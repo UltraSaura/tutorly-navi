@@ -14,9 +14,9 @@ const ModelSelection = () => {
   const { getAvailableModels, selectedModelId, setSelectedModelId } = useAdmin();
   const models = getAvailableModels();
   
-  // State to track which model details are expanded
+  // State to track which model details are expanded - initialize all to false
   const [expandedModels, setExpandedModels] = useState<Record<string, boolean>>(
-    Object.fromEntries(models.map(model => [model.id, true]))
+    Object.fromEntries(models.map(model => [model.id, false]))
   );
 
   // Toggle expansion state for a specific model
@@ -70,28 +70,28 @@ const ModelSelection = () => {
               </CardHeader>
 
               <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">{model.description}</p>
-                
-                <div className="mt-2">
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {model.capabilities.map((capability, idx) => (
-                      <Badge key={idx} variant="secondary" className="font-normal">
-                        {capability}
-                      </Badge>
-                    ))}
-                  </div>
+                <Collapsible open={isExpanded} onOpenChange={() => toggleModelExpansion(model.id)}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="flex items-center w-full justify-center hover:bg-muted/50">
+                      <span className="text-xs text-muted-foreground">
+                        {isExpanded ? "Hide details" : "Show details"}
+                      </span>
+                      {isExpanded ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
+                    </Button>
+                  </CollapsibleTrigger>
                   
-                  <Collapsible open={isExpanded} onOpenChange={() => toggleModelExpansion(model.id)}>
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm" className="flex items-center w-full justify-center mb-2 hover:bg-muted/50">
-                        <span className="text-xs text-muted-foreground">
-                          {isExpanded ? "Hide details" : "Show details"}
-                        </span>
-                        {isExpanded ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
-                      </Button>
-                    </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <p className="text-sm text-muted-foreground mb-4">{model.description}</p>
                     
-                    <CollapsibleContent>
+                    <div className="mt-2">
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {model.capabilities.map((capability, idx) => (
+                          <Badge key={idx} variant="secondary" className="font-normal">
+                            {capability}
+                          </Badge>
+                        ))}
+                      </div>
+                      
                       <div className="space-y-3">
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs">
@@ -128,9 +128,9 @@ const ModelSelection = () => {
                           <p className="font-medium">{model.pricing}</p>
                         </div>
                       </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </CardContent>
               
               <CardFooter>
