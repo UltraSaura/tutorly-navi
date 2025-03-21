@@ -1,4 +1,3 @@
-
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 
@@ -26,6 +25,7 @@ export interface ModelOption {
     reasoning: number;
   };
   bestFor: string[];
+  disabled?: boolean;
 }
 
 // Context interface
