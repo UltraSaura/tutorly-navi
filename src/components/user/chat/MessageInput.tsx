@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Send, Upload, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,11 +9,22 @@ interface MessageInputProps {
   inputMessage: string;
   setInputMessage: (message: string) => void;
   handleSendMessage: () => void;
+  handleFileUpload: (file: File) => void;
+  handlePhotoUpload: (file: File) => void;
   isLoading: boolean;
 }
 
-const MessageInput = ({ inputMessage, setInputMessage, handleSendMessage, isLoading }: MessageInputProps) => {
+const MessageInput = ({ 
+  inputMessage, 
+  setInputMessage, 
+  handleSendMessage, 
+  handleFileUpload, 
+  handlePhotoUpload, 
+  isLoading 
+}: MessageInputProps) => {
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -22,31 +33,92 @@ const MessageInput = ({ inputMessage, setInputMessage, handleSendMessage, isLoad
     }
   };
 
-  const handleFileUpload = () => {
-    toast({
-      title: "Upload Homework or Exercise",
-      description: "You can upload PDFs, Word documents, or images of your homework to get help.",
-    });
-    // File upload functionality would be implemented here
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
   };
   
-  const handlePhotoUpload = () => {
-    toast({
-      title: "Take a Photo of Your Work",
-      description: "Take a picture of your homework or written exercise to get immediate feedback.",
-    });
-    // Photo upload functionality would be implemented here
+  const triggerPhotoUpload = () => {
+    photoInputRef.current?.click();
+  };
+
+  const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>, isPhoto: boolean) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Maximum file size is 10MB.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (isPhoto) {
+        // Check that it's an image
+        if (!file.type.startsWith('image/')) {
+          toast({
+            title: "Invalid file type",
+            description: "Please upload an image file (jpg, png, etc.)",
+            variant: "destructive"
+          });
+          return;
+        }
+        handlePhotoUpload(file);
+        toast({
+          title: "Photo uploaded",
+          description: "Your photo has been uploaded successfully.",
+        });
+      } else {
+        // For documents, check that it's a valid type
+        const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+        if (!validTypes.includes(file.type)) {
+          toast({
+            title: "Invalid file type",
+            description: "Please upload a PDF, Word document, or text file.",
+            variant: "destructive"
+          });
+          return;
+        }
+        handleFileUpload(file);
+        toast({
+          title: "File uploaded",
+          description: `${file.name} has been uploaded successfully.`,
+        });
+      }
+      
+      // Reset the input value so the same file can be uploaded again
+      e.target.value = '';
+    }
   };
 
   return (
     <div className="p-4 border-t border-gray-200 dark:border-gray-700">
       <div className="flex gap-2">
-        <Button variant="outline" size="icon" className="shrink-0" onClick={handleFileUpload}>
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept=".pdf,.doc,.docx,.txt" 
+          onChange={(e) => onFileSelected(e, false)}
+        />
+        <Button variant="outline" size="icon" className="shrink-0" onClick={triggerFileUpload}>
           <Upload className="h-5 w-5" />
         </Button>
-        <Button variant="outline" size="icon" className="shrink-0" onClick={handlePhotoUpload}>
+        
+        <input 
+          type="file" 
+          ref={photoInputRef} 
+          className="hidden" 
+          accept="image/*" 
+          onChange={(e) => onFileSelected(e, true)}
+        />
+        <Button variant="outline" size="icon" className="shrink-0" onClick={triggerPhotoUpload}>
           <Camera className="h-5 w-5" />
         </Button>
+        
         <Textarea 
           placeholder="Type your message..." 
           value={inputMessage}

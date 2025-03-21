@@ -4,6 +4,9 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  type?: 'text' | 'file' | 'image';
+  filename?: string;
+  fileUrl?: string;
 }
 
 export interface Exercise {

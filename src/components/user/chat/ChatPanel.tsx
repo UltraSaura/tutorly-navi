@@ -10,6 +10,9 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  type?: 'text' | 'file' | 'image';
+  filename?: string;
+  fileUrl?: string;
 }
 
 interface ChatPanelProps {
@@ -18,6 +21,8 @@ interface ChatPanelProps {
   inputMessage: string;
   setInputMessage: (message: string) => void;
   handleSendMessage: () => void;
+  handleFileUpload: (file: File) => void;
+  handlePhotoUpload: (file: File) => void;
   currentTab: string;
   setCurrentTab: (tab: string) => void;
   newExercise: string;
@@ -31,6 +36,8 @@ const ChatPanel = ({
   inputMessage,
   setInputMessage,
   handleSendMessage,
+  handleFileUpload,
+  handlePhotoUpload,
   currentTab,
   setCurrentTab,
   newExercise,
@@ -58,6 +65,8 @@ const ChatPanel = ({
             inputMessage={inputMessage}
             setInputMessage={setInputMessage}
             handleSendMessage={handleSendMessage}
+            handleFileUpload={handleFileUpload}
+            handlePhotoUpload={handlePhotoUpload}
             isLoading={isLoading}
           />
         </>

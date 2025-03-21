@@ -55,6 +55,68 @@ const ChatInterface = () => {
     }, 1500);
   };
   
+  const handleFileUpload = (file: File) => {
+    // Create a temporary URL for the file
+    const fileUrl = URL.createObjectURL(file);
+    
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: `Uploaded a document: ${file.name}`,
+      timestamp: new Date(),
+      type: 'file',
+      filename: file.name,
+      fileUrl: fileUrl,
+    };
+    
+    setMessages([...messages, newMessage]);
+    setIsLoading(true);
+    
+    // Simulate AI response after file upload
+    setTimeout(() => {
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `I've received your document "${file.name}". Would you like me to help you understand its content or would you like to submit this as an exercise to work on?`,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, aiResponse]);
+      setIsLoading(false);
+    }, 2000);
+  };
+  
+  const handlePhotoUpload = (file: File) => {
+    // Create a temporary URL for the image
+    const imageUrl = URL.createObjectURL(file);
+    
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: `Uploaded an image: ${file.name}`,
+      timestamp: new Date(),
+      type: 'image',
+      filename: file.name,
+      fileUrl: imageUrl,
+    };
+    
+    setMessages([...messages, newMessage]);
+    setIsLoading(true);
+    
+    // Simulate AI response after image upload with OCR processing mention
+    setTimeout(() => {
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `I've received your image and processed it using OCR. I can see some text that appears to be related to ${Math.random() > 0.5 ? 'mathematics' : 'science'}. Would you like me to help explain this content or would you like to submit it as an exercise?`,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, aiResponse]);
+      setIsLoading(false);
+    }, 2500);
+  };
+  
   const toggleExerciseExpansion = (id: string) => {
     setExercises(exercises.map(exercise => 
       exercise.id === id ? { ...exercise, expanded: !exercise.expanded } : exercise
@@ -147,6 +209,8 @@ const ChatInterface = () => {
         inputMessage={inputMessage}
         setInputMessage={setInputMessage}
         handleSendMessage={handleSendMessage}
+        handleFileUpload={handleFileUpload}
+        handlePhotoUpload={handlePhotoUpload}
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
         newExercise={newExercise}
