@@ -99,6 +99,21 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     bestFor: ['Coding exercises', 'Technical curriculum', 'Computer science teaching'],
   },
   {
+    id: 'deepseek-chat',
+    name: 'DeepSeek Chat',
+    provider: 'DeepSeek',
+    description: 'Advanced large language model optimized for dialog and tutoring',
+    capabilities: ['Tutoring assistance', 'Concept explanations', 'Interactive learning'],
+    contextWindow: 32000,
+    pricing: '$0.004 / 1K tokens',
+    performance: {
+      speed: 90,
+      quality: 86,
+      reasoning: 88,
+    },
+    bestFor: ['One-on-one tutoring', 'Step-by-step guidance', 'Conceptual understanding'],
+  },
+  {
     id: 'grok-1',
     name: 'Grok-1',
     provider: 'xAI',
@@ -112,6 +127,21 @@ export const AVAILABLE_MODELS: ModelOption[] = [
       reasoning: 83,
     },
     bestFor: ['Current events discussions', 'Engaging explanations', 'Creative approaches'],
+  },
+  {
+    id: 'grok-2',
+    name: 'Grok-2',
+    provider: 'xAI',
+    description: 'Next-generation model with enhanced reasoning and problem-solving',
+    capabilities: ['Advanced reasoning', 'Math problem-solving', 'Creative thinking'],
+    contextWindow: 128000,
+    pricing: '$0.012 / 1K tokens',
+    performance: {
+      speed: 88,
+      quality: 92,
+      reasoning: 94,
+    },
+    bestFor: ['Complex problem-solving', 'Advanced mathematics', 'Scientific explanations'],
   },
   {
     id: 'chat',

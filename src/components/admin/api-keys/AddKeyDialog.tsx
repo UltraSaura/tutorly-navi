@@ -66,10 +66,11 @@ const AddKeyDialog = ({ onAddKey }: AddKeyDialogProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="OpenAI">OpenAI</SelectItem>
-                <SelectItem value="Google">Google Gemini</SelectItem>
-                <SelectItem value="Anthropic">Anthropic Claude</SelectItem>
-                <SelectItem value="Mistral">Mistral AI</SelectItem>
+                <SelectItem value="Google">Google</SelectItem>
+                <SelectItem value="Anthropic">Anthropic</SelectItem>
+                <SelectItem value="Mistral AI">Mistral AI</SelectItem>
                 <SelectItem value="DeepSeek">DeepSeek</SelectItem>
+                <SelectItem value="xAI">xAI</SelectItem>
                 <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>

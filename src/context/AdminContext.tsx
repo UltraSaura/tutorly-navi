@@ -76,12 +76,23 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     // Get list of providers we have API keys for
     const availableProviders = [...new Set(apiKeys.map(key => key.provider))];
     
+    // Log for debugging
+    console.log("Available providers:", availableProviders);
+    
     // Filter models based on available providers
-    return AVAILABLE_MODELS.map(model => ({
-      ...model,
-      // Flag models where we don't have an API key
-      disabled: !availableProviders.includes(model.provider)
-    }));
+    return AVAILABLE_MODELS.map(model => {
+      const hasProvider = availableProviders.some(
+        provider => provider === model.provider
+      );
+      
+      console.log(`Model: ${model.name}, Provider: ${model.provider}, Available: ${hasProvider}`);
+      
+      return {
+        ...model,
+        // Flag models where we don't have an API key
+        disabled: !hasProvider
+      };
+    });
   };
 
   return (
