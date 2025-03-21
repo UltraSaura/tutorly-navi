@@ -28,6 +28,7 @@ interface ChatPanelProps {
   newExercise: string;
   setNewExercise: (exercise: string) => void;
   submitAsExercise: () => void;
+  activeModel?: string;
 }
 
 const ChatPanel = ({
@@ -43,11 +44,17 @@ const ChatPanel = ({
   newExercise,
   setNewExercise,
   submitAsExercise,
+  activeModel = 'AI Model',
 }: ChatPanelProps) => {
   return (
     <div className="w-full md:w-1/3 flex flex-col glass rounded-xl overflow-hidden">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-lg font-semibold">AI Tutor Chat</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-semibold">AI Tutor Chat</h2>
+          <div className="flex items-center px-2 py-1 rounded-full bg-studywhiz-100 text-studywhiz-700 text-xs font-medium">
+            {activeModel}
+          </div>
+        </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">Ask questions or submit your assignments</p>
       </div>
       

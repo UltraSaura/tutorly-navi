@@ -1,11 +1,16 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { Message, Exercise, Grade } from '@/types/chat';
+import { useAdmin } from '@/context/AdminContext';
+import { supabase } from "@/integrations/supabase/client";
 import ChatPanel from './chat/ChatPanel';
 import ExerciseList from './chat/ExerciseList';
 
 const ChatInterface = () => {
+  const { selectedModelId, getAvailableModels } = useAdmin();
+  
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -20,14 +25,31 @@ const ChatInterface = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [currentTab, setCurrentTab] = useState('chat');
   const [newExercise, setNewExercise] = useState('');
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   
   const [grade, setGrade] = useState<Grade>({
     percentage: 0,
     letter: 'N/A',
   });
   
-  const handleSendMessage = () => {
+  // Get model info to display
+  const activeModel = (() => {
+    const models = getAvailableModels();
+    const model = models.find(m => m.id === selectedModelId);
+    return model ? model.name : 'AI Model';
+  })();
+  
+  // Convert messages to history format for the API
+  const getMessageHistory = () => {
+    return messages
+      .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+      .map(msg => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+  };
+  
+  const handleSendMessage = async () => {
     if (inputMessage.trim() === '') return;
     
     const newMessage: Message = {
@@ -41,18 +63,47 @@ const ChatInterface = () => {
     setInputMessage('');
     setIsLoading(true);
     
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      // Call the Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
+        body: {
+          message: inputMessage,
+          modelId: selectedModelId,
+          history: getMessageHistory(),
+        },
+      });
+      
+      if (error) {
+        console.error('Error calling AI chat function:', error);
+        throw new Error(error.message || 'Failed to get AI response');
+      }
+      
+      // Add AI response to messages
       const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: data.content,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, aiResponse]);
+      
+    } catch (error) {
+      console.error('Error in AI chat:', error);
+      toast.error('Failed to get AI response. Using fallback response.');
+      
+      // Fallback response if the API call fails
+      const fallbackResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: `I understand you're asking about ${inputMessage.substring(0, 20)}... Let me help with that! If you'd like to submit this as an exercise or homework to work on, click the "Submit as Exercise" button below.`,
         timestamp: new Date(),
       };
       
-      setMessages(prev => [...prev, aiResponse]);
+      setMessages(prev => [...prev, fallbackResponse]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
   
   const handleFileUpload = (file: File) => {
@@ -72,17 +123,25 @@ const ChatInterface = () => {
     setMessages([...messages, newMessage]);
     setIsLoading(true);
     
-    // Simulate AI response after file upload
-    setTimeout(() => {
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `I've received your document "${file.name}". Would you like me to help you understand its content or would you like to submit this as an exercise to work on?`,
-        timestamp: new Date(),
-      };
-      
-      setMessages(prev => [...prev, aiResponse]);
-      setIsLoading(false);
+    // Call AI model with the document info
+    setTimeout(async () => {
+      try {
+        // Here we would process the document with the AI
+        // For now using a simulated response
+        const aiResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: `I've received your document "${file.name}". Would you like me to help you understand its content or would you like to submit this as an exercise to work on?`,
+          timestamp: new Date(),
+        };
+        
+        setMessages(prev => [...prev, aiResponse]);
+      } catch (error) {
+        console.error('Error processing document:', error);
+        toast.error('Failed to process document');
+      } finally {
+        setIsLoading(false);
+      }
     }, 2000);
   };
   
@@ -103,17 +162,25 @@ const ChatInterface = () => {
     setMessages([...messages, newMessage]);
     setIsLoading(true);
     
-    // Simulate AI response after image upload with OCR processing mention
-    setTimeout(() => {
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `I've received your image and processed it using OCR. I can see some text that appears to be related to ${Math.random() > 0.5 ? 'mathematics' : 'science'}. Would you like me to help explain this content or would you like to submit it as an exercise?`,
-        timestamp: new Date(),
-      };
-      
-      setMessages(prev => [...prev, aiResponse]);
-      setIsLoading(false);
+    // Call AI model with the image info
+    setTimeout(async () => {
+      try {
+        // Here we would process the image with the AI
+        // For now using a simulated response
+        const aiResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: `I've received your image and processed it using OCR. I can see some text that appears to be related to ${Math.random() > 0.5 ? 'mathematics' : 'science'}. Would you like me to help explain this content or would you like to submit it as an exercise?`,
+          timestamp: new Date(),
+        };
+        
+        setMessages(prev => [...prev, aiResponse]);
+      } catch (error) {
+        console.error('Error processing image:', error);
+        toast.error('Failed to process image');
+      } finally {
+        setIsLoading(false);
+      }
     }, 2500);
   };
   
@@ -216,6 +283,7 @@ const ChatInterface = () => {
         newExercise={newExercise}
         setNewExercise={setNewExercise}
         submitAsExercise={submitAsExercise}
+        activeModel={activeModel}
       />
       
       {/* Exercise Panel */}

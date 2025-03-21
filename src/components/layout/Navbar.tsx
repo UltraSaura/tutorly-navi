@@ -4,10 +4,18 @@ import { Link, useLocation } from 'react-router-dom';
 import { MessageSquare, BookOpen, BarChart3, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { useAdmin } from '@/context/AdminContext';
 
 const Navbar = () => {
   const location = useLocation();
-  const [activeModel, setActiveModel] = useState('GPT-4');
+  const { selectedModelId, getAvailableModels } = useAdmin();
+  
+  // Get the active model name
+  const activeModel = (() => {
+    const models = getAvailableModels();
+    const selectedModel = models.find(model => model.id === selectedModelId);
+    return selectedModel ? selectedModel.name : 'AI Model';
+  })();
   
   const tabs = [
     { path: '/', label: 'Tutor', icon: <MessageSquare className="w-5 h-5" /> },

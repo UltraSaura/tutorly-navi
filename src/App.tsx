@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -44,33 +45,35 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <AnimatePresence mode="wait">
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
-              {/* User App Routes */}
-              <Route path="/" element={<MainLayout />}>
-                <Route index element={<ChatInterface />} />
-                <Route path="roadmap" element={<LearningRoadmap />} />
-                <Route path="grades" element={<GradeDashboard />} />
-                <Route path="skills" element={<SkillMastery />} />
-              </Route>
-              
-              {/* Admin Panel Routes */}
-              <Route path="/admin" element={<AdminProvider><AdminLayout /></AdminProvider>}>
-                <Route index element={<ApiKeyManagement />} />
-                <Route path="api-keys" element={<ApiKeyManagement />} />
-                <Route path="models" element={<ModelSelection />} />
-                <Route path="prompts" element={<SystemPromptConfig />} />
-                <Route path="users" element={<UserManagement />} />
-              </Route>
-              
-              {/* 404 Route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </AnimatePresence>
-      </BrowserRouter>
+      <AdminProvider>
+        <BrowserRouter>
+          <AnimatePresence mode="wait">
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                {/* User App Routes */}
+                <Route path="/" element={<MainLayout />}>
+                  <Route index element={<ChatInterface />} />
+                  <Route path="roadmap" element={<LearningRoadmap />} />
+                  <Route path="grades" element={<GradeDashboard />} />
+                  <Route path="skills" element={<SkillMastery />} />
+                </Route>
+                
+                {/* Admin Panel Routes */}
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<ApiKeyManagement />} />
+                  <Route path="api-keys" element={<ApiKeyManagement />} />
+                  <Route path="models" element={<ModelSelection />} />
+                  <Route path="prompts" element={<SystemPromptConfig />} />
+                  <Route path="users" element={<UserManagement />} />
+                </Route>
+                
+                {/* 404 Route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </AnimatePresence>
+        </BrowserRouter>
+      </AdminProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
