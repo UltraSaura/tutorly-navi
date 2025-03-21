@@ -25,3 +25,26 @@ export interface ModelOption {
   bestFor: string[];
   disabled?: boolean;
 }
+
+// Define the User interface for use with Supabase
+export interface User {
+  id: string;
+  email: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  country?: string | null;
+  phone_number?: string | null;
+  user_type: 'student' | 'parent';
+  created_at: string;
+  updated_at: string;
+  // Virtual properties for UI
+  activity?: {
+    day: string;
+    minutes: number;
+  }[];
+  subjects?: {
+    name: string;
+    progress: number;
+  }[];
+  children?: User[];
+}

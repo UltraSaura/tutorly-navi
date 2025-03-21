@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Search, MoreHorizontal, ChevronDown, ChevronLeft, ChevronRight, BarChart, CalendarDays, GraduationCap, User, UsersRound, UserCheck, Phone, Mail, MapPin, Plus, UserPlus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -16,28 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
-
-interface User {
-  id: string;
-  email: string;
-  first_name?: string;
-  last_name?: string;
-  country?: string;
-  phone_number?: string;
-  user_type: 'student' | 'parent';
-  created_at: string;
-  updated_at: string;
-  // Virtual properties for UI
-  activity?: {
-    day: string;
-    minutes: number;
-  }[];
-  subjects?: {
-    name: string;
-    progress: number;
-  }[];
-  children?: User[];
-}
+import { User as UserType } from '@/types/admin';
 
 const defaultActivity = [
   { day: 'Mon', minutes: 45 },
@@ -65,12 +43,12 @@ const generateNameFromEmail = (email: string): string => {
 };
 
 const UserManagement = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterGrade, setFilterGrade] = useState<string>('all');
   const [filterUserType, setFilterUserType] = useState<string>('all');
@@ -98,12 +76,13 @@ const UserManagement = () => {
           return;
         }
         
-        // Add virtual properties for UI purposes
+        // Add virtual properties for UI purposes and ensure user_type is cast to the correct type
         const processedUsers = data.map(user => ({
           ...user,
+          user_type: user.user_type as 'student' | 'parent', // Cast to ensure type safety
           activity: [...defaultActivity],
           subjects: user.user_type === 'student' ? [...defaultSubjects] : [],
-        }));
+        })) as UserType[];
         
         setUsers(processedUsers);
         
@@ -122,7 +101,7 @@ const UserManagement = () => {
             continue;
           }
           
-          if (relationships.length > 0) {
+          if (relationships && relationships.length > 0) {
             const childIds = relationships.map(rel => rel.child_id);
             
             // Get all children data
@@ -136,19 +115,22 @@ const UserManagement = () => {
               continue;
             }
             
-            // Process children data and attach to parent
-            const children = childrenData.map(child => ({
-              ...child,
-              activity: [...defaultActivity],
-              subjects: [...defaultSubjects],
-            }));
-            
-            // Find and update the parent in our state
-            const updatedUsers = processedUsers.map(u => 
-              u.id === parent.id ? { ...u, children } : u
-            );
-            
-            setUsers(updatedUsers);
+            if (childrenData) {
+              // Process children data and attach to parent
+              const children = childrenData.map(child => ({
+                ...child,
+                user_type: child.user_type as 'student' | 'parent', // Cast to ensure type safety
+                activity: [...defaultActivity],
+                subjects: [...defaultSubjects],
+              })) as UserType[];
+              
+              // Find and update the parent in our state
+              const updatedUsers = processedUsers.map(u => 
+                u.id === parent.id ? { ...u, children } : u
+              ) as UserType[];
+              
+              setUsers(updatedUsers);
+            }
           }
         }
       } catch (err) {
@@ -186,16 +168,16 @@ const UserManagement = () => {
     currentPage * usersPerPage
   );
   
-  const handleUserSelect = (user: User) => {
+  const handleUserSelect = (user: UserType) => {
     setSelectedUser(user);
   };
   
-  const averageMinutes = (user: User) => {
+  const averageMinutes = (user: UserType) => {
     const total = user.activity?.reduce((acc, day) => acc + day.minutes, 0) || 0;
     return Math.round(total / (user.activity?.length || 1));
   };
   
-  const totalMinutes = (user: User) => {
+  const totalMinutes = (user: UserType) => {
     return user.activity?.reduce((acc, day) => acc + day.minutes, 0) || 0;
   };
 
@@ -276,7 +258,7 @@ const UserManagement = () => {
       toast.success('Child account created and linked to parent');
       
       // Add the child to the parent's children array
-      const newChild: User = {
+      const newChild: UserType = {
         id: signUpData.user.id,
         email: childEmail,
         first_name: childFirstName,
