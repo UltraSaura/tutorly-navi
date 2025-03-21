@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Search, MoreHorizontal, ChevronDown, ChevronLeft, ChevronRight, BarChart, CalendarDays, GraduationCap } from 'lucide-react';
+import { Search, MoreHorizontal, ChevronDown, ChevronLeft, ChevronRight, BarChart, CalendarDays, GraduationCap, User, UsersRound, UserCheck, Phone, Mail, MapPin } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,8 @@ interface User {
   email: string;
   grade: string;
   country: string;
+  phoneNumber?: string;
+  userType: 'student' | 'parent';
   joinDate: Date;
   lastActive: Date;
   status: 'active' | 'inactive';
@@ -36,8 +38,10 @@ const users: User[] = [
     id: '1',
     name: 'Alex Johnson',
     email: 'alex.j@example.com',
+    phoneNumber: '+1 (555) 123-4567',
     grade: '7th Grade',
     country: 'United States',
+    userType: 'student',
     joinDate: new Date(2023, 1, 15),
     lastActive: new Date(2023, 6, 13),
     status: 'active',
@@ -60,8 +64,10 @@ const users: User[] = [
     id: '2',
     name: 'Sophia Kim',
     email: 'sophia.k@example.com',
+    phoneNumber: '+1 (555) 987-6543',
     grade: '9th Grade',
     country: 'Canada',
+    userType: 'student',
     joinDate: new Date(2023, 3, 10),
     lastActive: new Date(2023, 6, 14),
     status: 'active',
@@ -84,8 +90,10 @@ const users: User[] = [
     id: '3',
     name: 'Michael Chen',
     email: 'michael.c@example.com',
+    phoneNumber: '+61 4 8765 4321',
     grade: '5th Grade',
     country: 'Australia',
+    userType: 'student',
     joinDate: new Date(2023, 4, 5),
     lastActive: new Date(2023, 6, 10),
     status: 'inactive',
@@ -108,8 +116,10 @@ const users: User[] = [
     id: '4',
     name: 'Emma Thompson',
     email: 'emma.t@example.com',
+    phoneNumber: '+44 7700 900123',
     grade: '11th Grade',
     country: 'United Kingdom',
+    userType: 'student',
     joinDate: new Date(2023, 2, 20),
     lastActive: new Date(2023, 6, 12),
     status: 'active',
@@ -132,8 +142,10 @@ const users: User[] = [
     id: '5',
     name: 'Carlos Rodriguez',
     email: 'carlos.r@example.com',
+    phoneNumber: '+52 55 1234 5678',
     grade: '8th Grade',
     country: 'Mexico',
+    userType: 'student',
     joinDate: new Date(2023, 5, 1),
     lastActive: new Date(2023, 6, 11),
     status: 'active',
@@ -152,6 +164,50 @@ const users: User[] = [
       { day: 'Sun', minutes: 20 },
     ],
   },
+  {
+    id: '6',
+    name: 'Sarah Johnson',
+    email: 'sarah.j@example.com',
+    phoneNumber: '+1 (555) 234-5678',
+    country: 'United States',
+    userType: 'parent',
+    joinDate: new Date(2023, 1, 10),
+    lastActive: new Date(2023, 6, 15),
+    status: 'active',
+    grade: 'N/A',
+    subjects: [],
+    activity: [
+      { day: 'Mon', minutes: 20 },
+      { day: 'Tue', minutes: 15 },
+      { day: 'Wed', minutes: 25 },
+      { day: 'Thu', minutes: 10 },
+      { day: 'Fri', minutes: 30 },
+      { day: 'Sat', minutes: 5 },
+      { day: 'Sun', minutes: 10 },
+    ],
+  },
+  {
+    id: '7',
+    name: 'Robert Davis',
+    email: 'robert.d@example.com',
+    phoneNumber: '+61 4 1234 5678',
+    country: 'Australia',
+    userType: 'parent',
+    joinDate: new Date(2023, 3, 15),
+    lastActive: new Date(2023, 6, 12),
+    status: 'active',
+    grade: 'N/A',
+    subjects: [],
+    activity: [
+      { day: 'Mon', minutes: 15 },
+      { day: 'Tue', minutes: 10 },
+      { day: 'Wed', minutes: 20 },
+      { day: 'Thu', minutes: 5 },
+      { day: 'Fri', minutes: 25 },
+      { day: 'Sat', minutes: 10 },
+      { day: 'Sun', minutes: 5 },
+    ],
+  },
 ];
 
 const UserManagement = () => {
@@ -159,6 +215,7 @@ const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterGrade, setFilterGrade] = useState<string>('all');
+  const [filterUserType, setFilterUserType] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10;
   
@@ -166,12 +223,14 @@ const UserManagement = () => {
     const matchesSearch = 
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.country.toLowerCase().includes(searchQuery.toLowerCase());
+      user.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.phoneNumber && user.phoneNumber.toLowerCase().includes(searchQuery.toLowerCase()));
       
     const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
     const matchesGrade = filterGrade === 'all' || user.grade === filterGrade;
+    const matchesUserType = filterUserType === 'all' || user.userType === filterUserType;
     
-    return matchesSearch && matchesStatus && matchesGrade;
+    return matchesSearch && matchesStatus && matchesGrade && matchesUserType;
   });
   
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
@@ -192,13 +251,21 @@ const UserManagement = () => {
   const totalMinutes = (user: User) => {
     return user.activity.reduce((acc, day) => acc + day.minutes, 0);
   };
+
+  const getUserTypeIcon = (userType: 'student' | 'parent') => {
+    return userType === 'student' ? (
+      <GraduationCap className="h-4 w-4 text-blue-500" />
+    ) : (
+      <UsersRound className="h-4 w-4 text-purple-500" />
+    );
+  };
   
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
         <p className="text-muted-foreground mt-1">
-          View and manage student accounts and their activity
+          View and manage student and parent accounts
         </p>
       </div>
       
@@ -210,7 +277,7 @@ const UserManagement = () => {
                 <div className="relative w-full sm:w-auto">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search users..."
+                    placeholder="Search by name, email, country..."
                     className="pl-8 w-full sm:w-[300px]"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -218,6 +285,17 @@ const UserManagement = () => {
                 </div>
                 
                 <div className="flex flex-wrap gap-2">
+                  <Select value={filterUserType} onValueChange={setFilterUserType}>
+                    <SelectTrigger className="w-[130px]">
+                      <SelectValue placeholder="User Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="student">Students</SelectItem>
+                      <SelectItem value="parent">Parents</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
                   <Select value={filterStatus} onValueChange={setFilterStatus}>
                     <SelectTrigger className="w-[130px]">
                       <SelectValue placeholder="Status" />
@@ -251,7 +329,7 @@ const UserManagement = () => {
                   <thead>
                     <tr className="bg-muted/50">
                       <th className="px-4 py-3.5 text-left text-sm font-semibold">User</th>
-                      <th className="px-4 py-3.5 text-left text-sm font-semibold">Grade</th>
+                      <th className="px-4 py-3.5 text-left text-sm font-semibold">Type</th>
                       <th className="px-4 py-3.5 text-left text-sm font-semibold">Country</th>
                       <th className="px-4 py-3.5 text-left text-sm font-semibold">Status</th>
                       <th className="px-4 py-3.5 text-left text-sm font-semibold">Last Active</th>
@@ -279,7 +357,12 @@ const UserManagement = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm">{user.grade}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center">
+                            {getUserTypeIcon(user.userType)}
+                            <span className="ml-1.5 text-sm">{user.userType === 'student' ? 'Student' : 'Parent'}</span>
+                          </div>
+                        </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm">{user.country}</td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <Badge className={user.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'}>
@@ -368,9 +451,15 @@ const UserManagement = () => {
                       <CardDescription>{selectedUser.email}</CardDescription>
                     </div>
                   </div>
-                  <Badge className={selectedUser.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'}>
-                    {selectedUser.status === 'active' ? 'Active' : 'Inactive'}
-                  </Badge>
+                  <div className="flex flex-col items-end gap-2">
+                    <Badge className={selectedUser.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'}>
+                      {selectedUser.status === 'active' ? 'Active' : 'Inactive'}
+                    </Badge>
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      {getUserTypeIcon(selectedUser.userType)}
+                      {selectedUser.userType === 'student' ? 'Student' : 'Parent'}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -378,20 +467,53 @@ const UserManagement = () => {
                   <TabsList className="grid grid-cols-3 w-full glass">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="activity">Activity</TabsTrigger>
-                    <TabsTrigger value="progress">Progress</TabsTrigger>
+                    {selectedUser.userType === 'student' && (
+                      <TabsTrigger value="progress">Progress</TabsTrigger>
+                    )}
+                    {selectedUser.userType === 'parent' && (
+                      <TabsTrigger value="children">Children</TabsTrigger>
+                    )}
                   </TabsList>
                   
                   <TabsContent value="overview" className="pt-4">
                     <div className="space-y-6">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">Grade</p>
-                          <p className="text-sm">{selectedUser.grade}</p>
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <p className="text-sm font-medium">Email</p>
+                          </div>
+                          <p className="text-sm pl-6">{selectedUser.email}</p>
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">Country</p>
-                          <p className="text-sm">{selectedUser.country}</p>
+                        
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <p className="text-sm font-medium">Phone</p>
+                          </div>
+                          <p className="text-sm pl-6">{selectedUser.phoneNumber || 'Not provided'}</p>
                         </div>
+                        
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <p className="text-sm font-medium">Country</p>
+                          </div>
+                          <p className="text-sm pl-6">{selectedUser.country}</p>
+                        </div>
+                      </div>
+                      
+                      {selectedUser.userType === 'student' && (
+                        <div className="space-y-3">
+                          <h3 className="text-sm font-medium flex items-center gap-2">
+                            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                            <span>Grade</span>
+                          </h3>
+                          <p className="text-sm pl-6">{selectedUser.grade}</p>
+                        </div>
+                      )}
+                      
+                      <div className="grid grid-cols-2 gap-4 border-t pt-4">
                         <div className="space-y-1">
                           <p className="text-sm font-medium">Joined</p>
                           <p className="text-sm">{selectedUser.joinDate.toLocaleDateString()}</p>
@@ -428,18 +550,20 @@ const UserManagement = () => {
                         </div>
                       </div>
                       
-                      <div className="space-y-3">
-                        <h3 className="text-sm font-medium">Subjects Progress</h3>
-                        {selectedUser.subjects.map((subject, idx) => (
-                          <div key={idx}>
-                            <div className="flex justify-between text-sm mb-1">
-                              <span>{subject.name}</span>
-                              <span>{subject.progress}%</span>
+                      {selectedUser.userType === 'student' && selectedUser.subjects.length > 0 && (
+                        <div className="space-y-3">
+                          <h3 className="text-sm font-medium">Subjects Progress</h3>
+                          {selectedUser.subjects.map((subject, idx) => (
+                            <div key={idx}>
+                              <div className="flex justify-between text-sm mb-1">
+                                <span>{subject.name}</span>
+                                <span>{subject.progress}%</span>
+                              </div>
+                              <Progress value={subject.progress} className="h-1.5" />
                             </div>
-                            <Progress value={subject.progress} className="h-1.5" />
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </TabsContent>
                   
@@ -456,11 +580,19 @@ const UserManagement = () => {
                           <p className="text-sm font-medium">Weekly Usage</p>
                           <p className="text-sm">{totalMinutes(selectedUser)} mins</p>
                         </div>
-                        <div className="space-y-2 border rounded-lg p-3 text-center">
-                          <GraduationCap className="h-6 w-6 mx-auto text-green-500" />
-                          <p className="text-sm font-medium">Avg. Grade</p>
-                          <p className="text-sm">B+ (85%)</p>
-                        </div>
+                        {selectedUser.userType === 'student' ? (
+                          <div className="space-y-2 border rounded-lg p-3 text-center">
+                            <GraduationCap className="h-6 w-6 mx-auto text-green-500" />
+                            <p className="text-sm font-medium">Avg. Grade</p>
+                            <p className="text-sm">B+ (85%)</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 border rounded-lg p-3 text-center">
+                            <UsersRound className="h-6 w-6 mx-auto text-green-500" />
+                            <p className="text-sm font-medium">Children</p>
+                            <p className="text-sm">2</p>
+                          </div>
+                        )}
                       </div>
                       
                       <div>
@@ -491,94 +623,187 @@ const UserManagement = () => {
                       <div>
                         <h3 className="text-sm font-medium mb-3">Recent Sessions</h3>
                         <div className="space-y-2">
-                          {[
-                            { date: '2023-06-14', topic: 'Algebra Practice', duration: 35 },
-                            { date: '2023-06-12', topic: 'Essay Feedback', duration: 25 },
-                            { date: '2023-06-10', topic: 'Science Homework', duration: 40 },
-                          ].map((session, idx) => (
-                            <div key={idx} className="border rounded-md p-3">
-                              <div className="flex justify-between">
-                                <p className="text-sm font-medium">{session.topic}</p>
-                                <p className="text-sm text-muted-foreground">{session.duration} min</p>
+                          {selectedUser.userType === 'student' ? (
+                            [
+                              { date: '2023-06-14', topic: 'Algebra Practice', duration: 35 },
+                              { date: '2023-06-12', topic: 'Essay Feedback', duration: 25 },
+                              { date: '2023-06-10', topic: 'Science Homework', duration: 40 },
+                            ].map((session, idx) => (
+                              <div key={idx} className="border rounded-md p-3">
+                                <div className="flex justify-between">
+                                  <p className="text-sm font-medium">{session.topic}</p>
+                                  <p className="text-sm text-muted-foreground">{session.duration} min</p>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">{session.date}</p>
                               </div>
-                              <p className="text-xs text-muted-foreground mt-1">{session.date}</p>
-                            </div>
-                          ))}
+                            ))
+                          ) : (
+                            [
+                              { date: '2023-06-14', topic: 'Progress Review', duration: 20 },
+                              { date: '2023-06-10', topic: 'Teacher Meeting', duration: 15 },
+                              { date: '2023-06-08', topic: 'Account Settings', duration: 10 },
+                            ].map((session, idx) => (
+                              <div key={idx} className="border rounded-md p-3">
+                                <div className="flex justify-between">
+                                  <p className="text-sm font-medium">{session.topic}</p>
+                                  <p className="text-sm text-muted-foreground">{session.duration} min</p>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">{session.date}</p>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>
                   </TabsContent>
                   
-                  <TabsContent value="progress" className="pt-4">
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-sm font-medium mb-3">Subject Mastery</h3>
-                        {selectedUser.subjects.map((subject, idx) => (
-                          <div key={idx} className="mb-4">
-                            <div className="flex justify-between text-sm mb-1">
-                              <span className="font-medium">{subject.name}</span>
-                              <span>{subject.progress}%</span>
-                            </div>
-                            <Progress value={subject.progress} className="h-2" />
-                            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                              <span>Beginner</span>
-                              <span>Intermediate</span>
-                              <span>Advanced</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-sm font-medium mb-3">Recent Grades</h3>
-                        <div className="space-y-2">
-                          {[
-                            { assignment: 'Math Quiz', grade: 92, date: '2023-06-10' },
-                            { assignment: 'Science Report', grade: 85, date: '2023-06-07' },
-                            { assignment: 'Essay', grade: 78, date: '2023-06-03' },
-                            { assignment: 'History Test', grade: 88, date: '2023-05-28' },
-                          ].map((item, idx) => (
-                            <div key={idx} className="flex justify-between items-center p-2 border-b">
-                              <div>
-                                <p className="text-sm font-medium">{item.assignment}</p>
-                                <p className="text-xs text-muted-foreground">{item.date}</p>
+                  {selectedUser.userType === 'student' && (
+                    <TabsContent value="progress" className="pt-4">
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-sm font-medium mb-3">Subject Mastery</h3>
+                          {selectedUser.subjects.map((subject, idx) => (
+                            <div key={idx} className="mb-4">
+                              <div className="flex justify-between text-sm mb-1">
+                                <span className="font-medium">{subject.name}</span>
+                                <span>{subject.progress}%</span>
                               </div>
-                              <Badge className={
-                                item.grade >= 90 ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
-                                item.grade >= 80 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' :
-                                item.grade >= 70 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400' :
-                                'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                              }>
-                                {item.grade}%
-                              </Badge>
+                              <Progress value={subject.progress} className="h-2" />
+                              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                                <span>Beginner</span>
+                                <span>Intermediate</span>
+                                <span>Advanced</span>
+                              </div>
                             </div>
                           ))}
                         </div>
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-sm font-medium mb-3">Learning Recommendations</h3>
-                        <div className="space-y-2">
-                          <div className="border rounded-md p-3 bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800">
-                            <p className="text-sm font-medium text-blue-800 dark:text-blue-400">
-                              Focus on English Grammar
-                            </p>
-                            <p className="text-xs mt-1">
-                              Based on recent performance, extra practice with verb tenses recommended.
-                            </p>
+                        
+                        <div>
+                          <h3 className="text-sm font-medium mb-3">Recent Grades</h3>
+                          <div className="space-y-2">
+                            {[
+                              { assignment: 'Math Quiz', grade: 92, date: '2023-06-10' },
+                              { assignment: 'Science Report', grade: 85, date: '2023-06-07' },
+                              { assignment: 'Essay', grade: 78, date: '2023-06-03' },
+                              { assignment: 'History Test', grade: 88, date: '2023-05-28' },
+                            ].map((item, idx) => (
+                              <div key={idx} className="flex justify-between items-center p-2 border-b">
+                                <div>
+                                  <p className="text-sm font-medium">{item.assignment}</p>
+                                  <p className="text-xs text-muted-foreground">{item.date}</p>
+                                </div>
+                                <Badge className={
+                                  item.grade >= 90 ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
+                                  item.grade >= 80 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' :
+                                  item.grade >= 70 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400' :
+                                  'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                                }>
+                                  {item.grade}%
+                                </Badge>
+                              </div>
+                            ))}
                           </div>
-                          <div className="border rounded-md p-3 bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800">
-                            <p className="text-sm font-medium text-green-800 dark:text-green-400">
-                              Ready for Advanced Math
-                            </p>
-                            <p className="text-xs mt-1">
-                              Excellent algebra skills. Consider introducing pre-calculus concepts.
-                            </p>
+                        </div>
+                        
+                        <div>
+                          <h3 className="text-sm font-medium mb-3">Learning Recommendations</h3>
+                          <div className="space-y-2">
+                            <div className="border rounded-md p-3 bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800">
+                              <p className="text-sm font-medium text-blue-800 dark:text-blue-400">
+                                Focus on English Grammar
+                              </p>
+                              <p className="text-xs mt-1">
+                                Based on recent performance, extra practice with verb tenses recommended.
+                              </p>
+                            </div>
+                            <div className="border rounded-md p-3 bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800">
+                              <p className="text-sm font-medium text-green-800 dark:text-green-400">
+                                Ready for Advanced Math
+                              </p>
+                              <p className="text-xs mt-1">
+                                Excellent algebra skills. Consider introducing pre-calculus concepts.
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </TabsContent>
+                    </TabsContent>
+                  )}
+                  
+                  {selectedUser.userType === 'parent' && (
+                    <TabsContent value="children" className="pt-4">
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-sm font-medium mb-3">Children Accounts</h3>
+                          <div className="space-y-3">
+                            {[
+                              { id: '1', name: 'Alex Johnson', grade: '7th Grade', status: 'active' },
+                              { id: '3', name: 'Michael Chen', grade: '5th Grade', status: 'inactive' },
+                            ].map((child, idx) => (
+                              <div key={idx} className="border rounded-md p-3 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <Avatar className="h-8 w-8">
+                                    <AvatarImage src={`https://avatar.vercel.sh/${child.id}`} alt={child.name} />
+                                    <AvatarFallback>{child.name.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <p className="text-sm font-medium">{child.name}</p>
+                                    <p className="text-xs text-muted-foreground">{child.grade}</p>
+                                  </div>
+                                </div>
+                                <Badge className={child.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'}>
+                                  {child.status === 'active' ? 'Active' : 'Inactive'}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                          <Button className="w-full mt-4" variant="outline" size="sm">
+                            <UserCheck className="h-4 w-4 mr-2" />
+                            Add Child Account
+                          </Button>
+                        </div>
+                        
+                        <div>
+                          <h3 className="text-sm font-medium mb-3">Recent Activity</h3>
+                          <div className="space-y-2">
+                            {[
+                              { date: '2023-06-14', action: 'Reviewed Alex\'s Math homework', child: 'Alex Johnson' },
+                              { date: '2023-06-12', action: 'Updated Michael\'s account settings', child: 'Michael Chen' },
+                              { date: '2023-06-10', action: 'Messaged Science teacher', child: 'Alex Johnson' },
+                              { date: '2023-06-08', action: 'Added payment method', child: 'All children' },
+                            ].map((activity, idx) => (
+                              <div key={idx} className="border rounded-md p-3">
+                                <p className="text-sm font-medium">{activity.action}</p>
+                                <div className="flex justify-between mt-1">
+                                  <p className="text-xs text-muted-foreground">{activity.date}</p>
+                                  <p className="text-xs font-medium">{activity.child}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h3 className="text-sm font-medium mb-3">Upcoming Events</h3>
+                          <div className="space-y-2">
+                            {[
+                              { date: '2023-06-20', event: 'Parent-Teacher Conference', child: 'Alex Johnson' },
+                              { date: '2023-06-25', event: 'End of Year Presentation', child: 'Michael Chen' },
+                              { date: '2023-07-05', event: 'Summer Program Start', child: 'Both children' },
+                            ].map((event, idx) => (
+                              <div key={idx} className="border rounded-md p-3">
+                                <div className="flex justify-between">
+                                  <p className="text-sm font-medium">{event.event}</p>
+                                  <p className="text-sm text-blue-600 dark:text-blue-400">{event.date}</p>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">For: {event.child}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+                  )}
                 </Tabs>
               </CardContent>
             </Card>
