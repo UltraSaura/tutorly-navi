@@ -19,6 +19,7 @@ const MainLayout = () => {
       <footer className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
         <div className="studywhiz-container">
           <p>© {new Date().getFullYear()} StudyWhiz AI. All rights reserved.</p>
+          <p className="text-xs mt-1">Submit your homework and exercises and get personalized tutoring.</p>
         </div>
       </footer>
     </div>
