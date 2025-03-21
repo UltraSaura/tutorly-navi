@@ -1,30 +1,9 @@
 
-import { useState, useRef, useEffect } from 'react';
-import { Send, Upload, Camera, ChevronDown, ChevronUp, Check, X, BookOpen, PenLine } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-}
-
-interface Exercise {
-  id: string;
-  question: string;
-  userAnswer?: string;
-  isCorrect?: boolean;
-  explanation?: string;
-  expanded: boolean;
-}
+import { Message, Exercise, Grade } from '@/types/chat';
+import ChatPanel from './chat/ChatPanel';
+import ExerciseList from './chat/ExerciseList';
 
 const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -43,16 +22,10 @@ const ChatInterface = () => {
   const [newExercise, setNewExercise] = useState('');
   const { toast } = useToast();
   
-  const [grade, setGrade] = useState({
+  const [grade, setGrade] = useState<Grade>({
     percentage: 0,
     letter: 'N/A',
   });
-  
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
   
   const handleSendMessage = () => {
     if (inputMessage.trim() === '') return;
@@ -80,29 +53,6 @@ const ChatInterface = () => {
       setMessages(prev => [...prev, aiResponse]);
       setIsLoading(false);
     }, 1500);
-  };
-  
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-  
-  const handleFileUpload = () => {
-    toast({
-      title: "Upload Homework or Exercise",
-      description: "You can upload PDFs, Word documents, or images of your homework to get help.",
-    });
-    // File upload functionality would be implemented here
-  };
-  
-  const handlePhotoUpload = () => {
-    toast({
-      title: "Take a Photo of Your Work",
-      description: "Take a picture of your homework or written exercise to get immediate feedback.",
-    });
-    // Photo upload functionality would be implemented here
   };
   
   const toggleExerciseExpansion = (id: string) => {
@@ -188,254 +138,30 @@ const ChatInterface = () => {
     setGrade({ percentage, letter });
   };
   
-  const correctExercises = exercises.filter(ex => ex.isCorrect).length;
-  const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined).length;
-  const totalExercises = exercises.length;
-  
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-6rem)] gap-4">
       {/* Chat Panel */}
-      <div className="w-full md:w-1/3 flex flex-col glass rounded-xl overflow-hidden">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold">AI Tutor Chat</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Ask questions or submit your assignments</p>
-        </div>
-        
-        <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="chat">Chat</TabsTrigger>
-            <TabsTrigger value="submit">Submit Exercise</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        
-        {currentTab === 'chat' ? (
-          <>
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <div 
-                    key={message.id}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div 
-                      className={`max-w-[85%] p-3 rounded-2xl ${
-                        message.role === 'user' 
-                          ? 'bg-studywhiz-600 text-white rounded-tr-none' 
-                          : 'bg-gray-100 dark:bg-gray-800 rounded-tl-none'
-                      }`}
-                    >
-                      <p className="text-sm">{message.content}</p>
-                      <p className="text-xs opacity-70 mt-1 text-right">
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-                
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="max-w-[85%] p-3 bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-tl-none">
-                      <div className="flex space-x-2">
-                        <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse delay-100"></div>
-                        <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse delay-200"></div>
-                        <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse delay-300"></div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                <div ref={messagesEndRef} />
-              </div>
-            </ScrollArea>
-            
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex gap-2">
-                <Button variant="outline" size="icon" className="shrink-0" onClick={handleFileUpload}>
-                  <Upload className="h-5 w-5" />
-                </Button>
-                <Button variant="outline" size="icon" className="shrink-0" onClick={handlePhotoUpload}>
-                  <Camera className="h-5 w-5" />
-                </Button>
-                <Textarea 
-                  placeholder="Type your message..." 
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="min-h-10 resize-none"
-                />
-                <Button 
-                  size="icon" 
-                  className="shrink-0 bg-studywhiz-600 hover:bg-studywhiz-700"
-                  disabled={inputMessage.trim() === '' || isLoading}
-                  onClick={handleSendMessage}
-                >
-                  <Send className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 p-4 flex flex-col">
-            <div className="mb-4">
-              <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                Submit New Exercise or Homework
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Type or paste your exercise or homework question below. I'll help you work through it step by step.
-              </p>
-              <Textarea
-                placeholder="Enter your exercise or homework question here..."
-                value={newExercise}
-                onChange={(e) => setNewExercise(e.target.value)}
-                className="min-h-[150px] mb-4"
-              />
-              <Button 
-                className="w-full bg-studywhiz-600 hover:bg-studywhiz-700"
-                onClick={submitAsExercise}
-              >
-                <PenLine className="h-5 w-5 mr-2" />
-                Submit Exercise
-              </Button>
-            </div>
-            <Separator className="my-4" />
-            <div>
-              <h3 className="text-md font-medium mb-2">Tips for submitting work:</h3>
-              <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-2 list-disc pl-5">
-                <li>Be specific with your question</li>
-                <li>Include any relevant context or background information</li>
-                <li>If you're stuck, explain what you've tried so far</li>
-                <li>You can also upload photos or files of your work using the buttons in the chat tab</li>
-              </ul>
-            </div>
-          </div>
-        )}
-      </div>
+      <ChatPanel 
+        messages={messages}
+        isLoading={isLoading}
+        inputMessage={inputMessage}
+        setInputMessage={setInputMessage}
+        handleSendMessage={handleSendMessage}
+        currentTab={currentTab}
+        setCurrentTab={setCurrentTab}
+        newExercise={newExercise}
+        setNewExercise={setNewExercise}
+        submitAsExercise={submitAsExercise}
+      />
       
       {/* Exercise Panel */}
       <div className="w-full md:w-2/3 glass rounded-xl overflow-hidden">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold">Current Exercises & Homework</h2>
-          <div className="flex justify-between items-center mt-2">
-            <div className="flex-1 mr-4">
-              <Progress value={grade.percentage} className="h-2 bg-gray-200" />
-            </div>
-            <span className="text-lg font-semibold">
-              {answeredExercises > 0 ? `${grade.percentage}% ${grade.letter}` : 'No graded work yet'}
-            </span>
-          </div>
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>Progress</span>
-            <span>{correctExercises} of {answeredExercises} correct • {totalExercises} total</span>
-          </div>
-        </div>
-        
-        <ScrollArea className="h-[calc(100%-8rem)] p-4">
-          {exercises.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center p-6">
-              <BookOpen className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium mb-2">No exercises submitted yet</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md">
-                Use the "Submit Exercise" tab to add your homework questions or exercises, or ask me a question in the chat and I'll help you convert it to an exercise.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {exercises.map((exercise) => (
-                <div 
-                  key={exercise.id}
-                  className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all duration-200"
-                >
-                  <div className="p-4">
-                    <div className="flex justify-between">
-                      <h3 className="text-md font-medium">{exercise.question}</h3>
-                      {exercise.isCorrect !== undefined && (
-                        <div className={`flex items-center gap-1 ${
-                          exercise.isCorrect 
-                            ? 'text-green-600 dark:text-green-500' 
-                            : 'text-red-600 dark:text-red-500'
-                        }`}>
-                          {exercise.isCorrect ? (
-                            <Check className="w-5 h-5" />
-                          ) : (
-                            <X className="w-5 h-5" />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    
-                    {exercise.userAnswer ? (
-                      <div className="mt-2 text-sm">
-                        <span className="text-gray-500">Your answer: </span>
-                        <span className={exercise.isCorrect ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}>
-                          {exercise.userAnswer}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="mt-3">
-                        <Textarea 
-                          placeholder="Enter your answer here..." 
-                          className="text-sm resize-none" 
-                          onBlur={(e) => {
-                            if (e.target.value.trim()) {
-                              submitExerciseAnswer(exercise.id, e.target.value);
-                            }
-                          }}
-                        />
-                        <div className="flex justify-end mt-2">
-                          <Button size="sm" variant="outline">Submit Answer</Button>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {exercise.userAnswer && (
-                      <div className="mt-4 flex justify-between items-center">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                          onClick={() => toggleExerciseExpansion(exercise.id)}
-                        >
-                          {exercise.expanded ? 'Hide explanation' : 'Show explanation'}
-                          {exercise.expanded ? (
-                            <ChevronUp className="ml-1 h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="ml-1 h-4 w-4" />
-                          )}
-                        </Button>
-                        
-                        {!exercise.isCorrect && (
-                          <Button variant="outline" size="sm" className="text-xs">
-                            Try Again
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <AnimatePresence>
-                    {exercise.expanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <Separator />
-                        <div className="p-4 bg-gray-50 dark:bg-gray-800/50">
-                          <h4 className="text-sm font-medium mb-2">Explanation</h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">
-                            {exercise.explanation}
-                          </p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
+        <ExerciseList
+          exercises={exercises}
+          grade={grade}
+          toggleExerciseExpansion={toggleExerciseExpansion}
+          submitExerciseAnswer={submitExerciseAnswer}
+        />
       </div>
     </div>
   );
