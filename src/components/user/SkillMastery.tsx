@@ -129,7 +129,7 @@ const skills: Skill[] = [
     subskills: [
       { name: 'Main Idea Identification', progress: 70 },
       { name: 'Inference Making', progress: 55 },
-      { name: 'Author's Purpose', progress: 60 },
+      { name: 'Author\'s Purpose', progress: 60 },
       { name: 'Text Analysis', progress: 55 },
     ],
   },
