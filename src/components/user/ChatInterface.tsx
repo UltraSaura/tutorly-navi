@@ -88,9 +88,18 @@ const ChatInterface = () => {
       
       setMessages(prev => [...prev, aiResponse]);
       
+      // Show model used as a toast
+      toast.success(`Response generated using ${data.provider} ${data.modelUsed}`);
+      
     } catch (error) {
       console.error('Error in AI chat:', error);
-      toast.error('Failed to get AI response. Using fallback response.');
+      
+      // Check if the error is related to missing API keys
+      if (error.message?.includes('API key not configured')) {
+        toast.error(`API key missing for the selected model. Please add the required API key in Supabase settings.`);
+      } else {
+        toast.error('Failed to get AI response. Using fallback response.');
+      }
       
       // Fallback response if the API call fails
       const fallbackResponse: Message = {
