@@ -2,14 +2,10 @@
 import { useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Message from './Message';
+import { Message as MessageType } from '@/types/chat';
 
 interface MessageListProps {
-  messages: {
-    id: string;
-    role: 'user' | 'assistant';
-    content: string;
-    timestamp: Date;
-  }[];
+  messages: MessageType[];
   isLoading: boolean;
 }
 
@@ -26,10 +22,7 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
         {messages.map((message) => (
           <Message 
             key={message.id}
-            id={message.id}
-            role={message.role}
-            content={message.content}
-            timestamp={message.timestamp}
+            {...message}
           />
         ))}
         

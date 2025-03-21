@@ -1,18 +1,16 @@
 
 import React from 'react';
 import { File, Image } from 'lucide-react';
+import { Message as MessageType } from '@/types/chat';
 
-interface MessageProps {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  type?: 'text' | 'file' | 'image';
-  filename?: string;
-  fileUrl?: string;
-}
-
-const Message = ({ role, content, timestamp, type = 'text', filename, fileUrl }: MessageProps) => {
+const Message = ({ 
+  role, 
+  content, 
+  timestamp, 
+  type = 'text', 
+  filename, 
+  fileUrl 
+}: MessageType) => {
   const renderContent = () => {
     switch (type) {
       case 'file':
