@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 import { Message, Exercise, Grade } from '@/types/chat';
 import { useAdmin } from '@/context/AdminContext';
@@ -201,8 +201,8 @@ const ChatInterface = () => {
   
   const submitAsExercise = () => {
     if (newExercise.trim() === '') {
-      toast({
-        title: "Cannot Submit Empty Exercise",
+      // Fix: Use the uiToast function which accepts 'title' and 'description'
+      uiToast({
         description: "Please enter your exercise or homework question.",
         variant: "destructive",
       });
@@ -218,8 +218,8 @@ const ChatInterface = () => {
     setExercises([...exercises, newEx]);
     setNewExercise('');
     
-    toast({
-      title: "Exercise Submitted",
+    // Fix: Use the uiToast function which accepts 'title' and 'description'
+    uiToast({
       description: "Your exercise has been submitted. I'll help you work through it!",
     });
     
