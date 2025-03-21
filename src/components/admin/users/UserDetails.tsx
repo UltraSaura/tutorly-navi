@@ -1,4 +1,3 @@
-
 import { User, Mail, Phone, MapPin, BarChart, CalendarDays, GraduationCap, UsersRound, UserPlus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,15 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User as UserType } from '@/types/admin';
-
-// Helper function to generate name from email if first/last name isn't available
-const generateNameFromEmail = (email: string): string => {
-  const parts = email.split('@')[0].split('.');
-  const formattedParts = parts.map(part => 
-    part.charAt(0).toUpperCase() + part.slice(1)
-  );
-  return formattedParts.join(' ');
-};
+import { generateNameFromEmail, averageMinutes, totalMinutes } from './utils';
 
 interface UserDetailsProps {
   user: UserType;
@@ -25,15 +16,6 @@ interface UserDetailsProps {
 }
 
 export const UserDetails = ({ user, onAddChildClick, onUserSelect }: UserDetailsProps) => {
-  const averageMinutes = (user: UserType) => {
-    const total = user.activity?.reduce((acc, day) => acc + day.minutes, 0) || 0;
-    return Math.round(total / (user.activity?.length || 1));
-  };
-  
-  const totalMinutes = (user: UserType) => {
-    return user.activity?.reduce((acc, day) => acc + day.minutes, 0) || 0;
-  };
-
   const getUserTypeIcon = (userType: 'student' | 'parent') => {
     return userType === 'student' ? (
       <GraduationCap className="h-4 w-4 text-blue-500" />
