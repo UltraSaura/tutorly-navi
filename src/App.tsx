@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { AnimatePresence } from "framer-motion";
+import { AdminProvider } from "./context/AdminContext";
 
 // Layouts
 import MainLayout from "./components/layout/MainLayout";
@@ -57,7 +57,7 @@ const App = () => (
               </Route>
               
               {/* Admin Panel Routes */}
-              <Route path="/admin" element={<AdminLayout />}>
+              <Route path="/admin" element={<AdminProvider><AdminLayout /></AdminProvider>}>
                 <Route index element={<ApiKeyManagement />} />
                 <Route path="api-keys" element={<ApiKeyManagement />} />
                 <Route path="models" element={<ModelSelection />} />

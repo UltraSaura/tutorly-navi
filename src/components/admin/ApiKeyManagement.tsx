@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Trash2, Eye, EyeOff, Plus, Key } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -8,35 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-
-interface ApiKey {
-  id: string;
-  name: string;
-  provider: string;
-  key: string;
-  createdAt: Date;
-  lastUsed?: Date;
-}
+import { useAdmin, ApiKey } from '@/context/AdminContext';
 
 const ApiKeyManagement = () => {
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([
-    {
-      id: '1',
-      name: 'OpenAI Production',
-      provider: 'OpenAI',
-      key: 'sk-1234••••••••••••••••••••••••••••••••••',
-      createdAt: new Date(2023, 5, 15),
-      lastUsed: new Date(2023, 6, 14),
-    },
-    {
-      id: '2',
-      name: 'Google Gemini',
-      provider: 'Google',
-      key: 'AIza••••••••••••••••••••••••••••••••••••',
-      createdAt: new Date(2023, 5, 10),
-      lastUsed: new Date(2023, 6, 12),
-    },
-  ]);
+  const { apiKeys, addApiKey, deleteApiKey, testApiKeyConnection } = useAdmin();
   
   const [showDialogKey, setShowDialogKey] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
@@ -44,7 +18,7 @@ const ApiKeyManagement = () => {
   const [newKeyValue, setNewKeyValue] = useState('');
   const [visibleKeyId, setVisibleKeyId] = useState<string | null>(null);
   
-  const addNewKey = () => {
+  const handleAddKey = () => {
     if (!newKeyName || !newKeyProvider || !newKeyValue) {
       toast.error('Please fill all fields');
       return;
@@ -52,26 +26,20 @@ const ApiKeyManagement = () => {
     
     const obfuscatedKey = newKeyValue.substring(0, 5) + '••••••••••••••••••••••••••••••••••';
     
-    const newKey: ApiKey = {
-      id: Date.now().toString(),
+    addApiKey({
       name: newKeyName,
       provider: newKeyProvider,
       key: obfuscatedKey,
-      createdAt: new Date(),
-    };
+    });
     
-    setApiKeys([...apiKeys, newKey]);
     setNewKeyName('');
     setNewKeyProvider('');
     setNewKeyValue('');
     setShowDialogKey(false);
-    
-    toast.success('API key added successfully');
   };
   
-  const deleteKey = (id: string) => {
-    setApiKeys(apiKeys.filter(key => key.id !== id));
-    toast.success('API key deleted successfully');
+  const handleDeleteKey = (id: string) => {
+    deleteApiKey(id);
   };
   
   const toggleKeyVisibility = (id: string) => {
@@ -84,6 +52,19 @@ const ApiKeyManagement = () => {
       setTimeout(() => {
         setVisibleKeyId(null);
       }, 10000);
+    }
+  };
+  
+  const handleTestConnection = async (id: string) => {
+    try {
+      const success = await testApiKeyConnection(id);
+      if (success) {
+        toast.success('Connection test successful!');
+      } else {
+        toast.error('Connection test failed. Please check your API key.');
+      }
+    } catch (error) {
+      toast.error('Error testing connection');
     }
   };
   
@@ -156,7 +137,7 @@ const ApiKeyManagement = () => {
             
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowDialogKey(false)}>Cancel</Button>
-              <Button className="bg-studywhiz-600 hover:bg-studywhiz-700" onClick={addNewKey}>
+              <Button className="bg-studywhiz-600 hover:bg-studywhiz-700" onClick={handleAddKey}>
                 Add Key
               </Button>
             </DialogFooter>
@@ -184,7 +165,7 @@ const ApiKeyManagement = () => {
                   variant="ghost" 
                   size="icon" 
                   className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => deleteKey(apiKey.id)}
+                  onClick={() => handleDeleteKey(apiKey.id)}
                 >
                   <Trash2 className="h-5 w-5" />
                 </Button>
@@ -225,7 +206,13 @@ const ApiKeyManagement = () => {
                 </div>
                 
                 <div className="flex justify-end">
-                  <Button variant="outline" size="sm">Test Connection</Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleTestConnection(apiKey.id)}
+                  >
+                    Test Connection
+                  </Button>
                 </div>
               </div>
             </CardContent>
