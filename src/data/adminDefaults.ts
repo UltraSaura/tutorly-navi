@@ -83,4 +83,19 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     },
     bestFor: ['Basic tutoring tasks', 'Quick answers', 'Budget-friendly option'],
   },
+  {
+    id: 'chat',
+    name: 'Chat Model',
+    provider: 'OpenAI',
+    description: 'Specialized model for conversational interactions',
+    capabilities: ['Natural dialogue', 'Context retention', 'Personalized responses'],
+    contextWindow: 16000,
+    pricing: '$0.002 / 1K tokens',
+    performance: {
+      speed: 95,
+      quality: 88,
+      reasoning: 82,
+    },
+    bestFor: ['Interactive tutoring', 'Conversational learning', 'Quick Q&A sessions'],
+  },
 ];

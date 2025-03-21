@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Check, Info, ThumbsUp, Zap, BrainCircuit, Activity } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, Info, ThumbsUp, Zap, BrainCircuit, Activity, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAdmin } from '@/context/AdminContext';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,10 +8,24 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const ModelSelection = () => {
   const { getAvailableModels, selectedModelId, setSelectedModelId } = useAdmin();
   const models = getAvailableModels();
+  
+  // State to track which model details are expanded
+  const [expandedModels, setExpandedModels] = useState<Record<string, boolean>>(
+    Object.fromEntries(models.map(model => [model.id, true]))
+  );
+
+  // Toggle expansion state for a specific model
+  const toggleModelExpansion = (modelId: string) => {
+    setExpandedModels(prev => ({
+      ...prev,
+      [modelId]: !prev[modelId]
+    }));
+  };
 
   return (
     <div className="space-y-6">
@@ -33,6 +47,7 @@ const ModelSelection = () => {
         {models.map(model => {
           const isSelected = model.id === selectedModelId;
           const isDisabled = model.disabled;
+          const isExpanded = expandedModels[model.id];
 
           return (
             <Card 
@@ -66,42 +81,55 @@ const ModelSelection = () => {
                     ))}
                   </div>
                   
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> Speed</span>
-                        <span>{model.performance.speed}%</span>
-                      </div>
-                      <Progress value={model.performance.speed} className="h-1.5" />
-                    </div>
+                  <Collapsible open={isExpanded} onOpenChange={() => toggleModelExpansion(model.id)}>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="flex items-center w-full justify-center mb-2 hover:bg-muted/50">
+                        <span className="text-xs text-muted-foreground">
+                          {isExpanded ? "Hide details" : "Show details"}
+                        </span>
+                        {isExpanded ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
+                      </Button>
+                    </CollapsibleTrigger>
                     
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="flex items-center gap-1"><ThumbsUp className="h-3 w-3" /> Quality</span>
-                        <span>{model.performance.quality}%</span>
+                    <CollapsibleContent>
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> Speed</span>
+                            <span>{model.performance.speed}%</span>
+                          </div>
+                          <Progress value={model.performance.speed} className="h-1.5" />
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="flex items-center gap-1"><ThumbsUp className="h-3 w-3" /> Quality</span>
+                            <span>{model.performance.quality}%</span>
+                          </div>
+                          <Progress value={model.performance.quality} className="h-1.5" />
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="flex items-center gap-1"><BrainCircuit className="h-3 w-3" /> Reasoning</span>
+                            <span>{model.performance.reasoning}%</span>
+                          </div>
+                          <Progress value={model.performance.reasoning} className="h-1.5" />
+                        </div>
                       </div>
-                      <Progress value={model.performance.quality} className="h-1.5" />
-                    </div>
-                    
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="flex items-center gap-1"><BrainCircuit className="h-3 w-3" /> Reasoning</span>
-                        <span>{model.performance.reasoning}%</span>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm mt-3">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Context Window</p>
+                          <p className="font-medium">{(model.contextWindow/1000).toFixed(0)}K tokens</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Pricing</p>
+                          <p className="font-medium">{model.pricing}</p>
+                        </div>
                       </div>
-                      <Progress value={model.performance.reasoning} className="h-1.5" />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 text-sm mt-2">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Context Window</p>
-                    <p className="font-medium">{(model.contextWindow/1000).toFixed(0)}K tokens</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Pricing</p>
-                    <p className="font-medium">{model.pricing}</p>
-                  </div>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </div>
               </CardContent>
               
