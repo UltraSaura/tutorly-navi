@@ -28,13 +28,15 @@ const Exercise = ({ exercise, toggleExerciseExpansion, submitExerciseAnswer }: E
     if (answer.trim()) {
       submitExerciseAnswer(exercise.id, answer);
       setAnswer('');
+    } else {
+      setShowFeedback(true);
+      setTimeout(() => setShowFeedback(false), 3000);
     }
   };
   
   const handleTryAgain = () => {
     setAnswer('');
-    setShowFeedback(true);
-    setTimeout(() => setShowFeedback(false), 3000);
+    setShowFeedback(false);
   };
   
   return (

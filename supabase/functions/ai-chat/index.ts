@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
@@ -28,6 +27,9 @@ serve(async (req) => {
     
     console.log(`Processing request with model: ${modelId}`);
     
+    // Detect if this is a homework/exercise question
+    const isExercise = detectExercise(message);
+    
     // Determine which model to use and which API to call
     const modelConfig = getModelConfig(modelId);
     
@@ -45,10 +47,18 @@ serve(async (req) => {
     }
     
     // Prepare the chat messages
-    const systemMessage = {
+    let systemMessage = {
       role: 'system',
       content: 'You are StudyWhiz, an educational AI tutor. You help students understand concepts, solve problems, and learn new subjects. Be friendly, concise, and educational in your responses. Prioritize explaining concepts clearly rather than just giving answers.'
     };
+    
+    // If this is an exercise, enhance the system prompt
+    if (isExercise) {
+      systemMessage = {
+        role: 'system',
+        content: 'You are StudyWhiz, an educational AI tutor specializing in exercises and homework. When a student submits a homework question or exercise, format your response clearly, presenting the problem at the beginning followed by guidance on how to solve it without giving away the full answer. If you are evaluating a student\'s answer, clearly indicate whether it is correct or incorrect and provide a detailed explanation why.'
+      };
+    }
     
     const formattedHistory = formatHistoryForProvider(history, modelConfig.provider);
     const formattedSystemMessage = formatSystemMessageForProvider(systemMessage, modelConfig.provider);
@@ -61,7 +71,8 @@ serve(async (req) => {
           formattedSystemMessage, 
           formattedHistory, 
           message, 
-          modelConfig.model
+          modelConfig.model, 
+          isExercise
         );
         break;
       case 'Anthropic':
@@ -69,7 +80,8 @@ serve(async (req) => {
           formattedSystemMessage, 
           formattedHistory, 
           message, 
-          modelConfig.model
+          modelConfig.model, 
+          isExercise
         );
         break;
       case 'Mistral AI':
@@ -77,7 +89,8 @@ serve(async (req) => {
           formattedSystemMessage, 
           formattedHistory, 
           message, 
-          modelConfig.model
+          modelConfig.model, 
+          isExercise
         );
         break;
       case 'Google':
@@ -85,7 +98,8 @@ serve(async (req) => {
           formattedSystemMessage, 
           formattedHistory, 
           message, 
-          modelConfig.model
+          modelConfig.model, 
+          isExercise
         );
         break;
       case 'DeepSeek':
@@ -93,7 +107,8 @@ serve(async (req) => {
           formattedSystemMessage, 
           formattedHistory, 
           message, 
-          modelConfig.model
+          modelConfig.model, 
+          isExercise
         );
         break;
       case 'xAI':
@@ -101,7 +116,8 @@ serve(async (req) => {
           formattedSystemMessage, 
           formattedHistory, 
           message, 
-          modelConfig.model
+          modelConfig.model, 
+          isExercise
         );
         break;
       default:
@@ -111,7 +127,8 @@ serve(async (req) => {
           formattedSystemMessage, 
           formattedHistory, 
           message, 
-          'gpt-3.5-turbo'
+          'gpt-3.5-turbo', 
+          isExercise
         );
         break;
     }
@@ -123,6 +140,7 @@ serve(async (req) => {
         modelId: modelId,
         modelUsed: modelConfig.model,
         provider: modelConfig.provider,
+        isExercise: isExercise,
         timestamp: new Date().toISOString()
       }),
       { 
@@ -150,6 +168,14 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper function to detect if a message is likely an exercise or homework problem
+function detectExercise(message: string): boolean {
+  const exerciseKeywords = ['solve', 'calculate', 'find', 'homework', 'exercise', 'problem', 'question', 'assignment'];
+  const lowerMessage = message.toLowerCase();
+  
+  return exerciseKeywords.some(keyword => lowerMessage.includes(keyword));
+}
 
 // Helper function to get model configuration based on modelId
 function getModelConfig(modelId: string) {
@@ -224,7 +250,7 @@ function formatSystemMessageForProvider(systemMessage: any, provider: string) {
 }
 
 // Implementation for OpenAI API
-async function callOpenAI(systemMessage: any, history: any[], userMessage: string, model: string): Promise<string> {
+async function callOpenAI(systemMessage: any, history: any[], userMessage: string, model: string, isExercise: boolean = false): Promise<string> {
   if (!openAIApiKey) {
     throw new Error('OpenAI API key not configured');
   }
@@ -237,6 +263,14 @@ async function callOpenAI(systemMessage: any, history: any[], userMessage: strin
       content: userMessage
     }
   ];
+  
+  // If this is likely an exercise, add a formatting instruction
+  if (isExercise) {
+    messages.push({
+      role: 'system',
+      content: 'If this is a homework question or exercise, format your response clearly. Start with the problem statement, then provide guidance without giving away the full answer.'
+    });
+  }
   
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -262,7 +296,7 @@ async function callOpenAI(systemMessage: any, history: any[], userMessage: strin
 }
 
 // Implementation for Anthropic API (Claude)
-async function callAnthropic(systemMessage: any, history: any[], userMessage: string, model: string): Promise<string> {
+async function callAnthropic(systemMessage: any, history: any[], userMessage: string, model: string, isExercise: boolean = false): Promise<string> {
   if (!anthropicApiKey) {
     throw new Error('Anthropic API key not configured');
   }
@@ -273,7 +307,9 @@ async function callAnthropic(systemMessage: any, history: any[], userMessage: st
     ...history,
     {
       role: 'user',
-      content: userMessage
+      content: isExercise 
+        ? `${userMessage}\n\nNote: If this is a homework question, please format your response as an exercise with clear steps.`
+        : userMessage
     }
   ];
   
@@ -301,7 +337,7 @@ async function callAnthropic(systemMessage: any, history: any[], userMessage: st
 }
 
 // Implementation for Mistral AI API
-async function callMistral(systemMessage: any, history: any[], userMessage: string, model: string): Promise<string> {
+async function callMistral(systemMessage: any, history: any[], userMessage: string, model: string, isExercise: boolean = false): Promise<string> {
   if (!mistralApiKey) {
     throw new Error('Mistral AI API key not configured');
   }
@@ -311,7 +347,9 @@ async function callMistral(systemMessage: any, history: any[], userMessage: stri
     ...history,
     {
       role: 'user',
-      content: userMessage
+      content: isExercise
+        ? `${userMessage}\n\nNote: If this is a homework question, please format your response as an exercise with clear steps.`
+        : userMessage
     }
   ];
   
@@ -339,14 +377,16 @@ async function callMistral(systemMessage: any, history: any[], userMessage: stri
 }
 
 // Implementation for Google API (Gemini)
-async function callGoogle(systemMessage: any, history: any[], userMessage: string, model: string): Promise<string> {
+async function callGoogle(systemMessage: any, history: any[], userMessage: string, model: string, isExercise: boolean = false): Promise<string> {
   if (!googleApiKey) {
     throw new Error('Google API key not configured');
   }
   
   // Google has a different API structure
   const combinedHistory = history.map(msg => msg.content).join("\n");
-  const promptText = `${systemMessage.content}\n\n${combinedHistory}\n\nUser: ${userMessage}\nAssistant:`;
+  const exerciseNote = isExercise ? "\n\nNote: Format this as an educational exercise if it's a homework question." : "";
+  
+  const promptText = `${systemMessage.content}\n\n${combinedHistory}\n\nUser: ${userMessage}${exerciseNote}\nAssistant:`;
   
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleApiKey}`, {
     method: 'POST',
@@ -376,7 +416,7 @@ async function callGoogle(systemMessage: any, history: any[], userMessage: strin
 }
 
 // Implementation for DeepSeek API
-async function callDeepSeek(systemMessage: any, history: any[], userMessage: string, model: string): Promise<string> {
+async function callDeepSeek(systemMessage: any, history: any[], userMessage: string, model: string, isExercise: boolean = false): Promise<string> {
   if (!deepseekApiKey) {
     throw new Error('DeepSeek API key not configured');
   }
@@ -386,7 +426,9 @@ async function callDeepSeek(systemMessage: any, history: any[], userMessage: str
     ...history,
     {
       role: 'user',
-      content: userMessage
+      content: isExercise
+        ? `${userMessage}\n\nNote: If this is a homework question, please format your response as an exercise with clear steps.`
+        : userMessage
     }
   ];
   
@@ -414,7 +456,7 @@ async function callDeepSeek(systemMessage: any, history: any[], userMessage: str
 }
 
 // Implementation for xAI API (Grok)
-async function callXAI(systemMessage: any, history: any[], userMessage: string, model: string): Promise<string> {
+async function callXAI(systemMessage: any, history: any[], userMessage: string, model: string, isExercise: boolean = false): Promise<string> {
   if (!xaiApiKey) {
     throw new Error('xAI API key not configured');
   }
@@ -424,7 +466,9 @@ async function callXAI(systemMessage: any, history: any[], userMessage: string, 
     ...history,
     {
       role: 'user',
-      content: userMessage
+      content: isExercise
+        ? `${userMessage}\n\nNote: If this is a homework question, please format your response as an exercise with clear steps.`
+        : userMessage
     }
   ];
   

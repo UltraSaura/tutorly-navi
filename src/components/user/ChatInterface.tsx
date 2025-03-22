@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import ChatPanel from './chat/ChatPanel';
 import ExerciseList from './chat/ExerciseList';
@@ -28,8 +28,68 @@ const ChatInterface = () => {
     grade,
     toggleExerciseExpansion,
     submitAsExercise,
-    submitExerciseAnswer
+    submitExerciseAnswer,
+    createExerciseFromAI
   } = useExercises();
+
+  // Effect to detect homework exercises in AI responses
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      
+      // Only process assistant messages
+      if (lastMessage.role === 'assistant') {
+        // Check if this looks like a homework exercise
+        const isHomework = detectHomeworkInMessage(lastMessage.content);
+        
+        if (isHomework) {
+          // Extract the exercise and explanation
+          const { question, explanation } = extractExerciseFromMessage(lastMessage.content);
+          
+          if (question) {
+            // Create a new exercise from the AI response
+            createExerciseFromAI(question, explanation || "Solve this exercise step by step.");
+            
+            // Automatically switch to exercise tab
+            setCurrentTab('chat');
+          }
+        }
+      }
+    }
+  }, [messages]);
+  
+  const detectHomeworkInMessage = (content: string): boolean => {
+    // Keywords that might indicate a homework problem
+    const homeworkKeywords = [
+      'solve this', 'calculate', 'find the answer', 'homework', 
+      'exercise', 'problem', 'question', 'assignment', 'solve for',
+      'quiz', 'test', 'practice problem', 'compute', 'determine'
+    ];
+    
+    const contentLower = content.toLowerCase();
+    
+    // Check if any keywords are in the content
+    return homeworkKeywords.some(keyword => contentLower.includes(keyword));
+  };
+  
+  const extractExerciseFromMessage = (content: string): { question: string, explanation: string } => {
+    // Simple extraction - this could be made more sophisticated
+    // For now, we'll take the first paragraph as the question
+    // and the rest as the explanation
+    const paragraphs = content.split('\n\n');
+    
+    if (paragraphs.length === 0) {
+      return { question: content, explanation: '' };
+    }
+    
+    // Take the first paragraph as the question
+    const question = paragraphs[0].trim();
+    
+    // Use the rest as the explanation
+    const explanation = paragraphs.slice(1).join('\n\n').trim();
+    
+    return { question, explanation };
+  };
   
   const handleSubmitExercise = () => {
     const exercise = submitAsExercise();

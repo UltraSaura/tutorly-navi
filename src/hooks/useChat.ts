@@ -19,6 +19,7 @@ export const useChat = () => {
   
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [lastResponse, setLastResponse] = useState<any>(null);
   
   // Get model info to display
   const activeModel = (() => {
@@ -70,6 +71,9 @@ export const useChat = () => {
         console.error('Error calling AI chat function:', error);
         throw new Error(error.message || 'Failed to get AI response');
       }
+      
+      // Store the full response for potential exercise handling
+      setLastResponse(data);
       
       // Add AI response to messages
       const aiResponse: Message = {
@@ -192,6 +196,7 @@ export const useChat = () => {
     setInputMessage,
     isLoading,
     activeModel,
+    lastResponse,
     addMessage,
     handleSendMessage,
     handleFileUpload,
