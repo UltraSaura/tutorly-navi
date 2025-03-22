@@ -32,6 +32,7 @@ export const evaluateHomework = async (
         message: message,
         modelId: 'gpt4o', // Use a good model for evaluation
         history: [],
+        isGradingRequest: true, // Flag to ensure proper formatting
       },
     });
     
@@ -69,10 +70,8 @@ export const evaluateHomework = async (
       explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${explanation}`;
     }
     
-    if (explanation.length > 1000) {
-      // Truncate very long explanations but preserve meaning
-      explanation = explanation.substring(0, 1000) + '...';
-    }
+    // No need to truncate the response as it will affect formatting
+    // We'll handle long explanations in the UI instead
     
     // Display a notification based on the result
     toast.success(`Your homework has been graded. ${isCorrect ? 'Great job!' : 'Review the feedback for improvements.'}`);

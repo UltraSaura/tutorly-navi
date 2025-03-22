@@ -39,15 +39,12 @@ serve(async (req) => {
   
   try {
     // Parse the request
-    const { message, modelId, history = [] } = await req.json();
+    const { message, modelId, history = [], isGradingRequest = false } = await req.json();
     
-    console.log(`Processing request with model: ${modelId}`);
+    console.log(`Processing request with model: ${modelId}, isGradingRequest: ${isGradingRequest}`);
     
     // Detect if this is a homework/exercise question
-    const isExercise = detectExercise(message);
-    
-    // Check if this is a grading request
-    const isGradingRequest = message.includes("I need you to grade this");
+    const isExercise = detectExercise(message) || isGradingRequest;
     
     // Determine which model to use and which API to call
     const modelConfig = getModelConfig(modelId);
@@ -155,6 +152,7 @@ serve(async (req) => {
         modelUsed: modelConfig.model,
         provider: modelConfig.provider,
         isExercise: isExercise,
+        isGradingRequest: isGradingRequest,
         timestamp: new Date().toISOString()
       }),
       { 

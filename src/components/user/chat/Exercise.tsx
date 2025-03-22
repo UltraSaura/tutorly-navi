@@ -19,12 +19,26 @@ interface ExerciseProps {
 }
 
 const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
-  // Format explanation to make "Problem:" and "Guidance:" bold with better styling
-  const formattedExplanation = exercise.explanation ? 
-    exercise.explanation
-      .replace(/\*\*(Problem|Guidance):\*\*/g, '<strong class="text-studywhiz-600 dark:text-studywhiz-400">$1:</strong>')
-      .split('\n').join('<br />') : 
-    '';
+  // Format explanation with improved regex to handle more markdown patterns
+  const formatExplanation = (text: string) => {
+    if (!text) return '';
+    
+    // Format bold text markers
+    let formatted = text.replace(/\*\*(Problem|Guidance):\*\*/g, 
+      '<strong class="text-studywhiz-600 dark:text-studywhiz-400 block mb-2">$1:</strong>');
+    
+    // Format other markdown elements
+    formatted = formatted
+      // Handle numbered lists
+      .replace(/(\d+\.\s.*?)(?=\d+\.|$)/gs, '<div class="mb-2">$1</div>')
+      // Handle bullet points
+      .replace(/(-\s.*?)(?=-\s|$)/gs, '<div class="mb-1 ml-2">$1</div>')
+      // Convert newlines to breaks
+      .replace(/\n\n/g, '<br /><br />')
+      .replace(/\n/g, '<br />');
+    
+    return formatted;
+  };
 
   return (
     <motion.div 
@@ -128,7 +142,7 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
               </h4>
               <div 
                 className="text-sm text-gray-700 dark:text-gray-300 prose-sm max-w-full"
-                dangerouslySetInnerHTML={{ __html: formattedExplanation }}
+                dangerouslySetInnerHTML={{ __html: formatExplanation(exercise.explanation || '') }}
               />
             </div>
           </motion.div>

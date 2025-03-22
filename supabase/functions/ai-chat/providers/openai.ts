@@ -26,7 +26,7 @@ export async function callOpenAI(
   if (isExercise) {
     messages.push({
       role: 'system',
-      content: 'Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation.'
+      content: 'Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation. Ensure to include these exact headings with the asterisks.'
     });
   }
   
@@ -40,7 +40,7 @@ export async function callOpenAI(
       model: model,
       messages: messages,
       temperature: 0.7,
-      max_tokens: 800,
+      max_tokens: 1500, // Increase token limit to avoid truncation
     })
   });
   
