@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Check, X, ChevronUp, ChevronDown, ThumbsUp, AlertCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -19,38 +18,25 @@ interface ExerciseProps {
 }
 
 const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
-  // Improved formatExplanation function to better handle AI response formats
   const formatExplanation = (text: string) => {
     if (!text) return '';
     
-    // Create a working copy of the text
     let formatted = text;
     
-    // Step 1: Format section headers (Problem, Guidance)
-    formatted = formatted.replace(/\*\*([^*:]+):\*\*/g, 
-      '<strong class="text-studywhiz-600 dark:text-studywhiz-400 block mb-2">$1:</strong>');
+    formatted = formatted.replace(/\*\*(Problem|Guidance):\*\*/g, 
+      '<h3 class="text-studywhiz-600 dark:text-studywhiz-400 font-semibold text-md my-2">**$1:**</h3>');
     
-    // Step 2: Format numbered lists with improved regex that handles parentheses and special chars
-    formatted = formatted.replace(/(\d+\.\s.+?)(?=\n\d+\.|$|\n\n|\n\*\*)/gs, 
-      '<div class="mb-2 pl-4">$1</div>');
+    formatted = formatted.replace(/(\d+\.\s.*?)(?=\n\d+\.|$|\n\n)/gs, 
+      '<div class="ml-4 mb-2">$1</div>');
     
-    // Step 3: Handle bullet points
-    formatted = formatted.replace(/(-\s.+?)(?=\n-\s|$|\n\n|\n\*\*)/gs, 
-      '<div class="mb-1 pl-6">$1</div>');
+    formatted = formatted.replace(/(-\s.*?)(?=\n-\s|$|\n\n)/gs, 
+      '<div class="ml-6 mb-1">$1</div>');
     
-    // Step 4: Handle remaining bold text (beyond section headers)
     formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    
-    // Step 5: Handle mathematical expressions and symbols
-    // Convert LaTeX-style equations if present
-    formatted = formatted.replace(/\\([a-zA-Z]+)/g, '<em>$1</em>');
-    
-    // Step 6: Handle emphasized text
     formatted = formatted.replace(/\*([^*]+)\*/g, '<em>$1</em>');
     
-    // Step 7: Convert newlines to breaks for better readability
     formatted = formatted.replace(/\n\n/g, '<br /><br />');
-    formatted = formatted.replace(/\n/g, '<br />');
+    formatted = formatted.replace(/\n(?!\s*<)/g, '<br />');
     
     return formatted;
   };
@@ -146,7 +132,7 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
           >
             <Separator />
             <div className={cn(
-              "p-4",
+              "p-4 prose prose-sm max-w-none",
               exercise.isCorrect 
                 ? "bg-green-50 dark:bg-green-950/20" 
                 : "bg-amber-50 dark:bg-amber-950/20"
@@ -156,7 +142,7 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
                 Explanation
               </h4>
               <div 
-                className="text-sm text-gray-700 dark:text-gray-300 prose-sm max-w-full"
+                className="text-sm text-gray-700 dark:text-gray-300"
                 dangerouslySetInnerHTML={{ __html: formatExplanation(exercise.explanation || '') }}
               />
             </div>
