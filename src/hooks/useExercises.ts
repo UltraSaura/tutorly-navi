@@ -16,6 +16,9 @@ export const useExercises = () => {
     letter: 'N/A',
   });
   
+  // Track processed content to avoid duplicates
+  const [processedContent, setProcessedContent] = useState<Set<string>>(new Set());
+  
   const toggleExerciseExpansion = (id: string) => {
     setExercises(exercises.map(exercise => 
       exercise.id === id ? { ...exercise, expanded: !exercise.expanded } : exercise
@@ -25,11 +28,27 @@ export const useExercises = () => {
   // Function to process homework submitted directly via chat
   const processHomeworkFromChat = async (message: string) => {
     try {
+      // Check if we've processed this exact content before
+      if (processedContent.has(message)) {
+        console.log("Skipping duplicate homework submission");
+        return;
+      }
+      
       // Extract the exercise question and user's answer
       const { question, answer } = extractHomeworkFromMessage(message);
       
       if (!question || !answer) {
         console.log("Couldn't extract homework components from the message");
+        return;
+      }
+      
+      // Check if we already have this question-answer pair
+      const existingExercise = exercises.find(
+        ex => ex.question === question && ex.userAnswer === answer
+      );
+      
+      if (existingExercise) {
+        console.log("This question-answer pair already exists");
         return;
       }
       
@@ -44,6 +63,9 @@ export const useExercises = () => {
       // Add it to the list
       setExercises(prev => [...prev, newEx]);
       
+      // Mark this content as processed
+      setProcessedContent(prev => new Set([...prev, message]));
+      
       // Now evaluate the answer
       const updatedExercise = await evaluateHomework(newEx);
       
@@ -57,14 +79,20 @@ export const useExercises = () => {
       
     } catch (error) {
       console.error('Error processing homework:', error);
-      
-      // Fallback if there's an error
       toast.error('There was an issue grading your homework. Please try again.');
     }
   };
   
-  // Function to create exercises from AI responses
+  // Function to create exercises from AI responses - used when needed
   const createExerciseFromAI = (question: string, explanation: string) => {
+    // Check if we already have this question
+    const existingExercise = exercises.find(ex => ex.question === question);
+    
+    if (existingExercise) {
+      console.log("This exercise already exists");
+      return existingExercise;
+    }
+    
     const newEx: Exercise = {
       id: Date.now().toString(),
       question,
@@ -74,7 +102,7 @@ export const useExercises = () => {
     
     setExercises(prev => [...prev, newEx]);
     
-    toast.info("A new exercise has been added based on our conversation.");
+    toast.info("A new exercise has been added.");
     
     return newEx;
   };

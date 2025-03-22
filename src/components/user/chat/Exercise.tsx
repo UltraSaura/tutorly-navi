@@ -19,9 +19,11 @@ interface ExerciseProps {
 }
 
 const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
-  // Format explanation to make "Problem:" and "Guidance:" bold
+  // Format explanation to make "Problem:" and "Guidance:" bold with better styling
   const formattedExplanation = exercise.explanation ? 
-    exercise.explanation.replace(/\*\*(Problem|Guidance):\*\*/g, '<strong>$1:</strong>') : 
+    exercise.explanation
+      .replace(/\*\*(Problem|Guidance):\*\*/g, '<strong class="text-studywhiz-600 dark:text-studywhiz-400">$1:</strong>')
+      .split('\n').join('<br />') : 
     '';
 
   return (
@@ -66,10 +68,12 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
           <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
             <div className="flex items-center mb-1">
               <span className="text-sm font-medium">Your answer:</span>
-              {exercise.isCorrect ? (
-                <Check className="w-4 h-4 ml-2 text-green-500" />
-              ) : (
-                <X className="w-4 h-4 ml-2 text-red-500" />
+              {exercise.isCorrect !== undefined && (
+                exercise.isCorrect ? (
+                  <Check className="w-4 h-4 ml-2 text-green-500" />
+                ) : (
+                  <X className="w-4 h-4 ml-2 text-red-500" />
+                )
               )}
             </div>
             <p className={cn(

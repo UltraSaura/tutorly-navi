@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import ChatPanel from './chat/ChatPanel';
@@ -6,8 +7,7 @@ import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
 import { 
   detectHomeworkInMessage, 
-  extractHomeworkFromMessage,
-  extractExerciseFromMessage
+  extractHomeworkFromMessage
 } from '@/utils/homeworkExtraction';
 
 const ChatInterface = () => {
@@ -31,51 +31,36 @@ const ChatInterface = () => {
     processHomeworkFromChat
   } = useExercises();
 
+  // Track processed message IDs to prevent duplication
+  const [processedMessageIds, setProcessedMessageIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
       
+      // Skip if we've already processed this message
+      if (processedMessageIds.has(lastMessage.id)) {
+        return;
+      }
+      
       if (lastMessage.role === 'user') {
         // Check if the message contains a homework submission (including math problems)
         const isHomework = detectHomeworkInMessage(lastMessage.content);
-        if (isHomework) {
-          processHomeworkFromChat(lastMessage.content);
-        }
         
-        // Additional check for math expressions even if not explicitly marked as homework
+        // Additional check for math expressions
         const hasMathExpression = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(lastMessage.content);
-        if (hasMathExpression && !isHomework) {
-          processHomeworkFromChat(lastMessage.content);
-        }
-      } else if (lastMessage.role === 'assistant') {
-        const isExercise = detectExerciseInMessage(lastMessage.content);
         
-        if (isExercise) {
-          const { question, explanation } = extractExerciseFromMessage(lastMessage.content);
-          
-          if (question) {
-            createExerciseFromAI(question, explanation || "Review this exercise and complete the solution.");
-          }
+        if (isHomework || hasMathExpression) {
+          processHomeworkFromChat(lastMessage.content);
+          // Mark this message as processed
+          setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
         }
       }
+      
+      // We no longer process assistant messages automatically to avoid duplication
+      // AI explanations will only appear in the chat, not as separate exercises
     }
-  }, [messages]);
-  
-  const detectExerciseInMessage = (content: string): boolean => {
-    const exerciseKeywords = [
-      'solve this', 'calculate', 'find the answer', 'homework', 
-      'exercise', 'problem', 'question', 'assignment', 'solve for',
-      'quiz', 'test', 'practice problem', 'compute', 'determine'
-    ];
-    
-    const contentLower = content.toLowerCase();
-    
-    // Also detect if the AI is responding to a math problem
-    const isMathResponse = /\b(CORRECT|INCORRECT)\b/i.test(content) &&
-                         /\d+\s*[\+\-\*\/]\s*\d+/.test(content);
-    
-    return exerciseKeywords.some(keyword => contentLower.includes(keyword)) || isMathResponse;
-  };
+  }, [messages, processedMessageIds]);
   
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-6rem)] gap-4">

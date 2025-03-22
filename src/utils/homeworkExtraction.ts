@@ -96,7 +96,8 @@ export const detectHomeworkInMessage = (content: string): boolean => {
   // Keywords that might indicate a homework submission
   const homeworkKeywords = [
     'my answer is', 'my solution is', 'here\'s my answer', 'homework answer',
-    'assignment answer', 'my homework', 'i solved', 'solve:', 'answer:'
+    'assignment answer', 'my homework', 'i solved', 'solve:', 'answer:',
+    'problem:', 'question:'
   ];
   
   const contentLower = content.toLowerCase();
@@ -107,13 +108,27 @@ export const detectHomeworkInMessage = (content: string): boolean => {
   // Check for mathematical patterns (e.g., "2+2=4")
   const hasMathPattern = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(content);
   
-  return hasKeywords || hasMathPattern;
+  // Enhanced detection for likely homework content
+  const likelyHomework = /\b(solve|calculate|find|compute)\b.+\b(equation|problem|expression)\b/i.test(content);
+  
+  return hasKeywords || hasMathPattern || likelyHomework;
 };
 
 /**
  * Extracts question and explanation components from an AI message
  */
 export const extractExerciseFromMessage = (content: string): { question: string, explanation: string } => {
+  // Look for Problem/Guidance format
+  const problemMatch = content.match(/\*\*Problem:\*\*\s*(.*?)(?=\*\*Guidance:\*\*|$)/s);
+  const guidanceMatch = content.match(/\*\*Guidance:\*\*\s*(.*?)$/s);
+  
+  if (problemMatch && guidanceMatch) {
+    return {
+      question: problemMatch[1].trim(),
+      explanation: `**Problem:**${problemMatch[1]}\n\n**Guidance:**${guidanceMatch[1]}`
+    };
+  }
+  
   // Simple extraction - this could be made more sophisticated
   // For now, we'll take the first paragraph as the question
   // and the rest as the explanation

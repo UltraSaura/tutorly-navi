@@ -66,7 +66,7 @@ export const evaluateHomework = async (
     
     // If the explanation doesn't include the formatted Problem/Guidance sections, add them
     if (!explanation.includes('**Problem:**')) {
-      explanation = `**Problem:** ${exercise.question}=${exercise.userAnswer}\n\n**Guidance:** ${explanation}`;
+      explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${explanation}`;
     }
     
     if (explanation.length > 1000) {
