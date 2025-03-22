@@ -20,6 +20,12 @@ import {
   formatSystemMessageForProvider
 } from './utils.ts';
 
+// Import system prompt utilities
+import {
+  generateSystemMessage,
+  enhanceSystemMessageForMath
+} from './utils/systemPrompts.ts';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -59,26 +65,12 @@ serve(async (req) => {
       throw new Error(`API key not configured for provider: ${modelConfig.provider}`);
     }
     
-    // Prepare the chat messages
-    let systemMessage = {
-      role: 'system',
-      content: 'You are StudyWhiz, an educational AI tutor. You help students understand concepts, solve problems, and learn new subjects. Be friendly, concise, and educational in your responses. Prioritize explaining concepts clearly rather than just giving answers.'
-    };
+    // Generate the appropriate system message based on context
+    let systemMessage = generateSystemMessage(isExercise, isGradingRequest);
     
-    // If this is an exercise, enhance the system prompt
-    if (isExercise) {
-      systemMessage = {
-        role: 'system',
-        content: 'You are StudyWhiz, an educational AI tutor specializing in exercises and homework. When a student submits a homework question or exercise, format your response clearly, presenting the problem at the beginning followed by guidance on how to solve it without giving away the full answer. If you are evaluating a student\'s answer, clearly indicate whether it is correct or incorrect and provide a detailed explanation why.'
-      };
-    }
-    
-    // If this is a grading request, use a specific system prompt
-    if (isGradingRequest) {
-      systemMessage = {
-        role: 'system',
-        content: 'You are StudyWhiz, an educational AI tutor specializing in grading homework and exercises. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your detailed explanation. Clearly state CORRECT or INCORRECT at the beginning of your guidance. Be thorough but concise in your explanation.'
-      };
+    // Enhance system message for math problems if needed
+    if (modelConfig.provider === 'OpenAI') {
+      systemMessage = enhanceSystemMessageForMath(systemMessage, message);
     }
     
     // Format history messages based on provider

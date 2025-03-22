@@ -13,30 +13,8 @@ export async function callOpenAI(
     throw new Error('OpenAI API key not configured');
   }
   
-  // Enhance system message for math problems
-  let enhancedSystemMessage = systemMessage;
-  
-  // Check if this might be a math problem (simple check for numbers and operators)
-  const isMathProblem = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(userMessage);
-  
-  if (isMathProblem) {
-    enhancedSystemMessage = {
-      role: 'system',
-      content: 'You are StudyWhiz, an educational AI tutor specializing in mathematics. When a student submits a math problem or equation, evaluate whether their answer is correct or incorrect. If the equation contains "=" followed by a number, treat that as the student\'s proposed answer. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation. In the guidance section, clearly state whether the answer is CORRECT or INCORRECT at the beginning, and then provide a detailed explanation showing step-by-step work. Be precise with mathematical notation and explain concepts thoroughly.'
-    };
-  }
-  
-  // Check if this is a grading request
-  const isGradingRequest = userMessage.includes("I need you to grade this");
-  if (isGradingRequest) {
-    enhancedSystemMessage = {
-      role: 'system',
-      content: 'You are StudyWhiz, an educational AI grader. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your detailed explanation. At the beginning of your guidance, clearly state whether the answer is CORRECT or INCORRECT, and then provide a detailed explanation showing why. Be precise with your evaluation and explain concepts thoroughly.'
-    };
-  }
-  
   const messages = [
-    enhancedSystemMessage,
+    systemMessage,
     ...history,
     {
       role: 'user',
@@ -45,7 +23,7 @@ export async function callOpenAI(
   ];
   
   // If this is likely an exercise, add a formatting instruction
-  if (isExercise && !isMathProblem && !isGradingRequest) {
+  if (isExercise) {
     messages.push({
       role: 'system',
       content: 'Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation.'
