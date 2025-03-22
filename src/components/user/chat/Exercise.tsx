@@ -19,11 +19,6 @@ interface ExerciseProps {
 }
 
 const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
-  // Format explanation to make "Problem:" and "Guidance:" bold
-  const formattedExplanation = exercise.explanation ? 
-    exercise.explanation.replace(/\*\*(Problem|Guidance):\*\*/g, '<strong>$1:</strong>') : 
-    '';
-
   return (
     <motion.div 
       className={cn(
@@ -122,10 +117,9 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
                 <ThumbsUp className="w-4 h-4 mr-2 text-studywhiz-600" />
                 Explanation
               </h4>
-              <div 
-                className="text-sm text-gray-700 dark:text-gray-300 prose-sm max-w-full"
-                dangerouslySetInnerHTML={{ __html: formattedExplanation }}
-              />
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                {exercise.explanation}
+              </p>
             </div>
           </motion.div>
         )}

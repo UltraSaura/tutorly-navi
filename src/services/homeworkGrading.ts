@@ -21,9 +21,9 @@ export const evaluateHomework = async (
     let message = "";
     
     if (isMathProblem) {
-      message = `I need you to grade this math problem. The equation is: "${exercise.question}=${exercise.userAnswer}". Is this correct? Please evaluate it step by step and clearly state if it's CORRECT or INCORRECT at the beginning of your response. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation.`;
+      message = `I need you to grade this math problem. The equation is: "${exercise.question}=${exercise.userAnswer}". Is this correct? Please evaluate it step by step and clearly state if it's CORRECT or INCORRECT at the beginning of your response.`;
     } else {
-      message = `I need you to grade this homework. The question is: "${exercise.question}" and the student's answer is: "${exercise.userAnswer}". Please evaluate if it's correct or incorrect, and provide a detailed explanation why. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation.`;
+      message = `I need you to grade this homework. The question is: "${exercise.question}" and the student's answer is: "${exercise.userAnswer}". Please evaluate if it's correct or incorrect, and provide a detailed explanation why.`;
     }
     
     // Call AI service to evaluate the answer
@@ -63,15 +63,9 @@ export const evaluateHomework = async (
     
     // Extract an explanation from the AI response
     let explanation = aiResponse;
-    
-    // If the explanation doesn't include the formatted Problem/Guidance sections, add them
-    if (!explanation.includes('**Problem:**')) {
-      explanation = `**Problem:** ${exercise.question}=${exercise.userAnswer}\n\n**Guidance:** ${explanation}`;
-    }
-    
-    if (explanation.length > 1000) {
+    if (explanation.length > 500) {
       // Truncate very long explanations but preserve meaning
-      explanation = explanation.substring(0, 1000) + '...';
+      explanation = explanation.substring(0, 500) + '...';
     }
     
     // Display a notification based on the result
