@@ -5,6 +5,8 @@ import ChatPanel from './chat/ChatPanel';
 import ExerciseList from './chat/ExerciseList';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
+import { detectHomeworkInMessage } from '@/utils/homeworkExtraction';
+import { extractExerciseFromMessage } from '@/utils/homeworkExtraction';
 
 const ChatInterface = () => {
   const { 
@@ -56,19 +58,6 @@ const ChatInterface = () => {
     }
   }, [messages]);
   
-  const detectHomeworkInMessage = (content: string): boolean => {
-    // Keywords that might indicate a homework submission
-    const homeworkKeywords = [
-      'my answer is', 'my solution is', 'here\'s my answer', 'homework answer',
-      'assignment answer', 'my homework', 'i solved', 'solve:', 'answer:'
-    ];
-    
-    const contentLower = content.toLowerCase();
-    
-    // Check if any keywords are in the content
-    return homeworkKeywords.some(keyword => contentLower.includes(keyword));
-  };
-  
   const detectExerciseInMessage = (content: string): boolean => {
     // Keywords that might indicate an exercise explanation
     const exerciseKeywords = [
@@ -81,25 +70,6 @@ const ChatInterface = () => {
     
     // Check if any keywords are in the content
     return exerciseKeywords.some(keyword => contentLower.includes(keyword));
-  };
-  
-  const extractExerciseFromMessage = (content: string): { question: string, explanation: string } => {
-    // Simple extraction - this could be made more sophisticated
-    // For now, we'll take the first paragraph as the question
-    // and the rest as the explanation
-    const paragraphs = content.split('\n\n');
-    
-    if (paragraphs.length === 0) {
-      return { question: content, explanation: '' };
-    }
-    
-    // Take the first paragraph as the question
-    const question = paragraphs[0].trim();
-    
-    // Use the rest as the explanation
-    const explanation = paragraphs.slice(1).join('\n\n').trim();
-    
-    return { question, explanation };
   };
   
   return (
