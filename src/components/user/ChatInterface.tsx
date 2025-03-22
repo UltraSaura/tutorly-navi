@@ -1,11 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import ChatPanel from './chat/ChatPanel';
 import ExerciseList from './chat/ExerciseList';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
-import { detectHomeworkInMessage } from '@/utils/homeworkExtraction';
-import { extractExerciseFromMessage } from '@/utils/homeworkExtraction';
+import { detectHomeworkInMessage, extractHomeworkFromMessage } from '@/utils/homeworkExtraction';
 
 const ChatInterface = () => {
   const { 
@@ -33,8 +33,15 @@ const ChatInterface = () => {
       const lastMessage = messages[messages.length - 1];
       
       if (lastMessage.role === 'user') {
+        // Check if the message contains a homework submission (including math problems)
         const isHomework = detectHomeworkInMessage(lastMessage.content);
         if (isHomework) {
+          processHomeworkFromChat(lastMessage.content);
+        }
+        
+        // Additional check for math expressions even if not explicitly marked as homework
+        const hasMathExpression = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(lastMessage.content);
+        if (hasMathExpression && !isHomework) {
           processHomeworkFromChat(lastMessage.content);
         }
       } else if (lastMessage.role === 'assistant') {
@@ -60,7 +67,11 @@ const ChatInterface = () => {
     
     const contentLower = content.toLowerCase();
     
-    return exerciseKeywords.some(keyword => contentLower.includes(keyword));
+    // Also detect if the AI is responding to a math problem
+    const isMathResponse = /\b(CORRECT|INCORRECT)\b/i.test(content) &&
+                         /\d+\s*[\+\-\*\/]\s*\d+/.test(content);
+    
+    return exerciseKeywords.some(keyword => contentLower.includes(keyword)) || isMathResponse;
   };
   
   return (

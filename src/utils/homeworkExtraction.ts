@@ -28,6 +28,16 @@ export const extractHomeworkFromMessage = (message: string): { question: string,
   let question = "";
   let answer = "";
   
+  // Check for mathematical expression patterns (e.g., "2+2=4")
+  const mathPattern = /(.+?)\s*=\s*(.+)/;
+  const mathMatch = message.match(mathPattern);
+  
+  if (mathMatch) {
+    question = mathMatch[1].trim();
+    answer = mathMatch[2].trim();
+    return { question, answer };
+  }
+  
   // Try to extract the question
   for (const pattern of questionPatterns) {
     const match = message.match(pattern);
@@ -92,7 +102,12 @@ export const detectHomeworkInMessage = (content: string): boolean => {
   const contentLower = content.toLowerCase();
   
   // Check if any keywords are in the content
-  return homeworkKeywords.some(keyword => contentLower.includes(keyword));
+  const hasKeywords = homeworkKeywords.some(keyword => contentLower.includes(keyword));
+  
+  // Check for mathematical patterns (e.g., "2+2=4")
+  const hasMathPattern = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(content);
+  
+  return hasKeywords || hasMathPattern;
 };
 
 /**

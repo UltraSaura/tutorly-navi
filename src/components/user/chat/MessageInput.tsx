@@ -1,9 +1,10 @@
 
 import React, { useRef } from 'react';
-import { Send, Upload, Camera } from 'lucide-react';
+import { Send, Paperclip, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 
 interface MessageInputProps {
   inputMessage: string;
@@ -96,7 +97,7 @@ const MessageInput = ({
 
   return (
     <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-      <div className="flex gap-2">
+      <div className="relative flex items-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm">
         <input 
           type="file" 
           ref={fileInputRef} 
@@ -104,8 +105,13 @@ const MessageInput = ({
           accept=".pdf,.doc,.docx,.txt" 
           onChange={(e) => onFileSelected(e, false)}
         />
-        <Button variant="outline" size="icon" className="shrink-0" onClick={triggerFileUpload}>
-          <Upload className="h-5 w-5" />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="rounded-full p-2 text-gray-500" 
+          onClick={triggerFileUpload}
+        >
+          <Paperclip className="h-5 w-5" />
         </Button>
         
         <input 
@@ -115,7 +121,12 @@ const MessageInput = ({
           accept="image/*" 
           onChange={(e) => onFileSelected(e, true)}
         />
-        <Button variant="outline" size="icon" className="shrink-0" onClick={triggerPhotoUpload}>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="rounded-full p-2 text-gray-500" 
+          onClick={triggerPhotoUpload}
+        >
           <Camera className="h-5 w-5" />
         </Button>
         
@@ -124,15 +135,22 @@ const MessageInput = ({
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="min-h-10 resize-none"
+          className={cn(
+            "min-h-10 resize-none border-0 focus-visible:ring-0 p-3 flex-1",
+            isLoading && "opacity-50"
+          )}
         />
+        
         <Button 
           size="icon" 
-          className="shrink-0 bg-studywhiz-600 hover:bg-studywhiz-700"
+          className={cn(
+            "rounded-full m-1 bg-studywhiz-600 hover:bg-studywhiz-700",
+            (!inputMessage.trim() || isLoading) && "opacity-50 cursor-not-allowed"
+          )}
           disabled={inputMessage.trim() === '' || isLoading}
           onClick={handleSendMessage}
         >
-          <Send className="h-5 w-5" />
+          <Send className="h-4 w-4" />
         </Button>
       </div>
     </div>

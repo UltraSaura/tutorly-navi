@@ -169,12 +169,15 @@ serve(async (req) => {
   }
 });
 
-// Helper function to detect if a message is likely an exercise or homework problem
+// Updated helper function to detect if a message is likely an exercise or homework problem
 function detectExercise(message: string): boolean {
   const exerciseKeywords = ['solve', 'calculate', 'find', 'homework', 'exercise', 'problem', 'question', 'assignment'];
   const lowerMessage = message.toLowerCase();
   
-  return exerciseKeywords.some(keyword => lowerMessage.includes(keyword));
+  // Add detection for mathematical patterns
+  const mathPattern = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(message);
+  
+  return exerciseKeywords.some(keyword => lowerMessage.includes(keyword)) || mathPattern;
 }
 
 // Helper function to get model configuration based on modelId
@@ -255,8 +258,21 @@ async function callOpenAI(systemMessage: any, history: any[], userMessage: strin
     throw new Error('OpenAI API key not configured');
   }
   
+  // Enhance system message for math problems
+  let enhancedSystemMessage = systemMessage;
+  
+  // Check if this might be a math problem (simple check for numbers and operators)
+  const isMathProblem = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(userMessage);
+  
+  if (isMathProblem) {
+    enhancedSystemMessage = {
+      role: 'system',
+      content: 'You are StudyWhiz, an educational AI tutor specializing in mathematics. When a student submits a math problem or equation, evaluate whether their answer is correct or incorrect. If the equation contains "=" followed by a number, treat that as the student\'s proposed answer. Clearly state whether the answer is CORRECT or INCORRECT at the beginning of your response, and then provide a detailed explanation showing step-by-step work. Be precise with mathematical notation and explain concepts thoroughly.'
+    };
+  }
+  
   const messages = [
-    systemMessage,
+    enhancedSystemMessage,
     ...history,
     {
       role: 'user',
@@ -265,7 +281,7 @@ async function callOpenAI(systemMessage: any, history: any[], userMessage: strin
   ];
   
   // If this is likely an exercise, add a formatting instruction
-  if (isExercise) {
+  if (isExercise && !isMathProblem) {
     messages.push({
       role: 'system',
       content: 'If this is a homework question or exercise, format your response clearly. Start with the problem statement, then provide guidance without giving away the full answer.'

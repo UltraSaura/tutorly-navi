@@ -16,10 +16,20 @@ export const evaluateHomework = async (
       return exercise;
     }
     
+    // Special handling for mathematical expressions
+    const isMathProblem = /\d+\s*[\+\-\*\/]\s*\d+/.test(exercise.question);
+    let message = "";
+    
+    if (isMathProblem) {
+      message = `I need you to grade this math problem. The equation is: "${exercise.question}=${exercise.userAnswer}". Is this correct? Please evaluate it step by step and clearly state if it's CORRECT or INCORRECT at the beginning of your response.`;
+    } else {
+      message = `I need you to grade this homework. The question is: "${exercise.question}" and the student's answer is: "${exercise.userAnswer}". Please evaluate if it's correct or incorrect, and provide a detailed explanation why.`;
+    }
+    
     // Call AI service to evaluate the answer
     const { data, error } = await supabase.functions.invoke('ai-chat', {
       body: {
-        message: `I need you to grade this homework. The question is: "${exercise.question}" and the student's answer is: "${exercise.userAnswer}". Please evaluate if it's correct or incorrect, and provide a detailed explanation why.`,
+        message: message,
         modelId: 'gpt4o', // Use a good model for evaluation
         history: [],
       },
@@ -36,14 +46,19 @@ export const evaluateHomework = async (
     
     let isCorrect = false;
     
-    // Check for positive/negative keywords
-    if (correctKeywords.some(keyword => aiResponse.toLowerCase().includes(keyword))) {
+    // Check for explicit CORRECT/INCORRECT markers first (for math problems)
+    if (aiResponse.toUpperCase().includes('CORRECT') && !aiResponse.toUpperCase().includes('INCORRECT')) {
       isCorrect = true;
-    } else if (incorrectKeywords.some(keyword => aiResponse.toLowerCase().includes(keyword))) {
+    } else if (aiResponse.toUpperCase().includes('INCORRECT')) {
       isCorrect = false;
     } else {
-      // Default to not correct if no clear indicators
-      isCorrect = false;
+      // Fall back to keyword detection
+      if (correctKeywords.some(keyword => aiResponse.toLowerCase().includes(keyword)) && 
+          !incorrectKeywords.some(keyword => aiResponse.toLowerCase().includes(keyword))) {
+        isCorrect = true;
+      } else {
+        isCorrect = false;
+      }
     }
     
     // Extract an explanation from the AI response
