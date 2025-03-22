@@ -1,11 +1,14 @@
-
 import { useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import ChatPanel from './chat/ChatPanel';
 import ExerciseList from './chat/ExerciseList';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
-import { detectHomeworkInMessage, extractHomeworkFromMessage } from '@/utils/homeworkExtraction';
+import { 
+  detectHomeworkInMessage, 
+  extractHomeworkFromMessage,
+  extractExerciseFromMessage
+} from '@/utils/homeworkExtraction';
 
 const ChatInterface = () => {
   const { 
