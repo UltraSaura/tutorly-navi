@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Check, X, ChevronUp, ChevronDown, ThumbsUp, AlertCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -23,19 +22,28 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
   const formatExplanation = (text: string) => {
     if (!text) return '';
     
-    // Format bold text markers
-    let formatted = text.replace(/\*\*(Problem|Guidance):\*\*/g, 
+    // Keep the original formatting but enhance rendering
+    let formatted = text;
+    
+    // Format section headers (Problem, Guidance)
+    formatted = formatted.replace(/\*\*(Problem|Guidance):\*\*/g, 
       '<strong class="text-studywhiz-600 dark:text-studywhiz-400 block mb-2">$1:</strong>');
     
-    // Format other markdown elements
-    formatted = formatted
-      // Handle numbered lists
-      .replace(/(\d+\.\s.*?)(?=\d+\.|$)/gs, '<div class="mb-2">$1</div>')
-      // Handle bullet points
-      .replace(/(-\s.*?)(?=-\s|$)/gs, '<div class="mb-1 ml-2">$1</div>')
-      // Convert newlines to breaks
-      .replace(/\n\n/g, '<br /><br />')
-      .replace(/\n/g, '<br />');
+    // Format numbered lists
+    formatted = formatted.replace(/(\d+\.\s.*?)(?=\d+\.|$|\n\n)/gs, '<div class="mb-2">$1</div>');
+    
+    // Handle bullet points
+    formatted = formatted.replace(/(-\s.*?)(?=-\s|$|\n\n)/gs, '<div class="mb-1 ml-2">$1</div>');
+    
+    // Handle bold text (beyond section headers)
+    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Handle emphasized text
+    formatted = formatted.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    
+    // Convert newlines to breaks for better readability
+    formatted = formatted.replace(/\n\n/g, '<br /><br />');
+    formatted = formatted.replace(/\n/g, '<br />');
     
     return formatted;
   };

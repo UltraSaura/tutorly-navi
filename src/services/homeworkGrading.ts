@@ -21,9 +21,9 @@ export const evaluateHomework = async (
     let message = "";
     
     if (isMathProblem) {
-      message = `I need you to grade this math problem. The equation is: "${exercise.question}=${exercise.userAnswer}". Is this correct? Please evaluate it step by step and clearly state if it's CORRECT or INCORRECT at the beginning of your response. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation.`;
+      message = `I need you to grade this math problem. The equation is: "${exercise.question}=${exercise.userAnswer}". Is this correct? Please evaluate it step by step and clearly state if it's CORRECT or INCORRECT at the beginning of your response. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation. Use numbered lists for steps and bullet points for alternatives.`;
     } else {
-      message = `I need you to grade this homework. The question is: "${exercise.question}" and the student's answer is: "${exercise.userAnswer}". Please evaluate if it's correct or incorrect, and provide a detailed explanation why. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation.`;
+      message = `I need you to grade this homework. The question is: "${exercise.question}" and the student's answer is: "${exercise.userAnswer}". Please evaluate if it's correct or incorrect, and provide a detailed explanation why. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation. Use numbered lists for steps and bullet points for key points.`;
     }
     
     // Call AI service to evaluate the answer
@@ -40,6 +40,7 @@ export const evaluateHomework = async (
     
     // Parse the AI response to determine if the answer is correct
     const aiResponse = data.content;
+    console.log("AI response received:", aiResponse);
     
     // Determine if the answer is correct based on keywords in the response
     const correctKeywords = ['correct', 'right', 'accurate', 'perfect', 'excellent', 'well done'];
@@ -62,25 +63,14 @@ export const evaluateHomework = async (
       }
     }
     
-    // Extract an explanation from the AI response
-    let explanation = aiResponse;
-    
-    // If the explanation doesn't include the formatted Problem/Guidance sections, add them
-    if (!explanation.includes('**Problem:**')) {
-      explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${explanation}`;
-    }
-    
-    // No need to truncate the response as it will affect formatting
-    // We'll handle long explanations in the UI instead
-    
     // Display a notification based on the result
     toast.success(`Your homework has been graded. ${isCorrect ? 'Great job!' : 'Review the feedback for improvements.'}`);
     
-    // Return the updated exercise
+    // Return the updated exercise - preserve the full AI response as the explanation
     return {
       ...exercise,
       isCorrect,
-      explanation
+      explanation: aiResponse // Keep the full formatted response from AI
     };
   } catch (error) {
     console.error('Error evaluating homework:', error);

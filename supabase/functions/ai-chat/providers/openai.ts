@@ -5,7 +5,8 @@ export async function callOpenAI(
   history: any[], 
   userMessage: string, 
   model: string, 
-  isExercise: boolean = false
+  isExercise: boolean = false,
+  isGradingRequest: boolean = false
 ): Promise<string> {
   const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
   
@@ -22,11 +23,11 @@ export async function callOpenAI(
     }
   ];
   
-  // If this is likely an exercise, add a formatting instruction
-  if (isExercise) {
+  // Add formatting instructions - either for exercise or for grading
+  if (isExercise || isGradingRequest) {
     messages.push({
       role: 'system',
-      content: 'Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation. Ensure to include these exact headings with the asterisks.'
+      content: 'Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation. Ensure to include these exact headings with the asterisks. Use numbered lists and bullet points as appropriate for clear formatting.'
     });
   }
   
@@ -40,7 +41,7 @@ export async function callOpenAI(
       model: model,
       messages: messages,
       temperature: 0.7,
-      max_tokens: 1500, // Increase token limit to avoid truncation
+      max_tokens: 2000, // Increased token limit for complete responses
     })
   });
   
