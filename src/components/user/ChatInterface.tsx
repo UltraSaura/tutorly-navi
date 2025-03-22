@@ -7,8 +7,6 @@ import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
 
 const ChatInterface = () => {
-  const [currentTab, setCurrentTab] = useState('chat');
-  
   const { 
     messages, 
     inputMessage, 
@@ -23,13 +21,10 @@ const ChatInterface = () => {
   
   const {
     exercises,
-    newExercise,
-    setNewExercise,
     grade,
     toggleExerciseExpansion,
-    submitAsExercise,
-    submitExerciseAnswer,
-    createExerciseFromAI
+    createExerciseFromAI,
+    processHomeworkFromChat
   } = useExercises();
 
   // Effect to detect homework exercises in AI responses
@@ -37,21 +32,24 @@ const ChatInterface = () => {
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
       
-      // Only process assistant messages
-      if (lastMessage.role === 'assistant') {
-        // Check if this looks like a homework exercise
+      // Process both user and assistant messages to handle homework
+      if (lastMessage.role === 'user') {
+        // When user sends a message, check if it contains a homework submission
         const isHomework = detectHomeworkInMessage(lastMessage.content);
-        
         if (isHomework) {
+          processHomeworkFromChat(lastMessage.content);
+        }
+      } else if (lastMessage.role === 'assistant') {
+        // Process assistant messages for potential exercise creation
+        const isExercise = detectExerciseInMessage(lastMessage.content);
+        
+        if (isExercise) {
           // Extract the exercise and explanation
           const { question, explanation } = extractExerciseFromMessage(lastMessage.content);
           
           if (question) {
             // Create a new exercise from the AI response
-            createExerciseFromAI(question, explanation || "Solve this exercise step by step.");
-            
-            // Automatically switch to exercise tab
-            setCurrentTab('chat');
+            createExerciseFromAI(question, explanation || "Review this exercise and complete the solution.");
           }
         }
       }
@@ -59,8 +57,21 @@ const ChatInterface = () => {
   }, [messages]);
   
   const detectHomeworkInMessage = (content: string): boolean => {
-    // Keywords that might indicate a homework problem
+    // Keywords that might indicate a homework submission
     const homeworkKeywords = [
+      'my answer is', 'my solution is', 'here\'s my answer', 'homework answer',
+      'assignment answer', 'my homework', 'i solved', 'solve:', 'answer:'
+    ];
+    
+    const contentLower = content.toLowerCase();
+    
+    // Check if any keywords are in the content
+    return homeworkKeywords.some(keyword => contentLower.includes(keyword));
+  };
+  
+  const detectExerciseInMessage = (content: string): boolean => {
+    // Keywords that might indicate an exercise explanation
+    const exerciseKeywords = [
       'solve this', 'calculate', 'find the answer', 'homework', 
       'exercise', 'problem', 'question', 'assignment', 'solve for',
       'quiz', 'test', 'practice problem', 'compute', 'determine'
@@ -69,7 +80,7 @@ const ChatInterface = () => {
     const contentLower = content.toLowerCase();
     
     // Check if any keywords are in the content
-    return homeworkKeywords.some(keyword => contentLower.includes(keyword));
+    return exerciseKeywords.some(keyword => contentLower.includes(keyword));
   };
   
   const extractExerciseFromMessage = (content: string): { question: string, explanation: string } => {
@@ -91,21 +102,6 @@ const ChatInterface = () => {
     return { question, explanation };
   };
   
-  const handleSubmitExercise = () => {
-    const exercise = submitAsExercise();
-    if (exercise) {
-      // Add a message to the chat about the exercise submission
-      const confirmMessage: Message = {
-        id: (Date.now() + 2).toString(),
-        role: 'assistant',
-        content: `I've added your exercise to the list. Let's work on it together! You can see it in the exercise panel.`,
-        timestamp: new Date(),
-      };
-      
-      addMessage(confirmMessage);
-    }
-  };
-  
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-6rem)] gap-4">
       {/* Chat Panel */}
@@ -117,11 +113,6 @@ const ChatInterface = () => {
         handleSendMessage={handleSendMessage}
         handleFileUpload={handleFileUpload}
         handlePhotoUpload={handlePhotoUpload}
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
-        newExercise={newExercise}
-        setNewExercise={setNewExercise}
-        submitAsExercise={handleSubmitExercise}
         activeModel={activeModel}
       />
       
@@ -131,7 +122,6 @@ const ChatInterface = () => {
           exercises={exercises}
           grade={grade}
           toggleExerciseExpansion={toggleExerciseExpansion}
-          submitExerciseAnswer={submitExerciseAnswer}
         />
       </div>
     </div>

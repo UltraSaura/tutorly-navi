@@ -1,11 +1,10 @@
 
-import React, { useState } from 'react';
-import { Check, X, ChevronUp, ChevronDown, RefreshCw, ThumbsUp, AlertCircle } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
+import React from 'react';
+import { Check, X, ChevronUp, ChevronDown, ThumbsUp, AlertCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface ExerciseProps {
   exercise: {
@@ -17,28 +16,9 @@ interface ExerciseProps {
     expanded: boolean;
   };
   toggleExerciseExpansion: (id: string) => void;
-  submitExerciseAnswer: (id: string, answer: string) => void;
 }
 
-const Exercise = ({ exercise, toggleExerciseExpansion, submitExerciseAnswer }: ExerciseProps) => {
-  const [answer, setAnswer] = useState('');
-  const [showFeedback, setShowFeedback] = useState(false);
-  
-  const handleSubmit = () => {
-    if (answer.trim()) {
-      submitExerciseAnswer(exercise.id, answer);
-      setAnswer('');
-    } else {
-      setShowFeedback(true);
-      setTimeout(() => setShowFeedback(false), 3000);
-    }
-  };
-  
-  const handleTryAgain = () => {
-    setAnswer('');
-    setShowFeedback(false);
-  };
-  
+const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
   return (
     <motion.div 
       className={cn(
@@ -70,14 +50,14 @@ const Exercise = ({ exercise, toggleExerciseExpansion, submitExerciseAnswer }: E
               ) : (
                 <div className="flex items-center">
                   <AlertCircle className="w-5 h-5 mr-1" />
-                  <span className="text-sm font-medium">Try again</span>
+                  <span className="text-sm font-medium">Incorrect</span>
                 </div>
               )}
             </div>
           )}
         </div>
         
-        {exercise.userAnswer ? (
+        {exercise.userAnswer && (
           <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
             <div className="flex items-center mb-1">
               <span className="text-sm font-medium">Your answer:</span>
@@ -96,76 +76,26 @@ const Exercise = ({ exercise, toggleExerciseExpansion, submitExerciseAnswer }: E
               {exercise.userAnswer}
             </p>
           </div>
-        ) : (
-          <div className="mt-3">
-            <AnimatePresence>
-              {showFeedback && (
-                <motion.div 
-                  className="mb-2 text-amber-600 text-sm flex items-center p-2 bg-amber-50 dark:bg-amber-950/30 rounded-md"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  <AlertCircle className="w-4 h-4 mr-2" />
-                  Please provide your answer
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <Textarea 
-              placeholder="Enter your answer here..." 
-              className="text-sm resize-none focus-visible:ring-studywhiz-500/50 mb-2" 
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && e.ctrlKey) {
-                  handleSubmit();
-                }
-              }}
-            />
-            <div className="flex justify-end mt-2">
-              <Button 
-                size="sm" 
-                onClick={handleSubmit}
-                className="bg-studywhiz-600 hover:bg-studywhiz-700 text-white"
-              >
-                Submit Answer
-              </Button>
-            </div>
-          </div>
         )}
         
-        {exercise.userAnswer && (
-          <div className="mt-4 flex justify-between items-center">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className={cn(
-                "text-xs hover:text-gray-700 dark:hover:text-gray-300",
-                exercise.expanded ? "text-studywhiz-600" : "text-gray-500"
-              )}
-              onClick={() => toggleExerciseExpansion(exercise.id)}
-            >
-              {exercise.expanded ? 'Hide explanation' : 'Show explanation'}
-              {exercise.expanded ? (
-                <ChevronUp className="ml-1 h-4 w-4" />
-              ) : (
-                <ChevronDown className="ml-1 h-4 w-4" />
-              )}
-            </Button>
-            
-            {!exercise.isCorrect && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-xs border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/30"
-                onClick={handleTryAgain}
-              >
-                <RefreshCw className="mr-1 h-3 w-3" />
-                Try Again
-              </Button>
+        <div className="mt-4 flex justify-end items-center">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={cn(
+              "text-xs hover:text-gray-700 dark:hover:text-gray-300",
+              exercise.expanded ? "text-studywhiz-600" : "text-gray-500"
             )}
-          </div>
-        )}
+            onClick={() => toggleExerciseExpansion(exercise.id)}
+          >
+            {exercise.expanded ? 'Hide explanation' : 'Show explanation'}
+            {exercise.expanded ? (
+              <ChevronUp className="ml-1 h-4 w-4" />
+            ) : (
+              <ChevronDown className="ml-1 h-4 w-4" />
+            )}
+          </Button>
+        </div>
       </div>
       
       <AnimatePresence>

@@ -19,14 +19,12 @@ interface ExerciseListProps {
     letter: string;
   };
   toggleExerciseExpansion: (id: string) => void;
-  submitExerciseAnswer: (id: string, answer: string) => void;
 }
 
 const ExerciseList = ({ 
   exercises, 
   grade, 
-  toggleExerciseExpansion, 
-  submitExerciseAnswer 
+  toggleExerciseExpansion
 }: ExerciseListProps) => {
   const correctExercises = exercises.filter(ex => ex.isCorrect).length;
   const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined).length;
@@ -35,7 +33,7 @@ const ExerciseList = ({
   return (
     <>
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-lg font-semibold">Current Exercises & Homework</h2>
+        <h2 className="text-lg font-semibold">Graded Homework & Exercises</h2>
         <div className="flex justify-between items-center mt-2">
           <div className="flex-1 mr-4">
             <Progress value={grade.percentage} className="h-2 bg-gray-200" />
@@ -54,9 +52,9 @@ const ExerciseList = ({
         {exercises.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6">
             <BookOpen className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No exercises submitted yet</h3>
+            <h3 className="text-lg font-medium mb-2">No graded exercises yet</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md">
-              Use the "Submit Exercise" tab to add your homework questions or exercises, or ask me a question in the chat and I'll help you convert it to an exercise.
+              Submit your homework or exercises in the chat, and I'll grade them for you. Try phrases like "Here's my answer to this problem..." followed by your solution.
             </p>
           </div>
         ) : (
@@ -66,7 +64,6 @@ const ExerciseList = ({
                 key={exercise.id}
                 exercise={exercise}
                 toggleExerciseExpansion={toggleExerciseExpansion}
-                submitExerciseAnswer={submitExerciseAnswer}
               />
             ))}
           </div>

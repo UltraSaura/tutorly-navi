@@ -3,11 +3,11 @@ import { useState } from 'react';
 import { Exercise, Grade } from '@/types/chat';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from 'sonner';
 
 export const useExercises = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [newExercise, setNewExercise] = useState('');
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   
   const [grade, setGrade] = useState<Grade>({
     percentage: 0,
@@ -20,44 +20,32 @@ export const useExercises = () => {
     ));
   };
   
-  const submitAsExercise = () => {
-    if (newExercise.trim() === '') {
-      toast({
-        description: "Please enter your exercise or homework question.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const newEx: Exercise = {
-      id: Date.now().toString(),
-      question: newExercise,
-      expanded: false,
-    };
-    
-    setExercises([...exercises, newEx]);
-    setNewExercise('');
-    
-    toast({
-      description: "Your exercise has been submitted. I'll help you work through it!",
-    });
-    
-    // Update grade calculation
-    updateGrades();
-    
-    return newEx; // Return the newly created exercise for potential use
-  };
-  
-  const submitExerciseAnswer = async (id: string, answer: string) => {
+  // Function to process homework submitted directly via chat
+  const processHomeworkFromChat = async (message: string) => {
     try {
-      // Find the exercise
-      const exercise = exercises.find(ex => ex.id === id);
-      if (!exercise) return;
+      // Extract the exercise question and user's answer
+      const { question, answer } = extractHomeworkFromMessage(message);
       
-      // Call the AI to evaluate the answer
+      if (!question || !answer) {
+        console.log("Couldn't extract homework components from the message");
+        return;
+      }
+      
+      // First, create a new exercise
+      const newEx: Exercise = {
+        id: Date.now().toString(),
+        question,
+        userAnswer: answer,
+        expanded: false,
+      };
+      
+      // Add it to the list
+      setExercises(prev => [...prev, newEx]);
+      
+      // Now evaluate the answer
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: {
-          message: `I'm submitting my answer to this exercise: "${exercise.question}". My answer is: "${answer}". Please evaluate if it's correct, and provide an explanation for why it's correct or how to get the correct answer.`,
+          message: `I need you to grade this homework. The question is: "${question}" and the student's answer is: "${answer}". Please evaluate if it's correct or incorrect, and provide a detailed explanation why.`,
           modelId: 'gpt4o', // Use a good model for evaluation
           history: [],
         },
@@ -74,62 +62,124 @@ export const useExercises = () => {
       
       let isCorrect = false;
       
-      // Simple heuristic: check for positive/negative keywords
+      // Check for positive/negative keywords
       if (correctKeywords.some(keyword => aiResponse.toLowerCase().includes(keyword))) {
         isCorrect = true;
       } else if (incorrectKeywords.some(keyword => aiResponse.toLowerCase().includes(keyword))) {
         isCorrect = false;
       } else {
-        // If no clear indicators, default to not correct 
-        // (we could make this more sophisticated with more advanced NLP)
+        // Default to not correct if no clear indicators
         isCorrect = false;
       }
       
       // Extract an explanation from the AI response
       let explanation = aiResponse;
-      if (explanation.length > 300) {
-        // Truncate extremely long explanations
-        explanation = explanation.substring(0, 300) + '...';
+      if (explanation.length > 500) {
+        // Truncate very long explanations but preserve meaning
+        explanation = explanation.substring(0, 500) + '...';
       }
       
       // Update the exercise with the evaluated answer
-      setExercises(exercises.map(ex => 
-        ex.id === id 
+      setExercises(prev => prev.map(ex => 
+        ex.id === newEx.id 
           ? { 
               ...ex, 
-              userAnswer: answer, 
               isCorrect, 
               explanation
             } 
           : ex
       ));
       
+      // Display a toast to notify the user
+      toast.success(`Your homework has been graded. ${isCorrect ? 'Great job!' : 'Review the feedback for improvements.'}`);
+      
+      // Update the overall grade calculation
       updateGrades();
       
     } catch (error) {
-      console.error('Error evaluating answer:', error);
+      console.error('Error processing homework:', error);
       
-      // Fallback to random evaluation in case of errors
-      const isCorrect = Math.random() > 0.3; // 70% chance of being correct for demo
-      
-      setExercises(exercises.map(exercise => 
-        exercise.id === id 
-          ? { 
-              ...exercise, 
-              userAnswer: answer, 
-              isCorrect, 
-              explanation: isCorrect 
-                ? "Great job! Your answer is correct." 
-                : "Let's review this together. Here's how to approach this problem..."
-            } 
-          : exercise
-      ));
-      
-      updateGrades();
+      // Fallback if there's an error
+      toast.error('There was an issue grading your homework. Please try again.');
     }
   };
   
-  // Add a new function to create exercises from AI responses
+  // Helper function to extract homework components from a message
+  const extractHomeworkFromMessage = (message: string): { question: string, answer: string } => {
+    // This is a simplified extraction - could be improved with NLP
+    
+    // Some common patterns for homework submissions
+    const questionPatterns = [
+      /problem:(.+?)answer:/i,
+      /question:(.+?)answer:/i,
+      /homework:(.+?)answer:/i,
+      /(.+?)my answer is:/i,
+      /(.+?)my solution is:/i
+    ];
+    
+    const answerPatterns = [
+      /answer:(.+?)$/i,
+      /my answer is:(.+?)$/i,
+      /my solution is:(.+?)$/i,
+      /solution:(.+?)$/i
+    ];
+    
+    // Try to extract question and answer using patterns
+    let question = "";
+    let answer = "";
+    
+    // Try to extract the question
+    for (const pattern of questionPatterns) {
+      const match = message.match(pattern);
+      if (match && match[1]) {
+        question = match[1].trim();
+        break;
+      }
+    }
+    
+    // Try to extract the answer
+    for (const pattern of answerPatterns) {
+      const match = message.match(pattern);
+      if (match && match[1]) {
+        answer = match[1].trim();
+        break;
+      }
+    }
+    
+    // If pattern matching failed, make a best effort split
+    if (!question || !answer) {
+      // Look for keywords
+      const lowerMessage = message.toLowerCase();
+      const keywords = ['answer:', 'solution:', 'my answer is:', 'my solution is:'];
+      
+      for (const keyword of keywords) {
+        const index = lowerMessage.indexOf(keyword);
+        if (index > 0) {
+          question = message.substring(0, index).trim();
+          answer = message.substring(index + keyword.length).trim();
+          break;
+        }
+      }
+      
+      // If still no match, just split the message in half
+      if (!question || !answer) {
+        const parts = message.split('\n\n');
+        if (parts.length >= 2) {
+          question = parts[0].trim();
+          answer = parts.slice(1).join('\n\n').trim();
+        } else {
+          // Last resort: split in half
+          const midpoint = Math.floor(message.length / 2);
+          question = message.substring(0, midpoint).trim();
+          answer = message.substring(midpoint).trim();
+        }
+      }
+    }
+    
+    return { question, answer };
+  };
+  
+  // Function to create exercises from AI responses
   const createExerciseFromAI = (question: string, explanation: string) => {
     const newEx: Exercise = {
       id: Date.now().toString(),
@@ -140,9 +190,7 @@ export const useExercises = () => {
     
     setExercises(prev => [...prev, newEx]);
     
-    toast({
-      description: "A new exercise has been added based on our conversation.",
-    });
+    toast.info("A new exercise has been added based on our conversation.");
     
     return newEx;
   };
@@ -168,12 +216,9 @@ export const useExercises = () => {
   
   return {
     exercises,
-    newExercise,
-    setNewExercise,
     grade,
     toggleExerciseExpansion,
-    submitAsExercise,
-    submitExerciseAnswer,
-    createExerciseFromAI
+    createExerciseFromAI,
+    processHomeworkFromChat
   };
 };
