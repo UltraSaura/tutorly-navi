@@ -30,6 +30,9 @@ serve(async (req) => {
     // Detect if this is a homework/exercise question
     const isExercise = detectExercise(message);
     
+    // Check if this is a grading request
+    const isGradingRequest = message.includes("I need you to grade this");
+    
     // Determine which model to use and which API to call
     const modelConfig = getModelConfig(modelId);
     
@@ -60,6 +63,15 @@ serve(async (req) => {
       };
     }
     
+    // If this is a grading request, use a specific system prompt
+    if (isGradingRequest) {
+      systemMessage = {
+        role: 'system',
+        content: 'You are StudyWhiz, an educational AI tutor specializing in grading homework and exercises. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your detailed explanation. Clearly state CORRECT or INCORRECT at the beginning of your guidance. Be thorough but concise in your explanation.'
+      };
+    }
+    
+    // Format history messages based on provider
     const formattedHistory = formatHistoryForProvider(history, modelConfig.provider);
     const formattedSystemMessage = formatSystemMessageForProvider(systemMessage, modelConfig.provider);
     
@@ -267,7 +279,16 @@ async function callOpenAI(systemMessage: any, history: any[], userMessage: strin
   if (isMathProblem) {
     enhancedSystemMessage = {
       role: 'system',
-      content: 'You are StudyWhiz, an educational AI tutor specializing in mathematics. When a student submits a math problem or equation, evaluate whether their answer is correct or incorrect. If the equation contains "=" followed by a number, treat that as the student\'s proposed answer. Clearly state whether the answer is CORRECT or INCORRECT at the beginning of your response, and then provide a detailed explanation showing step-by-step work. Be precise with mathematical notation and explain concepts thoroughly.'
+      content: 'You are StudyWhiz, an educational AI tutor specializing in mathematics. When a student submits a math problem or equation, evaluate whether their answer is correct or incorrect. If the equation contains "=" followed by a number, treat that as the student\'s proposed answer. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation. In the guidance section, clearly state whether the answer is CORRECT or INCORRECT at the beginning, and then provide a detailed explanation showing step-by-step work. Be precise with mathematical notation and explain concepts thoroughly.'
+    };
+  }
+  
+  // Check if this is a grading request
+  const isGradingRequest = userMessage.includes("I need you to grade this");
+  if (isGradingRequest) {
+    enhancedSystemMessage = {
+      role: 'system',
+      content: 'You are StudyWhiz, an educational AI grader. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your detailed explanation. At the beginning of your guidance, clearly state whether the answer is CORRECT or INCORRECT, and then provide a detailed explanation showing why. Be precise with your evaluation and explain concepts thoroughly.'
     };
   }
   
@@ -281,10 +302,10 @@ async function callOpenAI(systemMessage: any, history: any[], userMessage: strin
   ];
   
   // If this is likely an exercise, add a formatting instruction
-  if (isExercise && !isMathProblem) {
+  if (isExercise && !isMathProblem && !isGradingRequest) {
     messages.push({
       role: 'system',
-      content: 'If this is a homework question or exercise, format your response clearly. Start with the problem statement, then provide guidance without giving away the full answer.'
+      content: 'Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation.'
     });
   }
   
