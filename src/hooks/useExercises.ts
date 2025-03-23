@@ -52,12 +52,12 @@ export const useExercises = () => {
         return;
       }
       
-      // First, create a new exercise
+      // First, create a new exercise and set expanded to true to show explanation by default
       const newEx: Exercise = {
         id: Date.now().toString(),
         question,
         userAnswer: answer,
-        expanded: false,
+        expanded: true, // Default to expanded to show explanation
       };
       
       // Add it to the list
@@ -68,6 +68,8 @@ export const useExercises = () => {
       
       // Now evaluate the answer
       const updatedExercise = await evaluateHomework(newEx);
+      
+      console.log("Exercise updated with explanation:", updatedExercise.explanation);
       
       // Update the exercise with the evaluated answer
       setExercises(prev => prev.map(ex => 
@@ -97,7 +99,7 @@ export const useExercises = () => {
       id: Date.now().toString(),
       question,
       explanation,
-      expanded: false,
+      expanded: true, // Default to expanded to show explanation
     };
     
     setExercises(prev => [...prev, newEx]);
