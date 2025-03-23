@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Check, X, ChevronUp, ChevronDown, ThumbsUp, AlertCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,39 +18,20 @@ interface ExerciseProps {
 }
 
 const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
-  // Debug logging for explanation content
-  useEffect(() => {
-    if (exercise.explanation) {
-      console.log(`Exercise ${exercise.id} has explanation:`, exercise.explanation.substring(0, 100) + '...');
-    } else {
-      console.log(`Exercise ${exercise.id} has no explanation`);
-    }
-  }, [exercise.id, exercise.explanation]);
-
   const formatExplanation = (text: string) => {
-    if (!text) {
-      console.log("Empty explanation text");
-      return '';
-    }
+    if (!text) return '';
     
-    try {
-      const formatted = text
-        .replace(/\*\*(Problem|Guidance):\*\*/g, 
-          '<h3 class="text-studywhiz-600 dark:text-studywhiz-400 font-semibold text-md my-2">$1:</h3>')
-        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-        .replace(/(\d+\.\s.*?)(?=\n\d+\.|$|\n\n)/gs, 
-          '<div class="ml-4 mb-2">$1</div>')
-        .replace(/(-\s.*?)(?=\n-\s|$|\n\n)/gs, 
-          '<div class="ml-6 mb-1">$1</div>')
-        .replace(/\n\n/g, '<br /><br />')
-        .replace(/\n(?!\s*<)/g, '<br />');
-      
-      return formatted;
-    } catch (error) {
-      console.error("Error formatting explanation:", error);
-      return text; // Return original text if formatting fails
-    }
+    return text
+      .replace(/\*\*(Problem|Guidance):\*\*/g, 
+        '<h3 class="text-studywhiz-600 dark:text-studywhiz-400 font-semibold text-md my-2">$1:</h3>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/(\d+\.\s.*?)(?=\n\d+\.|$|\n\n)/gs, 
+        '<div class="ml-4 mb-2">$1</div>')
+      .replace(/(-\s.*?)(?=\n-\s|$|\n\n)/gs, 
+        '<div class="ml-6 mb-1">$1</div>')
+      .replace(/\n\n/g, '<br /><br />')
+      .replace(/\n(?!\s*<)/g, '<br />');
   };
 
   return (
@@ -142,7 +122,6 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="explanation-container"
           >
             <Separator />
             <div className={cn(
@@ -156,7 +135,7 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
                 Explanation
               </h4>
               <div 
-                className="text-sm text-gray-700 dark:text-gray-300 explanation-content"
+                className="text-sm text-gray-700 dark:text-gray-300"
                 dangerouslySetInnerHTML={{ __html: formatExplanation(exercise.explanation) }}
               />
             </div>

@@ -51,12 +51,14 @@ const ChatInterface = () => {
         const hasMathExpression = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(lastMessage.content);
         
         if (isHomework || hasMathExpression) {
-          console.log("Processing homework submission:", lastMessage.content);
           processHomeworkFromChat(lastMessage.content);
           // Mark this message as processed
           setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
         }
       }
+      
+      // We no longer process assistant messages automatically to avoid duplication
+      // AI explanations will only appear in the chat, not as separate exercises
     }
   }, [messages, processedMessageIds]);
   
