@@ -68,23 +68,18 @@ export const evaluateHomework = async (
     // Display a notification based on the result
     toast.success(`Your homework has been graded. ${isCorrect ? 'Great job!' : 'Review the feedback for improvements.'}`);
     
-    // Ensure the explanation is set and in the correct format
+    // Ensure the formatting is correct for the explanation
     const formattedExplanation = aiResponse;
     
-    console.log("Explanation for exercise (length):", formattedExplanation.length);
-    console.log("Explanation for exercise (preview):", formattedExplanation.substring(0, 100) + '...');
+    console.log("Formatted explanation for exercise:", formattedExplanation);
     
     // Return the updated exercise with the full explanation
-    const updatedExercise = {
+    return {
       ...exercise,
       isCorrect,
       explanation: formattedExplanation,
       expanded: true // Auto-expand to show the explanation
     };
-    
-    console.log("Returning updated exercise with explanation:", updatedExercise.explanation ? "present" : "missing");
-    
-    return updatedExercise;
   } catch (error) {
     console.error('Error evaluating homework:', error);
     toast.error('There was an issue grading your homework. Please try again.');

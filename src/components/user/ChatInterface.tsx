@@ -28,8 +28,7 @@ const ChatInterface = () => {
     grade,
     toggleExerciseExpansion,
     createExerciseFromAI,
-    processHomeworkFromChat,
-    pendingEvaluations
+    processHomeworkFromChat
   } = useExercises();
 
   // Track processed message IDs to prevent duplication
@@ -41,7 +40,6 @@ const ChatInterface = () => {
       
       // Skip if we've already processed this message
       if (processedMessageIds.has(lastMessage.id)) {
-        console.log("Message already processed:", lastMessage.id);
         return;
       }
       
@@ -57,11 +55,10 @@ const ChatInterface = () => {
           processHomeworkFromChat(lastMessage.content);
           // Mark this message as processed
           setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
-          console.log("Marked message as processed:", lastMessage.id);
         }
       }
     }
-  }, [messages, processedMessageIds, processHomeworkFromChat]);
+  }, [messages, processedMessageIds]);
   
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-6rem)] gap-4">
@@ -81,7 +78,6 @@ const ChatInterface = () => {
           exercises={exercises}
           grade={grade}
           toggleExerciseExpansion={toggleExerciseExpansion}
-          pendingEvaluations={pendingEvaluations}
         />
       </div>
     </div>
