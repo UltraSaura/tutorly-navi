@@ -5,6 +5,7 @@ import { useAdmin } from '@/context/AdminContext';
 import { handleFileUpload, handlePhotoUpload } from '@/utils/chatFileHandlers';
 import { sendMessageToAI } from '@/services/chatService';
 import { generateFallbackResponse } from '@/utils/fallbackResponses';
+import { detectHomeworkInMessage } from '@/utils/homeworkExtraction';
 
 export const useChat = () => {
   const { selectedModelId, getAvailableModels } = useAdmin();
@@ -37,6 +38,9 @@ export const useChat = () => {
   const handleSendMessage = async () => {
     if (inputMessage.trim() === '') return;
     
+    // Check if the message contains a homework submission
+    const isHomework = detectHomeworkInMessage(inputMessage);
+    
     const newMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -55,15 +59,28 @@ export const useChat = () => {
       if (data) {
         setLastResponse(data);
         
-        // Add AI response to messages
-        const aiResponse: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: data.content,
-          timestamp: new Date(),
-        };
-        
-        setMessages(prev => [...prev, aiResponse]);
+        // For homework submissions, we don't add the AI response to chat
+        // Instead, show a simple acknowledgment that homework was submitted
+        if (isHomework) {
+          const homeworkAckMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: "I've received your homework submission. Check the exercise panel on the right to see your graded work with detailed feedback.",
+            timestamp: new Date(),
+          };
+          
+          setMessages(prev => [...prev, homeworkAckMessage]);
+        } else {
+          // For regular questions, add the full AI response to messages
+          const aiResponse: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: data.content,
+            timestamp: new Date(),
+          };
+          
+          setMessages(prev => [...prev, aiResponse]);
+        }
       } else if (error) {
         // Use fallback response if the API call fails
         const fallbackResponse = generateFallbackResponse(inputMessage);
