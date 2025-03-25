@@ -42,7 +42,8 @@ export const evaluateHomework = async (
     
     // Parse the AI response to determine if the answer is correct
     const aiResponse = data.content;
-    console.log("AI response received:", aiResponse);
+    console.log("AI response received for grading:", aiResponse.substring(0, 100) + '...');
+    console.log("Full AI response length:", aiResponse.length);
     
     // Determine if the answer is correct based on keywords in the response
     const correctKeywords = ['correct', 'right', 'accurate', 'perfect', 'excellent', 'well done'];
@@ -53,26 +54,43 @@ export const evaluateHomework = async (
     // Check for explicit CORRECT/INCORRECT markers first (for math problems)
     if (aiResponse.toUpperCase().includes('CORRECT') && !aiResponse.toUpperCase().includes('INCORRECT')) {
       isCorrect = true;
+      console.log("Answer marked as CORRECT based on keyword detection");
     } else if (aiResponse.toUpperCase().includes('INCORRECT')) {
       isCorrect = false;
+      console.log("Answer marked as INCORRECT based on keyword detection");
     } else {
       // Fall back to keyword detection
       if (correctKeywords.some(keyword => aiResponse.toLowerCase().includes(keyword)) && 
           !incorrectKeywords.some(keyword => aiResponse.toLowerCase().includes(keyword))) {
         isCorrect = true;
+        console.log("Answer marked as correct based on positive keyword detection");
       } else {
         isCorrect = false;
+        console.log("Answer marked as incorrect based on negative/missing positive keywords");
       }
     }
     
+    // Make sure the explanation is well-formatted with proper markdown
+    let formattedExplanation = aiResponse;
+    
+    // Add Problem/Guidance sections if they're missing
+    if (!formattedExplanation.includes('**Problem:**')) {
+      formattedExplanation = `**Problem:**\n${exercise.question}\n\n` + formattedExplanation;
+    }
+    
+    if (!formattedExplanation.includes('**Guidance:**')) {
+      const problemSection = formattedExplanation.split('**Problem:**')[1];
+      const problemContent = problemSection.split('\n\n')[0];
+      
+      formattedExplanation = `**Problem:**${problemContent}\n\n**Guidance:**\n${isCorrect ? 'CORRECT. ' : 'INCORRECT. '}` + 
+        formattedExplanation.replace(`**Problem:**${problemContent}`, '').trim();
+    }
+    
+    console.log("Formatted explanation for exercise (preview):", formattedExplanation.substring(0, 100) + '...');
+    console.log("Formatted explanation length:", formattedExplanation.length);
+    
     // Display a notification based on the result
     toast.success(`Your homework has been graded. ${isCorrect ? 'Great job!' : 'Review the feedback for improvements.'}`);
-    
-    // Ensure the explanation is set and in the correct format
-    const formattedExplanation = aiResponse;
-    
-    console.log("Explanation for exercise (length):", formattedExplanation.length);
-    console.log("Explanation for exercise (preview):", formattedExplanation.substring(0, 100) + '...');
     
     // Return the updated exercise with the full explanation
     const updatedExercise = {

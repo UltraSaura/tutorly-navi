@@ -35,6 +35,7 @@ const ChatInterface = () => {
   // Track processed message IDs to prevent duplication
   const [processedMessageIds, setProcessedMessageIds] = useState<Set<string>>(new Set());
 
+  // Process user messages to detect homework submissions
   useEffect(() => {
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
@@ -54,7 +55,10 @@ const ChatInterface = () => {
         
         if (isHomework || hasMathExpression) {
           console.log("Processing homework submission:", lastMessage.content);
+          
+          // Process the homework
           processHomeworkFromChat(lastMessage.content);
+          
           // Mark this message as processed
           setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
           console.log("Marked message as processed:", lastMessage.id);
@@ -62,6 +66,15 @@ const ChatInterface = () => {
       }
     }
   }, [messages, processedMessageIds, processHomeworkFromChat]);
+  
+  // Debug information
+  useEffect(() => {
+    console.log("ChatInterface - Current exercises count:", exercises.length);
+    console.log("ChatInterface - Exercises with explanations:", 
+                exercises.filter(ex => !!ex.explanation).length);
+    console.log("ChatInterface - Expanded exercises:", 
+                exercises.filter(ex => ex.expanded).length);
+  }, [exercises]);
   
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-6rem)] gap-4">

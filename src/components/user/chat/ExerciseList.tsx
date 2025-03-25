@@ -32,6 +32,14 @@ const ExerciseList = ({
   const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined).length;
   const totalExercises = exercises.length;
 
+  // Log current state for debugging
+  React.useEffect(() => {
+    console.log("ExerciseList - Total exercises:", totalExercises);
+    console.log("ExerciseList - Pending evaluations:", Array.from(pendingEvaluations));
+    console.log("ExerciseList - Exercises with explanations:", 
+                exercises.filter(ex => !!ex.explanation).length);
+  }, [exercises, pendingEvaluations, totalExercises]);
+
   return (
     <>
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">

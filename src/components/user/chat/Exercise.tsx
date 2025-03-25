@@ -19,40 +19,57 @@ interface ExerciseProps {
 }
 
 const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
-  // Debug logging for explanation content
+  // Enhanced debugging for explanation content
   useEffect(() => {
+    console.log(`Exercise ${exercise.id} expanded state:`, exercise.expanded);
+    
     if (exercise.explanation) {
-      console.log(`Exercise ${exercise.id} explanation length: ${exercise.explanation.length}`);
+      console.log(`Exercise ${exercise.id} explanation length:`, exercise.explanation.length);
       console.log(`Exercise ${exercise.id} explanation preview:`, exercise.explanation.substring(0, 100) + '...');
-      console.log(`Exercise ${exercise.id} expanded state:`, exercise.expanded);
+      
+      // Log the formatted explanation for debugging
+      const formatted = formatExplanation(exercise.explanation);
+      console.log(`Exercise ${exercise.id} formatted explanation preview:`, 
+                 formatted.substring(0, 100) + '...');
     } else {
-      console.log(`Exercise ${exercise.id} has no explanation`);
+      console.log(`Exercise ${exercise.id} has no explanation or it's empty`);
     }
   }, [exercise.id, exercise.explanation, exercise.expanded]);
 
   const formatExplanation = (text: string) => {
     if (!text) {
       console.log("Empty explanation text");
-      return 'No explanation available';
+      return '<p>No explanation available</p>';
     }
     
     try {
-      // Slightly simpler formatting logic to prevent issues
-      const formatted = text
+      // Improved formatting logic that preserves structure
+      let formatted = text
+        // Replace headings
         .replace(/\*\*Problem:\*\*/g, '<h3 class="text-studywhiz-600 dark:text-studywhiz-400 font-semibold text-md my-2">Problem:</h3>')
         .replace(/\*\*Guidance:\*\*/g, '<h3 class="text-studywhiz-600 dark:text-studywhiz-400 font-semibold text-md my-2">Guidance:</h3>')
+        
+        // Handle strong and emphasis
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
         .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        
+        // Process numbered lists
         .replace(/(\d+\.\s.*?)(?=\n\d+\.|$|\n\n)/gs, '<div class="ml-4 mb-2">$1</div>')
+        
+        // Process bullet points
         .replace(/(-\s.*?)(?=\n-\s|$|\n\n)/gs, '<div class="ml-6 mb-1">$1</div>')
+        
+        // Replace double newlines with paragraph breaks
         .replace(/\n\n/g, '<br /><br />')
+        
+        // Replace single newlines with line breaks (only if not already followed by an HTML tag)
         .replace(/\n(?!\s*<)/g, '<br />');
       
-      console.log("Formatted explanation length:", formatted.length);
+      console.log("Formatted explanation HTML length:", formatted.length);
       return formatted;
     } catch (error) {
       console.error("Error formatting explanation:", error);
-      return text; // Return original text if formatting fails
+      return `<p>${text}</p>`; // Fallback to simple paragraph
     }
   };
 
@@ -138,21 +155,23 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
         </div>
       </div>
       
-      {exercise.expanded && exercise.explanation && (
+      {exercise.explanation && exercise.expanded && (
         <>
           <Separator />
           <div className={cn(
             "p-4 prose prose-sm max-w-none",
-            exercise.isCorrect 
-              ? "bg-green-50 dark:bg-green-950/20" 
-              : "bg-amber-50 dark:bg-amber-950/20"
+            exercise.isCorrect !== undefined
+              ? (exercise.isCorrect 
+                ? "bg-green-50 dark:bg-green-950/20" 
+                : "bg-amber-50 dark:bg-amber-950/20")
+              : "bg-gray-50 dark:bg-gray-900/20"
           )}>
             <h4 className="text-sm font-medium mb-2 flex items-center">
               <ThumbsUp className="w-4 h-4 mr-2 text-studywhiz-600" />
               Explanation
             </h4>
             <div 
-              className="text-sm text-gray-700 dark:text-gray-300 explanation-content"
+              className="text-sm text-gray-700 dark:text-gray-300 explanation-content overflow-auto max-h-[500px]"
               dangerouslySetInnerHTML={{ __html: formatExplanation(exercise.explanation) }}
             />
           </div>

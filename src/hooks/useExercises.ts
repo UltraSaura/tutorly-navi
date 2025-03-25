@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Exercise, Grade } from '@/types/chat';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
@@ -22,14 +22,22 @@ export const useExercises = () => {
   // Track exercises being evaluated
   const [pendingEvaluations, setPendingEvaluations] = useState<Set<string>>(new Set());
   
-  const toggleExerciseExpansion = (id: string) => {
-    setExercises(exercises.map(exercise => 
-      exercise.id === id ? { ...exercise, expanded: !exercise.expanded } : exercise
-    ));
-  };
+  const toggleExerciseExpansion = useCallback((id: string) => {
+    console.log("Toggling exercise expansion for:", id);
+    setExercises(prevExercises => 
+      prevExercises.map(exercise => 
+        exercise.id === id ? { ...exercise, expanded: !exercise.expanded } : exercise
+      )
+    );
+  }, []);
+  
+  // Update grades when exercises change
+  useEffect(() => {
+    updateGrades();
+  }, [exercises]);
   
   // Function to process homework submitted directly via chat
-  const processHomeworkFromChat = async (message: string) => {
+  const processHomeworkFromChat = useCallback(async (message: string) => {
     try {
       // Check if we've processed this exact content before
       if (processedContent.has(message)) {
@@ -78,8 +86,11 @@ export const useExercises = () => {
       // Now evaluate the answer
       const updatedExercise = await evaluateHomework(newEx);
       
-      console.log("Exercise evaluated, has explanation:", !!updatedExercise.explanation);
-      console.log("Explanation length:", updatedExercise.explanation?.length || 0);
+      console.log("Exercise evaluated:");
+      console.log("- Has explanation:", !!updatedExercise.explanation);
+      console.log("- Explanation length:", updatedExercise.explanation?.length || 0);
+      console.log("- Is correct:", updatedExercise.isCorrect);
+      console.log("- Expanded state:", updatedExercise.expanded);
       
       // Update the exercise with the evaluated answer, ensuring expanded is true
       setExercises(prev => prev.map(ex => 
@@ -93,17 +104,14 @@ export const useExercises = () => {
         return newSet;
       });
       
-      // Update the overall grade calculation
-      updateGrades();
-      
     } catch (error) {
       console.error('Error processing homework:', error);
       toast.error('There was an issue grading your homework. Please try again.');
     }
-  };
+  }, [exercises, processedContent]);
   
   // Function to create exercises from AI responses - used when needed
-  const createExerciseFromAI = (question: string, explanation: string) => {
+  const createExerciseFromAI = useCallback((question: string, explanation: string) => {
     // Check if we already have this question
     const existingExercise = exercises.find(ex => ex.question === question);
     
@@ -124,19 +132,18 @@ export const useExercises = () => {
     toast.info("A new exercise has been added.");
     
     return newEx;
-  };
+  }, [exercises]);
   
-  const updateGrades = () => {
+  const updateGrades = useCallback(() => {
     const newGrade = calculateGrade(exercises);
     setGrade(newGrade);
-  };
+  }, [exercises]);
   
   // Log exercises state changes for debugging
   useEffect(() => {
-    console.log("Exercises updated:", exercises.length);
-    exercises.forEach(ex => {
-      console.log(`Exercise ${ex.id}: expanded=${ex.expanded}, has explanation=${!!ex.explanation}`);
-    });
+    console.log("Exercises updated, count:", exercises.length);
+    console.log("Exercises with explanations:", exercises.filter(ex => !!ex.explanation).length);
+    console.log("Expanded exercises:", exercises.filter(ex => ex.expanded).length);
   }, [exercises]);
   
   return {
