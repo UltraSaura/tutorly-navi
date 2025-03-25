@@ -66,12 +66,11 @@ export const evaluateHomework = async (
     // Display a notification based on the result
     toast.success(`Your homework has been graded. ${isCorrect ? 'Great job!' : 'Review the feedback for improvements.'}`);
     
-    // Return the updated exercise with the full explanation
+    // Return the updated exercise - preserve the full AI response as the explanation
     return {
       ...exercise,
       isCorrect,
-      explanation: aiResponse,
-      expanded: true // Auto-expand to show the explanation
+      explanation: aiResponse // Keep the full formatted response from AI
     };
   } catch (error) {
     console.error('Error evaluating homework:', error);

@@ -21,17 +21,24 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
   const formatExplanation = (text: string) => {
     if (!text) return '';
     
-    return text
-      .replace(/\*\*(Problem|Guidance):\*\*/g, 
-        '<h3 class="text-studywhiz-600 dark:text-studywhiz-400 font-semibold text-md my-2">$1:</h3>')
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-      .replace(/(\d+\.\s.*?)(?=\n\d+\.|$|\n\n)/gs, 
-        '<div class="ml-4 mb-2">$1</div>')
-      .replace(/(-\s.*?)(?=\n-\s|$|\n\n)/gs, 
-        '<div class="ml-6 mb-1">$1</div>')
-      .replace(/\n\n/g, '<br /><br />')
-      .replace(/\n(?!\s*<)/g, '<br />');
+    let formatted = text;
+    
+    formatted = formatted.replace(/\*\*(Problem|Guidance):\*\*/g, 
+      '<h3 class="text-studywhiz-600 dark:text-studywhiz-400 font-semibold text-md my-2">**$1:**</h3>');
+    
+    formatted = formatted.replace(/(\d+\.\s.*?)(?=\n\d+\.|$|\n\n)/gs, 
+      '<div class="ml-4 mb-2">$1</div>');
+    
+    formatted = formatted.replace(/(-\s.*?)(?=\n-\s|$|\n\n)/gs, 
+      '<div class="ml-6 mb-1">$1</div>');
+    
+    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    
+    formatted = formatted.replace(/\n\n/g, '<br /><br />');
+    formatted = formatted.replace(/\n(?!\s*<)/g, '<br />');
+    
+    return formatted;
   };
 
   return (
@@ -116,7 +123,7 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
       </div>
       
       <AnimatePresence>
-        {exercise.expanded && exercise.explanation && (
+        {exercise.expanded && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
@@ -136,7 +143,7 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
               </h4>
               <div 
                 className="text-sm text-gray-700 dark:text-gray-300"
-                dangerouslySetInnerHTML={{ __html: formatExplanation(exercise.explanation) }}
+                dangerouslySetInnerHTML={{ __html: formatExplanation(exercise.explanation || '') }}
               />
             </div>
           </motion.div>
