@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Exercise, Grade } from '@/types/chat';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
@@ -18,6 +18,9 @@ export const useExercises = () => {
   
   // Track processed content to avoid duplicates
   const [processedContent, setProcessedContent] = useState<Set<string>>(new Set());
+  
+  // Track exercises being evaluated
+  const [pendingEvaluations, setPendingEvaluations] = useState<Set<string>>(new Set());
   
   const toggleExerciseExpansion = (id: string) => {
     setExercises(exercises.map(exercise => 
@@ -52,12 +55,13 @@ export const useExercises = () => {
         return;
       }
       
-      // First, create a new exercise
+      // First, create a new exercise and set expanded to true to show explanation by default
+      const newExerciseId = Date.now().toString();
       const newEx: Exercise = {
-        id: Date.now().toString(),
+        id: newExerciseId,
         question,
         userAnswer: answer,
-        expanded: false,
+        expanded: true, // Default to expanded to show explanation
       };
       
       // Add it to the list
@@ -66,13 +70,28 @@ export const useExercises = () => {
       // Mark this content as processed
       setProcessedContent(prev => new Set([...prev, message]));
       
+      // Mark this exercise as pending evaluation
+      setPendingEvaluations(prev => new Set([...prev, newExerciseId]));
+      
+      console.log("Created new exercise, ID:", newExerciseId);
+      
       // Now evaluate the answer
       const updatedExercise = await evaluateHomework(newEx);
       
-      // Update the exercise with the evaluated answer
+      console.log("Exercise evaluated, has explanation:", !!updatedExercise.explanation);
+      console.log("Explanation length:", updatedExercise.explanation?.length || 0);
+      
+      // Update the exercise with the evaluated answer, ensuring expanded is true
       setExercises(prev => prev.map(ex => 
-        ex.id === newEx.id ? updatedExercise : ex
+        ex.id === newExerciseId ? { ...updatedExercise, expanded: true } : ex
       ));
+      
+      // Remove from pending evaluations
+      setPendingEvaluations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(newExerciseId);
+        return newSet;
+      });
       
       // Update the overall grade calculation
       updateGrades();
@@ -97,7 +116,7 @@ export const useExercises = () => {
       id: Date.now().toString(),
       question,
       explanation,
-      expanded: false,
+      expanded: true, // Default to expanded to show explanation
     };
     
     setExercises(prev => [...prev, newEx]);
@@ -112,11 +131,20 @@ export const useExercises = () => {
     setGrade(newGrade);
   };
   
+  // Log exercises state changes for debugging
+  useEffect(() => {
+    console.log("Exercises updated:", exercises.length);
+    exercises.forEach(ex => {
+      console.log(`Exercise ${ex.id}: expanded=${ex.expanded}, has explanation=${!!ex.explanation}`);
+    });
+  }, [exercises]);
+  
   return {
     exercises,
     grade,
     toggleExerciseExpansion,
     createExerciseFromAI,
-    processHomeworkFromChat
+    processHomeworkFromChat,
+    pendingEvaluations
   };
 };

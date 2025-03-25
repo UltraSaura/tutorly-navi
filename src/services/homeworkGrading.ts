@@ -26,6 +26,8 @@ export const evaluateHomework = async (
       message = `I need you to grade this homework. The question is: "${exercise.question}" and the student's answer is: "${exercise.userAnswer}". Please evaluate if it's correct or incorrect, and provide a detailed explanation why. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation. Use numbered lists for steps and bullet points for key points.`;
     }
     
+    console.log("Sending grading request to AI service:", message);
+    
     // Call AI service to evaluate the answer
     const { data, error } = await supabase.functions.invoke('ai-chat', {
       body: {
@@ -66,12 +68,23 @@ export const evaluateHomework = async (
     // Display a notification based on the result
     toast.success(`Your homework has been graded. ${isCorrect ? 'Great job!' : 'Review the feedback for improvements.'}`);
     
-    // Return the updated exercise - preserve the full AI response as the explanation
-    return {
+    // Ensure the explanation is set and in the correct format
+    const formattedExplanation = aiResponse;
+    
+    console.log("Explanation for exercise (length):", formattedExplanation.length);
+    console.log("Explanation for exercise (preview):", formattedExplanation.substring(0, 100) + '...');
+    
+    // Return the updated exercise with the full explanation
+    const updatedExercise = {
       ...exercise,
       isCorrect,
-      explanation: aiResponse // Keep the full formatted response from AI
+      explanation: formattedExplanation,
+      expanded: true // Auto-expand to show the explanation
     };
+    
+    console.log("Returning updated exercise with explanation:", updatedExercise.explanation ? "present" : "missing");
+    
+    return updatedExercise;
   } catch (error) {
     console.error('Error evaluating homework:', error);
     toast.error('There was an issue grading your homework. Please try again.');
