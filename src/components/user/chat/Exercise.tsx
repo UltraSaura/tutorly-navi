@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Check, X, ChevronUp, ChevronDown, ThumbsUp, AlertCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -124,10 +125,7 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
           </div>
         )}
         
-        <div className="mt-4 flex justify-between items-center">
-          <p className="text-xs italic font-medium text-studywhiz-600 dark:text-studywhiz-400">
-            ici c'est Paris
-          </p>
+        <div className="mt-4 flex justify-end items-center">
           <Button 
             variant="ghost" 
             size="sm" 
