@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Check, X, ChevronUp, ChevronDown, ThumbsUp, AlertCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -19,7 +18,6 @@ interface ExerciseProps {
 }
 
 const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
-  // Enhanced debugging for explanation content
   useEffect(() => {
     console.log(`Exercise ${exercise.id} expanded state:`, exercise.expanded);
     
@@ -27,7 +25,6 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
       console.log(`Exercise ${exercise.id} explanation length:`, exercise.explanation.length);
       console.log(`Exercise ${exercise.id} explanation preview:`, exercise.explanation.substring(0, 100) + '...');
       
-      // Log the formatted explanation for debugging
       const formatted = formatExplanation(exercise.explanation);
       console.log(`Exercise ${exercise.id} formatted explanation preview:`, 
                  formatted.substring(0, 100) + '...');
@@ -43,33 +40,26 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
     }
     
     try {
-      // Improved formatting logic that preserves structure
       let formatted = text
-        // Replace headings
         .replace(/\*\*Problem:\*\*/g, '<h3 class="text-studywhiz-600 dark:text-studywhiz-400 font-semibold text-md my-2">Problem:</h3>')
         .replace(/\*\*Guidance:\*\*/g, '<h3 class="text-studywhiz-600 dark:text-studywhiz-400 font-semibold text-md my-2">Guidance:</h3>')
         
-        // Handle strong and emphasis
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
         .replace(/\*([^*]+)\*/g, '<em>$1</em>')
         
-        // Process numbered lists
         .replace(/(\d+\.\s.*?)(?=\n\d+\.|$|\n\n)/gs, '<div class="ml-4 mb-2">$1</div>')
         
-        // Process bullet points
         .replace(/(-\s.*?)(?=\n-\s|$|\n\n)/gs, '<div class="ml-6 mb-1">$1</div>')
         
-        // Replace double newlines with paragraph breaks
         .replace(/\n\n/g, '<br /><br />')
         
-        // Replace single newlines with line breaks (only if not already followed by an HTML tag)
         .replace(/\n(?!\s*<)/g, '<br />');
       
       console.log("Formatted explanation HTML length:", formatted.length);
       return formatted;
     } catch (error) {
       console.error("Error formatting explanation:", error);
-      return `<p>${text}</p>`; // Fallback to simple paragraph
+      return `<p>${text}</p>`;
     }
   };
 
@@ -134,7 +124,10 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
           </div>
         )}
         
-        <div className="mt-4 flex justify-end items-center">
+        <div className="mt-4 flex justify-between items-center">
+          <p className="text-xs italic font-medium text-studywhiz-600 dark:text-studywhiz-400">
+            ici c'est Paris
+          </p>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -175,7 +168,6 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
               dangerouslySetInnerHTML={{ __html: formatExplanation(exercise.explanation) }}
             />
             
-            {/* New dynamic text field */}
             <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
               <p className="text-sm font-medium text-blue-700 dark:text-blue-300 italic">
                 ici c'est Paris
