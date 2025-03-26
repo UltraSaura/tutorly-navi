@@ -174,6 +174,13 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
               className="text-sm text-gray-700 dark:text-gray-300 explanation-content overflow-auto max-h-[500px]"
               dangerouslySetInnerHTML={{ __html: formatExplanation(exercise.explanation) }}
             />
+            
+            {/* New dynamic text field */}
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm font-medium text-blue-700 dark:text-blue-300 italic">
+                ici c'est Paris
+              </p>
+            </div>
           </div>
         </>
       )}
