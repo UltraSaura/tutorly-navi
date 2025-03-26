@@ -146,34 +146,41 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
         </div>
       </div>
       
-      {exercise.explanation && exercise.expanded && (
-        <>
-          <Separator />
-          <div className={cn(
-            "p-4 prose prose-sm max-w-none",
-            exercise.isCorrect !== undefined
-              ? (exercise.isCorrect 
-                ? "bg-green-50 dark:bg-green-950/20" 
-                : "bg-amber-50 dark:bg-amber-950/20")
-              : "bg-gray-50 dark:bg-gray-900/20"
-          )}>
-            <h4 className="text-sm font-medium mb-2 flex items-center">
-              <ThumbsUp className="w-4 h-4 mr-2 text-studywhiz-600" />
-              Explanation
-            </h4>
-            <div 
-              className="text-sm text-gray-700 dark:text-gray-300 explanation-content overflow-auto max-h-[500px]"
-              dangerouslySetInnerHTML={{ __html: formatExplanation(exercise.explanation) }}
-            />
-            
-            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-sm font-medium text-blue-700 dark:text-blue-300 italic">
-                ici c'est Paris
-              </p>
+      <AnimatePresence>
+        {exercise.explanation && exercise.expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Separator />
+            <div className={cn(
+              "p-4 prose prose-sm max-w-none",
+              exercise.isCorrect !== undefined
+                ? (exercise.isCorrect 
+                  ? "bg-green-50 dark:bg-green-950/20" 
+                  : "bg-amber-50 dark:bg-amber-950/20")
+                : "bg-gray-50 dark:bg-gray-900/20"
+            )}>
+              <h4 className="text-sm font-medium mb-2 flex items-center">
+                <ThumbsUp className="w-4 h-4 mr-2 text-studywhiz-600" />
+                Explanation
+              </h4>
+              <div 
+                className="text-sm text-gray-700 dark:text-gray-300 explanation-content overflow-auto max-h-[500px]"
+                dangerouslySetInnerHTML={{ __html: formatExplanation(exercise.explanation) }}
+              />
+              
+              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="text-sm font-medium text-blue-700 dark:text-blue-300 italic">
+                  ici c'est Paris
+                </p>
+              </div>
             </div>
-          </div>
-        </>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
