@@ -153,6 +153,7 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
+            className="overflow-hidden"
           >
             <Separator />
             <div className={cn(
