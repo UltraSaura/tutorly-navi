@@ -1,6 +1,6 @@
 
-import React, { useEffect } from 'react';
-import { BookOpen, Loader2 } from 'lucide-react';
+import React from 'react';
+import { BookOpen } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import Exercise from './Exercise';
@@ -19,35 +19,16 @@ interface ExerciseListProps {
     letter: string;
   };
   toggleExerciseExpansion: (id: string) => void;
-  pendingEvaluations?: Set<string>;
 }
 
 const ExerciseList = ({ 
   exercises, 
   grade, 
-  toggleExerciseExpansion,
-  pendingEvaluations = new Set()
+  toggleExerciseExpansion
 }: ExerciseListProps) => {
   const correctExercises = exercises.filter(ex => ex.isCorrect).length;
   const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined).length;
   const totalExercises = exercises.length;
-
-  // Enhanced debug logging
-  useEffect(() => {
-    console.log("ExerciseList - Rendering with exercises:", totalExercises);
-    console.log("ExerciseList - Pending evaluations:", Array.from(pendingEvaluations));
-    
-    // Log expanded state and explanation status of all exercises
-    exercises.forEach(ex => {
-      console.log(`ExerciseList - Exercise ${ex.id}: expanded=${ex.expanded}, hasExplanation=${!!ex.explanation}, explanationLength=${ex.explanation?.length || 0}`);
-    });
-  }, [exercises, pendingEvaluations, totalExercises]);
-  
-  // Function to safely handle toggle clicks
-  const handleToggleClick = (id: string) => {
-    console.log(`ExerciseList - Toggle clicked for ${id}`);
-    toggleExerciseExpansion(id);
-  };
 
   return (
     <>
@@ -79,19 +60,11 @@ const ExerciseList = ({
         ) : (
           <div className="space-y-4">
             {exercises.map((exercise) => (
-              <React.Fragment key={exercise.id}>
-                {pendingEvaluations.has(exercise.id) ? (
-                  <div className="border rounded-lg p-4 flex items-center justify-center space-x-2 bg-gray-50 dark:bg-gray-800/50">
-                    <Loader2 className="h-5 w-5 animate-spin text-studywhiz-500" />
-                    <span className="text-sm">Grading your submission...</span>
-                  </div>
-                ) : (
-                  <Exercise
-                    exercise={exercise}
-                    toggleExerciseExpansion={handleToggleClick}
-                  />
-                )}
-              </React.Fragment>
+              <Exercise
+                key={exercise.id}
+                exercise={exercise}
+                toggleExerciseExpansion={toggleExerciseExpansion}
+              />
             ))}
           </div>
         )}

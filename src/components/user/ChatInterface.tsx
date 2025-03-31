@@ -28,21 +28,18 @@ const ChatInterface = () => {
     grade,
     toggleExerciseExpansion,
     createExerciseFromAI,
-    processHomeworkFromChat,
-    pendingEvaluations
+    processHomeworkFromChat
   } = useExercises();
 
   // Track processed message IDs to prevent duplication
   const [processedMessageIds, setProcessedMessageIds] = useState<Set<string>>(new Set());
 
-  // Process user messages to detect homework submissions
   useEffect(() => {
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
       
       // Skip if we've already processed this message
       if (processedMessageIds.has(lastMessage.id)) {
-        console.log("Message already processed:", lastMessage.id);
         return;
       }
       
@@ -54,27 +51,16 @@ const ChatInterface = () => {
         const hasMathExpression = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(lastMessage.content);
         
         if (isHomework || hasMathExpression) {
-          console.log("Processing homework submission:", lastMessage.content);
-          
-          // Process the homework
           processHomeworkFromChat(lastMessage.content);
-          
           // Mark this message as processed
           setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
-          console.log("Marked message as processed:", lastMessage.id);
         }
       }
+      
+      // We no longer process assistant messages automatically to avoid duplication
+      // AI explanations will only appear in the chat, not as separate exercises
     }
-  }, [messages, processedMessageIds, processHomeworkFromChat]);
-  
-  // Debug information
-  useEffect(() => {
-    console.log("ChatInterface - Current exercises count:", exercises.length);
-    console.log("ChatInterface - Exercises with explanations:", 
-                exercises.filter(ex => !!ex.explanation).length);
-    console.log("ChatInterface - Expanded exercises:", 
-                exercises.filter(ex => ex.expanded).length);
-  }, [exercises]);
+  }, [messages, processedMessageIds]);
   
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-6rem)] gap-4">
@@ -94,7 +80,6 @@ const ChatInterface = () => {
           exercises={exercises}
           grade={grade}
           toggleExerciseExpansion={toggleExerciseExpansion}
-          pendingEvaluations={pendingEvaluations}
         />
       </div>
     </div>
