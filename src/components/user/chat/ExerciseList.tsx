@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BookOpen, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
@@ -32,13 +32,22 @@ const ExerciseList = ({
   const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined).length;
   const totalExercises = exercises.length;
 
-  // Log current state for debugging
-  React.useEffect(() => {
-    console.log("ExerciseList - Total exercises:", totalExercises);
+  // Debug logging for expanded states
+  useEffect(() => {
+    console.log("ExerciseList - Rendering with exercises:", totalExercises);
     console.log("ExerciseList - Pending evaluations:", Array.from(pendingEvaluations));
-    console.log("ExerciseList - Exercises with explanations:", 
-                exercises.filter(ex => !!ex.explanation).length);
+    
+    // Log expanded state of all exercises
+    exercises.forEach(ex => {
+      console.log(`ExerciseList - Exercise ${ex.id}: expanded=${ex.expanded}`);
+    });
   }, [exercises, pendingEvaluations, totalExercises]);
+  
+  // Function to safely handle toggle clicks
+  const handleToggleClick = (id: string) => {
+    console.log(`ExerciseList - Toggle clicked for ${id}`);
+    toggleExerciseExpansion(id);
+  };
 
   return (
     <>
@@ -79,7 +88,7 @@ const ExerciseList = ({
                 ) : (
                   <Exercise
                     exercise={exercise}
-                    toggleExerciseExpansion={toggleExerciseExpansion}
+                    toggleExerciseExpansion={(id) => handleToggleClick(id)}
                   />
                 )}
               </React.Fragment>

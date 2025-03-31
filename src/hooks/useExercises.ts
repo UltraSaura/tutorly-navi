@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { Exercise, Grade } from '@/types/chat';
 import { useToast } from '@/hooks/use-toast';
@@ -22,12 +23,20 @@ export const useExercises = () => {
   const [pendingEvaluations, setPendingEvaluations] = useState<Set<string>>(new Set());
   
   const toggleExerciseExpansion = useCallback((id: string) => {
-    console.log("Toggling exercise expansion for:", id);
-    setExercises(prevExercises => 
-      prevExercises.map(exercise => 
-        exercise.id === id ? { ...exercise, expanded: !exercise.expanded } : exercise
-      )
-    );
+    console.log("toggleExerciseExpansion called for:", id);
+    
+    setExercises(prevExercises => {
+      // Create a new array to ensure state update
+      const updatedExercises = prevExercises.map(exercise => {
+        if (exercise.id === id) {
+          console.log(`Toggling exercise ${id} from`, exercise.expanded, "to", !exercise.expanded);
+          return { ...exercise, expanded: !exercise.expanded };
+        }
+        return exercise;
+      });
+      
+      return updatedExercises;
+    });
   }, []);
   
   // Update grades when exercises change
@@ -62,8 +71,11 @@ export const useExercises = () => {
         return;
       }
       
-      // First, create a new exercise and set expanded to true to show explanation by default
+      // Create a new exercise ID
       const newExerciseId = Date.now().toString();
+      
+      // First, create a new exercise with initial expanded state
+      // We'll set expanded to true initially so users can see the explanation right away
       const newEx: Exercise = {
         id: newExerciseId,
         question,
@@ -123,6 +135,7 @@ export const useExercises = () => {
       return existingExercise;
     }
     
+    // Create a new exercise with default expanded state
     const newEx: Exercise = {
       id: Date.now().toString(),
       question,
@@ -130,6 +143,7 @@ export const useExercises = () => {
       expanded: true, // Default to expanded to show explanation initially
     };
     
+    // Add to the exercises list
     setExercises(prev => [...prev, newEx]);
     
     toast.info("A new exercise has been added.");
@@ -147,6 +161,11 @@ export const useExercises = () => {
     console.log("Exercises updated, count:", exercises.length);
     console.log("Exercises with explanations:", exercises.filter(ex => !!ex.explanation).length);
     console.log("Exercises expanded count:", exercises.filter(ex => ex.expanded).length);
+    
+    // Log each exercise's expanded state for debugging
+    exercises.forEach(ex => {
+      console.log(`Exercise ${ex.id}: expanded=${ex.expanded}, has explanation=${!!ex.explanation}`);
+    });
   }, [exercises]);
   
   return {

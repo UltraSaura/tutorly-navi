@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Toggle } from '@/components/ui/toggle';
 
 interface ExerciseProps {
   exercise: {
@@ -19,16 +20,18 @@ interface ExerciseProps {
 }
 
 const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
+  // Debug logging to help troubleshoot expansion issues
   useEffect(() => {
-    console.log(`Exercise ${exercise.id} expanded state:`, exercise.expanded);
-    
-    if (exercise.explanation) {
-      console.log(`Exercise ${exercise.id} explanation length:`, exercise.explanation.length);
-      console.log(`Exercise ${exercise.id} explanation preview:`, exercise.explanation.substring(0, 100) + '...');
-    } else {
-      console.log(`Exercise ${exercise.id} has no explanation or it's empty`);
-    }
-  }, [exercise.id, exercise.explanation, exercise.expanded]);
+    console.log(`Exercise ${exercise.id} - Current expanded state:`, exercise.expanded);
+    console.log(`Exercise ${exercise.id} - Has explanation:`, !!exercise.explanation);
+  }, [exercise.id, exercise.expanded, exercise.explanation]);
+
+  // Handler for toggle button click
+  const handleToggleClick = () => {
+    console.log(`Toggle clicked for exercise ${exercise.id}`);
+    console.log(`Before toggle - expanded state:`, exercise.expanded);
+    toggleExerciseExpansion(exercise.id);
+  };
 
   const formatExplanation = (text: string) => {
     if (!text) return '<p>No explanation available</p>';
@@ -112,25 +115,26 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
           </div>
         )}
         
-        <div className="mt-4 flex justify-end items-center">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className={cn(
-              "text-xs hover:text-gray-700 dark:hover:text-gray-300",
-              exercise.expanded ? "text-studywhiz-600" : "text-gray-500"
-            )}
-            onClick={() => toggleExerciseExpansion(exercise.id)}
-            disabled={!exercise.explanation}
-          >
-            {exercise.expanded ? 'Hide explanation' : 'Show explanation'}
-            {exercise.expanded ? (
-              <ChevronUp className="ml-1 h-4 w-4" />
-            ) : (
-              <ChevronDown className="ml-1 h-4 w-4" />
-            )}
-          </Button>
-        </div>
+        {exercise.explanation && (
+          <div className="mt-4 flex justify-end items-center">
+            <Toggle
+              aria-label={exercise.expanded ? "Hide explanation" : "Show explanation"}
+              pressed={exercise.expanded}
+              onPressedChange={() => handleToggleClick()}
+              className={cn(
+                "text-xs hover:text-gray-700 dark:hover:text-gray-300",
+                exercise.expanded ? "text-studywhiz-600" : "text-gray-500"
+              )}
+            >
+              <span className="mr-1">{exercise.expanded ? 'Hide explanation' : 'Show explanation'}</span>
+              {exercise.expanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Toggle>
+          </div>
+        )}
       </div>
       
       <AnimatePresence>
