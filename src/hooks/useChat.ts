@@ -1,10 +1,10 @@
-
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Message } from '@/types/chat';
 import { useAdmin } from '@/context/AdminContext';
 import { handleFileUpload, handlePhotoUpload } from '@/utils/chatFileHandlers';
 import { sendMessageToAI } from '@/services/chatService';
 import { generateFallbackResponse } from '@/utils/fallbackResponses';
+import { detectHomeworkInMessage } from '@/utils/homeworkExtraction';
 
 export const useChat = () => {
   const { selectedModelId, getAvailableModels } = useAdmin();
@@ -22,12 +22,26 @@ export const useChat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [lastResponse, setLastResponse] = useState<any>(null);
   
+  // Keep track of which AI messages are responses to homework submissions
+  const [homeworkResponseIds, setHomeworkResponseIds] = useState<Set<string>>(new Set());
+  
   // Get model info to display
   const activeModel = (() => {
     const models = getAvailableModels();
     const model = models.find(m => m.id === selectedModelId);
     return model ? model.name : 'AI Model';
   })();
+  
+  // Filter out AI messages that are responses to homework submissions
+  const filteredMessages = useMemo(() => {
+    return messages.filter(message => {
+      // Keep all user messages
+      if (message.role === 'user') return true;
+      
+      // Filter out AI messages that are responses to homework
+      return !homeworkResponseIds.has(message.id);
+    });
+  }, [messages, homeworkResponseIds]);
   
   // Add a message directly to the chat
   const addMessage = (message: Message) => {
@@ -48,6 +62,9 @@ export const useChat = () => {
     setInputMessage('');
     setIsLoading(true);
     
+    // Check if this message is a homework submission
+    const isHomework = detectHomeworkInMessage(inputMessage);
+    
     try {
       const { data, error } = await sendMessageToAI(inputMessage, messages, selectedModelId);
       
@@ -62,6 +79,11 @@ export const useChat = () => {
           content: data.content,
           timestamp: new Date(),
         };
+        
+        // If this is a homework-related message, add it to our tracking set
+        if (isHomework) {
+          setHomeworkResponseIds(prev => new Set([...prev, aiResponse.id]));
+        }
         
         setMessages(prev => [...prev, aiResponse]);
       } else if (error) {
@@ -85,6 +107,7 @@ export const useChat = () => {
   
   return {
     messages,
+    filteredMessages,
     inputMessage,
     setInputMessage,
     isLoading,

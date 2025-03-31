@@ -20,7 +20,8 @@ const ChatInterface = () => {
     addMessage,
     handleSendMessage, 
     handleFileUpload, 
-    handlePhotoUpload 
+    handlePhotoUpload,
+    filteredMessages
   } = useChat();
   
   const {
@@ -82,7 +83,7 @@ const ChatInterface = () => {
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-6rem)] gap-4">
       <ChatPanel 
-        messages={messages}
+        messages={filteredMessages}
         isLoading={isLoading}
         inputMessage={inputMessage}
         setInputMessage={setInputMessage}
