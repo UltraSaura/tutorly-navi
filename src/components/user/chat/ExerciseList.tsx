@@ -4,6 +4,7 @@ import { BookOpen } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import Exercise from './Exercise';
+import { Message } from '@/types/chat';
 
 interface ExerciseListProps {
   exercises: {
@@ -13,6 +14,7 @@ interface ExerciseListProps {
     isCorrect?: boolean;
     explanation?: string;
     expanded: boolean;
+    relatedMessages?: Message[];
   }[];
   grade: {
     percentage: number;

@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Exercise, Grade } from '@/types/chat';
+import { Exercise, Grade, Message } from '@/types/chat';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 import { extractHomeworkFromMessage } from '@/utils/homeworkExtraction';
@@ -58,6 +58,7 @@ export const useExercises = () => {
         question,
         userAnswer: answer,
         expanded: false,
+        relatedMessages: [], // Initialize empty array for related messages
       };
       
       // Add it to the list
@@ -83,6 +84,45 @@ export const useExercises = () => {
     }
   };
   
+  // Function to link AI responses to exercises
+  const linkAIResponseToExercise = (userMessage: string, aiMessage: Message) => {
+    // Extract the question from the user message
+    const { question } = extractHomeworkFromMessage(userMessage);
+    
+    if (!question) {
+      console.log("Couldn't extract question from user message");
+      return;
+    }
+    
+    // Find the corresponding exercise
+    const exerciseIndex = exercises.findIndex(ex => ex.question === question);
+    
+    if (exerciseIndex === -1) {
+      console.log("Couldn't find exercise for this message");
+      return;
+    }
+    
+    // Add the AI message to the exercise's relatedMessages
+    setExercises(prev => {
+      const updatedExercises = [...prev];
+      const exercise = updatedExercises[exerciseIndex];
+      
+      // Initialize relatedMessages if it doesn't exist
+      if (!exercise.relatedMessages) {
+        exercise.relatedMessages = [];
+      }
+      
+      // Add the message if it's not already there
+      if (!exercise.relatedMessages.some(msg => msg.id === aiMessage.id)) {
+        exercise.relatedMessages.push(aiMessage);
+      }
+      
+      return updatedExercises;
+    });
+    
+    console.log(`Linked AI message ${aiMessage.id} to exercise with question "${question}"`);
+  };
+  
   // Function to create exercises from AI responses - used when needed
   const createExerciseFromAI = (question: string, explanation: string) => {
     // Check if we already have this question
@@ -98,6 +138,7 @@ export const useExercises = () => {
       question,
       explanation,
       expanded: false,
+      relatedMessages: [],
     };
     
     setExercises(prev => [...prev, newEx]);
@@ -117,6 +158,7 @@ export const useExercises = () => {
     grade,
     toggleExerciseExpansion,
     createExerciseFromAI,
-    processHomeworkFromChat
+    processHomeworkFromChat,
+    linkAIResponseToExercise
   };
 };

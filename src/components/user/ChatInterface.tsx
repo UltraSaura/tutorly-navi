@@ -28,7 +28,8 @@ const ChatInterface = () => {
     grade,
     toggleExerciseExpansion,
     createExerciseFromAI,
-    processHomeworkFromChat
+    processHomeworkFromChat,
+    linkAIResponseToExercise
   } = useExercises();
 
   // Track processed message IDs to prevent duplication
@@ -55,10 +56,26 @@ const ChatInterface = () => {
           // Mark this message as processed
           setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
         }
+      } else if (lastMessage.role === 'assistant') {
+        // Find the most recent user message to link with this AI response
+        const recentUserMsgIndex = messages.slice(0, messages.length - 1)
+          .reverse()
+          .findIndex(msg => msg.role === 'user');
+          
+        if (recentUserMsgIndex !== -1) {
+          const recentUserMsg = messages[messages.length - 2 - recentUserMsgIndex];
+          const userMsgId = recentUserMsg.id;
+          
+          // Check if the user message was a homework submission
+          if (processedMessageIds.has(userMsgId)) {
+            // Link this AI response to the exercise created from the user message
+            linkAIResponseToExercise(recentUserMsg.content, lastMessage);
+          }
+        }
+        
+        // Mark this message as processed
+        setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
       }
-      
-      // We no longer process assistant messages automatically to avoid duplication
-      // AI explanations will only appear in the chat, not as separate exercises
     }
   }, [messages, processedMessageIds]);
   

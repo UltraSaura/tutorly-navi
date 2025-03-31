@@ -1,10 +1,12 @@
 
 import React from 'react';
-import { Check, X, ChevronUp, ChevronDown, ThumbsUp, AlertCircle } from 'lucide-react';
+import { Check, X, ChevronUp, ChevronDown, ThumbsUp, AlertCircle, MessageSquare } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Message } from '@/types/chat';
 
 interface ExerciseProps {
   exercise: {
@@ -14,6 +16,7 @@ interface ExerciseProps {
     isCorrect?: boolean;
     explanation?: string;
     expanded: boolean;
+    relatedMessages?: Message[];
   };
   toggleExerciseExpansion: (id: string) => void;
 }
@@ -25,6 +28,9 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
       .replace(/\*\*(Problem|Guidance):\*\*/g, '<strong class="text-studywhiz-600 dark:text-studywhiz-400">$1:</strong>')
       .split('\n').join('<br />') : 
     '';
+
+  // Check if there are any AI messages to display
+  const hasRelatedMessages = exercise.relatedMessages && exercise.relatedMessages.length > 0;
 
   return (
     <motion.div 
@@ -122,14 +128,43 @@ const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
                 ? "bg-green-50 dark:bg-green-950/20" 
                 : "bg-amber-50 dark:bg-amber-950/20"
             )}>
-              <h4 className="text-sm font-medium mb-2 flex items-center">
-                <ThumbsUp className="w-4 h-4 mr-2 text-studywhiz-600" />
-                Explanation
-              </h4>
-              <div 
-                className="text-sm text-gray-700 dark:text-gray-300 prose-sm max-w-full"
-                dangerouslySetInnerHTML={{ __html: formattedExplanation }}
-              />
+              <Accordion type="single" collapsible className="w-full border-none">
+                <AccordionItem value="explanation" className="border-none">
+                  <AccordionTrigger className="py-2 text-sm font-medium flex items-center">
+                    <ThumbsUp className="w-4 h-4 mr-2 text-studywhiz-600" />
+                    Explanation
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div 
+                      className="text-sm text-gray-700 dark:text-gray-300 prose-sm max-w-full"
+                      dangerouslySetInnerHTML={{ __html: formattedExplanation }}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+                
+                {hasRelatedMessages && (
+                  <AccordionItem value="ai-messages" className="border-none mt-2">
+                    <AccordionTrigger className="py-2 text-sm font-medium flex items-center">
+                      <MessageSquare className="w-4 h-4 mr-2 text-studywhiz-600" />
+                      AI Messages
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-3">
+                        {exercise.relatedMessages?.map((message, index) => (
+                          <div 
+                            key={index} 
+                            className="p-3 rounded-lg bg-white dark:bg-gray-800 text-sm"
+                          >
+                            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                              {message.content}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+              </Accordion>
             </div>
           </motion.div>
         )}

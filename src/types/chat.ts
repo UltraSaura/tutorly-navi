@@ -16,6 +16,7 @@ export interface Exercise {
   isCorrect?: boolean;
   explanation?: string;
   expanded: boolean;
+  relatedMessages?: Message[];
 }
 
 export interface Grade {
