@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Exercise, Grade } from '@/types/chat';
 import { useToast } from '@/hooks/use-toast';
@@ -69,7 +68,7 @@ export const useExercises = () => {
         id: newExerciseId,
         question,
         userAnswer: answer,
-        expanded: true, // Default to expanded to show explanation
+        expanded: true, // Default to expanded when first created
       };
       
       // Add it to the list
@@ -90,11 +89,15 @@ export const useExercises = () => {
       console.log("- Has explanation:", !!updatedExercise.explanation);
       console.log("- Explanation length:", updatedExercise.explanation?.length || 0);
       console.log("- Is correct:", updatedExercise.isCorrect);
-      console.log("- Expanded state:", updatedExercise.expanded);
       
-      // Update the exercise with the evaluated answer, ensuring expanded is true
+      // Update the exercise with the evaluated answer, but keep the existing expanded state
+      // This is the key fix - we don't force expanded: true when updating after evaluation
       setExercises(prev => prev.map(ex => 
-        ex.id === newExerciseId ? { ...updatedExercise, expanded: true } : ex
+        ex.id === newExerciseId ? { 
+          ...updatedExercise,
+          // Keep expanded state as is, don't force it to be true
+          expanded: ex.expanded 
+        } : ex
       ));
       
       // Remove from pending evaluations
@@ -124,7 +127,7 @@ export const useExercises = () => {
       id: Date.now().toString(),
       question,
       explanation,
-      expanded: true, // Default to expanded to show explanation
+      expanded: true, // Default to expanded to show explanation initially
     };
     
     setExercises(prev => [...prev, newEx]);
@@ -143,7 +146,7 @@ export const useExercises = () => {
   useEffect(() => {
     console.log("Exercises updated, count:", exercises.length);
     console.log("Exercises with explanations:", exercises.filter(ex => !!ex.explanation).length);
-    console.log("Expanded exercises:", exercises.filter(ex => ex.expanded).length);
+    console.log("Exercises expanded count:", exercises.filter(ex => ex.expanded).length);
   }, [exercises]);
   
   return {

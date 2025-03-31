@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Exercise } from "@/types/chat";
 import { toast } from 'sonner';
@@ -80,7 +79,7 @@ export const evaluateHomework = async (
     
     if (!formattedExplanation.includes('**Guidance:**')) {
       const problemSection = formattedExplanation.split('**Problem:**')[1];
-      const problemContent = problemSection.split('\n\n')[0];
+      const problemContent = problemSection?.split('\n\n')[0] || '';
       
       formattedExplanation = `**Problem:**${problemContent}\n\n**Guidance:**\n${isCorrect ? 'CORRECT. ' : 'INCORRECT. '}` + 
         formattedExplanation.replace(`**Problem:**${problemContent}`, '').trim();
@@ -97,7 +96,8 @@ export const evaluateHomework = async (
       ...exercise,
       isCorrect,
       explanation: formattedExplanation,
-      expanded: true // Auto-expand to show the explanation
+      // DON'T force expanded - let the toggle work properly
+      // We keep whatever expanded state was set before
     };
     
     console.log("Returning updated exercise with explanation:", updatedExercise.explanation ? "present" : "missing");
