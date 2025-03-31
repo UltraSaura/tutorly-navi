@@ -32,14 +32,14 @@ const ExerciseList = ({
   const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined).length;
   const totalExercises = exercises.length;
 
-  // Debug logging for expanded states
+  // Enhanced debug logging
   useEffect(() => {
     console.log("ExerciseList - Rendering with exercises:", totalExercises);
     console.log("ExerciseList - Pending evaluations:", Array.from(pendingEvaluations));
     
-    // Log expanded state of all exercises
+    // Log expanded state and explanation status of all exercises
     exercises.forEach(ex => {
-      console.log(`ExerciseList - Exercise ${ex.id}: expanded=${ex.expanded}`);
+      console.log(`ExerciseList - Exercise ${ex.id}: expanded=${ex.expanded}, hasExplanation=${!!ex.explanation}, explanationLength=${ex.explanation?.length || 0}`);
     });
   }, [exercises, pendingEvaluations, totalExercises]);
   
@@ -88,7 +88,7 @@ const ExerciseList = ({
                 ) : (
                   <Exercise
                     exercise={exercise}
-                    toggleExerciseExpansion={(id) => handleToggleClick(id)}
+                    toggleExerciseExpansion={handleToggleClick}
                   />
                 )}
               </React.Fragment>

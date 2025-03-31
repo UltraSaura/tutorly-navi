@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Exercise } from "@/types/chat";
 import { toast } from 'sonner';
@@ -93,12 +92,11 @@ export const evaluateHomework = async (
     toast.success(`Your homework has been graded. ${isCorrect ? 'Great job!' : 'Review the feedback for improvements.'}`);
     
     // Return the updated exercise with the full explanation
-    // Important: do NOT set expanded state here, let the parent component handle it
+    // Keep existing expanded state from the original exercise
     const updatedExercise = {
       ...exercise,
       isCorrect,
       explanation: formattedExplanation,
-      // Do NOT set expanded here - it should be managed by the toggleExerciseExpansion function
     };
     
     console.log("Returning updated exercise with explanation:", updatedExercise.explanation ? "present" : "missing");
