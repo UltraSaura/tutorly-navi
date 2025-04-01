@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin, Bookmark, PenTool } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Progress } from '@/components/ui/progress';
 import { User as UserType } from '@/types/admin';
@@ -37,6 +37,26 @@ export const OverviewTab = ({ user }: OverviewTabProps) => {
           </div>
           <p className="text-sm pl-6">{user.country || 'Not provided'}</p>
         </div>
+
+        {user.user_type === 'student' && (
+          <>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Bookmark className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium">Level</p>
+              </div>
+              <p className="text-sm pl-6">{user.level || 'Not specified'}</p>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <PenTool className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium">Learning Style</p>
+              </div>
+              <p className="text-sm pl-6">{user.style || 'Not specified'}</p>
+            </div>
+          </>
+        )}
       </div>
       
       <div className="grid grid-cols-2 gap-4 border-t pt-4">

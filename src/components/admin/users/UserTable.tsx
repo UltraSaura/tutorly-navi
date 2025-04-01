@@ -1,19 +1,10 @@
-
 import { useState } from 'react';
 import { MoreHorizontal, ChevronLeft, ChevronRight, GraduationCap, UsersRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { User } from '@/types/admin';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-
-// Helper function to generate name from email if first/last name isn't available
-const generateNameFromEmail = (email: string): string => {
-  const parts = email.split('@')[0].split('.');
-  const formattedParts = parts.map(part => 
-    part.charAt(0).toUpperCase() + part.slice(1)
-  );
-  return formattedParts.join(' ');
-};
+import { generateNameFromEmail } from './utils';
 
 interface UserTableProps {
   users: User[];
@@ -52,8 +43,9 @@ export const UserTable = ({
           <tr className="bg-muted/50">
             <th className="px-4 py-3.5 text-left text-sm font-semibold">User</th>
             <th className="px-4 py-3.5 text-left text-sm font-semibold">Type</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">Country</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">Email</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">Level</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">Style</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">Contact</th>
             <th className="px-4 py-3.5 text-right text-sm font-semibold"></th>
           </tr>
         </thead>
@@ -81,7 +73,7 @@ export const UserTable = ({
                       <div>
                         <div className="font-medium">{displayName}</div>
                         <div className="text-xs text-muted-foreground">
-                          {user.phone_number || 'No phone'}
+                          {user.country || 'No country'}
                         </div>
                       </div>
                     </div>
@@ -93,10 +85,13 @@ export const UserTable = ({
                     </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
-                    {user.country || 'Not specified'}
+                    {user.level || 'Not specified'}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
-                    {user.email}
+                    {user.style || 'Not specified'}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm">
+                    {user.phone_number || 'No phone'}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right">
                     <DropdownMenu>
@@ -132,7 +127,7 @@ export const UserTable = ({
             })
           ) : (
             <tr>
-              <td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">
+              <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
                 No users found matching your filters.
               </td>
             </tr>

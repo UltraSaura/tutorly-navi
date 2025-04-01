@@ -34,6 +34,8 @@ export interface User {
   last_name?: string | null;
   country?: string | null;
   phone_number?: string | null;
+  level?: string | null;
+  style?: string | null;
   user_type: 'student' | 'parent';
   created_at: string;
   updated_at: string;
