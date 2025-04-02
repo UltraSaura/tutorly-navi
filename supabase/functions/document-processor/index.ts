@@ -8,25 +8,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Get the OpenAI API key from environment variables
+// Get API keys from environment variables
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
 
-// Extract text from an image using OpenAI's GPT-4 Vision
+// Extract text from an image using DeepSeek-VL2
 async function extractTextFromImage(imageUrl: string): Promise<string> {
-  if (!openAIApiKey) {
-    console.error("OpenAI API key not configured");
-    return "Error: OpenAI API key not configured for image extraction.";
+  if (!deepseekApiKey) {
+    console.error("DeepSeek API key not configured");
+    return "Error: DeepSeek API key not configured for image extraction.";
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${deepseekApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "deepseek-vl",
         messages: [
           {
             role: "system",
@@ -45,27 +46,31 @@ async function extractTextFromImage(imageUrl: string): Promise<string> {
 
     const data = await response.json();
     if (data.error) {
-      console.error("OpenAI API error:", data.error);
+      console.error("DeepSeek API error:", data.error);
       return `Error extracting text from image: ${data.error.message}`;
     }
 
     return data.choices[0].message.content;
   } catch (error) {
-    console.error("Error in OpenAI image extraction:", error);
+    console.error("Error in DeepSeek image extraction:", error);
+    
+    // Fallback to OpenAI if DeepSeek fails
+    if (openAIApiKey) {
+      console.log("Falling back to OpenAI for image extraction");
+      return await extractTextFromImageWithOpenAI(imageUrl);
+    }
+    
     return `Error extracting text from image: ${error.message}`;
   }
 }
 
-// Extract text from a PDF using OpenAI
-async function extractTextFromPDF(pdfUrl: string): Promise<string> {
+// Fallback function using OpenAI if DeepSeek fails
+async function extractTextFromImageWithOpenAI(imageUrl: string): Promise<string> {
   if (!openAIApiKey) {
-    console.error("OpenAI API key not configured");
-    return "Error: OpenAI API key not configured for PDF extraction.";
+    return "Error: OpenAI API key not configured for fallback image extraction.";
   }
 
   try {
-    // For PDFs, we'll use GPT-4 Vision to analyze the PDF as an image
-    // This is a simplification - in production you'd want to use a PDF parser
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -74,6 +79,51 @@ async function extractTextFromPDF(pdfUrl: string): Promise<string> {
       },
       body: JSON.stringify({
         model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an OCR system. Extract all text content from the image, preserving format and structure."
+          },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Extract all text from this image:" },
+              { type: "image_url", image_url: { url: imageUrl } }
+            ]
+          }
+        ]
+      }),
+    });
+
+    const data = await response.json();
+    if (data.error) {
+      console.error("OpenAI API error:", data.error);
+      return `Error extracting text from image: ${data.error.message}`;
+    }
+
+    return data.choices[0].message.content;
+  } catch (error) {
+    console.error("Error in OpenAI fallback image extraction:", error);
+    return `Error extracting text from image: ${error.message}`;
+  }
+}
+
+// Extract text from a PDF using DeepSeek-VL2
+async function extractTextFromPDF(pdfUrl: string): Promise<string> {
+  if (!deepseekApiKey) {
+    console.error("DeepSeek API key not configured");
+    return "Error: DeepSeek API key not configured for PDF extraction.";
+  }
+
+  try {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${deepseekApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: "deepseek-vl",
         messages: [
           {
             role: "system",
@@ -92,13 +142,64 @@ async function extractTextFromPDF(pdfUrl: string): Promise<string> {
 
     const data = await response.json();
     if (data.error) {
+      console.error("DeepSeek API error:", data.error);
+      return `Error extracting text from PDF: ${data.error.message}`;
+    }
+
+    return data.choices[0].message.content;
+  } catch (error) {
+    console.error("Error in DeepSeek PDF extraction:", error);
+    
+    // Fallback to OpenAI if DeepSeek fails
+    if (openAIApiKey) {
+      console.log("Falling back to OpenAI for PDF extraction");
+      return await extractTextFromPDFWithOpenAI(pdfUrl);
+    }
+    
+    return `Error extracting text from PDF: ${error.message}`;
+  }
+}
+
+// Fallback function using OpenAI if DeepSeek fails
+async function extractTextFromPDFWithOpenAI(pdfUrl: string): Promise<string> {
+  if (!openAIApiKey) {
+    return "Error: OpenAI API key not configured for fallback PDF extraction.";
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a PDF text extractor. Extract all text content from the PDF, preserving format and structure."
+          },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Extract all text from this PDF:" },
+              { type: "image_url", image_url: { url: pdfUrl } }
+            ]
+          }
+        ]
+      }),
+    });
+
+    const data = await response.json();
+    if (data.error) {
       console.error("OpenAI API error:", data.error);
       return `Error extracting text from PDF: ${data.error.message}`;
     }
 
     return data.choices[0].message.content;
   } catch (error) {
-    console.error("Error in OpenAI PDF extraction:", error);
+    console.error("Error in OpenAI fallback PDF extraction:", error);
     return `Error extracting text from PDF: ${error.message}`;
   }
 }
@@ -114,8 +215,7 @@ async function extractTextFromFile(fileUrl: string, fileType: string): Promise<s
     } else if (fileType.includes('image')) {
       return await extractTextFromImage(fileUrl);
     } else if (fileType.includes('word') || fileType.includes('docx') || fileType.includes('text')) {
-      // For Word and text documents, we'll also use GPT-4 Vision as a simplified approach
-      // In production, you'd want to use a dedicated Word/docx parser
+      // For Word and text documents, we'll also use DeepSeek-VL as a simplified approach
       return await extractTextFromPDF(fileUrl);
     } else {
       // For unrecognized types, we'll try the image extractor as fallback
@@ -127,7 +227,135 @@ async function extractTextFromFile(fileUrl: string, fileType: string): Promise<s
   }
 }
 
-// Extract exercises from document text
+// Use DeepSeek Chat to extract exercises from unstructured text
+async function extractExercisesWithAI(text: string): Promise<Array<{ question: string, answer: string }>> {
+  if (!deepseekApiKey) {
+    console.error("DeepSeek API key not configured");
+    
+    // Fallback to OpenAI if DeepSeek is not available
+    if (openAIApiKey) {
+      console.log("Falling back to OpenAI for exercise extraction");
+      return await extractExercisesWithOpenAI(text);
+    }
+    
+    return [];
+  }
+
+  try {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${deepseekApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [
+          {
+            role: "system",
+            content: "You are an exercise extractor. Your task is to identify exercises, problems, questions and their answers or solutions from the provided text. Format your response as a JSON array with objects containing 'question' and 'answer' properties. If no clear exercises are found, make your best effort to structure the content as exercises."
+          },
+          {
+            role: "user",
+            content: text
+          }
+        ],
+        response_format: { type: "json_object" }
+      }),
+    });
+
+    const data = await response.json();
+    if (data.error) {
+      console.error("DeepSeek API error:", data.error);
+      return [];
+    }
+
+    // Parse the JSON response
+    try {
+      const content = data.choices[0].message.content;
+      const parsed = JSON.parse(content);
+      
+      if (parsed.exercises && Array.isArray(parsed.exercises)) {
+        return parsed.exercises;
+      } else {
+        console.error("Unexpected format from AI extraction:", parsed);
+        return [];
+      }
+    } catch (parseError) {
+      console.error("Error parsing DeepSeek extraction result:", parseError, data.choices[0].message.content);
+      return [];
+    }
+  } catch (error) {
+    console.error("Error in DeepSeek extraction:", error);
+    
+    // Fallback to OpenAI if DeepSeek fails
+    if (openAIApiKey) {
+      console.log("Falling back to OpenAI for exercise extraction");
+      return await extractExercisesWithOpenAI(text);
+    }
+    
+    return [];
+  }
+}
+
+// Fallback function using OpenAI if DeepSeek fails
+async function extractExercisesWithOpenAI(text: string): Promise<Array<{ question: string, answer: string }>> {
+  if (!openAIApiKey) {
+    console.error("OpenAI API key not configured for fallback");
+    return [];
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are an exercise extractor. Your task is to identify exercises, problems, questions and their answers or solutions from the provided text. Format your response as a JSON array with objects containing 'question' and 'answer' properties. If no clear exercises are found, make your best effort to structure the content as exercises."
+          },
+          {
+            role: "user",
+            content: text
+          }
+        ],
+        response_format: { type: "json_object" }
+      }),
+    });
+
+    const data = await response.json();
+    if (data.error) {
+      console.error("OpenAI API error:", data.error);
+      return [];
+    }
+
+    // Parse the JSON response
+    try {
+      const content = data.choices[0].message.content;
+      const parsed = JSON.parse(content);
+      
+      if (parsed.exercises && Array.isArray(parsed.exercises)) {
+        return parsed.exercises;
+      } else {
+        console.error("Unexpected format from AI extraction:", parsed);
+        return [];
+      }
+    } catch (parseError) {
+      console.error("Error parsing OpenAI extraction result:", parseError, data.choices[0].message.content);
+      return [];
+    }
+  } catch (error) {
+    console.error("Error in OpenAI extraction:", error);
+    return [];
+  }
+}
+
+// Extract exercises from document text using pattern matching
 function extractExercisesFromText(text: string): Array<{ question: string, answer: string }> {
   const exercises = [];
   
@@ -247,7 +475,7 @@ serve(async (req) => {
     
     console.log(`Processing document: ${fileName} (${fileType})`);
     
-    // Extract text from the document
+    // Extract text from the document using DeepSeek-VL2
     const extractedText = await extractTextFromFile(fileUrl, fileType);
     console.log(`Extracted text length: ${extractedText.length} characters`);
     
@@ -255,8 +483,8 @@ serve(async (req) => {
     let exercises = extractExercisesFromText(extractedText);
     
     // If pattern matching found fewer than 2 exercises and the text is substantial,
-    // try using AI to extract exercises
-    if (exercises.length < 2 && extractedText.length > 50 && openAIApiKey) {
+    // try using DeepSeek Chat to extract exercises
+    if (exercises.length < 2 && extractedText.length > 50) {
       console.log("Using AI to extract exercises from unstructured text");
       const aiExercises = await extractExercisesWithAI(extractedText);
       
