@@ -25,6 +25,40 @@ export const useExercises = () => {
     ));
   };
   
+  // Function to directly add pre-processed exercises
+  const addExercises = async (newExercises: Exercise[]) => {
+    try {
+      // Filter out any duplicates based on question + answer
+      const uniqueExercises = newExercises.filter(newEx => 
+        !exercises.some(
+          ex => ex.question === newEx.question && ex.userAnswer === newEx.userAnswer
+        )
+      );
+      
+      if (uniqueExercises.length === 0) {
+        console.log("No new unique exercises to add");
+        return;
+      }
+      
+      // Add all unique exercises to the list
+      setExercises(prev => [...prev, ...uniqueExercises]);
+      
+      // Mark these as processed
+      uniqueExercises.forEach(ex => {
+        const content = `${ex.question}:${ex.userAnswer}`;
+        setProcessedContent(prev => new Set([...prev, content]));
+      });
+      
+      // Update the overall grade calculation
+      updateGrades();
+      
+      console.log(`Added ${uniqueExercises.length} new exercises`);
+    } catch (error) {
+      console.error('Error adding exercises:', error);
+      toast.error('Error adding exercises');
+    }
+  };
+  
   // Function to process homework submitted directly via chat
   const processHomeworkFromChat = async (message: string) => {
     try {
@@ -174,6 +208,7 @@ export const useExercises = () => {
     toggleExerciseExpansion,
     createExerciseFromAI,
     processHomeworkFromChat,
-    linkAIResponseToExercise
+    linkAIResponseToExercise,
+    addExercises
   };
 };

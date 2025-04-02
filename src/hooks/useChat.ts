@@ -96,24 +96,28 @@ export const useChat = () => {
     }
   };
   
-  // We'll use the imported processHomeworkFromChat but it will be passed during ChatInterface initialization
-  let processHomeworkFn: ((content: string) => Promise<void>) | undefined;
-  
-  // Using the extracted file handlers with the required state and homework processor
-  const handleDocumentUpload = (file: File, homeworkProcessor?: (content: string) => Promise<void>) => {
-    // Store the processor for later use
-    if (homeworkProcessor) {
-      processHomeworkFn = homeworkProcessor;
-    }
-    handleFileUpload(file, messages, setMessages, setIsLoading, processHomeworkFn);
+  // Handle document upload with exercise processor
+  const handleDocumentUpload = (file: File, addExercises?: (exercises: any[]) => Promise<void>) => {
+    handleFileUpload(
+      file, 
+      messages, 
+      setMessages, 
+      setIsLoading, 
+      undefined, // No longer need processHomeworkFromChat as primary processor
+      addExercises // Pass the exercise processor directly
+    );
   };
   
-  const handleImageUpload = (file: File, homeworkProcessor?: (content: string) => Promise<void>) => {
-    // Store the processor for later use
-    if (homeworkProcessor) {
-      processHomeworkFn = homeworkProcessor;
-    }
-    handlePhotoUpload(file, messages, setMessages, setIsLoading, processHomeworkFn);
+  // Handle image upload with exercise processor
+  const handleImageUpload = (file: File, addExercises?: (exercises: any[]) => Promise<void>) => {
+    handlePhotoUpload(
+      file, 
+      messages, 
+      setMessages, 
+      setIsLoading, 
+      undefined, // No longer need processHomeworkFromChat as primary processor
+      addExercises // Pass the exercise processor directly
+    );
   };
   
   return {

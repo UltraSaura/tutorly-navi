@@ -30,7 +30,8 @@ const ChatInterface = () => {
     toggleExerciseExpansion,
     createExerciseFromAI,
     processHomeworkFromChat,
-    linkAIResponseToExercise
+    linkAIResponseToExercise,
+    addExercises
   } = useExercises();
 
   // Track processed message IDs to prevent duplication
@@ -82,11 +83,11 @@ const ChatInterface = () => {
   
   // Create wrappers for the file upload handlers to pass the homework processor function
   const handleDocumentFileUpload = (file: File) => {
-    handleFileUpload(file, processHomeworkFromChat);
+    handleFileUpload(file, addExercises);
   };
   
   const handlePhotoFileUpload = (file: File) => {
-    handlePhotoUpload(file, processHomeworkFromChat);
+    handlePhotoUpload(file, addExercises);
   };
   
   return (

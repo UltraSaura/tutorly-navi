@@ -3,6 +3,7 @@ import { Message } from '@/types/chat';
 import { toast } from 'sonner';
 import { extractHomeworkFromMessage } from '@/utils/homeworkExtraction';
 import { evaluateHomework } from '@/services/homeworkGrading';
+import { processUploadedDocument, gradeDocumentExercises } from '@/utils/documentProcessor';
 
 /**
  * Handles document file uploads in the chat
@@ -12,7 +13,8 @@ export const handleFileUpload = async (
   messages: Message[],
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  processHomeworkFromChat?: (content: string) => Promise<void>
+  processHomeworkFromChat?: (content: string) => Promise<void>,
+  addExercises?: (exercises: any[]) => Promise<void>
 ) => {
   // Create a temporary URL for the file
   const fileUrl = URL.createObjectURL(file);
@@ -31,37 +33,62 @@ export const handleFileUpload = async (
   setIsLoading(true);
   
   try {
-    // Automatically treat document uploads as homework if we have a processor
-    if (processHomeworkFromChat) {
-      // For PDF, Word, etc. we'll treat the upload itself as a homework submission
-      // with a placeholder structure until we can extract text (future enhancement)
-      const homeworkContent = `Problem: ${file.name}\nAnswer: Document submitted for review`;
-      await processHomeworkFromChat(homeworkContent);
-    }
+    // Process the document to extract exercises
+    const processingResult = await processUploadedDocument(file, fileUrl);
     
-    // Call AI model with the document info
-    setTimeout(async () => {
-      try {
-        // Here we would process the document with the AI
-        // For now using a simulated response
-        const aiResponse: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `I've received your document "${file.name}" and processed it as homework. It has been added to your graded exercises. Would you like me to provide more detailed feedback on the content?`,
-          timestamp: new Date(),
-        };
-        
-        setMessages(prev => [...prev, aiResponse]);
-      } catch (error) {
-        console.error('Error processing document:', error);
-        toast.error('Failed to process document');
-      } finally {
-        setIsLoading(false);
+    if (processingResult && processingResult.exercises.length > 0) {
+      // Grade the extracted exercises
+      const gradedExercises = await gradeDocumentExercises(processingResult.exercises);
+      
+      // Add the exercises to the exercise list if the handler is provided
+      if (addExercises) {
+        await addExercises(gradedExercises);
       }
-    }, 2000);
+      
+      // Create a summary of the extracted exercises
+      const exerciseCount = gradedExercises.length;
+      const correctCount = gradedExercises.filter(ex => ex.isCorrect).length;
+      
+      // Generate AI response with the results
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `I've processed your document "${file.name}" and extracted ${exerciseCount} exercises. ${correctCount} of them are correct. You can view them in the Graded Homework section.${processingResult.rawText ? '\n\nHere\'s what I found in your document:\n\n```\n' + processingResult.rawText + '\n```' : ''}`,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, aiResponse]);
+      toast.success(`Processed ${exerciseCount} exercises from your document`);
+    } else {
+      // Fallback to the old method if document processing failed
+      if (processHomeworkFromChat) {
+        const homeworkContent = `Problem: ${file.name}\nAnswer: Document submitted for review`;
+        await processHomeworkFromChat(homeworkContent);
+      }
+      
+      // Call AI model with the document info
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `I've received your document "${file.name}" but couldn't extract specific exercises. It has been added as a general submission to your graded exercises.`,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, aiResponse]);
+    }
   } catch (error) {
-    console.error('Error processing homework from document:', error);
-    toast.error('Failed to process document as homework');
+    console.error('Error processing document:', error);
+    toast.error('Failed to process document');
+    
+    const aiResponse: Message = {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content: `I had trouble processing your document "${file.name}". Please try again or submit your exercises in text format.`,
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, aiResponse]);
+  } finally {
     setIsLoading(false);
   }
 };
@@ -74,7 +101,8 @@ export const handlePhotoUpload = async (
   messages: Message[],
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  processHomeworkFromChat?: (content: string) => Promise<void>
+  processHomeworkFromChat?: (content: string) => Promise<void>,
+  addExercises?: (exercises: any[]) => Promise<void>
 ) => {
   // Create a temporary URL for the image
   const imageUrl = URL.createObjectURL(file);
@@ -93,37 +121,62 @@ export const handlePhotoUpload = async (
   setIsLoading(true);
   
   try {
-    // Automatically treat image uploads as homework if we have a processor
-    if (processHomeworkFromChat) {
-      // For images, we'll treat it as a homework submission with a placeholder
-      // until we can implement OCR (future enhancement)
-      const homeworkContent = `Problem: ${file.name}\nAnswer: Image submitted for review`;
-      await processHomeworkFromChat(homeworkContent);
-    }
+    // Process the image to extract exercises (using the same document processor)
+    const processingResult = await processUploadedDocument(file, imageUrl);
     
-    // Call AI model with the image info
-    setTimeout(async () => {
-      try {
-        // Here we would process the image with the AI
-        // For now using a simulated response
-        const aiResponse: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `I've received your image and processed it as homework. I've added it to your graded exercises. In the future, I'll be able to extract the text content using OCR for more detailed feedback.`,
-          timestamp: new Date(),
-        };
-        
-        setMessages(prev => [...prev, aiResponse]);
-      } catch (error) {
-        console.error('Error processing image:', error);
-        toast.error('Failed to process image');
-      } finally {
-        setIsLoading(false);
+    if (processingResult && processingResult.exercises.length > 0) {
+      // Grade the extracted exercises
+      const gradedExercises = await gradeDocumentExercises(processingResult.exercises);
+      
+      // Add the exercises to the exercise list if the handler is provided
+      if (addExercises) {
+        await addExercises(gradedExercises);
       }
-    }, 2500);
+      
+      // Create a summary of the extracted exercises
+      const exerciseCount = gradedExercises.length;
+      const correctCount = gradedExercises.filter(ex => ex.isCorrect).length;
+      
+      // Generate AI response with the results
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `I've processed your image and extracted ${exerciseCount} exercises. ${correctCount} of them are correct. You can view them in the Graded Homework section.${processingResult.rawText ? '\n\nHere\'s what I found in your image:\n\n```\n' + processingResult.rawText + '\n```' : ''}`,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, aiResponse]);
+      toast.success(`Processed ${exerciseCount} exercises from your image`);
+    } else {
+      // Fallback to the old method if image processing failed
+      if (processHomeworkFromChat) {
+        const homeworkContent = `Problem: ${file.name}\nAnswer: Image submitted for review`;
+        await processHomeworkFromChat(homeworkContent);
+      }
+      
+      // Call AI model with the image info
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `I've received your image but couldn't extract specific exercises. It has been added as a general submission to your graded exercises. In the future, I'll be able to extract the text content better.`,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, aiResponse]);
+    }
   } catch (error) {
-    console.error('Error processing homework from image:', error);
-    toast.error('Failed to process image as homework');
+    console.error('Error processing image:', error);
+    toast.error('Failed to process image');
+    
+    const aiResponse: Message = {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      content: `I had trouble processing your image. Please try again or submit your exercises in text format.`,
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, aiResponse]);
+  } finally {
     setIsLoading(false);
   }
 };
