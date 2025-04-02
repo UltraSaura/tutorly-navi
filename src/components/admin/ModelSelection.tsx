@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Check, Info, ThumbsUp, Zap, BrainCircuit, Activity, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAdmin } from '@/context/AdminContext';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,16 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 
 const ModelSelection = () => {
   const { getAvailableModels, selectedModelId, setSelectedModelId } = useAdmin();
-  const models = getAvailableModels();
+  const unsortedModels = getAvailableModels();
+  
+  // Sort models to put the selected model first
+  const models = useMemo(() => {
+    return [...unsortedModels].sort((a, b) => {
+      if (a.id === selectedModelId) return -1;
+      if (b.id === selectedModelId) return 1;
+      return 0;
+    });
+  }, [unsortedModels, selectedModelId]);
   
   // State to track which model details are expanded - initialize all to false
   const [expandedModels, setExpandedModels] = useState<Record<string, boolean>>(
