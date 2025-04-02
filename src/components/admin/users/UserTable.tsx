@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { MoreHorizontal, ChevronLeft, ChevronRight, GraduationCap, UsersRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -37,15 +38,18 @@ export const UserTable = ({
   };
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-x-auto">
       <table className="min-w-full divide-y divide-border">
         <thead>
           <tr className="bg-muted/50">
             <th className="px-4 py-3.5 text-left text-sm font-semibold">User</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">Name</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">Email</th>
             <th className="px-4 py-3.5 text-left text-sm font-semibold">Type</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">Phone</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">Country</th>
             <th className="px-4 py-3.5 text-left text-sm font-semibold">Level</th>
             <th className="px-4 py-3.5 text-left text-sm font-semibold">Style</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">Contact</th>
             <th className="px-4 py-3.5 text-right text-sm font-semibold"></th>
           </tr>
         </thead>
@@ -70,13 +74,13 @@ export const UserTable = ({
                         <AvatarImage src={`https://avatar.vercel.sh/${user.id}`} alt={displayName} />
                         <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <div>
-                        <div className="font-medium">{displayName}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {user.country || 'No country'}
-                        </div>
-                      </div>
                     </div>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="font-medium">{user.first_name || 'Not set'}</div>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm">
+                    {user.email}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center">
@@ -85,13 +89,16 @@ export const UserTable = ({
                     </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
-                    {user.level || 'Not specified'}
+                    {user.phone_number || 'Not set'}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
-                    {user.style || 'Not specified'}
+                    {user.country || 'Not set'}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
-                    {user.phone_number || 'No phone'}
+                    {user.level || 'Not set'}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm">
+                    {user.style || 'Not set'}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right">
                     <DropdownMenu>
@@ -127,7 +134,7 @@ export const UserTable = ({
             })
           ) : (
             <tr>
-              <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
+              <td colSpan={9} className="px-4 py-6 text-center text-muted-foreground">
                 No users found matching your filters.
               </td>
             </tr>

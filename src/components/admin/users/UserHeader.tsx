@@ -40,7 +40,7 @@ export const UserHeader = ({ user }: UserHeaderProps) => {
               ? `${user.first_name} ${user.last_name}`
               : generateNameFromEmail(user.email)}
           </CardTitle>
-          <CardDescription>{user.email}</CardDescription>
+          <CardDescription className="text-sm font-medium">{user.email}</CardDescription>
         </div>
       </div>
       <div className="flex flex-col items-end gap-2">
