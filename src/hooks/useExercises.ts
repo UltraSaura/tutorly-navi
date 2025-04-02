@@ -34,8 +34,23 @@ export const useExercises = () => {
         return;
       }
       
-      // Extract the exercise question and user's answer
-      const { question, answer } = extractHomeworkFromMessage(message);
+      // Check if this is a file upload message (special handling)
+      const isFileUpload = message.startsWith('Problem:') && message.includes('Answer: Document submitted for review') ||
+                         message.includes('Answer: Image submitted for review');
+      
+      let question, answer;
+      
+      if (isFileUpload) {
+        // For file uploads, split the message manually
+        const parts = message.split('\n');
+        question = parts[0].replace('Problem:', '').trim();
+        answer = parts[1].replace('Answer:', '').trim();
+      } else {
+        // For regular text, use the normal extraction
+        const extracted = extractHomeworkFromMessage(message);
+        question = extracted.question;
+        answer = extracted.answer;
+      }
       
       if (!question || !answer) {
         console.log("Couldn't extract homework components from the message");

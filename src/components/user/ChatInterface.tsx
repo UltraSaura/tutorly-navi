@@ -80,6 +80,15 @@ const ChatInterface = () => {
     }
   }, [messages, processedMessageIds]);
   
+  // Create wrappers for the file upload handlers to pass the homework processor function
+  const handleDocumentFileUpload = (file: File) => {
+    handleFileUpload(file, processHomeworkFromChat);
+  };
+  
+  const handlePhotoFileUpload = (file: File) => {
+    handlePhotoUpload(file, processHomeworkFromChat);
+  };
+  
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-6rem)] gap-4">
       <ChatPanel 
@@ -88,8 +97,8 @@ const ChatInterface = () => {
         inputMessage={inputMessage}
         setInputMessage={setInputMessage}
         handleSendMessage={handleSendMessage}
-        handleFileUpload={handleFileUpload}
-        handlePhotoUpload={handlePhotoUpload}
+        handleFileUpload={handleDocumentFileUpload}
+        handlePhotoUpload={handlePhotoFileUpload}
         activeModel={activeModel}
       />
       

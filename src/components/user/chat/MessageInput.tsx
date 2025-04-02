@@ -70,7 +70,7 @@ const MessageInput = ({
         handlePhotoUpload(file);
         toast({
           title: "Photo uploaded",
-          description: "Your photo has been uploaded successfully.",
+          description: "Your photo has been uploaded and will be processed as homework.",
         });
       } else {
         // For documents, check that it's a valid type
@@ -85,8 +85,8 @@ const MessageInput = ({
         }
         handleFileUpload(file);
         toast({
-          title: "File uploaded",
-          description: `${file.name} has been uploaded successfully.`,
+          title: "Document uploaded",
+          description: `${file.name} has been uploaded and will be processed as homework.`,
         });
       }
       
