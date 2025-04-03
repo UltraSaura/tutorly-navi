@@ -24,6 +24,7 @@ const ApiKeyManagement = lazy(() => import("./components/admin/ApiKeyManagement"
 const ModelSelection = lazy(() => import("./components/admin/ModelSelection"));
 const SystemPromptConfig = lazy(() => import("./components/admin/SystemPromptConfig"));
 const UserManagement = lazy(() => import("./components/admin/UserManagement"));
+const SubjectManagement = lazy(() => import("./components/admin/SubjectManagement"));
 
 // Loading Component
 const LoadingFallback = () => (
@@ -63,6 +64,7 @@ const App = () => (
                   <Route index element={<ApiKeyManagement />} />
                   <Route path="api-keys" element={<ApiKeyManagement />} />
                   <Route path="models" element={<ModelSelection />} />
+                  <Route path="subjects" element={<SubjectManagement />} />
                   <Route path="prompts" element={<SystemPromptConfig />} />
                   <Route path="users" element={<UserManagement />} />
                 </Route>

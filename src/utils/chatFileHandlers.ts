@@ -1,4 +1,3 @@
-
 import { Message } from '@/types/chat';
 import { toast } from 'sonner';
 import { extractHomeworkFromMessage } from '@/utils/homeworkExtraction';
@@ -14,7 +13,8 @@ export const handleFileUpload = async (
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   processHomeworkFromChat?: (content: string) => Promise<void>,
-  addExercises?: (exercises: any[]) => Promise<void>
+  addExercises?: (exercises: any[]) => Promise<void>,
+  subjectId?: string
 ) => {
   // Create a temporary URL for the file
   const fileUrl = URL.createObjectURL(file);
@@ -33,8 +33,8 @@ export const handleFileUpload = async (
   setIsLoading(true);
   
   try {
-    // Process the document to extract exercises
-    const processingResult = await processUploadedDocument(file, fileUrl);
+    // Process the document to extract exercises with subject ID
+    const processingResult = await processUploadedDocument(file, fileUrl, subjectId);
     
     if (processingResult && processingResult.exercises.length > 0) {
       // Grade the extracted exercises
@@ -102,7 +102,8 @@ export const handlePhotoUpload = async (
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   processHomeworkFromChat?: (content: string) => Promise<void>,
-  addExercises?: (exercises: any[]) => Promise<void>
+  addExercises?: (exercises: any[]) => Promise<void>,
+  subjectId?: string
 ) => {
   // Create a temporary URL for the image
   const imageUrl = URL.createObjectURL(file);
@@ -121,8 +122,8 @@ export const handlePhotoUpload = async (
   setIsLoading(true);
   
   try {
-    // Process the image to extract exercises (using the same document processor)
-    const processingResult = await processUploadedDocument(file, imageUrl);
+    // Process the image to extract exercises with subject ID
+    const processingResult = await processUploadedDocument(file, imageUrl, subjectId);
     
     if (processingResult && processingResult.exercises.length > 0) {
       // Grade the extracted exercises

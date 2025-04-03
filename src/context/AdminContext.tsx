@@ -1,9 +1,22 @@
-
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
-import { ApiKey, ModelOption } from '@/types/admin';
+import { ApiKey, ModelOption, Subject } from '@/types/admin';
 import { AdminContextType } from './AdminContextType';
 import { DEFAULT_API_KEYS, AVAILABLE_MODELS } from '@/data/adminDefaults';
+
+// Default subjects
+const DEFAULT_SUBJECTS: Subject[] = [
+  { id: 'math', name: 'Mathematics', active: true, icon: 'calculator' },
+  { id: 'physics', name: 'Physics', active: true, icon: 'atom' },
+  { id: 'chemistry', name: 'Chemistry', active: true, icon: 'flask-conical' },
+  { id: 'biology', name: 'Biology', active: true, icon: 'dna' },
+  { id: 'english', name: 'English', active: true, icon: 'book-open' },
+  { id: 'history', name: 'History', active: true, icon: 'landmark' },
+  { id: 'geography', name: 'Geography', active: true, icon: 'globe' },
+  { id: 'french', name: 'French', active: true, icon: 'languages' },
+  { id: 'spanish', name: 'Spanish', active: true, icon: 'languages' },
+  { id: 'computer-science', name: 'Computer Science', active: true, icon: 'code' }
+];
 
 // Create context
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -28,6 +41,12 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     return savedModel || 'gpt4o';
   });
 
+  // State for subjects
+  const [subjects, setSubjects] = useState<Subject[]>(() => {
+    const savedSubjects = localStorage.getItem('subjects');
+    return savedSubjects ? JSON.parse(savedSubjects) : DEFAULT_SUBJECTS;
+  });
+
   // Save API keys to localStorage when they change
   useEffect(() => {
     localStorage.setItem('apiKeys', JSON.stringify(apiKeys));
@@ -37,6 +56,11 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     localStorage.setItem('selectedModelId', selectedModelId);
   }, [selectedModelId]);
+
+  // Save subjects to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('subjects', JSON.stringify(subjects));
+  }, [subjects]);
 
   // Add a new API key
   const addApiKey = (key: Omit<ApiKey, 'id' | 'createdAt'>) => {
@@ -95,6 +119,44 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  // Subject management functions
+  const addSubject = (subject: Omit<Subject, 'id'>) => {
+    const newSubject: Subject = {
+      ...subject,
+      id: subject.name.toLowerCase().replace(/\s+/g, '-'),
+    };
+    
+    setSubjects([...subjects, newSubject]);
+    toast.success(`Subject ${subject.name} added successfully`);
+  };
+
+  const updateSubject = (id: string, updates: Partial<Subject>) => {
+    setSubjects(subjects.map(subject => 
+      subject.id === id ? { ...subject, ...updates } : subject
+    ));
+    toast.success(`Subject updated successfully`);
+  };
+
+  const deleteSubject = (id: string) => {
+    setSubjects(subjects.filter(subject => subject.id !== id));
+    toast.success(`Subject deleted successfully`);
+  };
+
+  const toggleSubjectActive = (id: string) => {
+    setSubjects(subjects.map(subject => 
+      subject.id === id ? { ...subject, active: !subject.active } : subject
+    ));
+    
+    const subject = subjects.find(s => s.id === id);
+    if (subject) {
+      toast.success(`${subject.name} is now ${!subject.active ? 'active' : 'inactive'}`);
+    }
+  };
+
+  const getActiveSubjects = () => {
+    return subjects.filter(subject => subject.active);
+  };
+
   return (
     <AdminContext.Provider value={{ 
       apiKeys, 
@@ -103,7 +165,13 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       testApiKeyConnection,
       selectedModelId,
       setSelectedModelId,
-      getAvailableModels
+      getAvailableModels,
+      subjects,
+      addSubject,
+      updateSubject,
+      deleteSubject,
+      toggleSubjectActive,
+      getActiveSubjects
     }}>
       {children}
     </AdminContext.Provider>
@@ -120,4 +188,4 @@ export const useAdmin = () => {
 };
 
 // Re-export types for convenience
-export type { ApiKey, ModelOption };
+export type { ApiKey, ModelOption, Subject };

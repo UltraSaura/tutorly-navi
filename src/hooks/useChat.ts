@@ -96,27 +96,37 @@ export const useChat = () => {
     }
   };
   
-  // Handle document upload with exercise processor
-  const handleDocumentUpload = (file: File, addExercises?: (exercises: any[]) => Promise<void>) => {
+  // Handle document upload with exercise processor and subject ID
+  const handleDocumentUpload = (
+    file: File, 
+    addExercises?: (exercises: any[]) => Promise<void>,
+    subjectId?: string
+  ) => {
     handleFileUpload(
       file, 
       messages, 
       setMessages, 
       setIsLoading, 
       undefined, // No longer need processHomeworkFromChat as primary processor
-      addExercises // Pass the exercise processor directly
+      addExercises, // Pass the exercise processor directly
+      subjectId // Pass the subject ID
     );
   };
   
-  // Handle image upload with exercise processor
-  const handleImageUpload = (file: File, addExercises?: (exercises: any[]) => Promise<void>) => {
+  // Handle image upload with exercise processor and subject ID
+  const handleImageUpload = (
+    file: File, 
+    addExercises?: (exercises: any[]) => Promise<void>,
+    subjectId?: string
+  ) => {
     handlePhotoUpload(
       file, 
       messages, 
       setMessages, 
       setIsLoading, 
       undefined, // No longer need processHomeworkFromChat as primary processor
-      addExercises // Pass the exercise processor directly
+      addExercises, // Pass the exercise processor directly
+      subjectId // Pass the subject ID
     );
   };
   

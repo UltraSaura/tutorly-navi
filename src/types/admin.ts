@@ -1,4 +1,3 @@
-
 // Types for the admin section
 export interface ApiKey {
   id: string;
@@ -49,4 +48,13 @@ export interface User {
     progress: number;
   }[];
   children?: User[];
+}
+
+// Define the Subject interface for subject management
+export interface Subject {
+  id: string;
+  name: string;
+  active: boolean;
+  description?: string;
+  icon?: string;
 }

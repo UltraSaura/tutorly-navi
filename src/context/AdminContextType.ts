@@ -1,5 +1,5 @@
 
-import { ApiKey, ModelOption } from '@/types/admin';
+import { ApiKey, ModelOption, Subject } from '@/types/admin';
 
 // Context interface
 export interface AdminContextType {
@@ -10,4 +10,12 @@ export interface AdminContextType {
   selectedModelId: string;
   setSelectedModelId: (id: string) => void;
   getAvailableModels: () => ModelOption[];
+  
+  // Subject management
+  subjects: Subject[];
+  addSubject: (subject: Omit<Subject, 'id'>) => void;
+  updateSubject: (id: string, subject: Partial<Subject>) => void;
+  deleteSubject: (id: string) => void;
+  toggleSubjectActive: (id: string) => void;
+  getActiveSubjects: () => Subject[];
 }

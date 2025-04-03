@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Exercise } from "@/types/chat";
 import { toast } from 'sonner';
+import { useAdmin } from "@/context/AdminContext";
 
 /**
  * Evaluates a homework submission using AI and returns the updated exercise with feedback
@@ -16,6 +17,25 @@ export const evaluateHomework = async (
       return exercise;
     }
     
+    // Skip if subject is deactivated (if we have a subject ID)
+    if (exercise.subjectId) {
+      // Get the subjects from local storage
+      const storedSubjects = localStorage.getItem('subjects');
+      if (storedSubjects) {
+        const subjects = JSON.parse(storedSubjects);
+        const subject = subjects.find((s: any) => s.id === exercise.subjectId);
+        
+        if (subject && !subject.active) {
+          console.log(`Subject ${exercise.subjectId} is deactivated, skipping grading`);
+          return {
+            ...exercise,
+            isCorrect: undefined,
+            explanation: `This exercise cannot be evaluated because the subject "${subject.name}" is currently deactivated.`
+          };
+        }
+      }
+    }
+    
     // Special handling for mathematical expressions
     const isMathProblem = /\d+\s*[\+\-\*\/]\s*\d+/.test(exercise.question);
     let message = "";
@@ -26,12 +46,18 @@ export const evaluateHomework = async (
       message = `I need you to grade this homework. The question is: "${exercise.question}" and the student's answer is: "${exercise.userAnswer}". Please evaluate if it's correct or incorrect, and provide a detailed explanation why. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation.`;
     }
     
+    // If we have a subject ID, include it in the prompt
+    if (exercise.subjectId) {
+      message += ` This is for the subject: ${exercise.subjectId}.`;
+    }
+    
     // Call AI service to evaluate the answer
     const { data, error } = await supabase.functions.invoke('ai-chat', {
       body: {
         message: message,
         modelId: 'gpt4o', // Use a good model for evaluation
         history: [],
+        subjectId: exercise.subjectId // Pass the subject ID if present
       },
     });
     

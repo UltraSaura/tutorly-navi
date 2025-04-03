@@ -9,7 +9,8 @@ import { evaluateHomework } from "@/services/homeworkGrading";
  */
 export const processUploadedDocument = async (
   file: File, 
-  fileUrl: string
+  fileUrl: string,
+  subjectId?: string
 ): Promise<{ exercises: Exercise[], rawText: string } | null> => {
   try {
     // Call the document processor edge function
@@ -17,7 +18,8 @@ export const processUploadedDocument = async (
       body: {
         fileUrl: fileUrl,
         fileType: file.type,
-        fileName: file.name
+        fileName: file.name,
+        subjectId: subjectId // Pass the subject ID if provided
       },
     });
     
@@ -46,7 +48,8 @@ export const processUploadedDocument = async (
       userAnswer: ex.answer,
       expanded: false,
       isCorrect: undefined,
-      explanation: undefined
+      explanation: undefined,
+      subjectId: subjectId // Include subject ID in exercise
     }));
     
     console.log(`Processed ${exercises.length} exercises from document`);

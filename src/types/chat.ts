@@ -1,25 +1,25 @@
 
+// Chat message type
 export interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
-  type?: 'text' | 'file' | 'image';
+  type?: 'text' | 'image' | 'file';
   filename?: string;
   fileUrl?: string;
 }
 
+// Exercise submission type
 export interface Exercise {
   id: string;
   question: string;
-  userAnswer?: string;
+  userAnswer: string;
+  expanded: boolean;
   isCorrect?: boolean;
   explanation?: string;
-  expanded: boolean;
-  relatedMessages?: Message[];
+  subjectId?: string; // Add subject ID to track which subject this exercise belongs to
 }
 
-export interface Grade {
-  percentage: number;
-  letter: string;
-}
+// Chat history type
+export type ChatHistory = Message[];

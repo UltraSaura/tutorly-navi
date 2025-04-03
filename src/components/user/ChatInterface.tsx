@@ -5,6 +5,7 @@ import ChatPanel from './chat/ChatPanel';
 import ExerciseList from './chat/ExerciseList';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
+import { useAdmin } from '@/context/AdminContext';
 import { 
   detectHomeworkInMessage, 
   extractHomeworkFromMessage
@@ -34,8 +35,14 @@ const ChatInterface = () => {
     addExercises
   } = useExercises();
 
+  const { getActiveSubjects } = useAdmin();
+
   // Track processed message IDs to prevent duplication
   const [processedMessageIds, setProcessedMessageIds] = useState<Set<string>>(new Set());
+
+  // Get active subjects
+  const activeSubjects = getActiveSubjects();
+  const defaultSubject = activeSubjects.length > 0 ? activeSubjects[0].id : undefined;
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -81,13 +88,13 @@ const ChatInterface = () => {
     }
   }, [messages, processedMessageIds]);
   
-  // Create wrappers for the file upload handlers to pass the homework processor function
+  // Create wrappers for the file upload handlers to pass the homework processor function and subject ID
   const handleDocumentFileUpload = (file: File) => {
-    handleFileUpload(file, addExercises);
+    handleFileUpload(file, addExercises, defaultSubject);
   };
   
   const handlePhotoFileUpload = (file: File) => {
-    handlePhotoUpload(file, addExercises);
+    handlePhotoUpload(file, addExercises, defaultSubject);
   };
   
   return (
