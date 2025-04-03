@@ -8,7 +8,7 @@ import { toast } from 'sonner';
  */
 export const getMessageHistory = (messages: Message[]) => {
   return messages
-    .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+    .filter(msg => msg.role === 'user' || msg.role === 'assistant' || msg.role === 'system')
     .map(msg => ({
       role: msg.role,
       content: msg.content,

@@ -2,16 +2,7 @@
 import React from 'react';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  type?: 'text' | 'file' | 'image';
-  filename?: string;
-  fileUrl?: string;
-}
+import { Message } from '@/types/chat';
 
 interface ChatPanelProps {
   messages: Message[];
