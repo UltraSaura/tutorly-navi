@@ -1,6 +1,31 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
+/**
+ * Extract text from a document based on file type
+ */
+export async function extractTextFromFile(fileUrl: string, fileType: string): Promise<string> {
+  console.log(`Processing file of type: ${fileType} from URL: ${fileUrl}`);
+
+  try {
+    // Handle different file types using DeepSeek-VL2 for visual content
+    if (fileType.includes('pdf')) {
+      return await extractTextFromPDFWithDeepSeekVL2(fileUrl);
+    } else if (fileType.includes('image')) {
+      return await extractTextWithDeepSeekVL2(fileUrl);
+    } else if (fileType.includes('word') || fileType.includes('docx') || fileType.includes('text')) {
+      // For Word and text documents, we'll also use DeepSeek-VL2 as a simplified approach
+      return await extractTextFromPDFWithDeepSeekVL2(fileUrl);
+    } else {
+      // For unrecognized types, we'll try the image extractor as fallback
+      return await extractTextWithDeepSeekVL2(fileUrl);
+    }
+  } catch (error) {
+    console.error("Error extracting text:", error);
+    return `Error extracting content from file: ${error.message}`;
+  }
+}
+
 // Extract text from an image using DeepSeek-VL2
 export async function extractTextWithDeepSeekVL2(imageUrl: string): Promise<string> {
   const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
