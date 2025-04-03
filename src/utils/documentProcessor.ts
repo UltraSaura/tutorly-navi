@@ -59,26 +59,6 @@ export const processUploadedDocument = async (
 };
 
 /**
- * Determines if an exercise is likely a math problem
- */
-const isMathProblem = (exercise: Exercise): boolean => {
-  // Check if the question contains math operators or equations
-  const mathPatterns = [
-    /\d+\s*[\+\-\*\/]\s*\d+/, // Basic operations with numbers
-    /[0-9]+\s*[×÷\+\-=]\s*[0-9]+/, // More math symbols
-    /\(\s*\d+(\s*[\+\-\*\/]\s*\d+)+\s*\)/, // Parentheses expressions
-    /sqrt|square root|cube|exponent|log|sin|cos|tan|∫|∑|∏|π|θ|∞|≠|≤|≥|±/, // Math terms and symbols
-    /equation|formula|calculate|solve for|simplify|factor|expand/, // Math instruction words
-    /algebra|geometry|calculus|trigonometry|statistics/ // Math subject areas
-  ];
-  
-  if (!exercise.question) return false;
-  
-  // Check if any math pattern matches
-  return mathPatterns.some(pattern => pattern.test(exercise.question.toLowerCase()));
-};
-
-/**
  * Grades all exercises extracted from a document
  */
 export const gradeDocumentExercises = async (exercises: Exercise[]): Promise<Exercise[]> => {
@@ -89,26 +69,8 @@ export const gradeDocumentExercises = async (exercises: Exercise[]): Promise<Exe
     
     console.log(`Grading ${exercises.length} exercises from document`);
     
-    // Partition exercises into math and non-math problems
-    const mathExercises: Exercise[] = [];
-    const nonMathExercises: Exercise[] = [];
-    
-    exercises.forEach(exercise => {
-      if (isMathProblem(exercise)) {
-        mathExercises.push(exercise);
-      } else {
-        nonMathExercises.push(exercise);
-      }
-    });
-    
-    console.log(`Identified ${mathExercises.length} math exercises and ${nonMathExercises.length} non-math exercises`);
-    
-    // Grade each type of exercise with the appropriate model
-    const gradingPromises = [
-      ...mathExercises.map(exercise => evaluateHomework(exercise, 'math')),
-      ...nonMathExercises.map(exercise => evaluateHomework(exercise, 'general'))
-    ];
-    
+    // Grade each exercise
+    const gradingPromises = exercises.map(exercise => evaluateHomework(exercise));
     const gradedExercises = await Promise.all(gradingPromises);
     
     // Check if any exercises were graded (have isCorrect property)
@@ -116,7 +78,7 @@ export const gradeDocumentExercises = async (exercises: Exercise[]): Promise<Exe
     
     if (!anyGraded) {
       console.warn('No exercises were successfully graded');
-      toast.warning('Could not grade exercises. Please check your API key configuration.');
+      toast.warning('Could not grade exercises. Please check your OpenAI API key configuration.');
     }
     
     return gradedExercises;

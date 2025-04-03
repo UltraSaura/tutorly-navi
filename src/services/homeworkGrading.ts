@@ -7,8 +7,7 @@ import { toast } from 'sonner';
  * Evaluates a homework submission using AI and returns the updated exercise with feedback
  */
 export const evaluateHomework = async (
-  exercise: Exercise,
-  exerciseType: 'math' | 'general' = 'general'
+  exercise: Exercise
 ): Promise<Exercise> => {
   try {
     // Skip if missing question or answer
@@ -17,13 +16,8 @@ export const evaluateHomework = async (
       return exercise;
     }
     
-    // Determine if this is a math problem if type wasn't explicitly passed
-    const isMathProblem = exerciseType === 'math' || /\d+\s*[\+\-\*\/]\s*\d+/.test(exercise.question);
-    
-    // Select the appropriate model based on exercise type
-    // Use OpenAI for math problems and DeepSeek for general exercises
-    const modelId = isMathProblem ? 'gpt4o' : 'deepseek-chat';
-    
+    // Special handling for mathematical expressions
+    const isMathProblem = /\d+\s*[\+\-\*\/]\s*\d+/.test(exercise.question);
     let message = "";
     
     if (isMathProblem) {
@@ -36,7 +30,7 @@ export const evaluateHomework = async (
     const { data, error } = await supabase.functions.invoke('ai-chat', {
       body: {
         message: message,
-        modelId: modelId,
+        modelId: 'gpt4o', // Use a good model for evaluation
         history: [],
       },
     });
