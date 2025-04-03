@@ -1,187 +1,73 @@
 
 import { useState } from 'react';
-import { Exercise, Grade, Message } from '@/types/chat';
-import { useToast } from '@/hooks/use-toast';
+import { Exercise, Message } from '@/types/chat';
 import { toast } from 'sonner';
-import { extractHomeworkFromMessage } from '@/utils/homeworkExtraction';
-import { evaluateHomework } from '@/services/homeworkGrading';
-import { calculateGrade } from '@/utils/gradeCalculation';
+import { useGrades } from './useGrades';
+import { processNewExercise, linkMessageToExercise } from '@/utils/exerciseProcessor';
 
 export const useExercises = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
-  const { toast: uiToast } = useToast();
-  
-  const [grade, setGrade] = useState<Grade>({
-    percentage: 0,
-    letter: 'N/A',
-  });
-  
-  // Track processed content to avoid duplicates
+  const { grade, updateGrades } = useGrades();
   const [processedContent, setProcessedContent] = useState<Set<string>>(new Set());
-  
+
   const toggleExerciseExpansion = (id: string) => {
     setExercises(exercises.map(exercise => 
       exercise.id === id ? { ...exercise, expanded: !exercise.expanded } : exercise
     ));
   };
-  
-  // Function to directly add pre-processed exercises
+
   const addExercises = async (newExercises: Exercise[]) => {
     try {
-      // Filter out any duplicates based on question + answer
       const uniqueExercises = newExercises.filter(newEx => 
         !exercises.some(
           ex => ex.question === newEx.question && ex.userAnswer === newEx.userAnswer
         )
       );
-      
+
       if (uniqueExercises.length === 0) {
         console.log("No new unique exercises to add");
         return;
       }
-      
-      // Add all unique exercises to the list
+
       setExercises(prev => [...prev, ...uniqueExercises]);
-      
-      // Mark these as processed
       uniqueExercises.forEach(ex => {
         const content = `${ex.question}:${ex.userAnswer}`;
         setProcessedContent(prev => new Set([...prev, content]));
       });
-      
-      // Update the overall grade calculation
-      updateGrades();
-      
+
+      updateGrades([...exercises, ...uniqueExercises]);
       console.log(`Added ${uniqueExercises.length} new exercises`);
     } catch (error) {
       console.error('Error adding exercises:', error);
       toast.error('Error adding exercises');
     }
   };
-  
-  // Function to process homework submitted directly via chat
+
   const processHomeworkFromChat = async (message: string) => {
-    try {
-      // Check if we've processed this exact content before
-      if (processedContent.has(message)) {
-        console.log("Skipping duplicate homework submission");
-        return;
-      }
-      
-      // Check if this is a file upload message (special handling)
-      const isFileUpload = message.startsWith('Problem:') && message.includes('Answer: Document submitted for review') ||
-                         message.includes('Answer: Image submitted for review');
-      
-      let question, answer;
-      
-      if (isFileUpload) {
-        // For file uploads, split the message manually
-        const parts = message.split('\n');
-        question = parts[0].replace('Problem:', '').trim();
-        answer = parts[1].replace('Answer:', '').trim();
-      } else {
-        // For regular text, use the normal extraction
-        const extracted = extractHomeworkFromMessage(message);
-        question = extracted.question;
-        answer = extracted.answer;
-      }
-      
-      if (!question || !answer) {
-        console.log("Couldn't extract homework components from the message");
-        return;
-      }
-      
-      // Check if we already have this question-answer pair
-      const existingExercise = exercises.find(
-        ex => ex.question === question && ex.userAnswer === answer
-      );
-      
-      if (existingExercise) {
-        console.log("This question-answer pair already exists");
-        return;
-      }
-      
-      // First, create a new exercise
-      const newEx: Exercise = {
-        id: Date.now().toString(),
-        question,
-        userAnswer: answer,
-        expanded: false,
-        relatedMessages: [], // Initialize empty array for related messages
-      };
-      
-      // Add it to the list
-      setExercises(prev => [...prev, newEx]);
-      
-      // Mark this content as processed
+    const newExercise = await processNewExercise(message, exercises, processedContent);
+    
+    if (newExercise) {
+      setExercises(prev => [...prev, newExercise]);
       setProcessedContent(prev => new Set([...prev, message]));
-      
-      // Now evaluate the answer
-      const updatedExercise = await evaluateHomework(newEx);
-      
-      // Update the exercise with the evaluated answer
-      setExercises(prev => prev.map(ex => 
-        ex.id === newEx.id ? updatedExercise : ex
-      ));
-      
-      // Update the overall grade calculation
-      updateGrades();
-      
-    } catch (error) {
-      console.error('Error processing homework:', error);
-      toast.error('There was an issue grading your homework. Please try again.');
+      updateGrades([...exercises, newExercise]);
     }
   };
-  
-  // Function to link AI responses to exercises
+
   const linkAIResponseToExercise = (userMessage: string, aiMessage: Message) => {
-    // Extract the question from the user message
-    const { question } = extractHomeworkFromMessage(userMessage);
-    
-    if (!question) {
-      console.log("Couldn't extract question from user message");
-      return;
+    const updatedExercises = linkMessageToExercise(exercises, userMessage, aiMessage);
+    if (updatedExercises !== exercises) {
+      setExercises(updatedExercises);
     }
-    
-    // Find the corresponding exercise
-    const exerciseIndex = exercises.findIndex(ex => ex.question === question);
-    
-    if (exerciseIndex === -1) {
-      console.log("Couldn't find exercise for this message");
-      return;
-    }
-    
-    // Add the AI message to the exercise's relatedMessages
-    setExercises(prev => {
-      const updatedExercises = [...prev];
-      const exercise = updatedExercises[exerciseIndex];
-      
-      // Initialize relatedMessages if it doesn't exist
-      if (!exercise.relatedMessages) {
-        exercise.relatedMessages = [];
-      }
-      
-      // Add the message if it's not already there
-      if (!exercise.relatedMessages.some(msg => msg.id === aiMessage.id)) {
-        exercise.relatedMessages.push(aiMessage);
-      }
-      
-      return updatedExercises;
-    });
-    
-    console.log(`Linked AI message ${aiMessage.id} to exercise with question "${question}"`);
   };
-  
-  // Function to create exercises from AI responses - used when needed
+
   const createExerciseFromAI = (question: string, explanation: string) => {
-    // Check if we already have this question
     const existingExercise = exercises.find(ex => ex.question === question);
     
     if (existingExercise) {
       console.log("This exercise already exists");
       return existingExercise;
     }
-    
+
     const newEx: Exercise = {
       id: Date.now().toString(),
       question,
@@ -190,19 +76,12 @@ export const useExercises = () => {
       expanded: false,
       relatedMessages: [],
     };
-    
+
     setExercises(prev => [...prev, newEx]);
-    
     toast.info("A new exercise has been added.");
-    
     return newEx;
   };
-  
-  const updateGrades = () => {
-    const newGrade = calculateGrade(exercises);
-    setGrade(newGrade);
-  };
-  
+
   return {
     exercises,
     grade,
