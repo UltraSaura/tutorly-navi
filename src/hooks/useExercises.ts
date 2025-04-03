@@ -185,6 +185,7 @@ export const useExercises = () => {
     const newEx: Exercise = {
       id: Date.now().toString(),
       question,
+      userAnswer: "",
       explanation,
       expanded: false,
       relatedMessages: [],

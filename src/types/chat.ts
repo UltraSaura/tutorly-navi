@@ -18,7 +18,14 @@ export interface Exercise {
   expanded: boolean;
   isCorrect?: boolean;
   explanation?: string;
-  subjectId?: string; // Add subject ID to track which subject this exercise belongs to
+  subjectId?: string;
+  relatedMessages?: Message[]; // Add related messages for AI responses
+}
+
+// Grade type definition
+export interface Grade {
+  percentage: number;
+  letter: string;
 }
 
 // Chat history type
