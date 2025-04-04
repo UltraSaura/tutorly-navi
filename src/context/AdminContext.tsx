@@ -1,3 +1,4 @@
+
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { ApiKey, ModelOption, Subject } from '@/types/admin';
@@ -6,16 +7,16 @@ import { DEFAULT_API_KEYS, AVAILABLE_MODELS } from '@/data/adminDefaults';
 
 // Default subjects
 const DEFAULT_SUBJECTS: Subject[] = [
-  { id: 'math', name: 'Mathematics', active: true, icon: 'calculator' },
-  { id: 'physics', name: 'Physics', active: true, icon: 'atom' },
-  { id: 'chemistry', name: 'Chemistry', active: true, icon: 'flask-conical' },
-  { id: 'biology', name: 'Biology', active: true, icon: 'dna' },
-  { id: 'english', name: 'English', active: true, icon: 'book-open' },
-  { id: 'history', name: 'History', active: true, icon: 'landmark' },
-  { id: 'geography', name: 'Geography', active: true, icon: 'globe' },
-  { id: 'french', name: 'French', active: true, icon: 'languages' },
-  { id: 'spanish', name: 'Spanish', active: true, icon: 'languages' },
-  { id: 'computer-science', name: 'Computer Science', active: true, icon: 'code' }
+  { id: 'math', name: 'Mathematics', active: true, icon: 'calculator', category: 'STEM', order: 0 },
+  { id: 'physics', name: 'Physics', active: true, icon: 'atom', category: 'STEM', order: 1 },
+  { id: 'chemistry', name: 'Chemistry', active: true, icon: 'flask-conical', category: 'STEM', order: 2 },
+  { id: 'biology', name: 'Biology', active: true, icon: 'dna', category: 'STEM', order: 3 },
+  { id: 'english', name: 'English', active: true, icon: 'book-open', category: 'Languages', order: 0 },
+  { id: 'history', name: 'History', active: true, icon: 'landmark', category: 'Humanities', order: 0 },
+  { id: 'geography', name: 'Geography', active: true, icon: 'globe', category: 'Humanities', order: 1 },
+  { id: 'french', name: 'French', active: true, icon: 'languages', category: 'Languages', order: 1 },
+  { id: 'spanish', name: 'Spanish', active: true, icon: 'languages', category: 'Languages', order: 2 },
+  { id: 'computer-science', name: 'Computer Science', active: true, icon: 'code', category: 'STEM', order: 4 }
 ];
 
 // Create context

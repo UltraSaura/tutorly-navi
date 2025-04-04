@@ -1,3 +1,4 @@
+
 // Types for the admin section
 export interface ApiKey {
   id: string;
@@ -57,4 +58,7 @@ export interface Subject {
   active: boolean;
   description?: string;
   icon?: string;
+  category?: string;
+  order?: number;
 }
+
