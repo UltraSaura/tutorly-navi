@@ -34,14 +34,14 @@ const GradeDashboard = () => {
 
       <div className="mb-6">
         <Select
-          value={selectedSubject || ""}
-          onValueChange={(value) => setSelectedSubject(value === "" ? null : value)}
+          value={selectedSubject || "all"}
+          onValueChange={(value) => setSelectedSubject(value === "all" ? null : value)}
         >
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="All Subjects" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Subjects</SelectItem>
+            <SelectItem value="all">All Subjects</SelectItem>
             {subjects.map((subject) => (
               <SelectItem key={subject.id} value={subject.id}>
                 {subject.name}
