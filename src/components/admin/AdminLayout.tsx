@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Link, useLocation } from 'react-router-dom';
-import { Key, Settings, Users, ArrowLeft, MenuIcon, X } from 'lucide-react';
+import { Key, Settings, Users, ArrowLeft, MenuIcon, X, Book } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,11 @@ const AdminLayout = () => {
       title: 'Model Selection',
       path: '/admin/models',
       icon: <Settings className="mr-2 h-5 w-5" />,
+    },
+    {
+      title: 'Subject Management',
+      path: '/admin/subjects',
+      icon: <Book className="mr-2 h-5 w-5" />,
     },
     {
       title: 'System Prompts',
