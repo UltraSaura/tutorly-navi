@@ -60,5 +60,15 @@ export interface Subject {
   icon?: string;
   category?: string;
   order?: number;
+  tutorActive?: boolean; // Whether the subject-specific tutor is active
+  tutorSystemPrompt?: string; // Custom system prompt for the subject tutor
+  tutorModelId?: string; // Model ID to use for this subject's tutor
 }
 
+// Subject tutor settings
+export interface TutorSettings {
+  subjectId: string;
+  systemPrompt: string;
+  modelId: string;
+  active: boolean;
+}

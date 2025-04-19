@@ -9,6 +9,16 @@ export const useExercises = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const { grade, updateGrades } = useGrades();
   const [processedContent, setProcessedContent] = useState<Set<string>>(new Set());
+  
+  // Group exercises by subject
+  const exercisesBySubject = exercises.reduce((acc, exercise) => {
+    const subjectId = exercise.subjectId || 'unclassified';
+    if (!acc[subjectId]) {
+      acc[subjectId] = [];
+    }
+    acc[subjectId].push(exercise);
+    return acc;
+  }, {} as Record<string, Exercise[]>);
 
   const toggleExerciseExpansion = (id: string) => {
     setExercises(exercises.map(exercise => 
@@ -43,8 +53,8 @@ export const useExercises = () => {
     }
   };
 
-  const processHomeworkFromChat = async (message: string) => {
-    const newExercise = await processNewExercise(message, exercises, processedContent);
+  const processHomeworkFromChat = async (message: string, subjectId?: string) => {
+    const newExercise = await processNewExercise(message, exercises, processedContent, subjectId);
     
     if (newExercise) {
       setExercises(prev => [...prev, newExercise]);
@@ -60,7 +70,7 @@ export const useExercises = () => {
     }
   };
 
-  const createExerciseFromAI = (question: string, explanation: string) => {
+  const createExerciseFromAI = (question: string, explanation: string, subjectId?: string) => {
     const existingExercise = exercises.find(ex => ex.question === question);
     
     if (existingExercise) {
@@ -73,6 +83,7 @@ export const useExercises = () => {
       question,
       userAnswer: "",
       explanation,
+      subjectId,
       expanded: false,
       relatedMessages: [],
     };
@@ -82,8 +93,18 @@ export const useExercises = () => {
     return newEx;
   };
 
+  const getExercisesBySubject = (subjectId?: string | null) => {
+    if (!subjectId) {
+      return exercises;
+    }
+    
+    return exercisesBySubject[subjectId] || [];
+  };
+
   return {
     exercises,
+    exercisesBySubject,
+    getExercisesBySubject,
     grade,
     toggleExerciseExpansion,
     createExerciseFromAI,

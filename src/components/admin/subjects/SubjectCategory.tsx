@@ -16,6 +16,7 @@ interface SubjectCategoryProps {
   onDeleteSubject: (id: string) => void;
   onRenameCategory: (oldName: string, newName: string) => void;
   onDeleteCategory: (name: string) => void;
+  onOpenTutorSettings: (subject: Subject) => void;
 }
 
 export const SubjectCategory: React.FC<SubjectCategoryProps> = ({
@@ -24,7 +25,8 @@ export const SubjectCategory: React.FC<SubjectCategoryProps> = ({
   onToggleSubject,
   onDeleteSubject,
   onRenameCategory,
-  onDeleteCategory
+  onDeleteCategory,
+  onOpenTutorSettings
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState(category);
@@ -93,6 +95,7 @@ export const SubjectCategory: React.FC<SubjectCategoryProps> = ({
                   subject={subject}
                   onDelete={onDeleteSubject}
                   onToggle={onToggleSubject}
+                  onOpenTutorSettings={onOpenTutorSettings}
                 />
               ))}
               {subjects.length === 0 && (

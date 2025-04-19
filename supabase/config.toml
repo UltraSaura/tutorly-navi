@@ -4,3 +4,5 @@ project_id = "sibprjxhbxahouejygeu"
 verify_jwt = false
 [functions.document-processor]
 verify_jwt = false
+[functions.classify-homework]
+verify_jwt = false

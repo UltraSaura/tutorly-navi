@@ -1,6 +1,6 @@
 
 import { useState, useMemo } from 'react';
-import { Plus, Trash, Check, X, FolderPlus } from 'lucide-react';
+import { Plus, Trash, Check, X, FolderPlus, Settings, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -9,6 +9,8 @@ import { useAdmin, Subject } from '@/context/AdminContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
@@ -17,16 +19,26 @@ import { iconOptions } from './subjects/DynamicIcon';
 import { Badge } from '@/components/ui/badge';
 
 const SubjectManagement = () => {
-  const { subjects, addSubject, updateSubject, deleteSubject, toggleSubjectActive } = useAdmin();
+  const { subjects, addSubject, updateSubject, deleteSubject, toggleSubjectActive, getAvailableModels } = useAdmin();
   
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showAddCategoryDialog, setShowAddCategoryDialog] = useState(false);
+  const [showTutorDialog, setShowTutorDialog] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState('');
   const [newSubjectDesc, setNewSubjectDesc] = useState('');
   const [newSubjectIcon, setNewSubjectIcon] = useState('book');
   const [newSubjectCategory, setNewSubjectCategory] = useState('Uncategorized');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
+  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+  
+  // Tutor settings
+  const [tutorActive, setTutorActive] = useState(false);
+  const [tutorModelId, setTutorModelId] = useState('');
+  const [tutorSystemPrompt, setTutorSystemPrompt] = useState('');
+  
+  // Get available models
+  const availableModels = getAvailableModels();
   
   // Group subjects by category
   const subjectsByCategory = useMemo(() => {
@@ -103,6 +115,29 @@ const SubjectManagement = () => {
     toast.success(`Category ${newCategoryName} created`);
     setShowAddCategoryDialog(false);
     setNewCategoryName('');
+  };
+  
+  const handleOpenTutorSettings = (subject: Subject) => {
+    setEditingSubject(subject);
+    setTutorActive(subject.tutorActive || false);
+    setTutorModelId(subject.tutorModelId || '');
+    setTutorSystemPrompt(subject.tutorSystemPrompt || '');
+    setShowTutorDialog(true);
+  };
+  
+  const handleSaveTutorSettings = () => {
+    if (!editingSubject) return;
+    
+    updateSubject(editingSubject.id, {
+      ...editingSubject,
+      tutorActive,
+      tutorModelId,
+      tutorSystemPrompt
+    });
+    
+    toast.success(`Tutor settings updated for ${editingSubject.name}`);
+    setShowTutorDialog(false);
+    setEditingSubject(null);
   };
   
   const handleRenameCategory = (oldName: string, newName: string) => {
@@ -185,6 +220,23 @@ const SubjectManagement = () => {
         updateSubject(subject.id, { ...subject, order: (subject.order || 0) + 1 });
       });
     }
+  };
+  
+  // Generate default system prompt for a subject
+  const generateDefaultSystemPrompt = (subject: Subject) => {
+    return `You are an educational AI tutor specializing in ${subject.name}.
+Your role is to provide expert assistance in this subject area, helping students understand concepts, solve problems, and learn new skills.
+
+When helping with ${subject.name} topics:
+1. Provide clear, concise explanations tailored to the student's level
+2. Use examples and analogies relevant to ${subject.name} to illustrate concepts
+3. Break down complex problems into manageable steps
+4. Encourage critical thinking and problem-solving skills
+5. Offer constructive feedback on student work
+6. Relate concepts to real-world applications when possible
+7. Use appropriate terminology and notation for ${subject.name}
+
+Always be patient, encouraging, and supportive in your interactions.`;
   };
   
   return (
@@ -312,6 +364,104 @@ const SubjectManagement = () => {
         </div>
       </div>
       
+      {/* Tutor Settings Dialog */}
+      <Dialog open={showTutorDialog} onOpenChange={setShowTutorDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingSubject && (
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-studywhiz-600" />
+                  <span>{editingSubject.name} Tutor Settings</span>
+                </div>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              Configure subject-specific tutor settings and AI behavior
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="tutorActive">Enable Subject Tutor</Label>
+                <p className="text-sm text-muted-foreground">
+                  When enabled, this subject will use its own model and prompts
+                </p>
+              </div>
+              <Switch 
+                id="tutorActive" 
+                checked={tutorActive}
+                onCheckedChange={setTutorActive}
+              />
+            </div>
+            
+            {tutorActive && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="tutorModel">AI Model</Label>
+                  <Select 
+                    value={tutorModelId} 
+                    onValueChange={setTutorModelId}
+                  >
+                    <SelectTrigger id="tutorModel">
+                      <SelectValue placeholder="Select AI model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableModels.map(model => (
+                        <SelectItem 
+                          key={model.id} 
+                          value={model.id}
+                          disabled={model.disabled}
+                        >
+                          {model.name} ({model.provider})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Select which AI model to use when this subject is selected
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="systemPrompt">Custom System Prompt</Label>
+                  <Textarea
+                    id="systemPrompt"
+                    placeholder={editingSubject ? generateDefaultSystemPrompt(editingSubject) : ""}
+                    value={tutorSystemPrompt}
+                    onChange={(e) => setTutorSystemPrompt(e.target.value)}
+                    className="min-h-32"
+                  />
+                  <div className="flex justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Define how the AI should behave when helping with this subject
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => editingSubject && setTutorSystemPrompt(generateDefaultSystemPrompt(editingSubject))}
+                    >
+                      Generate Default
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTutorDialog(false)}>Cancel</Button>
+            <Button 
+              className="bg-studywhiz-600 hover:bg-studywhiz-700" 
+              onClick={handleSaveTutorSettings}
+            >
+              Save Tutor Settings
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       <div className="mt-4">
         <div className="mb-2 flex items-center gap-2">
           <h2 className="text-lg font-medium">Categories</h2>
@@ -335,6 +485,7 @@ const SubjectManagement = () => {
               onDeleteSubject={deleteSubject}
               onRenameCategory={handleRenameCategory}
               onDeleteCategory={handleDeleteCategory}
+              onOpenTutorSettings={handleOpenTutorSettings}
             />
           ))}
         </DndContext>

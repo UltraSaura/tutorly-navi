@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import ChatPanel from './chat/ChatPanel';
 import ExerciseList from './chat/ExerciseList';
+import SubjectSelector from './chat/SubjectSelector';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
 import { useAdmin } from '@/context/AdminContext';
@@ -22,11 +23,16 @@ const ChatInterface = () => {
     handleSendMessage, 
     handleFileUpload, 
     handlePhotoUpload,
-    filteredMessages
+    filteredMessages,
+    selectedSubject,
+    setSelectedSubject,
+    activeSubject
   } = useChat();
   
   const {
     exercises,
+    exercisesBySubject,
+    getExercisesBySubject,
     grade,
     toggleExerciseExpansion,
     createExerciseFromAI,
@@ -35,10 +41,14 @@ const ChatInterface = () => {
     addExercises
   } = useExercises();
 
-  const { getActiveSubjects } = useAdmin();
+  const { getActiveSubjects, subjects } = useAdmin();
 
   // Track processed message IDs to prevent duplication
   const [processedMessageIds, setProcessedMessageIds] = useState<Set<string>>(new Set());
+  
+  // Get relevant exercises based on selected subject
+  const relevantExercises = selectedSubject ? 
+    getExercisesBySubject(selectedSubject) : exercises;
 
   // Get active subjects
   const activeSubjects = getActiveSubjects();
@@ -54,17 +64,10 @@ const ChatInterface = () => {
       }
       
       if (lastMessage.role === 'user') {
-        // Check if the message contains a homework submission (including math problems)
-        const isHomework = detectHomeworkInMessage(lastMessage.content);
-        
-        // Additional check for math expressions
-        const hasMathExpression = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(lastMessage.content);
-        
-        if (isHomework || hasMathExpression) {
-          processHomeworkFromChat(lastMessage.content);
-          // Mark this message as processed
-          setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
-        }
+        // Process as possible homework
+        processHomeworkFromChat(lastMessage.content, selectedSubject);
+        // Mark this message as processed
+        setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
       } else if (lastMessage.role === 'assistant') {
         // Find the most recent user message to link with this AI response
         const recentUserMsgIndex = messages.slice(0, messages.length - 1)
@@ -90,32 +93,42 @@ const ChatInterface = () => {
   
   // Create wrappers for the file upload handlers to pass the homework processor function and subject ID
   const handleDocumentFileUpload = (file: File) => {
-    handleFileUpload(file, addExercises, defaultSubject);
+    handleFileUpload(file, addExercises, selectedSubject);
   };
   
   const handlePhotoFileUpload = (file: File) => {
-    handlePhotoUpload(file, addExercises, defaultSubject);
+    handlePhotoUpload(file, addExercises, selectedSubject);
   };
   
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-6rem)] gap-4">
-      <ChatPanel 
-        messages={filteredMessages}
-        isLoading={isLoading}
-        inputMessage={inputMessage}
-        setInputMessage={setInputMessage}
-        handleSendMessage={handleSendMessage}
-        handleFileUpload={handleDocumentFileUpload}
-        handlePhotoUpload={handlePhotoFileUpload}
-        activeModel={activeModel}
+    <div className="space-y-4">
+      <SubjectSelector 
+        subjects={activeSubjects}
+        selectedSubject={selectedSubject}
+        onSelectSubject={setSelectedSubject}
       />
       
-      <div className="w-full md:w-2/3 glass rounded-xl overflow-hidden">
-        <ExerciseList
-          exercises={exercises}
-          grade={grade}
-          toggleExerciseExpansion={toggleExerciseExpansion}
+      <div className="flex flex-col md:flex-row h-[calc(100vh-11rem)] gap-4">
+        <ChatPanel 
+          messages={filteredMessages}
+          isLoading={isLoading}
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
+          handleSendMessage={handleSendMessage}
+          handleFileUpload={handleDocumentFileUpload}
+          handlePhotoUpload={handlePhotoFileUpload}
+          activeModel={activeModel}
+          activeSubject={activeSubject}
         />
+        
+        <div className="w-full md:w-2/3 glass rounded-xl overflow-hidden">
+          <ExerciseList
+            exercises={relevantExercises}
+            grade={grade}
+            toggleExerciseExpansion={toggleExerciseExpansion}
+            subjectId={selectedSubject}
+          />
+        </div>
       </div>
     </div>
   );

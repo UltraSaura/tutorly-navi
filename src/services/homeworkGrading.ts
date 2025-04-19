@@ -46,10 +46,10 @@ export const evaluateHomework = async (
       message = `I need you to grade this homework. The question is: "${exercise.question}" and the student's answer is: "${exercise.userAnswer}". Please evaluate if it's correct or incorrect, and provide a detailed explanation why. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation.`;
     }
     
-    // If we have a subject ID, include it in the prompt
-    if (exercise.subjectId) {
-      message += ` This is for the subject: ${exercise.subjectId}.`;
-    }
+    // If we have a subject ID, include it in the prompt and body
+    const subjectInfo = exercise.subjectId ? {
+      subjectId: exercise.subjectId,
+    } : undefined;
     
     // Call AI service to evaluate the answer
     const { data, error } = await supabase.functions.invoke('ai-chat', {
@@ -57,7 +57,7 @@ export const evaluateHomework = async (
         message: message,
         modelId: 'gpt4o', // Use a good model for evaluation
         history: [],
-        subjectId: exercise.subjectId // Pass the subject ID if present
+        subjectInfo
       },
     });
     
