@@ -1,7 +1,7 @@
 
 import { useExercises } from '@/hooks/useExercises';
 import ExerciseList from './chat/ExerciseList';
-import { BarChart3, Graduate } from 'lucide-react';
+import { BarChart3, GraduationCap } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const GradeDashboard = () => {
@@ -22,7 +22,7 @@ const GradeDashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Overall Grade</CardTitle>
-            <Graduate className="h-4 w-4 text-muted-foreground" />
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">{grade.percentage}%</div>
