@@ -15,7 +15,7 @@ serve(async (req) => {
   }
   
   try {
-    const { message, subjects = [] } = await req.json();
+    const { message, subjects = [], modelId = 'gpt-4o-mini' } = await req.json();
     
     // Get OpenAI API key from environment
     const openaiKey = Deno.env.get('OPENAI_API_KEY');
@@ -44,7 +44,7 @@ Please format your response as valid JSON with the following structure:
 User message: ${message}
 `;
 
-    // Call OpenAI API for classification
+    // Call OpenAI API for classification using the selected model
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -52,7 +52,7 @@ User message: ${message}
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // Using a smaller, faster model for classification
+        model: modelId, // Use the provided model ID
         messages: [
           { 
             role: 'user', 

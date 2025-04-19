@@ -74,10 +74,10 @@ export const useChat = () => {
       // Get active subjects for classification
       const activeSubjects = getActiveSubjects();
       
-      // Classify the message to detect homework and subject
-      const classification = await classifyHomework(inputMessage, activeSubjects);
+      // Pass the selectedModelId to the classification function
+      const classification = await classifyHomework(inputMessage, activeSubjects, selectedModelId);
       
-      // Use subject-specific model if a subject is selected and has a tutor model configured
+      // Use subject-specific model if available or the selected model
       let modelToUse = selectedModelId;
       let isHomework = classification.isHomework;
       

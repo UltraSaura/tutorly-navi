@@ -8,7 +8,8 @@ import { toast } from 'sonner';
  */
 export const classifyHomework = async (
   message: string,
-  subjects: Subject[] = []
+  subjects: Subject[] = [],
+  modelId?: string // Add modelId parameter
 ) => {
   try {
     // Call the Supabase Edge Function for classification
@@ -16,6 +17,7 @@ export const classifyHomework = async (
       body: {
         message,
         subjects,
+        modelId, // Pass the modelId to the edge function
       },
     });
     
