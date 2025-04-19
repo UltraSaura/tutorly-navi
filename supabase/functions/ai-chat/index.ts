@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
@@ -22,8 +23,7 @@ import {
 // Import system prompt utilities
 import {
   generateSystemMessage,
-  enhanceSystemMessageForMath,
-  generateSubjectSpecificPrompt
+  enhanceSystemMessageForMath
 } from './utils/systemPrompts.ts';
 
 const corsHeaders = {
@@ -39,12 +39,12 @@ serve(async (req) => {
   
   try {
     // Parse the request
-    const { message, modelId, history = [], customSystemPrompt, subjectInfo } = await req.json();
+    const { message, modelId, history = [] } = await req.json();
     
     console.log(`Processing request with model: ${modelId}`);
     
     // Detect if this is a homework/exercise question
-    const isExercise = detectExercise(message) || (subjectInfo && subjectInfo.subjectId);
+    const isExercise = detectExercise(message);
     
     // Check if this is a grading request
     const isGradingRequest = message.includes("I need you to grade this");
@@ -66,35 +66,10 @@ serve(async (req) => {
     }
     
     // Generate the appropriate system message based on context
-    let systemMessage;
-    
-    // If we have a custom system prompt (from subject tutor), use it
-    if (customSystemPrompt) {
-      systemMessage = { 
-        role: 'system', 
-        content: customSystemPrompt 
-      };
-      console.log('Using custom system prompt from subject tutor');
-    } 
-    // If we have subject info, generate a subject-specific prompt
-    else if (subjectInfo && subjectInfo.subjectId) {
-      systemMessage = { 
-        role: 'system', 
-        content: generateSubjectSpecificPrompt(
-          subjectInfo.subjectName || 'Unknown Subject', 
-          isExercise, 
-          isGradingRequest
-        )
-      };
-      console.log(`Generated subject-specific prompt for ${subjectInfo.subjectName}`);
-    } 
-    // Otherwise use the general system prompt
-    else {
-      systemMessage = generateSystemMessage(isExercise, isGradingRequest);
-    }
+    let systemMessage = generateSystemMessage(isExercise, isGradingRequest);
     
     // Enhance system message for math problems if needed
-    if (modelConfig.provider === 'OpenAI' && (subjectInfo?.subjectName?.toLowerCase().includes('math'))) {
+    if (modelConfig.provider === 'OpenAI') {
       systemMessage = enhanceSystemMessageForMath(systemMessage, message);
     }
     
@@ -180,7 +155,6 @@ serve(async (req) => {
         modelUsed: modelConfig.model,
         provider: modelConfig.provider,
         isExercise: isExercise,
-        subjectTutor: subjectInfo?.subjectName,
         timestamp: new Date().toISOString()
       }),
       { 

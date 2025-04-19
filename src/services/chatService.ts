@@ -12,7 +12,6 @@ export const getMessageHistory = (messages: Message[]) => {
     .map(msg => ({
       role: msg.role,
       content: msg.content,
-      subjectId: msg.subjectId
     }));
 };
 
@@ -22,12 +21,7 @@ export const getMessageHistory = (messages: Message[]) => {
 export const sendMessageToAI = async (
   inputMessage: string,
   messages: Message[],
-  selectedModelId: string,
-  customSystemPrompt?: string,
-  subjectInfo?: {
-    subjectId?: string;
-    subjectName?: string;
-  }
+  selectedModelId: string
 ) => {
   try {
     // Call the Supabase Edge Function
@@ -36,8 +30,6 @@ export const sendMessageToAI = async (
         message: inputMessage,
         modelId: selectedModelId,
         history: getMessageHistory(messages),
-        customSystemPrompt,
-        subjectInfo,
       },
     });
     
@@ -47,12 +39,7 @@ export const sendMessageToAI = async (
     }
     
     // Show model used as a toast
-    let toastMessage = `Response generated using ${data.provider} ${data.modelUsed}`;
-    if (data.subjectTutor) {
-      toastMessage += ` (${data.subjectTutor} Tutor)`;
-    }
-    
-    toast.success(toastMessage);
+    toast.success(`Response generated using ${data.provider} ${data.modelUsed}`);
     
     return { data, error: null };
   } catch (error) {

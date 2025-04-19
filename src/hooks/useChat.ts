@@ -1,14 +1,13 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Message } from '@/types/chat';
 import { useAdmin } from '@/context/AdminContext';
 import { handleFileUpload, handlePhotoUpload } from '@/utils/chatFileHandlers';
 import { sendMessageToAI } from '@/services/chatService';
 import { generateFallbackResponse } from '@/utils/fallbackResponses';
 import { detectHomeworkInMessage } from '@/utils/homeworkExtraction';
-import { classifyHomework } from '@/services/homeworkService';
 
 export const useChat = () => {
-  const { selectedModelId, getAvailableModels, subjects, getActiveSubjects } = useAdmin();
+  const { selectedModelId, getAvailableModels } = useAdmin();
   
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -22,7 +21,6 @@ export const useChat = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [lastResponse, setLastResponse] = useState<any>(null);
-  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   
   // Keep track of which AI messages are responses to homework submissions
   const [homeworkResponseIds, setHomeworkResponseIds] = useState<Set<string>>(new Set());
@@ -33,12 +31,6 @@ export const useChat = () => {
     const model = models.find(m => m.id === selectedModelId);
     return model ? model.name : 'AI Model';
   })();
-  
-  // Get subject info
-  const activeSubject = useMemo(() => {
-    if (!selectedSubject) return null;
-    return subjects.find(s => s.id === selectedSubject);
-  }, [selectedSubject, subjects]);
   
   // Filter out AI messages that are responses to homework submissions
   const filteredMessages = useMemo(() => {
@@ -70,44 +62,11 @@ export const useChat = () => {
     setInputMessage('');
     setIsLoading(true);
     
+    // Check if this message is a homework submission
+    const isHomework = detectHomeworkInMessage(inputMessage);
+    
     try {
-      // Get active subjects for classification
-      const activeSubjects = getActiveSubjects();
-      
-      // Pass the selectedModelId to the classification function
-      const classification = await classifyHomework(inputMessage, activeSubjects, selectedModelId);
-      
-      // Use subject-specific model if available or the selected model
-      let modelToUse = selectedModelId;
-      let isHomework = classification.isHomework;
-      
-      // If we have a selected subject with tutor active, or the message is classified for a specific subject
-      const targetSubject = selectedSubject 
-        ? subjects.find(s => s.id === selectedSubject)
-        : classification.isHomework && classification.subjectId
-          ? subjects.find(s => s.id === classification.subjectId)
-          : null;
-      
-      if (targetSubject?.tutorActive && targetSubject?.tutorModelId) {
-        modelToUse = targetSubject.tutorModelId;
-        console.log(`Using subject-specific model ${modelToUse} for ${targetSubject.name}`);
-      }
-      
-      // Enrich the message with subject information if it's homework
-      const subjectInfo = classification.isHomework && classification.subjectId
-        ? {
-            subjectId: classification.subjectId,
-            subjectName: classification.subject
-          }
-        : {};
-      
-      const { data, error } = await sendMessageToAI(
-        inputMessage, 
-        messages, 
-        modelToUse,
-        targetSubject?.tutorSystemPrompt,
-        subjectInfo
-      );
+      const { data, error } = await sendMessageToAI(inputMessage, messages, selectedModelId);
       
       // Store the full response for potential exercise handling
       if (data) {
@@ -119,8 +78,6 @@ export const useChat = () => {
           role: 'assistant',
           content: data.content,
           timestamp: new Date(),
-          subjectId: classification.subjectId,
-          isHomework: classification.isHomework,
         };
         
         // If this is a homework-related message, add it to our tracking set
@@ -150,9 +107,9 @@ export const useChat = () => {
       messages, 
       setMessages, 
       setIsLoading, 
-      undefined,
-      addExercises,
-      subjectId || selectedSubject
+      undefined, // No longer need processHomeworkFromChat as primary processor
+      addExercises, // Pass the exercise processor directly
+      subjectId // Pass the subject ID
     );
   };
   
@@ -167,9 +124,9 @@ export const useChat = () => {
       messages, 
       setMessages, 
       setIsLoading, 
-      undefined,
-      addExercises,
-      subjectId || selectedSubject
+      undefined, // No longer need processHomeworkFromChat as primary processor
+      addExercises, // Pass the exercise processor directly
+      subjectId // Pass the subject ID
     );
   };
   
@@ -181,9 +138,6 @@ export const useChat = () => {
     isLoading,
     activeModel,
     lastResponse,
-    selectedSubject,
-    setSelectedSubject,
-    activeSubject,
     addMessage,
     handleSendMessage,
     handleFileUpload: handleDocumentUpload,

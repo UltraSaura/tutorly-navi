@@ -4,26 +4,19 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardHeader, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, Trash, X, GripVertical, Settings } from 'lucide-react';
+import { Check, Trash, X, GripVertical } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { DynamicIcon } from './DynamicIcon';
 import { Subject } from '@/types/admin';
-import { Badge } from '@/components/ui/badge';
 
 interface DraggableSubjectProps {
   subject: Subject;
   onDelete: (id: string) => void;
   onToggle: (id: string) => void;
-  onOpenTutorSettings: (subject: Subject) => void;
 }
 
-export const DraggableSubject = ({ 
-  subject, 
-  onDelete, 
-  onToggle,
-  onOpenTutorSettings
-}: DraggableSubjectProps) => {
+export const DraggableSubject = ({ subject, onDelete, onToggle }: DraggableSubjectProps) => {
   const {
     attributes,
     listeners,
@@ -65,11 +58,6 @@ export const DraggableSubject = ({
                     <DynamicIcon name={subject.icon as any} className="h-5 w-5 text-studywhiz-600" />
                   </div>
                   <CardTitle>{subject.name}</CardTitle>
-                  {subject.tutorActive && (
-                    <Badge className="bg-studywhiz-200 hover:bg-studywhiz-300 text-studywhiz-700">
-                      Tutor Active
-                    </Badge>
-                  )}
                 </div>
                 <CardDescription>
                   {subject.description || `Subject ID: ${subject.id}`}
@@ -77,25 +65,14 @@ export const DraggableSubject = ({
               </div>
             </div>
             
-            <div className="flex gap-1">
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="h-8 w-8 text-studywhiz-600"
-                onClick={() => onOpenTutorSettings(subject)}
-                title="Tutor Settings"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={handleDelete}
-              >
-                <Trash className="h-5 w-5" />
-              </Button>
-            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={handleDelete}
+            >
+              <Trash className="h-5 w-5" />
+            </Button>
           </div>
         </CardHeader>
         <CardContent>

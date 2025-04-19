@@ -5,20 +5,17 @@ import { MessageSquare, BookOpen, BarChart3, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { useAdmin } from '@/context/AdminContext';
-import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const Navbar = () => {
   const location = useLocation();
-  const { selectedModelId, getAvailableModels, getActiveSubjects } = useAdmin();
-  const subjects = getActiveSubjects();
+  const { selectedModelId, getAvailableModels } = useAdmin();
+  
+  // Get the active model name
+  const activeModel = (() => {
+    const models = getAvailableModels();
+    const selectedModel = models.find(model => model.id === selectedModelId);
+    return selectedModel ? selectedModel.name : 'AI Model';
+  })();
   
   const tabs = [
     { path: '/', label: 'Tutor', icon: <MessageSquare className="w-5 h-5" /> },
@@ -36,30 +33,9 @@ const Navbar = () => {
               SW
             </div>
             <span className="text-lg font-semibold">StudyWhiz</span>
-            <Select defaultValue="general">
-              <SelectTrigger className="w-[140px] h-7 text-xs bg-studywhiz-100 text-studywhiz-700 border-none">
-                <SelectValue placeholder="Select a subject" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="general">
-                  <div className="flex items-center gap-2">
-                    <DynamicIcon name="book" className="h-4 w-4" />
-                    <span>General Tutor</span>
-                  </div>
-                </SelectItem>
-                {subjects.map((subject) => (
-                  <SelectItem key={subject.id} value={subject.id} disabled={!subject.active}>
-                    <div className="flex items-center gap-2">
-                      <DynamicIcon name={subject.icon as any || "book"} className="h-4 w-4" />
-                      <span>{subject.name}</span>
-                      {subject.tutorActive && (
-                        <div className="w-2 h-2 rounded-full bg-green-500" />
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="hidden md:flex items-center ml-2 px-2 py-1 rounded-full bg-studywhiz-100 text-studywhiz-700 text-xs font-medium">
+              {activeModel}
+            </div>
           </div>
           
           <nav className="hidden md:flex gap-1 p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800/50">

@@ -8,8 +8,6 @@ export interface Message {
   type?: 'text' | 'image' | 'file';
   filename?: string;
   fileUrl?: string;
-  subjectId?: string; // Added to track which subject a message belongs to
-  isHomework?: boolean; // Whether the message is related to a homework submission
 }
 
 // Exercise submission type
@@ -20,8 +18,8 @@ export interface Exercise {
   expanded: boolean;
   isCorrect?: boolean;
   explanation?: string;
-  subjectId?: string; // Added to associate exercises with specific subjects
-  relatedMessages?: Message[]; // Related messages for AI responses
+  subjectId?: string;
+  relatedMessages?: Message[]; // Add related messages for AI responses
 }
 
 // Grade type definition

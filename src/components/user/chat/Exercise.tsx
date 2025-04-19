@@ -1,14 +1,11 @@
 
 import React from 'react';
-import { Check, X, ChevronUp, ChevronDown, ThumbsUp, AlertCircle, BookOpen } from 'lucide-react';
+import { Check, X, ChevronUp, ChevronDown, ThumbsUp, AlertCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Message } from '@/types/chat';
-import { Subject } from '@/types/admin';
-import { Badge } from '@/components/ui/badge';
-import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
 
 interface ExerciseProps {
   exercise: {
@@ -18,14 +15,12 @@ interface ExerciseProps {
     isCorrect?: boolean;
     explanation?: string;
     expanded: boolean;
-    subjectId?: string;
     relatedMessages?: Message[];
   };
   toggleExerciseExpansion: (id: string) => void;
-  subjects: Subject[];
 }
 
-const Exercise = ({ exercise, toggleExerciseExpansion, subjects }: ExerciseProps) => {
+const Exercise = ({ exercise, toggleExerciseExpansion }: ExerciseProps) => {
   // Format explanation to make "Problem:" and "Guidance:" bold with better styling
   const formattedExplanation = exercise.explanation ? 
     exercise.explanation
@@ -35,9 +30,6 @@ const Exercise = ({ exercise, toggleExerciseExpansion, subjects }: ExerciseProps
 
   // Check if there are any AI messages to display
   const hasRelatedMessages = exercise.relatedMessages && exercise.relatedMessages.length > 0;
-  
-  // Find subject information if we have a subjectId
-  const subject = exercise.subjectId ? subjects.find(s => s.id === exercise.subjectId) : null;
 
   return (
     <motion.div 
@@ -54,21 +46,10 @@ const Exercise = ({ exercise, toggleExerciseExpansion, subjects }: ExerciseProps
       transition={{ duration: 0.3 }}
     >
       <div className="p-4">
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            {subject && (
-              <Badge variant="outline" className="mb-2 flex w-fit gap-1 items-center">
-                {subject.icon && (
-                  <DynamicIcon name={subject.icon as any} className="h-3 w-3" />
-                )}
-                {subject.name}
-              </Badge>
-            )}
-            <h3 className="text-md font-medium">{exercise.question}</h3>
-          </div>
-          
+        <div className="flex justify-between">
+          <h3 className="text-md font-medium">{exercise.question}</h3>
           {exercise.isCorrect !== undefined && (
-            <div className={`flex items-center gap-1 ml-2 ${
+            <div className={`flex items-center gap-1 ${
               exercise.isCorrect 
                 ? 'text-green-600 dark:text-green-500' 
                 : 'text-red-600 dark:text-red-500'
