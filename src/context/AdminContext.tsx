@@ -1,4 +1,3 @@
-
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { ApiKey, ModelOption, Subject } from '@/types/admin';
@@ -48,6 +47,12 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     return savedSubjects ? JSON.parse(savedSubjects) : DEFAULT_SUBJECTS;
   });
 
+  // State for selected subject
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(() => {
+    const savedSubject = localStorage.getItem('selectedSubject');
+    return savedSubject ? JSON.parse(savedSubject) : null;
+  });
+
   // Save API keys to localStorage when they change
   useEffect(() => {
     localStorage.setItem('apiKeys', JSON.stringify(apiKeys));
@@ -62,6 +67,13 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     localStorage.setItem('subjects', JSON.stringify(subjects));
   }, [subjects]);
+
+  // Save selected subject to localStorage when it changes
+  useEffect(() => {
+    if (selectedSubject) {
+      localStorage.setItem('selectedSubject', JSON.stringify(selectedSubject));
+    }
+  }, [selectedSubject]);
 
   // Add a new API key
   const addApiKey = (key: Omit<ApiKey, 'id' | 'createdAt'>) => {
@@ -172,7 +184,9 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       updateSubject,
       deleteSubject,
       toggleSubjectActive,
-      getActiveSubjects
+      getActiveSubjects,
+      selectedSubject,
+      setSelectedSubject
     }}>
       {children}
     </AdminContext.Provider>

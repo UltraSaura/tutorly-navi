@@ -1,21 +1,12 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MessageSquare, BookOpen, BarChart3, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { useAdmin } from '@/context/AdminContext';
+import SubjectSelector from './SubjectSelector';
 
 const Navbar = () => {
   const location = useLocation();
-  const { selectedModelId, getAvailableModels } = useAdmin();
-  
-  // Get the active model name
-  const activeModel = (() => {
-    const models = getAvailableModels();
-    const selectedModel = models.find(model => model.id === selectedModelId);
-    return selectedModel ? selectedModel.name : 'AI Model';
-  })();
   
   const tabs = [
     { path: '/', label: 'Tutor', icon: <MessageSquare className="w-5 h-5" /> },
@@ -33,8 +24,8 @@ const Navbar = () => {
               SW
             </div>
             <span className="text-lg font-semibold">StudyWhiz</span>
-            <div className="hidden md:flex items-center ml-2 px-2 py-1 rounded-full bg-studywhiz-100 text-studywhiz-700 text-xs font-medium">
-              {activeModel}
+            <div className="hidden md:block">
+              <SubjectSelector />
             </div>
           </div>
           
@@ -73,7 +64,6 @@ const Navbar = () => {
         </div>
       </div>
       
-      {/* Mobile navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-2 px-6">
         <div className="flex justify-around">
           {tabs.map((tab) => (

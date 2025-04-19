@@ -1,4 +1,3 @@
-
 import { ApiKey, ModelOption, Subject } from '@/types/admin';
 
 // Context interface
@@ -18,4 +17,8 @@ export interface AdminContextType {
   deleteSubject: (id: string) => void;
   toggleSubjectActive: (id: string) => void;
   getActiveSubjects: () => Subject[];
+  
+  // Add subject selection
+  selectedSubject: Subject | null;
+  setSelectedSubject: (subject: Subject | null) => void;
 }
