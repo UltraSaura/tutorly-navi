@@ -31,10 +31,7 @@ const ChatPanel = ({
   }
   return <div className="w-full md:w-1/3 flex flex-col glass rounded-xl overflow-hidden">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">AI Tutor Chat</h2>
-          
-        </div>
+        
         <p className="text-sm text-gray-500 dark:text-gray-400">Ask questions or submit your homework for grading</p>
       </div>
       
