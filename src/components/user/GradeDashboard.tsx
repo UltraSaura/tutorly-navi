@@ -3,16 +3,25 @@ import { useExercises } from '@/hooks/useExercises';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { ChartBar } from 'lucide-react';
+import { ChartBar, BookOpen } from 'lucide-react';
+import { useAdmin } from '@/context/AdminContext';
 import ExerciseList from './chat/ExerciseList';
+import { useState } from 'react';
 
 const GradeDashboard = () => {
-  const { exercises, grade, exercisesBySubject, getExercisesBySubject, toggleExerciseExpansion } = useExercises();
+  const { exercises, grade, getExercisesBySubject, toggleExerciseExpansion } = useExercises();
+  const { subjects } = useAdmin();
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   
-  const totalExercises = exercises.length;
-  const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined).length;
-  const correctExercises = exercises.filter(ex => ex.isCorrect).length;
+  const filteredExercises = selectedSubject 
+    ? getExercisesBySubject(selectedSubject)
+    : exercises;
+  
+  const totalExercises = filteredExercises.length;
+  const answeredExercises = filteredExercises.filter(ex => ex.isCorrect !== undefined).length;
+  const correctExercises = filteredExercises.filter(ex => ex.isCorrect).length;
   
   return (
     <div className="container mx-auto p-6">
@@ -21,6 +30,25 @@ const GradeDashboard = () => {
         <p className="text-muted-foreground">
           Track your progress and performance across all subjects
         </p>
+      </div>
+
+      <div className="mb-6">
+        <Select
+          value={selectedSubject || ""}
+          onValueChange={(value) => setSelectedSubject(value === "" ? null : value)}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="All Subjects" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Subjects</SelectItem>
+            {subjects.map((subject) => (
+              <SelectItem key={subject.id} value={subject.id}>
+                {subject.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
@@ -35,13 +63,7 @@ const GradeDashboard = () => {
             </div>
             <Progress 
               value={grade.percentage} 
-              className="h-2" 
-              indicatorClassName={
-                grade.percentage >= 90 ? "bg-green-500" :
-                grade.percentage >= 80 ? "bg-blue-500" :
-                grade.percentage >= 70 ? "bg-yellow-500" :
-                "bg-red-500"
-              }
+              className="h-2"
             />
           </CardContent>
         </Card>
@@ -89,9 +111,10 @@ const GradeDashboard = () => {
 
       <div className="rounded-lg border bg-card">
         <ExerciseList
-          exercises={exercises}
+          exercises={filteredExercises}
           grade={grade}
           toggleExerciseExpansion={toggleExerciseExpansion}
+          subjectId={selectedSubject}
         />
       </div>
     </div>
