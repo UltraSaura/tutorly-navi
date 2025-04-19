@@ -119,6 +119,7 @@ const ChatInterface = () => {
           handlePhotoUpload={handlePhotoFileUpload}
           activeModel={activeModel}
           activeSubject={activeSubject}
+          onSelectSubject={setSelectedSubject}
         />
         
         <div className="w-full md:w-2/3 glass rounded-xl overflow-hidden">

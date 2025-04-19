@@ -5,6 +5,7 @@ import MessageInput from './MessageInput';
 import { Message } from '@/types/chat';
 import { Subject } from '@/types/admin';
 import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
+import { useAdmin } from '@/context/AdminContext';
 import {
   Select,
   SelectContent,
@@ -25,6 +26,7 @@ interface ChatPanelProps {
   handlePhotoUpload: (file: File) => void;
   activeModel?: string;
   activeSubject?: Subject | null;
+  onSelectSubject?: (subjectId: string) => void;
 }
 
 const ChatPanel = ({
@@ -37,14 +39,28 @@ const ChatPanel = ({
   handlePhotoUpload,
   activeModel = 'AI Model',
   activeSubject = null,
+  onSelectSubject,
 }: ChatPanelProps) => {
+  // Get subjects from the Admin context
+  const { getActiveSubjects } = useAdmin();
+  const subjects = getActiveSubjects();
+  
+  const handleSubjectChange = (value: string) => {
+    if (onSelectSubject) {
+      onSelectSubject(value);
+    }
+  };
+
   return (
     <div className="w-full md:w-1/3 flex flex-col glass rounded-xl overflow-hidden">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             StudyWhiz
-            <Select defaultValue={activeSubject?.id || "general"}>
+            <Select 
+              defaultValue={activeSubject?.id || "general"}
+              onValueChange={handleSubjectChange}
+            >
               <SelectTrigger className="w-[140px] h-7 text-xs bg-studywhiz-100 text-studywhiz-700 border-none">
                 <SelectValue placeholder="Select a subject" />
               </SelectTrigger>
