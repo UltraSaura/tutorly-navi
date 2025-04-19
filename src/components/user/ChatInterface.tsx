@@ -1,16 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import ChatPanel from './chat/ChatPanel';
 import ExerciseList from './chat/ExerciseList';
-import SubjectSelector from './chat/SubjectSelector';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
 import { useAdmin } from '@/context/AdminContext';
-import { 
-  detectHomeworkInMessage, 
-  extractHomeworkFromMessage
-} from '@/utils/homeworkExtraction';
 
 const ChatInterface = () => {
   const { 
@@ -102,12 +96,6 @@ const ChatInterface = () => {
   
   return (
     <div className="space-y-4">
-      <SubjectSelector 
-        subjects={activeSubjects}
-        selectedSubject={selectedSubject}
-        onSelectSubject={setSelectedSubject}
-      />
-      
       <div className="flex flex-col md:flex-row h-[calc(100vh-11rem)] gap-4">
         <ChatPanel 
           messages={filteredMessages}
