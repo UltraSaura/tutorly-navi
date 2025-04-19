@@ -2,107 +2,52 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Exercise } from "@/types/chat";
 import { toast } from 'sonner';
-import { useAdmin } from "@/context/AdminContext";
 
-/**
- * Evaluates a homework submission using AI and returns the updated exercise with feedback
- */
 export const evaluateHomework = async (
   exercise: Exercise
 ): Promise<Exercise> => {
   try {
-    // Skip if missing question or answer
     if (!exercise.question || !exercise.userAnswer) {
       console.log("Missing question or answer for grading");
       return exercise;
     }
-    
-    // Skip if subject is deactivated (if we have a subject ID)
-    if (exercise.subjectId) {
-      // Get the subjects from local storage
-      const storedSubjects = localStorage.getItem('subjects');
-      if (storedSubjects) {
-        const subjects = JSON.parse(storedSubjects);
-        const subject = subjects.find((s: any) => s.id === exercise.subjectId);
-        
-        if (subject && !subject.active) {
-          console.log(`Subject ${exercise.subjectId} is deactivated, skipping grading`);
-          return {
-            ...exercise,
-            isCorrect: undefined,
-            explanation: `This exercise cannot be evaluated because the subject "${subject.name}" is currently deactivated.`
-          };
-        }
-      }
-    }
-    
-    // Special handling for mathematical expressions
-    const isMathProblem = /\d+\s*[\+\-\*\/]\s*\d+/.test(exercise.question);
-    let message = "";
-    
-    if (isMathProblem) {
-      message = `I need you to grade this math problem. The equation is: "${exercise.question}=${exercise.userAnswer}". Is this correct? Please evaluate it step by step and clearly state if it's CORRECT or INCORRECT at the beginning of your response. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation.`;
-    } else {
-      message = `I need you to grade this homework. The question is: "${exercise.question}" and the student's answer is: "${exercise.userAnswer}". Please evaluate if it's correct or incorrect, and provide a detailed explanation why. Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation.`;
-    }
-    
-    // If we have a subject ID, include it in the prompt
-    if (exercise.subjectId) {
-      message += ` This is for the subject: ${exercise.subjectId}.`;
-    }
-    
-    // Call AI service to evaluate the answer
-    const { data, error } = await supabase.functions.invoke('ai-chat', {
+
+    // Step 1: Get quick grade (just correct/incorrect)
+    const { data: gradeData, error: gradeError } = await supabase.functions.invoke('ai-chat', {
       body: {
-        message: message,
-        modelId: 'gpt4o', // Use a good model for evaluation
+        message: `Grade this answer. Question: "${exercise.question}" Answer: "${exercise.userAnswer}"`,
+        modelId: 'gpt4o',
         history: [],
-        subjectId: exercise.subjectId // Pass the subject ID if present
+        isGradingRequest: true
       },
     });
-    
-    if (error) throw error;
-    
-    // Parse the AI response to determine if the answer is correct
-    const aiResponse = data.content;
-    
-    // Determine if the answer is correct based on keywords in the response
-    const correctKeywords = ['correct', 'right', 'accurate', 'perfect', 'excellent', 'well done'];
-    const incorrectKeywords = ['incorrect', 'wrong', 'mistake', 'error', 'not right', 'not correct'];
-    
-    let isCorrect = false;
-    
-    // Check for explicit CORRECT/INCORRECT markers first (for math problems)
-    if (aiResponse.toUpperCase().includes('CORRECT') && !aiResponse.toUpperCase().includes('INCORRECT')) {
-      isCorrect = true;
-    } else if (aiResponse.toUpperCase().includes('INCORRECT')) {
-      isCorrect = false;
+
+    if (gradeError) throw gradeError;
+
+    // Parse the simple CORRECT/INCORRECT response
+    const isCorrect = gradeData.content.trim().toUpperCase() === 'CORRECT';
+
+    // Step 2: If incorrect, get guidance
+    let explanation = '';
+    if (!isCorrect) {
+      const { data: guidanceData, error: guidanceError } = await supabase.functions.invoke('ai-chat', {
+        body: {
+          message: `The student answered this incorrectly. Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Please provide guidance without giving away the answer.`,
+          modelId: 'gpt4o',
+          history: [],
+          isExercise: true
+        },
+      });
+
+      if (guidanceError) throw guidanceError;
+      explanation = guidanceData.content;
     } else {
-      // Fall back to keyword detection
-      if (correctKeywords.some(keyword => aiResponse.toLowerCase().includes(keyword)) && 
-          !incorrectKeywords.some(keyword => aiResponse.toLowerCase().includes(keyword))) {
-        isCorrect = true;
-      } else {
-        isCorrect = false;
-      }
+      explanation = "**Problem:** " + exercise.question + "\n\n**Guidance:** Well done! You've answered this correctly. Would you like to explore this concept further or try a more challenging problem?";
     }
-    
-    // Extract an explanation from the AI response
-    let explanation = aiResponse;
-    
-    // If the explanation doesn't include the formatted Problem/Guidance sections, add them
-    if (!explanation.includes('**Problem:**')) {
-      explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${explanation}`;
-    }
-    
-    if (explanation.length > 1000) {
-      // Truncate very long explanations but preserve meaning
-      explanation = explanation.substring(0, 1000) + '...';
-    }
-    
-    // Display a notification based on the result
-    toast.success(`Your homework has been graded. ${isCorrect ? 'Great job!' : 'Review the feedback for improvements.'}`);
-    
+
+    // Display appropriate notification
+    toast.success(isCorrect ? "Correct! Great job!" : "Incorrect. Check the guidance to improve your understanding.");
+
     // Return the updated exercise
     return {
       ...exercise,
