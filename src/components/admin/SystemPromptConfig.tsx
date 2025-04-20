@@ -10,18 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-
-interface PromptTemplate {
-  id: string;
-  name: string;
-  subject: string;
-  description: string;
-  prompt: string;
-  tags: string[];
-  isActive: boolean;
-  lastModified: Date;
-  type: 'tutor' | 'grading';
-}
+import { PromptTemplate, NewPromptTemplate } from '@/types/admin';
 
 const promptTemplates: PromptTemplate[] = [
   {
@@ -76,7 +65,7 @@ const SystemPromptConfig = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<PromptTemplate | null>(templates.find(t => t.isActive) || null);
   const [editedPrompt, setEditedPrompt] = useState<string>(selectedTemplate?.prompt || '');
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [newTemplate, setNewTemplate] = useState<Omit<PromptTemplate, 'id' | 'lastModified' | 'isActive' | 'type'>>({
+  const [newTemplate, setNewTemplate] = useState<NewPromptTemplate>({
     name: '',
     subject: 'General',
     description: '',
@@ -164,7 +153,6 @@ const SystemPromptConfig = () => {
       id: newId,
       isActive: false,
       lastModified: new Date(),
-      type: 'tutor'
     };
     
     setTemplates([...templates, newTemplateItem]);

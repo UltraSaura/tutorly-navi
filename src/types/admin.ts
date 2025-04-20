@@ -1,3 +1,4 @@
+
 // Types for the admin section
 export interface ApiKey {
   id: string;
@@ -70,5 +71,8 @@ export interface PromptTemplate {
   tags: string[];
   isActive: boolean;
   lastModified: Date;
-  type: 'tutor' | 'grading';  // New field to distinguish prompt types
+  type: 'tutor' | 'grading';  // Keeping this field for type differentiation
 }
+
+// Define the NewPromptTemplate type for creating new templates
+export type NewPromptTemplate = Omit<PromptTemplate, 'id' | 'lastModified' | 'isActive'>;

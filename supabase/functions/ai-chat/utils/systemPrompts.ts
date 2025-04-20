@@ -1,3 +1,4 @@
+
 // System prompts utility module for AI chat
 // Contains specialized system prompts for different chat scenarios
 
@@ -19,18 +20,11 @@ export function generateSystemMessage(isExercise: boolean = false, isGradingRequ
   
   // System message for grading requests
   if (isGradingRequest) {
-    // Get active grading prompt from templates
-    // Assuming promptTemplates is defined elsewhere or imported
-    // For the sake of this example, let's assume it's an empty array
-    const promptTemplates: any[] = []; // Replace with actual import or definition
-
-    const activeGradingPrompt = promptTemplates.find(
-      template => template.type === 'grading' && template.isActive
-    );
-
+    // For now we use a fixed grading prompt
+    // In a real implementation, this would fetch the active grading prompt from storage
     return {
       role: 'system',
-      content: activeGradingPrompt?.prompt || 'You are a grader. Your role is to ONLY determine if the answer is correct or incorrect. Respond with ONLY "CORRECT" or "INCORRECT" and nothing else. For math problems, verify the calculation but do not explain why.'
+      content: 'You are a grader. Your role is to ONLY determine if the answer is correct or incorrect. Respond with ONLY "CORRECT" or "INCORRECT" and nothing else. For math problems, verify the calculation but do not explain why.'
     };
   }
   
