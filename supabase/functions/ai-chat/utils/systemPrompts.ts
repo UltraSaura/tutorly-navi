@@ -1,3 +1,4 @@
+
 // System prompts utility module for AI chat
 // Contains specialized system prompts for different chat scenarios
 
@@ -41,7 +42,7 @@ export function generateSystemMessage(isExercise: boolean = false, isGradingRequ
    **Problem:** (state the problem)
    **Guidance:** (your Socratic questions and hints)
 
-Remember: Your goal is to help students learn how to solve problems, not to solve them for the students.'
+Remember: Your goal is to help students learn how to solve problems, not to solve them for the students.`
     };
   }
   
