@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Check, Info, ThumbsUp, Zap, BrainCircuit, Activity, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAdmin } from '@/context/AdminContext';
@@ -9,12 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ModelApiKeys } from './models/ModelApiKeys';
 
 const ModelSelection = () => {
   const { getAvailableModels, selectedModelId, setSelectedModelId } = useAdmin();
   const unsortedModels = getAvailableModels();
   
-  // Sort models to put the selected model first
   const models = useMemo(() => {
     return [...unsortedModels].sort((a, b) => {
       if (a.id === selectedModelId) return -1;
@@ -23,12 +22,10 @@ const ModelSelection = () => {
     });
   }, [unsortedModels, selectedModelId]);
   
-  // State to track which model details are expanded - initialize all to false
   const [expandedModels, setExpandedModels] = useState<Record<string, boolean>>(
     Object.fromEntries(models.map(model => [model.id, false]))
   );
 
-  // Toggle expansion state for a specific model
   const toggleModelExpansion = (modelId: string) => {
     setExpandedModels(prev => ({
       ...prev,
@@ -138,6 +135,11 @@ const ModelSelection = () => {
                         </div>
                       </div>
                     </div>
+                    
+                    <ModelApiKeys 
+                      provider={model.provider}
+                      isExpanded={isExpanded}
+                    />
                   </CollapsibleContent>
                 </Collapsible>
               </CardContent>
