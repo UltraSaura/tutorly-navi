@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Save, Trash2, Plus, FileText, RefreshCw, Copy, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ interface PromptTemplate {
   tags: string[];
   isActive: boolean;
   lastModified: Date;
+  type: 'tutor' | 'grading';
 }
 
 const promptTemplates: PromptTemplate[] = [
@@ -33,6 +33,7 @@ const promptTemplates: PromptTemplate[] = [
     tags: ['math', 'elementary', 'high school', 'algebra', 'geometry'],
     isActive: true,
     lastModified: new Date(2023, 5, 20),
+    type: 'tutor'
   },
   {
     id: '2',
@@ -43,6 +44,7 @@ const promptTemplates: PromptTemplate[] = [
     tags: ['science', 'biology', 'chemistry', 'physics', 'environmental'],
     isActive: false,
     lastModified: new Date(2023, 5, 18),
+    type: 'tutor'
   },
   {
     id: '3',
@@ -53,7 +55,19 @@ const promptTemplates: PromptTemplate[] = [
     tags: ['writing', 'essays', 'grammar', 'language arts', 'feedback'],
     isActive: false,
     lastModified: new Date(2023, 5, 15),
+    type: 'tutor'
   },
+  {
+    id: '4',
+    name: 'Answer Grader',
+    subject: 'All Subjects',
+    description: 'Strict correct/incorrect grading of answers',
+    prompt: 'You are a grader. Your role is to ONLY determine if the answer is correct or incorrect. Respond with ONLY "CORRECT" or "INCORRECT" and nothing else. For math problems, verify the calculation but do not explain why.',
+    tags: ['grading', 'assessment', 'evaluation'],
+    isActive: true,
+    lastModified: new Date(2023, 5, 15),
+    type: 'grading'
+  }
 ];
 
 const SystemPromptConfig = () => {
@@ -62,17 +76,20 @@ const SystemPromptConfig = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<PromptTemplate | null>(templates.find(t => t.isActive) || null);
   const [editedPrompt, setEditedPrompt] = useState<string>(selectedTemplate?.prompt || '');
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [newTemplate, setNewTemplate] = useState<Omit<PromptTemplate, 'id' | 'lastModified' | 'isActive'>>({
+  const [newTemplate, setNewTemplate] = useState<Omit<PromptTemplate, 'id' | 'lastModified' | 'isActive' | 'type'>>({
     name: '',
     subject: 'General',
     description: '',
     prompt: '',
     tags: [],
+    type: 'tutor'
   });
   const [newTag, setNewTag] = useState<string>('');
   const [isCopied, setIsCopied] = useState(false);
   
   const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  const [selectedType, setSelectedType] = useState<'all' | 'tutor' | 'grading'>('all');
   
   const handleTemplateSelect = (template: PromptTemplate) => {
     setSelectedTemplate(template);
@@ -147,6 +164,7 @@ const SystemPromptConfig = () => {
       id: newId,
       isActive: false,
       lastModified: new Date(),
+      type: 'tutor'
     };
     
     setTemplates([...templates, newTemplateItem]);
@@ -156,6 +174,7 @@ const SystemPromptConfig = () => {
       description: '',
       prompt: '',
       tags: [],
+      type: 'tutor'
     });
     
     setShowAddDialog(false);
@@ -171,6 +190,10 @@ const SystemPromptConfig = () => {
     
     toast.success("Prompt copied to clipboard");
   };
+  
+  const filteredTemplates = templates.filter(template => 
+    selectedType === 'all' || template.type === selectedType
+  );
   
   return (
     <div className="space-y-6">
@@ -189,7 +212,22 @@ const SystemPromptConfig = () => {
         
         <TabsContent value="templates" className="mt-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Available Templates</h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-semibold">Available Templates</h2>
+              <Select 
+                value={selectedType}
+                onValueChange={(value: 'all' | 'tutor' | 'grading') => setSelectedType(value)}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="tutor">Tutor</SelectItem>
+                  <SelectItem value="grading">Grading</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
@@ -317,6 +355,24 @@ const SystemPromptConfig = () => {
                       )}
                     </div>
                   </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <label htmlFor="templateType" className="text-right text-sm font-medium">
+                      Type
+                    </label>
+                    <Select 
+                      value={newTemplate.type} 
+                      onValueChange={(value: 'tutor' | 'grading') => setNewTemplate({ ...newTemplate, type: value })}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select template type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="tutor">Tutor</SelectItem>
+                        <SelectItem value="grading">Grading</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 
                 <DialogFooter>
@@ -335,7 +391,7 @@ const SystemPromptConfig = () => {
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
-            {templates.map((template) => (
+            {filteredTemplates.map((template) => (
               <Card 
                 key={template.id} 
                 className={`glass cursor-pointer transition-all ${

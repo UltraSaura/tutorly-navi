@@ -1,4 +1,3 @@
-
 // Types for the admin section
 export interface ApiKey {
   id: string;
@@ -62,3 +61,14 @@ export interface Subject {
   order?: number;
 }
 
+export interface PromptTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  description: string;
+  prompt: string;
+  tags: string[];
+  isActive: boolean;
+  lastModified: Date;
+  type: 'tutor' | 'grading';  // New field to distinguish prompt types
+}
