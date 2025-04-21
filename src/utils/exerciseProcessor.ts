@@ -1,4 +1,3 @@
-
 import { Exercise, Message } from '@/types/chat';
 import { toast } from 'sonner';
 import { evaluateHomework } from '@/services/homeworkGrading';
@@ -9,6 +8,8 @@ export const processNewExercise = async (
   existingExercises: Exercise[],
   processedContent: Set<string>
 ): Promise<Exercise | null> => {
+  console.log("Processing new exercise from message:", message);
+  
   // Check if we've processed this exact content before
   if (processedContent.has(message)) {
     console.log("Skipping duplicate homework submission");
@@ -27,14 +28,17 @@ export const processNewExercise = async (
     answer = parts[1].replace('Answer:', '').trim();
   } else {
     const extracted = extractHomeworkFromMessage(message);
-    question = extracted.question;
-    answer = extracted.answer;
+    console.log("Extracted components:", extracted);
+
+    const { question, answer } = extracted;
+
+    if (!question || !answer) {
+      console.log("Couldn't extract homework components from the message");
+      return null;
+    }
   }
 
-  if (!question || !answer) {
-    console.log("Couldn't extract homework components from the message");
-    return null;
-  }
+  console.log("Creating new exercise with:", { question, answer });
 
   // Check for duplicates
   const existingExercise = existingExercises.find(
@@ -56,7 +60,10 @@ export const processNewExercise = async (
   };
 
   try {
-    return await evaluateHomework(newEx);
+    console.log("Evaluating new exercise");
+    const evaluatedExercise = await evaluateHomework(newEx);
+    console.log("Evaluated exercise:", evaluatedExercise);
+    return evaluatedExercise;
   } catch (error) {
     console.error('Error evaluating homework:', error);
     toast.error('There was an issue grading your homework. Please try again.');
