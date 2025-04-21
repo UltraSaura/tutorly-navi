@@ -6,6 +6,8 @@
  * Extracts question and answer components from a homework submission message
  */
 export const extractHomeworkFromMessage = (message: string): { question: string, answer: string } => {
+  console.log("Extracting homework from message:", message);
+  
   // Math patterns to detect various formats
   const mathPatterns = [
     // Basic arithmetic
@@ -21,6 +23,8 @@ export const extractHomeworkFromMessage = (message: string): { question: string,
   // Try math patterns first
   for (const pattern of mathPatterns) {
     const match = message.match(pattern);
+    console.log("Math pattern match result:", match);
+    
     if (match) {
       // For word problems
       if (match[1]?.match(/If|What|How|Calculate|Solve|Find/i)) {
@@ -36,7 +40,10 @@ export const extractHomeworkFromMessage = (message: string): { question: string,
       };
     }
   }
-
+  
+  // Fallback logging
+  console.log("No math pattern matched in message");
+  
   // Question patterns to look for in messages
   const questionPatterns = [
     /problem:(.+?)answer:/i,
