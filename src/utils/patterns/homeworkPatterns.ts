@@ -1,13 +1,8 @@
-
-// Math problem patterns
+// Math problem patterns - Simplified to catch more cases
 export const mathPatterns = [
-  // Basic arithmetic
-  /(\d+\s*[\+\-\*\/]\s*\d+)\s*=\s*(\d+)/,
-  // Algebraic equations
-  /([0-9x\+\-\*\/\(\)]+)\s*=\s*([0-9x\+\-\*\/\(\)]+)/,
-  // Fractions
-  /(\d+\/\d+)\s*=\s*(\d+\/\d+|\d+\.\d+)/,
-  // Word problems with numbers
+  // Basic equation - matches any expression with equals sign
+  /(.+?)\s*=\s*(.+)/,
+  // Word problems with numbers - keep as fallback
   /(If|What|How|Calculate|Solve|Find).*?(\d+).*?[?].*?(answer|solution|result):?\s*([0-9\.]+)/i,
 ];
 
@@ -34,10 +29,10 @@ export const homeworkKeywords = [
   'problem:', 'question:'
 ];
 
+// Simplified math keywords
 export const mathKeywords = [
   'solve', 'calculate', 'compute', 'evaluate',
-  'simplify', 'find x', 'equation', 'expression',
-  'algebra', 'arithmetic', 'sum of', 'product of',
-  'fraction', 'decimal', 'percentage'
+  '=', '+', '-', '*', '/', 'x',
+  'equation', 'sum', 'difference', 'product',
+  'divide', 'multiply', 'add', 'subtract'
 ];
-

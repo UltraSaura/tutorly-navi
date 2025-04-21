@@ -2,6 +2,13 @@
 import { mathPatterns, questionPatterns, answerPatterns } from '../patterns/homeworkPatterns';
 
 export const matchMathProblem = (message: string): { question: string, answer: string } | null => {
+  // First try simple equation matching
+  const simpleMatch = extractSimpleEquation(message);
+  if (simpleMatch) {
+    return simpleMatch;
+  }
+
+  // Then try other patterns as fallback
   for (const pattern of mathPatterns) {
     const match = message.match(pattern);
     if (match) {
@@ -52,16 +59,19 @@ export const matchQuestionAnswer = (message: string): { question: string, answer
 };
 
 export const extractSimpleEquation = (message: string): { question: string, answer: string } | null => {
+  // Simple equation pattern - matches any expression with equals sign
   const mathPattern = /(.+?)\s*=\s*(.+)/;
   const mathMatch = message.match(mathPattern);
   
   if (mathMatch) {
-    return {
-      question: mathMatch[1].trim(),
-      answer: mathMatch[2].trim()
-    };
+    const question = mathMatch[1].trim();
+    const answer = mathMatch[2].trim();
+    
+    // Additional check to ensure both parts exist
+    if (question && answer) {
+      return { question, answer };
+    }
   }
   
   return null;
 };
-
