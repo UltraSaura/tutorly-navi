@@ -2,8 +2,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Exercise } from "@/types/chat";
 import { toast } from 'sonner';
-import { isArithmeticProblem, evaluateArithmeticProblem } from '@/utils/arithmeticEvaluator';
-import { getAIGuidance, getAIGrading } from './aiGuidance';
 
 export const evaluateHomework = async (
   exercise: Exercise
@@ -14,62 +12,51 @@ export const evaluateHomework = async (
       return exercise;
     }
 
-    // First, check for simple arithmetic problems
-    if (isArithmeticProblem(exercise.question, exercise.userAnswer)) {
-      return await handleArithmeticProblem(exercise);
+    // Step 1: Get quick grade (just correct/incorrect)
+    const { data: gradeData, error: gradeError } = await supabase.functions.invoke('ai-chat', {
+      body: {
+        message: `Grade this answer. Question: "${exercise.question}" Answer: "${exercise.userAnswer}"`,
+        modelId: 'gpt4o',
+        history: [],
+        isGradingRequest: true
+      },
+    });
+
+    if (gradeError) throw gradeError;
+
+    // Parse the simple CORRECT/INCORRECT response
+    const isCorrect = gradeData.content.trim().toUpperCase() === 'CORRECT';
+
+    // Step 2: If incorrect, get guidance
+    let explanation = '';
+    if (!isCorrect) {
+      const { data: guidanceData, error: guidanceError } = await supabase.functions.invoke('ai-chat', {
+        body: {
+          message: `The student answered this incorrectly. Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Please provide guidance without giving away the answer.`,
+          modelId: 'gpt4o',
+          history: [],
+          isExercise: true
+        },
+      });
+
+      if (guidanceError) throw guidanceError;
+      explanation = guidanceData.content;
+    } else {
+      explanation = "**Problem:** " + exercise.question + "\n\n**Guidance:** Well done! You've answered this correctly. Would you like to explore this concept further or try a more challenging problem?";
     }
 
-    // Fallback to AI grading for complex problems
-    return await handleComplexProblem(exercise);
+    // Display appropriate notification
+    toast.success(isCorrect ? "Correct! Great job!" : "Incorrect. Check the guidance to improve your understanding.");
+
+    // Return the updated exercise
+    return {
+      ...exercise,
+      isCorrect,
+      explanation
+    };
   } catch (error) {
     console.error('Error evaluating homework:', error);
     toast.error('There was an issue grading your homework. Please try again.');
     return exercise;
   }
 };
-
-const handleArithmeticProblem = async (exercise: Exercise): Promise<Exercise> => {
-  const isCorrect = evaluateArithmeticProblem(exercise.question, exercise.userAnswer);
-  
-  console.log("Simple arithmetic problem:", { 
-    question: exercise.question, 
-    userAnswer: exercise.userAnswer, 
-    isCorrect 
-  });
-  
-  const explanation = isCorrect 
-    ? formatSuccessGuidance(exercise)
-    : await getAIGuidance(exercise);
-
-  showGradingToast(isCorrect);
-
-  return {
-    ...exercise,
-    isCorrect,
-    explanation
-  };
-};
-
-const handleComplexProblem = async (exercise: Exercise): Promise<Exercise> => {
-  const isCorrect = await getAIGrading(exercise);
-  const explanation = isCorrect 
-    ? formatSuccessGuidance(exercise)
-    : await getAIGuidance(exercise);
-
-  showGradingToast(isCorrect);
-
-  return {
-    ...exercise,
-    isCorrect,
-    explanation
-  };
-};
-
-const formatSuccessGuidance = (exercise: Exercise): string => {
-  return "**Problem:** " + exercise.question + "\n\n**Guidance:** Great job! Your answer is correct.";
-};
-
-const showGradingToast = (isCorrect: boolean): void => {
-  toast.success(isCorrect ? "Correct! Great job!" : "Incorrect. Let's review your solution.");
-};
-
