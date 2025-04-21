@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { File, Image } from 'lucide-react';
+import { File, Image, CircleCheck, CircleX } from 'lucide-react';
 import { Message as MessageType } from '@/types/chat';
 
 const Message = ({ 
@@ -9,7 +9,8 @@ const Message = ({
   timestamp, 
   type = 'text', 
   filename, 
-  fileUrl 
+  fileUrl,
+  exerciseStatus 
 }: MessageType) => {
   const renderContent = () => {
     switch (type) {
@@ -47,7 +48,20 @@ const Message = ({
           </div>
         );
       default:
-        return <p className="text-sm">{content}</p>;
+        return (
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm">{content}</p>
+            {exerciseStatus && (
+              <div className="flex-shrink-0">
+                {exerciseStatus === 'correct' ? (
+                  <CircleCheck className="w-5 h-5 text-exercise-correct" />
+                ) : (
+                  <CircleX className="w-5 h-5 text-exercise-incorrect" />
+                )}
+              </div>
+            )}
+          </div>
+        );
     }
   };
 
@@ -70,3 +84,4 @@ const Message = ({
 };
 
 export default Message;
+
