@@ -1,3 +1,4 @@
+
 // Chat message type
 export interface Message {
   id: string;
@@ -7,7 +8,6 @@ export interface Message {
   type?: 'text' | 'image' | 'file';
   filename?: string;
   fileUrl?: string;
-  exerciseStatus?: 'correct' | 'incorrect';
 }
 
 // Exercise submission type

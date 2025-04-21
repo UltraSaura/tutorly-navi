@@ -1,31 +1,25 @@
 
+/**
+ * Utility functions for evaluating arithmetic expressions
+ */
+
 export const isArithmeticProblem = (question: string, answer: string): boolean => {
-  // Remove all spaces and normalize the format
-  const normalizedExpression = (question + " = " + answer).replace(/\s+/g, '');
-  return /^\d+[\+\-\*\/]\d+=\d+$/.test(normalizedExpression);
+  return /^\d+\s*[\+\-\*\/]\s*\d+\s*=\s*\d+$/.test(question + " = " + answer);
 };
 
+// Simple arithmetic evaluation function
 export const evaluateArithmeticProblem = (question: string, userAnswer: string): boolean => {
   try {
-    // Remove all spaces and normalize
+    // Safely evaluate the arithmetic problem
     const cleanQuestion = question.replace(/\s+/g, '');
     const cleanAnswer = userAnswer.replace(/\s+/g, '');
     
-    // Evaluate the expression
-    const expectedResult = eval(cleanQuestion);
-    const userResult = Number(cleanAnswer);
+    console.log("Arithmetic evaluation:", { question: cleanQuestion, answer: cleanAnswer });
     
-    console.log("Arithmetic evaluation:", {
-      question: cleanQuestion,
-      expectedResult,
-      userAnswer: userResult,
-      isCorrect: Math.abs(expectedResult - userResult) < 0.0001
-    });
-    
-    // Use small epsilon for floating point comparison
-    return Math.abs(expectedResult - Number(cleanAnswer)) < 0.0001;
+    return eval(cleanQuestion) === Number(cleanAnswer);
   } catch (error) {
     console.error("Arithmetic evaluation error:", error);
     return false;
   }
 };
+

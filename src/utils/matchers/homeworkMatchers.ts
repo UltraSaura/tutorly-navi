@@ -2,16 +2,6 @@
 import { mathPatterns, questionPatterns, answerPatterns } from '../patterns/homeworkPatterns';
 
 export const matchMathProblem = (message: string): { question: string, answer: string } | null => {
-  // Try compact format first
-  const compactMatch = message.match(/([0-9\+\-\*\/]+)=([0-9]+)/);
-  if (compactMatch) {
-    return {
-      question: compactMatch[1].trim(),
-      answer: compactMatch[2].trim()
-    };
-  }
-
-  // Try other patterns
   for (const pattern of mathPatterns) {
     const match = message.match(pattern);
     if (match) {

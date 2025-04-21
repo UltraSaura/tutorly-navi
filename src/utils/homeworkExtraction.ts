@@ -4,29 +4,25 @@ import { detectHomeworkInMessage } from './detectors/homeworkDetector';
 
 export { detectHomeworkInMessage };
 
+/**
+ * Extracts question and answer components from a homework submission message
+ */
 export const extractHomeworkFromMessage = (message: string): { question: string, answer: string } => {
   console.log("Extracting homework from message:", message);
   
-  // Try direct equation pattern first (e.g., "2+2=4")
-  const equationMatch = message.match(/([0-9\+\-\*\/\s]+)=([0-9\s]+)/);
-  if (equationMatch) {
-    return {
-      question: equationMatch[1].trim(),
-      answer: equationMatch[2].trim()
-    };
-  }
-  
-  // Try existing patterns
+  // Try math patterns first
   const mathResult = matchMathProblem(message);
   if (mathResult) {
     return mathResult;
   }
   
+  // Try question-answer patterns
   const qaResult = matchQuestionAnswer(message);
   if (qaResult) {
     return qaResult;
   }
   
+  // Try simple equation pattern
   const equationResult = extractSimpleEquation(message);
   if (equationResult) {
     return equationResult;
@@ -41,7 +37,7 @@ export const extractHomeworkFromMessage = (message: string): { question: string,
     };
   }
   
-  // Final fallback
+  // Final fallback: split in half
   const midpoint = Math.floor(message.length / 2);
   return {
     question: message.substring(0, midpoint).trim(),

@@ -1,10 +1,10 @@
 
 // Math problem patterns
 export const mathPatterns = [
-  // Basic arithmetic (with optional spaces)
-  /(\d+)\s*[\+\-\*\/]\s*(\d+)\s*=\s*(\d+)/,
-  // Algebraic equations (with optional spaces)
-  /([0-9x]+)\s*[\+\-\*\/]\s*([0-9x]+)\s*=\s*([0-9x]+)/,
+  // Basic arithmetic
+  /(\d+\s*[\+\-\*\/]\s*\d+)\s*=\s*(\d+)/,
+  // Algebraic equations
+  /([0-9x\+\-\*\/\(\)]+)\s*=\s*([0-9x\+\-\*\/\(\)]+)/,
   // Fractions
   /(\d+\/\d+)\s*=\s*(\d+\/\d+|\d+\.\d+)/,
   // Word problems with numbers
