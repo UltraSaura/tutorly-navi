@@ -29,7 +29,6 @@ CRITICAL INSTRUCTIONS:
 3. DO NOT use lowercase or mixed case
 4. If you're unsure, respond with "INCORRECT"
 5. For math problems, verify the calculation is exact
-6. For text answers, check for exact meaning match
 
 Example correct responses:
 "CORRECT"
