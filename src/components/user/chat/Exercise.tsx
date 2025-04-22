@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, X, ChevronUp, ChevronDown, ThumbsUp, AlertCircle } from 'lucide-react';
+import { Check, X, ChevronUp, ChevronDown, ThumbsUp, AlertCircle, CircleCheck, CircleX } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -51,46 +51,37 @@ const Exercise = ({
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200, damping: 15 }}
-              className={cn(
-                "rounded-full p-1",
-                exercise.isCorrect 
-                  ? "bg-green-100 dark:bg-green-900/30" 
-                  : "bg-amber-100 dark:bg-amber-900/30"
-              )}
             >
               {exercise.isCorrect ? (
-                <Check className="w-5 h-5 text-green-600 dark:text-green-500" />
+                <CircleCheck className="w-6 h-6 text-green-500" />
               ) : (
-                <X className="w-5 h-5 text-amber-600 dark:text-amber-500" />
+                <CircleX className="w-6 h-6 text-red-500" />
               )}
             </motion.div>
           )}
-          <div className="flex-1 flex justify-between items-start">
+          <div className="flex-1">
             <h3 className="text-md font-medium">{exercise.question}</h3>
-            {exercise.isCorrect !== undefined && <div className={`flex items-center gap-1 ${exercise.isCorrect ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
-              {exercise.isCorrect ? <div className="flex items-center">
-                  <ThumbsUp className="w-5 h-5 mr-1" />
-                  <span className="text-sm font-medium">Correct</span>
-                </div> : <div className="flex items-center">
-                  <AlertCircle className="w-5 h-5 mr-1" />
-                  <span className="text-sm font-medium">Incorrect</span>
-                </div>}
-            </div>}
           </div>
         </div>
         
-        {exercise.userAnswer && <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 py-[10px]">
-            <div className="flex items-center mb-1">
-              <span className="text-sm font-medium">Your answer:</span>
-              {exercise.isCorrect !== undefined && (exercise.isCorrect ? <Check className="w-4 h-4 ml-2 text-green-500" /> : <X className="w-4 h-4 ml-2 text-red-500" />)}
-            </div>
-            <p className={cn("text-sm", exercise.isCorrect ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400")}>
+        {exercise.userAnswer && (
+          <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 py-[10px]">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
               {exercise.userAnswer}
             </p>
-          </div>}
+          </div>
+        )}
         
         <div className="mt-4 flex justify-end items-center">
-          <Button variant="ghost" size="sm" className={cn("text-xs hover:text-gray-700 dark:hover:text-gray-300", exercise.expanded ? "text-studywhiz-600" : "text-gray-500")} onClick={() => toggleExerciseExpansion(exercise.id)}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={cn(
+              "text-xs hover:text-gray-700 dark:hover:text-gray-300",
+              exercise.expanded ? "text-studywhiz-600" : "text-gray-500"
+            )} 
+            onClick={() => toggleExerciseExpansion(exercise.id)}
+          >
             {exercise.expanded ? 'Hide explanation' : 'Show explanation'}
             {exercise.expanded ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />}
           </Button>
