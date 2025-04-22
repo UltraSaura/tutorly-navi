@@ -18,8 +18,7 @@ export const evaluateHomework = async (
         message: `Grade this answer. Question: "${exercise.question}" Answer: "${exercise.userAnswer}"`,
         modelId: 'gpt4o',
         history: [],
-        isGradingRequest: true,
-        isMathProblem: true // Always treat as math problem for strict grading
+        isGradingRequest: true
       },
     });
 
@@ -53,8 +52,7 @@ export const evaluateHomework = async (
           message: `The student answered this incorrectly. Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Please provide guidance without giving away the answer.`,
           modelId: 'gpt4o',
           history: [],
-          isExercise: true,
-          isMathProblem: true
+          isExercise: true
         },
       });
 
@@ -88,10 +86,6 @@ export const evaluateHomework = async (
   } catch (error) {
     console.error('Error evaluating homework:', error);
     toast.error('There was an issue grading your homework. Please try again.');
-    return {
-      ...exercise,
-      isCorrect: undefined,
-      explanation: "There was an error grading this exercise. Please try submitting it again."
-    };
+    return exercise;
   }
 };
