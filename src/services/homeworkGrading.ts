@@ -27,14 +27,22 @@ export const evaluateHomework = async (
       throw gradeError;
     }
 
-    console.log('Raw grade response:', gradeData?.content);
+    if (!gradeData?.content) {
+      console.error('Invalid grade response:', gradeData);
+      throw new Error('Invalid grading response received');
+    }
 
-    // Enhanced parsing of the CORRECT/INCORRECT response
-    // Make it more robust by checking for variants and case-insensitive matching
-    const responseContent = gradeData?.content?.trim().toUpperCase() || '';
-    const isCorrect = responseContent.includes('CORRECT') && !responseContent.includes('INCORRECT');
+    console.log('Raw grade response:', gradeData.content);
 
-    console.log(`Graded exercise with result: ${isCorrect ? 'CORRECT' : 'INCORRECT'}`);
+    // Strict parsing of the CORRECT/INCORRECT response
+    const responseContent = gradeData.content.trim().toUpperCase();
+    if (responseContent !== 'CORRECT' && responseContent !== 'INCORRECT') {
+      console.error('Invalid grade format:', responseContent);
+      throw new Error('Invalid grade format received');
+    }
+
+    const isCorrect = responseContent === 'CORRECT';
+    console.log(`Graded exercise with result: ${isCorrect}`);
 
     // Step 2: If incorrect, get guidance
     let explanation = '';
@@ -48,7 +56,16 @@ export const evaluateHomework = async (
         },
       });
 
-      if (guidanceError) throw guidanceError;
+      if (guidanceError) {
+        console.error('Error getting guidance:', guidanceError);
+        throw guidanceError;
+      }
+
+      if (!guidanceData?.content) {
+        console.error('Invalid guidance response:', guidanceData);
+        throw new Error('Invalid guidance response received');
+      }
+
       explanation = guidanceData.content;
     } else {
       explanation = "**Problem:** " + exercise.question + "\n\n**Guidance:** Well done! You've answered this correctly. Would you like to explore this concept further or try a more challenging problem?";
@@ -58,11 +75,14 @@ export const evaluateHomework = async (
     toast.success(isCorrect ? "Correct! Great job!" : "Incorrect. Check the guidance to improve your understanding.");
 
     // Return the updated exercise with explicit isCorrect field
-    return {
+    const gradedExercise = {
       ...exercise,
-      isCorrect: isCorrect,
+      isCorrect,
       explanation
     };
+
+    console.log('Returning graded exercise:', gradedExercise);
+    return gradedExercise;
   } catch (error) {
     console.error('Error evaluating homework:', error);
     toast.error('There was an issue grading your homework. Please try again.');
