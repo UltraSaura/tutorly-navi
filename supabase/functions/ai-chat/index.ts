@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
@@ -39,15 +38,14 @@ serve(async (req) => {
   
   try {
     // Parse the request
-    const { message, modelId, history = [] } = await req.json();
+    const { message, modelId, history = [], isGradingRequest = false } = await req.json();
     
     console.log(`Processing request with model: ${modelId}`);
+    console.log('Is grading request:', isGradingRequest);
     
     // Detect if this is a homework/exercise question
-    const isExercise = detectExercise(message);
-    
-    // Check if this is a grading request
-    const isGradingRequest = message.includes("I need you to grade this");
+    const isExercise = !isGradingRequest && detectExercise(message);
+    console.log('Is exercise:', isExercise);
     
     // Determine which model to use and which API to call
     const modelConfig = getModelConfig(modelId);
@@ -69,7 +67,7 @@ serve(async (req) => {
     let systemMessage = generateSystemMessage(isExercise, isGradingRequest);
     
     // Enhance system message for math problems if needed
-    if (modelConfig.provider === 'OpenAI') {
+    if (!isGradingRequest && modelConfig.provider === 'OpenAI') {
       systemMessage = enhanceSystemMessageForMath(systemMessage, message);
     }
     

@@ -9,14 +9,6 @@
  * @returns The appropriate system message object
  */
 export function generateSystemMessage(isExercise: boolean = false, isGradingRequest: boolean = false): { role: string, content: string } {
-  // Base system message for general educational assistance
-  if (!isExercise && !isGradingRequest) {
-    return {
-      role: 'system',
-      content: 'You are StudyWhiz, an educational AI tutor. You help students understand concepts, solve problems, and learn new subjects. Be friendly, concise, and educational in your responses. Prioritize explaining concepts clearly rather than just giving answers.'
-    };
-  }
-  
   // System message for grading requests
   if (isGradingRequest) {
     return {

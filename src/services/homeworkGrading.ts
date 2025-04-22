@@ -12,6 +12,8 @@ export const evaluateHomework = async (
       return exercise;
     }
 
+    console.log('Starting grading for:', { question: exercise.question, answer: exercise.userAnswer });
+
     // Step 1: Get quick grade (just correct/incorrect)
     const { data: gradeData, error: gradeError } = await supabase.functions.invoke('ai-chat', {
       body: {
@@ -42,14 +44,14 @@ export const evaluateHomework = async (
     }
 
     const isCorrect = responseContent === 'CORRECT';
-    console.log(`Graded exercise with result: ${isCorrect}`);
+    console.log(`Exercise graded as: ${isCorrect ? 'CORRECT' : 'INCORRECT'}`);
 
     // Step 2: If incorrect, get guidance
     let explanation = '';
     if (!isCorrect) {
       const { data: guidanceData, error: guidanceError } = await supabase.functions.invoke('ai-chat', {
         body: {
-          message: `The student answered this incorrectly. Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Please provide guidance without giving away the answer.`,
+          message: `The student answered incorrectly. Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Please provide guidance without giving away the answer.`,
           modelId: 'gpt4o',
           history: [],
           isExercise: true
@@ -66,9 +68,9 @@ export const evaluateHomework = async (
         throw new Error('Invalid guidance response received');
       }
 
-      explanation = guidanceData.content;
+      explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${guidanceData.content}`;
     } else {
-      explanation = "**Problem:** " + exercise.question + "\n\n**Guidance:** Well done! You've answered this correctly. Would you like to explore this concept further or try a more challenging problem?";
+      explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Well done! You've answered this correctly. Would you like to explore this concept further or try a more challenging problem?`;
     }
 
     // Display appropriate notification
