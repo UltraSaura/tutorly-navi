@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, X, ChevronUp, ChevronDown, ThumbsUp, AlertCircle, CircleCheck, CircleX } from 'lucide-react';
+import { ChevronUp, ChevronDown, ThumbsUp, AlertCircle, CircleCheck, CircleX } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,10 @@ interface ExerciseProps {
   toggleExerciseExpansion: (id: string) => void;
 }
 
+/**
+ * Exercise component displays a homework exercise with its question, 
+ * user's answer, and UI indicators for correct/incorrect status
+ */
 const Exercise = ({
   exercise,
   toggleExerciseExpansion
@@ -29,6 +33,14 @@ const Exercise = ({
     .join('<br />') : '';
 
   const hasRelatedMessages = exercise.relatedMessages && exercise.relatedMessages.length > 0;
+
+  // Debug rendering
+  console.log('Exercise rendering:', { 
+    id: exercise.id,
+    question: exercise.question, 
+    isCorrect: exercise.isCorrect, 
+    hasAnswer: !!exercise.userAnswer 
+  });
 
   return (
     <motion.div 

@@ -61,6 +61,7 @@ const ChatInterface = () => {
         const hasMathExpression = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(lastMessage.content);
         
         if (isHomework || hasMathExpression) {
+          console.log('Detected homework in message:', lastMessage.content);
           processHomeworkFromChat(lastMessage.content);
           // Mark this message as processed
           setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
@@ -78,6 +79,7 @@ const ChatInterface = () => {
           // Check if the user message was a homework submission
           if (processedMessageIds.has(userMsgId)) {
             // Link this AI response to the exercise created from the user message
+            console.log('Linking AI response to exercise from user message:', recentUserMsg.content);
             linkAIResponseToExercise(recentUserMsg.content, lastMessage);
           }
         }

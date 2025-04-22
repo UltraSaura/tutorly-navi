@@ -1,4 +1,3 @@
-
 import { Exercise, Message } from '@/types/chat';
 import { toast } from 'sonner';
 import { evaluateHomework } from '@/services/homeworkGrading';
@@ -55,8 +54,12 @@ export const processNewExercise = async (
     relatedMessages: [],
   };
 
+  console.log("Created new exercise:", newEx);
+
   try {
-    return await evaluateHomework(newEx);
+    const gradedExercise = await evaluateHomework(newEx);
+    console.log("Graded exercise:", gradedExercise);
+    return gradedExercise;
   } catch (error) {
     console.error('Error evaluating homework:', error);
     toast.error('There was an issue grading your homework. Please try again.');

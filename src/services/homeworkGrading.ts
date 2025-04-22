@@ -22,10 +22,19 @@ export const evaluateHomework = async (
       },
     });
 
-    if (gradeError) throw gradeError;
+    if (gradeError) {
+      console.error('Error getting grade:', gradeError);
+      throw gradeError;
+    }
 
-    // Parse the simple CORRECT/INCORRECT response
-    const isCorrect = gradeData.content.trim().toUpperCase() === 'CORRECT';
+    console.log('Raw grade response:', gradeData?.content);
+
+    // Enhanced parsing of the CORRECT/INCORRECT response
+    // Make it more robust by checking for variants and case-insensitive matching
+    const responseContent = gradeData?.content?.trim().toUpperCase() || '';
+    const isCorrect = responseContent.includes('CORRECT') && !responseContent.includes('INCORRECT');
+
+    console.log(`Graded exercise with result: ${isCorrect ? 'CORRECT' : 'INCORRECT'}`);
 
     // Step 2: If incorrect, get guidance
     let explanation = '';
@@ -48,10 +57,10 @@ export const evaluateHomework = async (
     // Display appropriate notification
     toast.success(isCorrect ? "Correct! Great job!" : "Incorrect. Check the guidance to improve your understanding.");
 
-    // Return the updated exercise
+    // Return the updated exercise with explicit isCorrect field
     return {
       ...exercise,
-      isCorrect,
+      isCorrect: isCorrect,
       explanation
     };
   } catch (error) {
