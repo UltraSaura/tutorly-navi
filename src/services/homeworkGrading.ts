@@ -9,8 +9,14 @@ export const evaluateHomework = async (
   try {
     if (!exercise.question || !exercise.userAnswer) {
       console.log("Missing question or answer for grading");
-      return exercise;
+      return {
+        ...exercise,
+        isCorrect: undefined,
+        explanation: "Missing question or answer"
+      };
     }
+
+    console.log("Grading exercise:", { question: exercise.question, answer: exercise.userAnswer });
 
     // Step 1: Get quick grade (just correct/incorrect)
     const { data: gradeData, error: gradeError } = await supabase.functions.invoke('ai-chat', {
@@ -70,7 +76,7 @@ export const evaluateHomework = async (
 
       explanation = guidanceData.content;
     } else {
-      explanation = "**Problem:** " + exercise.question + "\n\n**Guidance:** Well done! You've answered this correctly. Would you like to explore this concept further or try a more challenging problem?";
+      explanation = "Great job! You've answered this correctly. Would you like to try a more challenging problem?";
     }
 
     // Display appropriate notification
