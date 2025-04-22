@@ -1,10 +1,6 @@
-/**
- * Utility functions for extracting homework components from user messages
- */
 
-/**
- * Extracts question and answer components from a homework submission message
- */
+import { Exercise } from '@/types/chat';
+
 export const extractHomeworkFromMessage = (message: string): { question: string, answer: string } => {
   // Math patterns to detect various formats
   const mathPatterns = [
@@ -119,9 +115,6 @@ export const extractHomeworkFromMessage = (message: string): { question: string,
   return { question, answer };
 };
 
-/**
- * Detects if a message likely contains a homework submission
- */
 export const detectHomeworkInMessage = (content: string): boolean => {
   // Math-specific keywords
   const mathKeywords = [
@@ -170,35 +163,3 @@ export const detectHomeworkInMessage = (content: string): boolean => {
          likelyHomework;
 };
 
-/**
- * Extracts question and explanation components from an AI message
- */
-export const extractExerciseFromMessage = (content: string): { question: string, explanation: string } => {
-  // Look for Problem/Guidance format
-  const problemMatch = content.match(/\*\*Problem:\*\*\s*(.*?)(?=\*\*Guidance:\*\*|$)/s);
-  const guidanceMatch = content.match(/\*\*Guidance:\*\*\s*(.*?)$/s);
-  
-  if (problemMatch && guidanceMatch) {
-    return {
-      question: problemMatch[1].trim(),
-      explanation: `**Problem:**${problemMatch[1]}\n\n**Guidance:**${guidanceMatch[1]}`
-    };
-  }
-  
-  // Simple extraction - this could be made more sophisticated
-  // For now, we'll take the first paragraph as the question
-  // and the rest as the explanation
-  const paragraphs = content.split('\n\n');
-  
-  if (paragraphs.length === 0) {
-    return { question: content, explanation: '' };
-  }
-  
-  // Take the first paragraph as the question
-  const question = paragraphs[0].trim();
-  
-  // Use the rest as the explanation
-  const explanation = paragraphs.slice(1).join('\n\n').trim();
-  
-  return { question, explanation };
-};
