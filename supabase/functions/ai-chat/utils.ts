@@ -1,3 +1,4 @@
+
 // Utility functions for AI chat
 
 // Helper function to detect if a message is likely an exercise or homework problem
@@ -42,21 +43,6 @@ export function getApiKeyForProvider(provider: string): string | null {
   };
   
   return keys[provider] || null;
-}
-
-// Enhanced math pattern detection
-export function isMathProblem(message: string): boolean {
-  const mathPatterns = [
-    /\d+\s*[\+\-\*\/]\s*\d+/,                    // Basic arithmetic
-    /[0-9x]+\s*[\+\-\*\/]\s*[0-9x]+\s*=/,       // Algebraic equations
-    /\d+\/\d+/,                                  // Fractions
-    /\d+\s*%/,                                   // Percentages
-    /sqrt|cos|sin|tan|log|exp/,                  // Mathematical functions
-    /\([0-9x\+\-\*\/]+\)/,                      // Parentheses expressions
-    /\b(solve|calculate|compute|evaluate)\b.*?\d+/i  // Math word problems
-  ];
-  
-  return mathPatterns.some(pattern => pattern.test(message));
 }
 
 // Helper function to format history messages based on provider
