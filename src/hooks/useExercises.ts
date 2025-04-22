@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Exercise, Message } from '@/types/chat';
 import { toast } from 'sonner';
 import { useGrades } from './useGrades';
@@ -9,6 +8,10 @@ export const useExercises = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const { grade, updateGrades } = useGrades();
   const [processedContent, setProcessedContent] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    updateGrades(exercises);
+  }, [exercises, updateGrades]);
 
   const toggleExerciseExpansion = (id: string) => {
     setExercises(exercises.map(exercise => 
@@ -35,7 +38,6 @@ export const useExercises = () => {
         setProcessedContent(prev => new Set([...prev, content]));
       });
 
-      updateGrades([...exercises, ...uniqueExercises]);
       console.log(`Added ${uniqueExercises.length} new exercises`);
     } catch (error) {
       console.error('Error adding exercises:', error);
