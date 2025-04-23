@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, GraduationCap } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import Exercise from './Exercise';
@@ -34,8 +34,16 @@ const ExerciseList = ({
 
   return (
     <>
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-lg font-semibold">Graded Homework & Exercises</h2>
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-2">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+          <h2 className="text-lg font-semibold">Graded Homework & Exercises</h2>
+          <div className="flex items-center gap-2">
+            <GraduationCap className="h-5 w-5 text-studywhiz-600" />
+            <span className="font-medium text-sm">
+              Overall Grade: <span className="text-xl font-bold">{grade.percentage}%</span> {grade.letter !== 'N/A' && (<span className="ml-1">({grade.letter})</span>)}
+            </span>
+          </div>
+        </div>
         <div className="flex justify-between items-center mt-2">
           <div className="flex-1 mr-4">
             <Progress value={grade.percentage} className="h-2 bg-gray-200" />
@@ -76,3 +84,4 @@ const ExerciseList = ({
 };
 
 export default ExerciseList;
+
