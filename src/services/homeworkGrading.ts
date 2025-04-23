@@ -8,12 +8,12 @@ export const evaluateHomework = async (
 ): Promise<Exercise> => {
   try {
     if (!exercise.question || !exercise.userAnswer) {
-      console.error("Missing question or answer for grading:", exercise);
+      console.error("[homeworkGrading] Missing question or answer for grading:", exercise);
       toast.error('Please provide both a question and an answer for grading.');
       return exercise;
     }
 
-    console.log('Starting homework evaluation for:', { 
+    console.log('[homeworkGrading] Starting homework evaluation for:', { 
       question: exercise.question, 
       answer: exercise.userAnswer 
     });
@@ -28,35 +28,37 @@ export const evaluateHomework = async (
       },
     });
 
+    console.log('[homeworkGrading] Grade API response:', { gradeData, gradeError });
+
     if (gradeError) {
-      console.error('Grading error:', gradeError);
+      console.error('[homeworkGrading] Grading error:', gradeError);
       toast.error('Failed to grade your answer. Please try again.');
       throw gradeError;
     }
 
     if (!gradeData?.content) {
-      console.error('Invalid grading response:', gradeData);
+      console.error('[homeworkGrading] Invalid grading response:', gradeData);
       toast.error('Received invalid response from grading service.');
       throw new Error('Invalid grading response received');
     }
 
-    console.log('Raw grade response:', gradeData.content);
+    console.log('[homeworkGrading] Raw grade response:', gradeData.content);
 
     // Strict parsing of the CORRECT/INCORRECT response
     const responseContent = gradeData.content.trim().toUpperCase();
     if (responseContent !== 'CORRECT' && responseContent !== 'INCORRECT') {
-      console.error('Invalid grade format received:', responseContent);
+      console.error('[homeworkGrading] Invalid grade format received:', responseContent);
       toast.error('Received invalid grade format. Please try again.');
       throw new Error('Invalid grade format received');
     }
 
     const isCorrect = responseContent === 'CORRECT';
-    console.log(`Exercise graded as: ${isCorrect ? 'CORRECT' : 'INCORRECT'}`);
+    console.log(`[homeworkGrading] Exercise graded as: ${isCorrect ? 'CORRECT' : 'INCORRECT'}`);
 
     // Step 2: Get guidance based on correctness
     let explanation = '';
     if (!isCorrect) {
-      console.log('Requesting guidance for incorrect answer');
+      console.log('[homeworkGrading] Requesting guidance for incorrect answer');
       const { data: guidanceData, error: guidanceError } = await supabase.functions.invoke('ai-chat', {
         body: {
           message: `The student answered incorrectly. Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Provide guidance to help them understand without revealing the answer directly.`,
@@ -66,14 +68,16 @@ export const evaluateHomework = async (
         },
       });
 
+      console.log('[homeworkGrading] Guidance API response:', { guidanceData, guidanceError });
+
       if (guidanceError) {
-        console.error('Error getting guidance:', guidanceError);
+        console.error('[homeworkGrading] Error getting guidance:', guidanceError);
         toast.error('Failed to get guidance. Please try again.');
         throw guidanceError;
       }
 
       if (!guidanceData?.content) {
-        console.error('Invalid guidance response:', guidanceData);
+        console.error('[homeworkGrading] Invalid guidance response:', guidanceData);
         toast.error('Received invalid guidance response.');
         throw new Error('Invalid guidance response received');
       }
@@ -83,7 +87,7 @@ export const evaluateHomework = async (
       explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Well done! You've answered this correctly. Would you like to explore this concept further or try a more challenging problem?`;
     }
 
-    console.log('Generated explanation:', explanation);
+    console.log('[homeworkGrading] Generated explanation:', explanation);
 
     // Display appropriate notification
     toast.success(isCorrect ? "Correct! Great job!" : "Incorrect. Check the guidance to improve your understanding.");
@@ -95,10 +99,10 @@ export const evaluateHomework = async (
       explanation
     };
 
-    console.log('Returning graded exercise:', gradedExercise);
+    console.log('[homeworkGrading] Returning graded exercise:', gradedExercise);
     return gradedExercise;
   } catch (error) {
-    console.error('Error evaluating homework:', error);
+    console.error('[homeworkGrading] Error evaluating homework:', error);
     toast.error('There was an issue grading your homework. Please try again.');
     return exercise;
   }

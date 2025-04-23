@@ -14,6 +14,7 @@ export const useExercises = () => {
   useEffect(() => {
     console.log('[useExercises] exercises updated:', exercises);
     updateGrades(exercises);
+    console.log('[useExercises] grade after updateGrades:', grade);
   }, [exercises, updateGrades]);
 
   const toggleExerciseExpansion = (id: string) => {
@@ -22,6 +23,7 @@ export const useExercises = () => {
         exercise.id === id ? { ...exercise, expanded: !exercise.expanded } : exercise
       )
     );
+    console.log('[useExercises] toggled expansion for:', id);
   };
 
   const addExercises = async (newExercises: Exercise[]) => {
@@ -33,7 +35,7 @@ export const useExercises = () => {
       );
 
       if (uniqueExercises.length === 0) {
-        console.log("No new unique exercises to add");
+        console.log("[useExercises] No new unique exercises to add");
         return;
       }
       // Always add exercises, then recalculate grades
@@ -43,41 +45,41 @@ export const useExercises = () => {
           const content = `${ex.question}:${ex.userAnswer}`;
           setProcessedContent(old => new Set([...old, content]));
         });
-        // grades will be updated by useEffect above
+        console.log(`[useExercises] Added ${uniqueExercises.length} new exercises`, newList);
         return newList;
       });
-
-      console.log(`[useExercises] Added ${uniqueExercises.length} new exercises`);
     } catch (error) {
-      console.error('Error adding exercises:', error);
+      console.error('[useExercises] Error adding exercises:', error);
       toast.error('Error adding exercises');
     }
   };
 
   const processHomeworkFromChat = async (message: string) => {
+    console.log('[useExercises] Processing homework from chat message:', message);
     const newExercise = await processNewExercise(message, exercises, processedContent);
     if (newExercise) {
       setExercises(prev => {
         const updated = [...prev, newExercise];
-        console.log('[useExercises] New exercise added by chat:', newExercise);
+        console.log('[useExercises] New exercise added by chat:', newExercise, updated);
         return updated;
       });
       setProcessedContent(prev => new Set([...prev, message]));
-      // updateGrades will be called in useEffect
     }
   };
 
   const linkAIResponseToExercise = (userMessage: string, aiMessage: Message) => {
+    console.log('[useExercises] Linking AI response to exercise for user message:', userMessage, aiMessage);
     const updatedExercises = linkMessageToExercise(exercises, userMessage, aiMessage);
     if (updatedExercises !== exercises) {
       setExercises(updatedExercises);
+      console.log('[useExercises] Linked response, updated exercises:', updatedExercises);
     }
   };
 
   const createExerciseFromAI = (question: string, explanation: string) => {
     const existingExercise = exercises.find(ex => ex.question === question);
     if (existingExercise) {
-      console.log("[useExercises] This exercise already exists");
+      console.log("[useExercises] This exercise already exists", existingExercise);
       return existingExercise;
     }
 
@@ -92,11 +94,17 @@ export const useExercises = () => {
 
     setExercises(prev => {
       const newList = [...prev, newEx];
+      console.log('[useExercises] Exercise created from AI:', newEx, newList);
       return newList;
     });
     toast.info("A new exercise has been added.");
     return newEx;
   };
+
+  useEffect(() => {
+    // Debug log for grade on every grade update (from useGrades)
+    console.log('[useExercises] Current overall grade state:', grade);
+  }, [grade]);
 
   return {
     exercises,
