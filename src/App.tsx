@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,11 +19,7 @@ const GradeDashboard = lazy(() => import("./components/user/GradeDashboard"));
 const SkillMastery = lazy(() => import("./components/user/SkillMastery"));
 
 // Admin Pages
-const ApiKeyManagement = lazy(() => import("./components/admin/ApiKeyManagement"));
-const ModelSelection = lazy(() => import("./components/admin/ModelSelection"));
-const SystemPromptConfig = lazy(() => import("./components/admin/SystemPromptConfig"));
-const UserManagement = lazy(() => import("./components/admin/UserManagement"));
-const SubjectManagement = lazy(() => import("./components/admin/SubjectManagement"));
+import AIModelManagement from "./components/admin/AIModelManagement";
 
 // Loading Component
 const LoadingFallback = () => (
@@ -61,11 +56,9 @@ const App = () => (
                 
                 {/* Admin Panel Routes */}
                 <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<ApiKeyManagement />} />
-                  <Route path="api-keys" element={<ApiKeyManagement />} />
-                  <Route path="models" element={<ModelSelection />} />
+                  <Route index element={<AIModelManagement />} />
+                  <Route path="models" element={<AIModelManagement />} />
                   <Route path="subjects" element={<SubjectManagement />} />
-                  <Route path="prompts" element={<SystemPromptConfig />} />
                   <Route path="users" element={<UserManagement />} />
                 </Route>
                 

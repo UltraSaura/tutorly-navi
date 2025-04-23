@@ -1,8 +1,7 @@
 
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
-import { Link, useLocation } from 'react-router-dom';
-import { Key, Settings, Users, ArrowLeft, MenuIcon, X, Folder } from 'lucide-react';
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import { settings } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -11,41 +10,17 @@ const AdminLayout = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Define grouped navigation
+  // Only one nav group for AI Model Management now
   const navGroups = [
     {
-      label: 'AI Model Management',
+      label: 'Admin Features',
       items: [
         {
-          title: 'API Key Management',
-          path: '/admin/api-keys',
-          icon: <Key className="mr-2 h-5 w-5" />,
-        },
-        {
-          title: 'Model Selection',
+          title: 'AI Model Management',
           path: '/admin/models',
-          icon: <Settings className="mr-2 h-5 w-5" />,
+          icon: <settings className="mr-2 h-5 w-5" />,
         },
-        {
-          title: 'System Prompts',
-          path: '/admin/prompts',
-          icon: <Settings className="mr-2 h-5 w-5" />,
-        },
-      ],
-    },
-    {
-      label: 'User & Subject Management',
-      items: [
-        {
-          title: 'User Management',
-          path: '/admin/users',
-          icon: <Users className="mr-2 h-5 w-5" />,
-        },
-        {
-          title: 'Subject Management',
-          path: '/admin/subjects',
-          icon: <Folder className="mr-2 h-5 w-5" />,
-        },
+        // Future admin links (users, subjects etc) could be added here
       ],
     }
   ];
@@ -95,7 +70,9 @@ const AdminLayout = () => {
           <div className="p-4 border-t">
             <Link to="/">
               <Button variant="outline" className="w-full justify-start">
-                <ArrowLeft className="mr-2 h-4 w-4" />
+                <span className="mr-2">
+                  <svg className="h-4 w-4" />
+                </span>
                 Back to App
               </Button>
             </Link>
@@ -106,7 +83,7 @@ const AdminLayout = () => {
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="absolute top-4 left-4 z-50">
-                <MenuIcon className="h-6 w-6" />
+                <svg className="h-6 w-6" />
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-64">
@@ -118,7 +95,7 @@ const AdminLayout = () => {
                   <span className="ml-2 font-semibold">Admin Panel</span>
                 </Link>
                 <Button variant="ghost" size="icon" onClick={closeMobileMenu}>
-                  <X className="h-5 w-5" />
+                  <svg className="h-5 w-5" />
                 </Button>
               </div>
               <nav className="flex-1 overflow-y-auto py-6 px-4">
@@ -155,7 +132,9 @@ const AdminLayout = () => {
                     className="w-full justify-start"
                     onClick={closeMobileMenu}
                   >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    <span className="mr-2">
+                      <svg className="h-4 w-4" />
+                    </span>
                     Back to App
                   </Button>
                 </Link>
