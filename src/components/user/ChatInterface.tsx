@@ -10,6 +10,8 @@ import {
   detectHomeworkInMessage, 
   extractHomeworkFromMessage
 } from '@/utils/homeworkExtraction';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { GraduationCap } from 'lucide-react';
 
 const ChatInterface = () => {
   const { 
@@ -112,15 +114,32 @@ const ChatInterface = () => {
         activeModel={activeModel}
       />
       
-      <div className="w-full md:w-2/3 glass rounded-xl overflow-hidden">
-        <ExerciseList
-          exercises={exercises}
-          grade={grade}
-          toggleExerciseExpansion={toggleExerciseExpansion}
-        />
+      <div className="w-full md:w-2/3 glass rounded-xl overflow-hidden flex flex-col">
+        {/* Overall Grade Card */}
+        <Card className="mb-3 mx-4 mt-4 md:mt-8 max-w-sm self-center">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium">Overall Grade</CardTitle>
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{grade.percentage}%</div>
+            <p className="text-xs text-muted-foreground">
+              Grade: {grade.letter}
+            </p>
+          </CardContent>
+        </Card>
+        {/* Exercise List */}
+        <div className="flex-1">
+          <ExerciseList
+            exercises={exercises}
+            grade={grade}
+            toggleExerciseExpansion={toggleExerciseExpansion}
+          />
+        </div>
       </div>
     </div>
   );
 };
 
 export default ChatInterface;
+
