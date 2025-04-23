@@ -1,8 +1,16 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Exercise } from "@/types/chat";
 import { evaluateHomework } from "@/services/homeworkGrading";
+
+const convertBlobToBase64 = async (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
 
 export const processUploadedDocument = async (
   file: File, 
@@ -12,10 +20,13 @@ export const processUploadedDocument = async (
   try {
     console.log('Starting document processing:', { fileName: file.name, fileType: file.type });
     
-    // Call the document processor edge function
+    // Convert blob to base64
+    const base64Data = await convertBlobToBase64(file);
+    
+    // Call the document processor edge function with base64 data
     const { data, error } = await supabase.functions.invoke('document-processor', {
       body: {
-        fileUrl: fileUrl,
+        fileData: base64Data,
         fileType: file.type,
         fileName: file.name,
         subjectId: subjectId
@@ -24,7 +35,7 @@ export const processUploadedDocument = async (
     
     if (error) {
       console.error('Error calling document processor:', error);
-      toast.error(error.message || 'Could not process document');
+      toast.error('Could not process document. Please try uploading again.');
       return null;
     }
     
@@ -36,8 +47,41 @@ export const processUploadedDocument = async (
     
     if (!data.exercises || data.exercises.length === 0) {
       console.warn('No exercises found in document');
-      toast.warning('No exercises found in your document');
-      return { exercises: [], rawText: data.rawText || '' };
+      toast.warning('No exercises found in your document. Trying alternative extraction method...');
+      
+      // Attempt alternative extraction with just the raw text
+      if (data.rawText) {
+        const simpleExercises = extractSimpleExercises(data.rawText);
+        if (simpleExercises.length > 0) {
+          console.log('Found exercises using simple extraction:', simpleExercises);
+          return {
+            exercises: simpleExercises.map(ex => ({
+              id: Date.now() + Math.random().toString(36).substring(2, 9),
+              question: ex.question,
+              userAnswer: ex.answer,
+              expanded: false,
+              isCorrect: undefined,
+              explanation: undefined,
+              subjectId: subjectId
+            })),
+            rawText: data.rawText
+          };
+        }
+      }
+      
+      // Create a single exercise from the entire content if no exercises found
+      return {
+        exercises: [{
+          id: Date.now() + Math.random().toString(36).substring(2, 9),
+          question: `Document Content: ${file.name}`,
+          userAnswer: data.rawText || 'Content extraction failed',
+          expanded: false,
+          isCorrect: undefined,
+          explanation: undefined,
+          subjectId: subjectId
+        }],
+        rawText: data.rawText || ''
+      };
     }
     
     // Convert the raw exercises to our Exercise type
@@ -55,9 +99,44 @@ export const processUploadedDocument = async (
     return { exercises, rawText: data.rawText || '' };
   } catch (error) {
     console.error('Error processing document:', error);
-    toast.error('Failed to process document');
+    toast.error('Failed to process document. Please try a different format or upload as text.');
     return null;
   }
+};
+
+// Simple exercise extraction function as fallback
+const extractSimpleExercises = (text: string): Array<{ question: string, answer: string }> => {
+  const exercises = [];
+  const lines = text.split('\n');
+  
+  let currentQuestion = '';
+  let currentAnswer = '';
+  
+  for (const line of lines) {
+    // Look for common math exercise patterns
+    if (line.match(/^\d+[\.\)]|\([0-9a-z]\)|\b(exercice|problème|calcule)\b/i)) {
+      if (currentQuestion && currentAnswer) {
+        exercises.push({ question: currentQuestion.trim(), answer: currentAnswer.trim() });
+      }
+      currentQuestion = line;
+      currentAnswer = '';
+    } else if (currentQuestion && line.trim()) {
+      if (line.toLowerCase().includes('réponse') || line.toLowerCase().includes('solution')) {
+        currentAnswer = line.replace(/^(réponse|solution)\s*:\s*/i, '');
+      } else if (!currentAnswer) {
+        currentQuestion += ' ' + line;
+      } else {
+        currentAnswer += ' ' + line;
+      }
+    }
+  }
+  
+  // Add the last exercise if exists
+  if (currentQuestion && currentAnswer) {
+    exercises.push({ question: currentQuestion.trim(), answer: currentAnswer.trim() });
+  }
+  
+  return exercises;
 };
 
 export const gradeDocumentExercises = async (exercises: Exercise[]): Promise<Exercise[]> => {

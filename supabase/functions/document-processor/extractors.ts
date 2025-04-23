@@ -1,25 +1,24 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 /**
  * Extract text from a document based on file type
  */
-export async function extractTextFromFile(fileUrl: string, fileType: string): Promise<string> {
-  console.log(`Processing file of type: ${fileType} from URL: ${fileUrl}`);
+export async function extractTextFromFile(fileData: string, fileType: string): Promise<string> {
+  console.log(`Processing file of type: ${fileType}`);
 
   try {
     if (fileType.includes('pdf')) {
       console.log('Processing PDF document');
-      return await extractTextFromPDFWithDeepSeekVL2(fileUrl);
+      return await extractTextFromPDFWithDeepSeekVL2(fileData);
     } else if (fileType.includes('image')) {
       console.log('Processing image file');
-      return await extractTextWithDeepSeekVL2(fileUrl);
+      return await extractTextWithDeepSeekVL2(fileData);
     } else if (fileType.includes('word') || fileType.includes('docx') || fileType.includes('text')) {
       console.log('Processing Word/text document');
-      return await extractTextFromPDFWithDeepSeekVL2(fileUrl);
+      return await extractTextFromPDFWithDeepSeekVL2(fileData);
     } else {
       console.log('Unrecognized file type, attempting image extraction as fallback');
-      return await extractTextWithDeepSeekVL2(fileUrl);
+      return await extractTextWithDeepSeekVL2(fileData);
     }
   } catch (error) {
     console.error("Error extracting text:", error);
@@ -84,7 +83,7 @@ export async function extractTextWithDeepSeekVL2(imageUrl: string): Promise<stri
 }
 
 // Extract text from a PDF using DeepSeek-VL2
-export async function extractTextFromPDFWithDeepSeekVL2(pdfUrl: string): Promise<string> {
+export async function extractTextFromPDFWithDeepSeekVL2(fileData: string): Promise<string> {
   const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
   
   if (!deepseekApiKey) {
@@ -104,13 +103,13 @@ export async function extractTextFromPDFWithDeepSeekVL2(pdfUrl: string): Promise
         messages: [
           {
             role: "system",
-            content: "You are a PDF text extractor. Extract all text content from the PDF, preserving format and structure. Focus especially on identifying exercises, problems, questions, and their associated answers if present."
+            content: "You are a PDF text extractor. Extract all text content from the PDF, preserving format and structure. Focus especially on identifying exercises, problems, questions, and their associated answers if present. Pay special attention to mathematical content and equations."
           },
           {
             role: "user",
             content: [
               { type: "text", text: "Extract all text from this PDF, especially any exercises, problems, questions and answers:" },
-              { type: "image_url", image_url: { url: pdfUrl } }
+              { type: "image_url", image_url: { url: fileData } }
             ]
           }
         ],
@@ -126,11 +125,6 @@ export async function extractTextFromPDFWithDeepSeekVL2(pdfUrl: string): Promise
     }
 
     const data = await response.json();
-    if (data.error) {
-      console.error("DeepSeek API returned error:", data.error);
-      throw new Error(`DeepSeek API error: ${data.error.message}`);
-    }
-
     console.log('Successfully extracted text from PDF');
     return data.choices[0].message.content;
   } catch (error) {

@@ -4,7 +4,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { processDocument } from "./documentService.ts";
 import { corsHeaders } from "./utils.ts";
 
-// Main request handler
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -12,16 +11,16 @@ serve(async (req) => {
   }
   
   try {
-    const { fileUrl, fileType, fileName, subjectId } = await req.json();
+    const { fileData, fileType, fileName, subjectId } = await req.json();
     
-    if (!fileUrl) {
-      throw new Error("File URL is required");
+    if (!fileData) {
+      throw new Error("File data is required");
     }
     
     console.log(`Processing document: ${fileName} (${fileType})`);
     
     // Process the document using the documentService
-    const result = await processDocument(fileUrl, fileType, fileName, subjectId);
+    const result = await processDocument(fileData, fileType, fileName, subjectId);
     
     // Return the processed result
     return new Response(
