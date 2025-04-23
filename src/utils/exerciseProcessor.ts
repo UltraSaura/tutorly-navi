@@ -2,7 +2,7 @@
 import { Exercise, Message } from '@/types/chat';
 import { toast } from 'sonner';
 import { evaluateHomework } from '@/services/homeworkGrading';
-import { extractHomeworkFromMessage } from '@/utils/homeworkExtraction';
+import { extractHomeworkFromMessage } from '@/utils/homework';
 
 export const processNewExercise = async (
   message: string,

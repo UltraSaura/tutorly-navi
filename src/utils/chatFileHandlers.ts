@@ -1,6 +1,7 @@
+
 import { Message } from '@/types/chat';
 import { toast } from 'sonner';
-import { extractHomeworkFromMessage } from '@/utils/homeworkExtraction';
+import { extractHomeworkFromMessage } from '@/utils/homework';
 import { evaluateHomework } from '@/services/homeworkGrading';
 import { processUploadedDocument, gradeDocumentExercises } from '@/utils/documentProcessor';
 

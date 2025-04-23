@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import ChatPanel from './chat/ChatPanel';
@@ -5,9 +6,10 @@ import ExerciseList from './chat/ExerciseList';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
 import { useAdmin } from '@/context/AdminContext';
-import { detectHomeworkInMessage, extractHomeworkFromMessage } from '@/utils/homeworkExtraction';
+import { detectHomeworkInMessage, extractHomeworkFromMessage } from '@/utils/homework';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GraduationCap } from 'lucide-react';
+
 const ChatInterface = () => {
   const {
     messages,
@@ -40,6 +42,7 @@ const ChatInterface = () => {
   // Get active subjects
   const activeSubjects = getActiveSubjects();
   const defaultSubject = activeSubjects.length > 0 ? activeSubjects[0].id : undefined;
+  
   useEffect(() => {
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];

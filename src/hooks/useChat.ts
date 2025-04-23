@@ -1,10 +1,11 @@
+
 import { useState, useMemo } from 'react';
 import { Message } from '@/types/chat';
 import { useAdmin } from '@/context/AdminContext';
 import { handleFileUpload, handlePhotoUpload } from '@/utils/chatFileHandlers';
 import { sendMessageToAI } from '@/services/chatService';
 import { generateFallbackResponse } from '@/utils/fallbackResponses';
-import { detectHomeworkInMessage } from '@/utils/homeworkExtraction';
+import { detectHomeworkInMessage } from '@/utils/homework';
 
 export const useChat = () => {
   const { selectedModelId, getAvailableModels } = useAdmin();
