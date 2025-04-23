@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -18,7 +18,7 @@ const AdminLayout = () => {
         {
           title: 'AI Model Management',
           path: '/admin/models',
-          icon: <settings className="mr-2 h-5 w-5" />,
+          icon: <Settings className="mr-2 h-5 w-5" />,
         },
         // Future admin links (users, subjects etc) could be added here
       ],

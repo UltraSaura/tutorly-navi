@@ -20,6 +20,8 @@ const SkillMastery = lazy(() => import("./components/user/SkillMastery"));
 
 // Admin Pages
 import AIModelManagement from "./components/admin/AIModelManagement";
+import SubjectManagement from "./components/admin/SubjectManagement";
+import UserManagement from "./components/admin/UserManagement";
 
 // Loading Component
 const LoadingFallback = () => (
