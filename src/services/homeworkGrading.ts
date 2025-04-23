@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Exercise } from "@/types/chat";
 import { toast } from 'sonner';
@@ -6,6 +7,7 @@ export const evaluateHomework = async (
   exercise: Exercise
 ): Promise<Exercise> => {
   try {
+    console.log('[homeworkGrading] evaluateHomework called with:', exercise);
     if (!exercise.question || !exercise.userAnswer) {
       console.error("[homeworkGrading] Missing question or answer for grading:", exercise);
       toast.error('Please provide both a question and an answer for grading.');
@@ -45,6 +47,7 @@ export const evaluateHomework = async (
 
     // Strict parsing of the CORRECT/INCORRECT response
     const responseContent = gradeData.content.trim().toUpperCase();
+    console.log('[homeworkGrading] Parsed grading response as:', responseContent);
     if (responseContent !== 'CORRECT' && responseContent !== 'INCORRECT') {
       console.error('[homeworkGrading] Invalid grade format received:', responseContent);
       toast.error('Received invalid grade format. Please try again.');
@@ -82,11 +85,11 @@ export const evaluateHomework = async (
       }
 
       explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${guidanceData.content}`;
+      console.log('[homeworkGrading] Non-correct grade. Guidance explanation:', explanation);
     } else {
       explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Well done! You've answered this correctly. Would you like to explore this concept further or try a more challenging problem?`;
+      console.log('[homeworkGrading] Correct grade. Set default positive explanation:', explanation);
     }
-
-    console.log('[homeworkGrading] Generated explanation:', explanation);
 
     // Display appropriate notification
     toast.success(isCorrect ? "Correct! Great job!" : "Incorrect. Check the guidance to improve your understanding.");

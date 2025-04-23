@@ -1,3 +1,4 @@
+
 import { Exercise, Message } from '@/types/chat';
 import { toast } from 'sonner';
 import { evaluateHomework } from '@/services/homeworkGrading';
@@ -24,12 +25,12 @@ export const processNewExercise = async (
     const parts = message.split('\n');
     question = parts[0].replace('Problem:', '').trim();
     answer = parts[1].replace('Answer:', '').trim();
-    console.log("[exerciseProcessor] Detected file upload. Parsed question and answer:", question, answer);
+    console.log("[exerciseProcessor] Detected file upload. Parsed question and answer:", { question, answer });
   } else {
     const extracted = extractHomeworkFromMessage(message);
     question = extracted.question;
     answer = extracted.answer;
-    console.log("[exerciseProcessor] Extracted from message. Question/Answer:", question, answer);
+    console.log("[exerciseProcessor] Extracted from message. Question/Answer:", { question, answer });
   }
 
   if (!question || !answer) {
@@ -43,7 +44,7 @@ export const processNewExercise = async (
   );
 
   if (existingExercise) {
-    console.log("[exerciseProcessor] This question-answer pair already exists:", question, answer);
+    console.log("[exerciseProcessor] This question-answer pair already exists:", { question, answer });
     return null;
   }
 

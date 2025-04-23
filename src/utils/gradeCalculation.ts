@@ -9,7 +9,7 @@ export const calculateGrade = (exercises: Exercise[]): Grade => {
 
   const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined);
 
-  console.log('[gradeCalculation] Answered exercises:', answeredExercises);
+  console.log('[gradeCalculation] Filtered answered exercises:', answeredExercises);
 
   if (answeredExercises.length === 0) {
     console.log('[gradeCalculation] No answered exercises. Returning N/A.');
@@ -17,7 +17,11 @@ export const calculateGrade = (exercises: Exercise[]): Grade => {
   }
 
   const correctExercises = answeredExercises.filter(ex => ex.isCorrect).length;
+  console.log('[gradeCalculation] Number of correct exercises:', correctExercises);
+
   const percentage = Math.round((correctExercises / answeredExercises.length) * 100);
+
+  console.log('[gradeCalculation] Calculated percentage:', percentage);
 
   let letter = 'F';
   if (percentage >= 90) letter = 'A';

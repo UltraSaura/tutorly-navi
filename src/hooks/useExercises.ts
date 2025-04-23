@@ -9,20 +9,19 @@ export const useExercises = () => {
   const { grade, updateGrades } = useGrades();
   const [processedContent, setProcessedContent] = useState<Set<string>>(new Set());
 
-  // Always re-calculate grades when exercises change
   useEffect(() => {
-    console.log('[useExercises] exercises updated:', exercises);
+    console.log('[useExercises] exercises updated. Current exercises:', exercises);
     updateGrades(exercises);
-    console.log('[useExercises] grade after updateGrades:', grade);
+    console.log('[useExercises] Called updateGrades. Current grade after update:', grade);
   }, [exercises, updateGrades]);
 
   const toggleExerciseExpansion = (id: string) => {
+    console.log(`[useExercises] Toggling expansion for exercise id: ${id}`);
     setExercises(prev =>
       prev.map(exercise =>
         exercise.id === id ? { ...exercise, expanded: !exercise.expanded } : exercise
       )
     );
-    console.log('[useExercises] toggled expansion for:', id);
   };
 
   const addExercises = async (newExercises: Exercise[]) => {
@@ -38,14 +37,14 @@ export const useExercises = () => {
         console.log("[useExercises] No new unique exercises to add");
         return;
       }
-      // Always add exercises, then recalculate grades
       setExercises(prev => {
         const newList = [...prev, ...uniqueExercises];
         uniqueExercises.forEach(ex => {
           const content = `${ex.question}:${ex.userAnswer}`;
           setProcessedContent(old => new Set([...old, content]));
+          console.log(`[useExercises] Marked as processed content: ${content}`);
         });
-        console.log(`[useExercises] Added ${uniqueExercises.length} new exercises`, newList);
+        console.log(`[useExercises] Added ${uniqueExercises.length} new exercises. Updated list:`, newList);
         return newList;
       });
     } catch (error) {
@@ -60,15 +59,16 @@ export const useExercises = () => {
     if (newExercise) {
       setExercises(prev => {
         const updated = [...prev, newExercise];
-        console.log('[useExercises] New exercise added by chat:', newExercise, updated);
+        console.log('[useExercises] New exercise added by chat:', newExercise, 'Updated exercises:', updated);
         return updated;
       });
       setProcessedContent(prev => new Set([...prev, message]));
+      console.log('[useExercises] Message marked as processed:', message);
     }
   };
 
   const linkAIResponseToExercise = (userMessage: string, aiMessage: Message) => {
-    console.log('[useExercises] Linking AI response to exercise for user message:', userMessage, aiMessage);
+    console.log('[useExercises] Linking AI response to exercise. User message:', userMessage, 'AI message:', aiMessage);
     const updatedExercises = linkMessageToExercise(exercises, userMessage, aiMessage);
     if (updatedExercises !== exercises) {
       setExercises(updatedExercises);
@@ -82,7 +82,6 @@ export const useExercises = () => {
       console.log("[useExercises] This exercise already exists", existingExercise);
       return existingExercise;
     }
-
     const newEx: Exercise = {
       id: Date.now().toString(),
       question,
@@ -102,8 +101,7 @@ export const useExercises = () => {
   };
 
   useEffect(() => {
-    // Debug log for grade on every grade update (from useGrades)
-    console.log('[useExercises] Current overall grade state:', grade);
+    console.log('[useExercises] Current overall grade state after grade update:', grade);
   }, [grade]);
 
   return {
