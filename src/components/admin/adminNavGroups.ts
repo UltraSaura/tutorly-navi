@@ -8,18 +8,24 @@ export const adminNavGroups = [
       {
         title: 'AI Model Management',
         path: '/admin/models',
-        icon: <Settings className="mr-2 h-5 w-5" />,
+        iconName: 'Settings',
       },
       {
         title: 'Subject Management',
         path: '/admin/subjects',
-        icon: <Book className="mr-2 h-5 w-5" />,
+        iconName: 'Book',
       },
       {
         title: 'User Management',
         path: '/admin/users',
-        icon: <Users className="mr-2 h-5 w-5" />,
+        iconName: 'Users',
       },
     ],
   }
 ];
+
+export const iconMap = {
+  Settings,
+  Book,
+  Users
+};

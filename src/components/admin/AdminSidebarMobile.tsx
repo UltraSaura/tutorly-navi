@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { adminNavGroups } from './adminNavGroups';
+import { adminNavGroups, iconMap } from './adminNavGroups';
 
 interface AdminSidebarMobileProps {
   open: boolean;
@@ -40,22 +40,25 @@ const AdminSidebarMobile = ({ open, onOpenChange, closeMenu }: AdminSidebarMobil
                 {group.label}
               </div>
               <div className="space-y-1">
-                {group.items.map(item => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={cn(
-                      "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                      location.pathname === item.path
-                        ? "bg-studywhiz-100 text-studywhiz-700 dark:bg-studywhiz-900/20 dark:text-studywhiz-400"
-                        : "text-gray-600 hover:bg-studywhiz-50 hover:text-studywhiz-600 dark:text-gray-400 dark:hover:bg-studywhiz-900/10 dark:hover:text-studywhiz-400"
-                    )}
-                    onClick={closeMenu}
-                  >
-                    {item.icon}
-                    {item.title}
-                  </Link>
-                ))}
+                {group.items.map(item => {
+                  const Icon = iconMap[item.iconName];
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={cn(
+                        "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                        location.pathname === item.path
+                          ? "bg-studywhiz-100 text-studywhiz-700 dark:bg-studywhiz-900/20 dark:text-studywhiz-400"
+                          : "text-gray-600 hover:bg-studywhiz-50 hover:text-studywhiz-600 dark:text-gray-400 dark:hover:bg-studywhiz-900/10 dark:hover:text-studywhiz-400"
+                      )}
+                      onClick={closeMenu}
+                    >
+                      {Icon && <Icon className="mr-2 h-5 w-5" />}
+                      {item.title}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           ))}
