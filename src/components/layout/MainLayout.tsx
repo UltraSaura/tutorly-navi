@@ -8,7 +8,7 @@ const MainLayout = () => {
       <Navbar />
       
       <main className="flex-1 w-full">
-        <div className="animate-fade-in studywhiz-container md:py-8 py-[10px]">
+        <div className="animate-fade-in studywhiz-container md:py-8 py-[5px]">
           <Outlet />
         </div>
       </main>
