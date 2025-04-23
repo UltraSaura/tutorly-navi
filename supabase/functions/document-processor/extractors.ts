@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 /**
@@ -9,13 +10,13 @@ export async function extractTextFromFile(fileData: string, fileType: string): P
   try {
     if (fileType.includes('pdf')) {
       console.log('Processing PDF document');
-      return await extractTextFromPDFWithDeepSeekVL2(fileData);
+      return await extractTextWithDeepSeekVL2(fileData);
     } else if (fileType.includes('image')) {
       console.log('Processing image file');
       return await extractTextWithDeepSeekVL2(fileData);
     } else if (fileType.includes('word') || fileType.includes('docx') || fileType.includes('text')) {
       console.log('Processing Word/text document');
-      return await extractTextFromPDFWithDeepSeekVL2(fileData);
+      return await extractTextWithDeepSeekVL2(fileData);
     } else {
       console.log('Unrecognized file type, attempting image extraction as fallback');
       return await extractTextWithDeepSeekVL2(fileData);
@@ -26,8 +27,8 @@ export async function extractTextFromFile(fileData: string, fileType: string): P
   }
 }
 
-// Extract text from an image using DeepSeek-VL2
-export async function extractTextWithDeepSeekVL2(imageUrl: string): Promise<string> {
+// Extract text from images and documents using DeepSeek-VL2
+export async function extractTextWithDeepSeekVL2(fileUrl: string): Promise<string> {
   const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
   
   if (!deepseekApiKey) {
@@ -35,7 +36,7 @@ export async function extractTextWithDeepSeekVL2(imageUrl: string): Promise<stri
   }
 
   try {
-    console.log('Making DeepSeek API request for image extraction');
+    console.log('Making DeepSeek API request for content extraction');
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -47,13 +48,13 @@ export async function extractTextWithDeepSeekVL2(imageUrl: string): Promise<stri
         messages: [
           {
             role: "system",
-            content: "You are an OCR system. Extract all text content from the image, preserving format and structure. Focus on identifying questions, problems, exercises, and their associated answers if present."
+            content: "You are an OCR system. Extract all text content from the document, preserving format and structure. Focus on identifying questions, problems, exercises, and their associated answers if present."
           },
           {
             role: "user",
             content: [
-              { type: "text", text: "Extract all text from this image, especially any exercises, problems, questions and answers:" },
-              { type: "image_url", image_url: { url: imageUrl } }
+              { type: "text", text: "Extract all text from this document, especially any exercises, problems, questions and answers:" },
+              { type: "image_url", image_url: { url: fileUrl } }
             ]
           }
         ],
@@ -63,9 +64,9 @@ export async function extractTextWithDeepSeekVL2(imageUrl: string): Promise<stri
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.text();
       console.error('DeepSeek API error response:', errorData);
-      throw new Error(`DeepSeek API error: ${errorData.error?.message || 'Unknown error'}`);
+      throw new Error(`DeepSeek API error: ${errorData}`);
     }
 
     const data = await response.json();
@@ -74,61 +75,10 @@ export async function extractTextWithDeepSeekVL2(imageUrl: string): Promise<stri
       throw new Error(`DeepSeek API error: ${data.error.message}`);
     }
 
-    console.log('Successfully extracted text from image');
+    console.log('Successfully extracted text from document');
     return data.choices[0].message.content;
   } catch (error) {
-    console.error("Error in DeepSeek image extraction:", error);
-    throw new Error(`Failed to extract text from image: ${error.message}`);
-  }
-}
-
-// Extract text from a PDF using DeepSeek-VL2
-export async function extractTextFromPDFWithDeepSeekVL2(fileData: string): Promise<string> {
-  const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
-  
-  if (!deepseekApiKey) {
-    throw new Error("DeepSeek API key not configured for PDF extraction");
-  }
-
-  try {
-    console.log('Making DeepSeek API request for PDF extraction');
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${deepseekApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: "deepseek-vl2",
-        messages: [
-          {
-            role: "system",
-            content: "You are a PDF text extractor. Extract all text content from the PDF, preserving format and structure. Focus especially on identifying exercises, problems, questions, and their associated answers if present. Pay special attention to mathematical content and equations."
-          },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: "Extract all text from this PDF, especially any exercises, problems, questions and answers:" },
-              { type: "image_url", image_url: { url: fileData } }
-            ]
-          }
-        ],
-        temperature: 0.2,
-        max_tokens: 1500
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('DeepSeek API error response:', errorData);
-      throw new Error(`DeepSeek API error: ${errorData.error?.message || 'Unknown error'}`);
-    }
-
-    const data = await response.json();
-    console.log('Successfully extracted text from PDF');
-    return data.choices[0].message.content;
-  } catch (error) {
-    console.error("Error in DeepSeek PDF extraction:", error);
-    throw new Error(`Failed to extract text from PDF: ${error.message}`);
+    console.error("Error in DeepSeek extraction:", error);
+    throw new Error(`Failed to extract text: ${error.message}`);
   }
 }
