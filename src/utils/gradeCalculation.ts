@@ -5,9 +5,11 @@ import { Exercise, Grade } from '@/types/chat';
  * Calculates a grade based on the correct/incorrect exercises
  */
 export const calculateGrade = (exercises: Exercise[]): Grade => {
+  console.log('[gradeCalculation] Called with exercises:', exercises);
+
   const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined);
 
-  console.log('[gradeCalculation] Calculating grade. Answered exercises:', answeredExercises);
+  console.log('[gradeCalculation] Answered exercises:', answeredExercises);
 
   if (answeredExercises.length === 0) {
     console.log('[gradeCalculation] No answered exercises. Returning N/A.');

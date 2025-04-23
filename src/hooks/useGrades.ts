@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { Exercise, Grade } from '@/types/chat';
 import { calculateGrade } from '@/utils/gradeCalculation';
@@ -10,9 +9,9 @@ export const useGrades = () => {
   });
 
   const updateGrades = useCallback((exercises: Exercise[]) => {
-    console.log('Calculating new grade for', exercises.length, 'exercises');
+    console.log('[useGrades] updateGrades called with', exercises);
     const newGrade = calculateGrade(exercises);
-    console.log('New grade calculated:', newGrade);
+    console.log('[useGrades] New grade calculated:', newGrade);
     setGrade(newGrade);
   }, []);
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Exercise, Message } from '@/types/chat';
 import { toast } from 'sonner';
@@ -28,6 +27,7 @@ export const useExercises = () => {
 
   const addExercises = async (newExercises: Exercise[]) => {
     try {
+      console.log('[useExercises] addExercises called with:', newExercises);
       const uniqueExercises = newExercises.filter(newEx =>
         !exercises.some(
           ex => ex.question === newEx.question && ex.userAnswer === newEx.userAnswer
