@@ -53,7 +53,7 @@ export async function extractExercisesWithAI(
   }
 
   try {
-    // If a subject is specified, include it in the prompt
+    console.log('Starting AI-based exercise extraction');
     let systemPrompt = "You are an exercise extractor. Your task is to identify exercises, problems, questions and their answers or solutions from the provided text.";
     
     if (subjectId) {
@@ -80,29 +80,39 @@ export async function extractExercisesWithAI(
             content: text
           }
         ],
+        temperature: 0.2,
+        max_tokens: 1500,
         response_format: { type: "json_object" }
       }),
     });
 
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('OpenAI API error response:', errorData);
+      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+    }
+
     const data = await response.json();
     if (data.error) {
-      console.error("OpenAI API error:", data.error);
-      return [];
+      console.error("OpenAI API returned error:", data.error);
+      throw new Error(`OpenAI API error: ${data.error.message}`);
     }
 
     // Parse the JSON response
     try {
+      console.log('Parsing AI extraction response');
       const content = data.choices[0].message.content;
       const parsed = JSON.parse(content);
       
       if (parsed.exercises && Array.isArray(parsed.exercises)) {
+        console.log(`Successfully extracted ${parsed.exercises.length} exercises`);
         return parsed.exercises;
       } else {
         console.error("Unexpected format from AI extraction:", parsed);
         return [];
       }
     } catch (parseError) {
-      console.error("Error parsing AI extraction result:", parseError, data.choices[0].message.content);
+      console.error("Error parsing AI extraction result:", parseError);
       return [];
     }
   } catch (error) {

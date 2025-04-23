@@ -4,28 +4,27 @@ import { toast } from "sonner";
 import { Exercise } from "@/types/chat";
 import { evaluateHomework } from "@/services/homeworkGrading";
 
-/**
- * Processes an uploaded file to extract exercises
- */
 export const processUploadedDocument = async (
   file: File, 
   fileUrl: string,
   subjectId?: string
 ): Promise<{ exercises: Exercise[], rawText: string } | null> => {
   try {
+    console.log('Starting document processing:', { fileName: file.name, fileType: file.type });
+    
     // Call the document processor edge function
     const { data, error } = await supabase.functions.invoke('document-processor', {
       body: {
         fileUrl: fileUrl,
         fileType: file.type,
         fileName: file.name,
-        subjectId: subjectId // Pass the subject ID if provided
+        subjectId: subjectId
       },
     });
     
     if (error) {
       console.error('Error calling document processor:', error);
-      toast.error('Could not process document');
+      toast.error(error.message || 'Could not process document');
       return null;
     }
     
@@ -49,7 +48,7 @@ export const processUploadedDocument = async (
       expanded: false,
       isCorrect: undefined,
       explanation: undefined,
-      subjectId: subjectId // Include subject ID in exercise
+      subjectId: subjectId
     }));
     
     console.log(`Processed ${exercises.length} exercises from document`);
@@ -61,9 +60,6 @@ export const processUploadedDocument = async (
   }
 };
 
-/**
- * Grades all exercises extracted from a document
- */
 export const gradeDocumentExercises = async (exercises: Exercise[]): Promise<Exercise[]> => {
   try {
     if (exercises.length === 0) {
