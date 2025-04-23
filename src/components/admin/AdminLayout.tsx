@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Settings } from "lucide-react";
+import { Settings, Book, Users } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -10,7 +9,7 @@ const AdminLayout = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Only one nav group for AI Model Management now
+  // Updated nav groups to include all admin features
   const navGroups = [
     {
       label: 'Admin Features',
@@ -20,7 +19,16 @@ const AdminLayout = () => {
           path: '/admin/models',
           icon: <Settings className="mr-2 h-5 w-5" />,
         },
-        // Future admin links (users, subjects etc) could be added here
+        {
+          title: 'Subject Management',
+          path: '/admin/subjects',
+          icon: <Book className="mr-2 h-5 w-5" />,
+        },
+        {
+          title: 'User Management',
+          path: '/admin/users',
+          icon: <Users className="mr-2 h-5 w-5" />,
+        },
       ],
     }
   ];
