@@ -91,20 +91,46 @@ const ChatInterface = () => {
   const handlePhotoFileUpload = (file: File) => {
     handlePhotoUpload(file, addExercises, defaultSubject);
   };
-  return <div className="flex flex-col md:flex-row h-[calc(100vh-6rem)] gap-4">
-      <ChatPanel messages={filteredMessages} isLoading={isLoading} inputMessage={inputMessage} setInputMessage={setInputMessage} handleSendMessage={handleSendMessage} handleFileUpload={handleDocumentFileUpload} handlePhotoUpload={handlePhotoFileUpload} activeModel={activeModel} />
+  
+  return (
+    <div className="flex flex-col md:flex-row h-[calc(100vh-6rem)] gap-4">
+      <ChatPanel 
+        messages={filteredMessages} 
+        isLoading={isLoading} 
+        inputMessage={inputMessage} 
+        setInputMessage={setInputMessage} 
+        handleSendMessage={handleSendMessage} 
+        handleFileUpload={handleDocumentFileUpload} 
+        handlePhotoUpload={handlePhotoFileUpload} 
+        activeModel={activeModel} 
+      />
       
       <div className="w-full md:w-2/3 glass rounded-xl overflow-hidden flex flex-col">
         {/* Overall Grade Card */}
         <Card className="mb-3 mx-4 mt-4 md:mt-8 max-w-sm self-center">
-          
-          
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3">
+            <CardTitle className="text-sm font-medium">Overall Grade</CardTitle>
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="py-0 pb-3">
+            <div className="text-2xl font-bold">{grade.percentage}%</div>
+            <p className="text-xs text-muted-foreground">
+              Grade: {grade.letter}
+            </p>
+          </CardContent>
         </Card>
+        
         {/* Exercise List */}
         <div className="flex-1">
-          <ExerciseList exercises={exercises} grade={grade} toggleExerciseExpansion={toggleExerciseExpansion} />
+          <ExerciseList 
+            exercises={exercises} 
+            grade={grade} 
+            toggleExerciseExpansion={toggleExerciseExpansion} 
+          />
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default ChatInterface;

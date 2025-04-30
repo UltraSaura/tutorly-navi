@@ -29,6 +29,12 @@ const GradeDashboard = () => {
             <p className="text-xs text-muted-foreground">
               Grade: {grade.letter}
             </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              {completedExercises === 0 ? 
+                "Complete exercises to calculate your grade" : 
+                `Based on ${completedExercises} completed exercise${completedExercises !== 1 ? 's' : ''}`
+              }
+            </p>
           </CardContent>
         </Card>
 
