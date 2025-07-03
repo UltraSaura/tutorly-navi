@@ -47,9 +47,11 @@ export const sendMessageToAI = async (
     
     // Check if the error is related to missing API keys
     if (error.message?.includes('API key not configured')) {
-      toast.error(`API key missing for the selected model. Please add the required API key in Supabase settings.`);
+      toast.error(`API key missing for the selected model. Please configure the API key in Supabase secrets.`);
+    } else if (error.message?.includes('Failed to get AI response')) {
+      toast.error('AI service temporarily unavailable. Please try again.');
     } else {
-      toast.error('Failed to get AI response. Using fallback response.');
+      toast.error(`AI service error: ${error.message || 'Unknown error'}. Using fallback response.`);
     }
     
     return { data: null, error };

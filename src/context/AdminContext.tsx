@@ -113,21 +113,28 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     // Get list of providers we have API keys for
     const availableProviders = [...new Set(apiKeys.map(key => key.provider))];
     
+    // Priority providers that might be configured in Supabase secrets
+    const priorityProviders = ['openai', 'deepseek'];
+    
     // Log for debugging
     console.log("Available providers:", availableProviders);
     
     // Filter models based on available providers
     return AVAILABLE_MODELS.map(model => {
-      const hasProvider = availableProviders.some(
+      const hasLocalProvider = availableProviders.some(
         provider => provider === model.provider
       );
       
-      console.log(`Model: ${model.name}, Provider: ${model.provider}, Available: ${hasProvider}`);
+      // Consider priority providers as potentially available via Supabase secrets
+      const isPriorityProvider = priorityProviders.includes(model.provider);
+      const isAvailable = hasLocalProvider || isPriorityProvider;
+      
+      console.log(`Model: ${model.name}, Provider: ${model.provider}, Available: ${isAvailable}`);
       
       return {
         ...model,
-        // Flag models where we don't have an API key
-        disabled: !hasProvider
+        // Only disable models that aren't priority providers and don't have local keys
+        disabled: !isAvailable
       };
     });
   };
