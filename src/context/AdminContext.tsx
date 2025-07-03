@@ -114,7 +114,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     const availableProviders = [...new Set(apiKeys.map(key => key.provider))];
     
     // Priority providers that might be configured in Supabase secrets
-    const priorityProviders = ['openai', 'deepseek'];
+    const priorityProviders = ['OpenAI', 'DeepSeek'];
     
     // Log for debugging
     console.log("Available providers:", availableProviders);
