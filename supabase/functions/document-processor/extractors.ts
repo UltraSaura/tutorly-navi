@@ -8,31 +8,12 @@ export async function extractTextFromFile(fileData: string, fileType: string): P
   console.log(`Processing file of type: ${fileType}`);
 
   try {
-    // Primary method: Use OpenAI Vision for all file types
-    try {
-      console.log('Attempting to extract text using OpenAI Vision API');
-      return await extractTextWithOpenAIVision(fileData);
-    } catch (openaiError) {
-      console.error('OpenAI Vision extraction failed, falling back to DeepSeek:', openaiError);
-      
-      // Fallback to DeepSeek for different file types
-      if (fileType.includes('pdf')) {
-        console.log('Processing PDF document with DeepSeek');
-        return await extractTextWithDeepSeekVL2(fileData);
-      } else if (fileType.includes('image')) {
-        console.log('Processing image file with DeepSeek');
-        return await extractTextWithDeepSeekVL2(fileData);
-      } else if (fileType.includes('word') || fileType.includes('docx') || fileType.includes('text')) {
-        console.log('Processing Word/text document with DeepSeek');
-        return await extractTextWithDeepSeekVL2(fileData);
-      } else {
-        console.log('Unrecognized file type, attempting image extraction as fallback with DeepSeek');
-        return await extractTextWithDeepSeekVL2(fileData);
-      }
-    }
+    // Use OpenAI Vision for all file types - more reliable than DeepSeek Vision
+    console.log('Extracting text using OpenAI Vision API');
+    return await extractTextWithOpenAIVision(fileData);
   } catch (error) {
-    console.error("Error extracting text:", error);
-    throw new Error(`Failed to extract content: ${error.message}`);
+    console.error("Error extracting text with OpenAI Vision:", error);
+    throw new Error(`Failed to extract content: ${error.message}. Please ensure your OpenAI API key is configured.`);
   }
 }
 

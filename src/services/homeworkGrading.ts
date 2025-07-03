@@ -27,7 +27,7 @@ export const evaluateHomework = async (
     const { data: gradeData, error: gradeError } = await supabase.functions.invoke('ai-chat', {
       body: {
         message: `Grade this answer. Question: "${exercise.question}" Answer: "${exercise.userAnswer}"`,
-        modelId: 'gpt4o',
+        modelId: 'deepseek-chat',
         history: [],
         isGradingRequest: true
       },
@@ -85,7 +85,7 @@ export const evaluateHomework = async (
       const { data: guidanceData, error: guidanceError } = await supabase.functions.invoke('ai-chat', {
         body: {
           message: `The student answered incorrectly. Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Provide helpful guidance to help them understand the correct approach without giving away the answer directly. Focus on the learning process and concepts they should review.`,
-          modelId: 'gpt4o',
+          modelId: 'deepseek-chat',
           history: [],
           isExercise: true
         },
