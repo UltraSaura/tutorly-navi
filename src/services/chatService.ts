@@ -46,8 +46,8 @@ export const sendMessageToAI = async (
     console.error('Error in AI chat:', error);
     
     // Check if the error is related to missing API keys
-    if (error.message?.includes('API key not configured')) {
-      toast.error(`API key missing for the selected model. Please configure the API key in Supabase secrets.`);
+    if (error.message?.includes('API key not configured') || error.message?.includes('OpenAI API error')) {
+      toast.error(`OpenAI API key issue. Please update your API key in Supabase secrets.`);
     } else if (error.message?.includes('Failed to get AI response')) {
       toast.error('AI service temporarily unavailable. Please try again.');
     } else {

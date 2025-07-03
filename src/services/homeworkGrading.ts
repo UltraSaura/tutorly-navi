@@ -97,7 +97,10 @@ export const evaluateHomework = async (
 
       if (guidanceError || !guidanceData?.content) {
         console.error('[homeworkGrading] Error getting guidance:', guidanceError || 'No content');
-        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Your answer was incorrect. Unfortunately, additional guidance is not available at the moment. Try reviewing related materials and trying again.`;
+        
+        // Provide basic math guidance as fallback
+        const basicGuidance = generateBasicMathGuidance(exercise.question, exercise.userAnswer);
+        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${basicGuidance}`;
       } else {
         explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${guidanceData.content}`;
       }
@@ -131,4 +134,49 @@ export const evaluateHomework = async (
       explanation: `**Problem:** ${exercise.question}\n\n**Guidance:** An unexpected error occurred while grading your answer. Please try again later.`
     };
   }
+};
+
+/**
+ * Generate basic math guidance when AI service fails
+ */
+const generateBasicMathGuidance = (question: string, userAnswer: string): string => {
+  // Check if it's a basic arithmetic problem
+  const mathPattern = /(\d+)\s*([+\-*/])\s*(\d+)/;
+  const match = question.match(mathPattern);
+  
+  if (match) {
+    const [, num1, operator, num2] = match;
+    const a = parseInt(num1);
+    const b = parseInt(num2);
+    
+    let correctAnswer: number;
+    let operationName: string;
+    
+    switch (operator) {
+      case '+':
+        correctAnswer = a + b;
+        operationName = 'addition';
+        break;
+      case '-':
+        correctAnswer = a - b;
+        operationName = 'subtraction';
+        break;
+      case '*':
+        correctAnswer = a * b;
+        operationName = 'multiplication';
+        break;
+      case '/':
+        correctAnswer = a / b;
+        operationName = 'division';
+        break;
+      default:
+        return "Your answer was incorrect. Please double-check your calculation and try again.";
+    }
+    
+    return `Your answer was incorrect. This is a ${operationName} problem: ${a} ${operator} ${b}. 
+             Double-check your ${operationName} and make sure you're following the correct steps. 
+             The correct answer should be ${correctAnswer}.`;
+  }
+  
+  return "Your answer was incorrect. Please review the problem carefully, check your calculations, and try again. If you're unsure about the method, consider breaking the problem into smaller steps.";
 };
