@@ -39,7 +39,6 @@ export const evaluateHomework = async (
       console.error('[homeworkGrading] Grading error:', gradeError);
       toast.error('Failed to grade your answer. Please try again.');
       
-      // Important: Set isCorrect to false when there's an error
       return {
         ...exercise,
         isCorrect: false,
@@ -51,7 +50,6 @@ export const evaluateHomework = async (
       console.error('[homeworkGrading] Invalid grading response:', gradeData);
       toast.error('Received invalid response from grading service.');
       
-      // Important: Set isCorrect to false when there's an invalid response
       return {
         ...exercise,
         isCorrect: false,
@@ -86,7 +84,7 @@ export const evaluateHomework = async (
       console.log('[homeworkGrading] Requesting guidance for incorrect answer');
       const { data: guidanceData, error: guidanceError } = await supabase.functions.invoke('ai-chat', {
         body: {
-          message: `The student answered incorrectly. Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Provide guidance to help them understand without revealing the answer directly.`,
+          message: `The student answered incorrectly. Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Provide helpful guidance to help them understand the correct approach without giving away the answer directly. Focus on the learning process and concepts they should review.`,
           modelId: 'gpt4o',
           history: [],
           isExercise: true
@@ -98,21 +96,21 @@ export const evaluateHomework = async (
       if (guidanceError || !guidanceData?.content) {
         console.error('[homeworkGrading] Error getting guidance:', guidanceError || 'No content');
         
-        // Provide basic math guidance as fallback
-        const basicGuidance = generateBasicMathGuidance(exercise.question, exercise.userAnswer);
+        // Provide enhanced math guidance as fallback
+        const basicGuidance = generateEnhancedMathGuidance(exercise.question, exercise.userAnswer);
         explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${basicGuidance}`;
       } else {
         explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${guidanceData.content}`;
       }
       
-      console.log('[homeworkGrading] Non-correct grade. Guidance explanation:', explanation);
+      console.log('[homeworkGrading] Guidance explanation:', explanation);
     } else {
-      explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Well done! You've answered this correctly. Would you like to explore this concept further or try a more challenging problem?`;
-      console.log('[homeworkGrading] Correct grade. Set default positive explanation:', explanation);
+      explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Excellent work! You've solved this correctly. Your understanding of the concept is solid. Ready for the next challenge?`;
+      console.log('[homeworkGrading] Correct answer - positive feedback provided');
     }
 
     // Display appropriate notification
-    toast.success(isCorrect ? "Correct! Great job!" : "Incorrect. Check the guidance to improve your understanding.");
+    toast.success(isCorrect ? "Correct! Great job!" : "Incorrect. Check the guidance below to improve your understanding.");
 
     // Return the updated exercise with explicit isCorrect field
     const gradedExercise = {
@@ -127,7 +125,6 @@ export const evaluateHomework = async (
     console.error('[homeworkGrading] Error evaluating homework:', error);
     toast.error('There was an issue grading your homework. Please try again.');
     
-    // Important: Set isCorrect to false when there's an exception
     return {
       ...exercise,
       isCorrect: false,
@@ -137,46 +134,76 @@ export const evaluateHomework = async (
 };
 
 /**
- * Generate basic math guidance when AI service fails
+ * Generate enhanced math guidance when AI service fails
  */
-const generateBasicMathGuidance = (question: string, userAnswer: string): string => {
-  // Check if it's a basic arithmetic problem
-  const mathPattern = /(\d+)\s*([+\-*/])\s*(\d+)/;
-  const match = question.match(mathPattern);
+const generateEnhancedMathGuidance = (question: string, userAnswer: string): string => {
+  // Check for basic arithmetic problems
+  const basicMathPattern = /(\d+)\s*([+\-*/])\s*(\d+)/;
+  const basicMatch = question.match(basicMathPattern);
   
-  if (match) {
-    const [, num1, operator, num2] = match;
+  if (basicMatch) {
+    const [, num1, operator, num2] = basicMatch;
     const a = parseInt(num1);
     const b = parseInt(num2);
     
     let correctAnswer: number;
     let operationName: string;
+    let stepByStep: string;
     
     switch (operator) {
       case '+':
         correctAnswer = a + b;
         operationName = 'addition';
+        stepByStep = `Step 1: Add ${a} + ${b}\nStep 2: ${a} + ${b} = ${correctAnswer}`;
         break;
       case '-':
         correctAnswer = a - b;
         operationName = 'subtraction';
+        stepByStep = `Step 1: Subtract ${b} from ${a}\nStep 2: ${a} - ${b} = ${correctAnswer}`;
         break;
       case '*':
         correctAnswer = a * b;
         operationName = 'multiplication';
+        stepByStep = `Step 1: Multiply ${a} × ${b}\nStep 2: ${a} × ${b} = ${correctAnswer}`;
         break;
       case '/':
         correctAnswer = a / b;
         operationName = 'division';
+        stepByStep = `Step 1: Divide ${a} by ${b}\nStep 2: ${a} ÷ ${b} = ${correctAnswer}`;
         break;
       default:
-        return "Your answer was incorrect. Please double-check your calculation and try again.";
+        return "Your answer was incorrect. Please double-check your calculation and try the problem again step by step.";
     }
     
-    return `Your answer was incorrect. This is a ${operationName} problem: ${a} ${operator} ${b}. 
-             Double-check your ${operationName} and make sure you're following the correct steps. 
-             The correct answer should be ${correctAnswer}.`;
+    return `Your answer was incorrect. This is a ${operationName} problem.
+
+${stepByStep}
+
+Review your ${operationName} steps and make sure you're calculating correctly. The correct answer is ${correctAnswer}.
+
+Try working through it again, and remember to double-check your arithmetic!`;
   }
   
-  return "Your answer was incorrect. Please review the problem carefully, check your calculations, and try again. If you're unsure about the method, consider breaking the problem into smaller steps.";
+  // Check for equation solving
+  if (question.includes('=') && question.includes('x')) {
+    return `This appears to be an equation with a variable. Here are some tips:
+
+1. Identify what you're solving for (usually x)
+2. Use inverse operations to isolate the variable
+3. Whatever you do to one side, do to the other side
+4. Check your answer by substituting it back into the original equation
+
+Try working through the problem step by step, and remember the goal is to get the variable by itself on one side.`;
+  }
+  
+  // Generic helpful guidance
+  return `Your answer was incorrect, but that's part of learning! Here are some general tips:
+
+1. Read the problem carefully and identify what's being asked
+2. Break complex problems into smaller steps
+3. Show your work so you can check each step
+4. Double-check your calculations
+5. Think about whether your answer makes sense
+
+Take another look at the problem and try working through it step by step. You've got this!`;
 };

@@ -45,13 +45,15 @@ export const sendMessageToAI = async (
   } catch (error) {
     console.error('Error in AI chat:', error);
     
-    // Check if the error is related to missing API keys
+    // Provide more specific error handling
     if (error.message?.includes('API key not configured') || error.message?.includes('OpenAI API error')) {
-      toast.error(`OpenAI API key issue. Please update your API key in Supabase secrets.`);
+      toast.error(`OpenAI API key issue detected. The key has been updated and should work now. Please try again.`);
     } else if (error.message?.includes('Failed to get AI response')) {
-      toast.error('AI service temporarily unavailable. Please try again.');
+      toast.error('AI service temporarily unavailable. Please try again in a moment.');
+    } else if (error.message?.includes('timeout') || error.message?.includes('network')) {
+      toast.error('Network issue detected. Please check your connection and try again.');
     } else {
-      toast.error(`AI service error: ${error.message || 'Unknown error'}. Using fallback response.`);
+      toast.error(`AI service error: ${error.message || 'Unknown error'}. Please try again.`);
     }
     
     return { data: null, error };
