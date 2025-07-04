@@ -16,14 +16,18 @@ export async function processDocument(
     // Extract exercises from the text using pattern matching
     let exercises = extractExercisesFromText(extractedText);
     
-    // If pattern matching found fewer than 2 exercises and the text is substantial,
-    // try using AI to extract exercises
+    // If pattern matching found fewer than 5 exercises and the text is substantial,
+    // try using AI to extract exercises (or supplement existing ones)
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (exercises.length < 2 && extractedText.length > 50 && openAIApiKey) {
-      console.log("Using AI to extract exercises from unstructured text");
+    if (exercises.length < 5 && extractedText.length > 50 && openAIApiKey) {
+      console.log(`Pattern matching found ${exercises.length} exercises. Using AI to extract all exercises from text`);
       const aiExercises = await extractExercisesWithAI(extractedText, subjectId);
       
-      if (aiExercises.length > 0) {
+      // Use AI extraction if it found more exercises than pattern matching
+      if (aiExercises.length > exercises.length) {
+        console.log(`AI extraction found ${aiExercises.length} exercises vs ${exercises.length} from patterns. Using AI results.`);
+        exercises = aiExercises;
+      } else if (aiExercises.length > 0 && exercises.length === 0) {
         exercises = aiExercises;
       }
     }
