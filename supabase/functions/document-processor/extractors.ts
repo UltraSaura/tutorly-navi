@@ -45,14 +45,14 @@ export async function extractTextWithOpenAIVision(fileUrl: string): Promise<stri
         messages: [
           {
             role: "system",
-            content: "You are an OCR system specialized in educational content. Extract all text content from the document, preserving exact format and structure. Pay special attention to mathematical exercises, fraction problems, and numbered/lettered exercise sequences."
+            content: "You are an OCR system specialized in French math worksheets. Your task is to extract text with perfect accuracy for exercise identification. Focus on: letter-period patterns (a., b., c., d., e.), fraction notation (30/63), mathematical expressions, and ignore LaTeX formatting completely."
           },
           {
             role: "user",
             content: [
               { 
                 type: "text", 
-                text: "This appears to be a math worksheet. Please extract ALL text from this document with careful attention to:\n1. Exercise numbering/lettering (a., b., c., etc.)\n2. Mathematical expressions and fractions (like 30/63 = ...)\n3. Answer spaces and completion marks\n4. Preserve the exact structure and formatting\n\nExtract everything you can see:" 
+                text: "This is a French math worksheet with fraction exercises. Extract ALL text with PERFECT accuracy for these critical elements:\n\n**CRITICAL PATTERNS TO CAPTURE:**\n- Letter followed by period: a., b., c., d., e., f., g., h.\n- Fraction expressions: 30/63, 18/24, 45/54, etc.\n- Equals signs and mathematical operations\n- Any numbers and mathematical symbols\n\n**EXTRACTION RULES:**\n- Extract as plain text only (NO LaTeX, NO formatting)\n- Each exercise should be on its own line when possible\n- Preserve exact spacing around mathematical symbols\n- Include ALL visible text, even partial text\n- Focus on mathematical content over decorative elements\n\nExtract everything with maximum precision:" 
               },
               { type: "image_url", image_url: { url: fileUrl } }
             ]
