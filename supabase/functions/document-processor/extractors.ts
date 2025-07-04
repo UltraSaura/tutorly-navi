@@ -8,12 +8,19 @@ export async function extractTextFromFile(fileData: string, fileType: string): P
   console.log(`Processing file of type: ${fileType}`);
 
   try {
-    // Use OpenAI Vision for all file types - more reliable than DeepSeek Vision
-    console.log('Extracting text using OpenAI Vision API');
-    return await extractTextWithOpenAIVision(fileData);
-  } catch (error) {
-    console.error("Error extracting text with OpenAI Vision:", error);
-    throw new Error(`Failed to extract content: ${error.message}. Please ensure your OpenAI API key is configured.`);
+    // Primary method: Use DeepSeek Vision for all file types
+    console.log('Attempting to extract text using DeepSeek Vision API');
+    return await extractTextWithDeepSeekVL2(fileData);
+  } catch (deepseekError) {
+    console.error("DeepSeek Vision extraction failed, trying OpenAI Vision as fallback:", deepseekError);
+    
+    try {
+      console.log('Falling back to OpenAI Vision API');
+      return await extractTextWithOpenAIVision(fileData);
+    } catch (openaiError) {
+      console.error("Both DeepSeek and OpenAI Vision extraction failed:", openaiError);
+      throw new Error(`Failed to extract content: ${openaiError.message}. Please check your API key configuration.`);
+    }
   }
 }
 
@@ -82,7 +89,7 @@ export async function extractTextWithDeepSeekVL2(fileUrl: string): Promise<strin
   }
 
   try {
-    console.log('Making DeepSeek API request for content extraction');
+    console.log('Making DeepSeek Vision API request for content extraction');
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -93,14 +100,18 @@ export async function extractTextWithDeepSeekVL2(fileUrl: string): Promise<strin
         model: "deepseek-vl2",
         messages: [
           {
-            role: "system",
-            content: "You are an OCR system. Extract all text content from the document, preserving format and structure. Focus on identifying questions, problems, exercises, and their associated answers if present."
-          },
-          {
             role: "user",
             content: [
-              { type: "text", text: "Extract all text from this document, especially any exercises, problems, questions and answers:" },
-              { type: "image_url", image_url: { url: fileUrl } }
+              {
+                type: "text",
+                text: "You are an OCR system. Extract all text content from this document, preserving format and structure. Focus on identifying questions, problems, exercises, and their associated answers if present. Extract all text from this document, especially any exercises, problems, questions and answers:"
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: fileUrl
+                }
+              }
             ]
           }
         ],
@@ -111,20 +122,20 @@ export async function extractTextWithDeepSeekVL2(fileUrl: string): Promise<strin
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('DeepSeek API error response:', errorData);
-      throw new Error(`DeepSeek API error: ${errorData}`);
+      console.error('DeepSeek Vision API error response:', errorData);
+      throw new Error(`DeepSeek Vision API error: ${errorData}`);
     }
 
     const data = await response.json();
     if (data.error) {
-      console.error("DeepSeek API returned error:", data.error);
-      throw new Error(`DeepSeek API error: ${data.error.message}`);
+      console.error("DeepSeek Vision API returned error:", data.error);
+      throw new Error(`DeepSeek Vision API error: ${data.error.message}`);
     }
 
-    console.log('Successfully extracted text from document');
+    console.log('Successfully extracted text from document using DeepSeek Vision');
     return data.choices[0].message.content;
   } catch (error) {
-    console.error("Error in DeepSeek extraction:", error);
-    throw new Error(`Failed to extract text: ${error.message}`);
+    console.error("Error in DeepSeek Vision extraction:", error);
+    throw new Error(`Failed to extract text with DeepSeek Vision: ${error.message}`);
   }
 }
