@@ -1,6 +1,6 @@
 
 import { extractTextFromFile } from "./extractors.ts";
-import { extractExercisesFromText, extractExercisesWithAI } from "./exerciseExtractors.ts";
+import { extractExercisesFromText } from "./exerciseExtractors.ts";
 
 export async function processDocument(
   fileData: string, 
@@ -9,40 +9,22 @@ export async function processDocument(
   subjectId?: string
 ): Promise<{ success: boolean, exercises: any[], rawText: string, error?: string }> {
   try {
-    // Extract text from the document
+    console.log(`Processing document: ${fileName} (${fileType})`);
+    
+    // Extract text from the document using Vision API
     const extractedText = await extractTextFromFile(fileData, fileType);
     console.log(`Extracted text length: ${extractedText.length} characters`);
+    console.log(`Raw extracted text (first 300 chars): ${extractedText.substring(0, 300)}`);
     
-    console.log(`Raw extracted text (first 500 chars): ${extractedText.substring(0, 500)}`);
+    // Use simple, reliable pattern matching for exercise extraction
+    console.log('Using definitive pattern-based extraction');
+    const exercises = extractExercisesFromText(extractedText);
     
-    // Try AI extraction first for better results
-    let exercises = [];
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    console.log(`Definitive extraction found ${exercises.length} exercises`);
     
-    if (openAIApiKey && extractedText.length > 20) {
-      console.log('Attempting AI-first extraction approach');
-      const aiExercises = await extractExercisesWithAI(extractedText, subjectId);
-      if (aiExercises.length > 0) {
-        console.log(`AI extraction found ${aiExercises.length} exercises`);
-        exercises = aiExercises;
-      }
-    }
-    
-    // Fallback to pattern matching if AI didn't find enough exercises
-    if (exercises.length < 2) {
-      console.log(`AI found ${exercises.length} exercises, trying pattern matching as backup`);
-      const patternExercises = extractExercisesFromText(extractedText);
-      
-      if (patternExercises.length > exercises.length) {
-        console.log(`Pattern matching found ${patternExercises.length} exercises vs ${exercises.length} from AI. Using pattern results.`);
-        exercises = patternExercises;
-      } else if (exercises.length === 0) {
-        exercises = patternExercises;
-      }
-    }
-    
-    // If still no exercises but have text, create a generic one
+    // If no exercises found, create a fallback exercise from the content
     if (exercises.length === 0 && extractedText.length > 0) {
+      console.log('No exercises detected - creating fallback exercise');
       exercises.push({
         question: "Document Content Analysis",
         answer: extractedText.length > 300 
@@ -51,7 +33,10 @@ export async function processDocument(
       });
     }
     
-    console.log(`Extracted ${exercises.length} exercises`);
+    console.log(`Final result: ${exercises.length} exercises extracted`);
+    exercises.forEach((ex, idx) => {
+      console.log(`Final Exercise ${idx + 1}: "${ex.question.substring(0, 50)}..."`);
+    });
     
     return {
       success: true,
