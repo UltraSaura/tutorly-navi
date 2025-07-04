@@ -8,18 +8,18 @@ export async function extractTextFromFile(fileData: string, fileType: string): P
   console.log(`Processing file of type: ${fileType}`);
 
   try {
-    // Primary method: Use DeepSeek Vision for all file types
-    console.log('Attempting to extract text using DeepSeek Vision API');
-    return await extractTextWithDeepSeekVL2(fileData);
-  } catch (deepseekError) {
-    console.error("DeepSeek Vision extraction failed, trying OpenAI Vision as fallback:", deepseekError);
+    // Primary method: Use OpenAI Vision for all file types
+    console.log('Attempting to extract text using OpenAI Vision API');
+    return await extractTextWithOpenAIVision(fileData);
+  } catch (openaiError) {
+    console.error("OpenAI Vision extraction failed, trying DeepSeek Vision as fallback:", openaiError);
     
     try {
-      console.log('Falling back to OpenAI Vision API');
-      return await extractTextWithOpenAIVision(fileData);
-    } catch (openaiError) {
-      console.error("Both DeepSeek and OpenAI Vision extraction failed:", openaiError);
-      throw new Error(`Failed to extract content: ${openaiError.message}. Please check your API key configuration.`);
+      console.log('Falling back to DeepSeek Vision API');
+      return await extractTextWithDeepSeekVL2(fileData);
+    } catch (deepseekError) {
+      console.error("Both OpenAI and DeepSeek Vision extraction failed:", deepseekError);
+      throw new Error(`Failed to extract content: ${deepseekError.message}. Please check your API key configuration.`);
     }
   }
 }
