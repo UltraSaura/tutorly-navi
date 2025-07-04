@@ -45,12 +45,15 @@ export async function extractTextWithOpenAIVision(fileUrl: string): Promise<stri
         messages: [
           {
             role: "system",
-            content: "You are an OCR system. Extract all text content from the document, preserving format and structure. Focus on identifying questions, problems, exercises, and their associated answers if present."
+            content: "You are an OCR system specialized in educational content. Extract all text content from the document, preserving exact format and structure. Pay special attention to mathematical exercises, fraction problems, and numbered/lettered exercise sequences."
           },
           {
             role: "user",
             content: [
-              { type: "text", text: "Extract all text from this document, especially any exercises, problems, questions and answers:" },
+              { 
+                type: "text", 
+                text: "This appears to be a math worksheet. Please extract ALL text from this document with careful attention to:\n1. Exercise numbering/lettering (a., b., c., etc.)\n2. Mathematical expressions and fractions (like 30/63 = ...)\n3. Answer spaces and completion marks\n4. Preserve the exact structure and formatting\n\nExtract everything you can see:" 
+              },
               { type: "image_url", image_url: { url: fileUrl } }
             ]
           }
@@ -116,7 +119,7 @@ export async function extractTextWithDeepSeekVL2(fileData: string): Promise<stri
             content: [
               {
                 type: "text",
-                text: "You are an OCR system. Extract all text content from this document, preserving format and structure. Focus on identifying questions, problems, exercises, and their associated answers if present. Extract all text from this document, especially any exercises, problems, questions and answers:"
+                text: "You are an OCR system specialized in educational content. This appears to be a math worksheet. Please extract ALL text with careful attention to:\n1. Exercise numbering/lettering (a., b., c., etc.)\n2. Mathematical expressions and fractions\n3. Answer spaces and completion marks\n4. Preserve exact structure and formatting\n\nExtract everything you can see:"
               },
               {
                 type: "image",

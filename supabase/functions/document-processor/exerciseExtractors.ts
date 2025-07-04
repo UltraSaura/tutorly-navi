@@ -3,15 +3,21 @@
 export function extractExercisesFromText(text: string): Array<{ question: string, answer: string }> {
   const exercises = [];
   
-  // Enhanced pattern matching to find question-answer pairs
-  // Look for Problem/Answer, Question/Answer, Exercise/Solution patterns
+  // Enhanced pattern matching for various exercise formats
   const patterns = [
+    // French/international format: a., b., c. with fractions
+    /([a-zA-Z]\s*\.\s*\d+\/\d+\s*=\s*[\.…\s]*)/gis,
+    // Letter-labeled exercises with mathematical content
+    /([a-zA-Z]\s*\.\s*[^a-zA-Z\n\.]+(?:\n(?![a-zA-Z]\s*\.)[^\n]*)*)/gis,
+    // Numbered exercises with fractions
+    /(\d+\s*[\.\)]\s*\d+\/\d+\s*=\s*[\.…\s]*)/gis,
+    // Problem/Answer, Question/Answer, Exercise/Solution patterns
     /(?:Problem|Question|Exercise)[^:]*:\s*(.*?)(?:\n|$)(?:.*?)(?:Answer|Submission|Solution)[^:]*:\s*(.*?)(?:\n\s*\n|$)/gis,
     /(\d+\s*[\.\)]\s*.*?)(?:\n|$)(?:.*?)(?:Answer|Solution)(?:[^:]*)?:\s*(.*?)(?:\n\s*\n|$)/gis,
     /([A-Z][\.\)]\s*.*?)(?:\n|$)(?:.*?)(?:Answer|Solution)(?:[^:]*)?:\s*(.*?)(?:\n\s*\n|$)/gis,
     // Simple numbered exercises without explicit answer labels
     /(\d+\s*[\.\)]\s*[^0-9\n]+(?:\n(?!\d+\s*[\.\)])[^\n]*)*)/gis,
-    // Letter-labeled exercises
+    // Generic letter-labeled exercises
     /([a-zA-Z]\s*[\.\)]\s*[^a-zA-Z\n]+(?:\n(?![a-zA-Z]\s*[\.\)])[^\n]*)*)/gis
   ];
   
@@ -50,6 +56,23 @@ export function extractExercisesFromText(text: string): Array<{ question: string
     }
   }
   
+  // Fallback: manual splitting by letter patterns if no exercises found
+  if (exercises.length === 0) {
+    console.log('No exercises found with patterns, trying manual letter splitting');
+    const lines = text.split('\n');
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      // Look for lines starting with letters followed by periods or parentheses
+      if (/^[a-zA-Z]\s*[\.\)]\s*.+/.test(trimmedLine)) {
+        exercises.push({
+          question: trimmedLine,
+          answer: ""
+        });
+      }
+    }
+  }
+  
+  console.log(`Pattern matching extracted ${exercises.length} exercises`);
   return exercises;
 }
 
@@ -67,28 +90,38 @@ export async function extractExercisesWithAI(
 
   try {
     console.log('Starting AI-based exercise extraction');
-    let systemPrompt = `You are an exercise extractor. Your task is to identify ALL exercises, problems, questions and their answers or solutions from the provided text or image content.
+    console.log('Text length for AI extraction:', text.length);
+    console.log('First 200 characters:', text.substring(0, 200));
+    
+    let systemPrompt = `You are a specialized exercise extractor for educational content. Your task is to identify ALL exercises, problems, and questions from the provided text.
 
-IMPORTANT: Extract EVERY exercise you can find - don't stop at just one or two. Look for:
-- Numbered exercises (1., 2., 3., etc.)
-- Lettered exercises (a), b), c), etc.)
-- Math problems and equations
-- Questions with or without explicit answers
-- Problem statements
-- Any content that looks like it could be an exercise or homework problem
+CRITICAL INSTRUCTIONS:
+1. Extract EVERY SINGLE exercise you can find - never stop at just one
+2. This appears to be a math worksheet with multiple exercises
+3. Look specifically for patterns like:
+   - Letter-labeled exercises: a., b., c., d., e., etc.
+   - Numbered exercises: 1., 2., 3., etc.
+   - Fraction problems: 30/63 = ..., 18/45 = ...
+   - Mathematical expressions with equals signs
+   - Any exercise format in French or English
+
+4. For math worksheets, each line starting with a letter or number is likely a separate exercise
+5. If you see incomplete answers (dots, lines, or empty spaces), leave the answer empty
 
 ${subjectId ? `Focus specifically on exercises related to the subject: ${subjectId}.` : ''}
 
-Format your response as a JSON object with an "exercises" array containing objects with 'question' and 'answer' properties. If an exercise doesn't have an explicit answer in the text, set the answer to an empty string. Make sure to extract ALL exercises - aim for completeness.
+Format your response as a JSON object with an "exercises" array. Extract ALL exercises you can identify:
 
 Example format:
 {
   "exercises": [
-    {"question": "What is 2 + 2?", "answer": "4"},
-    {"question": "Solve for x: 3x + 5 = 14", "answer": "x = 3"},
-    {"question": "Define photosynthesis", "answer": ""}
+    {"question": "a. 30/63 = ", "answer": ""},
+    {"question": "b. 18/45 = ", "answer": ""},
+    {"question": "c. 24/36 = ", "answer": ""}
   ]
-}`;
+}
+
+REMEMBER: Extract ALL exercises, not just the first one!`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -97,7 +130,7 @@ Example format:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -109,7 +142,7 @@ Example format:
           }
         ],
         temperature: 0.1,
-        max_tokens: 3000,
+        max_tokens: 4000,
         response_format: { type: "json_object" }
       }),
     });

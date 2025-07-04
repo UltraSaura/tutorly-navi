@@ -13,22 +13,31 @@ export async function processDocument(
     const extractedText = await extractTextFromFile(fileData, fileType);
     console.log(`Extracted text length: ${extractedText.length} characters`);
     
-    // Extract exercises from the text using pattern matching
-    let exercises = extractExercisesFromText(extractedText);
+    console.log(`Raw extracted text (first 500 chars): ${extractedText.substring(0, 500)}`);
     
-    // If pattern matching found fewer than 5 exercises and the text is substantial,
-    // try using AI to extract exercises (or supplement existing ones)
+    // Try AI extraction first for better results
+    let exercises = [];
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (exercises.length < 5 && extractedText.length > 50 && openAIApiKey) {
-      console.log(`Pattern matching found ${exercises.length} exercises. Using AI to extract all exercises from text`);
+    
+    if (openAIApiKey && extractedText.length > 20) {
+      console.log('Attempting AI-first extraction approach');
       const aiExercises = await extractExercisesWithAI(extractedText, subjectId);
+      if (aiExercises.length > 0) {
+        console.log(`AI extraction found ${aiExercises.length} exercises`);
+        exercises = aiExercises;
+      }
+    }
+    
+    // Fallback to pattern matching if AI didn't find enough exercises
+    if (exercises.length < 2) {
+      console.log(`AI found ${exercises.length} exercises, trying pattern matching as backup`);
+      const patternExercises = extractExercisesFromText(extractedText);
       
-      // Use AI extraction if it found more exercises than pattern matching
-      if (aiExercises.length > exercises.length) {
-        console.log(`AI extraction found ${aiExercises.length} exercises vs ${exercises.length} from patterns. Using AI results.`);
-        exercises = aiExercises;
-      } else if (aiExercises.length > 0 && exercises.length === 0) {
-        exercises = aiExercises;
+      if (patternExercises.length > exercises.length) {
+        console.log(`Pattern matching found ${patternExercises.length} exercises vs ${exercises.length} from AI. Using pattern results.`);
+        exercises = patternExercises;
+      } else if (exercises.length === 0) {
+        exercises = patternExercises;
       }
     }
     
