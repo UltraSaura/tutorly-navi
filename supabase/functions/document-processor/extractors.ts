@@ -81,7 +81,7 @@ export async function extractTextWithOpenAIVision(fileUrl: string): Promise<stri
 }
 
 // Extract text from images and documents using DeepSeek-VL2
-export async function extractTextWithDeepSeekVL2(fileUrl: string): Promise<string> {
+export async function extractTextWithDeepSeekVL2(fileData: string): Promise<string> {
   const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
   
   if (!deepseekApiKey) {
@@ -90,6 +90,18 @@ export async function extractTextWithDeepSeekVL2(fileUrl: string): Promise<strin
 
   try {
     console.log('Making DeepSeek Vision API request for content extraction');
+    
+    // Handle base64 data URL format - DeepSeek Vision expects direct base64 data
+    let imageData = fileData;
+    if (fileData.startsWith('data:image/')) {
+      // Extract just the base64 part after the comma
+      const base64Match = fileData.match(/^data:image\/[^;]+;base64,(.+)$/);
+      if (base64Match) {
+        imageData = base64Match[1];
+        console.log('Extracted base64 data for DeepSeek Vision API');
+      }
+    }
+    
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -107,10 +119,8 @@ export async function extractTextWithDeepSeekVL2(fileUrl: string): Promise<strin
                 text: "You are an OCR system. Extract all text content from this document, preserving format and structure. Focus on identifying questions, problems, exercises, and their associated answers if present. Extract all text from this document, especially any exercises, problems, questions and answers:"
               },
               {
-                type: "image_url",
-                image_url: {
-                  url: fileUrl
-                }
+                type: "image",
+                image: imageData
               }
             ]
           }
