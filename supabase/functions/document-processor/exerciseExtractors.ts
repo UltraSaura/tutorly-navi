@@ -32,162 +32,77 @@ export function extractExercisesFromText(text: string): Array<{ question: string
   return exercises;
 }
 
-// Enhanced preprocessing pipeline for French educational worksheets
+// Preprocessing pipeline specifically for French educational worksheets
 function preprocessFrenchMathText(text: string): string {
-  console.log('Aggressive preprocessing of French educational text...');
-  console.log('Input text preview:', text.substring(0, 200));
+  console.log('Preprocessing French educational text...');
   
-  let cleanedText = text
-    // AGGRESSIVE completion mark removal (major fix for single exercise issue)
-    .replace(/\.{3,}/g, '___') // Replace 3+ dots with single placeholder
-    .replace(/_{3,}/g, '___') // Replace 3+ underscores with single placeholder  
-    .replace(/-{3,}/g, '___') // Replace 3+ dashes with single placeholder
-    .replace(/\s*\.{2,}\s*/g, ' ___ ') // Isolated dot sequences with spacing
-    .replace(/\s*_{2,}\s*/g, ' ___ ') // Isolated underscore sequences with spacing
-    .replace(/\s*-{2,}\s*/g, ' ___ ') // Isolated dash sequences with spacing
+  return text
+    // Clean up excessive dots from completion lines (major issue causing single exercise extraction)
+    .replace(/\.{4,}/g, '___') // Replace 4+ dots with placeholder
+    .replace(/_{4,}/g, '___') // Replace 4+ underscores with placeholder
+    .replace(/\s+\.{3,}\s+/g, ' ___ ') // Isolated dot sequences
     
-    // Remove LaTeX and formatting artifacts
+    // Remove LaTeX artifacts
     .replace(/\\\([^)]*\\\)/g, '')
     .replace(/\$\$[^$]*\$\$/g, '')
     .replace(/\\[a-zA-Z]+/g, '')
     .replace(/[{}]/g, '')
     
-    // Fix common OCR mistakes and normalize exercise markers
+    // Fix common OCR mistakes in French
     .replace(/([a-zA-Z0-9])\s*,\s*/g, '$1. ')  // Fix a, -> a.
-    .replace(/([0-9]+)\s*\.\s*/g, '$1. ')      // Normalize number spacing: 1. 
-    .replace(/([a-zA-Z])\s*\.\s*/g, '$1. ')    // Normalize letter spacing: a.
-    .replace(/([0-9]+)\s*\)\s*/g, '$1) ')      // Normalize parentheses: 1)
-    .replace(/([a-zA-Z])\s*\)\s*/g, '$1) ')    // Normalize letter parentheses: a)
-    .replace(/(\d+)\s*\/\s*(\d+)/g, '$1/$2')   // Normalize fractions
-    .replace(/=\s*/g, '= ')                    // Normalize equals signs
+    .replace(/([a-zA-Z0-9])\s*\.\s*/g, '$1. ') // Normalize spacing
+    .replace(/(\d+)\s*\/\s*(\d+)/g, '$1/$2') // Normalize fractions
+    .replace(/=\s*/g, '= ')
     
-    // Create clear exercise boundaries by forcing line breaks before exercise markers
-    .replace(/\s+((?:\d+|[a-zA-Z])\s*[.\)])/g, '\n$1')
-    .replace(/\s+((?:exercice|ex|problème|question)\s*\d*\s*[:\.]?)/gi, '\n$1')
-    .replace(/\s+([IVX]+\s*\.)/g, '\n$1')
+    // Normalize exercise separators
+    .replace(/([a-zA-Z0-9]\s*[.\)])\s*([a-zA-Z0-9]\s*[.\)])/g, '$1\n$2') // Separate exercises on new lines
     
-    // Clean up excessive whitespace while preserving line structure
-    .replace(/[ \t]+/g, ' ')  // Multiple spaces/tabs to single space
-    .replace(/\n\s*\n\s*\n/g, '\n\n')  // Multiple line breaks to double
-    .replace(/^\s+|\s+$/g, '') // Trim start and end
+    // Clean up whitespace while preserving structure
+    .replace(/\s+/g, ' ')
+    .replace(/\n\s*\n/g, '\n')
     .trim();
-    
-  console.log('Cleaned text preview:', cleanedText.substring(0, 200));  
-  console.log('Cleaned text line count:', cleanedText.split('\n').length);
-  
-  return cleanedText;
 }
 
-// Smart exercise boundary detection with character-by-character scanning
+// Structured extraction for French worksheet format - UNIVERSAL PATTERNS
 function extractStructuredExercises(text: string): Array<{ question: string, answer: string }> {
-  console.log('=== SMART BOUNDARY DETECTION ===');
-  const exercises = [];
-  const lines = text.split('\n');
-  
-  let currentExercise = '';
-  let exerciseCount = 0;
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue; // Skip empty lines
-    
-    console.log(`Processing line ${i}: "${line}"`);
-    
-    // Check if this line starts with an exercise marker
-    const exerciseMarkerMatch = line.match(/^(\d+\s*[.\)]|[a-zA-Z]\s*[.\)]|(?:exercice|ex|problème|question)\s*\d*\s*[:\.]?|[IVX]+\s*\.)/i);
-    
-    if (exerciseMarkerMatch) {
-      // If we had a previous exercise, save it
-      if (currentExercise.trim()) {
-        const cleanContent = cleanExerciseContent(currentExercise);
-        if (isEducationalContent(cleanContent)) {
-          exercises.push({
-            question: cleanContent,
-            answer: ""
-          });
-          console.log(`Saved exercise ${exerciseCount + 1}: "${cleanContent.substring(0, 50)}..."`);
-          exerciseCount++;
-        }
-      }
-      
-      // Start new exercise
-      currentExercise = line;
-      console.log(`New exercise started: "${line}"`);
-    } else if (currentExercise) {
-      // Continue current exercise
-      currentExercise += ' ' + line;
-      console.log(`Continuing exercise: "${line}"`);
-    } else {
-      // First line without marker - might be start of content
-      currentExercise = line;
-      console.log(`Starting content: "${line}"`);
-    }
-  }
-  
-  // Don't forget the last exercise
-  if (currentExercise.trim()) {
-    const cleanContent = cleanExerciseContent(currentExercise);
-    if (isEducationalContent(cleanContent)) {
-      exercises.push({
-        question: cleanContent,
-        answer: ""
-      });
-      console.log(`Saved final exercise: "${cleanContent.substring(0, 50)}..."`);
-      exerciseCount++;
-    }
-  }
-  
-  console.log(`Smart boundary detection found ${exercises.length} exercises`);
-  
-  // If still no exercises, try fallback pattern matching
-  if (exercises.length === 0) {
-    console.log('Falling back to pattern matching...');
-    return fallbackPatternMatching(text);
-  }
-  
-  return exercises;
-}
-
-// Clean individual exercise content
-function cleanExerciseContent(content: string): string {
-  return content
-    .replace(/_{3,}/g, '___')  // Normalize completion marks
-    .replace(/\.{3,}/g, '___') // Normalize dot completion marks
-    .replace(/\s+/g, ' ')      // Normalize spacing
-    .trim();
-}
-
-// Fallback pattern matching for when smart detection fails
-function fallbackPatternMatching(text: string): Array<{ question: string, answer: string }> {
   const exercises = [];
   
-  // Universal exercise patterns for French worksheets - more focused now
-  const patterns = [
-    // Numbers: 1., 2., 10., etc. - capture until next number or end
-    /(\d+\s*\.\s*[^0-9]*?)(?=\d+\s*\.|$)/gi,
-    // Letters: a., b., c., etc. - capture until next letter or end  
-    /([a-zA-Z]\s*\.\s*[^a-zA-Z]*?)(?=[a-zA-Z]\s*\.|$)/gi,
-    // Parentheses: 1), 2), a), b), etc.
-    /([0-9a-zA-Z]\s*\)\s*[^0-9a-zA-Z)]*?)(?=[0-9a-zA-Z]\s*\)|$)/gi,
-    // Exercise keywords
-    /((?:exercice|ex|problème|question)\s*\d*\s*[:\.]?\s*[^E]*?)(?=(?:exercice|ex|problème|question)|$)/gi
+  // Universal exercise patterns for French worksheets
+  const universalPatterns = [
+    // Numbers with dots: 1., 2., 3., 10., 15., etc.
+    /(\d+)\s*\.\s*([^0-9]+?)(?=\s*\d+\s*\.|$)/gi,
+    // Letters with dots: a., b., c., d., etc.
+    /([a-h])\s*\.\s*([^a-h\.]+?)(?=\s*[a-h]\s*\.|$)/gi,
+    // Numbers with parentheses: 1), 2), 3), etc.
+    /(\d+)\s*\)\s*([^0-9)]+?)(?=\s*\d+\s*\)|$)/gi,
+    // Letters with parentheses: a), b), c), etc.
+    /([a-h])\s*\)\s*([^a-h)]+?)(?=\s*[a-h]\s*\)|$)/gi,
+    // Exercise keywords: Exercice 1:, Ex 2:, Problème 3:, Question 4:
+    /((?:exercice|ex|problème|question)\s*\d*\s*[:\.]?)\s*([^E]+?)(?=\s*(?:exercice|ex|problème|question)|$)/gi,
+    // Roman numerals: I., II., III., IV., etc.
+    /([IVX]+)\s*\.\s*([^IVX\.]+?)(?=\s*[IVX]+\s*\.|$)/gi
   ];
   
-  for (const pattern of patterns) {
+  // Try each pattern
+  for (const pattern of universalPatterns) {
     let match;
     while ((match = pattern.exec(text)) !== null) {
-      const content = match[1].trim();
+      const identifier = match[1];
+      const content = match[2].trim();
+      
+      // Validate that this looks like educational content
       if (isEducationalContent(content)) {
         exercises.push({
-          question: cleanExerciseContent(content),
+          question: `${identifier}. ${content}`,
           answer: ""
         });
-        console.log(`Pattern matching found: "${content.substring(0, 50)}..."`);
+        console.log(`Universal extraction found: ${identifier}. ${content}`);
       }
     }
     
+    // If we found exercises with this pattern, return them
     if (exercises.length > 0) {
-      console.log(`Pattern matching successful with ${exercises.length} exercises`);
+      console.log(`Found ${exercises.length} exercises using pattern: ${pattern.source}`);
       return exercises;
     }
   }
@@ -195,44 +110,20 @@ function fallbackPatternMatching(text: string): Array<{ question: string, answer
   return exercises;
 }
 
-// Enhanced content validation with recovery
+// Check if content contains educational/mathematical elements
 function isEducationalContent(content: string): boolean {
-  console.log(`Validating content: "${content.substring(0, 100)}..."`);
-  
-  // First check: not just completion marks
-  if (/^[.\s_-]+$/.test(content) || content.length < 3) {
-    console.log('Content rejected: too short or just completion marks');
-    return false;
-  }
-  
-  // Check for educational indicators
   const educationalIndicators = [
-    /\d+\/\d+/, // fractions like 1/2, 3/4
-    /\d+\s*[+\-×÷*]\s*\d+/, // arithmetic operations
-    /\d+\s*=\s*\d+/, // equations
-    /[0-9]+/, // any numbers (very common in math)
-    /(calcul|résoudre|simplifi|réduire|complet|écris|trouve|égal|somme|différence|produit|quotient)/i, // French math keywords
-    /[A-Za-z]{4,}/, // meaningful words (4+ chars to avoid false positives)
-    /\([^)]*\)/, // parentheses expressions
-    /\d+\s*(cm|m|kg|g|€|%)/, // units
+    /\d+\/\d+/, // fractions
+    /\d+\s*[+\-×÷]\s*\d+/, // operations
+    /=/, // equals
+    /\d+/, // any numbers
+    /(calcul|résoudre|simplifi|réduire|complet|écris|trouve)/i, // French educational keywords
+    /[A-Za-z]{3,}/ // meaningful text (not just single characters)
   ];
   
-  const hasEducationalContent = educationalIndicators.some(pattern => {
-    const matches = pattern.test(content);
-    if (matches) {
-      console.log(`Content validated by pattern: ${pattern.source}`);
-    }
-    return matches;
-  });
-  
-  // Additional check: meaningful text length
-  const meaningfulTextLength = content.replace(/[.\s_-]/g, '').length;
-  const hasMinimumContent = meaningfulTextLength >= 5;
-  
-  const isValid = hasEducationalContent && hasMinimumContent;
-  console.log(`Content validation result: ${isValid} (educational: ${hasEducationalContent}, meaningful length: ${hasMinimumContent})`);
-  
-  return isValid;
+  return educationalIndicators.some(pattern => pattern.test(content)) && 
+         content.length > 2 &&
+         !/^[.\s_-]+$/.test(content); // not just dots, spaces, underscores, or dashes
 }
 
 // Extract any mathematical content as exercises
@@ -281,81 +172,18 @@ function extractContextAroundFraction(text: string, fraction: string): string {
   return text.substring(start, end).trim();
 }
 
-// Enhanced fallback with content recovery
+// Create fallback exercises when pattern matching fails
 function createFallbackExercises(text: string): Array<{ question: string, answer: string }> {
-  console.log('=== FALLBACK EXERCISE CREATION ===');
-  
   if (text.length < 10) {
-    console.log('Text too short for fallback extraction');
     return [];
   }
   
-  // Try to find mathematical content clusters
-  const mathClusters = findMathematicalClusters(text);
-  if (mathClusters.length > 0) {
-    console.log(`Found ${mathClusters.length} mathematical content clusters`);
-    return mathClusters.map((cluster, index) => ({
-      question: `Mathematical Exercise ${index + 1}: ${cluster}`,
-      answer: ""
-    }));
-  }
+  // Split text into chunks that might be exercises
+  const chunks = text.split(/\n+/).filter(chunk => chunk.trim().length > 5);
   
-  // Split by meaningful line breaks and filter for content
-  const meaningfulChunks = text
-    .split(/\n+/)
-    .map(chunk => cleanExerciseContent(chunk))
-    .filter(chunk => chunk.length > 8 && !/^[.\s_-]+$/.test(chunk))
-    .slice(0, 5); // Max 5 exercises
-  
-  if (meaningfulChunks.length > 0) {
-    console.log(`Creating ${meaningfulChunks.length} fallback exercises from chunks`);
-    return meaningfulChunks.map((chunk, index) => ({
-      question: `Exercise ${index + 1}: ${chunk}`,
-      answer: ""
-    }));
-  }
-  
-  // Last resort: single exercise from entire content
-  console.log('Creating single fallback exercise from entire content');
-  return [{
-    question: `Document Content: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`,
+  return chunks.slice(0, 5).map((chunk, index) => ({
+    question: `Exercise ${index + 1}: ${chunk.trim()}`,
     answer: ""
-  }];
-}
-
-// Find clusters of mathematical content
-function findMathematicalClusters(text: string): string[] {
-  const clusters = [];
-  const lines = text.split('\n');
-  let currentCluster = '';
-  
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    if (!trimmedLine) {
-      if (currentCluster && isEducationalContent(currentCluster)) {
-        clusters.push(currentCluster.trim());
-        currentCluster = '';
-      }
-      continue;
-    }
-    
-    // Check if line contains mathematical content
-    if (/\d|[+\-×÷*=\/]|fraction|calcul/i.test(trimmedLine)) {
-      currentCluster += (currentCluster ? ' ' : '') + trimmedLine;
-    } else if (currentCluster) {
-      // End of mathematical cluster
-      if (isEducationalContent(currentCluster)) {
-        clusters.push(currentCluster.trim());
-      }
-      currentCluster = '';
-    }
-  }
-  
-  // Don't forget the last cluster
-  if (currentCluster && isEducationalContent(currentCluster)) {
-    clusters.push(currentCluster.trim());
-  }
-  
-  return clusters;
+  }));
 }
 
