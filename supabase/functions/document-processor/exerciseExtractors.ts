@@ -54,8 +54,11 @@ function preprocessFrenchMathText(text: string): string {
     .replace(/(\d+)\s*\/\s*(\d+)/g, '$1/$2') // Normalize fractions
     .replace(/=\s*/g, '= ')
     
-    // Normalize exercise separators
-    .replace(/([a-zA-Z0-9]\s*[.\)])\s*([a-zA-Z0-9]\s*[.\)])/g, '$1\n$2') // Separate exercises on new lines
+    // AGGRESSIVE exercise separation - force line breaks between exercise markers
+    .replace(/([a-h]\s*[\.\)])(\s*)([a-h]\s*[\.\)])/gi, '$1\n$3') // a. b. -> a.\nb.
+    .replace(/(\d+\s*[\.\)])(\s*)(\d+\s*[\.\)])/g, '$1\n$3') // 1. 2. -> 1.\n2.
+    .replace(/([IVX]+\s*\.)(\s*)([IVX]+\s*\.)/gi, '$1\n$3') // I. II. -> I.\nII.
+    .replace(/(exercice\s*\d*)(\s*[:\.]?\s*)(exercice\s*\d*)/gi, '$1\n$3') // Exercice separation
     
     // Clean up whitespace while preserving structure
     .replace(/\s+/g, ' ')
@@ -63,47 +66,127 @@ function preprocessFrenchMathText(text: string): string {
     .trim();
 }
 
-// Structured extraction for French worksheet format - UNIVERSAL PATTERNS
+// Structured extraction for French worksheet format - SMART SPLITTING
 function extractStructuredExercises(text: string): Array<{ question: string, answer: string }> {
-  const exercises = [];
+  console.log('Starting smart exercise extraction...');
   
-  // Universal exercise patterns for French worksheets
-  const universalPatterns = [
-    // Numbers with dots: 1., 2., 3., 10., 15., etc.
-    /(\d+)\s*\.\s*([^0-9]+?)(?=\s*\d+\s*\.|$)/gi,
-    // Letters with dots: a., b., c., d., etc.
-    /([a-h])\s*\.\s*([^a-h\.]+?)(?=\s*[a-h]\s*\.|$)/gi,
-    // Numbers with parentheses: 1), 2), 3), etc.
-    /(\d+)\s*\)\s*([^0-9)]+?)(?=\s*\d+\s*\)|$)/gi,
-    // Letters with parentheses: a), b), c), etc.
-    /([a-h])\s*\)\s*([^a-h)]+?)(?=\s*[a-h]\s*\)|$)/gi,
-    // Exercise keywords: Exercice 1:, Ex 2:, Problème 3:, Question 4:
-    /((?:exercice|ex|problème|question)\s*\d*\s*[:\.]?)\s*([^E]+?)(?=\s*(?:exercice|ex|problème|question)|$)/gi,
-    // Roman numerals: I., II., III., IV., etc.
-    /([IVX]+)\s*\.\s*([^IVX\.]+?)(?=\s*[IVX]+\s*\.|$)/gi
+  // Try character-by-character scanning for exercise markers
+  const exercises = scanForExerciseMarkers(text);
+  
+  if (exercises.length > 0) {
+    console.log(`Smart scanning found ${exercises.length} exercises`);
+    return exercises;
+  }
+  
+  // Fallback to pattern-based extraction with better splitting
+  return extractWithImprovedPatterns(text);
+}
+
+// Character-by-character scanning for exercise markers
+function scanForExerciseMarkers(text: string): Array<{ question: string, answer: string }> {
+  const exercises = [];
+  const exerciseMarkers = [
+    /^([a-h])\s*[\.\)]/, // a. or a)
+    /^(\d+)\s*[\.\)]/, // 1. or 1)
+    /^([IVX]+)\s*\./, // I. II. III.
+    /^(exercice|ex|problème|question)\s*\d*/i // Exercise keywords
   ];
   
-  // Try each pattern
-  for (const pattern of universalPatterns) {
-    let match;
-    while ((match = pattern.exec(text)) !== null) {
+  // Split text into lines and scan each line
+  const lines = text.split(/\n+/);
+  let currentExercise = '';
+  let currentMarker = '';
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    
+    // Check if this line starts with an exercise marker
+    let isNewExercise = false;
+    let marker = '';
+    
+    for (const pattern of exerciseMarkers) {
+      const match = line.match(pattern);
+      if (match) {
+        marker = match[1];
+        isNewExercise = true;
+        break;
+      }
+    }
+    
+    if (isNewExercise) {
+      // Save previous exercise if it exists
+      if (currentExercise && currentMarker) {
+        const cleanContent = currentExercise.replace(/^[a-zA-Z0-9IVX]+[\.\)]\s*/, '').trim();
+        if (isEducationalContent(cleanContent)) {
+          exercises.push({
+            question: `${currentMarker}. ${cleanContent}`,
+            answer: ""
+          });
+          console.log(`Scanned exercise: ${currentMarker}. ${cleanContent.substring(0, 50)}...`);
+        }
+      }
+      
+      // Start new exercise
+      currentExercise = line;
+      currentMarker = marker;
+    } else if (currentExercise) {
+      // Continue building current exercise
+      currentExercise += ' ' + line;
+    }
+  }
+  
+  // Don't forget the last exercise
+  if (currentExercise && currentMarker) {
+    const cleanContent = currentExercise.replace(/^[a-zA-Z0-9IVX]+[\.\)]\s*/, '').trim();
+    if (isEducationalContent(cleanContent)) {
+      exercises.push({
+        question: `${currentMarker}. ${cleanContent}`,
+        answer: ""
+      });
+      console.log(`Final scanned exercise: ${currentMarker}. ${cleanContent.substring(0, 50)}...`);
+    }
+  }
+  
+  return exercises;
+}
+
+// Improved pattern-based extraction with better content limits
+function extractWithImprovedPatterns(text: string): Array<{ question: string, answer: string }> {
+  const exercises = [];
+  console.log('Using improved pattern extraction...');
+  
+  // More precise patterns with content length limits
+  const patterns = [
+    // Letters with dots - limit content to reasonable length
+    /([a-h])\s*\.\s*([^a-h\n]{3,150})(?=\s*[a-h]\s*\.|$)/gi,
+    // Numbers with dots
+    /(\d+)\s*\.\s*([^\d\n]{3,150})(?=\s*\d+\s*\.|$)/gi,
+    // Letters with parentheses  
+    /([a-h])\s*\)\s*([^a-h\n]{3,150})(?=\s*[a-h]\s*\)|$)/gi,
+    // Numbers with parentheses
+    /(\d+)\s*\)\s*([^\d\n]{3,150})(?=\s*\d+\s*\)|$)/gi
+  ];
+  
+  for (const pattern of patterns) {
+    const matches = [...text.matchAll(pattern)];
+    
+    for (const match of matches) {
       const identifier = match[1];
       const content = match[2].trim();
       
-      // Validate that this looks like educational content
-      if (isEducationalContent(content)) {
+      if (isEducationalContent(content) && content.length < 200) {
         exercises.push({
           question: `${identifier}. ${content}`,
           answer: ""
         });
-        console.log(`Universal extraction found: ${identifier}. ${content}`);
+        console.log(`Pattern found: ${identifier}. ${content.substring(0, 50)}...`);
       }
     }
     
-    // If we found exercises with this pattern, return them
     if (exercises.length > 0) {
-      console.log(`Found ${exercises.length} exercises using pattern: ${pattern.source}`);
-      return exercises;
+      console.log(`Pattern ${pattern.source} found ${exercises.length} exercises`);
+      break; // Use first successful pattern
     }
   }
   

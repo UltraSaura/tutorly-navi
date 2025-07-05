@@ -45,14 +45,14 @@ export async function extractTextWithOpenAIVision(fileUrl: string): Promise<stri
         messages: [
           {
             role: "system",
-            content: "You are an OCR system specialized in French educational worksheets. Extract ALL text with perfect accuracy. Focus on ANY exercise numbering patterns including: numbers (1., 2., 10.), letters (a., b.), parentheses (1), a)), exercise keywords (Exercice, Ex, Problème, Question), Roman numerals (I., II.), mathematical expressions, and fractions. Ignore LaTeX formatting completely."
+            content: "You are an OCR system specialized in French educational worksheets. CRITICAL: Ignore all dotted completion lines, underscores, and repetitive symbols used for student answers. Focus ONLY on extracting the actual exercise content with clear exercise boundaries."
           },
           {
             role: "user",
             content: [
               { 
                 type: "text", 
-                text: "This is a French educational worksheet. Extract ALL text with PERFECT accuracy, focusing on ANY exercise patterns:\n\n**ALL POSSIBLE EXERCISE PATTERNS:**\n- Numbers: 1., 2., 3., 10., 15. etc.\n- Letters: a., b., c., d., e., f., g., h. etc.\n- Parentheses: 1), 2), a), b) etc.\n- Exercise labels: Exercice 1:, Ex 2:, Problème 3:, Question 4:\n- Roman numerals: I., II., III., IV. etc.\n- Mathematical expressions, fractions, equations\n- Any numbering or organizational system\n\n**EXTRACTION RULES:**\n- Extract as plain text only (NO LaTeX, NO formatting)\n- Preserve spacing and line breaks between exercises\n- Include ALL mathematical content and symbols\n- Capture completion lines (dots, underscores) as placeholders\n- Don't assume any specific format - capture everything\n\nExtract with maximum precision:" 
+                text: "This is a French math worksheet. Extract ONLY the actual exercise content, ignoring completion marks:\n\n**CRITICAL INSTRUCTIONS:**\n- IGNORE all dotted lines (....), underscores (____), completion marks\n- Focus on exercise identifiers: a., b., c., 1., 2., 3., etc.\n- Extract each exercise separately with clear boundaries\n- Include mathematical expressions and fractions\n- Return each exercise on a new line\n\n**EXAMPLE FORMAT:**\na. Simplifier 3/6\nb. Calculer 2 + 3\nc. Résoudre x = 5\n\n**DO NOT INCLUDE:**\n- Completion dots or lines\n- Repetitive symbols\n- Empty spaces meant for answers\n\nExtract the exercises with perfect separation:" 
               },
               { type: "image_url", image_url: { url: fileUrl } }
             ]
