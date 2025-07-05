@@ -31,23 +31,21 @@ function preprocessExtractedText(text: string): string {
   return cleanedText;
 }
 
-// Multi-pass text extraction for better accuracy
-async function multiPassExtraction(fileData: string, fileType: string): Promise<string> {
-  console.log('Starting multi-pass extraction');
+// Optimized single-pass extraction with robust preprocessing
+async function optimizedExtraction(fileData: string, fileType: string): Promise<string> {
+  console.log('Starting optimized extraction');
   
   try {
-    // First pass: Standard extraction
-    const firstPass = await extractTextFromFile(fileData, fileType);
-    console.log('First pass completed, text length:', firstPass.length);
+    // Use Vision API with improved prompt
+    const extractedText = await extractTextFromFile(fileData, fileType);
+    console.log('Vision API extraction completed, text length:', extractedText.length);
     
-    // Preprocess the text
-    const cleanedText = preprocessExtractedText(firstPass);
+    // Apply targeted preprocessing for French math worksheets
+    const cleanedText = preprocessExtractedText(extractedText);
     
-    // For now, return the cleaned first pass
-    // TODO: Implement additional passes if needed
     return cleanedText;
   } catch (error) {
-    console.error('Multi-pass extraction failed:', error);
+    console.error('Optimized extraction failed:', error);
     throw error;
   }
 }
@@ -61,8 +59,8 @@ export async function processDocument(
   try {
     console.log(`Processing document: ${fileName} (${fileType})`);
     
-    // Use multi-pass extraction with enhanced preprocessing
-    const extractedText = await multiPassExtraction(fileData, fileType);
+    // Use optimized single-pass extraction
+    const extractedText = await optimizedExtraction(fileData, fileType);
     console.log(`Final extracted text length: ${extractedText.length} characters`);
     console.log(`Final extracted text (first 500 chars): ${extractedText.substring(0, 500)}`);
     
@@ -72,11 +70,11 @@ export async function processDocument(
       console.log(`Text chunk ${index + 1}:`, chunk);
     });
     
-    // Use enhanced pattern matching for exercise extraction
-    console.log('Using enhanced pattern-based extraction for French math worksheets');
+    // Use the tiered extraction system
+    console.log('Using tiered extraction system for robust exercise detection');
     const exercises = extractExercisesFromText(extractedText);
     
-    console.log(`Enhanced extraction found ${exercises.length} exercises`);
+    console.log(`Tiered extraction found ${exercises.length} exercises`);
     
     // If no exercises found, create a fallback exercise from the content
     if (exercises.length === 0 && extractedText.length > 0) {
