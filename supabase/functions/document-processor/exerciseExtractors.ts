@@ -1,35 +1,79 @@
 
-// Tiered extraction approach: Pattern-based first, then Vision API fallback
+// Progressive extraction with delimiter detection and robust fallbacks
 export function extractExercisesFromText(text: string): Array<{ question: string, answer: string }> {
-  console.log('=== TIER 1: Pattern-Based Extraction ===');
+  console.log('=== PROGRESSIVE EXTRACTION START ===');
   console.log('Input text length:', text.length);
-  console.log('Raw text:', text);
+  console.log('Raw text (first 500 chars):', text.substring(0, 500));
   
-  // Preprocessing pipeline for French math worksheets
-  const preprocessedText = preprocessFrenchMathText(text);
-  console.log('Preprocessed text:', preprocessedText);
+  // PHASE 1: Check for Vision API delimiters first
+  console.log('=== PHASE 1: Delimiter-Based Extraction ===');
+  let exercises = extractWithDelimiters(text);
   
-  // Try structured extraction first
-  let exercises = extractStructuredExercises(preprocessedText);
-  
-  if (exercises.length > 0) {
-    console.log(`TIER 1 SUCCESS: Found ${exercises.length} exercises using pattern matching`);
+  if (exercises.length > 1) {
+    console.log(`PHASE 1 SUCCESS: Found ${exercises.length} exercises using delimiters`);
     return exercises;
   }
   
-  console.log('=== TIER 2: Mathematical Content Detection ===');
-  exercises = extractMathematicalContent(preprocessedText);
+  // PHASE 2: Advanced boundary detection with preprocessing
+  console.log('=== PHASE 2: Boundary Detection ===');
+  const processedText = preprocessFrenchMathText(text);
+  console.log('Processed text:', processedText);
   
-  if (exercises.length > 0) {
-    console.log(`TIER 2 SUCCESS: Found ${exercises.length} exercises using math detection`);
+  exercises = extractWithBoundaryDetection(processedText);
+  
+  if (exercises.length > 1) {
+    console.log(`PHASE 2 SUCCESS: Found ${exercises.length} exercises using boundary detection`);
     return exercises;
   }
   
-  console.log('=== TIER 3: Fallback Extraction ===');
-  exercises = createFallbackExercises(text);
-  console.log(`TIER 3: Created ${exercises.length} fallback exercises`);
+  // PHASE 3: Content clustering fallback
+  console.log('=== PHASE 3: Content Clustering ===');
+  exercises = extractWithContentClustering(text);
+  
+  if (exercises.length > 1) {
+    console.log(`PHASE 3 SUCCESS: Found ${exercises.length} exercises using content clustering`);
+    return exercises;
+  }
+  
+  // PHASE 4: Force split if content is substantial
+  console.log('=== PHASE 4: Force Split Strategy ===');
+  exercises = createForcedSplitExercises(text);
+  console.log(`PHASE 4: Created ${exercises.length} exercises using forced split`);
   
   return exercises;
+}
+
+// PHASE 1: Extract exercises using Vision API delimiters
+function extractWithDelimiters(text: string): Array<{ question: string, answer: string }> {
+  console.log('Checking for EXERCISE_START/EXERCISE_END delimiters...');
+  
+  const delimiterPattern = /EXERCISE_START\s*(.*?)\s*EXERCISE_END/g;
+  const exercises = [];
+  let match;
+  
+  while ((match = delimiterPattern.exec(text)) !== null) {
+    const content = match[1].trim();
+    if (content && content.length > 2) {
+      exercises.push({
+        question: content,
+        answer: ""
+      });
+      console.log(`Delimiter extraction found: ${content.substring(0, 50)}...`);
+    }
+  }
+  
+  return exercises;
+}
+
+// PHASE 2: Boundary detection with aggressive preprocessing
+function extractWithBoundaryDetection(text: string): Array<{ question: string, answer: string }> {
+  console.log('Starting boundary detection...');
+  
+  // Apply aggressive preprocessing for French math worksheets
+  const processedText = preprocessFrenchMathText(text);
+  
+  // Use the existing smart scanning approach
+  return scanForExerciseMarkers(processedText);
 }
 
 // Preprocessing pipeline specifically for French educational worksheets
@@ -37,10 +81,10 @@ function preprocessFrenchMathText(text: string): string {
   console.log('Preprocessing French educational text...');
   
   return text
-    // Clean up excessive dots from completion lines (major issue causing single exercise extraction)
-    .replace(/\.{4,}/g, '___') // Replace 4+ dots with placeholder
-    .replace(/_{4,}/g, '___') // Replace 4+ underscores with placeholder
-    .replace(/\s+\.{3,}\s+/g, ' ___ ') // Isolated dot sequences
+    // Clean up excessive dots from completion lines
+    .replace(/\.{4,}/g, ' ') // Replace 4+ dots with space
+    .replace(/_{4,}/g, ' ') // Replace 4+ underscores with space
+    .replace(/\s+\.{3,}\s+/g, ' ') // Remove isolated dot sequences
     
     // Remove LaTeX artifacts
     .replace(/\\\([^)]*\\\)/g, '')
@@ -66,20 +110,58 @@ function preprocessFrenchMathText(text: string): string {
     .trim();
 }
 
-// Structured extraction for French worksheet format - SMART SPLITTING
-function extractStructuredExercises(text: string): Array<{ question: string, answer: string }> {
-  console.log('Starting smart exercise extraction...');
+// PHASE 3: Content clustering approach
+function extractWithContentClustering(text: string): Array<{ question: string, answer: string }> {
+  console.log('Starting content clustering...');
   
-  // Try character-by-character scanning for exercise markers
-  const exercises = scanForExerciseMarkers(text);
+  // Look for mathematical content clusters
+  const mathClusters = findMathematicalClusters(text);
   
-  if (exercises.length > 0) {
-    console.log(`Smart scanning found ${exercises.length} exercises`);
-    return exercises;
+  if (mathClusters.length > 1) {
+    console.log(`Found ${mathClusters.length} mathematical content clusters`);
+    return mathClusters.map((cluster, index) => ({
+      question: `Exercise ${index + 1}: ${cluster}`,
+      answer: ""
+    }));
   }
   
-  // Fallback to pattern-based extraction with better splitting
-  return extractWithImprovedPatterns(text);
+  // Try splitting on strong separators
+  return splitOnSeparators(text);
+}
+
+// Find clusters of mathematical content
+function findMathematicalClusters(text: string): string[] {
+  const clusters = [];
+  const mathPattern = /([^.!?]*(?:\d+\/\d+|\d+\s*[+\-×÷]\s*\d+|=)[^.!?]*[.!?]?)/g;
+  let match;
+  
+  while ((match = mathPattern.exec(text)) !== null) {
+    const content = match[1].trim();
+    if (content.length > 10 && isEducationalContent(content)) {
+      clusters.push(content);
+    }
+  }
+  
+  return clusters;
+}
+
+// Split text on strong separators
+function splitOnSeparators(text: string): Array<{ question: string, answer: string }> {
+  const separators = ['\n\n', '. ', '? ', '! '];
+  
+  for (const separator of separators) {
+    const parts = text.split(separator).filter(part => part.trim().length > 10);
+    
+    if (parts.length > 1) {
+      console.log(`Split on '${separator}' found ${parts.length} parts`);
+      return parts.map((part, index) => ({
+        question: `${index + 1}. ${part.trim()}`,
+        answer: ""
+      }));
+    }
+  }
+  
+  return [];
 }
 
 // Character-by-character scanning for exercise markers
@@ -255,18 +337,52 @@ function extractContextAroundFraction(text: string, fraction: string): string {
   return text.substring(start, end).trim();
 }
 
-// Create fallback exercises when pattern matching fails
-function createFallbackExercises(text: string): Array<{ question: string, answer: string }> {
-  if (text.length < 10) {
-    return [];
+// PHASE 4: Force split strategy for single long content
+function createForcedSplitExercises(text: string): Array<{ question: string, answer: string }> {
+  console.log('Applying forced split strategy...');
+  
+  if (text.length < 50) {
+    return [{
+      question: text.trim() || "No content extracted",
+      answer: ""
+    }];
   }
   
-  // Split text into chunks that might be exercises
-  const chunks = text.split(/\n+/).filter(chunk => chunk.trim().length > 5);
+  // If content is substantial but we only found one exercise, force split it
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
   
-  return chunks.slice(0, 5).map((chunk, index) => ({
-    question: `Exercise ${index + 1}: ${chunk.trim()}`,
+  if (sentences.length > 1) {
+    console.log(`Force splitting into ${sentences.length} parts`);
+    return sentences.slice(0, 5).map((sentence, index) => ({
+      question: `${String.fromCharCode(97 + index)}. ${sentence.trim()}`,
+      answer: ""
+    }));
+  }
+  
+  // Last resort: split by length
+  const words = text.split(/\s+/);
+  const chunkSize = Math.ceil(words.length / 3); // Split into 3 parts
+  const chunks = [];
+  
+  for (let i = 0; i < words.length; i += chunkSize) {
+    const chunk = words.slice(i, i + chunkSize).join(' ');
+    if (chunk.trim().length > 10) {
+      chunks.push(chunk.trim());
+    }
+  }
+  
+  if (chunks.length > 1) {
+    console.log(`Force splitting by length into ${chunks.length} parts`);
+    return chunks.map((chunk, index) => ({
+      question: `${String.fromCharCode(97 + index)}. ${chunk}`,
+      answer: ""
+    }));
+  }
+  
+  // Absolute fallback
+  return [{
+    question: text.trim() || "No content extracted",
     answer: ""
-  }));
+  }];
 }
 

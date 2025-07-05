@@ -45,14 +45,14 @@ export async function extractTextWithOpenAIVision(fileUrl: string): Promise<stri
         messages: [
           {
             role: "system",
-            content: "You are an OCR system specialized in French educational worksheets. CRITICAL: Ignore all dotted completion lines, underscores, and repetitive symbols used for student answers. Focus ONLY on extracting the actual exercise content with clear exercise boundaries."
+            content: "You are an OCR system that extracts French math exercises with STRICT formatting. Use EXERCISE_START and EXERCISE_END delimiters for each exercise to ensure proper separation."
           },
           {
             role: "user",
             content: [
               { 
                 type: "text", 
-                text: "This is a French math worksheet. Extract ONLY the actual exercise content, ignoring completion marks:\n\n**CRITICAL INSTRUCTIONS:**\n- IGNORE all dotted lines (....), underscores (____), completion marks\n- Focus on exercise identifiers: a., b., c., 1., 2., 3., etc.\n- Extract each exercise separately with clear boundaries\n- Include mathematical expressions and fractions\n- Return each exercise on a new line\n\n**EXAMPLE FORMAT:**\na. Simplifier 3/6\nb. Calculer 2 + 3\nc. Résoudre x = 5\n\n**DO NOT INCLUDE:**\n- Completion dots or lines\n- Repetitive symbols\n- Empty spaces meant for answers\n\nExtract the exercises with perfect separation:" 
+                text: "Extract ALL exercises from this French worksheet. Use this EXACT format for each exercise:\n\nEXERCISE_START a. [exercise content] EXERCISE_END\nEXERCISE_START b. [exercise content] EXERCISE_END\n\n**CRITICAL RULES:**\n1. Each exercise MUST be wrapped with EXERCISE_START and EXERCISE_END\n2. Keep the original numbering (a., b., c. or 1., 2., 3.)\n3. IGNORE completion lines (....), underscores (____)\n4. Include mathematical expressions and fractions\n5. Each exercise on a separate line\n\n**EXAMPLE OUTPUT:**\nEXERCISE_START a. Simplifier 3/6 EXERCISE_END\nEXERCISE_START b. Calculer 2 + 3 EXERCISE_END\nEXERCISE_START c. Résoudre x = 5 EXERCISE_END\n\nExtract ALL exercises with these delimiters:" 
               },
               { type: "image_url", image_url: { url: fileUrl } }
             ]
@@ -119,7 +119,7 @@ export async function extractTextWithDeepSeekVL2(fileData: string): Promise<stri
             content: [
               {
                 type: "text",
-                text: "You are an OCR system specialized in educational content. This appears to be a math worksheet. Please extract ALL text with careful attention to:\n1. Exercise numbering/lettering (a., b., c., etc.)\n2. Mathematical expressions and fractions\n3. Answer spaces and completion marks\n4. Preserve exact structure and formatting\n\nExtract everything you can see:"
+                text: "Extract ALL exercises from this worksheet using STRICT formatting. Use this EXACT format:\n\nEXERCISE_START a. [exercise content] EXERCISE_END\nEXERCISE_START b. [exercise content] EXERCISE_END\n\n**CRITICAL:**\n1. Each exercise MUST be wrapped with EXERCISE_START and EXERCISE_END\n2. Keep original numbering (a., b., c. or 1., 2., 3.)\n3. IGNORE completion lines (....), underscores (____)\n4. Include all mathematical expressions\n5. Each exercise on separate line\n\nExtract ALL exercises with these delimiters:"
               },
               {
                 type: "image",
