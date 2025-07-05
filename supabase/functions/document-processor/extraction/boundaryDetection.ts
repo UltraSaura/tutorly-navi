@@ -18,67 +18,90 @@ export function extractWithBoundaryDetection(text: string): Array<{ question: st
 export function scanForExerciseMarkers(text: string): Array<{ question: string, answer: string }> {
   const exercises = [];
   const exerciseMarkers = [
-    /^([a-h])\s*[\.\)]/, // a. or a)
-    /^(\d+)\s*[\.\)]/, // 1. or 1)
-    /^([IVX]+)\s*\./, // I. II. III.
-    /^(exercice|ex|problème|question)\s*\d*/i // Exercise keywords
+    /^([a-h])\s*[\.\)]\s*(.*)/, // a. or a) with content
+    /^(\d+)\s*[\.\)]\s*(.*)/, // 1. or 1) with content
+    /^([IVX]+)\s*\.\s*(.*)/, // I. II. III. with content
+    /^(exercice|ex|problème|question)\s*\d*[:\.]?\s*(.*)/i // Exercise keywords with content
   ];
+  
+  console.log('=== SCANNING FOR EXERCISE MARKERS ===');
+  console.log('Input text length:', text.length);
+  console.log('Input text preview:', text.substring(0, 200));
   
   // Split text into lines and scan each line
   const lines = text.split(/\n+/);
+  console.log('Total lines to process:', lines.length);
+  
   let currentExercise = '';
   let currentMarker = '';
+  let exerciseContent = '';
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
     
+    console.log(`Processing line ${i + 1}: "${line}"`);
+    
     // Check if this line starts with an exercise marker
     let isNewExercise = false;
     let marker = '';
+    let content = '';
     
     for (const pattern of exerciseMarkers) {
       const match = line.match(pattern);
       if (match) {
         marker = match[1];
+        content = match[2] ? match[2].trim() : '';
         isNewExercise = true;
+        console.log(`Found exercise marker: "${marker}" with initial content: "${content}"`);
         break;
       }
     }
     
     if (isNewExercise) {
       // Save previous exercise if it exists
-      if (currentExercise && currentMarker) {
-        const cleanContent = currentExercise.replace(/^[a-zA-Z0-9IVX]+[\.\)]\s*/, '').trim();
-        if (isEducationalContent(cleanContent)) {
+      if (currentMarker && exerciseContent) {
+        console.log(`Saving previous exercise: ${currentMarker} -> "${exerciseContent}"`);
+        if (isEducationalContent(exerciseContent) || exerciseContent.length > 2) {
           exercises.push({
-            question: `${currentMarker}. ${cleanContent}`,
+            question: `${currentMarker}. ${exerciseContent}`,
             answer: ""
           });
-          console.log(`Scanned exercise: ${currentMarker}. ${cleanContent.substring(0, 50)}...`);
+          console.log(`✅ Exercise saved: ${currentMarker}. ${exerciseContent.substring(0, 100)}...`);
+        } else {
+          console.log(`❌ Exercise rejected by validation: "${exerciseContent}"`);
         }
       }
       
       // Start new exercise
-      currentExercise = line;
       currentMarker = marker;
-    } else if (currentExercise) {
-      // Continue building current exercise
-      currentExercise += ' ' + line;
+      exerciseContent = content; // Start with the content found on the same line
+      console.log(`Starting new exercise: ${currentMarker} with content: "${exerciseContent}"`);
+    } else if (currentMarker) {
+      // Continue building current exercise content
+      exerciseContent += (exerciseContent ? ' ' : '') + line;
+      console.log(`Adding to current exercise: "${line}" -> full content now: "${exerciseContent}"`);
     }
   }
   
   // Don't forget the last exercise
-  if (currentExercise && currentMarker) {
-    const cleanContent = currentExercise.replace(/^[a-zA-Z0-9IVX]+[\.\)]\s*/, '').trim();
-    if (isEducationalContent(cleanContent)) {
+  if (currentMarker && exerciseContent) {
+    console.log(`Saving final exercise: ${currentMarker} -> "${exerciseContent}"`);
+    if (isEducationalContent(exerciseContent) || exerciseContent.length > 2) {
       exercises.push({
-        question: `${currentMarker}. ${cleanContent}`,
+        question: `${currentMarker}. ${exerciseContent}`,
         answer: ""
       });
-      console.log(`Final scanned exercise: ${currentMarker}. ${cleanContent.substring(0, 50)}...`);
+      console.log(`✅ Final exercise saved: ${currentMarker}. ${exerciseContent.substring(0, 100)}...`);
+    } else {
+      console.log(`❌ Final exercise rejected by validation: "${exerciseContent}"`);
     }
   }
+  
+  console.log(`=== SCAN COMPLETE: Found ${exercises.length} exercises ===`);
+  exercises.forEach((ex, idx) => {
+    console.log(`Exercise ${idx + 1}: "${ex.question}"`);
+  });
   
   return exercises;
 }
