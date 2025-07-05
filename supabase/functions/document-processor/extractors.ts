@@ -45,14 +45,14 @@ export async function extractTextWithOpenAIVision(fileUrl: string): Promise<stri
         messages: [
           {
             role: "system",
-            content: "You are an OCR system specialized in French math worksheets. Your task is to extract text with perfect accuracy for exercise identification. Focus on: letter-period patterns (a., b., c., d., e.), fraction notation (30/63), mathematical expressions, and ignore LaTeX formatting completely."
+            content: "You are an OCR system specialized in French educational worksheets. Extract ALL text with perfect accuracy. Focus on ANY exercise numbering patterns including: numbers (1., 2., 10.), letters (a., b.), parentheses (1), a)), exercise keywords (Exercice, Ex, Problème, Question), Roman numerals (I., II.), mathematical expressions, and fractions. Ignore LaTeX formatting completely."
           },
           {
             role: "user",
             content: [
               { 
                 type: "text", 
-                text: "This is a French math worksheet with fraction exercises. Extract ALL text with PERFECT accuracy for these critical elements:\n\n**CRITICAL PATTERNS TO CAPTURE:**\n- Letter followed by period: a., b., c., d., e., f., g., h.\n- Fraction expressions: 30/63, 18/24, 45/54, etc.\n- Equals signs and mathematical operations\n- Any numbers and mathematical symbols\n\n**EXTRACTION RULES:**\n- Extract as plain text only (NO LaTeX, NO formatting)\n- Each exercise should be on its own line when possible\n- Preserve exact spacing around mathematical symbols\n- Include ALL visible text, even partial text\n- Focus on mathematical content over decorative elements\n\nExtract everything with maximum precision:" 
+                text: "This is a French educational worksheet. Extract ALL text with PERFECT accuracy, focusing on ANY exercise patterns:\n\n**ALL POSSIBLE EXERCISE PATTERNS:**\n- Numbers: 1., 2., 3., 10., 15. etc.\n- Letters: a., b., c., d., e., f., g., h. etc.\n- Parentheses: 1), 2), a), b) etc.\n- Exercise labels: Exercice 1:, Ex 2:, Problème 3:, Question 4:\n- Roman numerals: I., II., III., IV. etc.\n- Mathematical expressions, fractions, equations\n- Any numbering or organizational system\n\n**EXTRACTION RULES:**\n- Extract as plain text only (NO LaTeX, NO formatting)\n- Preserve spacing and line breaks between exercises\n- Include ALL mathematical content and symbols\n- Capture completion lines (dots, underscores) as placeholders\n- Don't assume any specific format - capture everything\n\nExtract with maximum precision:" 
               },
               { type: "image_url", image_url: { url: fileUrl } }
             ]
