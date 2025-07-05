@@ -45,14 +45,14 @@ export async function extractTextWithOpenAIVision(fileUrl: string): Promise<stri
         messages: [
           {
             role: "system",
-            content: "You are an OCR system specialized in French educational worksheets. Extract ALL text with perfect accuracy. Focus on ANY exercise numbering patterns including: numbers (1., 2., 10.), letters (a., b.), parentheses (1), a)), exercise keywords (Exercice, Ex, Problème, Question), Roman numerals (I., II.), mathematical expressions, and fractions. Ignore LaTeX formatting completely."
+            content: "You are a specialized OCR system for French math worksheets. CRITICAL INSTRUCTIONS:\n\n1. IGNORE completion marks: Treat dotted lines (....), underscores (____), and similar repetitive symbols as simple placeholders - DO NOT extract them as content\n2. FOCUS on exercise identifiers: Extract clear numbering like 1., 2., a., b., 1), a), Exercice 1:, Question 2:, I., II.\n3. PRESERVE mathematical content: Numbers, fractions (1/2), equations (2+3=5), expressions\n4. SEPARATE exercises clearly: When you see an exercise marker, start a new line\n5. IGNORE LaTeX formatting completely\n6. Extract as clean, readable text without excessive dots or underscores"
           },
           {
             role: "user",
             content: [
               { 
                 type: "text", 
-                text: "This is a French educational worksheet. Extract ALL text with PERFECT accuracy, focusing on ANY exercise patterns:\n\n**ALL POSSIBLE EXERCISE PATTERNS:**\n- Numbers: 1., 2., 3., 10., 15. etc.\n- Letters: a., b., c., d., e., f., g., h. etc.\n- Parentheses: 1), 2), a), b) etc.\n- Exercise labels: Exercice 1:, Ex 2:, Problème 3:, Question 4:\n- Roman numerals: I., II., III., IV. etc.\n- Mathematical expressions, fractions, equations\n- Any numbering or organizational system\n\n**EXTRACTION RULES:**\n- Extract as plain text only (NO LaTeX, NO formatting)\n- Preserve spacing and line breaks between exercises\n- Include ALL mathematical content and symbols\n- Capture completion lines (dots, underscores) as placeholders\n- Don't assume any specific format - capture everything\n\nExtract with maximum precision:" 
+                text: "FRENCH MATH WORKSHEET - EXTRACT EXERCISES CLEANLY:\n\n**CRITICAL: IGNORE COMPLETION MARKS**\n- Do NOT extract long sequences of dots (....), underscores (____), or dashes (----)\n- These are just spaces for students to write answers\n- Replace them with simple placeholders like '___'\n\n**FOCUS ON REAL CONTENT:**\n- Exercise markers: 1., 2., a., b., 1), a), Exercice 1:, Question 2:, I., II.\n- Mathematical content: numbers, fractions (1/2, 3/4), equations (2+3=5)\n- Actual text and instructions\n\n**OUTPUT FORMAT:**\n- Start each exercise on a new line\n- Keep exercise markers clear (1., a., etc.)\n- Include mathematical expressions\n- Use simple '___' for answer spaces\n- Separate different exercises with line breaks\n\nExtract the actual educational content, not the completion marks:" 
               },
               { type: "image_url", image_url: { url: fileUrl } }
             ]
