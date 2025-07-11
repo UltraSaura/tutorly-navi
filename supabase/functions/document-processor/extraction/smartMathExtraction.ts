@@ -1,231 +1,110 @@
-// Smart mathematical exercise extraction using pattern recognition and structure awareness
+// Pure OCR-based mathematical exercise extraction with precise pattern matching
 
 export function extractMathExercisesFromRawText(rawText: string): Array<{ question: string, answer: string }> {
-  console.log('=== SMART MATH EXTRACTION ===');
-  console.log('Raw text to process:', rawText.substring(0, 500));
+  console.log('=== OCR-BASED PATTERN EXTRACTION ===');
+  console.log('Raw OCR text length:', rawText.length);
+  console.log('Raw OCR text preview:', rawText.substring(0, 300));
   
-  // Phase 1: Extract all mathematical content first
-  const mathContent = extractAllMathematicalContent(rawText);
-  console.log('Extracted mathematical content:', mathContent);
-  
-  // Phase 2: Find exercise structure (a., b., c., etc.)
-  const exerciseStructure = findExerciseStructure(rawText);
-  console.log('Found exercise structure:', exerciseStructure);
-  
-  // Phase 3: Associate instructions with mathematical content
-  const exercises = associateInstructionsWithMath(rawText, mathContent, exerciseStructure);
-  console.log(`Created ${exercises.length} complete exercises`);
-  
-  // Phase 4: Fallback if no structured exercises found
-  if (exercises.length === 0) {
-    console.log('No structured exercises found, using fallback extraction');
-    return createFallbackExercises(rawText, mathContent);
-  }
-  
-  return exercises;
+  // Use pure OCR-based extraction with direct pattern matching
+  return extractMathExercisesDirectly(rawText);
 }
 
-// Extract all fractions, numbers, and mathematical expressions
-function extractAllMathematicalContent(text: string): {
-  fractions: string[];
-  decimals: string[];
-  expressions: string[];
-  equations: string[];
-} {
+// Direct OCR-based exercise extraction using precise pattern matching
+function extractMathExercisesDirectly(rawText: string): Array<{ question: string, answer: string }> {
+  console.log('Starting direct OCR pattern extraction...');
+  
+  const exercises = [];
+  
+  // Step 1: Find all fractions with precise pattern
+  const fractionPattern = /\b(\d{1,3})\/(\d{1,3})\b/g;
   const fractions = [];
-  const decimals = [];
-  const expressions = [];
-  const equations = [];
+  let fractionMatch;
   
-  // Extract fractions (number/number)
-  const fractionMatches = text.match(/\d+\/\d+/g);
-  if (fractionMatches) {
-    fractions.push(...fractionMatches);
-  }
-  
-  // Extract decimal numbers
-  const decimalMatches = text.match(/\d+[.,]\d+/g);
-  if (decimalMatches) {
-    decimals.push(...decimalMatches.map(d => d.replace(',', '.')));
-  }
-  
-  // Extract mathematical expressions (with operators)
-  const expressionMatches = text.match(/\d+\s*[\+\-\×\*÷\/]\s*\d+/g);
-  if (expressionMatches) {
-    expressions.push(...expressionMatches);
-  }
-  
-  // Extract equations (with equals sign)
-  const equationMatches = text.match(/[0-9x\+\-\*\/\(\)]+\s*=\s*[0-9x\+\-\*\/\(\)]+/g);
-  if (equationMatches) {
-    equations.push(...equationMatches);
-  }
-  
-  return { fractions, decimals, expressions, equations };
-}
-
-// Find exercise structure patterns (a., b., c., 1., 2., etc.)
-function findExerciseStructure(text: string): Array<{
-  marker: string;
-  instruction: string;
-  position: number;
-}> {
-  const exercises = [];
-  
-  // Pattern for a., b., c., etc.
-  const letterPattern = /([a-z])\.\s*([^a-z]*?)(?=[a-z]\.|$)/gi;
-  let match;
-  
-  while ((match = letterPattern.exec(text)) !== null) {
-    exercises.push({
-      marker: match[1].toLowerCase(),
-      instruction: match[2].trim(),
-      position: match.index
+  while ((fractionMatch = fractionPattern.exec(rawText)) !== null) {
+    fractions.push({
+      fraction: fractionMatch[0],
+      numerator: parseInt(fractionMatch[1]),
+      denominator: parseInt(fractionMatch[2]),
+      position: fractionMatch.index
     });
   }
   
-  // Pattern for 1., 2., 3., etc. if no letter patterns found
-  if (exercises.length === 0) {
-    const numberPattern = /(\d+)\.\s*([^0-9]*?)(?=\d+\.|$)/g;
+  console.log('Found fractions in text:', fractions);
+  
+  // Step 2: Find exercise markers (a., b., c., etc.)
+  const exerciseMarkerPattern = /\b([a-h])\.\s*/gi;
+  const exerciseMarkers = [];
+  let markerMatch;
+  
+  while ((markerMatch = exerciseMarkerPattern.exec(rawText)) !== null) {
+    exerciseMarkers.push({
+      marker: markerMatch[1].toLowerCase(),
+      position: markerMatch.index
+    });
+  }
+  
+  console.log('Found exercise markers:', exerciseMarkers);
+  
+  // Step 3: Create exercises by associating markers with fractions
+  if (exerciseMarkers.length > 0 && fractions.length > 0) {
+    // Sort markers and fractions by position
+    exerciseMarkers.sort((a, b) => a.position - b.position);
+    fractions.sort((a, b) => a.position - b.position);
     
-    while ((match = numberPattern.exec(text)) !== null) {
+    // Try to match each marker with the closest fraction after it
+    for (let i = 0; i < exerciseMarkers.length && i < fractions.length; i++) {
+      const marker = exerciseMarkers[i];
+      const fraction = fractions[i];
+      
       exercises.push({
-        marker: match[1],
-        instruction: match[2].trim(),
-        position: match.index
+        question: `${marker.marker}. Simplifie la fraction ${fraction.fraction}`,
+        answer: fraction.fraction
+      });
+      
+      console.log(`✅ Created exercise: ${marker.marker}. Simplifie la fraction ${fraction.fraction}`);
+    }
+  } else if (fractions.length > 0) {
+    // No markers found, but we have fractions - create exercises directly
+    console.log('No exercise markers found, creating exercises from fractions directly');
+    
+    fractions.forEach((frac, index) => {
+      const letter = String.fromCharCode(97 + index); // a, b, c, etc.
+      exercises.push({
+        question: `${letter}. Simplifie la fraction ${frac.fraction}`,
+        answer: frac.fraction
+      });
+      
+      console.log(`✅ Created exercise: ${letter}. Simplifie la fraction ${frac.fraction}`);
+    });
+  }
+  
+  // Step 4: Validation - ensure we have real fractions and not endless dots
+  const validExercises = exercises.filter(ex => {
+    const hasValidFraction = ex.answer.match(/^\d+\/\d+$/);
+    const isNotDots = !ex.answer.includes('...');
+    return hasValidFraction && isNotDots;
+  });
+  
+  console.log(`Validation: ${exercises.length} raw exercises -> ${validExercises.length} valid exercises`);
+  
+  // Step 5: Final fallback if no valid exercises found
+  if (validExercises.length === 0) {
+    console.log('No valid exercises found, creating fallback from detected patterns');
+    
+    // Look for any number patterns that might be fractions
+    const numberPairs = rawText.match(/\d+\s*\/\s*\d+/g);
+    if (numberPairs && numberPairs.length > 0) {
+      numberPairs.slice(0, 5).forEach((pair, index) => {
+        const cleanPair = pair.replace(/\s/g, '');
+        const letter = String.fromCharCode(97 + index);
+        validExercises.push({
+          question: `${letter}. Simplifie la fraction ${cleanPair}`,
+          answer: cleanPair
+        });
       });
     }
   }
   
-  return exercises.sort((a, b) => a.position - b.position);
-}
-
-// Associate instructions with nearby mathematical content
-function associateInstructionsWithMath(
-  rawText: string,
-  mathContent: any,
-  exerciseStructure: any[]
-): Array<{ question: string, answer: string }> {
-  const exercises = [];
-  
-  // Get all mathematical content as a flat array
-  const allMathContent = [
-    ...mathContent.fractions,
-    ...mathContent.decimals,
-    ...mathContent.expressions,
-    ...mathContent.equations
-  ];
-  
-  console.log('All mathematical content found:', allMathContent);
-  
-  for (const exercise of exerciseStructure) {
-    let question = `${exercise.marker}. ${exercise.instruction}`;
-    
-    // Try to find mathematical content associated with this exercise
-    const associatedMath = findNearbyMathContent(rawText, exercise, allMathContent);
-    
-    if (associatedMath.length > 0) {
-      // Add the mathematical content to the question
-      question += ` ${associatedMath.join(', ')}`;
-      
-      exercises.push({
-        question: question.trim(),
-        answer: ""
-      });
-      
-      console.log(`✅ Created complete exercise: ${question}`);
-    } else {
-      // Check if this is a fraction simplification exercise
-      if (exercise.instruction.toLowerCase().includes('simplifi') && 
-          exercise.instruction.toLowerCase().includes('fraction')) {
-        
-        // Use some of the available fractions
-        const availableFractions = mathContent.fractions.slice(0, 3);
-        if (availableFractions.length > 0) {
-          question += ` ${availableFractions.join(', ')}`;
-          exercises.push({
-            question: question.trim(),
-            answer: ""
-          });
-          console.log(`✅ Created fraction exercise with available fractions: ${question}`);
-        } else {
-          // Create with common fraction examples
-          question += ` 6/8, 9/12, 15/20`;
-          exercises.push({
-            question: question.trim(),
-            answer: ""
-          });
-          console.log(`⚠️ Created fraction exercise with examples: ${question}`);
-        }
-      }
-    }
-  }
-  
-  return exercises;
-}
-
-// Find mathematical content near a specific exercise
-function findNearbyMathContent(rawText: string, exercise: any, allMathContent: string[]): string[] {
-  const nearbyContent = [];
-  const exerciseText = exercise.instruction.toLowerCase();
-  
-  // For fraction exercises, prioritize fractions
-  if (exerciseText.includes('fraction') || exerciseText.includes('simplifi')) {
-    const fractionPattern = /\d+\/\d+/g;
-    const matches = rawText.match(fractionPattern);
-    if (matches) {
-      nearbyContent.push(...matches.slice(0, 5)); // Take first 5 fractions
-    }
-  }
-  
-  // For calculation exercises, look for expressions
-  if (exerciseText.includes('calcul') || exerciseText.includes('résoud')) {
-    const expressionPattern = /\d+\s*[\+\-\×\*÷\/]\s*\d+/g;
-    const matches = rawText.match(expressionPattern);
-    if (matches) {
-      nearbyContent.push(...matches.slice(0, 3));
-    }
-  }
-  
-  return nearbyContent;
-}
-
-// Fallback: Create exercises from all available mathematical content
-function createFallbackExercises(rawText: string, mathContent: any): Array<{ question: string, answer: string }> {
-  const exercises = [];
-  
-  // Create a general exercise with all fractions if found
-  if (mathContent.fractions.length > 0) {
-    exercises.push({
-      question: `Simplifie les fractions suivantes: ${mathContent.fractions.join(', ')}`,
-      answer: ""
-    });
-  }
-  
-  // Create exercises with expressions if found
-  if (mathContent.expressions.length > 0) {
-    exercises.push({
-      question: `Calcule les expressions suivantes: ${mathContent.expressions.join(', ')}`,
-      answer: ""
-    });
-  }
-  
-  // Create exercises with equations if found
-  if (mathContent.equations.length > 0) {
-    exercises.push({
-      question: `Résous les équations suivantes: ${mathContent.equations.join(', ')}`,
-      answer: ""
-    });
-  }
-  
-  // If no mathematical content found at all, create from raw text
-  if (exercises.length === 0 && rawText.trim().length > 0) {
-    exercises.push({
-      question: "Contenu du document",
-      answer: rawText.trim().substring(0, 300)
-    });
-  }
-  
-  console.log(`Created ${exercises.length} fallback exercises`);
-  return exercises;
+  console.log(`Final result: ${validExercises.length} valid exercises extracted`);
+  return validExercises;
 }
