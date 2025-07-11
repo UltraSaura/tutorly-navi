@@ -24,16 +24,98 @@ export async function extractTextFromFile(fileData: string, fileType: string): P
   }
 }
 
-// Pure OCR using Google Vision Text Detection API
-export async function extractTextWithGoogleVisionOCR(fileData: string): Promise<string> {
-  const googleApiKey = Deno.env.get('GOOGLE_VISION_API_KEY');
+// Generate OAuth 2.0 access token from service account JSON
+async function generateAccessToken(): Promise<string> {
+  const credentialsJson = Deno.env.get('GOOGLE_VISION_CREDENTIALS');
   
-  if (!googleApiKey) {
-    throw new Error("Google Vision API key not configured for OCR extraction");
+  if (!credentialsJson) {
+    throw new Error("Google Vision credentials not configured");
   }
 
   try {
-    console.log('Making Google Vision Text Detection API request');
+    const credentials = JSON.parse(credentialsJson);
+    console.log('Parsed Google Vision credentials successfully');
+    
+    // Create JWT header
+    const header = {
+      alg: "RS256",
+      typ: "JWT"
+    };
+
+    // Create JWT payload
+    const now = Math.floor(Date.now() / 1000);
+    const payload = {
+      iss: credentials.client_email,
+      scope: "https://www.googleapis.com/auth/cloud-platform",
+      aud: "https://oauth2.googleapis.com/token",
+      exp: now + 3600, // 1 hour
+      iat: now
+    };
+
+    // Encode header and payload
+    const encodedHeader = btoa(JSON.stringify(header)).replace(/[+/=]/g, (m) => ({'+':'-','/':'_','=':''}[m]!));
+    const encodedPayload = btoa(JSON.stringify(payload)).replace(/[+/=]/g, (m) => ({'+':'-','/':'_','=':''}[m]!));
+    
+    // Create signature using private key
+    const signatureInput = `${encodedHeader}.${encodedPayload}`;
+    
+    // Import private key
+    const privateKeyPem = credentials.private_key.replace(/\\n/g, '\n');
+    const privateKey = await crypto.subtle.importKey(
+      "pkcs8",
+      new TextEncoder().encode(privateKeyPem.replace(/-----BEGIN PRIVATE KEY-----\n/, '').replace(/\n-----END PRIVATE KEY-----/, '').replace(/\n/g, '')),
+      {
+        name: "RSASSA-PKCS1-v1_5",
+        hash: "SHA-256"
+      },
+      false,
+      ["sign"]
+    );
+
+    // Sign the JWT
+    const signature = await crypto.subtle.sign(
+      "RSASSA-PKCS1-v1_5",
+      privateKey,
+      new TextEncoder().encode(signatureInput)
+    );
+
+    const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature))).replace(/[+/=]/g, (m) => ({'+':'-','/':'_','=':''}[m]!));
+    const jwt = `${signatureInput}.${encodedSignature}`;
+
+    // Exchange JWT for access token
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion: jwt
+      })
+    });
+
+    if (!tokenResponse.ok) {
+      const errorData = await tokenResponse.text();
+      console.error('Token exchange failed:', errorData);
+      throw new Error(`Token exchange failed: ${errorData}`);
+    }
+
+    const tokenData = await tokenResponse.json();
+    console.log('Successfully generated access token');
+    return tokenData.access_token;
+  } catch (error) {
+    console.error('Error generating access token:', error);
+    throw new Error(`Failed to generate access token: ${error.message}`);
+  }
+}
+
+// Pure OCR using Google Vision Text Detection API with OAuth 2.0
+export async function extractTextWithGoogleVisionOCR(fileData: string): Promise<string> {
+  try {
+    console.log('Generating Google Vision API access token');
+    const accessToken = await generateAccessToken();
+    
+    console.log('Making Google Vision Text Detection API request with OAuth token');
     
     // Extract base64 data
     let base64Image = fileData;
@@ -44,10 +126,11 @@ export async function extractTextWithGoogleVisionOCR(fileData: string): Promise<
       }
     }
     
-    const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${googleApiKey}`, {
+    const response = await fetch('https://vision.googleapis.com/v1/images:annotate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
       },
       body: JSON.stringify({
         requests: [
