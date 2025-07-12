@@ -137,14 +137,14 @@ export const evaluateHomework = async (
  * Generate enhanced math guidance when AI service fails
  */
 const generateEnhancedMathGuidance = (question: string, userAnswer: string): string => {
-  // Check for basic arithmetic problems
-  const basicMathPattern = /(\d+)\s*([+\-*/])\s*(\d+)/;
+  // Check for basic arithmetic problems with decimal support
+  const basicMathPattern = /(\d+(?:\.\d+)?)\s*([+\-*/])\s*(\d+(?:\.\d+)?)/;
   const basicMatch = question.match(basicMathPattern);
   
   if (basicMatch) {
     const [, num1, operator, num2] = basicMatch;
-    const a = parseInt(num1);
-    const b = parseInt(num2);
+    const a = parseFloat(num1);
+    const b = parseFloat(num2);
     
     let correctAnswer: number;
     let operationName: string;

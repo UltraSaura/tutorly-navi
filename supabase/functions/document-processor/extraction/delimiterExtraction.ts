@@ -87,6 +87,7 @@ function validateMathematicalContent(content: string): {
   const hasNumbers = /\d+/.test(content);
   const hasEquations = /=/.test(content);
   const hasDecimalNumbers = /\d+\.\d+/.test(content);
+  const hasDecimalArithmetic = /\d+\.\d+\s*[+\-×÷*\/]\s*\d+(?:\.\d+)?/.test(content);
   
   // Check for French math instruction words
   const mathInstructions = /(simplifi|calcul|résoud|trouv|écri|complet|réduire)/i.test(content);
@@ -97,7 +98,7 @@ function validateMathematicalContent(content: string): {
   
   console.log(`Content analysis for "${content}":`, {
     hasMathSymbols, hasFractions, hasNumbers, hasEquations, 
-    hasDecimalNumbers, mathInstructions, wordCount, isOnlyInstruction
+    hasDecimalNumbers, hasDecimalArithmetic, mathInstructions, wordCount, isOnlyInstruction
   });
   
   // Validation logic
@@ -111,7 +112,7 @@ function validateMathematicalContent(content: string): {
     };
   }
   
-  if (mathInstructions && (hasNumbers || hasFractions || hasMathSymbols)) {
+  if (mathInstructions && (hasNumbers || hasFractions || hasMathSymbols || hasDecimalNumbers || hasDecimalArithmetic)) {
     // Good mathematical exercise
     return {
       isValid: true,
@@ -132,7 +133,7 @@ function validateMathematicalContent(content: string): {
   }
   
   // Accept if it has some mathematical content even without instruction words
-  if (hasNumbers || hasFractions || hasMathSymbols) {
+  if (hasNumbers || hasFractions || hasMathSymbols || hasDecimalNumbers || hasDecimalArithmetic) {
     return {
       isValid: true,
       needsRecovery: false,
@@ -172,10 +173,10 @@ function attemptAggressiveRecovery(incompleteContent: string, originalText: stri
     }
   }
   
-  // Strategy 2: Look for mathematical expressions
+  // Strategy 2: Look for mathematical expressions including decimals
   const mathExpressions = [
-    /\d+\s*[+\-×÷]\s*\d+/g,
-    /\d+\s*=\s*\d+/g,
+    /\d+(?:\.\d+)?\s*[+\-×÷*\/]\s*\d+(?:\.\d+)?/g,
+    /\d+(?:\.\d+)?\s*=\s*\d+(?:\.\d+)?/g,
     /\d+\.\d+/g
   ];
   

@@ -5,14 +5,16 @@
 
 // Math expression patterns
 const mathPatterns = [
-  // Basic arithmetic
-  /(\d+\s*[\+\-\*\/]\s*\d+)\s*=\s*(\d+)/,
-  // Algebraic equations
-  /([0-9x\+\-\*\/\(\)]+)\s*=\s*([0-9x\+\-\*\/\(\)]+)/,
-  // Fractions
-  /(\d+\/\d+)\s*=\s*(\d+\/\d+|\d+\.\d+)/,
-  // Word problems with numbers
-  /(If|What|How|Calculate|Solve|Find).*?(\d+).*?[?].*?(answer|solution|result):?\s*([0-9\.]+)/i,
+  // Basic arithmetic with decimal support
+  /(\d+(?:\.\d+)?\s*[\+\-\*\/]\s*\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  // Algebraic equations with decimal support
+  /([0-9x\+\-\*\/\(\)\.]+)\s*=\s*([0-9x\+\-\*\/\(\)\.]+)/,
+  // Fractions with decimal results
+  /(\d+\/\d+)\s*=\s*(\d+\/\d+|\d+(?:\.\d+)?)/,
+  // Decimal arithmetic
+  /(\d+\.\d+\s*[\+\-\*\/]\s*\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  // Word problems with decimal numbers
+  /(If|What|How|Calculate|Solve|Find).*?(\d+(?:\.\d+)?).*?[?].*?(answer|solution|result):?\s*([0-9\.]+)/i,
 ];
 
 /**
