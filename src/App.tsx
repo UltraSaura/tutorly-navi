@@ -13,6 +13,7 @@ import AdminLayout from "./components/admin/AdminLayout";
 
 // User Pages
 import NotFound from "./pages/NotFound";
+import ManagementDashboard from "./pages/ManagementDashboard";
 const ChatInterface = lazy(() => import("./components/user/ChatInterface"));
 const LearningRoadmap = lazy(() => import("./components/user/LearningRoadmap"));
 const GradeDashboard = lazy(() => import("./components/user/GradeDashboard"));
@@ -55,6 +56,9 @@ const App = () => (
                   <Route path="grades" element={<GradeDashboard />} />
                   <Route path="skills" element={<SkillMastery />} />
                 </Route>
+                
+                {/* Management Dashboard */}
+                <Route path="/management" element={<ManagementDashboard />} />
                 
                 {/* Admin Panel Routes */}
                 <Route path="/admin" element={<AdminLayout />}>

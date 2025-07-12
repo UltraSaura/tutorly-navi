@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link } from 'react-router-dom';
 import Navbar from './Navbar';
 const MainLayout = () => {
   return <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-950 dark:to-gray-900 relative overflow-hidden">
@@ -17,6 +17,9 @@ const MainLayout = () => {
         <div className="studywhiz-container">
           <p>© {new Date().getFullYear()} StudyWhiz AI. All rights reserved.</p>
           <p className="text-xs mt-1">Submit your homework and exercises and get personalized tutoring.</p>
+          <Link to="/management" className="text-xs text-primary hover:underline mt-2 inline-block">
+            Management Dashboard
+          </Link>
         </div>
       </footer>
     </div>;
