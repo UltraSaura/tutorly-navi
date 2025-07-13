@@ -1,12 +1,35 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MessageSquare, BookOpen, BarChart3, CheckSquare } from 'lucide-react';
+import { MessageSquare, BookOpen, BarChart3, CheckSquare, User, Settings, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import SubjectSelector from './SubjectSelector';
-import LanguageSelector from '@/components/ui/language-selector';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 
+const LanguageMenuItems = () => {
+  const { language, changeLanguage, t } = useLanguage();
+
+  const languages = [
+    { code: 'en', name: t('language.english'), flag: '🇺🇸' },
+    { code: 'fr', name: t('language.french'), flag: '🇫🇷' }
+  ];
+
+  return (
+    <>
+      {languages.map((lang) => (
+        <DropdownMenuItem
+          key={lang.code}
+          onClick={() => changeLanguage(lang.code)}
+          className={language === lang.code ? 'bg-accent' : ''}
+        >
+          <span className="mr-2">{lang.flag}</span>
+          {lang.name}
+        </DropdownMenuItem>
+      ))}
+    </>
+  );
+};
 
 const Navbar = () => {
   const location = useLocation();
@@ -54,17 +77,32 @@ const Navbar = () => {
           </nav>
           
           <div className="flex items-center gap-2">
-            <LanguageSelector />
-            <Button variant="outline" size="sm" className="hidden md:flex">
-              {t('nav.myAccount')}
-            </Button>
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-              <img 
-                src="https://avatars.githubusercontent.com/u/12345678" 
-                alt="User avatar" 
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden cursor-pointer hover:ring-2 hover:ring-studywhiz-300">
+                  <img 
+                    src="https://avatars.githubusercontent.com/u/12345678" 
+                    alt="User avatar" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>{t('nav.myAccount')}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>{t('nav.profile')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>{t('nav.settings')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>{t('nav.language')}</DropdownMenuLabel>
+                <LanguageMenuItems />
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
