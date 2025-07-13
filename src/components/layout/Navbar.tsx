@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import SubjectSelector from './SubjectSelector';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 
+// Language menu items component
 const LanguageMenuItems = () => {
   const { language, changeLanguage, t } = useLanguage();
 
