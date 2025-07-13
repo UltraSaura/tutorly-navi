@@ -15,6 +15,17 @@ interface ExerciseProps {
     explanation?: string;
     expanded: boolean;
     relatedMessages?: Message[];
+    attemptCount: number;
+    attempts: Array<{
+      id: string;
+      answer: string;
+      isCorrect?: boolean;
+      explanation?: string;
+      timestamp: Date;
+      attemptNumber: number;
+    }>;
+    lastAttemptDate: Date;
+    needsRetry: boolean;
   };
   toggleExerciseExpansion: (id: string) => void;
 }
@@ -72,7 +83,19 @@ const Exercise = ({
             </motion.div>
           )}
           <div className="flex-1">
-            <h3 className="text-md font-medium">{exercise.question}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-md font-medium">{exercise.question}</h3>
+              {exercise.attemptCount > 1 && (
+                <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
+                  Attempt {exercise.attemptCount}
+                </span>
+              )}
+              {exercise.needsRetry && (
+                <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-full">
+                  Try again
+                </span>
+              )}
+            </div>
           </div>
         </div>
         
@@ -122,7 +145,11 @@ const Exercise = ({
                     : <AlertCircle className="w-4 h-4 mr-2 text-amber-600" />
                   }
                   <h4 className="text-sm font-medium">
-                    {exercise.isCorrect ? "Great work!" : "Learning Opportunity"}
+                    {exercise.isCorrect 
+                      ? exercise.attemptCount > 1 
+                        ? `Great work! (Attempt ${exercise.attemptCount})` 
+                        : "Great work!" 
+                      : `Learning Opportunity${exercise.attemptCount > 1 ? ` (Attempt ${exercise.attemptCount})` : ""}`}
                   </h4>
                 </div>
                 

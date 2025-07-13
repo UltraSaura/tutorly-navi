@@ -55,12 +55,21 @@ export const useExercises = () => {
 
   const processHomeworkFromChat = async (message: string) => {
     console.log('[useExercises] Processing homework from chat message:', message);
-    const newExercise = await processNewExercise(message, exercises, processedContent);
-    if (newExercise) {
+    const result = await processNewExercise(message, exercises, processedContent);
+    if (result) {
+      const { exercise, isUpdate } = result;
       setExercises(prev => {
-        const updated = [...prev, newExercise];
-        console.log('[useExercises] New exercise added by chat:', newExercise, 'Updated exercises:', updated);
-        return updated;
+        if (isUpdate) {
+          // Update existing exercise
+          const updated = prev.map(ex => ex.id === exercise.id ? exercise : ex);
+          console.log('[useExercises] Exercise updated:', exercise, 'Updated exercises:', updated);
+          return updated;
+        } else {
+          // Add new exercise
+          const updated = [...prev, exercise];
+          console.log('[useExercises] New exercise added by chat:', exercise, 'Updated exercises:', updated);
+          return updated;
+        }
       });
       setProcessedContent(prev => new Set([...prev, message]));
       console.log('[useExercises] Message marked as processed:', message);
@@ -89,6 +98,10 @@ export const useExercises = () => {
       explanation,
       expanded: false,
       relatedMessages: [],
+      attemptCount: 0,
+      attempts: [],
+      lastAttemptDate: new Date(),
+      needsRetry: false,
     };
 
     setExercises(prev => {

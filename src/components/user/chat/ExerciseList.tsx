@@ -4,18 +4,10 @@ import { BookOpen, GraduationCap } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import Exercise from './Exercise';
-import { Message } from '@/types/chat';
+import { Exercise as ExerciseType } from '@/types/chat';
 
 interface ExerciseListProps {
-  exercises: {
-    id: string;
-    question: string;
-    userAnswer?: string;
-    isCorrect?: boolean;
-    explanation?: string;
-    expanded: boolean;
-    relatedMessages?: Message[];
-  }[];
+  exercises: ExerciseType[];
   grade: {
     percentage: number;
     letter: string;
@@ -62,10 +54,10 @@ const ExerciseList = ({
         ) : (
           <div className="space-y-4">
             {exercises.map(exercise => (
-              <Exercise 
-                key={exercise.id} 
-                exercise={exercise} 
-                toggleExerciseExpansion={toggleExerciseExpansion} 
+              <Exercise
+                key={exercise.id}
+                exercise={exercise}
+                toggleExerciseExpansion={toggleExerciseExpansion}
               />
             ))}
           </div>

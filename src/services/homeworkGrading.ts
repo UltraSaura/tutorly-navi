@@ -4,7 +4,8 @@ import { Exercise } from "@/types/chat";
 import { toast } from 'sonner';
 
 export const evaluateHomework = async (
-  exercise: Exercise
+  exercise: Exercise,
+  attemptNumber: number = 1
 ): Promise<Exercise> => {
   try {
     console.log('[homeworkGrading] evaluateHomework called with:', exercise);
@@ -78,13 +79,24 @@ export const evaluateHomework = async (
     const isCorrect = responseContent === 'CORRECT';
     console.log(`[homeworkGrading] Exercise graded as: ${isCorrect ? 'CORRECT' : 'INCORRECT'}`);
 
-    // Step 2: Get guidance based on correctness
+    // Step 2: Get guidance based on correctness and attempt number
     let explanation = '';
     if (!isCorrect) {
-      console.log('[homeworkGrading] Requesting guidance for incorrect answer');
+      console.log('[homeworkGrading] Requesting guidance for incorrect answer, attempt:', attemptNumber);
+      
+      // Progressive feedback based on attempt number
+      let guidancePrompt = '';
+      if (attemptNumber === 1) {
+        guidancePrompt = `The student answered incorrectly on their first attempt. Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Provide helpful guidance to help them understand the correct approach without giving away the answer directly. Focus on the learning process and concepts they should review. End with "Try again!"`;
+      } else if (attemptNumber === 2) {
+        guidancePrompt = `The student answered incorrectly again (attempt ${attemptNumber}). Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Provide more detailed guidance with hints about the specific approach needed. Be more specific than before but still don't give the direct answer. End with "You're getting closer! Try once more!"`;
+      } else {
+        guidancePrompt = `The student has attempted this ${attemptNumber} times and is still incorrect. Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Provide step-by-step guidance that almost shows how to solve it, but let them do the final calculation. Be very specific about the method. End with "You can do this! One more try!"`;
+      }
+      
       const { data: guidanceData, error: guidanceError } = await supabase.functions.invoke('ai-chat', {
         body: {
-          message: `The student answered incorrectly. Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Provide helpful guidance to help them understand the correct approach without giving away the answer directly. Focus on the learning process and concepts they should review.`,
+          message: guidancePrompt,
           modelId: 'deepseek-chat',
           history: [],
           isExercise: true
@@ -105,18 +117,35 @@ export const evaluateHomework = async (
       
       console.log('[homeworkGrading] Guidance explanation:', explanation);
     } else {
-      explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Excellent work! You've solved this correctly. Your understanding of the concept is solid. Ready for the next challenge?`;
-      console.log('[homeworkGrading] Correct answer - positive feedback provided');
+      // Progressive success messages
+      if (attemptNumber === 1) {
+        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Perfect! You got it right on your first try! Your understanding of the concept is excellent. Ready for the next challenge?`;
+      } else {
+        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Excellent work! You persevered and got the correct answer after ${attemptNumber} attempts. That's the spirit of learning - keep trying until you succeed! Well done!`;
+      }
+      console.log('[homeworkGrading] Correct answer - positive feedback provided for attempt:', attemptNumber);
     }
+
+    // Update needsRetry flag
+    const needsRetry = !isCorrect;
 
     // Display appropriate notification
     toast.success(isCorrect ? "Correct! Great job!" : "Incorrect. Check the guidance below to improve your understanding.");
+
+    // Update the latest attempt with grading results
+    const updatedAttempts = exercise.attempts.map(attempt => 
+      attempt.attemptNumber === attemptNumber 
+        ? { ...attempt, isCorrect, explanation }
+        : attempt
+    );
 
     // Return the updated exercise with explicit isCorrect field
     const gradedExercise = {
       ...exercise,
       isCorrect,
-      explanation
+      explanation,
+      needsRetry,
+      attempts: updatedAttempts
     };
 
     console.log('[homeworkGrading] Returning graded exercise:', gradedExercise);

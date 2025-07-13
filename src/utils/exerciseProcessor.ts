@@ -8,7 +8,7 @@ export const processNewExercise = async (
   message: string,
   existingExercises: Exercise[],
   processedContent: Set<string>
-): Promise<Exercise | null> => {
+): Promise<{ exercise: Exercise; isUpdate: boolean } | null> => {
   // Check if we've processed this exact content before
   if (processedContent.has(message)) {
     console.log("[exerciseProcessor] Skipping duplicate homework submission for:", message);
@@ -38,31 +38,78 @@ export const processNewExercise = async (
     return null;
   }
 
-  // Check for duplicates
-  const existingExercise = existingExercises.find(
+  // Check for exact duplicates (same question + same answer)
+  const exactDuplicate = existingExercises.find(
     ex => ex.question === question && ex.userAnswer === answer
   );
 
-  if (existingExercise) {
-    console.log("[exerciseProcessor] This question-answer pair already exists:", { question, answer });
+  if (exactDuplicate) {
+    console.log("[exerciseProcessor] Exact duplicate found, ignoring:", { question, answer });
     return null;
   }
 
-  // Create and evaluate new exercise
+  // Check for retry attempts (same question + different answer)
+  const existingExercise = existingExercises.find(ex => ex.question === question);
+
+  if (existingExercise) {
+    console.log("[exerciseProcessor] Found retry attempt for existing question:", { question, answer });
+    
+    // Create new attempt
+    const attemptNumber = existingExercise.attemptCount + 1;
+    const newAttempt = {
+      id: `${existingExercise.id}-attempt-${attemptNumber}`,
+      answer,
+      timestamp: new Date(),
+      attemptNumber,
+    };
+
+    // Update existing exercise
+    const updatedExercise: Exercise = {
+      ...existingExercise,
+      userAnswer: answer, // Update to latest answer
+      attemptCount: attemptNumber,
+      attempts: [...existingExercise.attempts, newAttempt],
+      lastAttemptDate: new Date(),
+      needsRetry: false, // Will be set based on grading result
+    };
+
+    try {
+      const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber);
+      console.log("[exerciseProcessor] Graded retry exercise:", gradedExercise);
+      return { exercise: gradedExercise, isUpdate: true };
+    } catch (error) {
+      console.error('[exerciseProcessor] Error evaluating homework retry:', error);
+      toast.error('There was an issue grading your homework. Please try again.');
+      return null;
+    }
+  }
+
+  // Create new exercise
+  const newAttempt = {
+    id: `${Date.now()}-attempt-1`,
+    answer,
+    timestamp: new Date(),
+    attemptNumber: 1,
+  };
+
   const newEx: Exercise = {
     id: Date.now().toString(),
     question,
     userAnswer: answer,
     expanded: false,
     relatedMessages: [],
+    attemptCount: 1,
+    attempts: [newAttempt],
+    lastAttemptDate: new Date(),
+    needsRetry: false,
   };
 
   console.log("[exerciseProcessor] Created new exercise object before grading:", newEx);
 
   try {
-    const gradedExercise = await evaluateHomework(newEx);
-    console.log("[exerciseProcessor] Graded exercise returned:", gradedExercise);
-    return gradedExercise;
+    const gradedExercise = await evaluateHomework(newEx, 1);
+    console.log("[exerciseProcessor] Graded new exercise:", gradedExercise);
+    return { exercise: gradedExercise, isUpdate: false };
   } catch (error) {
     console.error('[exerciseProcessor] Error evaluating homework:', error);
     toast.error('There was an issue grading your homework. Please try again.');

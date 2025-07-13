@@ -62,7 +62,16 @@ export const processUploadedDocument = async (
               expanded: false,
               isCorrect: undefined,
               explanation: undefined,
-              subjectId: subjectId
+              subjectId: subjectId,
+              attemptCount: 1,
+              attempts: [{
+                id: `${Date.now()}-attempt-1`,
+                answer: ex.answer,
+                timestamp: new Date(),
+                attemptNumber: 1,
+              }],
+              lastAttemptDate: new Date(),
+              needsRetry: false,
             })),
             rawText: data.rawText
           };
@@ -78,6 +87,15 @@ export const processUploadedDocument = async (
           expanded: false,
           isCorrect: undefined,
           explanation: undefined,
+          attemptCount: 1,
+          attempts: [{
+            id: `${Date.now()}-attempt-1`,
+            answer: data.rawText || 'Content extraction failed',
+            timestamp: new Date(),
+            attemptNumber: 1,
+          }],
+          lastAttemptDate: new Date(),
+          needsRetry: false,
           subjectId: subjectId
         }],
         rawText: data.rawText || ''
@@ -92,7 +110,16 @@ export const processUploadedDocument = async (
       expanded: false,
       isCorrect: undefined,
       explanation: undefined,
-      subjectId: subjectId
+      subjectId: subjectId,
+      attemptCount: 1,
+      attempts: [{
+        id: `${Date.now()}-attempt-1`,
+        answer: ex.answer,
+        timestamp: new Date(),
+        attemptNumber: 1,
+      }],
+      lastAttemptDate: new Date(),
+      needsRetry: false,
     }));
     
     console.log(`Processed ${exercises.length} exercises from document`);
