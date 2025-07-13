@@ -1,5 +1,6 @@
 
 import { useAdmin } from "@/context/AdminContext";
+import { useLanguage } from "@/context/SimpleLanguageContext";
 import { 
   Select,
   SelectContent,
@@ -10,7 +11,15 @@ import {
 
 const SubjectSelector = () => {
   const { subjects, selectedSubject, setSelectedSubject } = useAdmin();
+  const { t } = useLanguage();
   const activeSubjects = subjects.filter(subject => subject.active);
+
+  const getTranslatedSubjectName = (subjectName: string) => {
+    const subjectKey = subjectName.toLowerCase().replace(/\s+/g, '');
+    const translationKey = `subjects.${subjectKey}`;
+    const translated = t(translationKey);
+    return translated !== translationKey ? translated : subjectName;
+  };
 
   return (
     <Select 
@@ -21,12 +30,12 @@ const SubjectSelector = () => {
       }}
     >
       <SelectTrigger className="w-[180px] bg-studywhiz-100 text-studywhiz-700 dark:bg-studywhiz-900/20 dark:text-studywhiz-400 border-none">
-        <SelectValue placeholder="Select a subject" />
+        <SelectValue placeholder={t('common.selectSubject')} />
       </SelectTrigger>
       <SelectContent>
         {activeSubjects.map((subject) => (
           <SelectItem key={subject.id} value={subject.id}>
-            {subject.name}
+            {getTranslatedSubjectName(subject.name)}
           </SelectItem>
         ))}
       </SelectContent>

@@ -109,6 +109,7 @@ const translations = {
     'common.back': 'Back',
     'common.retry': 'Retry',
     'common.refresh': 'Refresh',
+    'common.selectSubject': 'Select a subject',
     
     // File Upload
     'upload.dragDrop': 'Drag and drop files here, or click to select',
@@ -134,7 +135,19 @@ const translations = {
     'time.monthsAgo': '{count} month{plural} ago',
     'time.today': 'Today',
     'time.yesterday': 'Yesterday',
-    'time.tomorrow': 'Tomorrow'
+    'time.tomorrow': 'Tomorrow',
+
+    // Subjects
+    'subjects.mathematics': 'Mathematics',
+    'subjects.physics': 'Physics',
+    'subjects.chemistry': 'Chemistry',
+    'subjects.biology': 'Biology',
+    'subjects.english': 'English',
+    'subjects.french': 'French',
+    'subjects.spanish': 'Spanish',
+    'subjects.history': 'History',
+    'subjects.geography': 'Geography',
+    'subjects.computerscience': 'Computer Science'
   },
   fr: {
     // Navigation
@@ -235,6 +248,7 @@ const translations = {
     'common.back': 'Retour',
     'common.retry': 'Réessayer',
     'common.refresh': 'Actualiser',
+    'common.selectSubject': 'Sélectionner une matière',
     
     // File Upload
     'upload.dragDrop': 'Glissez-déposez les fichiers ici, ou cliquez pour sélectionner',
@@ -260,7 +274,19 @@ const translations = {
     'time.monthsAgo': 'Il y a {count} mois',
     'time.today': 'Aujourd\'hui',
     'time.yesterday': 'Hier',
-    'time.tomorrow': 'Demain'
+    'time.tomorrow': 'Demain',
+
+    // Subjects
+    'subjects.mathematics': 'Mathématiques',
+    'subjects.physics': 'Physique',
+    'subjects.chemistry': 'Chimie',
+    'subjects.biology': 'Biologie',
+    'subjects.english': 'Anglais',
+    'subjects.french': 'Français',
+    'subjects.spanish': 'Espagnol',
+    'subjects.history': 'Histoire',
+    'subjects.geography': 'Géographie',
+    'subjects.computerscience': 'Informatique'
   }
 };
 
