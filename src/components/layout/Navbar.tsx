@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MessageSquare, BookOpen, BarChart3, CheckSquare, User, Settings, Globe } from 'lucide-react';
+import { MessageSquare, BookOpen, BarChart3, CheckSquare, User, Settings, Globe, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
@@ -80,13 +80,16 @@ const Navbar = () => {
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden cursor-pointer hover:ring-2 hover:ring-studywhiz-300">
-                  <img 
-                    src="https://avatars.githubusercontent.com/u/12345678" 
-                    alt="User avatar" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2 h-10 px-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                    <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                  </div>
+                  <span className="text-sm font-medium">{t('nav.myAccount')}</span>
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>{t('nav.myAccount')}</DropdownMenuLabel>
