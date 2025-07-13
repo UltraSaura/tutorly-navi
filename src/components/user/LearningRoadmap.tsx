@@ -4,6 +4,7 @@ import { ChevronRight, Check, Clock, Star } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 interface Topic {
   id: string;
@@ -69,6 +70,7 @@ const topics: Topic[] = [
 ];
 
 const LearningRoadmap = () => {
+  const { t } = useLanguage();
   const getStatusIcon = (status: Topic['status']) => {
     switch (status) {
       case 'completed':
@@ -94,27 +96,27 @@ const LearningRoadmap = () => {
   const getStatusText = (status: Topic['status']) => {
     switch (status) {
       case 'completed':
-        return 'Completed';
+        return t('roadmap.complete');
       case 'in-progress':
-        return 'In Progress';
+        return t('roadmap.inProgress');
       case 'upcoming':
-        return 'Upcoming';
+        return t('roadmap.notStarted');
     }
   };
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Your Learning Roadmap</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">{t('roadmap.title')}</h1>
         <p className="text-muted-foreground">
-          Track your progress and see what's coming next in your personalized learning journey.
+          {t('roadmap.description')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="col-span-full md:col-span-2 glass">
           <CardHeader className="pb-2">
-            <CardTitle>Overall Progress</CardTitle>
+            <CardTitle>{t('roadmap.progress')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -197,7 +199,7 @@ const LearningRoadmap = () => {
                   
                   <div className="mt-3">
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Progress</span>
+                      <span>{t('roadmap.progress')}</span>
                       <span>{topic.progress}%</span>
                     </div>
                     <Progress value={topic.progress} className="h-1.5" />

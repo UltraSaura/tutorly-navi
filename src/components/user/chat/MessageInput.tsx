@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { useLanguage } from '@/context/LanguageContext';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 interface MessageInputProps {
   inputMessage: string;

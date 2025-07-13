@@ -6,15 +6,19 @@ import { handleFileUpload, handlePhotoUpload } from '@/utils/chatFileHandlers';
 import { sendMessageToAI } from '@/services/chatService';
 import { generateFallbackResponse } from '@/utils/fallbackResponses';
 import { detectHomeworkInMessage } from '@/utils/homework';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 export const useChat = () => {
   const { selectedModelId, getAvailableModels } = useAdmin();
+  const { language, t } = useLanguage();
   
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
-      content: "👋 Hi there! I'm your StudyWhiz AI tutor. How can I help you today? You can ask me questions, upload homework, or submit exercises for me to help you with.",
+      content: language === 'fr' 
+        ? "👋 Salut ! Je suis votre tuteur IA StudyWhiz. Comment puis-je vous aider aujourd'hui ? Vous pouvez me poser des questions, télécharger des devoirs ou soumettre des exercices pour que je vous aide."
+        : "👋 Hi there! I'm your StudyWhiz AI tutor. How can I help you today? You can ask me questions, upload homework, or submit exercises for me to help you with.",
       timestamp: new Date(Date.now() - 60000),
     },
   ]);
@@ -67,7 +71,7 @@ export const useChat = () => {
     const isHomework = detectHomeworkInMessage(inputMessage);
     
     try {
-      const { data, error } = await sendMessageToAI(inputMessage, messages, selectedModelId);
+      const { data, error } = await sendMessageToAI(inputMessage, messages, selectedModelId, language);
       
       // Store the full response for potential exercise handling
       if (data) {

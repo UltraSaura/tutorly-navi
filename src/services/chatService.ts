@@ -21,7 +21,8 @@ export const getMessageHistory = (messages: Message[]) => {
 export const sendMessageToAI = async (
   inputMessage: string,
   messages: Message[],
-  selectedModelId: string
+  selectedModelId: string,
+  language: string = 'en'
 ) => {
   try {
     // Call the Supabase Edge Function
@@ -30,6 +31,7 @@ export const sendMessageToAI = async (
         message: inputMessage,
         modelId: selectedModelId,
         history: getMessageHistory(messages),
+        language,
       },
     });
     

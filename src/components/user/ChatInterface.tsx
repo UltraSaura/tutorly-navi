@@ -9,8 +9,10 @@ import { useAdmin } from '@/context/AdminContext';
 import { detectHomeworkInMessage, extractHomeworkFromMessage } from '@/utils/homework';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GraduationCap } from 'lucide-react';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 const ChatInterface = () => {
+  const { t } = useLanguage();
   const {
     messages,
     inputMessage,
@@ -109,13 +111,13 @@ const ChatInterface = () => {
         {/* Overall Grade Card */}
         <Card className="mb-3 mx-4 mt-4 md:mt-8 max-w-sm self-center">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3">
-            <CardTitle className="text-sm font-medium">Overall Grade</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('grades.overallGrade')}</CardTitle>
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="py-0 pb-3">
             <div className="text-2xl font-bold">{grade.percentage}%</div>
             <p className="text-xs text-muted-foreground">
-              Grade: {grade.letter}
+              {t('grades.grade')}: {grade.letter}
             </p>
           </CardContent>
         </Card>
