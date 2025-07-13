@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Exercise } from "@/types/chat";
 import { toast } from 'sonner';
+import { areMathematicallyEquivalent, getEquivalencyContext } from "@/utils/mathValidation";
 
 export const evaluateHomework = async (
   exercise: Exercise,
@@ -22,6 +23,15 @@ export const evaluateHomework = async (
     console.log('[homeworkGrading] Starting homework evaluation for:', { 
       question: exercise.question, 
       answer: exercise.userAnswer 
+    });
+
+    // Step 0: Pre-validate mathematically equivalent answers
+    const mathematicalEquivalency = areMathematicallyEquivalent(exercise.question, exercise.userAnswer);
+    const equivalencyContext = getEquivalencyContext(exercise.question, exercise.userAnswer);
+    
+    console.log('[homeworkGrading] Mathematical pre-validation:', {
+      isEquivalent: mathematicalEquivalency,
+      context: equivalencyContext
     });
 
     // Step 1: Get quick grade (just correct/incorrect)
@@ -64,10 +74,28 @@ export const evaluateHomework = async (
     const responseContent = gradeData.content.trim().toUpperCase();
     console.log('[homeworkGrading] Parsed grading response as:', responseContent);
     
-    // Handle invalid format more gracefully
+    // Handle invalid format more gracefully with mathematical fallback
     if (responseContent !== 'CORRECT' && responseContent !== 'INCORRECT') {
       console.error('[homeworkGrading] Invalid grade format received:', responseContent);
-      toast.error('Received invalid grade format. Marking as incorrect.');
+      
+      // Use mathematical validation as fallback
+      if (mathematicalEquivalency === true) {
+        console.log('[homeworkGrading] Using mathematical validation fallback - marking as CORRECT');
+        const isCorrect = true;
+        return {
+          ...exercise,
+          isCorrect,
+          explanation: `**Problem:** ${exercise.question}\n\n**Guidance:** Perfect! Your answer is mathematically correct. ${equivalencyContext || ''}`,
+          needsRetry: false,
+          attempts: exercise.attempts.map(attempt => 
+            attempt.attemptNumber === attemptNumber 
+              ? { ...attempt, isCorrect, explanation: `Mathematical validation confirmed this answer is correct. ${equivalencyContext || ''}` }
+              : attempt
+          )
+        };
+      }
+      
+      toast.error('Received invalid grade format. Using mathematical fallback.');
       
       return {
         ...exercise,
@@ -76,7 +104,13 @@ export const evaluateHomework = async (
       };
     }
 
-    const isCorrect = responseContent === 'CORRECT';
+    let isCorrect = responseContent === 'CORRECT';
+    
+    // Override AI decision if mathematical validation indicates correctness
+    if (!isCorrect && mathematicalEquivalency === true) {
+      console.log('[homeworkGrading] AI marked incorrect but mathematical validation says correct - overriding to CORRECT');
+      isCorrect = true;
+    }
     console.log(`[homeworkGrading] Exercise graded as: ${isCorrect ? 'CORRECT' : 'INCORRECT'}`);
 
     // Step 2: Get guidance based on correctness and attempt number
@@ -110,18 +144,20 @@ export const evaluateHomework = async (
         
         // Provide enhanced math guidance as fallback
         const basicGuidance = generateEnhancedMathGuidance(exercise.question, exercise.userAnswer);
-        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${basicGuidance}`;
+        const mathContext = equivalencyContext ? `\n\n${equivalencyContext}` : '';
+        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${basicGuidance}${mathContext}`;
       } else {
         explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${guidanceData.content}`;
       }
       
       console.log('[homeworkGrading] Guidance explanation:', explanation);
     } else {
-      // Progressive success messages
+      // Progressive success messages with mathematical equivalency context
+      const mathContext = equivalencyContext ? `\n\n${equivalencyContext}` : '';
       if (attemptNumber === 1) {
-        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Perfect! You got it right on your first try! Your understanding of the concept is excellent. Ready for the next challenge?`;
+        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Perfect! You got it right on your first try! Your understanding of the concept is excellent.${mathContext} Ready for the next challenge?`;
       } else {
-        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Excellent work! You persevered and got the correct answer after ${attemptNumber} attempts. That's the spirit of learning - keep trying until you succeed! Well done!`;
+        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Excellent work! You persevered and got the correct answer after ${attemptNumber} attempts. That's the spirit of learning - keep trying until you succeed!${mathContext} Well done!`;
       }
       console.log('[homeworkGrading] Correct answer - positive feedback provided for attempt:', attemptNumber);
     }
@@ -198,7 +234,10 @@ const generateEnhancedMathGuidance = (question: string, userAnswer: string): str
       case '/':
         correctAnswer = a / b;
         operationName = 'division';
-        stepByStep = `Step 1: Divide ${a} by ${b}\nStep 2: ${a} ÷ ${b} = ${correctAnswer}`;
+        // Handle repeating decimals better
+        const isRepeatingDecimal = !Number.isInteger(correctAnswer) && (correctAnswer.toString().length > 6 || correctAnswer % 1 !== 0);
+        const roundedAnswer = Math.round(correctAnswer * 10000) / 10000; // Round to 4 decimal places
+        stepByStep = `Step 1: Divide ${a} by ${b}\nStep 2: ${a} ÷ ${b} = ${correctAnswer}${isRepeatingDecimal ? ` (or approximately ${roundedAnswer})` : ''}`;
         break;
       default:
         return "Your answer was incorrect. Please double-check your calculation and try the problem again step by step.";

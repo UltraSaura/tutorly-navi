@@ -20,7 +20,16 @@ CRITICAL INSTRUCTIONS:
 2. DO NOT include any other text, explanation, or punctuation
 3. DO NOT use lowercase or mixed case
 4. If you're unsure, respond with "INCORRECT"
-5. For math problems, verify the calculation is exact
+5. For math problems, verify mathematical equivalency:
+
+MATHEMATICAL EQUIVALENCY RULES:
+- Fractions and decimals: 1/2 = 0.5, 2/3 ≈ 0.67 or 0.667 or 0.6667, 3/4 = 0.75
+- Accept reasonable decimal approximations: 2/3 answered as 0.6, 0.66, 0.666, 0.6667 are ALL CORRECT
+- Division problems: 2÷3 = 0.67 (rounded) is CORRECT
+- Percentages: 50% = 0.5, 25% = 0.25
+- Allow rounding tolerance up to 2 decimal places for repeating decimals
+- 1/3 = 0.33, 0.333, 0.3333 are all CORRECT
+- Focus on mathematical correctness, not format precision
 
 Example correct responses:
 "CORRECT"
