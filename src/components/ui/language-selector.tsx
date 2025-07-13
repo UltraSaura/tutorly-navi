@@ -2,7 +2,7 @@ import React from 'react';
 import { Globe } from 'lucide-react';
 import { Button } from './button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './dropdown-menu';
-import { useLanguage } from '@/context/LanguageContext';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 const LanguageSelector = () => {
   const { language, changeLanguage, t } = useLanguage();
