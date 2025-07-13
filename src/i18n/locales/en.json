@@ -1,0 +1,64 @@
+{
+  "nav": {
+    "home": "Home",
+    "grades": "Grades",
+    "roadmap": "Roadmap", 
+    "skills": "Skills",
+    "myAccount": "My Account",
+    "language": "Language"
+  },
+  "chat": {
+    "inputPlaceholder": "Type your question or homework here...",
+    "uploadFile": "Upload File",
+    "takePhoto": "Take Photo",
+    "askQuestions": "Ask questions or submit your homework for grading",
+    "loading": "AI is thinking...",
+    "errorLoadChat": "Error: Unable to load chat. Please refresh the page."
+  },
+  "grades": {
+    "title": "Grade Dashboard",
+    "averageGrade": "Average Grade",
+    "totalAttempts": "Total Attempts",
+    "improvementTrend": "Improvement Trend",
+    "noGrades": "No grades available yet. Start submitting homework to see your progress!",
+    "gradeHistory": "Grade History",
+    "subject": "Subject",
+    "score": "Score",
+    "date": "Date"
+  },
+  "roadmap": {
+    "title": "Learning Roadmap",
+    "progress": "Progress",
+    "complete": "Complete",
+    "inProgress": "In Progress",
+    "notStarted": "Not Started"
+  },
+  "skills": {
+    "title": "Skill Mastery",
+    "level": "Level",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate", 
+    "advanced": "Advanced",
+    "expert": "Expert",
+    "progress": "Progress"
+  },
+  "footer": {
+    "copyright": "StudyWhiz AI. All rights reserved.",
+    "subtitle": "Submit your homework and exercises and get personalized tutoring.",
+    "managementDashboard": "Management Dashboard"
+  },
+  "language": {
+    "english": "English",
+    "french": "Français"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "close": "Close"
+  }
+}

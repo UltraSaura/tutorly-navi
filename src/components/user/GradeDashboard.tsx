@@ -3,9 +3,11 @@ import { useExercises } from '@/hooks/useExercises';
 import ExerciseList from './chat/ExerciseList';
 import { BarChart3, GraduationCap } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useLanguage } from '@/context/LanguageContext';
 
 const GradeDashboard = () => {
   const { exercises, grade, toggleExerciseExpansion } = useExercises();
+  const { t } = useLanguage();
 
   const totalExercises = exercises.length;
   const completedExercises = exercises.filter(ex => ex.isCorrect !== undefined).length;
@@ -14,7 +16,7 @@ const GradeDashboard = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Grade Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">{t('grades.title')}</h1>
         <p className="text-muted-foreground">Track your academic progress and review your exercises</p>
       </div>
 

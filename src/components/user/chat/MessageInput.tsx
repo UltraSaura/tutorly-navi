@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface MessageInputProps {
   inputMessage: string;
@@ -24,6 +25,7 @@ const MessageInput = ({
   isLoading 
 }: MessageInputProps) => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
@@ -131,7 +133,7 @@ const MessageInput = ({
         </Button>
         
         <Textarea 
-          placeholder="Type your message..." 
+          placeholder={t('chat.inputPlaceholder')} 
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}

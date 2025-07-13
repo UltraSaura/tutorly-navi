@@ -1,0 +1,64 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "grades": "Notes",
+    "roadmap": "Feuille de route",
+    "skills": "Compétences", 
+    "myAccount": "Mon compte",
+    "language": "Langue"
+  },
+  "chat": {
+    "inputPlaceholder": "Tapez votre question ou devoir ici...",
+    "uploadFile": "Télécharger un fichier",
+    "takePhoto": "Prendre une photo",
+    "askQuestions": "Posez des questions ou soumettez vos devoirs pour correction",
+    "loading": "L'IA réfléchit...",
+    "errorLoadChat": "Erreur : Impossible de charger le chat. Veuillez actualiser la page."
+  },
+  "grades": {
+    "title": "Tableau de bord des notes",
+    "averageGrade": "Note moyenne",
+    "totalAttempts": "Total des tentatives", 
+    "improvementTrend": "Tendance d'amélioration",
+    "noGrades": "Aucune note disponible pour le moment. Commencez à soumettre des devoirs pour voir vos progrès !",
+    "gradeHistory": "Historique des notes",
+    "subject": "Matière",
+    "score": "Score",
+    "date": "Date"
+  },
+  "roadmap": {
+    "title": "Feuille de route d'apprentissage",
+    "progress": "Progrès",
+    "complete": "Terminé",
+    "inProgress": "En cours",
+    "notStarted": "Pas commencé"
+  },
+  "skills": {
+    "title": "Maîtrise des compétences",
+    "level": "Niveau",
+    "beginner": "Débutant",
+    "intermediate": "Intermédiaire",
+    "advanced": "Avancé", 
+    "expert": "Expert",
+    "progress": "Progrès"
+  },
+  "footer": {
+    "copyright": "StudyWhiz AI. Tous droits réservés.",
+    "subtitle": "Soumettez vos devoirs et exercices et obtenez un tutorat personnalisé.",
+    "managementDashboard": "Tableau de bord de gestion"
+  },
+  "language": {
+    "english": "English",
+    "french": "Français"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "close": "Fermer"
+  }
+}
