@@ -39,6 +39,8 @@ const translations = {
     'chat.error': 'Error: Unable to load chat. Please refresh the page.',
     'chat.sendMessage': 'Send Message',
     'chat.typing': 'Type your message...',
+    'chat.history': 'Chat History',
+    'chat.conversationHistory': 'Conversation History',
     
     // Grades Dashboard
     'grades.title': 'Grade Dashboard',
@@ -178,6 +180,8 @@ const translations = {
     'chat.error': 'Erreur : Impossible de charger le chat. Veuillez actualiser la page.',
     'chat.sendMessage': 'Envoyer le message',
     'chat.typing': 'Tapez votre message...',
+    'chat.history': 'Historique du chat',
+    'chat.conversationHistory': 'Historique de conversation',
     
     // Grades Dashboard
     'grades.title': 'Tableau de bord des notes',
