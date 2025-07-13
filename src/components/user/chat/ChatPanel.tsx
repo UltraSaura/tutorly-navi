@@ -2,7 +2,7 @@ import React from 'react';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import { Message } from '@/types/chat';
-import { useLanguage } from '@/context/LanguageContext';
+
 interface ChatPanelProps {
   messages: Message[];
   isLoading: boolean;
@@ -23,18 +23,17 @@ const ChatPanel = ({
   handlePhotoUpload,
   activeModel = 'AI Model'
 }: ChatPanelProps) => {
-  const { t } = useLanguage();
   // Add a failsafe check for required props
   if (!setInputMessage || !handleSendMessage || !handleFileUpload || !handlePhotoUpload) {
     console.error('ChatPanel: Required props are missing');
     return <div className="w-full md:w-1/3 flex flex-col glass rounded-xl overflow-hidden p-4">
-        <div className="text-red-500">{t('chat.errorLoadChat')}</div>
+        <div className="text-red-500">Error: Unable to load chat. Please refresh the page.</div>
       </div>;
   }
   return <div className="w-full md:w-1/3 flex flex-col glass rounded-xl overflow-hidden">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         
-        <p className="text-sm font-semibold text-gray-900">{t('chat.askQuestions')}</p>
+        <p className="text-sm font-semibold text-gray-900">Ask questions or submit your homework for grading</p>
       </div>
       
       <MessageList messages={messages} isLoading={isLoading} />

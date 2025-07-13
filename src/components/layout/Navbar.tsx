@@ -4,18 +4,16 @@ import { MessageSquare, BookOpen, BarChart3, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import SubjectSelector from './SubjectSelector';
-import LanguageSelector from '@/components/ui/language-selector';
-import { useLanguage } from '@/context/LanguageContext';
+
 
 const Navbar = () => {
   const location = useLocation();
-  const { t } = useLanguage();
   
   const tabs = [
-    { path: '/', label: t('nav.home'), icon: <MessageSquare className="w-5 h-5" /> },
-    { path: '/roadmap', label: t('nav.roadmap'), icon: <BookOpen className="w-5 h-5" /> },
-    { path: '/grades', label: t('nav.grades'), icon: <BarChart3 className="w-5 h-5" /> },
-    { path: '/skills', label: t('nav.skills'), icon: <CheckSquare className="w-5 h-5" /> },
+    { path: '/', label: 'Tutor', icon: <MessageSquare className="w-5 h-5" /> },
+    { path: '/roadmap', label: 'Roadmap', icon: <BookOpen className="w-5 h-5" /> },
+    { path: '/grades', label: 'Grades', icon: <BarChart3 className="w-5 h-5" /> },
+    { path: '/skills', label: 'Skills', icon: <CheckSquare className="w-5 h-5" /> },
   ];
   
   return (
@@ -53,11 +51,8 @@ const Navbar = () => {
           </nav>
           
           <div className="flex items-center gap-2">
-            <div className="hidden md:block">
-              <LanguageSelector />
-            </div>
             <Button variant="outline" size="sm" className="hidden md:flex">
-              {t('nav.myAccount')}
+              My Account
             </Button>
             <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
               <img 

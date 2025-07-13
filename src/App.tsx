@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { AnimatePresence } from "framer-motion";
 import { AdminProvider } from "./context/AdminContext";
-import { LanguageProvider } from "./context/LanguageContext";
 
 // Layouts
 import MainLayout from "./components/layout/MainLayout";
@@ -42,12 +41,11 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <LanguageProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AdminProvider>
-          <BrowserRouter>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <AdminProvider>
+        <BrowserRouter>
           <AnimatePresence mode="wait">
             <Suspense fallback={<LoadingFallback />}>
               <Routes>
@@ -75,10 +73,9 @@ const App = () => (
               </Routes>
             </Suspense>
           </AnimatePresence>
-          </BrowserRouter>
-        </AdminProvider>
-      </TooltipProvider>
-    </LanguageProvider>
+        </BrowserRouter>
+      </AdminProvider>
+    </TooltipProvider>
   </QueryClientProvider>
 );
 
