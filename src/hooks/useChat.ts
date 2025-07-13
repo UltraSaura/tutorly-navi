@@ -16,9 +16,7 @@ export const useChat = () => {
     {
       id: '1',
       role: 'assistant',
-      content: language === 'fr' 
-        ? "👋 Salut ! Je suis votre tuteur IA StudyWhiz. Comment puis-je vous aider aujourd'hui ? Vous pouvez me poser des questions, télécharger des devoirs ou soumettre des exercices pour que je vous aide."
-        : "👋 Hi there! I'm your StudyWhiz AI tutor. How can I help you today? You can ask me questions, upload homework, or submit exercises for me to help you with.",
+      content: t('chat.welcomeMessage'),
       timestamp: new Date(Date.now() - 60000),
     },
   ]);

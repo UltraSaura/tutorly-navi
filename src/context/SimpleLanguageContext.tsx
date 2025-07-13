@@ -25,6 +25,25 @@ const translations = {
     'language.english': 'English',
     'language.french': 'Français',
     
+    // Exercise Component
+    'exercise.tryAgain': 'Try again',
+    'exercise.showExplanation': 'Show explanation',
+    'exercise.hideExplanation': 'Hide explanation',
+    'exercise.greatWork': 'Great work!',
+    'exercise.learningOpportunity': 'Learning Opportunity',
+    'exercise.attempt': 'Attempt',
+
+    // File Upload Messages
+    'upload.fileTooLarge': 'File too large',
+    'upload.maxFileSize': 'Maximum file size is 10MB.',
+    'upload.invalidFileType': 'Invalid file type',
+    'upload.imageFileError': 'Please upload an image file (jpg, png, etc.)',
+    'upload.documentFileError': 'Please upload a PDF, Word document, or text file.',
+    'upload.photoUploaded': 'Photo uploaded',
+    'upload.photoSuccess': 'Your photo has been uploaded and will be processed as homework.',
+    'upload.documentUploaded': 'Document uploaded',
+    'upload.documentSuccess': 'has been uploaded and will be processed as homework.',
+
     // Footer
     'footer.copyright': 'StudyWhiz AI. All rights reserved.',
     'footer.subtitle': 'Submit your homework and exercises and get personalized tutoring.',
@@ -41,6 +60,7 @@ const translations = {
     'chat.typing': 'Type your message...',
     'chat.history': 'Chat History',
     'chat.conversationHistory': 'Conversation History',
+    'chat.welcomeMessage': "👋 Hi there! I'm your StudyWhiz AI tutor. How can I help you today? You can ask me questions, upload homework, or submit exercises for me to help you with.",
     
     // Grades Dashboard
     'grades.title': 'Grade Dashboard',
@@ -119,7 +139,6 @@ const translations = {
     'upload.success': 'File uploaded successfully',
     'upload.error': 'Error uploading file',
     'upload.unsupportedFormat': 'Unsupported file format',
-    'upload.fileTooLarge': 'File too large',
     
     // Notifications
     'notification.exerciseCreated': 'Exercise created successfully',
@@ -166,6 +185,25 @@ const translations = {
     'language.english': 'English',
     'language.french': 'Français',
     
+    // Exercise Component
+    'exercise.tryAgain': 'Réessayer',
+    'exercise.showExplanation': 'Afficher l\'explication',
+    'exercise.hideExplanation': 'Masquer l\'explication',
+    'exercise.greatWork': 'Excellent travail !',
+    'exercise.learningOpportunity': 'Opportunité d\'apprentissage',
+    'exercise.attempt': 'Tentative',
+
+    // File Upload Messages
+    'upload.fileTooLarge': 'Fichier trop volumineux',
+    'upload.maxFileSize': 'La taille maximale du fichier est de 10 Mo.',
+    'upload.invalidFileType': 'Type de fichier invalide',
+    'upload.imageFileError': 'Veuillez télécharger un fichier image (jpg, png, etc.)',
+    'upload.documentFileError': 'Veuillez télécharger un PDF, un document Word ou un fichier texte.',
+    'upload.photoUploaded': 'Photo téléchargée',
+    'upload.photoSuccess': 'Votre photo a été téléchargée et sera traitée comme devoir.',
+    'upload.documentUploaded': 'Document téléchargé',
+    'upload.documentSuccess': 'a été téléchargé et sera traité comme devoir.',
+
     // Footer
     'footer.copyright': 'StudyWhiz AI. Tous droits réservés.',
     'footer.subtitle': 'Soumettez vos devoirs et exercices et obtenez un tutorat personnalisé.',
@@ -182,6 +220,7 @@ const translations = {
     'chat.typing': 'Tapez votre message...',
     'chat.history': 'Historique du chat',
     'chat.conversationHistory': 'Historique de conversation',
+    'chat.welcomeMessage': "👋 Salut ! Je suis votre tuteur IA StudyWhiz. Comment puis-je vous aider aujourd'hui ? Vous pouvez me poser des questions, télécharger des devoirs ou soumettre des exercices pour que je vous aide.",
     
     // Grades Dashboard
     'grades.title': 'Tableau de bord des notes',
@@ -260,7 +299,6 @@ const translations = {
     'upload.success': 'Fichier téléchargé avec succès',
     'upload.error': 'Erreur lors du téléchargement du fichier',
     'upload.unsupportedFormat': 'Format de fichier non pris en charge',
-    'upload.fileTooLarge': 'Fichier trop volumineux',
     
     // Notifications
     'notification.exerciseCreated': 'Exercice créé avec succès',

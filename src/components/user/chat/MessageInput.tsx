@@ -52,8 +52,8 @@ const MessageInput = ({
       // Check file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
         toast({
-          title: "File too large",
-          description: "Maximum file size is 10MB.",
+          title: t('upload.fileTooLarge'),
+          description: t('upload.maxFileSize'),
           variant: "destructive"
         });
         return;
@@ -63,32 +63,32 @@ const MessageInput = ({
         // Check that it's an image
         if (!file.type.startsWith('image/')) {
           toast({
-            title: "Invalid file type",
-            description: "Please upload an image file (jpg, png, etc.)",
+            title: t('upload.invalidFileType'),
+            description: t('upload.imageFileError'),
             variant: "destructive"
           });
           return;
         }
         handlePhotoUpload(file);
         toast({
-          title: "Photo uploaded",
-          description: "Your photo has been uploaded and will be processed as homework.",
+          title: t('upload.photoUploaded'),
+          description: t('upload.photoSuccess'),
         });
       } else {
         // For documents, check that it's a valid type
         const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
         if (!validTypes.includes(file.type)) {
           toast({
-            title: "Invalid file type",
-            description: "Please upload a PDF, Word document, or text file.",
+            title: t('upload.invalidFileType'),
+            description: t('upload.documentFileError'),
             variant: "destructive"
           });
           return;
         }
         handleFileUpload(file);
         toast({
-          title: "Document uploaded",
-          description: `${file.name} has been uploaded and will be processed as homework.`,
+          title: t('upload.documentUploaded'),
+          description: `${file.name} ${t('upload.documentSuccess')}`,
         });
       }
       

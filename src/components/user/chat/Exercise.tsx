@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Message } from '@/types/chat';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 interface ExerciseProps {
   exercise: {
@@ -38,6 +39,7 @@ const Exercise = ({
   exercise,
   toggleExerciseExpansion
 }: ExerciseProps) => {
+  const { t } = useLanguage();
   const formattedExplanation = exercise.explanation ? exercise.explanation
     .replace(/\*\*(Problem|Guidance):\*\*/g, '<strong class="text-studywhiz-600 dark:text-studywhiz-400">$1:</strong>')
     .split('\n')
@@ -87,12 +89,12 @@ const Exercise = ({
               <h3 className="text-md font-medium">{exercise.question}</h3>
               {exercise.attemptCount > 1 && (
                 <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
-                  Attempt {exercise.attemptCount}
+                  {t('exercise.attempt')} {exercise.attemptCount}
                 </span>
               )}
               {exercise.needsRetry && (
                 <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-full">
-                  Try again
+                  {t('exercise.tryAgain')}
                 </span>
               )}
             </div>
@@ -117,7 +119,7 @@ const Exercise = ({
             )} 
             onClick={() => toggleExerciseExpansion(exercise.id)}
           >
-            {exercise.expanded ? 'Hide explanation' : 'Show explanation'}
+            {exercise.expanded ? t('exercise.hideExplanation') : t('exercise.showExplanation')}
             {exercise.expanded ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />}
           </Button>
         </div>
@@ -147,9 +149,9 @@ const Exercise = ({
                   <h4 className="text-sm font-medium">
                     {exercise.isCorrect 
                       ? exercise.attemptCount > 1 
-                        ? `Great work! (Attempt ${exercise.attemptCount})` 
-                        : "Great work!" 
-                      : `Learning Opportunity${exercise.attemptCount > 1 ? ` (Attempt ${exercise.attemptCount})` : ""}`}
+                        ? `${t('exercise.greatWork')} (${t('exercise.attempt')} ${exercise.attemptCount})` 
+                        : t('exercise.greatWork') 
+                      : `${t('exercise.learningOpportunity')}${exercise.attemptCount > 1 ? ` (${t('exercise.attempt')} ${exercise.attemptCount})` : ""}`}
                   </h4>
                 </div>
                 
