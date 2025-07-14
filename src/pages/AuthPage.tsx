@@ -7,6 +7,7 @@ import { ParentRegistrationForm } from '@/components/auth/ParentRegistrationForm
 import { LoginForm } from '@/components/auth/LoginForm';
 import { Button } from '@/components/ui/button';
 import { UserType, StudentRegistrationData, ParentRegistrationData } from '@/types/registration';
+import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
@@ -101,12 +102,17 @@ const AuthPage: React.FC = () => {
   const handleParentRegistration = async (data: ParentRegistrationData) => {
     setLoading(true);
     try {
+      // Format phone number with area code
+      const areaCode = getPhoneAreaCode(data.country);
+      const fullPhoneNumber = areaCode ? `${areaCode}${data.phoneNumber}` : data.phoneNumber;
+      
       // Register the parent
       const { error: signUpError } = await signUp(data.email, data.password, {
         user_type: 'parent',
         first_name: data.firstName,
         last_name: data.lastName,
-        phone_number: data.phoneNumber,
+        country: data.country,
+        phone_number: fullPhoneNumber,
       });
 
       if (signUpError) {
