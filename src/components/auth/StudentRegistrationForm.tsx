@@ -11,6 +11,7 @@ import { useCountriesAndLevels } from '@/hooks/useCountriesAndLevels';
 import { StudentRegistrationData } from '@/types/registration';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Loader2 } from 'lucide-react';
+import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
 
 const studentSchema = z.object({
   email: z.string().email(),
@@ -113,7 +114,7 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
           </div>
 
           <div>
-            <Label htmlFor="email">{t('auth.email')}</Label>
+            <Label htmlFor="email">{t('auth.email')} (Username)</Label>
             <Input
               id="email"
               type="email"
@@ -122,57 +123,6 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
             />
             {errors.email && (
               <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="phoneNumber">{t('auth.phoneNumber')}</Label>
-            <Input
-              id="phoneNumber"
-              type="tel"
-              {...register('phoneNumber')}
-              className={errors.phoneNumber ? 'border-destructive' : ''}
-            />
-            {errors.phoneNumber && (
-              <p className="text-sm text-destructive mt-1">{errors.phoneNumber.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label>{t('auth.country')}</Label>
-            <Select onValueChange={handleCountryChange} value={selectedCountry}>
-              <SelectTrigger className={errors.country ? 'border-destructive' : ''}>
-                <SelectValue placeholder={t('auth.selectCountry')} />
-              </SelectTrigger>
-              <SelectContent>
-                {countries.map((country) => (
-                  <SelectItem key={country.code} value={country.code}>
-                    {country.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.country && (
-              <p className="text-sm text-destructive mt-1">{errors.country.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label>{t('auth.schoolLevel')}</Label>
-            <Select onValueChange={(value) => setValue('schoolLevel', value)} disabled={!selectedCountry}>
-              <SelectTrigger className={errors.schoolLevel ? 'border-destructive' : ''}>
-                <SelectValue placeholder={t('auth.selectSchoolLevel')} />
-              </SelectTrigger>
-              <SelectContent>
-                {schoolLevels.map((level) => (
-                  <SelectItem key={level.level_code} value={level.level_code}>
-                    {level.level_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.schoolLevel && (
-              <p className="text-sm text-destructive mt-1">{errors.schoolLevel.message}</p>
             )}
           </div>
 
@@ -199,6 +149,63 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
             />
             {errors.confirmPassword && (
               <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label>{t('auth.country')}</Label>
+            <Select onValueChange={handleCountryChange} value={selectedCountry}>
+              <SelectTrigger className={errors.country ? 'border-destructive' : ''}>
+                <SelectValue placeholder={t('auth.selectCountry')} />
+              </SelectTrigger>
+              <SelectContent>
+                {countries.map((country) => (
+                  <SelectItem key={country.code} value={country.code}>
+                    {country.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.country && (
+              <p className="text-sm text-destructive mt-1">{errors.country.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="phoneNumber">{t('auth.phoneNumber')}</Label>
+            <div className="flex">
+              <div className="flex items-center px-3 bg-muted border border-r-0 rounded-l-md text-muted-foreground">
+                {selectedCountry ? getPhoneAreaCode(selectedCountry) : '+'}
+              </div>
+              <Input
+                id="phoneNumber"
+                type="tel"
+                {...register('phoneNumber')}
+                className={`rounded-l-none ${errors.phoneNumber ? 'border-destructive' : ''}`}
+                placeholder="123456789"
+              />
+            </div>
+            {errors.phoneNumber && (
+              <p className="text-sm text-destructive mt-1">{errors.phoneNumber.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label>{t('auth.schoolLevel')}</Label>
+            <Select onValueChange={(value) => setValue('schoolLevel', value)} disabled={!selectedCountry}>
+              <SelectTrigger className={errors.schoolLevel ? 'border-destructive' : ''}>
+                <SelectValue placeholder={t('auth.selectSchoolLevel')} />
+              </SelectTrigger>
+              <SelectContent>
+                {schoolLevels.map((level) => (
+                  <SelectItem key={level.level_code} value={level.level_code}>
+                    {level.level_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.schoolLevel && (
+              <p className="text-sm text-destructive mt-1">{errors.schoolLevel.message}</p>
             )}
           </div>
 

@@ -15,7 +15,6 @@ import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
 
 const childSchema = z.object({
   firstName: z.string().min(1),
-  lastName: z.string().min(1),
   country: z.string().min(1),
   schoolLevel: z.string().min(1),
 });
@@ -60,7 +59,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
   } = useForm<ParentFormData>({
     resolver: zodResolver(parentSchema),
     defaultValues: {
-      children: [{ firstName: '', lastName: '', country: '', schoolLevel: '' }]
+      children: [{ firstName: '', country: '', schoolLevel: '' }]
     }
   });
 
@@ -78,7 +77,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
   };
 
   const addChild = () => {
-    append({ firstName: '', lastName: '', country: '', schoolLevel: '' });
+    append({ firstName: '', country: '', schoolLevel: '' });
   };
 
   const removeChild = (index: number) => {
@@ -149,6 +148,33 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
               )}
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="password">{t('auth.password')}</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  {...register('password')}
+                  className={errors.password ? 'border-destructive' : ''}
+                />
+                {errors.password && (
+                  <p className="text-sm text-destructive mt-1">{errors.password.message}</p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  {...register('confirmPassword')}
+                  className={errors.confirmPassword ? 'border-destructive' : ''}
+                />
+                {errors.confirmPassword && (
+                  <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>
+                )}
+              </div>
+            </div>
+
             <div>
               <Label htmlFor="country">{t('auth.country')}</Label>
               <Select onValueChange={(value) => setValue('country', value)}>
@@ -186,33 +212,6 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
                 <p className="text-sm text-destructive mt-1">{errors.phoneNumber.message}</p>
               )}
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="password">{t('auth.password')}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  {...register('password')}
-                  className={errors.password ? 'border-destructive' : ''}
-                />
-                {errors.password && (
-                  <p className="text-sm text-destructive mt-1">{errors.password.message}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  {...register('confirmPassword')}
-                  className={errors.confirmPassword ? 'border-destructive' : ''}
-                />
-                {errors.confirmPassword && (
-                  <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>
-                )}
-              </div>
-            </div>
           </div>
 
           {/* Children Information */}
@@ -242,31 +241,17 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>{t('auth.firstName')}</Label>
-                      <Input
-                        {...register(`children.${index}.firstName`)}
-                        className={errors.children?.[index]?.firstName ? 'border-destructive' : ''}
-                      />
-                      {errors.children?.[index]?.firstName && (
-                        <p className="text-sm text-destructive mt-1">
-                          {errors.children[index]?.firstName?.message}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <Label>{t('auth.lastName')}</Label>
-                      <Input
-                        {...register(`children.${index}.lastName`)}
-                        className={errors.children?.[index]?.lastName ? 'border-destructive' : ''}
-                      />
-                      {errors.children?.[index]?.lastName && (
-                        <p className="text-sm text-destructive mt-1">
-                          {errors.children[index]?.lastName?.message}
-                        </p>
-                      )}
-                    </div>
+                  <div>
+                    <Label>{t('auth.firstName')}</Label>
+                    <Input
+                      {...register(`children.${index}.firstName`)}
+                      className={errors.children?.[index]?.firstName ? 'border-destructive' : ''}
+                    />
+                    {errors.children?.[index]?.firstName && (
+                      <p className="text-sm text-destructive mt-1">
+                        {errors.children[index]?.firstName?.message}
+                      </p>
+                    )}
                   </div>
 
                   <div>
