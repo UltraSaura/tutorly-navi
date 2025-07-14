@@ -14,7 +14,6 @@ export interface SchoolLevel {
 
 export interface ChildInfo {
   firstName: string;
-  country: string;
   schoolLevel: string;
 }
 

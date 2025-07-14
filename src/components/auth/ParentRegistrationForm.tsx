@@ -15,7 +15,6 @@ import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
 
 const childSchema = z.object({
   firstName: z.string().min(1),
-  country: z.string().min(1),
   schoolLevel: z.string().min(1),
 });
 
@@ -59,7 +58,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
   } = useForm<ParentFormData>({
     resolver: zodResolver(parentSchema),
     defaultValues: {
-      children: [{ firstName: '', country: '', schoolLevel: '' }]
+      children: [{ firstName: '', schoolLevel: '' }]
     }
   });
 
@@ -77,7 +76,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
   };
 
   const addChild = () => {
-    append({ firstName: '', country: '', schoolLevel: '' });
+    append({ firstName: '', schoolLevel: '' });
   };
 
   const removeChild = (index: number) => {
@@ -255,43 +254,17 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
                   </div>
 
                   <div>
-                    <Label>{t('auth.country')}</Label>
-                    <Select 
-                      onValueChange={(value) => {
-                        setValue(`children.${index}.country`, value);
-                        setValue(`children.${index}.schoolLevel`, ''); // Reset school level
-                      }}
-                    >
-                      <SelectTrigger className={errors.children?.[index]?.country ? 'border-destructive' : ''}>
-                        <SelectValue placeholder={t('auth.selectCountry')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {countries.map((country) => (
-                          <SelectItem key={country.code} value={country.code}>
-                            {country.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.children?.[index]?.country && (
-                      <p className="text-sm text-destructive mt-1">
-                        {errors.children[index]?.country?.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
                     <Label>{t('auth.schoolLevel')}</Label>
                     <Select 
                       onValueChange={(value) => setValue(`children.${index}.schoolLevel`, value)}
-                      disabled={!watchedChildren[index]?.country}
+                      disabled={!watchedCountry}
                     >
                       <SelectTrigger className={errors.children?.[index]?.schoolLevel ? 'border-destructive' : ''}>
                         <SelectValue placeholder={t('auth.selectSchoolLevel')} />
                       </SelectTrigger>
                       <SelectContent>
-                        {watchedChildren[index]?.country && 
-                          getSchoolLevelsByCountry(watchedChildren[index].country).map((level) => (
+                        {watchedCountry && 
+                          getSchoolLevelsByCountry(watchedCountry).map((level) => (
                             <SelectItem key={level.level_code} value={level.level_code}>
                               {level.level_name}
                             </SelectItem>
