@@ -362,12 +362,21 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setLanguageFromCountry = (countryCode: string) => {
     // Only auto-set language if user hasn't manually changed it
     const manuallySet = localStorage.getItem('languageManuallySet');
+    
+    console.log('setLanguageFromCountry called with:', countryCode);
+    console.log('manuallySet flag:', manuallySet);
+    console.log('current language:', language);
+    
     if (manuallySet === 'true') {
+      console.log('Language was manually set, not changing automatically');
       return; // User has manually set language, don't override
     }
 
     const detectedLanguage = getLanguageFromCountry(countryCode);
+    console.log('detected language from country:', detectedLanguage);
+    
     if (detectedLanguage !== language) {
+      console.log('Changing language from', language, 'to', detectedLanguage);
       setLanguage(detectedLanguage);
       localStorage.setItem('language', detectedLanguage);
       
@@ -378,6 +387,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           description: detectedLanguage === 'fr' ? 'Basé sur votre pays sélectionné' : 'Based on your selected country',
         });
       });
+    } else {
+      console.log('Language already matches detected language');
     }
   };
 
