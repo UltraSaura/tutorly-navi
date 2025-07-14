@@ -20,6 +20,7 @@ const ChatInterface = lazy(() => import("./components/user/ChatInterface"));
 const LearningRoadmap = lazy(() => import("./components/user/LearningRoadmap"));
 const GradeDashboard = lazy(() => import("./components/user/GradeDashboard"));
 const SkillMastery = lazy(() => import("./components/user/SkillMastery"));
+const Index = lazy(() => import("./pages/Index"));
 
 // Admin Pages
 import AIModelManagement from "./components/admin/AIModelManagement";
@@ -59,12 +60,21 @@ const App = () => (
                     {/* Auth Routes */}
                     <Route path="/auth" element={<AuthPage />} />
                     
+                    {/* Home Route */}
+                    <Route path="/" element={<Index />} />
+                    
                     {/* User App Routes */}
-                    <Route path="/" element={<MainLayout />}>
+                    <Route path="/chat" element={<MainLayout />}>
                       <Route index element={<ChatInterface />} />
-                      <Route path="roadmap" element={<LearningRoadmap />} />
-                      <Route path="grades" element={<GradeDashboard />} />
-                      <Route path="skills" element={<SkillMastery />} />
+                    </Route>
+                    <Route path="/roadmap" element={<MainLayout />}>
+                      <Route index element={<LearningRoadmap />} />
+                    </Route>
+                    <Route path="/grades" element={<MainLayout />}>
+                      <Route index element={<GradeDashboard />} />
+                    </Route>
+                    <Route path="/skills" element={<MainLayout />}>
+                      <Route index element={<SkillMastery />} />
                     </Route>
                     
                     {/* Management Dashboard */}
