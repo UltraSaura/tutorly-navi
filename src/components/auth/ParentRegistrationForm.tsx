@@ -12,6 +12,7 @@ import { ParentRegistrationData } from '@/types/registration';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-react';
 import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 const childSchema = z.object({
   firstName: z.string().min(1),
@@ -46,6 +47,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
   loading = false
 }) => {
   const { t } = useTranslation();
+  const { setLanguageFromCountry } = useLanguage();
   const { countries, getSchoolLevelsByCountry, loading: dataLoading } = useCountriesAndLevels();
 
   const {
@@ -176,7 +178,14 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
 
             <div>
               <Label htmlFor="country">{t('auth.country')}</Label>
-              <Select onValueChange={(value) => setValue('country', value)}>
+              <Select onValueChange={(value) => {
+                setValue('country', value);
+                setLanguageFromCountry(value);
+                // Reset all children's school levels when parent's country changes
+                for (let i = 0; i < fields.length; i++) {
+                  setValue(`children.${i}.schoolLevel`, '');
+                }
+              }}>
                 <SelectTrigger className={errors.country ? 'border-destructive' : ''}>
                   <SelectValue placeholder={t('auth.selectCountry')} />
                 </SelectTrigger>

@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getLanguageFromCountry } from '@/utils/countryLanguageMapping';
 
 interface LanguageContextType {
   language: string;
   changeLanguage: (lng: string) => void;
+  setLanguageFromCountry: (countryCode: string) => void;
   t: (key: string) => string;
 }
 
@@ -24,6 +26,8 @@ const translations = {
     // Languages
     'language.english': 'English',
     'language.french': 'Français',
+    'language.autoDetected': 'Auto-detected based on country',
+    'language.auto': 'Auto',
     
     // Exercise Component
     'exercise.tryAgain': 'Try again',
@@ -146,6 +150,7 @@ const translations = {
     'notification.gradeUpdated': 'Grade has been updated',
     'notification.settingsSaved': 'Settings saved successfully',
     'notification.languageChanged': 'Language changed to English',
+    'notification.languageAutoChanged': 'Language automatically set to English based on your country',
     
     // Time & Dates
     'time.justNow': 'Just now',
@@ -184,6 +189,8 @@ const translations = {
     // Languages
     'language.english': 'English',
     'language.french': 'Français',
+    'language.autoDetected': 'Détection automatique selon le pays',
+    'language.auto': 'Auto',
     
     // Exercise Component
     'exercise.tryAgain': 'Réessayer',
@@ -306,6 +313,7 @@ const translations = {
     'notification.gradeUpdated': 'La note a été mise à jour',
     'notification.settingsSaved': 'Paramètres enregistrés avec succès',
     'notification.languageChanged': 'Langue changée en français',
+    'notification.languageAutoChanged': 'Langue automatiquement définie en français selon votre pays',
     
     // Time & Dates
     'time.justNow': 'À l\'instant',
@@ -340,6 +348,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const changeLanguage = (lng: string) => {
     setLanguage(lng);
     localStorage.setItem('language', lng);
+    localStorage.setItem('languageManuallySet', 'true');
     
     // Show notification about language change
     import('@/components/ui/use-toast').then(({ toast }) => {
@@ -348,6 +357,28 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         description: lng === 'fr' ? 'L\'interface utilisateur a été changée en français' : 'User interface has been changed to English',
       });
     });
+  };
+
+  const setLanguageFromCountry = (countryCode: string) => {
+    // Only auto-set language if user hasn't manually changed it
+    const manuallySet = localStorage.getItem('languageManuallySet');
+    if (manuallySet === 'true') {
+      return; // User has manually set language, don't override
+    }
+
+    const detectedLanguage = getLanguageFromCountry(countryCode);
+    if (detectedLanguage !== language) {
+      setLanguage(detectedLanguage);
+      localStorage.setItem('language', detectedLanguage);
+      
+      // Show notification about automatic language change
+      import('@/components/ui/use-toast').then(({ toast }) => {
+        toast({
+          title: detectedLanguage === 'fr' ? 'Langue automatiquement définie en français' : 'Language automatically set to English',
+          description: detectedLanguage === 'fr' ? 'Basé sur votre pays sélectionné' : 'Based on your selected country',
+        });
+      });
+    }
   };
 
   const t = (key: string): string => {
@@ -359,6 +390,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     <LanguageContext.Provider value={{
       language,
       changeLanguage,
+      setLanguageFromCountry,
       t
     }}>
       {children}
@@ -373,6 +405,7 @@ export const useLanguage = () => {
     return {
       language: 'en',
       changeLanguage: () => {},
+      setLanguageFromCountry: () => {},
       t: (key: string) => key
     };
   }

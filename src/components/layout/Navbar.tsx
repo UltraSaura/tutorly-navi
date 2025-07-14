@@ -16,8 +16,18 @@ const LanguageMenuItems = () => {
     { code: 'fr', name: t('language.french'), flag: '🇫🇷' }
   ];
 
+  const manuallySet = localStorage.getItem('languageManuallySet') === 'true';
+
   return (
     <>
+      {!manuallySet && (
+        <>
+          <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+            {t('language.autoDetected')}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+        </>
+      )}
       {languages.map((lang) => (
         <DropdownMenuItem
           key={lang.code}
@@ -26,6 +36,9 @@ const LanguageMenuItems = () => {
         >
           <span className="mr-2">{lang.flag}</span>
           {lang.name}
+          {language === lang.code && !manuallySet && (
+            <span className="ml-auto text-xs text-muted-foreground">{t('language.auto')}</span>
+          )}
         </DropdownMenuItem>
       ))}
     </>

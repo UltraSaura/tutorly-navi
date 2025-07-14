@@ -12,6 +12,7 @@ import { StudentRegistrationData } from '@/types/registration';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 const studentSchema = z.object({
   email: z.string().email(),
@@ -41,6 +42,7 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
   loading = false
 }) => {
   const { t } = useTranslation();
+  const { setLanguageFromCountry } = useLanguage();
   const { countries, getSchoolLevelsByCountry, loading: dataLoading } = useCountriesAndLevels();
   const [selectedCountry, setSelectedCountry] = useState<string>('');
 
@@ -61,6 +63,8 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
     setSelectedCountry(countryCode);
     setValue('country', countryCode);
     setValue('schoolLevel', ''); // Reset school level when country changes
+    // Set language based on country
+    setLanguageFromCountry(countryCode);
   };
 
   const onFormSubmit = async (data: StudentFormData) => {
