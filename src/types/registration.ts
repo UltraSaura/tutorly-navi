@@ -34,6 +34,7 @@ export interface ParentRegistrationData {
   password: string;
   firstName: string;
   lastName: string;
+  country: string;
   phoneNumber: string;
   children: ChildInfo[];
 }

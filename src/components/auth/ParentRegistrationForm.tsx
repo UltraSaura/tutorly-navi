@@ -11,6 +11,7 @@ import { useCountriesAndLevels } from '@/hooks/useCountriesAndLevels';
 import { ParentRegistrationData } from '@/types/registration';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-react';
+import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
 
 const childSchema = z.object({
   firstName: z.string().min(1),
@@ -25,6 +26,7 @@ const parentSchema = z.object({
   confirmPassword: z.string().min(6),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
+  country: z.string().min(1),
   phoneNumber: z.string().min(1),
   children: z.array(childSchema).min(1, "At least one child is required"),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -68,6 +70,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
   });
 
   const watchedChildren = watch('children');
+  const watchedCountry = watch('country');
 
   const onFormSubmit = async (data: ParentFormData) => {
     const { confirmPassword, ...parentData } = data;
@@ -134,7 +137,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
             </div>
 
             <div>
-              <Label htmlFor="email">{t('auth.email')}</Label>
+              <Label htmlFor="email">{t('auth.email')} (Username)</Label>
               <Input
                 id="email"
                 type="email"
@@ -147,13 +150,38 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
             </div>
 
             <div>
+              <Label htmlFor="country">{t('auth.country')}</Label>
+              <Select onValueChange={(value) => setValue('country', value)}>
+                <SelectTrigger className={errors.country ? 'border-destructive' : ''}>
+                  <SelectValue placeholder={t('auth.selectCountry')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {countries.map((country) => (
+                    <SelectItem key={country.code} value={country.code}>
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.country && (
+                <p className="text-sm text-destructive mt-1">{errors.country.message}</p>
+              )}
+            </div>
+
+            <div>
               <Label htmlFor="phoneNumber">{t('auth.phoneNumber')}</Label>
-              <Input
-                id="phoneNumber"
-                type="tel"
-                {...register('phoneNumber')}
-                className={errors.phoneNumber ? 'border-destructive' : ''}
-              />
+              <div className="flex">
+                <div className="flex items-center px-3 bg-muted border border-r-0 rounded-l-md text-muted-foreground">
+                  {watchedCountry ? getPhoneAreaCode(watchedCountry) : '+'}
+                </div>
+                <Input
+                  id="phoneNumber"
+                  type="tel"
+                  {...register('phoneNumber')}
+                  className={`rounded-l-none ${errors.phoneNumber ? 'border-destructive' : ''}`}
+                  placeholder="123456789"
+                />
+              </div>
               {errors.phoneNumber && (
                 <p className="text-sm text-destructive mt-1">{errors.phoneNumber.message}</p>
               )}
