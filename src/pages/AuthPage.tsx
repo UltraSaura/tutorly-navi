@@ -14,7 +14,7 @@ import { Loader2 } from 'lucide-react';
 
 type AuthStep = 'login' | 'userType' | 'studentForm' | 'parentForm';
 
-export const AuthPage: React.FC = () => {
+const AuthPage: React.FC = () => {
   const { user, loading: authLoading, signIn, signUp } = useAuth();
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -118,8 +118,6 @@ export const AuthPage: React.FC = () => {
         return;
       }
 
-      // Note: Child registration will be handled after parent confirms their email
-      // For now, we'll store this in a temporary way or handle it post-confirmation
       toast({
         title: t('auth.registrationSuccess'),
         description: t('auth.checkEmailParent'),
@@ -183,3 +181,5 @@ export const AuthPage: React.FC = () => {
     </div>
   );
 };
+
+export default AuthPage;
