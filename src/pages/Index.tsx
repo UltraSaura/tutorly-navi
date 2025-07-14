@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import LanguageSelector from "@/components/ui/language-selector";
 import { useAuth } from "@/context/AuthContext";
-import { MessageCircle, BookOpen, BarChart3, Award, Users, Settings, Sparkles, Zap, Target, Brain, LogIn } from "lucide-react";
+import { MessageCircle, BookOpen, BarChart3, Award, Settings, Sparkles, Brain, LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const Index = () => {
@@ -51,32 +51,6 @@ const Index = () => {
     }
   ];
 
-  const adminFeatures = [
-    {
-      icon: Brain,
-      title: "AI Model Management",
-      description: "Configure and optimize AI models for different subjects and learning styles.",
-      badge: "Advanced"
-    },
-    {
-      icon: Target,
-      title: "Subject Configuration",
-      description: "Customize subjects, topics, and learning objectives to match curriculum requirements.",
-      badge: "Flexible"
-    },
-    {
-      icon: Users,
-      title: "User Management",
-      description: "Manage student accounts, track progress, and organize learning groups effectively.",
-      badge: "Control"
-    },
-    {
-      icon: Zap,
-      title: "Performance Analytics",
-      description: "Get comprehensive insights into student performance and system optimization.",
-      badge: "Insights"
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-secondary/10">
@@ -159,37 +133,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Admin Features Section */}
-      <section className="container mx-auto px-4 py-16 bg-gradient-to-r from-secondary/5 to-primary/5 rounded-3xl mx-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">For Administrators</h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Powerful management tools to configure, monitor, and optimize the learning experience.
-          </p>
-        </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {adminFeatures.map((feature, index) => (
-            <Card key={index} className="relative overflow-hidden border-2 hover:border-secondary/50 transition-all duration-300 hover:shadow-lg group bg-background/80 backdrop-blur-sm">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <feature.icon className="h-8 w-8 text-secondary group-hover:scale-110 transition-transform duration-300" />
-                  <Badge variant="secondary" className="text-xs">
-                    {feature.badge}
-                  </Badge>
-                </div>
-                <CardTitle className="text-lg">{feature.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-sm leading-relaxed">
-                  {feature.description}
-                </CardDescription>
-              </CardContent>
-              <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </Card>
-          ))}
-        </div>
-      </section>
 
       {/* Footer */}
       <footer className="container mx-auto px-4 py-8 text-center border-t border-border/50 mt-16">
