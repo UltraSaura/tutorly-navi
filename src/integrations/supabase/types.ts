@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      countries: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       parent_child: {
         Row: {
           child_id: string
@@ -47,6 +68,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      school_levels: {
+        Row: {
+          country_code: string
+          created_at: string | null
+          id: string
+          level_code: string
+          level_name: string
+          sort_order: number | null
+        }
+        Insert: {
+          country_code: string
+          created_at?: string | null
+          id?: string
+          level_code: string
+          level_name: string
+          sort_order?: number | null
+        }
+        Update: {
+          country_code?: string
+          created_at?: string | null
+          id?: string
+          level_code?: string
+          level_name?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_levels_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
           },
         ]
       }

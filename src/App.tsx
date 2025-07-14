@@ -7,6 +7,7 @@ import { lazy, Suspense } from "react";
 import { AnimatePresence } from "framer-motion";
 import { AdminProvider } from "./context/AdminContext";
 import { LanguageProvider } from "./context/SimpleLanguageContext";
+import { AuthProvider } from "./context/AuthContext";
 
 // Layouts
 import MainLayout from "./components/layout/MainLayout";
@@ -24,6 +25,9 @@ const SkillMastery = lazy(() => import("./components/user/SkillMastery"));
 import AIModelManagement from "./components/admin/AIModelManagement";
 import SubjectManagement from "./components/admin/SubjectManagement";
 import UserManagement from "./components/admin/UserManagement";
+
+// Auth Pages  
+const AuthPage = lazy(() => import("./pages/AuthPage"));
 
 // Loading Component
 const LoadingFallback = () => (
@@ -46,37 +50,42 @@ const App = () => (
       <Toaster />
       <Sonner />
       <LanguageProvider>
-        <AdminProvider>
-        <BrowserRouter>
-          <AnimatePresence mode="wait">
-            <Suspense fallback={<LoadingFallback />}>
-              <Routes>
-                {/* User App Routes */}
-                <Route path="/" element={<MainLayout />}>
-                  <Route index element={<ChatInterface />} />
-                  <Route path="roadmap" element={<LearningRoadmap />} />
-                  <Route path="grades" element={<GradeDashboard />} />
-                  <Route path="skills" element={<SkillMastery />} />
-                </Route>
-                
-                {/* Management Dashboard */}
-                <Route path="/management" element={<ManagementDashboard />} />
-                
-                {/* Admin Panel Routes */}
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<AIModelManagement />} />
-                  <Route path="models" element={<AIModelManagement />} />
-                  <Route path="subjects" element={<SubjectManagement />} />
-                  <Route path="users" element={<UserManagement />} />
-                </Route>
-                
-                {/* 404 Route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </AnimatePresence>
-        </BrowserRouter>
-        </AdminProvider>
+        <AuthProvider>
+          <AdminProvider>
+            <BrowserRouter>
+              <AnimatePresence mode="wait">
+                <Suspense fallback={<LoadingFallback />}>
+                  <Routes>
+                    {/* Auth Routes */}
+                    <Route path="/auth" element={<AuthPage />} />
+                    
+                    {/* User App Routes */}
+                    <Route path="/" element={<MainLayout />}>
+                      <Route index element={<ChatInterface />} />
+                      <Route path="roadmap" element={<LearningRoadmap />} />
+                      <Route path="grades" element={<GradeDashboard />} />
+                      <Route path="skills" element={<SkillMastery />} />
+                    </Route>
+                    
+                    {/* Management Dashboard */}
+                    <Route path="/management" element={<ManagementDashboard />} />
+                    
+                    {/* Admin Panel Routes */}
+                    <Route path="/admin" element={<AdminLayout />}>
+                      <Route index element={<AIModelManagement />} />
+                      <Route path="models" element={<AIModelManagement />} />
+                      <Route path="subjects" element={<SubjectManagement />} />
+                      <Route path="users" element={<UserManagement />} />
+                    </Route>
+                    
+                    {/* 404 Route */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </AnimatePresence>
+            </BrowserRouter>
+          </AdminProvider>
+        </AuthProvider>
       </LanguageProvider>
     </TooltipProvider>
   </QueryClientProvider>
