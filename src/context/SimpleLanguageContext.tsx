@@ -179,7 +179,7 @@ const translations = {
     // Navigation
     'nav.home': 'Tuteur',
     'nav.grades': 'Notes',
-    'nav.roadmap': 'Feuille de route', 
+    'nav.roadmap': 'Suivi', 
     'nav.skills': 'Compétences',
     'nav.myAccount': 'Mon compte',
     'nav.profile': 'Profil',
