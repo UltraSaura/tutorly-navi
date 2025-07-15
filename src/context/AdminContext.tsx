@@ -3,6 +3,7 @@ import { AdminContextType } from './AdminContextType';
 import { useApiKeyManagement } from '@/hooks/useApiKeyManagement';
 import { useModelManagement } from '@/hooks/useModelManagement';
 import { useSubjectManagement } from '@/hooks/useSubjectManagement';
+import { usePromptTemplateManagement } from '@/hooks/usePromptTemplateManagement';
 
 // Create context
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -13,12 +14,14 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const apiKeyManagement = useApiKeyManagement();
   const modelManagement = useModelManagement(apiKeyManagement.apiKeys);
   const subjectManagement = useSubjectManagement();
+  const promptTemplateManagement = usePromptTemplateManagement();
 
   return (
     <AdminContext.Provider value={{ 
       ...apiKeyManagement,
       ...modelManagement,
-      ...subjectManagement
+      ...subjectManagement,
+      activePromptTemplate: promptTemplateManagement.activePromptTemplate
     }}>
       {children}
     </AdminContext.Provider>

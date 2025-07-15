@@ -9,6 +9,7 @@ import { PromptTemplateCard } from './prompts/PromptTemplateCard';
 import { PromptEditor } from './prompts/PromptEditor';
 import { PromptTemplateDetails } from './prompts/PromptTemplateDetails';
 import { NewTemplateDialog } from './prompts/NewTemplateDialog';
+import { VariablePanel } from './prompts/VariablePanel';
 
 const promptTemplates: PromptTemplate[] = [
   {
@@ -73,6 +74,13 @@ const SystemPromptConfig = () => {
   });
   const [newTag, setNewTag] = useState<string>('');
   const [selectedType, setSelectedType] = useState<'all' | 'tutor' | 'grading'>('all');
+
+  const handleInsertVariable = (variableName: string) => {
+    const variable = `{{${variableName}}}`;
+    const cursorPosition = editedPrompt.length;
+    const newPrompt = editedPrompt + ' ' + variable;
+    setEditedPrompt(newPrompt);
+  };
   
   const handleTemplateSelect = (template: PromptTemplate) => {
     setSelectedTemplate(template);
@@ -221,7 +229,7 @@ const SystemPromptConfig = () => {
         </TabsContent>
         
         <TabsContent value="editor" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <PromptTemplateDetails selectedTemplate={selectedTemplate} />
             <PromptEditor
               selectedTemplate={selectedTemplate}
@@ -229,6 +237,7 @@ const SystemPromptConfig = () => {
               onPromptChange={setEditedPrompt}
               onSave={handleSavePrompt}
             />
+            <VariablePanel onInsertVariable={handleInsertVariable} />
           </div>
         </TabsContent>
       </Tabs>

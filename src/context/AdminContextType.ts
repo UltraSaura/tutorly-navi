@@ -1,4 +1,4 @@
-import { ApiKey, ModelOption, Subject } from '@/types/admin';
+import { ApiKey, ModelOption, Subject, PromptTemplate } from '@/types/admin';
 
 // Context interface
 export interface AdminContextType {
@@ -21,4 +21,7 @@ export interface AdminContextType {
   // Add subject selection
   selectedSubject: Subject | null;
   setSelectedSubject: (subject: Subject | null) => void;
+  
+  // Prompt template management
+  activePromptTemplate: PromptTemplate | null;
 }

@@ -38,7 +38,15 @@ serve(async (req) => {
   
   try {
     // Parse the request
-    const { message, modelId, history = [], isGradingRequest = false, language = 'en' } = await req.json();
+    const { 
+      message, 
+      modelId, 
+      history = [], 
+      isGradingRequest = false, 
+      language = 'en',
+      customPrompt,
+      userContext
+    } = await req.json();
     
     console.log(`Processing request with model: ${modelId}`);
     console.log('Is grading request:', isGradingRequest);
@@ -64,7 +72,7 @@ serve(async (req) => {
     }
     
     // Generate the appropriate system message based on context
-    let systemMessage = generateSystemMessage(isExercise, isGradingRequest, language);
+    let systemMessage = generateSystemMessage(isExercise, isGradingRequest, language, customPrompt, userContext);
     
     // Enhance system message for math problems if needed
     if (!isGradingRequest && modelConfig.provider === 'OpenAI') {

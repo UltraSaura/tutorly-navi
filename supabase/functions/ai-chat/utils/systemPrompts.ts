@@ -2,13 +2,74 @@
 // Contains specialized system prompts for different chat scenarios
 
 /**
+ * Available variables for prompt templates
+ */
+export interface PromptVariables {
+  student_level?: string;
+  country?: string;
+  learning_style?: string;
+  first_name?: string;
+  subject?: string;
+  user_type?: string;
+}
+
+/**
+ * Substitutes variables in a prompt template with actual values
+ * 
+ * @param promptTemplate The template with {{variable}} placeholders
+ * @param variables The variables to substitute
+ * @returns The prompt with variables replaced
+ */
+export function substitutePromptVariables(promptTemplate: string, variables: PromptVariables): string {
+  let result = promptTemplate;
+  
+  // Replace all {{variable_name}} patterns with actual values
+  Object.entries(variables).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      result = result.replace(regex, value);
+    }
+  });
+  
+  // Clean up any remaining unreplaced variables (fallback handling)
+  result = result.replace(/\{\{[^}]+\}\}/g, (match) => {
+    const varName = match.slice(2, -2);
+    switch (varName) {
+      case 'student_level':
+        return 'student';
+      case 'first_name':
+        return 'student';
+      case 'country':
+        return 'your country';
+      case 'learning_style':
+        return 'a balanced';
+      case 'subject':
+        return 'this subject';
+      default:
+        return 'student';
+    }
+  });
+  
+  return result;
+}
+
+/**
  * Generates an appropriate system message based on message context
  * 
  * @param isExercise Whether the message appears to be a homework/exercise
  * @param isGradingRequest Whether the message is asking for grading
+ * @param language The language for the response
+ * @param customPrompt Optional custom prompt template with variables
+ * @param variables Variables for prompt substitution
  * @returns The appropriate system message object
  */
-export function generateSystemMessage(isExercise: boolean = false, isGradingRequest: boolean = false, language: string = 'en'): { role: string, content: string } {
+export function generateSystemMessage(
+  isExercise: boolean = false, 
+  isGradingRequest: boolean = false, 
+  language: string = 'en',
+  customPrompt?: string,
+  variables?: PromptVariables
+): { role: string, content: string } {
   // System message for grading requests
   if (isGradingRequest) {
     const gradingPrompt = language === 'fr' 
@@ -98,6 +159,15 @@ Remember: Your goal is to help students learn how to solve problems, not to solv
     return {
       role: 'system',
       content: exercisePrompt
+    };
+  }
+  
+  // Use custom prompt with variables if provided
+  if (customPrompt && variables) {
+    const substitutedPrompt = substitutePromptVariables(customPrompt, variables);
+    return {
+      role: 'system',
+      content: substitutedPrompt
     };
   }
   

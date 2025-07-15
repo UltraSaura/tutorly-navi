@@ -6,12 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Save, RefreshCw, Copy, CheckCheck, FileText } from 'lucide-react';
 import { PromptTemplate } from '@/types/admin';
+import { VariableHelper } from './VariableHelper';
 
 interface PromptEditorProps {
   selectedTemplate: PromptTemplate | null;
   editedPrompt: string;
   onPromptChange: (value: string) => void;
   onSave: () => void;
+  onInsertVariable?: (variableName: string) => void;
 }
 
 export const PromptEditor = ({
@@ -28,6 +30,25 @@ export const PromptEditor = ({
     navigator.clipboard.writeText(editedPrompt);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  const handleInsertVariable = (variableName: string) => {
+    const textarea = promptTextareaRef.current;
+    if (!textarea) return;
+
+    const variable = `{{${variableName}}}`;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    
+    // Insert the variable at cursor position
+    const newValue = editedPrompt.slice(0, start) + variable + editedPrompt.slice(end);
+    onPromptChange(newValue);
+    
+    // Move cursor after the inserted variable
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + variable.length, start + variable.length);
+    }, 0);
   };
 
   if (!selectedTemplate) {

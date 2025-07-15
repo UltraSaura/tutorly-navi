@@ -22,7 +22,9 @@ export const sendMessageToAI = async (
   inputMessage: string,
   messages: Message[],
   selectedModelId: string,
-  language: string = 'en'
+  language: string = 'en',
+  customPrompt?: string,
+  userContext?: any
 ) => {
   try {
     // Call the Supabase Edge Function
@@ -32,6 +34,8 @@ export const sendMessageToAI = async (
         modelId: selectedModelId,
         history: getMessageHistory(messages),
         language,
+        customPrompt,
+        userContext,
       },
     });
     

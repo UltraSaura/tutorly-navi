@@ -7,10 +7,12 @@ import { sendMessageToAI } from '@/services/chatService';
 import { generateFallbackResponse } from '@/utils/fallbackResponses';
 import { detectHomeworkInMessage } from '@/utils/homework';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useUserContext } from './useUserContext';
 
 export const useChat = () => {
-  const { selectedModelId, getAvailableModels } = useAdmin();
+  const { selectedModelId, getAvailableModels, activePromptTemplate } = useAdmin();
   const { language, t } = useLanguage();
+  const { userContext } = useUserContext();
   
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -69,7 +71,14 @@ export const useChat = () => {
     const isHomework = detectHomeworkInMessage(inputMessage);
     
     try {
-      const { data, error } = await sendMessageToAI(inputMessage, messages, selectedModelId, language);
+      const { data, error } = await sendMessageToAI(
+        inputMessage, 
+        messages, 
+        selectedModelId, 
+        language,
+        activePromptTemplate?.prompt,
+        userContext
+      );
       
       // Store the full response for potential exercise handling
       if (data) {
