@@ -9,6 +9,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, userData?: any) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,6 +73,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   };
 
+  const deleteAccount = async () => {
+    if (!user) {
+      throw new Error('No user logged in');
+    }
+
+    // Delete the user from Supabase Auth
+    // This will cascade to related data in users table due to foreign key constraints
+    const { error } = await supabase.auth.admin.deleteUser(user.id);
+    
+    if (error) {
+      throw error;
+    }
+
+    // Sign out the user
+    await signOut();
+  };
+
   const value = {
     user,
     session,
@@ -79,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signUp,
     signOut,
+    deleteAccount,
   };
 
   return (

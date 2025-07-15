@@ -21,6 +21,7 @@ const LearningRoadmap = lazy(() => import("./components/user/LearningRoadmap"));
 const GradeDashboard = lazy(() => import("./components/user/GradeDashboard"));
 const SkillMastery = lazy(() => import("./components/user/SkillMastery"));
 const Index = lazy(() => import("./pages/Index"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 
 // Admin Pages
 import AIModelManagement from "./components/admin/AIModelManagement";
@@ -75,6 +76,9 @@ const App = () => (
                     </Route>
                     <Route path="/skills" element={<MainLayout />}>
                       <Route index element={<SkillMastery />} />
+                    </Route>
+                    <Route path="/profile" element={<MainLayout />}>
+                      <Route index element={<ProfilePage />} />
                     </Route>
                     
                     {/* Management Dashboard */}

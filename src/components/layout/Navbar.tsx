@@ -107,9 +107,11 @@ const Navbar = () => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>{t('nav.myAccount')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>{t('nav.profile')}</span>
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>{t('nav.profile')}</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />

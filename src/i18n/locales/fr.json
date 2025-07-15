@@ -98,5 +98,33 @@
     "checkEmail": "Veuillez vérifier votre email pour confirmer votre compte",
     "checkEmailParent": "Veuillez vérifier votre email pour confirmer votre compte. Vous pourrez ensuite ajouter les informations de vos enfants.",
     "genericError": "Une erreur inattendue s'est produite. Veuillez réessayer."
+  },
+  "profile": {
+    "title": "Profil",
+    "description": "Gérez vos informations de compte et paramètres",
+    "personalInfo": "Informations personnelles",
+    "personalInfoDescription": "Vos détails de compte et préférences",
+    "accountType": "Type de compte",
+    "deleteAccount": {
+      "title": "Supprimer le compte",
+      "description": "Supprimer définitivement votre compte et toutes les données associées",
+      "warning": "Cette action ne peut pas être annulée. Toutes vos données seront définitivement supprimées.",
+      "consequences": "Ce qui sera supprimé :",
+      "consequence1": "Votre profil et informations de compte",
+      "consequence2": "Toutes vos notes et historique de devoirs",
+      "consequence3": "Progrès d'apprentissage et réalisations",
+      "consequence4": "Relations parent-enfant (le cas échéant)",
+      "button": "Supprimer mon compte",
+      "confirmTitle": "Êtes-vous absolument sûr ?",
+      "confirmDescription": "Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte et supprimera toutes vos données de nos serveurs.",
+      "typeToConfirm": "Tapez",
+      "confirmTextError": "Veuillez taper DELETE exactement pour confirmer",
+      "confirmButton": "Supprimer le compte",
+      "deleting": "Suppression...",
+      "success": "Compte supprimé",
+      "successMessage": "Votre compte a été supprimé avec succès",
+      "error": "Erreur",
+      "errorMessage": "Échec de la suppression du compte. Veuillez réessayer ou contacter le support."
+    }
   }
 }

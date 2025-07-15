@@ -173,7 +173,33 @@ const translations = {
     'subjects.spanish': 'Spanish',
     'subjects.history': 'History',
     'subjects.geography': 'Geography',
-    'subjects.computerscience': 'Computer Science'
+    'subjects.computerscience': 'Computer Science',
+
+    // Profile
+    'profile.title': 'Profile',
+    'profile.description': 'Manage your account information and settings',
+    'profile.personalInfo': 'Personal Information',
+    'profile.personalInfoDescription': 'Your account details and preferences',
+    'profile.accountType': 'Account Type',
+    'profile.deleteAccount.title': 'Delete Account',
+    'profile.deleteAccount.description': 'Permanently delete your account and all associated data',
+    'profile.deleteAccount.warning': 'This action cannot be undone. All your data will be permanently deleted.',
+    'profile.deleteAccount.consequences': 'What will be deleted:',
+    'profile.deleteAccount.consequence1': 'Your profile and account information',
+    'profile.deleteAccount.consequence2': 'All your grades and homework history',
+    'profile.deleteAccount.consequence3': 'Learning progress and achievements',
+    'profile.deleteAccount.consequence4': 'Parent-child relationships (if applicable)',
+    'profile.deleteAccount.button': 'Delete My Account',
+    'profile.deleteAccount.confirmTitle': 'Are you absolutely sure?',
+    'profile.deleteAccount.confirmDescription': 'This action cannot be undone. This will permanently delete your account and remove all your data from our servers.',
+    'profile.deleteAccount.typeToConfirm': 'Type',
+    'profile.deleteAccount.confirmTextError': 'Please type DELETE exactly to confirm',
+    'profile.deleteAccount.confirmButton': 'Delete Account',
+    'profile.deleteAccount.deleting': 'Deleting...',
+    'profile.deleteAccount.success': 'Account Deleted',
+    'profile.deleteAccount.successMessage': 'Your account has been successfully deleted',
+    'profile.deleteAccount.error': 'Error',
+    'profile.deleteAccount.errorMessage': 'Failed to delete account. Please try again or contact support.'
   },
   fr: {
     // Navigation
@@ -336,7 +362,33 @@ const translations = {
     'subjects.spanish': 'Espagnol',
     'subjects.history': 'Histoire',
     'subjects.geography': 'Géographie',
-    'subjects.computerscience': 'Informatique'
+    'subjects.computerscience': 'Informatique',
+
+    // Profile
+    'profile.title': 'Profil',
+    'profile.description': 'Gérez vos informations de compte et paramètres',
+    'profile.personalInfo': 'Informations personnelles',
+    'profile.personalInfoDescription': 'Vos détails de compte et préférences',
+    'profile.accountType': 'Type de compte',
+    'profile.deleteAccount.title': 'Supprimer le compte',
+    'profile.deleteAccount.description': 'Supprimer définitivement votre compte et toutes les données associées',
+    'profile.deleteAccount.warning': 'Cette action ne peut pas être annulée. Toutes vos données seront définitivement supprimées.',
+    'profile.deleteAccount.consequences': 'Ce qui sera supprimé :',
+    'profile.deleteAccount.consequence1': 'Votre profil et informations de compte',
+    'profile.deleteAccount.consequence2': 'Toutes vos notes et historique de devoirs',
+    'profile.deleteAccount.consequence3': 'Progrès d\'apprentissage et réalisations',
+    'profile.deleteAccount.consequence4': 'Relations parent-enfant (le cas échéant)',
+    'profile.deleteAccount.button': 'Supprimer mon compte',
+    'profile.deleteAccount.confirmTitle': 'Êtes-vous absolument sûr ?',
+    'profile.deleteAccount.confirmDescription': 'Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte et supprimera toutes vos données de nos serveurs.',
+    'profile.deleteAccount.typeToConfirm': 'Tapez',
+    'profile.deleteAccount.confirmTextError': 'Veuillez taper DELETE exactement pour confirmer',
+    'profile.deleteAccount.confirmButton': 'Supprimer le compte',
+    'profile.deleteAccount.deleting': 'Suppression...',
+    'profile.deleteAccount.success': 'Compte supprimé',
+    'profile.deleteAccount.successMessage': 'Votre compte a été supprimé avec succès',
+    'profile.deleteAccount.error': 'Erreur',
+    'profile.deleteAccount.errorMessage': 'Échec de la suppression du compte. Veuillez réessayer ou contacter le support.'
   }
 };
 

@@ -5,7 +5,8 @@
     "roadmap": "Roadmap", 
     "skills": "Skills",
     "myAccount": "My Account",
-    "language": "Language"
+    "language": "Language",
+    "profile": "Profile"
   },
   "chat": {
     "inputPlaceholder": "Type your question or homework here...",
@@ -98,5 +99,33 @@
     "checkEmail": "Please check your email to verify your account",
     "checkEmailParent": "Please check your email to verify your account. You can then add your children's information.",
     "genericError": "An unexpected error occurred. Please try again."
+  },
+  "profile": {
+    "title": "Profile",
+    "description": "Manage your account information and settings",
+    "personalInfo": "Personal Information",
+    "personalInfoDescription": "Your account details and preferences",
+    "accountType": "Account Type",
+    "deleteAccount": {
+      "title": "Delete Account",
+      "description": "Permanently delete your account and all associated data",
+      "warning": "This action cannot be undone. All your data will be permanently deleted.",
+      "consequences": "What will be deleted:",
+      "consequence1": "Your profile and account information",
+      "consequence2": "All your grades and homework history",
+      "consequence3": "Learning progress and achievements",
+      "consequence4": "Parent-child relationships (if applicable)",
+      "button": "Delete My Account",
+      "confirmTitle": "Are you absolutely sure?",
+      "confirmDescription": "This action cannot be undone. This will permanently delete your account and remove all your data from our servers.",
+      "typeToConfirm": "Type",
+      "confirmTextError": "Please type DELETE exactly to confirm",
+      "confirmButton": "Delete Account",
+      "deleting": "Deleting...",
+      "success": "Account Deleted",
+      "successMessage": "Your account has been successfully deleted",
+      "error": "Error",
+      "errorMessage": "Failed to delete account. Please try again or contact support."
+    }
   }
 }
