@@ -74,13 +74,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteAccount = async () => {
-    if (!user) {
+    if (!user || !session) {
       throw new Error('No user logged in');
     }
 
-    // Delete the user from Supabase Auth
-    // This will cascade to related data in users table due to foreign key constraints
-    const { error } = await supabase.auth.admin.deleteUser(user.id);
+    // Call the delete-account edge function
+    const { error } = await supabase.functions.invoke('delete-account', {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
     
     if (error) {
       throw error;
