@@ -8,6 +8,7 @@ import { AnimatePresence } from "framer-motion";
 import { AdminProvider } from "./context/AdminContext";
 import { LanguageProvider } from "./context/SimpleLanguageContext";
 import { AuthProvider } from "./context/AuthContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Layouts
 import MainLayout from "./components/layout/MainLayout";
@@ -48,12 +49,13 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AuthProvider>
-        <LanguageProvider>
-          <AdminProvider>
+    <ErrorBoundary>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AuthProvider>
+          <LanguageProvider>
+            <AdminProvider>
             <BrowserRouter>
               <AnimatePresence mode="wait">
                 <Suspense fallback={<LoadingFallback />}>
@@ -98,10 +100,11 @@ const App = () => (
                 </Suspense>
               </AnimatePresence>
             </BrowserRouter>
-          </AdminProvider>
-        </LanguageProvider>
-      </AuthProvider>
-    </TooltipProvider>
+            </AdminProvider>
+          </LanguageProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </ErrorBoundary>
   </QueryClientProvider>
 );
 

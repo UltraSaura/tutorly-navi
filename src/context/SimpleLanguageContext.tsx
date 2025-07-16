@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getLanguageFromCountry } from '@/utils/countryLanguageMapping';
-import { useUserContext } from '@/hooks/useUserContext';
 import { useAuth } from '@/context/AuthContext';
 
 interface LanguageContextType {
@@ -399,9 +398,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return localStorage.getItem('language') || 'en';
   });
   
-  // Safely get auth and user context - only if auth is available
   const { user } = useAuth();
-  const { userContext } = user ? useUserContext() : { userContext: null };
 
   const changeLanguage = (lng: string) => {
     setLanguage(lng);
@@ -455,13 +452,31 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return currentTranslations[key as keyof typeof currentTranslations] || key;
   };
 
-  // Auto-detect language when user context loads
+  // Auto-detect language when user loads
   useEffect(() => {
-    if (userContext?.country) {
-      console.log('User context loaded with country:', userContext.country);
-      setLanguageFromCountry(userContext.country);
-    }
-  }, [userContext?.country]);
+    const detectLanguageFromUser = async () => {
+      if (!user?.id || localStorage.getItem('languageManuallySet') === 'true') return;
+      
+      try {
+        const { data } = await import('@/integrations/supabase/client').then(m => 
+          m.supabase
+            .from('users')
+            .select('country')
+            .eq('id', user.id)
+            .single()
+        );
+        
+        if (data?.country) {
+          console.log('User loaded with country:', data.country);
+          setLanguageFromCountry(data.country);
+        }
+      } catch (error) {
+        console.warn('Failed to detect language from user profile:', error);
+      }
+    };
+    
+    detectLanguageFromUser();
+  }, [user?.id]);
 
   return (
     <LanguageContext.Provider value={{
