@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MessageSquare, BookOpen, BarChart3, CheckSquare, User, Settings, Globe, ChevronDown } from 'lucide-react';
+import { MessageSquare, BookOpen, BarChart3, CheckSquare, User, Settings, Globe, ChevronDown, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { motion } from 'framer-motion';
 import SubjectSelector from './SubjectSelector';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import MobileLanguageMenuItems from './MobileLanguageMenuItems';
 
 // Language menu items component
 const LanguageMenuItems = () => {
@@ -48,6 +52,13 @@ const LanguageMenuItems = () => {
 const Navbar = () => {
   const location = useLocation();
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setMobileMenuOpen(false);
+  };
   
   const tabs = [
     { path: '/', label: t('nav.home'), icon: <MessageSquare className="w-5 h-5" /> },
@@ -127,7 +138,7 @@ const Navbar = () => {
       </div>
       
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-2 px-6">
-        <div className="flex justify-around">
+        <div className="flex justify-around items-center">
           {tabs.map((tab) => (
             <Link 
               key={tab.path} 
@@ -142,6 +153,48 @@ const Navbar = () => {
               <span className="text-xs mt-1">{tab.label}</span>
             </Link>
           ))}
+          
+          {/* Mobile Account Menu */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <button className="flex flex-col items-center p-2 rounded-md text-gray-500 dark:text-gray-400">
+                <User className="w-5 h-5" />
+                <span className="text-xs mt-1">{t('nav.myAccount')}</span>
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-auto">
+              <SheetHeader>
+                <SheetTitle>{t('nav.myAccount')}</SheetTitle>
+              </SheetHeader>
+              
+              <div className="mt-6 space-y-4">
+                <Link 
+                  to="/profile" 
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <User className="w-5 h-5" />
+                  <span>{t('nav.profile')}</span>
+                </Link>
+                
+                <div className="p-3 rounded-lg border">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Globe className="w-5 h-5" />
+                    <span className="font-medium">{t('nav.language')}</span>
+                  </div>
+                  <MobileLanguageMenuItems />
+                </div>
+                
+                <button 
+                  onClick={handleSignOut}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent w-full text-left text-red-600 dark:text-red-400"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>

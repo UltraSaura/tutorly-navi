@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getLanguageFromCountry } from '@/utils/countryLanguageMapping';
+import { useUserContext } from '@/hooks/useUserContext';
 
 interface LanguageContextType {
   language: string;
@@ -396,6 +397,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [language, setLanguage] = useState(() => {
     return localStorage.getItem('language') || 'en';
   });
+  const { userContext } = useUserContext();
 
   const changeLanguage = (lng: string) => {
     setLanguage(lng);
@@ -448,6 +450,14 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const currentTranslations = translations[language as keyof typeof translations] || translations.en;
     return currentTranslations[key as keyof typeof currentTranslations] || key;
   };
+
+  // Auto-detect language when user context loads
+  useEffect(() => {
+    if (userContext?.country) {
+      console.log('User context loaded with country:', userContext.country);
+      setLanguageFromCountry(userContext.country);
+    }
+  }, [userContext?.country]);
 
   return (
     <LanguageContext.Provider value={{
