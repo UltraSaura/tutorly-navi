@@ -9,6 +9,7 @@ import SubjectSelector from './SubjectSelector';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import MobileLanguageMenuItems from './MobileLanguageMenuItems';
 
 // Language menu items component
@@ -54,10 +55,30 @@ const Navbar = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const { toast } = useToast();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setMobileMenuOpen(false);
+    if (isSigningOut) return;
+    
+    setIsSigningOut(true);
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been logged out of your account.",
+      });
+      setMobileMenuOpen(false);
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({
+        title: "Error signing out",
+        description: "There was a problem signing out. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSigningOut(false);
+    }
   };
   
   const tabs = [
@@ -131,6 +152,15 @@ const Navbar = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel>{t('nav.language')}</DropdownMenuLabel>
                 <LanguageMenuItems />
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
+                  className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>{isSigningOut ? 'Signing out...' : 'Sign Out'}</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -187,10 +217,11 @@ const Navbar = () => {
                 
                 <button 
                   onClick={handleSignOut}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent w-full text-left text-red-600 dark:text-red-400"
+                  disabled={isSigningOut}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent w-full text-left text-red-600 dark:text-red-400 disabled:opacity-50"
                 >
                   <LogOut className="w-5 h-5" />
-                  <span>Sign Out</span>
+                  <span>{isSigningOut ? 'Signing out...' : 'Sign Out'}</span>
                 </button>
               </div>
             </SheetContent>
