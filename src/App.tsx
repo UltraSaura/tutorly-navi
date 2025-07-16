@@ -51,8 +51,8 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <LanguageProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <LanguageProvider>
           <AdminProvider>
             <BrowserRouter>
               <AnimatePresence mode="wait">
@@ -99,8 +99,8 @@ const App = () => (
               </AnimatePresence>
             </BrowserRouter>
           </AdminProvider>
-        </AuthProvider>
-      </LanguageProvider>
+        </LanguageProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

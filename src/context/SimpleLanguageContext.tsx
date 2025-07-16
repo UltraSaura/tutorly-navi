@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getLanguageFromCountry } from '@/utils/countryLanguageMapping';
 import { useUserContext } from '@/hooks/useUserContext';
+import { useAuth } from '@/context/AuthContext';
 
 interface LanguageContextType {
   language: string;
@@ -397,7 +398,10 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [language, setLanguage] = useState(() => {
     return localStorage.getItem('language') || 'en';
   });
-  const { userContext } = useUserContext();
+  
+  // Safely get auth and user context - only if auth is available
+  const { user } = useAuth();
+  const { userContext } = user ? useUserContext() : { userContext: null };
 
   const changeLanguage = (lng: string) => {
     setLanguage(lng);
