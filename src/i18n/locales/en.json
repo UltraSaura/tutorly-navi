@@ -1,12 +1,17 @@
 {
   "nav": {
     "home": "Home",
+    "tutor": "Tutor",
+    "dashboard": "Dashboard",
     "grades": "Grades",
     "roadmap": "Roadmap", 
     "skills": "Skills",
+    "support": "Support",
+    "main": "Main",
     "myAccount": "My Account",
     "language": "Language",
-    "profile": "Profile"
+    "profile": "Profile",
+    "settings": "Settings"
   },
   "chat": {
     "inputPlaceholder": "Type your question or homework here...",

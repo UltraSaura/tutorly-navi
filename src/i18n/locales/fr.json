@@ -1,11 +1,17 @@
 {
   "nav": {
     "home": "Accueil",
+    "tutor": "Tuteur",
+    "dashboard": "Tableau de bord",
     "grades": "Notes",
     "roadmap": "Suivi",
-    "skills": "Compétences", 
+    "skills": "Compétences",
+    "support": "Support",
+    "main": "Principal",
     "myAccount": "Mon compte",
-    "language": "Langue"
+    "language": "Langue",
+    "profile": "Profil",
+    "settings": "Paramètres"
   },
   "chat": {
     "inputPlaceholder": "Tapez votre question ou devoir ici...",
