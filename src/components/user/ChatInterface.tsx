@@ -117,8 +117,8 @@ const ChatInterface = () => {
       </div>
 
       {/* Chat input positioned at exact bottom to align with sidebar footer */}
-      <div className="fixed bottom-6 left-[calc(var(--sidebar-width,16rem)+1.5rem)] right-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-t border-border p-4 z-50">
-        <div className="flex items-center gap-2 mb-3">
+      <div className="fixed bottom-6 left-[calc(var(--sidebar-width,16rem)+1.5rem)] right-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-t border-border p-3 z-50">
+        <div className="flex items-center gap-2 mb-1">
           <Sheet open={showChatHistory} onOpenChange={setShowChatHistory}>
             <SheetTrigger asChild>
               <Button variant="outline" size="sm" className="flex items-center gap-2">
