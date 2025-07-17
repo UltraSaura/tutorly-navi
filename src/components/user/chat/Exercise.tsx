@@ -1,9 +1,9 @@
 import React from 'react';
-import { ChevronUp, ChevronDown, ThumbsUp, AlertCircle, CircleCheck, CircleX } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ThumbsUp, AlertCircle, CircleCheck, CircleX } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Message } from '@/types/chat';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 
@@ -110,72 +110,79 @@ const Exercise = ({
         )}
         
         <div className="mt-4 flex justify-end items-center">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className={cn(
-              "text-xs hover:text-gray-700 dark:hover:text-gray-300",
-              exercise.expanded ? "text-studywhiz-600" : "text-gray-500"
-            )} 
-            onClick={() => toggleExerciseExpansion(exercise.id)}
-          >
-            {exercise.expanded ? t('exercise.hideExplanation') : t('exercise.showExplanation')}
-            {exercise.expanded ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />}
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                {t('exercise.showExplanation')}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-left">
+                  {exercise.question}
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                {exercise.userAnswer && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">{t('exercise.yourAnswer')}:</h4>
+                    <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        {exercise.userAnswer}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                <div className={cn(
+                  "p-4 rounded-lg",
+                  exercise.isCorrect 
+                    ? "bg-green-50 dark:bg-green-950/20" 
+                    : "bg-amber-50 dark:bg-amber-950/20"
+                )}>
+                  <div className="space-y-3">
+                    <div className="flex items-center mb-2">
+                      {exercise.isCorrect 
+                        ? <ThumbsUp className="w-4 h-4 mr-2 text-green-600" />
+                        : <AlertCircle className="w-4 h-4 mr-2 text-amber-600" />
+                      }
+                      <h4 className="text-sm font-medium">
+                        {exercise.isCorrect 
+                          ? exercise.attemptCount > 1 
+                            ? `${t('exercise.greatWork')} (${t('exercise.attempt')} ${exercise.attemptCount})` 
+                            : t('exercise.greatWork') 
+                          : `${t('exercise.learningOpportunity')}${exercise.attemptCount > 1 ? ` (${t('exercise.attempt')} ${exercise.attemptCount})` : ""}`}
+                      </h4>
+                    </div>
+                    
+                    {hasRelatedMessages ? (
+                      <div className="space-y-3">
+                        {exercise.relatedMessages?.map((message, index) => (
+                          <div key={index} className="p-3 rounded-lg bg-white dark:bg-gray-800 text-sm">
+                            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                              {message.content}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div 
+                        className="text-sm text-gray-700 dark:text-gray-300 prose-sm max-w-full"
+                        dangerouslySetInnerHTML={{ __html: formattedExplanation }}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
-      
-      <AnimatePresence>
-        {exercise.expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Separator />
-            <div className={cn(
-              "p-4",
-              exercise.isCorrect 
-                ? "bg-green-50 dark:bg-green-950/20" 
-                : "bg-amber-50 dark:bg-amber-950/20"
-            )}>
-              <div className="space-y-3">
-                <div className="flex items-center mb-2">
-                  {exercise.isCorrect 
-                    ? <ThumbsUp className="w-4 h-4 mr-2 text-green-600" />
-                    : <AlertCircle className="w-4 h-4 mr-2 text-amber-600" />
-                  }
-                  <h4 className="text-sm font-medium">
-                    {exercise.isCorrect 
-                      ? exercise.attemptCount > 1 
-                        ? `${t('exercise.greatWork')} (${t('exercise.attempt')} ${exercise.attemptCount})` 
-                        : t('exercise.greatWork') 
-                      : `${t('exercise.learningOpportunity')}${exercise.attemptCount > 1 ? ` (${t('exercise.attempt')} ${exercise.attemptCount})` : ""}`}
-                  </h4>
-                </div>
-                
-                {hasRelatedMessages ? (
-                  <div className="space-y-3">
-                    {exercise.relatedMessages?.map((message, index) => (
-                      <div key={index} className="p-3 rounded-lg bg-white dark:bg-gray-800 text-sm">
-                        <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                          {message.content}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div 
-                    className="text-sm text-gray-700 dark:text-gray-300 prose-sm max-w-full"
-                    dangerouslySetInnerHTML={{ __html: formattedExplanation }}
-                  />
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 };
