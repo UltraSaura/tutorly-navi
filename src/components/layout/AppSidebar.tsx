@@ -29,6 +29,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const navigation = [
   { 
@@ -133,65 +139,119 @@ export function AppSidebar() {
   const userInitials = user?.email?.charAt(0).toUpperCase() || 'U';
 
   return (
-    <Sidebar className={state === "collapsed" ? "w-16" : "w-64"} collapsible="icon">
-      <SidebarHeader className="border-b border-border/40 p-4">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-            SW
+    <TooltipProvider>
+      <Sidebar 
+        className={`transition-all duration-300 ease-in-out ${state === "collapsed" ? "w-16" : "w-64"}`} 
+        collapsible="icon"
+      >
+        <SidebarHeader className="border-b border-border/40 p-4 transition-all duration-300">
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold text-sm transition-all duration-300 hover:scale-105">
+                  SW
+                </div>
+              </TooltipTrigger>
+              {state === "collapsed" && (
+                <TooltipContent side="right">
+                  <p>StudyWhiz</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+            {state !== "collapsed" && (
+              <span className="text-lg font-semibold animate-fade-in">StudyWhiz</span>
+            )}
           </div>
-          {state !== "collapsed" && (
-            <span className="text-lg font-semibold">StudyWhiz</span>
-          )}
-        </div>
-      </SidebarHeader>
+        </SidebarHeader>
 
-      <SidebarContent className="p-4">
-        <SidebarGroup>
-          <SidebarGroupLabel className={state === "collapsed" ? "sr-only" : ""}>
-            {t('nav.main')}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigation.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
-                      <item.icon className="h-4 w-4" />
-                      {state !== "collapsed" && <span>{t(item.title)}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+        <SidebarContent className="p-4">
+          <SidebarGroup>
+            <SidebarGroupLabel className={state === "collapsed" ? "sr-only" : "animate-fade-in"}>
+              {t('nav.main')}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {navigation.map((item) => {
+                  const isActiveRoute = isActive(item.url);
+                  const menuButton = (
+                    <SidebarMenuButton asChild>
+                      <NavLink 
+                        to={item.url} 
+                        end 
+                        className={`transition-all duration-200 ${getNavCls({ isActive: isActiveRoute })}`}
+                      >
+                        <item.icon className="h-4 w-4 transition-all duration-200" />
+                        {state !== "collapsed" && (
+                          <span className="animate-fade-in">{t(item.title)}</span>
+                        )}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  );
 
-      <SidebarFooter className="border-t border-border/40 p-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className={`w-full justify-start gap-2 h-auto p-2 ${state === "collapsed" ? 'px-2' : 'px-3'}`}
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="text-sm">
-                  {userInitials}
-                </AvatarFallback>
-              </Avatar>
-              {state !== "collapsed" && (
-                <>
-                  <div className="flex flex-col items-start text-sm">
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      {state === "collapsed" ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            {menuButton}
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            <p>{t(item.title)}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        menuButton
+                      )}
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+
+        <SidebarFooter className="border-t border-border/40 p-4 transition-all duration-300">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              {state === "collapsed" ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-center p-2 transition-all duration-200 hover:scale-105"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="text-sm">
+                          {userInitials}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>{t('nav.myAccount')}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-2 h-auto p-3 transition-all duration-200 hover:bg-accent/50"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="text-sm">
+                      {userInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col items-start text-sm animate-fade-in">
                     <span className="font-medium">{t('nav.myAccount')}</span>
                     <span className="text-xs text-muted-foreground truncate max-w-32">
                       {user?.email}
                     </span>
                   </div>
-                  <ChevronDown className="h-4 w-4 ml-auto" />
-                </>
+                  <ChevronDown className="h-4 w-4 ml-auto transition-transform duration-200" />
+                </Button>
               )}
-            </Button>
-          </DropdownMenuTrigger>
+            </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>{t('nav.myAccount')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -217,8 +277,9 @@ export function AppSidebar() {
               <span>{isSigningOut ? 'Signing out...' : 'Sign Out'}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarFooter>
-    </Sidebar>
+          </DropdownMenu>
+        </SidebarFooter>
+      </Sidebar>
+    </TooltipProvider>
   );
 }
