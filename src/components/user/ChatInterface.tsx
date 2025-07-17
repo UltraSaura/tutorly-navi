@@ -104,9 +104,9 @@ const ChatInterface = () => {
 
   // Exercise-Focused Layout for Both Mobile and Desktop
   return (
-    <div className="flex flex-col h-full">
-      {/* Main Content Area - Exercise List */}
-      <div className="flex-1 overflow-y-auto">
+    <div className="relative h-[calc(100vh-8rem)]">
+      {/* Exercise List with padding for chat input */}
+      <div className="h-full overflow-y-auto pb-32">
         <div className="p-4">
           <ExerciseList 
             exercises={exercises} 
@@ -116,8 +116,8 @@ const ChatInterface = () => {
         </div>
       </div>
 
-      {/* Sticky Bottom Chat Input - Respects Sidebar */}
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-t border-border p-4">
+      {/* Absolutely positioned chat input at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-t border-border p-4">
         <div className="flex items-center gap-2 mb-3">
           <Sheet open={showChatHistory} onOpenChange={setShowChatHistory}>
             <SheetTrigger asChild>
