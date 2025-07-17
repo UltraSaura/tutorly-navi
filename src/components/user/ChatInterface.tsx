@@ -107,20 +107,6 @@ const ChatInterface = () => {
     <div className="flex flex-col h-[calc(100vh-6rem)]">
       {/* Main Content Area - Full Width Exercise List */}
       <div className="flex-1 overflow-y-auto pb-24">
-        {/* Enhanced Grade Card - More Prominent */}
-        <Card className="mb-6 mx-4 mt-6 max-w-md self-center">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-4">
-            <CardTitle className="text-lg font-semibold">{t('grades.overallGrade')}</CardTitle>
-            <GraduationCap className="h-6 w-6 text-studywhiz-600" />
-          </CardHeader>
-          <CardContent className="py-0 pb-4">
-            <div className="text-3xl font-bold text-studywhiz-600">{grade.percentage}%</div>
-            <p className="text-sm text-muted-foreground">
-              {t('grades.grade')}: {grade.letter}
-            </p>
-          </CardContent>
-        </Card>
-        
         {/* Full Width Exercise List */}
         <div className="mx-4">
           <ExerciseList 
