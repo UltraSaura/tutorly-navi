@@ -150,7 +150,7 @@ export function AppSidebar() {
 
   return (
     <TooltipProvider>
-      <Sidebar collapsible="icon" className="relative">
+      <Sidebar collapsible="icon" className="relative border-r bg-sidebar-background text-sidebar-foreground">
         {/* Custom Arrow Toggle Button */}
         <Button
           variant="ghost"
