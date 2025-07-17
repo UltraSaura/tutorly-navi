@@ -102,37 +102,39 @@ const ChatInterface = () => {
     handlePhotoUpload(file, addExercises, defaultSubject);
   };
 
-  // Mobile Layout - ChatGPT Style
-  if (isMobile) {
-    return (
-      <div className="flex flex-col h-[calc(100vh-6rem)]">
-        {/* Main Content Area - Exercises and Grades */}
-        <div className="flex-1 overflow-y-auto pb-20">
-          {/* Overall Grade Card */}
-          <Card className="mb-4 mx-4 mt-4 max-w-sm self-center">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3">
-              <CardTitle className="text-sm font-medium">{t('grades.overallGrade')}</CardTitle>
-              <GraduationCap className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="py-0 pb-3">
-              <div className="text-2xl font-bold">{grade.percentage}%</div>
-              <p className="text-xs text-muted-foreground">
-                {t('grades.grade')}: {grade.letter}
-              </p>
-            </CardContent>
-          </Card>
-          
-          {/* Exercise List */}
+  // Exercise-Focused Layout for Both Mobile and Desktop
+  return (
+    <div className="flex flex-col h-[calc(100vh-6rem)]">
+      {/* Main Content Area - Full Width Exercise List */}
+      <div className="flex-1 overflow-y-auto pb-24">
+        {/* Enhanced Grade Card - More Prominent */}
+        <Card className="mb-6 mx-4 mt-6 max-w-md self-center">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-4">
+            <CardTitle className="text-lg font-semibold">{t('grades.overallGrade')}</CardTitle>
+            <GraduationCap className="h-6 w-6 text-studywhiz-600" />
+          </CardHeader>
+          <CardContent className="py-0 pb-4">
+            <div className="text-3xl font-bold text-studywhiz-600">{grade.percentage}%</div>
+            <p className="text-sm text-muted-foreground">
+              {t('grades.grade')}: {grade.letter}
+            </p>
+          </CardContent>
+        </Card>
+        
+        {/* Full Width Exercise List */}
+        <div className="mx-4">
           <ExerciseList 
             exercises={exercises} 
             grade={grade} 
             toggleExerciseExpansion={toggleExerciseExpansion} 
           />
         </div>
+      </div>
 
-        {/* Fixed Bottom Chat Input */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 z-10">
-          <div className="flex items-center gap-2 mb-2">
+      {/* Fixed Bottom Chat Input - Full Width */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-t border-border p-4 z-10">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-2 mb-3">
             <Sheet open={showChatHistory} onOpenChange={setShowChatHistory}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="flex items-center gap-2">
@@ -157,47 +159,6 @@ const ChatInterface = () => {
             handleFileUpload={handleDocumentFileUpload}
             handlePhotoUpload={handlePhotoFileUpload}
             isLoading={isLoading}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  // Desktop Layout - Keep existing side-by-side layout
-  return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-6rem)] gap-4">
-      <ChatPanel 
-        messages={filteredMessages} 
-        isLoading={isLoading} 
-        inputMessage={inputMessage} 
-        setInputMessage={setInputMessage} 
-        handleSendMessage={handleSendMessage} 
-        handleFileUpload={handleDocumentFileUpload} 
-        handlePhotoUpload={handlePhotoFileUpload} 
-        activeModel={activeModel} 
-      />
-      
-      <div className="w-full md:w-2/3 glass rounded-xl overflow-hidden flex flex-col">
-        {/* Overall Grade Card */}
-        <Card className="mb-3 mx-4 mt-4 md:mt-8 max-w-sm self-center">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3">
-            <CardTitle className="text-sm font-medium">{t('grades.overallGrade')}</CardTitle>
-            <GraduationCap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="py-0 pb-3">
-            <div className="text-2xl font-bold">{grade.percentage}%</div>
-            <p className="text-xs text-muted-foreground">
-              {t('grades.grade')}: {grade.letter}
-            </p>
-          </CardContent>
-        </Card>
-        
-        {/* Exercise List */}
-        <div className="flex-1">
-          <ExerciseList 
-            exercises={exercises} 
-            grade={grade} 
-            toggleExerciseExpansion={toggleExerciseExpansion} 
           />
         </div>
       </div>
