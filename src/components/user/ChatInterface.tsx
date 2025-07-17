@@ -11,15 +11,11 @@ import { useAdmin } from '@/context/AdminContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { detectHomeworkInMessage, extractHomeworkFromMessage } from '@/utils/homework';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { GraduationCap, MessageSquare } from 'lucide-react';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 
 const ChatInterface = () => {
   const { t } = useLanguage();
   const isMobile = useIsMobile();
-  const [showChatHistory, setShowChatHistory] = useState(false);
   
   const {
     messages,
@@ -118,24 +114,6 @@ const ChatInterface = () => {
 
       {/* Chat input positioned at exact bottom to align with sidebar footer */}
       <div className="fixed bottom-6 left-[calc(var(--sidebar-width,16rem)+1.5rem)] right-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-t border-border p-3 z-50">
-        <div className="flex items-center gap-2 mb-1">
-          <Sheet open={showChatHistory} onOpenChange={setShowChatHistory}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                {t('chat.history')}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="h-[70vh]">
-              <SheetHeader>
-                <SheetTitle>{t('chat.conversationHistory')}</SheetTitle>
-              </SheetHeader>
-              <div className="mt-4 flex-1 overflow-hidden">
-                <MessageList messages={filteredMessages} isLoading={isLoading} />
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
         <MessageInput
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}

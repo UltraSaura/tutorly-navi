@@ -1,7 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useLanguage } from "@/context/SimpleLanguageContext";
+import { useChat } from "@/hooks/useChat";
+import MessageList from "@/components/user/chat/MessageList";
+import { useState } from "react";
 import { 
   MessageCircle, 
   Book, 
@@ -11,11 +15,14 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Info
+  Info,
+  History
 } from "lucide-react";
 
 const SupportPage = () => {
   const { t } = useLanguage();
+  const { filteredMessages } = useChat();
+  const [showChatHistory, setShowChatHistory] = useState(false);
 
   const contactMethods = [
     {
@@ -128,6 +135,37 @@ const SupportPage = () => {
           </Card>
         ))}
       </div>
+
+      {/* Chat History Section */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <History className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            <CardTitle>Chat History</CardTitle>
+          </div>
+          <CardDescription>
+            Review your previous conversations and interactions with the AI tutor
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Sheet open={showChatHistory} onOpenChange={setShowChatHistory}>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="w-full sm:w-auto">
+                <History className="mr-2 h-4 w-4" />
+                View Chat History
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[500px] sm:w-[600px]">
+              <SheetHeader>
+                <SheetTitle>Chat History</SheetTitle>
+              </SheetHeader>
+              <div className="h-full mt-6">
+                <MessageList messages={filteredMessages} isLoading={false} />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </CardContent>
+      </Card>
 
       {/* FAQ Section */}
       <div className="space-y-6">
