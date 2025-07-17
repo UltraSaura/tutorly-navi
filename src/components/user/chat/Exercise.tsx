@@ -28,7 +28,6 @@ interface ExerciseProps {
     lastAttemptDate: Date;
     needsRetry: boolean;
   };
-  exerciseNumber: number;
   toggleExerciseExpansion: (id: string) => void;
 }
 
@@ -38,7 +37,6 @@ interface ExerciseProps {
  */
 const Exercise = ({
   exercise,
-  exerciseNumber,
   toggleExerciseExpansion
 }: ExerciseProps) => {
   const { t } = useLanguage();
@@ -89,7 +87,6 @@ const Exercise = ({
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h3 className="text-md font-medium">
-                <span className="text-sm font-semibold text-muted-foreground mr-2">{exerciseNumber}.</span>
                 {exercise.question}
               </h3>
               {exercise.attemptCount > 1 && (
@@ -128,7 +125,7 @@ const Exercise = ({
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-left">
-                  {t('exercise.exercise')} {exerciseNumber}: {exercise.question}
+                  {exercise.question}
                 </DialogTitle>
               </DialogHeader>
               

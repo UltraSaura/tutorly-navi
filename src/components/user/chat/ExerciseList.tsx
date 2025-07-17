@@ -59,7 +59,6 @@ const ExerciseList = ({
               <Exercise
                 key={exercise.id}
                 exercise={exercise}
-                exerciseNumber={index + 1}
                 toggleExerciseExpansion={toggleExerciseExpansion}
               />
             ))}
