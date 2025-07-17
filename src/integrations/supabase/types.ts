@@ -106,42 +106,6 @@ export type Database = {
           },
         ]
       }
-      sidebar_tabs: {
-        Row: {
-          created_at: string | null
-          icon_name: string
-          id: string
-          is_visible: boolean | null
-          path: string
-          sort_order: number | null
-          title: string
-          updated_at: string | null
-          user_type: string
-        }
-        Insert: {
-          created_at?: string | null
-          icon_name: string
-          id?: string
-          is_visible?: boolean | null
-          path: string
-          sort_order?: number | null
-          title: string
-          updated_at?: string | null
-          user_type?: string
-        }
-        Update: {
-          created_at?: string | null
-          icon_name?: string
-          id?: string
-          is_visible?: boolean | null
-          path?: string
-          sort_order?: number | null
-          title?: string
-          updated_at?: string | null
-          user_type?: string
-        }
-        Relationships: []
-      }
       users: {
         Row: {
           country: string | null

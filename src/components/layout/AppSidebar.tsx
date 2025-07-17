@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { MessageSquare, LayoutDashboard, BarChart3, Award, HeadphonesIcon, User, Globe, LogOut, ChevronDown } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
@@ -6,7 +5,6 @@ import { useLanguage } from "@/context/SimpleLanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useSidebarTabs } from "@/hooks/useSidebarTabs";
 
 import {
   Sidebar,
@@ -40,15 +38,33 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// Icon mapping for dynamic icons
-const iconMap: { [key: string]: any } = {
-  MessageSquare,
-  LayoutDashboard,
-  BarChart3,
-  Award,
-  HeadphonesIcon,
-  User,
-};
+const navigation = [
+  { 
+    title: "nav.tutor", 
+    url: "/chat", 
+    icon: MessageSquare 
+  },
+  { 
+    title: "nav.dashboard", 
+    url: "/dashboard", 
+    icon: LayoutDashboard 
+  },
+  { 
+    title: "nav.grades", 
+    url: "/grades", 
+    icon: BarChart3 
+  },
+  { 
+    title: "nav.skills", 
+    url: "/skills", 
+    icon: Award 
+  },
+  { 
+    title: "nav.support", 
+    url: "/support", 
+    icon: HeadphonesIcon 
+  },
+];
 
 const LanguageMenuItems = () => {
   const { language, changeLanguage, t } = useLanguage();
@@ -94,9 +110,6 @@ export function AppSidebar() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSigningOut, setIsSigningOut] = useState(false);
-  
-  // Fetch dynamic sidebar tabs
-  const { data: sidebarTabs = [], isLoading } = useSidebarTabs('user');
   
   // Debug: Clear sidebar state cookie on first load
   useState(() => {
@@ -168,51 +181,40 @@ export function AppSidebar() {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {isLoading ? (
-                  // Loading skeleton
-                  <div className="space-y-2">
-                    {[...Array(4)].map((_, i) => (
-                      <div key={i} className="h-8 bg-gray-200 rounded animate-pulse" />
-                    ))}
-                  </div>
-                ) : (
-                  sidebarTabs.map((item) => {
-                    const isActiveRoute = isActive(item.path);
-                    const IconComponent = iconMap[item.icon_name];
-                    
-                    const menuButton = (
-                      <SidebarMenuButton asChild>
-                        <NavLink 
-                          to={item.path} 
-                          end 
-                          className={`transition-all duration-200 ${getNavCls({ isActive: isActiveRoute })}`}
-                        >
-                          {IconComponent && <IconComponent className="h-4 w-4 transition-all duration-200" />}
-                          {state !== "collapsed" && (
-                            <span className="animate-fade-in">{item.title}</span>
-                          )}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    );
-
-                    return (
-                      <SidebarMenuItem key={item.id}>
-                        {state === "collapsed" ? (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              {menuButton}
-                            </TooltipTrigger>
-                            <TooltipContent side="right">
-                              <p>{item.title}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          menuButton
+                {navigation.map((item) => {
+                  const isActiveRoute = isActive(item.url);
+                  const menuButton = (
+                    <SidebarMenuButton asChild>
+                      <NavLink 
+                        to={item.url} 
+                        end 
+                        className={`transition-all duration-200 ${getNavCls({ isActive: isActiveRoute })}`}
+                      >
+                        <item.icon className="h-4 w-4 transition-all duration-200" />
+                        {state !== "collapsed" && (
+                          <span className="animate-fade-in">{t(item.title)}</span>
                         )}
-                      </SidebarMenuItem>
-                    );
-                  })
-                )}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  );
+
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      {state === "collapsed" ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            {menuButton}
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            <p>{t(item.title)}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        menuButton
+                      )}
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

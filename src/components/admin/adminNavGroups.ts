@@ -1,5 +1,5 @@
 
-import { Settings, Book, Users, Layout } from "lucide-react";
+import { Settings, Book, Users } from "lucide-react";
 
 export const adminNavGroups = [
   {
@@ -20,11 +20,6 @@ export const adminNavGroups = [
         path: '/admin/users',
         iconName: 'Users',
       },
-      {
-        title: 'Sidebar Tabs',
-        path: '/admin/sidebar-tabs',
-        iconName: 'Layout',
-      },
     ],
   }
 ];
@@ -32,6 +27,5 @@ export const adminNavGroups = [
 export const iconMap = {
   Settings,
   Book,
-  Users,
-  Layout
+  Users
 };
