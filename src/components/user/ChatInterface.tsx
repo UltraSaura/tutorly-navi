@@ -104,11 +104,10 @@ const ChatInterface = () => {
 
   // Exercise-Focused Layout for Both Mobile and Desktop
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)]">
-      {/* Main Content Area - Full Width Exercise List */}
-      <div className="flex-1 overflow-y-auto pb-24">
-        {/* Full Width Exercise List */}
-        <div className="mx-4">
+    <div className="flex flex-col h-full">
+      {/* Main Content Area - Exercise List */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4">
           <ExerciseList 
             exercises={exercises} 
             grade={grade} 
@@ -117,36 +116,34 @@ const ChatInterface = () => {
         </div>
       </div>
 
-      {/* Fixed Bottom Chat Input - Full Width */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-t border-border p-4 z-10">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-2 mb-3">
-            <Sheet open={showChatHistory} onOpenChange={setShowChatHistory}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  {t('chat.history')}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="h-[70vh]">
-                <SheetHeader>
-                  <SheetTitle>{t('chat.conversationHistory')}</SheetTitle>
-                </SheetHeader>
-                <div className="mt-4 flex-1 overflow-hidden">
-                  <MessageList messages={filteredMessages} isLoading={isLoading} />
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-          <MessageInput
-            inputMessage={inputMessage}
-            setInputMessage={setInputMessage}
-            handleSendMessage={handleSendMessage}
-            handleFileUpload={handleDocumentFileUpload}
-            handlePhotoUpload={handlePhotoFileUpload}
-            isLoading={isLoading}
-          />
+      {/* Sticky Bottom Chat Input - Respects Sidebar */}
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-t border-border p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Sheet open={showChatHistory} onOpenChange={setShowChatHistory}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                {t('chat.history')}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[70vh]">
+              <SheetHeader>
+                <SheetTitle>{t('chat.conversationHistory')}</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 flex-1 overflow-hidden">
+                <MessageList messages={filteredMessages} isLoading={isLoading} />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
+        <MessageInput
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
+          handleSendMessage={handleSendMessage}
+          handleFileUpload={handleDocumentFileUpload}
+          handlePhotoUpload={handlePhotoFileUpload}
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );
