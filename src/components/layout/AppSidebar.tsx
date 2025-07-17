@@ -17,6 +17,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
@@ -102,12 +103,20 @@ const LanguageMenuItems = () => {
 };
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
   const location = useLocation();
   const { t } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  
+  // Debug: Clear sidebar state cookie on first load
+  useState(() => {
+    if (typeof window !== 'undefined') {
+      // Clear the sidebar state cookie to ensure fresh state
+      document.cookie = 'sidebar:state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    }
+  });
   
   const currentPath = location.pathname;
   const isActive = (path: string) => currentPath === path;
@@ -276,6 +285,7 @@ export function AppSidebar() {
           </DropdownMenuContent>
           </DropdownMenu>
         </SidebarFooter>
+        <SidebarRail />
       </Sidebar>
     </TooltipProvider>
   );
