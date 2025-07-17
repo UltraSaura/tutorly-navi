@@ -55,10 +55,11 @@ const ExerciseList = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {exercises.map(exercise => (
+            {exercises.map((exercise, index) => (
               <Exercise
                 key={exercise.id}
                 exercise={exercise}
+                exerciseNumber={index + 1}
                 toggleExerciseExpansion={toggleExerciseExpansion}
               />
             ))}

@@ -28,6 +28,7 @@ interface ExerciseProps {
     lastAttemptDate: Date;
     needsRetry: boolean;
   };
+  exerciseNumber: number;
   toggleExerciseExpansion: (id: string) => void;
 }
 
@@ -37,6 +38,7 @@ interface ExerciseProps {
  */
 const Exercise = ({
   exercise,
+  exerciseNumber,
   toggleExerciseExpansion
 }: ExerciseProps) => {
   const { t } = useLanguage();
@@ -46,6 +48,12 @@ const Exercise = ({
     .join('<br />') : '';
 
   const hasRelatedMessages = exercise.relatedMessages && exercise.relatedMessages.length > 0;
+
+  const getBadgeColor = (isCorrect?: boolean) => {
+    if (isCorrect === true) return "bg-green-500";
+    if (isCorrect === false) return "bg-red-500";
+    return "bg-blue-500"; // unanswered
+  };
 
   // Debug rendering
   console.log('Exercise rendering:', { 
@@ -71,6 +79,18 @@ const Exercise = ({
     >
       <div className="p-4 py-[5px]">
         <div className="flex items-center gap-4">
+          <motion.div
+            className={cn(
+              "w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium",
+              getBadgeColor(exercise.isCorrect)
+            )}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            aria-label={`Exercise number ${exerciseNumber}`}
+          >
+            {exerciseNumber}
+          </motion.div>
           {exercise.isCorrect !== undefined && (
             <motion.div
               initial={{ scale: 0 }}
@@ -123,7 +143,7 @@ const Exercise = ({
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-left">
-                  {exercise.question}
+                  Exercise {exerciseNumber}: {exercise.question}
                 </DialogTitle>
               </DialogHeader>
               
