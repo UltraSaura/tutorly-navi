@@ -18,6 +18,7 @@ import {
   SidebarHeader,
   SidebarFooter,
   SidebarRail,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
@@ -151,22 +152,25 @@ export function AppSidebar() {
     <TooltipProvider>
       <Sidebar collapsible="icon">
         <SidebarHeader className="border-b border-border/40 p-4 transition-all duration-300">
-          <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold text-sm transition-all duration-300 hover:scale-105">
-                  SW
-                </div>
-              </TooltipTrigger>
-              {state === "collapsed" && (
-                <TooltipContent side="right">
-                  <p>StudyWhiz</p>
-                </TooltipContent>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold text-sm transition-all duration-300 hover:scale-105">
+                    SW
+                  </div>
+                </TooltipTrigger>
+                {state === "collapsed" && (
+                  <TooltipContent side="right">
+                    <p>StudyWhiz</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+              {state !== "collapsed" && (
+                <span className="text-lg font-semibold animate-fade-in">StudyWhiz</span>
               )}
-            </Tooltip>
-            {state !== "collapsed" && (
-              <span className="text-lg font-semibold animate-fade-in">StudyWhiz</span>
-            )}
+            </div>
+            <SidebarTrigger className="h-8 w-8 transition-all duration-200 hover:bg-accent rounded-md" />
           </div>
         </SidebarHeader>
 
