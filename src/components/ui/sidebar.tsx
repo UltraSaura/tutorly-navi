@@ -220,7 +220,7 @@ const Sidebar = React.forwardRef<
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
         data-side={side}
-        style={{ backgroundColor: '#ffff00', border: '2px solid #ff0000' }}
+        
       >
         {/* This is what handles the sidebar gap on desktop */}
         <div
@@ -245,7 +245,7 @@ const Sidebar = React.forwardRef<
               : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
             className
           )}
-          style={{ backgroundColor: '#00ff00', border: '4px solid #ff0000' }}
+          
           {...props}
         >
           <div
