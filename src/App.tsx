@@ -1,115 +1,84 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { lazy, Suspense } from "react";
-import { AnimatePresence } from "framer-motion";
-import { AdminProvider } from "./context/AdminContext";
-import { LanguageProvider } from "./context/SimpleLanguageContext";
-import { AuthProvider } from "./context/AuthContext";
-import { ErrorBoundary } from "./components/ErrorBoundary";
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { SimpleLanguageProvider } from './context/SimpleLanguageContext';
+import { QueryClient } from '@tanstack/react-query';
+import AIModelManagement from './pages/admin/AIModelManagement';
+import SubjectManagement from './pages/admin/SubjectManagement';
+import UserManagement from './pages/admin/UserManagement';
+import AdminLayout from './components/admin/AdminLayout';
+import MainLayout from './components/layout/MainLayout';
+import Chat from './pages/Chat';
+import Dashboard from './pages/Dashboard';
+import Grades from './pages/Grades';
+import Skills from './pages/Skills';
+import Support from './pages/Support';
+import Profile from './pages/Profile';
+import LandingPage from './pages/LandingPage';
+import ManagementDashboard from './pages/ManagementDashboard';
+import PricingPage from './pages/PricingPage';
+import { useAuth } from './context/AuthContext'; // Import the useAuth hook
+import SidebarTabsPage from './pages/admin/SidebarTabsPage';
 
-// Layouts
-import MainLayout from "./components/layout/MainLayout";
-import AdminLayout from "./components/admin/AdminLayout";
+function AppRoutes() {
+  const { isLoggedIn, user, loading } = useAuth();
 
-// User Pages
-import NotFound from "./pages/NotFound";
-import ManagementDashboard from "./pages/ManagementDashboard";
-const ChatInterface = lazy(() => import("./components/user/ChatInterface"));
-const LearningRoadmap = lazy(() => import("./components/user/LearningRoadmap"));
-const GradeDashboard = lazy(() => import("./components/user/GradeDashboard"));
-const SkillMastery = lazy(() => import("./components/user/SkillMastery"));
-const Index = lazy(() => import("./pages/Index"));
-const ProfilePage = lazy(() => import("./pages/ProfilePage"));
-const SupportPage = lazy(() => import("./pages/SupportPage"));
+  // Show loading message while checking auth status
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
-// Admin Pages
-import AIModelManagement from "./components/admin/AIModelManagement";
-import SubjectManagement from "./components/admin/SubjectManagement";
-import UserManagement from "./components/admin/UserManagement";
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
 
-// Auth Pages  
-const AuthPage = lazy(() => import("./pages/AuthPage"));
+      {/* Public routes */}
+      {/* <Route path="/login" element={!isLoggedIn ? <Login /> : <Navigate to="/dashboard" />} />
+          <Route path="/register" element={!isLoggedIn ? <Register /> : <Navigate to="/dashboard" />} /> */}
 
-// Loading Component
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="flex flex-col items-center">
-      <div className="w-16 h-16 relative">
-        <div className="absolute top-0 left-0 w-full h-full border-4 border-muted rounded-full"></div>
-        <div className="absolute top-0 left-0 w-full h-full border-4 border-primary rounded-full animate-spin border-t-transparent"></div>
-      </div>
-      <p className="mt-4 text-lg font-medium">Loading...</p>
-    </div>
-  </div>
-);
+      {/* App routes with MainLayout */}
+      <Route path="/" element={isLoggedIn ? <MainLayout /> : <Navigate to="/" replace />}>
+        <Route path="chat" element={<Chat />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="grades" element={<Grades />} />
+        <Route path="skills" element={<Skills />} />
+        <Route path="support" element={<Support />} />
+        <Route path="profile" element={<Profile />} />
+      </Route>
 
-const queryClient = new QueryClient();
+      {/* Management Dashboard - accessible to all logged-in users for now */}
+      <Route path="/management" element={isLoggedIn ? <ManagementDashboard /> : <Navigate to="/" replace />} />
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ErrorBoundary>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AuthProvider>
-          <LanguageProvider>
-            <AdminProvider>
-            <BrowserRouter>
-              <AnimatePresence mode="wait">
-                <Suspense fallback={<LoadingFallback />}>
-                  <Routes>
-                    {/* Auth Routes */}
-                    <Route path="/auth" element={<AuthPage />} />
-                    
-                    {/* Home Route */}
-                    <Route path="/" element={<Index />} />
-                    
-                    {/* User App Routes */}
-                    <Route path="/chat" element={<MainLayout />}>
-                      <Route index element={<ChatInterface />} />
-                    </Route>
-                    <Route path="/dashboard" element={<MainLayout />}>
-                      <Route index element={<LearningRoadmap />} />
-                    </Route>
-                    <Route path="/grades" element={<MainLayout />}>
-                      <Route index element={<GradeDashboard />} />
-                    </Route>
-                    <Route path="/skills" element={<MainLayout />}>
-                      <Route index element={<SkillMastery />} />
-                    </Route>
-                    <Route path="/support" element={<MainLayout />}>
-                      <Route index element={<SupportPage />} />
-                    </Route>
-                    <Route path="/profile" element={<MainLayout />}>
-                      <Route index element={<ProfilePage />} />
-                    </Route>
-                    
-                    {/* Management Dashboard */}
-                    <Route path="/management" element={<ManagementDashboard />} />
-                    
-                    {/* Admin Panel Routes */}
-                    <Route path="/admin" element={<AdminLayout />}>
-                      <Route index element={<AIModelManagement />} />
-                      <Route path="models" element={<AIModelManagement />} />
-                      <Route path="subjects" element={<SubjectManagement />} />
-                      <Route path="users" element={<UserManagement />} />
-                    </Route>
-                    
-                    {/* 404 Route */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-              </AnimatePresence>
-            </BrowserRouter>
-            </AdminProvider>
-          </LanguageProvider>
-        </AuthProvider>
-      </TooltipProvider>
-    </ErrorBoundary>
-  </QueryClientProvider>
-);
+      {/* Admin routes */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<Navigate to="/admin/models" replace />} />
+        <Route path="models" element={<AIModelManagement />} />
+        <Route path="subjects" element={<SubjectManagement />} />
+        <Route path="users" element={<UserManagement />} />
+        <Route path="sidebar-tabs" element={<SidebarTabsPage />} />
+      </Route>
+
+      {/* Catch-all route for 404 */}
+      <Route path="*" element={<div>404 - Not Found</div>} />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <SimpleLanguageProvider>
+        <QueryClient>
+          <Router>
+            <div className="min-h-screen bg-background">
+              <AppRoutes />
+            </div>
+          </Router>
+        </QueryClient>
+      </SimpleLanguageProvider>
+    </AuthProvider>
+  );
+}
 
 export default App;
