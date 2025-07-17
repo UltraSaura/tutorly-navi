@@ -140,10 +140,7 @@ export function AppSidebar() {
 
   return (
     <TooltipProvider>
-      <Sidebar 
-        className={`transition-all duration-300 ease-in-out ${state === "collapsed" ? "w-16" : "w-64"}`} 
-        collapsible="icon"
-      >
+      <Sidebar collapsible="icon">
         <SidebarHeader className="border-b border-border/40 p-4 transition-all duration-300">
           <div className="flex items-center gap-2">
             <Tooltip>
