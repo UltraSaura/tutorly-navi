@@ -202,7 +202,7 @@ const SidebarTabsPage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Sidebar Tab Management</h1>
-        <Button onClick={() => setIsAddingNew(true)} disabled={isAddingNew || editingTab}>
+        <Button onClick={() => setIsAddingNew(true)} disabled={isAddingNew || !!editingTab}>
           <Plus className="h-4 w-4 mr-2" />
           Add New Tab
         </Button>

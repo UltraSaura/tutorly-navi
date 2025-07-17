@@ -24,7 +24,7 @@ export const useSidebarTabs = (userType: string = 'user') => {
         .order('sort_order');
       
       if (error) throw error;
-      return data as SidebarTab[];
+      return data || [];
     },
   });
 };
