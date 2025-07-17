@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare, LayoutDashboard, BarChart3, Award, HeadphonesIcon, User, Globe, LogOut, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { MessageSquare, LayoutDashboard, BarChart3, Award, HeadphonesIcon, User, Globe, LogOut, ChevronDown } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useLanguage } from "@/context/SimpleLanguageContext";
 import { useAuth } from "@/context/AuthContext";
@@ -150,21 +150,7 @@ export function AppSidebar() {
 
   return (
     <TooltipProvider>
-      <Sidebar collapsible="icon" className="relative border-r bg-sidebar-background text-sidebar-foreground">
-        {/* Custom Arrow Toggle Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleSidebar}
-          className="absolute top-4 -right-3 z-50 h-6 w-6 p-0 rounded-full bg-background border border-border shadow-sm hover:bg-accent transition-all duration-200"
-        >
-          {state === "collapsed" ? (
-            <ChevronRight className="h-3 w-3" />
-          ) : (
-            <ChevronLeft className="h-3 w-3" />
-          )}
-        </Button>
-
+      <Sidebar collapsible="icon">
         <SidebarHeader className="border-b border-border/40 p-4 transition-all duration-300">
           <div className="flex items-center gap-2">
             <Tooltip>
@@ -186,6 +172,9 @@ export function AppSidebar() {
         </SidebarHeader>
 
         <SidebarContent className="p-4">
+          <div className="mb-2">
+            <SidebarTrigger className="h-8 w-8 transition-all duration-200 hover:bg-accent rounded-md" />
+          </div>
           <SidebarGroup>
             <SidebarGroupLabel className={state === "collapsed" ? "sr-only" : "animate-fade-in"}>
               {t('nav.main')}
