@@ -1,11 +1,12 @@
 
-import React, { useRef } from 'react';
-import { Send, Paperclip, Camera } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Send, Paperclip, Camera, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import CameraCapture from './CameraCapture';
 
 interface MessageInputProps {
   inputMessage: string;
@@ -28,6 +29,8 @@ const MessageInput = ({
   const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -42,6 +45,22 @@ const MessageInput = ({
   
   const triggerPhotoUpload = () => {
     photoInputRef.current?.click();
+  };
+
+  const triggerCameraCapture = () => {
+    cameraInputRef.current?.click();
+  };
+
+  const openCameraDialog = () => {
+    setIsCameraOpen(true);
+  };
+
+  const handleCameraCapture = (file: File) => {
+    handlePhotoUpload(file);
+    toast({
+      title: t('upload.photoUploaded'),
+      description: t('upload.photoSuccess'),
+    });
   };
 
   const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>, isPhoto: boolean) => {
@@ -128,6 +147,25 @@ const MessageInput = ({
           size="icon" 
           className="rounded-full p-2 text-gray-500" 
           onClick={triggerPhotoUpload}
+          title={t('upload.choosePhoto')}
+        >
+          <ImageIcon className="h-5 w-5" />
+        </Button>
+
+        <input 
+          type="file" 
+          ref={cameraInputRef} 
+          className="hidden" 
+          accept="image/*" 
+          capture="environment"
+          onChange={(e) => onFileSelected(e, true)}
+        />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="rounded-full p-2 text-gray-500" 
+          onClick={triggerCameraCapture}
+          title={t('upload.takePhoto')}
         >
           <Camera className="h-5 w-5" />
         </Button>
@@ -155,6 +193,12 @@ const MessageInput = ({
           <Send className="h-4 w-4" />
         </Button>
       </div>
+
+      <CameraCapture
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCapture={handleCameraCapture}
+      />
     </div>
   );
 };

@@ -132,5 +132,24 @@
       "error": "Error",
       "errorMessage": "Failed to delete account. Please try again or contact support."
     }
+  },
+  "upload": {
+    "choosePhoto": "Choose from Gallery",
+    "takePhoto": "Take Photo",
+    "fileTooLarge": "File Too Large",
+    "maxFileSize": "Maximum file size is 10MB",
+    "invalidFileType": "Invalid File Type",
+    "imageFileError": "Please select a valid image file",
+    "documentFileError": "Please select a valid document file (PDF, DOC, DOCX, TXT)",
+    "photoUploaded": "Photo Uploaded",
+    "photoSuccess": "Your photo has been uploaded successfully",
+    "documentUploaded": "Document Uploaded",
+    "documentSuccess": "has been uploaded successfully"
+  },
+  "camera": {
+    "title": "Take Photo",
+    "accessError": "Camera Access Error",
+    "permissionRequired": "Camera permission is required to take photos",
+    "starting": "Starting camera..."
   }
 }

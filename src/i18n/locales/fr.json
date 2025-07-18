@@ -132,5 +132,24 @@
       "error": "Erreur",
       "errorMessage": "Échec de la suppression du compte. Veuillez réessayer ou contacter le support."
     }
+  },
+  "upload": {
+    "choosePhoto": "Choisir dans la galerie",
+    "takePhoto": "Prendre une photo",
+    "fileTooLarge": "Fichier trop volumineux",
+    "maxFileSize": "La taille maximale du fichier est de 10 Mo",
+    "invalidFileType": "Type de fichier invalide",
+    "imageFileError": "Veuillez sélectionner un fichier image valide",
+    "documentFileError": "Veuillez sélectionner un fichier document valide (PDF, DOC, DOCX, TXT)",
+    "photoUploaded": "Photo téléchargée",
+    "photoSuccess": "Votre photo a été téléchargée avec succès",
+    "documentUploaded": "Document téléchargé",
+    "documentSuccess": "a été téléchargé avec succès"
+  },
+  "camera": {
+    "title": "Prendre une photo",
+    "accessError": "Erreur d'accès à la caméra",
+    "permissionRequired": "L'autorisation de la caméra est requise pour prendre des photos",
+    "starting": "Démarrage de la caméra..."
   }
 }
