@@ -47,6 +47,7 @@ export async function extractTextFromFile(fileData: string, fileType: string): P
           return result;
         } catch (azureError) {
           console.error('❌ Azure OCR fallback failed:', azureError.message);
+          console.log('💡 To enable Azure OCR, add AZURE_COMPUTER_VISION_KEY and AZURE_COMPUTER_VISION_ENDPOINT to Supabase secrets');
           
           // PHASE 4: Emergency extraction
           console.log('🆘 Using emergency text extraction');

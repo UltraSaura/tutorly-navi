@@ -13,11 +13,11 @@ function generateRandomString(length: number = 16): string {
   return result;
 }
 
-// Generate MD5 hash
-async function generateMD5Hash(text: string): Promise<string> {
+// Generate SHA-256 hash (MD5 not supported in Deno)
+async function generateSHA256Hash(text: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest('MD5', data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
@@ -50,7 +50,7 @@ async function createSimpleTexHeaders(appId: string, appSecret: string, data: Re
   
   console.log('SimpleTex signature string:', signString);
   
-  const sign = await generateMD5Hash(signString);
+  const sign = await generateSHA256Hash(signString);
   
   return {
     'app-id': appId,

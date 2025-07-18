@@ -13,14 +13,29 @@ async function generateAccessToken(): Promise<string> {
 
   let parsedCredentials;
   try {
-    // Handle case where credentials might be stored as escaped JSON string
-    const cleanCredentials = credentials.trim().replace(/^"|"$/g, '');
+    // Handle case where credentials might be stored as escaped JSON string or with extra quotes
+    let cleanCredentials = credentials.trim();
+    
+    // Remove outer quotes if present
+    if ((cleanCredentials.startsWith('"') && cleanCredentials.endsWith('"')) ||
+        (cleanCredentials.startsWith("'") && cleanCredentials.endsWith("'"))) {
+      cleanCredentials = cleanCredentials.slice(1, -1);
+    }
+    
+    // Unescape any escaped quotes
+    cleanCredentials = cleanCredentials.replace(/\\"/g, '"');
+    
     parsedCredentials = JSON.parse(cleanCredentials);
     console.log('Successfully parsed Google Vision credentials');
+    
+    // Validate required fields
+    if (!parsedCredentials.client_email || !parsedCredentials.private_key) {
+      throw new Error('Missing required fields: client_email or private_key');
+    }
   } catch (error) {
     console.error('Failed to parse GOOGLE_VISION_CREDENTIALS:', error);
-    console.log('Credentials preview:', credentials.substring(0, 50) + '...');
-    throw new Error('Invalid GOOGLE_VISION_CREDENTIALS format. Must be valid JSON containing service account key.');
+    console.log('Credentials preview:', credentials.substring(0, 100) + '...');
+    throw new Error('Invalid GOOGLE_VISION_CREDENTIALS format. Must be valid JSON containing service account key with client_email and private_key fields.');
   }
 
   const { client_email, private_key } = parsedCredentials;
