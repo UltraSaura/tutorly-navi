@@ -37,14 +37,17 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
     }
   ];
 
-  const AttachmentButton = ({ children }: { children: React.ReactNode }) => (
-    <Button 
-      variant="ghost" 
-      size="icon" 
-      className="rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-    >
-      {children}
-    </Button>
+  const AttachmentButton = React.forwardRef<HTMLButtonElement, { children: React.ReactNode }>(
+    ({ children }, ref) => (
+      <Button 
+        ref={ref}
+        variant="ghost" 
+        size="icon" 
+        className="rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+      >
+        {children}
+      </Button>
+    )
   );
 
   const MenuContent = ({ onItemClick }: { onItemClick?: () => void }) => (
