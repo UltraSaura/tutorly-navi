@@ -28,7 +28,7 @@ const MainLayout = () => {
           </header>
           
           {/* Main Content */}
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-2 md:p-6">
             <div className="animate-fade-in">
               <Outlet />
             </div>

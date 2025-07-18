@@ -113,7 +113,7 @@ const MessageInput = ({
   };
 
   return (
-    <div className="p-4 border-t border-border">
+    <div className="p-2 md:p-4 border-t border-border">
       <div className="relative flex items-center rounded-lg border border-border bg-background shadow-sm">
         <input 
           type="file" 
