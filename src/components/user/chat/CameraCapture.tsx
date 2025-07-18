@@ -32,33 +32,92 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
         throw new Error('Camera access not supported in this browser');
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      });
+      // Try multiple camera constraints with fallbacks
+      const constraints = [
+        { video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: { width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: true }
+      ];
+
+      let stream: MediaStream | null = null;
+      let lastError: Error | null = null;
+
+      for (const constraint of constraints) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(constraint);
+          break;
+        } catch (error) {
+          lastError = error as Error;
+          console.log('Failed with constraint:', constraint, error);
+        }
+      }
+
+      if (!stream) {
+        throw lastError || new Error('Failed to access camera with any configuration');
+      }
       
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
         streamRef.current = stream;
         
-        await new Promise<void>((resolve, reject) => {
-          const video = videoRef.current!;
-          
-          video.onloadedmetadata = async () => {
+        // Set video properties before setting srcObject
+        const video = videoRef.current;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.muted = true;
+        
+        // Set up event handlers before setting stream
+        const loadingPromise = new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Camera loading timeout'));
+          }, 10000);
+
+          const onLoadedMetadata = async () => {
             try {
+              // Ensure video has actual dimensions
+              if (video.videoWidth === 0 || video.videoHeight === 0) {
+                throw new Error('Video stream has no content');
+              }
+              
               await video.play();
-              setCameraState('ready');
-              resolve();
+              
+              // Additional validation to ensure video is actually playing
+              setTimeout(() => {
+                if (video.currentTime === 0 && video.readyState < 3) {
+                  reject(new Error('Video failed to start playing'));
+                } else {
+                  clearTimeout(timeout);
+                  setCameraState('ready');
+                  resolve();
+                }
+              }, 500);
             } catch (error) {
+              clearTimeout(timeout);
               reject(error);
             }
           };
-          
-          video.onerror = () => reject(new Error('Video loading failed'));
-          
-          setTimeout(() => reject(new Error('Camera timeout')), 5000);
+
+          const onError = () => {
+            clearTimeout(timeout);
+            reject(new Error('Video loading failed'));
+          };
+
+          video.addEventListener('loadedmetadata', onLoadedMetadata, { once: true });
+          video.addEventListener('error', onError, { once: true });
         });
+
+        // Set the stream after event handlers are set up
+        video.srcObject = stream;
+        
+        await loadingPromise;
       }
     } catch (error: any) {
+      // Clean up stream if error occurs
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      
       setCameraState('error');
       
       let errorMessage = 'Camera access failed';
@@ -66,6 +125,12 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
         errorMessage = 'Camera permission denied. Please allow camera access and try again.';
       } else if (error.name === 'NotFoundError') {
         errorMessage = 'No camera found on this device.';
+      } else if (error.name === 'NotReadableError') {
+        errorMessage = 'Camera is being used by another application.';
+      } else if (error.message.includes('timeout')) {
+        errorMessage = 'Camera loading timed out. Please try again.';
+      } else if (error.message.includes('no content')) {
+        errorMessage = 'Camera stream appears to be empty. Please try again.';
       }
       
       setCameraError(errorMessage);
@@ -142,7 +207,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
         streamRef.current = null;
       }
     };
-  }, [isOpen, capturedImage, cameraState]);
+  }, [isOpen, capturedImage, cameraState, startCamera]);
 
   const handleClose = () => {
     stopCamera();
