@@ -18,85 +18,54 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [cameraState, setCameraState] = useState<'idle' | 'starting' | 'ready' | 'error'>('idle');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [isInitializing, setIsInitializing] = useState(false);
 
   const startCamera = useCallback(async () => {
-    setIsInitializing(true);
+    setCameraState('starting');
     setCameraError(null);
     
     try {
-      // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Camera access not supported in this browser');
       }
 
-      console.log('Requesting camera access...');
-      
-      // Try different constraint sets for better compatibility
-      const constraints = [
-        { video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } },
-        { video: { facingMode: 'environment' } },
-        { video: { width: { ideal: 1280 }, height: { ideal: 720 } } },
-        { video: true }
-      ];
-
-      let stream = null;
-      let lastError = null;
-
-      for (const constraint of constraints) {
-        try {
-          console.log('Trying constraint:', constraint);
-          stream = await navigator.mediaDevices.getUserMedia(constraint);
-          console.log('Camera access granted with constraint:', constraint);
-          break;
-        } catch (error) {
-          console.log('Constraint failed:', constraint, error);
-          lastError = error;
-          continue;
-        }
-      }
-
-      if (!stream) {
-        throw lastError || new Error('No camera access available');
-      }
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
         
-        // Wait for video to be ready
-        videoRef.current.onloadedmetadata = () => {
-          console.log('Video metadata loaded, camera ready');
-          setIsStreaming(true);
-          setIsInitializing(false);
-        };
-
-        // Add timeout for video loading
-        setTimeout(() => {
-          if (!isStreaming) {
-            console.log('Video loading timeout, forcing stream state');
-            setIsStreaming(true);
-            setIsInitializing(false);
-          }
-        }, 3000);
+        await new Promise<void>((resolve, reject) => {
+          const video = videoRef.current!;
+          
+          video.onloadedmetadata = async () => {
+            try {
+              await video.play();
+              setCameraState('ready');
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          };
+          
+          video.onerror = () => reject(new Error('Video loading failed'));
+          
+          setTimeout(() => reject(new Error('Camera timeout')), 5000);
+        });
       }
     } catch (error: any) {
-      console.error('Error accessing camera:', error);
-      setIsInitializing(false);
+      setCameraState('error');
       
-      let errorMessage = 'Unknown camera error';
+      let errorMessage = 'Camera access failed';
       if (error.name === 'NotAllowedError') {
         errorMessage = 'Camera permission denied. Please allow camera access and try again.';
       } else if (error.name === 'NotFoundError') {
         errorMessage = 'No camera found on this device.';
-      } else if (error.name === 'NotSupportedError') {
-        errorMessage = 'Camera not supported in this browser.';
-      } else if (error.message) {
-        errorMessage = error.message;
       }
       
       setCameraError(errorMessage);
@@ -106,15 +75,14 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
         variant: "destructive"
       });
     }
-  }, [toast, t, isStreaming]);
+  }, [toast, t]);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
-    setIsStreaming(false);
-    setIsInitializing(false);
+    setCameraState('idle');
     setCameraError(null);
     setCapturedImage(null);
   }, []);
@@ -129,14 +97,10 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
 
     if (!context) return;
 
-    // Set canvas dimensions to match video
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-
-    // Draw the video frame to canvas
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Convert canvas to blob
     canvas.toBlob((blob) => {
       if (blob) {
         const imageUrl = URL.createObjectURL(blob);
@@ -168,14 +132,17 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
   }, [capturedImage, onCapture, onClose]);
 
   useEffect(() => {
-    if (isOpen && !capturedImage) {
+    if (isOpen && !capturedImage && cameraState === 'idle') {
       startCamera();
     }
     
     return () => {
-      stopCamera();
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
     };
-  }, [isOpen, startCamera, stopCamera, capturedImage]);
+  }, [isOpen, capturedImage, cameraState]);
 
   const handleClose = () => {
     stopCamera();
@@ -208,7 +175,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
               />
               <canvas ref={canvasRef} className="hidden" />
               
-              {isStreaming && (
+              {cameraState === 'ready' && (
                 <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4">
                   <Button
                     variant="secondary"
@@ -259,10 +226,10 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
             </>
           )}
 
-          {!isStreaming && !capturedImage && (
+          {cameraState !== 'ready' && !capturedImage && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-white text-center p-4">
-                {cameraError ? (
+                {cameraState === 'error' ? (
                   <>
                     <AlertCircle className="h-12 w-12 mx-auto mb-2 text-red-400" />
                     <p className="text-red-400 font-medium mb-2">Camera Error</p>
@@ -276,7 +243,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
                       Try Again
                     </Button>
                   </>
-                ) : isInitializing ? (
+                ) : cameraState === 'starting' ? (
                   <>
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-2"></div>
                     <p>Starting camera...</p>
