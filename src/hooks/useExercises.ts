@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Exercise, Message } from '@/types/chat';
 import { toast } from 'sonner';
 import { useGrades } from './useGrades';
-import { processNewExercise, linkMessageToExercise } from '@/utils/exerciseProcessor';
+import { processNewExercise, linkMessageToExercise, processMultipleExercises } from '@/utils/exerciseProcessor';
+import { hasMultipleExercises } from '@/utils/homework/multiExerciseParser';
 
 export const useExercises = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -55,24 +56,47 @@ export const useExercises = () => {
 
   const processHomeworkFromChat = async (message: string) => {
     console.log('[useExercises] Processing homework from chat message:', message);
-    const result = await processNewExercise(message, exercises, processedContent);
-    if (result) {
-      const { exercise, isUpdate } = result;
-      setExercises(prev => {
-        if (isUpdate) {
-          // Update existing exercise
-          const updated = prev.map(ex => ex.id === exercise.id ? exercise : ex);
-          console.log('[useExercises] Exercise updated:', exercise, 'Updated exercises:', updated);
+    
+    // Check if the message contains multiple exercises
+    if (hasMultipleExercises(message)) {
+      console.log('[useExercises] Detected multiple exercises in message');
+      const newExercises = await processMultipleExercises(message, exercises, processedContent);
+      
+      if (newExercises.length > 0) {
+        setExercises(prev => {
+          const updated = [...prev, ...newExercises];
+          console.log(`[useExercises] Added ${newExercises.length} exercises from multi-exercise message:`, updated);
           return updated;
-        } else {
-          // Add new exercise
-          const updated = [...prev, exercise];
-          console.log('[useExercises] New exercise added by chat:', exercise, 'Updated exercises:', updated);
-          return updated;
+        });
+        setProcessedContent(prev => new Set([...prev, message]));
+        console.log('[useExercises] Multi-exercise message marked as processed:', message);
+        
+        // Show feedback to user
+        if (newExercises.length > 1) {
+          toast.info(`Found ${newExercises.length} exercises in your message`);
         }
-      });
-      setProcessedContent(prev => new Set([...prev, message]));
-      console.log('[useExercises] Message marked as processed:', message);
+      }
+    } else {
+      // Process single exercise
+      const result = await processNewExercise(message, exercises, processedContent);
+      if (result) {
+        const { exercise, isUpdate } = result;
+        setExercises(prev => {
+          if (isUpdate) {
+            // Update existing exercise
+            const updated = prev.map(ex => ex.id === exercise.id ? exercise : ex);
+            console.log('[useExercises] Exercise updated:', exercise, 'Updated exercises:', updated);
+            return updated;
+          } else {
+            // Add new exercise
+            const updated = [...prev, exercise];
+            console.log('[useExercises] New exercise added by chat:', exercise, 'Updated exercises:', updated);
+            return updated;
+          }
+        });
+        setProcessedContent(prev => new Set([...prev, message]));
+        console.log('[useExercises] Message marked as processed:', message);
+      }
     }
   };
 

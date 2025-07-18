@@ -83,3 +83,4 @@ export const extractExerciseFromMessage = (content: string): { question: string,
 export { detectHomeworkInMessage };
 export { extractWithPatterns };
 export { extractMathProblem };
+export { hasMultipleExercises, parseMultipleExercises } from './multiExerciseParser';

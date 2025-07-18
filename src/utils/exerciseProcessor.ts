@@ -3,6 +3,7 @@ import { Exercise, Message } from '@/types/chat';
 import { toast } from 'sonner';
 import { evaluateHomework } from '@/services/homeworkGrading';
 import { extractHomeworkFromMessage } from '@/utils/homework';
+import { hasMultipleExercises, parseMultipleExercises } from '@/utils/homework/multiExerciseParser';
 
 export const processNewExercise = async (
   message: string,
@@ -151,4 +152,126 @@ export const linkMessageToExercise = (
   }
 
   return updatedExercises;
+};
+
+/**
+ * Process multiple exercises from a single message
+ */
+export const processMultipleExercises = async (
+  message: string,
+  existingExercises: Exercise[],
+  processedContent: Set<string>
+): Promise<Exercise[]> => {
+  console.log("[exerciseProcessor] Processing multiple exercises from message:", message);
+  
+  // Check if we've processed this exact content before
+  if (processedContent.has(message)) {
+    console.log("[exerciseProcessor] Skipping duplicate multi-exercise submission");
+    return [];
+  }
+
+  // Parse the message into multiple exercises
+  const parsedExercises = parseMultipleExercises(message);
+  
+  if (parsedExercises.length === 0) {
+    console.log("[exerciseProcessor] No exercises found in multi-exercise message");
+    return [];
+  }
+
+  console.log(`[exerciseProcessor] Found ${parsedExercises.length} exercises in message`);
+
+  const processedExercises: Exercise[] = [];
+
+  for (const parsedEx of parsedExercises) {
+    if (!parsedEx.question) continue;
+
+    // Check for exact duplicates
+    const exactDuplicate = existingExercises.find(
+      ex => ex.question === parsedEx.question && ex.userAnswer === parsedEx.answer
+    );
+
+    if (exactDuplicate) {
+      console.log("[exerciseProcessor] Skipping duplicate exercise:", parsedEx.question);
+      continue;
+    }
+
+    // Check for retry attempts
+    const existingExercise = existingExercises.find(ex => ex.question === parsedEx.question);
+
+    if (existingExercise && parsedEx.answer) {
+      // This is a retry attempt
+      const attemptNumber = existingExercise.attemptCount + 1;
+      const newAttempt = {
+        id: `${existingExercise.id}-attempt-${attemptNumber}`,
+        answer: parsedEx.answer,
+        timestamp: new Date(),
+        attemptNumber,
+      };
+
+      const updatedExercise: Exercise = {
+        ...existingExercise,
+        userAnswer: parsedEx.answer,
+        attemptCount: attemptNumber,
+        attempts: [...existingExercise.attempts, newAttempt],
+        lastAttemptDate: new Date(),
+        needsRetry: false,
+      };
+
+      try {
+        const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber);
+        processedExercises.push(gradedExercise);
+        console.log("[exerciseProcessor] Processed retry exercise:", gradedExercise.question);
+      } catch (error) {
+        console.error('[exerciseProcessor] Error grading retry exercise:', error);
+        continue;
+      }
+    } else if (parsedEx.answer) {
+      // This is a new exercise with answer
+      const newAttempt = {
+        id: `${Date.now()}-${parsedEx.index}-attempt-1`,
+        answer: parsedEx.answer,
+        timestamp: new Date(),
+        attemptNumber: 1,
+      };
+
+      const newEx: Exercise = {
+        id: `${Date.now()}-${parsedEx.index}`,
+        question: parsedEx.question,
+        userAnswer: parsedEx.answer,
+        expanded: false,
+        relatedMessages: [],
+        attemptCount: 1,
+        attempts: [newAttempt],
+        lastAttemptDate: new Date(),
+        needsRetry: false,
+      };
+
+      try {
+        const gradedExercise = await evaluateHomework(newEx, 1);
+        processedExercises.push(gradedExercise);
+        console.log("[exerciseProcessor] Processed new exercise:", gradedExercise.question);
+      } catch (error) {
+        console.error('[exerciseProcessor] Error grading new exercise:', error);
+        continue;
+      }
+    } else {
+      // Exercise without answer (question only)
+      const newEx: Exercise = {
+        id: `${Date.now()}-${parsedEx.index}`,
+        question: parsedEx.question,
+        userAnswer: "",
+        expanded: false,
+        relatedMessages: [],
+        attemptCount: 0,
+        attempts: [],
+        lastAttemptDate: new Date(),
+        needsRetry: true,
+      };
+
+      processedExercises.push(newEx);
+      console.log("[exerciseProcessor] Added exercise without answer:", newEx.question);
+    }
+  }
+
+  return processedExercises;
 };
