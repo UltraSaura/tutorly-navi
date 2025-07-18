@@ -44,11 +44,14 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
         variant="ghost" 
         size="icon" 
         className="rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        onClick={() => console.log('AttachmentButton clicked!')}
+        aria-label="Attach files"
       >
         {children}
       </Button>
     )
   );
+  AttachmentButton.displayName = "AttachmentButton";
 
   const MenuContent = ({ onItemClick }: { onItemClick?: () => void }) => (
     <div className={`${isMobile ? 'p-6' : 'p-2'} space-y-1`}>
@@ -112,7 +115,7 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
           <Plus className="h-5 w-5" />
         </AttachmentButton>
       </PopoverTrigger>
-      <PopoverContent side="top" align="start" className="w-80 p-0">
+      <PopoverContent side="top" align="start" className="w-80 p-0 z-50">
         <MenuContent />
       </PopoverContent>
     </Popover>
