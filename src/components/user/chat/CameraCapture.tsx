@@ -1,5 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { Camera, X, RotateCcw, Check } from 'lucide-react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { Camera, X, RotateCcw, Check, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
@@ -21,31 +21,92 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   const startCamera = useCallback(async () => {
+    setIsInitializing(true);
+    setCameraError(null);
+    
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: 'environment', // Use back camera on mobile
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera access not supported in this browser');
+      }
+
+      console.log('Requesting camera access...');
+      
+      // Try different constraint sets for better compatibility
+      const constraints = [
+        { video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: { facingMode: 'environment' } },
+        { video: { width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: true }
+      ];
+
+      let stream = null;
+      let lastError = null;
+
+      for (const constraint of constraints) {
+        try {
+          console.log('Trying constraint:', constraint);
+          stream = await navigator.mediaDevices.getUserMedia(constraint);
+          console.log('Camera access granted with constraint:', constraint);
+          break;
+        } catch (error) {
+          console.log('Constraint failed:', constraint, error);
+          lastError = error;
+          continue;
         }
-      });
+      }
+
+      if (!stream) {
+        throw lastError || new Error('No camera access available');
+      }
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
-        setIsStreaming(true);
+        
+        // Wait for video to be ready
+        videoRef.current.onloadedmetadata = () => {
+          console.log('Video metadata loaded, camera ready');
+          setIsStreaming(true);
+          setIsInitializing(false);
+        };
+
+        // Add timeout for video loading
+        setTimeout(() => {
+          if (!isStreaming) {
+            console.log('Video loading timeout, forcing stream state');
+            setIsStreaming(true);
+            setIsInitializing(false);
+          }
+        }, 3000);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error accessing camera:', error);
+      setIsInitializing(false);
+      
+      let errorMessage = 'Unknown camera error';
+      if (error.name === 'NotAllowedError') {
+        errorMessage = 'Camera permission denied. Please allow camera access and try again.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = 'No camera found on this device.';
+      } else if (error.name === 'NotSupportedError') {
+        errorMessage = 'Camera not supported in this browser.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setCameraError(errorMessage);
       toast({
         title: t('camera.accessError'),
-        description: t('camera.permissionRequired'),
+        description: errorMessage,
         variant: "destructive"
       });
     }
-  }, [toast, t]);
+  }, [toast, t, isStreaming]);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -53,6 +114,8 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
       streamRef.current = null;
     }
     setIsStreaming(false);
+    setIsInitializing(false);
+    setCameraError(null);
     setCapturedImage(null);
   }, []);
 
@@ -104,7 +167,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
     }
   }, [capturedImage, onCapture, onClose]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen && !capturedImage) {
       startCamera();
     }
@@ -198,9 +261,32 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
 
           {!isStreaming && !capturedImage && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-white text-center">
-                <Camera className="h-12 w-12 mx-auto mb-2" />
-                <p>{t('camera.starting')}</p>
+              <div className="text-white text-center p-4">
+                {cameraError ? (
+                  <>
+                    <AlertCircle className="h-12 w-12 mx-auto mb-2 text-red-400" />
+                    <p className="text-red-400 font-medium mb-2">Camera Error</p>
+                    <p className="text-sm text-gray-300 mb-4">{cameraError}</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={startCamera}
+                      className="text-white border-white hover:bg-white hover:text-black"
+                    >
+                      Try Again
+                    </Button>
+                  </>
+                ) : isInitializing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-2"></div>
+                    <p>Starting camera...</p>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-12 w-12 mx-auto mb-2" />
+                    <p>{t('camera.starting')}</p>
+                  </>
+                )}
               </div>
             </div>
           )}
