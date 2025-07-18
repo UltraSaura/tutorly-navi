@@ -28,23 +28,45 @@ export function extractExercisesFromText(text: string): Array<{ question: string
     return exercises;
   }
   
-  // PHASE 3: Emergency extraction for SimpleTex LaTeX content
+  // PHASE 3: Emergency extraction for SimpleTex LaTeX content with better preprocessing
   console.log('=== PHASE 3: Emergency SimpleTex Content Extraction ===');
-  if (text.includes('ERERCIE') || text.includes('Simpliffer') || text.match(/\d+\/\d+/)) {
-    console.log('Detected SimpleTex LaTeX format, creating emergency exercise...');
+  if (text.includes('ERERCIE') || text.includes('Simpliffer') || text.includes('^(') || text.match(/\d+\/\d+/)) {
+    console.log('Detected SimpleTex LaTeX format, applying enhanced preprocessing...');
     
-    // Try to extract the fraction
-    const fractionMatch = text.match(/\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)|(\d+)\s*\/\s*(\d+)/);
-    if (fractionMatch) {
-      const numerator = fractionMatch[1] || fractionMatch[3];
-      const denominator = fractionMatch[2] || fractionMatch[4];
+    // Import and use the comprehensive preprocessing
+    import('./textPreprocessing.ts').then(module => {
+      const { preprocessFrenchMathText } = module;
+      const processedText = preprocessFrenchMathText(text);
+      console.log('Emergency processed text:', processedText.substring(0, 200));
+      
+      // Try to extract fractions from processed text
+      const fractionMatches = processedText.match(/\d+\/\d+/g);
+      if (fractionMatches && fractionMatches.length > 0) {
+        console.log('Found fractions after preprocessing:', fractionMatches);
+        fractionMatches.slice(0, 3).forEach((fraction, index) => {
+          const letter = String.fromCharCode(97 + index); // a, b, c
+          exercises.push({
+            question: `${letter}. Simplifiez la fraction ${fraction}`,
+            answer: fraction
+          });
+        });
+        console.log(`PHASE 3: Created ${exercises.length} emergency exercises`);
+        return exercises;
+      }
+    });
+    
+    // Immediate fallback if dynamic import doesn't work
+    const immediateFractionMatch = text.match(/\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)|(\d+)\s*\/\s*(\d+)/);
+    if (immediateFractionMatch) {
+      const numerator = immediateFractionMatch[1] || immediateFractionMatch[3];
+      const denominator = immediateFractionMatch[2] || immediateFractionMatch[4];
       const fraction = `${numerator}/${denominator}`;
       
       exercises = [{
         question: `a. Simplifiez la fraction ${fraction}`,
         answer: fraction
       }];
-      console.log(`PHASE 3: Created emergency exercise for fraction ${fraction}`);
+      console.log(`PHASE 3: Created immediate emergency exercise for fraction ${fraction}`);
       return exercises;
     }
   }

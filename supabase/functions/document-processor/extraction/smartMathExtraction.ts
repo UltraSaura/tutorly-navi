@@ -1,5 +1,7 @@
 // Enhanced mathematical exercise extraction with LaTeX support from SimpleTex
 
+import { preprocessFrenchMathText } from './textPreprocessing.ts';
+
 export function extractMathExercisesFromRawText(rawText: string): Array<{ question: string, answer: string }> {
   console.log('=== ENHANCED MATH PATTERN EXTRACTION ===');
   console.log('Raw text length:', rawText.length);
@@ -23,7 +25,7 @@ export function extractMathExercisesFromRawText(rawText: string): Array<{ questi
   return extractMathExercisesDirectly(rawText);
 }
 
-// Helper function to detect error/emergency text
+// Helper function to detect error/emergency text (more restrictive to allow SimpleTex LaTeX)
 function isErrorText(text: string): boolean {
   const errorIndicators = [
     'OCR extraction failed',
@@ -36,7 +38,11 @@ function isErrorText(text: string): boolean {
   ];
   
   const lowerText = text.toLowerCase();
-  return errorIndicators.some(indicator => lowerText.includes(indicator.toLowerCase()));
+  // Only consider it error text if it contains these AND doesn't have math content
+  const hasErrorIndicator = errorIndicators.some(indicator => lowerText.includes(indicator.toLowerCase()));
+  const hasMathContent = /\d+\/\d+|\d+\.\d+|exercice|fraction/i.test(text);
+  
+  return hasErrorIndicator && !hasMathContent;
 }
 
 // Extract exercises from LaTeX-formatted text (SimpleTex output)
@@ -45,9 +51,10 @@ function extractFromLatexText(text: string): Array<{ question: string, answer: s
   
   const exercises = [];
   
-  // STEP 1: Apply French math text preprocessing
-  const cleanedText = preprocessSimpleTexOutput(text);
+  // STEP 1: Apply comprehensive French math text preprocessing
+  const cleanedText = preprocessFrenchMathText(text);
   console.log('Cleaned text (first 300 chars):', cleanedText.substring(0, 300));
+  console.log('Cleaned text length:', cleanedText.length);
   
   // STEP 2: Look for exercise title and content
   const exerciseMatch = cleanedText.match(/EXERCICE\s+(\d+|[IVX]+)/i);
@@ -113,31 +120,6 @@ function extractFromLatexText(text: string): Array<{ question: string, answer: s
   return exercises;
 }
 
-// Helper function to clean SimpleTex LaTeX output
-function preprocessSimpleTexOutput(text: string): string {
-  return text
-    // Remove LaTeX alignment and array commands
-    .replace(/\^\(aligned\)/g, '')
-    .replace(/\^\(array\)/g, '')
-    .replace(/\\\\\&/g, ' ')
-    .replace(/\\\\/g, ' ')
-    .replace(/\&\^/g, ' ')
-    .replace(/c{10,}/g, '') // Remove long strings of 'c'
-    
-    // Fix French OCR errors
-    .replace(/ERERCIE/g, 'EXERCICE')
-    .replace(/Simpliffer/g, 'Simplifier')
-    .replace(/fiactions/g, 'fractions')
-    .replace(/Simpliffes/g, 'Simplifiez')
-    
-    // Clean up fraction formatting
-    .replace(/\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g, '$1/$2')
-    .replace(/\s*~\s*/g, ' ')
-    
-    // Normalize whitespace
-    .replace(/\s+/g, ' ')
-    .trim();
-}
 
 // Direct OCR-based exercise extraction using precise pattern matching
 function extractMathExercisesDirectly(rawText: string): Array<{ question: string, answer: string }> {
