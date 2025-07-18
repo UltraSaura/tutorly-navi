@@ -45,43 +45,98 @@ function extractFromLatexText(text: string): Array<{ question: string, answer: s
   
   const exercises = [];
   
-  // Look for equation patterns in the text
-  const equationPatterns = [
-    // LaTeX equation format: expression = result
-    /([^=\n]+)\s*=\s*([^=\n]+)/g,
-    // Fraction equals patterns
-    /(\d+\/\d+|\(\d+\)\/\(\d+\))\s*=\s*([0-9.,]+)/g,
-    // Mathematical operations
-    /([0-9+\-×÷()\/.,\s]+)\s*=\s*([0-9.,]+)/g
+  // STEP 1: Apply French math text preprocessing
+  const cleanedText = preprocessSimpleTexOutput(text);
+  console.log('Cleaned text (first 300 chars):', cleanedText.substring(0, 300));
+  
+  // STEP 2: Look for exercise title and content
+  const exerciseMatch = cleanedText.match(/EXERCICE\s+(\d+|[IVX]+)/i);
+  const exerciseTitle = exerciseMatch ? `EXERCICE ${exerciseMatch[1]}` : 'EXERCICE';
+  
+  // STEP 3: Look for instruction text
+  const instructionMatch = cleanedText.match(/(Simplifiez?|Calculez?|Résolvez?)[^.]*\./i);
+  const instruction = instructionMatch ? instructionMatch[0] : 'Simplifiez les fractions suivantes';
+  
+  // STEP 4: Find fractions with specific patterns
+  const fractionPatterns = [
+    /(\d+)\s*\/\s*(\d+)\s*=?\s*/g, // Basic fractions like 30/63
+    /\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g, // Parenthesized fractions (30)/(63)
   ];
   
-  let exerciseCount = 0;
+  let foundFractions = [];
   
-  for (const pattern of equationPatterns) {
+  for (const pattern of fractionPatterns) {
     let match;
-    while ((match = pattern.exec(text)) !== null && exerciseCount < 10) {
-      const left = match[1].trim();
-      const right = match[2].trim();
-      
-      // Skip if either side is too long or contains non-math characters
-      if (left.length > 50 || right.length > 20) continue;
-      if (!/[\d\/\(\)+\-×÷=.,]/.test(left)) continue;
-      
-      const letter = String.fromCharCode(97 + exerciseCount);
-      exercises.push({
-        question: `${letter}. Calcule: ${left}`,
-        answer: right
-      });
-      
-      exerciseCount++;
-      console.log(`✅ LaTeX exercise: ${left} = ${right}`);
+    while ((match = pattern.exec(cleanedText)) !== null) {
+      const numerator = match[1];
+      const denominator = match[2];
+      foundFractions.push(`${numerator}/${denominator}`);
+      console.log(`✅ Found fraction: ${numerator}/${denominator}`);
     }
+    pattern.lastIndex = 0; // Reset for next pattern
+  }
+  
+  // STEP 5: Create exercises from found fractions
+  if (foundFractions.length > 0) {
+    foundFractions.forEach((fraction, index) => {
+      const letter = String.fromCharCode(97 + index); // a, b, c, etc.
+      exercises.push({
+        question: `${letter}. Simplifiez la fraction ${fraction}`,
+        answer: fraction
+      });
+      console.log(`✅ Created exercise: ${letter}. Simplifiez la fraction ${fraction}`);
+    });
+  }
+  
+  // STEP 6: If no fractions found, look for other math patterns
+  if (exercises.length === 0) {
+    const mathPatterns = [
+      /(\d+[\+\-\×\÷]\d+)\s*=\s*(\d+)/g, // Simple operations
+      /(\d+\.\d+)/g, // Decimal numbers
+    ];
     
-    // Reset regex for next pattern
-    pattern.lastIndex = 0;
+    for (const pattern of mathPatterns) {
+      let match;
+      while ((match = pattern.exec(cleanedText)) !== null && exercises.length < 5) {
+        const expression = match[1] || match[0];
+        const letter = String.fromCharCode(97 + exercises.length);
+        exercises.push({
+          question: `${letter}. Calculez: ${expression}`,
+          answer: expression
+        });
+        console.log(`✅ Created math exercise: ${expression}`);
+      }
+      pattern.lastIndex = 0;
+    }
   }
   
   return exercises;
+}
+
+// Helper function to clean SimpleTex LaTeX output
+function preprocessSimpleTexOutput(text: string): string {
+  return text
+    // Remove LaTeX alignment and array commands
+    .replace(/\^\(aligned\)/g, '')
+    .replace(/\^\(array\)/g, '')
+    .replace(/\\\\\&/g, ' ')
+    .replace(/\\\\/g, ' ')
+    .replace(/\&\^/g, ' ')
+    .replace(/c{10,}/g, '') // Remove long strings of 'c'
+    
+    // Fix French OCR errors
+    .replace(/ERERCIE/g, 'EXERCICE')
+    .replace(/Simpliffer/g, 'Simplifier')
+    .replace(/fiactions/g, 'fractions')
+    .replace(/Simpliffes/g, 'Simplifiez')
+    
+    // Clean up fraction formatting
+    .replace(/\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g, '$1/$2')
+    .replace(/\s*~\s*/g, ' ')
+    
+    // Normalize whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 // Direct OCR-based exercise extraction using precise pattern matching
