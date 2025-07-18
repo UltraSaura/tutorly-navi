@@ -1,13 +1,12 @@
 
 import React, { useRef, useState } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Paperclip, Camera, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import CameraCapture from './CameraCapture';
-import AttachmentMenu from './AttachmentMenu';
 
 interface MessageInputProps {
   inputMessage: string;
@@ -113,8 +112,8 @@ const MessageInput = ({
   };
 
   return (
-    <div className="p-2 md:p-4 border-t border-border">
-      <div className="relative flex items-center rounded-lg border border-border bg-background shadow-sm">
+    <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="relative flex items-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm">
         <input 
           type="file" 
           ref={fileInputRef} 
@@ -122,6 +121,15 @@ const MessageInput = ({
           accept=".pdf,.doc,.docx,.txt" 
           onChange={(e) => onFileSelected(e, false)}
         />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="rounded-full p-2 text-gray-500" 
+          onClick={triggerFileUpload}
+        >
+          <Paperclip className="h-5 w-5" />
+        </Button>
+        
         <input 
           type="file" 
           ref={photoInputRef} 
@@ -129,12 +137,25 @@ const MessageInput = ({
           accept="image/*" 
           onChange={(e) => onFileSelected(e, true)}
         />
-        
-        <AttachmentMenu
-          onFileUpload={triggerFileUpload}
-          onPhotoUpload={triggerPhotoUpload}
-          onCameraOpen={openCameraDialog}
-        />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="rounded-full p-2 text-gray-500" 
+          onClick={triggerPhotoUpload}
+          title={t('upload.choosePhoto')}
+        >
+          <ImageIcon className="h-5 w-5" />
+        </Button>
+
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="rounded-full p-2 text-gray-500" 
+          onClick={openCameraDialog}
+          title={t('upload.takePhoto')}
+        >
+          <Camera className="h-5 w-5" />
+        </Button>
         
         <Textarea 
           placeholder={t('chat.inputPlaceholder')} 
@@ -142,7 +163,7 @@ const MessageInput = ({
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           className={cn(
-            "min-h-10 resize-none border-0 focus-visible:ring-0 p-3 flex-1 bg-transparent",
+            "min-h-10 resize-none border-0 focus-visible:ring-0 p-3 flex-1",
             isLoading && "opacity-50"
           )}
         />
@@ -150,7 +171,7 @@ const MessageInput = ({
         <Button 
           size="icon" 
           className={cn(
-            "rounded-full m-1 bg-primary hover:bg-primary/90",
+            "rounded-full m-1 bg-studywhiz-600 hover:bg-studywhiz-700",
             (!inputMessage.trim() || isLoading) && "opacity-50 cursor-not-allowed"
           )}
           disabled={inputMessage.trim() === '' || isLoading}
