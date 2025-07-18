@@ -29,7 +29,6 @@ const MessageInput = ({
   const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -45,10 +44,6 @@ const MessageInput = ({
   
   const triggerPhotoUpload = () => {
     photoInputRef.current?.click();
-  };
-
-  const triggerCameraCapture = () => {
-    cameraInputRef.current?.click();
   };
 
   const openCameraDialog = () => {
@@ -152,19 +147,11 @@ const MessageInput = ({
           <ImageIcon className="h-5 w-5" />
         </Button>
 
-        <input 
-          type="file" 
-          ref={cameraInputRef} 
-          className="hidden" 
-          accept="image/*" 
-          capture="environment"
-          onChange={(e) => onFileSelected(e, true)}
-        />
         <Button 
           variant="ghost" 
           size="icon" 
           className="rounded-full p-2 text-gray-500" 
-          onClick={triggerCameraCapture}
+          onClick={openCameraDialog}
           title={t('upload.takePhoto')}
         >
           <Camera className="h-5 w-5" />
