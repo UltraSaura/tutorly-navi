@@ -207,7 +207,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
         streamRef.current = null;
       }
     };
-  }, [isOpen, capturedImage, cameraState, startCamera]);
+  }, [isOpen, capturedImage, cameraState]);
 
   const handleClose = () => {
     stopCamera();
