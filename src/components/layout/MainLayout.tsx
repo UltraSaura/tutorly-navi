@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import SubjectSelector from './SubjectSelector';
 import { useLanguage } from '@/context/SimpleLanguageContext';
@@ -18,8 +18,11 @@ const MainLayout = () => {
           {/* Header */}
           <header className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 h-16">
             <div className="flex items-center justify-between h-full px-6">
-              <div className="hidden md:block">
-                <SubjectSelector />
+              <div className="flex items-center gap-4">
+                <SidebarTrigger className="md:hidden" />
+                <div className="hidden md:block">
+                  <SubjectSelector />
+                </div>
               </div>
             </div>
           </header>

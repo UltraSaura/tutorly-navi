@@ -112,8 +112,12 @@ const ChatInterface = () => {
         </div>
       </div>
 
-      {/* Chat input positioned at exact bottom to align with sidebar footer */}
-      <div className="fixed bottom-6 left-[calc(var(--sidebar-width,16rem)+1.5rem)] right-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-t border-border p-3 z-50">
+      {/* Chat input positioned at bottom - responsive for mobile/desktop */}
+      <div className={`fixed bottom-6 right-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-t border-border z-50 ${
+        isMobile 
+          ? 'left-6 p-4' 
+          : 'left-[calc(var(--sidebar-width,16rem)+1.5rem)] p-3'
+      }`}>
         <MessageInput
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
