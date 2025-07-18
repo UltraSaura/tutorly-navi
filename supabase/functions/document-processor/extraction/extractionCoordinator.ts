@@ -3,6 +3,70 @@
 import { extractMathExercisesFromRawText } from './smartMathExtraction.ts';
 import { extractWithDelimiters } from './delimiterExtraction.ts';
 
+// Helper function to extract lettered exercises (a. b. c. etc.)
+function extractLetteredExercises(text: string): Array<{ question: string, answer: string }> {
+  const exercises = [];
+  const letteredPattern = /(?:^|\n)\s*([a-h])[\.\)]\s*([^\n]+(?:\n(?!\s*[a-h][\.\)]).*)*)/gm;
+  const matches = [...text.matchAll(letteredPattern)];
+  
+  if (matches.length >= 2) {
+    console.log(`Found ${matches.length} lettered exercises`);
+    matches.forEach((match, index) => {
+      const letter = match[1];
+      const content = match[2].trim();
+      
+      // Look for math content in the exercise
+      const fractionMatch = content.match(/(\d+)\s*\/\s*(\d+)/);
+      if (fractionMatch) {
+        const fraction = `${fractionMatch[1]}/${fractionMatch[2]}`;
+        exercises.push({
+          question: `${letter}. Simplifiez la fraction ${fraction}`,
+          answer: fraction
+        });
+      } else {
+        exercises.push({
+          question: `${letter}. ${content}`,
+          answer: content.substring(0, 50)
+        });
+      }
+    });
+  }
+  
+  return exercises;
+}
+
+// Helper function to extract numbered exercises (1. 2. 3. etc.)
+function extractNumberedExercises(text: string): Array<{ question: string, answer: string }> {
+  const exercises = [];
+  const numberedPattern = /(?:^|\n)\s*(\d+)[\.\)]\s*([^\n]+(?:\n(?!\s*\d+[\.\)]).*)*)/gm;
+  const matches = [...text.matchAll(numberedPattern)];
+  
+  if (matches.length >= 2) {
+    console.log(`Found ${matches.length} numbered exercises`);
+    matches.forEach((match) => {
+      const number = match[1];
+      const content = match[2].trim();
+      
+      // Look for math content in the exercise
+      const fractionMatch = content.match(/(\d+)\s*\/\s*(\d+)/);
+      if (fractionMatch) {
+        const fraction = `${fractionMatch[1]}/${fractionMatch[2]}`;
+        exercises.push({
+          question: `${number}. Simplifiez la fraction ${fraction}`,
+          answer: fraction
+        });
+      } else {
+        exercises.push({
+          question: `${number}. ${content}`,
+          answer: content.substring(0, 50)
+        });
+      }
+    });
+  }
+  
+  return exercises;
+}
+
 // Enhanced extraction with better SimpleTex LaTeX support
 export function extractExercisesFromText(text: string): Array<{ question: string, answer: string }> {
   console.log('=== SMART EXTRACTION START ===');
@@ -28,45 +92,45 @@ export function extractExercisesFromText(text: string): Array<{ question: string
     return exercises;
   }
   
-  // PHASE 3: Emergency extraction for SimpleTex LaTeX content with better preprocessing
-  console.log('=== PHASE 3: Emergency SimpleTex Content Extraction ===');
+  // PHASE 3: Enhanced multi-exercise detection for specific patterns
+  console.log('=== PHASE 3: Enhanced Multi-Exercise Detection ===');
+  
+  // Try to detect multiple lettered exercises (common in French worksheets)
+  const letteredExercises = extractLetteredExercises(text);
+  if (letteredExercises.length > 1) {
+    console.log(`PHASE 3: Found ${letteredExercises.length} lettered exercises`);
+    return letteredExercises;
+  }
+  
+  // Try to detect multiple numbered exercises
+  const numberedExercises = extractNumberedExercises(text);
+  if (numberedExercises.length > 1) {
+    console.log(`PHASE 3: Found ${numberedExercises.length} numbered exercises`);
+    return numberedExercises;
+  }
+  
+  // Emergency extraction for SimpleTex LaTeX content
   if (text.includes('ERERCIE') || text.includes('Simpliffer') || text.includes('^(') || text.match(/\d+\/\d+/)) {
     console.log('Detected SimpleTex LaTeX format, applying enhanced preprocessing...');
     
-    // Import and use the comprehensive preprocessing
-    import('./textPreprocessing.ts').then(module => {
-      const { preprocessFrenchMathText } = module;
-      const processedText = preprocessFrenchMathText(text);
-      console.log('Emergency processed text:', processedText.substring(0, 200));
+    // Try to extract all fractions from the text
+    const allFractionMatches = text.match(/(?:\(\s*)?(\d+)\s*\/\s*(\d+)(?:\s*\))?/g);
+    if (allFractionMatches && allFractionMatches.length > 0) {
+      console.log('Found fractions in text:', allFractionMatches);
       
-      // Try to extract fractions from processed text
-      const fractionMatches = processedText.match(/\d+\/\d+/g);
-      if (fractionMatches && fractionMatches.length > 0) {
-        console.log('Found fractions after preprocessing:', fractionMatches);
-        fractionMatches.slice(0, 3).forEach((fraction, index) => {
-          const letter = String.fromCharCode(97 + index); // a, b, c
-          exercises.push({
-            question: `${letter}. Simplifiez la fraction ${fraction}`,
-            answer: fraction
-          });
+      allFractionMatches.forEach((fractionMatch, index) => {
+        // Clean up the fraction format
+        const cleanFraction = fractionMatch.replace(/[()]/g, '').replace(/\s/g, '');
+        const letter = String.fromCharCode(97 + index); // a, b, c, d, e
+        
+        exercises.push({
+          question: `${letter}. Simplifiez la fraction ${cleanFraction}`,
+          answer: cleanFraction
         });
-        console.log(`PHASE 3: Created ${exercises.length} emergency exercises`);
-        return exercises;
-      }
-    });
-    
-    // Immediate fallback if dynamic import doesn't work
-    const immediateFractionMatch = text.match(/\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)|(\d+)\s*\/\s*(\d+)/);
-    if (immediateFractionMatch) {
-      const numerator = immediateFractionMatch[1] || immediateFractionMatch[3];
-      const denominator = immediateFractionMatch[2] || immediateFractionMatch[4];
-      const fraction = `${numerator}/${denominator}`;
+        console.log(`✅ Created exercise: ${letter}. Simplifiez la fraction ${cleanFraction}`);
+      });
       
-      exercises = [{
-        question: `a. Simplifiez la fraction ${fraction}`,
-        answer: fraction
-      }];
-      console.log(`PHASE 3: Created immediate emergency exercise for fraction ${fraction}`);
+      console.log(`PHASE 3: Created ${exercises.length} fraction exercises`);
       return exercises;
     }
   }

@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Exercise } from "@/types/chat";
 import { evaluateHomework } from "@/services/homeworkGrading";
+import { hasMultipleExercises, parseMultipleExercises } from "@/utils/homework/multiExerciseParser";
+import { extractHomeworkFromMessage } from "@/utils/homework";
 
 const convertBlobToBase64 = async (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -39,6 +41,10 @@ export const processUploadedDocument = async (
       return null;
     }
     
+    console.log('Document processor response:', data);
+    console.log('Raw text length:', data.rawText?.length || 0);
+    console.log('Exercises found by edge function:', data.exercises?.length || 0);
+    
     if (!data.success) {
       console.error('Invalid response from document processor:', data);
       toast.error(data.error || 'Failed to extract exercises from document');
@@ -46,16 +52,36 @@ export const processUploadedDocument = async (
     }
     
     if (!data.exercises || data.exercises.length === 0) {
-      console.warn('No exercises found in document');
-      toast.warning('No exercises found in your document. Trying alternative extraction method...');
+      console.warn('No exercises found in document, trying advanced multi-exercise extraction...');
+      toast.warning('No exercises found by document processor. Trying advanced extraction method...');
       
-      // Attempt alternative extraction with just the raw text
+      // Attempt multi-exercise extraction with the raw text
       if (data.rawText) {
-        const simpleExercises = extractSimpleExercises(data.rawText);
-        if (simpleExercises.length > 0) {
-          console.log('Found exercises using simple extraction:', simpleExercises);
+        console.log('Raw text for multi-exercise extraction:', data.rawText.substring(0, 200));
+        
+        let extractedExercises: Array<{ question: string, answer: string }> = [];
+        
+        // First try multi-exercise parser
+        if (hasMultipleExercises(data.rawText)) {
+          console.log('Detected multiple exercises in document');
+          const parsedExercises = parseMultipleExercises(data.rawText);
+          extractedExercises = parsedExercises.map(ex => ({
+            question: ex.question,
+            answer: ex.answer || ""
+          }));
+          console.log(`Multi-exercise parser found ${extractedExercises.length} exercises`);
+        } else {
+          // Fallback to enhanced simple extraction
+          extractedExercises = extractEnhancedSimpleExercises(data.rawText);
+          console.log(`Enhanced simple extraction found ${extractedExercises.length} exercises`);
+        }
+        
+        if (extractedExercises.length > 0) {
+          console.log('Successfully extracted exercises using advanced methods:', extractedExercises);
+          toast.success(`Found ${extractedExercises.length} exercises using advanced extraction!`);
+          
           return {
-            exercises: simpleExercises.map(ex => ({
+            exercises: extractedExercises.map(ex => ({
               id: Date.now() + Math.random().toString(36).substring(2, 9),
               question: ex.question,
               userAnswer: ex.answer,
@@ -131,38 +157,80 @@ export const processUploadedDocument = async (
   }
 };
 
-// Simple exercise extraction function as fallback
-const extractSimpleExercises = (text: string): Array<{ question: string, answer: string }> => {
+// Enhanced exercise extraction function for documents
+const extractEnhancedSimpleExercises = (text: string): Array<{ question: string, answer: string }> => {
   const exercises = [];
-  const lines = text.split('\n');
   
-  let currentQuestion = '';
-  let currentAnswer = '';
+  // Enhanced patterns for French math worksheets
+  const patterns = [
+    // Lettered exercises: a. b. c. d. e.
+    /(?:^|\n)\s*([a-z])[\.\)]\s*([^\n]+(?:\n(?!\s*[a-z][\.\)]).*)*)/gm,
+    // Numbered exercises: 1. 2. 3.
+    /(?:^|\n)\s*(\d+)[\.\)]\s*([^\n]+(?:\n(?!\s*\d+[\.\)]).*)*)/gm,
+    // Exercise keywords
+    /(?:^|\n)\s*(exercice|problème|calcule[z]?)\s*(\d+|[a-z])?[\.\:]?\s*([^\n]+(?:\n(?!exercice|problème|calcule).*)*)/gim,
+    // Math expressions with fractions
+    /(?:^|\n)\s*([^\n]*(?:\d+\/\d+|fraction)[^\n]*)/gm
+  ];
   
-  for (const line of lines) {
-    // Look for common math exercise patterns
-    if (line.match(/^\d+[\.\)]|\([0-9a-z]\)|\b(exercice|problème|calcule)\b/i)) {
-      if (currentQuestion && currentAnswer) {
-        exercises.push({ question: currentQuestion.trim(), answer: currentAnswer.trim() });
-      }
-      currentQuestion = line;
-      currentAnswer = '';
-    } else if (currentQuestion && line.trim()) {
-      if (line.toLowerCase().includes('réponse') || line.toLowerCase().includes('solution')) {
-        currentAnswer = line.replace(/^(réponse|solution)\s*:\s*/i, '');
-      } else if (!currentAnswer) {
-        currentQuestion += ' ' + line;
-      } else {
-        currentAnswer += ' ' + line;
+  // Try each pattern
+  for (const pattern of patterns) {
+    const matches = [...text.matchAll(pattern)];
+    
+    if (matches.length >= 2) {
+      console.log(`Found ${matches.length} exercises using pattern: ${pattern}`);
+      
+      matches.forEach((match, index) => {
+        let exerciseText = '';
+        
+        if (match.length >= 4) {
+          // Pattern with 3+ groups (like exercise keywords)
+          exerciseText = match[3] || match[2] || match[1];
+        } else if (match.length === 3) {
+          // Pattern with 2 groups (like lettered/numbered)
+          exerciseText = match[2];
+        } else {
+          // Single group pattern
+          exerciseText = match[1];
+        }
+        
+        if (exerciseText && exerciseText.trim().length > 5) {
+          // Try to extract question/answer using existing logic
+          const parsed = extractHomeworkFromMessage(exerciseText.trim());
+          
+          exercises.push({
+            question: parsed.question || exerciseText.trim(),
+            answer: parsed.answer || ""
+          });
+        }
+      });
+      
+      // If we found exercises with this pattern, return them
+      if (exercises.length > 0) {
+        break;
       }
     }
   }
   
-  // Add the last exercise if exists
-  if (currentQuestion && currentAnswer) {
-    exercises.push({ question: currentQuestion.trim(), answer: currentAnswer.trim() });
+  // If no pattern worked, try to find any meaningful content
+  if (exercises.length === 0) {
+    const lines = text.split('\n').filter(line => line.trim().length > 10);
+    
+    if (lines.length > 0) {
+      // Look for math content or meaningful exercises
+      for (const line of lines) {
+        if (line.match(/\d+\/\d+|[a-z][\.\)]\s*|exercice|fraction|simplif|calcule/i)) {
+          const parsed = extractHomeworkFromMessage(line.trim());
+          exercises.push({
+            question: parsed.question || line.trim(),
+            answer: parsed.answer || ""
+          });
+        }
+      }
+    }
   }
   
+  console.log(`Enhanced extraction found ${exercises.length} exercises`);
   return exercises;
 };
 
