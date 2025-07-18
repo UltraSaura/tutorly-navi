@@ -113,10 +113,10 @@ const ChatInterface = () => {
       </div>
 
       {/* Chat input positioned at bottom - responsive for mobile/desktop */}
-      <div className={`fixed bottom-6 right-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-t border-border z-50 ${
+      <div className={`fixed bottom-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-t border-border z-50 ${
         isMobile 
-          ? 'left-6 p-4' 
-          : 'left-[calc(var(--sidebar-width,16rem)+1.5rem)] p-3'
+          ? 'left-4 right-4 p-4' 
+          : 'left-[calc(var(--sidebar-width,16rem)+1.5rem)] right-6 p-3'
       }`}>
         <MessageInput
           inputMessage={inputMessage}
