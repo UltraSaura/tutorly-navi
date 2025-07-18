@@ -134,6 +134,13 @@
     }
   },
   "upload": {
+    "attachFiles": "Attach Files",
+    "selectOption": "Select an option below",
+    "uploadDocument": "Upload Document",
+    "uploadPhoto": "Upload Photo",
+    "documentDescription": "PDF, DOC, DOCX, TXT files",
+    "photoDescription": "Choose from gallery",
+    "cameraDescription": "Take a new photo",
     "choosePhoto": "Choose from Gallery",
     "takePhoto": "Take Photo",
     "fileTooLarge": "File Too Large",
