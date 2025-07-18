@@ -1,12 +1,65 @@
-// Pure OCR-based mathematical exercise extraction with precise pattern matching
+// Enhanced mathematical exercise extraction with LaTeX support from SimpleTex
 
 export function extractMathExercisesFromRawText(rawText: string): Array<{ question: string, answer: string }> {
-  console.log('=== OCR-BASED PATTERN EXTRACTION ===');
-  console.log('Raw OCR text length:', rawText.length);
-  console.log('Raw OCR text preview:', rawText.substring(0, 300));
+  console.log('=== ENHANCED MATH PATTERN EXTRACTION ===');
+  console.log('Raw text length:', rawText.length);
+  console.log('Raw text preview:', rawText.substring(0, 300));
   
-  // Use pure OCR-based extraction with direct pattern matching
+  // First try LaTeX-aware extraction (for SimpleTex output)
+  const latexExercises = extractFromLatexText(rawText);
+  if (latexExercises.length > 0) {
+    console.log(`✅ Found ${latexExercises.length} exercises using LaTeX extraction`);
+    return latexExercises;
+  }
+  
+  // Fallback to pure OCR-based extraction with direct pattern matching
+  console.log('🔄 Falling back to OCR-based pattern extraction');
   return extractMathExercisesDirectly(rawText);
+}
+
+// Extract exercises from LaTeX-formatted text (SimpleTex output)
+function extractFromLatexText(text: string): Array<{ question: string, answer: string }> {
+  console.log('Attempting LaTeX-aware extraction...');
+  
+  const exercises = [];
+  
+  // Look for equation patterns in the text
+  const equationPatterns = [
+    // LaTeX equation format: expression = result
+    /([^=\n]+)\s*=\s*([^=\n]+)/g,
+    // Fraction equals patterns
+    /(\d+\/\d+|\(\d+\)\/\(\d+\))\s*=\s*([0-9.,]+)/g,
+    // Mathematical operations
+    /([0-9+\-×÷()\/.,\s]+)\s*=\s*([0-9.,]+)/g
+  ];
+  
+  let exerciseCount = 0;
+  
+  for (const pattern of equationPatterns) {
+    let match;
+    while ((match = pattern.exec(text)) !== null && exerciseCount < 10) {
+      const left = match[1].trim();
+      const right = match[2].trim();
+      
+      // Skip if either side is too long or contains non-math characters
+      if (left.length > 50 || right.length > 20) continue;
+      if (!/[\d\/\(\)+\-×÷=.,]/.test(left)) continue;
+      
+      const letter = String.fromCharCode(97 + exerciseCount);
+      exercises.push({
+        question: `${letter}. Calcule: ${left}`,
+        answer: right
+      });
+      
+      exerciseCount++;
+      console.log(`✅ LaTeX exercise: ${left} = ${right}`);
+    }
+    
+    // Reset regex for next pattern
+    pattern.lastIndex = 0;
+  }
+  
+  return exercises;
 }
 
 // Direct OCR-based exercise extraction using precise pattern matching
