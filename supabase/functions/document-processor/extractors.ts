@@ -9,6 +9,7 @@ import { extractTextWithAzureOCR } from './extractors/azure.ts';
  */
 export async function extractTextFromFile(fileData: string, fileType: string): Promise<string> {
   console.log(`🚀 Processing file of type: ${fileType} with SimpleTex-prioritized OCR approach`);
+  console.log(`📊 File data length: ${fileData.length} characters, starts with: ${fileData.substring(0, 50)}...`);
 
   // PHASE 1: SimpleTex for Math Content (primary for mathematical worksheets)
   try {

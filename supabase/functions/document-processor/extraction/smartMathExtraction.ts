@@ -5,6 +5,12 @@ export function extractMathExercisesFromRawText(rawText: string): Array<{ questi
   console.log('Raw text length:', rawText.length);
   console.log('Raw text preview:', rawText.substring(0, 300));
   
+  // Skip extraction if this looks like an error message or emergency text
+  if (isErrorText(rawText)) {
+    console.log('⚠️ Detected error/emergency text, skipping exercise extraction');
+    return [];
+  }
+  
   // First try LaTeX-aware extraction (for SimpleTex output)
   const latexExercises = extractFromLatexText(rawText);
   if (latexExercises.length > 0) {
@@ -15,6 +21,22 @@ export function extractMathExercisesFromRawText(rawText: string): Array<{ questi
   // Fallback to pure OCR-based extraction with direct pattern matching
   console.log('🔄 Falling back to OCR-based pattern extraction');
   return extractMathExercisesDirectly(rawText);
+}
+
+// Helper function to detect error/emergency text
+function isErrorText(text: string): boolean {
+  const errorIndicators = [
+    'OCR extraction failed',
+    'manual review required',
+    'could not be processed automatically',
+    'Document uploaded at',
+    'Status: OCR extraction failed',
+    'Try uploading again',
+    'emergency text extraction'
+  ];
+  
+  const lowerText = text.toLowerCase();
+  return errorIndicators.some(indicator => lowerText.includes(indicator.toLowerCase()));
 }
 
 // Extract exercises from LaTeX-formatted text (SimpleTex output)

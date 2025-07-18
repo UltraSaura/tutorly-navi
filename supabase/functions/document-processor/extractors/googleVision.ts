@@ -13,10 +13,14 @@ async function generateAccessToken(): Promise<string> {
 
   let parsedCredentials;
   try {
-    parsedCredentials = JSON.parse(credentials);
+    // Handle case where credentials might be stored as escaped JSON string
+    const cleanCredentials = credentials.trim().replace(/^"|"$/g, '');
+    parsedCredentials = JSON.parse(cleanCredentials);
+    console.log('Successfully parsed Google Vision credentials');
   } catch (error) {
     console.error('Failed to parse GOOGLE_VISION_CREDENTIALS:', error);
-    throw new Error('Invalid GOOGLE_VISION_CREDENTIALS format. Must be valid JSON.');
+    console.log('Credentials preview:', credentials.substring(0, 50) + '...');
+    throw new Error('Invalid GOOGLE_VISION_CREDENTIALS format. Must be valid JSON containing service account key.');
   }
 
   const { client_email, private_key } = parsedCredentials;

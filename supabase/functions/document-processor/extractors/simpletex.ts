@@ -72,10 +72,20 @@ export async function extractTextWithSimpleTexOCR(fileData: string): Promise<str
   if (!appId || !appSecret) {
     throw new Error('SimpleTex credentials not configured. Please add SIMPLETEX_APP_ID and SIMPLETEX_APP_SECRET to Supabase secrets.');
   }
-  
+
   try {
+    // Strip data URL prefix if present
+    let cleanBase64 = fileData;
+    if (fileData.startsWith('data:')) {
+      const commaIndex = fileData.indexOf(',');
+      if (commaIndex !== -1) {
+        cleanBase64 = fileData.substring(commaIndex + 1);
+        console.log('Stripped data URL prefix from base64 data');
+      }
+    }
+    
     // Convert base64 to blob for form data
-    const binaryString = atob(fileData);
+    const binaryString = atob(cleanBase64);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
