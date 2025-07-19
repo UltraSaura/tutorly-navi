@@ -3,8 +3,9 @@
 
 import { extractMathExercisesFromRawText } from './smartMathExtraction.ts';
 import { extractWithDelimiters } from './delimiterExtraction.ts';
+import { isEducationalContent } from './validationUtils.ts';
 
-// FIXED: Comprehensive function to extract ALL fractions as separate lettered exercises
+// FIXED: Comprehensive function to extract ALL fractions as separate exercises
 function extractAllFractionsAsExercises(text: string): Array<{ question: string, answer: string }> {
   console.log('=== COMPREHENSIVE FRACTION EXTRACTION (PRIMARY METHOD) ===');
   console.log('Input text length:', text.length);
@@ -84,7 +85,7 @@ function extractAllFractionsAsExercises(text: string): Array<{ question: string,
   return exercises;
 }
 
-// Enhanced lettered exercise extraction (supplementary)
+// FIXED: Enhanced lettered exercise extraction with proper validation
 function extractLetteredExercises(text: string): Array<{ question: string, answer: string }> {
   console.log('\n=== LETTERED EXERCISE EXTRACTION (SUPPLEMENTARY) ===');
   const exercises = [];
@@ -104,19 +105,36 @@ function extractLetteredExercises(text: string): Array<{ question: string, answe
         const letter = match[1].toLowerCase();
         const content = match[2].trim();
         
+        console.log(`Processing lettered content: "${content}"`);
+        
+        // FIXED: Only create exercises if content contains a valid fraction
         const fractionMatch = content.match(/(\d+)\s*\/\s*(\d+)/);
         if (fractionMatch) {
-          const fraction = `${fractionMatch[1]}/${fractionMatch[2]}`;
-          exercises.push({
-            question: `${letter}. Simplifiez la fraction ${fraction}`,
-            answer: fraction
-          });
-          console.log(`✅ Created lettered exercise: ${letter}. Simplifiez la fraction ${fraction}`);
-        } else if (content.length > 3) {
-          exercises.push({
-            question: `${letter}. ${content}`,
-            answer: content.substring(0, 50)
-          });
+          const numerator = parseInt(fractionMatch[1]);
+          const denominator = parseInt(fractionMatch[2]);
+          
+          // Validate the fraction is reasonable
+          if (numerator > 0 && denominator > 0 && denominator > 1 && numerator < 1000 && denominator < 1000) {
+            const fraction = `${numerator}/${denominator}`;
+            exercises.push({
+              question: `${letter}. Simplifiez la fraction ${fraction}`,
+              answer: fraction
+            });
+            console.log(`✅ Created valid lettered exercise: ${letter}. Simplifiez la fraction ${fraction}`);
+          } else {
+            console.log(`❌ Skipped invalid fraction: ${numerator}/${denominator}`);
+          }
+        } else {
+          // FIXED: Only create exercise if content passes educational validation
+          if (isEducationalContent(content) && content.length > 10) {
+            exercises.push({
+              question: `${letter}. ${content}`,
+              answer: content.substring(0, 50)
+            });
+            console.log(`✅ Created educational exercise: ${letter}. ${content.substring(0, 30)}...`);
+          } else {
+            console.log(`❌ Skipped invalid content: "${content}" (length: ${content.length}, educational: ${isEducationalContent(content)})`);
+          }
         }
       });
       
@@ -142,19 +160,36 @@ function extractNumberedExercises(text: string): Array<{ question: string, answe
       const number = match[1];
       const content = match[2].trim();
       
+      console.log(`Processing numbered content: "${content}"`);
+      
+      // FIXED: Only create exercises if content contains a valid fraction
       const fractionMatch = content.match(/(\d+)\s*\/\s*(\d+)/);
       if (fractionMatch) {
-        const fraction = `${fractionMatch[1]}/${fractionMatch[2]}`;
-        exercises.push({
-          question: `${number}. Simplifiez la fraction ${fraction}`,
-          answer: fraction
-        });
-        console.log(`✅ Created numbered exercise: ${number}. Simplifiez la fraction ${fraction}`);
-      } else if (content.length > 3) {
-        exercises.push({
-          question: `${number}. ${content}`,
-          answer: content.substring(0, 50)
-        });
+        const numerator = parseInt(fractionMatch[1]);
+        const denominator = parseInt(fractionMatch[2]);
+        
+        // Validate the fraction is reasonable
+        if (numerator > 0 && denominator > 0 && denominator > 1 && numerator < 1000 && denominator < 1000) {
+          const fraction = `${numerator}/${denominator}`;
+          exercises.push({
+            question: `${number}. Simplifiez la fraction ${fraction}`,
+            answer: fraction
+          });
+          console.log(`✅ Created valid numbered exercise: ${number}. Simplifiez la fraction ${fraction}`);
+        } else {
+          console.log(`❌ Skipped invalid fraction: ${numerator}/${denominator}`);
+        }
+      } else {
+        // FIXED: Only create exercise if content passes educational validation
+        if (isEducationalContent(content) && content.length > 10) {
+          exercises.push({
+            question: `${number}. ${content}`,
+            answer: content.substring(0, 50)
+          });
+          console.log(`✅ Created educational exercise: ${number}. ${content.substring(0, 30)}...`);
+        } else {
+          console.log(`❌ Skipped invalid content: "${content}" (length: ${content.length}, educational: ${isEducationalContent(content)})`);
+        }
       }
     });
   }
