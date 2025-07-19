@@ -1,10 +1,9 @@
-
 // Enhanced extraction coordinator with comprehensive multi-exercise detection
 
 import { extractMathExercisesFromRawText } from './smartMathExtraction.ts';
 import { extractWithDelimiters } from './delimiterExtraction.ts';
 
-// Enhanced function to extract multiple lettered exercises
+// FIXED: Enhanced function to extract multiple lettered exercises
 function extractLetteredExercises(text: string): Array<{ question: string, answer: string }> {
   console.log('=== EXTRACTING LETTERED EXERCISES ===');
   const exercises = [];
@@ -20,7 +19,7 @@ function extractLetteredExercises(text: string): Array<{ question: string, answe
     const matches = [...text.matchAll(pattern)];
     console.log(`Pattern found ${matches.length} lettered matches`);
     
-    if (matches.length >= 1) { // Changed from >= 2 to >= 1 to catch single exercises too
+    if (matches.length >= 1) {
       matches.forEach((match) => {
         const letter = match[1].toLowerCase();
         const content = match[2].trim();
@@ -51,7 +50,7 @@ function extractLetteredExercises(text: string): Array<{ question: string, answe
   return exercises;
 }
 
-// Enhanced function to extract all fractions and create individual exercises
+// FIXED: Enhanced function to extract all fractions and create individual exercises
 function extractAllFractionsAsExercises(text: string): Array<{ question: string, answer: string }> {
   console.log('=== EXTRACTING ALL FRACTIONS AS INDIVIDUAL EXERCISES ===');
   const exercises = [];
@@ -61,7 +60,8 @@ function extractAllFractionsAsExercises(text: string): Array<{ question: string,
     /(?:\(\s*)?(\d+)\s*\/\s*(\d+)(?:\s*\))?/g, // Basic fractions with optional parentheses
     /(\d+)\s*\/\s*(\d+)/g, // Simple fractions
     /\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g, // Parenthesized fractions
-    /\\frac\{(\d+)\}\{(\d+)\}/g // LaTeX fractions
+    /\\frac\{(\d+)\}\{(\d+)\}/g, // LaTeX fractions
+    /frac\{(\d+)\}\{(\d+)\}/g // LaTeX fractions without backslash
   ];
   
   const foundFractions = new Set(); // Avoid duplicates
@@ -81,7 +81,10 @@ function extractAllFractionsAsExercises(text: string): Array<{ question: string,
     pattern.lastIndex = 0; // Reset pattern
   }
   
-  // Create exercises from all found fractions
+  console.log(`Total unique fractions found: ${foundFractions.size}`);
+  console.log('All unique fractions:', Array.from(foundFractions));
+  
+  // FIXED: Create exercises from ALL found fractions
   const fractionsArray = Array.from(foundFractions);
   fractionsArray.forEach((fraction, index) => {
     const letter = String.fromCharCode(97 + index); // a, b, c, etc.
@@ -105,7 +108,7 @@ function extractNumberedExercises(text: string): Array<{ question: string, answe
   
   console.log(`Found ${matches.length} numbered matches`);
   
-  if (matches.length >= 1) { // Changed from >= 2 to >= 1
+  if (matches.length >= 1) {
     matches.forEach((match) => {
       const number = match[1];
       const content = match[2].trim();
@@ -131,7 +134,7 @@ function extractNumberedExercises(text: string): Array<{ question: string, answe
   return exercises;
 }
 
-// Main extraction function with comprehensive multi-exercise detection
+// FIXED: Main extraction function with comprehensive multi-exercise detection
 export function extractExercisesFromText(text: string): Array<{ question: string, answer: string }> {
   console.log('=== COMPREHENSIVE MULTI-EXERCISE EXTRACTION START ===');
   console.log('Input text length:', text.length);
@@ -142,30 +145,21 @@ export function extractExercisesFromText(text: string): Array<{ question: string
   // PHASE 1: Smart pattern-based extraction (original method)
   console.log('\n=== PHASE 1: Smart Pattern-Based Extraction ===');
   exercises = extractMathExercisesFromRawText(text);
+  console.log(`PHASE 1 RESULT: ${exercises.length} exercises found`);
   
-  // FIXED: Don't exit early if we found exercises, let's verify we got ALL of them
-  if (exercises.length > 0) {
-    console.log(`PHASE 1 FOUND: ${exercises.length} exercises using smart extraction`);
-    
-    // Check if there might be more exercises by looking for additional fractions
-    const additionalFractionCount = (text.match(/\d+\/\d+/g) || []).length;
-    console.log(`Additional fraction count check: ${additionalFractionCount} total fractions in text`);
-    
-    // If we found fewer exercises than total fractions, try other phases too
-    if (exercises.length >= additionalFractionCount || exercises.length >= 3) {
-      console.log(`PHASE 1 SUCCESS: Found sufficient exercises (${exercises.length})`);
-      return exercises;
-    } else {
-      console.log(`PHASE 1 PARTIAL: Found ${exercises.length} exercises but ${additionalFractionCount} fractions detected, continuing to other phases...`);
-    }
+  // If we found multiple exercises, return them
+  if (exercises.length > 1) {
+    console.log(`PHASE 1 SUCCESS: Found ${exercises.length} exercises using smart extraction`);
+    return exercises;
   }
   
   // PHASE 2: Extract all fractions as individual exercises
   console.log('\n=== PHASE 2: All Fractions as Individual Exercises ===');
   const fractionExercises = extractAllFractionsAsExercises(text);
+  console.log(`PHASE 2 RESULT: ${fractionExercises.length} exercises found`);
   
   if (fractionExercises.length > exercises.length) {
-    console.log(`PHASE 2 SUCCESS: Found ${fractionExercises.length} fraction exercises (better than ${exercises.length})`);
+    console.log(`PHASE 2 SUCCESS: Found ${fractionExercises.length} fraction exercises`);
     exercises = fractionExercises;
   }
   

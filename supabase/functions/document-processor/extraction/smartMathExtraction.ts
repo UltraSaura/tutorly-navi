@@ -46,7 +46,7 @@ function isErrorText(text: string): boolean {
   return hasErrorIndicator && !hasMathContent;
 }
 
-// Enhanced LaTeX extraction that finds ALL fractions and creates separate exercises
+// FIXED: Enhanced LaTeX extraction that finds ALL fractions and creates separate exercises
 function extractMultipleFromLatexText(text: string): Array<{ question: string, answer: string }> {
   console.log('=== COMPREHENSIVE LATEX MULTI-EXERCISE EXTRACTION ===');
   
@@ -56,17 +56,18 @@ function extractMultipleFromLatexText(text: string): Array<{ question: string, a
   const cleanedText = preprocessFrenchMathText(text);
   console.log('Cleaned text for LaTeX extraction:', cleanedText.substring(0, 400));
   
-  // Enhanced fraction detection patterns
+  // Enhanced fraction detection patterns - MORE COMPREHENSIVE
   const fractionPatterns = [
-    /(\d+)\s*\/\s*(\d+)/g, // Basic fractions
+    /(\d+)\s*\/\s*(\d+)/g, // Basic fractions like 30/63
     /\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g, // Parenthesized fractions
     /\(\s*(\d+)\s*\/\s*(\d+)\s*\)/g, // Single parenthesized fractions
     /\\frac\{(\d+)\}\{(\d+)\}/g, // LaTeX fractions
+    /frac\{(\d+)\}\{(\d+)\}/g, // LaTeX fractions without backslash
   ];
   
   const foundFractions = new Set();
   
-  // Find all unique fractions using multiple patterns
+  // FIXED: Find ALL unique fractions using multiple patterns
   for (const pattern of fractionPatterns) {
     let match;
     while ((match = pattern.exec(cleanedText)) !== null) {
@@ -80,12 +81,13 @@ function extractMultipleFromLatexText(text: string): Array<{ question: string, a
         console.log(`✅ Found valid LaTeX fraction: ${fraction}`);
       }
     }
-    pattern.lastIndex = 0;
+    pattern.lastIndex = 0; // Reset regex state
   }
   
   console.log(`Total unique LaTeX fractions found: ${foundFractions.size}`);
+  console.log('All found fractions:', Array.from(foundFractions));
   
-  // Create exercises from ALL found fractions - THIS WAS THE BUG!
+  // FIXED: Create exercises from ALL found fractions - this was the main bug!
   const fractionsArray = Array.from(foundFractions);
   fractionsArray.forEach((fraction, index) => {
     const letter = String.fromCharCode(97 + index); // a, b, c, etc.
@@ -97,36 +99,46 @@ function extractMultipleFromLatexText(text: string): Array<{ question: string, a
     console.log(`✅ Created LaTeX exercise ${index + 1}: ${exercise.question}`);
   });
   
-  console.log(`=== LATEX EXTRACTION RESULT: ${exercises.length} exercises ===`);
+  console.log(`=== LATEX EXTRACTION RESULT: ${exercises.length} exercises created from ${foundFractions.size} fractions ===`);
   return exercises;
 }
 
-// Enhanced direct OCR extraction that creates multiple exercises
+// FIXED: Enhanced direct OCR extraction that creates multiple exercises
 function extractMultipleMathExercisesDirectly(rawText: string): Array<{ question: string, answer: string }> {
   console.log('=== COMPREHENSIVE DIRECT OCR EXTRACTION ===');
   
   const exercises = [];
   
-  // Find all fractions in the text
-  const fractionPattern = /\b(\d{1,3})\/(\d{1,3})\b/g;
-  const foundFractions = new Set();
-  let fractionMatch;
+  // Find all fractions in the text - MORE COMPREHENSIVE PATTERNS
+  const fractionPatterns = [
+    /\b(\d{1,3})\/(\d{1,3})\b/g, // Basic fractions
+    /\((\d{1,3})\/(\d{1,3})\)/g, // Parenthesized fractions
+    /(\d{1,3})\s*\/\s*(\d{1,3})/g, // Fractions with spaces
+  ];
   
-  while ((fractionMatch = fractionPattern.exec(rawText)) !== null) {
-    const numerator = parseInt(fractionMatch[1]);
-    const denominator = parseInt(fractionMatch[2]);
-    
-    // Validate fraction
-    if (numerator > 0 && denominator > 0 && denominator > 1 && numerator < 1000 && denominator < 1000) {
-      const fraction = `${numerator}/${denominator}`;
-      foundFractions.add(fraction);
-      console.log(`✅ Found valid OCR fraction: ${fraction}`);
+  const foundFractions = new Set();
+  
+  // FIXED: Use multiple patterns to find ALL fractions
+  for (const pattern of fractionPatterns) {
+    let fractionMatch;
+    while ((fractionMatch = pattern.exec(rawText)) !== null) {
+      const numerator = parseInt(fractionMatch[1]);
+      const denominator = parseInt(fractionMatch[2]);
+      
+      // Validate fraction
+      if (numerator > 0 && denominator > 0 && denominator > 1 && numerator < 1000 && denominator < 1000) {
+        const fraction = `${numerator}/${denominator}`;
+        foundFractions.add(fraction);
+        console.log(`✅ Found valid OCR fraction: ${fraction}`);
+      }
     }
+    pattern.lastIndex = 0; // Reset regex state
   }
   
   console.log(`Total OCR fractions found: ${foundFractions.size}`);
+  console.log('All OCR fractions:', Array.from(foundFractions));
   
-  // Create exercises from ALL found fractions - THIS WAS ALSO THE BUG!
+  // FIXED: Create exercises from ALL found fractions - this was also a bug!
   const fractionsArray = Array.from(foundFractions);
   fractionsArray.forEach((fraction, index) => {
     const letter = String.fromCharCode(97 + index); // a, b, c, etc.
