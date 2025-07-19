@@ -72,18 +72,18 @@ function extractNumberedExercises(text: string): Array<{ question: string, answe
   return exercises;
 }
 
-// Enhanced extraction with better SimpleTex LaTeX support and comprehensive multi-exercise detection
+// Enhanced extraction with comprehensive multi-exercise detection and raw text analysis
 export function extractExercisesFromText(text: string): Array<{ question: string, answer: string }> {
-  console.log('=== SMART EXTRACTION START ===');
+  console.log('=== COMPREHENSIVE MULTI-EXERCISE EXTRACTION START ===');
   console.log('Input text length:', text.length);
   console.log('Raw text (first 500 chars):', text.substring(0, 500));
   
-  // PHASE 1: Try smart pattern-based extraction with LaTeX awareness
-  console.log('=== PHASE 1: Smart Pattern-Based Extraction ===');
+  // PHASE 1: Try enhanced smart pattern-based extraction with raw text analysis
+  console.log('=== PHASE 1: Enhanced Smart Pattern-Based Extraction ===');
   let exercises = extractMathExercisesFromRawText(text);
   
-  if (exercises.length > 0) {
-    console.log(`PHASE 1 SUCCESS: Found ${exercises.length} exercises using smart extraction`);
+  if (exercises.length > 1) {
+    console.log(`PHASE 1 SUCCESS: Found ${exercises.length} exercises using enhanced smart extraction`);
     console.log('Final exercises:', exercises.map(e => `"${e.question}"`));
     return exercises;
   }
@@ -116,21 +116,22 @@ export function extractExercisesFromText(text: string): Array<{ question: string
   
   // PHASE 4: Emergency extraction for SimpleTex LaTeX content with comprehensive fraction detection
   if (text.includes('EXERCICE') || text.includes('Simpliffer') || text.includes('^(') || text.match(/\d+\/\d+/)) {
-    console.log('=== PHASE 4: Emergency SimpleTex LaTeX Extraction ===');
+    console.log('=== PHASE 4: Emergency Comprehensive Fraction Extraction ===');
     console.log('Detected SimpleTex LaTeX format, applying comprehensive fraction extraction...');
     
     // Enhanced fraction detection with multiple patterns
     const fractionPatterns = [
-      /(?:\(\s*)?(\d+)\s*\/\s*(\d+)(?:\s*\))?/g, // Standard and parenthesized fractions
+      /\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g, // Parenthesized fractions (30)/(63)
+      /(\d+)\s*\/\s*(\d+)/g, // Standard fractions 30/63
       /(\d+)\s*÷\s*(\d+)/g, // Division symbol
-      /frac\{(\d+)\}\{(\d+)\}/g, // LaTeX fraction format
+      /\\?frac\{(\d+)\}\{(\d+)\}/g, // LaTeX fraction format
     ];
     
     const allFractions = [];
     
     for (const pattern of fractionPatterns) {
-      let match;
-      while ((match = pattern.exec(text)) !== null) {
+      const matches = [...text.matchAll(pattern)];
+      for (const match of matches) {
         const numerator = match[1];
         const denominator = match[2];
         const fraction = `${numerator}/${denominator}`;
