@@ -1,26 +1,35 @@
 
+
 import { extractTextFromFile } from "./extractors.ts";
 import { extractExercisesFromText } from "./exerciseExtractors.ts";
 
-// Simplified preprocessing that preserves ALL fraction content
+// Enhanced preprocessing with comprehensive logging
 function preserveFractionsPreprocessing(text: string): string {
-  console.log('Starting fraction-preserving preprocessing');
-  console.log('Raw text length:', text.length);
-  console.log('Raw text preview:', text.substring(0, 300));
+  console.log('--- PREPROCESSING START ---');
+  console.log('Input text length:', text.length);
+  console.log('Input text preview (first 300 chars):', text.substring(0, 300));
   
   // STEP 1: Extract and preserve all fractions BEFORE any cleaning
+  console.log('STEP 1: Extracting fractions from raw text...');
   const fractionPatterns = [
-    /\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g, // (30)/(63)
-    /(\d+)\s*\/\s*(\d+)/g, // 30/63
-    /\\frac\{(\d+)\}\{(\d+)\}/g, // \frac{30}{63}
-    /\\mathrm\{[^}]*\}\\frac\{(\d+)\}\{(\d+)\}/g, // \mathrm{a~}\frac{30}{63}
+    { name: 'Parenthesized', pattern: /\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g },
+    { name: 'Simple', pattern: /(\d+)\s*\/\s*(\d+)/g },
+    { name: 'LaTeX \\frac', pattern: /\\frac\{(\d+)\}\{(\d+)\}/g },
+    { name: 'Mathrm LaTeX', pattern: /\\mathrm\{[^}]*\}\\frac\{(\d+)\}\{(\d+)\}/g }
   ];
   
   const preservedFractions = [];
-  for (const pattern of fractionPatterns) {
-    let match;
-    const tempPattern = new RegExp(pattern.source, pattern.flags);
-    while ((match = tempPattern.exec(text)) !== null) {
+  
+  for (const { name, pattern } of fractionPatterns) {
+    console.log(`Testing preprocessing pattern: ${name}`);
+    
+    // Reset regex lastIndex
+    pattern.lastIndex = 0;
+    const matches = [...text.matchAll(pattern)];
+    
+    console.log(`Preprocessing pattern "${name}" found ${matches.length} matches`);
+    
+    for (const match of matches) {
       let numerator, denominator;
       
       // Handle different capture group positions
@@ -36,20 +45,22 @@ function preserveFractionsPreprocessing(text: string): string {
         const fraction = `${numerator}/${denominator}`;
         if (!preservedFractions.includes(fraction)) {
           preservedFractions.push(fraction);
-          console.log(`✅ Preserved fraction: ${fraction}`);
+          console.log(`✅ Preprocessing preserved fraction: ${fraction}`);
         }
       }
     }
   }
   
-  console.log(`Total fractions preserved: ${preservedFractions.length}`, preservedFractions);
+  console.log(`STEP 1 COMPLETE: Preserved ${preservedFractions.length} fractions:`, preservedFractions);
   
-  // STEP 2: If we have fractions, create a clean representation
+  // STEP 2: Create clean representation preserving all fractions
   if (preservedFractions.length > 0) {
+    console.log('STEP 2: Creating clean text with preserved fractions...');
     let cleanedText = '';
     preservedFractions.forEach((fraction, index) => {
       const letter = String.fromCharCode(97 + index); // a, b, c, d, e
       cleanedText += `${letter}. ${fraction} `;
+      console.log(`Added to clean text: ${letter}. ${fraction}`);
     });
     
     // Also include some original content for context
@@ -59,34 +70,45 @@ function preserveFractionsPreprocessing(text: string): string {
       .replace(/\s+/g, ' ')
       .trim();
     
-    const finalText = cleanedText + ' ' + originalCleaned;
-    console.log('Final text with preserved fractions:', finalText.substring(0, 300));
+    const finalText = cleanedText + ' ' + originalCleaned.substring(0, 200);
+    console.log('STEP 2 COMPLETE: Final preprocessed text:', finalText);
+    console.log('--- PREPROCESSING END ---');
     return finalText;
   }
   
   // STEP 3: If no fractions found, do minimal cleaning
+  console.log('STEP 3: No fractions found, applying minimal cleaning...');
   const minimalCleaned = text
     .replace(/\\begin\{[^}]*\}|\\end\{[^}]*\}/g, '')
     .replace(/\s+/g, ' ')
     .trim();
   
-  console.log('Minimal cleaned text:', minimalCleaned.substring(0, 300));
+  console.log('STEP 3 COMPLETE: Minimal cleaned text:', minimalCleaned.substring(0, 300));
+  console.log('--- PREPROCESSING END ---');
   return minimalCleaned;
 }
 
-// Optimized extraction that preserves fractions
+// Enhanced extraction with comprehensive logging
 async function optimizedFractionExtraction(fileData: string, fileType: string): Promise<string> {
-  console.log('Starting optimized fraction extraction');
+  console.log('=== OPTIMIZED FRACTION EXTRACTION START ===');
+  console.log('File type:', fileType);
   
   try {
     // Use Vision API to get raw text
+    console.log('Calling Vision API for text extraction...');
     const extractedText = await extractTextFromFile(fileData, fileType);
-    console.log('Vision API extraction completed, text length:', extractedText.length);
-    console.log('Raw extracted text preview:', extractedText.substring(0, 500));
+    console.log('Vision API extraction completed successfully');
+    console.log('Extracted text length:', extractedText.length);
+    console.log('Raw extracted text preview (first 500 chars):', extractedText.substring(0, 500));
     
     // Apply fraction-preserving preprocessing
+    console.log('Applying fraction-preserving preprocessing...');
     const processedText = preserveFractionsPreprocessing(extractedText);
+    console.log('Preprocessing completed');
+    console.log('Final processed text length:', processedText.length);
+    console.log('Final processed text:', processedText);
     
+    console.log('=== OPTIMIZED FRACTION EXTRACTION END ===');
     return processedText;
   } catch (error) {
     console.error('Optimized fraction extraction failed:', error);
@@ -101,42 +123,51 @@ export async function processDocument(
   subjectId?: string
 ): Promise<{ success: boolean, exercises: any[], rawText: string, error?: string }> {
   try {
+    console.log(`=== DOCUMENT PROCESSING START ===`);
     console.log(`Processing document: ${fileName} (${fileType})`);
     
     // Use optimized fraction extraction
     const extractedText = await optimizedFractionExtraction(fileData, fileType);
-    console.log(`Final extracted text length: ${extractedText.length} characters`);
-    console.log(`Final extracted text preview: ${extractedText.substring(0, 500)}`);
+    console.log(`Text extraction completed. Length: ${extractedText.length} characters`);
     
     // Use the enhanced extraction system that works directly with raw text
-    console.log('Using enhanced extraction system for multi-exercise detection');
+    console.log('Starting enhanced exercise extraction...');
     const exercises = extractExercisesFromText(extractedText);
     
+    console.log(`=== EXTRACTION RESULTS ===`);
     console.log(`Enhanced extraction found ${exercises.length} exercises`);
     
-    // Log each exercise found
+    // Log each exercise found with detailed info
     exercises.forEach((ex, idx) => {
-      console.log(`Exercise ${idx + 1}: "${ex.question}"`);
+      console.log(`Exercise ${idx + 1}:`);
+      console.log(`  Question: "${ex.question}"`);
+      console.log(`  Answer: "${ex.answer}"`);
     });
     
-    // If no exercises found, create a fallback exercise from the content
-    if (exercises.length === 0 && extractedText.length > 0) {
-      console.log('No exercises detected - creating fallback exercise');
-      exercises.push({
-        question: "Document Content Analysis",
-        answer: extractedText.length > 300 
-          ? extractedText.substring(0, 300) + "..." 
-          : extractedText
-      });
+    // Validation: Ensure we have exercises
+    if (exercises.length === 0) {
+      console.log('⚠️ WARNING: No exercises found - creating fallback exercise');
+      if (extractedText.length > 0) {
+        exercises.push({
+          question: "Document Content Analysis",
+          answer: extractedText.length > 300 
+            ? extractedText.substring(0, 300) + "..." 
+            : extractedText
+        });
+        console.log('Fallback exercise created');
+      }
     }
     
-    console.log(`Final result: ${exercises.length} exercises extracted`);
+    console.log(`=== DOCUMENT PROCESSING END ===`);
+    console.log(`Final result: ${exercises.length} exercises will be returned to frontend`);
+    
     return {
       success: true,
       exercises,
       rawText: extractedText
     };
   } catch (error) {
+    console.error('=== DOCUMENT PROCESSING ERROR ===');
     console.error('Error in document processing:', error);
     return {
       success: false,
@@ -146,3 +177,4 @@ export async function processDocument(
     };
   }
 }
+

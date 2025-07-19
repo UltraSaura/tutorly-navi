@@ -1,12 +1,11 @@
-
-// Enhanced mathematical exercise extraction with direct LaTeX processing
+// Enhanced mathematical exercise extraction with comprehensive logging and multi-exercise support
 
 import { preprocessFrenchMathText } from './textPreprocessing.ts';
 
 export function extractMathExercisesFromRawText(rawText: string): Array<{ question: string, answer: string }> {
-  console.log('=== DEFINITIVE MULTI-EXERCISE EXTRACTION ===');
-  console.log('Raw text length:', rawText.length);
-  console.log('Raw text preview:', rawText.substring(0, 300));
+  console.log('=== SMART MATH EXTRACTION START ===');
+  console.log('Input text length:', rawText.length);
+  console.log('Raw text preview (first 500 chars):', rawText.substring(0, 500));
   
   // Skip extraction if this looks like an error message
   if (isErrorText(rawText)) {
@@ -17,57 +16,64 @@ export function extractMathExercisesFromRawText(rawText: string): Array<{ questi
   // PHASE 1: Direct LaTeX fraction extraction from SimpleTex output
   console.log('🔍 PHASE 1: Direct LaTeX fraction extraction');
   const latexFractions = extractFractionsFromLatex(rawText);
+  console.log(`PHASE 1 RESULT: Found ${latexFractions.length} LaTeX fractions:`, latexFractions);
   
   if (latexFractions.length > 0) {
-    console.log(`✅ Found ${latexFractions.length} fractions in LaTeX format, creating exercises`);
-    return createExercisesFromFractions(latexFractions);
+    console.log(`✅ Creating ${latexFractions.length} exercises from LaTeX fractions`);
+    const exercises = createExercisesFromFractions(latexFractions);
+    console.log(`PHASE 1 SUCCESS: Created ${exercises.length} exercises from LaTeX`);
+    return exercises;
   }
   
   // PHASE 2: Comprehensive raw text fraction scanning
   console.log('🔍 PHASE 2: Comprehensive raw text fraction scanning');
   const allFractions = extractAllFractionsFromRawText(rawText);
+  console.log(`PHASE 2 RESULT: Found ${allFractions.length} raw text fractions:`, allFractions);
   
   if (allFractions.length > 0) {
-    console.log(`✅ Found ${allFractions.length} fractions in raw text, creating exercises`);
-    return createExercisesFromFractions(allFractions);
+    console.log(`✅ Creating ${allFractions.length} exercises from raw text fractions`);
+    const exercises = createExercisesFromFractions(allFractions);
+    console.log(`PHASE 2 SUCCESS: Created ${exercises.length} exercises from raw text`);
+    return exercises;
   }
   
   // PHASE 3: Try LaTeX-aware extraction (for other formats)
   console.log('🔍 PHASE 3: LaTeX-aware extraction fallback');
   const latexExercises = extractFromLatexText(rawText);
+  console.log(`PHASE 3 RESULT: Found ${latexExercises.length} exercises using LaTeX extraction`);
   if (latexExercises.length > 0) {
-    console.log(`✅ Found ${latexExercises.length} exercises using LaTeX extraction`);
+    console.log(`PHASE 3 SUCCESS: Created ${latexExercises.length} exercises using LaTeX extraction`);
     return latexExercises;
   }
   
-  console.log('No exercises found in any extraction phase');
+  console.log('❌ NO EXERCISES FOUND in any extraction phase');
   return [];
 }
 
-// NEW: Direct LaTeX fraction extraction specifically for SimpleTex output
+// Enhanced LaTeX fraction extraction with comprehensive logging
 function extractFractionsFromLatex(text: string): string[] {
-  console.log('Extracting fractions directly from LaTeX format...');
+  console.log('--- LATEX FRACTION EXTRACTION START ---');
+  console.log('Searching for LaTeX fractions in text...');
   
   const fractions = [];
   
-  // Comprehensive LaTeX fraction patterns
+  // Comprehensive LaTeX fraction patterns with detailed logging
   const latexPatterns = [
-    /\\frac\{(\d{1,3})\}\{(\d{1,3})\}/g, // \frac{30}{63}
-    /\\mathrm\{[^}]*\}\\frac\{(\d{1,3})\}\{(\d{1,3})\}/g, // \mathrm{a~}\frac{30}{63}
-    /\\\([^)]*\\frac\{(\d{1,3})\}\{(\d{1,3})\}[^)]*\\\)/g, // LaTeX inline fractions
+    { name: 'Standard \\frac{}{}', pattern: /\\frac\{(\d{1,3})\}\{(\d{1,3})\}/g },
+    { name: 'Mathrm with \\frac{}{}', pattern: /\\mathrm\{[^}]*\}\\frac\{(\d{1,3})\}\{(\d{1,3})\}/g },
+    { name: 'Inline LaTeX fractions', pattern: /\\\([^)]*\\frac\{(\d{1,3})\}\{(\d{1,3})\}[^)]*\\\)/g },
+    { name: 'Array parenthesized fractions', pattern: /\((\d{1,3})\)\/\((\d{1,3})\)/g },
+    { name: 'Simple fractions', pattern: /(\d{1,3})\/(\d{1,3})/g }
   ];
   
-  // Also look for parenthesized fractions in arrays
-  const arrayPatterns = [
-    /\((\d{1,3})\)\/\((\d{1,3})\)/g, // (30)/(63) in arrays
-    /(\d{1,3})\/(\d{1,3})/g, // Simple fractions
-  ];
-  
-  const allPatterns = [...latexPatterns, ...arrayPatterns];
-  
-  for (const pattern of allPatterns) {
-    console.log(`Testing LaTeX pattern: ${pattern.source}`);
+  for (const { name, pattern } of latexPatterns) {
+    console.log(`Testing pattern: ${name} - ${pattern.source}`);
+    
+    // Reset regex lastIndex to ensure proper matching
+    pattern.lastIndex = 0;
     const matches = [...text.matchAll(pattern)];
+    
+    console.log(`Pattern "${name}" found ${matches.length} matches`);
     
     for (const match of matches) {
       let numerator, denominator;
@@ -87,37 +93,50 @@ function extractFractionsFromLatex(text: string): string[] {
         
         if (!fractions.includes(fraction)) {
           fractions.push(fraction);
-          console.log(`✅ Found LaTeX fraction: ${fraction} at position ${match.index}`);
+          console.log(`✅ Added unique LaTeX fraction: ${fraction} (from pattern: ${name}) at position ${match.index}`);
+        } else {
+          console.log(`⚠️ Skipping duplicate fraction: ${fraction}`);
         }
+      } else {
+        console.log(`❌ Invalid fraction values: ${numerator}/${denominator}`);
       }
     }
   }
   
-  console.log(`Total LaTeX fractions found: ${fractions.length}`, fractions);
+  console.log(`--- LATEX EXTRACTION COMPLETE: ${fractions.length} unique fractions ---`);
+  fractions.forEach((frac, idx) => console.log(`Fraction ${idx + 1}: ${frac}`));
   return fractions;
 }
 
-// Enhanced fraction extraction from raw text with more patterns
+// Enhanced raw text fraction extraction with comprehensive logging
 function extractAllFractionsFromRawText(text: string): string[] {
-  console.log('Extracting ALL fractions from raw text...');
+  console.log('--- RAW TEXT FRACTION EXTRACTION START ---');
+  console.log('Searching for fractions in raw text...');
   
   const fractionPatterns = [
-    /\(\s*(\d{1,3})\s*\)\s*\/\s*\(\s*(\d{1,3})\s*\)/g, // (30)/(63)
-    /(\d{1,3})\s*\/\s*(\d{1,3})/g, // 30/63
-    /\\frac\{(\d{1,3})\}\{(\d{1,3})\}/g, // \frac{30}{63}
-    /(\d{1,3})\s*÷\s*(\d{1,3})/g, // 30÷63
-    /(\d{1,3})\s*:\s*(\d{1,3})/g, // 30:63 (ratio format)
+    { name: 'Parenthesized fractions', pattern: /\(\s*(\d{1,3})\s*\)\s*\/\s*\(\s*(\d{1,3})\s*\)/g },
+    { name: 'Simple fractions', pattern: /(\d{1,3})\s*\/\s*(\d{1,3})/g },
+    { name: 'LaTeX \\frac commands', pattern: /\\frac\{(\d{1,3})\}\{(\d{1,3})\}/g },
+    { name: 'Division symbol fractions', pattern: /(\d{1,3})\s*÷\s*(\d{1,3})/g },
+    { name: 'Ratio format fractions', pattern: /(\d{1,3})\s*:\s*(\d{1,3})/g }
   ];
   
   const allFractions = [];
   
-  for (const pattern of fractionPatterns) {
-    console.log(`Testing pattern: ${pattern.source}`);
+  for (const { name, pattern } of fractionPatterns) {
+    console.log(`Testing raw text pattern: ${name} - ${pattern.source}`);
+    
+    // Reset regex lastIndex to ensure proper matching
+    pattern.lastIndex = 0;
     const matches = [...text.matchAll(pattern)];
+    
+    console.log(`Raw text pattern "${name}" found ${matches.length} matches`);
     
     for (const match of matches) {
       const numerator = parseInt(match[1]);
       const denominator = parseInt(match[2]);
+      
+      console.log(`Found potential fraction: ${numerator}/${denominator} from pattern "${name}"`);
       
       // Validate fraction makes sense
       if (numerator > 0 && denominator > 0 && numerator < 1000 && denominator > 1) {
@@ -125,19 +144,30 @@ function extractAllFractionsFromRawText(text: string): string[] {
         
         if (!allFractions.includes(fraction)) {
           allFractions.push(fraction);
-          console.log(`✅ Found unique fraction: ${fraction} at position ${match.index}`);
+          console.log(`✅ Added unique raw text fraction: ${fraction} at position ${match.index}`);
+        } else {
+          console.log(`⚠️ Skipping duplicate fraction: ${fraction}`);
         }
+      } else {
+        console.log(`❌ Invalid fraction rejected: ${numerator}/${denominator}`);
       }
     }
   }
   
-  console.log(`Total unique fractions found: ${allFractions.length}`, allFractions);
+  console.log(`--- RAW TEXT EXTRACTION COMPLETE: ${allFractions.length} unique fractions ---`);
+  allFractions.forEach((frac, idx) => console.log(`Raw fraction ${idx + 1}: ${frac}`));
   return allFractions;
 }
 
-// Create lettered exercises from fractions
+// Enhanced exercise creation with comprehensive logging
 function createExercisesFromFractions(fractions: string[]): Array<{ question: string, answer: string }> {
-  console.log(`Creating ${fractions.length} exercises from fractions:`, fractions);
+  console.log(`--- EXERCISE CREATION START ---`);
+  console.log(`Creating exercises from ${fractions.length} fractions:`, fractions);
+  
+  if (fractions.length === 0) {
+    console.log('❌ No fractions provided for exercise creation');
+    return [];
+  }
   
   const exercises = [];
   
@@ -148,8 +178,11 @@ function createExercisesFromFractions(fractions: string[]): Array<{ question: st
       answer: fraction
     };
     exercises.push(exercise);
-    console.log(`✅ Created exercise ${index + 1}: ${exercise.question}`);
+    console.log(`✅ Created exercise ${index + 1}: "${exercise.question}" with answer: "${exercise.answer}"`);
   });
+  
+  console.log(`--- EXERCISE CREATION COMPLETE: ${exercises.length} exercises created ---`);
+  exercises.forEach((ex, idx) => console.log(`Final exercise ${idx + 1}: ${ex.question}`));
   
   return exercises;
 }
