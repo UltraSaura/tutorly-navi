@@ -1,18 +1,19 @@
+
 import { extractTextFromFile } from "./extractors.ts";
 import { extractExercisesFromText } from "./exerciseExtractors.ts";
 
-// Enhanced text preprocessing function that preserves multiple fractions
-function preprocessExtractedText(text: string): string {
-  console.log('Starting enhanced text preprocessing');
+// Simplified preprocessing that preserves ALL fraction content
+function preserveFractionsPreprocessing(text: string): string {
+  console.log('Starting fraction-preserving preprocessing');
   console.log('Raw text length:', text.length);
-  console.log('Raw text (first 500 chars):', text.substring(0, 500));
+  console.log('Raw text preview:', text.substring(0, 300));
   
-  // STEP 1: Extract and preserve all fractions BEFORE cleaning
+  // STEP 1: Extract and preserve all fractions BEFORE any cleaning
   const fractionPatterns = [
     /\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g, // (30)/(63)
     /(\d+)\s*\/\s*(\d+)/g, // 30/63
     /\\frac\{(\d+)\}\{(\d+)\}/g, // \frac{30}{63}
-    /(\d+)\s*÷\s*(\d+)/g, // 30÷63
+    /\\mathrm\{[^}]*\}\\frac\{(\d+)\}\{(\d+)\}/g, // \mathrm{a~}\frac{30}{63}
   ];
   
   const preservedFractions = [];
@@ -20,8 +21,19 @@ function preprocessExtractedText(text: string): string {
     let match;
     const tempPattern = new RegExp(pattern.source, pattern.flags);
     while ((match = tempPattern.exec(text)) !== null) {
+      let numerator, denominator;
+      
+      // Handle different capture group positions
       if (match[1] && match[2]) {
-        const fraction = `${match[1]}/${match[2]}`;
+        numerator = match[1];
+        denominator = match[2];
+      } else if (match[3] && match[4]) {
+        numerator = match[3];
+        denominator = match[4];
+      }
+      
+      if (numerator && denominator) {
+        const fraction = `${numerator}/${denominator}`;
         if (!preservedFractions.includes(fraction)) {
           preservedFractions.push(fraction);
           console.log(`✅ Preserved fraction: ${fraction}`);
@@ -32,74 +44,52 @@ function preprocessExtractedText(text: string): string {
   
   console.log(`Total fractions preserved: ${preservedFractions.length}`, preservedFractions);
   
-  // STEP 2: Clean the text but keep fraction structure
-  let cleanedText = text
-    // Remove LaTeX artifacts but preserve fraction content
-    .replace(/\\\([^)]*\\\)/g, '')
-    .replace(/\$\$[^$]*\$\$/g, '')
-    .replace(/\\[a-zA-Z]+(?:\{[^}]*\})?/g, '') // Remove LaTeX commands but keep content
-    .replace(/[{}]/g, '')
-    
-    // Fix common OCR mistakes in French
-    .replace(/([a-zA-Z])\s*,\s*/g, '$1. ')  // Fix a, -> a.
-    .replace(/([a-zA-Z])\s*\.\s*/g, '$1. ') // Normalize spacing around periods
-    .replace(/(\d+)\s*\/\s*(\d+)/g, '$1/$2') // Normalize fractions
-    
-    // Clean up whitespace
-    .replace(/\s+/g, ' ')
-    .replace(/\n\s*\n/g, '\n')
-    .trim();
-  
-  // STEP 3: If preprocessing removed fractions, reconstruct them
+  // STEP 2: If we have fractions, create a clean representation
   if (preservedFractions.length > 0) {
-    // Check if fractions are still in cleaned text
-    const remainingFractions = [];
-    for (const fraction of preservedFractions) {
-      if (cleanedText.includes(fraction)) {
-        remainingFractions.push(fraction);
-      }
-    }
+    let cleanedText = '';
+    preservedFractions.forEach((fraction, index) => {
+      const letter = String.fromCharCode(97 + index); // a, b, c, d, e
+      cleanedText += `${letter}. ${fraction} `;
+    });
     
-    console.log(`Fractions remaining after cleaning: ${remainingFractions.length}`, remainingFractions);
+    // Also include some original content for context
+    const originalCleaned = text
+      .replace(/\\[a-zA-Z]+(?:\{[^}]*\})?/g, '') // Remove LaTeX commands
+      .replace(/[{}]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
     
-    // If we lost fractions during cleaning, reconstruct the content
-    if (remainingFractions.length < preservedFractions.length) {
-      console.log('⚠️ Fractions were lost during preprocessing, reconstructing...');
-      
-      // Create a structured representation with all fractions
-      let reconstructedText = '';
-      preservedFractions.forEach((fraction, index) => {
-        const letter = String.fromCharCode(97 + index); // a, b, c, d, e
-        reconstructedText += `${letter}. ${fraction} `;
-      });
-      
-      // Combine original cleaned text with reconstructed fractions
-      cleanedText = reconstructedText + ' ' + cleanedText;
-      console.log('✅ Reconstructed text with all fractions:', reconstructedText);
-    }
+    const finalText = cleanedText + ' ' + originalCleaned;
+    console.log('Final text with preserved fractions:', finalText.substring(0, 300));
+    return finalText;
   }
   
-  console.log('Final cleaned text length:', cleanedText.length);
-  console.log('Final cleaned text (first 300 chars):', cleanedText.substring(0, 300));
+  // STEP 3: If no fractions found, do minimal cleaning
+  const minimalCleaned = text
+    .replace(/\\begin\{[^}]*\}|\\end\{[^}]*\}/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
   
-  return cleanedText;
+  console.log('Minimal cleaned text:', minimalCleaned.substring(0, 300));
+  return minimalCleaned;
 }
 
-// Optimized single-pass extraction with enhanced multi-fraction support
-async function optimizedExtraction(fileData: string, fileType: string): Promise<string> {
-  console.log('Starting optimized extraction with multi-fraction support');
+// Optimized extraction that preserves fractions
+async function optimizedFractionExtraction(fileData: string, fileType: string): Promise<string> {
+  console.log('Starting optimized fraction extraction');
   
   try {
-    // Use Vision API with improved prompt
+    // Use Vision API to get raw text
     const extractedText = await extractTextFromFile(fileData, fileType);
     console.log('Vision API extraction completed, text length:', extractedText.length);
+    console.log('Raw extracted text preview:', extractedText.substring(0, 500));
     
-    // Apply enhanced preprocessing that preserves multiple fractions
-    const cleanedText = preprocessExtractedText(extractedText);
+    // Apply fraction-preserving preprocessing
+    const processedText = preserveFractionsPreprocessing(extractedText);
     
-    return cleanedText;
+    return processedText;
   } catch (error) {
-    console.error('Optimized extraction failed:', error);
+    console.error('Optimized fraction extraction failed:', error);
     throw error;
   }
 }
@@ -113,22 +103,21 @@ export async function processDocument(
   try {
     console.log(`Processing document: ${fileName} (${fileType})`);
     
-    // Use optimized single-pass extraction with multi-fraction support
-    const extractedText = await optimizedExtraction(fileData, fileType);
+    // Use optimized fraction extraction
+    const extractedText = await optimizedFractionExtraction(fileData, fileType);
     console.log(`Final extracted text length: ${extractedText.length} characters`);
-    console.log(`Final extracted text (first 500 chars): ${extractedText.substring(0, 500)}`);
+    console.log(`Final extracted text preview: ${extractedText.substring(0, 500)}`);
     
-    // Log the full text for debugging (in chunks)
-    const textChunks = extractedText.match(/.{1,200}/g) || [];
-    textChunks.forEach((chunk, index) => {
-      console.log(`Text chunk ${index + 1}:`, chunk);
-    });
-    
-    // Use the enhanced tiered extraction system
-    console.log('Using enhanced tiered extraction system for multi-exercise detection');
+    // Use the enhanced extraction system that works directly with raw text
+    console.log('Using enhanced extraction system for multi-exercise detection');
     const exercises = extractExercisesFromText(extractedText);
     
-    console.log(`Enhanced tiered extraction found ${exercises.length} exercises`);
+    console.log(`Enhanced extraction found ${exercises.length} exercises`);
+    
+    // Log each exercise found
+    exercises.forEach((ex, idx) => {
+      console.log(`Exercise ${idx + 1}: "${ex.question}"`);
+    });
     
     // If no exercises found, create a fallback exercise from the content
     if (exercises.length === 0 && extractedText.length > 0) {
@@ -142,10 +131,6 @@ export async function processDocument(
     }
     
     console.log(`Final result: ${exercises.length} exercises extracted`);
-    exercises.forEach((ex, idx) => {
-      console.log(`Final Exercise ${idx + 1}: "${ex.question.substring(0, 100)}..."`);
-    });
-    
     return {
       success: true,
       exercises,

@@ -1,10 +1,67 @@
 
-// Main extraction coordinator that uses smart pattern-based extraction
+// Main extraction coordinator that prioritizes direct fraction extraction
 
 import { extractMathExercisesFromRawText } from './smartMathExtraction.ts';
 import { extractWithDelimiters } from './delimiterExtraction.ts';
 
-// Helper function to extract lettered exercises (a. b. c. etc.) - ENHANCED VERSION
+// Enhanced extraction with direct raw text analysis first
+export function extractExercisesFromText(text: string): Array<{ question: string, answer: string }> {
+  console.log('=== COMPREHENSIVE EXTRACTION COORDINATOR START ===');
+  console.log('Input text length:', text.length);
+  console.log('Raw text preview:', text.substring(0, 500));
+  
+  // PHASE 1: Direct mathematical extraction from raw text (highest priority)
+  console.log('=== PHASE 1: Direct Mathematical Extraction ===');
+  let exercises = extractMathExercisesFromRawText(text);
+  
+  if (exercises.length > 0) {
+    console.log(`PHASE 1 SUCCESS: Found ${exercises.length} exercises using direct extraction`);
+    exercises.forEach((ex, idx) => {
+      console.log(`Final Exercise ${idx + 1}: "${ex.question}"`);
+    });
+    return exercises;
+  }
+  
+  // PHASE 2: Lettered exercise pattern detection
+  console.log('=== PHASE 2: Lettered Exercise Pattern Detection ===');
+  const letteredExercises = extractLetteredExercises(text);
+  if (letteredExercises.length > 1) {
+    console.log(`PHASE 2 SUCCESS: Found ${letteredExercises.length} lettered exercises`);
+    return letteredExercises;
+  }
+  
+  // PHASE 3: Numbered exercise pattern detection
+  console.log('=== PHASE 3: Numbered Exercise Pattern Detection ===');
+  const numberedExercises = extractNumberedExercises(text);
+  if (numberedExercises.length > 1) {
+    console.log(`PHASE 3 SUCCESS: Found ${numberedExercises.length} numbered exercises`);
+    return numberedExercises;
+  }
+  
+  // PHASE 4: Delimiter-based extraction (legacy fallback)
+  console.log('=== PHASE 4: Delimiter-Based Fallback ===');
+  exercises = extractWithDelimiters(text);
+  
+  if (exercises.length > 0) {
+    console.log(`PHASE 4 SUCCESS: Found ${exercises.length} exercises using delimiters`);
+    return exercises;
+  }
+  
+  // PHASE 5: Final content-based exercise
+  console.log('=== PHASE 5: Content-Based Exercise Creation ===');
+  if (text.trim().length > 0) {
+    exercises = [{
+      question: "Document Content",
+      answer: text.trim().substring(0, 300)
+    }];
+    console.log(`PHASE 5: Created 1 content-based exercise`);
+  }
+  
+  console.log(`EXTRACTION COMPLETE: ${exercises.length} total exercises`);
+  return exercises;
+}
+
+// Helper function to extract lettered exercises (a. b. c. etc.)
 function extractLetteredExercises(text: string): Array<{ question: string, answer: string }> {
   const exercises = [];
   const letteredPattern = /(?:^|\n)\s*([a-h])[\.\)]\s*([^\n]+(?:\n(?!\s*[a-h][\.\)]).*)*)/gm;
@@ -12,7 +69,7 @@ function extractLetteredExercises(text: string): Array<{ question: string, answe
   
   if (matches.length >= 2) {
     console.log(`Found ${matches.length} lettered exercises`);
-    matches.forEach((match, index) => {
+    matches.forEach((match) => {
       const letter = match[1];
       const content = match[2].trim();
       
@@ -38,7 +95,7 @@ function extractLetteredExercises(text: string): Array<{ question: string, answe
   return exercises;
 }
 
-// Helper function to extract numbered exercises (1. 2. 3. etc.) - ENHANCED VERSION
+// Helper function to extract numbered exercises (1. 2. 3. etc.)
 function extractNumberedExercises(text: string): Array<{ question: string, answer: string }> {
   const exercises = [];
   const numberedPattern = /(?:^|\n)\s*(\d+)[\.\)]\s*([^\n]+(?:\n(?!\s*\d+[\.\)]).*)*)/gm;
@@ -67,111 +124,6 @@ function extractNumberedExercises(text: string): Array<{ question: string, answe
         console.log(`✅ Created numbered exercise: ${number}. ${content.substring(0, 30)}...`);
       }
     });
-  }
-  
-  return exercises;
-}
-
-// Enhanced extraction with comprehensive multi-exercise detection and raw text analysis
-export function extractExercisesFromText(text: string): Array<{ question: string, answer: string }> {
-  console.log('=== COMPREHENSIVE MULTI-EXERCISE EXTRACTION START ===');
-  console.log('Input text length:', text.length);
-  console.log('Raw text (first 500 chars):', text.substring(0, 500));
-  
-  // PHASE 1: Try enhanced smart pattern-based extraction with raw text analysis
-  console.log('=== PHASE 1: Enhanced Smart Pattern-Based Extraction ===');
-  let exercises = extractMathExercisesFromRawText(text);
-  
-  if (exercises.length > 1) {
-    console.log(`PHASE 1 SUCCESS: Found ${exercises.length} exercises using enhanced smart extraction`);
-    console.log('Final exercises:', exercises.map(e => `"${e.question}"`));
-    return exercises;
-  }
-  
-  // PHASE 2: Enhanced multi-exercise detection for specific patterns
-  console.log('=== PHASE 2: Enhanced Multi-Exercise Detection ===');
-  
-  // Try to detect multiple lettered exercises (common in French worksheets)
-  const letteredExercises = extractLetteredExercises(text);
-  if (letteredExercises.length > 1) {
-    console.log(`PHASE 2: Found ${letteredExercises.length} lettered exercises`);
-    return letteredExercises;
-  }
-  
-  // Try to detect multiple numbered exercises
-  const numberedExercises = extractNumberedExercises(text);
-  if (numberedExercises.length > 1) {
-    console.log(`PHASE 2: Found ${numberedExercises.length} numbered exercises`);
-    return numberedExercises;
-  }
-  
-  // PHASE 3: Fallback to delimiter-based extraction (legacy)
-  console.log('=== PHASE 3: Delimiter-Based Fallback ===');
-  exercises = extractWithDelimiters(text);
-  
-  if (exercises.length > 0) {
-    console.log(`PHASE 3 SUCCESS: Found ${exercises.length} exercises using delimiters`);
-    return exercises;
-  }
-  
-  // PHASE 4: Emergency extraction for SimpleTex LaTeX content with comprehensive fraction detection
-  if (text.includes('EXERCICE') || text.includes('Simpliffer') || text.includes('^(') || text.match(/\d+\/\d+/)) {
-    console.log('=== PHASE 4: Emergency Comprehensive Fraction Extraction ===');
-    console.log('Detected SimpleTex LaTeX format, applying comprehensive fraction extraction...');
-    
-    // Enhanced fraction detection with multiple patterns
-    const fractionPatterns = [
-      /\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g, // Parenthesized fractions (30)/(63)
-      /(\d+)\s*\/\s*(\d+)/g, // Standard fractions 30/63
-      /(\d+)\s*÷\s*(\d+)/g, // Division symbol
-      /\\?frac\{(\d+)\}\{(\d+)\}/g, // LaTeX fraction format
-    ];
-    
-    const allFractions = [];
-    
-    for (const pattern of fractionPatterns) {
-      const matches = [...text.matchAll(pattern)];
-      for (const match of matches) {
-        const numerator = match[1];
-        const denominator = match[2];
-        const fraction = `${numerator}/${denominator}`;
-        
-        // Avoid duplicates and validate
-        if (!allFractions.includes(fraction) && 
-            parseInt(numerator) > 0 && parseInt(denominator) > 0 &&
-            parseInt(numerator) < 1000 && parseInt(denominator) > 1) {
-          allFractions.push(fraction);
-          console.log(`✅ Found fraction in emergency extraction: ${fraction}`);
-        }
-      }
-    }
-    
-    if (allFractions.length > 0) {
-      console.log(`Emergency extraction found ${allFractions.length} fractions:`, allFractions);
-      
-      allFractions.forEach((fraction, index) => {
-        const letter = String.fromCharCode(97 + index); // a, b, c, d, e
-        
-        exercises.push({
-          question: `${letter}. Simplifiez la fraction ${fraction}`,
-          answer: fraction
-        });
-        console.log(`✅ Created emergency exercise: ${letter}. Simplifiez la fraction ${fraction}`);
-      });
-      
-      console.log(`PHASE 4 SUCCESS: Created ${exercises.length} fraction exercises`);
-      return exercises;
-    }
-  }
-  
-  // PHASE 5: Final fallback
-  console.log('=== PHASE 5: Minimal Content Exercise ===');
-  if (text.trim().length > 0) {
-    exercises = [{
-      question: "Document Content",
-      answer: text.trim().substring(0, 300)
-    }];
-    console.log(`PHASE 5: Created 1 content-based exercise`);
   }
   
   return exercises;
