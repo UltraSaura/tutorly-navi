@@ -20,7 +20,7 @@ function extractLetteredExercises(text: string): Array<{ question: string, answe
     const matches = [...text.matchAll(pattern)];
     console.log(`Pattern found ${matches.length} lettered matches`);
     
-    if (matches.length >= 2) {
+    if (matches.length >= 1) { // Changed from >= 2 to >= 1 to catch single exercises too
       matches.forEach((match) => {
         const letter = match[1].toLowerCase();
         const content = match[2].trim();
@@ -60,7 +60,8 @@ function extractAllFractionsAsExercises(text: string): Array<{ question: string,
   const fractionPatterns = [
     /(?:\(\s*)?(\d+)\s*\/\s*(\d+)(?:\s*\))?/g, // Basic fractions with optional parentheses
     /(\d+)\s*\/\s*(\d+)/g, // Simple fractions
-    /\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g // Parenthesized fractions
+    /\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g, // Parenthesized fractions
+    /\\frac\{(\d+)\}\{(\d+)\}/g // LaTeX fractions
   ];
   
   const foundFractions = new Set(); // Avoid duplicates
@@ -104,7 +105,7 @@ function extractNumberedExercises(text: string): Array<{ question: string, answe
   
   console.log(`Found ${matches.length} numbered matches`);
   
-  if (matches.length >= 2) {
+  if (matches.length >= 1) { // Changed from >= 2 to >= 1
     matches.forEach((match) => {
       const number = match[1];
       const content = match[2].trim();
@@ -142,65 +143,91 @@ export function extractExercisesFromText(text: string): Array<{ question: string
   console.log('\n=== PHASE 1: Smart Pattern-Based Extraction ===');
   exercises = extractMathExercisesFromRawText(text);
   
-  if (exercises.length > 1) {
-    console.log(`PHASE 1 SUCCESS: Found ${exercises.length} exercises using smart extraction`);
-    return exercises;
+  // FIXED: Don't exit early if we found exercises, let's verify we got ALL of them
+  if (exercises.length > 0) {
+    console.log(`PHASE 1 FOUND: ${exercises.length} exercises using smart extraction`);
+    
+    // Check if there might be more exercises by looking for additional fractions
+    const additionalFractionCount = (text.match(/\d+\/\d+/g) || []).length;
+    console.log(`Additional fraction count check: ${additionalFractionCount} total fractions in text`);
+    
+    // If we found fewer exercises than total fractions, try other phases too
+    if (exercises.length >= additionalFractionCount || exercises.length >= 3) {
+      console.log(`PHASE 1 SUCCESS: Found sufficient exercises (${exercises.length})`);
+      return exercises;
+    } else {
+      console.log(`PHASE 1 PARTIAL: Found ${exercises.length} exercises but ${additionalFractionCount} fractions detected, continuing to other phases...`);
+    }
   }
   
   // PHASE 2: Extract all fractions as individual exercises
   console.log('\n=== PHASE 2: All Fractions as Individual Exercises ===');
-  exercises = extractAllFractionsAsExercises(text);
+  const fractionExercises = extractAllFractionsAsExercises(text);
+  
+  if (fractionExercises.length > exercises.length) {
+    console.log(`PHASE 2 SUCCESS: Found ${fractionExercises.length} fraction exercises (better than ${exercises.length})`);
+    exercises = fractionExercises;
+  }
   
   if (exercises.length > 1) {
-    console.log(`PHASE 2 SUCCESS: Found ${exercises.length} fraction exercises`);
     return exercises;
   }
   
   // PHASE 3: Lettered exercise detection
   console.log('\n=== PHASE 3: Lettered Exercise Detection ===');
-  exercises = extractLetteredExercises(text);
+  const letteredExercises = extractLetteredExercises(text);
+  
+  if (letteredExercises.length > exercises.length) {
+    console.log(`PHASE 3 SUCCESS: Found ${letteredExercises.length} lettered exercises`);
+    exercises = letteredExercises;
+  }
   
   if (exercises.length > 1) {
-    console.log(`PHASE 3 SUCCESS: Found ${exercises.length} lettered exercises`);
     return exercises;
   }
   
   // PHASE 4: Numbered exercise detection
   console.log('\n=== PHASE 4: Numbered Exercise Detection ===');
-  exercises = extractNumberedExercises(text);
+  const numberedExercises = extractNumberedExercises(text);
+  
+  if (numberedExercises.length > exercises.length) {
+    console.log(`PHASE 4 SUCCESS: Found ${numberedExercises.length} numbered exercises`);
+    exercises = numberedExercises;
+  }
   
   if (exercises.length > 1) {
-    console.log(`PHASE 4 SUCCESS: Found ${exercises.length} numbered exercises`);
     return exercises;
   }
   
   // PHASE 5: Delimiter-based extraction (fallback)
   console.log('\n=== PHASE 5: Delimiter-Based Fallback ===');
-  exercises = extractWithDelimiters(text);
+  const delimiterExercises = extractWithDelimiters(text);
   
-  if (exercises.length > 0) {
-    console.log(`PHASE 5 SUCCESS: Found ${exercises.length} exercises using delimiters`);
-    return exercises;
+  if (delimiterExercises.length > exercises.length) {
+    console.log(`PHASE 5 SUCCESS: Found ${delimiterExercises.length} exercises using delimiters`);
+    exercises = delimiterExercises;
   }
   
   // PHASE 6: Emergency single-exercise extraction
-  console.log('\n=== PHASE 6: Emergency Single Exercise ===');
-  if (text.trim().length > 0) {
-    // Look for any math content
-    const fractionMatch = text.match(/(\d+)\s*\/\s*(\d+)/);
-    if (fractionMatch) {
-      const fraction = `${fractionMatch[1]}/${fractionMatch[2]}`;
-      exercises = [{
-        question: `Simplifiez la fraction ${fraction}`,
-        answer: fraction
-      }];
-      console.log(`PHASE 6: Created single fraction exercise: ${fraction}`);
-    } else {
-      exercises = [{
-        question: "Document Content",
-        answer: text.trim().substring(0, 300)
-      }];
-      console.log(`PHASE 6: Created content-based exercise`);
+  if (exercises.length === 0) {
+    console.log('\n=== PHASE 6: Emergency Single Exercise ===');
+    if (text.trim().length > 0) {
+      // Look for any math content
+      const fractionMatch = text.match(/(\d+)\s*\/\s*(\d+)/);
+      if (fractionMatch) {
+        const fraction = `${fractionMatch[1]}/${fractionMatch[2]}`;
+        exercises = [{
+          question: `Simplifiez la fraction ${fraction}`,
+          answer: fraction
+        }];
+        console.log(`PHASE 6: Created single fraction exercise: ${fraction}`);
+      } else {
+        exercises = [{
+          question: "Document Content",
+          answer: text.trim().substring(0, 300)
+        }];
+        console.log(`PHASE 6: Created content-based exercise`);
+      }
     }
   }
   

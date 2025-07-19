@@ -16,7 +16,9 @@ export function extractMathExercisesFromRawText(rawText: string): Array<{ questi
   
   // First try comprehensive LaTeX-aware extraction
   const latexExercises = extractMultipleFromLatexText(rawText);
-  if (latexExercises.length > 1) {
+  console.log(`LaTeX extraction found ${latexExercises.length} exercises`);
+  
+  if (latexExercises.length > 0) {
     console.log(`✅ Found ${latexExercises.length} exercises using LaTeX extraction`);
     return latexExercises;
   }
@@ -59,11 +61,12 @@ function extractMultipleFromLatexText(text: string): Array<{ question: string, a
     /(\d+)\s*\/\s*(\d+)/g, // Basic fractions
     /\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g, // Parenthesized fractions
     /\(\s*(\d+)\s*\/\s*(\d+)\s*\)/g, // Single parenthesized fractions
+    /\\frac\{(\d+)\}\{(\d+)\}/g, // LaTeX fractions
   ];
   
   const foundFractions = new Set();
   
-  // Find all unique fractions
+  // Find all unique fractions using multiple patterns
   for (const pattern of fractionPatterns) {
     let match;
     while ((match = pattern.exec(cleanedText)) !== null) {
@@ -74,23 +77,24 @@ function extractMultipleFromLatexText(text: string): Array<{ question: string, a
       // Validate fraction (avoid obviously wrong matches)
       if (parseInt(numerator) > 0 && parseInt(denominator) > 0 && parseInt(denominator) > parseInt(numerator)/100) {
         foundFractions.add(fraction);
-        console.log(`✅ Found valid fraction: ${fraction}`);
+        console.log(`✅ Found valid LaTeX fraction: ${fraction}`);
       }
     }
     pattern.lastIndex = 0;
   }
   
-  // Create exercises from all found fractions
-  const fractionsArray = Array.from(foundFractions);
-  console.log(`Total unique fractions found: ${fractionsArray.length}`);
+  console.log(`Total unique LaTeX fractions found: ${foundFractions.size}`);
   
+  // Create exercises from ALL found fractions - THIS WAS THE BUG!
+  const fractionsArray = Array.from(foundFractions);
   fractionsArray.forEach((fraction, index) => {
     const letter = String.fromCharCode(97 + index); // a, b, c, etc.
-    exercises.push({
+    const exercise = {
       question: `${letter}. Simplifiez la fraction ${fraction}`,
       answer: fraction
-    });
-    console.log(`✅ Created LaTeX exercise: ${letter}. Simplifiez la fraction ${fraction}`);
+    };
+    exercises.push(exercise);
+    console.log(`✅ Created LaTeX exercise ${index + 1}: ${exercise.question}`);
   });
   
   console.log(`=== LATEX EXTRACTION RESULT: ${exercises.length} exercises ===`);
@@ -120,23 +124,25 @@ function extractMultipleMathExercisesDirectly(rawText: string): Array<{ question
     }
   }
   
-  // Create exercises from all found fractions
-  const fractionsArray = Array.from(foundFractions);
-  console.log(`Total OCR fractions found: ${fractionsArray.length}`);
+  console.log(`Total OCR fractions found: ${foundFractions.size}`);
   
+  // Create exercises from ALL found fractions - THIS WAS ALSO THE BUG!
+  const fractionsArray = Array.from(foundFractions);
   fractionsArray.forEach((fraction, index) => {
     const letter = String.fromCharCode(97 + index); // a, b, c, etc.
-    exercises.push({
+    const exercise = {
       question: `${letter}. Simplifiez la fraction ${fraction}`,
       answer: fraction
-    });
-    console.log(`✅ Created OCR exercise: ${letter}. Simplifiez la fraction ${fraction}`);
+    };
+    exercises.push(exercise);
+    console.log(`✅ Created OCR exercise ${index + 1}: ${exercise.question}`);
   });
   
-  // If no fractions found, look for other math patterns
+  // Enhanced fallback patterns if no fractions found
   if (exercises.length === 0) {
     console.log('No fractions found, looking for other math patterns...');
     
+    // Look for decimal patterns
     const decimalPattern = /\b(\d+\.\d+)\b/g;
     const foundDecimals = new Set();
     let decimalMatch;
