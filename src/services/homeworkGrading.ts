@@ -10,13 +10,14 @@ export const evaluateHomework = async (
 ): Promise<Exercise> => {
   try {
     console.log('[homeworkGrading] evaluateHomework called with:', exercise);
-    if (!exercise.question || !exercise.userAnswer) {
+    if (!exercise.question || !exercise.userAnswer || exercise.userAnswer.trim() === "") {
       console.error("[homeworkGrading] Missing question or answer for grading:", exercise);
-      toast.error('Please provide both a question and an answer for grading.');
+      toast.error('Please provide an answer before grading.');
       return {
         ...exercise,
-        isCorrect: false,
-        explanation: "Unable to grade: Missing question or answer."
+        isCorrect: undefined,
+        explanation: undefined,
+        needsRetry: true
       };
     }
 

@@ -84,18 +84,13 @@ export const processUploadedDocument = async (
             exercises: extractedExercises.map(ex => ({
               id: Date.now() + Math.random().toString(36).substring(2, 9),
               question: ex.question,
-              userAnswer: ex.answer,
+              userAnswer: "", // Empty - student needs to provide answer
               expanded: false,
               isCorrect: undefined,
               explanation: undefined,
               subjectId: subjectId,
-              attemptCount: 1,
-              attempts: [{
-                id: `${Date.now()}-attempt-1`,
-                answer: ex.answer,
-                timestamp: new Date(),
-                attemptNumber: 1,
-              }],
+              attemptCount: 0,
+              attempts: [],
               lastAttemptDate: new Date(),
               needsRetry: false,
             })),
@@ -132,18 +127,13 @@ export const processUploadedDocument = async (
     const exercises: Exercise[] = data.exercises.map((ex: any) => ({
       id: Date.now() + Math.random().toString(36).substring(2, 9),
       question: ex.question,
-      userAnswer: ex.answer,
+      userAnswer: "", // Empty - student needs to provide answer
       expanded: false,
       isCorrect: undefined,
       explanation: undefined,
       subjectId: subjectId,
-      attemptCount: 1,
-      attempts: [{
-        id: `${Date.now()}-attempt-1`,
-        answer: ex.answer,
-        timestamp: new Date(),
-        attemptNumber: 1,
-      }],
+      attemptCount: 0,
+      attempts: [],
       lastAttemptDate: new Date(),
       needsRetry: false,
     }));

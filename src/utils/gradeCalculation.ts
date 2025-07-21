@@ -7,7 +7,7 @@ import { Exercise, Grade } from '@/types/chat';
 export const calculateGrade = (exercises: Exercise[]): Grade => {
   console.log('[gradeCalculation] Called with exercises:', exercises);
 
-  const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined);
+  const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined && ex.userAnswer && ex.userAnswer.trim() !== "");
 
   console.log('[gradeCalculation] Filtered answered exercises:', answeredExercises);
 

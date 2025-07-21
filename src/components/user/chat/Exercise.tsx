@@ -103,10 +103,16 @@ const Exercise = ({
           </div>
         </div>
         
-        {exercise.userAnswer && (
+        {exercise.userAnswer && exercise.userAnswer.trim() !== "" ? (
           <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 py-[10px]">
             <p className="text-sm text-gray-700 dark:text-gray-300">
               {exercise.userAnswer}
+            </p>
+          </div>
+        ) : (
+          <div className="mt-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-blue-700 dark:text-blue-300 italic">
+              {t('exercise.needsAnswer')}
             </p>
           </div>
         )}
@@ -130,7 +136,7 @@ const Exercise = ({
               </DialogHeader>
               
               <div className="space-y-4">
-                {exercise.userAnswer && (
+                {exercise.userAnswer && exercise.userAnswer.trim() !== "" ? (
                   <div>
                     <h4 className="text-sm font-medium mb-2">{t('exercise.yourAnswer')}:</h4>
                     <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
@@ -138,6 +144,12 @@ const Exercise = ({
                         {exercise.userAnswer}
                       </p>
                     </div>
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-700 dark:text-blue-300 italic text-center">
+                      {t('exercise.needsAnswer')}
+                    </p>
                   </div>
                 )}
                 
