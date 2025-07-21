@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ThumbsUp, AlertCircle, CircleCheck, CircleX } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -47,38 +46,14 @@ const Exercise = ({
     .join('<br />') : '';
 
   const hasRelatedMessages = exercise.relatedMessages && exercise.relatedMessages.length > 0;
-  const hasAnswer = exercise.userAnswer && exercise.userAnswer.trim() !== "";
 
   // Debug rendering
   console.log('Exercise rendering:', { 
     id: exercise.id,
     question: exercise.question, 
     isCorrect: exercise.isCorrect, 
-    hasAnswer: hasAnswer,
-    attemptCount: exercise.attemptCount
+    hasAnswer: !!exercise.userAnswer 
   });
-
-  // Determine the appropriate message based on attempt count and correctness
-  const getAnswerStateMessage = () => {
-    if (hasAnswer) {
-      return null; // Show the actual answer
-    }
-    
-    // No answer provided yet
-    if (exercise.attemptCount === 0) {
-      return t('exercise.needsAnswer');
-    }
-    
-    // Has attempted but incorrect (or needs retry)
-    if (exercise.attemptCount > 0 && (exercise.isCorrect === false || exercise.needsRetry)) {
-      return t('exercise.tryAgain');
-    }
-    
-    // Default to needs answer
-    return t('exercise.needsAnswer');
-  };
-
-  const answerStateMessage = getAnswerStateMessage();
 
   return (
     <motion.div 
@@ -128,26 +103,16 @@ const Exercise = ({
           </div>
         </div>
         
-        {hasAnswer ? (
+        {exercise.userAnswer && exercise.userAnswer.trim() !== "" ? (
           <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 py-[10px]">
             <p className="text-sm text-gray-700 dark:text-gray-300">
               {exercise.userAnswer}
             </p>
           </div>
         ) : (
-          <div className={cn(
-            "mt-3 p-3 rounded-lg border",
-            exercise.attemptCount > 0 && (exercise.isCorrect === false || exercise.needsRetry)
-              ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
-              : "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
-          )}>
-            <p className={cn(
-              "text-sm italic",
-              exercise.attemptCount > 0 && (exercise.isCorrect === false || exercise.needsRetry)
-                ? "text-amber-700 dark:text-amber-300"
-                : "text-blue-700 dark:text-blue-300"
-            )}>
-              {answerStateMessage}
+          <div className="mt-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-blue-700 dark:text-blue-300 italic">
+              {t('exercise.needsAnswer')}
             </p>
           </div>
         )}
@@ -171,7 +136,7 @@ const Exercise = ({
               </DialogHeader>
               
               <div className="space-y-4">
-                {hasAnswer ? (
+                {exercise.userAnswer && exercise.userAnswer.trim() !== "" ? (
                   <div>
                     <h4 className="text-sm font-medium mb-2">{t('exercise.yourAnswer')}:</h4>
                     <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
@@ -181,19 +146,9 @@ const Exercise = ({
                     </div>
                   </div>
                 ) : (
-                  <div className={cn(
-                    "p-3 rounded-lg border",
-                    exercise.attemptCount > 0 && (exercise.isCorrect === false || exercise.needsRetry)
-                      ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
-                      : "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
-                  )}>
-                    <p className={cn(
-                      "text-sm italic text-center",
-                      exercise.attemptCount > 0 && (exercise.isCorrect === false || exercise.needsRetry)
-                        ? "text-amber-700 dark:text-amber-300"
-                        : "text-blue-700 dark:text-blue-300"
-                    )}>
-                      {answerStateMessage}
+                  <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-700 dark:text-blue-300 italic text-center">
+                      {t('exercise.needsAnswer')}
                     </p>
                   </div>
                 )}
