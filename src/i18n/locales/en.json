@@ -1,3 +1,4 @@
+
 {
   "nav": {
     "home": "Home",
@@ -30,7 +31,11 @@
     "gradeHistory": "Grade History",
     "subject": "Subject",
     "score": "Score",
-    "date": "Date"
+    "date": "Date",
+    "exerciseList": "Exercise List",
+    "overallGrade": "Overall Grade",
+    "correctAnswers": "Correct: {correct}/{completed}",
+    "exerciseListDescription": "Start submitting homework to see your exercises here!"
   },
   "roadmap": {
     "title": "Learning Roadmap",
@@ -158,5 +163,19 @@
     "accessError": "Camera Access Error",
     "permissionRequired": "Camera permission is required to take photos",
     "starting": "Starting camera..."
+  },
+  "exercise": {
+    "noExercises": "No exercises yet",
+    "showExplanation": "Show Explanation",
+    "yourAnswer": "Your answer",
+    "greatWork": "Great work!",
+    "learningOpportunity": "Learning opportunity",
+    "attempt": "Attempt",
+    "tryAgain": "Try again",
+    "submitAnswer": "Submit Answer",
+    "yourAnswerPlaceholder": "Your answer...",
+    "pleaseProvideAnswer": "Please provide an answer",
+    "submitting": "Submitting...",
+    "answerSubmitted": "Answer submitted successfully!"
   }
 }

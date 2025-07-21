@@ -36,7 +36,8 @@ const ChatInterface = () => {
     createExerciseFromAI,
     processHomeworkFromChat,
     linkAIResponseToExercise,
-    addExercises
+    addExercises,
+    submitAnswer
   } = useExercises();
   const {
     getActiveSubjects
@@ -109,6 +110,7 @@ const ChatInterface = () => {
             exercises={exercises} 
             grade={grade} 
             toggleExerciseExpansion={toggleExerciseExpansion} 
+            onSubmitAnswer={submitAnswer}
           />
         </div>
       </div>

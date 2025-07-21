@@ -1,11 +1,14 @@
-import React from 'react';
-import { ThumbsUp, AlertCircle, CircleCheck, CircleX } from 'lucide-react';
+
+import React, { useState } from 'react';
+import { ThumbsUp, AlertCircle, CircleCheck, CircleX, Send } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Message } from '@/types/chat';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { toast } from 'sonner';
 
 interface ExerciseProps {
   exercise: {
@@ -29,6 +32,7 @@ interface ExerciseProps {
     needsRetry: boolean;
   };
   toggleExerciseExpansion: (id: string) => void;
+  onSubmitAnswer?: (exerciseId: string, answer: string) => void;
 }
 
 /**
@@ -37,22 +41,51 @@ interface ExerciseProps {
  */
 const Exercise = ({
   exercise,
-  toggleExerciseExpansion
+  toggleExerciseExpansion,
+  onSubmitAnswer
 }: ExerciseProps) => {
   const { t } = useLanguage();
+  const [answerInput, setAnswerInput] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const formattedExplanation = exercise.explanation ? exercise.explanation
     .replace(/\*\*(Problem|Guidance):\*\*/g, '<strong class="text-studywhiz-600 dark:text-studywhiz-400">$1:</strong>')
     .split('\n')
     .join('<br />') : '';
 
   const hasRelatedMessages = exercise.relatedMessages && exercise.relatedMessages.length > 0;
+  const hasAnswer = exercise.userAnswer && exercise.userAnswer.trim() !== '';
+
+  const handleSubmitAnswer = async () => {
+    if (!answerInput.trim()) {
+      toast.error(t('exercise.pleaseProvideAnswer'));
+      return;
+    }
+
+    if (!onSubmitAnswer) {
+      console.error('onSubmitAnswer callback not provided');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onSubmitAnswer(exercise.id, answerInput.trim());
+      setAnswerInput('');
+      toast.success(t('exercise.answerSubmitted'));
+    } catch (error) {
+      console.error('Error submitting answer:', error);
+      toast.error(t('common.error'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Debug rendering
   console.log('Exercise rendering:', { 
     id: exercise.id,
     question: exercise.question, 
     isCorrect: exercise.isCorrect, 
-    hasAnswer: !!exercise.userAnswer 
+    hasAnswer: hasAnswer 
   });
 
   return (
@@ -63,7 +96,9 @@ const Exercise = ({
           ? exercise.isCorrect 
             ? "border-green-200 dark:border-green-900" 
             : "border-amber-200 dark:border-amber-900" 
-          : "border-gray-200 dark:border-gray-700"
+          : hasAnswer 
+            ? "border-gray-200 dark:border-gray-700"
+            : "border-blue-200 dark:border-blue-900"
       )}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -103,34 +138,74 @@ const Exercise = ({
           </div>
         </div>
         
-        {exercise.userAnswer && (
+        {hasAnswer ? (
           <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 py-[10px]">
             <p className="text-sm text-gray-700 dark:text-gray-300">
               {exercise.userAnswer}
             </p>
           </div>
+        ) : (
+          <div className="mt-3 space-y-3">
+            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50">
+              <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                {t('exercise.pleaseProvideAnswer')}
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  value={answerInput}
+                  onChange={(e) => setAnswerInput(e.target.value)}
+                  placeholder={t('exercise.yourAnswerPlaceholder')}
+                  className="flex-1"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !isSubmitting) {
+                      handleSubmitAnswer();
+                    }
+                  }}
+                  disabled={isSubmitting}
+                />
+                <Button
+                  onClick={handleSubmitAnswer}
+                  disabled={isSubmitting || !answerInput.trim()}
+                  size="sm"
+                  className="shrink-0"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                      {t('exercise.submitting')}
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      {t('exercise.submitAnswer')}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
         
-        <div className="mt-4 flex justify-end items-center">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-              >
-                {t('exercise.showExplanation')}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="text-left">
-                  {exercise.question}
-                </DialogTitle>
-              </DialogHeader>
-              
-              <div className="space-y-4">
-                {exercise.userAnswer && (
+        {hasAnswer && (
+          <div className="mt-4 flex justify-end items-center">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  {t('exercise.showExplanation')}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-left">
+                    {exercise.question}
+                  </DialogTitle>
+                </DialogHeader>
+                
+                <div className="space-y-4">
                   <div>
                     <h4 className="text-sm font-medium mb-2">{t('exercise.yourAnswer')}:</h4>
                     <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
@@ -139,51 +214,51 @@ const Exercise = ({
                       </p>
                     </div>
                   </div>
-                )}
-                
-                <div className={cn(
-                  "p-4 rounded-lg",
-                  exercise.isCorrect 
-                    ? "bg-green-50 dark:bg-green-950/20" 
-                    : "bg-amber-50 dark:bg-amber-950/20"
-                )}>
-                  <div className="space-y-3">
-                    <div className="flex items-center mb-2">
-                      {exercise.isCorrect 
-                        ? <ThumbsUp className="w-4 h-4 mr-2 text-green-600" />
-                        : <AlertCircle className="w-4 h-4 mr-2 text-amber-600" />
-                      }
-                      <h4 className="text-sm font-medium">
+                  
+                  <div className={cn(
+                    "p-4 rounded-lg",
+                    exercise.isCorrect 
+                      ? "bg-green-50 dark:bg-green-950/20" 
+                      : "bg-amber-50 dark:bg-amber-950/20"
+                  )}>
+                    <div className="space-y-3">
+                      <div className="flex items-center mb-2">
                         {exercise.isCorrect 
-                          ? exercise.attemptCount > 1 
-                            ? `${t('exercise.greatWork')} (${t('exercise.attempt')} ${exercise.attemptCount})` 
-                            : t('exercise.greatWork') 
-                          : `${t('exercise.learningOpportunity')}${exercise.attemptCount > 1 ? ` (${t('exercise.attempt')} ${exercise.attemptCount})` : ""}`}
-                      </h4>
-                    </div>
-                    
-                    {hasRelatedMessages ? (
-                      <div className="space-y-3">
-                        {exercise.relatedMessages?.map((message, index) => (
-                          <div key={index} className="p-3 rounded-lg bg-white dark:bg-gray-800 text-sm">
-                            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                              {message.content}
-                            </p>
-                          </div>
-                        ))}
+                          ? <ThumbsUp className="w-4 h-4 mr-2 text-green-600" />
+                          : <AlertCircle className="w-4 h-4 mr-2 text-amber-600" />
+                        }
+                        <h4 className="text-sm font-medium">
+                          {exercise.isCorrect 
+                            ? exercise.attemptCount > 1 
+                              ? `${t('exercise.greatWork')} (${t('exercise.attempt')} ${exercise.attemptCount})` 
+                              : t('exercise.greatWork') 
+                            : `${t('exercise.learningOpportunity')}${exercise.attemptCount > 1 ? ` (${t('exercise.attempt')} ${exercise.attemptCount})` : ""}`}
+                        </h4>
                       </div>
-                    ) : (
-                      <div 
-                        className="text-sm text-gray-700 dark:text-gray-300 prose-sm max-w-full"
-                        dangerouslySetInnerHTML={{ __html: formattedExplanation }}
-                      />
-                    )}
+                      
+                      {hasRelatedMessages ? (
+                        <div className="space-y-3">
+                          {exercise.relatedMessages?.map((message, index) => (
+                            <div key={index} className="p-3 rounded-lg bg-white dark:bg-gray-800 text-sm">
+                              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                {message.content}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div 
+                          className="text-sm text-gray-700 dark:text-gray-300 prose-sm max-w-full"
+                          dangerouslySetInnerHTML={{ __html: formattedExplanation }}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
       </div>
     </motion.div>
   );

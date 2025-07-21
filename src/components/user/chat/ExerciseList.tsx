@@ -14,12 +14,14 @@ interface ExerciseListProps {
     letter: string;
   };
   toggleExerciseExpansion: (id: string) => void;
+  onSubmitAnswer?: (exerciseId: string, answer: string) => void;
 }
 
 const ExerciseList = ({
   exercises,
   grade,
-  toggleExerciseExpansion
+  toggleExerciseExpansion,
+  onSubmitAnswer
 }: ExerciseListProps) => {
   const { t } = useLanguage();
   const correctExercises = exercises.filter(ex => ex.isCorrect).length;
@@ -60,6 +62,7 @@ const ExerciseList = ({
                 key={exercise.id}
                 exercise={exercise}
                 toggleExerciseExpansion={toggleExerciseExpansion}
+                onSubmitAnswer={onSubmitAnswer}
               />
             ))}
           </div>

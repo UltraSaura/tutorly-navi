@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { Exercise, Message } from '@/types/chat';
 import { toast } from 'sonner';
 import { useGrades } from './useGrades';
 import { processNewExercise, linkMessageToExercise, processMultipleExercises } from '@/utils/exerciseProcessor';
 import { hasMultipleExercises } from '@/utils/homework/multiExerciseParser';
+import { evaluateHomework } from '@/services/homeworkGrading';
 
 export const useExercises = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -23,6 +25,51 @@ export const useExercises = () => {
         exercise.id === id ? { ...exercise, expanded: !exercise.expanded } : exercise
       )
     );
+  };
+
+  const submitAnswer = async (exerciseId: string, answer: string) => {
+    console.log(`[useExercises] Submitting answer for exercise ${exerciseId}:`, answer);
+    
+    try {
+      const exerciseIndex = exercises.findIndex(ex => ex.id === exerciseId);
+      if (exerciseIndex === -1) {
+        throw new Error('Exercise not found');
+      }
+
+      const exercise = exercises[exerciseIndex];
+      
+      // Create new attempt
+      const attemptNumber = exercise.attemptCount + 1;
+      const newAttempt = {
+        id: `${exerciseId}-attempt-${attemptNumber}`,
+        answer,
+        timestamp: new Date(),
+        attemptNumber,
+      };
+
+      // Update exercise with new answer
+      const updatedExercise: Exercise = {
+        ...exercise,
+        userAnswer: answer,
+        attemptCount: attemptNumber,
+        attempts: [...exercise.attempts, newAttempt],
+        lastAttemptDate: new Date(),
+        needsRetry: false,
+      };
+
+      // Grade the exercise
+      const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber);
+      
+      // Update exercises state
+      setExercises(prev => 
+        prev.map(ex => ex.id === exerciseId ? gradedExercise : ex)
+      );
+
+      console.log('[useExercises] Answer submitted and graded successfully:', gradedExercise);
+    } catch (error) {
+      console.error('[useExercises] Error submitting answer:', error);
+      throw error;
+    }
   };
 
   const addExercises = async (newExercises: Exercise[]) => {
@@ -148,6 +195,7 @@ export const useExercises = () => {
     createExerciseFromAI,
     processHomeworkFromChat,
     linkAIResponseToExercise,
-    addExercises
+    addExercises,
+    submitAnswer
   };
 };

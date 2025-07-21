@@ -1,3 +1,4 @@
+
 {
   "nav": {
     "home": "Accueil",
@@ -30,7 +31,11 @@
     "gradeHistory": "Historique des notes",
     "subject": "Matière",
     "score": "Score",
-    "date": "Date"
+    "date": "Date",
+    "exerciseList": "Liste des exercices",
+    "overallGrade": "Note globale",
+    "correctAnswers": "Correct: {correct}/{completed}",
+    "exerciseListDescription": "Commencez à soumettre des devoirs pour voir vos exercices ici!"
   },
   "roadmap": {
     "title": "Feuille de route d'apprentissage",
@@ -158,5 +163,19 @@
     "accessError": "Erreur d'accès à la caméra",
     "permissionRequired": "L'autorisation de la caméra est requise pour prendre des photos",
     "starting": "Démarrage de la caméra..."
+  },
+  "exercise": {
+    "noExercises": "Aucun exercice pour le moment",
+    "showExplanation": "Afficher l'explication",
+    "yourAnswer": "Votre réponse",
+    "greatWork": "Excellent travail!",
+    "learningOpportunity": "Opportunité d'apprentissage",
+    "attempt": "Tentative",
+    "tryAgain": "Réessayer",
+    "submitAnswer": "Soumettre la réponse",
+    "yourAnswerPlaceholder": "Votre réponse...",
+    "pleaseProvideAnswer": "Veuillez fournir une réponse",
+    "submitting": "Soumission...",
+    "answerSubmitted": "Réponse soumise avec succès!"
   }
 }
