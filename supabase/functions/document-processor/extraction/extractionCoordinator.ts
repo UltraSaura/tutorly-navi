@@ -1,71 +1,73 @@
-
 // Main extraction coordinator that uses smart pattern-based extraction
 
 import { extractMathExercisesFromRawText } from './smartMathExtraction.ts';
 import { extractWithDelimiters } from './delimiterExtraction.ts';
 
-// Helper function to extract lettered exercises with enhanced answer recognition
+// Helper function to extract lettered exercises (a. b. c. etc.)
 function extractLetteredExercises(text: string): Array<{ question: string, answer: string }> {
   const exercises = [];
+  const letteredPattern = /(?:^|\n)\s*([a-h])[\.\)]\s*([^\n]+(?:\n(?!\s*[a-h][\.\)]).*)*)/gm;
+  const matches = [...text.matchAll(letteredPattern)];
   
-  // Enhanced pattern to capture both questions and answers
-  const letteredPatterns = [
-    // Pattern for "a. 30/63 = 41/55"
-    /([a-h])[\.\)]\s*(\d+\/\d+)\s*=\s*(\d+\/\d+)/gm,
-    // Pattern for "a. 30/63 ... 41/55" (with dots/lines)
-    /([a-h])[\.\)]\s*(\d+\/\d+)\s*[.\s_-]+(\d+\/\d+)/gm,
-    // Pattern for basic lettered exercises without answers
-    /([a-h])[\.\)]\s*([^\n]+(?:\n(?!\s*[a-h][\.\)]).*)*)/gm,
-  ];
-  
-  for (const pattern of letteredPatterns) {
-    const matches = [...text.matchAll(pattern)];
-    
-    if (matches.length >= 2) {
-      console.log(`Found ${matches.length} lettered exercises with pattern`);
+  if (matches.length >= 2) {
+    console.log(`Found ${matches.length} lettered exercises`);
+    matches.forEach((match, index) => {
+      const letter = match[1];
+      const content = match[2].trim();
       
-      matches.forEach((match) => {
-        const letter = match[1];
-        
-        if (match.length === 4) {
-          // Has both question and answer
-          const questionFraction = match[2];
-          const studentAnswer = match[3];
-          
-          exercises.push({
-            question: `${letter}. Simplifiez la fraction ${questionFraction}`,
-            answer: studentAnswer
-          });
-          console.log(`✅ Found Q&A: ${letter}. ${questionFraction} = ${studentAnswer}`);
-        } else {
-          // Only has question
-          const content = match[2].trim();
-          const fractionMatch = content.match(/(\d+)\s*\/\s*(\d+)/);
-          
-          if (fractionMatch) {
-            const fraction = `${fractionMatch[1]}/${fractionMatch[2]}`;
-            exercises.push({
-              question: `${letter}. Simplifiez la fraction ${fraction}`,
-              answer: ""
-            });
-            console.log(`✅ Found Q only: ${letter}. ${fraction}`);
-          }
-        }
-      });
-      
-      // If we found exercises with this pattern, return them
-      if (exercises.length > 0) {
-        break;
+      // Look for math content in the exercise
+      const fractionMatch = content.match(/(\d+)\s*\/\s*(\d+)/);
+      if (fractionMatch) {
+        const fraction = `${fractionMatch[1]}/${fractionMatch[2]}`;
+        exercises.push({
+          question: `${letter}. Simplifiez la fraction ${fraction}`,
+          answer: fraction
+        });
+      } else {
+        exercises.push({
+          question: `${letter}. ${content}`,
+          answer: content.substring(0, 50)
+        });
       }
-    }
-    
-    pattern.lastIndex = 0;
+    });
   }
   
   return exercises;
 }
 
-// Enhanced extraction with better SimpleTex LaTeX support and answer recognition
+// Helper function to extract numbered exercises (1. 2. 3. etc.)
+function extractNumberedExercises(text: string): Array<{ question: string, answer: string }> {
+  const exercises = [];
+  const numberedPattern = /(?:^|\n)\s*(\d+)[\.\)]\s*([^\n]+(?:\n(?!\s*\d+[\.\)]).*)*)/gm;
+  const matches = [...text.matchAll(numberedPattern)];
+  
+  if (matches.length >= 2) {
+    console.log(`Found ${matches.length} numbered exercises`);
+    matches.forEach((match) => {
+      const number = match[1];
+      const content = match[2].trim();
+      
+      // Look for math content in the exercise
+      const fractionMatch = content.match(/(\d+)\s*\/\s*(\d+)/);
+      if (fractionMatch) {
+        const fraction = `${fractionMatch[1]}/${fractionMatch[2]}`;
+        exercises.push({
+          question: `${number}. Simplifiez la fraction ${fraction}`,
+          answer: fraction
+        });
+      } else {
+        exercises.push({
+          question: `${number}. ${content}`,
+          answer: content.substring(0, 50)
+        });
+      }
+    });
+  }
+  
+  return exercises;
+}
+
+// Enhanced extraction with better SimpleTex LaTeX support
 export function extractExercisesFromText(text: string): Array<{ question: string, answer: string }> {
   console.log('=== SMART EXTRACTION START ===');
   console.log('Input text length:', text.length);
@@ -77,88 +79,70 @@ export function extractExercisesFromText(text: string): Array<{ question: string
   
   if (exercises.length > 0) {
     console.log(`PHASE 1 SUCCESS: Found ${exercises.length} exercises using smart extraction`);
-    exercises.forEach((ex, idx) => {
-      console.log(`Exercise ${idx + 1}: "${ex.question}" → Answer: "${ex.answer}"`);
-    });
+    console.log('Final exercises:', exercises.map(e => `"${e.question}"`));
     return exercises;
   }
   
-  // PHASE 2: Enhanced lettered exercise extraction
-  console.log('=== PHASE 2: Enhanced Lettered Exercise Extraction ===');
-  exercises = extractLetteredExercises(text);
-  
-  if (exercises.length > 0) {
-    console.log(`PHASE 2 SUCCESS: Found ${exercises.length} exercises using enhanced lettered extraction`);
-    return exercises;
-  }
-  
-  // PHASE 3: Fallback to delimiter-based extraction (legacy)
-  console.log('=== PHASE 3: Delimiter-Based Fallback ===');
+  // PHASE 2: Fallback to delimiter-based extraction (legacy)
+  console.log('=== PHASE 2: Delimiter-Based Fallback ===');
   exercises = extractWithDelimiters(text);
   
   if (exercises.length > 0) {
-    console.log(`PHASE 3 SUCCESS: Found ${exercises.length} exercises using delimiters`);
+    console.log(`PHASE 2 SUCCESS: Found ${exercises.length} exercises using delimiters`);
     return exercises;
   }
   
-  // PHASE 4: Enhanced multi-exercise detection for specific patterns
-  console.log('=== PHASE 4: Enhanced Multi-Exercise Detection ===');
+  // PHASE 3: Enhanced multi-exercise detection for specific patterns
+  console.log('=== PHASE 3: Enhanced Multi-Exercise Detection ===');
   
-  // Emergency extraction for SimpleTex LaTeX content with answer recognition
+  // Try to detect multiple lettered exercises (common in French worksheets)
+  const letteredExercises = extractLetteredExercises(text);
+  if (letteredExercises.length > 1) {
+    console.log(`PHASE 3: Found ${letteredExercises.length} lettered exercises`);
+    return letteredExercises;
+  }
+  
+  // Try to detect multiple numbered exercises
+  const numberedExercises = extractNumberedExercises(text);
+  if (numberedExercises.length > 1) {
+    console.log(`PHASE 3: Found ${numberedExercises.length} numbered exercises`);
+    return numberedExercises;
+  }
+  
+  // Emergency extraction for SimpleTex LaTeX content
   if (text.includes('ERERCIE') || text.includes('Simpliffer') || text.includes('^(') || text.match(/\d+\/\d+/)) {
     console.log('Detected SimpleTex LaTeX format, applying enhanced preprocessing...');
     
-    // Look for patterns that might indicate student answers
-    const fractionAnswerPattern = /(\d+\/\d+)\s*[=\s._-]+\s*(\d+\/\d+)/g;
-    const matches = [...text.matchAll(fractionAnswerPattern)];
-    
-    if (matches.length > 0) {
-      console.log(`Found ${matches.length} question-answer pairs in SimpleTex format`);
+    // Try to extract all fractions from the text
+    const allFractionMatches = text.match(/(?:\(\s*)?(\d+)\s*\/\s*(\d+)(?:\s*\))?/g);
+    if (allFractionMatches && allFractionMatches.length > 0) {
+      console.log('Found fractions in text:', allFractionMatches);
       
-      matches.forEach((match, index) => {
-        const letter = String.fromCharCode(97 + index);
-        const questionFraction = match[1];
-        const studentAnswer = match[2];
+      allFractionMatches.forEach((fractionMatch, index) => {
+        // Clean up the fraction format
+        const cleanFraction = fractionMatch.replace(/[()]/g, '').replace(/\s/g, '');
+        const letter = String.fromCharCode(97 + index); // a, b, c, d, e
         
         exercises.push({
-          question: `${letter}. Simplifiez la fraction ${questionFraction}`,
-          answer: studentAnswer
+          question: `${letter}. Simplifiez la fraction ${cleanFraction}`,
+          answer: cleanFraction
         });
-        console.log(`✅ Created Q&A exercise: ${letter}. ${questionFraction} = ${studentAnswer}`);
+        console.log(`✅ Created exercise: ${letter}. Simplifiez la fraction ${cleanFraction}`);
       });
-    } else {
-      // Fallback to questions only
-      const allFractionMatches = text.match(/(?:\(\s*)?(\d+)\s*\/\s*(\d+)(?:\s*\))?/g);
-      if (allFractionMatches && allFractionMatches.length > 0) {
-        console.log('Found fractions in text:', allFractionMatches);
-        
-        allFractionMatches.forEach((fractionMatch, index) => {
-          const cleanFraction = fractionMatch.replace(/[()]/g, '').replace(/\s/g, '');
-          const letter = String.fromCharCode(97 + index);
-          
-          exercises.push({
-            question: `${letter}. Simplifiez la fraction ${cleanFraction}`,
-            answer: ""
-          });
-          console.log(`✅ Created question-only exercise: ${letter}. ${cleanFraction}`);
-        });
-      }
-    }
-    
-    if (exercises.length > 0) {
-      console.log(`PHASE 4: Created ${exercises.length} exercises from SimpleTex format`);
+      
+      console.log(`PHASE 3: Created ${exercises.length} fraction exercises`);
       return exercises;
     }
   }
   
-  // PHASE 5: Final fallback
-  console.log('=== PHASE 5: Minimal Content Exercise ===');
+  // PHASE 4: Final fallback
+  console.log('=== PHASE 4: Minimal Content Exercise ===');
   if (text.trim().length > 0) {
     exercises = [{
       question: "Document Content",
       answer: text.trim().substring(0, 300)
     }];
-    console.log(`PHASE 5: Created 1 content-based exercise`);
+    console.log(`PHASE 4: Created 1 content-based exercise`);
   }
   
   return exercises;
