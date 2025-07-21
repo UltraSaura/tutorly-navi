@@ -72,6 +72,49 @@ export function preprocessFrenchMathText(text: string): string {
   return processedText;
 }
 
+// NEW: Enhanced preprocessing specifically for structured worksheets
+export function preprocessStructuredWorksheet(text: string): string {
+  console.log('=== STRUCTURED WORKSHEET PREPROCESSING ===');
+  console.log('Original text length:', text.length);
+  
+  // Split into potential exercise sections
+  const sections = text.split(/(?=[a-e]\s*[~\.\):])/i);
+  console.log(`Found ${sections.length} potential exercise sections`);
+  
+  let processedSections = [];
+  
+  sections.forEach((section, index) => {
+    console.log(`Processing section ${index}: ${section.substring(0, 100)}...`);
+    
+    // Clean each section
+    let cleanSection = section
+      // Remove LaTeX artifacts
+      .replace(/\^\([^)]*\)/g, '')
+      .replace(/\\\\\&/g, ' ')
+      .replace(/\&\^/g, ' ')
+      .replace(/\\[a-zA-Z]+/g, ' ')
+      
+      // Fix letter patterns
+      .replace(/([a-e])\s*[~\.\)]\s*/gi, '$1. ')
+      
+      // Clean up garbled content but preserve fractions
+      .replace(/c{3,}/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    if (cleanSection.length > 5) {
+      processedSections.push(cleanSection);
+      console.log(`Cleaned section ${index}: ${cleanSection.substring(0, 50)}...`);
+    }
+  });
+  
+  const result = processedSections.join('\n');
+  console.log('=== STRUCTURED PREPROCESSING COMPLETE ===');
+  console.log('Final result:', result.substring(0, 200));
+  
+  return result;
+}
+
 // NEW: Separate function to clean up garbled handwritten answers
 export function cleanHandwrittenAnswer(answer: string): string {
   console.log('Cleaning handwritten answer:', answer.substring(0, 50));
@@ -115,4 +158,30 @@ export function extractQuestionFraction(text: string): string | null {
   
   console.log('No question fraction found');
   return null;
+}
+
+// NEW: Extract all fractions from a structured exercise line
+export function extractFractionsFromExerciseLine(line: string): Array<{letter: string, fraction: string}> {
+  console.log('Extracting fractions from exercise line:', line.substring(0, 100));
+  
+  const exercises = [];
+  
+  // Pattern to match letter followed by fraction: "a. 30/63", "b. 35/85", etc.
+  const exercisePattern = /([a-e])\s*[\.\)]\s*(\d+)\/(\d+)/gi;
+  
+  let match;
+  while ((match = exercisePattern.exec(line)) !== null) {
+    const letter = match[1].toLowerCase();
+    const fraction = `${match[2]}/${match[3]}`;
+    
+    exercises.push({
+      letter: letter,
+      fraction: fraction
+    });
+    
+    console.log(`Found exercise: ${letter}. ${fraction}`);
+  }
+  
+  console.log(`Total exercises found in line: ${exercises.length}`);
+  return exercises;
 }

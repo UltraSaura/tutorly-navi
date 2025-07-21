@@ -1,10 +1,121 @@
-
 // ENHANCED: Comprehensive extraction coordinator with OCR error correction and better logging
 
 import { extractMathExercisesFromRawText } from './smartMathExtraction.ts';
 import { extractWithDelimiters } from './delimiterExtraction.ts';
 import { isEducationalContent } from './validationUtils.ts';
 import { preprocessFrenchMathText, extractQuestionFraction } from './textPreprocessing.ts';
+import { detectMultipleExercises } from './multiExerciseDetector.ts';
+
+// ENHANCED: Main extraction function with comprehensive OCR correction and logging
+export function extractExercisesFromText(text: string): Array<{ question: string, answer: string }> {
+  console.log('\n🚀 === ENHANCED COMPREHENSIVE MULTI-EXERCISE EXTRACTION START ===');
+  console.log('Input text length:', text.length);
+  console.log('Raw text preview (first 400 chars):', text.substring(0, 400));
+  
+  let allExercises = [];
+  
+  // PHASE 1: MULTI-EXERCISE DETECTION FOR STRUCTURED WORKSHEETS (NEW PRIMARY METHOD)
+  console.log('\n🎯 === PHASE 1: STRUCTURED WORKSHEET MULTI-EXERCISE DETECTION ===');
+  const structuredExercises = detectMultipleExercises(text);
+  console.log(`🎯 PHASE 1 RESULT: ${structuredExercises.length} exercises found`);
+  
+  if (structuredExercises.length >= 2) {
+    console.log(`✅ Structured detection found ${structuredExercises.length} exercises - using this as primary result`);
+    allExercises = structuredExercises.map(ex => ({
+      question: `${ex.letter}. ${ex.question}`,
+      answer: ex.answer || ex.fraction
+    }));
+    
+    structuredExercises.forEach((ex, idx) => {
+      console.log(`  Structured Exercise ${idx + 1}: ${ex.letter}. ${ex.question} -> ${ex.answer || ex.fraction}`);
+    });
+    
+    console.log('\n🏆 === FINAL ENHANCED EXTRACTION RESULTS ===');
+    console.log(`Total exercises created: ${allExercises.length}`);
+    allExercises.forEach((ex, idx) => {
+      console.log(`Final Exercise ${idx + 1}: "${ex.question}" -> "${ex.answer}"`);
+    });
+    console.log('🏆 === ENHANCED EXTRACTION COMPLETE ===\n');
+    
+    return allExercises;
+  }
+  
+  // PHASE 2: COMPREHENSIVE FRACTION EXTRACTION WITH OCR CORRECTION (FALLBACK)
+  console.log('\n🔄 === PHASE 2: COMPREHENSIVE FRACTION EXTRACTION WITH OCR CORRECTION ===');
+  const fractionExercises = extractAllFractionsAsExercisesWithOCRCorrection(text);
+  console.log(`🔄 PHASE 2 RESULT: ${fractionExercises.length} exercises found`);
+  
+  // ALWAYS add fraction exercises if found
+  if (fractionExercises.length > 0) {
+    allExercises = [...fractionExercises];
+    console.log(`✅ Added ${fractionExercises.length} comprehensive fraction exercises to final results`);
+    fractionExercises.forEach((ex, idx) => {
+      console.log(`  Final Exercise ${idx + 1}: "${ex.question}" -> "${ex.answer}"`);
+    });
+  }
+  
+  // PHASE 3: ENHANCED SUPPLEMENTARY EXTRACTIONS
+  console.log('\n🔄 === PHASE 3: ENHANCED SUPPLEMENTARY EXTRACTIONS ===');
+  
+  // Enhanced lettered exercise detection
+  const letteredExercises = extractLetteredExercisesWithValidation(text);
+  letteredExercises.forEach(letteredEx => {
+    const alreadyExists = allExercises.some(ex => ex.question === letteredEx.question);
+    if (!alreadyExists) {
+      allExercises.push(letteredEx);
+      console.log(`✅ Added unique lettered exercise: ${letteredEx.question}`);
+    } else {
+      console.log(`🔄 Skipped duplicate lettered exercise: ${letteredEx.question}`);
+    }
+  });
+  
+  // PHASE 4: FALLBACK METHODS (only if no exercises found yet)
+  if (allExercises.length === 0) {
+    console.log('\n🆘 === PHASE 4: FALLBACK METHODS ===');
+    
+    // Smart math extraction fallback
+    console.log('Trying enhanced smart math extraction...');
+    const smartExercises = extractMathExercisesFromRawText(text);
+    console.log(`Smart extraction found: ${smartExercises.length} exercises`);
+    allExercises = [...allExercises, ...smartExercises];
+    
+    // Delimiter-based extraction fallback
+    if (allExercises.length === 0) {
+      console.log('Trying delimiter-based extraction...');
+      const delimiterExercises = extractWithDelimiters(text);
+      console.log(`Delimiter extraction found: ${delimiterExercises.length} exercises`);
+      allExercises = [...allExercises, ...delimiterExercises];
+    }
+    
+    // Emergency single-exercise extraction
+    if (allExercises.length === 0) {
+      console.log('Creating emergency single exercise...');
+      const questionFraction = extractQuestionFraction(text);
+      if (questionFraction) {
+        allExercises = [{
+          question: `Simplifiez la fraction ${questionFraction}`,
+          answer: questionFraction
+        }];
+        console.log(`Emergency: Created single fraction exercise: ${questionFraction}`);
+      } else if (text.trim().length > 0) {
+        allExercises = [{
+          question: "Document Content",
+          answer: text.trim().substring(0, 300)
+        }];
+        console.log(`Emergency: Created content-based exercise`);
+      }
+    }
+  }
+  
+  console.log('\n🏆 === FINAL ENHANCED EXTRACTION RESULTS ===');
+  console.log(`Total exercises created: ${allExercises.length}`);
+  allExercises.forEach((ex, idx) => {
+    console.log(`Final Exercise ${idx + 1}: "${ex.question}" -> "${ex.answer}"`);
+  });
+  console.log('🏆 === ENHANCED EXTRACTION COMPLETE ===\n');
+  
+  return allExercises;
+}
 
 // ENHANCED: Comprehensive function to extract ALL fractions as separate exercises with OCR correction
 function extractAllFractionsAsExercisesWithOCRCorrection(text: string): Array<{ question: string, answer: string }> {
@@ -184,89 +295,4 @@ function extractLetteredExercisesWithValidation(text: string): Array<{ question:
   
   console.log(`Enhanced lettered extraction result: ${exercises.length} exercises`);
   return exercises;
-}
-
-// ENHANCED: Main extraction function with comprehensive OCR correction and logging
-export function extractExercisesFromText(text: string): Array<{ question: string, answer: string }> {
-  console.log('\n🚀 === ENHANCED COMPREHENSIVE MULTI-EXERCISE EXTRACTION START ===');
-  console.log('Input text length:', text.length);
-  console.log('Raw text preview (first 400 chars):', text.substring(0, 400));
-  
-  let allExercises = [];
-  
-  // PHASE 1: COMPREHENSIVE FRACTION EXTRACTION WITH OCR CORRECTION (PRIMARY METHOD)
-  console.log('\n🎯 === PHASE 1: COMPREHENSIVE FRACTION EXTRACTION WITH OCR CORRECTION ===');
-  const fractionExercises = extractAllFractionsAsExercisesWithOCRCorrection(text);
-  console.log(`🎯 PHASE 1 RESULT: ${fractionExercises.length} exercises found`);
-  
-  // ALWAYS add fraction exercises if found
-  if (fractionExercises.length > 0) {
-    allExercises = [...fractionExercises];
-    console.log(`✅ Added ${fractionExercises.length} comprehensive fraction exercises to final results`);
-    fractionExercises.forEach((ex, idx) => {
-      console.log(`  Final Exercise ${idx + 1}: "${ex.question}" -> "${ex.answer}"`);
-    });
-  }
-  
-  // PHASE 2: ENHANCED SUPPLEMENTARY EXTRACTIONS
-  console.log('\n🔄 === PHASE 2: ENHANCED SUPPLEMENTARY EXTRACTIONS ===');
-  
-  // Enhanced lettered exercise detection
-  const letteredExercises = extractLetteredExercisesWithValidation(text);
-  letteredExercises.forEach(letteredEx => {
-    const alreadyExists = allExercises.some(ex => ex.question === letteredEx.question);
-    if (!alreadyExists) {
-      allExercises.push(letteredEx);
-      console.log(`✅ Added unique lettered exercise: ${letteredEx.question}`);
-    } else {
-      console.log(`🔄 Skipped duplicate lettered exercise: ${letteredEx.question}`);
-    }
-  });
-  
-  // PHASE 3: FALLBACK METHODS (only if no exercises found yet)
-  if (allExercises.length === 0) {
-    console.log('\n🆘 === PHASE 3: FALLBACK METHODS ===');
-    
-    // Smart math extraction fallback
-    console.log('Trying enhanced smart math extraction...');
-    const smartExercises = extractMathExercisesFromRawText(text);
-    console.log(`Smart extraction found: ${smartExercises.length} exercises`);
-    allExercises = [...allExercises, ...smartExercises];
-    
-    // Delimiter-based extraction fallback
-    if (allExercises.length === 0) {
-      console.log('Trying delimiter-based extraction...');
-      const delimiterExercises = extractWithDelimiters(text);
-      console.log(`Delimiter extraction found: ${delimiterExercises.length} exercises`);
-      allExercises = [...allExercises, ...delimiterExercises];
-    }
-    
-    // Emergency single-exercise extraction
-    if (allExercises.length === 0) {
-      console.log('Creating emergency single exercise...');
-      const questionFraction = extractQuestionFraction(text);
-      if (questionFraction) {
-        allExercises = [{
-          question: `Simplifiez la fraction ${questionFraction}`,
-          answer: questionFraction
-        }];
-        console.log(`Emergency: Created single fraction exercise: ${questionFraction}`);
-      } else if (text.trim().length > 0) {
-        allExercises = [{
-          question: "Document Content",
-          answer: text.trim().substring(0, 300)
-        }];
-        console.log(`Emergency: Created content-based exercise`);
-      }
-    }
-  }
-  
-  console.log('\n🏆 === FINAL ENHANCED EXTRACTION RESULTS ===');
-  console.log(`Total exercises created: ${allExercises.length}`);
-  allExercises.forEach((ex, idx) => {
-    console.log(`Final Exercise ${idx + 1}: "${ex.question}" -> "${ex.answer}"`);
-  });
-  console.log('🏆 === ENHANCED EXTRACTION COMPLETE ===\n');
-  
-  return allExercises;
 }

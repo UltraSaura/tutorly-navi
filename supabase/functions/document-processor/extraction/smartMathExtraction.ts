@@ -1,7 +1,7 @@
-
 // Enhanced mathematical exercise extraction with comprehensive OCR error correction
 
 import { preprocessFrenchMathText, cleanHandwrittenAnswer, extractQuestionFraction } from './textPreprocessing.ts';
+import { detectMultipleExercises } from './multiExerciseDetector.ts';
 
 export function extractMathExercisesFromRawText(rawText: string): Array<{ question: string, answer: string }> {
   console.log('=== ENHANCED MULTI-EXERCISE MATH EXTRACTION WITH OCR CORRECTION ===');
@@ -14,7 +14,19 @@ export function extractMathExercisesFromRawText(rawText: string): Array<{ questi
     return [];
   }
   
-  // First try comprehensive LaTeX-aware extraction with OCR correction
+  // NEW: Try multi-exercise detection first (for structured worksheets)
+  console.log('🎯 Trying multi-exercise detection for structured worksheets...');
+  const multiExercises = detectMultipleExercises(rawText);
+  
+  if (multiExercises.length >= 2) {
+    console.log(`✅ Multi-exercise detection found ${multiExercises.length} exercises`);
+    return multiExercises.map(ex => ({
+      question: `${ex.letter}. ${ex.question}`,
+      answer: ex.answer || ex.fraction
+    }));
+  }
+  
+  // Fallback to original comprehensive LaTeX-aware extraction with OCR correction
   const latexExercises = extractMultipleFromLatexTextWithOCRCorrection(rawText);
   console.log(`LaTeX extraction with OCR correction found ${latexExercises.length} exercises`);
   
@@ -23,7 +35,7 @@ export function extractMathExercisesFromRawText(rawText: string): Array<{ questi
     return latexExercises;
   }
   
-  // Fallback to direct OCR-based extraction with error correction
+  // Final fallback to direct OCR-based extraction with error correction
   console.log('🔄 Falling back to direct OCR extraction with correction');
   const ocrExercises = extractMultipleMathExercisesWithOCRCorrection(rawText);
   
