@@ -1,46 +1,51 @@
+
 import { extractTextFromFile } from "./extractors.ts";
 import { extractExercisesFromText } from "./exerciseExtractors.ts";
 
-// Minimal text preprocessing that preserves exercise structure
-function minimalPreprocessing(text: string): string {
-  console.log('=== MINIMAL PREPROCESSING ===');
+// Text preprocessing function to clean OCR output
+function preprocessExtractedText(text: string): string {
+  console.log('Starting text preprocessing');
   console.log('Raw text length:', text.length);
-  console.log('Raw text (first 500 chars):', text.substring(0, 500));
+  console.log('Raw text (first 300 chars):', text.substring(0, 300));
   
-  // Only remove obvious LaTeX artifacts while preserving structure
   let cleanedText = text
-    // Remove LaTeX commands but keep content
-    .replace(/\\[a-zA-Z]+/g, ' ')
-    .replace(/[{}]/g, ' ')
+    // Remove LaTeX artifacts
+    .replace(/\\\([^)]*\\\)/g, '')
+    .replace(/\$\$[^$]*\$\$/g, '')
+    .replace(/\\[a-zA-Z]+/g, '')
+    .replace(/[{}]/g, '')
     
-    // Normalize whitespace but preserve line breaks
+    // Fix common OCR mistakes in French
+    .replace(/([a-zA-Z])\s*,\s*/g, '$1. ')  // Fix a, -> a.
+    .replace(/([a-zA-Z])\s*\.\s*/g, '$1. ') // Normalize spacing around periods
+    .replace(/(\d+)\s*\/\s*(\d+)/g, '$1/$2') // Normalize fractions
+    
+    // Clean up whitespace
     .replace(/\s+/g, ' ')
     .replace(/\n\s*\n/g, '\n')
     .trim();
   
-  console.log('Minimally processed text length:', cleanedText.length);
-  console.log('Minimally processed text (first 500 chars):', cleanedText.substring(0, 500));
-  console.log('=== MINIMAL PREPROCESSING COMPLETE ===');
+  console.log('Cleaned text length:', cleanedText.length);
+  console.log('Cleaned text (first 300 chars):', cleanedText.substring(0, 300));
   
   return cleanedText;
 }
 
-// Enhanced extraction that works with raw text
-async function enhancedExtraction(fileData: string, fileType: string): Promise<string> {
-  console.log('Starting enhanced extraction with structure preservation');
+// Optimized single-pass extraction with robust preprocessing
+async function optimizedExtraction(fileData: string, fileType: string): Promise<string> {
+  console.log('Starting optimized extraction');
   
   try {
-    // Extract raw text from file
-    const rawText = await extractTextFromFile(fileData, fileType);
-    console.log('Raw extraction completed, text length:', rawText.length);
-    console.log('Raw text sample:', rawText.substring(0, 300));
+    // Use Vision API with improved prompt
+    const extractedText = await extractTextFromFile(fileData, fileType);
+    console.log('Vision API extraction completed, text length:', extractedText.length);
     
-    // Apply minimal preprocessing to preserve exercise structure
-    const processedText = minimalPreprocessing(rawText);
+    // Apply targeted preprocessing for French math worksheets
+    const cleanedText = preprocessExtractedText(extractedText);
     
-    return processedText;
+    return cleanedText;
   } catch (error) {
-    console.error('Enhanced extraction failed:', error);
+    console.error('Optimized extraction failed:', error);
     throw error;
   }
 }
@@ -52,58 +57,40 @@ export async function processDocument(
   subjectId?: string
 ): Promise<{ success: boolean, exercises: any[], rawText: string, error?: string }> {
   try {
-    console.log(`=== PROCESSING DOCUMENT: ${fileName} (${fileType}) ===`);
+    console.log(`Processing document: ${fileName} (${fileType})`);
     
-    // Use enhanced extraction that preserves structure
-    const extractedText = await enhancedExtraction(fileData, fileType);
-    console.log(`Enhanced extraction result - text length: ${extractedText.length} characters`);
+    // Use optimized single-pass extraction
+    const extractedText = await optimizedExtraction(fileData, fileType);
+    console.log(`Final extracted text length: ${extractedText.length} characters`);
+    console.log(`Final extracted text (first 500 chars): ${extractedText.substring(0, 500)}`);
     
-    // Log the full text in manageable chunks for debugging
-    const textChunks = extractedText.match(/.{1,300}/g) || [];
+    // Log the full text for debugging (in chunks)
+    const textChunks = extractedText.match(/.{1,200}/g) || [];
     textChunks.forEach((chunk, index) => {
       console.log(`Text chunk ${index + 1}:`, chunk);
     });
     
-    // Use the enhanced multi-exercise extraction system
-    console.log('=== STARTING MULTI-EXERCISE EXTRACTION ===');
+    // Use the tiered extraction system
+    console.log('Using tiered extraction system for robust exercise detection');
     const exercises = extractExercisesFromText(extractedText);
     
-    console.log(`=== EXTRACTION COMPLETE: Found ${exercises.length} exercises ===`);
+    console.log(`Tiered extraction found ${exercises.length} exercises`);
     
-    // Log each exercise found
-    exercises.forEach((ex, idx) => {
-      console.log(`Exercise ${idx + 1}: Question="${ex.question}" Answer="${ex.answer}"`);
-    });
-    
-    // Enhanced fallback if no exercises found
+    // If no exercises found, create a fallback exercise from the content
     if (exercises.length === 0 && extractedText.length > 0) {
-      console.log('No exercises detected - creating comprehensive fallback');
-      
-      // Look for any fraction patterns in the text
-      const fractionMatches = extractedText.match(/\d+\/\d+/g);
-      if (fractionMatches && fractionMatches.length > 0) {
-        console.log('Found fractions for fallback exercises:', fractionMatches);
-        
-        fractionMatches.forEach((fraction, index) => {
-          const letter = String.fromCharCode(97 + index); // a, b, c, etc.
-          exercises.push({
-            question: `${letter}. Simplifiez la fraction ${fraction}`,
-            answer: fraction
-          });
-          console.log(`Created fallback exercise: ${letter}. Simplifiez la fraction ${fraction}`);
-        });
-      } else {
-        // Final fallback
-        exercises.push({
-          question: "Document Content Analysis",
-          answer: extractedText.length > 300 
-            ? extractedText.substring(0, 300) + "..." 
-            : extractedText
-        });
-      }
+      console.log('No exercises detected - creating fallback exercise');
+      exercises.push({
+        question: "Document Content Analysis",
+        answer: extractedText.length > 300 
+          ? extractedText.substring(0, 300) + "..." 
+          : extractedText
+      });
     }
     
-    console.log(`=== FINAL RESULT: ${exercises.length} exercises extracted ===`);
+    console.log(`Final result: ${exercises.length} exercises extracted`);
+    exercises.forEach((ex, idx) => {
+      console.log(`Final Exercise ${idx + 1}: "${ex.question.substring(0, 100)}..."`);
+    });
     
     return {
       success: true,
@@ -111,7 +98,7 @@ export async function processDocument(
       rawText: extractedText
     };
   } catch (error) {
-    console.error('=== ERROR IN DOCUMENT PROCESSING ===', error);
+    console.error('Error in document processing:', error);
     return {
       success: false,
       exercises: [],

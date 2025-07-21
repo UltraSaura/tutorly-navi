@@ -23,7 +23,8 @@ const ExerciseList = ({
 }: ExerciseListProps) => {
   const { t } = useLanguage();
   const correctExercises = exercises.filter(ex => ex.isCorrect).length;
-  const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined).length;
+  const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined && ex.userAnswer && ex.userAnswer.trim() !== "").length;
+  const incompleteExercises = exercises.filter(ex => !ex.userAnswer || ex.userAnswer.trim() === "").length;
   const totalExercises = exercises.length;
   
   return (
@@ -40,7 +41,10 @@ const ExerciseList = ({
         </div>
         
         <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>{t('grades.correctAnswers').replace('{correct}', correctExercises.toString()).replace('{completed}', answeredExercises.toString())} • {totalExercises} total</span>
+          <span>
+            {t('grades.correctAnswers').replace('{correct}', correctExercises.toString()).replace('{completed}', answeredExercises.toString())} • {totalExercises} total
+            {incompleteExercises > 0 && <span className="text-blue-600 dark:text-blue-400 ml-2">({incompleteExercises} {t('exercise.incomplete')})</span>}
+          </span>
         </div>
       </div>
       

@@ -158,5 +158,22 @@
     "accessError": "Camera Access Error",
     "permissionRequired": "Camera permission is required to take photos",
     "starting": "Starting camera..."
+  },
+  "exercise": {
+    "noExercises": "No exercises found",
+    "showExplanation": "Show explanation",
+    "yourAnswer": "Your answer",
+    "greatWork": "Great work!",
+    "learningOpportunity": "Learning opportunity",
+    "attempt": "Attempt",
+    "tryAgain": "Try again",
+    "needsAnswer": "Please provide your answer to this exercise",
+    "incomplete": "incomplete"
+  },
+  "grades": {
+    "exerciseList": "Exercise List",
+    "overallGrade": "Overall Grade",
+    "correctAnswers": "{correct} of {completed} correct",
+    "exerciseListDescription": "Upload homework or type exercises to see them here"
   }
 }
