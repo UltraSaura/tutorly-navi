@@ -30,6 +30,14 @@ export const useExercises = () => {
   const submitAnswer = async (exerciseId: string, answer: string) => {
     console.log(`[useExercises] Submitting answer for exercise ${exerciseId}:`, answer);
     
+    // Validate input
+    if (!answer || answer.trim() === '') {
+      toast.error('Please provide an answer before submitting.');
+      throw new Error('Empty answer provided');
+    }
+
+    const trimmedAnswer = answer.trim();
+    
     try {
       const exerciseIndex = exercises.findIndex(ex => ex.id === exerciseId);
       if (exerciseIndex === -1) {
@@ -38,11 +46,17 @@ export const useExercises = () => {
 
       const exercise = exercises[exerciseIndex];
       
+      // Check if this is the same answer as before
+      if (exercise.userAnswer === trimmedAnswer) {
+        toast.info('This is the same answer as before. Try a different approach.');
+        return;
+      }
+      
       // Create new attempt
       const attemptNumber = exercise.attemptCount + 1;
       const newAttempt = {
         id: `${exerciseId}-attempt-${attemptNumber}`,
-        answer,
+        answer: trimmedAnswer,
         timestamp: new Date(),
         attemptNumber,
       };
@@ -50,11 +64,11 @@ export const useExercises = () => {
       // Update exercise with new answer
       const updatedExercise: Exercise = {
         ...exercise,
-        userAnswer: answer,
+        userAnswer: trimmedAnswer,
         attemptCount: attemptNumber,
         attempts: [...exercise.attempts, newAttempt],
         lastAttemptDate: new Date(),
-        needsRetry: false,
+        needsRetry: false, // Will be updated based on grading result
       };
 
       // Grade the exercise

@@ -7,7 +7,12 @@ import { Exercise, Grade } from '@/types/chat';
 export const calculateGrade = (exercises: Exercise[]): Grade => {
   console.log('[gradeCalculation] Called with exercises:', exercises);
 
-  const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined);
+  // Only count exercises that have been answered (have a user answer and isCorrect is defined)
+  const answeredExercises = exercises.filter(ex => 
+    ex.userAnswer && 
+    ex.userAnswer.trim() !== '' && 
+    ex.isCorrect !== undefined
+  );
 
   console.log('[gradeCalculation] Filtered answered exercises:', answeredExercises);
 

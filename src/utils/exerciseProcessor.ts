@@ -34,9 +34,42 @@ export const processNewExercise = async (
     console.log("[exerciseProcessor] Extracted from message. Question/Answer:", { question, answer });
   }
 
-  if (!question || !answer) {
-    console.log("[exerciseProcessor] Couldn't extract homework components from the message:", { message, question, answer });
+  if (!question) {
+    console.log("[exerciseProcessor] Couldn't extract question from the message:", message);
     return null;
+  }
+
+  // Handle missing or empty answers
+  if (!answer || answer.trim() === '' || 
+      answer === 'Document submitted for review' || 
+      answer === 'Image submitted for review') {
+    console.log("[exerciseProcessor] No answer provided, creating exercise that needs response");
+    
+    // Check for existing exercise with same question
+    const existingExercise = existingExercises.find(ex => ex.question === question);
+    
+    if (existingExercise) {
+      console.log("[exerciseProcessor] Question already exists, not creating duplicate");
+      return null;
+    }
+    
+    // Create exercise without answer that needs user response
+    const newEx: Exercise = {
+      id: Date.now().toString(),
+      question,
+      userAnswer: "",
+      expanded: false,
+      isCorrect: false, // Explicitly mark as incorrect until answered
+      explanation: undefined,
+      relatedMessages: [],
+      attemptCount: 0,
+      attempts: [],
+      lastAttemptDate: new Date(),
+      needsRetry: true, // Needs user to provide answer
+    };
+
+    console.log("[exerciseProcessor] Created exercise needing response:", newEx);
+    return { exercise: newEx, isUpdate: false };
   }
 
   // Check for exact duplicates (same question + same answer)
@@ -85,7 +118,7 @@ export const processNewExercise = async (
     }
   }
 
-  // Create new exercise
+  // Create new exercise with answer
   const newAttempt = {
     id: `${Date.now()}-attempt-1`,
     answer,
@@ -198,8 +231,8 @@ export const processMultipleExercises = async (
     // Check for retry attempts
     const existingExercise = existingExercises.find(ex => ex.question === parsedEx.question);
 
-    if (existingExercise && parsedEx.answer) {
-      // This is a retry attempt
+    if (existingExercise && parsedEx.answer && parsedEx.answer.trim() !== '') {
+      // This is a retry attempt with a valid answer
       const attemptNumber = existingExercise.attemptCount + 1;
       const newAttempt = {
         id: `${existingExercise.id}-attempt-${attemptNumber}`,
@@ -225,7 +258,7 @@ export const processMultipleExercises = async (
         console.error('[exerciseProcessor] Error grading retry exercise:', error);
         continue;
       }
-    } else if (parsedEx.answer) {
+    } else if (parsedEx.answer && parsedEx.answer.trim() !== '') {
       // This is a new exercise with answer
       const newAttempt = {
         id: `${Date.now()}-${parsedEx.index}-attempt-1`,
@@ -255,21 +288,23 @@ export const processMultipleExercises = async (
         continue;
       }
     } else {
-      // Exercise without answer (question only)
+      // Exercise without answer (question only) - needs user response
       const newEx: Exercise = {
         id: `${Date.now()}-${parsedEx.index}`,
         question: parsedEx.question,
         userAnswer: "",
         expanded: false,
+        isCorrect: false, // Explicitly mark as incorrect until answered
+        explanation: undefined,
         relatedMessages: [],
         attemptCount: 0,
         attempts: [],
         lastAttemptDate: new Date(),
-        needsRetry: true,
+        needsRetry: true, // Needs user to provide answer
       };
 
       processedExercises.push(newEx);
-      console.log("[exerciseProcessor] Added exercise without answer:", newEx.question);
+      console.log("[exerciseProcessor] Added exercise needing response:", newEx.question);
     }
   }
 

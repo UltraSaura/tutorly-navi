@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ThumbsUp, AlertCircle, CircleCheck, CircleX, Send } from 'lucide-react';
+import { ThumbsUp, AlertCircle, CircleCheck, CircleX, Send, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -55,8 +55,10 @@ const Exercise = ({
 
   const hasRelatedMessages = exercise.relatedMessages && exercise.relatedMessages.length > 0;
   const hasAnswer = exercise.userAnswer && exercise.userAnswer.trim() !== '';
+  const needsResponse = !hasAnswer || exercise.needsRetry;
 
   const handleSubmitAnswer = async () => {
+    // Validate empty input
     if (!answerInput.trim()) {
       toast.error(t('exercise.pleaseProvideAnswer'));
       return;
@@ -85,20 +87,42 @@ const Exercise = ({
     id: exercise.id,
     question: exercise.question, 
     isCorrect: exercise.isCorrect, 
-    hasAnswer: hasAnswer 
+    hasAnswer: hasAnswer,
+    needsResponse: needsResponse 
   });
+
+  // Determine the border color and status icon
+  const getBorderColor = () => {
+    if (needsResponse) {
+      return "border-blue-200 dark:border-blue-900";
+    }
+    if (exercise.isCorrect !== undefined) {
+      return exercise.isCorrect 
+        ? "border-green-200 dark:border-green-900" 
+        : "border-amber-200 dark:border-amber-900";
+    }
+    return "border-gray-200 dark:border-gray-700";
+  };
+
+  const getStatusIcon = () => {
+    if (needsResponse) {
+      return <Clock className="w-6 h-6 text-blue-500" />;
+    }
+    if (exercise.isCorrect !== undefined) {
+      return exercise.isCorrect ? (
+        <CircleCheck className="w-6 h-6 text-green-500" />
+      ) : (
+        <CircleX className="w-6 h-6 text-red-500" />
+      );
+    }
+    return null;
+  };
 
   return (
     <motion.div 
       className={cn(
         "border rounded-lg overflow-hidden transition-all duration-200 shadow-sm hover:shadow-md",
-        exercise.isCorrect !== undefined 
-          ? exercise.isCorrect 
-            ? "border-green-200 dark:border-green-900" 
-            : "border-amber-200 dark:border-amber-900" 
-          : hasAnswer 
-            ? "border-gray-200 dark:border-gray-700"
-            : "border-blue-200 dark:border-blue-900"
+        getBorderColor()
       )}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -106,19 +130,13 @@ const Exercise = ({
     >
       <div className="p-4 py-[5px]">
         <div className="flex items-center gap-4">
-          {exercise.isCorrect !== undefined && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 15 }}
-            >
-              {exercise.isCorrect ? (
-                <CircleCheck className="w-6 h-6 text-green-500" />
-              ) : (
-                <CircleX className="w-6 h-6 text-red-500" />
-              )}
-            </motion.div>
-          )}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+          >
+            {getStatusIcon()}
+          </motion.div>
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h3 className="text-md font-medium">
@@ -129,16 +147,16 @@ const Exercise = ({
                   {t('exercise.attempt')} {exercise.attemptCount}
                 </span>
               )}
-              {exercise.needsRetry && (
-                <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-full">
-                  {t('exercise.tryAgain')}
+              {needsResponse && (
+                <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
+                  {t('exercise.responseNeeded')}
                 </span>
               )}
             </div>
           </div>
         </div>
         
-        {hasAnswer ? (
+        {hasAnswer && !needsResponse ? (
           <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 py-[10px]">
             <p className="text-sm text-gray-700 dark:text-gray-300">
               {exercise.userAnswer}
@@ -148,7 +166,10 @@ const Exercise = ({
           <div className="mt-3 space-y-3">
             <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50">
               <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                {t('exercise.pleaseProvideAnswer')}
+                {needsResponse && hasAnswer 
+                  ? t('exercise.tryAgainPrompt')
+                  : t('exercise.pleaseProvideAnswer')
+                }
               </p>
               <div className="flex gap-2">
                 <Input
@@ -186,7 +207,7 @@ const Exercise = ({
           </div>
         )}
         
-        {hasAnswer && (
+        {hasAnswer && !needsResponse && (
           <div className="mt-4 flex justify-end items-center">
             <Dialog>
               <DialogTrigger asChild>

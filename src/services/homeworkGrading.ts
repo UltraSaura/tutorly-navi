@@ -10,13 +10,32 @@ export const evaluateHomework = async (
 ): Promise<Exercise> => {
   try {
     console.log('[homeworkGrading] evaluateHomework called with:', exercise);
-    if (!exercise.question || !exercise.userAnswer) {
-      console.error("[homeworkGrading] Missing question or answer for grading:", exercise);
-      toast.error('Please provide both a question and an answer for grading.');
+    
+    // Check for missing question
+    if (!exercise.question) {
+      console.error("[homeworkGrading] Missing question for grading:", exercise);
+      toast.error('Please provide a question for grading.');
       return {
         ...exercise,
         isCorrect: false,
-        explanation: "Unable to grade: Missing question or answer."
+        explanation: "Unable to grade: Missing question.",
+        needsRetry: true
+      };
+    }
+
+    // Check for missing or empty answer - immediately mark as incorrect
+    if (!exercise.userAnswer || exercise.userAnswer.trim() === '') {
+      console.log("[homeworkGrading] Empty answer provided, marking as needs response");
+      return {
+        ...exercise,
+        isCorrect: false,
+        explanation: undefined, // No explanation needed for missing answers
+        needsRetry: true, // User needs to provide an answer
+        attempts: exercise.attempts.map(attempt => 
+          attempt.attemptNumber === attemptNumber 
+            ? { ...attempt, isCorrect: false, explanation: "No answer provided" }
+            : attempt
+        )
       };
     }
 
@@ -53,7 +72,8 @@ export const evaluateHomework = async (
       return {
         ...exercise,
         isCorrect: false,
-        explanation: `**Problem:** ${exercise.question}\n\n**Guidance:** There was an error grading your answer. The system couldn't determine if your answer is correct. Please try again later or contact support if the issue persists.`
+        explanation: `**Problem:** ${exercise.question}\n\n**Guidance:** There was an error grading your answer. The system couldn't determine if your answer is correct. Please try again later or contact support if the issue persists.`,
+        needsRetry: true
       };
     }
 
@@ -64,7 +84,8 @@ export const evaluateHomework = async (
       return {
         ...exercise,
         isCorrect: false,
-        explanation: `**Problem:** ${exercise.question}\n\n**Guidance:** Unable to grade your answer due to a technical issue. Please try again later.`
+        explanation: `**Problem:** ${exercise.question}\n\n**Guidance:** Unable to grade your answer due to a technical issue. Please try again later.`,
+        needsRetry: true
       };
     }
 
@@ -100,7 +121,8 @@ export const evaluateHomework = async (
       return {
         ...exercise,
         isCorrect: false,
-        explanation: `**Problem:** ${exercise.question}\n\n**Guidance:** The system received an unexpected response when grading your answer. It has been marked as incorrect, but you may want to review it with a teacher.`
+        explanation: `**Problem:** ${exercise.question}\n\n**Guidance:** The system received an unexpected response when grading your answer. It has been marked as incorrect, but you may want to review it with a teacher.`,
+        needsRetry: true
       };
     }
 
@@ -193,7 +215,8 @@ export const evaluateHomework = async (
     return {
       ...exercise,
       isCorrect: false,
-      explanation: `**Problem:** ${exercise.question}\n\n**Guidance:** An unexpected error occurred while grading your answer. Please try again later.`
+      explanation: `**Problem:** ${exercise.question}\n\n**Guidance:** An unexpected error occurred while grading your answer. Please try again later.`,
+      needsRetry: true
     };
   }
 };
