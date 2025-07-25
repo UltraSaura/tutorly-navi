@@ -137,11 +137,13 @@ function detectFromPatterns(text: string): DetectedExercise[] {
   console.log('=== PATTERN-BASED DETECTION ===');
   const exercises: DetectedExercise[] = [];
   
-  // Enhanced patterns for different formats
+  // Enhanced patterns for different formats including answers with dots
   const patterns = [
-    /([a-e])\s*[\.\)]\s*[^\w]*(\d+)\s*\/\s*(\d+)/gi,
-    /([a-e])\s*[\.\)]\s*.*?(\d+)\s*\/\s*(\d+)/gi,
-    /([a-e])\s*[~\^\&]*\s*.*?(\d+)\s*\/\s*(\d+)/gi,
+    /([a-e])\s*[\.\)]\s*[^\w]*(\d+)\s*\/\s*(\d+)\s*=\s*(\d+\/\d+)[\.\s]*/gi, // a. 30/63 = 41/55...
+    /([a-e])\s*[\.\)]\s*.*?(\d+)\s*\/\s*(\d+)\s*=\s*(\d+\/\d+)[\.\s]*/gi, // with answer
+    /([a-e])\s*[\.\)]\s*[^\w]*(\d+)\s*\/\s*(\d+)/gi, // without answer
+    /([a-e])\s*[\.\)]\s*.*?(\d+)\s*\/\s*(\d+)/gi, // fallback pattern
+    /([a-e])\s*[~\^\&]*\s*.*?(\d+)\s*\/\s*(\d+)/gi, // OCR artifacts
   ];
   
   for (const pattern of patterns) {
@@ -150,6 +152,7 @@ function detectFromPatterns(text: string): DetectedExercise[] {
       const letter = match[1].toLowerCase();
       const numerator = match[2];
       const denominator = match[3];
+      const answer = match[4]; // Potential answer from pattern
       const fraction = `${numerator}/${denominator}`;
       
       // Validate fraction
@@ -157,10 +160,11 @@ function detectFromPatterns(text: string): DetectedExercise[] {
         exercises.push({
           letter: letter,
           question: `Simplifiez la fraction ${fraction}`,
-          fraction: fraction
+          fraction: fraction,
+          answer: answer || undefined // Include answer if captured
         });
         
-        console.log(`Pattern detected: ${letter}. ${fraction}`);
+        console.log(`Pattern detected: ${letter}. ${fraction}${answer ? ` = ${answer}` : ''}`);
       }
     }
     pattern.lastIndex = 0;

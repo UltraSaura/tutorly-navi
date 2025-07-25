@@ -5,7 +5,7 @@ import { extractMathExercisesFromRawText } from './smartMathExtraction.ts';
 import { extractWithDelimiters } from './delimiterExtraction.ts';
 import { isEducationalContent } from './validationUtils.ts';
 import { detectMultipleExercises } from './multiExerciseDetector.ts';
-import { enhancedWorksheetPreprocessing } from './enhancedOCRPreprocessor.ts';
+import { enhancedWorksheetPreprocessing, preprocessFrenchMathText } from './enhancedOCRPreprocessor.ts';
 
 // ENHANCED: Main extraction function with robust multi-exercise detection
 export function extractExercisesFromText(text: string): Array<{ question: string, answer: string }> {
@@ -15,6 +15,21 @@ export function extractExercisesFromText(text: string): Array<{ question: string
   
   let allExercises = [];
   
+  // NEW: PHASE 0: DIRECT EXERCISE-ANSWER EXTRACTION 
+  console.log('\n🎯 === PHASE 0: DIRECT EXERCISE-ANSWER EXTRACTION ===');
+  const directExercises = extractExercisesWithAnswers(text);
+  console.log(`🎯 PHASE 0 RESULT: ${directExercises.length} exercises with answers found`);
+  
+  if (directExercises.length >= 2) {
+    console.log(`✅ Direct extraction found ${directExercises.length} exercises with answers - using as primary result`);
+    directExercises.forEach((ex, idx) => {
+      console.log(`  Direct Exercise ${idx + 1}: "${ex.question}" -> "${ex.answer}"`);
+    });
+    
+    console.log('\n🏆 === DIRECT EXTRACTION SUCCESS - EXERCISES WITH ANSWERS FOUND ===');
+    return directExercises;
+  }
+
   // PHASE 1: ENHANCED MULTI-EXERCISE DETECTION (PRIMARY METHOD)
   console.log('\n🎯 === PHASE 1: ENHANCED MULTI-EXERCISE DETECTION ===');
   const multiExercises = detectMultipleExercises(text);
@@ -24,7 +39,7 @@ export function extractExercisesFromText(text: string): Array<{ question: string
     console.log(`✅ Enhanced detection found ${multiExercises.length} exercises - using as primary result`);
     allExercises = multiExercises.map(ex => ({
       question: `${ex.letter}. ${ex.question}`,
-      answer: "" // Document extracted questions have no user answer initially
+      answer: ex.answer || "" // Use answer if found, otherwise empty
     }));
     
     multiExercises.forEach((ex, idx) => {
@@ -115,6 +130,46 @@ export function extractExercisesFromText(text: string): Array<{ question: string
   return allExercises;
 }
 
+// NEW: Extract exercises with answers in specific format (letter. fraction = answer...)
+function extractExercisesWithAnswers(text: string): Array<{ question: string, answer: string }> {
+  console.log('=== DIRECT EXERCISE-ANSWER EXTRACTION ===');
+  console.log('Looking for pattern: letter. fraction = answer...');
+  
+  const exercises = [];
+  
+  // Enhanced patterns to match your document format: a. 30/63 = 41/55...
+  const exerciseAnswerPatterns = [
+    /([a-e])\s*[\.\)]\s*.*?(\d+)\s*\/\s*(\d+)\s*=\s*(\d+\/\d+)[\.\s]*/gi,
+    /([a-e])\s*[\.\)]\s*(\d+)\s*\/\s*(\d+)\s*=\s*(\d+\/\d+)[\.\s]*/gi,
+    /([a-e])\s*[\.\)]\s*.*?(\d+)\s*\/\s*(\d+)\s*=\s*(\d+\/\d+)/gi,
+  ];
+  
+  for (const pattern of exerciseAnswerPatterns) {
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      const letter = match[1].toLowerCase();
+      const numerator = match[2];
+      const denominator = match[3];
+      const answer = match[4];
+      const fraction = `${numerator}/${denominator}`;
+      
+      // Validate fraction and answer
+      if (parseInt(numerator) > 0 && parseInt(denominator) > 1 && answer.includes('/')) {
+        exercises.push({
+          question: `${letter}. Simplifiez la fraction ${fraction}`,
+          answer: answer
+        });
+        
+        console.log(`✅ Found exercise with answer: ${letter}. ${fraction} = ${answer}`);
+      }
+    }
+    pattern.lastIndex = 0;
+  }
+  
+  console.log(`Direct extraction found ${exercises.length} exercises with answers`);
+  return exercises;
+}
+
 // Enhanced function to extract all fractions as separate exercises
 function extractAllFractionsAsExercises(text: string): Array<{ question: string, answer: string }> {
   console.log('=== ENHANCED FRACTION EXTRACTION ===');
@@ -143,13 +198,22 @@ function extractAllFractionsAsExercises(text: string): Array<{ question: string,
     pattern.lastIndex = 0;
   }
   
-  // Create exercises from found fractions - these are questions without user answers
+  // Create exercises from found fractions - check for answers nearby
   Array.from(foundFractions).forEach((fraction, index) => {
     const letter = String.fromCharCode(97 + index);
+    
+    // Try to find an answer for this fraction in the text
+    const answerRegex = new RegExp(`${fraction.replace('/', '\\/')}\\s*=\\s*(\\d+\\/\\d+)[\.\\s]*`, 'i');
+    const answerMatch = text.match(answerRegex);
+    
     exercises.push({
       question: `${letter}. Simplifiez la fraction ${fraction}`,
-      answer: "" // Document extracted questions have no user answer
+      answer: answerMatch ? answerMatch[1] : "" // Use found answer or empty
     });
+    
+    if (answerMatch) {
+      console.log(`✅ Found answer for ${fraction}: ${answerMatch[1]}`);
+    }
   });
   
   console.log(`Enhanced fraction extraction found ${exercises.length} exercises`);

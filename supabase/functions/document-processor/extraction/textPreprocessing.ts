@@ -48,10 +48,11 @@ export function preprocessFrenchMathText(text: string): string {
     .replace(/\\[a-zA-Z]+/g, '')
     .replace(/[{}]/g, '')
     
-    // STEP 7: Clean up excessive dots from completion lines (but preserve fractions)
-    .replace(/\.{4,}/g, ' ') // Replace 4+ dots with space
+    // STEP 7: Clean up excessive dots BUT preserve answer patterns (fraction = answer...)
+    .replace(/(\d+\/\d+)\s*=\s*(\d+\/\d+)\s*\.+/g, '$1 = $2') // Preserve answer patterns
+    .replace(/(?<!\d\/\d\s*=\s*\d+\/\d+)\s*\.{4,}/g, ' ') // Replace 4+ dots with space (but not after answers)
     .replace(/_{4,}/g, ' ') // Replace 4+ underscores with space
-    .replace(/\s+\.{3,}\s+/g, ' ') // Remove isolated dot sequences
+    .replace(/\s+\.{3,}\s+(?!\d)/g, ' ') // Remove isolated dot sequences (but not before numbers)
     
     // STEP 8: Normalize spacing and math
     .replace(/(\d+)\s*\/\s*(\d+)/g, '$1/$2') // Normalize fractions
@@ -115,16 +116,31 @@ export function preprocessStructuredWorksheet(text: string): string {
   return result;
 }
 
-// NEW: Separate function to clean up garbled handwritten answers
+// NEW: Enhanced function to clean up garbled handwritten answers preserving fractions
 export function cleanHandwrittenAnswer(answer: string): string {
   console.log('Cleaning handwritten answer:', answer.substring(0, 50));
   
-  // Remove obvious OCR garbage
+  // First, handle specific patterns we know are valid
+  const fractionMatch = answer.match(/(\d+\/\d+)/);
+  if (fractionMatch) {
+    console.log('Found valid fraction answer:', fractionMatch[1]);
+    return fractionMatch[1];
+  }
+  
+  // Remove obvious OCR garbage but be more permissive
   let cleaned = answer
+    .replace(/\.{3,}/g, '') // Remove trailing dots from completion lines
     .replace(/c{3,}/g, '') // Remove strings of c's
-    .replace(/[^\d\/\.\s\-\+\*]/g, ' ') // Keep only math characters
+    .replace(/[^\d\/\.\s\-\+\*=]/g, ' ') // Keep math characters and equals
     .replace(/\s+/g, ' ')
     .trim();
+  
+  // Look for fraction pattern in cleaned text
+  const cleanedFractionMatch = cleaned.match(/(\d+\/\d+)/);
+  if (cleanedFractionMatch) {
+    console.log('Found fraction in cleaned text:', cleanedFractionMatch[1]);
+    return cleanedFractionMatch[1];
+  }
   
   // If nothing useful remains, return empty
   if (cleaned.length < 2 || !/\d/.test(cleaned)) {

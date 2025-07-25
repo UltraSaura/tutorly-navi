@@ -220,11 +220,15 @@ function extractStudentAnswer(text: string, questionFraction: string): string | 
   const afterQuestion = text.substring(questionIndex + questionFraction.length, questionIndex + questionFraction.length + 200);
   console.log('Text after question:', afterQuestion.substring(0, 100));
   
-  // Look for equals sign followed by a fraction or number
+  // Enhanced patterns to handle answers followed by dots or other OCR artifacts
   const answerPatterns = [
-    /=\s*(\d+\/\d+)/,  // = 41/55
-    /=\s*(\d+\.\d+)/,  // = 0.75
-    /=\s*(\d+)/,       // = 1
+    /=\s*(\d+\/\d+)[\.\s]*/, // = 41/55... or = 41/55 
+    /=\s*(\d+\/\d+)[\.]*\s*[\.]+/, // = 41/55...
+    /=\s*(\d+\/\d+)[\.]+/, // = 41/55...
+    /=\s*(\d+\.\d+)[\.\s]*/, // = 0.75...
+    /=\s*(\d+)[\.\s]*/, // = 1...
+    /(\d+\/\d+)\s*[\.]{3,}/, // 41/55...
+    /(\d+\/\d+)\s*[\.\s]+$/, // 41/55... at end of line
   ];
   
   for (const pattern of answerPatterns) {
