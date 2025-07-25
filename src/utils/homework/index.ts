@@ -5,11 +5,27 @@ import { detectHomeworkInMessage } from './detectionUtils';
 
 /**
  * Extracts question and answer components from a homework submission message
+ * Enhanced to detect missing responses properly
  */
 export const extractHomeworkFromMessage = (message: string): { question: string, answer: string } => {
+  // First check if this is just a question without an answer (common from document uploads)
+  if (isQuestionWithoutAnswer(message)) {
+    return {
+      question: message.trim(),
+      answer: ""
+    };
+  }
+  
   // First try math-specific extraction
   const mathResult = extractMathProblem(message);
   if (mathResult) {
+    // Validate that the math result actually has a meaningful answer
+    if (!mathResult.answer || mathResult.answer.trim() === "" || mathResult.answer === mathResult.question) {
+      return {
+        question: mathResult.question,
+        answer: ""
+      };
+    }
     return mathResult;
   }
   
@@ -25,9 +41,10 @@ export const extractHomeworkFromMessage = (message: string): { question: string,
     for (const keyword of keywords) {
       const index = lowerMessage.indexOf(keyword);
       if (index > 0) {
+        const extractedAnswer = message.substring(index + keyword.length).trim();
         return {
           question: message.substring(0, index).trim(),
-          answer: message.substring(index + keyword.length).trim()
+          answer: extractedAnswer || ""
         };
       }
     }
@@ -41,6 +58,14 @@ export const extractHomeworkFromMessage = (message: string): { question: string,
       };
     }
     
+    // Check if this looks like a question without answer - return empty answer
+    if (looksLikeQuestionOnly(message)) {
+      return {
+        question: message.trim(),
+        answer: ""
+      };
+    }
+    
     // Last resort: split in half
     const midpoint = Math.floor(message.length / 2);
     return {
@@ -51,6 +76,50 @@ export const extractHomeworkFromMessage = (message: string): { question: string,
   
   return { question, answer };
 };
+
+/**
+ * Checks if message is a question without an answer
+ */
+function isQuestionWithoutAnswer(message: string): boolean {
+  const trimmed = message.trim();
+  
+  // Check for common question patterns without answers
+  const questionPatterns = [
+    /^[a-e]\.\s*Simplifiez\s+la\s+fraction\s+\d+\/\d+\s*$/i,
+    /^Simplifiez\s+la\s+fraction\s+\d+\/\d+\s*$/i,
+    /^[a-e]\.\s*Calculez\s+.+$/i,
+    /^[a-e]\.\s*Résolvez\s+.+$/i,
+    /^Que\s+vaut\s+.+\?\s*$/i,
+    /^Combien\s+font\s+.+\?\s*$/i
+  ];
+  
+  return questionPatterns.some(pattern => pattern.test(trimmed));
+}
+
+/**
+ * Checks if message looks like a question only (no answer provided)
+ */
+function looksLikeQuestionOnly(message: string): boolean {
+  const trimmed = message.trim();
+  
+  // If message ends with a question mark and has no equal sign, likely a question
+  if (trimmed.endsWith('?') && !trimmed.includes('=')) {
+    return true;
+  }
+  
+  // If message contains question words but no answer indicators
+  const questionWords = ['simplifiez', 'calculez', 'résolvez', 'trouvez', 'déterminez'];
+  const answerIndicators = ['=', 'réponse', 'solution', 'résultat'];
+  
+  const hasQuestionWord = questionWords.some(word => 
+    trimmed.toLowerCase().includes(word)
+  );
+  const hasAnswerIndicator = answerIndicators.some(indicator => 
+    trimmed.toLowerCase().includes(indicator)
+  );
+  
+  return hasQuestionWord && !hasAnswerIndicator;
+}
 
 /**
  * Extracts question and explanation components from an AI message

@@ -174,7 +174,9 @@
     "tryAgain": "Réessayer",
     "submitAnswer": "Soumettre la réponse",
     "yourAnswerPlaceholder": "Votre réponse...",
-    "pleaseProvideAnswer": "Veuillez fournir une réponse",
+    "pleaseProvideAnswer": "Veuillez fournir votre réponse à cet exercice",
+    "tryAgainPrompt": "Votre réponse précédente était incorrecte. Veuillez réessayer.",
+    "responseNeeded": "Réponse Requise",
     "submitting": "Soumission...",
     "answerSubmitted": "Réponse soumise avec succès!"
   }

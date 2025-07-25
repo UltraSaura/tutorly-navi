@@ -174,7 +174,9 @@
     "tryAgain": "Try again",
     "submitAnswer": "Submit Answer",
     "yourAnswerPlaceholder": "Your answer...",
-    "pleaseProvideAnswer": "Please provide an answer",
+    "pleaseProvideAnswer": "Please provide your answer for this exercise",
+    "tryAgainPrompt": "Your previous answer was incorrect. Please try again.",
+    "responseNeeded": "Response Needed",
     "submitting": "Submitting...",
     "answerSubmitted": "Answer submitted successfully!"
   }

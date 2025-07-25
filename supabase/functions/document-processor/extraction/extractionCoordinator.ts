@@ -20,11 +20,11 @@ export function extractExercisesFromText(text: string): Array<{ question: string
   const multiExercises = detectMultipleExercises(text);
   console.log(`🎯 PHASE 1 RESULT: ${multiExercises.length} exercises found`);
   
-  if (multiExercises.length >= 1) {
+    if (multiExercises.length >= 1) {
     console.log(`✅ Enhanced detection found ${multiExercises.length} exercises - using as primary result`);
     allExercises = multiExercises.map(ex => ({
       question: `${ex.letter}. ${ex.question}`,
-      answer: ex.answer || ex.fraction
+      answer: "" // Document extracted questions have no user answer initially
     }));
     
     multiExercises.forEach((ex, idx) => {
@@ -92,7 +92,7 @@ export function extractExercisesFromText(text: string): Array<{ question: string
       if (anyFraction) {
         allExercises = [{
           question: `Simplifiez la fraction ${anyFraction[1]}/${anyFraction[2]}`,
-          answer: `${anyFraction[1]}/${anyFraction[2]}`
+          answer: "" // Emergency exercises also have no user answer
         }];
         console.log(`Emergency: Created single fraction exercise: ${anyFraction[1]}/${anyFraction[2]}`);
       } else if (text.trim().length > 0) {
@@ -143,12 +143,12 @@ function extractAllFractionsAsExercises(text: string): Array<{ question: string,
     pattern.lastIndex = 0;
   }
   
-  // Create exercises from found fractions
+  // Create exercises from found fractions - these are questions without user answers
   Array.from(foundFractions).forEach((fraction, index) => {
     const letter = String.fromCharCode(97 + index);
     exercises.push({
       question: `${letter}. Simplifiez la fraction ${fraction}`,
-      answer: fraction
+      answer: "" // Document extracted questions have no user answer
     });
   });
   
