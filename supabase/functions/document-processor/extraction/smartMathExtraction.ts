@@ -66,30 +66,65 @@ function extractFromOCRFormat(text: string): Array<{ question: string, answer: s
   console.log('--- OCR Format Extraction ---');
   const exercises: Array<{ question: string, answer: string }> = [];
   
-  // Look for regular fractions like 30/63, (30)/(63), etc.
-  const ocrFractionRegex = /\(?(\d+)\)?\s*\/\s*\(?(\d+)\)?/g;
-  const fractions: string[] = [];
-  let match;
+  // Build pairs of LHS (question) and optional RHS (student answer)
+  const pairs: Array<{ lhs: string; rhs?: string }> = [];
+  const seenLHS = new Set<string>();
   
-  while ((match = ocrFractionRegex.exec(text)) !== null) {
-    fractions.push(`${match[1]}/${match[2]}`);
+  let m: RegExpExecArray | null;
+  
+  // 1) Equations with parentheses: (30)/(63) = (13)/(23)
+  const parenEq = /\((\d+)\)\s*\/\s*\((\d+)\)\s*=\s*\((\d+)\)\s*\/\s*\((\d+)\)/g;
+  while ((m = parenEq.exec(text)) !== null) {
+    const lhs = `${m[1]}/${m[2]}`;
+    const rhs = `${m[3]}/${m[4]}`;
+    if (!seenLHS.has(lhs)) { seenLHS.add(lhs); pairs.push({ lhs, rhs }); }
   }
   
-  if (fractions.length === 0) {
-    console.log('No OCR fractions found');
-    return exercises;
+  // 2) Plain equations: 30/63 = 13/23
+  const plainEq = /(\d+)\s*\/\s*(\d+)\s*=\s*(\d+)\s*\/\s*(\d+)/g;
+  while ((m = plainEq.exec(text)) !== null) {
+    const lhs = `${m[1]}/${m[2]}`;
+    const rhs = `${m[3]}/${m[4]}`;
+    if (!seenLHS.has(lhs)) { seenLHS.add(lhs); pairs.push({ lhs, rhs }); }
   }
   
-  // Process each fraction
-  fractions.forEach((fraction, index) => {
-    const letter = String.fromCharCode(97 + index); // a, b, c, d, e...
-    
-    // Try to find student's answer
-    const studentAnswer = findStudentAnswerNear(text, fraction);
+  // 3) LHS only (parentheses): (50)/(58) =
+  const parenLhsOnly = /\((\d+)\)\s*\/\s*\((\d+)\)\s*=/g;
+  while ((m = parenLhsOnly.exec(text)) !== null) {
+    const lhs = `${m[1]}/${m[2]}`;
+    if (!seenLHS.has(lhs)) { seenLHS.add(lhs); pairs.push({ lhs }); }
+  }
+  
+  // 4) LHS only (plain): 50/58 =
+  const plainLhsOnly = /(\d+)\s*\/\s*(\d+)\s*=/g;
+  while ((m = plainLhsOnly.exec(text)) !== null) {
+    const lhs = `${m[1]}/${m[2]}`;
+    if (!seenLHS.has(lhs)) { seenLHS.add(lhs); pairs.push({ lhs }); }
+  }
+  
+  // 5) Fallback: any fraction that is NOT immediately after an equals sign
+  const generic = /(\d+)\s*\/\s*(\d+)/g;
+  while ((m = generic.exec(text)) !== null) {
+    const start = m.index;
+    let i = start - 1;
+    while (i >= 0 && /\s/.test(text[i])) i--; // skip whitespace
+    if (i >= 0 && text[i] === '=') continue; // skip RHS fractions
+    const lhs = `${m[1]}/${m[2]}`;
+    if (!seenLHS.has(lhs)) { seenLHS.add(lhs); pairs.push({ lhs }); }
+  }
+  
+  // Build exercises only from LHS, optionally using detected RHS as student's answer
+  pairs.forEach((pair, index) => {
+    const letter = String.fromCharCode(97 + index); // a, b, c, ...
+    let answer = pair.rhs || '';
+    if (!answer) {
+      // Try heuristic search near the LHS
+      answer = findStudentAnswerNear(text, pair.lhs) || '';
+    }
     
     const exercise = {
-      question: `${letter}. Simplifiez la fraction ${fraction}`,
-      answer: studentAnswer || "" // Only use student-provided answer, empty if none
+      question: `${letter}. Simplifiez la fraction ${pair.lhs}`,
+      answer: answer
     };
     exercises.push(exercise);
     console.log(`✅ Created OCR exercise ${index + 1}: ${exercise.question} -> Answer: "${exercise.answer || 'NEEDS STUDENT INPUT'}"`);
