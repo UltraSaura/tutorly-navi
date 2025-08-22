@@ -127,8 +127,8 @@ function findStudentAnswerNear(text: string, fraction: string): string {
   console.log(`Looking for student answer near fraction: ${fraction}`);
   
   // Handle parentheses format: (30)/(63)=(13)/(23)
-  const parenthesesFraction = fraction.replace(/(\d+)\/(\d+)/, '($1)/($2)');
-  const parenthesesPattern = new RegExp(`\\${parenthesesFraction.replace('/', '\\/')}\\s*=\\s*\\(\\s*(\\d+)\\s*\\)\\s*\/\\s*\\(\\s*(\\d+)\\s*\\)`, 'g');
+  const escapedFraction = fraction.replace(/(\d+)\/(\d+)/, '\\($1\\)\\/\\($2\\)');
+  const parenthesesPattern = new RegExp(`${escapedFraction}\\s*=\\s*\\(\\s*(\\d+)\\s*\\)\\/\\(\\s*(\\d+)\\s*\\)`, 'g');
   const parenthesesMatch = parenthesesPattern.exec(text);
   if (parenthesesMatch) {
     const answer = `${parenthesesMatch[1]}/${parenthesesMatch[2]}`;
