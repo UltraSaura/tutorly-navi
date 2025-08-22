@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ThumbsUp, AlertCircle, CircleCheck, CircleX, Send } from 'lucide-react';
+import { ThumbsUp, AlertCircle, CircleCheck, CircleX, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -180,10 +180,7 @@ const Exercise = ({
                       {t('exercise.submitting')}
                     </>
                   ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      {t('exercise.submitAnswer')}
-                    </>
+                    <ArrowRight className="w-4 h-4" />
                   )}
                 </Button>
               </div>
