@@ -11,6 +11,10 @@ export function detectMultipleExercises(text: string): Array<{ letter: string, q
   
   // Enhanced patterns for detecting multiple exercises
   const patterns = [
+    // a) (30)/(63)=(13)/(23) format with parentheses
+    /([a-e])\)\s*\((\d+)\)\/\((\d+)\)(?:\s*=\s*\((\d+)\)\/\((\d+)\))?/gi,
+    // a. (30)/(63)=(13)/(23) format with parentheses  
+    /([a-e])\.\s*\((\d+)\)\/\((\d+)\)(?:\s*=\s*\((\d+)\)\/\((\d+)\))?/gi,
     // a) fraction b) fraction format
     /([a-e])\)\s*\\?frac\{(\d+)\}\{(\d+)\}(?:\s*=\s*([^a-e\n]+?))?(?=\s*[a-e]\)|$)/gi,
     // a. fraction b. fraction format
@@ -25,20 +29,28 @@ export function detectMultipleExercises(text: string): Array<{ letter: string, q
     let match;
     while ((match = pattern.exec(text)) !== null) {
       const letter = match[1].toLowerCase();
-      const numerator = match[2];
-      const denominator = match[3];
-      const rawAnswer = match[4];
+      let numerator, denominator, studentAnswer = "";
       
-      // Clean up the answer if provided by student
-      let studentAnswer = "";
-      if (rawAnswer) {
-        studentAnswer = rawAnswer.trim()
-          .replace(/[^\d\/]/g, '') // Keep only digits and slash
-          .replace(/\s+/g, ''); // Remove spaces
+      // Handle parentheses format: (30)/(63)=(13)/(23)
+      if (match[4] && match[5]) {
+        numerator = match[2];
+        denominator = match[3];
+        studentAnswer = `${match[4]}/${match[5]}`;
+      } else {
+        numerator = match[2];
+        denominator = match[3];
+        const rawAnswer = match[4];
         
-        // Validate it's a proper fraction
-        if (!/^\d+\/\d+$/.test(studentAnswer)) {
-          studentAnswer = "";
+        // Clean up the answer if provided by student
+        if (rawAnswer) {
+          studentAnswer = rawAnswer.trim()
+            .replace(/[^\d\/]/g, '') // Keep only digits and slash
+            .replace(/\s+/g, ''); // Remove spaces
+          
+          // Validate it's a proper fraction
+          if (!/^\d+\/\d+$/.test(studentAnswer)) {
+            studentAnswer = "";
+          }
         }
       }
       

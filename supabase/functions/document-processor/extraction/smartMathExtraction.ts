@@ -126,6 +126,16 @@ function findHandwrittenAnswerNear(text: string, fraction: string): string {
 function findStudentAnswerNear(text: string, fraction: string): string {
   console.log(`Looking for student answer near fraction: ${fraction}`);
   
+  // Handle parentheses format: (30)/(63)=(13)/(23)
+  const parenthesesFraction = fraction.replace(/(\d+)\/(\d+)/, '($1)/($2)');
+  const parenthesesPattern = new RegExp(`\\${parenthesesFraction.replace('/', '\\/')}\\s*=\\s*\\(\\s*(\\d+)\\s*\\)\\s*\/\\s*\\(\\s*(\\d+)\\s*\\)`, 'g');
+  const parenthesesMatch = parenthesesPattern.exec(text);
+  if (parenthesesMatch) {
+    const answer = `${parenthesesMatch[1]}/${parenthesesMatch[2]}`;
+    console.log(`Found student answer with parentheses: ${answer}`);
+    return answer;
+  }
+  
   // Look for equals sign followed by another fraction
   const afterEqualsPattern = new RegExp(`${fraction.replace('/', '\\/')}\\s*=\\s*(\\d+\\s*\\/\\s*\\d+)`, 'g');
   const equalsMatch = afterEqualsPattern.exec(text);
