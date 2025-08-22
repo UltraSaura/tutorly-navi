@@ -111,7 +111,7 @@ function extractMultipleFromLatexTextWithOCRCorrection(text: string): Array<{ qu
     
     const exercise = {
       question: `${letter}. Simplifiez la fraction ${fraction}`,
-      answer: handwrittenAnswer || fraction // Use handwritten answer if found, otherwise original fraction
+      answer: handwrittenAnswer || simplifyFraction(fraction)
     };
     exercises.push(exercise);
     console.log(`✅ Created LaTeX exercise ${index + 1}: ${exercise.question} -> ${exercise.answer}`);
@@ -166,7 +166,7 @@ function extractMultipleMathExercisesWithOCRCorrection(rawText: string): Array<{
     
     const exercise = {
       question: `${letter}. Simplifiez la fraction ${fraction}`,
-      answer: studentAnswer || fraction
+      answer: studentAnswer || simplifyFraction(fraction)
     };
     exercises.push(exercise);
     console.log(`✅ Created OCR exercise ${index + 1}: ${exercise.question} -> ${exercise.answer}`);
