@@ -1,15 +1,9 @@
 
-// ENHANCED: Comprehensive extraction coordinator with robust multi-exercise detection
-
-import { extractMathExercisesFromRawText } from './smartMathExtraction.ts';
-import { extractWithDelimiters } from './delimiterExtraction.ts';
-import { isEducationalContent } from './validationUtils.ts';
 import { detectMultipleExercises } from './multiExerciseDetector.ts';
-import { enhancedWorksheetPreprocessing } from './enhancedOCRPreprocessor.ts';
+import { extractSmartMathExercises } from './smartMathExtraction.ts';
 
-// ENHANCED: Main extraction function with robust multi-exercise detection
 export function extractExercisesFromText(text: string): Array<{ question: string, answer: string }> {
-  console.log('\n🚀 === ENHANCED MULTI-EXERCISE EXTRACTION START ===');
+  console.log('\n🚀 === EXERCISE EXTRACTION COORDINATOR ===');
   console.log('Input text length:', text.length);
   console.log('Raw text preview (first 300 chars):', text.substring(0, 300));
   
@@ -18,99 +12,83 @@ export function extractExercisesFromText(text: string): Array<{ question: string
   // PHASE 1: ENHANCED MULTI-EXERCISE DETECTION (PRIMARY METHOD)
   console.log('\n🎯 === PHASE 1: ENHANCED MULTI-EXERCISE DETECTION ===');
   const multiExercises = detectMultipleExercises(text);
-  console.log(`🎯 PHASE 1 RESULT: ${multiExercises.length} exercises found`);
   
-  if (multiExercises.length >= 1) {
+  if (multiExercises.length > 0) {
     console.log(`✅ Enhanced detection found ${multiExercises.length} exercises - using as primary result`);
     allExercises = multiExercises.map(ex => ({
       question: `${ex.letter}. ${ex.question}`,
-      answer: ex.answer || simplifyFraction(ex.fraction)
+      answer: ex.answer || "" // Only use student-provided answer, empty if none
     }));
     
     multiExercises.forEach((ex, idx) => {
-      console.log(`  Enhanced Exercise ${idx + 1}: ${ex.letter}. ${ex.question} -> ${ex.answer || ex.fraction}`);
+      console.log(`Exercise ${idx + 1}: ${ex.letter}. ${ex.question} -> Answer: "${ex.answer || 'NO ANSWER PROVIDED'}"`);
     });
     
-    // If we have 5 exercises (typical worksheet), return immediately
-    if (allExercises.length === 5) {
-      console.log('\n🏆 === COMPLETE WORKSHEET DETECTED - RETURNING ALL 5 EXERCISES ===');
-      allExercises.forEach((ex, idx) => {
-        console.log(`Final Exercise ${idx + 1}: "${ex.question}" -> "${ex.answer}"`);
-      });
-      console.log('🏆 === ENHANCED EXTRACTION COMPLETE ===\n');
-      return allExercises;
-    }
+    return allExercises;
   }
   
-  // PHASE 2: SUPPLEMENTARY EXTRACTION (only if we don't have enough)
-  if (allExercises.length < 3) {
-    console.log('\n🔄 === PHASE 2: SUPPLEMENTARY EXTRACTION ===');
+  // PHASE 2: SMART MATH EXTRACTION (FALLBACK)
+  console.log('\n🔍 === PHASE 2: SMART MATH EXTRACTION ===');
+  const smartExercises = extractSmartMathExercises(text);
+  
+  if (smartExercises.length > 0) {
+    console.log(`✅ Smart extraction found ${smartExercises.length} exercises`);
+    allExercises = [...allExercises, ...smartExercises];
     
-    // Enhanced preprocessing for supplementary extraction
-    const preprocessedText = enhancedWorksheetPreprocessing(text);
+    smartExercises.forEach((ex, idx) => {
+      console.log(`Smart Exercise ${idx + 1}: ${ex.question} -> Answer: "${ex.answer || 'NO ANSWER PROVIDED'}"`);
+    });
     
-    // Try comprehensive fraction extraction
-    const fractionExercises = extractAllFractionsAsExercises(preprocessedText);
-    console.log(`🔄 PHASE 2 RESULT: ${fractionExercises.length} supplementary exercises found`);
+    return allExercises;
+  }
+  
+  // PHASE 3: FRACTION-BASED EXTRACTION (SUPPLEMENTARY)
+  console.log('\n📊 === PHASE 3: FRACTION-BASED EXTRACTION ===');
+  const fractionExercises = extractAllFractionsAsExercises(text);
+  
+  if (fractionExercises.length > 0) {
+    console.log(`Found ${fractionExercises.length} fraction-based exercises`);
     
     // Add non-duplicate exercises
     for (const newEx of fractionExercises) {
       const isDuplicate = allExercises.some(existing => 
-        existing.question.includes(newEx.question.replace(/^[a-e]\.\u0020*/, '')) ||
+        existing.question.includes(newEx.question.replace(/^[a-e]\.\s*/, '')) ||
         existing.answer === newEx.answer
       );
       
       if (!isDuplicate) {
         allExercises.push(newEx);
-        console.log(`✅ Added supplementary exercise: ${newEx.question}`);
+        console.log(`Added fraction exercise: ${newEx.question} -> ${newEx.answer || 'NO ANSWER PROVIDED'}`);
       }
     }
   }
   
-  // PHASE 3: FALLBACK METHODS (only if still insufficient)
+  // PHASE 4: EMERGENCY SINGLE-EXERCISE CREATION
   if (allExercises.length === 0) {
-    console.log('\n🆘 === PHASE 3: FALLBACK METHODS ===');
+    console.log('\n🚨 === PHASE 4: EMERGENCY SINGLE-EXERCISE CREATION ===');
     
-    // Smart math extraction fallback
-    console.log('Trying smart math extraction...');
-    const smartExercises = extractMathExercisesFromRawText(text);
-    console.log(`Smart extraction found: ${smartExercises.length} exercises`);
-    allExercises.push(...smartExercises);
-    
-    // Delimiter-based extraction fallback
-    if (allExercises.length === 0) {
-      console.log('Trying delimiter-based extraction...');
-      const delimiterExercises = extractWithDelimiters(text);
-      console.log(`Delimiter extraction found: ${delimiterExercises.length} exercises`);
-      allExercises.push(...delimiterExercises);
-    }
-    
-    // Emergency single-exercise creation
-    if (allExercises.length === 0) {
-      console.log('Creating emergency exercise...');
-      const anyFraction = text.match(/(\d+)\s*\/\s*(\d+)/);
-      if (anyFraction) {
-        allExercises = [{
-          question: `Simplifiez la fraction ${anyFraction[1]}/${anyFraction[2]}`,
-          answer: simplifyFraction(`${anyFraction[1]}/${anyFraction[2]}`)
-        }];
-        console.log(`Emergency: Created single fraction exercise: ${anyFraction[1]}/${anyFraction[2]}`);
-      } else if (text.trim().length > 0) {
-        allExercises = [{
-          question: "Document Content",
-          answer: text.trim().substring(0, 200)
-        }];
-        console.log(`Emergency: Created content-based exercise`);
-      }
+    // Look for any fraction pattern to create a single exercise
+    const anyFraction = text.match(/(\d+)\s*\/\s*(\d+)/);
+    if (anyFraction) {
+      allExercises = [{
+        question: `Simplifiez la fraction ${anyFraction[1]}/${anyFraction[2]}`,
+        answer: "" // No answer provided - student needs to enter one
+      }];
+      console.log(`Emergency: Created single fraction exercise: ${anyFraction[1]}/${anyFraction[2]} (no answer provided)`);
+    } else if (text.trim().length > 0) {
+      // Generic fallback
+      allExercises = [{
+        question: text.trim().substring(0, 200) + (text.length > 200 ? '...' : ''),
+        answer: "" // No answer provided - student needs to enter one
+      }];
+      console.log('Emergency: Created generic exercise from text');
     }
   }
   
-  console.log('\n🏆 === FINAL ENHANCED EXTRACTION RESULTS ===');
-  console.log(`Total exercises created: ${allExercises.length}`);
+  console.log(`\n✅ FINAL RESULT: ${allExercises.length} exercises extracted`);
   allExercises.forEach((ex, idx) => {
-    console.log(`Final Exercise ${idx + 1}: "${ex.question}" -> "${ex.answer}"`);
+    console.log(`Final Exercise ${idx + 1}: ${ex.question} -> Answer: "${ex.answer || 'NEEDS STUDENT INPUT'}"`);
   });
-  console.log('🏆 === ENHANCED EXTRACTION COMPLETE ===\n');
   
   return allExercises;
 }
@@ -134,44 +112,23 @@ function extractAllFractionsAsExercises(text: string): Array<{ question: string,
     while ((match = pattern.exec(text)) !== null) {
       const num = parseInt(match[1]);
       const den = parseInt(match[2]);
+      const fraction = `${num}/${den}`;
       
-      if (num > 0 && den > 0 && den > 1 && num < 1000 && den < 1000) {
-        const fraction = `${num}/${den}`;
+      if (num > 0 && den > 0 && !foundFractions.has(fraction)) {
         foundFractions.add(fraction);
       }
     }
-    pattern.lastIndex = 0;
   }
   
-  // Create exercises from found fractions
+  // Create exercises for each unique fraction found - but don't provide answers
   Array.from(foundFractions).forEach((fraction, index) => {
     const letter = String.fromCharCode(97 + index);
     exercises.push({
       question: `${letter}. Simplifiez la fraction ${fraction}`,
-      answer: simplifyFraction(fraction)
+      answer: "" // No answer provided - student needs to enter one
     });
   });
   
-  console.log(`Enhanced fraction extraction found ${exercises.length} exercises`);
+  console.log(`Found ${exercises.length} fraction exercises (all need student answers)`);
   return exercises;
-}
-
-// Helper: simplify a fraction like "30/63" safely
-function simplifyFraction(fraction: string): string {
-  const parts = fraction.split('/')
-  if (parts.length !== 2) return fraction
-  const n = parseInt(parts[0], 10)
-  const d = parseInt(parts[1], 10)
-  if (!Number.isFinite(n) || !Number.isFinite(d) || d === 0) return fraction
-  const g = gcd(Math.abs(n), Math.abs(d))
-  return `${n / g}/${d / g}`
-}
-
-function gcd(a: number, b: number): number {
-  while (b !== 0) {
-    const t = b
-    b = a % b
-    a = t
-  }
-  return a || 1
 }

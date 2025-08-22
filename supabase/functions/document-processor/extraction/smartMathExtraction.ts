@@ -1,244 +1,157 @@
-// Enhanced mathematical exercise extraction with comprehensive OCR error correction
+import { JSDOM } from 'jsdom';
 
-import { preprocessFrenchMathText, cleanHandwrittenAnswer, extractQuestionFraction } from './textPreprocessing.ts';
-import { detectMultipleExercises } from './multiExerciseDetector.ts';
+// Type definition for extracted exercises
+type Exercise = {
+  question: string;
+  answer: string;
+};
 
-export function extractMathExercisesFromRawText(rawText: string): Array<{ question: string, answer: string }> {
-  console.log('=== ENHANCED MULTI-EXERCISE MATH EXTRACTION WITH OCR CORRECTION ===');
-  console.log('Raw text length:', rawText.length);
-  console.log('Raw text preview:', rawText.substring(0, 400));
+export function extractSmartMathExercises(text: string): Array<{ question: string, answer: string }> {
+  console.log('\n=== SMART MATH EXTRACTION ===');
+  const exercises: Array<{ question: string, answer: string }> = [];
   
-  // Skip extraction if this looks like an error message
-  if (isErrorText(rawText)) {
-    console.log('⚠️ Detected error text, skipping extraction');
-    return [];
-  }
-  
-  // NEW: Try multi-exercise detection first (for structured worksheets)
-  console.log('🎯 Trying multi-exercise detection for structured worksheets...');
-  const multiExercises = detectMultipleExercises(rawText);
-  
-  if (multiExercises.length >= 2) {
-    console.log(`✅ Multi-exercise detection found ${multiExercises.length} exercises`);
-    return multiExercises.map(ex => ({
-      question: `${ex.letter}. ${ex.question}`,
-      answer: ex.answer || ex.fraction
-    }));
-  }
-  
-  // Fallback to original comprehensive LaTeX-aware extraction with OCR correction
-  const latexExercises = extractMultipleFromLatexTextWithOCRCorrection(rawText);
-  console.log(`LaTeX extraction with OCR correction found ${latexExercises.length} exercises`);
-  
+  // Try LaTeX extraction first
+  const latexExercises = extractFromLatexFormat(text);
   if (latexExercises.length > 0) {
-    console.log(`✅ Found ${latexExercises.length} exercises using enhanced LaTeX extraction`);
-    return latexExercises;
+    exercises.push(...latexExercises);
+    console.log(`LaTeX extraction found ${latexExercises.length} exercises`);
   }
   
-  // Final fallback to direct OCR-based extraction with error correction
-  console.log('🔄 Falling back to direct OCR extraction with correction');
-  const ocrExercises = extractMultipleMathExercisesWithOCRCorrection(rawText);
-  
-  console.log(`=== FINAL SMART EXTRACTION RESULT: ${ocrExercises.length} exercises ===`);
-  return ocrExercises;
-}
-
-function isErrorText(text: string): boolean {
-  const errorIndicators = [
-    'OCR extraction failed',
-    'manual review required',
-    'could not be processed automatically',
-    'Status: OCR extraction failed'
-  ];
-  
-  const lowerText = text.toLowerCase();
-  const hasErrorIndicator = errorIndicators.some(indicator => lowerText.includes(indicator.toLowerCase()));
-  const hasMathContent = /\d+\/\d+|\d+\.\d+|exercice|fraction/i.test(text);
-  
-  return hasErrorIndicator && !hasMathContent;
-}
-
-// ENHANCED: LaTeX extraction with OCR error correction
-function extractMultipleFromLatexTextWithOCRCorrection(text: string): Array<{ question: string, answer: string }> {
-  console.log('=== COMPREHENSIVE LATEX EXTRACTION WITH OCR CORRECTION ===');
-  
-  const exercises = [];
-  
-  // Apply enhanced preprocessing with OCR correction
-  const cleanedText = preprocessFrenchMathText(text);
-  console.log('Cleaned text for LaTeX extraction:', cleanedText.substring(0, 400));
-  
-  // Enhanced fraction detection patterns with OCR error tolerance
-  const fractionPatterns = [
-    /(\d+)\s*\/\s*(\d+)/g, // Basic fractions like 30/63
-    /\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g, // Parenthesized fractions
-    /\(\s*(\d+)\s*\/\s*(\d+)\s*\)/g, // Single parenthesized fractions
-    /\\frac\{(\d+)\}\{(\d+)\}/g, // LaTeX fractions
-    /frac\{(\d+)\}\{(\d+)\}/g, // LaTeX fractions without backslash
-  ];
-  
-  const foundFractions = new Set();
-  
-  // Find ALL unique fractions using multiple patterns
-  for (const pattern of fractionPatterns) {
-    let match;
-    while ((match = pattern.exec(cleanedText)) !== null) {
-      const numerator = match[1];
-      const denominator = match[2];
-      const fraction = `${numerator}/${denominator}`;
-      
-      // Enhanced validation for fractions
-      if (isValidFraction(numerator, denominator)) {
-        foundFractions.add(fraction);
-        console.log(`✅ Found valid LaTeX fraction: ${fraction}`);
-      } else {
-        console.log(`❌ Rejected invalid fraction: ${fraction}`);
-      }
-    }
-    pattern.lastIndex = 0; // Reset regex state
+  // Try OCR-friendly extraction
+  const ocrExercises = extractFromOCRFormat(text);
+  if (ocrExercises.length > 0) {
+    exercises.push(...ocrExercises);
+    console.log(`OCR extraction found ${ocrExercises.length} exercises`);
   }
   
-  console.log(`Total unique LaTeX fractions found: ${foundFractions.size}`);
-  console.log('All found fractions:', Array.from(foundFractions));
-  
-  // Create exercises from ALL found fractions with enhanced answer detection
-  const fractionsArray = Array.from(foundFractions);
-  fractionsArray.forEach((fraction, index) => {
-    const letter = String.fromCharCode(97 + index); // a, b, c, etc.
-    
-    // Try to extract student's handwritten answer
-    const handwrittenAnswer = extractStudentAnswer(text, fraction);
-    
-    const exercise = {
-      question: `${letter}. Simplifiez la fraction ${fraction}`,
-      answer: handwrittenAnswer || simplifyFraction(fraction)
-    };
-    exercises.push(exercise);
-    console.log(`✅ Created LaTeX exercise ${index + 1}: ${exercise.question} -> ${exercise.answer}`);
-  });
-  
-  console.log(`=== LATEX EXTRACTION RESULT: ${exercises.length} exercises created from ${foundFractions.size} fractions ===`);
+  console.log(`Smart extraction total: ${exercises.length} exercises`);
   return exercises;
 }
 
-// ENHANCED: Direct OCR extraction with error correction
-function extractMultipleMathExercisesWithOCRCorrection(rawText: string): Array<{ question: string, answer: string }> {
-  console.log('=== COMPREHENSIVE DIRECT OCR EXTRACTION WITH CORRECTION ===');
+function extractFromLatexFormat(text: string): Array<{ question: string, answer: string }> {
+  console.log('--- LaTeX Format Extraction ---');
+  const exercises: Array<{ question: string, answer: string }> = [];
   
-  const exercises = [];
+  // Look for LaTeX fractions like \frac{30}{63}
+  const latexFractionRegex = /\\frac\{(\d+)\}\{(\d+)\}/g;
+  const fractions: string[] = [];
+  let match;
   
-  // Find all fractions in the text with OCR error tolerance
-  const fractionPatterns = [
-    /\b(\d{1,3})\/(\d{1,3})\b/g, // Basic fractions
-    /\((\d{1,3})\/(\d{1,3})\)/g, // Parenthesized fractions
-    /(\d{1,3})\s*\/\s*(\d{1,3})/g, // Fractions with spaces
-  ];
-  
-  const foundFractions = new Set();
-  
-  // Use multiple patterns to find ALL fractions
-  for (const pattern of fractionPatterns) {
-    let fractionMatch;
-    while ((fractionMatch = pattern.exec(rawText)) !== null) {
-      const numerator = fractionMatch[1];
-      const denominator = fractionMatch[2];
-      
-      // Enhanced validation
-      if (isValidFraction(numerator, denominator)) {
-        const fraction = `${numerator}/${denominator}`;
-        foundFractions.add(fraction);
-        console.log(`✅ Found valid OCR fraction: ${fraction}`);
-      }
-    }
-    pattern.lastIndex = 0; // Reset regex state
+  while ((match = latexFractionRegex.exec(text)) !== null) {
+    fractions.push(`${match[1]}/${match[2]}`);
   }
   
-  console.log(`Total OCR fractions found: ${foundFractions.size}`);
-  console.log('All OCR fractions:', Array.from(foundFractions));
+  if (fractions.length === 0) {
+    console.log('No LaTeX fractions found');
+    return exercises;
+  }
   
-  // Create exercises from ALL found fractions with answer detection
-  const fractionsArray = Array.from(foundFractions);
-  fractionsArray.forEach((fraction, index) => {
-    const letter = String.fromCharCode(97 + index); // a, b, c, etc.
+  // Look for handwritten answers near each fraction
+  fractions.forEach((fraction, index) => {
+    const letter = String.fromCharCode(97 + index); // a, b, c, d, e...
     
-    // Try to extract student's answer
-    const studentAnswer = extractStudentAnswer(rawText, fraction);
+    // Try to find handwritten answer near this fraction
+    const handwrittenAnswer = findHandwrittenAnswerNear(text, fraction);
     
     const exercise = {
       question: `${letter}. Simplifiez la fraction ${fraction}`,
-      answer: studentAnswer || simplifyFraction(fraction)
+      answer: handwrittenAnswer || "" // Only use student-provided answer, empty if none
     };
     exercises.push(exercise);
-    console.log(`✅ Created OCR exercise ${index + 1}: ${exercise.question} -> ${exercise.answer}`);
+    console.log(`✅ Created LaTeX exercise ${index + 1}: ${exercise.question} -> Answer: "${exercise.answer || 'NEEDS STUDENT INPUT'}"`);
   });
   
-  // Enhanced fallback patterns if no fractions found
-  if (exercises.length === 0) {
-    console.log('No fractions found, looking for other math patterns...');
-    
-    // Look for decimal patterns
-    const decimalPattern = /\b(\d+\.\d+)\b/g;
-    const foundDecimals = new Set();
-    let decimalMatch;
-    
-    while ((decimalMatch = decimalPattern.exec(rawText)) !== null && foundDecimals.size < 5) {
-      const decimal = decimalMatch[1];
-      foundDecimals.add(decimal);
-      console.log(`✅ Found decimal: ${decimal}`);
-    }
-    
-    Array.from(foundDecimals).forEach((decimal, index) => {
-      const letter = String.fromCharCode(97 + index);
-      exercises.push({
-        question: `${letter}. Calculez avec le nombre décimal ${decimal}`,
-        answer: decimal
-      });
-    });
-  }
-  
-  console.log(`=== DIRECT OCR RESULT: ${exercises.length} exercises ===`);
   return exercises;
 }
 
-// NEW: Enhanced fraction validation
-function isValidFraction(numerator: string, denominator: string): boolean {
-  const num = parseInt(numerator);
-  const den = parseInt(denominator);
+function extractFromOCRFormat(text: string): Array<{ question: string, answer: string }> {
+  console.log('--- OCR Format Extraction ---');
+  const exercises: Array<{ question: string, answer: string }> = [];
   
-  return num > 0 && den > 0 && den > 1 && num < 1000 && den < 1000 && den !== num;
+  // Look for regular fractions like 30/63, (30)/(63), etc.
+  const ocrFractionRegex = /\(?(\d+)\)?\s*\/\s*\(?(\d+)\)?/g;
+  const fractions: string[] = [];
+  let match;
+  
+  while ((match = ocrFractionRegex.exec(text)) !== null) {
+    fractions.push(`${match[1]}/${match[2]}`);
+  }
+  
+  if (fractions.length === 0) {
+    console.log('No OCR fractions found');
+    return exercises;
+  }
+  
+  // Process each fraction
+  fractions.forEach((fraction, index) => {
+    const letter = String.fromCharCode(97 + index); // a, b, c, d, e...
+    
+    // Try to find student's answer
+    const studentAnswer = findStudentAnswerNear(text, fraction);
+    
+    const exercise = {
+      question: `${letter}. Simplifiez la fraction ${fraction}`,
+      answer: studentAnswer || "" // Only use student-provided answer, empty if none
+    };
+    exercises.push(exercise);
+    console.log(`✅ Created OCR exercise ${index + 1}: ${exercise.question} -> Answer: "${exercise.answer || 'NEEDS STUDENT INPUT'}"`);
+  });
+  
+  return exercises;
 }
 
-// NEW: Extract student's handwritten answer near a question
-function extractStudentAnswer(text: string, questionFraction: string): string | null {
-  console.log(`Looking for student answer near question fraction: ${questionFraction}`);
+function findHandwrittenAnswerNear(text: string, fraction: string): string {
+  console.log(`Looking for handwritten answer near fraction: ${fraction}`);
   
-  // Find the position of the question fraction
-  const questionIndex = text.indexOf(questionFraction);
-  if (questionIndex === -1) return null;
-  
-  // Look for answer in text after the question (within reasonable distance)
-  const afterQuestion = text.substring(questionIndex + questionFraction.length, questionIndex + questionFraction.length + 200);
-  console.log('Text after question:', afterQuestion.substring(0, 100));
-  
-  // Look for equals sign followed by a fraction or number
-  const answerPatterns = [
-    /=\s*(\d+\/\d+)/,  // = 41/55
-    /=\s*(\d+\.\d+)/,  // = 0.75
-    /=\s*(\d+)/,       // = 1
+  // Look for patterns that might indicate a handwritten answer
+  const patterns = [
+    // Look for simplified fractions after equals sign
+    new RegExp(`\\\\frac\\{\\d+\\}\\{\\d+\\}\\s*=\\s*\\\\frac\\{(\\d+)\\}\\{(\\d+)\\}`, 'g'),
+    new RegExp(`${fraction.replace('/', '\\/')}\\s*=\\s*(\\d+\\s*\\/\\s*\\d+)`, 'g'),
+    // Look for answers in parentheses or brackets
+    new RegExp(`${fraction.replace('/', '\\/')}.*?[\\(\\[]\\s*(\\d+\\s*\\/\\s*\\d+)\\s*[\\)\\]]`, 'g'),
   ];
   
-  for (const pattern of answerPatterns) {
-    const match = afterQuestion.match(pattern);
+  for (const pattern of patterns) {
+    const match = pattern.exec(text);
     if (match) {
-      const rawAnswer = match[1];
-      const cleanedAnswer = cleanHandwrittenAnswer(rawAnswer);
-      if (cleanedAnswer) {
-        console.log(`Found student answer: ${cleanedAnswer}`);
-        return cleanedAnswer;
-      }
+      const answer = match[1] && match[2] ? `${match[1]}/${match[2]}` : match[1];
+      console.log(`Found handwritten answer: ${answer}`);
+      return answer;
+    }
+  }
+  
+  console.log('No handwritten answer found');
+  return "";
+}
+
+function findStudentAnswerNear(text: string, fraction: string): string {
+  console.log(`Looking for student answer near fraction: ${fraction}`);
+  
+  // Look for equals sign followed by another fraction
+  const afterEqualsPattern = new RegExp(`${fraction.replace('/', '\\/')}\\s*=\\s*(\\d+\\s*\\/\\s*\\d+)`, 'g');
+  const equalsMatch = afterEqualsPattern.exec(text);
+  if (equalsMatch) {
+    console.log(`Found student answer after equals: ${equalsMatch[1]}`);
+    return equalsMatch[1].replace(/\s/g, ''); // Remove spaces
+  }
+  
+  // Look for answer in common formats near the fraction
+  const nearbyPatterns = [
+    // Answer in parentheses
+    new RegExp(`${fraction.replace('/', '\\/')}.*?\\(\\s*(\\d+\\s*\\/\\s*\\d+)\\s*\\)`, 'g'),
+    // Answer with arrow or colon
+    new RegExp(`${fraction.replace('/', '\\/')}\\s*[→:]\\s*(\\d+\\s*\\/\\s*\\d+)`, 'g'),
+  ];
+  
+  for (const pattern of nearbyPatterns) {
+    const match = pattern.exec(text);
+    if (match) {
+      console.log(`Found student answer with pattern: ${match[1]}`);
+      return match[1].replace(/\s/g, '');
     }
   }
   
   console.log('No student answer found');
-  return null;
+  return "";
 }
