@@ -413,29 +413,3 @@ function isValidFraction(fraction: string): boolean {
   return numerator > 0 && denominator > 1 && numerator < 1000 && denominator < 1000;
 }
 
-// Extract all fractions from text with better error handling
-function extractAllFractionsFromText(text: string): string[] {
-  const fractions = new Set<string>();
-  
-  const patterns = [
-    /(\d+)\/(\d+)/g,
-    /\((\d+)\)\/\((\d+)\)/g,
-    /\\frac\{(\d+)\}\{(\d+)\}/g
-  ];
-  
-  for (const pattern of patterns) {
-    let match;
-    while ((match = pattern.exec(text)) !== null) {
-      const num = parseInt(match[1]);
-      const den = parseInt(match[2]);
-      
-      // Validate fraction
-      if (num > 0 && den > 0 && den > 1 && num < 1000 && den < 1000) {
-        fractions.add(`${num}/${den}`);
-      }
-    }
-    pattern.lastIndex = 0;
-  }
-  
-  return Array.from(fractions);
-}
