@@ -1,5 +1,3 @@
-import { JSDOM } from 'jsdom';
-
 // Type definition for extracted exercises
 type Exercise = {
   question: string;
