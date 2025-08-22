@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { BookOpen, GraduationCap } from 'lucide-react';
+import { BookOpen, GraduationCap, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import Exercise from './Exercise';
 import { Exercise as ExerciseType } from '@/types/chat';
 import { useLanguage } from '@/context/SimpleLanguageContext';
@@ -15,24 +16,46 @@ interface ExerciseListProps {
   };
   toggleExerciseExpansion: (id: string) => void;
   onSubmitAnswer?: (exerciseId: string, answer: string) => void;
+  onClearExercises?: () => void;
 }
 
 const ExerciseList = ({
   exercises,
   grade,
   toggleExerciseExpansion,
-  onSubmitAnswer
+  onSubmitAnswer,
+  onClearExercises
 }: ExerciseListProps) => {
   const { t } = useLanguage();
   const correctExercises = exercises.filter(ex => ex.isCorrect).length;
   const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined).length;
   const totalExercises = exercises.length;
   
+  // Debug logging
+  console.log('ExerciseList props:', { 
+    exercisesLength: exercises.length, 
+    onClearExercises: !!onClearExercises,
+    onClearExercisesType: typeof onClearExercises 
+  });
+  
   return (
     <>
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-2 py-[9px]">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <h2 className="text-lg font-semibold">{t('grades.exerciseList')}</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold">{t('grades.exerciseList')}</h2>
+            {/* Always show the clear button for debugging */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClearExercises || (() => console.log('onClearExercises is not defined'))}
+              className="h-8 px-2 text-gray-600 hover:text-red-600 hover:border-red-300 transition-colors"
+              title={t('common.clearAllExercises')}
+              disabled={!onClearExercises}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
           <div className="flex items-center gap-2">
             <GraduationCap className="h-5 w-5 text-studywhiz-600" />
             <span className="font-medium text-sm">

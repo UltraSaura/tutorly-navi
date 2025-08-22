@@ -37,7 +37,8 @@ const ChatInterface = () => {
     processHomeworkFromChat,
     linkAIResponseToExercise,
     addExercises,
-    submitAnswer
+    submitAnswer,
+    clearExercises
   } = useExercises();
   const {
     getActiveSubjects
@@ -94,9 +95,16 @@ const ChatInterface = () => {
 
   // Create wrappers for the file upload handlers to pass the homework processor function and subject ID
   const handleDocumentFileUpload = (file: File) => {
+    console.log('=== DOCUMENT UPLOAD TRIGGERED ===');
+    console.log('File details:', { name: file.name, size: file.size, type: file.type });
+    console.log('Calling handleFileUpload...');
     handleFileUpload(file, addExercises, defaultSubject);
   };
+  
   const handlePhotoFileUpload = (file: File) => {
+    console.log('=== PHOTO UPLOAD TRIGGERED ===');
+    console.log('File details:', { name: file.name, size: file.size, type: file.type });
+    console.log('Calling handlePhotoUpload...');
     handlePhotoUpload(file, addExercises, defaultSubject);
   };
 
@@ -111,6 +119,7 @@ const ChatInterface = () => {
             grade={grade} 
             toggleExerciseExpansion={toggleExerciseExpansion} 
             onSubmitAnswer={submitAnswer}
+            onClearExercises={clearExercises}
           />
         </div>
       </div>

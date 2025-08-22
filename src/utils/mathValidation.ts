@@ -11,6 +11,11 @@ export function areMathematicallyEquivalent(
   tolerance: number = 0.01
 ): boolean | null {
   try {
+    // Special handling for fraction simplification exercises
+    if (question.includes('Simplifiez la fraction')) {
+      return areFractionsEquivalent(question, userAnswer);
+    }
+    
     // Extract the correct answer from the question
     const correctAnswer = extractCorrectAnswer(question);
     if (correctAnswer === null) return null;
@@ -123,4 +128,78 @@ export function getEquivalencyContext(question: string, userAnswer: string): str
   }
 
   return null;
+}
+
+// NEW: Special function for fraction simplification exercises
+function areFractionsEquivalent(question: string, userAnswer: string): boolean | null {
+  try {
+    // Extract the original fraction from the question
+    const fractionMatch = question.match(/(\d+)\/(\d+)/);
+    if (!fractionMatch) return null;
+    
+    const originalFraction = fractionMatch[0];
+    const [originalNum, originalDen] = originalFraction.split('/').map(Number);
+    
+    // Parse user's answer
+    const userFractionMatch = userAnswer.match(/(\d+)\/(\d+)/);
+    if (!userFractionMatch) return null;
+    
+    const userFraction = userFractionMatch[0];
+    const [userNum, userDen] = userFraction.split('/').map(Number);
+    
+    // Check if user provided the original fraction (which is incorrect for simplification)
+    if (userNum === originalNum && userDen === originalDen) {
+      console.log('[mathValidation] User provided original fraction - this is incorrect for simplification');
+      return false;
+    }
+    
+    // Check if the fractions are mathematically equivalent
+    const originalValue = originalNum / originalDen;
+    const userValue = userNum / userDen;
+    
+    if (Math.abs(originalValue - userValue) < Number.EPSILON) {
+      // Check if user's answer is actually simplified
+      const userGCD = findGCD(userNum, userDen);
+      const isSimplified = userGCD === 1;
+      
+      if (!isSimplified) {
+        console.log('[mathValidation] Fractions are equivalent but user answer is not simplified');
+        return false;
+      }
+      
+      console.log('[mathValidation] Fractions are equivalent and simplified correctly');
+      return true;
+    }
+    
+    console.log('[mathValidation] Fractions are not equivalent');
+    return false;
+  } catch (error) {
+    console.log('[mathValidation] Error checking fraction equivalency:', error);
+    return null;
+  }
+}
+
+// NEW: Helper function to find Greatest Common Divisor
+function findGCD(a: number, b: number): number {
+  a = Math.abs(a);
+  b = Math.abs(b);
+  
+  while (b !== 0) {
+    const temp = b;
+    b = a % b;
+    a = temp;
+  }
+  
+  return a;
+}
+
+// NEW: Validate fraction format
+function isValidFraction(fraction: string): boolean {
+  const fractionPattern = /^\d+\/\d+$/;
+  if (!fractionPattern.test(fraction)) {
+    return false;
+  }
+  
+  const [numerator, denominator] = fraction.split('/').map(Number);
+  return numerator > 0 && denominator > 1 && numerator < 1000 && denominator < 1000;
 }

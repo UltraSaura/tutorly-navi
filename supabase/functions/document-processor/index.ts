@@ -5,11 +5,22 @@ import { processDocument } from "./documentService.ts";
 import { corsHeaders } from "./utils.ts";
 
 serve(async (req) => {
+  // More permissive CORS headers
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': '*',
+    'Access-Control-Max-Age': '86400',
+  };
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      status: 200,
+      headers: corsHeaders,
+    })
   }
-  
+
   try {
     const { fileData, fileType, fileName, subjectId } = await req.json();
     
@@ -23,31 +34,23 @@ serve(async (req) => {
     const result = await processDocument(fileData, fileType, fileName, subjectId);
     
     // Return the processed result
-    return new Response(
-      JSON.stringify(result),
-      { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json' 
-        } 
-      }
-    );
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    })
     
   } catch (error) {
-    console.error('Error in document processor:', error);
+    console.error('Edge Function error:', error);
     
-    return new Response(
-      JSON.stringify({ 
-        success: false,
-        error: error.message || 'An error occurred while processing the document'
-      }),
-      { 
-        status: 500,
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json' 
-        } 
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    })
   }
 });

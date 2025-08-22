@@ -184,6 +184,12 @@ export const useExercises = () => {
     return newEx;
   };
 
+  const clearExercises = () => {
+    setExercises([]);
+    setProcessedContent(new Set());
+    toast.success("All exercises have been cleared.");
+  };
+
   useEffect(() => {
     console.log('[useExercises] Current overall grade state after grade update:', grade);
   }, [grade]);
@@ -196,6 +202,7 @@ export const useExercises = () => {
     processHomeworkFromChat,
     linkAIResponseToExercise,
     addExercises,
-    submitAnswer
+    submitAnswer,
+    clearExercises
   };
 };
