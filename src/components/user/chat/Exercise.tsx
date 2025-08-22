@@ -52,6 +52,7 @@ const Exercise = ({
     .replace(/\*\*Problem:\*\*/g, `<strong class="text-studywhiz-600 dark:text-studywhiz-400">${t('exercise.problem')}:</strong>`)
     .replace(/\*\*Guidance:\*\*/g, `<strong class="text-studywhiz-600 dark:text-studywhiz-400">${t('exercise.guidance')}:</strong>`)
     .replace(/^Guidance:\s*Problem:\s*/gm, '') // Remove "Guidance: Problem: " lines
+    .replace(/^exercise\.guidance:\s*exercise\.problem:\s*/gm, '') // Remove "exercise.guidance: exercise.problem: " lines
     .split('\n')
     .join('<br />') : '';
 
