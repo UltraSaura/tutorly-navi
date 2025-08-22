@@ -49,7 +49,9 @@ const Exercise = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const formattedExplanation = exercise.explanation ? exercise.explanation
-    .replace(/\*\*(Problem|Guidance):\*\*/g, '<strong class="text-studywhiz-600 dark:text-studywhiz-400">$1:</strong>')
+    .replace(/\*\*Problem:\*\*/g, `<strong class="text-studywhiz-600 dark:text-studywhiz-400">${t('exercise.problem')}:</strong>`)
+    .replace(/\*\*Guidance:\*\*/g, `<strong class="text-studywhiz-600 dark:text-studywhiz-400">${t('exercise.guidance')}:</strong>`)
+    .replace(/^Guidance:\s*Problem:\s*/gm, '') // Remove "Guidance: Problem: " lines
     .split('\n')
     .join('<br />') : '';
 

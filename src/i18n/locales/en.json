@@ -171,11 +171,13 @@
     "greatWork": "Great work!",
     "learningOpportunity": "Learning opportunity",
     "attempt": "Attempt",
-    "tryAgain": "Try again",
+    "tryAgain": "Try again!",
     "submitAnswer": "Submit Answer",
     "yourAnswerPlaceholder": "Your answer...",
     "pleaseProvideAnswer": "Please provide an answer",
     "submitting": "Submitting...",
-    "answerSubmitted": "Answer submitted successfully!"
+    "answerSubmitted": "Answer submitted successfully!",
+    "problem": "Problem",
+    "guidance": "Guidance"
   }
 }
