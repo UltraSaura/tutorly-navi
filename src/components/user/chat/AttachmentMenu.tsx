@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Plus, Paperclip, Camera, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -16,25 +16,31 @@ interface AttachmentMenuProps {
 const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: AttachmentMenuProps) => {
   const isMobile = useIsMobile();
   const { t } = useLanguage();
+  const [open, setOpen] = useState(false);
+
+  const handleItemClick = (originalOnClick: () => void) => {
+    originalOnClick();
+    setOpen(false);
+  };
 
   const menuItems = [
     {
       icon: Paperclip,
       label: t('upload.uploadDocument'),
       description: t('upload.documentDescription'),
-      onClick: onFileUpload,
+      onClick: () => handleItemClick(onFileUpload),
     },
     {
       icon: ImageIcon,
       label: t('upload.uploadPhoto'),
       description: t('upload.photoDescription'),
-      onClick: onPhotoUpload,
+      onClick: () => handleItemClick(onPhotoUpload),
     },
     {
       icon: Camera,
       label: t('upload.takePhoto'),
       description: t('upload.cameraDescription'),
-      onClick: onCameraOpen,
+      onClick: () => handleItemClick(onCameraOpen),
     },
   ];
 
@@ -99,7 +105,7 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
 
   if (isMobile) {
     return (
-      <Sheet>
+      <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <TriggerButton />
         </SheetTrigger>
@@ -119,7 +125,7 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
   }
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <TriggerButton />
       </PopoverTrigger>
