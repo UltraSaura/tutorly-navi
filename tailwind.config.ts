@@ -81,12 +81,48 @@ export default {
 					correct: '#34d399',
 					incorrect: '#f87171',
 					progress: '#6366f1',
+				},
+				// Design tokens brand colors
+				brand: {
+					primary: '#2F6BFF',
+					navy: '#1E3A8A',
+					tint: '#EEF4FF'
+				},
+				game: {
+					xp: '#7C3AED',
+					coin: '#FFB020',
+					streak: '#FF7A45'
+				},
+				state: {
+					success: '#22C55E',
+					danger: '#EF4444'
+				},
+				neutral: {
+					bg: '#F5F7FB',
+					surface: '#FFFFFF',
+					text: '#0F172A',
+					muted: '#475569',
+					border: '#E2E8F0'
 				}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				sm: 'calc(var(--radius) - 4px)',
+				// Design token radii
+				card: '28px',
+				button: '24px',
+				chip: '999px'
+			},
+			fontSize: {
+				'display': ['44px', { lineHeight: '1.1' }],
+				'h1': ['36px', { lineHeight: '1.2' }],
+				'h2': ['30px', { lineHeight: '1.3' }],
+				'body': ['16px', { lineHeight: '1.5' }],
+				'caption': ['13px', { lineHeight: '1.4' }],
+			},
+			spacing: {
+				'base': '24px'
 			},
 			keyframes: {
 				'accordion-down': {

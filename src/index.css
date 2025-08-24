@@ -43,6 +43,21 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Design Token CSS Variables */
+    --brand-primary: #2F6BFF;
+    --brand-navy: #1E3A8A;
+    --brand-tint: #EEF4FF;
+    --game-xp: #7C3AED;
+    --game-coin: #FFB020;
+    --game-streak: #FF7A45;
+    --state-success: #22C55E;
+    --state-danger: #EF4444;
+    --neutral-bg: #F5F7FB;
+    --neutral-surface: #FFFFFF;
+    --neutral-text: #0F172A;
+    --neutral-muted: #475569;
+    --neutral-border: #E2E8F0;
   }
 
   .dark {
@@ -82,6 +97,13 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Dark mode design tokens - adjust as needed */
+    --neutral-bg: #1a1a1a;
+    --neutral-surface: #2a2a2a;
+    --neutral-text: #ffffff;
+    --neutral-muted: #94a3b8;
+    --neutral-border: #374151;
   }
 }
 
@@ -91,7 +113,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-neutral-bg text-neutral-text;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
