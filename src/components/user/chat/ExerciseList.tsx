@@ -21,7 +21,7 @@ interface ExerciseListProps {
   onSubmitAnswer?: (exerciseId: string, answer: string) => void;
   onClearExercises?: () => void;
   onSubmitQuestion?: (question: string) => void;
-  onUploadHomework?: (type: 'document' | 'photo' | 'camera') => void;
+  onUploadHomework?: () => void;
 }
 
 const ExerciseList = ({
@@ -97,9 +97,9 @@ const ExerciseList = ({
     }
   };
   
-  const handleUpload = (type: 'document' | 'photo' | 'camera') => {
+  const handleUpload = () => {
     if (onUploadHomework) {
-      onUploadHomework(type);
+      onUploadHomework();
     }
   };
   
@@ -190,7 +190,7 @@ const ExerciseList = ({
                 <div className="flex flex-col sm:flex-row items-center gap-4">
                   <Button 
                     size="lg"
-                    onClick={() => handleUpload('document')}
+                    onClick={handleUpload}
                     className="bg-brand-primary hover:bg-brand-primary/90 text-neutral-surface"
                   >
                     <Upload className="mr-2" size={20} />

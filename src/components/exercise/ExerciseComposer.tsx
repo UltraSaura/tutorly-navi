@@ -3,13 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import UploadModal from '@/components/upload/UploadModal';
-
-type UploadType = 'document' | 'photo' | 'camera';
 
 interface ExerciseComposerProps {
   onSubmitQuestion: (question: string) => void;
-  onUpload: (type: UploadType) => void;
+  onUpload: () => void;
   disabled?: boolean;
 }
 
@@ -20,7 +17,6 @@ const ExerciseComposer = ({
 }: ExerciseComposerProps) => {
   const [question, setQuestion] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState(false);
 
   const handleSubmit = async () => {
     if (!question.trim() || isSubmitting) return;
@@ -41,11 +37,6 @@ const ExerciseComposer = ({
     }
   };
 
-  const handleUploadSelect = (type: UploadType) => {
-    onUpload(type);
-    setShowUploadModal(false);
-  };
-
   return (
     <div className="p-6 border-t border-neutral-border bg-neutral-surface">
       <div className="max-w-4xl mx-auto">
@@ -54,7 +45,7 @@ const ExerciseComposer = ({
           <Button
             variant="outline"
             size="lg"
-            onClick={() => setShowUploadModal(true)}
+            onClick={onUpload}
             disabled={disabled}
             className="flex-shrink-0 h-12 w-12 p-0 border-neutral-border hover:bg-neutral-bg"
             aria-label="Upload homework"
@@ -102,13 +93,6 @@ const ExerciseComposer = ({
           Ask questions, upload homework, or get help with any subject
         </p>
       </div>
-      
-      {/* Upload Modal */}
-      <UploadModal
-        open={showUploadModal}
-        onClose={() => setShowUploadModal(false)}
-        onSelect={handleUploadSelect}
-      />
     </div>
   );
 };
