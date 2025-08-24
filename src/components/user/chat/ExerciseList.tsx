@@ -1,12 +1,15 @@
 
-import React from 'react';
-import { BookOpen, GraduationCap, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { BookOpen, Upload, MessageCircleQuestion } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import Exercise from './Exercise';
+import { XpBar, StreakChip, CoinWallet } from '@/components/game';
+import ExerciseCard from '@/components/exercise/ExerciseCard';
+import ExplanationModal from '@/components/exercise/ExplanationModal';
+import ExerciseComposer from '@/components/exercise/ExerciseComposer';
 import { Exercise as ExerciseType } from '@/types/chat';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { cn } from '@/lib/utils';
 
 interface ExerciseListProps {
   exercises: ExerciseType[];
@@ -17,6 +20,8 @@ interface ExerciseListProps {
   toggleExerciseExpansion: (id: string) => void;
   onSubmitAnswer?: (exerciseId: string, answer: string) => void;
   onClearExercises?: () => void;
+  onSubmitQuestion?: (question: string) => void;
+  onUploadHomework?: () => void;
 }
 
 const ExerciseList = ({
@@ -24,74 +29,219 @@ const ExerciseList = ({
   grade,
   toggleExerciseExpansion,
   onSubmitAnswer,
-  onClearExercises
+  onClearExercises,
+  onSubmitQuestion,
+  onUploadHomework
 }: ExerciseListProps) => {
   const { t } = useLanguage();
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
+  const [showExplanationModal, setShowExplanationModal] = useState(false);
+  
   const correctExercises = exercises.filter(ex => ex.isCorrect).length;
   const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined).length;
   const totalExercises = exercises.length;
   
-  // Debug logging
-  console.log('ExerciseList props:', { 
-    exercisesLength: exercises.length, 
-    onClearExercises: !!onClearExercises,
-    onClearExercisesType: typeof onClearExercises 
+  // Mock data for gamification (replace with real data from context)
+  const userStats = {
+    xpProgress: 0.7, // 70% to next level
+    currentLevel: 5,
+    streakDays: 7,
+    streakActive: true,
+    coins: 245
+  };
+  
+  // Mock explanation steps
+  const mockExplanationSteps = [
+    {
+      title: "Analyze the problem",
+      body: "First, identify what type of problem this is and what information you have available.",
+      icon: "magnifier"
+    },
+    {
+      title: "Break down the steps",
+      body: "Divide the problem into smaller, manageable parts that you can solve one at a time.",
+      icon: "checklist" 
+    },
+    {
+      title: "Apply the method",
+      body: "Use the appropriate mathematical or logical method to solve each part of the problem.",
+      icon: "divide"
+    },
+    {
+      title: "Verify your answer",
+      body: "Check your work by substituting your answer back into the original problem.",
+      icon: "check"
+    }
+  ];
+  
+  const getGradeColor = () => {
+    if (grade.percentage >= 80) return 'text-state-success';
+    if (grade.percentage >= 60) return 'text-game-coin';
+    return 'text-state-danger';
+  };
+  
+  const handleShowExplanation = (exerciseId: string) => {
+    setSelectedExerciseId(exerciseId);
+    setShowExplanationModal(true);
+  };
+  
+  const handleTryAgain = (exerciseId: string) => {
+    // Handle retry logic
+    console.log('Retrying exercise:', exerciseId);
+    setShowExplanationModal(false);
+  };
+  
+  const handleSubmitQuestion = async (question: string) => {
+    if (onSubmitQuestion) {
+      await onSubmitQuestion(question);
+    }
+  };
+  
+  const handleUpload = () => {
+    if (onUploadHomework) {
+      onUploadHomework();
+    }
+  };
+  
+  // Convert exercises to ExerciseCard format
+  const convertToExerciseCard = (exercise: ExerciseType) => ({
+    id: exercise.id,
+    subject: 'math' as const, // Default to math, should be determined from exercise data
+    prompt: exercise.question,
+    userAnswer: exercise.userAnswer,
+    status: exercise.isCorrect === undefined 
+      ? 'unanswered' as const
+      : exercise.isCorrect 
+        ? 'correct' as const 
+        : 'incorrect' as const,
+    score: exercise.isCorrect !== undefined ? {
+      got: exercise.isCorrect ? 1 : 0,
+      total: 1
+    } : undefined
   });
   
   return (
-    <>
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-2 py-[9px]">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold">{t('grades.exerciseList')}</h2>
-            {/* Always show the clear button for debugging */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClearExercises || (() => console.log('onClearExercises is not defined'))}
-              className="h-8 px-2 text-gray-600 hover:text-red-600 hover:border-red-300 transition-colors"
-              title={t('common.clearAllExercises')}
-              disabled={!onClearExercises}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+    <div className="flex flex-col h-full">
+      {/* Header with Grade and Gamification */}
+      <div className="p-6 border-b border-neutral-border bg-neutral-surface">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            {/* Grade Section */}
+            <div className="flex items-center gap-4">
+              <div className="text-center">
+                <h2 className="text-h1 font-bold text-neutral-text mb-1">
+                  Exercise Progress
+                </h2>
+                <div className="flex items-center gap-2">
+                  <span className="text-body text-neutral-muted">Overall Grade:</span>
+                  <span className={cn("text-h2 font-bold", getGradeColor())}>
+                    {grade.percentage}%
+                  </span>
+                  {grade.letter !== 'N/A' && (
+                    <span className="text-body text-neutral-muted">({grade.letter})</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* Gamification Stats */}
+            <div className="flex flex-wrap items-center gap-4">
+              <XpBar 
+                value={userStats.xpProgress} 
+                level={userStats.currentLevel}
+                className="min-w-48"
+              />
+              <StreakChip 
+                days={userStats.streakDays} 
+                active={userStats.streakActive} 
+              />
+              <CoinWallet coins={userStats.coins} />
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <GraduationCap className="h-5 w-5 text-studywhiz-600" />
-            <span className="font-medium text-sm">
-              {t('grades.overallGrade')}: <span className="text-xl font-bold">{grade.percentage}%</span> {grade.letter !== 'N/A' && <span className="ml-1">({grade.letter})</span>}
-            </span>
+          
+          {/* Stats Summary */}
+          <div className="mt-4 flex justify-center lg:justify-start">
+            <div className="text-caption text-neutral-muted">
+              {correctExercises} correct • {answeredExercises} completed • {totalExercises} total exercises
+            </div>
           </div>
-        </div>
-        
-        <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>{t('grades.correctAnswers').replace('{correct}', correctExercises.toString()).replace('{completed}', answeredExercises.toString())} • {totalExercises} total</span>
         </div>
       </div>
       
-      <ScrollArea className="h-[calc(100%-8rem)] p-4">
-        {exercises.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center p-6">
-            <BookOpen className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium mb-2">{t('exercise.noExercises')}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md">
-              {t('grades.exerciseListDescription')}
-            </p>
+      {/* Content Area */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="p-6">
+            {exercises.length === 0 ? (
+              /* Empty State */
+              <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                <div className="w-48 h-48 mb-6 bg-neutral-bg rounded-card flex items-center justify-center">
+                  <BookOpen size={80} className="text-neutral-muted" />
+                </div>
+                
+                <h3 className="text-h2 font-bold text-neutral-text mb-3">
+                  No exercises yet
+                </h3>
+                
+                <p className="text-body text-neutral-muted mb-8 max-w-md">
+                  Upload your first homework and earn your First Explorer badge +50 XP!
+                </p>
+                
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <Button 
+                    size="lg"
+                    onClick={handleUpload}
+                    className="bg-brand-primary hover:bg-brand-primary/90 text-neutral-surface"
+                  >
+                    <Upload className="mr-2" size={20} />
+                    Upload homework
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    size="lg"
+                    onClick={() => handleSubmitQuestion('')}
+                    className="border-neutral-border text-neutral-text hover:bg-neutral-bg"
+                  >
+                    <MessageCircleQuestion className="mr-2" size={20} />
+                    Ask a question
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Exercise Cards Grid */
+              <div className="max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {exercises.map((exercise) => (
+                    <ExerciseCard
+                      key={exercise.id}
+                      {...convertToExerciseCard(exercise)}
+                      onShowExplanation={handleShowExplanation}
+                      onTryAgain={handleTryAgain}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {exercises.map((exercise, index) => (
-              <Exercise
-                key={exercise.id}
-                exercise={exercise}
-                toggleExerciseExpansion={toggleExerciseExpansion}
-                onSubmitAnswer={onSubmitAnswer}
-              />
-            ))}
-          </div>
-        )}
-      </ScrollArea>
-    </>
+        </ScrollArea>
+      </div>
+      
+      {/* Footer Composer */}
+      <ExerciseComposer
+        onSubmitQuestion={handleSubmitQuestion}
+        onUpload={handleUpload}
+        disabled={false}
+      />
+      
+      {/* Explanation Modal */}
+      <ExplanationModal
+        isOpen={showExplanationModal}
+        onClose={() => setShowExplanationModal(false)}
+        steps={mockExplanationSteps}
+        onTryAgain={() => handleTryAgain(selectedExerciseId || '')}
+      />
+    </div>
   );
 };
 
