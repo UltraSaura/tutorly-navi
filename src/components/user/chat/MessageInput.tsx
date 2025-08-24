@@ -1,9 +1,9 @@
 
 import React, { useRef, useState } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import CameraCapture from './CameraCapture';
@@ -113,8 +113,8 @@ const MessageInput = ({
   };
 
   return (
-    <div className="p-3 border-t bg-background">
-      <div className="relative flex items-center rounded-xl border bg-background shadow-sm">
+    <div className="p-4">
+      <div className="relative flex items-center rounded-xl border border-neutral-border bg-neutral-surface shadow-sm max-w-4xl mx-auto">
         <input 
           type="file" 
           ref={fileInputRef} 
@@ -130,34 +130,39 @@ const MessageInput = ({
           onChange={(e) => onFileSelected(e, true)}
         />
         
-        <AttachmentMenu
-          onFileUpload={triggerFileUpload}
-          onPhotoUpload={triggerPhotoUpload}
-          onCameraOpen={openCameraDialog}
-        />
+        {/* Glowing + button for uploads */}
+        <div className="p-2">
+          <AttachmentMenu
+            onFileUpload={triggerFileUpload}
+            onPhotoUpload={triggerPhotoUpload}
+            onCameraOpen={openCameraDialog}
+          />
+        </div>
         
         <Textarea 
-          placeholder={t('chat.inputPlaceholder')} 
+          placeholder="Type your question or homework here..." 
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           className={cn(
-            "min-h-10 resize-none border-0 focus-visible:ring-0 p-3 flex-1 bg-transparent",
+            "min-h-10 resize-none border-0 focus-visible:ring-0 p-3 flex-1 bg-transparent text-neutral-text placeholder:text-neutral-muted",
             isLoading && "opacity-50"
           )}
         />
         
-        <Button 
-          size="icon" 
-          className={cn(
-            "rounded-full m-1.5 bg-primary hover:bg-primary/90",
-            (!inputMessage.trim() || isLoading) && "opacity-50 cursor-not-allowed"
-          )}
-          disabled={inputMessage.trim() === '' || isLoading}
-          onClick={handleSendMessage}
-        >
-          <Send className="h-4 w-4" />
-        </Button>
+        <div className="p-2">
+          <Button 
+            size="icon" 
+            className={cn(
+              "h-8 w-8 rounded-full bg-brand-primary hover:bg-brand-primary/90 transition-all duration-200",
+              (!inputMessage.trim() || isLoading) && "opacity-50 cursor-not-allowed"
+            )}
+            disabled={inputMessage.trim() === '' || isLoading}
+            onClick={handleSendMessage}
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <CameraCapture

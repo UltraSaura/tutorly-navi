@@ -2,12 +2,18 @@
 // Chat message type
 export interface Message {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant' | 'system' | 'gamification';
   content: string;
   timestamp: Date;
-  type?: 'text' | 'image' | 'file';
+  type?: 'text' | 'image' | 'file' | 'xp_reward' | 'streak_milestone' | 'feedback';
   filename?: string;
   fileUrl?: string;
+  subjectId?: string; // For subject icon display
+  xpReward?: number; // XP amount for rewards
+  streakDays?: number; // Streak count for milestones
+  badgeName?: string; // Badge name for unlocks
+  explanation?: ExplanationStep[]; // Expandable explanation steps
+  isCorrect?: boolean; // For feedback messages
 }
 
 // Exercise attempt type
@@ -40,6 +46,14 @@ export interface Exercise {
 export interface Grade {
   percentage: number;
   letter: string;
+}
+
+// Explanation step type
+export interface ExplanationStep {
+  id: string;
+  title: string;
+  content: string;
+  icon?: 'magnifier' | 'divide' | 'check' | 'calculator';
 }
 
 // Chat history type

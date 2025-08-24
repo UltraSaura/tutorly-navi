@@ -3,7 +3,7 @@ import { useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Message from './Message';
 import { Message as MessageType } from '@/types/chat';
-import { useLanguage } from '@/context/LanguageContext';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 interface MessageListProps {
   messages: MessageType[];
@@ -19,8 +19,8 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
   }, [messages]);
 
   return (
-    <ScrollArea className="flex-1 p-4">
-      <div className="space-y-4">
+    <ScrollArea className="flex-1 p-4 bg-neutral-bg">
+      <div className="space-y-2 max-w-4xl mx-auto">
         {messages.map((message) => (
           <Message 
             key={message.id}
@@ -29,12 +29,17 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
         ))}
         
         {isLoading && (
-          <div className="flex justify-start">
-            <div className="max-w-[85%] p-3 bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-tl-none">
-              <div className="flex space-x-2">
-                <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse delay-100"></div>
-                <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse delay-200"></div>
-                <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse delay-300"></div>
+          <div className="flex justify-start mb-4">
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-neutral-surface border border-neutral-border flex items-center justify-center mt-1">
+                <div className="w-4 h-4 bg-brand-primary rounded-full animate-pulse" />
+              </div>
+              <div className="max-w-[75%] rounded-xl px-4 py-3 bg-neutral-surface border border-neutral-border">
+                <div className="flex space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-neutral-muted animate-pulse delay-100"></div>
+                  <div className="w-2 h-2 rounded-full bg-neutral-muted animate-pulse delay-200"></div>
+                  <div className="w-2 h-2 rounded-full bg-neutral-muted animate-pulse delay-300"></div>
+                </div>
               </div>
             </div>
           </div>
