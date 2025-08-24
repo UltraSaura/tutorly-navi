@@ -1,8 +1,5 @@
-
 import { useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
-import ChatPanel from './chat/ChatPanel';
-import ExerciseList from './chat/ExerciseList';
 import MessageInput from './chat/MessageInput';
 import MessageList from './chat/MessageList';
 import { useChat } from '@/hooks/useChat';
@@ -10,7 +7,6 @@ import { useExercises } from '@/hooks/useExercises';
 import { useAdmin } from '@/context/AdminContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { detectHomeworkInMessage, extractHomeworkFromMessage, hasMultipleExercises } from '@/utils/homework';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 
 const ChatInterface = () => {
@@ -108,27 +104,20 @@ const ChatInterface = () => {
     handlePhotoUpload(file, addExercises, defaultSubject);
   };
 
-  // Exercise-Focused Layout for Both Mobile and Desktop
+  // Conversation-Focused Layout 
   return (
-    <div className="relative h-[calc(100vh-4rem)]">
-      {/* Exercise List with padding for chat input */}
-      <div className="h-full overflow-y-auto pb-32">
-        <div className="p-4">
-          <ExerciseList 
-            exercises={exercises} 
-            grade={grade} 
-            toggleExerciseExpansion={toggleExerciseExpansion} 
-            onSubmitAnswer={submitAnswer}
-            onClearExercises={clearExercises}
-          />
-        </div>
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-neutral-bg">
+      {/* Message List */}
+      <div className="flex-1 overflow-hidden">
+        <MessageList 
+          messages={filteredMessages} 
+          isLoading={isLoading}
+        />
       </div>
 
-      {/* Chat input positioned at bottom - responsive for mobile/desktop */}
-      <div className={`fixed bottom-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-t border-border z-50 ${
-        isMobile 
-          ? 'left-4 right-4 p-4' 
-          : 'left-[calc(var(--sidebar-width,16rem)+1.5rem)] right-6 p-3'
+      {/* Chat Input at Bottom */}
+      <div className={`bg-neutral-surface border-t border-neutral-border p-4 ${
+        isMobile ? '' : 'mx-6 mb-6 rounded-t-xl shadow-sm'
       }`}>
         <MessageInput
           inputMessage={inputMessage}

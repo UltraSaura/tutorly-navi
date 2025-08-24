@@ -113,52 +113,48 @@ const MessageInput = ({
   };
 
   return (
-    <div className="p-3 border-t bg-background">
-      <div className="relative flex items-center rounded-xl border bg-background shadow-sm">
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          className="hidden" 
-          accept=".pdf,.doc,.docx,.txt" 
-          onChange={(e) => onFileSelected(e, false)}
-        />
-        <input 
-          type="file" 
-          ref={photoInputRef} 
-          className="hidden" 
-          accept="image/*" 
-          onChange={(e) => onFileSelected(e, true)}
-        />
-        
+    <div className="flex items-center gap-3 bg-neutral-surface rounded-button border border-neutral-border p-2">
+      <div className="relative">
         <AttachmentMenu
           onFileUpload={triggerFileUpload}
           onPhotoUpload={triggerPhotoUpload}
           onCameraOpen={openCameraDialog}
         />
-        
-        <Textarea 
-          placeholder={t('chat.inputPlaceholder')} 
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className={cn(
-            "min-h-10 resize-none border-0 focus-visible:ring-0 p-3 flex-1 bg-transparent",
-            isLoading && "opacity-50"
-          )}
-        />
-        
-        <Button 
-          size="icon" 
-          className={cn(
-            "rounded-full m-1.5 bg-primary hover:bg-primary/90",
-            (!inputMessage.trim() || isLoading) && "opacity-50 cursor-not-allowed"
-          )}
-          disabled={inputMessage.trim() === '' || isLoading}
-          onClick={handleSendMessage}
-        >
-          <Send className="h-4 w-4" />
-        </Button>
       </div>
+      
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        className="hidden" 
+        accept=".pdf,.doc,.docx,.txt" 
+        onChange={(e) => onFileSelected(e, false)}
+      />
+      <input 
+        type="file" 
+        ref={photoInputRef} 
+        className="hidden" 
+        accept="image/*" 
+        onChange={(e) => onFileSelected(e, true)}
+      />
+      
+      <Textarea 
+        placeholder="Type your question or homework here…"
+        value={inputMessage}
+        onChange={(e) => setInputMessage(e.target.value)}
+        onKeyDown={handleKeyDown}
+        className="min-h-[40px] max-h-32 resize-none flex-1 border-0 shadow-none focus-visible:ring-0 text-neutral-text placeholder:text-neutral-muted bg-transparent"
+        disabled={isLoading}
+      />
+      
+      <Button
+        type="submit"
+        size="icon"
+        disabled={!inputMessage.trim() || isLoading}
+        className="h-9 w-9 bg-brand-primary hover:bg-brand-navy text-white rounded-button flex-shrink-0"
+        onClick={handleSendMessage}
+      >
+        <Send className="h-4 w-4" />
+      </Button>
 
       <CameraCapture
         isOpen={isCameraOpen}

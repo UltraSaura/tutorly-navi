@@ -26,61 +26,78 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
   const menuItems = [
     {
       icon: Paperclip,
-      label: t('upload.uploadDocument'),
-      description: t('upload.documentDescription'),
+      label: 'Upload Document (PDF)',
+      description: 'Upload a PDF or document to extract exercises',
       onClick: () => handleItemClick(onFileUpload),
+      color: 'bg-blue-500',
     },
     {
       icon: ImageIcon,
-      label: t('upload.uploadPhoto'),
-      description: t('upload.photoDescription'),
+      label: 'Upload Photo',
+      description: 'Upload an image from your gallery',
       onClick: () => handleItemClick(onPhotoUpload),
+      color: 'bg-green-500',
     },
     {
       icon: Camera,
-      label: t('upload.takePhoto'),
-      description: t('upload.cameraDescription'),
+      label: 'Take Photo',
+      description: 'Capture a photo with your camera',
       onClick: () => handleItemClick(onCameraOpen),
+      color: 'bg-orange-500',
     },
   ];
 
   const MenuContent = () => (
     <div className={cn(
-      "grid gap-1",
-      isMobile ? "p-4 pb-6" : "p-2"
+      "grid gap-3",
+      isMobile ? "p-6" : "p-2 gap-1"
     )}>
       {menuItems.map((item, index) => {
         const Icon = item.icon;
         return (
-          <Button
+          <div
             key={index}
-            variant="ghost"
             className={cn(
-              "justify-start gap-3 text-left",
+              "relative overflow-hidden rounded-button cursor-pointer transition-all hover:scale-105 active:scale-95",
               isMobile 
-                ? "h-14 px-4 rounded-xl" 
-                : "h-12 px-3 rounded-lg hover:bg-muted"
+                ? "p-6 min-h-[80px]" 
+                : "p-4 min-h-[60px]"
             )}
             onClick={item.onClick}
           >
-            <Icon className={cn(
-              "text-muted-foreground",
-              isMobile ? "h-6 w-6" : "h-5 w-5"
+            {/* Background with color */}
+            <div className={cn(
+              "absolute inset-0 opacity-10",
+              item.color
             )} />
-            <div className="flex flex-col gap-0.5">
-              <span className={cn(
-                "font-medium",
-                isMobile ? "text-base" : "text-sm"
+            
+            {/* Content */}
+            <div className="relative flex items-center gap-4">
+              <div className={cn(
+                "rounded-full p-2",
+                item.color,
+                "text-white"
               )}>
-                {item.label}
-              </span>
-              {isMobile && (
-                <span className="text-sm text-muted-foreground">
+                <Icon className={cn(
+                  isMobile ? "h-6 w-6" : "h-5 w-5"
+                )} />
+              </div>
+              <div className="flex-1">
+                <div className={cn(
+                  "font-semibold text-neutral-text",
+                  isMobile ? "text-lg" : "text-base"
+                )}>
+                  {item.label}
+                </div>
+                <div className={cn(
+                  "text-neutral-muted",
+                  isMobile ? "text-sm" : "text-xs"
+                )}>
                   {item.description}
-                </span>
-              )}
+                </div>
+              </div>
             </div>
-          </Button>
+          </div>
         );
       })}
     </div>
@@ -113,10 +130,10 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
           side="bottom" 
           className="rounded-t-xl border-t"
         >
-          <div className="mx-auto w-12 h-1.5 bg-muted rounded-full mb-4" />
-          <div className="text-center mb-4">
-            <h3 className="text-lg font-semibold">{t('upload.attachFiles')}</h3>
-            <p className="text-sm text-muted-foreground">{t('upload.selectOption')}</p>
+          <div className="mx-auto w-12 h-1.5 bg-neutral-border rounded-full mb-4" />
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-semibold text-neutral-text">Upload Content</h3>
+            <p className="text-neutral-muted">Choose how you'd like to add your homework</p>
           </div>
           <MenuContent />
         </SheetContent>

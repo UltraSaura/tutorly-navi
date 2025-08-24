@@ -8,6 +8,8 @@ export interface Message {
   type?: 'text' | 'image' | 'file';
   filename?: string;
   fileUrl?: string;
+  subjectId?: string;
+  explanation?: string;
 }
 
 // Exercise attempt type
