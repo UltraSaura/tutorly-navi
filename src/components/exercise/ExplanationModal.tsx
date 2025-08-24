@@ -105,7 +105,7 @@ const ExplanationModal = ({
             className="w-full bg-brand-primary hover:bg-brand-primary/90 text-neutral-surface"
             size="lg"
           >
-            Try again → Earn +5 XP
+            Try again → +5 XP
           </Button>
         </div>
       </DialogContent>

@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
-import MessageInput from './chat/MessageInput';
-import MessageList from './chat/MessageList';
+import ExerciseList from './chat/ExerciseList';
+import CameraCapture from './chat/CameraCapture';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
 import { useAdmin } from '@/context/AdminContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { detectHomeworkInMessage, extractHomeworkFromMessage, hasMultipleExercises } from '@/utils/homework';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { FileText, Image, Camera, Upload } from 'lucide-react';
 
 const ChatInterface = () => {
   const { t } = useLanguage();
@@ -42,6 +45,10 @@ const ChatInterface = () => {
 
   // Track processed message IDs to prevent duplication
   const [processedMessageIds, setProcessedMessageIds] = useState<Set<string>>(new Set());
+  
+  // Upload sheet state
+  const [showUploadSheet, setShowUploadSheet] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
 
   // Get active subjects
   const activeSubjects = getActiveSubjects();
@@ -104,30 +111,128 @@ const ChatInterface = () => {
     handlePhotoUpload(file, addExercises, defaultSubject);
   };
 
-  // Conversation-Focused Layout 
+  // Handle question submission through chat pipeline
+  const handleSubmitQuestion = async (question: string) => {
+    if (question.trim()) {
+      setInputMessage(question);
+      // Wait for next tick to ensure inputMessage is set
+      setTimeout(async () => {
+        await handleSendMessage();
+      }, 0);
+    }
+  };
+
+  // Handle upload sheet opening
+  const handleUploadHomework = () => {
+    setShowUploadSheet(true);
+  };
+
+  // Handle document upload from sheet
+  const handleDocumentUploadClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        handleDocumentFileUpload(file);
+        setShowUploadSheet(false);
+      }
+    };
+    input.click();
+  };
+
+  // Handle photo upload from sheet
+  const handlePhotoUploadClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        handlePhotoFileUpload(file);
+        setShowUploadSheet(false);
+      }
+    };
+    input.click();
+  };
+
+  // Handle camera capture
+  const handleCameraOpen = () => {
+    setShowUploadSheet(false);
+    setShowCamera(true);
+  };
+
+  const handleCameraCapture = (file: File) => {
+    handlePhotoFileUpload(file);
+    setShowCamera(false);
+  };
+
+  // Exercise-Focused Layout with Upload Sheet
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-neutral-bg">
-      {/* Message List */}
+      {/* Exercise List - replaces MessageList */}
       <div className="flex-1 overflow-hidden">
-        <MessageList 
-          messages={filteredMessages} 
-          isLoading={isLoading}
+        <ExerciseList
+          exercises={exercises}
+          grade={grade}
+          toggleExerciseExpansion={toggleExerciseExpansion}
+          onSubmitAnswer={submitAnswer}
+          onClearExercises={clearExercises}
+          onSubmitQuestion={handleSubmitQuestion}
+          onUploadHomework={handleUploadHomework}
         />
       </div>
 
-      {/* Chat Input at Bottom */}
-      <div className={`bg-neutral-surface border-t border-neutral-border p-4 ${
-        isMobile ? '' : 'mx-6 mb-6 rounded-t-xl shadow-sm'
-      }`}>
-        <MessageInput
-          inputMessage={inputMessage}
-          setInputMessage={setInputMessage}
-          handleSendMessage={handleSendMessage}
-          handleFileUpload={handleDocumentFileUpload}
-          handlePhotoUpload={handlePhotoFileUpload}
-          isLoading={isLoading}
-        />
-      </div>
+      {/* Upload Bottom Sheet */}
+      <Sheet open={showUploadSheet} onOpenChange={setShowUploadSheet}>
+        <SheetContent side="bottom" className="h-auto">
+          <SheetHeader>
+            <SheetTitle className="text-h2 font-semibold text-neutral-text">
+              Upload Homework
+            </SheetTitle>
+          </SheetHeader>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 mb-4">
+            {/* Document Upload */}
+            <Button
+              onClick={handleDocumentUploadClick}
+              className="flex flex-col items-center justify-center gap-3 h-24 bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 text-blue-700 rounded-card"
+              variant="outline"
+            >
+              <FileText size={32} />
+              <span className="text-body font-medium">Upload Document (PDF)</span>
+            </Button>
+
+            {/* Photo Upload */}
+            <Button
+              onClick={handlePhotoUploadClick}
+              className="flex flex-col items-center justify-center gap-3 h-24 bg-green-50 hover:bg-green-100 border-2 border-green-200 text-green-700 rounded-card"
+              variant="outline"
+            >
+              <Image size={32} />
+              <span className="text-body font-medium">Upload Photo</span>
+            </Button>
+
+            {/* Camera */}
+            <Button
+              onClick={handleCameraOpen}
+              className="flex flex-col items-center justify-center gap-3 h-24 bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 text-orange-700 rounded-card"
+              variant="outline"
+            >
+              <Camera size={32} />
+              <span className="text-body font-medium">Take Photo</span>
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Camera Capture Modal */}
+      <CameraCapture
+        isOpen={showCamera}
+        onClose={() => setShowCamera(false)}
+        onCapture={handleCameraCapture}
+      />
     </div>
   );
 };
