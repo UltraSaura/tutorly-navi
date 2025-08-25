@@ -16,7 +16,7 @@ export function useExplanation() {
     setError(null);
     try {
       const raw = await fetchExplanation(exerciseRow, undefined, undefined, "concept"); // calls AI and returns raw text
-      const payload = parseConceptResponse(raw);       // parses to { steps }
+      const payload = parseConceptResponse(raw, exerciseRow.question ?? "");       // parses to { steps }
       setSteps(payload.steps);
       console.log("[Explain] steps set >>>", payload.steps);
     } catch (e: any) {

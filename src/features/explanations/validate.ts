@@ -24,7 +24,18 @@ function redactAnswers(text: string): string {
   return t;
 }
 
-export function parseConceptResponse(aiText: string): StepsPayload {
+function redactStudentNumbers(text: string, exercise: string): string {
+  // Extract numbers and fractions from the exercise string
+  const matches = exercise.match(/\d+\/\d+|\d+/g) || [];
+  let redacted = text;
+  for (const m of matches) {
+    const regex = new RegExp(m.replace("/", "\\/"), "g");
+    redacted = redacted.replace(regex, "[your fraction]");
+  }
+  return redacted;
+}
+
+export function parseConceptResponse(aiText: string, exercise: string = ""): StepsPayload {
   try {
     const jsonStr = extractFirstJsonObject(aiText) ?? "{}";
     const obj = JSON.parse(jsonStr);
@@ -33,7 +44,7 @@ export function parseConceptResponse(aiText: string): StepsPayload {
 
     const steps: Step[] = stepsRaw.slice(0,5).map((s: any) => ({
       title: (s?.title ?? "").toString().slice(0, 60),
-      body: redactAnswers((s?.body ?? "").toString().slice(0, 700)),
+      body: redactStudentNumbers(redactAnswers((s?.body ?? "").toString().slice(0, 700)), exercise),
       icon: ALLOWED_ICONS.includes(s?.icon) ? s.icon : "lightbulb",
       kind: ALLOWED_KIND.includes(s?.kind) ? s.kind : "concept",
     })).filter(s => s.title && s.body);
