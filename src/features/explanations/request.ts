@@ -21,6 +21,7 @@ const MATH_EXPLANATION_TEMPLATE_ID = 'math-explanation-generator';
  * @param exerciseRow - The exercise data containing question, user answer, etc.
  * @param correctAnswer - The correct answer for the exercise (optional)
  * @param userContext - Additional user context like grade level, name, etc. (optional)
+ * @param teachingMode - Mode for explanation: "concept" (default) or "solution"
  * @returns Promise<string> - Raw JSON string response from AI
  */
 export async function fetchExplanation(
@@ -31,7 +32,8 @@ export async function fetchExplanation(
     first_name?: string;
     country?: string;
     response_language?: string;
-  }
+  },
+  teachingMode: "concept" | "solution" = "concept"
 ): Promise<string> {
   if (EXPLAIN_DEBUG.forceMock) {
     if (EXPLAIN_DEBUG.enableConsole) {
