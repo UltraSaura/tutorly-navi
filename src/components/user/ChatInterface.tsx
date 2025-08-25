@@ -179,8 +179,6 @@ const ChatInterface = () => {
           toggleExerciseExpansion={toggleExerciseExpansion}
           onSubmitAnswer={submitAnswer}
           onClearExercises={clearExercises}
-          onSubmitQuestion={handleSubmitQuestion}
-          onUploadHomework={handleUploadHomework}
         />
       </div>
 

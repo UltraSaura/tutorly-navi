@@ -1,11 +1,10 @@
 
 import React, { useState } from 'react';
-import { BookOpen, Upload, MessageCircleQuestion, GraduationCap, Trash2 } from 'lucide-react';
+import { BookOpen, GraduationCap, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import ExerciseCard from '@/components/exercise/ExerciseCard';
 import ExplanationModal from '@/components/exercise/ExplanationModal';
-import ExerciseComposer from '@/components/exercise/ExerciseComposer';
 import XpChip from '@/components/game/XpChip';
 import CompactStreakChip from '@/components/game/CompactStreakChip';
 import CompactCoinChip from '@/components/game/CompactCoinChip';
@@ -22,8 +21,6 @@ interface ExerciseListProps {
   toggleExerciseExpansion: (id: string) => void;
   onSubmitAnswer?: (exerciseId: string, answer: string) => void;
   onClearExercises?: () => void;
-  onSubmitQuestion?: (question: string) => void;
-  onUploadHomework?: () => void;
 }
 
 const ExerciseList = ({
@@ -31,9 +28,7 @@ const ExerciseList = ({
   grade,
   toggleExerciseExpansion,
   onSubmitAnswer,
-  onClearExercises,
-  onSubmitQuestion,
-  onUploadHomework
+  onClearExercises
 }: ExerciseListProps) => {
   const { t } = useLanguage();
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
@@ -92,17 +87,6 @@ const ExerciseList = ({
     setShowExplanationModal(false);
   };
   
-  const handleSubmitQuestion = async (question: string) => {
-    if (onSubmitQuestion) {
-      await onSubmitQuestion(question);
-    }
-  };
-  
-  const handleUpload = () => {
-    if (onUploadHomework) {
-      onUploadHomework();
-    }
-  };
   
   // Convert exercises to ExerciseCard format
   const convertToExerciseCard = (exercise: ExerciseType) => ({
@@ -187,29 +171,8 @@ const ExerciseList = ({
                 </h3>
                 
                 <p className="text-body text-neutral-muted mb-8 max-w-md">
-                  No exercises yet. Upload your first homework to get started!
+                  No exercises yet. Use the chat to upload homework or ask questions to get started!
                 </p>
-                
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <Button 
-                    size="lg"
-                    onClick={handleUpload}
-                    className="bg-brand-primary hover:bg-brand-primary/90 text-neutral-surface"
-                  >
-                    <Upload className="mr-2" size={20} />
-                    + Upload homework
-                  </Button>
-                  
-                  <Button 
-                    variant="outline"
-                    size="lg"
-                    onClick={() => handleSubmitQuestion('')}
-                    className="border-neutral-border text-neutral-text hover:bg-neutral-bg"
-                  >
-                    <MessageCircleQuestion className="mr-2" size={20} />
-                    Ask a question
-                  </Button>
-                </div>
               </div>
             ) : (
               /* Exercise Cards Grid */
@@ -230,13 +193,6 @@ const ExerciseList = ({
           </div>
         </ScrollArea>
       </div>
-      
-      {/* Footer Composer */}
-      <ExerciseComposer
-        onSubmitQuestion={handleSubmitQuestion}
-        onUpload={handleUpload}
-        disabled={false}
-      />
       
       {/* Explanation Modal */}
       <ExplanationModal
