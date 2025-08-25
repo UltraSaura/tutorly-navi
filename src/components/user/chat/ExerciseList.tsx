@@ -99,11 +99,7 @@ const ExerciseList = ({
       ? 'unanswered' as const
       : exercise.isCorrect 
         ? 'correct' as const 
-        : 'incorrect' as const,
-    score: exercise.isCorrect !== undefined ? {
-      got: exercise.isCorrect ? 1 : 0,
-      total: 1
-    } : undefined
+        : 'incorrect' as const
   });
   
   return (

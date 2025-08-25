@@ -14,10 +14,6 @@ interface ExerciseCardProps {
   prompt: string;
   userAnswer?: string;
   status: StatusType;
-  score?: {
-    got: number;
-    total: number;
-  };
   explanation?: string;
   onShowExplanation: (id: string) => void;
   onTryAgain: (id: string) => void;
@@ -42,7 +38,6 @@ const ExerciseCard = ({
   prompt,
   userAnswer,
   status,
-  score,
   explanation,
   onShowExplanation,
   onTryAgain,
@@ -82,20 +77,20 @@ const ExerciseCard = ({
   return (
     <div 
       className={cn(
-        'p-6 rounded-card border transition-all duration-200 hover:shadow-md',
+        'p-4 rounded-card border transition-all duration-200 hover:shadow-md',
         getStatusStyles()
       )}
       role="article"
       aria-labelledby={`exercise-${id}-title`}
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-3">
         {/* Subject Icon */}
         <div className={cn(
-          'flex-shrink-0 w-12 h-12 rounded-button flex items-center justify-center',
+          'flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center',
           'bg-neutral-surface border border-neutral-border',
           subjectColors[subject]
         )}>
-          <SubjectIcon size={24} aria-hidden="true" />
+          <SubjectIcon size={20} aria-hidden="true" />
         </div>
         
         <div className="flex-1 min-w-0">
@@ -110,7 +105,7 @@ const ExerciseCard = ({
           
           {/* User Answer */}
           {userAnswer && (
-            <div className="mb-4">
+            <div className="mb-3">
               <Badge 
                 variant="secondary" 
                 className="px-3 py-1 bg-neutral-bg text-neutral-muted"
@@ -120,18 +115,9 @@ const ExerciseCard = ({
             </div>
           )}
           
-          {/* Score */}
-          {score && (
-            <div className="mb-4">
-              <span className="text-caption text-neutral-muted">
-                Score: {score.got}/{score.total}
-              </span>
-            </div>
-          )}
-          
           {/* Answer Input for Unanswered Exercises */}
           {status === 'unanswered' && onSubmitAnswer && (
-            <div className="mb-4 space-y-3">
+            <div className="mb-3 space-y-2">
               <Textarea
                 value={inputAnswer}
                 onChange={(e) => setInputAnswer(e.target.value)}
