@@ -11,8 +11,24 @@ export function areMathematicallyEquivalent(
   tolerance: number = 0.01
 ): boolean | null {
   try {
-    // Special handling for fraction simplification exercises
-    if (question.includes('Simplifiez la fraction')) {
+    console.log('[mathValidation] Checking equivalency:', { question, userAnswer });
+    
+    // Enhanced French fraction detection - case insensitive and plural forms
+    const fractionKeywords = [
+      'simplifiez la fraction',
+      'simplifiez les fractions', 
+      'simplifie la fraction',
+      'simplifie les fractions',
+      'réduire la fraction',
+      'réduire les fractions'
+    ];
+    
+    const isFractionExercise = fractionKeywords.some(keyword => 
+      question.toLowerCase().includes(keyword)
+    );
+    
+    if (isFractionExercise) {
+      console.log('[mathValidation] Detected French fraction exercise');
       return areFractionsEquivalent(question, userAnswer);
     }
     
@@ -133,19 +149,33 @@ export function getEquivalencyContext(question: string, userAnswer: string): str
 // NEW: Special function for fraction simplification exercises
 function areFractionsEquivalent(question: string, userAnswer: string): boolean | null {
   try {
-    // Extract the original fraction from the question
-    const fractionMatch = question.match(/(\d+)\/(\d+)/);
-    if (!fractionMatch) return null;
+    console.log('[mathValidation] areFractionsEquivalent called with:', { question, userAnswer });
+    
+    // Extract the original fraction from the question - more flexible regex
+    const fractionMatch = question.match(/(\d+)\s*\/\s*(\d+)/);
+    if (!fractionMatch) {
+      console.log('[mathValidation] No fraction found in question');
+      return null;
+    }
     
     const originalFraction = fractionMatch[0];
-    const [originalNum, originalDen] = originalFraction.split('/').map(Number);
+    const [originalNum, originalDen] = originalFraction.split('/').map(n => parseInt(n.trim()));
+    console.log('[mathValidation] Original fraction:', { originalNum, originalDen, originalFraction });
     
-    // Parse user's answer
-    const userFractionMatch = userAnswer.match(/(\d+)\/(\d+)/);
-    if (!userFractionMatch) return null;
+    // Normalize user answer - remove extra spaces and handle different formats
+    const normalizedUserAnswer = userAnswer.trim().replace(/\s+/g, '');
+    console.log('[mathValidation] Normalized user answer:', normalizedUserAnswer);
+    
+    // Parse user's answer - more flexible regex
+    const userFractionMatch = normalizedUserAnswer.match(/(\d+)\s*\/\s*(\d+)/);
+    if (!userFractionMatch) {
+      console.log('[mathValidation] No fraction found in user answer');
+      return null;
+    }
     
     const userFraction = userFractionMatch[0];
-    const [userNum, userDen] = userFraction.split('/').map(Number);
+    const [userNum, userDen] = userFraction.split('/').map(n => parseInt(n.trim()));
+    console.log('[mathValidation] User fraction:', { userNum, userDen, userFraction });
     
     // Check if user provided the original fraction (which is incorrect for simplification)
     if (userNum === originalNum && userDen === originalDen) {
@@ -156,22 +186,24 @@ function areFractionsEquivalent(question: string, userAnswer: string): boolean |
     // Check if the fractions are mathematically equivalent
     const originalValue = originalNum / originalDen;
     const userValue = userNum / userDen;
+    console.log('[mathValidation] Fraction values:', { originalValue, userValue, difference: Math.abs(originalValue - userValue) });
     
     if (Math.abs(originalValue - userValue) < Number.EPSILON) {
       // Check if user's answer is actually simplified
       const userGCD = findGCD(userNum, userDen);
       const isSimplified = userGCD === 1;
+      console.log('[mathValidation] Simplification check:', { userGCD, isSimplified });
       
       if (!isSimplified) {
         console.log('[mathValidation] Fractions are equivalent but user answer is not simplified');
         return false;
       }
       
-      console.log('[mathValidation] Fractions are equivalent and simplified correctly');
+      console.log('[mathValidation] ✅ Fractions are equivalent and simplified correctly');
       return true;
     }
     
-    console.log('[mathValidation] Fractions are not equivalent');
+    console.log('[mathValidation] ❌ Fractions are not equivalent');
     return false;
   } catch (error) {
     console.log('[mathValidation] Error checking fraction equivalency:', error);
