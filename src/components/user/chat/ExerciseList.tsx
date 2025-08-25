@@ -141,7 +141,7 @@ const ExerciseList = ({
               <GraduationCap size={16} className="text-neutral-muted" />
               <span className="text-body text-neutral-muted">Overall Grade:</span>
               <span className={cn("text-body font-semibold", getGradeColor())}>
-                {grade.percentage}%
+                {grade.percentage}% ({grade.letter})
               </span>
             </div>
             <div className="text-body text-neutral-muted">
