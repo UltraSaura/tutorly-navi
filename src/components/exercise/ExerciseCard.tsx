@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { Book, FlaskConical, Languages } from 'lucide-react';
+import { Book, FlaskConical, Languages, Send } from 'lucide-react';
 
 type SubjectType = 'math' | 'science' | 'english';
 type StatusType = 'correct' | 'incorrect' | 'unanswered';
@@ -20,6 +21,7 @@ interface ExerciseCardProps {
   explanation?: string;
   onShowExplanation: (id: string) => void;
   onTryAgain: (id: string) => void;
+  onSubmitAnswer?: (id: string, answer: string) => void;
 }
 
 const subjectIcons = {
@@ -43,8 +45,11 @@ const ExerciseCard = ({
   score,
   explanation,
   onShowExplanation,
-  onTryAgain
+  onTryAgain,
+  onSubmitAnswer
 }: ExerciseCardProps) => {
+  const [inputAnswer, setInputAnswer] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const SubjectIcon = subjectIcons[subject];
   
   const getStatusStyles = () => {
@@ -57,6 +62,20 @@ const ExerciseCard = ({
         return 'bg-brand-tint border-brand-primary/20';
       default:
         return 'bg-neutral-bg border-neutral-border';
+    }
+  };
+
+  const handleSubmitAnswer = async () => {
+    if (!inputAnswer.trim() || !onSubmitAnswer) return;
+    
+    setIsSubmitting(true);
+    try {
+      await onSubmitAnswer(id, inputAnswer.trim());
+      setInputAnswer('');
+    } catch (error) {
+      console.error('Error submitting answer:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -110,19 +129,43 @@ const ExerciseCard = ({
             </div>
           )}
           
+          {/* Answer Input for Unanswered Exercises */}
+          {status === 'unanswered' && onSubmitAnswer && (
+            <div className="mb-4 space-y-3">
+              <Textarea
+                value={inputAnswer}
+                onChange={(e) => setInputAnswer(e.target.value)}
+                placeholder="Enter your answer here..."
+                className="min-h-[80px]"
+                disabled={isSubmitting}
+              />
+              <Button
+                onClick={handleSubmitAnswer}
+                disabled={!inputAnswer.trim() || isSubmitting}
+                size="sm"
+                className="w-full"
+              >
+                <Send size={16} className="mr-2" />
+                {isSubmitting ? 'Submitting...' : 'Submit Answer'}
+              </Button>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onShowExplanation(id)}
-              className="text-caption"
-              aria-label={`Show explanation for exercise ${id}`}
-            >
-              Show explanation
-            </Button>
+            {status !== 'unanswered' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onShowExplanation(id)}
+                className="text-caption"
+                aria-label={`Show explanation for exercise ${id}`}
+              >
+                Show explanation
+              </Button>
+            )}
             
-            {status !== 'correct' && (
+            {status === 'incorrect' && (
               <Button
                 variant="default"
                 size="sm"

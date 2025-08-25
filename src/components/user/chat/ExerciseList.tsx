@@ -221,6 +221,7 @@ const ExerciseList = ({
                       {...convertToExerciseCard(exercise)}
                       onShowExplanation={handleShowExplanation}
                       onTryAgain={handleTryAgain}
+                      onSubmitAnswer={onSubmitAnswer}
                     />
                   ))}
                 </div>

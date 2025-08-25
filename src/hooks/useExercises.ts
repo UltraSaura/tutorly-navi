@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Exercise, Message } from '@/types/chat';
 import { toast } from 'sonner';
 import { useGrades } from './useGrades';
+import { useLanguage } from '@/context/LanguageContext';
 import { processNewExercise, linkMessageToExercise, processMultipleExercises } from '@/utils/exerciseProcessor';
 import { hasMultipleExercises } from '@/utils/homework/multiExerciseParser';
 import { evaluateHomework } from '@/services/homeworkGrading';
@@ -10,6 +11,7 @@ import { evaluateHomework } from '@/services/homeworkGrading';
 export const useExercises = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const { grade, updateGrades } = useGrades();
+  const { language } = useLanguage();
   const [processedContent, setProcessedContent] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -58,7 +60,7 @@ export const useExercises = () => {
       };
 
       // Grade the exercise
-      const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber);
+      const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber, language);
       
       // Update exercises state
       setExercises(prev => 
@@ -107,7 +109,7 @@ export const useExercises = () => {
     // Check if the message contains multiple exercises
     if (hasMultipleExercises(message)) {
       console.log('[useExercises] Detected multiple exercises in message');
-      const newExercises = await processMultipleExercises(message, exercises, processedContent);
+      const newExercises = await processMultipleExercises(message, exercises, processedContent, language);
       
       if (newExercises.length > 0) {
         setExercises(prev => {
@@ -125,7 +127,7 @@ export const useExercises = () => {
       }
     } else {
       // Process single exercise
-      const result = await processNewExercise(message, exercises, processedContent);
+      const result = await processNewExercise(message, exercises, processedContent, language);
       if (result) {
         const { exercise, isUpdate } = result;
         setExercises(prev => {

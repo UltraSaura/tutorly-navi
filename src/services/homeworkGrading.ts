@@ -6,17 +6,27 @@ import { areMathematicallyEquivalent, getEquivalencyContext, detectFractionOcrMi
 
 export const evaluateHomework = async (
   exercise: Exercise,
-  attemptNumber: number = 1
+  attemptNumber: number = 1,
+  language: string = 'en'
 ): Promise<Exercise> => {
   try {
     console.log('[homeworkGrading] evaluateHomework called with:', exercise);
-    if (!exercise.question || !exercise.userAnswer) {
-      console.error("[homeworkGrading] Missing question or answer for grading:", exercise);
-      toast.error('Please provide both a question and an answer for grading.');
+    if (!exercise.question) {
+      console.error("[homeworkGrading] Missing question for grading:", exercise);
+      toast.error('Please provide a question for grading.');
       return {
         ...exercise,
         isCorrect: false,
-        explanation: "Unable to grade: Missing question or answer."
+        explanation: "Unable to grade: Missing question."
+      };
+    }
+
+    if (!exercise.userAnswer || exercise.userAnswer.trim() === '') {
+      console.log("[homeworkGrading] No answer provided, returning unanswered exercise");
+      return {
+        ...exercise,
+        needsRetry: true,
+        explanation: undefined
       };
     }
 
@@ -144,12 +154,19 @@ export const evaluateHomework = async (
       
       // Progressive feedback based on attempt number
       let guidancePrompt = '';
+      const languageInstructions = language === 'fr' 
+        ? 'Respond in French.' 
+        : 'Respond in English.';
+      
       if (attemptNumber === 1) {
-        guidancePrompt = `The student answered incorrectly on their first attempt. Question: "${correctedQuestion}" Their answer: "${exercise.userAnswer}". Provide helpful guidance to help them understand the correct approach without giving away the answer directly. Focus on the learning process and concepts they should review. End with "Try again!"`;
+        const endPhrase = language === 'fr' ? 'Essayez encore !' : 'Try again!';
+        guidancePrompt = `${languageInstructions} The student answered incorrectly on their first attempt. Question: "${correctedQuestion}" Their answer: "${exercise.userAnswer}". Provide helpful guidance to help them understand the correct approach without giving away the answer directly. Focus on the learning process and concepts they should review. End with "${endPhrase}"`;
       } else if (attemptNumber === 2) {
-        guidancePrompt = `The student answered incorrectly again (attempt ${attemptNumber}). Question: "${correctedQuestion}" Their answer: "${exercise.userAnswer}". Provide more detailed guidance with hints about the specific approach needed. Be more specific than before but still don't give the direct answer. End with "You're getting closer! Try once more!"`;
+        const endPhrase = language === 'fr' ? 'Vous vous rapprochez ! Essayez encore une fois !' : 'You\'re getting closer! Try once more!';
+        guidancePrompt = `${languageInstructions} The student answered incorrectly again (attempt ${attemptNumber}). Question: "${correctedQuestion}" Their answer: "${exercise.userAnswer}". Provide more detailed guidance with hints about the specific approach needed. Be more specific than before but still don't give the direct answer. End with "${endPhrase}"`;
       } else {
-        guidancePrompt = `The student has attempted this ${attemptNumber} times and is still incorrect. Question: "${correctedQuestion}" Their answer: "${exercise.userAnswer}". Provide step-by-step guidance that almost shows how to solve it, but let them do the final calculation. Be very specific about the method. End with "You can do this! One more try!"`;
+        const endPhrase = language === 'fr' ? 'Vous pouvez le faire ! Encore un essai !' : 'You can do this! One more try!';
+        guidancePrompt = `${languageInstructions} The student has attempted this ${attemptNumber} times and is still incorrect. Question: "${correctedQuestion}" Their answer: "${exercise.userAnswer}". Provide step-by-step guidance that almost shows how to solve it, but let them do the final calculation. Be very specific about the method. End with "${endPhrase}"`;
       }
       
       const { data: guidanceData, error: guidanceError } = await supabase.functions.invoke('ai-chat', {
@@ -167,7 +184,7 @@ export const evaluateHomework = async (
         console.error('[homeworkGrading] Error getting guidance:', guidanceError || 'No content');
         
         // Provide enhanced math guidance as fallback
-        const basicGuidance = generateEnhancedMathGuidance(exercise.question, exercise.userAnswer);
+        const basicGuidance = generateEnhancedMathGuidance(exercise.question, exercise.userAnswer, language);
         const mathContext = equivalencyContext ? `\n\n${equivalencyContext}` : '';
         explanation = `**Problem:** ${correctedQuestion}\n\n**Guidance:** ${basicGuidance}${mathContext}`;
       } else {
@@ -179,9 +196,15 @@ export const evaluateHomework = async (
       // Progressive success messages with mathematical equivalency context
       const mathContext = equivalencyContext ? `\n\n${equivalencyContext}` : '';
       if (attemptNumber === 1) {
-        explanation = `**Problem:** ${correctedQuestion}\n\n**Guidance:** Perfect! You got it right on your first try! Your understanding of the concept is excellent.${mathContext}${ocrCorrectionNote} Ready for the next challenge?`;
+        const successMessage = language === 'fr' 
+          ? `Parfait ! Vous avez réussi du premier coup ! Votre compréhension du concept est excellente.${mathContext}${ocrCorrectionNote} Prêt pour le prochain défi ?`
+          : `Perfect! You got it right on your first try! Your understanding of the concept is excellent.${mathContext}${ocrCorrectionNote} Ready for the next challenge?`;
+        explanation = `**Problem:** ${correctedQuestion}\n\n**Guidance:** ${successMessage}`;
       } else {
-        explanation = `**Problem:** ${correctedQuestion}\n\n**Guidance:** Excellent work! You persevered and got the correct answer after ${attemptNumber} attempts. That's the spirit of learning - keep trying until you succeed!${mathContext}${ocrCorrectionNote} Well done!`;
+        const successMessage = language === 'fr'
+          ? `Excellent travail ! Vous avez persévéré et obtenu la bonne réponse après ${attemptNumber} tentatives. C'est l'esprit d'apprentissage - continuez à essayer jusqu'à réussir !${mathContext}${ocrCorrectionNote} Bien joué !`
+          : `Excellent work! You persevered and got the correct answer after ${attemptNumber} attempts. That's the spirit of learning - keep trying until you succeed!${mathContext}${ocrCorrectionNote} Well done!`;
+        explanation = `**Problem:** ${correctedQuestion}\n\n**Guidance:** ${successMessage}`;
       }
       console.log('[homeworkGrading] Correct answer - positive feedback provided for attempt:', attemptNumber);
     }
@@ -190,7 +213,9 @@ export const evaluateHomework = async (
     const needsRetry = !isCorrect;
 
     // Display appropriate notification
-    toast.success(isCorrect ? "Correct! Great job!" : "Incorrect. Check the guidance below to improve your understanding.");
+    const successMsg = language === 'fr' ? "Correct ! Bon travail !" : "Correct! Great job!";
+    const incorrectMsg = language === 'fr' ? "Incorrect. Consultez les conseils ci-dessous pour améliorer votre compréhension." : "Incorrect. Check the guidance below to improve your understanding.";
+    toast.success(isCorrect ? successMsg : incorrectMsg);
 
     // Update the latest attempt with grading results
     const updatedAttempts = exercise.attempts.map(attempt => 
@@ -226,7 +251,7 @@ export const evaluateHomework = async (
 /**
  * Generate enhanced math guidance when AI service fails
  */
-const generateEnhancedMathGuidance = (question: string, userAnswer: string): string => {
+const generateEnhancedMathGuidance = (question: string, userAnswer: string, language: string = 'en'): string => {
   // Check for basic arithmetic problems with decimal support
   const basicMathPattern = /(\d+(?:\.\d+)?)\s*([+\-*/])\s*(\d+(?:\.\d+)?)/;
   const basicMatch = question.match(basicMathPattern);
@@ -243,43 +268,72 @@ const generateEnhancedMathGuidance = (question: string, userAnswer: string): str
     switch (operator) {
       case '+':
         correctAnswer = a + b;
-        operationName = 'addition';
-        stepByStep = `Step 1: Add ${a} + ${b}\nStep 2: ${a} + ${b} = ${correctAnswer}`;
+        operationName = language === 'fr' ? 'addition' : 'addition';
+        stepByStep = language === 'fr' 
+          ? `Étape 1 : Additionner ${a} + ${b}\nÉtape 2 : ${a} + ${b} = ${correctAnswer}`
+          : `Step 1: Add ${a} + ${b}\nStep 2: ${a} + ${b} = ${correctAnswer}`;
         break;
       case '-':
         correctAnswer = a - b;
-        operationName = 'subtraction';
-        stepByStep = `Step 1: Subtract ${b} from ${a}\nStep 2: ${a} - ${b} = ${correctAnswer}`;
+        operationName = language === 'fr' ? 'soustraction' : 'subtraction';
+        stepByStep = language === 'fr'
+          ? `Étape 1 : Soustraire ${b} de ${a}\nÉtape 2 : ${a} - ${b} = ${correctAnswer}`
+          : `Step 1: Subtract ${b} from ${a}\nStep 2: ${a} - ${b} = ${correctAnswer}`;
         break;
       case '*':
         correctAnswer = a * b;
-        operationName = 'multiplication';
-        stepByStep = `Step 1: Multiply ${a} × ${b}\nStep 2: ${a} × ${b} = ${correctAnswer}`;
+        operationName = language === 'fr' ? 'multiplication' : 'multiplication';
+        stepByStep = language === 'fr'
+          ? `Étape 1 : Multiplier ${a} × ${b}\nÉtape 2 : ${a} × ${b} = ${correctAnswer}`
+          : `Step 1: Multiply ${a} × ${b}\nStep 2: ${a} × ${b} = ${correctAnswer}`;
         break;
       case '/':
         correctAnswer = a / b;
-        operationName = 'division';
+        operationName = language === 'fr' ? 'division' : 'division';
         // Handle repeating decimals better
         const isRepeatingDecimal = !Number.isInteger(correctAnswer) && (correctAnswer.toString().length > 6 || correctAnswer % 1 !== 0);
         const roundedAnswer = Math.round(correctAnswer * 10000) / 10000; // Round to 4 decimal places
-        stepByStep = `Step 1: Divide ${a} by ${b}\nStep 2: ${a} ÷ ${b} = ${correctAnswer}${isRepeatingDecimal ? ` (or approximately ${roundedAnswer})` : ''}`;
+        stepByStep = language === 'fr'
+          ? `Étape 1 : Diviser ${a} par ${b}\nÉtape 2 : ${a} ÷ ${b} = ${correctAnswer}${isRepeatingDecimal ? ` (ou approximativement ${roundedAnswer})` : ''}`
+          : `Step 1: Divide ${a} by ${b}\nStep 2: ${a} ÷ ${b} = ${correctAnswer}${isRepeatingDecimal ? ` (or approximately ${roundedAnswer})` : ''}`;
         break;
       default:
-        return "Your answer was incorrect. Please double-check your calculation and try the problem again step by step.";
+        return language === 'fr' 
+          ? "Votre réponse était incorrecte. Veuillez vérifier votre calcul et essayer le problème étape par étape."
+          : "Your answer was incorrect. Please double-check your calculation and try the problem again step by step.";
     }
     
-    return `Your answer was incorrect. This is a ${operationName} problem.
+    const guidanceText = language === 'fr'
+      ? `Votre réponse était incorrecte. Ceci est un problème de ${operationName}.
+
+${stepByStep}
+
+Revoyez vos étapes de ${operationName} et assurez-vous de calculer correctement. La bonne réponse est ${correctAnswer}.
+
+Essayez de refaire le problème et n'oubliez pas de vérifier votre arithmétique !`
+      : `Your answer was incorrect. This is a ${operationName} problem.
 
 ${stepByStep}
 
 Review your ${operationName} steps and make sure you're calculating correctly. The correct answer is ${correctAnswer}.
 
 Try working through it again, and remember to double-check your arithmetic!`;
+    
+    return guidanceText;
   }
   
   // Check for equation solving
   if (question.includes('=') && question.includes('x')) {
-    return `This appears to be an equation with a variable. Here are some tips:
+    return language === 'fr'
+      ? `Ceci semble être une équation avec une variable. Voici quelques conseils :
+
+1. Identifiez ce que vous résolvez (généralement x)
+2. Utilisez des opérations inverses pour isoler la variable
+3. Ce que vous faites d'un côté, faites-le de l'autre côté
+4. Vérifiez votre réponse en la substituant dans l'équation originale
+
+Essayez de résoudre le problème étape par étape, et rappelez-vous que l'objectif est d'obtenir la variable seule d'un côté.`
+      : `This appears to be an equation with a variable. Here are some tips:
 
 1. Identify what you're solving for (usually x)
 2. Use inverse operations to isolate the variable
@@ -290,7 +344,17 @@ Try working through the problem step by step, and remember the goal is to get th
   }
   
   // Generic helpful guidance
-  return `Your answer was incorrect, but that's part of learning! Here are some general tips:
+  return language === 'fr'
+    ? `Votre réponse était incorrecte, mais cela fait partie de l'apprentissage ! Voici quelques conseils généraux :
+
+1. Lisez attentivement le problème et identifiez ce qui est demandé
+2. Divisez les problèmes complexes en étapes plus petites
+3. Montrez votre travail pour pouvoir vérifier chaque étape
+4. Vérifiez vos calculs
+5. Réfléchissez si votre réponse a du sens
+
+Regardez à nouveau le problème et essayez de le résoudre étape par étape. Vous pouvez le faire !`
+    : `Your answer was incorrect, but that's part of learning! Here are some general tips:
 
 1. Read the problem carefully and identify what's being asked
 2. Break complex problems into smaller steps
