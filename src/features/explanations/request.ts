@@ -44,37 +44,40 @@ export async function fetchExplanation(
 
   try {
     // Build the prompt template (using the Math Explanation Generator template)
-    const mathExplanationTemplate = `You are a helpful and patient math tutor for students from elementary to high school level.
-Teach the underlying concept clearly using simple language and a similar example, but do NOT solve the student's exact problem.
+    const mathExplanationTemplate = `You are a patient math tutor. Your job is to TEACH the underlying mathematical concept, not to solve the student's exercise.
 
-Return ONLY minified JSON exactly like:
+Explain using clear, grade-appropriate language, but always include the precise mathematical terms:
+- Greatest Common Divisor (GCD) or PGCD (in French) when simplifying fractions.
+- Factorization, prime numbers, divisibility rules, etc. where relevant.
+- Avoid vague phrases like "lowest terms" or "simpler fraction."
+
+Your output must ALWAYS be structured JSON:
 {"steps":[{"title":"","body":"","icon":"","kind":""}],"meta":{"mode":"concept","revealAnswer":false}}
 
 Rules:
-- 3–5 steps maximum.
+- 3–5 steps.
 - Each step:
-  • "title": 2–5 words
-  • "body": 1–3 simple sentences, grade-appropriate
+  • "title": 2–5 words (short label)
+  • "body": 1–3 simple sentences explaining the concept clearly.
   • "icon": one of ["lightbulb","magnifier","divide","checklist","warning","target"]
   • "kind": one of ["concept","example","strategy","pitfall","check"]
-- Do NOT compute or state the final numeric/algebraic answer to the student's exercise.
-- If you show an example, use DIFFERENT numbers or a generic symbolic example, and you may solve THAT example fully.
-- Prefer this flow:
-  1) concept           (icon=lightbulb)
-  2) similar example   (icon=magnifier or divide)
-  3) strategy/steps    (icon=checklist)
-  4) common pitfall    (icon=warning)    [optional]
-  5) check yourself    (icon=target but NO final answer; make it a checklist/question)
-- No extra text, no markdown, no code fences.
+- DO NOT solve the student's exact exercise. Instead, use a different example to illustrate the concept.
+- Example must use different numbers than the exercise but can be fully solved to show how the concept applies.
+- Last step should be a self-check question, not the answer.
 
-Exercise: {{exercise_content}}
-Student answer: {{student_answer}}
+Exercise (for context, DO NOT solve): {{exercise}}
+Student answer: {{studentAnswer}}
 Subject: {{subject}}
-Language: {{response_language}}
-Grade level: {{grade_level}}`;
+Language: {{language}}
+Grade level: {{gradeLevel}}`;
 
     // Map exercise data to template variables
-    const variables: PromptVariables = {
+    const variables: PromptVariables & {
+      exercise: string;
+      studentAnswer: string;
+      language: string;
+      gradeLevel: string;
+    } = {
       exercise_content: exerciseRow.question,
       student_answer: exerciseRow.userAnswer,
       correct_answer: correctAnswer || 'Not provided',
@@ -84,7 +87,12 @@ Grade level: {{grade_level}}`;
       response_language: userContext?.response_language || 'English',
       // Legacy variables for backward compatibility
       student_level: userContext?.grade_level || 'middle school',
-      subject: 'Mathematics'
+      subject: 'Mathematics',
+      // New template variable mappings
+      exercise: exerciseRow.question,
+      studentAnswer: exerciseRow.userAnswer,
+      language: userContext?.response_language || 'English',
+      gradeLevel: userContext?.grade_level || 'middle school'
     };
 
     // Substitute variables into the template
