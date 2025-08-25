@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Book, FlaskConical, Languages, Send } from 'lucide-react';
 
@@ -117,21 +117,27 @@ const ExerciseCard = ({
           
           {/* Answer Input for Unanswered Exercises */}
           {status === 'unanswered' && onSubmitAnswer && (
-            <div className="mb-2 space-y-1">
-              <Textarea
+            <div className="mb-2 flex items-center gap-2">
+              <Input
                 value={inputAnswer}
                 onChange={(e) => setInputAnswer(e.target.value)}
                 placeholder="Enter your answer here..."
-                className="min-h-[50px]"
+                className="h-6 text-xs px-2 flex-1"
                 disabled={isSubmitting}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmitAnswer();
+                  }
+                }}
               />
               <Button
                 onClick={handleSubmitAnswer}
                 disabled={!inputAnswer.trim() || isSubmitting}
-                className="w-full h-6 text-xs px-2 py-0.5"
+                className="h-6 text-xs px-2"
               >
-                <Send size={14} className="mr-1" />
-                {isSubmitting ? 'Submitting...' : 'Submit Answer'}
+                <Send size={12} className="mr-1" />
+                {isSubmitting ? 'Submitting...' : 'Submit'}
               </Button>
             </div>
           )}
