@@ -29,8 +29,10 @@ Choose icons thoughtfully:
 - checklist: checking work/verification
 - divide: breaking down complex parts
 - lightbulb: key insights/understanding
-- target: final answer/goal
+- target: reaching understanding/goal
 - warning: common mistakes/cautions
+
+IMPORTANT: DO NOT reveal the final answer - guide students to discover it themselves through the process.
 
 Be encouraging and adapt language to {{grade_level}} level. NO markdown, NO extra text outside JSON.`,
     tags: ['math', 'explanations', 'json', 'structured'],

@@ -21,9 +21,9 @@ const ai = {
           icon: "checklist"
         },
         {
-          title: "Final Answer",
-          body: "Here's the complete solution with verification.",
-          icon: "target"
+          title: "Check Your Work",
+          body: "Now verify your steps and see if you can reach the correct answer.",
+          icon: "checklist"
         }
       ]
     });
@@ -70,6 +70,7 @@ Requirements:
 - Only use these icons: magnifier, checklist, divide, lightbulb, target, warning
 - Be encouraging and age-appropriate for {{grade_level}} level
 - Focus on understanding, not just the answer
+- DO NOT reveal the final answer - guide students to discover it themselves
 
 Respond ONLY with the JSON, no other text.`;
 
