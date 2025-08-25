@@ -87,11 +87,6 @@ const ExerciseComposer = ({
             </Button>
           </div>
         </div>
-        
-        {/* Helper text */}
-        <p className="text-caption text-neutral-muted mt-2 text-center">
-          Ask questions, upload homework, or get help with any subject
-        </p>
       </div>
     </div>
   );
