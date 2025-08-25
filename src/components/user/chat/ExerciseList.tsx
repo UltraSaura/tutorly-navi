@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, GraduationCap, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,15 @@ const ExerciseList = ({
   const { t } = useLanguage();
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [showExplanationModal, setShowExplanationModal] = useState(false);
+
+  // Debug logging for grade props
+  console.log('[ExerciseList] Received grade prop:', grade);
+  console.log('[ExerciseList] Grade percentage:', grade.percentage, 'Grade letter:', grade.letter);
+  
+  // Track grade changes
+  useEffect(() => {
+    console.log('[ExerciseList] Grade changed via useEffect:', grade);
+  }, [grade]);
   
   const correctExercises = exercises.filter(ex => ex.isCorrect).length;
   const answeredExercises = exercises.filter(ex => ex.isCorrect !== undefined).length;

@@ -17,8 +17,13 @@ export const useExercises = () => {
   useEffect(() => {
     console.log('[useExercises] exercises updated. Current exercises:', exercises);
     updateGrades(exercises);
-    console.log('[useExercises] Called updateGrades. Current grade after update:', grade);
+    // Note: grade state will be updated asynchronously, so the log below shows stale state
   }, [exercises, updateGrades]);
+
+  // Separate useEffect to track grade changes (shows current state)
+  useEffect(() => {
+    console.log('[useExercises] Grade state updated:', grade);
+  }, [grade]);
 
   const toggleExerciseExpansion = (id: string) => {
     console.log(`[useExercises] Toggling expansion for exercise id: ${id}`);
