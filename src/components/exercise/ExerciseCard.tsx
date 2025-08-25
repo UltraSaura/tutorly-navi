@@ -138,13 +138,13 @@ const ExerciseCard = ({
           )}
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {status !== 'unanswered' && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onShowExplanation(id)}
-                className="text-caption"
+                className="text-caption px-2 py-1 h-7"
                 aria-label={`Show explanation for exercise ${id}`}
               >
                 Show explanation
@@ -156,7 +156,7 @@ const ExerciseCard = ({
                 variant="default"
                 size="sm"
                 onClick={() => onTryAgain(id)}
-                className="text-caption"
+                className="text-caption px-2 py-1 h-7"
                 aria-label={`Try again for exercise ${id}`}
               >
                 Try again
