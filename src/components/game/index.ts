@@ -1,7 +1,10 @@
 // Export all gamification components
 export { default as XpBar } from './XpBar';
+export { default as XpChip } from './XpChip';
 export { default as StreakChip } from './StreakChip';
-export { default as CoinWallet } from './CoinWallet';
+export { default as CompactStreakChip } from './CompactStreakChip';
+export { default as CoinWallet } from './CoinWallet';  
+export { default as CompactCoinChip } from './CompactCoinChip';
 export { default as BadgeCard } from './BadgeCard';
 export { default as XpToast, showXpToast } from './XpToast';
 

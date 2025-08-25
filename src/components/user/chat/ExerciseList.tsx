@@ -1,12 +1,14 @@
 
 import React, { useState } from 'react';
-import { BookOpen, Upload, MessageCircleQuestion } from 'lucide-react';
+import { BookOpen, Upload, MessageCircleQuestion, GraduationCap } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { XpBar, StreakChip, CoinWallet } from '@/components/game';
 import ExerciseCard from '@/components/exercise/ExerciseCard';
 import ExplanationModal from '@/components/exercise/ExplanationModal';
 import ExerciseComposer from '@/components/exercise/ExerciseComposer';
+import XpChip from '@/components/game/XpChip';
+import CompactStreakChip from '@/components/game/CompactStreakChip';
+import CompactCoinChip from '@/components/game/CompactCoinChip';
 import { Exercise as ExerciseType } from '@/types/chat';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { cn } from '@/lib/utils';
@@ -43,8 +45,8 @@ const ExerciseList = ({
   
   // Mock data for gamification (replace with real data from context)
   const userStats = {
-    xpProgress: 0.7, // 70% to next level
-    currentLevel: 5,
+    currentLevel: 2,
+    currentXp: 250,
     streakDays: 7,
     streakActive: true,
     coins: 245
@@ -75,8 +77,7 @@ const ExerciseList = ({
   ];
   
   const getGradeColor = () => {
-    if (grade.percentage >= 80) return 'text-state-success';
-    if (grade.percentage >= 60) return 'text-game-coin';
+    if (grade.percentage >= 60) return 'text-state-success';
     return 'text-state-danger';
   };
   
@@ -122,47 +123,38 @@ const ExerciseList = ({
   
   return (
     <div className="flex flex-col h-full">
-      {/* Header with Grade and Gamification */}
-      <div className="p-6 border-b border-neutral-border bg-neutral-surface">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            {/* Grade Section */}
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <h2 className="text-h1 font-bold text-neutral-text mb-1">
-                  Exercise Progress
-                </h2>
-                <div className="flex items-center gap-2">
-                  <span className="text-body text-neutral-muted">Overall Grade:</span>
-                  <span className={cn("text-h2 font-bold", getGradeColor())}>
-                    {grade.percentage}%
-                  </span>
-                  {grade.letter !== 'N/A' && (
-                    <span className="text-body text-neutral-muted">({grade.letter})</span>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            {/* Gamification Stats */}
-            <div className="flex flex-wrap items-center gap-4">
-              <XpBar 
-                value={userStats.xpProgress} 
-                level={userStats.currentLevel}
-                className="min-w-48"
-              />
-              <StreakChip 
-                days={userStats.streakDays} 
-                active={userStats.streakActive} 
-              />
-              <CoinWallet coins={userStats.coins} />
-            </div>
+      {/* Compact 3-Line Header */}
+      <div className="px-6 py-4 border-b border-neutral-border bg-neutral-surface">
+        <div className="max-w-6xl mx-auto space-y-2">
+          {/* Line 1: Title */}
+          <div className="flex items-center">
+            <h1 className="text-h2 font-bold text-neutral-text">Exercise List</h1>
           </div>
           
-          {/* Stats Summary */}
-          <div className="mt-4 flex justify-center lg:justify-start">
-            <div className="text-caption text-neutral-muted">
-              {correctExercises} correct • {answeredExercises} completed • {totalExercises} total exercises
+          {/* Line 2: Motivation Row (conditional) */}
+          <div className="flex items-center gap-3">
+            <XpChip 
+              level={userStats.currentLevel} 
+              xp={userStats.currentXp}
+            />
+            <CompactStreakChip 
+              days={userStats.streakDays} 
+              active={userStats.streakActive} 
+            />
+            <CompactCoinChip coins={userStats.coins} />
+          </div>
+          
+          {/* Line 3: Performance Summary */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <GraduationCap size={16} className="text-neutral-muted" />
+              <span className="text-body text-neutral-muted">Overall Grade:</span>
+              <span className={cn("text-body font-semibold", getGradeColor())}>
+                {grade.percentage}%
+              </span>
+            </div>
+            <div className="text-body text-neutral-muted">
+              {correctExercises}/{totalExercises} correct
             </div>
           </div>
         </div>
@@ -184,7 +176,7 @@ const ExerciseList = ({
                 </h3>
                 
                 <p className="text-body text-neutral-muted mb-8 max-w-md">
-                  Upload your first homework and earn your First Explorer badge +50 XP!
+                  No exercises yet. Upload your first homework to get started!
                 </p>
                 
                 <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -194,7 +186,7 @@ const ExerciseList = ({
                     className="bg-brand-primary hover:bg-brand-primary/90 text-neutral-surface"
                   >
                     <Upload className="mr-2" size={20} />
-                    Upload homework
+                    + Upload homework
                   </Button>
                   
                   <Button 
