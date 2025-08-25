@@ -6,7 +6,7 @@ import { calculateGrade } from '@/utils/gradeCalculation';
 export const useGrades = () => {
   const [grade, setGrade] = useState<Grade>({
     percentage: 0,
-    letter: 'N/A',
+    letter: '--',
   });
 
   const updateGrades = useCallback((exercises: Exercise[]) => {

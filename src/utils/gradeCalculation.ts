@@ -12,8 +12,8 @@ export const calculateGrade = (exercises: Exercise[]): Grade => {
   console.log('[gradeCalculation] Filtered answered exercises:', answeredExercises);
 
   if (answeredExercises.length === 0) {
-    console.log('[gradeCalculation] No answered exercises. Returning N/A.');
-    return { percentage: 0, letter: 'N/A' };
+    console.log('[gradeCalculation] No answered exercises. Returning --.');
+    return { percentage: 0, letter: '--' };
   }
 
   const correctExercises = answeredExercises.filter(ex => ex.isCorrect).length;
