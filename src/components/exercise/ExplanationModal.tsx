@@ -12,19 +12,14 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Search, CheckSquare, Divide, Check } from 'lucide-react';
+import { Search, CheckSquare, Divide, Check, Lightbulb, Target, AlertTriangle } from 'lucide-react';
 import { showXpToast } from '@/components/game/XpToast';
-
-interface ExplanationStep {
-  title: string;
-  body: string;
-  icon: string;
-}
+import { Step } from '@/features/explanations/types';
 
 interface ExplanationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  steps: ExplanationStep[];
+  steps: Step[];
   onTryAgain: () => void;
 }
 
@@ -32,7 +27,9 @@ const iconMap = {
   magnifier: Search,
   checklist: CheckSquare,
   divide: Divide,
-  check: Check,
+  lightbulb: Lightbulb,
+  target: Target,
+  warning: AlertTriangle,
 };
 
 const ExplanationModal = ({

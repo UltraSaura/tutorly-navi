@@ -9,6 +9,7 @@ import XpChip from '@/components/game/XpChip';
 import CompactStreakChip from '@/components/game/CompactStreakChip';
 import CompactCoinChip from '@/components/game/CompactCoinChip';
 import { Exercise as ExerciseType } from '@/types/chat';
+import { Step } from '@/features/explanations/types';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { cn } from '@/lib/utils';
 
@@ -57,7 +58,7 @@ const ExerciseList = ({
   };
   
   // Mock explanation steps
-  const mockExplanationSteps = [
+  const mockExplanationSteps: Step[] = [
     {
       title: "Analyze the problem",
       body: "First, identify what type of problem this is and what information you have available.",
@@ -76,7 +77,7 @@ const ExerciseList = ({
     {
       title: "Verify your answer",
       body: "Check your work by substituting your answer back into the original problem.",
-      icon: "check"
+      icon: "target"
     }
   ];
   
