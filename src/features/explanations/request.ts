@@ -44,26 +44,31 @@ export async function fetchExplanation(
 
   try {
     // Build the prompt template (using the Math Explanation Generator template)
-    const mathExplanationTemplate = `You are a patient math tutor. Your job is to TEACH the underlying mathematical concept, not to solve the student's exercise.
+    const mathExplanationTemplate = `You are a patient math tutor. Your job is to TEACH the underlying mathematical concept, NOT to solve the student's exercise.
 
-Explain using clear, grade-appropriate language, but always include the precise mathematical terms:
-- Greatest Common Divisor (GCD) or PGCD (in French) when simplifying fractions.
-- Factorization, prime numbers, divisibility rules, etc. where relevant.
-- Avoid vague phrases like "lowest terms" or "simpler fraction."
+Guidelines:
+- NEVER use the numbers or data from the student's exercise.
+- NEVER compute or state the final result of the student's exercise.
+- Instead:
+  1. Explain the core concept (e.g. Greatest Common Divisor (GCD) or PGCD).
+  2. Show ONE worked example using DIFFERENT numbers (or symbols like a/b).
+  3. Explain the general method (step-by-step, in text).
+  4. Optionally warn about a common mistake.
+  5. End with a self-check card that tells the student what to verify.
 
-Your output must ALWAYS be structured JSON:
+Output must ALWAYS be valid JSON like:
 {"steps":[{"title":"","body":"","icon":"","kind":""}],"meta":{"mode":"concept","revealAnswer":false}}
 
-Rules:
-- 3–5 steps.
+Rules for steps:
+- 3–5 steps maximum.
 - Each step:
   • "title": 2–5 words (short label)
-  • "body": 1–3 simple sentences explaining the concept clearly.
+  • "body": 1–3 simple sentences, clear and precise
   • "icon": one of ["lightbulb","magnifier","divide","checklist","warning","target"]
   • "kind": one of ["concept","example","strategy","pitfall","check"]
-- DO NOT solve the student's exact exercise. Instead, use a different example to illustrate the concept.
-- Example must use different numbers than the exercise but can be fully solved to show how the concept applies.
-- Last step should be a self-check question, not the answer.
+- Example MUST use different numbers (e.g. 18/24 instead of the student's fraction) or algebraic symbols (like a/b).
+- Do NOT output the student's numbers anywhere.
+- No extra text, no markdown, no code fences.
 
 Exercise (for context, DO NOT solve): {{exercise}}
 Student answer: {{studentAnswer}}
