@@ -4,7 +4,8 @@ import { BookOpen, GraduationCap, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import ExerciseCard from '@/components/exercise/ExerciseCard';
-import ExplanationModal from '@/components/exercise/ExplanationModal';
+import { ExplanationModal } from '@/features/explanations/ExplanationModal';
+import { useExplanation } from '@/features/explanations/useExplanation';
 import XpChip from '@/components/game/XpChip';
 import CompactStreakChip from '@/components/game/CompactStreakChip';
 import CompactCoinChip from '@/components/game/CompactCoinChip';
@@ -31,8 +32,7 @@ const ExerciseList = ({
   onClearExercises
 }: ExerciseListProps) => {
   const { t } = useLanguage();
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
-  const [showExplanationModal, setShowExplanationModal] = useState(false);
+  const exp = useExplanation();
 
   // Debug logging for grade props
   console.log('[ExerciseList] Received grade prop:', grade);
@@ -62,14 +62,15 @@ const ExerciseList = ({
   };
   
   const handleShowExplanation = (exerciseId: string) => {
-    setSelectedExerciseId(exerciseId);
-    setShowExplanationModal(true);
+    const exercise = exercises.find(ex => ex.id === exerciseId);
+    if (exercise) {
+      exp.openWithExercise(exercise);
+    }
   };
   
   const handleTryAgain = (exerciseId: string) => {
     // Handle retry logic
     console.log('Retrying exercise:', exerciseId);
-    setShowExplanationModal(false);
   };
   
   
@@ -177,10 +178,12 @@ const ExerciseList = ({
       
       {/* Explanation Modal */}
       <ExplanationModal
-        isOpen={showExplanationModal}
-        onClose={() => setShowExplanationModal(false)}
-        exerciseRow={exercises.find(ex => ex.id === selectedExerciseId) || exercises[0]}
-        onTryAgain={() => handleTryAgain(selectedExerciseId || '')}
+        open={exp.open}
+        onClose={() => exp.setOpen(false)}
+        loading={exp.loading}
+        steps={exp.steps}
+        error={exp.error}
+        onTryAgain={() => handleTryAgain('')}
       />
     </div>
   );
