@@ -35,6 +35,7 @@ export function safeParseNoAnswer(aiText: string): StepsPayload {
         title: (s.title || "").toString().slice(0,60),
         body: redactAnswers((s.body || "").toString().slice(0,600)),
         icon: ALLOWED.includes(s.icon) ? s.icon : "lightbulb",
+        kind: ["concept","example","strategy","pitfall","check"].includes(s.kind) ? s.kind : "concept",
       }));
 
     if (!normalized.length) throw new Error("empty steps");
@@ -44,11 +45,16 @@ export function safeParseNoAnswer(aiText: string): StepsPayload {
       last.title = "Check your result";
       last.body = redactAnswers(last.body).replace(/final answer.*$/i, "Make sure your result is fully reduced and consistent.");
       last.icon = "lightbulb";
+      last.kind = "check";
     }
-    return { steps: normalized };
+    return { 
+      steps: normalized,
+      meta: obj.meta || { mode: "concept", revealAnswer: false }
+    };
   } catch {
     return {
-      steps: [{ title:"How to approach", body:"Break the problem into smaller actions and verify each step.", icon:"lightbulb" }]
+      steps: [{ title:"How to approach", body:"Break the problem into smaller actions and verify each step.", icon:"lightbulb", kind:"concept" }],
+      meta: { mode: "concept", revealAnswer: false }
     };
   }
 }

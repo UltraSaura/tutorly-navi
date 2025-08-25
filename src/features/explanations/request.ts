@@ -42,27 +42,34 @@ export async function fetchExplanation(
 
   try {
     // Build the prompt template (using the Math Explanation Generator template)
-    const mathExplanationTemplate = `You are a friendly math tutor helping a {{grade_level}} student named {{first_name}} from {{country}}.
+    const mathExplanationTemplate = `You are a helpful and patient math tutor for students from elementary to high school level.
+Teach the underlying concept clearly using simple language and a similar example, but do NOT solve the student's exact problem.
 
-The student attempted this exercise: "{{exercise_content}}"
-Their answer was: "{{student_answer}}"
-The correct answer is: "{{correct_answer}}"
+Return ONLY minified JSON exactly like:
+{"steps":[{"title":"","body":"","icon":"","kind":""}],"meta":{"mode":"concept","revealAnswer":false}}
 
-Generate a step-by-step explanation in {{response_language}} that helps them understand the solution.
+Rules:
+- 3–5 steps maximum.
+- Each step:
+  • "title": 2–5 words
+  • "body": 1–3 simple sentences, grade-appropriate
+  • "icon": one of ["lightbulb","magnifier","divide","checklist","warning","target"]
+  • "kind": one of ["concept","example","strategy","pitfall","check"]
+- Do NOT compute or state the final numeric/algebraic answer to the student's exercise.
+- If you show an example, use DIFFERENT numbers or a generic symbolic example, and you may solve THAT example fully.
+- Prefer this flow:
+  1) concept           (icon=lightbulb)
+  2) similar example   (icon=magnifier or divide)
+  3) strategy/steps    (icon=checklist)
+  4) common pitfall    (icon=warning)    [optional]
+  5) check yourself    (icon=target but NO final answer; make it a checklist/question)
+- No extra text, no markdown, no code fences.
 
-You MUST respond with valid JSON in this exact format:
-{"steps":[{"title":"Step Title (max 50 chars)","body":"Detailed explanation (max 200 chars)","icon":"magnifier|checklist|divide|lightbulb|target|warning"}]}
-
-Requirements:
-- Provide exactly 3-5 steps
-- Each title must be 50 characters or less
-- Each body must be 200 characters or less  
-- Only use these icons: magnifier, checklist, divide, lightbulb, target, warning
-- Be encouraging and age-appropriate for {{grade_level}} level
-- Focus on understanding, not just the answer
-- DO NOT reveal the final answer - guide students to discover it themselves
-
-Respond ONLY with the JSON, no other text.`;
+Exercise: {{exercise_content}}
+Student answer: {{student_answer}}
+Subject: {{subject}}
+Language: {{response_language}}
+Grade level: {{grade_level}}`;
 
     // Map exercise data to template variables
     const variables: PromptVariables = {
