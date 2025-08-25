@@ -18,6 +18,7 @@ export function useExplanation() {
       const raw = await fetchExplanation(exerciseRow); // calls AI and returns raw text
       const payload = safeParse(raw);                  // parses to { steps }
       setSteps(payload.steps);
+      console.log("[Explain] steps set >>>", payload.steps);
     } catch (e: any) {
       setError("Couldn't load explanation. Please try again.");
       setSteps([{ title:"How to approach", body:"Break the problem into smaller steps and re-check your operations.", icon:"lightbulb" }]);

@@ -15,7 +15,6 @@ const ICONS: Record<Step["icon"], string> = {
 };
 
 const ExplanationCards: React.FC<ExplanationCardsProps> = ({ steps }) => {
-  if (!steps?.length) return null;
   
   return (
     <div className="space-y-4">

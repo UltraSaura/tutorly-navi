@@ -9,25 +9,7 @@ const ai = {
     console.log('AI Chat called with prompt:', prompt);
     
     // Return mock JSON response for now
-    return JSON.stringify({
-      steps: [
-        {
-          title: "Understanding the Problem",
-          body: "Let's break down what we need to find in this exercise.",
-          icon: "magnifier"
-        },
-        {
-          title: "Apply the Method", 
-          body: "We'll use the appropriate mathematical method to solve this step by step.",
-          icon: "checklist"
-        },
-        {
-          title: "Check Your Work",
-          body: "Now verify your steps and see if you can reach the correct answer.",
-          icon: "checklist"
-        }
-      ]
-    });
+    return MOCK_JSON;
   }
 };
 
