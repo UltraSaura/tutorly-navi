@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import ExerciseList from './chat/ExerciseList';
+import MessageInput from './chat/MessageInput';
 import CameraCapture from './chat/CameraCapture';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
@@ -168,17 +169,29 @@ const ChatInterface = () => {
     setShowCamera(false);
   };
 
-  // Exercise-Focused Layout with Upload Sheet
+  // Exercise-Focused Layout with Chat Input
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-neutral-bg">
-      {/* Exercise List - replaces MessageList */}
-      <div className="flex-1 overflow-hidden">
+      {/* Exercise List */}
+      <div className="flex-1 overflow-hidden pb-4">
         <ExerciseList
           exercises={exercises}
           grade={grade}
           toggleExerciseExpansion={toggleExerciseExpansion}
           onSubmitAnswer={submitAnswer}
           onClearExercises={clearExercises}
+        />
+      </div>
+
+      {/* Chat Input */}
+      <div className="flex-shrink-0 p-4 bg-neutral-bg">
+        <MessageInput
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
+          handleSendMessage={handleSendMessage}
+          handleFileUpload={handleDocumentFileUpload}
+          handlePhotoUpload={handlePhotoFileUpload}
+          isLoading={isLoading}
         />
       </div>
 
