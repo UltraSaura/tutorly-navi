@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { BookOpen, Upload, MessageCircleQuestion, GraduationCap } from 'lucide-react';
+import { BookOpen, Upload, MessageCircleQuestion, GraduationCap, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import ExerciseCard from '@/components/exercise/ExerciseCard';
@@ -127,8 +127,18 @@ const ExerciseList = ({
       <div className="px-6 py-4 border-b border-neutral-border bg-neutral-surface">
         <div className="max-w-6xl mx-auto space-y-2">
           {/* Line 1: Title */}
-          <div className="flex items-center">
+          <div className="flex items-center justify-between">
             <h1 className="text-h2 font-bold text-neutral-text">Exercise List</h1>
+            {exercises.length > 0 && onClearExercises && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClearExercises}
+                className="text-neutral-muted hover:text-neutral-text"
+              >
+                <Trash2 size={16} />
+              </Button>
+            )}
           </div>
           
           {/* Line 2: Motivation Row (conditional) */}
