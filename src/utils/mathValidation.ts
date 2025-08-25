@@ -122,28 +122,124 @@ function normalizeAnswer(answer: string): string {
  * Generates helpful equivalency context for grading
  */
 export function getEquivalencyContext(question: string, userAnswer: string): string | null {
-  const correctAnswer = extractCorrectAnswer(question);
-  if (correctAnswer === null) return null;
-
-  const normalizedUserAnswer = normalizeAnswer(userAnswer);
-  const userValue = parseFloat(normalizedUserAnswer);
-  
-  if (isNaN(userValue)) return null;
-
-  // If answers are equivalent but in different formats
-  if (areMathematicallyEquivalent(question, userAnswer)) {
-    // Check if it's a fraction-decimal equivalency
-    if (question.includes('/') && !userAnswer.includes('/')) {
-      return `Note: The student provided the decimal equivalent (${userAnswer}) of the fraction, which is mathematically correct.`;
+  try {
+    const correctAnswer = extractCorrectAnswer(question);
+    if (correctAnswer === null) return null;
+    
+    const userNum = parseFloat(normalizeAnswer(userAnswer));
+    if (isNaN(userNum)) return null;
+    
+    // Check for common equivalencies
+    if (Math.abs(userNum - correctAnswer) < 0.01) {
+      // Check if it's a decimal equivalent of a fraction
+      const fractionMatch = question.match(/(\d+)\/(\d+)/);
+      if (fractionMatch) {
+        const [num, den] = fractionMatch.slice(1).map(Number);
+        if (Math.abs(userNum - (num / den)) < 0.01) {
+          return `Note: ${userAnswer} is the decimal equivalent of ${num}/${den}`;
+        }
+      }
+      
+      // Check if it's an acceptably rounded decimal
+      if (userAnswer.includes('.')) {
+        return `Note: ${userAnswer} is an acceptably precise decimal approximation`;
+      }
     }
     
-    // Check if it's a rounded decimal
-    if (Math.abs(userValue - correctAnswer) > Number.EPSILON && Math.abs(userValue - correctAnswer) <= 0.01) {
-      return `Note: The student provided a rounded decimal (${userAnswer}) which is acceptably close to the exact value (${correctAnswer.toFixed(6)}).`;
-    }
+    return null;
+  } catch (error) {
+    console.log('[mathValidation] Error generating equivalency context:', error);
+    return null;
   }
+}
 
-  return null;
+/**
+ * OCR sanity-check utility for fraction exercises
+ */
+export function detectFractionOcrMisread(question: string, userAnswer: string): { 
+  isLikely: boolean; 
+  correctedFraction?: string; 
+  reason?: string; 
+} {
+  try {
+    console.log('[mathValidation] detectFractionOcrMisread called:', { question, userAnswer });
+    
+    // Extract original fraction from question
+    const questionFractionMatch = question.match(/(\d+)\s*\/\s*(\d+)/);
+    if (!questionFractionMatch) return { isLikely: false };
+    
+    const [a, b] = questionFractionMatch.slice(1).map(n => parseInt(n.trim()));
+    
+    // Parse user's simplified fraction
+    const userFractionMatch = userAnswer.trim().replace(/\s+/g, '').match(/(\d+)\s*\/\s*(\d+)/);
+    if (!userFractionMatch) return { isLikely: false };
+    
+    const [c, d] = userFractionMatch.slice(1).map(n => parseInt(n.trim()));
+    
+    // Check if user's fraction is in simplest form
+    const userGCD = findGCD(c, d);
+    if (userGCD !== 1) return { isLikely: false };
+    
+    // If a is divisible by c, calculate the expected ratio
+    if (a % c !== 0) return { isLikely: false };
+    
+    const k = a / c;
+    const expectedDenominator = d * k;
+    
+    console.log('[mathValidation] OCR analysis:', { 
+      original: `${a}/${b}`, 
+      user: `${c}/${d}`, 
+      k, 
+      expectedDenominator, 
+      actualDenominator: b 
+    });
+    
+    // Check if the denominators differ by a single digit (common OCR error)
+    const denomString = b.toString();
+    const expectedString = expectedDenominator.toString();
+    
+    // Common OCR digit confusions
+    const ocrConfusions = [
+      ['8', '9'], ['9', '8'], ['3', '8'], ['8', '3'], ['5', '6'], ['6', '5'],
+      ['1', '7'], ['7', '1'], ['0', '8'], ['8', '0'], ['2', '5'], ['5', '2']
+    ];
+    
+    // Check for single digit difference
+    if (Math.abs(b - expectedDenominator) <= 10 && denomString.length === expectedString.length) {
+      // Find which digit differs
+      for (let i = 0; i < denomString.length; i++) {
+        if (denomString[i] !== expectedString[i]) {
+          const actualDigit = denomString[i];
+          const expectedDigit = expectedString[i];
+          
+          // Check if it's a common OCR confusion
+          const isOcrConfusion = ocrConfusions.some(([d1, d2]) => 
+            (actualDigit === d1 && expectedDigit === d2) || 
+            (actualDigit === d2 && expectedDigit === d1)
+          );
+          
+          if (isOcrConfusion) {
+            console.log('[mathValidation] ✅ OCR misread detected:', { 
+              actualDigit, 
+              expectedDigit, 
+              position: i 
+            });
+            
+            return {
+              isLikely: true,
+              correctedFraction: `${a}/${expectedDenominator}`,
+              reason: `OCR likely misread '${expectedDigit}' as '${actualDigit}' in denominator`
+            };
+          }
+        }
+      }
+    }
+    
+    return { isLikely: false };
+  } catch (error) {
+    console.log('[mathValidation] Error in OCR detection:', error);
+    return { isLikely: false };
+  }
 }
 
 // NEW: Special function for fraction simplification exercises

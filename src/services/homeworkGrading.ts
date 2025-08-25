@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Exercise } from "@/types/chat";
 import { toast } from 'sonner';
-import { areMathematicallyEquivalent, getEquivalencyContext } from "@/utils/mathValidation";
+import { areMathematicallyEquivalent, getEquivalencyContext, detectFractionOcrMisread } from "@/utils/mathValidation";
 
 export const evaluateHomework = async (
   exercise: Exercise,
@@ -105,12 +105,24 @@ export const evaluateHomework = async (
     }
 
     let isCorrect = responseContent === 'CORRECT';
+    let ocrCorrectionNote = '';
     
     // Override AI decision if mathematical validation indicates correctness
     if (!isCorrect && mathematicalEquivalency === true) {
       console.log('[homeworkGrading] AI marked incorrect but mathematical validation says correct - overriding to CORRECT');
       isCorrect = true;
     }
+    
+    // Check for likely OCR misreads in fraction exercises if still incorrect
+    if (!isCorrect) {
+      const ocrCheck = detectFractionOcrMisread(exercise.question, exercise.userAnswer);
+      if (ocrCheck.isLikely) {
+        console.log('[homeworkGrading] OCR misread detected - overriding to CORRECT:', ocrCheck);
+        isCorrect = true;
+        ocrCorrectionNote = `\n\n**OCR Correction:** Your answer is correct! The system detected a likely OCR misread where "${ocrCheck.correctedFraction}" was read as the original fraction. ${ocrCheck.reason}.`;
+      }
+    }
+    
     console.log(`[homeworkGrading] Exercise graded as: ${isCorrect ? 'CORRECT' : 'INCORRECT'}`);
 
     // Step 2: Get guidance based on correctness and attempt number
@@ -155,9 +167,9 @@ export const evaluateHomework = async (
       // Progressive success messages with mathematical equivalency context
       const mathContext = equivalencyContext ? `\n\n${equivalencyContext}` : '';
       if (attemptNumber === 1) {
-        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Perfect! You got it right on your first try! Your understanding of the concept is excellent.${mathContext} Ready for the next challenge?`;
+        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Perfect! You got it right on your first try! Your understanding of the concept is excellent.${mathContext}${ocrCorrectionNote} Ready for the next challenge?`;
       } else {
-        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Excellent work! You persevered and got the correct answer after ${attemptNumber} attempts. That's the spirit of learning - keep trying until you succeed!${mathContext} Well done!`;
+        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Excellent work! You persevered and got the correct answer after ${attemptNumber} attempts. That's the spirit of learning - keep trying until you succeed!${mathContext}${ocrCorrectionNote} Well done!`;
       }
       console.log('[homeworkGrading] Correct answer - positive feedback provided for attempt:', attemptNumber);
     }
