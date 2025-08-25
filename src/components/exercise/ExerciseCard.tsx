@@ -117,21 +117,20 @@ const ExerciseCard = ({
           
           {/* Answer Input for Unanswered Exercises */}
           {status === 'unanswered' && onSubmitAnswer && (
-            <div className="mb-3 space-y-2">
+            <div className="mb-2 space-y-1">
               <Textarea
                 value={inputAnswer}
                 onChange={(e) => setInputAnswer(e.target.value)}
                 placeholder="Enter your answer here..."
-                className="min-h-[80px]"
+                className="min-h-[50px]"
                 disabled={isSubmitting}
               />
               <Button
                 onClick={handleSubmitAnswer}
                 disabled={!inputAnswer.trim() || isSubmitting}
-                size="sm"
-                className="w-full"
+                className="w-full h-6 text-xs px-2 py-0.5"
               >
-                <Send size={16} className="mr-2" />
+                <Send size={14} className="mr-1" />
                 {isSubmitting ? 'Submitting...' : 'Submit Answer'}
               </Button>
             </div>
