@@ -134,10 +134,10 @@ const ExerciseCard = ({
               <Button
                 onClick={handleSubmitAnswer}
                 disabled={!inputAnswer.trim() || isSubmitting}
-                className="h-6 text-xs px-2"
+                className="h-6 text-xs px-1.5"
+                aria-label={isSubmitting ? 'Submitting answer' : 'Submit answer'}
               >
-                <Send size={12} className="mr-1" />
-                {isSubmitting ? 'Submitting...' : 'Submit'}
+                <Send size={12} />
               </Button>
             </div>
           )}
