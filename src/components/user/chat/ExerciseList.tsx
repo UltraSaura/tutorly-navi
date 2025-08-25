@@ -9,7 +9,6 @@ import XpChip from '@/components/game/XpChip';
 import CompactStreakChip from '@/components/game/CompactStreakChip';
 import CompactCoinChip from '@/components/game/CompactCoinChip';
 import { Exercise as ExerciseType } from '@/types/chat';
-import { Step } from '@/features/explanations/types';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { cn } from '@/lib/utils';
 
@@ -56,30 +55,6 @@ const ExerciseList = ({
     streakActive: true,
     coins: 245
   };
-  
-  // Mock explanation steps
-  const mockExplanationSteps: Step[] = [
-    {
-      title: "Analyze the problem",
-      body: "First, identify what type of problem this is and what information you have available.",
-      icon: "magnifier"
-    },
-    {
-      title: "Break down the steps",
-      body: "Divide the problem into smaller, manageable parts that you can solve one at a time.",
-      icon: "checklist" 
-    },
-    {
-      title: "Apply the method",
-      body: "Use the appropriate mathematical or logical method to solve each part of the problem.",
-      icon: "divide"
-    },
-    {
-      title: "Verify your answer",
-      body: "Check your work by substituting your answer back into the original problem.",
-      icon: "target"
-    }
-  ];
   
   const getGradeColor = () => {
     if (grade.percentage >= 60) return 'text-state-success';
@@ -204,7 +179,7 @@ const ExerciseList = ({
       <ExplanationModal
         isOpen={showExplanationModal}
         onClose={() => setShowExplanationModal(false)}
-        steps={mockExplanationSteps}
+        exerciseRow={exercises.find(ex => ex.id === selectedExerciseId) || exercises[0]}
         onTryAgain={() => handleTryAgain(selectedExerciseId || '')}
       />
     </div>

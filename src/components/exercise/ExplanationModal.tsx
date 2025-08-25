@@ -1,49 +1,69 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Search, CheckSquare, Divide, Check, Lightbulb, Target, AlertTriangle } from 'lucide-react';
 import { showXpToast } from '@/components/game/XpToast';
 import { Step } from '@/features/explanations/types';
+import { Exercise } from '@/types/chat';
+import { fetchExplanation } from '@/features/explanations/request';
+import { safeParse } from '@/features/explanations/validate';
+import ExplanationCards from '@/features/explanations/ExplanationCards';
 
 interface ExplanationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  steps: Step[];
+  exerciseRow: Exercise;
   onTryAgain: () => void;
 }
-
-const iconMap = {
-  magnifier: Search,
-  checklist: CheckSquare,
-  divide: Divide,
-  lightbulb: Lightbulb,
-  target: Target,
-  warning: AlertTriangle,
-};
 
 const ExplanationModal = ({
   isOpen,
   onClose,
-  steps,
+  exerciseRow,
   onTryAgain
 }: ExplanationModalProps) => {
+  const [steps, setSteps] = useState<Step[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hasShownExplanation, setHasShownExplanation] = useState(false);
+  
+  const handleShowExplanation = async () => {
+    if (hasShownExplanation) return; // Already shown
+    
+    setLoading(true);
+    try {
+      const response = await fetchExplanation(exerciseRow);
+      const parsedSteps = safeParse(response);
+      setSteps(parsedSteps.steps);
+      setHasShownExplanation(true);
+    } catch (error) {
+      console.error('Failed to fetch explanation:', error);
+      // safeParse will return fallback steps if needed
+      const fallbackSteps = safeParse('');
+      setSteps(fallbackSteps.steps);
+      setHasShownExplanation(true);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const handleTryAgain = () => {
     onTryAgain();
     showXpToast(5, "Great effort! Keep learning!");
     onClose();
   };
+
+  // Reset state when modal opens/closes
+  React.useEffect(() => {
+    if (!isOpen) {
+      setSteps([]);
+      setHasShownExplanation(false);
+      setLoading(false);
+    }
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -65,35 +85,20 @@ const ExplanationModal = ({
         </div>
         
         <div className="flex-1 overflow-y-auto py-4">
-          <Accordion type="single" collapsible className="space-y-2">
-            {steps.map((step, index) => {
-              const IconComponent = iconMap[step.icon as keyof typeof iconMap] || Check;
-              
-              return (
-                <AccordionItem 
-                  key={index} 
-                  value={`step-${index}`}
-                  className="border border-neutral-border rounded-button px-4"
-                >
-                  <AccordionTrigger className="hover:no-underline py-4">
-                    <div className="flex items-center gap-3 text-left">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-chip bg-brand-tint flex items-center justify-center">
-                        <IconComponent size={16} className="text-brand-primary" aria-hidden="true" />
-                      </div>
-                      <span className="text-body font-medium text-neutral-text">
-                        {step.title}
-                      </span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="pt-0 pb-4">
-                    <div className="ml-11 text-body text-neutral-muted leading-relaxed">
-                      {step.body}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              );
-            })}
-          </Accordion>
+          {!hasShownExplanation ? (
+            <div className="text-center py-8">
+              <Button
+                onClick={handleShowExplanation}
+                disabled={loading}
+                className="bg-brand-primary hover:bg-brand-primary/90 text-neutral-surface"
+                size="lg"
+              >
+                {loading ? 'Loading explanation...' : 'Show explanation'}
+              </Button>
+            </div>
+          ) : (
+            <ExplanationCards steps={steps} />
+          )}
         </div>
         
         <div className="pt-4 border-t border-neutral-border">
