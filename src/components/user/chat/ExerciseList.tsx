@@ -110,6 +110,7 @@ const ExerciseList = ({
     subject: 'math' as const, // Default to math, should be determined from exercise data
     prompt: exercise.question,
     userAnswer: exercise.userAnswer,
+    explanation: exercise.explanation,
     status: exercise.isCorrect === undefined 
       ? 'unanswered' as const
       : exercise.isCorrect 

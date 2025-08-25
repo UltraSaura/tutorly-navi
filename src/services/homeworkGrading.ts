@@ -106,6 +106,7 @@ export const evaluateHomework = async (
 
     let isCorrect = responseContent === 'CORRECT';
     let ocrCorrectionNote = '';
+    let correctedQuestion = exercise.question;
     
     // Override AI decision if mathematical validation indicates correctness
     if (!isCorrect && mathematicalEquivalency === true) {
@@ -118,6 +119,17 @@ export const evaluateHomework = async (
       const ocrCheck = detectFractionOcrMisread(exercise.question, exercise.userAnswer);
       if (ocrCheck.isLikely) {
         console.log('[homeworkGrading] OCR misread detected - overriding to CORRECT:', ocrCheck);
+        console.log('[homeworkGrading] Original question:', exercise.question);
+        
+        // Replace the misread fraction in the question with the corrected one
+        if (ocrCheck.correctedFraction) {
+          const fractionMatch = exercise.question.match(/\d+\/\d+/);
+          if (fractionMatch) {
+            correctedQuestion = exercise.question.replace(fractionMatch[0], ocrCheck.correctedFraction);
+            console.log('[homeworkGrading] Corrected question:', correctedQuestion);
+          }
+        }
+        
         isCorrect = true;
         ocrCorrectionNote = `\n\n**OCR Correction:** Your answer is correct! The system detected a likely OCR misread where "${ocrCheck.correctedFraction}" was read as the original fraction. ${ocrCheck.reason}.`;
       }
@@ -133,11 +145,11 @@ export const evaluateHomework = async (
       // Progressive feedback based on attempt number
       let guidancePrompt = '';
       if (attemptNumber === 1) {
-        guidancePrompt = `The student answered incorrectly on their first attempt. Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Provide helpful guidance to help them understand the correct approach without giving away the answer directly. Focus on the learning process and concepts they should review. End with "Try again!"`;
+        guidancePrompt = `The student answered incorrectly on their first attempt. Question: "${correctedQuestion}" Their answer: "${exercise.userAnswer}". Provide helpful guidance to help them understand the correct approach without giving away the answer directly. Focus on the learning process and concepts they should review. End with "Try again!"`;
       } else if (attemptNumber === 2) {
-        guidancePrompt = `The student answered incorrectly again (attempt ${attemptNumber}). Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Provide more detailed guidance with hints about the specific approach needed. Be more specific than before but still don't give the direct answer. End with "You're getting closer! Try once more!"`;
+        guidancePrompt = `The student answered incorrectly again (attempt ${attemptNumber}). Question: "${correctedQuestion}" Their answer: "${exercise.userAnswer}". Provide more detailed guidance with hints about the specific approach needed. Be more specific than before but still don't give the direct answer. End with "You're getting closer! Try once more!"`;
       } else {
-        guidancePrompt = `The student has attempted this ${attemptNumber} times and is still incorrect. Question: "${exercise.question}" Their answer: "${exercise.userAnswer}". Provide step-by-step guidance that almost shows how to solve it, but let them do the final calculation. Be very specific about the method. End with "You can do this! One more try!"`;
+        guidancePrompt = `The student has attempted this ${attemptNumber} times and is still incorrect. Question: "${correctedQuestion}" Their answer: "${exercise.userAnswer}". Provide step-by-step guidance that almost shows how to solve it, but let them do the final calculation. Be very specific about the method. End with "You can do this! One more try!"`;
       }
       
       const { data: guidanceData, error: guidanceError } = await supabase.functions.invoke('ai-chat', {
@@ -157,9 +169,9 @@ export const evaluateHomework = async (
         // Provide enhanced math guidance as fallback
         const basicGuidance = generateEnhancedMathGuidance(exercise.question, exercise.userAnswer);
         const mathContext = equivalencyContext ? `\n\n${equivalencyContext}` : '';
-        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${basicGuidance}${mathContext}`;
+        explanation = `**Problem:** ${correctedQuestion}\n\n**Guidance:** ${basicGuidance}${mathContext}`;
       } else {
-        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** ${guidanceData.content}`;
+        explanation = `**Problem:** ${correctedQuestion}\n\n**Guidance:** ${guidanceData.content}`;
       }
       
       console.log('[homeworkGrading] Guidance explanation:', explanation);
@@ -167,9 +179,9 @@ export const evaluateHomework = async (
       // Progressive success messages with mathematical equivalency context
       const mathContext = equivalencyContext ? `\n\n${equivalencyContext}` : '';
       if (attemptNumber === 1) {
-        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Perfect! You got it right on your first try! Your understanding of the concept is excellent.${mathContext}${ocrCorrectionNote} Ready for the next challenge?`;
+        explanation = `**Problem:** ${correctedQuestion}\n\n**Guidance:** Perfect! You got it right on your first try! Your understanding of the concept is excellent.${mathContext}${ocrCorrectionNote} Ready for the next challenge?`;
       } else {
-        explanation = `**Problem:** ${exercise.question}\n\n**Guidance:** Excellent work! You persevered and got the correct answer after ${attemptNumber} attempts. That's the spirit of learning - keep trying until you succeed!${mathContext}${ocrCorrectionNote} Well done!`;
+        explanation = `**Problem:** ${correctedQuestion}\n\n**Guidance:** Excellent work! You persevered and got the correct answer after ${attemptNumber} attempts. That's the spirit of learning - keep trying until you succeed!${mathContext}${ocrCorrectionNote} Well done!`;
       }
       console.log('[homeworkGrading] Correct answer - positive feedback provided for attempt:', attemptNumber);
     }
@@ -187,9 +199,10 @@ export const evaluateHomework = async (
         : attempt
     );
 
-    // Return the updated exercise with explicit isCorrect field
+    // Return the updated exercise with explicit isCorrect field and corrected question
     const gradedExercise = {
       ...exercise,
+      question: correctedQuestion,
       isCorrect,
       explanation,
       needsRetry,

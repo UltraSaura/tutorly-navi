@@ -17,6 +17,7 @@ interface ExerciseCardProps {
     got: number;
     total: number;
   };
+  explanation?: string;
   onShowExplanation: (id: string) => void;
   onTryAgain: (id: string) => void;
 }
@@ -40,6 +41,7 @@ const ExerciseCard = ({
   userAnswer,
   status,
   score,
+  explanation,
   onShowExplanation,
   onTryAgain
 }: ExerciseCardProps) => {
@@ -99,14 +101,22 @@ const ExerciseCard = ({
             </div>
           )}
           
-          {/* Score */}
-          {score && (
-            <div className="mb-4">
+          {/* Score and OCR Badge */}
+          <div className="mb-4 flex items-center gap-2">
+            {score && (
               <span className="text-caption text-neutral-muted">
                 Score: {score.got}/{score.total}
               </span>
-            </div>
-          )}
+            )}
+            {explanation?.includes('OCR Correction:') && (
+              <Badge 
+                variant="secondary" 
+                className="px-2 py-1 text-xs bg-blue-50 text-blue-700 border-blue-200"
+              >
+                OCR corrected
+              </Badge>
+            )}
+          </div>
           
           {/* Actions */}
           <div className="flex items-center gap-3">
