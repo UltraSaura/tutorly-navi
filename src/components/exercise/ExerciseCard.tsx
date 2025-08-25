@@ -144,7 +144,7 @@ const ExerciseCard = ({
                 variant="outline"
                 size="sm"
                 onClick={() => onShowExplanation(id)}
-                className="text-caption px-2 py-1 h-7"
+                className="text-xs px-2 py-0.5 h-6"
                 aria-label={`Show explanation for exercise ${id}`}
               >
                 Show explanation
@@ -156,7 +156,7 @@ const ExerciseCard = ({
                 variant="default"
                 size="sm"
                 onClick={() => onTryAgain(id)}
-                className="text-caption px-2 py-1 h-7"
+                className="text-xs px-2 py-0.5 h-6"
                 aria-label={`Try again for exercise ${id}`}
               >
                 Try again
