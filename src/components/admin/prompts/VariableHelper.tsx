@@ -11,8 +11,8 @@ interface Variable {
 
 const AVAILABLE_VARIABLES: Variable[] = [
   {
-    name: 'student_level',
-    description: 'Student\'s school level (e.g., Grade 5, High School)',
+    name: 'grade_level',
+    description: 'Student\'s grade level (e.g., Grade 5, High School)',
     example: 'Grade 8'
   },
   {
@@ -34,6 +34,31 @@ const AVAILABLE_VARIABLES: Variable[] = [
     name: 'user_type',
     description: 'Type of user (student, parent)',
     example: 'student'
+  },
+  {
+    name: 'exercise_content',
+    description: 'The math problem or exercise being solved',
+    example: 'Solve for x: 2x + 5 = 13'
+  },
+  {
+    name: 'student_answer',
+    description: 'The student\'s submitted answer',
+    example: 'x = 4'
+  },
+  {
+    name: 'correct_answer',
+    description: 'The correct answer to the problem',
+    example: 'x = 4'
+  },
+  {
+    name: 'response_language',
+    description: 'Language for the AI response',
+    example: 'English'
+  },
+  {
+    name: 'subject',
+    description: 'The subject being studied',
+    example: 'Mathematics'
   }
 ];
 
@@ -94,7 +119,7 @@ export const VariableHelper = ({ onInsertVariable }: VariableHelperProps) => {
             <strong>Example usage:</strong>
           </p>
           <code className="text-xs block mt-1 text-foreground">
-            {`"You are helping {{first_name}}, a {{student_level}} student from {{country}}. Adapt your explanations to {{student_level}} level."`}
+            {`"You are helping {{first_name}}, a {{grade_level}} student from {{country}}. For exercise: {{exercise_content}}, provide explanation in {{response_language}}."`}
           </code>
         </div>
       </CardContent>

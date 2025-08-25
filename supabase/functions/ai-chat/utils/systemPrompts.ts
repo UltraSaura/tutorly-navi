@@ -5,12 +5,17 @@
  * Available variables for prompt templates
  */
 export interface PromptVariables {
-  student_level?: string;
+  student_level?: string; // Keep for backward compatibility
+  grade_level?: string;   // New consistent naming
   country?: string;
   learning_style?: string;
   first_name?: string;
   subject?: string;
   user_type?: string;
+  exercise_content?: string;
+  student_answer?: string;
+  correct_answer?: string;
+  response_language?: string;
 }
 
 /**
@@ -36,6 +41,7 @@ export function substitutePromptVariables(promptTemplate: string, variables: Pro
     const varName = match.slice(2, -2);
     switch (varName) {
       case 'student_level':
+      case 'grade_level':
         return 'student';
       case 'first_name':
         return 'student';
@@ -45,6 +51,14 @@ export function substitutePromptVariables(promptTemplate: string, variables: Pro
         return 'a balanced';
       case 'subject':
         return 'this subject';
+      case 'exercise_content':
+        return 'the exercise';
+      case 'student_answer':
+        return 'your answer';
+      case 'correct_answer':
+        return 'the correct answer';
+      case 'response_language':
+        return 'English';
       default:
         return 'student';
     }
