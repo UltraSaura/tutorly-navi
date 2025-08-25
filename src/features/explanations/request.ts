@@ -1,5 +1,6 @@
 import { Exercise } from '@/types/chat';
 import { substitutePromptVariables, PromptVariables } from '../../../supabase/functions/ai-chat/utils/systemPrompts';
+import { EXPLAIN_DEBUG, MOCK_JSON } from "./debug";
 
 // Stub AI provider interface
 const ai = {
@@ -50,6 +51,13 @@ export async function fetchExplanation(
     response_language?: string;
   }
 ): Promise<string> {
+  if (EXPLAIN_DEBUG.forceMock) {
+    if (EXPLAIN_DEBUG.enableConsole) {
+      console.log("[Explain] Using mock data");
+    }
+    return MOCK_JSON;
+  }
+
   try {
     // Build the prompt template (using the Math Explanation Generator template)
     const mathExplanationTemplate = `You are a friendly math tutor helping a {{grade_level}} student named {{first_name}} from {{country}}.
@@ -91,10 +99,19 @@ Respond ONLY with the JSON, no other text.`;
     // Substitute variables into the template
     const finalPrompt = substitutePromptVariables(mathExplanationTemplate, variables);
 
+    if (EXPLAIN_DEBUG.enableConsole) {
+      console.log("[Explain] prompt >>>", finalPrompt);
+    }
+
     // Call AI provider with the built prompt
     const response = await ai.chat(finalPrompt);
+    const text = response || "";
 
-    return response;
+    if (EXPLAIN_DEBUG.enableConsole) {
+      console.log("[Explain] raw >>>", text);
+    }
+
+    return text;
 
   } catch (error) {
     console.error('Error fetching explanation:', error);

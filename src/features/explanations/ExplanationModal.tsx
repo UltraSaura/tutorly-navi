@@ -64,6 +64,23 @@ export function ExplanationModal({
         </div>
 
         <div className="p-5 border-t border-border">
+          {process.env.NODE_ENV !== "production" && (
+            <div className="mb-4 text-xs text-muted-foreground">
+              <button 
+                onClick={() => console.log("[Explain] steps", steps)}
+                className="hover:text-foreground transition-colors"
+              >
+                Log steps
+              </button>
+              <span className="mx-2">•</span>
+              <button 
+                onClick={() => alert("If empty, check console for raw AI output and prompt.")}
+                className="hover:text-foreground transition-colors"
+              >
+                Help
+              </button>
+            </div>
+          )}
           <Button 
             onClick={handleTryAgain}
             className="w-full"
