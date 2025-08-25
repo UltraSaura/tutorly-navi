@@ -1,7 +1,7 @@
 import React from "react";
 import type { Step } from "./types";
 import { fetchExplanation } from "./request";
-import { safeParse } from "./validate";
+import { parseConceptResponse } from "./validate";
 import { Exercise } from "@/types/chat";
 
 export function useExplanation() {
@@ -16,7 +16,7 @@ export function useExplanation() {
     setError(null);
     try {
       const raw = await fetchExplanation(exerciseRow); // calls AI and returns raw text
-      const payload = safeParse(raw);                  // parses to { steps }
+      const payload = parseConceptResponse(raw);       // parses to { steps }
       setSteps(payload.steps);
       console.log("[Explain] steps set >>>", payload.steps);
     } catch (e: any) {

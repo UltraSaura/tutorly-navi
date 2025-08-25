@@ -1,13 +1,7 @@
 import type { StepsPayload, Step } from "./types";
 
-const ALLOWED: Step["icon"][] = ["magnifier","checklist","divide","lightbulb","target","warning"];
-
-function redactAnswers(text: string): string {
-  let t = text.replace(/\b\d+\s*\/\s*\d+\b/g, "your reduced fraction");
-  t = t.replace(/\b([a-zA-Z])\s*=\s*-?\d+(\.\d+)?\b/g, "$1 = your value");
-  t = t.replace(/(?:^|\s)(-?\d+(?:\.\d+)?)(?=(?:\s|$))/g, " your result"); // simple numeric guard
-  return t;
-}
+const ALLOWED_ICONS: Step["icon"][] = ["lightbulb","magnifier","divide","checklist","warning","target"];
+const ALLOWED_KIND: Step["kind"][] = ["concept","example","strategy","pitfall","check"];
 
 function extractFirstJsonObject(s: string): string | null {
   s = s.replace(/```json|```/gi, "").trim();
@@ -23,43 +17,48 @@ function extractFirstJsonObject(s: string): string | null {
   return null;
 }
 
-export function safeParseNoAnswer(aiText: string): StepsPayload {
+function redactAnswers(text: string): string {
+  let t = text.replace(/\b\d+\s*\/\s*\d+\b/g, "your reduced fraction");
+  t = t.replace(/\b([a-zA-Z])\s*=\s*-?\d+(\.\d+)?\b/g, "$1 = your value");
+  t = t.replace(/(?:^|\s)(-?\d+(?:\.\d+)?)(?=(?:\s|$))/g, " your result"); // very simple numeric guard
+  return t;
+}
+
+export function parseConceptResponse(aiText: string): StepsPayload {
   try {
     const jsonStr = extractFirstJsonObject(aiText) ?? "{}";
     const obj = JSON.parse(jsonStr);
-    const steps = Array.isArray(obj?.steps) ? obj.steps : [];
-    const normalized: Step[] = steps
-      .filter((s:any) => s && typeof s.title === "string" && typeof s.body === "string")
-      .slice(0,5)
-      .map((s:any) => ({
-        title: (s.title || "").toString().slice(0,60),
-        body: redactAnswers((s.body || "").toString().slice(0,600)),
-        icon: ALLOWED.includes(s.icon) ? s.icon : "lightbulb",
-        kind: ["concept","example","strategy","pitfall","check"].includes(s.kind) ? s.kind : "concept",
-      }));
+    const stepsRaw = Array.isArray(obj?.steps) ? obj.steps : [];
+    const meta = obj?.meta ?? { mode: "concept", revealAnswer: false };
 
-    if (!normalized.length) throw new Error("empty steps");
-    // soften a "target" finale into a check
-    const last = normalized[normalized.length-1];
-    if (last.icon === "target") {
-      last.title = "Check your result";
-      last.body = redactAnswers(last.body).replace(/final answer.*$/i, "Make sure your result is fully reduced and consistent.");
-      last.icon = "lightbulb";
+    const steps: Step[] = stepsRaw.slice(0,5).map((s: any) => ({
+      title: (s?.title ?? "").toString().slice(0, 60),
+      body: redactAnswers((s?.body ?? "").toString().slice(0, 700)),
+      icon: ALLOWED_ICONS.includes(s?.icon) ? s.icon : "lightbulb",
+      kind: ALLOWED_KIND.includes(s?.kind) ? s.kind : "concept",
+    })).filter(s => s.title && s.body);
+
+    if (!steps.length) throw new Error("empty steps");
+
+    // If last step says "final answer" ideas, soften it
+    const last = steps[steps.length - 1];
+    if (last.icon === "target" && last.kind !== "check") {
       last.kind = "check";
+      last.title = "Check yourself";
+      last.body = "Confirm your result is fully reduced and consistent. Explain why each step is valid.";
+      last.icon = "checklist";
     }
-    return { 
-      steps: normalized,
-      meta: obj.meta || { mode: "concept", revealAnswer: false }
-    };
+
+    return { steps, meta };
   } catch {
     return {
-      steps: [{ title:"How to approach", body:"Break the problem into smaller actions and verify each step.", icon:"lightbulb", kind:"concept" }],
+      steps: [{
+        title: "Understand the concept",
+        body: "Recall the definition and a simple example with different numbers. Then try the same strategy on your problem.",
+        icon: "lightbulb",
+        kind: "concept"
+      }],
       meta: { mode: "concept", revealAnswer: false }
     };
   }
-}
-
-// Keep the old function for backward compatibility
-export function safeParse(aiText: string): StepsPayload {
-  return safeParseNoAnswer(aiText);
 }
