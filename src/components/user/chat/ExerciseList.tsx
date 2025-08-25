@@ -9,6 +9,8 @@ import ExplanationModal from '@/components/exercise/ExplanationModal';
 import ExerciseComposer from '@/components/exercise/ExerciseComposer';
 import { Exercise as ExerciseType } from '@/types/chat';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { UltraCompactStickyHeader, CompactHorizontalHeader } from './ExerciseHeaderVariants';
 import { cn } from '@/lib/utils';
 
 interface ExerciseListProps {
@@ -120,53 +122,32 @@ const ExerciseList = ({
     } : undefined
   });
   
+  const isMobile = useIsMobile();
+
   return (
     <div className="flex flex-col h-full">
-      {/* Header with Grade and Gamification */}
-      <div className="p-6 border-b border-neutral-border bg-neutral-surface">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            {/* Grade Section */}
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <h2 className="text-h1 font-bold text-neutral-text mb-1">
-                  Exercise Progress
-                </h2>
-                <div className="flex items-center gap-2">
-                  <span className="text-body text-neutral-muted">Overall Grade:</span>
-                  <span className={cn("text-h2 font-bold", getGradeColor())}>
-                    {grade.percentage}%
-                  </span>
-                  {grade.letter !== 'N/A' && (
-                    <span className="text-body text-neutral-muted">({grade.letter})</span>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            {/* Gamification Stats */}
-            <div className="flex flex-wrap items-center gap-4">
-              <XpBar 
-                value={userStats.xpProgress} 
-                level={userStats.currentLevel}
-                className="min-w-48"
-              />
-              <StreakChip 
-                days={userStats.streakDays} 
-                active={userStats.streakActive} 
-              />
-              <CoinWallet coins={userStats.coins} />
-            </div>
-          </div>
-          
-          {/* Stats Summary */}
-          <div className="mt-4 flex justify-center lg:justify-start">
-            <div className="text-caption text-neutral-muted">
-              {correctExercises} correct • {answeredExercises} completed • {totalExercises} total exercises
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Responsive Header - Mobile gets ultra-compact, Desktop gets compact */}
+      {isMobile ? (
+        <UltraCompactStickyHeader
+          grade={grade}
+          userStats={userStats}
+          exerciseStats={{
+            correct: correctExercises,
+            answered: answeredExercises,
+            total: totalExercises
+          }}
+        />
+      ) : (
+        <CompactHorizontalHeader
+          grade={grade}
+          userStats={userStats}
+          exerciseStats={{
+            correct: correctExercises,
+            answered: answeredExercises,
+            total: totalExercises
+          }}
+        />
+      )}
       
       {/* Content Area */}
       <div className="flex-1 overflow-hidden">
