@@ -1,44 +1,27 @@
-import React from 'react';
-import { Step } from './types';
+import React from "react";
+import type { Step } from "./types";
 
-interface ExplanationCardsProps {
-  steps: Step[];
-}
-
-const ICONS: Record<Step["icon"], string> = {
-  magnifier: "🔍", 
-  checklist: "☑️", 
-  divide: "➗",
-  lightbulb: "💡", 
-  target: "🎯", 
-  warning: "⚠️"
+const ICON: Record<Step["icon"], string> = {
+  lightbulb:"💡", magnifier:"🔍", divide:"➗", checklist:"☑️", warning:"⚠️", target:"🎯"
+};
+const KIND: Record<Step["kind"], string> = {
+  concept:"Concept", example:"Example", strategy:"Strategy", pitfall:"Pitfall", check:"Check"
 };
 
-const ExplanationCards: React.FC<ExplanationCardsProps> = ({ steps }) => {
-  
+export default function ExplanationCards({ steps }: { steps: Step[] }) {
+  if (!steps?.length) return null;
   return (
-    <div className="space-y-4">
-      {steps.map((step, index) => (
-        <details
-          key={index}
-          className="group rounded-3xl border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:shadow-md"
-        >
-          <summary className="flex cursor-pointer items-center gap-3 text-lg font-semibold text-foreground list-none">
-            <span className="text-2xl" role="img" aria-label={step.icon}>
-              {ICONS[step.icon] ?? "💡"}
-            </span>
-            <span className="flex-1">{step.title}</span>
-            <span className="text-muted-foreground transition-transform duration-200 group-open:rotate-180">
-              ▼
-            </span>
+    <div className="space-y-2">
+      {steps.map((s, i) => (
+        <details key={i} className="rounded-xl border p-3 bg-white">
+          <summary className="cursor-pointer font-medium flex items-center gap-2">
+            <span aria-hidden>{ICON[s.icon] ?? "💡"}</span>
+            <span>{s.title}</span>
+            <span className="ml-2 text-xs rounded-full bg-neutral-100 px-2 py-0.5 text-neutral-600">{KIND[s.kind]}</span>
           </summary>
-          <div className="mt-4 pl-11 text-muted-foreground leading-relaxed whitespace-pre-wrap">
-            {step.body}
-          </div>
+          <p className="mt-2 text-sm text-neutral-700 whitespace-pre-wrap">{s.body}</p>
         </details>
       ))}
     </div>
   );
-};
-
-export default ExplanationCards;
+}
