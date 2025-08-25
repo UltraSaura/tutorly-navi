@@ -1,6 +1,7 @@
 import { Exercise } from '@/types/chat';
 import { substitutePromptVariables, PromptVariables } from '../../../supabase/functions/ai-chat/utils/systemPrompts';
 import { EXPLAIN_DEBUG, MOCK_JSON } from "./debug";
+import { usePromptTemplateManagement } from '@/hooks/usePromptTemplateManagement';
 
 // Stub AI provider interface
 const ai = {
@@ -43,8 +44,10 @@ export async function fetchExplanation(
   }
 
   try {
-    // Build the prompt template (using the Math Explanation Generator template)
-    const mathExplanationTemplate = `You are a patient math tutor. Your job is to TEACH the underlying mathematical concept, NOT to solve the student's exercise.
+    // Get the active prompt template from admin management
+    // Note: Since this is outside a React component, we'll use a fallback approach
+    // In a real implementation, this would be passed as a parameter or accessed via a service
+    const fallbackTemplate = `You are a patient math tutor. Your job is to TEACH the underlying mathematical concept, NOT to solve the student's exercise.
 
 Guidelines:
 - NEVER use the numbers or data from the student's exercise.
@@ -76,6 +79,11 @@ Subject: {{subject}}
 Language: {{language}}
 Grade level: {{gradeLevel}}`;
 
+    // TODO: Replace with actual admin template retrieval
+    // For now, use the fallback template. In a full implementation, 
+    // this would be retrieved from the admin context or a service
+    const promptTemplate = fallbackTemplate;
+
     // Map exercise data to template variables
     const variables: PromptVariables & {
       exercise: string;
@@ -101,7 +109,7 @@ Grade level: {{gradeLevel}}`;
     };
 
     // Substitute variables into the template
-    const finalPrompt = substitutePromptVariables(mathExplanationTemplate, variables);
+    const finalPrompt = substitutePromptVariables(promptTemplate, variables);
 
     if (EXPLAIN_DEBUG.enableConsole) {
       console.log("[Explain] prompt >>>", finalPrompt);

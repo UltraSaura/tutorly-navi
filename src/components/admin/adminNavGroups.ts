@@ -20,6 +20,11 @@ export const adminNavGroups = [
         path: '/admin/users',
         iconName: 'Users',
       },
+      {
+        title: 'System Prompts',
+        path: '/admin/prompts',
+        iconName: 'Settings',
+      },
     ],
   }
 ];

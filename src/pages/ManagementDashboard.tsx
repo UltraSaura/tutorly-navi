@@ -133,6 +133,11 @@ const ManagementDashboard = () => {
                 User Accounts
               </Button>
             </Link>
+            <Link to="/admin/prompts">
+              <Button variant="outline" size="sm">
+                System Prompts
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

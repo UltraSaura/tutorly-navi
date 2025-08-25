@@ -31,6 +31,7 @@ const GamePreview = lazy(() => import("./pages/GamePreview"));
 import AIModelManagement from "./components/admin/AIModelManagement";
 import SubjectManagement from "./components/admin/SubjectManagement";
 import UserManagement from "./components/admin/UserManagement";
+import SystemPromptConfig from "./components/admin/SystemPromptConfig";
 
 // Auth Pages  
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -104,6 +105,7 @@ const App = () => (
                       <Route path="models" element={<AIModelManagement />} />
                       <Route path="subjects" element={<SubjectManagement />} />
                       <Route path="users" element={<UserManagement />} />
+                      <Route path="prompts" element={<SystemPromptConfig />} />
                     </Route>
                     
                     {/* 404 Route */}
