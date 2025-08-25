@@ -101,22 +101,14 @@ const ExerciseCard = ({
             </div>
           )}
           
-          {/* Score and OCR Badge */}
-          <div className="mb-4 flex items-center gap-2">
-            {score && (
+          {/* Score */}
+          {score && (
+            <div className="mb-4">
               <span className="text-caption text-neutral-muted">
                 Score: {score.got}/{score.total}
               </span>
-            )}
-            {explanation?.includes('OCR Correction:') && (
-              <Badge 
-                variant="secondary" 
-                className="px-2 py-1 text-xs bg-blue-50 text-blue-700 border-blue-200"
-              >
-                OCR corrected
-              </Badge>
-            )}
-          </div>
+            </div>
+          )}
           
           {/* Actions */}
           <div className="flex items-center gap-3">
