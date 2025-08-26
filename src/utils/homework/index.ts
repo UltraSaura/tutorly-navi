@@ -18,6 +18,19 @@ export const extractHomeworkFromMessage = (message: string): { question: string,
   
   // If pattern matching failed, make a best effort split
   if (!question || !answer) {
+    // Special handling: commands like "simplify 30/63" (EN/FR)
+    const simplifyRegex = /\b(simplif(?:y|iez|ie)?|reduce|réduis(?:ez)?)(?:\s+(?:the|la|les))?\s*(?:fraction|fractions)?\s*(\d+)\s*\/\s*(\d+)\b/i;
+    const simplifyMatch = message.match(simplifyRegex);
+    if (simplifyMatch) {
+      const num = simplifyMatch[2];
+      const den = simplifyMatch[3];
+      return {
+        question: `Simplify the fraction ${num}/${den}`,
+        // Treat the provided fraction as the user's initial attempt (status will mark it incorrect if not simplified)
+        answer: `${num}/${den}`
+      };
+    }
+
     // Look for keywords
     const lowerMessage = message.toLowerCase();
     const keywords = ['answer:', 'solution:', 'my answer is:', 'my solution is:'];
@@ -32,16 +45,17 @@ export const extractHomeworkFromMessage = (message: string): { question: string,
       }
     }
     
-    // If still no match, split the message
-    const parts = message.split('\n\n');
-    if (parts.length >= 2) {
+    // If still no match, split the message more intelligently around a fraction
+    const fractionOnly = message.match(/(\d+)\s*\/\s*(\d+)/);
+    if (fractionOnly) {
+      const frac = `${fractionOnly[1]}/${fractionOnly[2]}`;
       return {
-        question: parts[0].trim(),
-        answer: parts.slice(1).join('\n\n').trim()
+        question: `Simplify the fraction ${frac}`,
+        answer: frac
       };
     }
-    
-    // Last resort: split in half
+
+    // Last resort: split in half (legacy fallback)
     const midpoint = Math.floor(message.length / 2);
     return {
       question: message.substring(0, midpoint).trim(),
