@@ -1,18 +1,8 @@
 import { Exercise } from '@/types/chat';
 import { substitutePromptVariables, PromptVariables } from '../../../supabase/functions/ai-chat/utils/systemPrompts';
 import { EXPLAIN_DEBUG, MOCK_JSON } from "./debug";
-import { usePromptTemplateManagement } from '@/hooks/usePromptTemplateManagement';
-
-// Stub AI provider interface
-const ai = {
-  chat: async (prompt: string): Promise<string> => {
-    // TODO: Replace with actual AI provider call
-    console.log('AI Chat called with prompt:', prompt);
-    
-    // Return mock JSON response for now
-    return MOCK_JSON;
-  }
-};
+import { sendMessageToAI } from '@/services/chatService';
+import { PromptTemplate } from '@/types/admin';
 
 // Default Math Explanation Generator template ID
 const MATH_EXPLANATION_TEMPLATE_ID = 'math-explanation-generator';
@@ -23,6 +13,8 @@ const MATH_EXPLANATION_TEMPLATE_ID = 'math-explanation-generator';
  * @param correctAnswer - The correct answer for the exercise (optional)
  * @param userContext - Additional user context like grade level, name, etc. (optional)
  * @param teachingMode - Mode for explanation: "concept" (default) or "solution"
+ * @param activeTemplate - Admin-managed prompt template to use (optional)
+ * @param selectedModelId - Model ID to use for AI generation (optional)
  * @returns Promise<string> - Raw JSON string response from AI
  */
 export async function fetchExplanation(
@@ -34,7 +26,9 @@ export async function fetchExplanation(
     country?: string;
     response_language?: string;
   },
-  teachingMode: "concept" | "solution" = "concept"
+  teachingMode: "concept" | "solution" = "concept",
+  activeTemplate?: PromptTemplate | null,
+  selectedModelId: string = "deepseek-chat"
 ): Promise<string> {
   if (EXPLAIN_DEBUG.forceMock) {
     if (EXPLAIN_DEBUG.enableConsole) {
@@ -44,9 +38,7 @@ export async function fetchExplanation(
   }
 
   try {
-    // Get the active prompt template from admin management
-    // Note: Since this is outside a React component, we'll use a fallback approach
-    // In a real implementation, this would be passed as a parameter or accessed via a service
+    // Use admin template if available, otherwise fallback
     const fallbackTemplate = `You are a patient math tutor. Your job is to TEACH the underlying mathematical concept, NOT to solve the student's exercise.
 
 Guidelines:
@@ -79,10 +71,7 @@ Subject: {{subject}}
 Language: {{language}}
 Grade level: {{gradeLevel}}`;
 
-    // TODO: Replace with actual admin template retrieval
-    // For now, use the fallback template. In a full implementation, 
-    // this would be retrieved from the admin context or a service
-    const promptTemplate = fallbackTemplate;
+    const promptTemplate = activeTemplate?.prompt || fallbackTemplate;
 
     // Map exercise data to template variables
     const variables: PromptVariables & {
@@ -115,9 +104,19 @@ Grade level: {{gradeLevel}}`;
       console.log("[Explain] prompt >>>", finalPrompt);
     }
 
-    // Call AI provider with the built prompt
-    const response = await ai.chat(finalPrompt);
-    const text = response || "";
+    // Call AI provider with the built prompt using the chat service
+    const { data, error } = await sendMessageToAI(
+      finalPrompt,
+      [], // No message history for explanations
+      selectedModelId,
+      userContext?.response_language || 'en'
+    );
+
+    if (error) {
+      throw new Error(`AI service error: ${error.message}`);
+    }
+
+    const text = data?.content || "";
 
     if (EXPLAIN_DEBUG.enableConsole) {
       console.log("[Explain] raw >>>", text);

@@ -1,6 +1,6 @@
 export const EXPLAIN_DEBUG = {
   enableConsole: true,   // log raw AI output
-  forceMock: false,      // set true to bypass AI for testing
+  forceMock: false,      // set true to bypass AI for testing (now uses real AI)
 };
 
 export const MOCK_JSON =

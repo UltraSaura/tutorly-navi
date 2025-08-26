@@ -3,6 +3,7 @@ import type { Step } from "./types";
 import { fetchExplanation } from "./request";
 import { parseConceptResponse } from "./validate";
 import { Exercise } from "@/types/chat";
+import { useAdmin } from "@/context/AdminContext";
 
 export function useExplanation() {
   const [open, setOpen] = React.useState(false);
@@ -10,6 +11,8 @@ export function useExplanation() {
   const [steps, setSteps] = React.useState<Step[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const [exerciseQuestion, setExerciseQuestion] = React.useState<string>("");
+  
+  const { activePromptTemplate, selectedModelId } = useAdmin();
 
   async function openWithExercise(exerciseRow: Exercise) {
     setOpen(true);
@@ -17,8 +20,15 @@ export function useExplanation() {
     setError(null);
     setExerciseQuestion(exerciseRow.question ?? "");
     try {
-      const raw = await fetchExplanation(exerciseRow, undefined, undefined, "concept"); // calls AI and returns raw text
-      const payload = parseConceptResponse(raw, exerciseRow.question ?? "");       // parses to { steps }
+      const raw = await fetchExplanation(
+        exerciseRow, 
+        undefined, 
+        undefined, 
+        "concept",
+        activePromptTemplate,
+        selectedModelId
+      );
+      const payload = parseConceptResponse(raw, exerciseRow.question ?? "");
       setSteps(payload.steps);
       console.log("[Explain] steps set >>>", payload.steps);
     } catch (e: any) {
