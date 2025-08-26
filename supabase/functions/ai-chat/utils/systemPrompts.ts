@@ -1,6 +1,8 @@
 // System prompts utility module for AI chat  
 // Contains specialized system prompts for different chat scenarios
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+
+// @ts-ignore Deno environment in edge functions
+declare const Deno: any;
 
 /**
  * Available variables for prompt templates
@@ -73,8 +75,10 @@ export function substitutePromptVariables(promptTemplate: string, variables: Pro
  */
 async function getActivePromptTemplate(usageType: string, subject?: string) {
   try {
+    // @ts-ignore - Dynamic import for edge function environment
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data, error } = await supabase

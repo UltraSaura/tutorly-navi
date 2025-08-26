@@ -106,7 +106,7 @@ export const PromptEditor = ({
         <div className="flex gap-2">
           <Button 
             variant="outline" 
-            onClick={() => onPromptChange(selectedTemplate.prompt)}
+            onClick={() => onPromptChange(selectedTemplate.prompt_content)}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
             Reset
@@ -132,7 +132,7 @@ export const PromptEditor = ({
         
         <Button 
           onClick={onSave}
-          disabled={editedPrompt === selectedTemplate.prompt}
+          disabled={editedPrompt === selectedTemplate.prompt_content}
           className="bg-studywhiz-600 hover:bg-studywhiz-700"
         >
           <Save className="mr-2 h-4 w-4" />

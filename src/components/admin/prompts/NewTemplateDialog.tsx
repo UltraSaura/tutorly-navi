@@ -97,8 +97,8 @@ export const NewTemplateDialog = ({
             </label>
             <Textarea
               id="templatePrompt"
-              value={newTemplate.prompt}
-              onChange={(e) => onNewTemplateChange({ ...newTemplate, prompt: e.target.value })}
+              value={newTemplate.prompt_content}
+              onChange={(e) => onNewTemplateChange({ ...newTemplate, prompt_content: e.target.value })}
               className="col-span-3 min-h-32"
               placeholder="Enter the system prompt instructions..."
             />
@@ -159,15 +159,17 @@ export const NewTemplateDialog = ({
               Type
             </label>
             <Select 
-              value={newTemplate.type} 
-              onValueChange={(value: 'tutor' | 'grading') => onNewTemplateChange({ ...newTemplate, type: value })}
+              value={newTemplate.usage_type} 
+              onValueChange={(value: 'chat' | 'grading' | 'explanation' | 'math_enhanced') => onNewTemplateChange({ ...newTemplate, usage_type: value })}
             >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select template type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="tutor">Tutor</SelectItem>
+                <SelectItem value="chat">Chat</SelectItem>
                 <SelectItem value="grading">Grading</SelectItem>
+                <SelectItem value="explanation">Explanation</SelectItem>
+                <SelectItem value="math_enhanced">Math Enhanced</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -32,7 +32,7 @@ export const PromptTemplateCard = ({
           <div>
             <CardTitle className="flex items-center gap-2">
               {template.name}
-              {template.isActive && (
+              {template.is_active && (
                 <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 text-xs">
                   Active
                 </Badge>
@@ -61,7 +61,7 @@ export const PromptTemplateCard = ({
         
         <div className="mb-3">
           <p className="text-sm font-medium mb-1">Prompt Preview:</p>
-          <p className="text-sm text-muted-foreground line-clamp-3">{template.prompt}</p>
+          <p className="text-sm text-muted-foreground line-clamp-3">{template.prompt_content}</p>
         </div>
         
         {template.tags.length > 0 && (
@@ -76,10 +76,10 @@ export const PromptTemplateCard = ({
       </CardContent>
       <CardFooter className="pt-0 flex justify-between items-center">
         <p className="text-xs text-muted-foreground">
-          Last updated: {template.lastModified.toLocaleDateString()}
+          Last updated: {new Date(template.updated_at).toLocaleDateString()}
         </p>
         
-        {!template.isActive && (
+        {!template.is_active && (
           <Button 
             variant="outline" 
             size="sm"

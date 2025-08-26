@@ -68,8 +68,8 @@ export const PromptTemplateDetails = ({ selectedTemplate }: PromptTemplateDetail
           <div>
             <p className="text-sm font-medium">Last Updated</p>
             <p className="text-sm">
-              {selectedTemplate.lastModified.toLocaleDateString()} at {' '}
-              {selectedTemplate.lastModified.toLocaleTimeString()}
+              {new Date(selectedTemplate.updated_at).toLocaleDateString()} at {' '}
+              {new Date(selectedTemplate.updated_at).toLocaleTimeString()}
             </p>
           </div>
         </div>
