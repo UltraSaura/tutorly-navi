@@ -18,16 +18,16 @@ export const extractHomeworkFromMessage = (message: string): { question: string,
   
   // If pattern matching failed, make a best effort split
   if (!question || !answer) {
-    // Special handling: commands like "simplify 30/63" (EN/FR)
-    const simplifyRegex = /\b(simplif(?:y|iez|ie)?|reduce|réduis(?:ez)?)(?:\s+(?:the|la|les))?\s*(?:fraction|fractions)?\s*(\d+)\s*\/\s*(\d+)\b/i;
-    const simplifyMatch = message.match(simplifyRegex);
+    // Special handling: commands like "simplify 30/63" (EN/FR) without an answer
+    const simplifyRegex = /^(simplif(?:y|iez|ie)?|reduce|réduis(?:ez)?)(?:\s+(?:the|la|les))?\s*(?:fraction|fractions)?\s*(\d+)\s*\/\s*(\d+)$/i;
+    const simplifyMatch = message.trim().match(simplifyRegex);
     if (simplifyMatch) {
       const num = simplifyMatch[2];
       const den = simplifyMatch[3];
       return {
         question: `Simplify the fraction ${num}/${den}`,
-        // Treat the provided fraction as the user's initial attempt (status will mark it incorrect if not simplified)
-        answer: `${num}/${den}`
+        // No answer provided - this should be an unanswered exercise
+        answer: ""
       };
     }
 
