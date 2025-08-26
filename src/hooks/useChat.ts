@@ -95,7 +95,7 @@ export const useChat = () => {
         messages, 
         selectedModelId, 
         language,
-        activePromptTemplate?.prompt,
+        activePromptTemplate?.prompt_content,
         userContext
       );
       

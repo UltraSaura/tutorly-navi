@@ -1,6 +1,7 @@
 
 import { useAdmin } from "@/context/AdminContext";
 import { useLanguage } from "@/context/SimpleLanguageContext";
+import { usePromptManagement } from "@/hooks/usePromptManagement";
 import { 
   Select,
   SelectContent,
@@ -12,6 +13,7 @@ import {
 const SubjectSelector = () => {
   const { subjects, selectedSubject, setSelectedSubject } = useAdmin();
   const { t } = useLanguage();
+  const { autoActivateForSubject } = usePromptManagement();
   const activeSubjects = subjects.filter(subject => subject.active);
 
   const getTranslatedSubjectName = (subjectName: string) => {
@@ -24,9 +26,14 @@ const SubjectSelector = () => {
   return (
     <Select 
       value={selectedSubject?.id} 
-      onValueChange={(value) => {
+      onValueChange={async (value) => {
         const subject = subjects.find(s => s.id === value);
         setSelectedSubject(subject || null);
+        
+        // Auto-activate prompts for the selected subject
+        if (subject) {
+          await autoActivateForSubject(subject.name);
+        }
       }}
     >
       <SelectTrigger className="w-[180px] bg-studywhiz-100 text-studywhiz-700 dark:bg-studywhiz-900/20 dark:text-studywhiz-400 border-none">

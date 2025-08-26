@@ -2,7 +2,7 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ApiKeyManagement from "./ApiKeyManagement";
 import ModelSelection from "./ModelSelection";
-import SystemPromptConfig from "./SystemPromptConfig";
+import SystemPromptConfigNew from "./SystemPromptConfigNew";
 import { useState } from "react";
 
 // This component gives you tabs for all model-related admin settings.
@@ -31,7 +31,7 @@ const AIModelManagement = () => {
           <ModelSelection />
         </TabsContent>
         <TabsContent value="prompts">
-          <SystemPromptConfig />
+          <SystemPromptConfigNew />
         </TabsContent>
       </Tabs>
     </div>

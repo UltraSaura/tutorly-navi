@@ -71,8 +71,8 @@ serve(async (req) => {
       throw new Error(`API key not configured for provider: ${modelConfig.provider}`);
     }
     
-    // Generate the appropriate system message based on context
-    let systemMessage = generateSystemMessage(isExercise, isGradingRequest, language, customPrompt, userContext);
+    // Generate the appropriate system message based on context (now async)
+    let systemMessage = await generateSystemMessage(isExercise, isGradingRequest, language, customPrompt, userContext);
     
     // Enhance system message for math problems if needed
     if (!isGradingRequest && modelConfig.provider === 'OpenAI') {

@@ -71,7 +71,7 @@ Subject: {{subject}}
 Language: {{language}}
 Grade level: {{gradeLevel}}`;
 
-    const promptTemplate = activeTemplate?.prompt || fallbackTemplate;
+    const promptTemplate = activeTemplate?.prompt_content || fallbackTemplate;
 
     // Map exercise data to template variables
     const variables: PromptVariables & {

@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -70,6 +70,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prompt_templates: {
+        Row: {
+          auto_activate: boolean | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          priority: number | null
+          prompt_content: string
+          subject: string | null
+          tags: string[] | null
+          updated_at: string | null
+          usage_type: string
+        }
+        Insert: {
+          auto_activate?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          priority?: number | null
+          prompt_content: string
+          subject?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          usage_type: string
+        }
+        Update: {
+          auto_activate?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          priority?: number | null
+          prompt_content?: string
+          subject?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          usage_type?: string
+        }
+        Relationships: []
       }
       school_levels: {
         Row: {
@@ -141,6 +186,41 @@ export type Database = {
           user_type?: string
         }
         Relationships: []
+      }
+      subject_prompt_assignments: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          prompt_template_id: string | null
+          subject_id: string
+          usage_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          prompt_template_id?: string | null
+          subject_id: string
+          usage_type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          prompt_template_id?: string | null
+          subject_id?: string
+          usage_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subject_prompt_assignments_prompt_template_id_fkey"
+            columns: ["prompt_template_id"]
+            isOneToOne: false
+            referencedRelation: "prompt_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       users: {
         Row: {

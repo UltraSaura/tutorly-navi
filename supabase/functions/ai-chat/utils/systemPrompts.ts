@@ -1,5 +1,6 @@
-// System prompts utility module for AI chat
+// System prompts utility module for AI chat  
 // Contains specialized system prompts for different chat scenarios
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 /**
  * Available variables for prompt templates
@@ -68,7 +69,38 @@ export function substitutePromptVariables(promptTemplate: string, variables: Pro
 }
 
 /**
- * Generates an appropriate system message based on message context
+ * Get active prompt template from database
+ */
+async function getActivePromptTemplate(usageType: string, subject?: string) {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data, error } = await supabase
+      .from('prompt_templates')
+      .select('*')
+      .eq('is_active', true)
+      .eq('usage_type', usageType)
+      .or(subject ? `subject.eq.${subject},subject.eq.All Subjects` : 'subject.is.null,subject.eq.All Subjects')
+      .order('priority', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching prompt template:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in getActivePromptTemplate:', error);
+    return null;
+  }
+}
+
+/**
+ * Generates an appropriate system message based on message context - now uses database prompts
  * 
  * @param isExercise Whether the message appears to be a homework/exercise
  * @param isGradingRequest Whether the message is asking for grading
@@ -77,14 +109,42 @@ export function substitutePromptVariables(promptTemplate: string, variables: Pro
  * @param variables Variables for prompt substitution
  * @returns The appropriate system message object
  */
-export function generateSystemMessage(
+export async function generateSystemMessage(
   isExercise: boolean = false, 
   isGradingRequest: boolean = false, 
   language: string = 'en',
   customPrompt?: string,
   variables?: PromptVariables
-): { role: string, content: string } {
-  // System message for grading requests
+): Promise<{ role: string, content: string }> {
+  // If custom prompt provided, use it directly
+  if (customPrompt) {
+    const finalPrompt = substitutePromptVariables(customPrompt, variables || {});
+    return { role: "system", content: finalPrompt };
+  }
+
+  // Determine usage type and subject
+  let usageType = 'chat';
+  let subject = variables?.subject;
+
+  if (isGradingRequest) {
+    usageType = 'grading';
+  } else if (isExercise) {
+    usageType = 'chat'; // Exercises use chat prompts but might be math-enhanced
+  }
+
+  // Try to get active prompt from database
+  const activeTemplate = await getActivePromptTemplate(usageType, subject);
+  
+  if (activeTemplate) {
+    console.log(`Using database prompt: ${activeTemplate.name} (${usageType})`);
+    const finalPrompt = substitutePromptVariables(activeTemplate.prompt_content, variables || {});
+    return { role: "system", content: finalPrompt };
+  }
+
+  // Fallback to hardcoded prompts if database prompts not available
+  console.log(`Falling back to hardcoded prompt for ${usageType}`);
+  
+  // Hardcoded grading prompt fallback
   if (isGradingRequest) {
     const gradingPrompt = language === 'fr' 
       ? `Vous êtes un assistant de notation strict. Votre SEULE tâche est de déterminer si une réponse est correcte ou incorrecte.
@@ -140,7 +200,7 @@ Remember: ONLY respond with "CORRECT" or "INCORRECT" - nothing else!`;
     };
   }
   
-  // System message for exercises and guidance
+  // Hardcoded exercise prompt fallback
   if (isExercise) {
     const exercisePrompt = language === 'fr'
       ? `Vous êtes un tuteur IA éducatif axé sur l'aide aux étudiants pour découvrir les réponses par eux-mêmes. Suivez ces principes:
@@ -173,15 +233,6 @@ Remember: Your goal is to help students learn how to solve problems, not to solv
     return {
       role: 'system',
       content: exercisePrompt
-    };
-  }
-  
-  // Use custom prompt with variables if provided
-  if (customPrompt && variables) {
-    const substitutedPrompt = substitutePromptVariables(customPrompt, variables);
-    return {
-      role: 'system',
-      content: substitutedPrompt
     };
   }
   

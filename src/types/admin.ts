@@ -67,12 +67,25 @@ export interface PromptTemplate {
   name: string;
   subject: string;
   description: string;
-  prompt: string;
+  prompt_content: string;  // Changed from 'prompt' to match database
   tags: string[];
-  isActive: boolean;
-  lastModified: Date;
-  type: 'tutor' | 'grading';  // Keeping this field for type differentiation
+  is_active: boolean;  // Changed from 'isActive' to match database
+  created_at: Date;
+  updated_at: Date;
+  usage_type: 'chat' | 'grading' | 'explanation' | 'math_enhanced';
+  auto_activate: boolean;
+  priority: number;
 }
 
 // Define the NewPromptTemplate type for creating new templates
-export type NewPromptTemplate = Omit<PromptTemplate, 'id' | 'lastModified' | 'isActive'>;
+export type NewPromptTemplate = Omit<PromptTemplate, 'id' | 'created_at' | 'updated_at'>;
+
+// Subject-Prompt Assignment interface
+export interface SubjectPromptAssignment {
+  id: string;
+  subject_id: string;
+  prompt_template_id: string;
+  usage_type: string;
+  is_primary: boolean;
+  created_at: Date;
+}
