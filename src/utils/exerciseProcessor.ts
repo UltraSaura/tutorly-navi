@@ -35,9 +35,40 @@ export const processNewExercise = async (
     console.log("[exerciseProcessor] Extracted from message. Question/Answer:", { question, answer });
   }
 
-  if (!question || !answer) {
-    console.log("[exerciseProcessor] Couldn't extract homework components from the message:", { message, question, answer });
+  if (!question) {
+    console.log("[exerciseProcessor] Couldn't extract question from the message:", { message, question, answer });
     return null;
+  }
+
+  // Handle question-only exercises (like "simplify 30/63")
+  if (!answer) {
+    console.log("[exerciseProcessor] Creating question-only exercise for:", { question });
+    
+    // Check if we already have this question as an unanswered exercise
+    const existingUnansweredExercise = existingExercises.find(
+      ex => ex.question === question && ex.attemptCount === 0
+    );
+
+    if (existingUnansweredExercise) {
+      console.log("[exerciseProcessor] Question-only exercise already exists, ignoring duplicate");
+      return null;
+    }
+
+    // Create new unanswered exercise
+    const newEx: Exercise = {
+      id: Date.now().toString(),
+      question,
+      userAnswer: "",
+      expanded: false,
+      relatedMessages: [],
+      attemptCount: 0,
+      attempts: [],
+      lastAttemptDate: new Date(),
+      needsRetry: true,
+    };
+
+    console.log("[exerciseProcessor] Created unanswered exercise:", newEx);
+    return { exercise: newEx, isUpdate: false };
   }
 
   // Check for exact duplicates (same question + same answer)
