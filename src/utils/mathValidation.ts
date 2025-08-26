@@ -13,19 +13,23 @@ export function areMathematicallyEquivalent(
   try {
     console.log('[mathValidation] Checking equivalency:', { question, userAnswer });
     
-    // Enhanced French fraction detection - case insensitive and plural forms
+    // Enhanced fraction detection - supports both French and English
     const fractionKeywords = [
       'simplifiez la fraction',
       'simplifiez les fractions', 
       'simplifie la fraction',
       'simplifie les fractions',
       'réduire la fraction',
-      'réduire les fractions'
+      'réduire les fractions',
+      'simplify the fraction',
+      'simplify fraction',
+      'reduce the fraction',
+      'reduce fraction'
     ];
     
     const isFractionExercise = fractionKeywords.some(keyword => 
       question.toLowerCase().includes(keyword)
-    );
+    ) || (question.match(/\d+\/\d+/) && (question.toLowerCase().includes('simplify') || question.toLowerCase().includes('reduce')));
     
     if (isFractionExercise) {
       console.log('[mathValidation] Detected French fraction exercise');
@@ -265,8 +269,8 @@ function areFractionsEquivalent(question: string, userAnswer: string): boolean |
     // Parse user's answer - more flexible regex
     const userFractionMatch = normalizedUserAnswer.match(/(\d+)\s*\/\s*(\d+)/);
     if (!userFractionMatch) {
-      console.log('[mathValidation] No fraction found in user answer');
-      return null;
+      console.log('[mathValidation] No fraction found in user answer - marking as incorrect for simplification exercise');
+      return false; // Non-fraction answers are incorrect for simplification
     }
     
     const userFraction = userFractionMatch[0];

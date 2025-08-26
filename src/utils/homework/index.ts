@@ -7,7 +7,21 @@ import { detectHomeworkInMessage } from './detectionUtils';
  * Extracts question and answer components from a homework submission message
  */
 export const extractHomeworkFromMessage = (message: string): { question: string, answer: string } => {
-  // First try math-specific extraction
+  // First try simplification exercises (priority handling) - supports optional answer
+  const simplifyRegex = /^(simplif(?:y|iez|ie)?|reduce|réduis(?:ez)?)(?:\s+(?:the|la|les))?\s*(?:fraction|fractions)?\s*(\d+)\s*\/\s*(\d+)(?:\s*=\s*([0-9]+(?:\/[0-9]+)?|\d+(?:\.\d+)?))?/i;
+  const simplifyMatch = message.trim().match(simplifyRegex);
+  if (simplifyMatch) {
+    const num = simplifyMatch[2];
+    const den = simplifyMatch[3];
+    const answer = simplifyMatch[4] || ""; // Optional answer after equals sign
+    console.log('[homework extraction] Matched simplification pattern:', { num, den, answer });
+    return {
+      question: `Simplify the fraction ${num}/${den}`,
+      answer: answer
+    };
+  }
+
+  // Try math-specific extraction (equations, etc.)
   const mathResult = extractMathProblem(message);
   if (mathResult) {
     return mathResult;
@@ -18,18 +32,6 @@ export const extractHomeworkFromMessage = (message: string): { question: string,
   
   // If pattern matching failed, make a best effort split
   if (!question || !answer) {
-    // Special handling: commands like "simplify 30/63" (EN/FR) without an answer
-    const simplifyRegex = /^(simplif(?:y|iez|ie)?|reduce|réduis(?:ez)?)(?:\s+(?:the|la|les))?\s*(?:fraction|fractions)?\s*(\d+)\s*\/\s*(\d+)/i;
-    const simplifyMatch = message.trim().match(simplifyRegex);
-    if (simplifyMatch) {
-      const num = simplifyMatch[2];
-      const den = simplifyMatch[3];
-      return {
-        question: `Simplify the fraction ${num}/${den}`,
-        // No answer provided - this should be an unanswered exercise
-        answer: ""
-      };
-    }
 
     // Look for keywords
     const lowerMessage = message.toLowerCase();
