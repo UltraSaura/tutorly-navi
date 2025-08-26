@@ -26,6 +26,13 @@ export const useChat = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [lastResponse, setLastResponse] = useState<any>(null);
+
+  // Debug logging for input state changes
+  const debugSetInputMessage = (message: string) => {
+    console.log('[DEBUG] setInputMessage called with:', message);
+    console.log('[DEBUG] Current inputMessage state:', inputMessage);
+    setInputMessage(message);
+  };
   
   // Keep track of which AI messages are responses to homework submissions
   const [homeworkResponseIds, setHomeworkResponseIds] = useState<Set<string>>(new Set());
@@ -54,12 +61,22 @@ export const useChat = () => {
   };
   
   const handleSendMessage = async () => {
-    if (inputMessage.trim() === '') return;
+    console.log('[DEBUG] handleSendMessage called');
+    console.log('[DEBUG] Current inputMessage before send:', inputMessage);
+    console.log('[DEBUG] inputMessage length:', inputMessage.length);
+    
+    if (inputMessage.trim() === '') {
+      console.log('[DEBUG] Empty message, returning early');
+      return;
+    }
+    
+    const messageToSend = inputMessage; // Capture the message before clearing
+    console.log('[DEBUG] Message to send:', messageToSend);
     
     const newMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: inputMessage,
+      content: messageToSend,
       timestamp: new Date(),
     };
     
@@ -68,11 +85,13 @@ export const useChat = () => {
     setIsLoading(true);
     
     // Check if this message is a homework submission
-    const isHomework = detectHomeworkInMessage(inputMessage);
+    const isHomework = detectHomeworkInMessage(messageToSend);
+    console.log('[DEBUG] Is homework detected:', isHomework);
     
     try {
+      console.log('[DEBUG] Sending message to AI:', messageToSend);
       const { data, error } = await sendMessageToAI(
-        inputMessage, 
+        messageToSend, 
         messages, 
         selectedModelId, 
         language,
@@ -146,7 +165,7 @@ export const useChat = () => {
     messages,
     filteredMessages,
     inputMessage,
-    setInputMessage,
+    setInputMessage: debugSetInputMessage,
     isLoading,
     activeModel,
     lastResponse,

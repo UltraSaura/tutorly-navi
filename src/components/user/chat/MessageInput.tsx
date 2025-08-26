@@ -33,8 +33,11 @@ const MessageInput = ({
   const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    console.log('[DEBUG] Key pressed:', e.key);
+    console.log('[DEBUG] Current input value on keydown:', inputMessage);
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      console.log('[DEBUG] Enter pressed, calling handleSendMessage');
       handleSendMessage();
     }
   };
@@ -140,7 +143,10 @@ const MessageInput = ({
       <Textarea 
         placeholder="Type your question or homework here…"
         value={inputMessage}
-        onChange={(e) => setInputMessage(e.target.value)}
+        onChange={(e) => {
+          console.log('[DEBUG] Textarea onChange:', e.target.value);
+          setInputMessage(e.target.value);
+        }}
         onKeyDown={handleKeyDown}
         className="min-h-[40px] max-h-32 resize-none flex-1 border-0 shadow-none focus-visible:ring-0 text-neutral-text placeholder:text-neutral-muted bg-transparent"
         disabled={isLoading}
