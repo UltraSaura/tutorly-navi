@@ -9,11 +9,13 @@ export function useExplanation() {
   const [loading, setLoading] = React.useState(false);
   const [steps, setSteps] = React.useState<Step[]>([]);
   const [error, setError] = React.useState<string | null>(null);
+  const [exerciseQuestion, setExerciseQuestion] = React.useState<string>("");
 
   async function openWithExercise(exerciseRow: Exercise) {
     setOpen(true);
     setLoading(true);
     setError(null);
+    setExerciseQuestion(exerciseRow.question ?? "");
     try {
       const raw = await fetchExplanation(exerciseRow, undefined, undefined, "concept"); // calls AI and returns raw text
       const payload = parseConceptResponse(raw, exerciseRow.question ?? "");       // parses to { steps }
@@ -27,5 +29,5 @@ export function useExplanation() {
     }
   }
 
-  return { open, setOpen, loading, steps, error, openWithExercise };
+  return { open, setOpen, loading, steps, error, openWithExercise, exerciseQuestion };
 }

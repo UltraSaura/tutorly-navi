@@ -184,6 +184,7 @@ const ExerciseList = ({
         steps={exp.steps}
         error={exp.error}
         onTryAgain={() => handleTryAgain('')}
+        exerciseQuestion={exp.exerciseQuestion}
       />
     </div>
   );

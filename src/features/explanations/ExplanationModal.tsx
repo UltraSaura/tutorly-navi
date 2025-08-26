@@ -13,6 +13,7 @@ interface ExplanationModalProps {
   steps: Step[];
   error: string | null;
   onTryAgain?: () => void;
+  exerciseQuestion?: string;
 }
 
 export function ExplanationModal({ 
@@ -21,7 +22,8 @@ export function ExplanationModal({
   loading, 
   steps, 
   error,
-  onTryAgain 
+  onTryAgain,
+  exerciseQuestion 
 }: ExplanationModalProps) {
   if (!open) return null;
 
@@ -51,15 +53,30 @@ export function ExplanationModal({
 
         <div className="flex-1 overflow-y-auto p-5">
           {loading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-16 rounded-xl" />
-              <Skeleton className="h-16 rounded-xl" />
-              <Skeleton className="h-16 rounded-xl" />
+            <div className="space-y-4">
+              <Skeleton className="h-20 rounded-xl" />
+              <Skeleton className="h-32 rounded-xl" />
             </div>
           ) : error ? (
             <p className="text-sm text-destructive">{error}</p>
           ) : (
-            <ExplanationCards steps={steps} />
+            <div className="space-y-4">
+              {/* Exercise Card */}
+              <div className="bg-slate-50 rounded-xl border p-4">
+                <h4 className="flex items-center gap-2 font-semibold text-foreground mb-2">
+                  <span>📘</span>
+                  Exercise
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  {exerciseQuestion || "Practice exercise"}
+                </p>
+              </div>
+
+              {/* Explanation Card */}
+              <div className="bg-card rounded-xl border shadow-md p-6">
+                <ExplanationCards steps={steps} />
+              </div>
+            </div>
           )}
         </div>
 

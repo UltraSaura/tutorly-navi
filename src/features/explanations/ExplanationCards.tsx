@@ -1,27 +1,53 @@
 import React from "react";
 import type { Step } from "./types";
 
-const ICON: Record<Step["icon"], string> = {
-  lightbulb:"💡", magnifier:"🔍", divide:"➗", checklist:"☑️", warning:"⚠️", target:"🎯"
-};
-const KIND: Record<Step["kind"], string> = {
-  concept:"Concept", example:"Example", strategy:"Strategy", pitfall:"Pitfall", check:"Check"
-};
+const SECTION_CONFIG = {
+  concept: { emoji: "💡", title: "Concept" },
+  example: { emoji: "🔍", title: "Example" },
+  strategy: { emoji: "☑️", title: "Strategy" },
+  pitfall: { emoji: "⚠️", title: "Pitfall" },
+  check: { emoji: "🎯", title: "Check yourself" }
+} as const;
 
 export default function ExplanationCards({ steps }: { steps: Step[] }) {
   if (!steps?.length) return null;
+
+  // Group steps by kind
+  const groupedSteps = steps.reduce((acc, step) => {
+    if (!acc[step.kind]) {
+      acc[step.kind] = [];
+    }
+    acc[step.kind].push(step);
+    return acc;
+  }, {} as Record<Step["kind"], Step[]>);
+
+  // Define order of sections
+  const sectionOrder: Step["kind"][] = ["concept", "example", "strategy", "pitfall", "check"];
+
   return (
-    <div className="space-y-2">
-      {steps.map((s, i) => (
-        <details key={i} className="rounded-xl border p-3 bg-white">
-          <summary className="cursor-pointer font-medium flex items-center gap-2">
-            <span aria-hidden>{ICON[s.icon] ?? "💡"}</span>
-            <span>{s.title}</span>
-            <span className="ml-2 text-xs rounded-full bg-neutral-100 px-2 py-0.5 text-neutral-600">{KIND[s.kind]}</span>
-          </summary>
-          <p className="mt-2 text-sm text-neutral-700 whitespace-pre-wrap">{s.body}</p>
-        </details>
-      ))}
+    <div className="space-y-6">
+      {sectionOrder.map((kind) => {
+        const sectionSteps = groupedSteps[kind];
+        if (!sectionSteps?.length) return null;
+
+        const config = SECTION_CONFIG[kind];
+        
+        return (
+          <div key={kind} className="space-y-3">
+            <h5 className="flex items-center gap-2 font-bold text-foreground">
+              <span>{config.emoji}</span>
+              {config.title}
+            </h5>
+            <div className="space-y-2">
+              {sectionSteps.map((step, index) => (
+                <div key={index} className="text-sm text-muted-foreground leading-relaxed">
+                  {step.body}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
