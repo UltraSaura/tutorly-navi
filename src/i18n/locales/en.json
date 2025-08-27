@@ -177,6 +177,8 @@
   },
   "exercise": {
     "noExercises": "No exercises yet",
+    "exerciseList": "Exercise List",
+    "correct": "correct",
     "showExplanation": "Show Explanation",
     "yourAnswer": "Your answer",
     "greatWork": "Great work!",

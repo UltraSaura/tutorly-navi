@@ -100,7 +100,7 @@ const ExerciseList = ({
         <div className="max-w-6xl mx-auto space-y-2">
           {/* Line 1: Title */}
           <div className="flex items-center justify-between">
-            <h1 className="text-h2 font-bold text-neutral-text">Exercise List</h1>
+            <h1 className="text-h2 font-bold text-neutral-text">{t('exercise.exerciseList')}</h1>
             {exercises.length > 0 && onClearExercises && (
               <Button
                 variant="ghost"
@@ -130,13 +130,13 @@ const ExerciseList = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <GraduationCap size={16} className="text-neutral-muted" />
-              <span className="text-body text-neutral-muted">Overall Grade:</span>
+              <span className="text-body text-neutral-muted">{t('grades.overallGrade')}:</span>
               <span className={cn("text-body font-semibold", getGradeColor())}>
                 {grade.percentage}% ({grade.letter})
               </span>
             </div>
             <div className="text-body text-neutral-muted">
-              {correctExercises}/{totalExercises} correct
+              {correctExercises}/{totalExercises} {t('exercise.correct')}
             </div>
           </div>
         </div>
@@ -154,11 +154,11 @@ const ExerciseList = ({
                 </div>
                 
                 <h3 className="text-h2 font-bold text-neutral-text mb-3">
-                  No exercises yet
+                  {t('exercise.noExercises')}
                 </h3>
                 
                 <p className="text-body text-neutral-muted mb-8 max-w-md">
-                  No exercises yet. Use the chat to upload homework or ask questions to get started!
+                  {t('grades.exerciseListDescription')}
                 </p>
               </div>
             ) : (
@@ -186,7 +186,7 @@ const ExerciseList = ({
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-card p-5">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-lg">Explanation</h3>
+              <h3 className="font-semibold text-lg">{t('exercise.showExplanation')}</h3>
               <button onClick={() => teaching.setOpen(false)}>✖</button>
             </div>
 
@@ -205,7 +205,7 @@ const ExerciseList = ({
 
             <div className="mt-6">
               <button className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-medium">
-                Try again → +5 XP
+                {t('exercise.tryAgain')} → +5 XP
               </button>
             </div>
           </div>

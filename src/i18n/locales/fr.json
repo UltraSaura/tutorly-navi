@@ -177,6 +177,8 @@
   },
   "exercise": {
     "noExercises": "Aucun exercice pour le moment",
+    "exerciseList": "Liste des exercices",
+    "correct": "correct",
     "showExplanation": "Afficher l'explication",
     "yourAnswer": "Votre réponse",
     "greatWork": "Excellent travail!",

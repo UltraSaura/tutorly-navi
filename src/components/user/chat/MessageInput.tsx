@@ -141,7 +141,7 @@ const MessageInput = ({
       />
       
       <Textarea 
-        placeholder="Type your question or homework here…"
+        placeholder={t('chat.inputPlaceholder')}
         value={inputMessage}
         onChange={(e) => {
           console.log('[DEBUG] Textarea onChange:', e.target.value);
