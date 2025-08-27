@@ -23,7 +23,6 @@ export function useExplanation() {
       const raw = await fetchExplanation(
         exerciseRow, 
         undefined, 
-        undefined, 
         "concept",
         activePromptTemplate,
         selectedModelId

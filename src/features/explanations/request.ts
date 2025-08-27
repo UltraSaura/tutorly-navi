@@ -10,7 +10,6 @@ const MATH_EXPLANATION_TEMPLATE_ID = 'math-explanation-generator';
 /**
  * Fetches an AI-generated explanation for an exercise
  * @param exerciseRow - The exercise data containing question, user answer, etc.
- * @param correctAnswer - The correct answer for the exercise (optional)
  * @param userContext - Additional user context like grade level, name, etc. (optional)
  * @param teachingMode - Mode for explanation: "concept" (default) or "solution"
  * @param activeTemplate - Admin-managed prompt template to use (optional)
@@ -19,12 +18,11 @@ const MATH_EXPLANATION_TEMPLATE_ID = 'math-explanation-generator';
  */
 export async function fetchExplanation(
   exerciseRow: Exercise,
-  correctAnswer?: string,
   userContext?: {
-    grade_level?: string;
+    gradeLevel?: string;
+    language?: string;
     first_name?: string;
     country?: string;
-    response_language?: string;
   },
   teachingMode: "concept" | "solution" = "concept",
   activeTemplate?: PromptTemplate | null,
@@ -73,28 +71,27 @@ Grade level: {{gradeLevel}}`;
 
     const promptTemplate = activeTemplate?.prompt_content || fallbackTemplate;
 
-    // Map exercise data to template variables
+    // Map exercise data to template variables using the exact structure specified
     const variables: PromptVariables & {
       exercise: string;
       studentAnswer: string;
       language: string;
       gradeLevel: string;
     } = {
-      exercise_content: exerciseRow.question,
-      student_answer: exerciseRow.userAnswer,
-      correct_answer: correctAnswer || 'Not provided',
-      grade_level: userContext?.grade_level || 'middle school',
+      exercise_content: exerciseRow.question ?? "",
+      student_answer: exerciseRow.userAnswer ?? "",
+      subject: "math",
+      response_language: userContext?.language ?? "English",
+      grade_level: userContext?.gradeLevel ?? "High School",
       first_name: userContext?.first_name || 'Student',
       country: userContext?.country || 'your country',
-      response_language: userContext?.response_language || 'English',
       // Legacy variables for backward compatibility
-      student_level: userContext?.grade_level || 'middle school',
-      subject: 'Mathematics',
+      student_level: userContext?.gradeLevel ?? "High School",
       // New template variable mappings
-      exercise: exerciseRow.question,
-      studentAnswer: exerciseRow.userAnswer,
-      language: userContext?.response_language || 'English',
-      gradeLevel: userContext?.grade_level || 'middle school'
+      exercise: exerciseRow.question ?? "",
+      studentAnswer: exerciseRow.userAnswer ?? "",
+      language: userContext?.language ?? "English",
+      gradeLevel: userContext?.gradeLevel ?? "High School"
     };
 
     // Substitute variables into the template
@@ -109,7 +106,7 @@ Grade level: {{gradeLevel}}`;
       finalPrompt,
       [], // No message history for explanations
       selectedModelId,
-      userContext?.response_language || 'en'
+      userContext?.language || 'en'
     );
 
     if (error) {

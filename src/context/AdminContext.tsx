@@ -21,7 +21,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       ...apiKeyManagement,
       ...modelManagement,
       ...subjectManagement,
-      activePromptTemplate: promptManagement.getActiveTemplate('chat')
+      activePromptTemplate: promptManagement.getActiveTemplate('explanation')
     }}>
       {children}
     </AdminContext.Provider>
