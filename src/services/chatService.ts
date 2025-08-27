@@ -45,17 +45,20 @@ export const sendMessageToAI = async (
     }
     
     // Show activated model as a toast with actual model used from response
-    const actualModel = data?.metadata?.modelUsed || selectedModelId;
-    console.log('[DEBUG] Using activated model:', selectedModelId, 'Actual model used:', actualModel);
-    toast.success(`Response generated using ${actualModel}`);
+    const actualModel = data?.modelUsed || selectedModelId;
+    const provider = data?.provider ? `${data.provider} • ` : '';
+    console.log('[DEBUG] Using activated model:', selectedModelId, 'Actual model used:', `${provider}${actualModel}`);
+    toast.success(`Response generated using ${provider}${actualModel}`);
     
     return { data, error: null };
   } catch (error) {
     console.error('Error in AI chat:', error);
     
     // Provide more specific error handling
-    if (error.message?.includes('API key not configured') || error.message?.includes('OpenAI API error')) {
-      toast.error(`OpenAI API key issue detected. The key has been updated and should work now. Please try again.`);
+    if (error.message?.includes('API key not configured')) {
+      toast.error('API key not configured for the selected provider. Please add the key in Admin > Model Selection.');
+    } else if (error.message?.includes('Provider not implemented')) {
+      toast.error('Selected provider is not yet implemented. Please choose another model.');
     } else if (error.message?.includes('Failed to get AI response')) {
       toast.error('AI service temporarily unavailable. Please try again in a moment.');
     } else if (error.message?.includes('timeout') || error.message?.includes('network')) {

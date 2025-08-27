@@ -116,7 +116,7 @@ export const useExercises = () => {
     // Check if the message contains multiple exercises
     if (hasMultipleExercises(message)) {
       console.log('[useExercises] Detected multiple exercises in message');
-      const newExercises = await processMultipleExercises(message, exercises, processedContent, language);
+      const newExercises = await processMultipleExercises(message, exercises, processedContent, language, selectedModelId);
       
       if (newExercises.length > 0) {
         setExercises(prev => {
@@ -133,8 +133,8 @@ export const useExercises = () => {
         }
       }
     } else {
-      // Process single exercise
-      const result = await processNewExercise(message, exercises, processedContent, language);
+    // Process single exercise
+    const result = await processNewExercise(message, exercises, processedContent, language, selectedModelId);
       if (result) {
         const { exercise, isUpdate } = result;
         setExercises(prev => {

@@ -206,7 +206,7 @@ const extractAllFractionsFromText = (text: string): Array<{ question: string, an
   return exercises;
 };
 
-export const gradeDocumentExercises = async (exercises: Exercise[]): Promise<Exercise[]> => {
+export const gradeDocumentExercises = async (exercises: Exercise[], selectedModelId: string): Promise<Exercise[]> => {
   try {
     if (exercises.length === 0) {
       return exercises;
@@ -215,7 +215,7 @@ export const gradeDocumentExercises = async (exercises: Exercise[]): Promise<Exe
     console.log(`Grading ${exercises.length} exercises from document`);
     
     // Grade each exercise
-    const gradingPromises = exercises.map(exercise => evaluateHomework(exercise));
+    const gradingPromises = exercises.map(exercise => evaluateHomework(exercise, 1, 'en', selectedModelId));
     const gradedExercises = await Promise.all(gradingPromises);
     
     // Check if any exercises were graded (have isCorrect property)
@@ -223,7 +223,7 @@ export const gradeDocumentExercises = async (exercises: Exercise[]): Promise<Exe
     
     if (!anyGraded) {
       console.warn('No exercises were successfully graded');
-      toast.warning('Could not grade exercises. Please check your OpenAI API key configuration.');
+      toast.warning('Could not grade exercises. Please check your API key configuration.');
     }
     
     return gradedExercises;

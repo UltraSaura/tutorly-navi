@@ -42,7 +42,7 @@ export function getModelConfig(modelId: string) {
     'default': { provider: 'OpenAI', model: 'gpt-4.1-2025-04-14' }
   };
   
-  return modelMap[modelId] || modelMap.default;
+  return modelMap[modelId];
 }
 
 // Helper function to get API key for a provider

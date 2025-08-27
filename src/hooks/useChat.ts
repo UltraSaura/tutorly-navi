@@ -135,7 +135,8 @@ export const useChat = () => {
       setIsLoading, 
       undefined, // No longer need processHomeworkFromChat as primary processor
       addExercises, // Pass the exercise processor directly
-      subjectId // Pass the subject ID
+      subjectId, // Pass the subject ID
+      selectedModelId
     );
   };
   
@@ -152,7 +153,8 @@ export const useChat = () => {
       setIsLoading, 
       undefined, // No longer need processHomeworkFromChat as primary processor
       addExercises, // Pass the exercise processor directly
-      subjectId // Pass the subject ID
+      subjectId, // Pass the subject ID
+      selectedModelId
     );
   };
   

@@ -9,7 +9,8 @@ export const processNewExercise = async (
   message: string,
   existingExercises: Exercise[],
   processedContent: Set<string>,
-  language: string = 'en'
+  language: string = 'en',
+  selectedModelId: string
 ): Promise<{ exercise: Exercise; isUpdate: boolean } | null> => {
   // Check if we've processed this exact content before
   if (processedContent.has(message)) {
@@ -107,7 +108,7 @@ export const processNewExercise = async (
     };
 
     try {
-      const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber, language);
+      const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber, language, selectedModelId);
       console.log("[exerciseProcessor] Graded retry exercise:", gradedExercise);
       return { exercise: gradedExercise, isUpdate: true };
     } catch (error) {
@@ -140,7 +141,7 @@ export const processNewExercise = async (
   console.log("[exerciseProcessor] Created new exercise object before grading:", newEx);
 
   try {
-    const gradedExercise = await evaluateHomework(newEx, 1, language);
+    const gradedExercise = await evaluateHomework(newEx, 1, language, selectedModelId);
     console.log("[exerciseProcessor] Graded new exercise:", gradedExercise);
     return { exercise: gradedExercise, isUpdate: false };
   } catch (error) {
@@ -193,7 +194,8 @@ export const processMultipleExercises = async (
   message: string,
   existingExercises: Exercise[],
   processedContent: Set<string>,
-  language: string = 'en'
+  language: string = 'en',
+  selectedModelId: string
 ): Promise<Exercise[]> => {
   console.log("[exerciseProcessor] Processing multiple exercises from message:", message);
   
@@ -251,7 +253,7 @@ export const processMultipleExercises = async (
       };
 
       try {
-        const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber, language);
+        const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber, language, selectedModelId);
         processedExercises.push(gradedExercise);
         console.log("[exerciseProcessor] Processed retry exercise:", gradedExercise.question);
       } catch (error) {
@@ -280,7 +282,7 @@ export const processMultipleExercises = async (
       };
 
       try {
-        const gradedExercise = await evaluateHomework(newEx, 1, language);
+        const gradedExercise = await evaluateHomework(newEx, 1, language, selectedModelId);
         processedExercises.push(gradedExercise);
         console.log("[exerciseProcessor] Processed new exercise:", gradedExercise.question);
       } catch (error) {

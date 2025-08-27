@@ -15,7 +15,8 @@ export const handleFileUpload = async (
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   processHomeworkFromChat?: (content: string) => Promise<void>,
   addExercises?: (exercises: any[]) => Promise<void>,
-  subjectId?: string
+  subjectId?: string,
+  selectedModelId?: string
 ) => {
   // Create a temporary URL for the file
   const fileUrl = URL.createObjectURL(file);
@@ -39,7 +40,7 @@ export const handleFileUpload = async (
     
     if (processingResult && processingResult.exercises.length > 0) {
       // Grade the extracted exercises
-      const gradedExercises = await gradeDocumentExercises(processingResult.exercises);
+      const gradedExercises = await gradeDocumentExercises(processingResult.exercises, selectedModelId || localStorage.getItem('selectedModelId') || 'gpt-4.1');
       
       // Add the exercises to the exercise list if the handler is provided
       if (addExercises) {
@@ -104,7 +105,8 @@ export const handlePhotoUpload = async (
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   processHomeworkFromChat?: (content: string) => Promise<void>,
   addExercises?: (exercises: any[]) => Promise<void>,
-  subjectId?: string
+  subjectId?: string,
+  selectedModelId?: string
 ) => {
   // Create a temporary URL for the image
   const imageUrl = URL.createObjectURL(file);
@@ -128,7 +130,7 @@ export const handlePhotoUpload = async (
     
     if (processingResult && processingResult.exercises.length > 0) {
       // Grade the extracted exercises
-      const gradedExercises = await gradeDocumentExercises(processingResult.exercises);
+      const gradedExercises = await gradeDocumentExercises(processingResult.exercises, selectedModelId || localStorage.getItem('selectedModelId') || 'gpt-4.1');
       
       // Add the exercises to the exercise list if the handler is provided
       if (addExercises) {

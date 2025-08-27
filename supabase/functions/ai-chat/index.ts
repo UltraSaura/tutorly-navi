@@ -141,16 +141,7 @@ serve(async (req) => {
         );
         break;
       default:
-        // Fallback to OpenAI if provider is not implemented
-        console.log(`Fallback to OpenAI for provider: ${modelConfig.provider}`);
-        responseContent = await callOpenAI(
-          formattedSystemMessage, 
-          formattedHistory, 
-          message, 
-          'gpt-3.5-turbo', 
-          isExercise
-        );
-        break;
+        throw new Error(`Provider not implemented: ${modelConfig.provider}`);
     }
     
     // Return the AI's response

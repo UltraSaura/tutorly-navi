@@ -26,7 +26,7 @@ export async function fetchExplanation(
   },
   teachingMode: "concept" | "solution" = "concept",
   activeTemplate?: PromptTemplate | null,
-  selectedModelId?: string
+  selectedModelId: string
 ): Promise<string> {
   if (EXPLAIN_DEBUG.forceMock) {
     if (EXPLAIN_DEBUG.enableConsole) {
@@ -36,12 +36,7 @@ export async function fetchExplanation(
   }
 
   try {
-    // Use the selected model ID from localStorage if not provided, fallback to gpt-4.1
-    const modelId = selectedModelId || localStorage.getItem('selectedModelId') || 'gpt-4.1';
-    console.log('[explanationRequest] Using model:', modelId, { 
-      passed: selectedModelId, 
-      fromStorage: localStorage.getItem('selectedModelId') 
-    });
+    console.log('[explanationRequest] Using model:', selectedModelId);
 
     // Use admin template if available, otherwise fallback
     const fallbackTemplate = `You are a patient math tutor. Your job is to TEACH the underlying mathematical concept, NOT to solve the student's exercise.
@@ -112,7 +107,7 @@ Grade level: {{gradeLevel}}`;
     const { data, error } = await sendMessageToAI(
       finalPrompt,
       [], // No message history for explanations
-      modelId,
+      selectedModelId,
       userContext?.language || 'en'
     );
 
