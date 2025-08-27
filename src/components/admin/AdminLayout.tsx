@@ -1,12 +1,19 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 import AdminSidebarMobile from './AdminSidebarMobile';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 const AdminLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { canAccessAdmin } = useAdminAuth();
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  // Redirect non-admin users
+  if (!canAccessAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900 relative overflow-hidden">
