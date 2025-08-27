@@ -3,6 +3,7 @@ import { requestTwoCardTeaching } from "./promptClient";
 import { parseTwoCardText, TeachingSections } from "./twoCardParser";
 import { usePromptManagement } from "@/hooks/usePromptManagement";
 import { useAdmin } from "@/context/AdminContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 export function useTwoCardTeaching() {
   const [open, setOpen] = React.useState(false);
@@ -12,6 +13,7 @@ export function useTwoCardTeaching() {
   
   const { getActiveTemplate } = usePromptManagement();
   const { selectedModelId } = useAdmin();
+  const { t } = useLanguage();
 
   async function openFor(row: any, profile: { response_language?: string; grade_level?: string }) {
     setOpen(true);
@@ -42,12 +44,12 @@ export function useTwoCardTeaching() {
       if (!parsed.concept && !parsed.example && !parsed.strategy) {
         console.log('[TwoCardTeaching] Using fallback - all core fields empty');
         setSections({
-          exercise: "Your exercise",
-          concept: "We'll focus on the exact math idea you need here.",
-          example: "Here's a similar example with different numbers.",
-          strategy: "1) Understand the goal  2) Apply the rules  3) Check your result.",
-          pitfall: "Don't apply an operation to only one part.",
-          check: "Explain why your steps are valid.",
+          exercise: t('explanation.fallback.exercise'),
+          concept: t('explanation.fallback.concept'),
+          example: t('explanation.fallback.example'),
+          strategy: t('explanation.fallback.strategy'),
+          pitfall: t('explanation.fallback.pitfall'),
+          check: t('explanation.fallback.check'),
         });
       } else {
         console.log('[TwoCardTeaching] Using parsed sections:', parsed);
@@ -55,14 +57,14 @@ export function useTwoCardTeaching() {
       }
     } catch (e:any) {
       console.error('[TwoCardTeaching] Error:', e);
-      setError("Couldn't load the teaching explanation. Please try again.");
+      setError(t('explanation.error'));
       setSections({
-        exercise: "Your exercise",
-        concept: "We'll focus on the exact math idea you need here.",
-        example: "Here's a similar example with different numbers.",
-        strategy: "1) Understand the goal  2) Apply the rules  3) Check your result.",
-        pitfall: "Don't apply an operation to only one part.",
-        check: "Explain why your steps are valid.",
+        exercise: t('explanation.fallback.exercise'),
+        concept: t('explanation.fallback.concept'),
+        example: t('explanation.fallback.example'),
+        strategy: t('explanation.fallback.strategy'),
+        pitfall: t('explanation.fallback.pitfall'),
+        check: t('explanation.fallback.check'),
       });
     } finally {
       setLoading(false);

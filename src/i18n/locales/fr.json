@@ -192,5 +192,16 @@
     "answerSubmitted": "Réponse soumise avec succès!",
     "problem": "Problème",
     "guidance": "Conseil"
+  },
+  "explanation": {
+    "error": "Impossible de charger l'explication pédagogique. Veuillez réessayer.",
+    "fallback": {
+      "exercise": "Votre exercice",
+      "concept": "Nous nous concentrerons sur l'idée mathématique exacte dont vous avez besoin ici.",
+      "example": "Voici un exemple similaire avec des nombres différents.",
+      "strategy": "1) Comprendre l'objectif  2) Appliquer les règles  3) Vérifier votre résultat.",
+      "pitfall": "N'appliquez pas une opération à une seule partie.",
+      "check": "Expliquez pourquoi vos étapes sont valides."
+    }
   }
 }

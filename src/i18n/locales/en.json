@@ -192,5 +192,16 @@
     "answerSubmitted": "Answer submitted successfully!",
     "problem": "Problem",
     "guidance": "Guidance"
+  },
+  "explanation": {
+    "error": "Couldn't load the teaching explanation. Please try again.",
+    "fallback": {
+      "exercise": "Your exercise",
+      "concept": "We'll focus on the exact math idea you need here.",
+      "example": "Here's a similar example with different numbers.",
+      "strategy": "1) Understand the goal  2) Apply the rules  3) Check your result.",
+      "pitfall": "Don't apply an operation to only one part.",
+      "check": "Explain why your steps are valid."
+    }
   }
 }
