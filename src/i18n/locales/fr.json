@@ -60,7 +60,9 @@
   },
   "language": {
     "english": "English",
-    "french": "Français"
+    "french": "Français",
+    "autoDetected": "Langue détectée automatiquement",
+    "auto": "Auto"
   },
   "common": {
     "loading": "Chargement...",
@@ -70,7 +72,12 @@
     "save": "Enregistrer",
     "edit": "Modifier",
     "delete": "Supprimer",
-    "close": "Fermer"
+    "close": "Fermer",
+    "signingOut": "Déconnexion...",
+    "signOutSuccess": "Déconnecté avec succès",
+    "signOutSuccessDescription": "Vous avez été déconnecté de votre compte.",
+    "signOutError": "Erreur lors de la déconnexion",
+    "signOutErrorDescription": "Il y a eu un problème lors de la déconnexion. Veuillez réessayer."
   },
   "auth": {
     "signIn": "Se connecter",

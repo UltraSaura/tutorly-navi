@@ -65,15 +65,15 @@ const Navbar = () => {
     try {
       await supabase.auth.signOut();
       toast({
-        title: "Signed out successfully",
-        description: "You have been logged out of your account.",
+        title: t('common.signOutSuccess'),
+        description: t('common.signOutSuccessDescription'),
       });
       setMobileMenuOpen(false);
     } catch (error) {
       console.error('Sign out error:', error);
       toast({
-        title: "Error signing out",
-        description: "There was a problem signing out. Please try again.",
+        title: t('common.signOutError'),
+        description: t('common.signOutErrorDescription'),
         variant: "destructive",
       });
     } finally {
@@ -83,7 +83,7 @@ const Navbar = () => {
   
   const tabs = [
     { path: '/', label: t('nav.home'), icon: <MessageSquare className="w-5 h-5" /> },
-    { path: '/roadmap', label: t('nav.roadmap'), icon: <BookOpen className="w-5 h-5" /> },
+    { path: '/dashboard', label: t('nav.roadmap'), icon: <BookOpen className="w-5 h-5" /> },
     { path: '/grades', label: t('nav.grades'), icon: <BarChart3 className="w-5 h-5" /> },
     { path: '/skills', label: t('nav.skills'), icon: <CheckSquare className="w-5 h-5" /> },
   ];
@@ -159,7 +159,7 @@ const Navbar = () => {
                   className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>{isSigningOut ? 'Signing out...' : 'Sign Out'}</span>
+                  <span>{isSigningOut ? t('common.signingOut') : t('auth.logout')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -221,7 +221,7 @@ const Navbar = () => {
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent w-full text-left text-red-600 dark:text-red-400 disabled:opacity-50"
                 >
                   <LogOut className="w-5 h-5" />
-                  <span>{isSigningOut ? 'Signing out...' : 'Sign Out'}</span>
+                  <span>{isSigningOut ? t('common.signingOut') : t('auth.logout')}</span>
                 </button>
               </div>
             </SheetContent>

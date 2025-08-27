@@ -60,7 +60,9 @@
   },
   "language": {
     "english": "English",
-    "french": "Français"
+    "french": "Français",
+    "autoDetected": "Auto-detected language",
+    "auto": "Auto"
   },
   "common": {
     "loading": "Loading...",
@@ -70,7 +72,12 @@
     "save": "Save",
     "edit": "Edit",
     "delete": "Delete",
-    "close": "Close"
+    "close": "Close",
+    "signingOut": "Signing out...",
+    "signOutSuccess": "Signed out successfully",
+    "signOutSuccessDescription": "You have been logged out of your account.",
+    "signOutError": "Error signing out",
+    "signOutErrorDescription": "There was a problem signing out. Please try again."
   },
   "auth": {
     "signIn": "Sign In",
