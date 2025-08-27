@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import ExerciseList from './chat/ExerciseList';
 import MessageInput from './chat/MessageInput';
+import MessageList from './chat/MessageList';
 import CameraCapture from './chat/CameraCapture';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
@@ -169,11 +170,11 @@ const ChatInterface = () => {
     setShowCamera(false);
   };
 
-  // Exercise-Focused Layout with Chat Input
+  // Layout with Exercises and Chat
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] bg-neutral-bg">
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] bg-neutral-bg gap-4 p-4">
       {/* Exercise List */}
-      <div className="flex-1 overflow-hidden pb-4">
+      <div className="flex-1 min-h-0">
         <ExerciseList
           exercises={exercises}
           grade={grade}
@@ -183,16 +184,26 @@ const ChatInterface = () => {
         />
       </div>
 
-      {/* Chat Input */}
-      <div className="flex-shrink-0 p-4 bg-neutral-bg">
-        <MessageInput
-          inputMessage={inputMessage}
-          setInputMessage={setInputMessage}
-          handleSendMessage={handleSendMessage}
-          handleFileUpload={handleDocumentFileUpload}
-          handlePhotoUpload={handlePhotoFileUpload}
-          isLoading={isLoading}
-        />
+      {/* Chat Panel */}
+      <div className="w-full lg:w-1/3 flex flex-col min-h-0">
+        <div className="glass rounded-xl overflow-hidden flex flex-col h-full">
+          <div className="p-4 border-b border-border">
+            <p className="text-sm font-semibold text-neutral-text">{t('chat.askQuestions')}</p>
+          </div>
+          
+          <MessageList messages={filteredMessages} isLoading={isLoading} />
+          
+          <div className="flex-shrink-0 p-4">
+            <MessageInput
+              inputMessage={inputMessage}
+              setInputMessage={setInputMessage}
+              handleSendMessage={handleSendMessage}
+              handleFileUpload={handleDocumentFileUpload}
+              handlePhotoUpload={handlePhotoFileUpload}
+              isLoading={isLoading}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Upload Bottom Sheet */}

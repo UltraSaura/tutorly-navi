@@ -34,7 +34,7 @@ export const useChat = () => {
     setInputMessage(message);
   };
   
-  // Keep track of which AI messages are responses to homework submissions
+  // Keep track of which AI messages are responses to homework submissions that create exercises
   const [homeworkResponseIds, setHomeworkResponseIds] = useState<Set<string>>(new Set());
   
   // Get model info to display
@@ -44,16 +44,11 @@ export const useChat = () => {
     return model ? model.name : 'AI Model';
   })();
   
-  // Filter out AI messages that are responses to homework submissions
+  // Only filter messages when exercises are actually created, not for all math questions
   const filteredMessages = useMemo(() => {
-    return messages.filter(message => {
-      // Keep all user messages
-      if (message.role === 'user') return true;
-      
-      // Filter out AI messages that are responses to homework
-      return !homeworkResponseIds.has(message.id);
-    });
-  }, [messages, homeworkResponseIds]);
+    // For now, show all messages - let the interface decide what to display
+    return messages;
+  }, [messages]);
   
   // Add a message directly to the chat
   const addMessage = (message: Message) => {
@@ -111,10 +106,9 @@ export const useChat = () => {
           timestamp: new Date(),
         };
         
-        // If this is a homework-related message, add it to our tracking set
-        if (isHomework) {
-          setHomeworkResponseIds(prev => new Set([...prev, aiResponse.id]));
-        }
+        // Only track responses that will create exercises, not math explanations
+        // This allows math questions to show their explanations in chat
+        console.log('[DEBUG] AI response created for:', { isHomework, content: data.content.substring(0, 100) });
         
         setMessages(prev => [...prev, aiResponse]);
       } else if (error) {
