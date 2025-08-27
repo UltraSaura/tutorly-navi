@@ -29,14 +29,14 @@ function substitutePromptVariables(template: string, variables: ExplanationVaria
 /**
  * Requests a two-card teaching explanation using the explanation prompt system
  * @param vars - Variables for the explanation including exercise content, student answer, etc.
+ * @param selectedModelId - The model ID to use for AI generation (required)
  * @param activeTemplate - The active prompt template to use (optional)
- * @param selectedModelId - The model ID to use for AI generation (default: 'gpt-4.1')
  * @returns Promise<string> - Raw text response from the AI
  */
 export async function requestTwoCardTeaching(
   vars: ExplanationVariables,
-  activeTemplate?: PromptTemplate | null,
-  selectedModelId: string = 'gpt-4.1'
+  selectedModelId: string,
+  activeTemplate?: PromptTemplate | null
 ): Promise<string> {
   
   console.log('[promptClient] Template Info:', {

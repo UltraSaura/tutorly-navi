@@ -2,6 +2,7 @@ import React from "react";
 import { requestTwoCardTeaching } from "./promptClient";
 import { parseTwoCardText, TeachingSections } from "./twoCardParser";
 import { usePromptManagement } from "@/hooks/usePromptManagement";
+import { useAdmin } from "@/context/AdminContext";
 
 export function useTwoCardTeaching() {
   const [open, setOpen] = React.useState(false);
@@ -10,6 +11,7 @@ export function useTwoCardTeaching() {
   const [error, setError] = React.useState<string | null>(null);
   
   const { getActiveTemplate } = usePromptManagement();
+  const { selectedModelId } = useAdmin();
 
   async function openFor(row: any, profile: { response_language?: string; grade_level?: string }) {
     setOpen(true);
@@ -30,7 +32,7 @@ export function useTwoCardTeaching() {
         subject: row?.subject ?? "math",
         response_language: profile?.response_language ?? "English",
         grade_level: profile?.grade_level ?? "High School",
-      }, explanationTemplate);
+      }, selectedModelId, explanationTemplate);
       
       console.log('[TwoCardTeaching] Raw AI Response:', raw);
       

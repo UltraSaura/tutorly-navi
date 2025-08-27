@@ -44,8 +44,9 @@ export const sendMessageToAI = async (
       throw new Error(error.message || 'Failed to get AI response');
     }
     
-    // Show model used as a toast
-    toast.success(`Response generated using ${data.provider} ${data.modelUsed}`);
+    // Show activated model as a toast (client-side selectedModelId)
+    console.log('[DEBUG] Using activated model:', selectedModelId);
+    toast.success(`Response generated using activated model: ${selectedModelId}`);
     
     return { data, error: null };
   } catch (error) {

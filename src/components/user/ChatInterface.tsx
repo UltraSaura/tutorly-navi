@@ -188,7 +188,10 @@ const ChatInterface = () => {
       <div className="w-full lg:w-1/3 flex flex-col min-h-0">
         <div className="glass rounded-xl overflow-hidden flex flex-col h-full">
           <div className="p-4 border-b border-border">
-            <p className="text-sm font-semibold text-neutral-text">{t('chat.askQuestions')}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-neutral-text">{t('chat.askQuestions')}</p>
+              <p className="text-xs text-neutral-text/60">Using: {activeModel}</p>
+            </div>
           </div>
           
           <MessageList messages={filteredMessages} isLoading={isLoading} />

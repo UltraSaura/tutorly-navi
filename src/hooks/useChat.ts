@@ -77,6 +77,7 @@ export const useChat = () => {
     
     setMessages([...messages, newMessage]);
     setInputMessage('');
+    console.log('[DEBUG] Sending message with model:', selectedModelId);
     setIsLoading(true);
     
     // Check if this message is a homework submission
@@ -108,7 +109,7 @@ export const useChat = () => {
         
         // Only track responses that will create exercises, not math explanations
         // This allows math questions to show their explanations in chat
-        console.log('[DEBUG] AI response created for:', { isHomework, content: data.content.substring(0, 100) });
+        console.log('[DEBUG] AI response created for:', { isHomework, selectedModelId, content: data.content.substring(0, 100) });
         
         setMessages(prev => [...prev, aiResponse]);
       } else if (error) {
