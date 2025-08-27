@@ -5,9 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Pencil, Trash2, Plus, Eye, Settings } from 'lucide-react';
 import { usePromptManagement } from '@/hooks/usePromptManagement';
-import { PromptTemplate } from '@/types/admin';
+import { PromptTemplate, NewPromptTemplate } from '@/types/admin';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { NewTemplateDialog } from './prompts/NewTemplateDialog';
+import { EditTemplateDialog } from './prompts/EditTemplateDialog';
+import { ViewTemplateDialog } from './prompts/ViewTemplateDialog';
 
 const SystemPromptConfigNew = () => {
   const {
@@ -15,10 +18,30 @@ const SystemPromptConfigNew = () => {
     loading,
     getActiveTemplate,
     setActiveTemplate,
-    deleteTemplate
+    deleteTemplate,
+    addTemplate,
+    updateTemplate
   } = usePromptManagement();
 
   const [selectedUsageType, setSelectedUsageType] = useState<string>('chat');
+  const [showNewDialog, setShowNewDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showViewDialog, setShowViewDialog] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<PromptTemplate | null>(null);
+  
+  // New template form state
+  const [newTemplate, setNewTemplate] = useState<NewPromptTemplate>({
+    name: '',
+    subject: '',
+    description: '',
+    prompt_content: '',
+    tags: [],
+    is_active: false,
+    usage_type: 'chat',
+    auto_activate: false,
+    priority: 0
+  });
+  const [newTag, setNewTag] = useState('');
 
   if (loading) {
     return (
@@ -61,6 +84,60 @@ const SystemPromptConfigNew = () => {
     }
   };
 
+  const handleAddTemplate = async () => {
+    await addTemplate(newTemplate);
+    setShowNewDialog(false);
+    resetNewTemplate();
+  };
+
+  const handleEditTemplate = async (updates: Partial<PromptTemplate>) => {
+    if (selectedTemplate) {
+      await updateTemplate(selectedTemplate.id, updates);
+    }
+  };
+
+  const handleView = (template: PromptTemplate) => {
+    setSelectedTemplate(template);
+    setShowViewDialog(true);
+  };
+
+  const handleEdit = (template: PromptTemplate) => {
+    setSelectedTemplate(template);
+    setShowEditDialog(true);
+  };
+
+  const resetNewTemplate = () => {
+    setNewTemplate({
+      name: '',
+      subject: '',
+      description: '',
+      prompt_content: '',
+      tags: [],
+      is_active: false,
+      usage_type: selectedUsageType as 'chat' | 'grading' | 'explanation' | 'math_enhanced',
+      auto_activate: false,
+      priority: 0
+    });
+    setNewTag('');
+  };
+
+  const addTag = () => {
+    if (newTag.trim() && !newTemplate.tags.includes(newTag.trim())) {
+      setNewTemplate({
+        ...newTemplate,
+        tags: [...newTemplate.tags, newTag.trim()]
+      });
+      setNewTag('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setNewTemplate({
+      ...newTemplate,
+      tags: newTemplate.tags.filter(tag => tag !== tagToRemove)
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -70,7 +147,10 @@ const SystemPromptConfigNew = () => {
             Manage AI prompts centrally for all system interactions
           </p>
         </div>
-        <Button>
+        <Button onClick={() => {
+          resetNewTemplate();
+          setShowNewDialog(true);
+        }}>
           <Plus className="h-4 w-4 mr-2" />
           Add Template
         </Button>
@@ -130,10 +210,18 @@ const SystemPromptConfigNew = () => {
                             Activate
                           </Button>
                         )}
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleView(template)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleEdit(template)}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button 
@@ -170,7 +258,13 @@ const SystemPromptConfigNew = () => {
                     <p className="text-muted-foreground">
                       No templates found for {type.label.toLowerCase()}
                     </p>
-                    <Button className="mt-4">
+                    <Button 
+                      className="mt-4"
+                      onClick={() => {
+                        resetNewTemplate();
+                        setShowNewDialog(true);
+                      }}
+                    >
                       <Plus className="h-4 w-4 mr-2" />
                       Create First Template
                     </Button>
@@ -181,6 +275,32 @@ const SystemPromptConfigNew = () => {
           </TabsContent>
         ))}
       </Tabs>
+
+      {/* Dialogs */}
+      <NewTemplateDialog
+        open={showNewDialog}
+        onOpenChange={setShowNewDialog}
+        newTemplate={newTemplate}
+        onNewTemplateChange={setNewTemplate}
+        onAddTemplate={handleAddTemplate}
+        newTag={newTag}
+        onNewTagChange={setNewTag}
+        onAddTag={addTag}
+        onRemoveTag={removeTag}
+      />
+
+      <EditTemplateDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        template={selectedTemplate}
+        onSave={handleEditTemplate}
+      />
+
+      <ViewTemplateDialog
+        open={showViewDialog}
+        onOpenChange={setShowViewDialog}
+        template={selectedTemplate}
+      />
     </div>
   );
 };
