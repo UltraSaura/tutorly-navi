@@ -3,14 +3,15 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showXpToast } from '@/components/game/XpToast';
-import ExplanationCards from './ExplanationCards';
-import type { Step } from './types';
+import { TwoCards } from './TwoCards';
+import { useTwoCardTeaching } from './useTwoCardTeaching';
+import type { TeachingSections } from './twoCardParser';
 
 interface ExplanationModalProps {
   open: boolean;
   onClose: () => void;
   loading: boolean;
-  steps: Step[];
+  sections: TeachingSections | null;
   error: string | null;
   onTryAgain?: () => void;
   exerciseQuestion?: string;
@@ -20,7 +21,7 @@ export function ExplanationModal({
   open, 
   onClose, 
   loading, 
-  steps, 
+  sections, 
   error,
   onTryAgain,
   exerciseQuestion 
@@ -59,39 +60,23 @@ export function ExplanationModal({
             </div>
           ) : error ? (
             <p className="text-sm text-destructive">{error}</p>
-          ) : (
-            <div className="space-y-4">
-              {/* Exercise Card */}
-              <div className="bg-slate-50 rounded-xl border p-4">
-                <h4 className="flex items-center gap-2 font-semibold text-foreground mb-2">
-                  <span>📘</span>
-                  Exercise
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  {exerciseQuestion || "Practice exercise"}
-                </p>
-              </div>
-
-              {/* Explanation Card */}
-              <div className="bg-card rounded-xl border shadow-md p-6">
-                <ExplanationCards steps={steps} />
-              </div>
-            </div>
-          )}
+          ) : sections ? (
+            <TwoCards s={sections} />
+          ) : null}
         </div>
 
         <div className="p-5 border-t border-border">
           {process.env.NODE_ENV !== "production" && (
             <div className="mb-4 text-xs text-muted-foreground">
               <button 
-                onClick={() => console.log("[Explain] steps", steps)}
+                onClick={() => console.log("[Explain] sections", sections)}
                 className="hover:text-foreground transition-colors"
               >
-                Log steps
+                Log sections
               </button>
               <span className="mx-2">•</span>
               <button 
-                onClick={() => alert("If empty, check console for raw AI output and prompt.")}
+                onClick={() => alert("If empty, check console for raw AI output and template info.")}
                 className="hover:text-foreground transition-colors"
               >
                 Help

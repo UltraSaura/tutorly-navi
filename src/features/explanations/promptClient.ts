@@ -39,15 +39,40 @@ export async function requestTwoCardTeaching(
   selectedModelId: string = 'gpt-4.1'
 ): Promise<string> {
   
+  console.log('[promptClient] Template Info:', {
+    name: activeTemplate?.name || 'Fallback template',
+    usage_type: activeTemplate?.usage_type || 'fallback',
+    has_content: !!activeTemplate?.prompt_content
+  });
+  
   // Use active explanation template or fallback
-  const fallbackTemplate = `You are a helpful math tutor. Please provide a step-by-step explanation for this exercise:
+  const fallbackTemplate = `You are a math tutor specializing in step-by-step explanations. Given an exercise and a student's answer, provide a structured teaching response using this exact format:
+
+📘 Exercise
+State the exercise clearly and concisely.
+
+💡 Concept  
+Explain the key mathematical concept needed to solve this type of problem.
+
+🔍 Example (different numbers)
+Show a similar example using different numbers to illustrate the concept.
+
+☑️ Strategy
+Provide a clear step-by-step strategy for approaching this type of problem.
+
+⚠️ Pitfall
+Highlight common mistakes students make with this type of problem.
+
+🎯 Check yourself
+Give the student a way to verify their understanding or check their work.
 
 Exercise: {{exercise_content}}
-${vars.student_answer ? 'Student Answer: {{student_answer}}' : ''}
+Student Answer: {{student_answer}}
 Subject: {{subject}}
+Response Language: {{response_language}}
 Grade Level: {{grade_level}}
 
-Please provide your explanation in {{response_language}}.`;
+Provide your response using the exact format above with the emoji headers.`;
   
   const promptTemplate = activeTemplate?.prompt_content || fallbackTemplate;
   
@@ -79,6 +104,8 @@ Please provide your explanation in {{response_language}}.`;
   if (!data?.content) {
     throw new Error('No content received from AI service');
   }
+  
+  console.log('[promptClient] Raw AI Response:', data.content);
   
   return data.content;
 }
