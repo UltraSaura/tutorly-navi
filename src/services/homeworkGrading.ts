@@ -7,7 +7,8 @@ import { areMathematicallyEquivalent, getEquivalencyContext, detectFractionOcrMi
 export const evaluateHomework = async (
   exercise: Exercise,
   attemptNumber: number = 1,
-  language: string = 'en'
+  language: string = 'en',
+  selectedModelId: string = 'deepseek-chat'
 ): Promise<Exercise> => {
   try {
     console.log('[homeworkGrading] evaluateHomework called with:', exercise);
@@ -48,7 +49,7 @@ export const evaluateHomework = async (
     const { data: gradeData, error: gradeError } = await supabase.functions.invoke('ai-chat', {
       body: {
         message: `Grade this answer. Question: "${exercise.question}" Answer: "${exercise.userAnswer}"`,
-        modelId: 'deepseek-chat',
+        modelId: selectedModelId,
         history: [],
         isGradingRequest: true
       },
@@ -172,7 +173,7 @@ export const evaluateHomework = async (
       const { data: guidanceData, error: guidanceError } = await supabase.functions.invoke('ai-chat', {
         body: {
           message: guidancePrompt,
-          modelId: 'deepseek-chat',
+          modelId: selectedModelId,
           history: [],
           isExercise: true
         },

@@ -7,11 +7,13 @@ import { useLanguage } from '@/context/LanguageContext';
 import { processNewExercise, linkMessageToExercise, processMultipleExercises } from '@/utils/exerciseProcessor';
 import { hasMultipleExercises } from '@/utils/homework/multiExerciseParser';
 import { evaluateHomework } from '@/services/homeworkGrading';
+import { useAdmin } from '@/context/AdminContext';
 
 export const useExercises = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const { grade, updateGrades } = useGrades();
   const { language } = useLanguage();
+  const { selectedModelId } = useAdmin();
   const [processedContent, setProcessedContent] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -65,7 +67,7 @@ export const useExercises = () => {
       };
 
       // Grade the exercise
-      const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber, language);
+      const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber, language, selectedModelId);
       
       // Update exercises state
       setExercises(prev => 

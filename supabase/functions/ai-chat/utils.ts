@@ -15,17 +15,31 @@ export function detectExercise(message: string): boolean {
 // Helper function to get model configuration based on modelId
 export function getModelConfig(modelId: string) {
   const modelMap: Record<string, { provider: string; model: string }> = {
+    // Latest OpenAI models
+    'gpt-5': { provider: 'OpenAI', model: 'gpt-5-2025-08-07' },
+    'gpt-5-mini': { provider: 'OpenAI', model: 'gpt-5-mini-2025-08-07' },
+    'gpt-5-nano': { provider: 'OpenAI', model: 'gpt-5-nano-2025-08-07' },
+    'gpt-4.1': { provider: 'OpenAI', model: 'gpt-4.1-2025-04-14' },
+    'gpt-4.1-mini': { provider: 'OpenAI', model: 'gpt-4.1-mini-2025-04-14' },
+    'o3': { provider: 'OpenAI', model: 'o3-2025-04-16' },
+    'o4-mini': { provider: 'OpenAI', model: 'o4-mini-2025-04-16' },
+    // Legacy OpenAI models
     'gpt4o': { provider: 'OpenAI', model: 'gpt-4o' },
+    'gpt-4o-mini': { provider: 'OpenAI', model: 'gpt-4o-mini' },
+    'chat': { provider: 'OpenAI', model: 'gpt-4.1-2025-04-14' },
+    // Other providers
     'gemini-pro': { provider: 'Google', model: 'gemini-pro' },
     'claude-3': { provider: 'Anthropic', model: 'claude-3-opus-20240229' },
+    'claude-sonnet-4': { provider: 'Anthropic', model: 'claude-sonnet-4-20250514' },
+    'claude-opus-4': { provider: 'Anthropic', model: 'claude-opus-4-20250514' },
+    'claude-haiku-3.5': { provider: 'Anthropic', model: 'claude-3-5-haiku-20241022' },
     'mistral-large': { provider: 'Mistral AI', model: 'mistral-large-latest' },
     'deepseek-coder': { provider: 'DeepSeek', model: 'deepseek-coder' },
     'deepseek-chat': { provider: 'DeepSeek', model: 'deepseek-chat' },
     'grok-1': { provider: 'xAI', model: 'grok-1' },
     'grok-2': { provider: 'xAI', model: 'grok-2' },
-    'chat': { provider: 'OpenAI', model: 'gpt-3.5-turbo' },
-    // Default to GPT-3.5 Turbo
-    'default': { provider: 'OpenAI', model: 'gpt-3.5-turbo' }
+    // Default to latest GPT-4.1
+    'default': { provider: 'OpenAI', model: 'gpt-4.1-2025-04-14' }
   };
   
   return modelMap[modelId] || modelMap.default;

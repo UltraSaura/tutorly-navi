@@ -5,7 +5,7 @@ import { AVAILABLE_MODELS } from '@/data/adminDefaults';
 export const useModelManagement = (apiKeys: ApiKey[]) => {
   const [selectedModelId, setSelectedModelId] = useState<string>(() => {
     const savedModel = localStorage.getItem('selectedModelId');
-    return savedModel || 'deepseek-chat';
+    return savedModel || 'gpt-4.1';
   });
 
   // Save selected model to localStorage when it changes

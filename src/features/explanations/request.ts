@@ -28,7 +28,7 @@ export async function fetchExplanation(
   },
   teachingMode: "concept" | "solution" = "concept",
   activeTemplate?: PromptTemplate | null,
-  selectedModelId: string = "deepseek-chat"
+  selectedModelId: string = "gpt-4.1"
 ): Promise<string> {
   if (EXPLAIN_DEBUG.forceMock) {
     if (EXPLAIN_DEBUG.enableConsole) {
