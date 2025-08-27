@@ -65,10 +65,8 @@ const SystemPromptConfigNew = () => {
   }
 
   const usageTypes = [
-    { value: 'chat', label: 'Chat Assistant', description: 'Main conversational prompts' },
-    { value: 'grading', label: 'Exercise Grader', description: 'Prompts for grading student answers' },
-    { value: 'explanation', label: 'Explanation System', description: 'Structured explanations and teaching' },
-    { value: 'math_enhanced', label: 'Math Specialist', description: 'Enhanced math problem solving' }
+    { value: 'chat', label: 'Chat Assistant', description: 'General assistant with cross-subject support, including math specialist' },
+    { value: 'grading', label: 'Exercise Grader', description: 'Prompts for grading student answers' }
   ];
 
   const filteredTemplates = templates.filter(t => t.usage_type === selectedUsageType);
@@ -114,7 +112,7 @@ const SystemPromptConfigNew = () => {
       prompt_content: '',
       tags: [],
       is_active: false,
-      usage_type: selectedUsageType as 'chat' | 'grading' | 'explanation' | 'math_enhanced',
+      usage_type: selectedUsageType as 'chat' | 'grading',
       auto_activate: false,
       priority: 0
     });
@@ -157,7 +155,7 @@ const SystemPromptConfigNew = () => {
       </div>
 
       <Tabs value={selectedUsageType} onValueChange={setSelectedUsageType}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2">
           {usageTypes.map((type) => (
             <TabsTrigger key={type.value} value={type.value} className="text-xs">
               {type.label}
