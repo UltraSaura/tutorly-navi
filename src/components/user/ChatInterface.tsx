@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import ExerciseList from './chat/ExerciseList';
 import MessageInput from './chat/MessageInput';
-import MessageList from './chat/MessageList';
 import CameraCapture from './chat/CameraCapture';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
@@ -170,11 +169,11 @@ const ChatInterface = () => {
     setShowCamera(false);
   };
 
-  // Layout with Exercises and Chat
+  // Exercise-Focused Layout with Chat Input
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] bg-neutral-bg gap-4 p-4">
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-neutral-bg">
       {/* Exercise List */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 overflow-hidden pb-4">
         <ExerciseList
           exercises={exercises}
           grade={grade}
@@ -184,29 +183,16 @@ const ChatInterface = () => {
         />
       </div>
 
-      {/* Chat Panel */}
-      <div className="w-full lg:w-1/3 flex flex-col min-h-0">
-        <div className="glass rounded-xl overflow-hidden flex flex-col h-full">
-          <div className="p-4 border-b border-border">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-neutral-text">{t('chat.askQuestions')}</p>
-              <p className="text-xs text-neutral-text/60">Using: {activeModel}</p>
-            </div>
-          </div>
-          
-          <MessageList messages={filteredMessages} isLoading={isLoading} />
-          
-          <div className="flex-shrink-0 p-4">
-            <MessageInput
-              inputMessage={inputMessage}
-              setInputMessage={setInputMessage}
-              handleSendMessage={handleSendMessage}
-              handleFileUpload={handleDocumentFileUpload}
-              handlePhotoUpload={handlePhotoFileUpload}
-              isLoading={isLoading}
-            />
-          </div>
-        </div>
+      {/* Chat Input */}
+      <div className="flex-shrink-0 p-4 bg-neutral-bg">
+        <MessageInput
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
+          handleSendMessage={handleSendMessage}
+          handleFileUpload={handleDocumentFileUpload}
+          handlePhotoUpload={handlePhotoFileUpload}
+          isLoading={isLoading}
+        />
       </div>
 
       {/* Upload Bottom Sheet */}
