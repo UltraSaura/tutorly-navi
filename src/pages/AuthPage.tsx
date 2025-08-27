@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { UserTypeSelection } from '@/components/auth/UserTypeSelection';
 import { StudentRegistrationForm } from '@/components/auth/StudentRegistrationForm';
@@ -19,9 +19,23 @@ const AuthPage: React.FC = () => {
   const { user, loading: authLoading, signIn, signUp } = useAuth();
   const { t } = useTranslation();
   const { toast } = useToast();
+  const location = useLocation();
   const [step, setStep] = useState<AuthStep>('login');
   const [selectedUserType, setSelectedUserType] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const state = location.state as { message?: string; returnTo?: string } | null;
+
+  // Show message if redirected from admin panel
+  useEffect(() => {
+    if (state?.message) {
+      toast({
+        title: "Admin Access Required",
+        description: state.message,
+        variant: "default",
+      });
+    }
+  }, [state?.message, toast]);
 
   // Redirect if already authenticated
   if (authLoading) {
@@ -33,7 +47,9 @@ const AuthPage: React.FC = () => {
   }
 
   if (user) {
-    return <Navigate to="/" replace />;
+    // Redirect to the return URL if provided, otherwise go to home
+    const returnTo = state?.returnTo || "/";
+    return <Navigate to={returnTo} replace />;
   }
 
   const handleLogin = async (data: { email: string; password: string }) => {

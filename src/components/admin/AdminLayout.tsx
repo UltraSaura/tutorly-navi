@@ -15,9 +15,9 @@ const AdminLayout = () => {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-  // Redirect non-admin users
+  // Redirect non-admin users to login page
   if (!canAccessAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/auth" replace state={{ message: "Please log in as an admin to access the admin panel", returnTo: "/admin" }} />;
   }
 
   return (

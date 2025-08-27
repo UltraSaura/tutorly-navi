@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { MessageSquare, LayoutDashboard, BarChart3, Award, HeadphonesIcon, User, Globe, LogOut, ChevronDown } from "lucide-react";
+import { MessageSquare, LayoutDashboard, BarChart3, Award, HeadphonesIcon, User, Globe, LogOut, ChevronDown, Settings } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useLanguage } from "@/context/SimpleLanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 import {
   Sidebar,
@@ -110,6 +111,7 @@ export function AppSidebar() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const { isAdmin } = useAdminAuth();
   
   // Debug: Clear sidebar state cookie on first load
   useState(() => {
@@ -271,6 +273,14 @@ export function AppSidebar() {
                 <span>{t('nav.profile')}</span>
               </NavLink>
             </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem asChild>
+                <NavLink to="/admin" className="flex items-center">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Admin Panel</span>
+                </NavLink>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="flex items-center">
               <Globe className="mr-2 h-4 w-4" />
