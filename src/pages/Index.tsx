@@ -1,18 +1,21 @@
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import LanguageSelector from "@/components/ui/language-selector";
 import { useAuth } from "@/context/AuthContext";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { MessageCircle, BookOpen, BarChart3, Award, Settings, Sparkles, Brain, LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const Index = () => {
   const { user, loading } = useAuth();
+  const { isAdmin, isLoading: adminLoading } = useAdminAuth();
   const { t } = useTranslation();
+  const location = useLocation();
 
-  // Redirect authenticated users to chat
-  if (loading) {
+  // Show loading while checking auth and admin status
+  if (loading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -20,7 +23,14 @@ const Index = () => {
     );
   }
 
+  // For authenticated users, check if they're trying to access admin routes
   if (user) {
+    // If user is admin and trying to access admin routes, don't redirect
+    if (isAdmin && (location.pathname.startsWith('/admin') || location.pathname.startsWith('/management'))) {
+      // Let the admin routes handle the navigation
+      return null;
+    }
+    // Otherwise, redirect to chat for regular users
     return <Navigate to="/chat" replace />;
   }
 
