@@ -4,8 +4,9 @@ import { BookOpen, GraduationCap, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import ExerciseCard from '@/components/exercise/ExerciseCard';
-import { ExplanationModal } from '@/features/explanations/ExplanationModal';
-import { useExplanation } from '@/features/explanations/useExplanation';
+import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
+import { TwoCards } from '@/features/explanations/TwoCards';
+import { useUserContext } from '@/hooks/useUserContext';
 import XpChip from '@/components/game/XpChip';
 import CompactStreakChip from '@/components/game/CompactStreakChip';
 import CompactCoinChip from '@/components/game/CompactCoinChip';
@@ -32,7 +33,8 @@ const ExerciseList = ({
   onClearExercises
 }: ExerciseListProps) => {
   const { t } = useLanguage();
-  const exp = useExplanation();
+  const teaching = useTwoCardTeaching();
+  const { userContext } = useUserContext();
 
   // Debug logging for grade props
   console.log('[ExerciseList] Received grade prop:', grade);
@@ -64,7 +66,10 @@ const ExerciseList = ({
   const handleShowExplanation = (exerciseId: string) => {
     const exercise = exercises.find(ex => ex.id === exerciseId);
     if (exercise) {
-      exp.openWithExercise(exercise);
+      teaching.openFor(exercise, { 
+        response_language: "English", // Default language - should be from user profile
+        grade_level: userContext?.student_level || "High School"
+      });
     }
   };
   
@@ -176,16 +181,36 @@ const ExerciseList = ({
         </ScrollArea>
       </div>
       
-      {/* Explanation Modal */}
-      <ExplanationModal
-        open={exp.open}
-        onClose={() => exp.setOpen(false)}
-        loading={exp.loading}
-        steps={exp.steps}
-        error={exp.error}
-        onTryAgain={() => handleTryAgain('')}
-        exerciseQuestion={exp.exerciseQuestion}
-      />
+      {/* Two Card Teaching Modal */}
+      {teaching.open && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-card p-5">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-lg">Explanation</h3>
+              <button onClick={() => teaching.setOpen(false)}>✖</button>
+            </div>
+
+            {teaching.loading ? (
+              <div className="mt-4 space-y-3">
+                <div className="h-16 rounded-xl bg-muted animate-pulse" />
+                <div className="h-16 rounded-xl bg-muted animate-pulse" />
+              </div>
+            ) : teaching.sections ? (
+              <div className="mt-4">
+                <TwoCards s={teaching.sections} />
+              </div>
+            ) : (
+              <p className="mt-4 text-sm text-destructive">{teaching.error || "No explanation yet."}</p>
+            )}
+
+            <div className="mt-6">
+              <button className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-medium">
+                Try again → +5 XP
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
