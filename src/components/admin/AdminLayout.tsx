@@ -6,9 +6,14 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 const AdminLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { canAccessAdmin } = useAdminAuth();
+  const { canAccessAdmin, isLoading } = useAdminAuth();
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  // Show loading while checking admin status
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
   // Redirect non-admin users
   if (!canAccessAdmin) {
