@@ -108,7 +108,11 @@
     "registrationSuccess": "Inscription réussie",
     "checkEmail": "Veuillez vérifier votre email pour confirmer votre compte",
     "checkEmailParent": "Veuillez vérifier votre email pour confirmer votre compte. Vous pourrez ensuite ajouter les informations de vos enfants.",
-    "genericError": "Une erreur inattendue s'est produite. Veuillez réessayer."
+    "genericError": "Une erreur inattendue s'est produite. Veuillez réessayer.",
+    "adminAccessRequired": "Accès administrateur requis",
+    "adminAccessMessage": "Vous êtes connecté mais n'avez pas les privilèges d'administrateur. Veuillez vous déconnecter et vous connecter avec un compte administrateur pour accéder au panneau d'administration.",
+    "signOutAndSwitch": "Se déconnecter et changer de compte",
+    "backToHome": "Retour à l'accueil"
   },
   "profile": {
     "title": "Profil",

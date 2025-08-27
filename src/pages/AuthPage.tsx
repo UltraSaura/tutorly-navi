@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { UserTypeSelection } from '@/components/auth/UserTypeSelection';
 import { StudentRegistrationForm } from '@/components/auth/StudentRegistrationForm';
 import { ParentRegistrationForm } from '@/components/auth/ParentRegistrationForm';
@@ -8,7 +10,6 @@ import { LoginForm } from '@/components/auth/LoginForm';
 import { Button } from '@/components/ui/button';
 import { UserType, StudentRegistrationData, ParentRegistrationData } from '@/types/registration';
 import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
-import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -16,7 +17,8 @@ import { Loader2 } from 'lucide-react';
 type AuthStep = 'login' | 'userType' | 'studentForm' | 'parentForm';
 
 const AuthPage: React.FC = () => {
-  const { user, loading: authLoading, signIn, signUp } = useAuth();
+  const { user, loading: authLoading, signIn, signUp, signOut } = useAuth();
+  const { isAdmin, isLoading: adminLoading } = useAdminAuth();
   const { t } = useTranslation();
   const { toast } = useToast();
   const location = useLocation();
@@ -38,7 +40,7 @@ const AuthPage: React.FC = () => {
   }, [state?.message, toast]);
 
   // Redirect if already authenticated
-  if (authLoading) {
+  if (authLoading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin" />
@@ -47,8 +49,49 @@ const AuthPage: React.FC = () => {
   }
 
   if (user) {
-    // Redirect to the return URL if provided, otherwise go to home
     const returnTo = state?.returnTo || "/";
+    
+    // Special handling for admin routes
+    if (returnTo.startsWith('/admin') || returnTo.startsWith('/management')) {
+      if (isAdmin) {
+        return <Navigate to={returnTo} replace />;
+      } else {
+        // Non-admin user trying to access admin - show error and option to switch accounts
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex items-center justify-center p-4">
+            <div className="w-full max-w-md space-y-6 text-center">
+              <div className="space-y-2">
+                <h1 className="text-2xl font-bold text-destructive">{t('auth.adminAccessRequired')}</h1>
+                <p className="text-muted-foreground">
+                  {t('auth.adminAccessMessage')}
+                </p>
+              </div>
+              <div className="space-y-3">
+                <Button 
+                  variant="destructive" 
+                  onClick={async () => {
+                    await signOut();
+                    window.location.reload();
+                  }}
+                  className="w-full"
+                >
+                  {t('auth.signOutAndSwitch')}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.location.href = '/'}
+                  className="w-full"
+                >
+                  {t('auth.backToHome')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
+    
+    // Regular redirect for non-admin routes
     return <Navigate to={returnTo} replace />;
   }
 

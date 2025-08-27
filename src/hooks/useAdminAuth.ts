@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useAdminAuth = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const { data: userContext, isLoading } = useQuery({
     queryKey: ['user-context', user?.id],
@@ -25,7 +25,8 @@ export const useAdminAuth = () => {
 
   const isAdmin = userContext?.user_type === 'admin';
   const isAuthenticated = !!user;
-  const isLoading_ = isLoading || !user;
+  // Only consider loading if auth is loading OR if user exists and we're fetching their context
+  const isLoading_ = authLoading || (!!user && isLoading);
 
   return {
     isAdmin,
