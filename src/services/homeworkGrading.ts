@@ -8,8 +8,14 @@ export const evaluateHomework = async (
   exercise: Exercise,
   attemptNumber: number = 1,
   language: string = 'en',
-  selectedModelId: string = 'deepseek-chat'
+  selectedModelId?: string
 ): Promise<Exercise> => {
+  // Use the selected model ID from localStorage if not provided, fallback to gpt-4.1
+  const modelId = selectedModelId || localStorage.getItem('selectedModelId') || 'gpt-4.1';
+  console.log('[homeworkGrading] Using model:', modelId, { 
+    passed: selectedModelId, 
+    fromStorage: localStorage.getItem('selectedModelId') 
+  });
   try {
     console.log('[homeworkGrading] evaluateHomework called with:', exercise);
     if (!exercise.question) {
@@ -49,7 +55,7 @@ export const evaluateHomework = async (
     const { data: gradeData, error: gradeError } = await supabase.functions.invoke('ai-chat', {
       body: {
         message: `Grade this answer. Question: "${exercise.question}" Answer: "${exercise.userAnswer}"`,
-        modelId: selectedModelId,
+        modelId: modelId,
         history: [],
         isGradingRequest: true
       },
@@ -173,7 +179,7 @@ export const evaluateHomework = async (
       const { data: guidanceData, error: guidanceError } = await supabase.functions.invoke('ai-chat', {
         body: {
           message: guidancePrompt,
-          modelId: selectedModelId,
+          modelId: modelId,
           history: [],
           isExercise: true
         },
