@@ -10,14 +10,15 @@ const MATH_EXPLANATION_TEMPLATE_ID = 'math-explanation-generator';
 /**
  * Fetches an AI-generated explanation for an exercise
  * @param exerciseRow - The exercise data containing question, user answer, etc.
+ * @param selectedModelId - Model ID to use for AI generation (required)
  * @param userContext - Additional user context like grade level, name, etc. (optional)
  * @param teachingMode - Mode for explanation: "concept" (default) or "solution"
  * @param activeTemplate - Admin-managed prompt template to use (optional)
- * @param selectedModelId - Model ID to use for AI generation (optional)
  * @returns Promise<string> - Raw JSON string response from AI
  */
 export async function fetchExplanation(
   exerciseRow: Exercise,
+  selectedModelId: string,
   userContext?: {
     gradeLevel?: string;
     language?: string;
@@ -25,8 +26,7 @@ export async function fetchExplanation(
     country?: string;
   },
   teachingMode: "concept" | "solution" = "concept",
-  activeTemplate?: PromptTemplate | null,
-  selectedModelId: string
+  activeTemplate?: PromptTemplate | null
 ): Promise<string> {
   if (EXPLAIN_DEBUG.forceMock) {
     if (EXPLAIN_DEBUG.enableConsole) {
