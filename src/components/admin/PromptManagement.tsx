@@ -29,10 +29,6 @@ const PromptManagement = () => {
             Centralized management of AI prompts across all system interactions
           </p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Template
-        </Button>
       </div>
 
       <div className="grid gap-4">

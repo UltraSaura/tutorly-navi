@@ -22,11 +22,22 @@ export function useTwoCardTeaching() {
     try {
       const explanationTemplate = getActiveTemplate('explanation');
       
-      console.log('[TwoCardTeaching] Template Info:', {
-        name: explanationTemplate?.name || 'No template',
-        usage_type: explanationTemplate?.usage_type || 'N/A',
-        template_id: explanationTemplate?.id || 'N/A'
+      // Add detailed debugging
+      console.log('[TwoCardTeaching] All templates:', templates);
+      console.log('[TwoCardTeaching] Explanation template found:', explanationTemplate);
+      console.log('[TwoCardTeaching] Template details:', {
+        id: explanationTemplate?.id,
+        name: explanationTemplate?.name,
+        usage_type: explanationTemplate?.usage_type,
+        is_active: explanationTemplate?.is_active,
+        prompt_content: explanationTemplate?.prompt_content?.substring(0, 100) + '...'
       });
+      
+      if (!explanationTemplate) {
+        console.error('[TwoCardTeaching] No active explanation template found!');
+        console.error('[TwoCardTeaching] Available templates:', templates.filter(t => t.usage_type === 'explanation'));
+        throw new Error('No active explanation template found. Please create one in the admin panel.');
+      }
       
       const raw = await requestTwoCardTeaching({
         exercise_content: row?.prompt ?? "",
@@ -39,6 +50,7 @@ export function useTwoCardTeaching() {
       console.log('[TwoCardTeaching] Raw AI Response:', raw);
       
       const parsed = parseTwoCardText(raw);
+      console.log('[TwoCardTeaching] Parsed sections:', parsed);
       
       // Only fallback when all three core fields are empty
       if (!parsed.concept && !parsed.example && !parsed.strategy) {
