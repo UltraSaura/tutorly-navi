@@ -33,11 +33,12 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
     // Get list of providers we have API keys for
     const availableProviders = [...new Set(apiKeys.map(key => key.provider))];
     
-    // Priority providers that might be configured in Supabase secrets
+    // Priority providers that are likely configured in Supabase secrets
     const priorityProviders = ['OpenAI', 'DeepSeek'];
     
     // Log for debugging
     console.log("Available providers:", availableProviders);
+    console.log("Priority providers:", priorityProviders);
     
     // Filter models based on available providers
     return AVAILABLE_MODELS.map(model => {
@@ -49,12 +50,14 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
       const isPriorityProvider = priorityProviders.includes(model.provider);
       const isAvailable = hasLocalProvider || isPriorityProvider;
       
-      console.log(`Model: ${model.name}, Provider: ${model.provider}, Available: ${isAvailable}`);
+      console.log(`Model: ${model.name}, Provider: ${model.provider}, Local Key: ${hasLocalProvider}, Priority: ${isPriorityProvider}, Available: ${isAvailable}`);
       
       return {
         ...model,
-        // Only disable models that aren't priority providers and don't have local keys
-        disabled: !isAvailable
+        // Mark models as potentially unavailable if no local key and not priority
+        disabled: !isAvailable,
+        // Add a flag to indicate if this is using a Supabase secret
+        usesSupabaseSecret: isPriorityProvider && !hasLocalProvider
       };
     });
   };

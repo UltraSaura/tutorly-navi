@@ -24,6 +24,7 @@ export interface ModelOption {
   };
   bestFor: string[];
   disabled?: boolean;
+  usesSupabaseSecret?: boolean;
 }
 
 // Define the User interface for use with Supabase

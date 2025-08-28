@@ -69,8 +69,8 @@ const ModelSelection = () => {
                     </CardTitle>
                     <CardDescription>{model.provider}</CardDescription>
                   </div>
-                  <Badge variant={isDisabled ? "outline" : "default"}>
-                    {isDisabled ? "Key Required" : "Available"}
+                  <Badge variant={isDisabled ? "destructive" : model.usesSupabaseSecret ? "outline" : "default"}>
+                    {isDisabled ? "No API Key" : model.usesSupabaseSecret ? "Supabase Secret" : "Available"}
                   </Badge>
                 </div>
               </CardHeader>
@@ -170,7 +170,7 @@ const ModelSelection = () => {
                     variant={isSelected ? "default" : "outline"}
                     size="sm"
                   >
-                    {isSelected ? "Selected" : "Select Model"}
+                    {isSelected ? "Selected" : isDisabled ? "Configure API Key First" : "Select Model"}
                   </Button>
                 </div>
               </CardFooter>

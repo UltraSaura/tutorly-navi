@@ -41,7 +41,52 @@ export const sendMessageToAI = async (
     
     if (error) {
       console.error('Error calling AI chat function:', error);
+      
+      // Handle specific API key errors
+      if (error.message?.includes('Missing API key')) {
+        toast.error(`API Key Missing`, {
+          description: `The selected model requires an API key. Please configure it in Admin Settings.`,
+          action: {
+            label: "Open Admin",
+            onClick: () => window.location.href = "/admin"
+          }
+        });
+      } else {
+        toast.error('Failed to get AI response', {
+          description: error.message || 'Unknown error occurred'
+        });
+      }
+      
       throw new Error(error.message || 'Failed to get AI response');
+    }
+    
+    if (!data || data.error) {
+      console.error('Error from ai-chat function:', data?.error, data);
+      
+      // Check for missing API key errors
+      if (data?.error?.includes('Missing API key')) {
+        toast.error(`${data.error}`, {
+          description: data.details || `Please configure the API key for ${data.provider || 'the selected provider'} in Admin Settings.`,
+          action: {
+            label: "Open Admin",
+            onClick: () => window.location.href = "/admin"
+          }
+        });
+      } else if (data?.error?.includes('model') && data?.error?.includes('not available')) {
+        toast.error(`Model not available: ${selectedModelId}`, {
+          description: `The selected model may not be available. Check your API key configuration.`,
+          action: {
+            label: "Open Admin",
+            onClick: () => window.location.href = "/admin"
+          }
+        });
+      } else {
+        toast.error('Failed to get AI response', {
+          description: data?.error || 'Unknown error occurred'
+        });
+      }
+      
+      throw new Error(data?.error || 'Failed to get AI response');
     }
     
     // Show activated model as a toast with actual model used from response
