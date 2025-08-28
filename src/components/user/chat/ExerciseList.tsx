@@ -25,6 +25,15 @@ interface ExerciseListProps {
   onClearExercises?: () => void;
 }
 
+// Utility function to map language codes to full names for AI
+const mapLanguageForAI = (languageCode: string): string => {
+  const languageMap: Record<string, string> = {
+    'en': 'English',
+    'fr': 'French'
+  };
+  return languageMap[languageCode] || 'English';
+};
+
 const ExerciseList = ({
   exercises,
   grade,
@@ -32,7 +41,7 @@ const ExerciseList = ({
   onSubmitAnswer,
   onClearExercises
 }: ExerciseListProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const teaching = useTwoCardTeaching();
   const { userContext } = useUserContext();
 
@@ -74,7 +83,7 @@ const ExerciseList = ({
       };
       
       teaching.openFor(exerciseRow, { 
-        response_language: "English", // Default language - should be from user profile
+        response_language: mapLanguageForAI(language),
         grade_level: userContext?.student_level || "High School"
       });
     }
