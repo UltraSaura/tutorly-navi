@@ -242,14 +242,14 @@ const translations = {
 
 export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState(() => {
-    return localStorage.getItem('language') || defaultLang;
+    return localStorage.getItem('lang') || defaultLang;
   });
   
   const { user } = useAuth();
 
   const changeLanguage = (lng: string) => {
     setLanguage(lng);
-    localStorage.setItem('language', lng);
+    localStorage.setItem('lang', lng);
     localStorage.setItem('languageManuallySet', 'true');
     
     // Show notification about language change
@@ -280,7 +280,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     if (detectedLanguage !== language) {
       console.log('Changing language from', language, 'to', detectedLanguage);
       setLanguage(detectedLanguage);
-      localStorage.setItem('language', detectedLanguage);
+      localStorage.setItem('lang', detectedLanguage);
       
       // Show notification about automatic language change
       import('@/components/ui/use-toast').then(({ toast }) => {
