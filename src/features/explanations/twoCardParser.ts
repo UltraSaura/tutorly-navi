@@ -14,11 +14,12 @@ const LABELS = [
 ] as const;
 
 export function parseTwoCardText(raw: string): TeachingSections {
-  const map: Record<string, string> = {};
-  const parts = raw.split(/\n(?=📘|💡|🔍|☑️|⚠️|🎯|📈)/).map(s => s.trim());
-  for (const part of parts) {
-    const [firstLine, ...rest] = part.split("\n");
-    map[firstLine] = (rest.join("\n").trim()) || "";
+  const text = (raw || "").replace(/\r\n/g, "\n").trim();
+  const parts = text.split(/\n(?=📘|💡|🔍|☑️|⚠️|🎯|📈)/).map(s => s.trim());
+  const map: Record<string,string> = {};
+  for (const block of parts) {
+    const [head, ...rest] = block.split("\n");
+    map[head?.trim() || ""] = (rest.join("\n").trim()) || "";
   }
   return {
     exercise: map["📘 Exercise"] || "",
