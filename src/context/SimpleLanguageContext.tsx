@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getLanguageFromCountry } from '@/utils/countryLanguageMapping';
 import { useAuth } from '@/context/AuthContext';
 
+export const defaultLang = "en";
+
 interface LanguageContextType {
   language: string;
   changeLanguage: (lng: string) => void;
@@ -419,7 +421,7 @@ const translations = {
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState(() => {
-    return localStorage.getItem('language') || 'en';
+    return localStorage.getItem('language') || defaultLang;
   });
   
   const { user } = useAuth();
@@ -472,7 +474,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const t = (key: string): string => {
-    const currentTranslations = translations[language as keyof typeof translations] || translations.en;
+    const currentTranslations = translations[language as keyof typeof translations] || translations[defaultLang];
     return currentTranslations[key as keyof typeof currentTranslations] || key;
   };
 
@@ -519,7 +521,7 @@ export const useLanguage = () => {
   if (!context) {
     // Fallback if context is not available
     return {
-      language: 'en',
+      language: defaultLang,
       changeLanguage: () => {},
       setLanguageFromCountry: () => {},
       t: (key: string) => key
