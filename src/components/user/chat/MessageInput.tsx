@@ -6,6 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { Badge } from '@/components/ui/badge';
+import { useAdmin } from '@/context/AdminContext';
 import CameraCapture from './CameraCapture';
 import AttachmentMenu from './AttachmentMenu';
 
@@ -28,9 +30,14 @@ const MessageInput = ({
 }: MessageInputProps) => {
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { selectedModelId, getAvailableModels } = useAdmin();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+
+  // Get the model display name
+  const activeModel = getAvailableModels().find(model => model.id === selectedModelId);
+  const modelDisplayName = activeModel ? `${activeModel.provider} • ${activeModel.name}` : selectedModelId;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     console.log('[DEBUG] Key pressed:', e.key);
@@ -116,7 +123,15 @@ const MessageInput = ({
   };
 
   return (
-    <div className="flex items-center gap-3 bg-neutral-surface rounded-button border border-neutral-border p-2">
+    <div className="space-y-2">
+      {/* Active Model Display */}
+      <div className="flex justify-center">
+        <Badge variant="secondary" className="text-xs">
+          {modelDisplayName}
+        </Badge>
+      </div>
+      
+      <div className="flex items-center gap-3 bg-neutral-surface rounded-button border border-neutral-border p-2">
       <div className="relative">
         <AttachmentMenu
           onFileUpload={triggerFileUpload}
@@ -167,6 +182,7 @@ const MessageInput = ({
         onClose={() => setIsCameraOpen(false)}
         onCapture={handleCameraCapture}
       />
+      </div>
     </div>
   );
 };

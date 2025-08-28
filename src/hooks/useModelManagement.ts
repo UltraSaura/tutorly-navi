@@ -3,9 +3,24 @@ import { ApiKey, ModelOption } from '@/types/admin';
 import { AVAILABLE_MODELS } from '@/data/adminDefaults';
 
 export const useModelManagement = (apiKeys: ApiKey[]) => {
+  // Helper function to get default available model
+  const getDefaultAvailableModel = () => {
+    const availableProviders = [...new Set(apiKeys.map(key => key.provider))];
+    const priorityProviders = ['OpenAI', 'DeepSeek'];
+    
+    // Find the first available model with an API key or from priority providers
+    const availableModel = AVAILABLE_MODELS.find(model => {
+      const hasLocalProvider = availableProviders.some(provider => provider === model.provider);
+      const isPriorityProvider = priorityProviders.includes(model.provider);
+      return hasLocalProvider || isPriorityProvider;
+    });
+    
+    return availableModel?.id || 'gpt-5-2025-08-07'; // Fallback to best GPT-5 model
+  };
+
   const [selectedModelId, setSelectedModelId] = useState<string>(() => {
     const savedModel = localStorage.getItem('selectedModelId');
-    return savedModel || 'gpt-4.1';
+    return savedModel || getDefaultAvailableModel();
   });
 
   // Save selected model to localStorage when it changes

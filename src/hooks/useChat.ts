@@ -133,10 +133,10 @@ export const useChat = () => {
       messages, 
       setMessages, 
       setIsLoading, 
+      selectedModelId, // selectedModelId is now required parameter
       undefined, // No longer need processHomeworkFromChat as primary processor
       addExercises, // Pass the exercise processor directly
-      subjectId, // Pass the subject ID
-      selectedModelId
+      subjectId // Pass the subject ID
     );
   };
   
@@ -151,10 +151,10 @@ export const useChat = () => {
       messages, 
       setMessages, 
       setIsLoading, 
+      selectedModelId, // selectedModelId is now required parameter
       undefined, // No longer need processHomeworkFromChat as primary processor
       addExercises, // Pass the exercise processor directly
-      subjectId, // Pass the subject ID
-      selectedModelId
+      subjectId // Pass the subject ID
     );
   };
   

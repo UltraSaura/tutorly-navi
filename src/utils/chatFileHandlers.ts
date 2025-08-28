@@ -13,10 +13,10 @@ export const handleFileUpload = async (
   messages: Message[],
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  selectedModelId: string,
   processHomeworkFromChat?: (content: string) => Promise<void>,
   addExercises?: (exercises: any[]) => Promise<void>,
-  subjectId?: string,
-  selectedModelId?: string
+  subjectId?: string
 ) => {
   // Create a temporary URL for the file
   const fileUrl = URL.createObjectURL(file);
@@ -40,7 +40,7 @@ export const handleFileUpload = async (
     
     if (processingResult && processingResult.exercises.length > 0) {
       // Grade the extracted exercises
-      const gradedExercises = await gradeDocumentExercises(processingResult.exercises, selectedModelId || localStorage.getItem('selectedModelId') || 'gpt-4.1');
+      const gradedExercises = await gradeDocumentExercises(processingResult.exercises, selectedModelId);
       
       // Add the exercises to the exercise list if the handler is provided
       if (addExercises) {
@@ -103,10 +103,10 @@ export const handlePhotoUpload = async (
   messages: Message[],
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  selectedModelId: string,
   processHomeworkFromChat?: (content: string) => Promise<void>,
   addExercises?: (exercises: any[]) => Promise<void>,
-  subjectId?: string,
-  selectedModelId?: string
+  subjectId?: string
 ) => {
   // Create a temporary URL for the image
   const imageUrl = URL.createObjectURL(file);
@@ -130,7 +130,7 @@ export const handlePhotoUpload = async (
     
     if (processingResult && processingResult.exercises.length > 0) {
       // Grade the extracted exercises
-      const gradedExercises = await gradeDocumentExercises(processingResult.exercises, selectedModelId || localStorage.getItem('selectedModelId') || 'gpt-4.1');
+      const gradedExercises = await gradeDocumentExercises(processingResult.exercises, selectedModelId);
       
       // Add the exercises to the exercise list if the handler is provided
       if (addExercises) {
