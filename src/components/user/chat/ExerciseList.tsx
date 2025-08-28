@@ -66,7 +66,14 @@ const ExerciseList = ({
   const handleShowExplanation = (exerciseId: string) => {
     const exercise = exercises.find(ex => ex.id === exerciseId);
     if (exercise) {
-      teaching.openFor(exercise, { 
+      // Map Exercise fields to the format expected by useTwoCardTeaching
+      const exerciseRow = {
+        prompt: exercise.question,  // Map 'question' to 'prompt'
+        userAnswer: exercise.userAnswer,
+        subject: exercise.subjectId || 'math'  // Map 'subjectId' to 'subject'
+      };
+      
+      teaching.openFor(exerciseRow, { 
         response_language: "English", // Default language - should be from user profile
         grade_level: userContext?.student_level || "High School"
       });

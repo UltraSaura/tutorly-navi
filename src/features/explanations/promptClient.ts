@@ -61,6 +61,13 @@ export async function requestTwoCardTeaching(
     grade_level: vars.grade_level || 'High School'
   };
   
+  // Defensive check - ensure exercise_content is not empty
+  if (!vars.exercise_content?.trim()) {
+    console.warn('[promptClient] Warning: exercise_content is empty or undefined:', vars.exercise_content);
+  }
+  
+  console.log('[promptClient] Template variables:', templateVariables);
+  
   // Substitute variables into the template
   const finalPrompt = substitutePromptVariables(promptTemplate, templateVariables);
   

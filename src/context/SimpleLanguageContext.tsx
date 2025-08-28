@@ -202,7 +202,17 @@ const translations = {
     'profile.deleteAccount.success': 'Account Deleted',
     'profile.deleteAccount.successMessage': 'Your account has been successfully deleted',
     'profile.deleteAccount.error': 'Error',
-    'profile.deleteAccount.errorMessage': 'Failed to delete account. Please try again or contact support.'
+    'profile.deleteAccount.errorMessage': 'Failed to delete account. Please try again or contact support.',
+    
+    // Explanation fallbacks
+    'explanation.fallback.exercise': 'Exercise Review - Analyze the given problem.',
+    'explanation.fallback.concept': 'Key Concept - Understand the fundamental principles.',
+    'explanation.fallback.example': 'Example - Here\'s a similar problem with different numbers.',
+    'explanation.fallback.strategy': 'Strategy - Step-by-step approach to solve this type of problem.',
+    'explanation.fallback.pitfall': 'Common Pitfall - Watch out for frequent mistakes.',
+    'explanation.fallback.check': 'Check Yourself - Validate your work with these tips.',
+    'explanation.fallback.practice': 'Practice Tip - Suggestions to improve your skills.',
+    'explanation.error': 'Error loading explanation. Please try again.'
   },
   fr: {
     // Navigation
@@ -393,7 +403,17 @@ const translations = {
     'profile.deleteAccount.success': 'Compte supprimé',
     'profile.deleteAccount.successMessage': 'Votre compte a été supprimé avec succès',
     'profile.deleteAccount.error': 'Erreur',
-    'profile.deleteAccount.errorMessage': 'Échec de la suppression du compte. Veuillez réessayer ou contacter le support.'
+    'profile.deleteAccount.errorMessage': 'Échec de la suppression du compte. Veuillez réessayer ou contacter le support.',
+    
+    // Explanation fallbacks
+    'explanation.fallback.exercise': 'Revue de l\'exercice - Analysez le problème donné.',
+    'explanation.fallback.concept': 'Concept clé - Comprenez les principes fondamentaux.',
+    'explanation.fallback.example': 'Exemple - Voici un problème similaire avec des nombres différents.',
+    'explanation.fallback.strategy': 'Stratégie - Approche étape par étape pour résoudre ce type de problème.',
+    'explanation.fallback.pitfall': 'Piège courant - Attention aux erreurs fréquentes.',
+    'explanation.fallback.check': 'Vérifiez vous-même - Validez votre travail avec ces conseils.',
+    'explanation.fallback.practice': 'Conseil de pratique - Suggestions pour améliorer vos compétences.',
+    'explanation.error': 'Erreur lors du chargement de l\'explication. Veuillez réessayer.'
   }
 };
 
