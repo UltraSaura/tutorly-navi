@@ -6,7 +6,7 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
   // Helper function to get default available model
   const getDefaultAvailableModel = () => {
     const availableProviders = [...new Set(apiKeys.map(key => key.provider))];
-    const priorityProviders = ['OpenAI', 'DeepSeek'];
+    const priorityProviders = ['DeepSeek', 'OpenAI']; // Prioritize DeepSeek over OpenAI
     
     // Find the first available model with an API key or from priority providers
     const availableModel = AVAILABLE_MODELS.find(model => {
@@ -15,12 +15,22 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
       return hasLocalProvider || isPriorityProvider;
     });
     
-    return availableModel?.id || 'gpt-5-2025-08-07'; // Fallback to best GPT-5 model
+    return availableModel?.id || 'deepseek-chat'; // Fallback to DeepSeek model
   };
 
   const [selectedModelId, setSelectedModelId] = useState<string>(() => {
     const savedModel = localStorage.getItem('selectedModelId');
-    return savedModel || getDefaultAvailableModel();
+    
+    // Migrate legacy model selections to current ones
+    const legacyMigrations: Record<string, string> = {
+      'gpt4o': 'gpt-4.1',
+      'gpt-4o': 'gpt-4.1',
+      'gpt-4o-mini': 'gpt-4.1-mini',
+      'gpt-5-2025-08-07': 'gpt-5', // Fix invalid model ID
+    };
+    
+    const migratedModel = savedModel && legacyMigrations[savedModel] ? legacyMigrations[savedModel] : savedModel;
+    return migratedModel || getDefaultAvailableModel();
   });
 
   // Save selected model to localStorage when it changes
@@ -34,7 +44,7 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
     const availableProviders = [...new Set(apiKeys.map(key => key.provider))];
     
     // Priority providers that are likely configured in Supabase secrets
-    const priorityProviders = ['OpenAI', 'DeepSeek'];
+    const priorityProviders = ['DeepSeek', 'OpenAI']; // Prioritize DeepSeek over OpenAI
     
     // Log for debugging
     console.log("Available providers:", availableProviders);
