@@ -201,7 +201,8 @@
       "example": "💡 **Worked Example**\n\nLet me show you a similar problem solved step-by-step to illustrate the method.",
       "strategy": "🎯 **Solution Strategy**\n\nFollow this systematic approach to tackle problems like this one.",
       "pitfall": "⚠️ **Common Pitfalls**\n\nBe careful to avoid these mistakes that students often make.",
-      "check": "✅ **Self-Check**\n\nUse these methods to verify your solution and build confidence."
+      "check": "✅ **Self-Check**\n\nUse these methods to verify your solution and build confidence.",
+      "practice": "📈 **Practice Tip**\n\nHere are some ways to practice and reinforce what you've learned."
     }
   }
 }

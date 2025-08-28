@@ -52,6 +52,7 @@ export function useTwoCardTeaching() {
           strategy: t('explanation.fallback.strategy'),
           pitfall: t('explanation.fallback.pitfall'),
           check: t('explanation.fallback.check'),
+          practice: t('explanation.fallback.practice'),
         });
       } else {
         console.log('[TwoCardTeaching] Using parsed sections:', parsed);
@@ -67,6 +68,7 @@ export function useTwoCardTeaching() {
         strategy: t('explanation.fallback.strategy'),
         pitfall: t('explanation.fallback.pitfall'),
         check: t('explanation.fallback.check'),
+        practice: t('explanation.fallback.practice'),
       });
     } finally {
       setLoading(false);

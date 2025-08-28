@@ -201,7 +201,8 @@
       "example": "💡 **Exemple détaillé**\n\nLaissez-moi vous montrer un problème similaire résolu étape par étape pour illustrer la méthode.",
       "strategy": "🎯 **Stratégie de résolution**\n\nSuivez cette approche systématique pour résoudre des problèmes comme celui-ci.",
       "pitfall": "⚠️ **Pièges courants**\n\nAttention à éviter ces erreurs que les étudiants font souvent.",
-      "check": "✅ **Auto-vérification**\n\nUtilisez ces méthodes pour vérifier votre solution et gagner en confiance."
+      "check": "✅ **Auto-vérification**\n\nUtilisez ces méthodes pour vérifier votre solution et gagner en confiance.",
+      "practice": "📈 **Conseil de pratique**\n\nVoici quelques façons de pratiquer et renforcer ce que vous avez appris."
     }
   }
 }

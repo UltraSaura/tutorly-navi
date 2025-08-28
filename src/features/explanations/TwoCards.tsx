@@ -44,6 +44,7 @@ export function TwoCards({ s }: { s: TeachingSections }) {
         <Section title="☑️ Strategy" text={s.strategy} t={t} />
         <Section title="⚠️ Pitfall" text={s.pitfall} t={t} />
         <Section title="🎯 Check yourself" text={s.check} t={t} />
+        <Section title="📈 Practice Tip" text={s.practice} t={t} />
       </div>
     </div>
   );
