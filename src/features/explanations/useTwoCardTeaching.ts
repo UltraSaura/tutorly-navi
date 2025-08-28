@@ -29,7 +29,7 @@ export function useTwoCardTeaching() {
         
       const explanationTemplate = getActiveTemplate('explanation');
       
-      console.log('[TwoCardTeaching] Explanation template found:', explanationTemplate);
+      console.log("[Explain] template →", { name: explanationTemplate?.name, usage: explanationTemplate?.usage_type, id: explanationTemplate?.id });
       
       if (!explanationTemplate) {
         console.error('[TwoCardTeaching] No active explanation template found!');
