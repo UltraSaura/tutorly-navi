@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Book, FlaskConical, Languages, Send } from 'lucide-react';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 type SubjectType = 'math' | 'science' | 'english';
 type StatusType = 'correct' | 'incorrect' | 'unanswered';
@@ -46,6 +47,7 @@ const ExerciseCard = ({
   const [inputAnswer, setInputAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const SubjectIcon = subjectIcons[subject];
+  const { t } = useLanguage();
   
   const getStatusStyles = () => {
     switch (status) {
@@ -121,7 +123,7 @@ const ExerciseCard = ({
               <Input
                 value={inputAnswer}
                 onChange={(e) => setInputAnswer(e.target.value)}
-                placeholder="Enter your answer here..."
+                placeholder={t("form.placeholders.enterAnswer")}
                 className="h-6 text-xs px-2 flex-1"
                 disabled={isSubmitting}
                 onKeyDown={(e) => {

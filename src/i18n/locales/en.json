@@ -195,6 +195,7 @@
   },
   "explanation": {
     "error": "Failed to load explanation",
+    "stepByStepTitle": "Step-by-step explanation",
     "fallback": {
       "exercise": "📝 **Exercise Review**\n\nLet's carefully examine this problem to understand what we're being asked to solve.",
       "concept": "🧠 **Key Concepts**\n\nHere are the fundamental ideas you need to master for this type of problem.",
@@ -204,5 +205,64 @@
       "check": "✅ **Self-Check**\n\nUse these methods to verify your solution and build confidence.",
       "practice": "📈 **Practice Tip**\n\nHere are some ways to practice and reinforce what you've learned."
     }
+  },
+  "ui": {
+    "loading": "Loading...",
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "toggleSidebar": "Toggle Sidebar"
+  },
+  "form": {
+    "placeholders": {
+      "email": "Enter your email",
+      "password": "Enter your password",
+      "name": "Enter your name",
+      "phone": "123456789",
+      "categoryName": "e.g., Science",
+      "subjectName": "e.g., Physics",
+      "subjectDesc": "Brief description",
+      "templateName": "e.g., History Tutor",
+      "templateDesc": "Brief description of the template's purpose",
+      "systemPrompt": "Enter the system prompt instructions...",
+      "addTag": "Add a tag",
+      "searchUsers": "Search by name, email, country...",
+      "enterAnswer": "Enter your answer here...",
+      "questionOrHomework": "Type your question or homework here...",
+      "apiKey": "Enter your API key",
+      "keyName": "e.g., OpenAI Production",
+      "confirmDelete": "DELETE"
+    },
+    "select": {
+      "selectProvider": "Select provider",
+      "selectSubject": "Select subject",
+      "selectCategory": "Select a category",
+      "selectIcon": "Select an icon",
+      "selectType": "Select template type",
+      "userType": "User Type"
+    },
+    "aria": {
+      "uploadHomework": "Upload homework",
+      "sendQuestion": "Send question",
+      "close": "Close",
+      "toggleSidebar": "Toggle Sidebar",
+      "breadcrumb": "breadcrumb",
+      "pagination": "pagination",
+      "previousPage": "Go to previous page",
+      "nextPage": "Go to next page"
+    }
+  },
+  "errors": {
+    "somethingWrong": "Something went wrong",
+    "refreshPage": "Please refresh the page to try again."
   }
 }

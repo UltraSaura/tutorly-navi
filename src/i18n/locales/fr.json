@@ -195,6 +195,7 @@
   },
   "explanation": {
     "error": "Impossible de charger l'explication pédagogique. Veuillez réessayer.",
+    "stepByStepTitle": "Explication étape par étape",
     "fallback": {
       "exercise": "📝 **Révision de l'exercice**\n\nExaminons attentivement ce problème pour comprendre ce qu'on nous demande de résoudre.",
       "concept": "🧠 **Concepts clés**\n\nVoici les idées fondamentales que vous devez maîtriser pour ce type de problème.",
@@ -204,5 +205,64 @@
       "check": "✅ **Auto-vérification**\n\nUtilisez ces méthodes pour vérifier votre solution et gagner en confiance.",
       "practice": "📈 **Conseil de pratique**\n\nVoici quelques façons de pratiquer et renforcer ce que vous avez appris."
     }
+  },
+  "ui": {
+    "loading": "Chargement...",
+    "close": "Fermer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "search": "Rechercher",
+    "submit": "Soumettre",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "toggleSidebar": "Basculer la barre latérale"
+  },
+  "form": {
+    "placeholders": {
+      "email": "Entrez votre e-mail",
+      "password": "Entrez votre mot de passe",
+      "name": "Entrez votre nom",
+      "phone": "123456789",
+      "categoryName": "ex. Science",
+      "subjectName": "ex. Physique",
+      "subjectDesc": "Brève description",
+      "templateName": "ex. Tuteur d'histoire",
+      "templateDesc": "Brève description de l'objectif du modèle",
+      "systemPrompt": "Entrez les instructions du prompt système...",
+      "addTag": "Ajouter un tag",
+      "searchUsers": "Rechercher par nom, e-mail, pays...",
+      "enterAnswer": "Entrez votre réponse ici...",
+      "questionOrHomework": "Tapez votre question ou devoir ici...",
+      "apiKey": "Entrez votre clé API",
+      "keyName": "ex. OpenAI Production",
+      "confirmDelete": "DELETE"
+    },
+    "select": {
+      "selectProvider": "Sélectionner le fournisseur",
+      "selectSubject": "Sélectionner la matière",
+      "selectCategory": "Sélectionner une catégorie",
+      "selectIcon": "Sélectionner une icône",
+      "selectType": "Sélectionner le type de modèle",
+      "userType": "Type d'utilisateur"
+    },
+    "aria": {
+      "uploadHomework": "Télécharger les devoirs",
+      "sendQuestion": "Envoyer la question",
+      "close": "Fermer",
+      "toggleSidebar": "Basculer la barre latérale",
+      "breadcrumb": "fil d'ariane",
+      "pagination": "pagination",
+      "previousPage": "Aller à la page précédente",
+      "nextPage": "Aller à la page suivante"
+    }
+  },
+  "errors": {
+    "somethingWrong": "Quelque chose s'est mal passé",
+    "refreshPage": "Veuillez actualiser la page pour réessayer."
   }
 }

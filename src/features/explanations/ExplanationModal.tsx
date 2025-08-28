@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { showXpToast } from '@/components/game/XpToast';
 import { TwoCards } from './TwoCards';
 import { useTwoCardTeaching } from './useTwoCardTeaching';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 import type { TeachingSections } from './twoCardParser';
 
 interface ExplanationModalProps {
@@ -26,6 +27,8 @@ export function ExplanationModal({
   onTryAgain,
   exerciseQuestion 
 }: ExplanationModalProps) {
+  const { t } = useLanguage();
+  
   if (!open) return null;
 
   const handleTryAgain = () => {
@@ -40,13 +43,13 @@ export function ExplanationModal({
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
       <div className="w-full max-w-2xl rounded-2xl bg-card border border-border shadow-lg max-h-[80vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-5 border-b border-border">
-          <h3 className="font-semibold text-lg text-foreground">Step-by-step explanation</h3>
+          <h3 className="font-semibold text-lg text-foreground">{t("explanation.stepByStepTitle")}</h3>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
             className="h-6 w-6"
-            aria-label="Close"
+            aria-label={t("form.aria.close")}
           >
             <X size={16} />
           </Button>
