@@ -4,6 +4,7 @@ import { parseTwoCardText, TeachingSections } from "./twoCardParser";
 import { usePromptManagement } from "@/hooks/usePromptManagement";
 import { useAdmin } from "@/context/AdminContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { ensureLanguage } from "@/lib/ensureLanguage";
 
 export function useTwoCardTeaching() {
   const [open, setOpen] = React.useState(false);
@@ -46,7 +47,16 @@ export function useTwoCardTeaching() {
       
       console.log('[TwoCardTeaching] Raw AI Response:', raw);
       
-      const parsed = parseTwoCardText(raw);
+      // Ensure the response is in the correct language
+      const rawInCorrectLanguage = await ensureLanguage(
+        raw, 
+        profile?.response_language ?? "English",
+        selectedModelId
+      );
+      
+      console.log('[TwoCardTeaching] Language-corrected Response:', rawInCorrectLanguage);
+      
+      const parsed = parseTwoCardText(rawInCorrectLanguage);
       console.log("[Explain] parsed →", parsed);
       
       // Only fallback when all three core fields are empty
