@@ -1,6 +1,6 @@
 import React from "react";
 import type { TeachingSections } from "./twoCardParser";
-import { useLanguage } from "@/context/LanguageContext";
+import { useLanguage } from "@/context/SimpleLanguageContext";
 
 function maskDigits(s: string) {
   // Optional: hide numbers from the exercise to avoid hints
