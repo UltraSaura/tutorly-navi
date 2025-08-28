@@ -8,15 +8,67 @@ interface LanguageContextType {
   language: string;
   changeLanguage: (lng: string) => void;
   setLanguageFromCountry: (countryCode: string) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// Comprehensive translation object
+// Nested translation object with legacy key support
 const translations = {
   en: {
-    // Navigation
+    // New nested structure
+    app: {
+      title: "Tutorly Navi",
+      loading: "Loading…",
+      retry: "Retry",
+      cancel: "Cancel",
+    },
+    nav: { tutor: "Tutor", homework: "Homework", progress: "Progress", rewards: "Rewards" },
+    chat: {
+      placeholder: "Type your question or homework here…",
+      attach: "Attach",
+      send: "Send",
+      upload_doc: "Upload document",
+      upload_photo: "Upload photo",
+      take_photo: "Take a photo",
+    },
+    exercises: {
+      list_title: "Exercise List",
+      header_grade: "Overall Grade",
+      summary: "{correct}/{total} correct",
+      empty_title: "No exercises submitted yet",
+      empty_sub: "Start by asking questions or uploading homework!",
+      show_explanation: "Show explanation",
+      try_again: "Try again → +{xp} XP",
+    },
+    explanation: {
+      modal_title: "Explanation",
+      fallback: {
+        exercise: "This is your exercise. Try to restate it in your own words.",
+        concept: "We'll focus on the exact math idea you need here.",
+        example: "Here's a similar example with different numbers.",
+        strategy: "1) Understand the goal  2) Apply the rules  3) Check your result.",
+        pitfall: "Avoid applying an operation to only one part.",
+        check: "Explain why each step is valid.",
+        practice: "Practice a few similar problems and explain your steps aloud.",
+      },
+      headers: {
+        exercise: "📘 Exercise",
+        concept: "💡 Concept",
+        example: "🔍 Example (different numbers)",
+        strategy: "☑️ Strategy",
+        pitfall: "⚠️ Pitfall",
+        check: "🎯 Check yourself",
+        practice: "📈 Practice Tip",
+      },
+    },
+    badges: {
+      streak: "Day {n} Streak!",
+      xp_gain: "+{xp} XP",
+      level: "Level {n}",
+    },
+    
+    // Legacy flat keys for backward compatibility
     'nav.home': 'Tutor',
     'nav.grades': 'Grades', 
     'nav.roadmap': 'Roadmap',
@@ -25,64 +77,21 @@ const translations = {
     'nav.profile': 'Profile',
     'nav.settings': 'Settings',
     'nav.language': 'Language',
-    
-    // Languages
     'language.english': 'English',
     'language.french': 'Français',
     'language.autoDetected': 'Auto-detected based on country',
     'language.auto': 'Auto',
-    
-    // Exercise Component
     'exercise.tryAgain': 'Try again',
     'exercise.showExplanation': 'Show explanation',
     'exercise.hideExplanation': 'Hide explanation',
     'exercise.greatWork': 'Great work!',
     'exercise.learningOpportunity': 'Learning Opportunity',
     'exercise.attempt': 'Attempt',
-
-    // File Upload Messages
-    'upload.fileTooLarge': 'File too large',
-    'upload.maxFileSize': 'Maximum file size is 10MB.',
-    'upload.invalidFileType': 'Invalid file type',
-    'upload.imageFileError': 'Please upload an image file (jpg, png, etc.)',
-    'upload.documentFileError': 'Please upload a PDF, Word document, or text file.',
-    'upload.photoUploaded': 'Photo uploaded',
-    'upload.photoSuccess': 'Your photo has been uploaded and will be processed as homework.',
-    'upload.documentUploaded': 'Document uploaded',
-    'upload.documentSuccess': 'has been uploaded and will be processed as homework.',
-
-    // Footer
-    'footer.copyright': 'StudyWhiz AI. All rights reserved.',
-    'footer.subtitle': 'Submit your homework and exercises and get personalized tutoring.',
-    'footer.managementDashboard': 'Management Dashboard',
-    
-    // Chat Interface
-    'chat.inputPlaceholder': 'Type your question or homework here...',
-    'chat.uploadFile': 'Upload File',
-    'chat.takePhoto': 'Take Photo',
-    'chat.askQuestions': 'Ask questions or submit your homework for grading',
-    'chat.loading': 'AI is thinking...',
-    'chat.error': 'Error: Unable to load chat. Please refresh the page.',
-    'chat.sendMessage': 'Send Message',
-    'chat.typing': 'Type your message...',
-    'chat.history': 'Chat History',
-    'chat.conversationHistory': 'Conversation History',
-    'chat.welcomeMessage': "👋 Hi there! I'm your StudyWhiz AI tutor. How can I help you today? You can ask me questions, upload homework, or submit exercises for me to help you with.",
-    
-    // Grades Dashboard
-    'grades.title': 'Grade Dashboard',
-    'grades.description': 'Track your academic progress and review your exercises',
-    'grades.overallGrade': 'Overall Grade',
-    'grades.exerciseStats': 'Exercise Statistics',
-    'grades.exerciseList': 'Exercise List',
-    'grades.exerciseListDescription': 'Review your submitted exercises and their feedback',
-    'grades.grade': 'Grade',
-    'grades.noGrade': 'Complete exercises to calculate your grade',
-    'grades.basedOn': 'Based on {count} completed exercise{plural}',
-    'grades.totalExercises': '{total} total exercises • {completed} attempted',
-    'grades.correctAnswers': '{correct}/{completed}',
-    
-    // Exercise Related
+    'exercise.exerciseList': 'Exercise List',
+    'exercise.problem': 'Problem',
+    'exercise.guidance': 'Guidance',
+    'exercise.pleaseProvideAnswer': 'Please provide an answer',
+    'exercise.answerSubmitted': 'Answer submitted successfully',
     'exercise.correct': 'Correct',
     'exercise.incorrect': 'Incorrect',
     'exercise.pending': 'Pending Review',
@@ -92,25 +101,6 @@ const translations = {
     'exercise.expand': 'Expand',
     'exercise.collapse': 'Collapse',
     'exercise.noExercises': 'No exercises submitted yet. Start by asking questions or uploading homework!',
-    
-    // Skills & Roadmap
-    'skills.title': 'Skill Mastery',
-    'skills.description': 'Track your progress across different subjects and skills',
-    'skills.level': 'Level',
-    'skills.progress': 'Progress',
-    'skills.beginner': 'Beginner',
-    'skills.intermediate': 'Intermediate',
-    'skills.advanced': 'Advanced',
-    'skills.expert': 'Expert',
-    
-    'roadmap.title': 'Learning Roadmap',
-    'roadmap.description': 'Follow your personalized learning path',
-    'roadmap.progress': 'Progress',
-    'roadmap.complete': 'Complete',
-    'roadmap.inProgress': 'In Progress',
-    'roadmap.notStarted': 'Not Started',
-    
-    // Common UI Elements
     'common.loading': 'Loading...',
     'common.error': 'Error',
     'common.success': 'Success',
@@ -120,93 +110,18 @@ const translations = {
     'common.delete': 'Delete',
     'common.close': 'Close',
     'common.submit': 'Submit',
-    'common.search': 'Search',
-    'common.filter': 'Filter',
-    'common.clear': 'Clear',
-    'common.clearAll': 'Clear All',
-    'common.clearAllExercises': 'Clear all exercises',
-    'common.add': 'Add',
-    'common.remove': 'Remove',
-    'common.upload': 'Upload',
-    'common.download': 'Download',
-    'common.view': 'View',
-    'common.hide': 'Hide',
-    'common.show': 'Show',
-    'common.more': 'More',
-    'common.less': 'Less',
-    'common.next': 'Next',
-    'common.previous': 'Previous',
-    'common.continue': 'Continue',
-    'common.back': 'Back',
     'common.retry': 'Retry',
-    'common.refresh': 'Refresh',
     'common.selectSubject': 'Select a subject',
-    
-    // File Upload
-    'upload.dragDrop': 'Drag and drop files here, or click to select',
-    'upload.processing': 'Processing file...',
-    'upload.success': 'File uploaded successfully',
-    'upload.error': 'Error uploading file',
-    'upload.unsupportedFormat': 'Unsupported file format',
-    
-    // Notifications
-    'notification.exerciseCreated': 'Exercise created successfully',
-    'notification.answerSubmitted': 'Answer submitted for review',
-    'notification.gradeUpdated': 'Grade has been updated',
-    'notification.settingsSaved': 'Settings saved successfully',
-    'notification.languageChanged': 'Language changed to English',
-    'notification.languageAutoChanged': 'Language automatically set to English based on your country',
-    
-    // Time & Dates
-    'time.justNow': 'Just now',
-    'time.minutesAgo': '{count} minute{plural} ago',
-    'time.hoursAgo': '{count} hour{plural} ago',
-    'time.daysAgo': '{count} day{plural} ago',
-    'time.weeksAgo': '{count} week{plural} ago',
-    'time.monthsAgo': '{count} month{plural} ago',
-    'time.today': 'Today',
-    'time.yesterday': 'Yesterday',
-    'time.tomorrow': 'Tomorrow',
-
-    // Subjects
-    'subjects.mathematics': 'Mathematics',
-    'subjects.physics': 'Physics',
-    'subjects.chemistry': 'Chemistry',
-    'subjects.biology': 'Biology',
-    'subjects.english': 'English',
-    'subjects.french': 'French',
-    'subjects.spanish': 'Spanish',
-    'subjects.history': 'History',
-    'subjects.geography': 'Geography',
-    'subjects.computerscience': 'Computer Science',
-
-    // Profile
-    'profile.title': 'Profile',
-    'profile.description': 'Manage your account information and settings',
-    'profile.personalInfo': 'Personal Information',
-    'profile.personalInfoDescription': 'Your account details and preferences',
-    'profile.accountType': 'Account Type',
-    'profile.deleteAccount.title': 'Delete Account',
-    'profile.deleteAccount.description': 'Permanently delete your account and all associated data',
-    'profile.deleteAccount.warning': 'This action cannot be undone. All your data will be permanently deleted.',
-    'profile.deleteAccount.consequences': 'What will be deleted:',
-    'profile.deleteAccount.consequence1': 'Your profile and account information',
-    'profile.deleteAccount.consequence2': 'All your grades and homework history',
-    'profile.deleteAccount.consequence3': 'Learning progress and achievements',
-    'profile.deleteAccount.consequence4': 'Parent-child relationships (if applicable)',
-    'profile.deleteAccount.button': 'Delete My Account',
-    'profile.deleteAccount.confirmTitle': 'Are you absolutely sure?',
-    'profile.deleteAccount.confirmDescription': 'This action cannot be undone. This will permanently delete your account and remove all your data from our servers.',
-    'profile.deleteAccount.typeToConfirm': 'Type',
-    'profile.deleteAccount.confirmTextError': 'Please type DELETE exactly to confirm',
-    'profile.deleteAccount.confirmButton': 'Delete Account',
-    'profile.deleteAccount.deleting': 'Deleting...',
-    'profile.deleteAccount.success': 'Account Deleted',
-    'profile.deleteAccount.successMessage': 'Your account has been successfully deleted',
-    'profile.deleteAccount.error': 'Error',
-    'profile.deleteAccount.errorMessage': 'Failed to delete account. Please try again or contact support.',
-    
-    // Explanation fallbacks
+    'chat.inputPlaceholder': 'Type your question or homework here...',
+    'chat.uploadFile': 'Upload File',
+    'chat.takePhoto': 'Take Photo',
+    'chat.loading': 'AI is thinking...',
+    'chat.sendMessage': 'Send Message',
+    'auth.signIn': 'Sign In',
+    'auth.email': 'Email',
+    'auth.password': 'Password',
+    'auth.parentRegistration': 'Parent Registration',
+    'auth.parentInformation': 'Parent Information',
     'explanation.fallback.exercise': 'This is your exercise. Try to restate it in your own words.',
     'explanation.fallback.concept': 'We\'ll focus on the exact math idea you need here.',
     'explanation.fallback.example': 'Here\'s a similar example with different numbers.',
@@ -217,7 +132,50 @@ const translations = {
     'explanation.error': 'Error loading explanation. Please try again.'
   },
   fr: {
-    // Navigation
+    // New nested structure
+    app: { title: "Tutorly Navi", loading: "Chargement…", retry: "Réessayer", cancel: "Annuler" },
+    nav: { tutor: "Tuteur", homework: "Devoirs", progress: "Progrès", rewards: "Récompenses" },
+    chat: {
+      placeholder: "Saisissez votre question ou devoir…",
+      attach: "Joindre",
+      send: "Envoyer",
+      upload_doc: "Importer un document",
+      upload_photo: "Importer une photo",
+      take_photo: "Prendre une photo",
+    },
+    exercises: {
+      list_title: "Liste d'exercices",
+      header_grade: "Note globale",
+      summary: "{correct}/{total} correct",
+      empty_title: "Aucun exercice soumis",
+      empty_sub: "Commencez par poser une question ou téléverser un devoir !",
+      show_explanation: "Afficher l'explication",
+      try_again: "Réessayer → +{xp} XP",
+    },
+    explanation: {
+      modal_title: "Afficher l'explication",
+      fallback: {
+        exercise: "Voici votre exercice. Reformulez-le avec vos propres mots.",
+        concept: "Concentrons-nous sur l'idée mathématique essentielle.",
+        example: "Voici un exemple semblable avec d'autres nombres.",
+        strategy: "1) Comprendre l'objectif  2) Appliquer les règles  3) Vérifier le résultat.",
+        pitfall: "N'appliquez jamais une opération à une seule partie.",
+        check: "Expliquez pourquoi chaque étape est valide.",
+        practice: "Entraînez-vous avec des exercices similaires en expliquant vos étapes.",
+      },
+      headers: {
+        exercise: "📘 Exercice",
+        concept: "💡 Concept",
+        example: "🔍 Exemple (autres nombres)",
+        strategy: "☑️ Stratégie",
+        pitfall: "⚠️ Piège",
+        check: "🎯 Auto-vérification",
+        practice: "📈 Astuce de pratique",
+      },
+    },
+    badges: { streak: "Série de {n} jours !", xp_gain: "+{xp} XP", level: "Niveau {n}" },
+    
+    // Legacy flat keys for backward compatibility
     'nav.home': 'Tuteur',
     'nav.grades': 'Notes',
     'nav.roadmap': 'Suivi', 
@@ -226,64 +184,21 @@ const translations = {
     'nav.profile': 'Profil',
     'nav.settings': 'Paramètres',
     'nav.language': 'Langue',
-    
-    // Languages
     'language.english': 'English',
     'language.french': 'Français',
     'language.autoDetected': 'Détection automatique selon le pays',
     'language.auto': 'Auto',
-    
-    // Exercise Component
     'exercise.tryAgain': 'Réessayer',
     'exercise.showExplanation': 'Afficher l\'explication',
     'exercise.hideExplanation': 'Masquer l\'explication',
     'exercise.greatWork': 'Excellent travail !',
     'exercise.learningOpportunity': 'Opportunité d\'apprentissage',
     'exercise.attempt': 'Tentative',
-
-    // File Upload Messages
-    'upload.fileTooLarge': 'Fichier trop volumineux',
-    'upload.maxFileSize': 'La taille maximale du fichier est de 10 Mo.',
-    'upload.invalidFileType': 'Type de fichier invalide',
-    'upload.imageFileError': 'Veuillez télécharger un fichier image (jpg, png, etc.)',
-    'upload.documentFileError': 'Veuillez télécharger un PDF, un document Word ou un fichier texte.',
-    'upload.photoUploaded': 'Photo téléchargée',
-    'upload.photoSuccess': 'Votre photo a été téléchargée et sera traitée comme devoir.',
-    'upload.documentUploaded': 'Document téléchargé',
-    'upload.documentSuccess': 'a été téléchargé et sera traité comme devoir.',
-
-    // Footer
-    'footer.copyright': 'StudyWhiz AI. Tous droits réservés.',
-    'footer.subtitle': 'Soumettez vos devoirs et exercices et obtenez un tutorat personnalisé.',
-    'footer.managementDashboard': 'Tableau de bord de gestion',
-    
-    // Chat Interface
-    'chat.inputPlaceholder': 'Tapez votre question ou devoir ici...',
-    'chat.uploadFile': 'Télécharger un fichier',
-    'chat.takePhoto': 'Prendre une photo',
-    'chat.askQuestions': 'Posez des questions ou soumettez vos devoirs pour correction',
-    'chat.loading': 'L\'IA réfléchit...',
-    'chat.error': 'Erreur : Impossible de charger le chat. Veuillez actualiser la page.',
-    'chat.sendMessage': 'Envoyer le message',
-    'chat.typing': 'Tapez votre message...',
-    'chat.history': 'Historique du chat',
-    'chat.conversationHistory': 'Historique de conversation',
-    'chat.welcomeMessage': "👋 Salut ! Je suis votre tuteur IA StudyWhiz. Comment puis-je vous aider aujourd'hui ? Vous pouvez me poser des questions, télécharger des devoirs ou soumettre des exercices pour que je vous aide.",
-    
-    // Grades Dashboard
-    'grades.title': 'Tableau de bord des notes',
-    'grades.description': 'Suivez vos progrès académiques et examinez vos exercices',
-    'grades.overallGrade': 'Note globale',
-    'grades.exerciseStats': 'Statistiques des exercices',
-    'grades.exerciseList': 'Liste des exercices',
-    'grades.exerciseListDescription': 'Examinez vos exercices soumis et leurs commentaires',
-    'grades.grade': 'Note',
-    'grades.noGrade': 'Complétez des exercices pour calculer votre note',
-    'grades.basedOn': 'Basé sur {count} exercice{plural} terminé{plural}',
-    'grades.totalExercises': '{total} exercices au total • {completed} tentés',
-    'grades.correctAnswers': '{correct}/{completed}',
-    
-    // Exercise Related
+    'exercise.exerciseList': 'Liste des exercices',
+    'exercise.problem': 'Problème',
+    'exercise.guidance': 'Guide',
+    'exercise.pleaseProvideAnswer': 'Veuillez fournir une réponse',
+    'exercise.answerSubmitted': 'Réponse soumise avec succès',
     'exercise.correct': 'Correct',
     'exercise.incorrect': 'Incorrect',
     'exercise.pending': 'En attente de révision',
@@ -293,25 +208,6 @@ const translations = {
     'exercise.expand': 'Développer',
     'exercise.collapse': 'Réduire',
     'exercise.noExercises': 'Aucun exercice soumis pour le moment. Commencez par poser des questions ou télécharger des devoirs !',
-    
-    // Skills & Roadmap
-    'skills.title': 'Maîtrise des compétences',
-    'skills.description': 'Suivez vos progrès dans différentes matières et compétences',
-    'skills.level': 'Niveau',
-    'skills.progress': 'Progrès',
-    'skills.beginner': 'Débutant',
-    'skills.intermediate': 'Intermédiaire',
-    'skills.advanced': 'Avancé',
-    'skills.expert': 'Expert',
-    
-    'roadmap.title': 'Feuille de route d\'apprentissage',
-    'roadmap.description': 'Suivez votre parcours d\'apprentissage personnalisé',
-    'roadmap.progress': 'Progrès',
-    'roadmap.complete': 'Terminé',
-    'roadmap.inProgress': 'En cours',
-    'roadmap.notStarted': 'Pas commencé',
-    
-    // Common UI Elements
     'common.loading': 'Chargement...',
     'common.error': 'Erreur',
     'common.success': 'Succès',
@@ -321,93 +217,18 @@ const translations = {
     'common.delete': 'Supprimer',
     'common.close': 'Fermer',
     'common.submit': 'Soumettre',
-    'common.search': 'Rechercher',
-    'common.filter': 'Filtrer',
-    'common.clear': 'Effacer',
-    'common.clearAll': 'Tout effacer',
-    'common.clearAllExercises': 'Effacer tous les exercices',
-    'common.add': 'Ajouter',
-    'common.remove': 'Supprimer',
-    'common.upload': 'Télécharger',
-    'common.download': 'Télécharger',
-    'common.view': 'Voir',
-    'common.hide': 'Masquer',
-    'common.show': 'Afficher',
-    'common.more': 'Plus',
-    'common.less': 'Moins',
-    'common.next': 'Suivant',
-    'common.previous': 'Précédent',
-    'common.continue': 'Continuer',
-    'common.back': 'Retour',
     'common.retry': 'Réessayer',
-    'common.refresh': 'Actualiser',
     'common.selectSubject': 'Sélectionner une matière',
-    
-    // File Upload
-    'upload.dragDrop': 'Glissez-déposez les fichiers ici, ou cliquez pour sélectionner',
-    'upload.processing': 'Traitement du fichier...',
-    'upload.success': 'Fichier téléchargé avec succès',
-    'upload.error': 'Erreur lors du téléchargement du fichier',
-    'upload.unsupportedFormat': 'Format de fichier non pris en charge',
-    
-    // Notifications
-    'notification.exerciseCreated': 'Exercice créé avec succès',
-    'notification.answerSubmitted': 'Réponse soumise pour révision',
-    'notification.gradeUpdated': 'La note a été mise à jour',
-    'notification.settingsSaved': 'Paramètres enregistrés avec succès',
-    'notification.languageChanged': 'Langue changée en français',
-    'notification.languageAutoChanged': 'Langue automatiquement définie en français selon votre pays',
-    
-    // Time & Dates
-    'time.justNow': 'À l\'instant',
-    'time.minutesAgo': 'Il y a {count} minute{plural}',
-    'time.hoursAgo': 'Il y a {count} heure{plural}',
-    'time.daysAgo': 'Il y a {count} jour{plural}',
-    'time.weeksAgo': 'Il y a {count} semaine{plural}',
-    'time.monthsAgo': 'Il y a {count} mois',
-    'time.today': 'Aujourd\'hui',
-    'time.yesterday': 'Hier',
-    'time.tomorrow': 'Demain',
-
-    // Subjects
-    'subjects.mathematics': 'Mathématiques',
-    'subjects.physics': 'Physique',
-    'subjects.chemistry': 'Chimie',
-    'subjects.biology': 'Biologie',
-    'subjects.english': 'Anglais',
-    'subjects.french': 'Français',
-    'subjects.spanish': 'Espagnol',
-    'subjects.history': 'Histoire',
-    'subjects.geography': 'Géographie',
-    'subjects.computerscience': 'Informatique',
-
-    // Profile
-    'profile.title': 'Profil',
-    'profile.description': 'Gérez vos informations de compte et paramètres',
-    'profile.personalInfo': 'Informations personnelles',
-    'profile.personalInfoDescription': 'Vos détails de compte et préférences',
-    'profile.accountType': 'Type de compte',
-    'profile.deleteAccount.title': 'Supprimer le compte',
-    'profile.deleteAccount.description': 'Supprimer définitivement votre compte et toutes les données associées',
-    'profile.deleteAccount.warning': 'Cette action ne peut pas être annulée. Toutes vos données seront définitivement supprimées.',
-    'profile.deleteAccount.consequences': 'Ce qui sera supprimé :',
-    'profile.deleteAccount.consequence1': 'Votre profil et informations de compte',
-    'profile.deleteAccount.consequence2': 'Toutes vos notes et historique de devoirs',
-    'profile.deleteAccount.consequence3': 'Progrès d\'apprentissage et réalisations',
-    'profile.deleteAccount.consequence4': 'Relations parent-enfant (le cas échéant)',
-    'profile.deleteAccount.button': 'Supprimer mon compte',
-    'profile.deleteAccount.confirmTitle': 'Êtes-vous absolument sûr ?',
-    'profile.deleteAccount.confirmDescription': 'Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte et supprimera toutes vos données de nos serveurs.',
-    'profile.deleteAccount.typeToConfirm': 'Tapez',
-    'profile.deleteAccount.confirmTextError': 'Veuillez taper DELETE exactement pour confirmer',
-    'profile.deleteAccount.confirmButton': 'Supprimer le compte',
-    'profile.deleteAccount.deleting': 'Suppression...',
-    'profile.deleteAccount.success': 'Compte supprimé',
-    'profile.deleteAccount.successMessage': 'Votre compte a été supprimé avec succès',
-    'profile.deleteAccount.error': 'Erreur',
-    'profile.deleteAccount.errorMessage': 'Échec de la suppression du compte. Veuillez réessayer ou contacter le support.',
-    
-    // Explanation fallbacks
+    'chat.inputPlaceholder': 'Tapez votre question ou devoir ici...',
+    'chat.uploadFile': 'Télécharger un fichier',
+    'chat.takePhoto': 'Prendre une photo',
+    'chat.loading': 'L\'IA réfléchit...',
+    'chat.sendMessage': 'Envoyer le message',
+    'auth.signIn': 'Se connecter',
+    'auth.email': 'Email',
+    'auth.password': 'Mot de passe',
+    'auth.parentRegistration': 'Inscription des parents',
+    'auth.parentInformation': 'Informations sur les parents',
     'explanation.fallback.exercise': 'Voici votre exercice. Reformulez-le avec vos propres mots.',
     'explanation.fallback.concept': 'Concentrons-nous sur l\'idée mathématique essentielle.',
     'explanation.fallback.example': 'Voici un exemple semblable avec d\'autres nombres.',
@@ -416,8 +237,8 @@ const translations = {
     'explanation.fallback.check': 'Expliquez pourquoi chaque étape est valide.',
     'explanation.fallback.practice': 'Entraînez-vous avec quelques exercices similaires en expliquant vos étapes.',
     'explanation.error': 'Erreur lors du chargement de l\'explication. Veuillez réessayer.'
-  }
-};
+  },
+} as const;
 
 export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState(() => {
@@ -473,9 +294,29 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     }
   };
 
-  const t = (key: string): string => {
+  const t = (key: string, params?: Record<string, string | number>): string => {
     const currentTranslations = translations[language as keyof typeof translations] || translations[defaultLang];
-    return currentTranslations[key as keyof typeof currentTranslations] || key;
+    
+    // Navigate through nested object using dot notation
+    const keys = key.split('.');
+    let value: any = currentTranslations;
+    
+    for (const k of keys) {
+      value = value?.[k];
+      if (value === undefined) break;
+    }
+    
+    // Fallback to key if translation not found
+    let result = value || key;
+    
+    // Handle interpolation if params provided
+    if (params && typeof result === 'string') {
+      result = result.replace(/\{(\w+)\}/g, (match, paramKey) => {
+        return params[paramKey] !== undefined ? String(params[paramKey]) : match;
+      });
+    }
+    
+    return result;
   };
 
   // Auto-detect language when user loads
@@ -524,7 +365,7 @@ export const useLanguage = () => {
       language: defaultLang,
       changeLanguage: () => {},
       setLanguageFromCountry: () => {},
-      t: (key: string) => key
+      t: (key: string, params?: Record<string, string | number>) => key
     };
   }
   return context;
