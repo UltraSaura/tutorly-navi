@@ -20,6 +20,13 @@ export function useTwoCardTeaching() {
     setLoading(true);
     setError(null);
     try {
+      // Accept both Exercise shape and the normalized shape
+      const exercise_content =
+        row?.prompt || row?.question || row?.exercise_content || "";
+      const student_answer = row?.userAnswer || row?.student_answer || "";
+      const subject =
+        row?.subject || row?.subjectId || "math";
+        
       const explanationTemplate = getActiveTemplate('explanation');
       
       console.log('[TwoCardTeaching] Explanation template found:', explanationTemplate);
@@ -30,9 +37,9 @@ export function useTwoCardTeaching() {
       }
       
       const raw = await requestTwoCardTeaching({
-        exercise_content: row?.prompt ?? "",
-        student_answer: row?.userAnswer ?? "",
-        subject: row?.subject ?? "math",
+        exercise_content,
+        student_answer,
+        subject: typeof subject === "string" ? subject : String(subject),
         response_language: profile?.response_language ?? "English",
         grade_level: profile?.grade_level ?? "High School",
       }, selectedModelId, explanationTemplate);
