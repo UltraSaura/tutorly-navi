@@ -47,7 +47,7 @@ export function useTwoCardTeaching() {
       console.log('[TwoCardTeaching] Raw AI Response:', raw);
       
       const parsed = parseTwoCardText(raw);
-      console.log('[TwoCardTeaching] Parsed sections:', parsed);
+      console.log("[Explain] parsed →", parsed);
       
       // Only fallback when all three core fields are empty
       if (!parsed.concept && !parsed.example && !parsed.strategy) {
