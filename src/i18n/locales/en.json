@@ -194,14 +194,14 @@
     "guidance": "Guidance"
   },
   "explanation": {
-    "error": "Couldn't load the teaching explanation. Please try again.",
+    "error": "Failed to load explanation",
     "fallback": {
-      "exercise": "Your exercise",
-      "concept": "We'll focus on the exact math idea you need here.",
-      "example": "Here's a similar example with different numbers.",
-      "strategy": "1) Understand the goal  2) Apply the rules  3) Check your result.",
-      "pitfall": "Don't apply an operation to only one part.",
-      "check": "Explain why your steps are valid."
+      "exercise": "📝 **Exercise Review**\n\nLet's carefully examine this problem to understand what we're being asked to solve.",
+      "concept": "🧠 **Key Concepts**\n\nHere are the fundamental ideas you need to master for this type of problem.",
+      "example": "💡 **Worked Example**\n\nLet me show you a similar problem solved step-by-step to illustrate the method.",
+      "strategy": "🎯 **Solution Strategy**\n\nFollow this systematic approach to tackle problems like this one.",
+      "pitfall": "⚠️ **Common Pitfalls**\n\nBe careful to avoid these mistakes that students often make.",
+      "check": "✅ **Self-Check**\n\nUse these methods to verify your solution and build confidence."
     }
   }
 }

@@ -196,12 +196,12 @@
   "explanation": {
     "error": "Impossible de charger l'explication pédagogique. Veuillez réessayer.",
     "fallback": {
-      "exercise": "Votre exercice",
-      "concept": "Nous nous concentrerons sur l'idée mathématique exacte dont vous avez besoin ici.",
-      "example": "Voici un exemple similaire avec des nombres différents.",
-      "strategy": "1) Comprendre l'objectif  2) Appliquer les règles  3) Vérifier votre résultat.",
-      "pitfall": "N'appliquez pas une opération à une seule partie.",
-      "check": "Expliquez pourquoi vos étapes sont valides."
+      "exercise": "📝 **Révision de l'exercice**\n\nExaminons attentivement ce problème pour comprendre ce qu'on nous demande de résoudre.",
+      "concept": "🧠 **Concepts clés**\n\nVoici les idées fondamentales que vous devez maîtriser pour ce type de problème.",
+      "example": "💡 **Exemple détaillé**\n\nLaissez-moi vous montrer un problème similaire résolu étape par étape pour illustrer la méthode.",
+      "strategy": "🎯 **Stratégie de résolution**\n\nSuivez cette approche systématique pour résoudre des problèmes comme celui-ci.",
+      "pitfall": "⚠️ **Pièges courants**\n\nAttention à éviter ces erreurs que les étudiants font souvent.",
+      "check": "✅ **Auto-vérification**\n\nUtilisez ces méthodes pour vérifier votre solution et gagner en confiance."
     }
   }
 }
