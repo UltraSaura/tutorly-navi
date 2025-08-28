@@ -419,7 +419,7 @@ const translations = {
   }
 };
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState(() => {
     return localStorage.getItem('language') || defaultLang;
   });

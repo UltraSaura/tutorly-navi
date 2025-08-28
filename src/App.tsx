@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { AnimatePresence } from "framer-motion";
 import { AdminProvider } from "./context/AdminContext";
-import { LanguageProvider } from "./context/SimpleLanguageContext";
+import { SimpleLanguageProvider } from "./context/SimpleLanguageContext";
 import { useLanguage } from "./context/SimpleLanguageContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -76,7 +76,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <AuthProvider>
-          <LanguageProvider>
+          <SimpleLanguageProvider>
             <AdminProvider>
             <BrowserRouter>
               <AnimatePresence mode="wait">
@@ -133,7 +133,7 @@ const App = () => (
               </AnimatePresence>
             </BrowserRouter>
             </AdminProvider>
-          </LanguageProvider>
+          </SimpleLanguageProvider>
         </AuthProvider>
       </TooltipProvider>
     </ErrorBoundary>
