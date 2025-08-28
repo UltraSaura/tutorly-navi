@@ -205,13 +205,13 @@ const translations = {
     'profile.deleteAccount.errorMessage': 'Failed to delete account. Please try again or contact support.',
     
     // Explanation fallbacks
-    'explanation.fallback.exercise': 'Exercise Review - Analyze the given problem.',
-    'explanation.fallback.concept': 'Key Concept - Understand the fundamental principles.',
-    'explanation.fallback.example': 'Example - Here\'s a similar problem with different numbers.',
-    'explanation.fallback.strategy': 'Strategy - Step-by-step approach to solve this type of problem.',
-    'explanation.fallback.pitfall': 'Common Pitfall - Watch out for frequent mistakes.',
-    'explanation.fallback.check': 'Check Yourself - Validate your work with these tips.',
-    'explanation.fallback.practice': 'Practice Tip - Suggestions to improve your skills.',
+    'explanation.fallback.exercise': 'This is your exercise. Try to restate it in your own words.',
+    'explanation.fallback.concept': 'We\'ll focus on the exact math idea you need here.',
+    'explanation.fallback.example': 'Here\'s a similar example with different numbers.',
+    'explanation.fallback.strategy': '1) Understand the goal  2) Apply the rules  3) Check your result.',
+    'explanation.fallback.pitfall': 'Avoid applying an operation to only one part.',
+    'explanation.fallback.check': 'Explain why each step is valid.',
+    'explanation.fallback.practice': 'Practice a few similar problems and explain your steps aloud.',
     'explanation.error': 'Error loading explanation. Please try again.'
   },
   fr: {
@@ -406,13 +406,13 @@ const translations = {
     'profile.deleteAccount.errorMessage': 'Échec de la suppression du compte. Veuillez réessayer ou contacter le support.',
     
     // Explanation fallbacks
-    'explanation.fallback.exercise': 'Revue de l\'exercice - Analysez le problème donné.',
-    'explanation.fallback.concept': 'Concept clé - Comprenez les principes fondamentaux.',
-    'explanation.fallback.example': 'Exemple - Voici un problème similaire avec des nombres différents.',
-    'explanation.fallback.strategy': 'Stratégie - Approche étape par étape pour résoudre ce type de problème.',
-    'explanation.fallback.pitfall': 'Piège courant - Attention aux erreurs fréquentes.',
-    'explanation.fallback.check': 'Vérifiez vous-même - Validez votre travail avec ces conseils.',
-    'explanation.fallback.practice': 'Conseil de pratique - Suggestions pour améliorer vos compétences.',
+    'explanation.fallback.exercise': 'Voici votre exercice. Reformulez-le avec vos propres mots.',
+    'explanation.fallback.concept': 'Concentrons-nous sur l\'idée mathématique essentielle.',
+    'explanation.fallback.example': 'Voici un exemple semblable avec d\'autres nombres.',
+    'explanation.fallback.strategy': '1) Comprendre l\'objectif  2) Appliquer les règles  3) Vérifier le résultat.',
+    'explanation.fallback.pitfall': 'N\'appliquez jamais une opération à une seule partie.',
+    'explanation.fallback.check': 'Expliquez pourquoi chaque étape est valide.',
+    'explanation.fallback.practice': 'Entraînez-vous avec quelques exercices similaires en expliquant vos étapes.',
     'explanation.error': 'Erreur lors du chargement de l\'explication. Veuillez réessayer.'
   }
 };
