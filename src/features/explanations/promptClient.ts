@@ -52,6 +52,14 @@ export async function requestTwoCardTeaching(
   
   const promptTemplate = activeTemplate.prompt_content;
   
+  console.log("[Explain] vars →", {
+    exercise_content: vars.exercise_content,
+    student_answer: vars.student_answer,
+    subject: vars.subject,
+    response_language: vars.response_language,
+    grade_level: vars.grade_level,
+  });
+
   // Prepare variables with defaults
   const templateVariables: ExplanationVariables = {
     exercise_content: vars.exercise_content,
