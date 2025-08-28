@@ -50,8 +50,7 @@ export function useTwoCardTeaching() {
       // Ensure the response is in the correct language
       const rawInCorrectLanguage = await ensureLanguage(
         raw, 
-        profile?.response_language ?? "English",
-        selectedModelId
+        profile?.response_language ?? "English"
       );
       
       console.log('[TwoCardTeaching] Language-corrected Response:', rawInCorrectLanguage);
