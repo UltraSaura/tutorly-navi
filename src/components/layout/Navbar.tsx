@@ -11,10 +11,11 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import MobileLanguageMenuItems from './MobileLanguageMenuItems';
+import { useTranslation } from 'react-i18next';
 
 // Language menu items component
 const LanguageMenuItems = () => {
-  const { language, changeLanguage, t } = useLanguage();
+  const { i18n, t } = useTranslation();
 
   const languages = [
     { code: 'en', name: t('language.english'), flag: '🇺🇸' },
@@ -36,12 +37,15 @@ const LanguageMenuItems = () => {
       {languages.map((lang) => (
         <DropdownMenuItem
           key={lang.code}
-          onClick={() => changeLanguage(lang.code)}
-          className={language === lang.code ? 'bg-accent' : ''}
+          onClick={() => {
+            i18n.changeLanguage(lang.code);
+            localStorage.setItem('languageManuallySet', 'true');
+          }}
+          className={i18n.resolvedLanguage === lang.code ? 'bg-accent' : ''}
         >
           <span className="mr-2">{lang.flag}</span>
           {lang.name}
-          {language === lang.code && !manuallySet && (
+          {i18n.resolvedLanguage === lang.code && !manuallySet && (
             <span className="ml-auto text-xs text-muted-foreground">{t('language.auto')}</span>
           )}
         </DropdownMenuItem>
@@ -94,9 +98,9 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-studywhiz-600 text-white font-bold">
-              SW
+              {t('brand.short')}
             </div>
-            <span className="text-lg font-semibold">StudyWhiz</span>
+            <span className="text-lg font-semibold">{t('brand.name')}</span>
             <div className="hidden md:block">
               <SubjectSelector />
             </div>
@@ -128,6 +132,7 @@ const Navbar = () => {
                 <Button
                   variant="ghost"
                   className="flex items-center gap-2 h-10 px-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                  aria-label={t('nav.myAccount')}
                 >
                   <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
                     <User className="w-4 h-4 text-gray-600 dark:text-gray-300" />
@@ -187,7 +192,10 @@ const Navbar = () => {
           {/* Mobile Account Menu */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <button className="flex flex-col items-center p-2 rounded-md text-gray-500 dark:text-gray-400">
+              <button 
+                className="flex flex-col items-center p-2 rounded-md text-gray-500 dark:text-gray-400"
+                aria-label={t('nav.myAccount')}
+              >
                 <User className="w-5 h-5" />
                 <span className="text-xs mt-1">{t('nav.myAccount')}</span>
               </button>

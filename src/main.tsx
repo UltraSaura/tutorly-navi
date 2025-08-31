@@ -1,4 +1,5 @@
 
+import "./i18n"; // <-- add this import before rendering the app
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'

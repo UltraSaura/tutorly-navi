@@ -1,5 +1,6 @@
 import React from "react";
 import type { Step } from "./types";
+import { useTranslation } from "react-i18next";
 
 const SECTION_CONFIG = {
   concept: { emoji: "💡", title: "Concept" },
@@ -11,6 +12,8 @@ const SECTION_CONFIG = {
 
 export default function ExplanationCards({ steps }: { steps: Step[] }) {
   if (!steps?.length) return null;
+
+  const { t } = useTranslation();
 
   // Group steps by kind
   const groupedSteps = steps.reduce((acc, step) => {

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useTranslation } from 'react-i18next'; // <-- Updated import
 import { Badge } from '@/components/ui/badge';
 import { useAdmin } from '@/context/AdminContext';
 import CameraCapture from './CameraCapture';
@@ -29,7 +29,7 @@ const MessageInput = ({
   isLoading 
 }: MessageInputProps) => {
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t } = useTranslation(); // <-- Updated hook usage
   const { selectedModelId, getAvailableModels } = useAdmin();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);

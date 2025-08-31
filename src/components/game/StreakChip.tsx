@@ -1,6 +1,7 @@
 import React from 'react';
-import { Flame } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface StreakChipProps {
   days: number;
@@ -9,39 +10,21 @@ interface StreakChipProps {
 }
 
 const StreakChip = ({ days, active, className }: StreakChipProps) => {
+  const { t } = useTranslation();
+  
+  if (!active || days === 0) return null;
+
   return (
-    <div 
+    <Badge 
+      variant="secondary"
       className={cn(
-        "inline-flex items-center gap-2 px-3 py-2 rounded-chip transition-all duration-200",
-        active 
-          ? "bg-game-streak/10 border border-game-streak/20" 
-          : "bg-neutral-border/50 border border-neutral-border",
+        "bg-game-fire/10 text-game-fire border-0 px-2 py-1 text-xs font-medium",
         className
       )}
-      aria-label={`${days} day streak${active ? ', active' : ', inactive'}`}
+      aria-label={`${days} ${t('game.dayStreak')}${active ? `, ${t('game.active')}` : `, ${t('game.inactive')}`}`}
     >
-      <Flame 
-        size={16}
-        className={cn(
-          "transition-colors duration-200",
-          active ? "text-game-streak" : "text-neutral-muted"
-        )}
-        aria-hidden="true"
-      />
-      
-      <span 
-        className={cn(
-          "text-caption font-medium transition-colors duration-200",
-          active ? "text-game-streak" : "text-neutral-muted"
-        )}
-      >
-        {days} day streak
-      </span>
-      
-      {active && (
-        <div className="w-2 h-2 bg-game-streak rounded-full animate-pulse" />
-      )}
-    </div>
+      🔥 {days} {t('game.dayStreak')}
+    </Badge>
   );
 };
 

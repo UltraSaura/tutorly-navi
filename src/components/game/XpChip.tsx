@@ -1,6 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface XpChipProps {
   level: number;
@@ -9,6 +10,8 @@ interface XpChipProps {
 }
 
 const XpChip = ({ level, xp, className }: XpChipProps) => {
+  const { t } = useTranslation();
+
   return (
     <Badge 
       variant="secondary"
@@ -17,7 +20,7 @@ const XpChip = ({ level, xp, className }: XpChipProps) => {
         className
       )}
     >
-      ⭐ Level {level} · {xp} XP
+      ⭐ {t('game.level')} {level} · {xp} {t('game.xp')}
     </Badge>
   );
 };

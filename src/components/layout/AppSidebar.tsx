@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { MessageSquare, LayoutDashboard, BarChart3, Award, HeadphonesIcon, User, Globe, LogOut, ChevronDown, Settings } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
-import { useLanguage } from "@/context/SimpleLanguageContext";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -41,7 +41,7 @@ import {
 
 const navigation = [
   { 
-    title: "nav.tutor", 
+    title: "nav.home", 
     url: "/chat", 
     icon: MessageSquare 
   },
@@ -68,7 +68,7 @@ const navigation = [
 ];
 
 const LanguageMenuItems = () => {
-  const { language, changeLanguage, t } = useLanguage();
+  const { i18n, t } = useTranslation();
 
   const languages = [
     { code: 'en', name: t('language.english'), flag: '🇺🇸' },
@@ -90,12 +90,15 @@ const LanguageMenuItems = () => {
       {languages.map((lang) => (
         <DropdownMenuItem
           key={lang.code}
-          onClick={() => changeLanguage(lang.code)}
-          className={language === lang.code ? 'bg-accent' : ''}
+          onClick={() => {
+            i18n.changeLanguage(lang.code);
+            localStorage.setItem('languageManuallySet', 'true');
+          }}
+          className={i18n.resolvedLanguage === lang.code ? 'bg-accent' : ''}
         >
           <span className="mr-2">{lang.flag}</span>
           {lang.name}
-          {language === lang.code && !manuallySet && (
+          {i18n.resolvedLanguage === lang.code && !manuallySet && (
             <span className="ml-auto text-xs text-muted-foreground">{t('language.auto')}</span>
           )}
         </DropdownMenuItem>
@@ -107,7 +110,7 @@ const LanguageMenuItems = () => {
 export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const location = useLocation();
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSigningOut, setIsSigningOut] = useState(false);

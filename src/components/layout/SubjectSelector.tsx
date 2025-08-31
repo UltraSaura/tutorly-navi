@@ -1,6 +1,6 @@
 
 import { useAdmin } from "@/context/AdminContext";
-import { useLanguage } from "@/context/SimpleLanguageContext";
+import { useTranslation } from "react-i18next";
 import { usePromptManagement } from "@/hooks/usePromptManagement";
 import { 
   Select,
@@ -12,7 +12,7 @@ import {
 
 const SubjectSelector = () => {
   const { subjects, selectedSubject, setSelectedSubject } = useAdmin();
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const { autoActivateForSubject } = usePromptManagement();
   const activeSubjects = subjects.filter(subject => subject.active);
 

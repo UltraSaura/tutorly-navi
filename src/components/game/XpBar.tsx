@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next'; // <-- Add this import
 
 interface XpBarProps {
   value: number; // 0 to 1
@@ -8,12 +9,13 @@ interface XpBarProps {
 }
 
 const XpBar = ({ value, level, className }: XpBarProps) => {
+  const { t } = useTranslation(); // <-- Add this hook
   const percentage = Math.max(0, Math.min(100, value * 100));
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <span className="text-body font-medium text-neutral-text whitespace-nowrap">
-        Level {level}
+        {t('game.level')} {level} {/* <-- Updated */}
       </span>
       
       <div className="flex-1 relative">

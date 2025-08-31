@@ -3,9 +3,9 @@ import { Outlet } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import SubjectSelector from './SubjectSelector';
-import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useTranslation } from "react-i18next";
 const MainLayout = () => {
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   
   return (
     <SidebarProvider>

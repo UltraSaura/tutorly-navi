@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Book, FlaskConical, Languages, Send } from 'lucide-react';
-import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useTranslation } from 'react-i18next';
 
 type SubjectType = 'math' | 'science' | 'english';
 type StatusType = 'correct' | 'incorrect' | 'unanswered';
@@ -47,7 +47,7 @@ const ExerciseCard = ({
   const [inputAnswer, setInputAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const SubjectIcon = subjectIcons[subject];
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   
   const getStatusStyles = () => {
     switch (status) {
@@ -112,7 +112,7 @@ const ExerciseCard = ({
                 variant="secondary" 
                 className="px-3 py-1 bg-neutral-bg text-neutral-muted"
               >
-                Your answer: {userAnswer}
+                {t('exercise.yourAnswer')}: {userAnswer}
               </Badge>
             </div>
           )}
@@ -152,9 +152,9 @@ const ExerciseCard = ({
                 size="sm"
                 onClick={() => onShowExplanation(id)}
                 className="text-xs px-2 py-0.5 h-6"
-                aria-label={`Show explanation for exercise ${id}`}
+                aria-label={`${t('exercise.showExplanation')} for exercise ${id}`}
               >
-                Show explanation
+                {t('exercise.showExplanation')}
               </Button>
             )}
             
@@ -164,9 +164,9 @@ const ExerciseCard = ({
                 size="sm"
                 onClick={() => onTryAgain(id)}
                 className="text-xs px-2 py-0.5 h-6"
-                aria-label={`Try again for exercise ${id}`}
+                aria-label={`${t('exercise.tryAgain')} for exercise ${id}`}
               >
-                Try again
+                {t('exercise.tryAgain')}
               </Button>
             )}
           </div>

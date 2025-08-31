@@ -11,7 +11,7 @@ import XpChip from '@/components/game/XpChip';
 import CompactStreakChip from '@/components/game/CompactStreakChip';
 import CompactCoinChip from '@/components/game/CompactCoinChip';
 import { Exercise as ExerciseType } from '@/types/chat';
-import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useTranslation } from 'react-i18next'; // <-- Updated import
 import { cn } from '@/lib/utils';
 
 interface ExerciseListProps {
@@ -41,7 +41,7 @@ const ExerciseList = ({
   onSubmitAnswer,
   onClearExercises
 }: ExerciseListProps) => {
-  const { t, language } = useLanguage();
+  const { t, i18n } = useTranslation(); // <-- Updated hook usage
   const teaching = useTwoCardTeaching();
   const { userContext } = useUserContext();
 
@@ -83,7 +83,7 @@ const ExerciseList = ({
       };
       
       teaching.openFor(exerciseRow, { 
-        response_language: mapLanguageForAI(language),
+        response_language: mapLanguageForAI(i18n.resolvedLanguage), // <-- Updated
         grade_level: userContext?.student_level || "High School"
       });
     }

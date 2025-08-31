@@ -6,8 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { AnimatePresence } from "framer-motion";
 import { AdminProvider } from "./context/AdminContext";
-import { SimpleLanguageProvider } from "./context/SimpleLanguageContext";
-import { useLanguage } from "./context/SimpleLanguageContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
@@ -37,7 +35,7 @@ import PromptManagement from "./components/admin/PromptManagement";
 // Auth Pages  
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 
-// Loading Component (outside of language context to avoid circular dependency)
+// Loading Component (no language context needed)
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
     <div className="flex flex-col items-center">
@@ -50,23 +48,6 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Translated Loading Component (inside language context)
-const TranslatedLoadingFallback = () => {
-  const { t } = useLanguage();
-  
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="flex flex-col items-center">
-        <div className="w-16 h-16 relative">
-          <div className="absolute top-0 left-0 w-full h-full border-4 border-muted rounded-full"></div>
-          <div className="absolute top-0 left-0 w-full h-full border-4 border-primary rounded-full animate-spin border-t-transparent"></div>
-        </div>
-        <p className="mt-4 text-lg font-medium">{t('common.loading')}</p>
-      </div>
-    </div>
-  );
-};
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -76,11 +57,10 @@ const App = () => (
         <Toaster />
         <Sonner />
         <AuthProvider>
-          <SimpleLanguageProvider>
-            <AdminProvider>
+          <AdminProvider>
             <BrowserRouter>
               <AnimatePresence mode="wait">
-                <Suspense fallback={<TranslatedLoadingFallback />}>
+                <Suspense fallback={<LoadingFallback />}>
                   <Routes>
                     {/* Auth Routes */}
                     <Route path="/auth" element={<AuthPage />} />
@@ -132,8 +112,7 @@ const App = () => (
                 </Suspense>
               </AnimatePresence>
             </BrowserRouter>
-            </AdminProvider>
-          </SimpleLanguageProvider>
+          </AdminProvider>
         </AuthProvider>
       </TooltipProvider>
     </ErrorBoundary>
