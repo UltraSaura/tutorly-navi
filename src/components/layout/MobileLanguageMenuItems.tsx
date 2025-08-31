@@ -40,6 +40,3 @@ const MobileLanguageMenuItems = () => {
 };
 
 export default MobileLanguageMenuItems;
-};
-
-export default MobileLanguageMenuItems;

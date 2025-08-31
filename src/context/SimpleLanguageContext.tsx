@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getLanguageFromCountry } from '@/utils/countryLanguageMapping';
 import { useAuth } from '@/context/AuthContext';
+import { useCountryDetection } from '@/hooks/useCountryDetection';
 
 export const defaultLang = "en";
 
@@ -246,6 +247,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   });
   
   const { user } = useAuth();
+  const { detection, getLanguageFromDetection } = useCountryDetection();
 
   const changeLanguage = (lng: string) => {
     setLanguage(lng);
@@ -319,31 +321,61 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     return result;
   };
 
-  // Auto-detect language when user loads
+  // Auto-detect language from multiple sources when user loads
   useEffect(() => {
     const detectLanguageFromUser = async () => {
-      if (!user?.id || localStorage.getItem('languageManuallySet') === 'true') return;
+      const languageManuallySet = localStorage.getItem('languageManuallySet') === 'true';
+      if (languageManuallySet) return;
       
-      try {
-        const { data } = await import('@/integrations/supabase/client').then(m => 
-          m.supabase
-            .from('users')
-            .select('country')
-            .eq('id', user.id)
-            .single()
-        );
-        
-        if (data?.country) {
-          console.log('User loaded with country:', data.country);
-          setLanguageFromCountry(data.country);
+      let detectedLanguage = null;
+      
+      // First try user profile country
+      if (user?.id) {
+        try {
+          const { data } = await import('@/integrations/supabase/client').then(m => 
+            m.supabase
+              .from('users')
+              .select('country')
+              .eq('id', user.id)
+              .single()
+          );
+          
+          if (data?.country) {
+            console.log('User loaded with country:', data.country);
+            detectedLanguage = getLanguageFromCountry(data.country);
+          }
+        } catch (error) {
+          console.warn('Failed to detect language from user profile:', error);
         }
-      } catch (error) {
-        console.warn('Failed to detect language from user profile:', error);
+      }
+      
+      // Fallback to automatic country detection
+      if (!detectedLanguage && detection.country) {
+        detectedLanguage = getLanguageFromDetection();
+        console.log('Using automatic detection:', detection.country, '->', detectedLanguage);
+      }
+      
+      if (detectedLanguage && detectedLanguage !== language) {
+        console.log('Changing language from', language, 'to', detectedLanguage);
+        setLanguage(detectedLanguage);
+        localStorage.setItem('lang', detectedLanguage);
+        
+        const methodText = detection.method === 'geolocation' ? 'location' :
+                          detection.method === 'ip' ? 'IP address' :
+                          detection.method === 'timezone' ? 'timezone' : 'profile';
+        
+        // Show notification about automatic language change
+        import('@/components/ui/use-toast').then(({ toast }) => {
+          toast({
+            title: detectedLanguage === 'fr' ? 'Langue automatiquement définie en français' : 'Language automatically set to English',
+            description: detectedLanguage === 'fr' ? `Basé sur votre ${methodText}` : `Based on your ${methodText}`,
+          });
+        });
       }
     };
     
     detectLanguageFromUser();
-  }, [user?.id]);
+  }, [user?.id, detection.country, detection.method, language, getLanguageFromDetection]);
 
   return (
     <LanguageContext.Provider value={{
