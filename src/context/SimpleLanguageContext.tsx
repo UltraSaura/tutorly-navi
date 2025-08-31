@@ -9,6 +9,8 @@ interface LanguageContextType {
   language: string;
   changeLanguage: (lng: string) => void;
   setLanguageFromCountry: (countryCode: string) => void;
+  detectLanguageNow: () => Promise<void>;
+  resetLanguageDetection: () => Promise<void>;
   t: (key: string, params?: Record<string, string | number>) => string;
 }
 
@@ -82,6 +84,8 @@ const translations = {
     'language.french': 'Français',
     'language.autoDetected': 'Auto-detected based on country',
     'language.auto': 'Auto',
+    'language.detectNow': 'Detect now',
+    'language.resetAuto': 'Reset auto-detection',
     'exercise.tryAgain': 'Try again',
     'exercise.showExplanation': 'Show explanation',
     'exercise.hideExplanation': 'Hide explanation',
@@ -189,6 +193,8 @@ const translations = {
     'language.french': 'Français',
     'language.autoDetected': 'Détection automatique selon le pays',
     'language.auto': 'Auto',
+    'language.detectNow': 'Détecter maintenant',
+    'language.resetAuto': 'Réinitialiser la détection auto',
     'exercise.tryAgain': 'Réessayer',
     'exercise.showExplanation': 'Afficher l\'explication',
     'exercise.hideExplanation': 'Masquer l\'explication',
@@ -247,7 +253,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   });
   
   const { user } = useAuth();
-  const { detection, getLanguageFromDetection } = useCountryDetection();
+  const { detection, getLanguageFromDetection, /* add */ detectCountry } = useCountryDetection();
 
   const changeLanguage = (lng: string) => {
     setLanguage(lng);
@@ -255,12 +261,37 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     localStorage.setItem('languageManuallySet', 'true');
     
     // Show notification about language change
-    import('@/components/ui/use-toast').then(({ toast }) => {
+    import('@/hooks/use-toast').then(({ toast }) => {
       toast({
         title: lng === 'fr' ? 'Langue changée en français' : 'Language changed to English',
         description: lng === 'fr' ? 'L\'interface utilisateur a été changée en français' : 'User interface has been changed to English',
       });
     });
+  };
+
+  // Normalize a country input (handles names like "France" and codes like "fr"/"FR"/"FRA")
+  const normalizeCountryCode = (input: string): string | null => {
+    if (!input) return null;
+    const trimmed = String(input).trim();
+    // If 2-3 letters, use first two as ISO alpha-2 uppercased
+    if (/^[A-Za-z]{2,3}$/.test(trimmed)) {
+      return trimmed.slice(0, 2).toUpperCase();
+    }
+    const map: Record<string, string> = {
+      'FRANCE': 'FR',
+      'UNITED STATES': 'US',
+      'UNITED STATES OF AMERICA': 'US',
+      'USA': 'US',
+      'CANADA': 'CA',
+      'UNITED KINGDOM': 'GB',
+      'UK': 'GB',
+      'GREAT BRITAIN': 'GB',
+      'GERMANY': 'DE',
+      'ITALY': 'IT',
+      'SPAIN': 'ES',
+    };
+    const upper = trimmed.toUpperCase();
+    return map[upper] || null;
   };
 
   const setLanguageFromCountry = (countryCode: string) => {
@@ -276,8 +307,9 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
       return; // User has manually set language, don't override
     }
 
-    const detectedLanguage = getLanguageFromCountry(countryCode);
-    console.log('detected language from country:', detectedLanguage);
+    const normalized = normalizeCountryCode(countryCode) || countryCode?.toUpperCase?.() || countryCode;
+    const detectedLanguage = getLanguageFromCountry(normalized);
+    console.log('detected language from country (normalized=', normalized, '):', detectedLanguage);
     
     if (detectedLanguage !== language) {
       console.log('Changing language from', language, 'to', detectedLanguage);
@@ -285,7 +317,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
       localStorage.setItem('lang', detectedLanguage);
       
       // Show notification about automatic language change
-      import('@/components/ui/use-toast').then(({ toast }) => {
+      import('@/hooks/use-toast').then(({ toast }) => {
         toast({
           title: detectedLanguage === 'fr' ? 'Langue automatiquement définie en français' : 'Language automatically set to English',
           description: detectedLanguage === 'fr' ? 'Basé sur votre pays sélectionné' : 'Based on your selected country',
@@ -293,6 +325,43 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
       });
     } else {
       console.log('Language already matches detected language');
+    }
+  };
+
+  const detectLanguageNow = async () => {
+    try {
+      const result = await detectCountry();
+      if (result?.country) {
+        setLanguageFromCountry(result.country);
+      }
+    } catch (e) {
+      console.warn('detectLanguageNow failed', e);
+    }
+  };
+
+  const resetLanguageDetection = async () => {
+    localStorage.removeItem('languageManuallySet');
+    // Prefer profile country, then current detection
+    try {
+      if (user?.id) {
+        const { data } = await import('@/integrations/supabase/client').then(m => 
+          m.supabase
+            .from('users')
+            .select('country')
+            .eq('id', user.id)
+            .single()
+        );
+        if (data?.country) {
+          const norm = normalizeCountryCode(data.country) || data.country;
+          setLanguageFromCountry(norm);
+          return;
+        }
+      }
+      if (detection.country) {
+        setLanguageFromCountry(detection.country);
+      }
+    } catch (e) {
+      console.warn('resetLanguageDetection failed', e);
     }
   };
 
@@ -342,7 +411,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
           
           if (data?.country) {
             console.log('User loaded with country:', data.country);
-            detectedLanguage = getLanguageFromCountry(data.country);
+            const norm = normalizeCountryCode(data.country) || data.country;
+            detectedLanguage = getLanguageFromCountry(norm);
           }
         } catch (error) {
           console.warn('Failed to detect language from user profile:', error);
@@ -365,7 +435,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
                           detection.method === 'timezone' ? 'timezone' : 'profile';
         
         // Show notification about automatic language change
-        import('@/components/ui/use-toast').then(({ toast }) => {
+        import('@/hooks/use-toast').then(({ toast }) => {
           toast({
             title: detectedLanguage === 'fr' ? 'Langue automatiquement définie en français' : 'Language automatically set to English',
             description: detectedLanguage === 'fr' ? `Basé sur votre ${methodText}` : `Based on your ${methodText}`,
@@ -382,6 +452,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
       language,
       changeLanguage,
       setLanguageFromCountry,
+      detectLanguageNow,
+      resetLanguageDetection,
       t
     }}>
       {children}
@@ -397,6 +469,8 @@ export const useLanguage = () => {
       language: defaultLang,
       changeLanguage: () => {},
       setLanguageFromCountry: () => {},
+      detectLanguageNow: async () => {},
+      resetLanguageDetection: async () => {},
       t: (key: string, params?: Record<string, string | number>) => key
     };
   }

@@ -2,7 +2,7 @@ import React from 'react';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 
 const MobileLanguageMenuItems = () => {
-  const { language, changeLanguage, t } = useLanguage();
+  const { language, changeLanguage, t, resetLanguageDetection, detectLanguageNow } = useLanguage();
 
   const languages = [
     { code: 'en', name: t('language.english'), flag: '🇺🇸' },
@@ -35,6 +35,23 @@ const MobileLanguageMenuItems = () => {
           )}
         </button>
       ))}
+
+      <div className="mt-3 flex items-center justify-between">
+        {manuallySet && (
+          <button
+            onClick={() => resetLanguageDetection()}
+            className="text-xs underline text-muted-foreground hover:text-foreground"
+          >
+            {t('language.resetAuto')}
+          </button>
+        )}
+        <button
+          onClick={() => detectLanguageNow()}
+          className="ml-auto text-xs underline text-muted-foreground hover:text-foreground"
+        >
+          {t('language.detectNow')}
+        </button>
+      </div>
     </div>
   );
 };
