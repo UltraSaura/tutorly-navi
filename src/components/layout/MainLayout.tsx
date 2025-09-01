@@ -4,8 +4,11 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import SubjectSelector from './SubjectSelector';
 import { useTranslation } from "react-i18next";
+import { MobileBottomTabs } from "./MobileBottomTabs";
+import { useIsMobile } from "@/hooks/use-mobile";
 const MainLayout = () => {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   
   return (
     <SidebarProvider>
@@ -28,13 +31,16 @@ const MainLayout = () => {
           </header>
           
           {/* Main Content */}
-          <main className="flex-1 p-6">
+          <main className={`flex-1 p-6 ${isMobile ? 'pb-20' : ''}`}>
             <div className="animate-fade-in">
               <Outlet />
             </div>
           </main>
         </div>
       </div>
+      
+      {/* Mobile Bottom Tabs */}
+      <MobileBottomTabs />
     </SidebarProvider>
   );
 };

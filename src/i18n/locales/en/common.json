@@ -14,9 +14,14 @@
   "nav.skills": "Skills",
   "nav.support": "Support",
   "nav.myAccount": "My account",
+  "nav.account": "Account",
+  "nav.tools": "Tools",
   "nav.profile": "Profile",
   "nav.settings": "Settings",
   "nav.language": "Language",
+
+  "tools.comingSoon": "Coming Soon",
+  "tools.description": "New tools and features will be available here soon.",
 
   "language.english": "English",
   "language.french": "French",

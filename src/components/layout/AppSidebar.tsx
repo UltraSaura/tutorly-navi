@@ -39,7 +39,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const navigation = [
+import { useIsMobile } from "@/hooks/use-mobile";
+
+// Desktop navigation (full sidebar)
+const desktopNavigation = [
   { 
     title: "nav.home", 
     url: "/chat", 
@@ -64,6 +67,20 @@ const navigation = [
     title: "nav.support", 
     url: "/support", 
     icon: HeadphonesIcon 
+  },
+];
+
+// Mobile navigation (only grades and skills in sidebar)
+const mobileNavigation = [
+  { 
+    title: "nav.grades", 
+    url: "/grades", 
+    icon: BarChart3 
+  },
+  { 
+    title: "nav.skills", 
+    url: "/skills", 
+    icon: Award 
   },
 ];
 
@@ -115,6 +132,7 @@ export function AppSidebar() {
   const { toast } = useToast();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const { isAdmin } = useAdminAuth();
+  const isMobile = useIsMobile();
   
   // Debug: Clear sidebar state cookie on first load
   useState(() => {
@@ -152,6 +170,9 @@ export function AppSidebar() {
   };
 
   const userInitials = user?.email?.charAt(0).toUpperCase() || 'U';
+  
+  // Use different navigation based on mobile/desktop
+  const navigation = isMobile ? mobileNavigation : desktopNavigation;
 
   return (
     <TooltipProvider>
