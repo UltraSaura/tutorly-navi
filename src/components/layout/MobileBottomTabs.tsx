@@ -59,7 +59,7 @@ export function MobileBottomTabs() {
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border/40">
-        <div className="flex items-center justify-around h-12 px-1">
+        <div className="flex items-center justify-around h-16 px-2">
           {bottomTabItems.map((item) => {
             const isActiveTab = isActive(item.url);
             
@@ -68,14 +68,14 @@ export function MobileBottomTabs() {
                 <NavLink
                   key={item.title}
                   to={item.url}
-                  className={`flex flex-col items-center justify-center h-10 w-14 rounded-lg transition-colors ${
+                  className={`flex flex-col items-center justify-center h-12 w-16 rounded-lg transition-colors ${
                     isActiveTab 
                       ? "bg-primary/10 text-primary" 
                       : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                   }`}
                 >
-                  <item.icon className="h-4 w-4 mb-0.5" />
-                  <span className="text-[10px] font-medium">{t(item.title)}</span>
+                  <item.icon className="h-5 w-5 mb-1" />
+                  <span className="text-xs font-medium">{t(item.title)}</span>
                 </NavLink>
               );
             }
@@ -86,10 +86,10 @@ export function MobileBottomTabs() {
                 variant="ghost"
                 size="sm"
                 onClick={() => handleTabClick(item)}
-                className="flex flex-col items-center justify-center h-10 w-14 rounded-lg p-0 text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                className="flex flex-col items-center justify-center h-12 w-16 rounded-lg p-0 text-muted-foreground hover:text-foreground hover:bg-accent/50"
               >
-                <item.icon className="h-4 w-4 mb-0.5" />
-                <span className="text-[10px] font-medium">{t(item.title)}</span>
+                <item.icon className="h-5 w-5 mb-1" />
+                <span className="text-xs font-medium">{t(item.title)}</span>
               </Button>
             );
           })}
