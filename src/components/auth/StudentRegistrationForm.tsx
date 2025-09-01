@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCountriesAndLevels } from '@/hooks/useCountriesAndLevels';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { StudentRegistrationData } from '@/types/registration';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Loader2 } from 'lucide-react';
@@ -43,8 +44,9 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
 }) => {
   const { t } = useTranslation();
   const { setLanguageFromCountry } = useLanguage();
-  const { countries, getSchoolLevelsByCountry, loading: dataLoading } = useCountriesAndLevels();
-  const [selectedCountry, setSelectedCountry] = useState<string>('');
+  const { profile } = useUserProfile();
+  const { countries, getSchoolLevelsByCountry, loading: dataLoading, selectedCountry, setCountry } = useCountriesAndLevels(profile?.country);
+  const [localSelectedCountry, setLocalSelectedCountry] = useState<string>(profile?.country || '');
 
   const {
     register,
@@ -53,16 +55,38 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
     setValue,
     watch
   } = useForm<StudentFormData>({
-    resolver: zodResolver(studentSchema)
+    resolver: zodResolver(studentSchema),
+    defaultValues: {
+      country: profile?.country || '',
+      firstName: profile?.firstName || '',
+      lastName: profile?.lastName || '',
+      email: profile?.email || '',
+      phoneNumber: profile?.phoneNumber || '',
+      schoolLevel: profile?.level || ''
+    }
   });
+
+  // Update form when profile loads
+  useEffect(() => {
+    if (profile) {
+      setValue('country', profile.country);
+      setValue('firstName', profile.firstName);
+      setValue('lastName', profile.lastName);
+      setValue('email', profile.email);
+      setValue('phoneNumber', profile.phoneNumber);
+      setValue('schoolLevel', profile.level);
+      setLocalSelectedCountry(profile.country);
+    }
+  }, [profile, setValue]);
 
   const watchedCountry = watch('country');
   const schoolLevels = watchedCountry ? getSchoolLevelsByCountry(watchedCountry) : [];
 
   const handleCountryChange = (countryCode: string) => {
-    setSelectedCountry(countryCode);
+    setLocalSelectedCountry(countryCode);
     setValue('country', countryCode);
     setValue('schoolLevel', ''); // Reset school level when country changes
+    setCountry(countryCode); // Update the hook's selected country
     // Set language based on country
     setLanguageFromCountry(countryCode);
   };
@@ -158,7 +182,7 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
 
           <div>
             <Label>{t('auth.country')}</Label>
-            <Select onValueChange={handleCountryChange} value={selectedCountry}>
+            <Select onValueChange={handleCountryChange} value={localSelectedCountry}>
               <SelectTrigger className={errors.country ? 'border-destructive' : ''}>
                 <SelectValue placeholder={t('auth.selectCountry')} />
               </SelectTrigger>

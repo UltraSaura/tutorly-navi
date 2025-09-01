@@ -8,6 +8,7 @@ import { AnimatePresence } from "framer-motion";
 import { AdminProvider } from "./context/AdminContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { LanguageProvider } from "./context/LanguageProvider";
 
 // Layouts
 import MainLayout from "./components/layout/MainLayout";
@@ -35,7 +36,7 @@ import PromptManagement from "./components/admin/PromptManagement";
 // Auth Pages  
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 
-// Loading Component (no language context needed)
+// Loading Component
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
     <div className="flex flex-col items-center">
@@ -50,73 +51,78 @@ const LoadingFallback = () => (
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ErrorBoundary>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AuthProvider>
-          <AdminProvider>
-            <BrowserRouter>
-              <AnimatePresence mode="wait">
-                <Suspense fallback={<LoadingFallback />}>
-                  <Routes>
-                    {/* Auth Routes */}
-                    <Route path="/auth" element={<AuthPage />} />
-                    
-                    {/* Home Route */}
-                    <Route path="/" element={<Index />} />
-                    
-                    {/* User App Routes */}
-                    <Route path="/chat" element={<MainLayout />}>
-                      <Route index element={<ChatInterface />} />
-                    </Route>
-                    <Route path="/dashboard" element={<MainLayout />}>
-                      <Route index element={<LearningRoadmap />} />
-                    </Route>
-                    <Route path="/grades" element={<MainLayout />}>
-                      <Route index element={<GradeDashboard />} />
-                    </Route>
-                    <Route path="/skills" element={<MainLayout />}>
-                      <Route index element={<SkillMastery />} />
-                    </Route>
-                    <Route path="/support" element={<MainLayout />}>
-                      <Route index element={<SupportPage />} />
-                    </Route>
-                    <Route path="/profile" element={<MainLayout />}>
-                      <Route index element={<ProfilePage />} />
-                    </Route>
-                    <Route path="/tokens" element={<MainLayout />}>
-                      <Route index element={<TokensPreview />} />
-                    </Route>
-                    <Route path="/game" element={<MainLayout />}>
-                      <Route index element={<GamePreview />} />
-                    </Route>
-                    
-                    {/* Management Dashboard */}
-                    <Route path="/management" element={<ManagementDashboard />} />
-                    
-                    {/* Admin Panel Routes */}
-                    <Route path="/admin" element={<AdminLayout />}>
-                      <Route index element={<AIModelManagement />} />
-                      <Route path="models" element={<AIModelManagement />} />
-                      <Route path="subjects" element={<SubjectManagement />} />
-                      <Route path="users" element={<UserManagement />} />
-                      <Route path="prompts" element={<PromptManagement />} />
-                    </Route>
-                    
-                    {/* 404 Route */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-              </AnimatePresence>
-            </BrowserRouter>
-          </AdminProvider>
-        </AuthProvider>
-      </TooltipProvider>
-    </ErrorBoundary>
-  </QueryClientProvider>
-);
+// Simple App Component (no language detection for now)
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <LanguageProvider>
+            <AuthProvider>
+              <AdminProvider>
+                <BrowserRouter>
+                  <AnimatePresence mode="wait">
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Routes>
+                        {/* Auth Routes */}
+                        <Route path="/auth" element={<AuthPage />} />
+                        
+                        {/* Home Route */}
+                        <Route path="/" element={<Index />} />
+                        
+                        {/* User App Routes */}
+                        <Route path="/chat" element={<MainLayout />}>
+                          <Route index element={<ChatInterface />} />
+                        </Route>
+                        <Route path="/dashboard" element={<MainLayout />}>
+                          <Route index element={<LearningRoadmap />} />
+                        </Route>
+                        <Route path="/grades" element={<MainLayout />}>
+                          <Route index element={<GradeDashboard />} />
+                        </Route>
+                        <Route path="/skills" element={<MainLayout />}>
+                          <Route index element={<SkillMastery />} />
+                        </Route>
+                        <Route path="/support" element={<MainLayout />}>
+                          <Route index element={<SupportPage />} />
+                        </Route>
+                        <Route path="/profile" element={<MainLayout />}>
+                          <Route index element={<ProfilePage />} />
+                        </Route>
+                        <Route path="/tokens" element={<MainLayout />}>
+                          <Route index element={<TokensPreview />} />
+                        </Route>
+                        <Route path="/game" element={<MainLayout />}>
+                          <Route index element={<GamePreview />} />
+                        </Route>
+                        
+                        {/* Management Dashboard */}
+                        <Route path="/management" element={<ManagementDashboard />} />
+                        
+                        {/* Admin Panel Routes */}
+                        <Route path="/admin" element={<AdminLayout />}>
+                          <Route index element={<AIModelManagement />} />
+                          <Route path="models" element={<AIModelManagement />} />
+                          <Route path="subjects" element={<SubjectManagement />} />
+                          <Route path="users" element={<UserManagement />} />
+                          <Route path="prompts" element={<PromptManagement />} />
+                        </Route>
+                        
+                        {/* 404 Route */}
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Suspense>
+                  </AnimatePresence>
+                </BrowserRouter>
+              </AdminProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </TooltipProvider>
+      </ErrorBoundary>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

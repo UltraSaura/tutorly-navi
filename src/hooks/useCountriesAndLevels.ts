@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Country, SchoolLevel } from '@/types/registration';
 
-export const useCountriesAndLevels = () => {
+export const useCountriesAndLevels = (defaultCountry?: string) => {
   const [countries, setCountries] = useState<Country[]>([]);
   const [schoolLevels, setSchoolLevels] = useState<SchoolLevel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<string>(defaultCountry || '');
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -46,8 +47,19 @@ export const useCountriesAndLevels = () => {
     loadData();
   }, []);
 
+  // Update selected country when defaultCountry changes
+  useEffect(() => {
+    if (defaultCountry && defaultCountry !== selectedCountry) {
+      setSelectedCountry(defaultCountry);
+    }
+  }, [defaultCountry, selectedCountry]);
+
   const getSchoolLevelsByCountry = (countryCode: string) => {
     return schoolLevels.filter(level => level.country_code === countryCode);
+  };
+
+  const setCountry = (countryCode: string) => {
+    setSelectedCountry(countryCode);
   };
 
   return {
@@ -55,6 +67,8 @@ export const useCountriesAndLevels = () => {
     schoolLevels,
     loading,
     error,
+    selectedCountry,
+    setCountry,
     getSchoolLevelsByCountry
   };
 };

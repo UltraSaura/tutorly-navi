@@ -151,5 +151,23 @@
   "auth.studentDescription": "Crée un compte pour obtenir de l'aide et suivre tes progrès.",
   "auth.continueAsStudent": "Continuer en tant qu'élève",
   "auth.parent": "Parent",
-  "auth.parentDescription": "Crée un compte pour gérer les comptes de tes enfants."
+  "auth.parentDescription": "Crée un compte pour gérer les comptes de tes enfants.",
+
+  "game.level": "Niveau",
+  "game.xp": "XP",
+  "game.dayStreak": "jours de suite",
+  "game.streak": "série",
+  "game.coins": "pièces",
+  "game.points": "points",
+
+  "subjects.math": "Mathématiques",
+  "subjects.physics": "Physique",
+  "subjects.chemistry": "Chimie",
+  "subjects.biology": "Biologie",
+  "subjects.english": "Anglais",
+  "subjects.history": "Histoire",
+  "subjects.geography": "Géographie",
+  "subjects.french": "Français",
+  "subjects.spanish": "Espagnol",
+  "subjects.computerScience": "Informatique"
 } 

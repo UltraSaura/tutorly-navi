@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useTranslation } from 'react-i18next';
 
 interface Topic {
   id: string;
@@ -70,7 +71,7 @@ const topics: Topic[] = [
 ];
 
 const LearningRoadmap = () => {
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const getStatusIcon = (status: Topic['status']) => {
     switch (status) {
       case 'completed':
@@ -155,11 +156,13 @@ const LearningRoadmap = () => {
             <div className="space-y-2 text-sm">
               <Badge className="bg-studywhiz-500 hover:bg-studywhiz-600 mr-1">14 Skills Mastered</Badge>
               <Badge className="bg-green-500 hover:bg-green-600 mr-1">3 Topics Completed</Badge>
-              <Badge className="bg-amber-500 hover:bg-amber-600">5 Day Streak</Badge>
+              <Badge className="bg-amber-500 hover:bg-amber-600">
+                5 {t('game.dayStreak')}
+              </Badge>
               
               <div className="flex justify-between items-center mt-4">
                 <span className="font-medium">Next Achievement:</span>
-                <span>10 Day Streak</span>
+                <span>10 {t('game.dayStreak')}</span>
               </div>
               <Progress value={50} className="h-2" />
             </div>

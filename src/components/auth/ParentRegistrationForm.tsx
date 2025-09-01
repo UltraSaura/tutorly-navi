@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-react';
 import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 const childSchema = z.object({
   firstName: z.string().min(1),
@@ -48,7 +49,8 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
 }) => {
   const { t } = useTranslation();
   const { setLanguageFromCountry } = useLanguage();
-  const { countries, getSchoolLevelsByCountry, loading: dataLoading } = useCountriesAndLevels();
+  const { profile } = useUserProfile();
+  const { countries, getSchoolLevelsByCountry, loading: dataLoading, selectedCountry, setCountry } = useCountriesAndLevels(profile?.country);
 
   const {
     register,
@@ -185,7 +187,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
                 for (let i = 0; i < fields.length; i++) {
                   setValue(`children.${i}.schoolLevel`, '');
                 }
-              }}>
+              }} value={selectedCountry}>
                 <SelectTrigger className={errors.country ? 'border-destructive' : ''}>
                   <SelectValue placeholder={t('auth.selectCountry')} />
                 </SelectTrigger>

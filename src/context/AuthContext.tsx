@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 interface AuthContextType {
   user: User | null;
@@ -28,26 +29,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { i18n } = useTranslation();
+
+  // Move the language detection logic to useCallback to avoid hook order issues
+  const detectLanguageFromUser = useCallback((user: User) => {
+    if (user?.user_metadata?.country && i18n?.changeLanguage) {
+      const country = user.user_metadata.country;
+      
+      // Map countries to languages
+      const countryLanguageMap: Record<string, string> = {
+        'FR': 'fr', 'CA': 'fr', 'BE': 'fr', 'CH': 'fr', 'LU': 'fr',
+        'MC': 'fr', 'SN': 'fr', 'CI': 'fr', 'ML': 'fr', 'BF': 'fr',
+        // ... add more French-speaking countries
+      };
+
+      const detectedLanguage = countryLanguageMap[country] || 'en';
+      
+      // Only change language if it's different and user hasn't manually set it
+      if (detectedLanguage !== i18n.resolvedLanguage && 
+          localStorage.getItem('languageManuallySet') !== 'true') {
+        
+        console.log(`Auto-detecting language ${detectedLanguage} from country ${country}`);
+        try {
+          i18n.changeLanguage(detectedLanguage);
+        } catch (error) {
+          console.warn('Failed to change language:', error);
+        }
+      }
+    }
+  }, [i18n]);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Detect language when user logs in
+        if (session?.user) {
+          detectLanguageFromUser(session.user);
+        }
+        
         setLoading(false);
       }
     );
 
-    // THEN check for existing session
+    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Detect language for existing session
+      if (session?.user) {
+        detectLanguageFromUser(session.user);
+      }
+      
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [detectLanguageFromUser]); // Use the memoized callback
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
