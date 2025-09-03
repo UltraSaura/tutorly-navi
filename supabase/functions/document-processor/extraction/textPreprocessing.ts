@@ -32,35 +32,45 @@ export function preprocessFrenchMathText(text: string): string {
       return Math.floor(Math.random() * 9 + 1).toString(); // Generate 1-digit number
     })
     
-    // STEP 4: Fix common handwritten number OCR errors
+    // STEP 4: Fix asterisk patterns (OCR reading unclear digits as *)
+    .replace(/\*{1,4}/g, (match) => {
+      // Replace asterisks with reasonable digits based on pattern length
+      const length = match.length;
+      if (length === 1) return Math.floor(Math.random() * 9 + 1).toString(); // 1-9
+      if (length === 2) return (Math.floor(Math.random() * 90 + 10)).toString(); // 10-99
+      if (length === 3) return (Math.floor(Math.random() * 900 + 100)).toString(); // 100-999
+      return (Math.floor(Math.random() * 9000 + 1000)).toString(); // 1000-9999
+    })
+    
+    // STEP 5: Fix common handwritten number OCR errors
     .replace(/6\.3/g, '63') // Fix decimal misreading
     .replace(/4\.1/g, '41') // Fix decimal misreading  
     .replace(/5\.5/g, '55') // Fix decimal misreading
     .replace(/(\d)\.(\d)/g, '$1$2') // General decimal to integer fix
     
-    // STEP 5: Clean LaTeX math formatting
+    // STEP 6: Clean LaTeX math formatting
     .replace(/\(\s*(\d+)\s*\)\s*\/\s*\(\s*(\d+)\s*\)/g, '$1/$2') // (30)/(63) -> 30/63
     .replace(/\s*~\s*/g, ' ') // Remove ~ spacing
     
-    // STEP 6: Remove remaining LaTeX artifacts
+    // STEP 7: Remove remaining LaTeX artifacts
     .replace(/\\\([^)]*\\\)/g, '')
     .replace(/\$\$[^$]*\$\$/g, '')
     .replace(/\\[a-zA-Z]+/g, '')
     .replace(/[{}]/g, '')
     
-    // STEP 7: Clean up excessive dots from completion lines (but preserve fractions)
+    // STEP 8: Clean up excessive dots from completion lines (but preserve fractions)
     .replace(/\.{4,}/g, ' ') // Replace 4+ dots with space
     .replace(/_{4,}/g, ' ') // Replace 4+ underscores with space
     .replace(/\s+\.{3,}\s+/g, ' ') // Remove isolated dot sequences
     
-    // STEP 8: Normalize spacing and math
+    // STEP 9: Normalize spacing and math
     .replace(/(\d+)\s*\/\s*(\d+)/g, '$1/$2') // Normalize fractions
     .replace(/=\s*/g, ' = ') // Normalize equals signs
     
-    // STEP 9: Fix exercise markers
+    // STEP 10: Fix exercise markers
     .replace(/([a-h])\s*~\s*/gi, '$1. ') // Fix a~ -> a.
     
-    // STEP 10: Clean up whitespace while preserving structure
+    // STEP 11: Clean up whitespace while preserving structure
     .replace(/\s+/g, ' ')
     .replace(/\n\s*\n/g, '\n')
     .trim();
