@@ -9,6 +9,8 @@ const mathPatterns = [
   /(\d+\/\d+)\s*=\s*(\d+\/\d+)/,
   // Fractions with decimal results
   /(\d+\/\d+)\s*=\s*(\d+(?:\.\d+)?)/,
+  // Multiple operations arithmetic (prioritize longer expressions)
+  /(\d+(?:\.\d+)?(?:\s*[\+\-\*\/]\s*\d+(?:\.\d+)?)+)\s*=\s*(\d+(?:\.\d+)?)/,
   // Basic arithmetic with decimal support
   /(\d+(?:\.\d+)?\s*[\+\-\*\/]\s*\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
   // Decimal arithmetic
