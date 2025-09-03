@@ -199,30 +199,42 @@ const ExerciseList = ({
       
       {/* Two Card Teaching Modal */}
       {teaching.open && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-card p-5">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-lg">{t('exercise.showExplanation')}</h3>
-              <button onClick={() => teaching.setOpen(false)}>✖</button>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-2 md:p-4 z-50">
+          <div className="w-full max-w-2xl rounded-2xl bg-card border border-border shadow-lg max-h-[95vh] md:max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 md:p-5 border-b border-border">
+              <h3 className="font-semibold text-lg text-foreground">{t('exercise.showExplanation')}</h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => teaching.setOpen(false)}
+                className="h-6 w-6"
+                aria-label="Close"
+              >
+                <span className="text-sm">✖</span>
+              </Button>
             </div>
 
-            {teaching.loading ? (
-              <div className="mt-4 space-y-3">
-                <div className="h-16 rounded-xl bg-muted animate-pulse" />
-                <div className="h-16 rounded-xl bg-muted animate-pulse" />
-              </div>
-            ) : teaching.sections ? (
-              <div className="mt-4">
+            <div className="flex-1 overflow-y-auto p-4 md:p-5">
+              {teaching.loading ? (
+                <div className="space-y-3">
+                  <div className="h-16 rounded-xl bg-muted animate-pulse" />
+                  <div className="h-16 rounded-xl bg-muted animate-pulse" />
+                </div>
+              ) : teaching.sections ? (
                 <TwoCards s={teaching.sections} />
-              </div>
-            ) : (
-              <p className="mt-4 text-sm text-destructive">{teaching.error || "No explanation yet."}</p>
-            )}
+              ) : (
+                <p className="text-sm text-destructive">{teaching.error || "No explanation yet."}</p>
+              )}
+            </div>
 
-            <div className="mt-6">
-              <button className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-medium">
+            <div className="p-4 md:p-5 border-t border-border">
+              <Button 
+                onClick={() => teaching.setOpen(false)}
+                className="w-full"
+                size="lg"
+              >
                 {t('exercise.tryAgain')} → +5 XP
-              </button>
+              </Button>
             </div>
           </div>
         </div>
