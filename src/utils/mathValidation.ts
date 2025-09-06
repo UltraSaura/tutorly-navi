@@ -2,6 +2,8 @@
  * Mathematical validation utilities for checking equivalency between different answer formats
  */
 
+import { latexToPlainText, isLatex, normalizeMathExpression } from './latexUtils';
+
 /**
  * Checks if two mathematical expressions are equivalent
  */
@@ -40,8 +42,11 @@ export function areMathematicallyEquivalent(
     const correctAnswer = extractCorrectAnswer(question);
     if (correctAnswer === null) return null;
 
+    // Convert LaTeX to plain text if needed
+    const plainTextAnswer = isLatex(userAnswer) ? latexToPlainText(userAnswer) : userAnswer;
+    
     // Normalize and parse user answer
-    const normalizedUserAnswer = normalizeAnswer(userAnswer);
+    const normalizedUserAnswer = normalizeAnswer(plainTextAnswer);
     const userValue = parseFloat(normalizedUserAnswer);
     
     if (isNaN(userValue)) return null;

@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next'; // <-- Updated import
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { useAdmin } from '@/context/AdminContext';
 import CameraCapture from './CameraCapture';
 import AttachmentMenu from './AttachmentMenu';
+import { MathLiveInput, MathInputToggle } from '@/components/math';
 
 interface MessageInputProps {
   inputMessage: string;
@@ -29,11 +30,12 @@ const MessageInput = ({
   isLoading 
 }: MessageInputProps) => {
   const { toast } = useToast();
-  const { t } = useTranslation(); // <-- Updated hook usage
+  const { t } = useTranslation();
   const { selectedModelId, getAvailableModels } = useAdmin();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isMathMode, setIsMathMode] = useState(false);
 
   // Get the model display name
   const activeModel = getAvailableModels().find(model => model.id === selectedModelId);
@@ -48,6 +50,22 @@ const MessageInput = ({
       handleSendMessage();
     }
   };
+
+  const handleMathEnter = () => {
+    console.log('[DEBUG] Math Enter pressed, calling handleSendMessage');
+    handleSendMessage();
+  };
+
+  const toggleMathMode = () => {
+    setIsMathMode(!isMathMode);
+  };
+
+  // Auto-detect math content and suggest math mode
+  const shouldSuggestMathMode = !isMathMode && (
+    /[+\-*/=()^]/.test(inputMessage) || 
+    /\d+\/\d+/.test(inputMessage) ||
+    /\\[a-zA-Z]/.test(inputMessage)
+  );
 
   const triggerFileUpload = () => {
     fileInputRef.current?.click();
@@ -131,14 +149,23 @@ const MessageInput = ({
         </Badge>
       </div>
       
-      <div className="flex items-center gap-3 bg-neutral-surface rounded-button border border-neutral-border p-2">
-      <div className="relative">
-        <AttachmentMenu
-          onFileUpload={triggerFileUpload}
-          onPhotoUpload={triggerPhotoUpload}
-          onCameraOpen={openCameraDialog}
-        />
-      </div>
+       <div className="relative">
+        {shouldSuggestMathMode && (
+          <div className="absolute -top-10 left-0 right-0 flex justify-center z-10">
+            <div className="bg-brand-primary/10 text-brand-primary text-xs px-2 py-1 rounded-md">
+              Math detected - <button onClick={toggleMathMode} className="underline">Switch to math mode</button>
+            </div>
+          </div>
+        )}
+        
+        <div className="flex items-center gap-3 bg-neutral-surface rounded-button border border-neutral-border p-2">
+          <div className="relative">
+            <AttachmentMenu
+              onFileUpload={triggerFileUpload}
+              onPhotoUpload={triggerPhotoUpload}
+              onCameraOpen={openCameraDialog}
+            />
+          </div>
       
       <input 
         type="file" 
@@ -155,16 +182,33 @@ const MessageInput = ({
         onChange={(e) => onFileSelected(e, true)}
       />
       
-      <Textarea 
-        placeholder={t('chat.inputPlaceholder')}
-        value={inputMessage}
-        onChange={(e) => {
-          console.log('[DEBUG] Textarea onChange:', e.target.value);
-          setInputMessage(e.target.value);
-        }}
-        onKeyDown={handleKeyDown}
-        className="min-h-[40px] max-h-32 resize-none flex-1 border-0 shadow-none focus-visible:ring-0 text-neutral-text placeholder:text-neutral-muted bg-transparent"
-        disabled={isLoading}
+      {isMathMode ? (
+        <MathLiveInput
+          value={inputMessage}
+          onChange={setInputMessage}
+          onEnter={handleMathEnter}
+          placeholder={t('chat.mathInputPlaceholder', 'Type mathematical expressions...')}
+          className="flex-1 border-0 shadow-none focus-visible:ring-0 bg-transparent"
+          disabled={isLoading}
+        />
+      ) : (
+        <Textarea 
+          placeholder={t('chat.inputPlaceholder')}
+          value={inputMessage}
+          onChange={(e) => {
+            console.log('[DEBUG] Textarea onChange:', e.target.value);
+            setInputMessage(e.target.value);
+          }}
+          onKeyDown={handleKeyDown}
+          className="min-h-[40px] max-h-32 resize-none flex-1 border-0 shadow-none focus-visible:ring-0 text-neutral-text placeholder:text-neutral-muted bg-transparent"
+          disabled={isLoading}
+        />
+      )}
+      
+      <MathInputToggle 
+        isMathMode={isMathMode} 
+        onToggle={toggleMathMode}
+        className="flex-shrink-0"
       />
       
       <Button
@@ -176,6 +220,7 @@ const MessageInput = ({
       >
         <Send className="h-4 w-4" />
       </Button>
+      </div>
 
       <CameraCapture
         isOpen={isCameraOpen}

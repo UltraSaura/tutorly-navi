@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Message } from '@/types/chat';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { toast } from 'sonner';
+import { MathLiveInput, MathInputToggle, MathRenderer } from '@/components/math';
 
 interface ExerciseProps {
   exercise: {
@@ -47,6 +48,7 @@ const Exercise = ({
   const { t } = useLanguage();
   const [answerInput, setAnswerInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMathMode, setIsMathMode] = useState(false);
   
   const formattedExplanation = exercise.explanation ? exercise.explanation
     .replace(/\*\*Problem:\*\*/g, `<strong class="text-studywhiz-600 dark:text-studywhiz-400">${t('exercise.problem')}:</strong>`)
@@ -60,6 +62,13 @@ const Exercise = ({
 
   const hasRelatedMessages = exercise.relatedMessages && exercise.relatedMessages.length > 0;
   const hasAnswer = exercise.userAnswer && exercise.userAnswer.trim() !== '';
+  
+  // Auto-detect if this is a math exercise
+  const isMathExercise = /[+\-*/=()^]/.test(exercise.question) || 
+                        /\d+\/\d+/.test(exercise.question) ||
+                        /\\[a-zA-Z]/.test(exercise.question) ||
+                        exercise.question.toLowerCase().includes('math') ||
+                        exercise.question.toLowerCase().includes('equation');
 
   const handleSubmitAnswer = async () => {
     if (!answerInput.trim()) {
@@ -127,7 +136,11 @@ const Exercise = ({
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h3 className="text-md font-medium">
-                {exercise.question}
+                {isMathExercise ? (
+                  <MathRenderer latex={exercise.question} inline />
+                ) : (
+                  exercise.question
+                )}
               </h3>
               {exercise.attemptCount > 1 && (
                 <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
@@ -146,7 +159,11 @@ const Exercise = ({
         {hasAnswer ? (
           <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 py-[10px]">
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              {exercise.userAnswer}
+              {isMathExercise ? (
+                <MathRenderer latex={exercise.userAnswer} inline />
+              ) : (
+                exercise.userAnswer
+              )}
             </p>
           </div>
         ) : (
@@ -156,18 +173,38 @@ const Exercise = ({
                 {t('exercise.pleaseProvideAnswer')}
               </p>
               <div className="flex gap-2">
-                <Input
-                  value={answerInput}
-                  onChange={(e) => setAnswerInput(e.target.value)}
-                  placeholder={t('exercise.yourAnswerPlaceholder')}
-                  className="flex-1"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !isSubmitting) {
-                      handleSubmitAnswer();
-                    }
-                  }}
-                  disabled={isSubmitting}
-                />
+                {isMathMode ? (
+                  <MathLiveInput
+                    value={answerInput}
+                    onChange={setAnswerInput}
+                    onEnter={handleSubmitAnswer}
+                    placeholder="Enter your mathematical answer..."
+                    className="flex-1"
+                    disabled={isSubmitting}
+                  />
+                ) : (
+                  <Input
+                    value={answerInput}
+                    onChange={(e) => setAnswerInput(e.target.value)}
+                    placeholder={t('exercise.yourAnswerPlaceholder')}
+                    className="flex-1"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !isSubmitting) {
+                        handleSubmitAnswer();
+                      }
+                    }}
+                    disabled={isSubmitting}
+                  />
+                )}
+                
+                {isMathExercise && (
+                  <MathInputToggle 
+                    isMathMode={isMathMode} 
+                    onToggle={() => setIsMathMode(!isMathMode)}
+                    className="shrink-0"
+                  />
+                )}
+                
                 <Button
                   onClick={handleSubmitAnswer}
                   disabled={isSubmitting || !answerInput.trim()}

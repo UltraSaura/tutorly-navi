@@ -3,6 +3,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* MathLive CSS */
+@import url('https://unpkg.com/mathlive/dist/mathlive-fonts.css');
+
 @layer base {
   :root {
     --background: 210 40% 98%;
@@ -215,5 +218,23 @@
 
   .shimmer {
     @apply relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent;
+  }
+
+  /* MathLive custom styling */
+  .mathlive-input {
+    --ml-color: var(--neutral-text);
+    --ml-background: transparent;
+    --ml-color-secondary: var(--neutral-muted);
+    --ml-border-color: var(--neutral-border);
+    --ml-focus-border-color: var(--brand-primary);
+  }
+
+  .math-renderer {
+    color: inherit;
+    font-size: inherit;
+  }
+
+  .math-renderer .ML__latex {
+    color: inherit;
   }
 }
