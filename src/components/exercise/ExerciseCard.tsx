@@ -62,15 +62,32 @@ const ExerciseCard = ({
     }
   };
 
+  // Add this debug version to help identify the issue
   const handleSubmitAnswer = async () => {
-    if (!inputAnswer.trim() || !onSubmitAnswer) return;
+    console.log('=== DEBUG: handleSubmitAnswer called ===');
+    console.log('inputAnswer:', inputAnswer);
+    console.log('onSubmitAnswer function:', onSubmitAnswer);
+    console.log('id:', id);
+    
+    if (!inputAnswer.trim()) {
+      console.log('DEBUG: No input answer provided');
+      return;
+    }
+    
+    if (!onSubmitAnswer) {
+      console.error('DEBUG: onSubmitAnswer callback not provided');
+      return;
+    }
+    
+    console.log('DEBUG: Calling onSubmitAnswer with:', { id, answer: inputAnswer.trim() });
     
     setIsSubmitting(true);
     try {
       await onSubmitAnswer(id, inputAnswer.trim());
+      console.log('DEBUG: onSubmitAnswer completed successfully');
       setInputAnswer('');
     } catch (error) {
-      console.error('Error submitting answer:', error);
+      console.error('DEBUG: Error submitting answer:', error);
     } finally {
       setIsSubmitting(false);
     }

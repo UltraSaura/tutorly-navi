@@ -16,23 +16,17 @@ export const MathInputToggle = ({
 }: MathInputToggleProps) => {
   return (
     <Button
+      type="button"
       variant="ghost"
       size="icon"
       onClick={onToggle}
       className={cn(
-        "h-9 w-9 transition-colors",
-        isMathMode 
-          ? "bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20" 
-          : "text-neutral-muted hover:text-neutral-text",
+        "h-9 w-9 text-neutral-muted hover:text-neutral-text hover:bg-neutral-surface",
         className
       )}
-      title={isMathMode ? "Switch to text input" : "Switch to math input"}
+      title={isMathMode ? "Switch to text mode" : "Switch to math mode"}
     >
-      {isMathMode ? (
-        <Calculator className="h-4 w-4" />
-      ) : (
-        <Type className="h-4 w-4" />
-      )}
+      {isMathMode ? <Type className="h-4 w-4" /> : <Calculator className="h-4 w-4" />}
     </Button>
   );
 };

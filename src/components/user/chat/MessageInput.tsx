@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Calculator, Type } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAdmin } from '@/context/AdminContext';
 import CameraCapture from './CameraCapture';
 import AttachmentMenu from './AttachmentMenu';
-import { MathLiveInput, MathInputToggle } from '@/components/math';
+import { MathLiveInput } from '@/components/math';
 
 interface MessageInputProps {
   inputMessage: string;
@@ -42,17 +42,30 @@ const MessageInput = ({
   const modelDisplayName = activeModel ? `${activeModel.provider} • ${activeModel.name}` : selectedModelId;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    console.log('[DEBUG] Key pressed:', e.key);
-    console.log('[DEBUG] Current input value on keydown:', inputMessage);
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      console.log('[DEBUG] Enter pressed, calling handleSendMessage');
+      console.log('[DEBUG] Enter key pressed in textarea, calling handleSendMessage');
       handleSendMessage();
     }
   };
 
   const handleMathEnter = () => {
-    console.log('[DEBUG] Math Enter pressed, calling handleSendMessage');
+    console.log('[DEBUG] Enter key pressed in math input, calling handleSendMessage');
+    handleSendMessage();
+  };
+
+  const handleSendClick = () => {
+    console.log('[DEBUG] Send button clicked');
+    console.log('[DEBUG] Current inputMessage:', inputMessage);
+    console.log('[DEBUG] inputMessage length:', inputMessage.length);
+    console.log('[DEBUG] isLoading:', isLoading);
+    
+    if (!inputMessage.trim()) {
+      console.log('[DEBUG] Empty message, not sending');
+      return;
+    }
+    
+    console.log('[DEBUG] Calling handleSendMessage');
     handleSendMessage();
   };
 
@@ -141,7 +154,7 @@ const MessageInput = ({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {/* Active Model Display */}
       <div className="flex justify-center">
         <Badge variant="secondary" className="text-xs">
@@ -149,85 +162,95 @@ const MessageInput = ({
         </Badge>
       </div>
       
-       <div className="relative">
-        {shouldSuggestMathMode && (
-          <div className="absolute -top-10 left-0 right-0 flex justify-center z-10">
-            <div className="bg-brand-primary/10 text-brand-primary text-xs px-2 py-1 rounded-md">
-              Math detected - <button onClick={toggleMathMode} className="underline">Switch to math mode</button>
-            </div>
+      {/* Math Mode Suggestion */}
+      {shouldSuggestMathMode && (
+        <div className="flex justify-center">
+          <div className="bg-brand-primary/10 text-brand-primary text-xs px-3 py-2 rounded-md">
+            Math detected - <button onClick={toggleMathMode} className="underline font-medium">Switch to math mode</button>
           </div>
-        )}
-        
-        <div className="flex items-center gap-3 bg-neutral-surface rounded-button border border-neutral-border p-2">
-          <div className="relative">
-            <AttachmentMenu
-              onFileUpload={triggerFileUpload}
-              onPhotoUpload={triggerPhotoUpload}
-              onCameraOpen={openCameraDialog}
-            />
-          </div>
-      
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        className="hidden" 
-        accept=".pdf,.doc,.docx,.txt" 
-        onChange={(e) => onFileSelected(e, false)}
-      />
-      <input 
-        type="file" 
-        ref={photoInputRef} 
-        className="hidden" 
-        accept="image/*" 
-        onChange={(e) => onFileSelected(e, true)}
-      />
-      
-      {isMathMode ? (
-        <MathLiveInput
-          value={inputMessage}
-          onChange={setInputMessage}
-          onEnter={handleMathEnter}
-          placeholder={t('chat.mathInputPlaceholder', 'Type mathematical expressions...')}
-          className="flex-1 border-0 shadow-none focus-visible:ring-0 bg-transparent"
-          disabled={isLoading}
-        />
-      ) : (
-        <Textarea 
-          placeholder={t('chat.inputPlaceholder')}
-          value={inputMessage}
-          onChange={(e) => {
-            console.log('[DEBUG] Textarea onChange:', e.target.value);
-            setInputMessage(e.target.value);
-          }}
-          onKeyDown={handleKeyDown}
-          className="min-h-[40px] max-h-32 resize-none flex-1 border-0 shadow-none focus-visible:ring-0 text-neutral-text placeholder:text-neutral-muted bg-transparent"
-          disabled={isLoading}
-        />
+        </div>
       )}
       
-      <MathInputToggle 
-        isMathMode={isMathMode} 
-        onToggle={toggleMathMode}
-        className="flex-shrink-0"
-      />
-      
-      <Button
-        type="submit"
-        size="icon"
-        disabled={!inputMessage.trim() || isLoading}
-        className="h-9 w-9 bg-brand-primary hover:bg-brand-navy text-white rounded-button flex-shrink-0"
-        onClick={handleSendMessage}
-      >
-        <Send className="h-4 w-4" />
-      </Button>
+      {/* Main Input Area */}
+      <div className="relative">
+        <div className="flex items-center gap-2 bg-neutral-surface rounded-button border border-neutral-border p-3">
+          {/* Attachment Menu */}
+          <AttachmentMenu
+            onFileUpload={triggerFileUpload}
+            onPhotoUpload={triggerPhotoUpload}
+            onCameraOpen={openCameraDialog}
+          />
+          
+          {/* Hidden File Inputs */}
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            accept=".pdf,.doc,.docx,.txt" 
+            onChange={(e) => onFileSelected(e, false)}
+          />
+          <input 
+            type="file" 
+            ref={photoInputRef} 
+            className="hidden" 
+            accept="image/*" 
+            onChange={(e) => onFileSelected(e, true)}
+          />
+          
+          {/* Input Field */}
+          <div className="flex-1">
+            {isMathMode ? (
+              <MathLiveInput
+                value={inputMessage}
+                onChange={setInputMessage}
+                onEnter={handleMathEnter}
+                placeholder={t('chat.mathInputPlaceholder', 'Type mathematical expressions...')}
+                className="border-0 shadow-none focus-visible:ring-0 bg-transparent"
+                disabled={isLoading}
+              />
+            ) : (
+              <Textarea 
+                placeholder={t('chat.inputPlaceholder')}
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="min-h-[40px] max-h-32 resize-none border-0 shadow-none focus-visible:ring-0 text-neutral-text placeholder:text-neutral-muted bg-transparent"
+                disabled={isLoading}
+              />
+            )}
+          </div>
+          
+          {/* Mode Toggle Button */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={toggleMathMode}
+            className="h-9 w-9 text-neutral-muted hover:text-neutral-text hover:bg-neutral-surface flex-shrink-0"
+            title={isMathMode ? "Switch to text mode" : "Switch to math mode"}
+          >
+            {isMathMode ? <Type className="h-4 w-4" /> : <Calculator className="h-4 w-4" />}
+          </Button>
+          
+          {/* Send Button */}
+          <Button
+            type="button"
+            size="icon"
+            disabled={!inputMessage.trim() || isLoading}
+            className="h-9 w-9 bg-brand-primary hover:bg-brand-navy text-white rounded-button flex-shrink-0"
+            onClick={handleSendClick}
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
+      {/* Camera Capture Modal */}
       <CameraCapture
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         onCapture={handleCameraCapture}
       />
-      </div>
     </div>
   );
 };
