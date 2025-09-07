@@ -15,6 +15,12 @@ export const latexToPlainText = (latex: string): string => {
     .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1/$2')
     .replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
     .replace(/\\sqrt\[([^\]]+)\]\{([^}]+)\}/g, '$2^(1/$1)')
+    // Handle Unicode square root symbol
+    .replace(/√\{([^}]+)\}/g, 'sqrt($1)')
+    .replace(/√([0-9]+(?:\.[0-9]+)?)/g, 'sqrt($1)')
+    .replace(/√\(([^)]+)\)/g, 'sqrt($1)')
+    // Handle direct Unicode square root without delimiters
+    .replace(/√/g, 'sqrt')
     .replace(/\^?\{([^}]+)\}/g, '^$1')
     .replace(/_?\{([^}]+)\}/g, '_$1')
     
@@ -61,8 +67,15 @@ export const plainTextToLatex = (text: string): string => {
     .replace(/_(\d+)/g, '_{$1}')
     .replace(/_(\([^)]+\))/g, '_{$1}')
     
-    // Convert sqrt
+    // Convert mathematical functions
     .replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}')
+    .replace(/cbrt\(([^)]+)\)/g, '\\sqrt[3]{$1}')
+    .replace(/sin\(([^)]+)\)/g, '\\sin($1)')
+    .replace(/cos\(([^)]+)\)/g, '\\cos($1)')
+    .replace(/tan\(([^)]+)\)/g, '\\tan($1)')
+    .replace(/log\(([^)]+)\)/g, '\\log($1)')
+    .replace(/ln\(([^)]+)\)/g, '\\ln($1)')
+    .replace(/exp\(([^)]+)\)/g, 'e^{$1}')
     
     // Convert operators
     .replace(/\*/g, '\\cdot ')
