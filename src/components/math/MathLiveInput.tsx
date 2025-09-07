@@ -24,7 +24,6 @@ export const MathLiveInput = ({
   const [keyboardMode, setKeyboardMode] = useState<'numeric' | 'functions'>('numeric');
 
   useEffect(() => {
-    // Dynamically import MathLive to avoid SSR issues
     const initMathField = async () => {
       try {
         const { MathfieldElement } = await import('mathlive');
@@ -37,105 +36,16 @@ export const MathLiveInput = ({
 
         const mathfield = mathfieldRef.current;
         
-        // Define custom virtual keyboards
-        const numericKeyboard = {
-          label: 'Numeric',
-          tooltip: 'Numeric Keyboard',
-          layer: 'numeric',
-          rows: [
-            [
-              { latex: '7', class: 'ML__keycap--numeric' },
-              { latex: '8', class: 'ML__keycap--numeric' },
-              { latex: '9', class: 'ML__keycap--numeric' }
-            ],
-            [
-              { latex: '4', class: 'ML__keycap--numeric' },
-              { latex: '5', class: 'ML__keycap--numeric' },
-              { latex: '6', class: 'ML__keycap--numeric' }
-            ],
-            [
-              { latex: '1', class: 'ML__keycap--numeric' },
-              { latex: '2', class: 'ML__keycap--numeric' },
-              { latex: '3', class: 'ML__keycap--numeric' }
-            ],
-            [
-              { latex: '+', class: 'ML__keycap--operator' },
-              { latex: '0', class: 'ML__keycap--numeric' },
-              { latex: '-', class: 'ML__keycap--operator' }
-            ],
-            [
-              { latex: '\\times', class: 'ML__keycap--operator' },
-              { latex: '.', class: 'ML__keycap--numeric' },
-              { latex: '\\div', class: 'ML__keycap--operator' }
-            ],
-            [
-              { 
-                latex: 'f(x)', 
-                class: 'ML__keycap--action',
-                command: ['switchKeyboardLayer', 'functions']
-              },
-              { latex: '=', class: 'ML__keycap--operator' },
-              { latex: '[Backspace]', class: 'ML__keycap--action' }
-            ]
-          ]
-        };
-
-        const functionsKeyboard = {
-          label: 'Functions',
-          tooltip: 'Functions Keyboard',
-          layer: 'functions',
-          rows: [
-            [
-              { latex: '\\sqrt{#?}', class: 'ML__keycap--function' },
-              { latex: '#?^{#?}', class: 'ML__keycap--function' },
-              { latex: '\\frac{#?}{#?}', class: 'ML__keycap--function' }
-            ],
-            [
-              { latex: '\\sin', class: 'ML__keycap--function' },
-              { latex: '\\cos', class: 'ML__keycap--function' },
-              { latex: '\\tan', class: 'ML__keycap--function' }
-            ],
-            [
-              { latex: '\\ln', class: 'ML__keycap--function' },
-              { latex: '\\log', class: 'ML__keycap--function' },
-              { latex: 'e', class: 'ML__keycap--function' }
-            ],
-            [
-              { latex: '(', class: 'ML__keycap--operator' },
-              { latex: ')', class: 'ML__keycap--operator' },
-              { latex: '\\pi', class: 'ML__keycap--function' }
-            ],
-            [
-              { latex: '\\alpha', class: 'ML__keycap--function' },
-              { latex: '\\beta', class: 'ML__keycap--function' },
-              { latex: '\\theta', class: 'ML__keycap--function' }
-            ],
-            [
-              { 
-                latex: '123', 
-                class: 'ML__keycap--action',
-                command: ['switchKeyboardLayer', 'numeric']
-              },
-              { latex: '\\infty', class: 'ML__keycap--function' },
-              { latex: '[Backspace]', class: 'ML__keycap--action' }
-            ]
-          ]
-        };
-
         // Set initial value
         if (value) {
           mathfield.value = value;
         }
 
-        // Configure mathfield options with custom virtual keyboard
+        // Configure mathfield with simplified keyboard setup
         mathfield.setOptions({
           virtualKeyboardMode: 'manual',
-          virtualKeyboards: 'custom',
-          customVirtualKeyboards: {
-            numeric: numericKeyboard,
-            functions: functionsKeyboard
-          },
-          virtualKeyboardLayout: 'numeric',
+          virtualKeyboards: 'numeric symbols functions',
+          virtualKeyboardLayout: keyboardMode,
           smartMode: true,
           smartFence: true,
           smartSuperscript: true,
@@ -156,10 +66,33 @@ export const MathLiveInput = ({
           }
         });
 
-        // Handle keyboard layer switching
-        mathfield.addEventListener('virtual-keyboard-toggle', (e: any) => {
-          const currentLayer = mathfield.getOption('virtualKeyboardLayout');
-          setKeyboardMode(currentLayer === 'numeric' ? 'numeric' : 'functions');
+        // Add custom keyboard switching buttons
+        mathfield.addEventListener('virtual-keyboard-ready', () => {
+          const keyboard = document.querySelector('.ML__virtual-keyboard');
+          if (keyboard && !keyboard.querySelector('.keyboard-toggle')) {
+            const toggleContainer = document.createElement('div');
+            toggleContainer.className = 'keyboard-toggle-container';
+            
+            const numericBtn = document.createElement('button');
+            numericBtn.className = 'keyboard-toggle numeric-toggle';
+            numericBtn.textContent = '123';
+            numericBtn.onclick = () => {
+              mathfield.setOptions({ virtualKeyboardLayout: 'numeric' });
+              setKeyboardMode('numeric');
+            };
+            
+            const functionsBtn = document.createElement('button');
+            functionsBtn.className = 'keyboard-toggle functions-toggle';
+            functionsBtn.textContent = 'f(x)';
+            functionsBtn.onclick = () => {
+              mathfield.setOptions({ virtualKeyboardLayout: 'functions' });
+              setKeyboardMode('functions');
+            };
+            
+            toggleContainer.appendChild(numericBtn);
+            toggleContainer.appendChild(functionsBtn);
+            keyboard.appendChild(toggleContainer);
+          }
         });
 
         if (autoFocus) {
@@ -191,9 +124,13 @@ export const MathLiveInput = ({
   // Handle keyboard mode switching
   useEffect(() => {
     if (mathfieldRef.current) {
-      mathfieldRef.current.setOptions({
-        virtualKeyboardLayout: keyboardMode
-      });
+      try {
+        mathfieldRef.current.setOptions({
+          virtualKeyboardLayout: keyboardMode
+        });
+      } catch (error) {
+        console.error('Error switching keyboard layout:', error);
+      }
     }
   }, [keyboardMode]);
 

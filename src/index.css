@@ -298,6 +298,33 @@
     background: hsl(var(--brand-primary) / 0.1);
   }
 
+  /* Keyboard toggle buttons */
+  .keyboard-toggle-container {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  .keyboard-toggle {
+    padding: 6px 12px;
+    border: 1px solid hsl(var(--border));
+    border-radius: 6px;
+    background: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .keyboard-toggle:hover {
+    background: hsl(var(--brand-primary));
+    color: white;
+  }
+
   /* Keyboard layout specific adjustments */
   .ML__virtual-keyboard .ML__rows {
     gap: 8px;
