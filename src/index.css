@@ -237,4 +237,83 @@
   .math-renderer .ML__latex {
     color: inherit;
   }
+
+  /* Custom MathLive Virtual Keyboard Styles */
+  .ML__virtual-keyboard {
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--border));
+    border-radius: 12px;
+    box-shadow: 0 4px 12px hsl(var(--shadow) / 0.15);
+  }
+
+  .ML__keycap--numeric {
+    background: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+    border: 1px solid hsl(var(--border));
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 18px;
+  }
+
+  .ML__keycap--numeric:hover {
+    background: hsl(var(--secondary) / 0.8);
+  }
+
+  .ML__keycap--operator {
+    background: hsl(var(--brand-primary));
+    color: white;
+    border: 1px solid hsl(var(--brand-primary));
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .ML__keycap--operator:hover {
+    background: hsl(var(--brand-primary) / 0.9);
+  }
+
+  .ML__keycap--function {
+    background: hsl(var(--brand-navy));
+    color: white;
+    border: 1px solid hsl(var(--brand-navy));
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .ML__keycap--function:hover {
+    background: hsl(var(--brand-navy) / 0.9);
+  }
+
+  .ML__keycap--action {
+    background: hsl(var(--neutral-surface));
+    color: hsl(var(--brand-primary));
+    border: 2px solid hsl(var(--brand-primary));
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .ML__keycap--action:hover {
+    background: hsl(var(--brand-primary) / 0.1);
+  }
+
+  /* Keyboard layout specific adjustments */
+  .ML__virtual-keyboard .ML__rows {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .ML__virtual-keyboard .ML__row {
+    gap: 6px;
+  }
+
+  .ML__virtual-keyboard .ML__keycap {
+    min-width: 48px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
 }
