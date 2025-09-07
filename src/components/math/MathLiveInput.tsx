@@ -22,6 +22,7 @@ export const MathLiveInput = ({
 }: MathLiveInputProps) => {
   const mathfieldRef = useRef<any>(null);
   const [isMathLiveReady, setIsMathLiveReady] = useState(false);
+  const [lastValue, setLastValue] = useState(value); // New state to track last value
 
   useEffect(() => {
     const initMathField = async () => {
@@ -45,11 +46,17 @@ export const MathLiveInput = ({
         mf.virtualKeyboards = 'numbers functions';
         
         // Set up event listeners
-        mf.addEventListener('input', (event) => {
-          const latex = (event.target as MathfieldElement).value;
+        const handleInput = (event: any) => {
+          const latex = mf.getValue('latex') || ''; // FIX: Use mf.getValue('latex') instead of event.target.value
           console.log('[DEBUG] MathLive input changed:', latex);
+          setLastValue(latex);
           onChange?.(latex);
-        });
+        };
+
+        // Add event listeners
+        mf.addEventListener('input', handleInput);
+        mf.addEventListener('change', handleInput);
+        mf.addEventListener('blur', handleInput);
 
         // Add Enter key handler for submission
         mf.addEventListener('keydown', (event: KeyboardEvent) => {
@@ -128,6 +135,22 @@ export const MathLiveInput = ({
       mathfieldRef.current.readOnly = disabled;
     }
   }, [disabled]);
+
+  // Poll for changes as a fallback - more aggressive polling
+  useEffect(() => {
+    const pollInterval = setInterval(() => {
+      if (mathfieldRef.current) {
+        const currentValue = mathfieldRef.current.getValue('latex') || ''; // FIX: Use mf.getValue('latex') instead of mf.value
+        if (currentValue !== lastValue) {
+          console.log('[DEBUG] MathLive polled value changed:', currentValue);
+          setLastValue(currentValue);
+          onChange?.(currentValue);
+        }
+      }
+    }, 50); // More frequent polling
+
+    return () => clearInterval(pollInterval);
+  }, [lastValue, onChange]);
 
   return (
     <math-field

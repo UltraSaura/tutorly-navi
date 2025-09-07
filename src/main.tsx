@@ -3,6 +3,7 @@ import "./i18n"; // <-- Uncomment this line
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import './styles/mathlive.css'  // Add this line
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {

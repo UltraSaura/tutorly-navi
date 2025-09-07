@@ -202,7 +202,10 @@ const MessageInput = ({
             {isMathMode ? (
               <MathLiveInput
                 value={inputMessage}
-                onChange={setInputMessage}
+                onChange={(value) => {
+                  console.log('[DEBUG] MathLiveInput onChange called with:', value);
+                  setInputMessage(value);
+                }}
                 onEnter={handleMathEnter}
                 placeholder={t('chat.mathInputPlaceholder', 'Type mathematical expressions...')}
                 className="border-0 shadow-none focus-visible:ring-0 bg-transparent"
