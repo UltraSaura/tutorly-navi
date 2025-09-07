@@ -1,5 +1,4 @@
 
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -237,73 +236,5 @@
 
   .math-renderer .ML__latex {
     color: inherit;
-  }
-
-  /* Condensed MathLive virtual keyboard */
-  :root {
-    --keycap-height: 28px;
-    --keycap-font-size: 16px;
-    --keycap-gap: 2px;
-
-    --keyboard-toolbar-font-size: 14px;
-    --keyboard-padding-top: 4px;
-    --keyboard-padding-bottom: 4px;
-    --keyboard-padding-horizontal: 6px;
-  }
-
-  /* Ensure virtual keyboard is visible */
-  .ML__keyboard {
-    display: block !important;
-    visibility: visible !important;
-    z-index: 1000 !important;
-  }
-
-  /* Style the virtual keyboard */
-  .ML__keyboard .ML__keyboard-layer {
-    background: var(--neutral-surface);
-    border: 1px solid var(--neutral-border);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  .ML__keyboard .ML__keyboard-layer .ML__keyboard-row {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 4px;
-  }
-
-  .ML__keyboard .ML__keyboard-layer .ML__keyboard-row:last-child {
-    margin-bottom: 0;
-  }
-
-  .ML__keyboard .ML__keyboard-layer .ML__keyboard-row .ML__keyboard-key {
-    background: var(--neutral-surface);
-    border: 1px solid var(--neutral-border);
-    border-radius: 4px;
-    padding: 8px 12px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--neutral-text);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    min-width: 40px;
-    text-align: center;
-  }
-
-  .ML__keyboard .ML__keyboard-layer .ML__keyboard-row .ML__keyboard-key:hover {
-    background: var(--brand-tint);
-    border-color: var(--brand-primary);
-  }
-
-  .ML__keyboard .ML__keyboard-layer .ML__keyboard-row .ML__keyboard-key:active {
-    transform: translateY(1px);
-    background: var(--brand-primary);
-    color: white;
-  }
-
-  /* Optional: make the toggle icon smaller or move it */
-  math-field::part(container) {
-    /* example: put the toggle at the right */
-    /* flex-flow: row-reverse; */
   }
 }

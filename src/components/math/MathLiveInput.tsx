@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface MathLiveInputProps {
@@ -21,99 +21,60 @@ export const MathLiveInput = ({
   autoFocus = false
 }: MathLiveInputProps) => {
   const mathfieldRef = useRef<any>(null);
-  const [isMathLiveReady, setIsMathLiveReady] = useState(false);
 
   useEffect(() => {
+    // Dynamically import MathLive to avoid SSR issues
     const initMathField = async () => {
       try {
-        const { MathfieldElement, mathVirtualKeyboard } = await import('mathlive');
+        const { MathfieldElement } = await import('mathlive');
         
         if (!mathfieldRef.current) return;
 
-        // Configure MathLive properly
-        MathfieldElement.fontsDirectory = 'https://unpkg.com/mathlive@0.107.0/dist/fonts/';
-        MathfieldElement.soundsDirectory = 'https://unpkg.com/mathlive@0.107.0/dist/sounds/';
-        
-        // Disable sounds to avoid CORS issues
-        MathfieldElement.soundEnabled = false;
-        
-        // Set up the math field
-        const mf = mathfieldRef.current as MathfieldElement;
-        
-        // Configure virtual keyboard - this is the key fix
-        mf.virtualKeyboardPolicy = 'manual';
-        mf.virtualKeyboards = 'numbers functions';
-        
-        // Set up event listeners
-        mf.addEventListener('input', (event) => {
-          const latex = (event.target as MathfieldElement).value;
-          console.log('[DEBUG] MathLive input changed:', latex);
-          onChange?.(latex);
-        });
+        // Configure MathLive
+        MathfieldElement.fontsDirectory = 'https://unpkg.com/mathlive/dist/fonts/';
+        MathfieldElement.soundsDirectory = 'https://unpkg.com/mathlive/dist/sounds/';
 
-        // Add Enter key handler for submission
-        mf.addEventListener('keydown', (event: KeyboardEvent) => {
-          console.log('[DEBUG] MathLive keydown:', event.key);
-          if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            event.stopPropagation();
-            console.log('[DEBUG] MathLive Enter pressed, calling onEnter');
-            onEnter?.();
-          }
-        });
-
-        // Add focus event for debugging
-        mf.addEventListener('focus', () => {
-          console.log('[DEBUG] MathLive focused');
-        });
-
+        const mathfield = mathfieldRef.current;
+        
         // Set initial value
         if (value) {
-          mf.value = value;
+          mathfield.value = value;
         }
 
-        // Configure virtual keyboard globally - this is crucial
-        if (mathVirtualKeyboard) {
-          mathVirtualKeyboard.layouts = ['numbers', 'functions'];
-          mathVirtualKeyboard.editToolbar = 'none';
-          console.log('[DEBUG] Virtual keyboard configured');
+        // Configure mathfield options
+        mathfield.options = {
+          virtualKeyboardMode: 'auto',
+          smartMode: true,
+          smartFence: true,
+          smartSuperscript: true,
+          readOnly: disabled,
+        };
+
+        // Set up event listeners
+        mathfield.addEventListener('input', (e: any) => {
+          if (onChange) {
+            onChange(e.target.value);
+          }
+        });
+
+        mathfield.addEventListener('keydown', (e: KeyboardEvent) => {
+          if (e.key === 'Enter' && !e.shiftKey && onEnter) {
+            e.preventDefault();
+            onEnter();
+          }
+        });
+
+        if (autoFocus) {
+          mathfield.focus();
         }
-
-        // Add a click handler to show the virtual keyboard
-        mf.addEventListener('click', () => {
-          console.log('[DEBUG] MathLive clicked, showing virtual keyboard');
-          if (mathVirtualKeyboard) {
-            mathVirtualKeyboard.show();
-          }
-        });
-
-        // Add a focus handler to show the virtual keyboard
-        mf.addEventListener('focus', () => {
-          console.log('[DEBUG] MathLive focused, showing virtual keyboard');
-          if (mathVirtualKeyboard) {
-            mathVirtualKeyboard.show();
-          }
-        });
-
-        // Add a touch handler for mobile devices
-        mf.addEventListener('touchstart', () => {
-          console.log('[DEBUG] MathLive touched, showing virtual keyboard');
-          if (mathVirtualKeyboard) {
-            mathVirtualKeyboard.show();
-          }
-        });
-
-        setIsMathLiveReady(true);
-        console.log('[DEBUG] MathLive initialized successfully');
 
       } catch (error) {
-        console.error('Error initializing MathLive:', error);
-        setIsMathLiveReady(false);
+        console.error('Failed to initialize MathLive:', error);
       }
     };
 
     initMathField();
-  }, [value, onChange, onEnter]);
+  }, []);
 
   // Update value when prop changes
   useEffect(() => {

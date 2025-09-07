@@ -92,14 +92,6 @@ function extractCorrectAnswer(question: string): number | null {
     }
   }
 
-  // Handle exponentiation - this is the key addition
-  const exponentMatch = question.match(/(\d+(?:\.\d+)?)\s*\^\s*(\d+(?:\.\d+)?)/);
-  if (exponentMatch) {
-    const base = parseFloat(exponentMatch[1]);
-    const exponent = parseFloat(exponentMatch[2]);
-    return Math.pow(base, exponent);
-  }
-
   // Handle fraction notation like "2/3"
   const fractionMatch = question.match(/(\d+)\s*\/\s*(\d+)/);
   if (fractionMatch) {
@@ -347,16 +339,4 @@ function isValidFraction(fraction: string): boolean {
   
   const [numerator, denominator] = fraction.split('/').map(Number);
   return numerator > 0 && denominator > 1 && numerator < 1000 && denominator < 1000;
-}
-
-/**
- * Normalizes mathematical expressions for comparison
- */
-export function normalizeMathExpression(expression: string): string {
-  return expression
-    .replace(/\s+/g, '') // Remove all whitespace
-    .replace(/•/g, '*')  // Convert bullet multiplication to asterisk
-    .replace(/×/g, '*')  // Convert × to asterisk
-    .replace(/÷/g, '/')  // Convert ÷ to slash
-    .toLowerCase();
 }

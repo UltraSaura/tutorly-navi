@@ -24,15 +24,14 @@ const homeworkKeywords = [
 export const detectHomeworkInMessage = (content: string): boolean => {
   const contentLower = content.toLowerCase();
 
-  // Check for mathematical expressions - includes bullet multiplication and exponents
+  // Check for mathematical expressions
   const hasMathExpression = [
-    /\d+\s*[\+\-\*\/•]\s*\d+/,                    // Basic arithmetic (including bullet)
-    /[0-9x]+\s*[\+\-\*\/•]\s*[0-9x]+\s*=/,       // Algebraic equations (including bullet)
+    /\d+\s*[\+\-\*\/]\s*\d+/,                    // Basic arithmetic
+    /[0-9x]+\s*[\+\-\*\/]\s*[0-9x]+\s*=/,       // Algebraic equations
     /\d+\/\d+/,                                  // Fractions
     /\d+\s*%/,                                   // Percentages
-    /\d+\s*\^\s*\d+/,                            // Exponents (like 5^2)
     /sqrt|cos|sin|tan|log|exp/,                  // Mathematical functions
-    /\([0-9x\+\-\*\/•\^]+\)/,                   // Parentheses expressions (including bullet and exponents)
+    /\([0-9x\+\-\*\/]+\)/,                      // Parentheses expressions
   ].some(pattern => pattern.test(content));
 
   // Check for math word problems
@@ -41,8 +40,8 @@ export const detectHomeworkInMessage = (content: string): boolean => {
   // Check if any keywords are in the content
   const hasKeywords = homeworkKeywords.some(keyword => contentLower.includes(keyword));
 
-  // Check for mathematical patterns - includes bullet multiplication and exponents
-  const hasMathPattern = /\d+\s*[\+\-\*\/•\^]\s*\d+\s*=/.test(content);
+  // Check for mathematical patterns
+  const hasMathPattern = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(content);
 
   // Enhanced detection for likely homework content
   const likelyHomework = /\b(solve|calculate|find|compute)\b.+\b(equation|problem|expression)\b/i.test(content);

@@ -15,16 +15,8 @@ export const latexToPlainText = (latex: string): string => {
     .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1/$2')
     .replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
     .replace(/\\sqrt\[([^\]]+)\]\{([^}]+)\}/g, '$2^(1/$1)')
-    
-    // Handle exponents - this is the key fix
-    .replace(/\^\{([^}]+)\}/g, '^$1')  // Convert ^{2} to ^2
-    .replace(/\^([0-9]+)/g, '^$1')     // Keep ^2 as ^2
-    .replace(/\^\(([^)]+)\)/g, '^$1')  // Convert ^(2) to ^2
-    
-    // Handle subscripts
-    .replace(/_\{([^}]+)\}/g, '_$1')   // Convert _{2} to _2
-    .replace(/_([0-9]+)/g, '_$1')      // Keep _2 as _2
-    .replace(/_\(([^)]+)\)/g, '_$1')   // Convert _(2) to _2
+    .replace(/\^?\{([^}]+)\}/g, '^$1')
+    .replace(/_?\{([^}]+)\}/g, '_$1')
     
     // Convert Greek letters
     .replace(/\\alpha/g, 'α')
