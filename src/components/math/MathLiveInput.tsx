@@ -148,7 +148,6 @@ export const MathLiveInput = ({
         }
       }
     }, 50); // More frequent polling
-
     return () => clearInterval(pollInterval);
   }, [lastValue, onChange]);
 

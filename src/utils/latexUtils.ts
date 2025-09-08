@@ -16,11 +16,11 @@ export const latexToPlainText = (latex: string): string => {
     .replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
     .replace(/\\sqrt\[([^\]]+)\]\{([^}]+)\}/g, '$2^(1/$1)')
     
-    // Handle sqrt without braces (MathLive format) - ADD THIS
+    // Handle sqrt without braces (MathLive format)
     .replace(/\\sqrt(\d+(?:\.\d+)?)/g, 'sqrt($1)')
     .replace(/\\sqrt([a-zA-Z])/g, 'sqrt($1)')
     
-    // Handle other functions without braces (MathLive format) - ADD THIS
+    // Handle other functions without braces (MathLive format)
     .replace(/\\sin(\d+(?:\.\d+)?)/g, 'sin($1)')
     .replace(/\\cos(\d+(?:\.\d+)?)/g, 'cos($1)')
     .replace(/\\tan(\d+(?:\.\d+)?)/g, 'tan($1)')
@@ -29,7 +29,14 @@ export const latexToPlainText = (latex: string): string => {
     .replace(/\\exp(\d+(?:\.\d+)?)/g, 'exp($1)')
     .replace(/\\abs(\d+(?:\.\d+)?)/g, 'abs($1)')
     
-    // Handle exponents - this is the key fix
+    // Handle Unicode square root symbol
+    .replace(/√\{([^}]+)\}/g, 'sqrt($1)')
+    .replace(/√([0-9]+(?:\.[0-9]+)?)/g, 'sqrt($1)')
+    .replace(/√\(([^)]+)\)/g, 'sqrt($1)')
+    // Handle direct Unicode square root without delimiters
+    .replace(/√/g, 'sqrt')
+    
+    // Handle exponents
     .replace(/\^\{([^}]+)\}/g, '^$1')  // Convert ^{2} to ^2
     .replace(/\^([0-9]+)/g, '^$1')     // Keep ^2 as ^2
     .replace(/\^\(([^)]+)\)/g, '^$1')  // Convert ^(2) to ^2
@@ -82,8 +89,15 @@ export const plainTextToLatex = (text: string): string => {
     .replace(/_(\d+)/g, '_{$1}')
     .replace(/_(\([^)]+\))/g, '_{$1}')
     
-    // Convert sqrt
+    // Convert mathematical functions
     .replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}')
+    .replace(/cbrt\(([^)]+)\)/g, '\\sqrt[3]{$1}')
+    .replace(/sin\(([^)]+)\)/g, '\\sin($1)')
+    .replace(/cos\(([^)]+)\)/g, '\\cos($1)')
+    .replace(/tan\(([^)]+)\)/g, '\\tan($1)')
+    .replace(/log\(([^)]+)\)/g, '\\log($1)')
+    .replace(/ln\(([^)]+)\)/g, '\\ln($1)')
+    .replace(/exp\(([^)]+)\)/g, 'e^{$1}')
     
     // Convert operators
     .replace(/\*/g, '\\cdot ')

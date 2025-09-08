@@ -45,8 +45,11 @@ export function areMathematicallyEquivalent(
     // Convert LaTeX to plain text if needed
     const plainTextAnswer = isLatex(userAnswer) ? latexToPlainText(userAnswer) : userAnswer;
     
+    // Evaluate mathematical functions in the answer
+    const evaluatedAnswer = evaluateMathematicalFunctions(plainTextAnswer);
+    
     // Normalize and parse user answer
-    const normalizedUserAnswer = normalizeAnswer(plainTextAnswer);
+    const normalizedUserAnswer = normalizeAnswer(evaluatedAnswer);
     const userValue = parseFloat(normalizedUserAnswer);
     
     if (isNaN(userValue)) return null;
@@ -68,6 +71,16 @@ export function areMathematicallyEquivalent(
  * Extract the correct answer from a mathematical question
  */
 function extractCorrectAnswer(question: string): number | null {
+  // Handle square root problems
+  const sqrtMatch = question.match(/(?:√|\\sqrt\{|sqrt\()(\d+(?:\.\d+)?)(?:\}|\))?/);
+  if (sqrtMatch) {
+    const number = parseFloat(sqrtMatch[1]);
+    if (!isNaN(number) && number >= 0) {
+      console.log(`[mathValidation] Found square root in question: sqrt(${number}) = ${Math.sqrt(number)}`);
+      return Math.sqrt(number);
+    }
+  }
+
   // Handle division problems (fractions)
   const divisionMatch = question.match(/(\d+(?:\.\d+)?)\s*[÷\/]\s*(\d+(?:\.\d+)?)/);
   if (divisionMatch) {
@@ -259,7 +272,7 @@ export function detectFractionOcrMisread(question: string, userAnswer: string): 
   }
 }
 
-// NEW: Special function for fraction simplification exercises
+// Special function for fraction simplification exercises
 function areFractionsEquivalent(question: string, userAnswer: string): boolean | null {
   try {
     console.log('[mathValidation] areFractionsEquivalent called with:', { question, userAnswer });
@@ -324,7 +337,7 @@ function areFractionsEquivalent(question: string, userAnswer: string): boolean |
   }
 }
 
-// NEW: Helper function to find Greatest Common Divisor
+// Helper function to find Greatest Common Divisor
 function findGCD(a: number, b: number): number {
   a = Math.abs(a);
   b = Math.abs(b);
@@ -338,7 +351,7 @@ function findGCD(a: number, b: number): number {
   return a;
 }
 
-// NEW: Validate fraction format
+// Validate fraction format
 function isValidFraction(fraction: string): boolean {
   const fractionPattern = /^\d+\/\d+$/;
   if (!fractionPattern.test(fraction)) {
@@ -359,4 +372,167 @@ export function normalizeMathExpression(expression: string): string {
     .replace(/×/g, '*')  // Convert × to asterisk
     .replace(/÷/g, '/')  // Convert ÷ to slash
     .toLowerCase();
+}
+
+/**
+ * Evaluate mathematical functions in expressions (sqrt, etc.)
+ */
+function evaluateMathematicalFunctions(expression: string): string {
+  try {
+    console.log('[mathValidation] Evaluating mathematical functions in:', expression);
+    
+    let result = expression;
+    
+    // Handle square root functions
+    result = result.replace(/sqrt\(([^)]+)\)/g, (match, content) => {
+      try {
+        // Handle nested expressions or simple numbers
+        const innerValue = parseFloat(content);
+        if (!isNaN(innerValue) && innerValue >= 0) {
+          const sqrtResult = Math.sqrt(innerValue);
+          console.log(`[mathValidation] sqrt(${innerValue}) = ${sqrtResult}`);
+          return sqrtResult.toString();
+        }
+        return match; // Return original if can't evaluate
+      } catch (error) {
+        console.log('[mathValidation] Error evaluating sqrt:', error);
+        return match;
+      }
+    });
+    
+    // Handle cube root functions
+    result = result.replace(/cbrt\(([^)]+)\)/g, (match, content) => {
+      try {
+        const innerValue = parseFloat(content);
+        if (!isNaN(innerValue)) {
+          const cbrtResult = Math.cbrt(innerValue);
+          console.log(`[mathValidation] cbrt(${innerValue}) = ${cbrtResult}`);
+          return cbrtResult.toString();
+        }
+        return match;
+      } catch (error) {
+        console.log('[mathValidation] Error evaluating cbrt:', error);
+        return match;
+      }
+    });
+    
+    // Handle basic trigonometric functions (in degrees)
+    result = result.replace(/sin\(([^)]+)\)/g, (match, content) => {
+      try {
+        const degrees = parseFloat(content);
+        if (!isNaN(degrees)) {
+          const radians = (degrees * Math.PI) / 180;
+          const sinResult = Math.sin(radians);
+          console.log(`[mathValidation] sin(${degrees}°) = ${sinResult}`);
+          return sinResult.toString();
+        }
+        return match;
+      } catch (error) {
+        console.log('[mathValidation] Error evaluating sin:', error);
+        return match;
+      }
+    });
+    
+    result = result.replace(/cos\(([^)]+)\)/g, (match, content) => {
+      try {
+        const degrees = parseFloat(content);
+        if (!isNaN(degrees)) {
+          const radians = (degrees * Math.PI) / 180;
+          const cosResult = Math.cos(radians);
+          console.log(`[mathValidation] cos(${degrees}°) = ${cosResult}`);
+          return cosResult.toString();
+        }
+        return match;
+      } catch (error) {
+        console.log('[mathValidation] Error evaluating cos:', error);
+        return match;
+      }
+    });
+    
+    result = result.replace(/tan\(([^)]+)\)/g, (match, content) => {
+      try {
+        const degrees = parseFloat(content);
+        if (!isNaN(degrees)) {
+          const radians = (degrees * Math.PI) / 180;
+          const tanResult = Math.tan(radians);
+          console.log(`[mathValidation] tan(${degrees}°) = ${tanResult}`);
+          return tanResult.toString();
+        }
+        return match;
+      } catch (error) {
+        console.log('[mathValidation] Error evaluating tan:', error);
+        return match;
+      }
+    });
+    
+    // Handle logarithmic functions
+    result = result.replace(/log\(([^)]+)\)/g, (match, content) => {
+      try {
+        const innerValue = parseFloat(content);
+        if (!isNaN(innerValue) && innerValue > 0) {
+          const logResult = Math.log10(innerValue);
+          console.log(`[mathValidation] log(${innerValue}) = ${logResult}`);
+          return logResult.toString();
+        }
+        return match;
+      } catch (error) {
+        console.log('[mathValidation] Error evaluating log:', error);
+        return match;
+      }
+    });
+    
+    result = result.replace(/ln\(([^)]+)\)/g, (match, content) => {
+      try {
+        const innerValue = parseFloat(content);
+        if (!isNaN(innerValue) && innerValue > 0) {
+          const lnResult = Math.log(innerValue);
+          console.log(`[mathValidation] ln(${innerValue}) = ${lnResult}`);
+          return lnResult.toString();
+        }
+        return match;
+      } catch (error) {
+        console.log('[mathValidation] Error evaluating ln:', error);
+        return match;
+      }
+    });
+    
+    // Handle exponential functions
+    result = result.replace(/exp\(([^)]+)\)/g, (match, content) => {
+      try {
+        const innerValue = parseFloat(content);
+        if (!isNaN(innerValue)) {
+          const expResult = Math.exp(innerValue);
+          console.log(`[mathValidation] exp(${innerValue}) = ${expResult}`);
+          return expResult.toString();
+        }
+        return match;
+      } catch (error) {
+        console.log('[mathValidation] Error evaluating exp:', error);
+        return match;
+      }
+    });
+    
+    // Handle power functions (basic case: number^number)
+    result = result.replace(/([0-9.]+)\^([0-9.]+)/g, (match, base, exponent) => {
+      try {
+        const baseNum = parseFloat(base);
+        const expNum = parseFloat(exponent);
+        if (!isNaN(baseNum) && !isNaN(expNum)) {
+          const powResult = Math.pow(baseNum, expNum);
+          console.log(`[mathValidation] ${baseNum}^${expNum} = ${powResult}`);
+          return powResult.toString();
+        }
+        return match;
+      } catch (error) {
+        console.log('[mathValidation] Error evaluating power:', error);
+        return match;
+      }
+    });
+    
+    console.log(`[mathValidation] Function evaluation result: "${expression}" -> "${result}"`);
+    return result;
+  } catch (error) {
+    console.log('[mathValidation] Error in evaluateMathematicalFunctions:', error);
+    return expression; // Return original if evaluation fails
+  }
 }
