@@ -47,20 +47,20 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Design Token CSS Variables */
-    --brand-primary: #2F6BFF;
-    --brand-navy: #1E3A8A;
-    --brand-tint: #EEF4FF;
-    --game-xp: #7C3AED;
-    --game-coin: #FFB020;
-    --game-streak: #FF7A45;
-    --state-success: #22C55E;
-    --state-danger: #EF4444;
-    --neutral-bg: #F5F7FB;
-    --neutral-surface: #FFFFFF;
-    --neutral-text: #0F172A;
-    --neutral-muted: #475569;
-    --neutral-border: #E2E8F0;
+    /* Design Token CSS Variables - HSL format */
+    --brand-primary: 221 83% 59%;
+    --brand-navy: 221 83% 35%;
+    --brand-tint: 221 100% 96%;
+    --game-xp: 258 90% 66%;
+    --game-coin: 38 100% 56%;
+    --game-streak: 17 100% 64%;
+    --state-success: 142 76% 47%;
+    --state-danger: 0 84% 60%;
+    --neutral-bg: 216 50% 97%;
+    --neutral-surface: 0 0% 100%;
+    --neutral-text: 222 84% 5%;
+    --neutral-muted: 215 25% 41%;
+    --neutral-border: 214 32% 91%;
   }
 
   .dark {
@@ -101,12 +101,12 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Dark mode design tokens - adjust as needed */
-    --neutral-bg: #1a1a1a;
-    --neutral-surface: #2a2a2a;
-    --neutral-text: #ffffff;
-    --neutral-muted: #94a3b8;
-    --neutral-border: #374151;
+    /* Dark mode design tokens - HSL format */
+    --neutral-bg: 0 0% 10%;
+    --neutral-surface: 0 0% 16%;
+    --neutral-text: 0 0% 100%;
+    --neutral-muted: 215 25% 65%;
+    --neutral-border: 220 13% 25%;
   }
 }
 

@@ -26,9 +26,17 @@ export const MathLiveInput = ({
   useEffect(() => {
     const initMathField = async () => {
       try {
+        // Guard against multiple initializations
+        if (!mathfieldRef.current || mathfieldRef.current.hasAttribute('data-mathlive-initialized')) {
+          return;
+        }
+
         const { MathfieldElement } = await import('mathlive');
         
         if (!mathfieldRef.current) return;
+        
+        // Mark as initialized to prevent re-initialization
+        mathfieldRef.current.setAttribute('data-mathlive-initialized', 'true');
 
         // Configure MathLive
         MathfieldElement.fontsDirectory = 'https://unpkg.com/mathlive/dist/fonts/';
@@ -101,6 +109,19 @@ export const MathLiveInput = ({
 
       } catch (error) {
         console.error('Failed to initialize MathLive:', error);
+        // Provide fallback behavior if MathLive fails
+        if (mathfieldRef.current) {
+          mathfieldRef.current.style.display = 'none';
+          const fallback = document.createElement('input');
+          fallback.type = 'text';
+          fallback.value = value;
+          fallback.placeholder = placeholder || 'Math input unavailable';
+          fallback.className = mathfieldRef.current.className;
+          fallback.addEventListener('input', (e) => {
+            if (onChange) onChange((e.target as HTMLInputElement).value);
+          });
+          mathfieldRef.current.parentNode?.insertBefore(fallback, mathfieldRef.current);
+        }
       }
     };
 
