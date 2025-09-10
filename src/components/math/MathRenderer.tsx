@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { normalizeLatexForDisplay } from '@/utils/latexUtils';
 
 interface MathRendererProps {
   latex: string;
@@ -20,10 +21,19 @@ export const MathRenderer = ({
         const { renderMathInElement } = await import('mathlive');
         
         if (renderRef.current) {
+          // Normalize LaTeX for proper rendering
+          const normalizedLatex = normalizeLatexForDisplay(latex);
+          
           // Wrap latex in delimiters if not already present
-          const mathContent = latex.startsWith('$') || latex.startsWith('\\') 
-            ? latex 
-            : inline ? `$${latex}$` : `$$${latex}$$`;
+          const mathContent = normalizedLatex.startsWith('$') || normalizedLatex.startsWith('\\') 
+            ? normalizedLatex 
+            : inline ? `$${normalizedLatex}$` : `$$${normalizedLatex}$$`;
+          
+          console.log('[MathRenderer] Rendering math:', {
+            original: latex,
+            normalized: normalizedLatex,
+            mathContent: mathContent
+          });
           
           renderRef.current.innerHTML = mathContent;
           renderMathInElement(renderRef.current);

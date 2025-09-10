@@ -22,32 +22,34 @@ export const MathLiveInput = ({
 }: MathLiveInputProps) => {
   const mathfieldRef = useRef<any>(null);
   const [isMathLiveReady, setIsMathLiveReady] = useState(false);
-  const [lastValue, setLastValue] = useState(value); // New state to track last value
+  const [lastValue, setLastValue] = useState(value);
 
   useEffect(() => {
     const initMathField = async () => {
       try {
-        const { MathfieldElement, mathVirtualKeyboard } = await import('mathlive');
+        const mathlive = await import('mathlive');
+        const { MathfieldElement, mathVirtualKeyboard } = mathlive;
         
         if (!mathfieldRef.current) return;
 
-        // Configure MathLive properly
-        MathfieldElement.fontsDirectory = 'https://unpkg.com/mathlive@0.107.0/dist/fonts/';
-        MathfieldElement.soundsDirectory = 'https://unpkg.com/mathlive@0.107.0/dist/sounds/';
-        
-        // Disable sounds to avoid CORS issues
+        // Use local fonts that are copied by postinstall script
+        MathfieldElement.fontsDirectory = '/mathlive/fonts/';
+        MathfieldElement.soundsDirectory = '/mathlive/sounds/';
         MathfieldElement.soundEnabled = false;
         
         // Set up the math field
-        const mf = mathfieldRef.current as MathfieldElement;
+        const mf = mathfieldRef.current;
         
-        // Configure virtual keyboard - this is the key fix
+        // Configure for proper rendering
         mf.virtualKeyboardPolicy = 'manual';
         mf.virtualKeyboards = 'numbers functions';
+        mf.smartFence = true;
+        mf.smartSuperscript = true;
+        mf.removeExtraneousParentheses = true;
         
         // Set up event listeners
-        const handleInput = (event: any) => {
-          const latex = mf.getValue('latex') || ''; // FIX: Use mf.getValue('latex') instead of event.target.value
+        const handleInput = () => {
+          const latex = mf.getValue('latex') || '';
           console.log('[DEBUG] MathLive input changed:', latex);
           setLastValue(latex);
           onChange?.(latex);
@@ -69,24 +71,19 @@ export const MathLiveInput = ({
           }
         });
 
-        // Add focus event for debugging
-        mf.addEventListener('focus', () => {
-          console.log('[DEBUG] MathLive focused');
-        });
-
         // Set initial value
         if (value) {
           mf.value = value;
         }
 
-        // Configure virtual keyboard globally - this is crucial
+        // Configure virtual keyboard globally
         if (mathVirtualKeyboard) {
           mathVirtualKeyboard.layouts = ['numbers', 'functions'];
           mathVirtualKeyboard.editToolbar = 'none';
           console.log('[DEBUG] Virtual keyboard configured');
         }
 
-        // Add a click handler to show the virtual keyboard
+        // Add click handler to show the virtual keyboard
         mf.addEventListener('click', () => {
           console.log('[DEBUG] MathLive clicked, showing virtual keyboard');
           if (mathVirtualKeyboard) {
@@ -94,7 +91,7 @@ export const MathLiveInput = ({
           }
         });
 
-        // Add a focus handler to show the virtual keyboard
+        // Add focus handler to show the virtual keyboard
         mf.addEventListener('focus', () => {
           console.log('[DEBUG] MathLive focused, showing virtual keyboard');
           if (mathVirtualKeyboard) {
@@ -102,7 +99,7 @@ export const MathLiveInput = ({
           }
         });
 
-        // Add a touch handler for mobile devices
+        // Add touch handler for mobile devices
         mf.addEventListener('touchstart', () => {
           console.log('[DEBUG] MathLive touched, showing virtual keyboard');
           if (mathVirtualKeyboard) {
@@ -136,20 +133,22 @@ export const MathLiveInput = ({
     }
   }, [disabled]);
 
-  // Poll for changes as a fallback - more aggressive polling
+  // Poll for changes as a fallback - but only if MathLive is ready
   useEffect(() => {
+    if (!isMathLiveReady) return;
+    
     const pollInterval = setInterval(() => {
-      if (mathfieldRef.current) {
-        const currentValue = mathfieldRef.current.getValue('latex') || ''; // FIX: Use mf.getValue('latex') instead of mf.value
+      if (mathfieldRef.current && typeof mathfieldRef.current.getValue === 'function') {
+        const currentValue = mathfieldRef.current.getValue('latex') || '';
         if (currentValue !== lastValue) {
           console.log('[DEBUG] MathLive polled value changed:', currentValue);
           setLastValue(currentValue);
           onChange?.(currentValue);
         }
       }
-    }, 50); // More frequent polling
+    }, 100); // Reduced frequency to avoid errors
     return () => clearInterval(pollInterval);
-  }, [lastValue, onChange]);
+  }, [lastValue, onChange, isMathLiveReady]);
 
   return (
     <math-field
@@ -159,9 +158,11 @@ export const MathLiveInput = ({
         className
       )}
       style={{ 
-        fontSize: '14px',
+        fontSize: '16px',
         '--ml-hue': '221',
-        '--ml-contains-size': 'size'
+        '--ml-contains-size': 'size',
+        '--ml-font-family': 'KaTeX_Main, "Times New Roman", serif',
+        '--ml-font-size': '16px'
       } as any}
     />
   );

@@ -3,9 +3,20 @@
  * Math-specific pattern matching and extraction utilities
  */
 
-// Math expression patterns
+// Math expression patterns - ORDERED BY PRIORITY (most specific first)
 const mathPatterns = [
-  // Mathematical functions with equations (prioritize these)
+  // Mathematical functions with equations (HIGHEST PRIORITY)
+  // Handle sqrt(3)+3=55, sqrt(3)*2=6, etc.
+  /(sqrt\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  /(sin\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  /(cos\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  /(tan\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  /(log\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  /(ln\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  /(exp\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  /(abs\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  
+  // Simple mathematical functions with equations
   /(sqrt\(\d+(?:\.\d+)?\))\s*=\s*(\d+(?:\.\d+)?)/,
   /(sin\(\d+(?:\.\d+)?\))\s*=\s*(\d+(?:\.\d+)?)/,
   /(cos\(\d+(?:\.\d+)?\))\s*=\s*(\d+(?:\.\d+)?)/,
@@ -16,26 +27,6 @@ const mathPatterns = [
   /(abs\(\d+(?:\.\d+)?\))\s*=\s*(\d+(?:\.\d+)?)/,
   
   // Mathematical functions without equations (standalone)
-  /(sqrt\(\d+(?:\.\d+)?\))/,
-  /(sin\(\d+(?:\.\d+)?\))/,
-  /(cos\(\d+(?:\.\d+)?\))/,
-  /(tan\(\d+(?:\.\d+)?\))/,
-  /(log\(\d+(?:\.\d+)?\))/,
-  /(ln\(\d+(?:\.\d+)?\))/,
-  /(exp\(\d+(?:\.\d+)?\))/,
-  /(abs\(\d+(?:\.\d+)?\))/,
-  
-  // Mixed expressions with functions (NEW - handle sqrt(9)+6, etc.)
-  /(sqrt\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
-  /(sin\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
-  /(cos\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
-  /(tan\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
-  /(log\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
-  /(ln\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
-  /(exp\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
-  /(abs\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
-  
-  // Mixed expressions without equations (standalone)
   /(sqrt\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)/,
   /(sin\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)/,
   /(cos\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)/,
@@ -45,11 +36,21 @@ const mathPatterns = [
   /(exp\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)/,
   /(abs\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)/,
   
+  // Simple mathematical functions without equations
+  /(sqrt\(\d+(?:\.\d+)?\))/,
+  /(sin\(\d+(?:\.\d+)?\))/,
+  /(cos\(\d+(?:\.\d+)?\))/,
+  /(tan\(\d+(?:\.\d+)?\))/,
+  /(log\(\d+(?:\.\d+)?\))/,
+  /(ln\(\d+(?:\.\d+)?\))/,
+  /(exp\(\d+(?:\.\d+)?\))/,
+  /(abs\(\d+(?:\.\d+)?\))/,
+  
   // Fraction to fraction equations (prioritize complete fractions)
   /(\d+\/\d+)\s*=\s*(\d+\/\d+)/,
   // Fractions with decimal results
   /(\d+\/\d+)\s*=\s*(\d+(?:\.\d+)?)/,
-  // Exponentiation equations - this is the key addition
+  // Exponentiation equations
   /(\d+(?:\.\d+)?\s*\^\s*\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
   // Multiple operations arithmetic (prioritize longer expressions) - includes bullet multiplication
   /(\d+(?:\.\d+)?(?:\s*[\+\-\*\/•\^]\s*\d+(?:\.\d+)?)+)\s*=\s*(\d+(?:\.\d+)?)/,
@@ -67,35 +68,46 @@ const mathPatterns = [
  * Extract math problem and solution from text
  */
 export const extractMathProblem = (message: string): { question: string; answer: string } | null => {
+  console.log('[mathExtractor] Processing message:', message);
+  
   // Try each math pattern
-  for (const pattern of mathPatterns) {
+  for (let i = 0; i < mathPatterns.length; i++) {
+    const pattern = mathPatterns[i];
     const match = message.match(pattern);
     if (match) {
+      console.log(`[mathExtractor] Pattern ${i} matched:`, { 
+        pattern: pattern.toString(), 
+        match: match,
+        question: match[1]?.trim() || '',
+        answer: match[2]?.trim() || ''
+      });
+      
       // For word problems
       if (match[1]?.match(/If|What|How|Calculate|Solve|Find/i)) {
+        const splitResult = match[0]?.split(/answer|solution|result/i);
         return {
-          question: match[0].split(/answer|solution|result/i)[0].trim(),
-          answer: match[4].trim()
+          question: splitResult?.[0]?.trim() || '',
+          answer: match[4]?.trim() || ''
         };
       }
       // For equations and arithmetic
       return {
-        question: match[1].trim(),
-        answer: match[2].trim()
+        question: match[1]?.trim() || '',
+        answer: match[2]?.trim() || ''
       };
     }
   }
   
-  // Check for simple equation pattern
-  const mathPattern = /(.+?)\s*=\s*(.+)/;
-  const mathMatch = message.match(mathPattern);
-  if (mathMatch) {
+  // Check for simple equation pattern as fallback
+  const simpleMatch = message.match(/(.+?)\s*=\s*(.+)/);
+  if (simpleMatch) {
     return {
-      question: mathMatch[1].trim(),
-      answer: mathMatch[2].trim()
+      question: simpleMatch[1]?.trim() || '',
+      answer: simpleMatch[2]?.trim() || ''
     };
   }
   
+  console.log('[mathExtractor] No patterns matched');
   return null;
 };
 

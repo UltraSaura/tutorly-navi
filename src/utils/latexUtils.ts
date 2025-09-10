@@ -111,6 +111,29 @@ export const plainTextToLatex = (text: string): string => {
 };
 
 /**
+ * Normalize LaTeX for proper MathLive rendering
+ */
+export const normalizeLatexForDisplay = (latex: string): string => {
+  return latex
+    // Ensure sqrt has braces around argument
+    .replace(/\\sqrt([a-zA-Z0-9]+)/g, (match, content) => {
+      // If it's a number or variable without braces, add them
+      if (/^[a-zA-Z0-9]+$/.test(content)) {
+        return `\\sqrt{${content}}`;
+      }
+      return match;
+    })
+
+    // Ensure other functions have proper formatting
+    .replace(/\\sin([a-zA-Z0-9]+)/g, '\\sin($1)')
+    .replace(/\\cos([a-zA-Z0-9]+)/g, '\\cos($1)')
+    .replace(/\\tan([a-zA-Z0-9]+)/g, '\\tan($1)')
+    .replace(/\\log([a-zA-Z0-9]+)/g, '\\log($1)')
+    .replace(/\\ln([a-zA-Z0-9]+)/g, '\\ln($1)')
+    .replace(/\\exp([a-zA-Z0-9]+)/g, '\\exp($1)');
+};
+
+/**
  * Check if a string contains LaTeX syntax
  */
 export const isLatex = (text: string): boolean => {

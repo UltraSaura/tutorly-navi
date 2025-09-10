@@ -10,6 +10,7 @@ import { Message } from '@/types/chat';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { toast } from 'sonner';
 import { MathLiveInput, MathInputToggle, MathRenderer } from '@/components/math';
+import { processMathContentForDisplay } from '@/utils/mathDisplayProcessor';
 
 interface ExerciseProps {
   exercise: {
@@ -50,6 +51,11 @@ const Exercise = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMathMode, setIsMathMode] = useState(false);
   
+  // Process math content for display
+  const processedQuestion = processMathContentForDisplay(exercise.question);
+  const processedUserAnswer = exercise.userAnswer ? 
+    processMathContentForDisplay(exercise.userAnswer) : null;
+  
   const formattedExplanation = exercise.explanation ? exercise.explanation
     .replace(/\*\*Problem:\*\*/g, `<strong class="text-studywhiz-600 dark:text-studywhiz-400">${t('exercise.problem')}:</strong>`)
     .replace(/\*\*Guidance:\*\*/g, `<strong class="text-studywhiz-600 dark:text-studywhiz-400">${t('exercise.guidance')}:</strong>`)
@@ -63,12 +69,8 @@ const Exercise = ({
   const hasRelatedMessages = exercise.relatedMessages && exercise.relatedMessages.length > 0;
   const hasAnswer = exercise.userAnswer && exercise.userAnswer.trim() !== '';
   
-  // Auto-detect if this is a math exercise
-  const isMathExercise = /[+\-*/=()^]/.test(exercise.question) || 
-                        /\d+\/\d+/.test(exercise.question) ||
-                        /\\[a-zA-Z]/.test(exercise.question) ||
-                        exercise.question.toLowerCase().includes('math') ||
-                        exercise.question.toLowerCase().includes('equation');
+  // Auto-detect if this is a math exercise based on processed content
+  const isMathExercise = processedQuestion.isMath;
 
   const handleSubmitAnswer = async () => {
     if (!answerInput.trim()) {
@@ -97,7 +99,8 @@ const Exercise = ({
   // Debug rendering
   console.log('Exercise rendering:', { 
     id: exercise.id,
-    question: exercise.question, 
+    question: exercise.question,
+    processedQuestion: processedQuestion,
     isCorrect: exercise.isCorrect, 
     hasAnswer: hasAnswer 
   });
@@ -136,10 +139,14 @@ const Exercise = ({
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h3 className="text-md font-medium">
-                {isMathExercise ? (
-                  <MathRenderer latex={exercise.question} inline />
+                {processedQuestion.isMath ? (
+                  <MathRenderer 
+                    latex={processedQuestion.processed} 
+                    inline 
+                    className="text-lg"
+                  />
                 ) : (
-                  exercise.question
+                  processedQuestion.processed
                 )}
               </h3>
               {exercise.attemptCount > 1 && (
@@ -159,10 +166,13 @@ const Exercise = ({
         {hasAnswer ? (
           <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 py-[10px]">
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              {isMathExercise ? (
-                <MathRenderer latex={exercise.userAnswer} inline />
+              {processedUserAnswer?.isMath ? (
+                <MathRenderer 
+                  latex={processedUserAnswer.processed} 
+                  inline 
+                />
               ) : (
-                exercise.userAnswer
+                processedUserAnswer?.processed
               )}
             </p>
           </div>
@@ -240,7 +250,14 @@ const Exercise = ({
               <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="text-left">
-                    {exercise.question}
+                    {processedQuestion.isMath ? (
+                      <MathRenderer 
+                        latex={processedQuestion.processed} 
+                        inline 
+                      />
+                    ) : (
+                      processedQuestion.processed
+                    )}
                   </DialogTitle>
                 </DialogHeader>
                 
@@ -249,7 +266,14 @@ const Exercise = ({
                     <h4 className="text-sm font-medium mb-2">{t('exercise.yourAnswer')}:</h4>
                     <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                       <p className="text-sm text-gray-700 dark:text-gray-300">
-                        {exercise.userAnswer}
+                        {processedUserAnswer?.isMath ? (
+                          <MathRenderer 
+                            latex={processedUserAnswer.processed} 
+                            inline 
+                          />
+                        ) : (
+                          processedUserAnswer?.processed
+                        )}
                       </p>
                     </div>
                   </div>

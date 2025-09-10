@@ -15,6 +15,17 @@ export function areMathematicallyEquivalent(
   try {
     console.log('[mathValidation] Checking equivalency:', { question, userAnswer });
     
+    // Convert LaTeX to plain text for both question and answer
+    const plainTextQuestion = isLatex(question) ? latexToPlainText(question) : question;
+    const plainTextAnswer = isLatex(userAnswer) ? latexToPlainText(userAnswer) : userAnswer;
+    
+    console.log('[mathValidation] Converted to plain text:', { 
+      originalQuestion: question, 
+      plainTextQuestion,
+      originalAnswer: userAnswer,
+      plainTextAnswer 
+    });
+    
     // Enhanced fraction detection - supports both French and English
     const fractionKeywords = [
       'simplifiez la fraction',
@@ -30,21 +41,18 @@ export function areMathematicallyEquivalent(
     ];
     
     const isFractionExercise = fractionKeywords.some(keyword => 
-      question.toLowerCase().includes(keyword)
-    ) || (question.match(/\d+\/\d+/) && (question.toLowerCase().includes('simplify') || question.toLowerCase().includes('reduce')));
+      plainTextQuestion.toLowerCase().includes(keyword)
+    ) || (plainTextQuestion.match(/\d+\/\d+/) && (plainTextQuestion.toLowerCase().includes('simplify') || plainTextQuestion.toLowerCase().includes('reduce')));
     
     if (isFractionExercise) {
       console.log('[mathValidation] Detected French fraction exercise');
-      return areFractionsEquivalent(question, userAnswer);
+      return areFractionsEquivalent(plainTextQuestion, plainTextAnswer);
     }
     
-    // Extract the correct answer from the question
-    const correctAnswer = extractCorrectAnswer(question);
+    // Extract the correct answer from the plain text question
+    const correctAnswer = extractCorrectAnswer(plainTextQuestion);
     if (correctAnswer === null) return null;
 
-    // Convert LaTeX to plain text if needed
-    const plainTextAnswer = isLatex(userAnswer) ? latexToPlainText(userAnswer) : userAnswer;
-    
     // Evaluate mathematical functions in the answer
     const evaluatedAnswer = evaluateMathematicalFunctions(plainTextAnswer);
     
