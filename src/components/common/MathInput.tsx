@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MathfieldElement, mathVirtualKeyboard } from 'mathlive';
+import { MathfieldElement } from 'mathlive';
 
 /** Make TS happy about the <math-field> web component in JSX */
 declare global {
@@ -24,7 +24,7 @@ type MathInputProps = {
   className?: string;
 };
 
-const vk = (globalThis as any).mathVirtualKeyboard ?? mathVirtualKeyboard;
+const vk: any = (globalThis as any).mathVirtualKeyboard;
 
 export default function MathInput({
   value = '',
@@ -36,6 +36,7 @@ export default function MathInput({
   const [currentKeyboard, setCurrentKeyboard] = useState<'numbers' | 'functions'>('numbers');
 
   useEffect(() => {
+    if (!vk) return;
     // Remove right-side edit toolbar
     vk.editToolbar = 'none';
 

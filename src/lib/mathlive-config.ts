@@ -5,6 +5,6 @@ MathfieldElement.fontsDirectory = '/mathlive/fonts';
 MathfieldElement.soundsDirectory = '/mathlive/sounds';
 
 // Enable sounds since we're using local assets
-MathfieldElement.soundEnabled = true;
+(MathfieldElement as any).soundEnabled = true;
 
 export { MathfieldElement }; 

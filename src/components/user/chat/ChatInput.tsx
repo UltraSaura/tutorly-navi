@@ -286,9 +286,7 @@ export default function ChatInput({
             defaultValue={latex}
             onInput={handleMathChange}
             className="tn-chat-mathfield"
-            inlineShortcuts={false}
-            virtual-keyboard-mode="manual"
-            read-only="false"
+            {...({ 'virtual-keyboard-policy': 'manual' } as any)}
             placeholder="Type your exercise or question…"
           />
         ) : (

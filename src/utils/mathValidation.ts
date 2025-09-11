@@ -2,7 +2,7 @@
  * Mathematical validation utilities for checking equivalency between different answer formats
  */
 
-import { latexToPlainText, isLatex, normalizeMathExpression } from './latexUtils';
+import { latexToPlainText, isLatex } from './latexUtils';
 
 /**
  * Checks if two mathematical expressions are equivalent

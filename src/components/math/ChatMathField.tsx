@@ -2,9 +2,6 @@
 import { forwardRef, useEffect, useRef, useCallback } from "react";
 import type { MathfieldElement } from "mathlive";
 
-declare global {
-  namespace JSX { interface IntrinsicElements { "math-field": any } }
-}
 
 type Props = {
   value?: string;
@@ -55,11 +52,9 @@ const ChatMathField = forwardRef<MathfieldElement, Props>(function ChatMathField
   return (
     <math-field
       ref={ref as any}
-      class="tn-chat-mathfield"
-      inlineShortcuts={false}     // prevents typed 'sqrt' → √ autocycling while debugging
-      virtual-keyboard-mode="manual"
-      read-only="false"
+      className="tn-chat-mathfield"
       placeholder={placeholder}
+      {...({ 'virtual-keyboard-policy': 'manual' } as any)}
     />
   );
 });

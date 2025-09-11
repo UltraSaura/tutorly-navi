@@ -28,14 +28,14 @@ export const MathLiveInput = ({
     const initMathField = async () => {
       try {
         const mathlive = await import('mathlive');
-        const { MathfieldElement, mathVirtualKeyboard } = mathlive;
+        const { MathfieldElement } = mathlive;
         
         if (!mathfieldRef.current) return;
 
         // Use local fonts that are copied by postinstall script
         MathfieldElement.fontsDirectory = '/mathlive/fonts/';
         MathfieldElement.soundsDirectory = '/mathlive/sounds/';
-        MathfieldElement.soundEnabled = false;
+        (MathfieldElement as any).soundEnabled = false;
         
         // Set up the math field
         const mf = mathfieldRef.current;
@@ -76,36 +76,7 @@ export const MathLiveInput = ({
           mf.value = value;
         }
 
-        // Configure virtual keyboard globally
-        if (mathVirtualKeyboard) {
-          mathVirtualKeyboard.layouts = ['numbers', 'functions'];
-          mathVirtualKeyboard.editToolbar = 'none';
-          console.log('[DEBUG] Virtual keyboard configured');
-        }
-
-        // Add click handler to show the virtual keyboard
-        mf.addEventListener('click', () => {
-          console.log('[DEBUG] MathLive clicked, showing virtual keyboard');
-          if (mathVirtualKeyboard) {
-            mathVirtualKeyboard.show();
-          }
-        });
-
-        // Add focus handler to show the virtual keyboard
-        mf.addEventListener('focus', () => {
-          console.log('[DEBUG] MathLive focused, showing virtual keyboard');
-          if (mathVirtualKeyboard) {
-            mathVirtualKeyboard.show();
-          }
-        });
-
-        // Add touch handler for mobile devices
-        mf.addEventListener('touchstart', () => {
-          console.log('[DEBUG] MathLive touched, showing virtual keyboard');
-          if (mathVirtualKeyboard) {
-            mathVirtualKeyboard.show();
-          }
-        });
+        // Virtual keyboard configuration skipped for compatibility
 
         setIsMathLiveReady(true);
         console.log('[DEBUG] MathLive initialized successfully');

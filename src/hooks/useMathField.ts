@@ -44,13 +44,13 @@ export function useMathField() {
     f.focus();
 
     if (typeof f.insert === 'function') f.insert(snippet);
-    else mfRef.current!.executeCommand?.('insert', snippet);
+    else (mfRef.current as any)?.executeCommand?.(['insert', snippet] as any);
 
     // Jump into the first placeholder so the next click goes to denominator
-    const advanced = mfRef.current!.executeCommand?.('nextPlaceholder') === true;
+    const advanced = (mfRef.current as any)?.executeCommand?.('nextPlaceholder' as any) === true;
     if (advanced) resetStepOutFlag();
 
-    mfRef.current!.focus();
+    (mfRef.current as any)?.focus?.();
   }, [resetStepOutFlag]);
 
   const insertSnippet = useCallback((snippetKey: keyof typeof MATH_SNIPPETS) => {
@@ -136,8 +136,8 @@ export function useMathField() {
   }, []);
 
   const clear = useCallback(() => {
-    mfRef.current?.executeCommand?.('selectAll');
-    mfRef.current?.executeCommand?.('deleteSelection');
+    (mfRef.current as any)?.executeCommand?.('selectAll' as any);
+    (mfRef.current as any)?.executeCommand?.('deleteSelection' as any);
     resetStepOutFlag(); // Reset when clearing
   }, [resetStepOutFlag]);
 
