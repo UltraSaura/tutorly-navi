@@ -118,9 +118,11 @@ const convertPlainTextToLatex = (text: string): string => {
     .replace(/exp\((\d+(?:\.\d+)?)\)/g, '\\exp($1)')
     .replace(/abs\((\d+(?:\.\d+)?)\)/g, '\\abs($1)')
     
-    // Convert exponents (including variables like x^2)
-    .replace(/([a-zA-Z]+)\^(\d+)/g, '$1^{$2}')  // x^2 → x^{2}
-    .replace(/(\d+(?:\.\d+)?)\^(\d+(?:\.\d+)?)/g, '$1^{$2}')  // 2^3 → 2^{3}
+    // Convert exponents (including variables like x^2, handle negative and parenthesized exponents)
+    .replace(/([a-zA-Z]+)\^(-?\d+(?:\.\d+)?)/g, '$1^{$2}')  // x^2, x^-2 → x^{2}, x^{-2}
+    .replace(/([a-zA-Z]+)\^\(([^)]+)\)/g, '$1^{$2}')        // x^(2n) → x^{2n}
+    .replace(/(\d+(?:\.\d+)?)\^(-?\d+(?:\.\d+)?)/g, '$1^{$2}')  // 2^3, 2^-3 → 2^{3}, 2^{-3}
+    .replace(/(\d+(?:\.\d+)?)\^\(([^)]+)\)/g, '$1^{$2}')    // 2^(n+1) → 2^{n+1}
     
     // Convert fractions
     .replace(/(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)/g, '\\frac{$1}{$2}')

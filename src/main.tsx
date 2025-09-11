@@ -3,6 +3,7 @@ import "./i18n";
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import 'mathlive/static.css'    // MathLive core CSS for proper rendering
 import './styles/mathlive.css'  // Keep our custom keyboard styles
 
 const rootElement = document.getElementById("root");
