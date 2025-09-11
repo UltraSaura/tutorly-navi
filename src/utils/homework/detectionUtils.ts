@@ -31,8 +31,9 @@ export const detectHomeworkInMessage = (content: string): boolean => {
     /\d+\/\d+/,                                  // Fractions
     /\d+\s*%/,                                   // Percentages
     /\d+\s*\^\s*\d+/,                            // Exponents (like 5^2)
-    /sqrt|cos|sin|tan|log|exp/,                  // Mathematical functions
-    /\([0-9x\+\-\*\/•\^]+\)/,                   // Parentheses expressions (including bullet and exponents)
+    /sqrt|cos|sin|tan|log|ln|exp/,                  // Mathematical functions (plain)
+    /\\(sqrt|cos|sin|tan|log|ln|exp)/,             // LaTeX functions (with backslash)
+    /√\s*\(?\s*[0-9a-zA-Z]+/                      // Unicode square root (√9, √x, √(9))
   ].some(pattern => pattern.test(content));
 
   // Check for math word problems

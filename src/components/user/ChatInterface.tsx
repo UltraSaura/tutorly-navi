@@ -68,8 +68,9 @@ const ChatInterface = () => {
         const isHomework = detectHomeworkInMessage(lastMessage.content);
         const hasMultiple = hasMultipleExercises(lastMessage.content);
 
-        // Additional check for math expressions
-        const hasMathExpression = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(lastMessage.content);
+        // Additional check for math expressions (including roots)
+        const hasMathExpression = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(lastMessage.content)
+          || /√|\\sqrt|sqrt\(/.test(lastMessage.content);
         if (isHomework || hasMultiple || hasMathExpression) {
           console.log('Detected homework in message (single or multiple):', lastMessage.content);
           processHomeworkFromChat(lastMessage.content);
