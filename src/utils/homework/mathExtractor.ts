@@ -26,6 +26,14 @@ const mathPatterns = [
   /(exp\(\d+(?:\.\d+)?\))\s*=\s*(\d+(?:\.\d+)?)/,
   /(abs\(\d+(?:\.\d+)?\))\s*=\s*(\d+(?:\.\d+)?)/,
   
+  // Fallback patterns for functions without parentheses
+  /(sqrt\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  /(sin\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  /(cos\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  /(tan\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  /(log\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  /(ln\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
+  
   // Mathematical functions without equations (standalone)
   /(sqrt\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)/,
   /(sin\(\d+(?:\.\d+)?\)[\+\-\*\/•\^]\d+(?:\.\d+)?)/,
@@ -70,10 +78,15 @@ const mathPatterns = [
 export const extractMathProblem = (message: string): { question: string; answer: string } | null => {
   console.log('[mathExtractor] Processing message:', message);
   
+  // Convert LaTeX to plain text for pattern matching
+  const processedMessage = message.includes('√') ? 
+    message.replace(/√([0-9]+(?:\.[0-9]+)?)/g, 'sqrt($1)') : message;
+  console.log('[mathExtractor] Processed message:', processedMessage);
+  
   // Try each math pattern
   for (let i = 0; i < mathPatterns.length; i++) {
     const pattern = mathPatterns[i];
-    const match = message.match(pattern);
+    const match = processedMessage.match(pattern);
     if (match) {
       console.log(`[mathExtractor] Pattern ${i} matched:`, { 
         pattern: pattern.toString(), 

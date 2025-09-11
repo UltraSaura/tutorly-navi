@@ -33,8 +33,10 @@ export const latexToPlainText = (latex: string): string => {
     .replace(/√\{([^}]+)\}/g, 'sqrt($1)')
     .replace(/√([0-9]+(?:\.[0-9]+)?)/g, 'sqrt($1)')
     .replace(/√\(([^)]+)\)/g, 'sqrt($1)')
-    // Handle direct Unicode square root without delimiters
-    .replace(/√/g, 'sqrt')
+    // Handle direct Unicode square root with following content
+    .replace(/√([a-zA-Z0-9]+)/g, 'sqrt($1)')
+    // Handle standalone Unicode square root
+    .replace(/√/g, 'sqrt()')
     
     // Handle exponents
     .replace(/\^\{([^}]+)\}/g, '^$1')  // Convert ^{2} to ^2
