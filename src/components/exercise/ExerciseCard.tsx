@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Book, FlaskConical, Languages, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { MathRenderer } from '@/components/math/MathRenderer';
+import { processMathContentForDisplay } from '@/utils/mathDisplayProcessor';
 
 type SubjectType = 'math' | 'science' | 'english';
 type StatusType = 'correct' | 'incorrect' | 'unanswered';
@@ -114,22 +116,45 @@ const ExerciseCard = ({
         
         <div className="flex-1 min-w-0">
           {/* Title/Prompt */}
-          <h3 
+          <div 
             id={`exercise-${id}-title`}
             className="text-body font-semibold text-neutral-text mb-3 line-clamp-2"
             title={prompt}
           >
-            {prompt}
-          </h3>
+            {(() => {
+              const processedPrompt = processMathContentForDisplay(prompt);
+              return processedPrompt.isMath ? (
+                <MathRenderer 
+                  latex={processedPrompt.processed} 
+                  inline={true}
+                  className="inline-math"
+                />
+              ) : (
+                prompt
+              );
+            })()}
+          </div>
           
           {/* User Answer */}
           {userAnswer && (
             <div className="mb-3">
               <Badge 
                 variant="secondary" 
-                className="px-3 py-1 bg-neutral-bg text-neutral-muted"
+                className="px-3 py-1 bg-neutral-bg text-neutral-muted flex items-center gap-1"
               >
-                {t('exercise.yourAnswer')}: {userAnswer}
+                <span>{t('exercise.yourAnswer')}:</span>
+                {(() => {
+                  const processedAnswer = processMathContentForDisplay(userAnswer);
+                  return processedAnswer.isMath ? (
+                    <MathRenderer 
+                      latex={processedAnswer.processed} 
+                      inline={true}
+                      className="inline-math"
+                    />
+                  ) : (
+                    <span>{userAnswer}</span>
+                  );
+                })()}
               </Badge>
             </div>
           )}
