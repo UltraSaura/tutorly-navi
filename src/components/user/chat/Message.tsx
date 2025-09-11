@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { File, Image, Calculator, FlaskConical, BookOpen, ChevronDown, ChevronRight } from 'lucide-react';
 import { Message as MessageType } from '@/types/chat';
 import { Button } from '@/components/ui/button';
+import { MathRenderer } from '@/components/math/MathRenderer';
+import { processMathContentForDisplay } from '@/utils/mathDisplayProcessor';
 
 const Message = ({ 
   role, 
@@ -61,9 +63,22 @@ const Message = ({
           </div>
         );
       default:
+        // Process content for mathematical expressions
+        const processedContent = processMathContentForDisplay(content);
+        
         return (
           <div>
-            <p className="text-sm">{content}</p>
+            {processedContent.isMath ? (
+              <div className="text-sm">
+                <MathRenderer 
+                  latex={processedContent.processed} 
+                  inline={false}
+                  className="math-content"
+                />
+              </div>
+            ) : (
+              <p className="text-sm">{content}</p>
+            )}
             {explanation && role === 'assistant' && (
               <div className="mt-3 pt-3 border-t border-neutral-border">
                 <Button

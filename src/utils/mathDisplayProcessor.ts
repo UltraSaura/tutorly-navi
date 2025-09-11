@@ -26,7 +26,9 @@ export const processMathContentForDisplay = (content: string): ProcessedMathCont
   
   // Check if content contains mathematical patterns
   const mathPatterns = [
+    /√\s*\(?\s*[0-9a-zA-Z]+\)?/g,  // Unicode square root (√9, √x, √(9))
     /sqrt\(\d+\)/g,
+    /sqrt\d+/g,                      // sqrt without parentheses (sqrt9)
     /sin\(\d+\)/g,
     /cos\(\d+\)/g,
     /tan\(\d+\)/g,
@@ -66,8 +68,12 @@ export const processMathContentForDisplay = (content: string): ProcessedMathCont
  */
 const convertPlainTextToLatex = (text: string): string => {
   return text
+    // Convert Unicode square root symbols
+    .replace(/√\s*\(?\s*([0-9a-zA-Z]+)\)?/g, '\\sqrt{$1}')
+    
     // Convert function calls
-    .replace(/sqrt\((\d+(?:\.\d+)?)\)/g, '\\sqrt{$1}')
+    .replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}')
+    .replace(/sqrt(\d+(?:\.\d+)?)/g, '\\sqrt{$1}')  // sqrt without parentheses
     .replace(/sin\((\d+(?:\.\d+)?)\)/g, '\\sin($1)')
     .replace(/cos\((\d+(?:\.\d+)?)\)/g, '\\cos($1)')
     .replace(/tan\((\d+(?:\.\d+)?)\)/g, '\\tan($1)')
