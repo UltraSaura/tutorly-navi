@@ -8,6 +8,11 @@ type Props = {
   onToggleAdvanced: () => void;
 };
 
+const keepFocus = (e: React.SyntheticEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+};
+
 // This component uses the backspace prop function passed from parent
 
 export default function MathPad({ insert, next, backspace, showAdvanced, onToggleAdvanced }: Props) {
