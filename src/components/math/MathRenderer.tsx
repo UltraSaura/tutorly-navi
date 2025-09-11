@@ -18,35 +18,47 @@ export const MathRenderer = ({
   useEffect(() => {
     const renderMath = async () => {
       try {
-        const { renderMathInElement } = await import('mathlive');
+        const mathlive = await import('mathlive');
         
         if (renderRef.current) {
           // Normalize LaTeX for proper rendering
           const normalizedLatex = normalizeLatexForDisplay(latex);
-          
-          // Check if already has proper delimiters
-          const hasDelimiters = (text: string): boolean => {
-            return (
-              (text.startsWith('$$') && text.endsWith('$$')) ||
-              (text.startsWith('$') && text.endsWith('$') && !text.startsWith('$$')) ||
-              (text.startsWith('\\[') && text.endsWith('\\]')) ||
-              (text.startsWith('\\(') && text.endsWith('\\)'))
-            );
+
+          // Strip common math delimiters to get raw LaTeX
+          const stripDelimiters = (text: string): string => {
+            const s = text.trim();
+            if (s.startsWith('$$') && s.endsWith('$$')) return s.slice(2, -2).trim();
+            if (s.startsWith('$') && s.endsWith('$') && !s.startsWith('$$')) return s.slice(1, -1).trim();
+            if (s.startsWith('\\[') && s.endsWith('\\]')) return s.slice(2, -2).trim();
+            if (s.startsWith('\\(') && s.endsWith('\\)')) return s.slice(2, -2).trim();
+            return s;
           };
-          
-          // Wrap latex in delimiters if not already present
-          const mathContent = hasDelimiters(normalizedLatex)
-            ? normalizedLatex 
-            : inline ? `$${normalizedLatex}$` : `$$${normalizedLatex}$$`;
-          
-          console.log('[MathRenderer] Rendering math:', {
-            original: latex,
-            normalized: normalizedLatex,
-            mathContent: mathContent
-          });
-          
-          renderRef.current.innerHTML = mathContent;
-          renderMathInElement(renderRef.current);
+
+          const baseLatex = stripDelimiters(normalizedLatex);
+
+          // Prefer direct conversion to markup so symbols like √ render correctly
+          let markup = '';
+          try {
+            const anyMathlive = mathlive as any;
+            if (anyMathlive.convertLatexToMarkup) {
+              markup = anyMathlive.convertLatexToMarkup(baseLatex);
+            }
+          } catch (e) {
+            // ignore, will fallback below
+          }
+
+          if (markup) {
+            renderRef.current.innerHTML = markup;
+          } else if ((mathlive as any).renderMathInElement) {
+            // Fallback: use delimiter scanning
+            const content = inline ? `$${baseLatex}$` : `$$${baseLatex}$$`;
+            renderRef.current.innerHTML = content;
+            (mathlive as any).renderMathInElement(renderRef.current);
+          } else {
+            // Ultimate fallback to plain text
+            renderRef.current.textContent = latex;
+          }
+
         }
       } catch (error) {
         console.error('Failed to render math:', error);
