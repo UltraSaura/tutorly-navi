@@ -38,6 +38,10 @@ export const processMathContentForDisplay = (content: string): ProcessedMathCont
     /abs\(\d+\)/g,
     /\d+\^\d+/g,
     /\d+\/\d+/g,
+    /(\d+(?:\.\d+)?)pow(\d+(?:\.\d+)?)/g,  // 2pow2
+    /(\d+(?:\.\d+)?)\s+pow\s+(\d+(?:\.\d+)?)/g,  // 2 pow 2
+    /pow\([^,]+,\s*[^)]+\)/g,        // pow(2,3)
+    /([a-zA-Z]+)\^(\d+)/g,           // x^2, y^3
     /[+\-*/=()^]/g,
     /\d+\.\d+/g
   ];
@@ -71,6 +75,11 @@ const convertPlainTextToLatex = (text: string): string => {
     // Convert Unicode square root symbols
     .replace(/√\s*\(?\s*([0-9a-zA-Z]+)\)?/g, '\\sqrt{$1}')
     
+    // Convert power expressions (do these before other exponent rules)
+    .replace(/(\d+(?:\.\d+)?)pow(\d+(?:\.\d+)?)/g, '$1^{$2}')  // 2pow2 → 2^{2}
+    .replace(/(\d+(?:\.\d+)?)\s+pow\s+(\d+(?:\.\d+)?)/g, '$1^{$2}')  // 2 pow 2 → 2^{2}
+    .replace(/pow\(([^,]+),\s*([^)]+)\)/g, '$1^{$2}')  // pow(2,3) → 2^{3}
+    
     // Convert function calls
     .replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}')
     .replace(/sqrt(\d+(?:\.\d+)?)/g, '\\sqrt{$1}')  // sqrt without parentheses
@@ -82,8 +91,9 @@ const convertPlainTextToLatex = (text: string): string => {
     .replace(/exp\((\d+(?:\.\d+)?)\)/g, '\\exp($1)')
     .replace(/abs\((\d+(?:\.\d+)?)\)/g, '\\abs($1)')
     
-    // Convert exponents
-    .replace(/(\d+(?:\.\d+)?)\^(\d+(?:\.\d+)?)/g, '$1^{$2}')
+    // Convert exponents (including variables like x^2)
+    .replace(/([a-zA-Z]+)\^(\d+)/g, '$1^{$2}')  // x^2 → x^{2}
+    .replace(/(\d+(?:\.\d+)?)\^(\d+(?:\.\d+)?)/g, '$1^{$2}')  // 2^3 → 2^{3}
     
     // Convert fractions
     .replace(/(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)/g, '\\frac{$1}{$2}')
@@ -99,4 +109,4 @@ const convertPlainTextToLatex = (text: string): string => {
     .replace(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/g, '$1 - $2 = $3')
     .replace(/(\d+(?:\.\d+)?)\s*\*\s*(\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/g, '$1 \\cdot $2 = $3')
     .replace(/(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/g, '\\frac{$1}{$2} = $3');
-}; 
+};
