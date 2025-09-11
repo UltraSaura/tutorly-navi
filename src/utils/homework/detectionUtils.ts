@@ -30,7 +30,10 @@ export const detectHomeworkInMessage = (content: string): boolean => {
     /[0-9x]+\s*[\+\-\*\/•]\s*[0-9x]+\s*=/,       // Algebraic equations (including bullet)
     /\d+\/\d+/,                                  // Fractions
     /\d+\s*%/,                                   // Percentages
-    /\d+\s*\^\s*\d+/,                            // Exponents (like 5^2)
+    /\d+\s*\^\s*\d+/,                            // Numeric exponents (like 5^2)
+    /[a-zA-Z]+\s*\^\s*\d+/,                      // Variable exponents (like x^2)
+    /\d+[²³⁴⁵⁶⁷⁸⁹⁰¹]/,                        // Unicode superscripts (2², 3³, etc.)
+    /[a-zA-Z]+[²³⁴⁵⁶⁷⁸⁹⁰¹]/,                   // Variable with Unicode superscripts (x², y³, etc.)
     /sqrt|cos|sin|tan|log|ln|exp/,                  // Mathematical functions (plain)
     /\\(sqrt|cos|sin|tan|log|ln|exp)/,             // LaTeX functions (with backslash)
     /√\s*\(?\s*[0-9a-zA-Z]+/                      // Unicode square root (√9, √x, √(9))
@@ -43,7 +46,12 @@ export const detectHomeworkInMessage = (content: string): boolean => {
   const hasKeywords = homeworkKeywords.some(keyword => contentLower.includes(keyword));
 
   // Check for mathematical patterns - includes bullet multiplication and exponents
-  const hasMathPattern = /\d+\s*[\+\-\*\/•\^]\s*\d+\s*=/.test(content);
+  const hasMathPattern = [
+    /\d+\s*[\+\-\*\/•\^]\s*\d+\s*=/,              // Numeric expressions with equals
+    /[a-zA-Z]+\s*\^\s*\d+/,                       // Variable exponents (x^2)
+    /\d+[²³⁴⁵⁶⁷⁸⁹⁰¹]/,                          // Unicode superscripts (2²)
+    /[a-zA-Z]+[²³⁴⁵⁶⁷⁸⁹⁰¹]/                     // Variable with Unicode superscripts (x²)
+  ].some(pattern => pattern.test(content));
 
   // Enhanced detection for likely homework content
   const likelyHomework = /\b(solve|calculate|find|compute)\b.+\b(equation|problem|expression)\b/i.test(content);

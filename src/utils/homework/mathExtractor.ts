@@ -68,6 +68,15 @@ const mathPatterns = [
   /(\d+\.\d+\s*[\+\-\*\/•]\s*\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)/,
   // Algebraic equations with decimal support - includes bullet multiplication and exponents
   /([0-9x\+\-\*\/•\(\)\.\^]+)\s*=\s*([0-9x\+\-\*\/•\(\)\.\^]+)/,
+  
+  // Standalone mathematical expressions (no equals sign) - NEW PATTERNS
+  /([a-zA-Z]+\^\d+)/,                             // Variable exponents (x^2, y^3)
+  /(\d+[²³⁴⁵⁶⁷⁸⁹⁰¹])/,                         // Unicode superscripts (2², 3³)
+  /([a-zA-Z]+[²³⁴⁵⁶⁷⁸⁹⁰¹])/,                  // Variable with Unicode superscripts (x², y³)
+  /(\d+\^\d+)/,                                 // Numeric exponents (2^3, 5^2)
+  /(sqrt\(\d+(?:\.\d+)?\))/,                    // Square root functions
+  /(√\s*\(?\s*\d+(?:\.\d+)?\)?)/,              // Unicode square roots
+  
   // Word problems with decimal numbers
   /(If|What|How|Calculate|Solve|Find).*?(\d+(?:\.\d+)?).*?[?].*?(answer|solution|result):?\s*([0-9\.\/\^]+)/i,
 ];
@@ -78,9 +87,19 @@ const mathPatterns = [
 export const extractMathProblem = (message: string): { question: string; answer: string } | null => {
   console.log('[mathExtractor] Processing message:', message);
   
-  // Convert LaTeX to plain text for pattern matching
-  const processedMessage = message.includes('√') ? 
-    message.replace(/√([0-9]+(?:\.[0-9]+)?)/g, 'sqrt($1)') : message;
+  // Convert Unicode superscripts and LaTeX to plain text for pattern matching
+  const processedMessage = message
+    .replace(/√([0-9]+(?:\.[0-9]+)?)/g, 'sqrt($1)')
+    .replace(/²/g, '^2')
+    .replace(/³/g, '^3')
+    .replace(/⁴/g, '^4')
+    .replace(/⁵/g, '^5')
+    .replace(/⁶/g, '^6')
+    .replace(/⁷/g, '^7')
+    .replace(/⁸/g, '^8')
+    .replace(/⁹/g, '^9')
+    .replace(/⁰/g, '^0')
+    .replace(/¹/g, '^1');
   console.log('[mathExtractor] Processed message:', processedMessage);
   
   // Try each math pattern
@@ -103,6 +122,13 @@ export const extractMathProblem = (message: string): { question: string; answer:
           answer: match[4]?.trim() || ''
         };
       }
+      // For standalone expressions (no equals sign)
+      if (!match[2]) {
+        return {
+          question: match[1]?.trim() || '',
+          answer: '' // No answer provided for standalone expressions
+        };
+      }
       // For equations and arithmetic
       return {
         question: match[1]?.trim() || '',
@@ -112,11 +138,29 @@ export const extractMathProblem = (message: string): { question: string; answer:
   }
   
   // Check for simple equation pattern as fallback
-  const simpleMatch = message.match(/(.+?)\s*=\s*(.+)/);
+  const simpleMatch = processedMessage.match(/(.+?)\s*=\s*(.+)/);
   if (simpleMatch) {
     return {
       question: simpleMatch[1]?.trim() || '',
       answer: simpleMatch[2]?.trim() || ''
+    };
+  }
+  
+  // Final fallback: treat entire message as standalone math expression if it contains math patterns
+  const standalonePatterns = [
+    /[a-zA-Z]+\^\d+/,        // Variable exponents
+    /\d+\^\d+/,              // Numeric exponents  
+    /\d+[²³⁴⁵⁶⁷⁸⁹⁰¹]/,     // Unicode superscripts
+    /[a-zA-Z]+[²³⁴⁵⁶⁷⁸⁹⁰¹]/, // Variable with Unicode superscripts
+    /sqrt\(/,                // Square root functions
+    /√/                      // Unicode square root
+  ];
+  
+  const hasStandaloneMath = standalonePatterns.some(pattern => pattern.test(message));
+  if (hasStandaloneMath) {
+    return {
+      question: message.trim(),
+      answer: ''
     };
   }
   

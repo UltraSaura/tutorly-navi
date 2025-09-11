@@ -36,12 +36,15 @@ export const processMathContentForDisplay = (content: string): ProcessedMathCont
     /ln\(\d+\)/g,
     /exp\(\d+\)/g,
     /abs\(\d+\)/g,
-    /\d+\^\d+/g,
+    /\d+\^\d+/g,                     // Numeric exponents (2^3)
+    /[a-zA-Z]+\^\d+/g,              // Variable exponents (x^2, y^3)
+    /\d+[²³⁴⁵⁶⁷⁸⁹⁰¹]/g,           // Unicode superscripts (2², 3³)
+    /[a-zA-Z]+[²³⁴⁵⁶⁷⁸⁹⁰¹]/g,     // Variable with Unicode superscripts (x², y³)
+    /[₀₁₂₃₄₅₆₇₈₉]/g,              // Unicode subscripts (x₁, H₂O)
     /\d+\/\d+/g,
     /(\d+(?:\.\d+)?)pow(\d+(?:\.\d+)?)/g,  // 2pow2
     /(\d+(?:\.\d+)?)\s+pow\s+(\d+(?:\.\d+)?)/g,  // 2 pow 2
     /pow\([^,]+,\s*[^)]+\)/g,        // pow(2,3)
-    /([a-zA-Z]+)\^(\d+)/g,           // x^2, y^3
     /[+\-*/=()^]/g,
     /\d+\.\d+/g
   ];
@@ -74,6 +77,30 @@ const convertPlainTextToLatex = (text: string): string => {
   return text
     // Convert Unicode square root symbols
     .replace(/√\s*\(?\s*([0-9a-zA-Z]+)\)?/g, '\\sqrt{$1}')
+    
+    // Convert Unicode superscripts to LaTeX (do this first)
+    .replace(/²/g, '^{2}')
+    .replace(/³/g, '^{3}')
+    .replace(/⁴/g, '^{4}')
+    .replace(/⁵/g, '^{5}')
+    .replace(/⁶/g, '^{6}')
+    .replace(/⁷/g, '^{7}')
+    .replace(/⁸/g, '^{8}')
+    .replace(/⁹/g, '^{9}')
+    .replace(/⁰/g, '^{0}')
+    .replace(/¹/g, '^{1}')
+    
+    // Convert Unicode subscripts to LaTeX
+    .replace(/₀/g, '_{0}')
+    .replace(/₁/g, '_{1}')
+    .replace(/₂/g, '_{2}')
+    .replace(/₃/g, '_{3}')
+    .replace(/₄/g, '_{4}')
+    .replace(/₅/g, '_{5}')
+    .replace(/₆/g, '_{6}')
+    .replace(/₇/g, '_{7}')
+    .replace(/₈/g, '_{8}')
+    .replace(/₉/g, '_{9}')
     
     // Convert power expressions (do these before other exponent rules)
     .replace(/(\d+(?:\.\d+)?)pow(\d+(?:\.\d+)?)/g, '$1^{$2}')  // 2pow2 → 2^{2}
