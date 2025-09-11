@@ -24,8 +24,18 @@ export const MathRenderer = ({
           // Normalize LaTeX for proper rendering
           const normalizedLatex = normalizeLatexForDisplay(latex);
           
+          // Check if already has proper delimiters
+          const hasDelimiters = (text: string): boolean => {
+            return (
+              (text.startsWith('$$') && text.endsWith('$$')) ||
+              (text.startsWith('$') && text.endsWith('$') && !text.startsWith('$$')) ||
+              (text.startsWith('\\[') && text.endsWith('\\]')) ||
+              (text.startsWith('\\(') && text.endsWith('\\)'))
+            );
+          };
+          
           // Wrap latex in delimiters if not already present
-          const mathContent = normalizedLatex.startsWith('$') || normalizedLatex.startsWith('\\') 
+          const mathContent = hasDelimiters(normalizedLatex)
             ? normalizedLatex 
             : inline ? `$${normalizedLatex}$` : `$$${normalizedLatex}$$`;
           
