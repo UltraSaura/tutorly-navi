@@ -111,78 +111,49 @@ const ExerciseList = ({
   
   return (
     <div className="flex flex-col h-full">
-      {/* Enhanced Header Card */}
-      <div className="bg-gradient-to-br from-brand-tint to-brand-tint/50 rounded-card mx-4 mt-4 p-6">
-        {/* Title Row with Back Arrow */}
-        <div className="flex items-center gap-3 mb-6">
-          <button className="p-2 hover:bg-white/50 rounded-button transition-colors">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="m15 18-6-6 6-6"/>
-            </svg>
-          </button>
-          <h1 className="text-h2 font-semibold text-neutral-text">
-            {t('exercise.exerciseList')}
-          </h1>
-          {exercises.length > 0 && onClearExercises && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClearExercises}
-              className="text-neutral-muted hover:text-neutral-text ml-auto"
-            >
-              <Trash2 size={16} />
-            </Button>
-          )}
-        </div>
-
-        {/* Grade Progress Section */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-body font-medium text-neutral-text">
-              {t('grades.overallGrade')}
-            </span>
-            <span className="text-h2 font-bold text-brand-primary">
-              {grade.percentage}%
-            </span>
+      {/* Compact 3-Line Header */}
+      <div className="px-6 py-4 border-b border-neutral-border bg-neutral-surface">
+        <div className="max-w-6xl mx-auto space-y-2">
+          {/* Line 1: Title */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-h2 font-bold text-neutral-text">{t('exercise.exerciseList')}</h1>
+            {exercises.length > 0 && onClearExercises && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClearExercises}
+                className="text-neutral-muted hover:text-neutral-text"
+              >
+                <Trash2 size={16} />
+              </Button>
+            )}
           </div>
-          <div className="relative">
-            <div className="h-4 bg-white/60 rounded-chip overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-brand-primary to-blue-500 transition-all duration-700 ease-out rounded-chip"
-                style={{ width: `${grade.percentage}%` }}
-              />
-            </div>
-            <div className="absolute right-2 top-1/2 -translate-y-1/2">
-              <span className="text-caption font-medium text-white bg-brand-primary/80 px-2 py-0.5 rounded-chip">
-                {grade.letter}
+          
+          {/* Line 2: Motivation Row (conditional) */}
+          <div className="flex items-center gap-3">
+            <XpChip 
+              level={userStats.currentLevel} 
+              xp={userStats.currentXp}
+            />
+            <CompactStreakChip 
+              days={userStats.streakDays} 
+              active={userStats.streakActive} 
+            />
+            <CompactCoinChip coins={userStats.coins} />
+          </div>
+          
+          {/* Line 3: Performance Summary */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <GraduationCap size={16} className="text-neutral-muted" />
+              <span className="text-body text-neutral-muted">{t('grades.overallGrade')}:</span>
+              <span className={cn("text-body font-semibold", getGradeColor())}>
+                {grade.percentage}% ({grade.letter})
               </span>
             </div>
-          </div>
-        </div>
-
-        {/* XP Progress Section */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-body text-neutral-text">XP {userStats.currentXp}/500</span>
-            <span className="text-body font-medium text-neutral-text">{t('game.level')} {userStats.currentLevel}</span>
-          </div>
-          <div className="h-2 bg-white/60 rounded-chip overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-game-xp to-purple-500 transition-all duration-500 ease-out rounded-chip"
-              style={{ width: `${(userStats.currentXp / 500) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Achievement Badges */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-white/80 rounded-button px-4 py-2">
-            <span className="text-lg">🚀</span>
-            <span className="text-body font-medium text-neutral-text">+30 XP</span>
-          </div>
-          <div className="flex items-center gap-2 bg-white/80 rounded-button px-4 py-2">
-            <span className="text-lg">🔥</span>
-            <span className="text-body font-medium text-neutral-text">Day {userStats.streakDays} Streak!</span>
+            <div className="text-body text-neutral-muted">
+              {correctExercises}/{totalExercises} {t('exercise.correct')}
+            </div>
           </div>
         </div>
       </div>
