@@ -6,10 +6,24 @@ export function detectExercise(message: string): boolean {
   const exerciseKeywords = ['solve', 'calculate', 'find', 'homework', 'exercise', 'problem', 'question', 'assignment'];
   const lowerMessage = message.toLowerCase();
   
-  // Add detection for mathematical patterns
-  const mathPattern = /\d+\s*[\+\-\*\/]\s*\d+\s*=/.test(message);
+  // Check for keyword-based detection first
+  const hasKeywords = exerciseKeywords.some(keyword => lowerMessage.includes(keyword));
   
-  return exerciseKeywords.some(keyword => lowerMessage.includes(keyword)) || mathPattern;
+  // Enhanced math pattern detection (includes expressions with and without equals)
+  const mathPatterns = [
+    /\d+\s*[\+\-\*\/•]\s*\d+\s*=/,                    // Equations with equals
+    /\d+\s*[\+\-\*\/•]\s*\d+(?!\s*=)/,                // Expressions without equals (like "2+2")
+    /\d+\/\d+/,                                        // Fractions
+    /\d+\s*\^\s*\d+/,                                  // Exponents
+    /[a-zA-Z]+\s*\^\s*\d+/,                           // Variable exponents (x^2)
+    /\d+[²³⁴⁵⁶⁷⁸⁹⁰¹]/,                             // Unicode superscripts
+    /sqrt|cos|sin|tan|log|ln|exp/,                     // Mathematical functions
+    /√\s*\(?\s*[0-9a-zA-Z]+/                          // Unicode square root
+  ];
+  
+  const hasMathPattern = mathPatterns.some(pattern => pattern.test(message));
+  
+  return hasKeywords || hasMathPattern;
 }
 
 // Helper function to get model configuration based on modelId

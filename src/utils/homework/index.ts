@@ -86,11 +86,19 @@ export const extractHomeworkFromMessage = (message: string): { question: string,
       };
     }
 
-    // Last resort: split in half (legacy fallback)
-    const midpoint = Math.floor(processedMessage.length / 2);
+    // For simple math expressions without clear answers, return as unanswered question
+    if (/\d+\s*[\+\-\*\/•]\s*\d+/.test(processedMessage) || /^\d+$/.test(processedMessage.trim())) {
+      console.log('[homework extraction] Treating as unanswered math expression:', processedMessage);
+      return {
+        question: processedMessage.trim(),
+        answer: ""
+      };
+    }
+
+    // Last resort: create meaningful question from the content
     return {
-      question: processedMessage.substring(0, midpoint).trim(),
-      answer: processedMessage.substring(midpoint).trim()
+      question: processedMessage.trim(),
+      answer: ""
     };
   }
   
