@@ -165,11 +165,11 @@ const ExerciseList = ({
             {exercises.length === 0 ? (
               /* Empty State */
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                <div className="w-48 h-48 mb-6 flex items-center justify-center">
+                <div className="w-full mb-8 flex items-center justify-center">
                   <img 
                     src="/images/student-illustration.png" 
                     alt="Student with laptop and books"
-                    className="w-full h-full object-contain"
+                    className="w-full max-w-2xl h-auto object-contain"
                   />
                 </div>
                 
