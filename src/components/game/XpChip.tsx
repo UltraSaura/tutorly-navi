@@ -16,7 +16,7 @@ const XpChip = ({ level, xp, className }: XpChipProps) => {
     <Badge 
       variant="secondary"
       className={cn(
-        "bg-[#606dfc] text-white border-0 px-2 py-1 text-xs font-medium",
+        "bg-brand-tint text-brand-primary border-0 px-2 py-1 text-xs font-medium",
         className
       )}
     >

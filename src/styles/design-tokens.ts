@@ -3,8 +3,7 @@ export const designTokens = {
     brand: {
       primary: "#2F6BFF",
       navy: "#1E3A8A", 
-      tint: "#EEF4FF",
-      xp: "#606dfc"
+      tint: "#EEF4FF"
     },
     game: {
       xp: "#7C3AED",
