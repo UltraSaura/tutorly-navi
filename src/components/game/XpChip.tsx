@@ -16,9 +16,10 @@ const XpChip = ({ level, xp, className }: XpChipProps) => {
     <Badge 
       variant="secondary"
       className={cn(
-        "bg-brand-tint text-brand-primary border-0 px-2 py-1 text-xs font-medium",
+        "border-0 px-2 py-1 text-xs font-medium text-white",
         className
       )}
+      style={{ backgroundColor: '#606dfc' }}
     >
       ⭐ {t('game.level')} {level} · {xp} {t('game.xp')}
     </Badge>
