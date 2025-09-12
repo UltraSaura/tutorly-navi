@@ -165,8 +165,12 @@ const ExerciseList = ({
             {exercises.length === 0 ? (
               /* Empty State */
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                <div className="w-48 h-48 mb-6 bg-neutral-bg rounded-card flex items-center justify-center">
-                  <BookOpen size={80} className="text-neutral-muted" />
+                <div className="w-48 h-48 mb-6 flex items-center justify-center">
+                  <img 
+                    src="/images/student-illustration.png" 
+                    alt="Student with laptop and books"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 
                 <h3 className="text-h2 font-bold text-neutral-text mb-3">
