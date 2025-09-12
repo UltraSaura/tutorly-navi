@@ -186,6 +186,11 @@ const ChatInterface = () => {
           toggleExerciseExpansion={toggleExerciseExpansion}
           onSubmitAnswer={submitAnswer}
           onClearExercises={clearExercises}
+          inputMessage={inputMessage}
+          onInputChange={setInputMessage}
+          onSubmit={handleSendMessage}
+          isLoading={isLoading}
+          onAddExercise={() => setShowUploadSheet(true)}
         />
       </div>
 

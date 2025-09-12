@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { useExercises } from '@/hooks/useExercises';
 import ExerciseList from './chat/ExerciseList';
 import { BarChart3, GraduationCap } from 'lucide-react';
@@ -8,6 +9,18 @@ import { useLanguage } from '@/context/SimpleLanguageContext';
 const GradeDashboard = () => {
   const { exercises, grade, toggleExerciseExpansion } = useExercises();
   const { t } = useLanguage();
+  const [inputMessage, setInputMessage] = useState('');
+
+  const handleSubmit = () => {
+    // Placeholder - could redirect to chat interface or show a message
+    console.log('Submit from dashboard:', inputMessage);
+    setInputMessage('');
+  };
+
+  const handleAddExercise = () => {
+    // Placeholder - could redirect to chat interface 
+    console.log('Add exercise from dashboard');
+  };
 
   const totalExercises = exercises.length;
   const completedExercises = exercises.filter(ex => ex.isCorrect !== undefined).length;
@@ -72,6 +85,10 @@ const GradeDashboard = () => {
             exercises={exercises}
             grade={grade}
             toggleExerciseExpansion={toggleExerciseExpansion}
+            inputMessage={inputMessage}
+            onInputChange={setInputMessage}
+            onSubmit={handleSubmit}
+            onAddExercise={handleAddExercise}
           />
         </CardContent>
       </Card>

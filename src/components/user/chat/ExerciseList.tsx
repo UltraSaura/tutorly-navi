@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { BookOpen, GraduationCap, Trash2 } from 'lucide-react';
+import { GraduationCap, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import ExerciseCard from '@/components/exercise/ExerciseCard';
@@ -8,8 +8,8 @@ import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { TwoCards } from '@/features/explanations/TwoCards';
 import { useUserContext } from '@/hooks/useUserContext';
 import XpChip from '@/components/game/XpChip';
-import CompactStreakChip from '@/components/game/CompactStreakChip';
 import CompactCoinChip from '@/components/game/CompactCoinChip';
+import EmptyExerciseState from './EmptyExerciseState';
 import { Exercise as ExerciseType } from '@/types/chat';
 import { useTranslation } from 'react-i18next'; // <-- Updated import
 import { cn } from '@/lib/utils';
@@ -23,6 +23,11 @@ interface ExerciseListProps {
   toggleExerciseExpansion: (id: string) => void;
   onSubmitAnswer?: (exerciseId: string, answer: string) => void;
   onClearExercises?: () => void;
+  inputMessage: string;
+  onInputChange: (value: string) => void;
+  onSubmit: () => void;
+  isLoading?: boolean;
+  onAddExercise?: () => void;
 }
 
 // Utility function to map language codes to full names for AI
@@ -39,7 +44,12 @@ const ExerciseList = ({
   grade,
   toggleExerciseExpansion,
   onSubmitAnswer,
-  onClearExercises
+  onClearExercises,
+  inputMessage,
+  onInputChange,
+  onSubmit,
+  isLoading,
+  onAddExercise
 }: ExerciseListProps) => {
   const { t, i18n } = useTranslation(); // <-- Updated hook usage
   const teaching = useTwoCardTeaching();
@@ -111,74 +121,63 @@ const ExerciseList = ({
   
   return (
     <div className="flex flex-col h-full">
-      {/* Compact 3-Line Header */}
-      <div className="px-6 py-4 border-b border-neutral-border bg-neutral-surface">
-        <div className="max-w-6xl mx-auto space-y-2">
-          {/* Line 1: Title */}
-          <div className="flex items-center justify-between">
-            <h1 className="text-h2 font-bold text-neutral-text">{t('exercise.exerciseList')}</h1>
-            {exercises.length > 0 && onClearExercises && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClearExercises}
-                className="text-neutral-muted hover:text-neutral-text"
-              >
-                <Trash2 size={16} />
-              </Button>
-            )}
-          </div>
-          
-          {/* Line 2: Motivation Row (conditional) */}
-          <div className="flex items-center gap-3">
-            <XpChip 
-              level={userStats.currentLevel} 
-              xp={userStats.currentXp}
-            />
-            <CompactStreakChip 
-              days={userStats.streakDays} 
-              active={userStats.streakActive} 
-            />
-            <CompactCoinChip coins={userStats.coins} />
-          </div>
-          
-          {/* Line 3: Performance Summary */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <GraduationCap size={16} className="text-neutral-muted" />
-              <span className="text-body text-neutral-muted">{t('grades.overallGrade')}:</span>
-              <span className={cn("text-body font-semibold", getGradeColor())}>
-                {grade.percentage}% ({grade.letter})
-              </span>
+      {/* Simplified Header - Only show when exercises exist */}
+      {exercises.length > 0 && (
+        <div className="px-6 py-4 border-b border-neutral-border bg-neutral-surface">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <XpChip 
+                  level={userStats.currentLevel} 
+                  xp={userStats.currentXp}
+                />
+                <CompactCoinChip coins={userStats.coins} />
+              </div>
+              
+              {onClearExercises && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClearExercises}
+                  className="text-neutral-muted hover:text-neutral-text"
+                >
+                  <Trash2 size={16} />
+                </Button>
+              )}
             </div>
-            <div className="text-body text-neutral-muted">
-              {correctExercises}/{totalExercises} {t('exercise.correct')}
+            
+            {/* Performance Summary */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <GraduationCap size={16} className="text-neutral-muted" />
+                <span className="text-body text-neutral-muted">{t('grades.overallGrade')}:</span>
+                <span className={cn("text-body font-semibold", getGradeColor())}>
+                  {grade.percentage}% ({grade.letter})
+                </span>
+              </div>
+              <div className="text-body text-neutral-muted">
+                {correctExercises}/{totalExercises} {t('exercise.correct')}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
       
       {/* Content Area */}
       <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
-          <div className="p-6">
-            {exercises.length === 0 ? (
-              /* Empty State */
-              <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                <div className="w-48 h-48 mb-6 bg-neutral-bg rounded-card flex items-center justify-center">
-                  <BookOpen size={80} className="text-neutral-muted" />
-                </div>
-                
-                <h3 className="text-h2 font-bold text-neutral-text mb-3">
-                  {t('exercise.noExercises')}
-                </h3>
-                
-                <p className="text-body text-neutral-muted mb-8 max-w-md">
-                  {t('grades.exerciseListDescription')}
-                </p>
-              </div>
-            ) : (
-              /* Exercise Cards Grid */
+        {exercises.length === 0 ? (
+          /* Empty State */
+          <EmptyExerciseState
+            inputMessage={inputMessage}
+            onInputChange={onInputChange}
+            onSubmit={onSubmit}
+            isLoading={isLoading}
+            onAddExercise={onAddExercise}
+          />
+        ) : (
+          /* Exercise Cards Grid */
+          <ScrollArea className="h-full">
+            <div className="p-6">
               <div className="max-w-6xl mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {exercises.map((exercise) => (
@@ -192,9 +191,9 @@ const ExerciseList = ({
                   ))}
                 </div>
               </div>
-            )}
-          </div>
-        </ScrollArea>
+            </div>
+          </ScrollArea>
+        )}
       </div>
       
       {/* Two Card Teaching Modal */}
