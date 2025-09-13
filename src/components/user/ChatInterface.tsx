@@ -190,7 +190,7 @@ const ChatInterface = () => {
       </div>
 
       {/* Chat Input */}
-      <div className="flex-shrink-0 p-4 bg-neutral-bg">
+      <div className="flex-shrink-0 pt-4 bg-neutral-bg">
         <MessageInput
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
