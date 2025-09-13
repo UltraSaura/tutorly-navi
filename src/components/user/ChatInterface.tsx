@@ -177,9 +177,9 @@ const ChatInterface = () => {
 
   // Exercise-Focused Layout with Chat Input
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] bg-neutral-bg">
+    <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg">
       {/* Exercise List */}
-      <div className="flex-1 overflow-hidden pb-4">
+      <div className="h-full overflow-auto pb-32">
         <ExerciseList
           exercises={exercises}
           grade={grade}
@@ -189,8 +189,8 @@ const ChatInterface = () => {
         />
       </div>
 
-      {/* Chat Input */}
-      <div className="flex-shrink-0 pt-4 bg-neutral-bg">
+      {/* Fixed Chat Input */}
+      <div className="fixed bottom-0 left-0 right-0 z-10 bg-neutral-bg border-t border-neutral-border shadow-lg px-6 py-4">
         <MessageInput
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
