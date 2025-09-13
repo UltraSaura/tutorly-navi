@@ -190,7 +190,7 @@ const ChatInterface = () => {
       </div>
 
       {/* Fixed Chat Input */}
-      <div className="fixed left-0 right-0 z-[60] bottom-16 md:bottom-0 bg-neutral-bg border-t border-neutral-border shadow-lg px-6 py-1">
+      <div className="fixed left-0 right-0 z-[60] bottom-16 md:bottom-0 bg-neutral-bg border-t border-neutral-border shadow-lg px-[10px] py-1">
         <MessageInput
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
