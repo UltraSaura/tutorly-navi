@@ -155,13 +155,6 @@ const MessageInput = ({
 
   return (
     <div className="space-y-2">
-      {/* Active Model Display */}
-      <div className="flex justify-center">
-        <Badge variant="secondary" className="text-xs">
-          {modelDisplayName}
-        </Badge>
-      </div>
-      
       {/* Math Mode Suggestion */}
       {shouldSuggestMathMode && (
         <div className="flex justify-center">
