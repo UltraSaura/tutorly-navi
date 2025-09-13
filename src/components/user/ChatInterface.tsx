@@ -179,7 +179,7 @@ const ChatInterface = () => {
   return (
     <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg">
       {/* Exercise List */}
-      <div className="h-full overflow-auto pb-32">
+      <div className="h-full overflow-auto pb-40 md:pb-32">
         <ExerciseList
           exercises={exercises}
           grade={grade}
@@ -190,7 +190,7 @@ const ChatInterface = () => {
       </div>
 
       {/* Fixed Chat Input */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 bg-neutral-bg border-t border-neutral-border shadow-lg px-6 py-4">
+      <div className="fixed left-0 right-0 z-[60] bottom-16 md:bottom-0 bg-neutral-bg border-t border-neutral-border shadow-lg px-6 py-4">
         <MessageInput
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
