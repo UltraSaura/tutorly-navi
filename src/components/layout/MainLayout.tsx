@@ -31,7 +31,7 @@ const MainLayout = () => {
           </header>
           
           {/* Main Content */}
-          <main className={`flex-1 p-5 mb-[5px] ${isMobile ? 'pb-20' : ''}`}>
+          <main className={`flex-1 pt-5 px-5 pb-[5px] mb-[5px] ${isMobile ? 'pb-20' : ''}`}>
             <div className="animate-fade-in">
               <Outlet />
             </div>
