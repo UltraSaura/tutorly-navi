@@ -154,7 +154,7 @@ const MessageInput = ({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Active Model Display */}
       <div className="flex justify-center">
         <Badge variant="secondary" className="text-xs">
@@ -171,9 +171,9 @@ const MessageInput = ({
         </div>
       )}
       
-      {/* Main Input Area */}
-      <div className="relative">
-        <div className="flex items-center gap-2 bg-neutral-surface rounded-button border border-neutral-border p-3">
+      {/* Main Input Area - Moved below and made full width */}
+      <div className="relative w-full">
+        <div className="flex items-center gap-2 bg-neutral-surface rounded-button border border-neutral-border p-2 w-full">
           {/* Attachment Menu */}
           <AttachmentMenu
             onFileUpload={triggerFileUpload}
