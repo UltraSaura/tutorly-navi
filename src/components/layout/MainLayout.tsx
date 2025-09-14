@@ -19,7 +19,7 @@ const MainLayout = () => {
         
         <div className="flex flex-col flex-1 relative">
           {/* Header */}
-          <header className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 h-2">
+          <header className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 h-5">
             <div className="flex items-center h-full px-4">
               <SidebarTrigger className="h-3 w-3 mr-2" />
               <h1 className="text-xs font-semibold text-gray-900 dark:text-white">StudyWhiz</h1>
