@@ -54,35 +54,14 @@ const desktopNavigation = [
     icon: LayoutDashboard 
   },
   { 
-    title: "nav.grades", 
-    url: "/grades", 
-    icon: BarChart3 
-  },
-  { 
-    title: "nav.skills", 
-    url: "/skills", 
-    icon: Award 
-  },
-  { 
     title: "nav.support", 
     url: "/support", 
     icon: HeadphonesIcon 
   },
 ];
 
-// Mobile navigation (only grades and skills in sidebar)
-const mobileNavigation = [
-  { 
-    title: "nav.grades", 
-    url: "/grades", 
-    icon: BarChart3 
-  },
-  { 
-    title: "nav.skills", 
-    url: "/skills", 
-    icon: Award 
-  },
-];
+// Mobile navigation is now handled by MobileBottomTabs
+const mobileNavigation: typeof desktopNavigation = [];
 
 const LanguageMenuItems = () => {
   const { i18n, t } = useTranslation();

@@ -18,9 +18,7 @@ import AdminLayout from "./components/admin/AdminLayout";
 import NotFound from "./pages/NotFound";
 import ManagementDashboard from "./pages/ManagementDashboard";
 const ChatInterface = lazy(() => import("./components/user/ChatInterface"));
-const LearningRoadmap = lazy(() => import("./components/user/LearningRoadmap"));
-const GradeDashboard = lazy(() => import("./components/user/GradeDashboard"));
-const SkillMastery = lazy(() => import("./components/user/SkillMastery"));
+const UnifiedDashboard = lazy(() => import("./components/user/UnifiedDashboard"));
 const Index = lazy(() => import("./pages/Index"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
@@ -77,13 +75,7 @@ const App = () => {
                           <Route index element={<ChatInterface />} />
                         </Route>
                         <Route path="/dashboard" element={<MainLayout />}>
-                          <Route index element={<LearningRoadmap />} />
-                        </Route>
-                        <Route path="/grades" element={<MainLayout />}>
-                          <Route index element={<GradeDashboard />} />
-                        </Route>
-                        <Route path="/skills" element={<MainLayout />}>
-                          <Route index element={<SkillMastery />} />
+                          <Route index element={<UnifiedDashboard />} />
                         </Route>
                         <Route path="/support" element={<MainLayout />}>
                           <Route index element={<SupportPage />} />
