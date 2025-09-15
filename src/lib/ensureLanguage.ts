@@ -12,15 +12,17 @@ const normalizeLanguage = (lang: string): string => {
   return langMap[lang] || 'en';
 };
 
-export async function ensureLanguage(text: string, target: string): Promise<string> {
+export async function ensureLanguage(text: string, target: string, selectedModelId?: string): Promise<string> {
   const detected = detectLanguage(text);
   const normalizedTarget = normalizeLanguage(target);
   
   if (!text) return text;
   if (detected === normalizedTarget) return text;
 
-  // Minimal fallback: prepend a one-shot instruction and re-ask a tiny model to translate.
-  // If you don't have a translate endpoint, do a simple replace for known headers.
+  // Get the model to use for translation - use selected model or fallback
+  const modelToUse = selectedModelId || localStorage.getItem('selectedModelId') || 'deepseek-chat';
+
+  // Minimal fallback: prepend a one-shot instruction and re-ask the selected model to translate.
   try {
     const targetLangName = normalizedTarget === 'fr' ? 'French' : 'English';
     const translationPrompt = `Translate to ${targetLangName} keeping emoji headers and formatting exactly:\n\n${text}`;
@@ -28,7 +30,7 @@ export async function ensureLanguage(text: string, target: string): Promise<stri
     const result = await sendMessageToAI(
       translationPrompt,
       [],
-      'gpt-4o-mini',
+      modelToUse,
       targetLangName
     );
     

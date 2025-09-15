@@ -94,8 +94,16 @@ export const sendMessageToAI = async (
     const provider = data?.provider ? `${data.provider} • ` : '';
     console.log('[DEBUG] Using activated model:', selectedModelId, 'Actual model used:', `${provider}${actualModel}`);
     
-    // Guard against model mismatch - warn if backend used different model than selected
-    if (actualModel !== selectedModelId) {
+    // Normalize model names for comparison to avoid false positives
+    const normalizeModelName = (model: string): string => {
+      return model.replace(/-2025-\d{2}-\d{2}$/, '').replace(/-\d{4}-\d{2}-\d{2}$/, '');
+    };
+    
+    const normalizedSelected = normalizeModelName(selectedModelId);
+    const normalizedActual = normalizeModelName(actualModel);
+    
+    // Only warn if the base model names are truly different
+    if (normalizedSelected !== normalizedActual && data?.modelId !== selectedModelId) {
       console.warn('[MODEL MISMATCH] Selected:', selectedModelId, 'Actually used:', actualModel);
       toast.error(`Model mismatch! Selected ${selectedModelId} but backend used ${actualModel}. Please check admin settings.`);
     } else {
