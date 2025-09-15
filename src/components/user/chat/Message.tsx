@@ -132,17 +132,10 @@ const Message = ({
         }`}
       >
         {renderContent()}
-        <p className={`${'text-xs mt-2 text-right opacity-70'} ${
+        <p className={`text-xs mt-2 text-right opacity-70 ${
           role === 'user' ? 'text-white/80' : 'text-neutral-muted'
         }`}>
-          {(() => {
-            try {
-              const time = timestamp instanceof Date ? timestamp : new Date(timestamp as unknown as string);
-              return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            } catch {
-              return '';
-            }
-          })()}
+          {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
     </div>

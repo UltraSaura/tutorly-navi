@@ -69,13 +69,13 @@ serve(async (req) => {
     console.log(`Checking API key for provider: ${modelConfig.provider}, Found: ${!!apiKey}`);
     
     if (!apiKey) {
-      console.error(`No API key found for provider: ${modelConfig.provider} for model: ${modelId}`);
+      console.error(`No API key found for provider: ${modelConfig.provider} for model: ${selectedModelId}`);
       return new Response(
         JSON.stringify({ 
           error: `Missing API key for ${modelConfig.provider}`,
-          details: `The model "${modelId}" requires a ${modelConfig.provider} API key to be configured in Supabase Secrets. Please add the ${modelConfig.provider.toUpperCase().replace(' ', '_')}_API_KEY to your project secrets.`,
+          details: `The model "${selectedModelId}" requires a ${modelConfig.provider} API key to be configured in Supabase Secrets. Please add the ${modelConfig.provider.toUpperCase().replace(' ', '_')}_API_KEY to your project secrets.`,
           provider: modelConfig.provider,
-          modelId: modelId
+          modelId: selectedModelId
         }),
         { 
           status: 400, 

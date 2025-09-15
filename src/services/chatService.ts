@@ -91,14 +91,13 @@ export const sendMessageToAI = async (
     
     // Show activated model as a toast with actual model used from response
     const actualModel = data?.modelUsed || selectedModelId;
-    const requestedModelId = data?.modelId || selectedModelId;
     const provider = data?.provider ? `${data.provider} • ` : '';
     console.log('[DEBUG] Using activated model:', selectedModelId, 'Actual model used:', `${provider}${actualModel}`);
     
-    // Guard against model mismatch - compare requested model ID with selected model ID
-    if (requestedModelId !== selectedModelId) {
-      console.warn('[MODEL MISMATCH] Selected:', selectedModelId, 'Backend requested:', requestedModelId);
-      toast.error(`Model mismatch! Selected ${selectedModelId} but backend used ${requestedModelId}. Please check admin settings.`);
+    // Guard against model mismatch - warn if backend used different model than selected
+    if (actualModel !== selectedModelId) {
+      console.warn('[MODEL MISMATCH] Selected:', selectedModelId, 'Actually used:', actualModel);
+      toast.error(`Model mismatch! Selected ${selectedModelId} but backend used ${actualModel}. Please check admin settings.`);
     } else {
       toast.success(`Response generated using ${provider}${actualModel}`);
     }

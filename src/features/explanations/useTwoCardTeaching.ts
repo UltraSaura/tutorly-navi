@@ -16,11 +16,7 @@ export function useTwoCardTeaching() {
   const { selectedModelId } = useAdmin();
   const { t } = useLanguage();
 
-  async function openFor(
-    row: any, 
-    profile: { response_language?: string; grade_level?: string },
-    options?: { mode?: 'coach' | 'explain'; reveal_final_answer?: boolean }
-  ) {
+  async function openFor(row: any, profile: { response_language?: string; grade_level?: string }) {
     setOpen(true);
     setLoading(true);
     setError(null);
@@ -47,8 +43,6 @@ export function useTwoCardTeaching() {
         subject: typeof subject === "string" ? subject : String(subject),
         response_language: profile?.response_language ?? "English",
         grade_level: profile?.grade_level ?? "High School",
-        mode: options?.mode ?? 'explain',
-        reveal_final_answer: options?.reveal_final_answer ? 'true' : 'false'
       }, selectedModelId, explanationTemplate);
       
       console.log('[TwoCardTeaching] Raw AI Response:', raw);

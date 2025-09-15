@@ -41,11 +41,6 @@ const AVAILABLE_VARIABLES: Variable[] = [
     example: 'Solve for x: 2x + 5 = 13'
   },
   {
-    name: 'exercise_normalized',
-    description: 'LaTeX normalized version of the exercise content',
-    example: '\\frac{2x + 5}{1} = 13'
-  },
-  {
     name: 'student_answer',
     description: 'The student\'s submitted answer',
     example: 'x = 4'
@@ -64,16 +59,6 @@ const AVAILABLE_VARIABLES: Variable[] = [
     name: 'subject',
     description: 'The subject being studied',
     example: 'Mathematics'
-  },
-  {
-    name: 'mode',
-    description: 'Teaching mode: "coach" for Socratic questioning or "explain" for direct explanation',
-    example: 'coach'
-  },
-  {
-    name: 'reveal_final_answer',
-    description: 'Safety gate to control if final answers should be revealed (true/false)',
-    example: 'false'
   }
 ];
 

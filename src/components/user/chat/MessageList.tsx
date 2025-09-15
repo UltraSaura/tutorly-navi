@@ -1,8 +1,9 @@
 
 import { useRef, useEffect } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import Message from './Message';
 import { Message as MessageType } from '@/types/chat';
-import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface MessageListProps {
   messages: MessageType[];
@@ -18,7 +19,7 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
   }, [messages]);
 
   return (
-    <div className="flex-1 bg-neutral-bg overflow-auto">
+    <ScrollArea className="flex-1 bg-neutral-bg">
       <div className="py-4">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-64 text-center px-6">
@@ -55,7 +56,7 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
         
         <div ref={messagesEndRef} />
       </div>
-    </div>
+    </ScrollArea>
   );
 };
 
