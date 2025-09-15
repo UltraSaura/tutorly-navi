@@ -7,14 +7,15 @@ import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
 import { useAdmin } from '@/context/AdminContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { detectHomeworkInMessage, extractHomeworkFromMessage, hasMultipleExercises } from '@/utils/homework';
+import { detectMathWithAI } from '@/services/aiMathDetection';
+import { processAIDetectedExercise, processMultipleAIExercises } from '@/utils/exerciseProcessor';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { FileText, Image, Camera, Upload } from 'lucide-react';
 
 const ChatInterface = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const isMobile = useIsMobile();
   
   const {
@@ -41,7 +42,8 @@ const ChatInterface = () => {
     clearExercises
   } = useExercises();
   const {
-    getActiveSubjects
+    getActiveSubjects,
+    selectedModelId
   } = useAdmin();
 
   // Track processed message IDs to prevent duplication
@@ -51,7 +53,7 @@ const ChatInterface = () => {
   const [showUploadSheet, setShowUploadSheet] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
 
-  // Get active subjects
+  // Get active subjects and language
   const activeSubjects = getActiveSubjects();
   const defaultSubject = activeSubjects.length > 0 ? activeSubjects[0].id : undefined;
   
@@ -63,25 +65,61 @@ const ChatInterface = () => {
       if (processedMessageIds.has(lastMessage.id)) {
         return;
       }
+      
       if (lastMessage.role === 'user') {
-        // Check if the message contains homework (single or multiple exercises)
-        const isHomework = detectHomeworkInMessage(lastMessage.content);
-        const hasMultiple = hasMultipleExercises(lastMessage.content);
-
-        // Additional check for math expressions (including roots, variables, Unicode superscripts)
-        const hasMathExpression = [
-          /\d+\s*[\+\-\*\/]\s*\d+\s*=/,            // Basic equations
-          /√|\\sqrt|sqrt\(/,                        // Square roots
-          /[a-zA-Z]+\s*\^\s*\d+/,                  // Variable exponents (x^2)
-          /\d+[²³⁴⁵⁶⁷⁸⁹⁰¹]/,                     // Unicode superscripts (2²)
-          /[a-zA-Z]+[²³⁴⁵⁶⁷⁸⁹⁰¹]/               // Variable with Unicode superscripts (x²)
-        ].some(pattern => pattern.test(lastMessage.content));
-        if (isHomework || hasMultiple || hasMathExpression) {
-          console.log('Detected homework in message (single or multiple):', lastMessage.content);
-          processHomeworkFromChat(lastMessage.content);
-          // Mark this message as processed
-          setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
-        }
+        // Use AI-powered math detection
+        (async () => {
+          try {
+            const mathDetection = await detectMathWithAI(lastMessage.content, selectedModelId, language);
+            console.log('AI Math Detection Result:', mathDetection);
+            
+            if (mathDetection.isMath && mathDetection.confidence > 50) {
+              if (mathDetection.isMultiple) {
+                console.log('Processing multiple exercises from AI detection');
+                processMultipleAIExercises(
+                  lastMessage.content, 
+                  mathDetection, 
+                  exercises, 
+                  processedMessageIds, 
+                  language,
+                  selectedModelId
+                ).then(newExercises => {
+                  if (newExercises.length > 0) {
+                    addExercises(newExercises);
+                  }
+                });
+              } else {
+                console.log('Processing single exercise from AI detection');
+                processAIDetectedExercise(
+                  lastMessage.content,
+                  mathDetection,
+                  exercises,
+                  processedMessageIds,
+                  language,
+                  selectedModelId
+                ).then(result => {
+                  if (result) {
+                    if (result.isUpdate) {
+                      // Update existing exercise
+                      const updatedExercises = exercises.map(ex => 
+                        ex.id === result.exercise.id ? result.exercise : ex
+                      );
+                      addExercises(updatedExercises);
+                    } else {
+                      // Add new exercise
+                      addExercises([result.exercise]);
+                    }
+                  }
+                });
+              }
+              
+              // Mark this message as processed
+              setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
+            }
+          } catch (error) {
+            console.error('Error in AI math detection:', error);
+          }
+        })();
       } else if (lastMessage.role === 'assistant') {
         // Find the most recent user message to link with this AI response
         const recentUserMsgIndex = messages.slice(0, messages.length - 1).reverse().findIndex(msg => msg.role === 'user');
@@ -101,7 +139,7 @@ const ChatInterface = () => {
         setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
       }
     }
-  }, [messages, processedMessageIds]);
+  }, [messages, processedMessageIds, selectedModelId, language]);
 
   // Create wrappers for the file upload handlers to pass the homework processor function and subject ID
   const handleDocumentFileUpload = (file: File) => {

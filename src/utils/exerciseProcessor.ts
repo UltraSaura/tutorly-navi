@@ -1,9 +1,148 @@
-
 import { Exercise, Message } from '@/types/chat';
 import { toast } from 'sonner';
 import { evaluateHomework } from '@/services/homeworkGrading';
 import { extractHomeworkFromMessage } from '@/utils/homework';
 import { hasMultipleExercises, parseMultipleExercises } from '@/utils/homework/multiExerciseParser';
+import { MathDetectionResult } from '@/services/aiMathDetection';
+
+/**
+ * Process exercise from AI-detected math content
+ */
+export const processAIDetectedExercise = async (
+  message: string,
+  mathDetection: MathDetectionResult,
+  existingExercises: Exercise[],
+  processedContent: Set<string>,
+  language: string = 'en',
+  selectedModelId: string
+): Promise<{ exercise: Exercise; isUpdate: boolean } | null> => {
+  console.log("[exerciseProcessor] Processing AI-detected math:", mathDetection);
+  
+  // Check if we've processed this exact content before
+  if (processedContent.has(message)) {
+    console.log("[exerciseProcessor] Skipping duplicate AI-detected submission for:", message);
+    return null;
+  }
+
+  if (!mathDetection.isMath || !mathDetection.question) {
+    console.log("[exerciseProcessor] No math question found in AI detection");
+    return null;
+  }
+
+  const question = mathDetection.question;
+  const answer = mathDetection.answer;
+
+  console.log("[exerciseProcessor] Extracted from AI detection. Question/Answer:", { question, answer });
+
+  // Handle question-only exercises (like "simplify 30/63")
+  if (!mathDetection.hasAnswer || !answer) {
+    console.log("[exerciseProcessor] Creating question-only exercise for:", { question });
+    
+    // Check if we already have this question as an unanswered exercise
+    const existingUnansweredExercise = existingExercises.find(
+      ex => ex.question === question && ex.attemptCount === 0
+    );
+
+    if (existingUnansweredExercise) {
+      console.log("[exerciseProcessor] Question-only exercise already exists, ignoring duplicate");
+      return null;
+    }
+
+    // Create new unanswered exercise
+    const newEx: Exercise = {
+      id: Date.now().toString(),
+      question,
+      userAnswer: "",
+      expanded: false,
+      relatedMessages: [],
+      attemptCount: 0,
+      attempts: [],
+      lastAttemptDate: new Date(),
+      needsRetry: true,
+    };
+
+    console.log("[exerciseProcessor] Created unanswered exercise:", newEx);
+    return { exercise: newEx, isUpdate: false };
+  }
+
+  // Check for exact duplicates (same question + same answer)
+  const exactDuplicate = existingExercises.find(
+    ex => ex.question === question && ex.userAnswer === answer
+  );
+
+  if (exactDuplicate) {
+    console.log("[exerciseProcessor] Exact duplicate found, ignoring:", { question, answer });
+    return null;
+  }
+
+  // Check for retry attempts (same question + different answer)
+  const existingExercise = existingExercises.find(ex => ex.question === question);
+
+  if (existingExercise) {
+    console.log("[exerciseProcessor] Found retry attempt for existing question:", { question, answer });
+    
+    // Create new attempt
+    const attemptNumber = existingExercise.attemptCount + 1;
+    const newAttempt = {
+      id: `${existingExercise.id}-attempt-${attemptNumber}`,
+      answer,
+      timestamp: new Date(),
+      attemptNumber,
+    };
+
+    // Update existing exercise
+    const updatedExercise: Exercise = {
+      ...existingExercise,
+      userAnswer: answer, // Update to latest answer
+      attemptCount: attemptNumber,
+      attempts: [...existingExercise.attempts, newAttempt],
+      lastAttemptDate: new Date(),
+      needsRetry: false, // Will be set based on grading result
+    };
+
+    try {
+      const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber, language, selectedModelId);
+      console.log("[exerciseProcessor] Graded retry exercise:", gradedExercise);
+      return { exercise: gradedExercise, isUpdate: true };
+    } catch (error) {
+      console.error('[exerciseProcessor] Error evaluating homework retry:', error);
+      toast.error('There was an issue grading your homework. Please try again.');
+      return null;
+    }
+  }
+
+  // Create new exercise
+  const newAttempt = {
+    id: `${Date.now()}-attempt-1`,
+    answer,
+    timestamp: new Date(),
+    attemptNumber: 1,
+  };
+
+  const newEx: Exercise = {
+    id: Date.now().toString(),
+    question,
+    userAnswer: answer,
+    expanded: false,
+    relatedMessages: [],
+    attemptCount: 1,
+    attempts: [newAttempt],
+    lastAttemptDate: new Date(),
+    needsRetry: false,
+  };
+
+  console.log("[exerciseProcessor] Created new exercise object before grading:", newEx);
+
+  try {
+    const gradedExercise = await evaluateHomework(newEx, 1, language, selectedModelId);
+    console.log("[exerciseProcessor] Graded new exercise:", gradedExercise);
+    return { exercise: gradedExercise, isUpdate: false };
+  } catch (error) {
+    console.error('[exerciseProcessor] Error evaluating homework:', error);
+    toast.error('There was an issue grading your homework. Please try again.');
+    return null;
+  }
+};
 
 export const processNewExercise = async (
   message: string,
@@ -185,6 +324,126 @@ export const linkMessageToExercise = (
   }
 
   return updatedExercises;
+};
+
+/**
+ * Process multiple exercises from AI detection
+ */
+export const processMultipleAIExercises = async (
+  message: string,
+  mathDetection: MathDetectionResult,
+  existingExercises: Exercise[],
+  processedContent: Set<string>,
+  language: string = 'en',
+  selectedModelId: string
+): Promise<Exercise[]> => {
+  console.log("[exerciseProcessor] Processing multiple AI-detected exercises:", mathDetection.exercises);
+  
+  // Check if we've processed this exact content before
+  if (processedContent.has(message)) {
+    console.log("[exerciseProcessor] Skipping duplicate multi-exercise submission");
+    return [];
+  }
+
+  if (!mathDetection.isMultiple || mathDetection.exercises.length === 0) {
+    console.log("[exerciseProcessor] No multiple exercises found in AI detection");
+    return [];
+  }
+
+  const processedExercises: Exercise[] = [];
+
+  for (const parsedEx of mathDetection.exercises) {
+    if (!parsedEx.question) continue;
+
+    // Check for exact duplicates
+    const exactDuplicate = existingExercises.find(
+      ex => ex.question === parsedEx.question && ex.userAnswer === parsedEx.answer
+    );
+
+    if (exactDuplicate) {
+      console.log("[exerciseProcessor] Skipping duplicate exercise:", parsedEx.question);
+      continue;
+    }
+
+    // Check for retry attempts
+    const existingExercise = existingExercises.find(ex => ex.question === parsedEx.question);
+
+    if (existingExercise && parsedEx.answer) {
+      // This is a retry attempt
+      const attemptNumber = existingExercise.attemptCount + 1;
+      const newAttempt = {
+        id: `${existingExercise.id}-attempt-${attemptNumber}`,
+        answer: parsedEx.answer,
+        timestamp: new Date(),
+        attemptNumber,
+      };
+
+      const updatedExercise: Exercise = {
+        ...existingExercise,
+        userAnswer: parsedEx.answer,
+        attemptCount: attemptNumber,
+        attempts: [...existingExercise.attempts, newAttempt],
+        lastAttemptDate: new Date(),
+        needsRetry: false,
+      };
+
+      try {
+        const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber, language, selectedModelId);
+        processedExercises.push(gradedExercise);
+        console.log("[exerciseProcessor] Processed retry exercise:", gradedExercise.question);
+      } catch (error) {
+        console.error('[exerciseProcessor] Error grading retry exercise:', error);
+        continue;
+      }
+    } else if (parsedEx.answer) {
+      // This is a new exercise with answer
+      const newAttempt = {
+        id: `${Date.now()}-${parsedEx.index}-attempt-1`,
+        answer: parsedEx.answer,
+        timestamp: new Date(),
+        attemptNumber: 1,
+      };
+
+      const newEx: Exercise = {
+        id: `${Date.now()}-${parsedEx.index}`,
+        question: parsedEx.question,
+        userAnswer: parsedEx.answer,
+        expanded: false,
+        relatedMessages: [],
+        attemptCount: 1,
+        attempts: [newAttempt],
+        lastAttemptDate: new Date(),
+        needsRetry: false,
+      };
+
+      try {
+        const gradedExercise = await evaluateHomework(newEx, 1, language, selectedModelId);
+        processedExercises.push(gradedExercise);
+        console.log("[exerciseProcessor] Processed new exercise:", gradedExercise.question);
+      } catch (error) {
+        console.error('[exerciseProcessor] Error grading new exercise:', error);
+        continue;
+      }
+    } else {
+      // Exercise without answer (question only)
+      const newEx: Exercise = {
+        id: `${Date.now()}-${parsedEx.index}`,
+        question: parsedEx.question,
+        userAnswer: "",
+        expanded: false,
+        relatedMessages: [],
+        attemptCount: 0,
+        attempts: [],
+        lastAttemptDate: new Date(),
+        needsRetry: true,
+      };
+
+      processedExercises.push(newEx);
+      console.log("[exerciseProcessor] Added exercise without answer:", newEx.question);
+    }
+  }
+
+  return processedExercises;
 };
 
 /**

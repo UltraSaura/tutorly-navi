@@ -5,7 +5,7 @@ import { useAdmin } from '@/context/AdminContext';
 import { handleFileUpload, handlePhotoUpload } from '@/utils/chatFileHandlers';
 import { sendMessageToAI } from '@/services/chatService';
 import { generateFallbackResponse } from '@/utils/fallbackResponses';
-import { detectHomeworkInMessage } from '@/utils/homework';
+import { detectMathWithAI } from '@/services/aiMathDetection';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useUserContext } from './useUserContext';
 
@@ -80,9 +80,9 @@ export const useChat = () => {
     console.log('[DEBUG] Sending message with model:', selectedModelId);
     setIsLoading(true);
     
-    // Check if this message is a homework submission
-    const isHomework = detectHomeworkInMessage(messageToSend);
-    console.log('[DEBUG] Is homework detected:', isHomework);
+    // Use AI-powered math detection
+    const mathDetection = await detectMathWithAI(messageToSend, selectedModelId, language);
+    console.log('[DEBUG] AI math detection result:', mathDetection);
     
     try {
       console.log('[DEBUG] Sending message to AI:', messageToSend);
@@ -109,7 +109,12 @@ export const useChat = () => {
         
         // Only track responses that will create exercises, not math explanations
         // This allows math questions to show their explanations in chat
-        console.log('[DEBUG] AI response created for:', { isHomework, selectedModelId, content: data.content.substring(0, 100) });
+        console.log('[DEBUG] AI response created for:', { 
+          isMath: mathDetection.isMath, 
+          hasAnswer: mathDetection.hasAnswer,
+          selectedModelId, 
+          content: data.content.substring(0, 100) 
+        });
         
         setMessages(prev => [...prev, aiResponse]);
       } else if (error) {
