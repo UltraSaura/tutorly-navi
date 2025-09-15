@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import ExerciseList from './chat/ExerciseList';
+import MessageList from './chat/MessageList';
 import MessageInput from './chat/MessageInput';
 import CameraCapture from './chat/CameraCapture';
 import { useChat } from '@/hooks/useChat';
@@ -178,8 +179,12 @@ const ChatInterface = () => {
   // Exercise-Focused Layout with Chat Input
   return (
     <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg">
-      {/* Exercise List */}
+      {/* Exercise List and Chat Messages */}
       <div className="h-full overflow-auto pb-20 md:pb-16">
+        {/* Chat Messages */}
+        <MessageList messages={messages} isLoading={isLoading} />
+        
+        {/* Exercise List */}
         <ExerciseList
           exercises={exercises}
           grade={grade}
