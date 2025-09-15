@@ -1,13 +1,17 @@
 import { sendMessageToAI } from '@/services/chatService';
 import { PromptTemplate } from '@/types/admin';
+import { normalizeExerciseForPrompt } from '@/utils/exerciseNormalization';
 
 // Interface for the variables expected by the prompt client
 interface ExplanationVariables {
   exercise_content: string;
+  exercise_normalized?: string;
   student_answer?: string;
   subject?: string;
   response_language?: string;
   grade_level?: string;
+  mode?: string;
+  reveal_final_answer?: string;
 }
 
 // Simple variable substitution function for prompt templates
@@ -63,10 +67,13 @@ export async function requestTwoCardTeaching(
   // Prepare variables with defaults
   const templateVariables: ExplanationVariables = {
     exercise_content: vars.exercise_content,
+    exercise_normalized: vars.exercise_normalized || normalizeExerciseForPrompt(vars.exercise_content),
     student_answer: vars.student_answer || '',
     subject: vars.subject || 'math',
     response_language: vars.response_language || 'English',
-    grade_level: vars.grade_level || 'High School'
+    grade_level: vars.grade_level || 'High School',
+    mode: vars.mode || 'explain',
+    reveal_final_answer: vars.reveal_final_answer || 'false'
   };
   
   // Defensive check - ensure exercise_content is not empty

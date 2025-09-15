@@ -16,9 +16,12 @@ export interface PromptVariables {
   subject?: string;
   user_type?: string;
   exercise_content?: string;
+  exercise_normalized?: string;
   student_answer?: string;
   correct_answer?: string;
   response_language?: string;
+  mode?: string;
+  reveal_final_answer?: string;
 }
 
 /**
@@ -56,12 +59,18 @@ export function substitutePromptVariables(promptTemplate: string, variables: Pro
         return 'this subject';
       case 'exercise_content':
         return 'the exercise';
+      case 'exercise_normalized':
+        return 'the exercise';
       case 'student_answer':
         return 'your answer';
       case 'correct_answer':
         return 'the correct answer';
       case 'response_language':
         return 'English';
+      case 'mode':
+        return 'explain';
+      case 'reveal_final_answer':
+        return 'false';
       default:
         return 'student';
     }

@@ -3,6 +3,7 @@ import { substitutePromptVariables, PromptVariables } from '../../../supabase/fu
 import { EXPLAIN_DEBUG, MOCK_JSON } from "./debug";
 import { sendMessageToAI } from '@/services/chatService';
 import { PromptTemplate } from '@/types/admin';
+import { normalizeExerciseForPrompt } from '@/utils/exerciseNormalization';
 
 // Default Math Explanation Generator template ID
 const MATH_EXPLANATION_TEMPLATE_ID = 'math-explanation-generator';
@@ -81,12 +82,15 @@ Grade level: {{gradeLevel}}`;
       gradeLevel: string;
     } = {
       exercise_content: exerciseRow.question ?? "",
+      exercise_normalized: normalizeExerciseForPrompt(exerciseRow.question ?? ""),
       student_answer: exerciseRow.userAnswer ?? "",
       subject: "math",
       response_language: userContext?.language ?? "English",
       grade_level: userContext?.gradeLevel ?? "High School",
       first_name: userContext?.first_name || 'Student',
       country: userContext?.country || 'your country',
+      mode: teachingMode === 'concept' ? 'explain' : 'coach',
+      reveal_final_answer: teachingMode === 'solution' ? 'true' : 'false',
       // Legacy variables for backward compatibility
       student_level: userContext?.gradeLevel ?? "High School",
       // New template variable mappings
