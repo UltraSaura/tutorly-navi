@@ -3,13 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 export async function callGraderFromServer(payload: {
   exercise: string;
   studentAnswer: string;
+  modelId: string;
 }): Promise<"CORRECT" | "INCORRECT"> {
   try {
     // Calls the grading path in your existing edge function with isGradingRequest=true
     const { data, error } = await supabase.functions.invoke('ai-chat', {
       body: {
         message: `Exercise: ${payload.exercise}\nStudent Answer: ${payload.studentAnswer}`,
-        modelId: 'gpt-4o', // Default grading model
+        modelId: payload.modelId,
         history: [],
         language: 'en',
         isGradingRequest: true,

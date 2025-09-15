@@ -10,6 +10,7 @@ type ExplainPayload = {
   learning_style?: string;
   mode: "coach" | "explain";
   reveal_final_answer: "true" | "false";
+  modelId: string;
 };
 
 export async function callExplanationFromServer(p: ExplainPayload) {
@@ -18,7 +19,7 @@ export async function callExplanationFromServer(p: ExplainPayload) {
     const { data, error } = await supabase.functions.invoke('ai-chat', {
       body: {
         message: p.exercise_content,
-        modelId: 'gpt-4o', // Default explanation model
+        modelId: p.modelId,
         history: [],
         language: p.response_language || 'en',
         customPrompt: 'explanation', // This should trigger the explanation template
