@@ -147,60 +147,60 @@ export function HeaderNavigation() {
         </nav>
       )}
 
-      {/* User Account Dropdown */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="flex items-center gap-2 h-auto p-2 hover:bg-accent/50"
-          >
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-sm">
-                {userInitials}
-              </AvatarFallback>
-            </Avatar>
-            {!isMobile && (
+      {/* User Account Dropdown - Desktop Only */}
+      {!isMobile && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="flex items-center gap-2 h-auto p-2 hover:bg-accent/50"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="text-sm">
+                  {userInitials}
+                </AvatarFallback>
+              </Avatar>
               <div className="flex flex-col items-start text-sm">
                 <span className="text-xs text-muted-foreground truncate max-w-32">
                   {user?.email}
                 </span>
               </div>
-            )}
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56 bg-background border shadow-md">
-          <DropdownMenuItem asChild>
-            <NavLink to="/profile" className="flex items-center">
-              <User className="mr-2 h-4 w-4" />
-              <span>{t('nav.profile')}</span>
-            </NavLink>
-          </DropdownMenuItem>
-          {isAdmin && (
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 bg-background border shadow-md">
             <DropdownMenuItem asChild>
-              <NavLink to="/admin" className="flex items-center">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Admin Panel</span>
+              <NavLink to="/profile" className="flex items-center">
+                <User className="mr-2 h-4 w-4" />
+                <span>{t('nav.profile')}</span>
               </NavLink>
             </DropdownMenuItem>
-          )}
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="flex items-center">
-            <Globe className="mr-2 h-4 w-4" />
-            {t('nav.language')}
-          </DropdownMenuLabel>
-          <LanguageMenuItems />
-          <DropdownMenuSeparator />
-          <DropdownMenuItem 
-            onClick={handleSignOut}
-            disabled={isSigningOut}
-            className="text-destructive focus:text-destructive"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>{isSigningOut ? 'Signing out...' : 'Sign Out'}</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            {isAdmin && (
+              <DropdownMenuItem asChild>
+                <NavLink to="/admin" className="flex items-center">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Admin Panel</span>
+                </NavLink>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center">
+              <Globe className="mr-2 h-4 w-4" />
+              {t('nav.language')}
+            </DropdownMenuLabel>
+            <LanguageMenuItems />
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={handleSignOut}
+              disabled={isSigningOut}
+              className="text-destructive focus:text-destructive"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>{isSigningOut ? 'Signing out...' : 'Sign Out'}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 }
