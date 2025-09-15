@@ -161,7 +161,6 @@ export function HeaderNavigation() {
             </Avatar>
             {!isMobile && (
               <div className="flex flex-col items-start text-sm">
-                <span className="font-medium">{t('nav.myAccount')}</span>
                 <span className="text-xs text-muted-foreground truncate max-w-32">
                   {user?.email}
                 </span>
@@ -171,8 +170,6 @@ export function HeaderNavigation() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 bg-background border shadow-md">
-          <DropdownMenuLabel>{t('nav.myAccount')}</DropdownMenuLabel>
-          <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <NavLink to="/profile" className="flex items-center">
               <User className="mr-2 h-4 w-4" />
