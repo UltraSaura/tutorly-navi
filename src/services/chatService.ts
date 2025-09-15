@@ -26,6 +26,9 @@ export const sendMessageToAI = async (
   customPrompt?: string,
   userContext?: any
 ) => {
+  console.log('[ChatService] Sending message with model:', selectedModelId);
+  console.log('[ChatService] Available localStorage model:', localStorage.getItem('selectedModelId'));
+  
   try {
     // Call the Supabase Edge Function
     const { data, error } = await supabase.functions.invoke('ai-chat', {

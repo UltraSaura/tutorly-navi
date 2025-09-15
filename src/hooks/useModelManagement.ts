@@ -18,23 +18,27 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
     return availableModel?.id || 'deepseek-chat'; // Fallback to DeepSeek model
   };
 
-  const [selectedModelId, setSelectedModelId] = useState<string>(() => {
+  const [selectedModelId, setSelectedModelIdState] = useState<string>(() => {
     const savedModel = localStorage.getItem('selectedModelId');
     
-    // Migrate legacy model selections to current ones
+    console.log('[ModelManagement] Initial load - saved model:', savedModel);
+    console.log('[ModelManagement] Available API keys:', apiKeys.map(k => k.provider));
+    
+    // Only migrate truly invalid model IDs, don't force OpenAI models
     const legacyMigrations: Record<string, string> = {
-      'gpt4o': 'gpt-4.1',
-      'gpt-4o': 'gpt-4.1',
-      'gpt-4o-mini': 'gpt-4.1-mini',
-      'gpt-5-2025-08-07': 'gpt-5', // Fix invalid model ID
+      'gpt-5-2025-08-07': 'gpt-5', // Fix invalid date format only
     };
     
     const migratedModel = savedModel && legacyMigrations[savedModel] ? legacyMigrations[savedModel] : savedModel;
-    return migratedModel || getDefaultAvailableModel();
+    const finalModel = migratedModel || getDefaultAvailableModel();
+    
+    console.log('[ModelManagement] Final selected model:', finalModel);
+    return finalModel;
   });
 
   // Save selected model to localStorage when it changes
   useEffect(() => {
+    console.log('[ModelManagement] Saving model to localStorage:', selectedModelId);
     localStorage.setItem('selectedModelId', selectedModelId);
   }, [selectedModelId]);
 
@@ -74,7 +78,10 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
 
   return {
     selectedModelId,
-    setSelectedModelId,
+    setSelectedModelId: (id: string) => {
+      console.log('[ModelManagement] Model selection changing from', selectedModelId, 'to', id);
+      setSelectedModelIdState(id);
+    },
     getAvailableModels
   };
 };
