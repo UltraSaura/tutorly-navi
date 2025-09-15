@@ -182,7 +182,7 @@ const ChatInterface = () => {
       {/* Exercise List and Chat Messages */}
       <div className="h-full overflow-auto pb-20 md:pb-16">
         {/* Chat Messages */}
-        <MessageList messages={messages} isLoading={isLoading} />
+        <MessageList messages={filteredMessages} isLoading={isLoading} />
         
         {/* Exercise List */}
         <ExerciseList
