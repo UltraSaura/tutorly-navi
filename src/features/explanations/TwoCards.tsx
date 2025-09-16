@@ -4,8 +4,27 @@ import { useTranslation } from "react-i18next"; // <-- Updated import
 import { useResolveText } from "@/hooks/useResolveText";
 
 function maskDigits(s: string) {
-  // Optional: hide numbers from the exercise to avoid hints
-  return s.replace(/\d+\/\d+/g, "[your fraction]").replace(/\d/g, "█");
+  // Smart masking: show problem values, hide only solutions/answers
+  if (!s) return s;
+  
+  // Patterns that indicate solution contexts (mask these numbers)
+  const solutionPatterns = [
+    /(\b(?:answer|solution|result|equals?)\s*:?\s*)(\d+(?:\.\d+)?)/gi,
+    /(\b(?:so|therefore|thus)\s+.*?)(\d+(?:\.\d+)?)/gi,
+    /(\s*=\s*)(\d+(?:\.\d+)?)/g,
+    /(\b(?:the answer is|we get|this gives us)\s+)(\d+(?:\.\d+)?)/gi
+  ];
+  
+  let masked = s;
+  
+  // Apply solution masking
+  solutionPatterns.forEach(pattern => {
+    masked = masked.replace(pattern, (match, prefix, number) => {
+      return prefix + "___";
+    });
+  });
+  
+  return masked;
 }
 
 function Section({ title, text }: { title: string; text: string }) {
