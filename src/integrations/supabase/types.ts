@@ -35,6 +35,123 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_attempts: {
+        Row: {
+          attempt_number: number
+          created_at: string
+          exercise_history_id: string
+          explanation_id: string | null
+          id: string
+          is_correct: boolean | null
+          user_answer: string
+        }
+        Insert: {
+          attempt_number: number
+          created_at?: string
+          exercise_history_id: string
+          explanation_id?: string | null
+          id?: string
+          is_correct?: boolean | null
+          user_answer: string
+        }
+        Update: {
+          attempt_number?: number
+          created_at?: string
+          exercise_history_id?: string
+          explanation_id?: string | null
+          id?: string
+          is_correct?: boolean | null
+          user_answer?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_attempts_exercise_history_id_fkey"
+            columns: ["exercise_history_id"]
+            isOneToOne: false
+            referencedRelation: "exercise_history"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_attempts_explanation_id_fkey"
+            columns: ["explanation_id"]
+            isOneToOne: false
+            referencedRelation: "exercise_explanations_cache"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercise_explanations_cache: {
+        Row: {
+          created_at: string
+          exercise_content: string
+          exercise_hash: string
+          explanation_data: Json
+          id: string
+          quality_score: number | null
+          subject_id: string | null
+          updated_at: string
+          usage_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          exercise_content: string
+          exercise_hash: string
+          explanation_data: Json
+          id?: string
+          quality_score?: number | null
+          subject_id?: string | null
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          exercise_content?: string
+          exercise_hash?: string
+          explanation_data?: Json
+          id?: string
+          quality_score?: number | null
+          subject_id?: string | null
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
+      exercise_history: {
+        Row: {
+          attempts_count: number | null
+          created_at: string
+          exercise_content: string
+          id: string
+          is_correct: boolean | null
+          subject_id: string | null
+          updated_at: string
+          user_answer: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts_count?: number | null
+          created_at?: string
+          exercise_content: string
+          id?: string
+          is_correct?: boolean | null
+          subject_id?: string | null
+          updated_at?: string
+          user_answer?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts_count?: number | null
+          created_at?: string
+          exercise_content?: string
+          id?: string
+          is_correct?: boolean | null
+          subject_id?: string | null
+          updated_at?: string
+          user_answer?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       parent_child: {
         Row: {
           child_id: string

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Exercise, Message } from '@/types/chat';
 import { toast } from 'sonner';
 import { useGrades } from './useGrades';
+import { useExerciseHistory } from './useExerciseHistory';
 import { useLanguage } from '@/context/LanguageContext';
 import { processNewExercise, linkMessageToExercise, processMultipleExercises } from '@/utils/exerciseProcessor';
 import { hasMultipleExercises } from '@/utils/homework/multiExerciseParser';
@@ -12,6 +13,7 @@ import { useAdmin } from '@/context/AdminContext';
 export const useExercises = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const { grade, updateGrades } = useGrades();
+  const { saveExerciseToHistory } = useExerciseHistory();
   const { language } = useLanguage();
   const { selectedModelId } = useAdmin();
   const [processedContent, setProcessedContent] = useState<Set<string>>(new Set());
@@ -68,6 +70,14 @@ export const useExercises = () => {
 
       // Grade the exercise
       const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber, language, selectedModelId);
+      
+      // Save to exercise history
+      await saveExerciseToHistory(
+        gradedExercise.question,
+        answer,
+        gradedExercise.isCorrect,
+        gradedExercise.subjectId
+      );
       
       // Update exercises state
       setExercises(prev => 

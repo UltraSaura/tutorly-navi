@@ -5,20 +5,11 @@ import { usePromptManagement } from "@/hooks/usePromptManagement";
 import { useAdmin } from "@/context/AdminContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { ensureLanguage } from "@/lib/ensureLanguage";
+import { ExerciseCanonicalizer } from "@/services/exerciseCanonicalizer";
+import { supabase } from "@/integrations/supabase/client";
 
-// Cache for storing explanations to avoid repeated AI requests
-const explanationCache = new Map<string, TeachingSections>();
-
-// Generate cache key from exercise data
-function generateCacheKey(
-  exercise_content: string, 
-  student_answer: string, 
-  subject: string, 
-  response_language: string, 
-  grade_level: string
-): string {
-  return `${exercise_content}|${student_answer}|${subject}|${response_language}|${grade_level}`;
-}
+// In-memory cache for storing explanations within the session
+const sessionCache = new Map<string, TeachingSections>();
 
 export function useTwoCardTeaching() {
   const [open, setOpen] = React.useState(false);
@@ -43,21 +34,46 @@ export function useTwoCardTeaching() {
         row?.subject || row?.subjectId || "math";
       const response_language = profile?.response_language ?? "English";
       const grade_level = profile?.grade_level ?? "High School";
-        
-      // Generate cache key
-      const cacheKey = generateCacheKey(
+
+      // Create canonicalized version and cache key
+      const canonical = ExerciseCanonicalizer.canonicalize(exercise_content, subject);
+      const cacheKey = ExerciseCanonicalizer.createCacheKey(
         exercise_content,
-        student_answer,
         typeof subject === "string" ? subject : String(subject),
         response_language,
         grade_level
       );
       
-      // Check cache first
-      const cachedExplanation = explanationCache.get(cacheKey);
-      if (cachedExplanation) {
-        console.log('[TwoCardTeaching] Using cached explanation');
-        setSections(cachedExplanation);
+      // Check session cache first
+      const sessionCachedExplanation = sessionCache.get(cacheKey);
+      if (sessionCachedExplanation) {
+        console.log('[TwoCardTeaching] Using session cached explanation');
+        setSections(sessionCachedExplanation);
+        return;
+      }
+
+      // Check database cache
+      const { data: cachedExplanation, error: cacheError } = await supabase
+        .from('exercise_explanations_cache')
+        .select('explanation_data, usage_count')
+        .eq('exercise_hash', canonical.hash)
+        .maybeSingle();
+
+      if (!cacheError && cachedExplanation) {
+        console.log('[TwoCardTeaching] Using database cached explanation');
+        
+        // Update usage count
+        await supabase
+          .from('exercise_explanations_cache')
+          .update({ 
+            usage_count: cachedExplanation.usage_count + 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq('exercise_hash', canonical.hash);
+
+        const explanation = cachedExplanation.explanation_data as TeachingSections;
+        sessionCache.set(cacheKey, explanation);
+        setSections(explanation);
         return;
       }
       
@@ -114,9 +130,24 @@ export function useTwoCardTeaching() {
         finalSections = parsed;
       }
       
-      // Cache the successful result
-      explanationCache.set(cacheKey, finalSections);
-      console.log('[TwoCardTeaching] Cached explanation for future use');
+      // Cache the successful result in session cache
+      sessionCache.set(cacheKey, finalSections);
+      
+      // Save to database cache
+      try {
+        await supabase.from('exercise_explanations_cache').insert({
+          exercise_hash: canonical.hash,
+          exercise_content: canonical.normalizedContent,
+          subject_id: typeof subject === "string" ? subject : String(subject),
+          explanation_data: finalSections,
+          quality_score: 0,
+          usage_count: 1
+        });
+        console.log('[TwoCardTeaching] Saved explanation to database cache');
+      } catch (dbError) {
+        console.warn('[TwoCardTeaching] Failed to save to database cache:', dbError);
+        // Don't fail the whole operation if caching fails
+      }
       
       setSections(finalSections);
     } catch (e:any) {
