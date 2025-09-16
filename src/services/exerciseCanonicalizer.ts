@@ -1,10 +1,26 @@
-import crypto from 'crypto';
+// Note: Use a lightweight browser-safe hash (FNV-1a based) instead of Node 'crypto'
 
 export interface CanonicalizedExercise {
   hash: string;
   normalizedContent: string;
   originalContent: string;
   subject: string;
+}
+
+/**
+ * Lightweight, browser-safe 32-bit FNV-1a hash combined with length for 64-bit-like hex
+ */
+function hashStringFNV1a(input: string): string {
+  let hash = 0x811c9dc5; // FNV-1a 32-bit offset basis
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    // 32-bit FNV-1a prime: 16777619
+    hash = (hash >>> 0) * 16777619;
+  }
+  // Ensure unsigned 32-bit
+  const h1 = (hash >>> 0).toString(16).padStart(8, '0');
+  const h2 = (input.length >>> 0).toString(16).padStart(8, '0');
+  return (h1 + h2).slice(0, 16);
 }
 
 /**
@@ -104,12 +120,8 @@ export class ExerciseCanonicalizer {
     
     const canonicalString = canonicalParts.join('|');
     
-    // Generate hash
-    const hash = crypto
-      .createHash('sha256')
-      .update(canonicalString)
-      .digest('hex')
-      .substring(0, 16); // Use first 16 chars for shorter hash
+// Generate hash using browser-safe function
+const hash = hashStringFNV1a(canonicalString);
 
     return {
       hash,
