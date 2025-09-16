@@ -1,6 +1,5 @@
 import React from "react";
 import type { TeachingSections } from "./twoCardParser";
-import { useTranslation } from "react-i18next"; // <-- Updated import
 import { useResolveText } from "@/hooks/useResolveText";
 
 function maskDigits(s: string) {
@@ -40,24 +39,23 @@ function Section({ title, text }: { title: string; text: string }) {
 }
 
 export function TwoCards({ s }: { s: TeachingSections }) {
-  const { t } = useTranslation(); // <-- Updated hook usage
   const resolveText = useResolveText();
   
   return (
     <div className="space-y-3">
       <div className="rounded-xl border bg-muted p-4">
-        <div className="font-semibold">📘 {t('explanation.fallback.exercise')}</div> {/* <-- Updated */}
+        <div className="font-semibold">📘 Exercise</div>
         <p className="mt-1 text-muted-foreground whitespace-pre-wrap">
-          {s.exercise ? maskDigits(resolveText(s.exercise)) : t('explanation.fallback.exercise')}
+          {s.exercise ? maskDigits(resolveText(s.exercise)) : "No exercise provided"}
         </p>
       </div>
       <div className="rounded-xl border bg-card p-4 shadow-sm">
-        <Section title={`💡 ${t('explanation.fallback.concept')}`} text={s.concept} /> {/* <-- Updated */}
-        <Section title={`🔍 ${t('explanation.fallback.example')}`} text={s.example} /> {/* <-- Updated */}
-        <Section title={`☑️ ${t('explanation.fallback.strategy')}`} text={s.strategy} /> {/* <-- Updated */}
-        <Section title={`⚠️ ${t('explanation.fallback.pitfall')}`} text={s.pitfall} /> {/* <-- Updated */}
-        <Section title={`🎯 ${t('explanation.fallback.check')}`} text={s.check} /> {/* <-- Updated */}
-        <Section title={`📈 ${t('explanation.fallback.practice')}`} text={s.practice} /> {/* <-- Updated */}
+        <Section title="💡 Concept" text={s.concept} />
+        <Section title="🔍 Example" text={s.example} />
+        <Section title="☑️ Strategy" text={s.strategy} />
+        <Section title="⚠️ Pitfall" text={s.pitfall} />
+        <Section title="🎯 Check yourself" text={s.check} />
+        <Section title="📈 Practice Tip" text={s.practice} />
       </div>
     </div>
   );

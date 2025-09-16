@@ -157,13 +157,25 @@ Write all content in {{response_language}}. Keep the section headers in English 
       if (!parsed.concept && !parsed.example && !parsed.strategy) {
         console.log('[TwoCardTeaching] Using fallback - all core fields empty');
         finalSections = {
-          exercise: t('explanation.fallback.exercise'),
-          concept: t('explanation.fallback.concept'),
-          example: t('explanation.fallback.example'),
-          strategy: t('explanation.fallback.strategy'),
-          pitfall: t('explanation.fallback.pitfall'),
-          check: t('explanation.fallback.check'),
-          practice: t('explanation.fallback.practice'),
+          exercise: exercise_content || 'No exercise provided',
+          concept: response_language === 'French' 
+            ? 'Concept clé nécessaire pour résoudre ce problème'
+            : 'Key concept needed to solve this problem',
+          example: response_language === 'French'
+            ? 'Exemple similaire avec des nombres différents'
+            : 'Similar example with different numbers',
+          strategy: response_language === 'French'
+            ? 'Approche étape par étape pour résoudre ce type de problème'
+            : 'Step-by-step approach to solve this type of problem',
+          pitfall: response_language === 'French'
+            ? 'Erreurs courantes que font les étudiants avec ce type de problème'
+            : 'Common mistakes students make with this type of problem',
+          check: response_language === 'French'
+            ? 'Comment vérifier que la réponse est correcte'
+            : 'How to verify the answer is correct',
+          practice: response_language === 'French'
+            ? 'Suggestion pour améliorer ce type de problème'
+            : 'Suggestion for improving at this type of problem'
         };
       } else {
         console.log('[TwoCardTeaching] Using parsed sections:', parsed);
@@ -192,15 +204,21 @@ Write all content in {{response_language}}. Keep the section headers in English 
       setSections(finalSections);
     } catch (e:any) {
       console.error('[TwoCardTeaching] Error:', e);
-      setError(t('explanation.error'));
+      setError('Failed to generate explanation');
       const fallbackSections = {
-        exercise: t('explanation.fallback.exercise'),
-        concept: t('explanation.fallback.concept'),
-        example: t('explanation.fallback.example'),
-        strategy: t('explanation.fallback.strategy'),
-        pitfall: t('explanation.fallback.pitfall'),
-        check: t('explanation.fallback.check'),
-        practice: t('explanation.fallback.practice'),
+        exercise: row?.prompt || row?.question || row?.exercise_content || 'No exercise provided',
+        concept: (profile?.response_language === 'French') 
+          ? 'Une erreur s\'est produite lors de la génération de l\'explication'
+          : 'An error occurred generating the explanation',
+        example: (profile?.response_language === 'French')
+          ? 'Veuillez réessayer plus tard'
+          : 'Please try again later',
+        strategy: (profile?.response_language === 'French')
+          ? 'Contactez le support si le problème persiste'
+          : 'Contact support if the issue persists',
+        pitfall: '',
+        check: '',
+        practice: ''
       };
       setSections(fallbackSections);
     } finally {
