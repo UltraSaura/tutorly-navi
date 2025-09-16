@@ -22,6 +22,7 @@ export function useTwoCardTeaching() {
   const { t } = useLanguage();
 
   async function openFor(row: any, profile: { response_language?: string; grade_level?: string }) {
+    console.log('[TwoCardTeaching] Opening explanation for:', { row, profile });
     setOpen(true);
     setError(null);
     

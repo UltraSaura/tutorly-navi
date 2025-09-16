@@ -49,6 +49,26 @@ const OBVIOUS_MATH_PATTERNS = [
   /^\s*\d+\/\d+\s*=?\s*\d*\.?\d*\s*$/,  // Fractions like "3/4=0.75"
 ];
 
+// Debug function for testing patterns
+function testFrenchPattern(message: string) {
+  console.log('[Pattern Test] Testing message:', message);
+  
+  const patterns = OBVIOUS_MATH_PATTERNS;
+  patterns.forEach((pattern, index) => {
+    const match = pattern.test(message);
+    console.log(`[Pattern Test] Pattern ${index}:`, pattern, 'Match:', match);
+  });
+  
+  // Test the specific French math regex
+  const frenchRegex = /^\s*\d+\s*fois\s*\d+\s*(font|égal|égale|est)?\s*\d*\s*$/i;
+  const frenchMatch = frenchRegex.test(message);
+  console.log('[Pattern Test] French regex match:', frenchMatch);
+  
+  // Test containsMathSymbols
+  const hasSymbols = containsMathSymbols(message);
+  console.log('[Pattern Test] Has math symbols:', hasSymbols);
+}
+
 // Patterns for math action phrases
 const MATH_ACTION_PATTERNS = [
   /^(calculate|solve|simplify|evaluate|determine|prove|show that|factor|expand|graph|find|convert)\s+/i,
@@ -68,13 +88,18 @@ export async function detectMathWithAI(
   selectedModelId: string,
   language: string = 'en'
 ): Promise<MathDetectionResult> {
-  console.log('[aiMathDetection] Processing message:', message.substring(0, 100));
+  console.log('[MathDetection] Starting detection for:', { message, language });
+  
+  // Add debug test for French patterns
+  if (message.includes('fois') || message.includes('font')) {
+    testFrenchPattern(message);
+  }
   
   // Check cache first
   const cacheKey = `${message}_${language}`;
   const cached = detectionCache.get(cacheKey);
   if (cached && Date.now() - (cached as any).timestamp < CACHE_EXPIRY) {
-    console.log('[aiMathDetection] Cache hit');
+    console.log('[MathDetection] Cache hit');
     return cached;
   }
 
@@ -85,10 +110,18 @@ export async function detectMathWithAI(
     message.toLowerCase().includes(verb)) || MATH_ACTION_VERBS.fr.some(verb => 
     message.toLowerCase().includes(verb));
 
+  console.log('[MathDetection] Pattern checks:', { 
+    hasObviousPattern, 
+    hasActionPattern, 
+    hasActionVerb,
+    message 
+  });
+
   // Quick fallback for obvious math patterns (optimization)
   if (hasObviousPattern) {
-    console.log('[aiMathDetection] Using regex fallback for obvious math pattern');
+    console.log('[MathDetection] Using regex fallback for obvious math pattern');
     const result = createSimpleMathResult(message.trim());
+    console.log('[MathDetection] Simple math result:', result);
     detectionCache.set(cacheKey, { ...result, timestamp: Date.now() } as any);
     return result;
   }
@@ -212,11 +245,14 @@ function parseAIResponse(content: string, originalMessage: string): MathDetectio
  * Create result for obvious math patterns using regex
  */
 function createSimpleMathResult(message: string): MathDetectionResult {
+  console.log('[MathDetection] Creating simple math result for:', message);
+  
   // Handle French mathematical expressions first
   const frenchMathMatch = message.match(/^(.+?)(font|égal|égale|est)\s*(.+)?$/i);
   if (frenchMathMatch) {
+    console.log('[MathDetection] French math match found:', frenchMathMatch);
     const [, question, , answer] = frenchMathMatch;
-    return {
+    const result = {
       isMath: true,
       confidence: 95,
       question: question?.trim() || message,
@@ -225,6 +261,8 @@ function createSimpleMathResult(message: string): MathDetectionResult {
       isMultiple: false,
       exercises: []
     };
+    console.log('[MathDetection] French result:', result);
+    return result;
   }
 
   // Handle English mathematical expressions with equals
@@ -259,6 +297,8 @@ function createSimpleMathResult(message: string): MathDetectionResult {
  * Check if message contains mathematical symbols or patterns
  */
 function containsMathSymbols(message: string): boolean {
+  console.log('[MathDetection] Checking math symbols for:', message);
+  
   const mathSymbols = [
     /\d+\s*[\+\-\*\/•÷×=]\s*\d+/,  // Mathematical operations
     /[xyz]\s*=\s*\d+/i,             // Variable assignments
@@ -272,7 +312,9 @@ function containsMathSymbols(message: string): boolean {
     /(font|égal|égale|est)\s*\d+/i  // French equals expressions
   ];
   
-  return mathSymbols.some(pattern => pattern.test(message));
+  const result = mathSymbols.some(pattern => pattern.test(message));
+  console.log('[MathDetection] Math symbols check result:', { message, result });
+  return result;
 }
 
 /**

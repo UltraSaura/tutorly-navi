@@ -16,6 +16,11 @@ export const processAIDetectedExercise = async (
   language: string = 'en',
   selectedModelId: string
 ): Promise<{ exercise: Exercise; isUpdate: boolean } | null> => {
+  console.log('[ExerciseProcessor] Processing AI detected exercise:', { 
+    message, 
+    mathDetection, 
+    language 
+  });
   console.log("[exerciseProcessor] Processing AI-detected math:", mathDetection);
   
   // Check if we've processed this exact content before
