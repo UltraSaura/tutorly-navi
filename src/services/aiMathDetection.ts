@@ -19,12 +19,27 @@ export interface MathDetectionResult {
 const detectionCache = new Map<string, MathDetectionResult>();
 const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
 
-// Fallback regex patterns for obvious math cases (performance optimization)
+// Enhanced math detection patterns based on educational action verbs
+const MATH_ACTION_VERBS = {
+  en: ['calculate', 'solve', 'simplify', 'evaluate', 'determine', 'prove', 'show that', 'factor', 'expand', 'graph', 'find', 'convert'],
+  fr: ['calculer', 'résoudre', 'simplifier', 'évaluer', 'déterminer', 'prouver', 'montrer que', 'factoriser', 'développer', 'tracer', 'trouver', 'convertir']
+};
+
+// Enhanced patterns for obvious math cases (performance optimization)
 const OBVIOUS_MATH_PATTERNS = [
   /^\s*\d+\s*[\+\-\*\/•÷×]\s*\d+\s*=?\s*\d*\s*$/,  // Simple arithmetic like "2+3=5"
   /^\s*solve\s*:\s*\d+x\s*[\+\-]\s*\d+\s*=\s*\d+/i,  // Basic equations like "solve: 2x+3=7"
   /^\s*x\s*=\s*\d+\s*$/i,  // Simple solutions like "x=4"
   /^\s*\d+\/\d+\s*=?\s*\d*\.?\d*\s*$/,  // Fractions like "3/4=0.75"
+];
+
+// Patterns for math action phrases
+const MATH_ACTION_PATTERNS = [
+  /^(calculate|solve|simplify|evaluate|determine|prove|show that|factor|expand|graph|find|convert)\s+/i,
+  /^(calculer|résoudre|simplifier|évaluer|déterminer|prouver|montrer que|factoriser|développer|tracer|trouver|convertir)\s+/i,
+  /(what is|qu'est-ce que|combien|how much)/i,
+  /(equation|équation|expression|fonction|function)/i,
+  /(\d+[x-z]|\d+\^|\d+\/\d+|√|∫|∑|∆)/i  // Mathematical symbols and variables
 ];
 
 /**
@@ -45,10 +60,25 @@ export async function detectMathWithAI(
     return cached;
   }
 
+  // Smart pre-filtering: Check for obvious math patterns or action verbs
+  const hasObviousPattern = OBVIOUS_MATH_PATTERNS.some(pattern => pattern.test(message.trim()));
+  const hasActionPattern = MATH_ACTION_PATTERNS.some(pattern => pattern.test(message.trim()));
+  const hasActionVerb = MATH_ACTION_VERBS.en.some(verb => 
+    message.toLowerCase().includes(verb)) || MATH_ACTION_VERBS.fr.some(verb => 
+    message.toLowerCase().includes(verb));
+
   // Quick fallback for obvious math patterns (optimization)
-  if (OBVIOUS_MATH_PATTERNS.some(pattern => pattern.test(message.trim()))) {
-    console.log('[aiMathDetection] Using regex fallback for obvious math');
+  if (hasObviousPattern) {
+    console.log('[aiMathDetection] Using regex fallback for obvious math pattern');
     const result = createSimpleMathResult(message.trim());
+    detectionCache.set(cacheKey, { ...result, timestamp: Date.now() } as any);
+    return result;
+  }
+
+  // Skip AI call for obviously non-math content (performance optimization)
+  if (!hasActionPattern && !hasActionVerb && !containsMathSymbols(message)) {
+    console.log('[aiMathDetection] Skipping AI call - no math indicators found');
+    const result = createFallbackResult(message);
     detectionCache.set(cacheKey, { ...result, timestamp: Date.now() } as any);
     return result;
   }
@@ -62,9 +92,18 @@ export async function detectMathWithAI(
 
     const prompt = `${languageInstructions}
 
-Analyze this message and determine if it contains mathematical content (problems, exercises, questions, or equations).
+You are an expert math education assistant. Analyze this message and determine if it contains mathematical content.
+
+CONTEXT: Common math action verbs include: Calculate, Solve, Simplify, Evaluate, Determine, Prove, Show that, Factor, Expand, Graph, Find, Convert (and their French equivalents: Calculer, Résoudre, Simplifier, Évaluer, Déterminer, Prouver, Montrer que, Factoriser, Développer, Tracer, Trouver, Convertir).
 
 Message: "${message}"
+
+INSTRUCTIONS:
+Look for:
+- Math problems, equations, calculations, or requests to solve something
+- Educational phrases like "Calculate the area", "Solve for x", "Find the value", "Simplify the expression"
+- Mathematical symbols, variables, numbers with operations
+- Word problems involving quantities, measurements, or mathematical relationships
 
 Respond with ONLY a valid JSON object with this exact structure:
 {
@@ -77,19 +116,16 @@ Respond with ONLY a valid JSON object with this exact structure:
   "exercises": [{"question": "Q1", "answer": "A1 or null", "index": 0}]
 }
 
-Guidelines:
-- isMath: true if message contains math problems, equations, calculations, or requests to solve something
-- confidence: 0-100 confidence level
-- question: extract the main math question/problem (clean it up, remove extra text)
-- hasAnswer: true if user provided their answer/solution
-- answer: extract the user's answer if provided
-- isMultiple: true if multiple math problems are present
-- exercises: array of individual problems if multiple detected
+EXAMPLES:
+✅ Math content:
+- "Calculate the area of a rectangle with width 5 and height 3" → {"isMath": true, "confidence": 100, "question": "Calculate the area of a rectangle with width 5 and height 3", "hasAnswer": false, "answer": null, "isMultiple": false, "exercises": []}
+- "Solve for x: 2x+3=7. My answer is x=2" → {"isMath": true, "confidence": 100, "question": "2x+3=7", "hasAnswer": true, "answer": "x=2", "isMultiple": false, "exercises": []}
+- "What is 15% of 80?" → {"isMath": true, "confidence": 95, "question": "What is 15% of 80?", "hasAnswer": false, "answer": null, "isMultiple": false, "exercises": []}
+- "Find the slope of the line passing through (2,3) and (4,7)" → {"isMath": true, "confidence": 100, "question": "Find the slope of the line passing through (2,3) and (4,7)", "hasAnswer": false, "answer": null, "isMultiple": false, "exercises": []}
 
-Examples:
-"What is 2+3?" → {"isMath": true, "confidence": 95, "question": "2+3", "hasAnswer": false, "answer": null, "isMultiple": false, "exercises": []}
-"Solve 2x+3=7. My answer is x=2" → {"isMath": true, "confidence": 100, "question": "2x+3=7", "hasAnswer": true, "answer": "x=2", "isMultiple": false, "exercises": []}
-"Hello how are you?" → {"isMath": false, "confidence": 100, "question": null, "hasAnswer": false, "answer": null, "isMultiple": false, "exercises": []}`;
+❌ Non-math content:
+- "Hello, how are you?" → {"isMath": false, "confidence": 100, "question": null, "hasAnswer": false, "answer": null, "isMultiple": false, "exercises": []}
+- "I need help with my homework" → {"isMath": false, "confidence": 90, "question": null, "hasAnswer": false, "answer": null, "isMultiple": false, "exercises": []}`;
 
     const { data, error } = await supabase.functions.invoke('ai-chat', {
       body: {
@@ -186,7 +222,25 @@ function createSimpleMathResult(message: string): MathDetectionResult {
 }
 
 /**
- * Fallback result when AI detection fails
+ * Check if message contains mathematical symbols or patterns
+ */
+function containsMathSymbols(message: string): boolean {
+  const mathSymbols = [
+    /\d+\s*[\+\-\*\/•÷×=]\s*\d+/,  // Mathematical operations
+    /[xyz]\s*=\s*\d+/i,             // Variable assignments
+    /\d+x\s*[\+\-]/i,               // Linear equations
+    /√|\^|\(\s*\d+\s*,\s*\d+\s*\)/, // Square roots, powers, coordinates
+    /\d+\/\d+/,                     // Fractions
+    /\d+%/,                         // Percentages
+    /\d+°/,                         // Degrees
+    /sin|cos|tan|log/i              // Trigonometric/logarithmic functions
+  ];
+  
+  return mathSymbols.some(pattern => pattern.test(message));
+}
+
+/**
+ * Enhanced fallback result using comprehensive patterns
  */
 function createFallbackResult(message: string): MathDetectionResult {
   // Use basic patterns as fallback
@@ -196,16 +250,29 @@ function createFallbackResult(message: string): MathDetectionResult {
     return createSimpleMathResult(message);
   }
 
-  // Check for math keywords as last resort
-  const mathKeywords = ['solve', 'calculate', 'equation', 'math', 'algebra', '+', '-', '*', '/', '='];
-  const hasMathKeywords = mathKeywords.some(keyword => 
-    message.toLowerCase().includes(keyword)
+  // Enhanced keyword detection using action verbs from Excel data
+  const allMathKeywords = [
+    ...MATH_ACTION_VERBS.en,
+    ...MATH_ACTION_VERBS.fr,
+    'equation', 'expression', 'function', 'formula', 'theorem',
+    'algebra', 'geometry', 'calculus', 'trigonometry',
+    '+', '-', '*', '/', '=', '%', '°'
+  ];
+  
+  const lowerMessage = message.toLowerCase();
+  const hasMathKeywords = allMathKeywords.some(keyword => 
+    lowerMessage.includes(keyword)
   );
 
+  const hasMathSymbols = containsMathSymbols(message);
+
+  const isMath = hasMathKeywords || hasMathSymbols;
+  const confidence = hasMathSymbols ? 75 : (hasMathKeywords ? 60 : 10);
+
   return {
-    isMath: hasMathKeywords,
-    confidence: hasMathKeywords ? 60 : 10,
-    question: hasMathKeywords ? message : null,
+    isMath,
+    confidence,
+    question: isMath ? message : null,
     hasAnswer: false,
     answer: null,
     isMultiple: false,
