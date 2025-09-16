@@ -22,12 +22,28 @@ const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
 // Enhanced math detection patterns based on educational action verbs
 const MATH_ACTION_VERBS = {
   en: ['calculate', 'solve', 'simplify', 'evaluate', 'determine', 'prove', 'show that', 'factor', 'expand', 'graph', 'find', 'convert'],
-  fr: ['calculer', 'résoudre', 'simplifier', 'évaluer', 'déterminer', 'prouver', 'montrer que', 'factoriser', 'développer', 'tracer', 'trouver', 'convertir']
+  fr: ['calculer', 'résoudre', 'simplifier', 'évaluer', 'déterminer', 'démontrer', 'prouver', 'montrer que', 'factoriser', 'développer', 'tracer', 'trouver', 'convertir']
+};
+
+// French mathematical operation words
+const FRENCH_MATH_OPERATIONS = {
+  'fois': '×',         // multiplication: "3 fois 2"
+  'plus': '+',         // addition: "3 plus 2"
+  'moins': '-',        // subtraction: "5 moins 3"
+  'divisé par': '÷',   // division: "8 divisé par 2"
+  'font': '=',         // equals: "font 6"
+  'égal': '=',         // equals: "égal 6"
+  'égale': '=',        // equals: "égale 6"
+  'est': '=',          // is/equals: "est 6"
 };
 
 // Enhanced patterns for obvious math cases (performance optimization)
 const OBVIOUS_MATH_PATTERNS = [
   /^\s*\d+\s*[\+\-\*\/•÷×]\s*\d+\s*=?\s*\d*\s*$/,  // Simple arithmetic like "2+3=5"
+  /^\s*\d+\s*fois\s*\d+\s*(font|égal|égale|est)?\s*\d*\s*$/i,  // French multiplication like "3 fois 2 font 6"
+  /^\s*\d+\s*plus\s*\d+\s*(font|égal|égale|est)?\s*\d*\s*$/i,  // French addition like "3 plus 2 font 5"
+  /^\s*\d+\s*moins\s*\d+\s*(font|égal|égale|est)?\s*\d*\s*$/i,  // French subtraction like "5 moins 3 font 2"
+  /^\s*\d+\s*divisé\s+par\s*\d+\s*(font|égal|égale|est)?\s*\d*\s*$/i,  // French division like "8 divisé par 2 font 4"
   /^\s*solve\s*:\s*\d+x\s*[\+\-]\s*\d+\s*=\s*\d+/i,  // Basic equations like "solve: 2x+3=7"
   /^\s*x\s*=\s*\d+\s*$/i,  // Simple solutions like "x=4"
   /^\s*\d+\/\d+\s*=?\s*\d*\.?\d*\s*$/,  // Fractions like "3/4=0.75"
@@ -36,10 +52,12 @@ const OBVIOUS_MATH_PATTERNS = [
 // Patterns for math action phrases
 const MATH_ACTION_PATTERNS = [
   /^(calculate|solve|simplify|evaluate|determine|prove|show that|factor|expand|graph|find|convert)\s+/i,
-  /^(calculer|résoudre|simplifier|évaluer|déterminer|prouver|montrer que|factoriser|développer|tracer|trouver|convertir)\s+/i,
+  /^(calculer|calculez|résoudre|résolvez|simplifier|simplifiez|évaluer|évaluez|déterminer|déterminez|démontrer|démontrez|prouver|prouvez|montrer que|factoriser|factorisez|développer|développez|tracer|tracez|trouver|trouvez|convertir|convertissez)\s+/i,
   /(what is|qu'est-ce que|combien|how much)/i,
   /(equation|équation|expression|fonction|function)/i,
-  /(\d+[x-z]|\d+\^|\d+\/\d+|√|∫|∑|∆)/i  // Mathematical symbols and variables
+  /(\d+[x-z]|\d+\^|\d+\/\d+|√|∫|∑|∆)/i,  // Mathematical symbols and variables
+  /\d+\s*(fois|plus|moins|divisé\s+par)\s*\d+/i,  // French mathematical operations
+  /(font|égal|égale|est)\s*\d+/i  // French equals expressions
 ];
 
 /**
@@ -194,6 +212,22 @@ function parseAIResponse(content: string, originalMessage: string): MathDetectio
  * Create result for obvious math patterns using regex
  */
 function createSimpleMathResult(message: string): MathDetectionResult {
+  // Handle French mathematical expressions first
+  const frenchMathMatch = message.match(/^(.+?)(font|égal|égale|est)\s*(.+)?$/i);
+  if (frenchMathMatch) {
+    const [, question, , answer] = frenchMathMatch;
+    return {
+      isMath: true,
+      confidence: 95,
+      question: question?.trim() || message,
+      hasAnswer: Boolean(answer?.trim()),
+      answer: answer?.trim() || null,
+      isMultiple: false,
+      exercises: []
+    };
+  }
+
+  // Handle English mathematical expressions with equals
   const equationMatch = message.match(/^(.+?)(=\s*(.+))?$/);
   const hasEquals = message.includes('=');
   
@@ -233,7 +267,9 @@ function containsMathSymbols(message: string): boolean {
     /\d+\/\d+/,                     // Fractions
     /\d+%/,                         // Percentages
     /\d+°/,                         // Degrees
-    /sin|cos|tan|log/i              // Trigonometric/logarithmic functions
+    /sin|cos|tan|log/i,             // Trigonometric/logarithmic functions
+    /\d+\s*(fois|plus|moins|divisé\s+par)\s*\d+/i,  // French mathematical operations
+    /(font|égal|égale|est)\s*\d+/i  // French equals expressions
   ];
   
   return mathSymbols.some(pattern => pattern.test(message));
@@ -256,6 +292,10 @@ function createFallbackResult(message: string): MathDetectionResult {
     ...MATH_ACTION_VERBS.fr,
     'equation', 'expression', 'function', 'formula', 'theorem',
     'algebra', 'geometry', 'calculus', 'trigonometry',
+    'équation', 'expression', 'fonction', 'formule', 'théorème',
+    'algèbre', 'géométrie', 'calcul', 'trigonométrie',
+    // French mathematical operations
+    'fois', 'plus', 'moins', 'divisé par', 'font', 'égal', 'égale', 'est',
     '+', '-', '*', '/', '=', '%', '°'
   ];
   

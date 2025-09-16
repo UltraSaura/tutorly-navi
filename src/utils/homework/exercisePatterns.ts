@@ -9,7 +9,15 @@ export const questionPatterns = [
   /question:(.+?)answer:/i,
   /homework:(.+?)answer:/i,
   /(.+?)my answer is:/i,
-  /(.+?)my solution is:/i
+  /(.+?)my solution is:/i,
+  // French patterns
+  /problème:(.+?)réponse:/i,
+  /question:(.+?)réponse:/i,
+  /exercice:(.+?)réponse:/i,
+  /(.+?)ma réponse est:/i,
+  /(.+?)ma solution est:/i,
+  // French mathematical patterns  
+  /(.+?)(font|égal|égale|est)\s*(.+)$/i
 ];
 
 /**
@@ -19,7 +27,14 @@ export const answerPatterns = [
   /answer:(.+?)$/i,
   /my answer is:(.+?)$/i,
   /my solution is:(.+?)$/i,
-  /solution:(.+?)$/i
+  /solution:(.+?)$/i,
+  // French patterns
+  /réponse:(.+?)$/i,
+  /ma réponse est:(.+?)$/i,
+  /ma solution est:(.+?)$/i,
+  /solution:(.+?)$/i,
+  // French mathematical patterns
+  /(font|égal|égale|est)\s*(.+?)$/i
 ];
 
 /**
@@ -34,16 +49,22 @@ export const extractWithPatterns = (message: string): { question: string; answer
     const match = message.match(pattern);
     if (match && match[1]) {
       question = match[1].trim();
+      // For French mathematical patterns, also capture the answer part
+      if (match[3]) {
+        answer = match[3].trim();
+      }
       break;
     }
   }
   
-  // Try to extract the answer
-  for (const pattern of answerPatterns) {
-    const match = message.match(pattern);
-    if (match && match[1]) {
-      answer = match[1].trim();
-      break;
+  // Try to extract the answer if not already found
+  if (!answer) {
+    for (const pattern of answerPatterns) {
+      const match = message.match(pattern);
+      if (match && (match[1] || match[2])) {
+        answer = (match[1] || match[2]).trim();
+        break;
+      }
     }
   }
   
