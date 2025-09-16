@@ -79,12 +79,18 @@ export async function requestTwoCardTeaching(
   // Substitute variables into the template
   const finalPrompt = substitutePromptVariables(promptTemplate, templateVariables);
   
+  // Map response language to API language code
+  const apiLanguage = vars.response_language === 'French' ? 'fr' : 'en';
+  
+  console.log('[promptClient] Final Prompt Length:', finalPrompt.length);
+  console.log('[promptClient] API Language:', apiLanguage);
+  
   // Call the AI service
   const { data, error } = await sendMessageToAI(
     finalPrompt,
     [], // No message history for explanations
     selectedModelId,
-    vars.response_language || 'en'
+    apiLanguage
   );
   
   if (error) {

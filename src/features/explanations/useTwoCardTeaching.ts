@@ -81,13 +81,52 @@ export function useTwoCardTeaching() {
       // Not in cache, start loading and make AI request
       setLoading(true);
       
-      const explanationTemplate = getActiveTemplate('explanation');
+      let explanationTemplate = getActiveTemplate('explanation');
       
       console.log("[Explain] template →", { name: explanationTemplate?.name, usage: explanationTemplate?.usage_type, id: explanationTemplate?.id });
       
+      // Built-in fallback template if no active template is found
       if (!explanationTemplate) {
-        console.error('[TwoCardTeaching] No active explanation template found!');
-        throw new Error('No active explanation template found. Please create one in the admin panel.');
+        console.log('[TwoCardTeaching] No active template found, using built-in fallback');
+        explanationTemplate = {
+          id: 'fallback',
+          name: 'Built-in Fallback',
+          subject: 'math',
+          description: 'Built-in fallback explanation template',
+          usage_type: 'explanation',
+          prompt_content: `You are an expert tutor. The student answered "{{student_answer}}" to the question "{{exercise_content}}" in {{subject}}.
+
+Please provide a clear educational explanation with these EXACT sections and emojis:
+
+📘 Exercise
+{{exercise_content}}
+
+💡 Concept
+Explain the key concept needed to solve this problem.
+
+🔍 Example
+Show a similar example with different numbers.
+
+☑️ Strategy
+Explain the step-by-step approach to solve this type of problem.
+
+⚠️ Pitfall
+Common mistakes students make with this type of problem.
+
+🎯 Check yourself
+How to verify the answer is correct.
+
+📈 Practice Tip
+Suggestion for improving at this type of problem.
+
+Write all content in {{response_language}}. Keep the section headers in English with emojis exactly as shown above. Return plain text only.`,
+          tags: ['fallback', 'explanation'],
+          is_active: true,
+          priority: 0,
+          auto_activate: false,
+          created_at: new Date(),
+          updated_at: new Date()
+        };
       }
       
       const raw = await requestTwoCardTeaching({
