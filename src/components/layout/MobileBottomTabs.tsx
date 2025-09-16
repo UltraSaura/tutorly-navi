@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare, LayoutDashboard, User, Wrench } from "lucide-react";
+import { MessageSquare, LayoutDashboard, User, History } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -9,7 +9,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 import { AccountTabContent } from "./AccountTabContent";
 
@@ -25,14 +24,14 @@ const bottomTabItems = [
     icon: LayoutDashboard 
   },
   { 
+    title: "nav.history", 
+    url: "/exercise-history", 
+    icon: History 
+  },
+  { 
     title: "nav.account", 
     url: null, // Special case - opens sheet
     icon: User 
-  },
-  { 
-    title: "nav.tools", 
-    url: null, // Special case - future tools
-    icon: Wrench 
   },
 ];
 
@@ -41,7 +40,6 @@ export function MobileBottomTabs() {
   const location = useLocation();
   const { t } = useTranslation();
   const [isAccountOpen, setIsAccountOpen] = useState(false);
-  const [isToolsOpen, setIsToolsOpen] = useState(false);
   
   if (!isMobile) return null;
   
@@ -51,8 +49,6 @@ export function MobileBottomTabs() {
   const handleTabClick = (item: typeof bottomTabItems[0]) => {
     if (item.title === "nav.account") {
       setIsAccountOpen(true);
-    } else if (item.title === "nav.tools") {
-      setIsToolsOpen(true);
     }
   };
 
@@ -106,19 +102,6 @@ export function MobileBottomTabs() {
         </SheetContent>
       </Sheet>
 
-      {/* Tools Sheet */}
-      <Sheet open={isToolsOpen} onOpenChange={setIsToolsOpen}>
-        <SheetContent side="bottom" className="h-[50vh]">
-          <SheetHeader>
-            <SheetTitle>{t('nav.tools')}</SheetTitle>
-          </SheetHeader>
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <Wrench className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">{t('tools.comingSoon')}</h3>
-            <p className="text-muted-foreground">{t('tools.description')}</p>
-          </div>
-        </SheetContent>
-      </Sheet>
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare, LayoutDashboard, HeadphonesIcon, User, Globe, LogOut, ChevronDown, Settings } from "lucide-react";
+import { MessageSquare, LayoutDashboard, HeadphonesIcon, History, User, Globe, LogOut, ChevronDown, Settings } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
@@ -30,6 +30,11 @@ const desktopNavigation = [
     title: "nav.dashboard", 
     url: "/dashboard", 
     icon: LayoutDashboard 
+  },
+  { 
+    title: "nav.history", 
+    url: "/exercise-history", 
+    icon: History 
   },
   { 
     title: "nav.support", 

@@ -24,6 +24,7 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
 const TokensPreview = lazy(() => import("./pages/TokensPreview"));
 const GamePreview = lazy(() => import("./pages/GamePreview"));
+const ExerciseHistoryPage = lazy(() => import("./pages/ExerciseHistoryPage"));
 
 // Admin Pages
 import AIModelManagement from "./components/admin/AIModelManagement";
@@ -88,6 +89,9 @@ const App = () => {
                         </Route>
                         <Route path="/game" element={<MainLayout />}>
                           <Route index element={<GamePreview />} />
+                        </Route>
+                        <Route path="/exercise-history" element={<MainLayout />}>
+                          <Route index element={<ExerciseHistoryPage />} />
                         </Route>
                         
                         {/* Management Dashboard */}

@@ -262,3 +262,5 @@ export const ExerciseHistoryPage = () => {
     </div>
   );
 };
+
+export default ExerciseHistoryPage;
