@@ -17,7 +17,9 @@ export const questionPatterns = [
   /(.+?)ma réponse est:/i,
   /(.+?)ma solution est:/i,
   // French mathematical patterns  
-  /(.+?)(font|égal|égale|est)\s*(.+)$/i
+  /(.+?)(font|égal|égale|est)\s*(.+)$/i,
+  // Flexible answer patterns (with or without colon)
+  /(.+?)[\s,]*réponse[\s:]*(.+)$/i
 ];
 
 /**
@@ -34,7 +36,9 @@ export const answerPatterns = [
   /ma solution est:(.+?)$/i,
   /solution:(.+?)$/i,
   // French mathematical patterns
-  /(font|égal|égale|est)\s*(.+?)$/i
+  /(font|égal|égale|est)\s*(.+?)$/i,
+  // Flexible answer patterns (with or without colon)
+  /[\s,]*réponse[\s:]*(.+?)$/i
 ];
 
 /**

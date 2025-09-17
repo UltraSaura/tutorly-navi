@@ -21,8 +21,8 @@ const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
 
 // Enhanced math detection patterns based on educational action verbs
 const MATH_ACTION_VERBS = {
-  en: ['calculate', 'solve', 'simplify', 'evaluate', 'determine', 'prove', 'show that', 'factor', 'expand', 'graph', 'find', 'convert'],
-  fr: ['calculer', 'résoudre', 'simplifier', 'évaluer', 'déterminer', 'démontrer', 'prouver', 'montrer que', 'factoriser', 'développer', 'tracer', 'trouver', 'convertir']
+  en: ['calculate', 'solve', 'simplify', 'evaluate', 'determine', 'prove', 'show that', 'factor', 'expand', 'graph', 'find', 'convert', 'decompose'],
+  fr: ['calculer', 'résoudre', 'simplifier', 'évaluer', 'déterminer', 'démontrer', 'prouver', 'montrer que', 'factoriser', 'développer', 'tracer', 'trouver', 'convertir', 'décomposer', 'decompose']
 };
 
 // French mathematical operation words
@@ -71,10 +71,10 @@ function testFrenchPattern(message: string) {
 
 // Patterns for math action phrases
 const MATH_ACTION_PATTERNS = [
-  /^(calculate|solve|simplify|evaluate|determine|prove|show that|factor|expand|graph|find|convert)\s+/i,
-  /^(calculer|calculez|résoudre|résolvez|simplifier|simplifiez|évaluer|évaluez|déterminer|déterminez|démontrer|démontrez|prouver|prouvez|montrer que|factoriser|factorisez|développer|développez|tracer|tracez|trouver|trouvez|convertir|convertissez)\s+/i,
+  /^(calculate|solve|simplify|evaluate|determine|prove|show that|factor|expand|graph|find|convert|decompose)\s+/i,
+  /^(calculer|calculez|résoudre|résolvez|simplifier|simplifiez|évaluer|évaluez|déterminer|déterminez|démontrer|démontrez|prouver|prouvez|montrer que|factoriser|factorisez|développer|développez|tracer|tracez|trouver|trouvez|convertir|convertissez|décomposer|décomposez|decompose)\s+/i,
   /(what is|qu'est-ce que|combien|how much)/i,
-  /(equation|équation|expression|fonction|function)/i,
+  /(equation|équation|expression|fonction|function|facteur|facteurs|premiers|prime)/i,
   /(\d+[x-z]|\d+\^|\d+\/\d+|√|∫|∑|∆)/i,  // Mathematical symbols and variables
   /\d+\s*(fois|plus|moins|divisé\s+par)\s*\d+/i,  // French mathematical operations
   /(font|égal|égale|est)\s*\d+/i  // French equals expressions
