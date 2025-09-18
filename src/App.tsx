@@ -7,6 +7,7 @@ import { lazy, Suspense } from "react";
 import { AnimatePresence } from "framer-motion";
 import { AdminProvider } from "./context/AdminContext";
 import { AuthProvider } from "./context/AuthContext";
+import { OverlayProvider } from "./context/OverlayContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LanguageProvider } from "./context/LanguageProvider";
 
@@ -58,12 +59,13 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <LanguageProvider>
-            <AuthProvider>
-              <AdminProvider>
-                <BrowserRouter>
-                  <AnimatePresence mode="wait">
-                    <Suspense fallback={<LoadingFallback />}>
+          <OverlayProvider>
+            <LanguageProvider>
+              <AuthProvider>
+                <AdminProvider>
+                  <BrowserRouter>
+                    <AnimatePresence mode="wait">
+                      <Suspense fallback={<LoadingFallback />}>
                       <Routes>
                         {/* Auth Routes */}
                         <Route path="/auth" element={<AuthPage />} />
@@ -115,10 +117,11 @@ const App = () => {
               </AdminProvider>
             </AuthProvider>
           </LanguageProvider>
-        </TooltipProvider>
-      </ErrorBoundary>
-    </QueryClientProvider>
-  );
+        </OverlayProvider>
+      </TooltipProvider>
+    </ErrorBoundary>
+  </QueryClientProvider>
+);
 };
 
 export default App;

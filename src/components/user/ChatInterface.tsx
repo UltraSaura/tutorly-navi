@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Message } from '@/types/chat';
 import ExerciseList from './chat/ExerciseList';
 import MessageInput from './chat/MessageInput';
@@ -7,6 +8,7 @@ import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
 import { useAdmin } from '@/context/AdminContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useOverlay } from '@/context/OverlayContext';
 import { detectMathWithAI } from '@/services/aiMathDetection';
 import { processAIDetectedExercise, processMultipleAIExercises } from '@/utils/exerciseProcessor';
 import { useLanguage } from '@/context/SimpleLanguageContext';
@@ -17,6 +19,8 @@ import { FileText, Image, Camera, Upload } from 'lucide-react';
 const ChatInterface = () => {
   const { t, language } = useLanguage();
   const isMobile = useIsMobile();
+  const location = useLocation();
+  const { hasActiveOverlay } = useOverlay();
   
   const {
     messages,
@@ -227,17 +231,19 @@ const ChatInterface = () => {
         />
       </div>
 
-      {/* Fixed Chat Input */}
-      <div className="fixed left-0 right-0 z-[60] bottom-16 md:bottom-0 bg-neutral-bg border-t border-neutral-border shadow-lg px-[10px] py-1">
-        <MessageInput
-          inputMessage={inputMessage}
-          setInputMessage={setInputMessage}
-          handleSendMessage={handleSendMessage}
-          handleFileUpload={handleDocumentFileUpload}
-          handlePhotoUpload={handlePhotoFileUpload}
-          isLoading={isLoading}
-        />
-      </div>
+      {/* Fixed Chat Input - Only show on /chat route when no overlays are active */}
+      {location.pathname === '/chat' && !hasActiveOverlay && (
+        <div className="fixed left-0 right-0 z-[60] bottom-16 md:bottom-0 bg-neutral-bg border-t border-neutral-border shadow-lg px-[10px] py-1">
+          <MessageInput
+            inputMessage={inputMessage}
+            setInputMessage={setInputMessage}
+            handleSendMessage={handleSendMessage}
+            handleFileUpload={handleDocumentFileUpload}
+            handlePhotoUpload={handlePhotoFileUpload}
+            isLoading={isLoading}
+          />
+        </div>
+      )}
 
       {/* Upload Bottom Sheet */}
       <Sheet open={showUploadSheet} onOpenChange={setShowUploadSheet}>

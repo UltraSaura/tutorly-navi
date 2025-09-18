@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageSquare, LayoutDashboard, User, History } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useOverlay } from "@/context/OverlayContext";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -39,7 +40,13 @@ export function MobileBottomTabs() {
   const isMobile = useIsMobile();
   const location = useLocation();
   const { t } = useTranslation();
+  const { setHasActiveOverlay } = useOverlay();
   const [isAccountOpen, setIsAccountOpen] = useState(false);
+
+  // Update global overlay state when account sheet opens/closes
+  useEffect(() => {
+    setHasActiveOverlay(isAccountOpen);
+  }, [isAccountOpen, setHasActiveOverlay]);
   
   if (!isMobile) return null;
   
@@ -94,7 +101,7 @@ export function MobileBottomTabs() {
 
       {/* Account Sheet */}
       <Sheet open={isAccountOpen} onOpenChange={setIsAccountOpen}>
-        <SheetContent side="bottom" className="h-[80vh]">
+        <SheetContent side="bottom" className="h-[80vh] z-[70]">
           <SheetHeader>
             <SheetTitle>{t('nav.account')}</SheetTitle>
           </SheetHeader>
