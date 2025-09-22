@@ -17,6 +17,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const watchdogRef = useRef<number | null>(null);
   
   const [cameraState, setCameraState] = useState<'idle' | 'starting' | 'ready' | 'error'>('idle');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -71,6 +72,17 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
       if (videoRef.current) {
         streamRef.current = stream;
         
+        // Track diagnostics
+        const track = stream.getVideoTracks()[0];
+        if (track) {
+          track.addEventListener('ended', () => {
+            console.warn('[Camera] Video track ended, restarting');
+            safeRestart();
+          });
+          track.addEventListener('mute', () => console.warn('[Camera] Video track muted'));
+          track.addEventListener('unmute', () => console.warn('[Camera] Video track unmuted'));
+        }
+        
         const video = videoRef.current;
         video.srcObject = stream;
         
@@ -94,6 +106,27 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
                   if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
                     clearTimeout(timeout);
                     setCameraState('ready');
+
+                    // Start watchdog to keep stream healthy
+                    if (watchdogRef.current) {
+                      clearInterval(watchdogRef.current);
+                    }
+                    watchdogRef.current = window.setInterval(() => {
+                      const v = videoRef.current;
+                      const s = streamRef.current;
+                      if (!v || !s) return;
+                      const t = s.getVideoTracks()[0];
+                      if (!t || t.readyState !== 'live') {
+                        console.warn('[Camera] Watchdog: track not live, restarting');
+                        safeRestart();
+                        return;
+                      }
+                      if (v.readyState < 2 || v.videoWidth === 0 || v.videoHeight === 0) {
+                        console.warn('[Camera] Watchdog: video not rendering, attempting play()');
+                        v.play().catch((err) => console.warn('[Camera] Watchdog play() failed', err));
+                      }
+                    }, 3000);
+
                     resolve();
                   } else {
                     reject(new Error('Video failed to initialize properly'));
@@ -148,9 +181,12 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
+    if (watchdogRef.current) {
+      clearInterval(watchdogRef.current);
+      watchdogRef.current = null;
+    }
     setCameraState('idle');
     setCameraError(null);
-    setCapturedImage(null);
   }, []);
 
   const capturePhoto = useCallback(() => {
@@ -195,6 +231,11 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
     startCamera();
   }, [startCamera]);
 
+  const safeRestart = useCallback(() => {
+    // Gracefully restart the camera
+    stopCamera();
+    startCamera();
+  }, [stopCamera, startCamera]);
   const retakePhoto = useCallback(() => {
     if (capturedImage) {
       URL.revokeObjectURL(capturedImage);
@@ -216,17 +257,18 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
   }, [capturedImage, onCapture, onClose]);
 
   useEffect(() => {
-    if (isOpen && !capturedImage && cameraState === 'idle') {
+    if (isOpen) {
+      // Start when dialog opens
       startCamera();
+      return () => {
+        // Stop only when dialog closes or component unmounts
+        stopCamera();
+      };
+    } else {
+      // Ensure stopped when closed
+      stopCamera();
     }
-    
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
-    };
-  }, [isOpen, capturedImage, cameraState, startCamera]);
+  }, [isOpen, startCamera, stopCamera]);
 
   const handleClose = () => {
     stopCamera();
@@ -255,7 +297,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
                 autoPlay
                 playsInline
                 muted
-                className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
+                className="w-full h-full object-cover"
                 style={{ 
                   minWidth: '100%', 
                   minHeight: '100%',
