@@ -1,10 +1,11 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Plus, Paperclip, Camera, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useOverlay } from '@/context/OverlayContext';
 import { cn } from '@/lib/utils';
 
 interface AttachmentMenuProps {
@@ -16,7 +17,15 @@ interface AttachmentMenuProps {
 const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: AttachmentMenuProps) => {
   const isMobile = useIsMobile();
   const { t } = useLanguage();
+  const { setHasActiveOverlay } = useOverlay();
   const [open, setOpen] = useState(false);
+
+  // Sync sheet state with global overlay context
+  useEffect(() => {
+    if (isMobile) {
+      setHasActiveOverlay(open);
+    }
+  }, [open, isMobile, setHasActiveOverlay]);
 
   const handleItemClick = (originalOnClick: () => void) => {
     originalOnClick();
