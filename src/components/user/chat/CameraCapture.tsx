@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Camera, X, RotateCcw, Check, AlertCircle } from 'lucide-react';
+import { Camera, X, RotateCcw, Check, AlertCircle, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
@@ -22,30 +22,39 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
 
-  const startCamera = useCallback(async () => {
+  const startCamera = useCallback(async (preferredFacingMode?: 'user' | 'environment') => {
     setCameraState('starting');
     setCameraError(null);
+    
+    const targetFacingMode = preferredFacingMode || facingMode;
     
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Camera access not supported in this browser');
       }
 
-      // Try multiple camera constraints with fallbacks
+      // Try constraints in order of preference
       const constraints = [
-        { video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } },
-        { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: { facingMode: targetFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: { facingMode: targetFacingMode } },
+        { video: { facingMode: targetFacingMode === 'environment' ? 'user' : 'environment' } },
         { video: { width: { ideal: 1280 }, height: { ideal: 720 } } },
         { video: true }
       ];
 
       let stream: MediaStream | null = null;
       let lastError: Error | null = null;
+      let actualFacingMode = targetFacingMode;
 
       for (const constraint of constraints) {
         try {
           stream = await navigator.mediaDevices.getUserMedia(constraint);
+          // Update facing mode based on what actually worked
+          if (constraint.video && typeof constraint.video === 'object' && constraint.video.facingMode) {
+            actualFacingMode = constraint.video.facingMode as 'user' | 'environment';
+          }
           break;
         } catch (error) {
           lastError = error as Error;
@@ -57,68 +66,44 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
         throw lastError || new Error('Failed to access camera with any configuration');
       }
       
+      setFacingMode(actualFacingMode);
+      
       if (videoRef.current) {
         streamRef.current = stream;
         
-        // Set video properties before setting srcObject
         const video = videoRef.current;
-        video.autoplay = true;
-        video.playsInline = true;
-        video.muted = true;
+        video.srcObject = stream;
         
-        // Set up event handlers before setting stream
-        const loadingPromise = new Promise<void>((resolve, reject) => {
+        // Wait for video to load and start playing
+        await new Promise<void>((resolve, reject) => {
           const timeout = setTimeout(() => {
             reject(new Error('Camera loading timeout'));
-          }, 10000);
+          }, 8000);
 
-          const onLoadedMetadata = async () => {
-            try {
-              console.log('Video metadata loaded:', { 
-                videoWidth: video.videoWidth, 
-                videoHeight: video.videoHeight,
-                readyState: video.readyState 
-              });
-              
-              // Give the video element time to initialize
-              await new Promise(resolve => setTimeout(resolve, 100));
-              
-              // Ensure video has actual dimensions
-              if (video.videoWidth === 0 || video.videoHeight === 0) {
-                // Wait a bit more and check again
-                await new Promise(resolve => setTimeout(resolve, 500));
-                if (video.videoWidth === 0 || video.videoHeight === 0) {
-                  throw new Error('Video stream has no content');
-                }
-              }
-              
-              await video.play();
-              console.log('Video play started');
-              
-              // Additional validation to ensure video is actually playing
-              setTimeout(() => {
-                console.log('Video validation check:', { 
-                  currentTime: video.currentTime, 
-                  readyState: video.readyState,
-                  videoWidth: video.videoWidth,
-                  videoHeight: video.videoHeight
-                });
-                
-                if (video.readyState >= 2) { // HAVE_CURRENT_DATA or better
-                  clearTimeout(timeout);
-                  setCameraState('ready');
-                  resolve();
-                } else {
-                  reject(new Error('Video failed to start playing properly'));
-                }
-              }, 800);
-            } catch (error) {
-              clearTimeout(timeout);
-              reject(error);
-            }
+          const onLoadedMetadata = () => {
+            console.log('Video loaded:', { 
+              videoWidth: video.videoWidth, 
+              videoHeight: video.videoHeight,
+              readyState: video.readyState 
+            });
+            
+            video.play()
+              .then(() => {
+                // Give video time to actually start playing
+                setTimeout(() => {
+                  if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+                    clearTimeout(timeout);
+                    setCameraState('ready');
+                    resolve();
+                  } else {
+                    reject(new Error('Video failed to initialize properly'));
+                  }
+                }, 300);
+              })
+              .catch(reject);
           };
 
-          const onError = () => {
+          const onError = (e: Event) => {
             clearTimeout(timeout);
             reject(new Error('Video loading failed'));
           };
@@ -126,11 +111,6 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
           video.addEventListener('loadedmetadata', onLoadedMetadata, { once: true });
           video.addEventListener('error', onError, { once: true });
         });
-
-        // Set the stream after event handlers are set up
-        video.srcObject = stream;
-        
-        await loadingPromise;
       }
     } catch (error: any) {
       // Clean up stream if error occurs
@@ -150,8 +130,8 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
         errorMessage = 'Camera is being used by another application.';
       } else if (error.message.includes('timeout')) {
         errorMessage = 'Camera loading timed out. Please try again.';
-      } else if (error.message.includes('no content')) {
-        errorMessage = 'Camera stream appears to be empty. Please try again.';
+      } else if (error.message.includes('initialize')) {
+        errorMessage = 'Camera failed to initialize. Please try again.';
       }
       
       setCameraError(errorMessage);
@@ -161,7 +141,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
         variant: "destructive"
       });
     }
-  }, [toast, t]);
+  }, [facingMode, toast, t]);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -185,7 +165,14 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Mirror the image if using front camera
+    if (facingMode === 'user') {
+      context.scale(-1, 1);
+      context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+    } else {
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    }
 
     canvas.toBlob((blob) => {
       if (blob) {
@@ -195,7 +182,18 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
       }
       setIsCapturing(false);
     }, 'image/jpeg', 0.8);
-  }, [stopCamera]);
+  }, [stopCamera, facingMode]);
+
+  const flipCamera = useCallback(() => {
+    const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(newFacingMode);
+    stopCamera();
+    startCamera(newFacingMode);
+  }, [facingMode, startCamera, stopCamera]);
+
+  const retryCamera = useCallback(() => {
+    startCamera();
+  }, [startCamera]);
 
   const retakePhoto = useCallback(() => {
     if (capturedImage) {
@@ -228,7 +226,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
         streamRef.current = null;
       }
     };
-  }, [isOpen, capturedImage, cameraState]);
+  }, [isOpen, capturedImage, cameraState, startCamera]);
 
   const handleClose = () => {
     stopCamera();
@@ -240,7 +238,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={() => handleClose()}>
       <DialogContent className="max-w-md mx-auto p-0 overflow-hidden">
         <DialogHeader className="p-4">
           <DialogTitle className="flex items-center gap-2">
@@ -257,7 +255,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
                 autoPlay
                 playsInline
                 muted
-                className="w-full h-full object-cover transform scale-x-[-1]"
+                className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
                 style={{ 
                   minWidth: '100%', 
                   minHeight: '100%',
@@ -267,14 +265,23 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
               <canvas ref={canvasRef} className="hidden" />
               
               {cameraState === 'ready' && (
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4">
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
                   <Button
                     variant="secondary"
                     size="icon"
-                    className="rounded-full h-12 w-12"
+                    className="rounded-full h-10 w-10"
                     onClick={handleClose}
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-4 w-4" />
+                  </Button>
+                  
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="rounded-full h-10 w-10"
+                    onClick={flipCamera}
+                  >
+                    <RotateCw className="h-4 w-4" />
                   </Button>
                   
                   <Button
@@ -328,7 +335,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={startCamera}
+                      onClick={retryCamera}
                       className="text-white border-white hover:bg-white hover:text-black"
                     >
                       Try Again
