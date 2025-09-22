@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, X, RotateCcw, Check, AlertCircle, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, CameraDialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 
@@ -238,8 +238,8 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => handleClose()}>
-      <DialogContent className="max-w-md mx-auto p-0 overflow-hidden">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
+      <CameraDialogContent className="max-w-md mx-auto p-0 overflow-hidden">
         <DialogHeader className="p-4">
           <DialogTitle className="flex items-center gap-2">
             <Camera className="h-5 w-5" />
@@ -356,7 +356,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
             </div>
           )}
         </div>
-      </DialogContent>
+      </CameraDialogContent>
     </Dialog>
   );
 };
