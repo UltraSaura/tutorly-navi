@@ -48,7 +48,10 @@ export function MobileBottomTabs() {
     setHasActiveOverlay(isAccountOpen);
   }, [isAccountOpen, setHasActiveOverlay]);
   
-  if (!isMobile) return null;
+  // Temporarily force mobile view for testing
+  const forceMobile = true; // Change this to true for testing
+  
+  if (!isMobile && !forceMobile) return null;
   
   const currentPath = location.pathname;
   const isActive = (url: string | null) => url && currentPath === url;
