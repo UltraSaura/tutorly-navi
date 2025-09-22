@@ -74,23 +74,44 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
 
           const onLoadedMetadata = async () => {
             try {
+              console.log('Video metadata loaded:', { 
+                videoWidth: video.videoWidth, 
+                videoHeight: video.videoHeight,
+                readyState: video.readyState 
+              });
+              
+              // Give the video element time to initialize
+              await new Promise(resolve => setTimeout(resolve, 100));
+              
               // Ensure video has actual dimensions
               if (video.videoWidth === 0 || video.videoHeight === 0) {
-                throw new Error('Video stream has no content');
+                // Wait a bit more and check again
+                await new Promise(resolve => setTimeout(resolve, 500));
+                if (video.videoWidth === 0 || video.videoHeight === 0) {
+                  throw new Error('Video stream has no content');
+                }
               }
               
               await video.play();
+              console.log('Video play started');
               
               // Additional validation to ensure video is actually playing
               setTimeout(() => {
-                if (video.currentTime === 0 && video.readyState < 3) {
-                  reject(new Error('Video failed to start playing'));
-                } else {
+                console.log('Video validation check:', { 
+                  currentTime: video.currentTime, 
+                  readyState: video.readyState,
+                  videoWidth: video.videoWidth,
+                  videoHeight: video.videoHeight
+                });
+                
+                if (video.readyState >= 2) { // HAVE_CURRENT_DATA or better
                   clearTimeout(timeout);
                   setCameraState('ready');
                   resolve();
+                } else {
+                  reject(new Error('Video failed to start playing properly'));
                 }
-              }, 500);
+              }, 800);
             } catch (error) {
               clearTimeout(timeout);
               reject(error);
@@ -228,7 +249,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="relative aspect-[4/3] bg-black">
+        <div className="relative aspect-[4/3] bg-black overflow-hidden">
           {!capturedImage ? (
             <>
               <video
@@ -236,7 +257,12 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
                 autoPlay
                 playsInline
                 muted
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transform scale-x-[-1]"
+                style={{ 
+                  minWidth: '100%', 
+                  minHeight: '100%',
+                  objectFit: 'cover'
+                }}
               />
               <canvas ref={canvasRef} className="hidden" />
               
