@@ -17,7 +17,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const watchdogRef = useRef<number | null>(null);
+  
   
   const [cameraState, setCameraState] = useState<'idle' | 'starting' | 'ready' | 'error'>('idle');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -72,15 +72,12 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
       if (videoRef.current) {
         streamRef.current = stream;
         
-        // Track diagnostics
+        // Track diagnostics (no auto-restart)
         const track = stream.getVideoTracks()[0];
         if (track) {
           track.addEventListener('ended', () => {
-            console.warn('[Camera] Video track ended, restarting');
-            safeRestart();
+            console.warn('[Camera] Video track ended');
           });
-          track.addEventListener('mute', () => console.warn('[Camera] Video track muted'));
-          track.addEventListener('unmute', () => console.warn('[Camera] Video track unmuted'));
         }
         
         const video = videoRef.current;
@@ -107,25 +104,6 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
                     clearTimeout(timeout);
                     setCameraState('ready');
 
-                    // Start watchdog to keep stream healthy
-                    if (watchdogRef.current) {
-                      clearInterval(watchdogRef.current);
-                    }
-                    watchdogRef.current = window.setInterval(() => {
-                      const v = videoRef.current;
-                      const s = streamRef.current;
-                      if (!v || !s) return;
-                      const t = s.getVideoTracks()[0];
-                      if (!t || t.readyState !== 'live') {
-                        console.warn('[Camera] Watchdog: track not live, restarting');
-                        safeRestart();
-                        return;
-                      }
-                      if (v.readyState < 2 || v.videoWidth === 0 || v.videoHeight === 0) {
-                        console.warn('[Camera] Watchdog: video not rendering, attempting play()');
-                        v.play().catch((err) => console.warn('[Camera] Watchdog play() failed', err));
-                      }
-                    }, 3000);
 
                     resolve();
                   } else {
@@ -181,10 +159,6 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
-    if (watchdogRef.current) {
-      clearInterval(watchdogRef.current);
-      watchdogRef.current = null;
-    }
     setCameraState('idle');
     setCameraError(null);
   }, []);
@@ -231,11 +205,6 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
     startCamera();
   }, [startCamera]);
 
-  const safeRestart = useCallback(() => {
-    // Gracefully restart the camera
-    stopCamera();
-    startCamera();
-  }, [stopCamera, startCamera]);
   const retakePhoto = useCallback(() => {
     if (capturedImage) {
       URL.revokeObjectURL(capturedImage);
