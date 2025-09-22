@@ -17,7 +17,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  
+  const errorToastShownRef = useRef(false);
   
   const [cameraState, setCameraState] = useState<'idle' | 'starting' | 'ready' | 'error'>('idle');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -146,11 +146,14 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
       }
       
       setCameraError(errorMessage);
-      toast({
-        title: t('camera.accessError'),
-        description: errorMessage,
-        variant: "destructive"
-      });
+      if (!errorToastShownRef.current) {
+        toast({
+          title: t('camera.accessError'),
+          description: errorMessage,
+          variant: "destructive"
+        });
+        errorToastShownRef.current = true;
+      }
     }
   }, [facingMode, toast, t]);
 
@@ -228,6 +231,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
   useEffect(() => {
     if (isOpen) {
       // Start when dialog opens
+      errorToastShownRef.current = false;
       startCamera();
       return () => {
         // Stop only when dialog closes or component unmounts
@@ -237,7 +241,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
       // Ensure stopped when closed
       stopCamera();
     }
-  }, [isOpen, startCamera, stopCamera]);
+  }, [isOpen]);
 
   const handleClose = () => {
     stopCamera();
