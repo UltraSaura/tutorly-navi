@@ -40,13 +40,17 @@ export function MobileBottomTabs() {
   const isMobile = useIsMobile();
   const location = useLocation();
   const { t } = useTranslation();
-  const { setHasActiveOverlay } = useOverlay();
+  const { registerOverlay, unregisterOverlay } = useOverlay();
   const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   // Update global overlay state when account sheet opens/closes
   useEffect(() => {
-    setHasActiveOverlay(isAccountOpen);
-  }, [isAccountOpen, setHasActiveOverlay]);
+    if (isAccountOpen) {
+      registerOverlay('account-sheet');
+    } else {
+      unregisterOverlay('account-sheet');
+    }
+  }, [isAccountOpen, registerOverlay, unregisterOverlay]);
   
   if (!isMobile) return null;
   

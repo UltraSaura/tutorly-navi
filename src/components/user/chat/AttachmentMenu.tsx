@@ -17,15 +17,19 @@ interface AttachmentMenuProps {
 const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: AttachmentMenuProps) => {
   const isMobile = useIsMobile();
   const { t } = useLanguage();
-  const { setHasActiveOverlay } = useOverlay();
+  const { registerOverlay, unregisterOverlay } = useOverlay();
   const [open, setOpen] = useState(false);
 
   // Sync sheet state with global overlay context
   useEffect(() => {
     if (isMobile) {
-      setHasActiveOverlay(open);
+      if (open) {
+        registerOverlay('attachment-menu');
+      } else {
+        unregisterOverlay('attachment-menu');
+      }
     }
-  }, [open, isMobile, setHasActiveOverlay]);
+  }, [open, isMobile, registerOverlay, unregisterOverlay]);
 
   const handleItemClick = (originalOnClick: () => void) => {
     originalOnClick();
