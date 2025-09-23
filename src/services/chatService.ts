@@ -68,24 +68,29 @@ export const sendMessageToAI = async (
       
       // Check for missing API key errors
       if (data?.error?.includes('Missing API key')) {
-        toast.error(`${data.error}`, {
-          description: data.details || `Please configure the API key for ${data.provider || 'the selected provider'} in Admin Settings.`,
+        const provider = data.provider || 'the selected provider';
+        toast.error(`API Key Required: ${provider}`, {
+          description: data.details || `This model requires a ${provider} API key to be configured in Supabase secrets.`,
           action: {
-            label: "Open Admin",
-            onClick: () => window.location.href = "/admin"
+            label: "View Setup Guide",
+            onClick: () => window.open('https://supabase.com/dashboard/project/sibprjxhbxahouejygeu/settings/functions', '_blank')
           }
         });
       } else if (data?.error?.includes('model') && data?.error?.includes('not available')) {
-        toast.error(`Model not available: ${selectedModelId}`, {
-          description: `The selected model may not be available. Check your API key configuration.`,
+        toast.error(`Model Unavailable`, {
+          description: `The model "${selectedModelId}" is not available. Try switching to a different model.`,
           action: {
-            label: "Open Admin",
+            label: "Select Model",
             onClick: () => window.location.href = "/admin"
           }
         });
+      } else if (data?.error?.includes('Provider not implemented')) {
+        toast.error('Provider Not Supported', {
+          description: `The selected AI provider is not yet implemented. Please choose a different model.`
+        });
       } else {
-        toast.error('Failed to get AI response', {
-          description: data?.error || 'Unknown error occurred'
+        toast.error('AI Service Error', {
+          description: data?.error || 'Failed to process your request. Please try again or select a different model.'
         });
       }
       
@@ -118,16 +123,30 @@ export const sendMessageToAI = async (
     console.error('Error in AI chat:', error);
     
     // Provide more specific error handling
-    if (error.message?.includes('API key not configured')) {
-      toast.error('API key not configured for the selected provider. Please add the key in Admin > Model Selection.');
+    if (error.message?.includes('Missing API key')) {
+      toast.error('API Key Missing', {
+        description: 'The selected model requires an API key. Please configure it in Supabase secrets.',
+        action: {
+          label: "Setup Guide",
+          onClick: () => window.open('https://supabase.com/dashboard/project/sibprjxhbxahouejygeu/settings/functions', '_blank')
+        }
+      });
     } else if (error.message?.includes('Provider not implemented')) {
-      toast.error('Selected provider is not yet implemented. Please choose another model.');
+      toast.error('Provider Not Available', {
+        description: 'This AI provider is not yet supported. Please select a different model.'
+      });
     } else if (error.message?.includes('Failed to get AI response')) {
-      toast.error('AI service temporarily unavailable. Please try again in a moment.');
+      toast.error('Service Temporarily Unavailable', {
+        description: 'The AI service is currently experiencing issues. Please try again in a moment.'
+      });
     } else if (error.message?.includes('timeout') || error.message?.includes('network')) {
-      toast.error('Network issue detected. Please check your connection and try again.');
+      toast.error('Connection Issue', {
+        description: 'Unable to reach the AI service. Please check your connection and try again.'
+      });
     } else {
-      toast.error(`AI service error: ${error.message || 'Unknown error'}. Please try again.`);
+      toast.error('Request Failed', {
+        description: error.message || 'An unexpected error occurred. Please try again or select a different model.'
+      });
     }
     
     return { data: null, error };

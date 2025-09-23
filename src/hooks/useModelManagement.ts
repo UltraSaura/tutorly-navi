@@ -3,19 +3,22 @@ import { ApiKey, ModelOption } from '@/types/admin';
 import { AVAILABLE_MODELS } from '@/data/adminDefaults';
 
 export const useModelManagement = (apiKeys: ApiKey[]) => {
-  // Helper function to get default available model
+  // Helper function to get default available model based on Supabase secrets
   const getDefaultAvailableModel = () => {
-    const availableProviders = [...new Set(apiKeys.map(key => key.provider))];
-    const priorityProviders = ['DeepSeek', 'OpenAI']; // Prioritize DeepSeek over OpenAI
+    // Priority order: models most likely to have API keys configured in Supabase
+    const priorityModels = [
+      'deepseek-chat',    // DEEPSEEK_API_KEY is configured
+      'gpt-4.1',          // OPENAI_API_KEY is configured  
+      'gpt-5-mini',       // OPENAI_API_KEY is configured
+      'gpt4o'             // OPENAI_API_KEY is configured
+    ];
     
-    // Find the first available model with an API key or from priority providers
-    const availableModel = AVAILABLE_MODELS.find(model => {
-      const hasLocalProvider = availableProviders.some(provider => provider === model.provider);
-      const isPriorityProvider = priorityProviders.includes(model.provider);
-      return hasLocalProvider || isPriorityProvider;
-    });
+    // Check if any priority model exists in available models
+    const availableModel = AVAILABLE_MODELS.find(model => 
+      priorityModels.includes(model.id)
+    );
     
-    return availableModel?.id || 'deepseek-chat'; // Fallback to DeepSeek model
+    return availableModel?.id || 'deepseek-chat'; // Fallback to DeepSeek
   };
 
   const [selectedModelId, setSelectedModelIdState] = useState<string>(() => {
@@ -42,37 +45,38 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
     localStorage.setItem('selectedModelId', selectedModelId);
   }, [selectedModelId]);
 
-  // Get filtered list of available models based on API keys
+  // Get filtered list of available models based on Supabase secrets
   const getAvailableModels = () => {
-    // Get list of providers we have API keys for
-    const availableProviders = [...new Set(apiKeys.map(key => key.provider))];
-    
-    // Priority providers that are likely configured in Supabase secrets
-    const priorityProviders = ['DeepSeek', 'OpenAI']; // Prioritize DeepSeek over OpenAI
+    // Models that have API keys configured in Supabase secrets
+    const configuredProviders = ['DeepSeek', 'OpenAI']; // Based on DEEPSEEK_API_KEY and OPENAI_API_KEY
     
     // Log for debugging
-    console.log("Available providers:", availableProviders);
-    console.log("Priority providers:", priorityProviders);
+    console.log("Configured providers in Supabase:", configuredProviders);
     
-    // Filter models based on available providers
+    // Filter and enhance models based on configured providers
     return AVAILABLE_MODELS.map(model => {
-      const hasLocalProvider = availableProviders.some(
-        provider => provider === model.provider
-      );
+      const hasSupabaseSecret = configuredProviders.includes(model.provider);
+      const hasLocalApiKey = apiKeys.some(key => key.provider === model.provider);
       
-      // Consider priority providers as potentially available via Supabase secrets
-      const isPriorityProvider = priorityProviders.includes(model.provider);
-      const isAvailable = hasLocalProvider || isPriorityProvider;
+      // Model is available if it has either a Supabase secret or local API key
+      const isAvailable = hasSupabaseSecret || hasLocalApiKey;
       
-      console.log(`Model: ${model.name}, Provider: ${model.provider}, Local Key: ${hasLocalProvider}, Priority: ${isPriorityProvider}, Available: ${isAvailable}`);
+      console.log(`Model: ${model.name}, Provider: ${model.provider}, Supabase Secret: ${hasSupabaseSecret}, Local Key: ${hasLocalApiKey}, Available: ${isAvailable}`);
       
       return {
         ...model,
-        // Mark models as potentially unavailable if no local key and not priority
         disabled: !isAvailable,
-        // Add a flag to indicate if this is using a Supabase secret
-        usesSupabaseSecret: isPriorityProvider && !hasLocalProvider
+        usesSupabaseSecret: hasSupabaseSecret && !hasLocalApiKey
       };
+    })
+    .sort((a, b) => {
+      // Sort available models first, then by priority
+      if (a.disabled !== b.disabled) return a.disabled ? 1 : -1;
+      
+      // Prioritize DeepSeek and OpenAI models
+      const aPriority = ['DeepSeek', 'OpenAI'].includes(a.provider) ? 0 : 1;
+      const bPriority = ['DeepSeek', 'OpenAI'].includes(b.provider) ? 0 : 1;
+      return aPriority - bPriority;
     });
   };
 
