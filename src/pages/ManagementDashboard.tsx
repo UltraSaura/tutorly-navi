@@ -133,9 +133,9 @@ const ManagementDashboard = () => {
                 User Accounts
               </Button>
             </Link>
-            <Link to="/admin/prompts">
+            <Link to="/admin/diagnostics">
               <Button variant="outline" size="sm">
-                System Prompts
+                Connection Test
               </Button>
             </Link>
           </div>

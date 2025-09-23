@@ -31,13 +31,40 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Set CORS headers for all responses
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('✅ CORS preflight request handled');
     return new Response(null, { headers: corsHeaders });
   }
-  
+
+  console.log(`🚀 ${req.method} request to ai-chat function at ${new Date().toISOString()}`);
+  console.log('📋 Request headers:', Object.fromEntries(req.headers.entries()));
+
   try {
-    // Parse the request
+    // Parse request body with detailed logging
+    const requestText = await req.text();
+    console.log('📥 Raw request received, length:', requestText.length);
+    
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(requestText);
+    } catch (parseError) {
+      console.error('❌ JSON parse error:', parseError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
     const { 
       message, 
       modelId, 
@@ -46,36 +73,25 @@ serve(async (req) => {
       language = 'en',
       customPrompt,
       userContext
-    } = await req.json();
+    } = parsedBody;
     
-    console.log(`Processing request with model: ${modelId}`);
-    console.log('Is grading request:', isGradingRequest);
-    
-    // Detect if this is a homework/exercise question
-    const isExercise = !isGradingRequest && detectExercise(message);
-    console.log('Is exercise:', isExercise);
-    
-    // Determine which model to use and which API to call
-    const modelConfig = getModelConfig(modelId);
-    
-    if (!modelConfig) {
-      throw new Error(`Unsupported model ID: ${modelId}`);
-    }
-    
-    console.log(`Using provider: ${modelConfig.provider}, model: ${modelConfig.model}`);
-    
-    // Check if we have the API key for the selected provider
-    const apiKey = getApiKeyForProvider(modelConfig.provider);
-    console.log(`Checking API key for provider: ${modelConfig.provider}, Found: ${!!apiKey}`);
-    
-    if (!apiKey) {
-      console.error(`No API key found for provider: ${modelConfig.provider} for model: ${modelId}`);
+    console.log('📊 Request analysis:', { 
+      modelId, 
+      messageLength: message?.length,
+      historyLength: history?.length,
+      isGradingRequest,
+      language,
+      hasCustomPrompt: !!customPrompt,
+      hasUserContext: !!userContext
+    });
+
+    // Validate required parameters
+    if (!message || !modelId) {
+      console.error('❌ Missing required parameters');
       return new Response(
         JSON.stringify({ 
-          error: `Missing API key for ${modelConfig.provider}`,
-          details: `The model "${modelId}" requires a ${modelConfig.provider} API key to be configured in Supabase Secrets. Please add the ${modelConfig.provider.toUpperCase().replace(' ', '_')}_API_KEY to your project secrets.`,
-          provider: modelConfig.provider,
-          modelId: modelId
+          error: 'Missing required parameters: message or modelId',
+          received: { hasMessage: !!message, hasModelId: !!modelId }
         }),
         { 
           status: 400, 
@@ -83,6 +99,58 @@ serve(async (req) => {
         }
       );
     }
+
+    // Detect if this is an exercise request
+    const isExercise = !isGradingRequest && detectExercise(message);
+    console.log('🧮 Exercise detection:', { isGradingRequest, isExercise });
+
+    // Get model configuration
+    const modelConfig = getModelConfig(modelId);
+    if (!modelConfig) {
+      console.error('❌ Unsupported model:', modelId);
+      return new Response(
+        JSON.stringify({ 
+          error: `Unsupported model: ${modelId}`,
+          supportedModels: ['gpt-5', 'gpt-4.1', 'deepseek-chat', 'claude-3-5-sonnet-20241022']
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    console.log('⚙️ Model configuration:', modelConfig);
+
+    // Get API key for the provider
+    const apiKey = getApiKeyForProvider(modelConfig.provider);
+    if (!apiKey) {
+      console.error('❌ API key not found for provider:', modelConfig.provider);
+      const availableKeys = [
+        'OPENAI_API_KEY', 
+        'DEEPSEEK_API_KEY', 
+        'ANTHROPIC_API_KEY', 
+        'GOOGLE_API_KEY'
+      ].filter(key => Deno.env.get(key));
+      
+      console.log('🔑 Available API keys:', availableKeys);
+      
+      return new Response(
+        JSON.stringify({ 
+          error: `Missing API key for ${modelConfig.provider}`,
+          details: `The model "${modelId}" requires a ${modelConfig.provider} API key to be configured in Supabase Secrets. Please add the ${modelConfig.provider.toUpperCase().replace(' ', '_')}_API_KEY to your project secrets.`,
+          provider: modelConfig.provider,
+          modelId: modelId,
+          availableProviders: availableKeys.map(key => key.replace('_API_KEY', ''))
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    console.log('🔑 API key found for provider:', modelConfig.provider);
     
     // Generate the appropriate system message based on context (now async)
     let systemMessage = await generateSystemMessage(isExercise, isGradingRequest, language, customPrompt, userContext);
@@ -92,70 +160,89 @@ serve(async (req) => {
       systemMessage = enhanceSystemMessageForMath(systemMessage, message);
     }
     
+    console.log('📝 System message generated, length:', systemMessage.content?.length || systemMessage.length);
+    
     // Format history messages based on provider
     const formattedHistory = formatHistoryForProvider(history, modelConfig.provider);
     const formattedSystemMessage = formatSystemMessageForProvider(systemMessage, modelConfig.provider);
     
+    console.log('📚 Formatted history count:', formattedHistory.length);
+    
     // Call the appropriate API based on the provider
+    console.log(`🔄 Calling ${modelConfig.provider} API with model: ${modelConfig.model}`);
     let responseContent;
-    switch (modelConfig.provider) {
-      case 'OpenAI':
-        responseContent = await callOpenAI(
-          formattedSystemMessage, 
-          formattedHistory, 
-          message, 
-          modelConfig.model, 
-          isExercise
-        );
-        break;
-      case 'Anthropic':
-        responseContent = await callAnthropic(
-          formattedSystemMessage, 
-          formattedHistory, 
-          message, 
-          modelConfig.model, 
-          isExercise
-        );
-        break;
-      case 'Mistral AI':
-        responseContent = await callMistral(
-          formattedSystemMessage, 
-          formattedHistory, 
-          message, 
-          modelConfig.model, 
-          isExercise
-        );
-        break;
-      case 'Google':
-        responseContent = await callGoogle(
-          formattedSystemMessage, 
-          formattedHistory, 
-          message, 
-          modelConfig.model, 
-          isExercise
-        );
-        break;
-      case 'DeepSeek':
-        responseContent = await callDeepSeek(
-          formattedSystemMessage, 
-          formattedHistory, 
-          message, 
-          modelConfig.model, 
-          isExercise
-        );
-        break;
-      case 'xAI':
-        responseContent = await callXAI(
-          formattedSystemMessage, 
-          formattedHistory, 
-          message, 
-          modelConfig.model, 
-          isExercise
-        );
-        break;
-      default:
-        throw new Error(`Provider not implemented: ${modelConfig.provider}`);
+    
+    const apiStartTime = Date.now();
+    try {
+      switch (modelConfig.provider) {
+        case 'OpenAI':
+          responseContent = await callOpenAI(
+            formattedSystemMessage, 
+            formattedHistory, 
+            message, 
+            modelConfig.model, 
+            isExercise
+          );
+          break;
+        case 'Anthropic':
+          responseContent = await callAnthropic(
+            formattedSystemMessage, 
+            formattedHistory, 
+            message, 
+            modelConfig.model, 
+            isExercise
+          );
+          break;
+        case 'Mistral AI':
+          responseContent = await callMistral(
+            formattedSystemMessage, 
+            formattedHistory, 
+            message, 
+            modelConfig.model, 
+            isExercise
+          );
+          break;
+        case 'Google':
+          responseContent = await callGoogle(
+            formattedSystemMessage, 
+            formattedHistory, 
+            message, 
+            modelConfig.model, 
+            isExercise
+          );
+          break;
+        case 'DeepSeek':
+          responseContent = await callDeepSeek(
+            formattedSystemMessage, 
+            formattedHistory, 
+            message, 
+            modelConfig.model, 
+            isExercise
+          );
+          break;
+        case 'xAI':
+          responseContent = await callXAI(
+            formattedSystemMessage, 
+            formattedHistory, 
+            message, 
+            modelConfig.model, 
+            isExercise
+          );
+          break;
+        default:
+          throw new Error(`Provider not implemented: ${modelConfig.provider}`);
+      }
+      
+      const apiEndTime = Date.now();
+      console.log(`✅ ${modelConfig.provider} API success, response time: ${apiEndTime - apiStartTime}ms`);
+      
+    } catch (providerError) {
+      const apiEndTime = Date.now();
+      console.error(`❌ ${modelConfig.provider} API failed after ${apiEndTime - apiStartTime}ms:`, providerError);
+      throw providerError;
     }
+    
+    console.log('📤 Returning successful response, content length:', responseContent?.length || 0);
     
     // Return the AI's response
     return new Response(
@@ -176,14 +263,34 @@ serve(async (req) => {
     );
     
   } catch (error) {
-    console.error('Error in AI chat function:', error);
+    console.error('❌ Error in AI chat function:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Enhanced error response with more details
+    let errorMessage = error.message || 'An error occurred while processing your request';
+    let statusCode = 500;
+    
+    // Categorize errors for better user experience
+    if (errorMessage.includes('API key')) {
+      statusCode = 401;
+    } else if (errorMessage.includes('model') || errorMessage.includes('Unsupported')) {
+      statusCode = 400;
+    } else if (errorMessage.includes('timeout') || errorMessage.includes('network')) {
+      statusCode = 503;
+    }
     
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'An error occurred while processing your request'
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+        statusCode
       }),
       { 
-        status: 500,
+        status: statusCode,
         headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json' 

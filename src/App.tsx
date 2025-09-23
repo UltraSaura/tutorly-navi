@@ -32,6 +32,7 @@ import AIModelManagement from "./components/admin/AIModelManagement";
 import SubjectManagement from "./components/admin/SubjectManagement";
 import UserManagement from "./components/admin/UserManagement";
 import PromptManagement from "./components/admin/PromptManagement";
+import ConnectionDiagnostics from "./components/admin/ConnectionDiagnostics";
 
 // Auth Pages  
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -103,6 +104,7 @@ const App = () => {
                         <Route path="/admin" element={<AdminLayout />}>
                           <Route index element={<AIModelManagement />} />
                           <Route path="models" element={<AIModelManagement />} />
+                          <Route path="diagnostics" element={<ConnectionDiagnostics />} />
                           <Route path="subjects" element={<SubjectManagement />} />
                           <Route path="users" element={<UserManagement />} />
                           <Route path="prompts" element={<PromptManagement />} />

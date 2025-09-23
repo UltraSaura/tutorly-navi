@@ -1,5 +1,5 @@
 
-import { Settings, Book, Users } from "lucide-react";
+import { Settings, Book, Users, Wifi } from "lucide-react";
 
 export const adminNavGroups = [
   {
@@ -9,6 +9,11 @@ export const adminNavGroups = [
         title: 'AI Model Management',
         path: '/admin/models',
         iconName: 'Settings',
+      },
+      {
+        title: 'Connection Diagnostics',
+        path: '/admin/diagnostics',
+        iconName: 'Wifi',
       },
       {
         title: 'Subject Management',
@@ -32,5 +37,6 @@ export const adminNavGroups = [
 export const iconMap = {
   Settings,
   Book,
-  Users
+  Users,
+  Wifi
 };
