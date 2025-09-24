@@ -9,6 +9,19 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          mathlive: ['mathlive'],
+          supabase: ['@supabase/supabase-js'],
+          react: ['react', 'react-dom']
+        }
+      }
+    }
+  },
   plugins: [
     react(),
     mode === 'development' &&
@@ -19,4 +32,7 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    global: 'globalThis',
+  }
 }));
