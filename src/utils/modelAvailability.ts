@@ -23,15 +23,15 @@ export const testModelAvailability = async (modelId: string): Promise<boolean> =
 
 // Get the best available model based on configured providers
 export const getBestAvailableModel = (): string => {
-  // Priority order based on performance and availability
+  // DeepSeek prioritized as the best choice for tutoring applications
   const priorityModels = [
-    'deepseek-chat',    // Fast, reliable, configured
-    'gpt-4.1',          // High quality, configured
-    'gpt-5-mini',       // Latest, efficient, configured
-    'gpt4o'             // Fallback, configured
+    'deepseek-chat',    // Best choice: fast, cost-effective, optimized for education, no API compatibility issues
+    'gpt-4.1',          // Backup: high quality but more expensive
+    'gpt-5-mini',       // Backup: efficient but parameter compatibility issues
+    'gpt4o'             // Last resort: legacy model
   ];
   
-  return priorityModels[0]; // Return the highest priority available model
+  return priorityModels[0]; // DeepSeek as primary recommendation
 };
 
 // Check if a provider has API keys configured

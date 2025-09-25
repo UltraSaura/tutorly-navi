@@ -5,12 +5,12 @@ import { AVAILABLE_MODELS } from '@/data/adminDefaults';
 export const useModelManagement = (apiKeys: ApiKey[]) => {
   // Helper function to get default available model based on Supabase secrets
   const getDefaultAvailableModel = () => {
-    // Priority order: models most likely to have API keys configured in Supabase
+    // DeepSeek is now the primary default - fast, reliable, cost-effective
     const priorityModels = [
-      'deepseek-chat',    // DEEPSEEK_API_KEY is configured
-      'gpt-4.1',          // OPENAI_API_KEY is configured  
-      'gpt-5-mini',       // OPENAI_API_KEY is configured
-      'gpt4o'             // OPENAI_API_KEY is configured
+      'deepseek-chat',    // Primary choice - DEEPSEEK_API_KEY configured, optimized for tutoring
+      'gpt-4.1',          // Backup - OPENAI_API_KEY configured  
+      'gpt-5-mini',       // Backup - OPENAI_API_KEY configured
+      'gpt4o'             // Last resort - OPENAI_API_KEY configured
     ];
     
     // Check if any priority model exists in available models
@@ -18,7 +18,7 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
       priorityModels.includes(model.id)
     );
     
-    return availableModel?.id || 'deepseek-chat'; // Fallback to DeepSeek
+    return availableModel?.id || 'deepseek-chat'; // Always fallback to DeepSeek
   };
 
   const [selectedModelId, setSelectedModelIdState] = useState<string>(() => {

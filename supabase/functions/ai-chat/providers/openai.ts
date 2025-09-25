@@ -17,6 +17,12 @@ export async function callOpenAI(
   // Map gpt4o to the actual OpenAI model name
   const actualModel = model === 'gpt4o' ? 'gpt-4o' : model;
   
+  // Check if this is a newer model that requires different parameters
+  const isNewerModel = actualModel.startsWith('gpt-5') || 
+                      actualModel.startsWith('gpt-4.1') || 
+                      actualModel.startsWith('o3') || 
+                      actualModel.startsWith('o4');
+  
   const messages = [
     systemMessage,
     ...history,
@@ -37,18 +43,28 @@ export async function callOpenAI(
   try {
     console.log(`Calling OpenAI API with model: ${actualModel}`);
     
+    // Prepare request body based on model type
+    const requestBody: any = {
+      model: actualModel,
+      messages: messages,
+    };
+    
+    // Use different parameters for newer vs legacy models
+    if (isNewerModel) {
+      requestBody.max_completion_tokens = 800;
+      // Newer models don't support temperature parameter
+    } else {
+      requestBody.max_tokens = 800;
+      requestBody.temperature = 0.7;
+    }
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        model: actualModel,
-        messages: messages,
-        temperature: 0.7,
-        max_tokens: 800,
-      })
+      body: JSON.stringify(requestBody)
     });
     
     if (!response.ok) {

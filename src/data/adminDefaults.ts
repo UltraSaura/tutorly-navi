@@ -175,10 +175,10 @@ export const AVAILABLE_MODELS: ModelOption[] = [
   },
   {
     id: 'deepseek-chat',
-    name: 'DeepSeek Chat',
+    name: 'DeepSeek Chat 🏆',
     provider: 'DeepSeek',
-    description: 'Advanced large language model optimized for dialog and tutoring',
-    capabilities: ['Tutoring assistance', 'Concept explanations', 'Interactive learning'],
+    description: 'RECOMMENDED: Advanced model optimized for educational content with excellent tutoring capabilities and no API compatibility issues',
+    capabilities: ['Educational tutoring', 'Math explanations', 'Interactive learning', 'Multilingual support', 'Cost-effective responses'],
     contextWindow: 32000,
     pricing: '$0.004 / 1K tokens',
     performance: {
@@ -186,7 +186,7 @@ export const AVAILABLE_MODELS: ModelOption[] = [
       quality: 86,
       reasoning: 88,
     },
-    bestFor: ['One-on-one tutoring', 'Step-by-step guidance', 'Conceptual understanding'],
+    bestFor: ['Primary tutoring choice', 'Educational explanations', 'Math problem solving', 'Fast reliable responses', 'Cost-effective learning'],
   },
   {
     id: 'grok-1',
