@@ -27,12 +27,25 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
     console.log('[ModelManagement] Initial load - saved model:', savedModel);
     console.log('[ModelManagement] Available API keys:', apiKeys.map(k => k.provider));
     
-    // Only migrate truly invalid model IDs, don't force OpenAI models
+    // Force migration from GPT models to DeepSeek for better compatibility and performance
     const legacyMigrations: Record<string, string> = {
-      'gpt-5-2025-08-07': 'gpt-5', // Fix invalid date format only
+      'gpt-5-2025-08-07': 'deepseek-chat', // Fix invalid date format
+      'gpt-4.1': 'deepseek-chat',          // Migrate GPT-4.1 to DeepSeek
+      'gpt-5-mini': 'deepseek-chat',       // Migrate GPT-5-mini to DeepSeek  
+      'gpt4o': 'deepseek-chat',            // Migrate GPT-4o to DeepSeek
+      'gpt-4': 'deepseek-chat',            // Migrate GPT-4 to DeepSeek
+      'gpt-3.5-turbo': 'deepseek-chat',   // Migrate GPT-3.5 to DeepSeek
     };
     
-    const migratedModel = savedModel && legacyMigrations[savedModel] ? legacyMigrations[savedModel] : savedModel;
+    // Check if saved model needs migration
+    const shouldMigrate = savedModel && legacyMigrations[savedModel];
+    if (shouldMigrate) {
+      console.log('[ModelManagement] Migrating from', savedModel, 'to', legacyMigrations[savedModel]);
+      // Clear the old value from localStorage
+      localStorage.removeItem('selectedModelId');
+    }
+    
+    const migratedModel = shouldMigrate ? legacyMigrations[savedModel] : savedModel;
     const finalModel = migratedModel || getDefaultAvailableModel();
     
     console.log('[ModelManagement] Final selected model:', finalModel);
