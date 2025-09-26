@@ -129,15 +129,64 @@ Write all content in {{response_language}}. Keep the section headers in English 
         };
       }
       
-      const raw = await requestTwoCardTeaching({
-        exercise_content,
-        student_answer,
-        subject: typeof subject === "string" ? subject : String(subject),
-        response_language,
-        grade_level,
-      }, selectedModelId, explanationTemplate);
-      
-      console.log('[TwoCardTeaching] Raw AI Response:', raw);
+      let raw: string;
+      try {
+        raw = await requestTwoCardTeaching({
+          exercise_content,
+          student_answer,
+          subject: typeof subject === "string" ? subject : String(subject),
+          response_language,
+          grade_level,
+        }, selectedModelId, explanationTemplate);
+        
+        console.log('[TwoCardTeaching] Raw AI Response:', raw);
+        
+        // Check if the response is "NOT_MATH" or similar failure
+        if (raw.includes('NOT_MATH') || raw.includes('non-mathematical')) {
+          throw new Error('AI classified this as non-mathematical content');
+        }
+        
+      } catch (error) {
+        console.warn('[TwoCardTeaching] Primary AI call failed:', error);
+        // Use the fallback template with a simpler approach
+        const fallbackPrompt = `Please provide a clear educational explanation for this math problem in ${response_language}:
+
+Exercise: ${exercise_content}
+Student Answer: ${student_answer}
+
+Please format your response with these exact section headers:
+
+📘 Exercise
+${exercise_content}
+
+💡 Concept
+[Explain the key mathematical concept]
+
+🔍 Example
+[Show a similar example with different numbers]
+
+☑️ Strategy
+[Explain the step-by-step approach]
+
+⚠️ Pitfall
+[Common mistakes to avoid]
+
+🎯 Check yourself
+[How to verify the answer]
+
+📈 Practice Tip
+[Suggestion for improvement]`;
+
+        const { data: fallbackData, error: fallbackError } = await import('@/services/chatService').then(module => 
+          module.sendMessageToAI(fallbackPrompt, [], selectedModelId, response_language === 'French' ? 'fr' : 'en')
+        );
+        
+        if (fallbackError || !fallbackData?.content) {
+          throw new Error('Both primary and fallback AI calls failed');
+        }
+        
+        raw = fallbackData.content;
+      }
       
       // Ensure the response is in the correct language
       const rawInCorrectLanguage = await ensureLanguage(

@@ -15,6 +15,20 @@ const LABELS = [
 
 export function parseTwoCardText(raw: string): TeachingSections {
   const text = (raw || "").replace(/\r\n/g, "\n").trim();
+  
+  // If the text contains "NOT_MATH" or is too short, return empty sections
+  if (text.includes('NOT_MATH') || text.length < 50) {
+    return {
+      exercise: "",
+      concept: "",
+      example: "",
+      strategy: "",
+      pitfall: "",
+      check: "",
+      practice: ""
+    };
+  }
+  
   const parts = text.split(/\n(?=📘|💡|🔍|☑️|⚠️|🎯|📈)/).map(s => s.trim());
   const map: Record<string,string> = {};
   
@@ -43,7 +57,7 @@ export function parseTwoCardText(raw: string): TeachingSections {
     else if (trimmedHead.startsWith("🎯")) normalizedKey = "🎯 Check yourself";
     else if (trimmedHead.startsWith("📈")) normalizedKey = "📈 Practice Tip";
     
-    if (normalizedKey) {
+    if (normalizedKey && content) {
       map[normalizedKey] = content;
     }
   }
