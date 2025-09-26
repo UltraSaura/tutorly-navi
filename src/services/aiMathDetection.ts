@@ -25,6 +25,15 @@ const MATH_ACTION_VERBS = {
   fr: ['calculer', 'résoudre', 'simplifier', 'évaluer', 'déterminer', 'démontrer', 'prouver', 'montrer que', 'factoriser', 'développer', 'tracer', 'trouver', 'convertir', 'décomposer', 'decompose']
 };
 
+// English number words (one through twenty, plus common larger numbers)
+const ENGLISH_NUMBERS = 'zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred';
+
+// English operation words
+const ENGLISH_OPERATIONS = 'times|multiplied\\s+by|plus|added\\s+to|minus|subtract|subtracted\\s+from|divided\\s+by|equals?|is|makes|gives';
+
+// French number words
+const FRENCH_NUMBERS = 'zéro|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|dix-sept|dix-huit|dix-neuf|vingt|trente|quarante|cinquante|soixante|soixante-dix|quatre-vingts|quatre-vingt-dix|cent';
+
 // French mathematical operation words
 const FRENCH_MATH_OPERATIONS = {
   'fois': '×',         // multiplication: "3 fois 2"
@@ -47,6 +56,22 @@ const OBVIOUS_MATH_PATTERNS = [
   /^\s*solve\s*:\s*\d+x\s*[\+\-]\s*\d+\s*=\s*\d+/i,  // Basic equations like "solve: 2x+3=7"
   /^\s*x\s*=\s*\d+\s*$/i,  // Simple solutions like "x=4"
   /^\s*\d+\/\d+\s*=?\s*\d*\.?\d*\s*$/,  // Fractions like "3/4=0.75"
+  
+  // English written-out math patterns
+  new RegExp(`^\\s*(${ENGLISH_NUMBERS})\\s+(${ENGLISH_OPERATIONS})\\s+(${ENGLISH_NUMBERS})\\s*(${ENGLISH_OPERATIONS})?\\s*(${ENGLISH_NUMBERS})?\\s*$`, 'i'), // "two times five equals ten"
+  new RegExp(`^\\s*(what\\s+is\\s+)?(${ENGLISH_NUMBERS})\\s+(${ENGLISH_OPERATIONS})\\s+(${ENGLISH_NUMBERS})\\s*\\??\\s*$`, 'i'), // "what is two times five?"
+  
+  // French written-out math patterns
+  new RegExp(`^\\s*(${FRENCH_NUMBERS})\\s+(fois|plus|moins|divisé\\s+par)\\s+(${FRENCH_NUMBERS})\\s*(font|égal|égale|est)?\\s*(${FRENCH_NUMBERS})?\\s*$`, 'i'), // "deux fois cinq font dix"
+  new RegExp(`^\\s*(combien\\s+font\\s+)?(${FRENCH_NUMBERS})\\s+(fois|plus|moins|divisé\\s+par)\\s+(${FRENCH_NUMBERS})\\s*\\??\\s*$`, 'i'), // "combien font deux fois cinq?"
+  
+  // Mixed format patterns (numbers + written operations)
+  /^\s*\d+\s+(times|plus|minus|divided\s+by)\s+\d+\s*(equals?|is|=)?\s*\d*\s*$/i,  // "2 times 5 equals 10"
+  /^\s*\d+\s+(fois|plus|moins|divisé\s+par)\s+\d+\s*(font|égal|égale|est|=)?\s*\d*\s*$/i,  // "2 fois 5 font 10"
+  
+  // Natural language questions
+  /^\s*(what\s+is|how\s+much\s+is)\s+\d+\s*[\+\-\*\/•÷×]\s*\d+\s*\??/i,  // "what is 2+3?"
+  /^\s*(combien\s+font)\s+\d+\s*[\+\-\*\/•÷×]\s*\d+\s*\??/i,  // "combien font 2+3?"
 ];
 
 // Debug function for testing patterns
@@ -77,7 +102,18 @@ const MATH_ACTION_PATTERNS = [
   /(equation|équation|expression|fonction|function|facteur|facteurs|premiers|prime)/i,
   /(\d+[x-z]|\d+\^|\d+\/\d+|√|∫|∑|∆)/i,  // Mathematical symbols and variables
   /\d+\s*(fois|plus|moins|divisé\s+par)\s*\d+/i,  // French mathematical operations
-  /(font|égal|égale|est)\s*\d+/i  // French equals expressions
+  /(font|égal|égale|est)\s*\d+/i,  // French equals expressions
+  
+  // English written-out math patterns
+  new RegExp(`(${ENGLISH_NUMBERS})\\s+(${ENGLISH_OPERATIONS})\\s+(${ENGLISH_NUMBERS})`, 'i'),  // "two times five"
+  /(times|multiplied\s+by|plus|added\s+to|minus|subtract|subtracted\s+from|divided\s+by|equals?|is|makes|gives)/i,  // English operation words
+  
+  // French written-out math patterns  
+  new RegExp(`(${FRENCH_NUMBERS})\\s+(fois|plus|moins|divisé\\s+par)\\s+(${FRENCH_NUMBERS})`, 'i'),  // "deux fois cinq"
+  
+  // Mixed patterns (numbers with written operations)
+  /\d+\s+(times|plus|minus|divided\s+by)\s+\d+/i,  // "2 times 5"
+  /(equals?|is|makes|gives)\s*\d+/i,  // "equals 10"
 ];
 
 /**
@@ -309,7 +345,20 @@ function containsMathSymbols(message: string): boolean {
     /\d+°/,                         // Degrees
     /sin|cos|tan|log/i,             // Trigonometric/logarithmic functions
     /\d+\s*(fois|plus|moins|divisé\s+par)\s*\d+/i,  // French mathematical operations
-    /(font|égal|égale|est)\s*\d+/i  // French equals expressions
+    /(font|égal|égale|est)\s*\d+/i,  // French equals expressions
+    
+    // English written-out math patterns
+    new RegExp(`(${ENGLISH_NUMBERS})\\s+(${ENGLISH_OPERATIONS})\\s+(${ENGLISH_NUMBERS})`, 'i'),  // "two times five"
+    /(times|multiplied\s+by|plus|added\s+to|minus|subtract|subtracted\s+from|divided\s+by|equals?|is|makes|gives)\s+\d+/i,  // English operations with numbers
+    /\d+\s+(times|plus|minus|divided\s+by)/i,  // Numbers with English operations
+    
+    // French written-out math patterns
+    new RegExp(`(${FRENCH_NUMBERS})\\s+(fois|plus|moins|divisé\\s+par)\\s+(${FRENCH_NUMBERS})`, 'i'),  // "deux fois cinq"
+    new RegExp(`(${FRENCH_NUMBERS})\\s+(font|égal|égale|est)`, 'i'),  // "cinq font"
+    
+    // Natural language math questions
+    /(what\s+is|how\s+much\s+is)\s+\d+/i,  // "what is 5"
+    /(combien\s+font)\s+\d+/i,  // "combien font"
   ];
   
   const result = mathSymbols.some(pattern => pattern.test(message));
@@ -338,7 +387,15 @@ function createFallbackResult(message: string): MathDetectionResult {
     'algèbre', 'géométrie', 'calcul', 'trigonométrie',
     // French mathematical operations
     'fois', 'plus', 'moins', 'divisé par', 'font', 'égal', 'égale', 'est',
-    '+', '-', '*', '/', '=', '%', '°'
+    // English mathematical operations
+    'times', 'multiplied by', 'plus', 'added to', 'minus', 'subtract', 'subtracted from', 'divided by', 'equals', 'is', 'makes', 'gives',
+    // Symbols
+    '+', '-', '*', '/', '=', '%', '°',
+    // Number words (common ones for keyword matching)
+    'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+    'un', 'une', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix',
+    // Question words
+    'what is', 'how much', 'combien'
   ];
   
   const lowerMessage = message.toLowerCase();
