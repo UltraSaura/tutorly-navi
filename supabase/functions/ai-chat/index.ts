@@ -69,7 +69,9 @@ serve(async (req) => {
       message, 
       modelId, 
       history = [], 
+      isExercise = false, 
       isGradingRequest = false, 
+      isUnified = false,
       language = 'en',
       customPrompt,
       userContext
@@ -79,7 +81,9 @@ serve(async (req) => {
       modelId, 
       messageLength: message?.length,
       historyLength: history?.length,
+      isExercise,
       isGradingRequest,
+      isUnified,
       language,
       hasCustomPrompt: !!customPrompt,
       hasUserContext: !!userContext
@@ -100,9 +104,11 @@ serve(async (req) => {
       );
     }
 
-    // Detect if this is an exercise request
-    const isExercise = !isGradingRequest && detectExercise(message);
-    console.log('🧮 Exercise detection:', { isGradingRequest, isExercise });
+    // Detect if this is an exercise request (only if not using unified approach)
+    if (!isUnified) {
+      isExercise = !isGradingRequest && detectExercise(message);
+    }
+    console.log('🧮 Exercise detection:', { isGradingRequest, isExercise, isUnified });
 
     // Get model configuration
     const modelConfig = getModelConfig(modelId);
@@ -152,8 +158,24 @@ serve(async (req) => {
 
     console.log('🔑 API key found for provider:', modelConfig.provider);
     
-    // Generate the appropriate system message based on context (now async)
-    let systemMessage = await generateSystemMessage(isExercise, isGradingRequest, language, customPrompt, userContext);
+    // Generate system message - use unified template if requested
+    let usageType = 'chat';
+    if (isUnified) {
+      usageType = 'unified_math_chat';
+    } else if (isGradingRequest) {
+      usageType = 'grading';
+    } else if (isExercise) {
+      usageType = 'chat';
+    }
+
+    let systemMessage = await generateSystemMessage(
+      isExercise, 
+      isGradingRequest, 
+      language, 
+      customPrompt,
+      userContext,
+      usageType
+    );
     
     // Enhance system message for math problems if needed
     if (!isGradingRequest && modelConfig.provider === 'OpenAI') {

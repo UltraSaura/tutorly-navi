@@ -3,9 +3,7 @@ import { useState, useMemo } from 'react';
 import { Message } from '@/types/chat';
 import { useAdmin } from '@/context/AdminContext';
 import { handleFileUpload, handlePhotoUpload } from '@/utils/chatFileHandlers';
-import { sendMessageToAI } from '@/services/chatService';
-import { generateFallbackResponse } from '@/utils/fallbackResponses';
-import { detectMathWithAI } from '@/services/aiMathDetection';
+import { sendUnifiedMessage, generateUnifiedFallback } from '@/services/unifiedChatService';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useUserContext } from './useUserContext';
 
@@ -77,16 +75,12 @@ export const useChat = () => {
     
     setMessages([...messages, newMessage]);
     setInputMessage('');
-    console.log('[DEBUG] Sending message with model:', selectedModelId);
+    console.log('[DEBUG] Sending unified message with model:', selectedModelId);
     setIsLoading(true);
     
-    // Use AI-powered math detection
-    const mathDetection = await detectMathWithAI(messageToSend, selectedModelId, language);
-    console.log('[DEBUG] AI math detection result:', mathDetection);
-    
     try {
-      console.log('[DEBUG] Sending message to AI:', messageToSend);
-      const { data, error } = await sendMessageToAI(
+      console.log('[DEBUG] Sending unified message to AI:', messageToSend);
+      const { data, error } = await sendUnifiedMessage(
         messageToSend, 
         messages, 
         selectedModelId, 
@@ -100,7 +94,7 @@ export const useChat = () => {
         setLastResponse(data);
         
         // Check if this is a NOT_MATH response
-        if (data.content && data.content.includes('NOT_MATH')) {
+        if (!data.isMath || data.content.includes('NOT_MATH')) {
           const redirectMessage = language === 'fr' 
             ? "Cette question ne semble pas être liée aux mathématiques. Cette interface est dédiée uniquement aux questions mathématiques. Pour les questions générales, veuillez utiliser la page de chat général."
             : "This question doesn't appear to be math-related. This interface is dedicated to mathematics questions only. For general questions, please use the general chat page.";
@@ -114,7 +108,7 @@ export const useChat = () => {
           
           setMessages(prev => [...prev, aiResponse]);
         } else {
-          // Add AI response to messages
+          // Add AI response to messages - now includes automatic grading if answer provided
           const aiResponse: Message = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
@@ -122,11 +116,11 @@ export const useChat = () => {
             timestamp: new Date(),
           };
           
-          // Only track responses that will create exercises, not math explanations
-          // This allows math questions to show their explanations in chat
-          console.log('[DEBUG] AI response created for:', { 
-            isMath: mathDetection.isMath, 
-            hasAnswer: mathDetection.hasAnswer,
+          console.log('[DEBUG] Unified AI response created:', { 
+            isMath: data.isMath, 
+            hasAnswer: data.hasAnswer,
+            isCorrect: data.isCorrect,
+            confidence: data.confidence,
             selectedModelId, 
             content: data.content.substring(0, 100) 
           });
@@ -134,9 +128,15 @@ export const useChat = () => {
           setMessages(prev => [...prev, aiResponse]);
         }
       } else if (error) {
-        // Use fallback response if the API call fails
-        const fallbackResponse = generateFallbackResponse(inputMessage);
-        setMessages(prev => [...prev, fallbackResponse]);
+        // Use unified fallback response if the API call fails
+        const fallbackResponse = generateUnifiedFallback(messageToSend, language);
+        const aiResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: fallbackResponse.content,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, aiResponse]);
       }
     } finally {
       setIsLoading(false);
