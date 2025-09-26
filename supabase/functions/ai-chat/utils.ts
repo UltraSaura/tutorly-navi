@@ -3,7 +3,15 @@
 
 // Helper function to detect if a message is likely an exercise or homework problem
 export function detectExercise(message: string): boolean {
-  const exerciseKeywords = ['solve', 'calculate', 'find', 'homework', 'exercise', 'problem', 'question', 'assignment'];
+  // Written number constants
+  const ENGLISH_NUMBERS = 'zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand';
+  const FRENCH_NUMBERS = 'zéro|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|dix-sept|dix-huit|dix-neuf|vingt|trente|quarante|cinquante|soixante|soixante-dix|quatre-vingts|quatre-vingt-dix|cent|mille';
+  
+  // Operation word constants
+  const ENGLISH_OPERATIONS = 'times|multiplied\\s+by|plus|added\\s+to|minus|subtract|subtracted\\s+from|divided\\s+by|equals?|is|makes|gives';
+  const FRENCH_OPERATIONS = 'fois|multiplié\\s+par|plus|ajouté\\s+à|moins|soustrait|soustrait\\s+de|divisé\\s+par|égal|égale|font|est|fait|donne';
+  
+  const exerciseKeywords = ['solve', 'calculate', 'find', 'homework', 'exercise', 'problem', 'question', 'assignment', 'résoudre', 'calculer', 'trouver', 'devoir', 'exercice', 'problème'];
   const lowerMessage = message.toLowerCase();
   
   // Check for keyword-based detection first
@@ -11,6 +19,7 @@ export function detectExercise(message: string): boolean {
   
   // Enhanced math pattern detection (includes expressions with and without equals)
   const mathPatterns = [
+    // Digit-based patterns
     /\d+\s*[\+\-\*\/•]\s*\d+\s*=/,                    // Equations with equals
     /\d+\s*[\+\-\*\/•]\s*\d+(?!\s*=)/,                // Expressions without equals (like "2+2")
     /\d+\/\d+/,                                        // Fractions
@@ -18,12 +27,34 @@ export function detectExercise(message: string): boolean {
     /[a-zA-Z]+\s*\^\s*\d+/,                           // Variable exponents (x^2)
     /\d+[²³⁴⁵⁶⁷⁸⁹⁰¹]/,                             // Unicode superscripts
     /sqrt|cos|sin|tan|log|ln|exp/,                     // Mathematical functions
-    /√\s*\(?\s*[0-9a-zA-Z]+/                          // Unicode square root
+    /√\s*\(?\s*[0-9a-zA-Z]+/,                         // Unicode square root
+    
+    // Written-out math patterns - English
+    new RegExp(`\\b(${ENGLISH_NUMBERS})\\s+(${ENGLISH_OPERATIONS})\\s+(${ENGLISH_NUMBERS})\\s*(${ENGLISH_OPERATIONS})?\\s*(${ENGLISH_NUMBERS}|\\d+)?\\b`, 'i'),
+    new RegExp(`\\b(${ENGLISH_NUMBERS})\\s*[+\\-*/=]\\s*(${ENGLISH_NUMBERS}|\\d+)\\b`, 'i'), // Mixed format: "two + 3"
+    new RegExp(`\\b\\d+\\s+(${ENGLISH_OPERATIONS})\\s+(${ENGLISH_NUMBERS})\\b`, 'i'), // "5 times two"
+    
+    // Written-out math patterns - French  
+    new RegExp(`\\b(${FRENCH_NUMBERS})\\s+(${FRENCH_OPERATIONS})\\s+(${FRENCH_NUMBERS})\\s*(${FRENCH_OPERATIONS})?\\s*(${FRENCH_NUMBERS}|\\d+)?\\b`, 'i'),
+    new RegExp(`\\b(${FRENCH_NUMBERS})\\s*[+\\-*/=]\\s*(${FRENCH_NUMBERS}|\\d+)\\b`, 'i'), // Mixed format: "deux + 3"
+    new RegExp(`\\b\\d+\\s+(${FRENCH_OPERATIONS})\\s+(${FRENCH_NUMBERS})\\b`, 'i'), // "5 fois deux"
+    
+    // Question patterns
+    /what\s+is\s+.*(plus|times|minus|divided)/i,       // "what is two plus three"
+    /combien\s+font\s+.*(plus|fois|moins|divisé)/i,    // "combien font deux plus trois"
+    /how\s+much\s+is\s+.*(plus|times|minus|divided)/i  // "how much is five times two"
   ];
   
   const hasMathPattern = mathPatterns.some(pattern => pattern.test(message));
   
-  return hasKeywords || hasMathPattern;
+  // Check for written math words as additional indicators
+  const mathWords = ['plus', 'minus', 'times', 'divided', 'equals', 'is', 'makes', 'gives', 'fois', 'moins', 'divisé', 'égal', 'égale', 'font', 'est'];
+  const numberWords = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix'];
+  
+  const hasWrittenMath = mathWords.some(word => lowerMessage.includes(word)) && 
+                        numberWords.some(num => lowerMessage.includes(num));
+  
+  return hasKeywords || hasMathPattern || hasWrittenMath;
 }
 
 // Helper function to get model configuration based on modelId
