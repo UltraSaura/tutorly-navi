@@ -119,7 +119,8 @@ export async function generateSystemMessage(
   language: string = 'en',
   customPrompt?: string,
   variables?: PromptVariables,
-  usageType?: string
+  usageType?: string,
+  isUnified: boolean = false
 ): Promise<{ role: string, content: string }> {
   // If custom prompt provided, use it directly
   if (customPrompt) {
@@ -140,7 +141,37 @@ export async function generateSystemMessage(
   let subject = variables?.subject;
 
   // Try to get active prompt from database
-  const activeTemplate = await getActivePromptTemplate(usageType, subject);
+  let activeTemplate;
+  
+  if (isUnified) {
+    // For unified approach, look for templates with 'unified' tag and highest priority
+    try {
+      // @ts-ignore - Dynamic import for edge function environment
+      const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.49.1");
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      const { data, error } = await supabase
+        .from('prompt_templates')
+        .select('*')
+        .eq('is_active', true)
+        .eq('usage_type', 'chat')
+        .contains('tags', ['unified'])
+        .or(subject ? `subject.eq.${subject},subject.eq.All Subjects` : 'subject.is.null,subject.eq.All Subjects')
+        .order('priority', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (!error && data) {
+        activeTemplate = data;
+      }
+    } catch (error) {
+      console.error('Error in unified template fetch:', error);
+    }
+  } else {
+    activeTemplate = await getActivePromptTemplate(usageType, subject);
+  }
   
   if (activeTemplate) {
     console.log(`Using database prompt: ${activeTemplate.name} (${usageType})`);

@@ -80,7 +80,6 @@ serve(async (req) => {
       modelId, 
       messageLength: message?.length,
       historyLength: history?.length,
-      isExercise,
       isGradingRequest,
       isUnified,
       language,
@@ -161,7 +160,8 @@ serve(async (req) => {
     // Generate system message - use unified template if requested
     let usageType = 'chat';
     if (isUnified) {
-      usageType = 'unified_math_chat';
+      // For unified approach, we look for templates tagged with 'unified'
+      usageType = 'chat';
     } else if (isGradingRequest) {
       usageType = 'grading';
     } else if (isExercise) {
@@ -174,7 +174,8 @@ serve(async (req) => {
       language, 
       customPrompt,
       userContext,
-      usageType
+      usageType,
+      isUnified
     );
     
     // Enhance system message for math problems if needed
