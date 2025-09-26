@@ -74,11 +74,23 @@ const MessageInput = ({
   };
 
   // Auto-detect math content and suggest math mode
+  // Only suggest math mode for LaTeX syntax or algebraic expressions with variables
+  // NOT for natural language math expressions like "four times two = five"
   const shouldSuggestMathMode = !isMathMode && (
-    /[+\-*/=()^]/.test(inputMessage) || 
-    /\d+\/\d+/.test(inputMessage) ||
-    /\\[a-zA-Z]/.test(inputMessage)
-  );
+    // LaTeX commands
+    /\\[a-zA-Z]/.test(inputMessage) ||
+    // Fractions with LaTeX syntax
+    /\\frac\{/.test(inputMessage) ||
+    // Algebraic expressions with variables
+    /[a-zA-Z]\s*[\+\-\*/\^]\s*\d+/.test(inputMessage) ||
+    /\d+\s*[\+\-\*/\^]\s*[a-zA-Z]/.test(inputMessage) ||
+    // Mathematical notation with exponents or complex expressions
+    /[a-zA-Z]\^/.test(inputMessage) ||
+    // Fraction notation (numbers only, not words)
+    /^\s*\d+\s*\/\s*\d+\s*$/.test(inputMessage)
+  ) && 
+  // Exclude natural language patterns
+  !/\b(one|two|three|four|five|six|seven|eight|nine|ten|plus|minus|times|divided|equals)\b/i.test(inputMessage);
 
   const triggerFileUpload = () => {
     fileInputRef.current?.click();
@@ -159,7 +171,7 @@ const MessageInput = ({
       {shouldSuggestMathMode && (
         <div className="flex justify-center">
           <div className="bg-brand-primary/10 text-brand-primary text-xs px-3 py-2 rounded-md">
-            Math detected - <button onClick={toggleMathMode} className="underline font-medium">Switch to math mode</button>
+            LaTeX notation detected - <button onClick={toggleMathMode} className="underline font-medium">Switch to math mode</button> for advanced formatting
           </div>
         </div>
       )}
