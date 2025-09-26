@@ -29,15 +29,23 @@ export function detectExercise(message: string): boolean {
     /sqrt|cos|sin|tan|log|ln|exp/,                     // Mathematical functions
     /√\s*\(?\s*[0-9a-zA-Z]+/,                         // Unicode square root
     
-    // Written-out math patterns - English
+    // Written-out math patterns - English (with spaces)
     new RegExp(`\\b(${ENGLISH_NUMBERS})\\s+(${ENGLISH_OPERATIONS})\\s+(${ENGLISH_NUMBERS})\\s*(${ENGLISH_OPERATIONS})?\\s*(${ENGLISH_NUMBERS}|\\d+)?\\b`, 'i'),
     new RegExp(`\\b(${ENGLISH_NUMBERS})\\s*[+\\-*/=]\\s*(${ENGLISH_NUMBERS}|\\d+)\\b`, 'i'), // Mixed format: "two + 3"
     new RegExp(`\\b\\d+\\s+(${ENGLISH_OPERATIONS})\\s+(${ENGLISH_NUMBERS})\\b`, 'i'), // "5 times two"
     
-    // Written-out math patterns - French  
+    // Written-out math patterns - English (concatenated without spaces)
+    new RegExp(`\\b(${ENGLISH_NUMBERS})(times|plus|minus|dividedby)(${ENGLISH_NUMBERS})\\b`, 'i'), // "fourtimestwo"
+    new RegExp(`\\b(${ENGLISH_NUMBERS})(times|plus|minus|dividedby)(${ENGLISH_NUMBERS})\\s*=\\s*(${ENGLISH_NUMBERS}|\\d+)\\b`, 'i'), // "fourtimestwo = five"
+    
+    // Written-out math patterns - French (with spaces)
     new RegExp(`\\b(${FRENCH_NUMBERS})\\s+(${FRENCH_OPERATIONS})\\s+(${FRENCH_NUMBERS})\\s*(${FRENCH_OPERATIONS})?\\s*(${FRENCH_NUMBERS}|\\d+)?\\b`, 'i'),
     new RegExp(`\\b(${FRENCH_NUMBERS})\\s*[+\\-*/=]\\s*(${FRENCH_NUMBERS}|\\d+)\\b`, 'i'), // Mixed format: "deux + 3"
     new RegExp(`\\b\\d+\\s+(${FRENCH_OPERATIONS})\\s+(${FRENCH_NUMBERS})\\b`, 'i'), // "5 fois deux"
+    
+    // Written-out math patterns - French (concatenated without spaces)
+    new RegExp(`\\b(${FRENCH_NUMBERS})(fois|plus|moins|divisepar)(${FRENCH_NUMBERS})\\b`, 'i'), // "quatrefoiscinq"
+    new RegExp(`\\b(${FRENCH_NUMBERS})(fois|plus|moins|divisepar)(${FRENCH_NUMBERS})\\s*=\\s*(${FRENCH_NUMBERS}|\\d+)\\b`, 'i'), // "quatrefoiscinq = vingt"
     
     // Question patterns
     /what\s+is\s+.*(plus|times|minus|divided)/i,       // "what is two plus three"
