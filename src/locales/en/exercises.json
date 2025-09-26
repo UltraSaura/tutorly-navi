@@ -1,0 +1,60 @@
+{
+  "exercise": {
+    "tryAgain": "Try again",
+    "showExplanation": "Show explanation", 
+    "hideExplanation": "Hide explanation",
+    "greatWork": "Great work!",
+    "learningOpportunity": "Learning Opportunity",
+    "attempt": "Attempt",
+    "exerciseList": "Exercise List", 
+    "problem": "Problem",
+    "guidance": "Guidance",
+    "pleaseProvideAnswer": "Please provide an answer",
+    "answerSubmitted": "Answer submitted successfully",
+    "correct": "Correct",
+    "incorrect": "Incorrect", 
+    "pending": "Pending Review",
+    "feedback": "Feedback",
+    "answer": "Your Answer",
+    "question": "Question",
+    "expand": "Expand",
+    "collapse": "Collapse", 
+    "noExercises": "No exercises submitted yet. Start by asking questions or uploading homework!"
+  },
+  "exercises": {
+    "list_title": "Exercise List",
+    "header_grade": "Overall Grade",
+    "summary": "{correct}/{total} correct",
+    "empty_title": "No exercises submitted yet", 
+    "empty_sub": "Start by asking questions or uploading homework!",
+    "show_explanation": "Show explanation",
+    "try_again": "Try again → +{xp} XP"
+  },
+  "explanation": {
+    "modal_title": "Explanation",
+    "error": "Error loading explanation. Please try again.", 
+    "fallback": {
+      "exercise": "This is your exercise. Try to restate it in your own words.",
+      "concept": "We'll focus on the exact math idea you need here.",
+      "example": "Here's a similar example with different numbers.",
+      "strategy": "1) Understand the goal  2) Apply the rules  3) Check your result.", 
+      "pitfall": "Avoid applying an operation to only one part.",
+      "check": "Explain why each step is valid.",
+      "practice": "Practice a few similar problems and explain your steps aloud."
+    },
+    "headers": {
+      "exercise": "📘 Exercise",
+      "concept": "💡 Concept", 
+      "example": "🔍 Example (different numbers)",
+      "strategy": "☑️ Strategy",
+      "pitfall": "⚠️ Pitfall",
+      "check": "🎯 Check yourself",
+      "practice": "📈 Practice Tip"
+    }
+  },
+  "badges": {
+    "streak": "Day {n} Streak!",
+    "xp_gain": "+{xp} XP", 
+    "level": "Level {n}"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "actionVerbs": [
+    "calculer", "résoudre", "simplifier", "évaluer", "déterminer", "démontrer", "prouver", 
+    "montrer que", "factoriser", "développer", "tracer", "trouver", "convertir", "décomposer", 
+    "decompose", "comment", "qu'est-ce que", "comment calculer", "comment résoudre", 
+    "que fait", "expliquer comment", "montrez-moi comment"
+  ],
+  "operations": {
+    "fois": "×",
+    "plus": "+", 
+    "moins": "-",
+    "divisé par": "÷",
+    "font": "=",
+    "égal": "=",
+    "égale": "=",
+    "est": "="
+  },
+  "concepts": {
+    "équation": "equation", 
+    "expression": "expression",
+    "fonction": "function",
+    "formule": "formula",
+    "théorème": "theorem",
+    "algèbre": "algebra",
+    "géométrie": "geometry",
+    "calcul": "calculus", 
+    "trigonométrie": "trigonometry"
+  }
+}

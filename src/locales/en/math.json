@@ -1,0 +1,25 @@
+{
+  "actionVerbs": [
+    "calculate", "solve", "simplify", "evaluate", "determine", "prove", "show that", 
+    "factor", "expand", "graph", "find", "convert", "decompose", "how do", "what is", 
+    "how to calculate", "how to solve", "what does", "explain how", "show me how"
+  ],
+  "operations": {
+    "plus": "+",
+    "minus": "-", 
+    "times": "*",
+    "divided_by": "/",
+    "equals": "="
+  },
+  "concepts": {
+    "equation": "equation",
+    "expression": "expression", 
+    "function": "function",
+    "formula": "formula",
+    "theorem": "theorem",
+    "algebra": "algebra",
+    "geometry": "geometry",
+    "calculus": "calculus",
+    "trigonometry": "trigonometry"
+  }
+}

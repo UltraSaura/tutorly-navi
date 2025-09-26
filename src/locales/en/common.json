@@ -1,0 +1,63 @@
+{
+  "app": {
+    "title": "Tutorly Navi",
+    "loading": "Loading…",
+    "retry": "Retry",
+    "cancel": "Cancel"
+  },
+  "nav": {
+    "tutor": "Tutor",
+    "homework": "Homework", 
+    "progress": "Progress",
+    "rewards": "Rewards",
+    "home": "Tutor",
+    "grades": "Grades",
+    "roadmap": "Roadmap", 
+    "skills": "Skills",
+    "myAccount": "My Account",
+    "profile": "Profile",
+    "settings": "Settings",
+    "language": "Language"
+  },
+  "language": {
+    "english": "English",
+    "french": "Français", 
+    "autoDetected": "Auto-detected based on country",
+    "auto": "Auto",
+    "detectNow": "Detect now",
+    "resetAuto": "Reset auto-detection"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error", 
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "close": "Close",
+    "submit": "Submit",
+    "retry": "Retry",
+    "selectSubject": "Select a subject"
+  },
+  "chat": {
+    "placeholder": "Type your question or homework here…",
+    "attach": "Attach",
+    "send": "Send",
+    "upload_doc": "Upload document",
+    "upload_photo": "Upload photo", 
+    "take_photo": "Take a photo",
+    "inputPlaceholder": "Type your question or homework here...",
+    "uploadFile": "Upload File",
+    "takePhoto": "Take Photo",
+    "loading": "AI is thinking...",
+    "sendMessage": "Send Message"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "email": "Email", 
+    "password": "Password",
+    "parentRegistration": "Parent Registration",
+    "parentInformation": "Parent Information"
+  }
+}

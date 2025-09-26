@@ -19,10 +19,48 @@ export interface MathDetectionResult {
 const detectionCache = new Map<string, MathDetectionResult>();
 const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
 
-// Enhanced math detection patterns based on educational action verbs
-const MATH_ACTION_VERBS = {
-  en: ['calculate', 'solve', 'simplify', 'evaluate', 'determine', 'prove', 'show that', 'factor', 'expand', 'graph', 'find', 'convert', 'decompose', 'how do', 'what is', 'how to calculate', 'how to solve', 'what does', 'explain how', 'show me how'],
-  fr: ['calculer', 'résoudre', 'simplifier', 'évaluer', 'déterminer', 'démontrer', 'prouver', 'montrer que', 'factoriser', 'développer', 'tracer', 'trouver', 'convertir', 'décomposer', 'decompose', 'comment', 'qu\'est-ce que', 'comment calculer', 'comment résoudre', 'que fait', 'expliquer comment', 'montrez-moi comment']
+// Math action verbs - now loaded dynamically from translation files
+let MATH_ACTION_VERBS: Record<string, string[]> = {
+  en: [],
+  fr: []
+};
+
+// Initialize math action verbs
+const initializeMathVerbs = async () => {
+  try {
+    const [enMath, frMath] = await Promise.all([
+      import('@/locales/en/math.json'),
+      import('@/locales/fr/math.json')
+    ]);
+    
+    MATH_ACTION_VERBS = {
+      en: enMath.default.actionVerbs,
+      fr: frMath.default.actionVerbs
+    };
+  } catch (error) {
+    console.error('Failed to load math action verbs:', error);
+    // Fallback to hardcoded values
+    MATH_ACTION_VERBS = {
+      en: ['calculate', 'solve', 'simplify', 'evaluate', 'determine', 'prove', 'show that', 'factor', 'expand', 'graph', 'find', 'convert', 'decompose', 'how do', 'what is', 'how to calculate', 'how to solve', 'what does', 'explain how', 'show me how'],
+      fr: ['calculer', 'résoudre', 'simplifier', 'évaluer', 'déterminer', 'démontrer', 'prouver', 'montrer que', 'factoriser', 'développer', 'tracer', 'trouver', 'convertir', 'décomposer', 'decompose', 'comment', 'qu\'est-ce que', 'comment calculer', 'comment résoudre', 'que fait', 'expliquer comment', 'montrez-moi comment']
+    };
+  }
+};
+
+// Get math action verbs for the current language - refresh verbs when language changes
+export const refreshMathActionVerbs = async (language: string = 'en') => {
+  try {
+    const mathTranslations = await import(`@/locales/${language}/math.json`);
+    MATH_ACTION_VERBS[language] = mathTranslations.default.actionVerbs || [];
+  } catch (error) {
+    console.error(`Failed to refresh math action verbs for ${language}:`, error);
+    // Keep existing verbs or set fallback
+    if (!MATH_ACTION_VERBS[language]) {
+      MATH_ACTION_VERBS[language] = language === 'fr' 
+        ? ['calculer', 'résoudre', 'simplifier'] 
+        : ['calculate', 'solve', 'simplify'];
+    }
+  }
 };
 
 // English number words (one through twenty, plus common larger numbers)
