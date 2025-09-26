@@ -69,7 +69,6 @@ serve(async (req) => {
       message, 
       modelId, 
       history = [], 
-      isExercise = false, 
       isGradingRequest = false, 
       isUnified = false,
       language = 'en',
@@ -105,6 +104,7 @@ serve(async (req) => {
     }
 
     // Detect if this is an exercise request (only if not using unified approach)
+    let isExercise = false;
     if (!isUnified) {
       isExercise = !isGradingRequest && detectExercise(message);
     }
