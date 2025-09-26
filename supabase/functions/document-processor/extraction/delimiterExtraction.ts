@@ -78,7 +78,7 @@ function validateMathematicalContent(content: string): {
   enhancedContent: string;
   issues: string[];
 } {
-  const issues = [];
+  const issues: string[] = [];
   let enhancedContent = content;
   
   // Check for mathematical elements

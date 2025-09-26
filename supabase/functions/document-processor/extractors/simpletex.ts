@@ -217,7 +217,7 @@ export async function extractTextWithSimpleTexOCR(fileData: string): Promise<str
     
   } catch (error) {
     console.error('SimpleTex OCR extraction failed:', error);
-    throw new Error(`SimpleTex OCR failed: ${error.message}`);
+    throw new Error(`SimpleTex OCR failed: ${(error as Error).message || String(error)}`);
   }
 }
 

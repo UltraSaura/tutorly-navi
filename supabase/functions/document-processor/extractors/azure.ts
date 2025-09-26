@@ -101,6 +101,6 @@ export async function extractTextWithAzureOCR(fileData: string): Promise<string>
     
   } catch (error) {
     console.error('Azure OCR extraction failed:', error);
-    throw new Error(`Azure OCR failed: ${error.message}`);
+    throw new Error(`Azure OCR failed: ${(error as Error).message || String(error)}`);
   }
 }

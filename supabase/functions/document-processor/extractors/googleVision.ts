@@ -178,6 +178,6 @@ export async function extractTextWithGoogleVisionOCR(fileData: string): Promise<
     
   } catch (error) {
     console.error('Google Vision OCR extraction failed:', error);
-    throw new Error(`Google Vision OCR failed: ${error.message}`);
+    throw new Error(`Google Vision OCR failed: ${(error as Error).message || String(error)}`);
   }
 }

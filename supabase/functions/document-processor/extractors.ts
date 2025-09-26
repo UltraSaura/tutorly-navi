@@ -23,7 +23,7 @@ export async function extractTextFromFile(fileData: string, fileType: string): P
       console.log(`⚠️ SimpleTex returned insufficient text (${simpleTexResult?.length || 0} chars)`);
     }
   } catch (simpleTexError) {
-    console.error('❌ SimpleTex failed:', simpleTexError.message);
+    console.error('❌ SimpleTex failed:', (simpleTexError as Error).message || String(simpleTexError));
     console.log('🔄 Falling back to Google Vision...');
   }
 
@@ -35,7 +35,7 @@ export async function extractTextFromFile(fileData: string, fileType: string): P
       console.log('✅ Google Vision OCR succeeded');
       return result;
     } catch (googleError) {
-      console.error(`❌ Google Vision attempt ${attempt} failed:`, googleError.message);
+      console.error(`❌ Google Vision attempt ${attempt} failed:`, (googleError as Error).message || String(googleError));
       
       if (attempt === 2) {
         console.log('🔄 Google Vision exhausted, trying Azure fallback...');
@@ -46,7 +46,7 @@ export async function extractTextFromFile(fileData: string, fileType: string): P
           console.log('✅ Azure OCR fallback succeeded');
           return result;
         } catch (azureError) {
-          console.error('❌ Azure OCR fallback failed:', azureError.message);
+          console.error('❌ Azure OCR fallback failed:', (azureError as Error).message || String(azureError));
           console.log('💡 To enable Azure OCR, add AZURE_COMPUTER_VISION_KEY and AZURE_COMPUTER_VISION_ENDPOINT to Supabase secrets');
           
           // PHASE 4: Emergency extraction

@@ -91,7 +91,7 @@ export function preprocessStructuredWorksheet(text: string): string {
   const sections = text.split(/(?=[a-e]\s*[~\.\):])/i);
   console.log(`Found ${sections.length} potential exercise sections`);
   
-  let processedSections = [];
+  let processedSections: string[] = [];
   
   sections.forEach((section, index) => {
     console.log(`Processing section ${index}: ${section.substring(0, 100)}...`);
