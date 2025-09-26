@@ -21,8 +21,8 @@ const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
 
 // Enhanced math detection patterns based on educational action verbs
 const MATH_ACTION_VERBS = {
-  en: ['calculate', 'solve', 'simplify', 'evaluate', 'determine', 'prove', 'show that', 'factor', 'expand', 'graph', 'find', 'convert', 'decompose'],
-  fr: ['calculer', 'résoudre', 'simplifier', 'évaluer', 'déterminer', 'démontrer', 'prouver', 'montrer que', 'factoriser', 'développer', 'tracer', 'trouver', 'convertir', 'décomposer', 'decompose']
+  en: ['calculate', 'solve', 'simplify', 'evaluate', 'determine', 'prove', 'show that', 'factor', 'expand', 'graph', 'find', 'convert', 'decompose', 'how do', 'what is', 'how to calculate', 'how to solve', 'what does', 'explain how', 'show me how'],
+  fr: ['calculer', 'résoudre', 'simplifier', 'évaluer', 'déterminer', 'démontrer', 'prouver', 'montrer que', 'factoriser', 'développer', 'tracer', 'trouver', 'convertir', 'décomposer', 'decompose', 'comment', 'qu\'est-ce que', 'comment calculer', 'comment résoudre', 'que fait', 'expliquer comment', 'montrez-moi comment']
 };
 
 // English number words (one through twenty, plus common larger numbers)

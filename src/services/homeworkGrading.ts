@@ -80,6 +80,20 @@ export const evaluateHomework = async (
       };
     }
 
+    // Check if this is a NOT_MATH response
+    if (gradeData.content && gradeData.content.includes('NOT_MATH')) {
+      console.log('[homeworkGrading] Content flagged as not mathematics');
+      const redirectMessage = language === 'fr' 
+        ? "Cette question ne semble pas être liée aux mathématiques. Cette interface est dédiée uniquement aux questions mathématiques."
+        : "This question doesn't appear to be math-related. This interface is dedicated to mathematics questions only.";
+      
+      return {
+        ...exercise,
+        isCorrect: false,
+        explanation: `**Problem:** ${exercise.question}\n\n**Guidance:** ${redirectMessage}`
+      };
+    }
+
     console.log('[homeworkGrading] Raw grade response:', gradeData.content);
 
     // Strict parsing of the CORRECT/INCORRECT response

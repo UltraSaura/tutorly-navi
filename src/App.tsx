@@ -26,6 +26,7 @@ const SupportPage = lazy(() => import("./pages/SupportPage"));
 const TokensPreview = lazy(() => import("./pages/TokensPreview"));
 const GamePreview = lazy(() => import("./pages/GamePreview"));
 const ExerciseHistoryPage = lazy(() => import("./pages/ExerciseHistoryPage"));
+const GeneralChatPage = lazy(() => import("./pages/GeneralChatPage"));
 
 // Admin Pages
 import AIModelManagement from "./components/admin/AIModelManagement";
@@ -78,6 +79,7 @@ const App = () => {
                         <Route path="/chat" element={<MainLayout />}>
                           <Route index element={<ChatInterface />} />
                         </Route>
+                        <Route path="/general-chat" element={<GeneralChatPage />} />
                         <Route path="/dashboard" element={<MainLayout />}>
                           <Route index element={<UnifiedDashboard />} />
                         </Route>

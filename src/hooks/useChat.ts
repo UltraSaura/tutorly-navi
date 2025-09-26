@@ -99,24 +99,40 @@ export const useChat = () => {
       if (data) {
         setLastResponse(data);
         
-        // Add AI response to messages
-        const aiResponse: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: data.content,
-          timestamp: new Date(),
-        };
-        
-        // Only track responses that will create exercises, not math explanations
-        // This allows math questions to show their explanations in chat
-        console.log('[DEBUG] AI response created for:', { 
-          isMath: mathDetection.isMath, 
-          hasAnswer: mathDetection.hasAnswer,
-          selectedModelId, 
-          content: data.content.substring(0, 100) 
-        });
-        
-        setMessages(prev => [...prev, aiResponse]);
+        // Check if this is a NOT_MATH response
+        if (data.content && data.content.includes('NOT_MATH')) {
+          const redirectMessage = language === 'fr' 
+            ? "Cette question ne semble pas être liée aux mathématiques. Cette interface est dédiée uniquement aux questions mathématiques. Pour les questions générales, veuillez utiliser la page de chat général."
+            : "This question doesn't appear to be math-related. This interface is dedicated to mathematics questions only. For general questions, please use the general chat page.";
+          
+          const aiResponse: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: redirectMessage,
+            timestamp: new Date(),
+          };
+          
+          setMessages(prev => [...prev, aiResponse]);
+        } else {
+          // Add AI response to messages
+          const aiResponse: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: data.content,
+            timestamp: new Date(),
+          };
+          
+          // Only track responses that will create exercises, not math explanations
+          // This allows math questions to show their explanations in chat
+          console.log('[DEBUG] AI response created for:', { 
+            isMath: mathDetection.isMath, 
+            hasAnswer: mathDetection.hasAnswer,
+            selectedModelId, 
+            content: data.content.substring(0, 100) 
+          });
+          
+          setMessages(prev => [...prev, aiResponse]);
+        }
       } else if (error) {
         // Use fallback response if the API call fails
         const fallbackResponse = generateFallbackResponse(inputMessage);
