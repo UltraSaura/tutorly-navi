@@ -1,11 +1,11 @@
 
 
+/* MathLive CSS - must come before Tailwind directives */
+@import url('https://unpkg.com/mathlive/dist/mathlive-fonts.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* MathLive CSS */
-@import url('https://unpkg.com/mathlive/dist/mathlive-fonts.css');
 
 @layer base {
   :root {

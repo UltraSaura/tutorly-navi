@@ -8,6 +8,14 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    fs: {
+      allow: [
+        // Allow serving files from the project root
+        path.resolve(__dirname, "."),
+        // Allow serving files from node_modules (for MathLive fonts)
+        path.resolve(__dirname, "node_modules"),
+      ],
+    },
   },
   build: {
     outDir: 'dist',
