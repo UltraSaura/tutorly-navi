@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
 // Import provider-specific implementations
 import { callOpenAI } from './providers/openai.ts';
@@ -160,7 +160,7 @@ serve(async (req) => {
       systemMessage = enhanceSystemMessageForMath(systemMessage, message);
     }
     
-    console.log('📝 System message generated, length:', systemMessage.content?.length || systemMessage.length);
+    console.log('📝 System message generated, length:', systemMessage.content?.length || 0);
     
     // Format history messages based on provider
     const formattedHistory = formatHistoryForProvider(history, modelConfig.provider);
@@ -264,14 +264,14 @@ serve(async (req) => {
     
   } catch (error) {
     console.error('❌ Error in AI chat function:', {
-      error: error.message,
-      stack: error.stack,
-      name: error.name,
+      error: (error as Error).message || String(error),
+      stack: (error as Error).stack,
+      name: (error as Error).name,
       timestamp: new Date().toISOString()
     });
     
     // Enhanced error response with more details
-    let errorMessage = error.message || 'An error occurred while processing your request';
+    let errorMessage = (error as Error).message || String(error);
     let statusCode = 500;
     
     // Categorize errors for better user experience

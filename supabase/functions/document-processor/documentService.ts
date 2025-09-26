@@ -135,7 +135,7 @@ export async function processDocument(
       success: false,
       exercises: [],
       rawText: '',
-      error: error.message
+      error: (error as Error).message || 'Processing failed'
     };
   }
 }

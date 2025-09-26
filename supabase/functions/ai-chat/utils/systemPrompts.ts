@@ -76,7 +76,7 @@ export function substitutePromptVariables(promptTemplate: string, variables: Pro
 async function getActivePromptTemplate(usageType: string, subject?: string) {
   try {
     // @ts-ignore - Dynamic import for edge function environment
-    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.49.1");
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);

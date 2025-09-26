@@ -45,7 +45,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Edge Function error:', error);
     
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message || 'Processing failed' }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
