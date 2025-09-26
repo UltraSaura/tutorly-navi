@@ -17,7 +17,7 @@ export function parseTwoCardText(raw: string): TeachingSections {
   const text = (raw || "").replace(/\r\n/g, "\n").trim();
   
   // If the text contains "NOT_MATH" or is too short, return empty sections
-  if (text.includes('NOT_MATH') || text.length < 50) {
+  if (text.includes('NOT_MATH') || text.length < 10) {
     return {
       exercise: "",
       concept: "",

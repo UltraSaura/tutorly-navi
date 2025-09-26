@@ -11,6 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 // In-memory cache for storing explanations within the session
 const sessionCache = new Map<string, TeachingSections>();
 
+// Cache control flag - disable caching for now to avoid issues
+const ENABLE_EXPLANATION_CACHE = false;
+
 export function useTwoCardTeaching() {
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -45,37 +48,39 @@ export function useTwoCardTeaching() {
         grade_level
       );
       
-      // Check session cache first
-      const sessionCachedExplanation = sessionCache.get(cacheKey);
-      if (sessionCachedExplanation) {
-        console.log('[TwoCardTeaching] Using session cached explanation');
-        setSections(sessionCachedExplanation);
-        return;
-      }
+      // Check session cache first (if caching enabled)
+      if (ENABLE_EXPLANATION_CACHE) {
+        const sessionCachedExplanation = sessionCache.get(cacheKey);
+        if (sessionCachedExplanation) {
+          console.log('[TwoCardTeaching] Using session cached explanation');
+          setSections(sessionCachedExplanation);
+          return;
+        }
 
-      // Check database cache
-      const { data: cachedExplanation, error: cacheError } = await supabase
-        .from('exercise_explanations_cache')
-        .select('explanation_data, usage_count')
-        .eq('exercise_hash', canonical.hash)
-        .maybeSingle();
-
-      if (!cacheError && cachedExplanation) {
-        console.log('[TwoCardTeaching] Using database cached explanation');
-        
-        // Update usage count
-        await supabase
+        // Check database cache
+        const { data: cachedExplanation, error: cacheError } = await supabase
           .from('exercise_explanations_cache')
-          .update({ 
-            usage_count: cachedExplanation.usage_count + 1,
-            updated_at: new Date().toISOString()
-          })
-          .eq('exercise_hash', canonical.hash);
+          .select('explanation_data, usage_count')
+          .eq('exercise_hash', canonical.hash)
+          .maybeSingle();
 
-        const explanation = cachedExplanation.explanation_data as TeachingSections;
-        sessionCache.set(cacheKey, explanation);
-        setSections(explanation);
-        return;
+        if (!cacheError && cachedExplanation) {
+          console.log('[TwoCardTeaching] Using database cached explanation');
+          
+          // Update usage count
+          await supabase
+            .from('exercise_explanations_cache')
+            .update({ 
+              usage_count: cachedExplanation.usage_count + 1,
+              updated_at: new Date().toISOString()
+            })
+            .eq('exercise_hash', canonical.hash);
+
+          const explanation = cachedExplanation.explanation_data as TeachingSections;
+          sessionCache.set(cacheKey, explanation);
+          setSections(explanation);
+          return;
+        }
       }
       
       // Not in cache, start loading and make AI request
@@ -200,54 +205,50 @@ ${exercise_content}
       const parsed = parseTwoCardText(rawInCorrectLanguage);
       console.log("[Explain] parsed →", parsed);
       
-      let finalSections: TeachingSections;
+      // Always fill missing sections with safe defaults
+      const finalSections: TeachingSections = {
+        exercise: parsed.exercise || exercise_content || 'No exercise provided',
+        concept: parsed.concept || (response_language === 'French' 
+          ? 'Concept clé nécessaire pour résoudre ce problème'
+          : 'Key concept needed to solve this problem'),
+        example: parsed.example || (response_language === 'French'
+          ? 'Exemple similaire avec des nombres différents'
+          : 'Similar example with different numbers'),
+        strategy: parsed.strategy || (response_language === 'French'
+          ? 'Approche étape par étape pour résoudre ce type de problème'
+          : 'Step-by-step approach to solve this type of problem'),
+        pitfall: parsed.pitfall || (response_language === 'French'
+          ? 'Erreurs courantes que font les étudiants avec ce type de problème'
+          : 'Common mistakes students make with this type of problem'),
+        check: parsed.check || (response_language === 'French'
+          ? 'Comment vérifier que la réponse est correcte'
+          : 'How to verify the answer is correct'),
+        practice: parsed.practice || (response_language === 'French'
+          ? 'Suggestion pour améliorer ce type de problème'
+          : 'Suggestion for improving at this type of problem')
+      };
       
-      // Only fallback when all three core fields are empty
-      if (!parsed.concept && !parsed.example && !parsed.strategy) {
-        console.log('[TwoCardTeaching] Using fallback - all core fields empty');
-        finalSections = {
-          exercise: exercise_content || 'No exercise provided',
-          concept: response_language === 'French' 
-            ? 'Concept clé nécessaire pour résoudre ce problème'
-            : 'Key concept needed to solve this problem',
-          example: response_language === 'French'
-            ? 'Exemple similaire avec des nombres différents'
-            : 'Similar example with different numbers',
-          strategy: response_language === 'French'
-            ? 'Approche étape par étape pour résoudre ce type de problème'
-            : 'Step-by-step approach to solve this type of problem',
-          pitfall: response_language === 'French'
-            ? 'Erreurs courantes que font les étudiants avec ce type de problème'
-            : 'Common mistakes students make with this type of problem',
-          check: response_language === 'French'
-            ? 'Comment vérifier que la réponse est correcte'
-            : 'How to verify the answer is correct',
-          practice: response_language === 'French'
-            ? 'Suggestion pour améliorer ce type de problème'
-            : 'Suggestion for improving at this type of problem'
-        };
-      } else {
-        console.log('[TwoCardTeaching] Using parsed sections:', parsed);
-        finalSections = parsed;
-      }
+      console.log('[TwoCardTeaching] Final sections with defaults applied:', finalSections);
       
-      // Cache the successful result in session cache
-      sessionCache.set(cacheKey, finalSections);
-      
-      // Save to database cache
-      try {
-        await supabase.from('exercise_explanations_cache').insert({
-          exercise_hash: canonical.hash,
-          exercise_content: canonical.normalizedContent,
-          subject_id: typeof subject === "string" ? subject : String(subject),
-          explanation_data: finalSections,
-          quality_score: 0,
-          usage_count: 1
-        });
-        console.log('[TwoCardTeaching] Saved explanation to database cache');
-      } catch (dbError) {
-        console.warn('[TwoCardTeaching] Failed to save to database cache:', dbError);
-        // Don't fail the whole operation if caching fails
+      // Cache the successful result (if caching enabled)
+      if (ENABLE_EXPLANATION_CACHE) {
+        sessionCache.set(cacheKey, finalSections);
+        
+        // Save to database cache
+        try {
+          await supabase.from('exercise_explanations_cache').insert({
+            exercise_hash: canonical.hash,
+            exercise_content: canonical.normalizedContent,
+            subject_id: typeof subject === "string" ? subject : String(subject),
+            explanation_data: finalSections,
+            quality_score: 0,
+            usage_count: 1
+          });
+          console.log('[TwoCardTeaching] Saved explanation to database cache');
+        } catch (dbError) {
+          console.warn('[TwoCardTeaching] Failed to save to database cache:', dbError);
+          // Don't fail the whole operation if caching fails
+        }
       }
       
       setSections(finalSections);
