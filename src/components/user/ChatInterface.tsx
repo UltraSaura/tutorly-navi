@@ -224,23 +224,25 @@ const ChatInterface = () => {
     setShowCamera(false);
   };
 
-  // Exercise-Focused Layout with Input at Bottom
+  // Exercise-Focused Layout with Fixed Input at Bottom
   return (
-    <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg">
-      <div className="h-full flex flex-col">
-        {/* Exercise List - Takes most of the space */}
-        <div className="flex-1 overflow-auto">
-          <ExerciseList
-            exercises={exercises}
-            grade={grade}
-            toggleExerciseExpansion={toggleExerciseExpansion}
-            onSubmitAnswer={submitAnswer}
-            onClearExercises={clearExercises}
-          />
-        </div>
+    <div className="relative h-[calc(100vh-4rem)] bg-background">
+      {/* Exercise List - Takes full height with bottom padding for fixed input */}
+      <div className={`h-full overflow-auto ${isMobile ? 'pb-32' : 'pb-20'}`}>
+        <ExerciseList
+          exercises={exercises}
+          grade={grade}
+          toggleExerciseExpansion={toggleExerciseExpansion}
+          onSubmitAnswer={submitAnswer}
+          onClearExercises={clearExercises}
+        />
+      </div>
 
-        {/* Message Input - Fixed at bottom */}
-        <div className="flex-shrink-0 p-4 bg-neutral-bg border-t border-neutral-border">
+      {/* Message Input - Fixed at bottom like mobile tabs */}
+      <div className={`fixed left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-t border-border ${
+        isMobile ? 'bottom-16' : 'bottom-0'
+      }`}>
+        <div className="p-4">
           <MessageInput
             inputMessage={inputMessage}
             setInputMessage={setInputMessage}
