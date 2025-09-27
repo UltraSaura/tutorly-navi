@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Message } from '@/types/chat';
 import ExerciseList from './chat/ExerciseList';
-import MessageInput from './chat/MessageInput';
+import ChatPanel from './chat/ChatPanel';
 import CameraCapture from './chat/CameraCapture';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
@@ -217,33 +217,37 @@ const ChatInterface = () => {
     setShowCamera(false);
   };
 
-  // Exercise-Focused Layout with Chat Input
+  // Exercise-Focused Layout with Chat Integration
   return (
     <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg">
-      {/* Exercise List */}
-      <div className="h-full overflow-auto pb-20 md:pb-16">
-        <ExerciseList
-          exercises={exercises}
-          grade={grade}
-          toggleExerciseExpansion={toggleExerciseExpansion}
-          onSubmitAnswer={submitAnswer}
-          onClearExercises={clearExercises}
-        />
-      </div>
-
-      {/* Fixed Chat Input - Only show on /chat route when no overlays are active */}
-      {location.pathname === '/chat' && !hasActiveOverlay && (
-        <div className="fixed left-0 right-0 z-[60] bottom-16 md:bottom-0 bg-neutral-bg border-t border-neutral-border shadow-lg px-[10px] py-1">
-          <MessageInput
-            inputMessage={inputMessage}
-            setInputMessage={setInputMessage}
-            handleSendMessage={handleSendMessage}
-            handleFileUpload={handleDocumentFileUpload}
-            handlePhotoUpload={handlePhotoFileUpload}
-            isLoading={isLoading}
+      <div className="h-full flex flex-col md:flex-row gap-0">
+        {/* Exercise List - Takes 2/3 on desktop, full width on mobile */}
+        <div className="flex-1 md:flex-[2] h-full overflow-auto">
+          <ExerciseList
+            exercises={exercises}
+            grade={grade}
+            toggleExerciseExpansion={toggleExerciseExpansion}
+            onSubmitAnswer={submitAnswer}
+            onClearExercises={clearExercises}
           />
         </div>
-      )}
+
+        {/* Chat Panel - Takes 1/3 on desktop, full width on mobile */}
+        {location.pathname === '/chat' && !hasActiveOverlay && (
+          <div className="md:flex-[1] h-full">
+            <ChatPanel
+              messages={filteredMessages}
+              isLoading={isLoading}
+              inputMessage={inputMessage}
+              setInputMessage={setInputMessage}
+              handleSendMessage={handleSendMessage}
+              handleFileUpload={handleDocumentFileUpload}
+              handlePhotoUpload={handlePhotoFileUpload}
+              activeModel={activeModel}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Upload Bottom Sheet */}
       <Sheet open={showUploadSheet} onOpenChange={setShowUploadSheet}>
