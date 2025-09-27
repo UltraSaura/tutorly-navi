@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ThumbsUp, AlertCircle, CircleCheck, CircleX, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import DOMPurify from 'dompurify';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -312,7 +313,12 @@ const Exercise = ({
                       ) : (
                         <div 
                           className="text-sm text-gray-700 dark:text-gray-300 prose-sm max-w-full"
-                          dangerouslySetInnerHTML={{ __html: formattedExplanation }}
+                          dangerouslySetInnerHTML={{ 
+                            __html: DOMPurify.sanitize(formattedExplanation, { 
+                              ALLOWED_TAGS: ['strong', 'br', 'em', 'p'],
+                              ALLOWED_ATTR: ['class']
+                            }) 
+                          }}
                         />
                       )}
                     </div>
