@@ -6,6 +6,23 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { User } from '@/types/admin';
+import { z } from 'zod';
+import { toast } from 'sonner';
+
+const addChildSchema = z.object({
+  email: z.string()
+    .trim()
+    .email({ message: "Invalid email address" })
+    .max(255, { message: "Email must be less than 255 characters" }),
+  firstName: z.string()
+    .trim()
+    .min(1, { message: "First name is required" })
+    .max(100, { message: "First name must be less than 100 characters" }),
+  lastName: z.string()
+    .trim()
+    .min(1, { message: "Last name is required" })
+    .max(100, { message: "Last name must be less than 100 characters" })
+});
 
 interface AddChildDialogProps {
   open: boolean;
@@ -26,20 +43,33 @@ export const AddChildDialog = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddChildAccount = async () => {
-    if (!childEmail || !childFirstName || !childLastName) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    
     try {
-      await onAddChild(childEmail, childFirstName, childLastName);
+      // Validate input data
+      const validatedData = addChildSchema.parse({
+        email: childEmail,
+        firstName: childFirstName,
+        lastName: childLastName
+      });
+
+      setIsSubmitting(true);
+      
+      await onAddChild(validatedData.email, validatedData.firstName, validatedData.lastName);
       
       // Reset form fields
       setChildEmail('');
       setChildFirstName('');
       setChildLastName('');
       onOpenChange(false);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        // Show validation errors
+        error.errors.forEach(err => {
+          toast.error(`${err.path.join('.')}: ${err.message}`);
+        });
+      } else {
+        console.error('Error adding child account:', error);
+        toast.error('Failed to create child account');
+      }
     } finally {
       setIsSubmitting(false);
     }
