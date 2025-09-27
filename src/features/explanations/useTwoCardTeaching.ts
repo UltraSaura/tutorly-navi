@@ -14,6 +14,115 @@ const sessionCache = new Map<string, TeachingSections>();
 // Cache control flag - disable caching for now to avoid issues
 const ENABLE_EXPLANATION_CACHE = false;
 
+// Helper function to generate explanations for simple arithmetic
+function generateSimpleArithmeticExplanation(exercise: string, language: string): TeachingSections {
+  const isFrench = language === 'French';
+  
+  // Parse the arithmetic
+  const match = exercise.match(/(\d+)\s*([\+\-\*×\/÷])\s*(\d+)/);
+  if (!match) return getErrorFallback(exercise, isFrench);
+  
+  const [, num1, operator, num2] = match;
+  const n1 = parseInt(num1);
+  const n2 = parseInt(num2);
+  
+  let operation = '';
+  let result = 0;
+  let concept = '';
+  let example = '';
+  let strategy = '';
+  
+  if (operator === '+') {
+    operation = isFrench ? 'addition' : 'addition';
+    result = n1 + n2;
+    concept = isFrench ? 
+      `L'addition consiste à combiner deux nombres pour obtenir leur somme totale.` :
+      `Addition means combining two numbers to get their total sum.`;
+    example = isFrench ? 
+      `Par exemple: ${n1 + 1} + ${n2 + 1} = ${(n1 + 1) + (n2 + 1)}` :
+      `For example: ${n1 + 1} + ${n2 + 1} = ${(n1 + 1) + (n2 + 1)}`;
+    strategy = isFrench ?
+      `Comptez en partant du premier nombre et ajoutez le second nombre.` :
+      `Start with the first number and count up by the second number.`;
+  } else if (operator === '-') {
+    operation = isFrench ? 'soustraction' : 'subtraction';
+    result = n1 - n2;
+    concept = isFrench ?
+      `La soustraction consiste à enlever un nombre d'un autre.` :
+      `Subtraction means taking one number away from another.`;
+    example = isFrench ?
+      `Par exemple: ${n1 + 1} - ${n2} = ${(n1 + 1) - n2}` :
+      `For example: ${n1 + 1} - ${n2} = ${(n1 + 1) - n2}`;
+    strategy = isFrench ?
+      `Commencez par le premier nombre et comptez en arrière.` :
+      `Start with the first number and count backwards.`;
+  } else if (operator === '*' || operator === '×') {
+    operation = isFrench ? 'multiplication' : 'multiplication';
+    result = n1 * n2;
+    concept = isFrench ?
+      `La multiplication consiste à additionner un nombre plusieurs fois.` :
+      `Multiplication means adding a number multiple times.`;
+    example = isFrench ?
+      `Par exemple: ${n1} × ${n2 + 1} = ${n1 * (n2 + 1)}` :
+      `For example: ${n1} × ${n2 + 1} = ${n1 * (n2 + 1)}`;
+    strategy = isFrench ?
+      `Additionnez ${n1} un total de ${n2} fois: ${Array(n2).fill(n1).join(' + ')} = ${result}` :
+      `Add ${n1} a total of ${n2} times: ${Array(n2).fill(n1).join(' + ')} = ${result}`;
+  } else if (operator === '/' || operator === '÷') {
+    operation = isFrench ? 'division' : 'division';
+    result = n1 / n2;
+    concept = isFrench ?
+      `La division consiste à partager un nombre en groupes égaux.` :
+      `Division means splitting a number into equal groups.`;
+    example = isFrench ?
+      `Par exemple: ${n1 * 2} ÷ ${n2} = ${(n1 * 2) / n2}` :
+      `For example: ${n1 * 2} ÷ ${n2} = ${(n1 * 2) / n2}`;
+    strategy = isFrench ?
+      `Combien de fois ${n2} rentre-t-il dans ${n1}?` :
+      `How many times does ${n2} go into ${n1}?`;
+  }
+  
+  return {
+    exercise: exercise,
+    concept,
+    example,
+    strategy,
+    pitfall: isFrench ? 
+      `Attention aux erreurs de calcul mental.` :
+      `Be careful with mental math mistakes.`,
+    check: isFrench ?
+      `Vérifiez: ${n1} ${operator} ${n2} = ${result}` :
+      `Check: ${n1} ${operator} ${n2} = ${result}`,
+    practice: isFrench ?
+      `Pratiquez avec d'autres nombres similaires.` :
+      `Practice with other similar numbers.`
+  };
+}
+
+function getErrorFallback(exercise: string, isFrench: boolean): TeachingSections {
+  return {
+    exercise,
+    concept: isFrench ? 
+      'Concept mathématique de base' :
+      'Basic mathematical concept',
+    example: isFrench ?
+      'Exemple avec des nombres différents' :
+      'Example with different numbers',
+    strategy: isFrench ?
+      'Approche étape par étape' :
+      'Step-by-step approach',
+    pitfall: isFrench ?
+      'Erreurs courantes à éviter' :
+      'Common mistakes to avoid',
+    check: isFrench ?
+      'Comment vérifier la réponse' :
+      'How to verify the answer',
+    practice: isFrench ?
+      'Suggestion d\'amélioration' :
+      'Suggestion for improvement'
+  };
+}
+
 export function useTwoCardTeaching() {
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -86,6 +195,16 @@ export function useTwoCardTeaching() {
       // Not in cache, start loading and make AI request
       setLoading(true);
       
+      // Check if this is a simple arithmetic problem that we can handle directly
+      const simpleArithmeticPattern = /^\s*\d+\s*[\+\-\*×\/÷]\s*\d+\s*=?\s*\d*\s*$/;
+      if (simpleArithmeticPattern.test(exercise_content)) {
+        console.log('[TwoCardTeaching] Detected simple arithmetic, using direct explanation');
+        const directExplanation = generateSimpleArithmeticExplanation(exercise_content, response_language);
+        setSections(directExplanation);
+        setLoading(false);
+        return;
+      }
+      
       let explanationTemplate = getActiveTemplate('explanation');
       
       console.log("[Explain] template →", { name: explanationTemplate?.name, usage: explanationTemplate?.usage_type, id: explanationTemplate?.id });
@@ -153,44 +272,59 @@ Write all content in {{response_language}}. Keep the section headers in English 
         
       } catch (error) {
         console.warn('[TwoCardTeaching] Primary AI call failed:', error);
-        // Use the fallback template with a simpler approach
-        const fallbackPrompt = `Please provide a clear educational explanation for this math problem in ${response_language}:
+        
+        // Check if this is simple arithmetic and provide direct explanation
+        const simpleArithmeticPattern = /^\s*\d+\s*[\+\-\*×\/÷]\s*\d+\s*=?\s*\d*\s*$/;
+        if (simpleArithmeticPattern.test(exercise_content)) {
+          console.log('[TwoCardTeaching] AI failed but detected simple arithmetic, using direct explanation');
+          const directExplanation = generateSimpleArithmeticExplanation(exercise_content, response_language);
+          setSections(directExplanation);
+          setLoading(false);
+          return;
+        }
+        
+        // For non-simple problems, try with a different model (gpt-4o-mini as backup)
+        try {
+          const fallbackPrompt = `Explain this math problem step by step in ${response_language}:
 
 Exercise: ${exercise_content}
 Student Answer: ${student_answer}
 
-Please format your response with these exact section headers:
-
+Format:
 📘 Exercise
 ${exercise_content}
 
 💡 Concept
-[Explain the key mathematical concept]
+[Key concept]
 
-🔍 Example
-[Show a similar example with different numbers]
+🔍 Example  
+[Different example]
 
 ☑️ Strategy
-[Explain the step-by-step approach]
+[Step by step]
 
 ⚠️ Pitfall
-[Common mistakes to avoid]
+[Common mistake]
 
 🎯 Check yourself
-[How to verify the answer]
+[Verification]
 
 📈 Practice Tip
-[Suggestion for improvement]`;
+[Improvement tip]`;
 
-        const { data: fallbackData, error: fallbackError } = await import('@/services/chatService').then(module => 
-          module.sendMessageToAI(fallbackPrompt, [], selectedModelId, response_language === 'French' ? 'fr' : 'en')
-        );
-        
-        if (fallbackError || !fallbackData?.content) {
-          throw new Error('Both primary and fallback AI calls failed');
+          const { data: fallbackData, error: fallbackError } = await import('@/services/chatService').then(module => 
+            module.sendMessageToAI(fallbackPrompt, [], 'gpt-4o-mini', response_language === 'French' ? 'fr' : 'en')
+          );
+          
+          if (fallbackError || !fallbackData?.content) {
+            throw new Error('Both primary and fallback AI calls failed');
+          }
+          
+          raw = fallbackData.content;
+        } catch (fallbackError) {
+          console.error('[TwoCardTeaching] All AI calls failed:', fallbackError);
+          throw new Error('All AI explanation attempts failed');
         }
-        
-        raw = fallbackData.content;
       }
       
       // Ensure the response is in the correct language
