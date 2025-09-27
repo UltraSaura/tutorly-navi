@@ -8,6 +8,7 @@ export interface MathDetectionResult {
   hasAnswer: boolean;
   answer: string | null;
   isMultiple: boolean;
+  isQuestion: boolean;  // true for "how do I..." questions, false for exercises
   exercises: Array<{
     question: string;
     answer: string | null;
@@ -217,16 +218,21 @@ export async function detectMathWithAI(
 
     const prompt = `${languageInstructions}
 
-You are an expert math education assistant. Analyze this message and determine if it contains mathematical content.
+You are an expert math education assistant. Analyze this message and determine if it contains mathematical content AND classify the intent.
 
 CONTEXT: Common math action verbs include: Calculate, Solve, Simplify, Evaluate, Determine, Prove, Show that, Factor, Expand, Graph, Find, Convert (and their French equivalents: Calculer, Résoudre, Simplifier, Évaluer, Déterminer, Prouver, Montrer que, Factoriser, Développer, Tracer, Trouver, Convertir).
 
 Message: "${message}"
 
 INSTRUCTIONS:
+1. Determine if this is math-related content
+2. Classify the INTENT:
+   - QUESTION (isQuestion: true): Asking for explanation, help, or "how to" do something. Examples: "how do I calculate quadratic?", "what is calculus?", "explain derivatives", "help me understand fractions"
+   - EXERCISE (isQuestion: false): Presenting a specific problem to solve or homework to grade. Examples: "solve 2x+3=7", "my answer is 15", "calculate 5*3"
+
 Look for:
 - Math problems, equations, calculations, or requests to solve something
-- Educational phrases like "Calculate the area", "Solve for x", "Find the value", "Simplify the expression"
+- Educational phrases and question words like "how do I", "what is", "how to", "explain", "help me understand"
 - Mathematical symbols, variables, numbers with operations
 - Word problems involving quantities, measurements, or mathematical relationships
 
@@ -238,19 +244,24 @@ Respond with ONLY a valid JSON object with this exact structure:
   "hasAnswer": boolean,
   "answer": "extracted answer or null", 
   "isMultiple": boolean,
+  "isQuestion": boolean,
   "exercises": [{"question": "Q1", "answer": "A1 or null", "index": 0}]
 }
 
 EXAMPLES:
-✅ Math content:
-- "Calculate the area of a rectangle with width 5 and height 3" → {"isMath": true, "confidence": 100, "question": "Calculate the area of a rectangle with width 5 and height 3", "hasAnswer": false, "answer": null, "isMultiple": false, "exercises": []}
-- "Solve for x: 2x+3=7. My answer is x=2" → {"isMath": true, "confidence": 100, "question": "2x+3=7", "hasAnswer": true, "answer": "x=2", "isMultiple": false, "exercises": []}
-- "What is 15% of 80?" → {"isMath": true, "confidence": 95, "question": "What is 15% of 80?", "hasAnswer": false, "answer": null, "isMultiple": false, "exercises": []}
-- "Find the slope of the line passing through (2,3) and (4,7)" → {"isMath": true, "confidence": 100, "question": "Find the slope of the line passing through (2,3) and (4,7)", "hasAnswer": false, "answer": null, "isMultiple": false, "exercises": []}
+✅ Math QUESTIONS (for explanation):
+- "how do I calculate quadratic?" → {"isMath": true, "confidence": 100, "question": "how do I calculate quadratic?", "hasAnswer": false, "answer": null, "isMultiple": false, "isQuestion": true, "exercises": []}
+- "what is the quadratic formula?" → {"isMath": true, "confidence": 100, "question": "what is the quadratic formula?", "hasAnswer": false, "answer": null, "isMultiple": false, "isQuestion": true, "exercises": []}
+- "explain how to find derivatives" → {"isMath": true, "confidence": 100, "question": "explain how to find derivatives", "hasAnswer": false, "answer": null, "isMultiple": false, "isQuestion": true, "exercises": []}
+
+✅ Math EXERCISES (for grading):
+- "Calculate the area of a rectangle with width 5 and height 3" → {"isMath": true, "confidence": 100, "question": "Calculate the area of a rectangle with width 5 and height 3", "hasAnswer": false, "answer": null, "isMultiple": false, "isQuestion": false, "exercises": []}
+- "Solve for x: 2x+3=7. My answer is x=2" → {"isMath": true, "confidence": 100, "question": "2x+3=7", "hasAnswer": true, "answer": "x=2", "isMultiple": false, "isQuestion": false, "exercises": []}
+- "What is 15% of 80?" → {"isMath": true, "confidence": 95, "question": "What is 15% of 80?", "hasAnswer": false, "answer": null, "isMultiple": false, "isQuestion": false, "exercises": []}
 
 ❌ Non-math content:
-- "Hello, how are you?" → {"isMath": false, "confidence": 100, "question": null, "hasAnswer": false, "answer": null, "isMultiple": false, "exercises": []}
-- "I need help with my homework" → {"isMath": false, "confidence": 90, "question": null, "hasAnswer": false, "answer": null, "isMultiple": false, "exercises": []}`;
+- "Hello, how are you?" → {"isMath": false, "confidence": 100, "question": null, "hasAnswer": false, "answer": null, "isMultiple": false, "isQuestion": false, "exercises": []}
+- "I need help with my homework" → {"isMath": false, "confidence": 90, "question": null, "hasAnswer": false, "answer": null, "isMultiple": false, "isQuestion": false, "exercises": []}`;
 
     const { data, error } = await supabase.functions.invoke('ai-chat', {
       body: {
@@ -306,6 +317,7 @@ function parseAIResponse(content: string, originalMessage: string): MathDetectio
       hasAnswer: Boolean(parsed.hasAnswer),
       answer: parsed.answer || null,
       isMultiple: Boolean(parsed.isMultiple),
+      isQuestion: Boolean(parsed.isQuestion),
       exercises: Array.isArray(parsed.exercises) ? parsed.exercises : []
     };
 
@@ -321,6 +333,10 @@ function parseAIResponse(content: string, originalMessage: string): MathDetectio
 function createSimpleMathResult(message: string): MathDetectionResult {
   console.log('[MathDetection] Creating simple math result for:', message);
   
+  // Simple intent detection for simple math results
+  const questionWords = ['how', 'what', 'why', 'when', 'where', 'explain', 'help me understand', 'comment', 'qu\'est-ce que', 'pourquoi', 'expliquer'];
+  const isQuestionIntent = questionWords.some(word => message.toLowerCase().includes(word));
+  
   // Handle French mathematical expressions first
   const frenchMathMatch = message.match(/^(.+?)(font|égal|égale|est)\s*(.+)?$/i);
   if (frenchMathMatch) {
@@ -333,6 +349,7 @@ function createSimpleMathResult(message: string): MathDetectionResult {
       hasAnswer: Boolean(answer?.trim()),
       answer: answer?.trim() || null,
       isMultiple: false,
+      isQuestion: isQuestionIntent,
       exercises: []
     };
     console.log('[MathDetection] French result:', result);
@@ -352,6 +369,7 @@ function createSimpleMathResult(message: string): MathDetectionResult {
       hasAnswer: Boolean(answer?.trim()),
       answer: answer?.trim() || null,
       isMultiple: false,
+      isQuestion: isQuestionIntent,
       exercises: []
     };
   }
@@ -363,6 +381,7 @@ function createSimpleMathResult(message: string): MathDetectionResult {
     hasAnswer: false,
     answer: null,
     isMultiple: false,
+    isQuestion: isQuestionIntent,
     exercises: []
   };
 }
@@ -443,6 +462,10 @@ function createFallbackResult(message: string): MathDetectionResult {
 
   const hasMathSymbols = containsMathSymbols(message);
 
+  // Simple intent detection for fallback results
+  const questionWords = ['how', 'what', 'why', 'when', 'where', 'explain', 'help me understand', 'comment', 'qu\'est-ce que', 'pourquoi', 'expliquer'];
+  const isQuestionIntent = questionWords.some(word => message.toLowerCase().includes(word));
+
   const isMath = hasMathKeywords || hasMathSymbols;
   const confidence = hasMathSymbols ? 75 : (hasMathKeywords ? 60 : 10);
 
@@ -453,6 +476,7 @@ function createFallbackResult(message: string): MathDetectionResult {
     hasAnswer: false,
     answer: null,
     isMultiple: false,
+    isQuestion: isQuestionIntent,
     exercises: []
   };
 }

@@ -77,7 +77,8 @@ const ChatInterface = () => {
             const mathDetection = await detectMathWithAI(lastMessage.content, selectedModelId, language);
             console.log('AI Math Detection Result:', mathDetection);
             
-            if (mathDetection.isMath && mathDetection.confidence > 50) {
+            // Only process as exercise if it's NOT a question
+            if (mathDetection.isMath && mathDetection.confidence > 50 && !mathDetection.isQuestion) {
               if (mathDetection.isMultiple) {
                 console.log('Processing multiple exercises from AI detection');
                 processMultipleAIExercises(
