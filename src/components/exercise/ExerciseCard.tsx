@@ -188,17 +188,15 @@ const ExerciseCard = ({
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            {status !== 'unanswered' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onShowExplanation(id)}
-                className="text-xs px-2 py-0.5 h-6"
-                aria-label={`${t('exercise.showExplanation')} for exercise ${id}`}
-              >
-                {t('exercise.showExplanation')}
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onShowExplanation(id)}
+              className="text-xs px-2 py-0.5 h-6"
+              aria-label={`${t('exercise.showExplanation')} for exercise ${id}`}
+            >
+              {t('exercise.showExplanation')}
+            </Button>
             
             {status === 'incorrect' && (
               <Button

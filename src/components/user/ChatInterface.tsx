@@ -77,8 +77,15 @@ const ChatInterface = () => {
             const mathDetection = await detectMathWithAI(lastMessage.content, selectedModelId, language);
             console.log('AI Math Detection Result:', mathDetection);
             
-            if (mathDetection.isMath && mathDetection.confidence > 50 && !mathDetection.isQuestion) {
-              if (mathDetection.isMultiple) {
+            if (mathDetection.isMath && mathDetection.confidence > 50) {
+              if (mathDetection.isQuestion) {
+                // Create exercise from math question
+                console.log('Processing math question as exercise');
+                const existingExercise = exercises.find(ex => ex.question.toLowerCase().trim() === lastMessage.content.toLowerCase().trim());
+                if (!existingExercise) {
+                  createExerciseFromAI(lastMessage.content, "");
+                }
+              } else if (mathDetection.isMultiple) {
                 console.log('Processing multiple exercises from AI detection');
                 processMultipleAIExercises(
                   lastMessage.content, 
