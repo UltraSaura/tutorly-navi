@@ -233,20 +233,27 @@ const ChatInterface = () => {
         </div>
 
         {/* Chat Panel - Takes 1/3 on desktop, full width on mobile */}
-        {location.pathname === '/chat' && !hasActiveOverlay && (
-          <div className="md:flex-[1] h-full">
-            <ChatPanel
-              messages={filteredMessages}
-              isLoading={isLoading}
-              inputMessage={inputMessage}
-              setInputMessage={setInputMessage}
-              handleSendMessage={handleSendMessage}
-              handleFileUpload={handleDocumentFileUpload}
-              handlePhotoUpload={handlePhotoFileUpload}
-              activeModel={activeModel}
-            />
-          </div>
-        )}
+        {(() => {
+          console.log('ChatInterface render check:', {
+            pathname: location.pathname,
+            hasActiveOverlay,
+            shouldShowChat: location.pathname === '/chat' && !hasActiveOverlay
+          });
+          return location.pathname === '/chat' && !hasActiveOverlay ? (
+            <div className="md:flex-[1] h-full">
+              <ChatPanel
+                messages={filteredMessages}
+                isLoading={isLoading}
+                inputMessage={inputMessage}
+                setInputMessage={setInputMessage}
+                handleSendMessage={handleSendMessage}
+                handleFileUpload={handleDocumentFileUpload}
+                handlePhotoUpload={handlePhotoFileUpload}
+                activeModel={activeModel}
+              />
+            </div>
+          ) : null;
+        })()}
       </div>
 
       {/* Upload Bottom Sheet */}
