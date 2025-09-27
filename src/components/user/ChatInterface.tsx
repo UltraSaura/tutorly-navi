@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Message } from '@/types/chat';
 import ExerciseList from './chat/ExerciseList';
-import ChatPanel from './chat/ChatPanel';
+import MessageInput from './chat/MessageInput';
 import CameraCapture from './chat/CameraCapture';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
@@ -217,12 +217,12 @@ const ChatInterface = () => {
     setShowCamera(false);
   };
 
-  // Exercise-Focused Layout with Chat Integration
+  // Exercise-Focused Layout with Input at Bottom
   return (
     <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg">
-      <div className="h-full flex flex-col md:flex-row gap-0">
-        {/* Exercise List - Takes 2/3 on desktop, full width on mobile */}
-        <div className="flex-1 md:flex-[2] h-full overflow-auto">
+      <div className="h-full flex flex-col">
+        {/* Exercise List - Takes most of the space */}
+        <div className="flex-1 overflow-auto">
           <ExerciseList
             exercises={exercises}
             grade={grade}
@@ -232,28 +232,17 @@ const ChatInterface = () => {
           />
         </div>
 
-        {/* Chat Panel - Takes 1/3 on desktop, full width on mobile */}
-        {(() => {
-          console.log('ChatInterface render check:', {
-            pathname: location.pathname,
-            hasActiveOverlay,
-            shouldShowChat: location.pathname === '/chat' && !hasActiveOverlay
-          });
-          return location.pathname === '/chat' && !hasActiveOverlay ? (
-            <div className="md:flex-[1] h-full">
-              <ChatPanel
-                messages={filteredMessages}
-                isLoading={isLoading}
-                inputMessage={inputMessage}
-                setInputMessage={setInputMessage}
-                handleSendMessage={handleSendMessage}
-                handleFileUpload={handleDocumentFileUpload}
-                handlePhotoUpload={handlePhotoFileUpload}
-                activeModel={activeModel}
-              />
-            </div>
-          ) : null;
-        })()}
+        {/* Message Input - Fixed at bottom */}
+        <div className="flex-shrink-0 p-4 bg-neutral-bg border-t border-neutral-border">
+          <MessageInput
+            inputMessage={inputMessage}
+            setInputMessage={setInputMessage}
+            handleSendMessage={handleSendMessage}
+            handleFileUpload={handleDocumentFileUpload}
+            handlePhotoUpload={handlePhotoFileUpload}
+            isLoading={isLoading}
+          />
+        </div>
       </div>
 
       {/* Upload Bottom Sheet */}
