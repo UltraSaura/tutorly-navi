@@ -14,6 +14,124 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_model_keys: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          key_value: string
+          name: string
+          provider_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key_value: string
+          name: string
+          provider_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key_value?: string
+          name?: string
+          provider_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_model_keys_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "ai_model_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_model_providers: {
+        Row: {
+          api_base_url: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          api_base_url: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          api_base_url?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_models: {
+        Row: {
+          capabilities: string[] | null
+          context_window: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          max_tokens: number | null
+          model_id: string
+          name: string
+          pricing_input: number | null
+          pricing_output: number | null
+          provider_id: string
+          updated_at: string
+        }
+        Insert: {
+          capabilities?: string[] | null
+          context_window?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_tokens?: number | null
+          model_id: string
+          name: string
+          pricing_input?: number | null
+          pricing_output?: number | null
+          provider_id: string
+          updated_at?: string
+        }
+        Update: {
+          capabilities?: string[] | null
+          context_window?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_tokens?: number | null
+          model_id?: string
+          name?: string
+          pricing_input?: number | null
+          pricing_output?: number | null
+          provider_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_models_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "ai_model_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           code: string
