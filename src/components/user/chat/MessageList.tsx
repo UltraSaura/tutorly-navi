@@ -3,7 +3,7 @@ import { useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Message from './Message';
 import { Message as MessageType } from '@/types/chat';
-import { useLanguage } from '@/context/LanguageContext';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 interface MessageListProps {
   messages: MessageType[];
