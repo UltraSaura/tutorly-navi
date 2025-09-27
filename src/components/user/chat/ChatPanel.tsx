@@ -33,9 +33,7 @@ const ChatPanel = ({
         <div className="text-red-500">{t('chat.error')}</div>
       </div>;
   }
-  console.log('ChatPanel rendering with messages:', messages.length);
-  
-  return <div className="h-full flex flex-col glass rounded-xl overflow-hidden">
+  return <div className="w-full md:w-1/3 flex flex-col glass rounded-xl overflow-hidden">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('chat.askQuestions')}</p>
