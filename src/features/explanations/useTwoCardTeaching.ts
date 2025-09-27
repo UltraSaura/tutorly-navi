@@ -7,6 +7,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { ensureLanguage } from "@/lib/ensureLanguage";
 import { ExerciseCanonicalizer } from "@/services/exerciseCanonicalizer";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 // In-memory cache for storing explanations within the session
 const sessionCache = new Map<string, TeachingSections>();
@@ -14,89 +15,224 @@ const sessionCache = new Map<string, TeachingSections>();
 // Cache control flag - disable caching for now to avoid issues
 const ENABLE_EXPLANATION_CACHE = false;
 
-// Helper function to generate explanations for simple arithmetic
+// Helper function to evaluate arithmetic expressions respecting order of operations
+function evaluateArithmetic(expression: string): number {
+  // Simple evaluation that handles +, -, *, /
+  // First handle multiplication and division (left to right)
+  let expr = expression.replace(/\s/g, ''); // Remove spaces
+  
+  // Handle multiplication and division first
+  while (expr.match(/\d+[\*×\/÷]\d+/)) {
+    expr = expr.replace(/(\d+)([\*×])(\d+)/, (match, n1, op, n2) => {
+      return String(parseInt(n1) * parseInt(n2));
+    });
+    expr = expr.replace(/(\d+)([\/÷])(\d+)/, (match, n1, op, n2) => {
+      return String(parseInt(n1) / parseInt(n2));
+    });
+  }
+  
+  // Then handle addition and subtraction (left to right)
+  while (expr.match(/\d+[\+\-]\d+/)) {
+    expr = expr.replace(/(\d+)([\+])(\d+)/, (match, n1, op, n2) => {
+      return String(parseInt(n1) + parseInt(n2));
+    });
+    expr = expr.replace(/(\d+)([\-])(\d+)/, (match, n1, op, n2) => {
+      return String(parseInt(n1) - parseInt(n2));
+    });
+  }
+  
+  return parseFloat(expr);
+}
+
+// Helper function to generate step-by-step solution
+function generateSteps(expression: string, isFrench: boolean): string {
+  const steps = [];
+  let expr = expression.replace(/\s/g, '');
+  
+  // Track each step of evaluation
+  const originalExpr = expr;
+  
+  // First, handle multiplication and division
+  while (expr.match(/\d+[\*×\/÷]\d+/)) {
+    const multMatch = expr.match(/(\d+)([\*×])(\d+)/);
+    const divMatch = expr.match(/(\d+)([\/÷])(\d+)/);
+    
+    if (multMatch) {
+      const [match, n1, op, n2] = multMatch;
+      const result = parseInt(n1) * parseInt(n2);
+      steps.push(isFrench ? 
+        `${n1} × ${n2} = ${result}` :
+        `${n1} × ${n2} = ${result}`);
+      expr = expr.replace(match, String(result));
+    }
+    
+    if (divMatch && (!multMatch || expr.indexOf(divMatch[0]) < expr.indexOf(multMatch[0]))) {
+      const [match, n1, op, n2] = divMatch;
+      const result = parseInt(n1) / parseInt(n2);
+      steps.push(isFrench ? 
+        `${n1} ÷ ${n2} = ${result}` :
+        `${n1} ÷ ${n2} = ${result}`);
+      expr = expr.replace(match, String(result));
+    }
+  }
+  
+  // Then handle addition and subtraction
+  while (expr.match(/\d+[\+\-]\d+/)) {
+    const addMatch = expr.match(/(\d+)([\+])(\d+)/);
+    const subMatch = expr.match(/(\d+)([\-])(\d+)/);
+    
+    if (addMatch && (!subMatch || expr.indexOf(addMatch[0]) < expr.indexOf(subMatch[0]))) {
+      const [match, n1, op, n2] = addMatch;
+      const result = parseInt(n1) + parseInt(n2);
+      steps.push(isFrench ? 
+        `${n1} + ${n2} = ${result}` :
+        `${n1} + ${n2} = ${result}`);
+      expr = expr.replace(match, String(result));
+    }
+    
+    if (subMatch) {
+      const [match, n1, op, n2] = subMatch;
+      const result = parseInt(n1) - parseInt(n2);
+      steps.push(isFrench ? 
+        `${n1} - ${n2} = ${result}` :
+        `${n1} - ${n2} = ${result}`);
+      expr = expr.replace(match, String(result));
+    }
+  }
+  
+  return steps.join(isFrench ? ', puis ' : ', then ');
+}
+
+// Helper function to generate explanations for arithmetic expressions
 function generateSimpleArithmeticExplanation(exercise: string, language: string): TeachingSections {
   const isFrench = language === 'French';
   
-  // Parse the arithmetic
-  const match = exercise.match(/(\d+)\s*([\+\-\*×\/÷])\s*(\d+)/);
-  if (!match) return getErrorFallback(exercise, isFrench);
+  // Check if it's a simple single operation first
+  const singleOpMatch = exercise.match(/^\s*(\d+)\s*([\+\-\*×\/÷])\s*(\d+)\s*=?\s*\d*\s*$/);
   
-  const [, num1, operator, num2] = match;
-  const n1 = parseInt(num1);
-  const n2 = parseInt(num2);
-  
-  let operation = '';
-  let result = 0;
-  let concept = '';
-  let example = '';
-  let strategy = '';
-  
-  if (operator === '+') {
-    operation = isFrench ? 'addition' : 'addition';
-    result = n1 + n2;
-    concept = isFrench ? 
-      `L'addition consiste à combiner deux nombres pour obtenir leur somme totale.` :
-      `Addition means combining two numbers to get their total sum.`;
-    example = isFrench ? 
-      `Par exemple: ${n1 + 1} + ${n2 + 1} = ${(n1 + 1) + (n2 + 1)}` :
-      `For example: ${n1 + 1} + ${n2 + 1} = ${(n1 + 1) + (n2 + 1)}`;
-    strategy = isFrench ?
-      `Comptez en partant du premier nombre et ajoutez le second nombre.` :
-      `Start with the first number and count up by the second number.`;
-  } else if (operator === '-') {
-    operation = isFrench ? 'soustraction' : 'subtraction';
-    result = n1 - n2;
-    concept = isFrench ?
-      `La soustraction consiste à enlever un nombre d'un autre.` :
-      `Subtraction means taking one number away from another.`;
-    example = isFrench ?
-      `Par exemple: ${n1 + 1} - ${n2} = ${(n1 + 1) - n2}` :
-      `For example: ${n1 + 1} - ${n2} = ${(n1 + 1) - n2}`;
-    strategy = isFrench ?
-      `Commencez par le premier nombre et comptez en arrière.` :
-      `Start with the first number and count backwards.`;
-  } else if (operator === '*' || operator === '×') {
-    operation = isFrench ? 'multiplication' : 'multiplication';
-    result = n1 * n2;
-    concept = isFrench ?
-      `La multiplication consiste à additionner un nombre plusieurs fois.` :
-      `Multiplication means adding a number multiple times.`;
-    example = isFrench ?
-      `Par exemple: ${n1} × ${n2 + 1} = ${n1 * (n2 + 1)}` :
-      `For example: ${n1} × ${n2 + 1} = ${n1 * (n2 + 1)}`;
-    strategy = isFrench ?
-      `Additionnez ${n1} un total de ${n2} fois: ${Array(n2).fill(n1).join(' + ')} = ${result}` :
-      `Add ${n1} a total of ${n2} times: ${Array(n2).fill(n1).join(' + ')} = ${result}`;
-  } else if (operator === '/' || operator === '÷') {
-    operation = isFrench ? 'division' : 'division';
-    result = n1 / n2;
-    concept = isFrench ?
-      `La division consiste à partager un nombre en groupes égaux.` :
-      `Division means splitting a number into equal groups.`;
-    example = isFrench ?
-      `Par exemple: ${n1 * 2} ÷ ${n2} = ${(n1 * 2) / n2}` :
-      `For example: ${n1 * 2} ÷ ${n2} = ${(n1 * 2) / n2}`;
-    strategy = isFrench ?
-      `Combien de fois ${n2} rentre-t-il dans ${n1}?` :
-      `How many times does ${n2} go into ${n1}?`;
+  if (singleOpMatch) {
+    // Handle single operation as before
+    const [, num1, operator, num2] = singleOpMatch;
+    const n1 = parseInt(num1);
+    const n2 = parseInt(num2);
+    
+    let operation = '';
+    let result = 0;
+    let concept = '';
+    let example = '';
+    let strategy = '';
+    
+    if (operator === '+') {
+      operation = isFrench ? 'addition' : 'addition';
+      result = n1 + n2;
+      concept = isFrench ? 
+        `L'addition consiste à combiner deux nombres pour obtenir leur somme totale.` :
+        `Addition means combining two numbers to get their total sum.`;
+      example = isFrench ? 
+        `Par exemple: ${n1 + 1} + ${n2 + 1} = ${(n1 + 1) + (n2 + 1)}` :
+        `For example: ${n1 + 1} + ${n2 + 1} = ${(n1 + 1) + (n2 + 1)}`;
+      strategy = isFrench ?
+        `Comptez en partant du premier nombre et ajoutez le second nombre.` :
+        `Start with the first number and count up by the second number.`;
+    } else if (operator === '-') {
+      operation = isFrench ? 'soustraction' : 'subtraction';
+      result = n1 - n2;
+      concept = isFrench ?
+        `La soustraction consiste à enlever un nombre d'un autre.` :
+        `Subtraction means taking one number away from another.`;
+      example = isFrench ?
+        `Par exemple: ${n1 + 1} - ${n2} = ${(n1 + 1) - n2}` :
+        `For example: ${n1 + 1} - ${n2} = ${(n1 + 1) - n2}`;
+      strategy = isFrench ?
+        `Commencez par le premier nombre et comptez en arrière.` :
+        `Start with the first number and count backwards.`;
+    } else if (operator === '*' || operator === '×') {
+      operation = isFrench ? 'multiplication' : 'multiplication';
+      result = n1 * n2;
+      concept = isFrench ?
+        `La multiplication consiste à additionner un nombre plusieurs fois.` :
+        `Multiplication means adding a number multiple times.`;
+      example = isFrench ?
+        `Par exemple: ${n1} × ${n2 + 1} = ${n1 * (n2 + 1)}` :
+        `For example: ${n1} × ${n2 + 1} = ${n1 * (n2 + 1)}`;
+      strategy = isFrench ?
+        `Additionnez ${n1} un total de ${n2} fois: ${Array(n2).fill(n1).join(' + ')} = ${result}` :
+        `Add ${n1} a total of ${n2} times: ${Array(n2).fill(n1).join(' + ')} = ${result}`;
+    } else if (operator === '/' || operator === '÷') {
+      operation = isFrench ? 'division' : 'division';
+      result = n1 / n2;
+      concept = isFrench ?
+        `La division consiste à partager un nombre en groupes égaux.` :
+        `Division means splitting a number into equal groups.`;
+      example = isFrench ?
+        `Par exemple: ${n1 * 2} ÷ ${n2} = ${(n1 * 2) / n2}` :
+        `For example: ${n1 * 2} ÷ ${n2} = ${(n1 * 2) / n2}`;
+      strategy = isFrench ?
+        `Combien de fois ${n2} rentre-t-il dans ${n1}?` :
+        `How many times does ${n2} go into ${n1}?`;
+    }
+    
+    return {
+      exercise: exercise,
+      concept,
+      example,
+      strategy,
+      pitfall: isFrench ? 
+        `Attention aux erreurs de calcul mental.` :
+        `Be careful with mental math mistakes.`,
+      check: isFrench ?
+        `Vérifiez: ${n1} ${operator} ${n2} = ${result}` :
+        `Check: ${n1} ${operator} ${n2} = ${result}`,
+      practice: isFrench ?
+        `Pratiquez avec d'autres nombres similaires.` :
+        `Practice with other similar numbers.`
+    };
   }
   
-  return {
-    exercise: exercise,
-    concept,
-    example,
-    strategy,
-    pitfall: isFrench ? 
-      `Attention aux erreurs de calcul mental.` :
-      `Be careful with mental math mistakes.`,
-    check: isFrench ?
-      `Vérifiez: ${n1} ${operator} ${n2} = ${result}` :
-      `Check: ${n1} ${operator} ${n2} = ${result}`,
-    practice: isFrench ?
-      `Pratiquez avec d'autres nombres similaires.` :
-      `Practice with other similar numbers.`
-  };
+  // Handle multi-operator expressions
+  const multiOpPattern = /^\s*\d+\s*[\+\-\*×\/÷]\s*\d+(?:\s*[\+\-\*×\/÷]\s*\d+)*\s*=?\s*\d*\s*$/;
+  if (multiOpPattern.test(exercise)) {
+    const cleanExpr = exercise.replace(/\s*=.*$/, '').trim(); // Remove any = and answer part
+    const result = evaluateArithmetic(cleanExpr);
+    const steps = generateSteps(cleanExpr, isFrench);
+    
+    const hasMultiplication = /[\*×]/.test(cleanExpr);
+    const hasDivision = /[\/÷]/.test(cleanExpr);
+    const hasAddition = /\+/.test(cleanExpr);
+    const hasSubtraction = /\-/.test(cleanExpr);
+    
+    let concept = '';
+    let example = '';
+    let strategy = '';
+    
+    if (isFrench) {
+      concept = `Ordre des opérations (PEMDAS): Multiplication et division d'abord, puis addition et soustraction de gauche à droite.`;
+      example = `Autre exemple: 3 × 2 + 5 = 6 + 5 = 11`;
+      strategy = `1. Identifiez toutes les opérations\n2. Faites d'abord × et ÷ (de gauche à droite)\n3. Puis + et - (de gauche à droite)\n4. Étapes: ${steps}`;
+    } else {
+      concept = `Order of operations (PEMDAS): Multiply and divide first, then add and subtract from left to right.`;
+      example = `Another example: 3 × 2 + 5 = 6 + 5 = 11`;
+      strategy = `1. Identify all operations\n2. Do × and ÷ first (left to right)\n3. Then + and - (left to right)\n4. Steps: ${steps}`;
+    }
+    
+    return {
+      exercise: exercise,
+      concept,
+      example,
+      strategy,
+      pitfall: isFrench ? 
+        `Erreur commune: faire les opérations de gauche à droite sans respecter l'ordre des opérations.` :
+        `Common mistake: doing operations left to right without following order of operations.`,
+      check: isFrench ?
+        `Vérifiez: ${cleanExpr} = ${result}` :
+        `Check: ${cleanExpr} = ${result}`,
+      practice: isFrench ?
+        `Pratiquez avec d'autres expressions multi-opérations.` :
+        `Practice with other multi-operation expressions.`
+    };
+  }
+  
+  return getErrorFallback(exercise, isFrench);
 }
 
 function getErrorFallback(exercise: string, isFrench: boolean): TeachingSections {
@@ -195,10 +331,10 @@ export function useTwoCardTeaching() {
       // Not in cache, start loading and make AI request
       setLoading(true);
       
-      // Check if this is a simple arithmetic problem that we can handle directly
-      const simpleArithmeticPattern = /^\s*\d+\s*[\+\-\*×\/÷]\s*\d+\s*=?\s*\d*\s*$/;
-      if (simpleArithmeticPattern.test(exercise_content)) {
-        console.log('[TwoCardTeaching] Detected simple arithmetic, using direct explanation');
+      // Check if this is an arithmetic problem that we can handle directly
+      const arithmeticPattern = /^\s*\d+\s*[\+\-\*×\/÷]\s*\d+(?:\s*[\+\-\*×\/÷]\s*\d+)*\s*=?\s*\d*\s*$/;
+      if (arithmeticPattern.test(exercise_content)) {
+        console.log('[TwoCardTeaching] Detected arithmetic expression, using direct explanation');
         const directExplanation = generateSimpleArithmeticExplanation(exercise_content, response_language);
         setSections(directExplanation);
         setLoading(false);
@@ -273,10 +409,10 @@ Write all content in {{response_language}}. Keep the section headers in English 
       } catch (error) {
         console.warn('[TwoCardTeaching] Primary AI call failed:', error);
         
-        // Check if this is simple arithmetic and provide direct explanation
-        const simpleArithmeticPattern = /^\s*\d+\s*[\+\-\*×\/÷]\s*\d+\s*=?\s*\d*\s*$/;
-        if (simpleArithmeticPattern.test(exercise_content)) {
-          console.log('[TwoCardTeaching] AI failed but detected simple arithmetic, using direct explanation');
+        // Check if this is arithmetic and provide direct explanation
+        const arithmeticPattern = /^\s*\d+\s*[\+\-\*×\/÷]\s*\d+(?:\s*[\+\-\*×\/÷]\s*\d+)*\s*=?\s*\d*\s*$/;
+        if (arithmeticPattern.test(exercise_content)) {
+          console.log('[TwoCardTeaching] AI failed but detected arithmetic expression, using direct explanation');
           const directExplanation = generateSimpleArithmeticExplanation(exercise_content, response_language);
           setSections(directExplanation);
           setLoading(false);
@@ -389,6 +525,16 @@ ${exercise_content}
     } catch (e:any) {
       console.error('[TwoCardTeaching] Error:', e);
       setError('Failed to generate explanation');
+      
+      // Show toast in development for debugging
+      if (import.meta.env.DEV) {
+        toast({
+          title: "Debug: Explanation Error", 
+          description: `Error generating explanation: ${e.message}`,
+          variant: "destructive"
+        });
+      }
+      
       const fallbackSections = {
         exercise: row?.prompt || row?.question || row?.exercise_content || 'No exercise provided',
         concept: (profile?.response_language === 'French') 
@@ -400,9 +546,15 @@ ${exercise_content}
         strategy: (profile?.response_language === 'French')
           ? 'Contactez le support si le problème persiste'
           : 'Contact support if the issue persists',
-        pitfall: '',
-        check: '',
-        practice: ''
+        pitfall: (profile?.response_language === 'French')
+          ? 'Vérifiez votre connexion internet'
+          : 'Check your internet connection',
+        check: (profile?.response_language === 'French')
+          ? 'Essayez de reformuler la question'
+          : 'Try rephrasing the question',
+        practice: (profile?.response_language === 'French')
+          ? 'Essayez avec une question plus simple'
+          : 'Try with a simpler question'
       };
       setSections(fallbackSections);
     } finally {
