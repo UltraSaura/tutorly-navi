@@ -19,6 +19,7 @@ interface MessageInputProps {
   handleFileUpload: (file: File) => void;
   handlePhotoUpload: (file: File) => void;
   isLoading: boolean;
+  onKeyboardChange?: (isVisible: boolean, height: number) => void;
 }
 
 const MessageInput = ({ 
@@ -27,7 +28,8 @@ const MessageInput = ({
   handleSendMessage, 
   handleFileUpload, 
   handlePhotoUpload, 
-  isLoading 
+  isLoading,
+  onKeyboardChange 
 }: MessageInputProps) => {
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -230,6 +232,7 @@ const MessageInput = ({
                 }}
                 onEnter={handleMathEnter}
                 onEscape={handleMathEscape}
+                onKeyboardChange={onKeyboardChange}
                 placeholder={t('chat.mathInputPlaceholder', 'Type mathematical expressions...')}
                 className="border-0 shadow-none focus-visible:ring-0 bg-transparent"
                 disabled={isLoading}

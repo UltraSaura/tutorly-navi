@@ -56,6 +56,10 @@ const ChatInterface = () => {
   // Upload sheet state
   const [showUploadSheet, setShowUploadSheet] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  
+  // Keyboard state for layout adjustment
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // Get active subjects and language
   const activeSubjects = getActiveSubjects();
@@ -224,11 +228,23 @@ const ChatInterface = () => {
     setShowCamera(false);
   };
 
+  // Handle keyboard visibility changes
+  const handleKeyboardChange = (isVisible: boolean, height: number) => {
+    console.log('[DEBUG] Keyboard state changed:', { isVisible, height });
+    setKeyboardVisible(isVisible);
+    setKeyboardHeight(height);
+  };
+
   // Exercise-Focused Layout with Fixed Input at Bottom
   return (
     <div className="relative h-[calc(100vh-4rem)] bg-background">
-      {/* Exercise List - Takes full height with bottom padding for fixed input */}
-      <div className={`h-full overflow-auto ${isMobile ? 'pb-32' : 'pb-20'}`}>
+      {/* Exercise List - Takes full height with bottom padding for fixed input and keyboard */}
+      <div 
+        className={`h-full overflow-auto transition-all duration-300 ease-in-out`}
+        style={{
+          paddingBottom: `${(isMobile ? 128 : 80) + (keyboardVisible ? keyboardHeight : 0)}px`
+        }}
+      >
         <ExerciseList
           exercises={exercises}
           grade={grade}
@@ -240,9 +256,11 @@ const ChatInterface = () => {
 
       {/* Message Input - Fixed at bottom like mobile tabs */}
       <div 
-        className={`fixed left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-t border-border`}
+        className={`fixed left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-t border-border transition-all duration-300 ease-in-out`}
         style={{ 
-          bottom: isMobile 
+          bottom: `${keyboardVisible ? keyboardHeight : 0}px`,
+          transform: keyboardVisible ? 'translateY(0)' : 'translateY(0)',
+          marginBottom: isMobile 
             ? 'calc(4rem + max(env(safe-area-inset-bottom), 0px))' 
             : 'max(env(safe-area-inset-bottom), 0px)'
         }}
@@ -255,6 +273,7 @@ const ChatInterface = () => {
             handleFileUpload={handleDocumentFileUpload}
             handlePhotoUpload={handlePhotoFileUpload}
             isLoading={isLoading}
+            onKeyboardChange={handleKeyboardChange}
           />
         </div>
       </div>

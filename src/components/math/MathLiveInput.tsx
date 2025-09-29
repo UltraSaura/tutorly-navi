@@ -13,6 +13,7 @@ interface MathLiveInputProps {
   className?: string;
   disabled?: boolean;
   autoFocus?: boolean;
+  onKeyboardChange?: (isVisible: boolean, height: number) => void;
 }
 
 export const MathLiveInput = ({
@@ -23,7 +24,8 @@ export const MathLiveInput = ({
   placeholder = '',
   className,
   disabled = false,
-  autoFocus = false
+  autoFocus = false,
+  onKeyboardChange
 }: MathLiveInputProps) => {
   const mathfieldRef = useRef<any>(null);
   const [isMathLiveReady, setIsMathLiveReady] = useState(false);
@@ -46,23 +48,17 @@ export const MathLiveInput = ({
         // Set up the math field
         const mf = mathfieldRef.current;
         
-        // Configure for proper rendering - disable virtual keyboards completely
-        mf.virtualKeyboardPolicy = 'manual';
-        mf.virtualKeyboards = 'none';  // Disable virtual keyboards
+        // Configure for proper rendering - enable virtual keyboards with layout awareness
+        mf.virtualKeyboardPolicy = 'auto';
+        mf.virtualKeyboards = 'all';  // Enable virtual keyboards
         mf.smartFence = true;
         mf.smartSuperscript = true;
         mf.removeExtraneousParentheses = true;
         
-        // On mobile platforms, ensure no virtual keyboard appears
+        // On mobile platforms, allow virtual keyboard with proper configuration
         if (Capacitor.isNativePlatform()) {
-          mf.virtualKeyboardPolicy = 'manual';
-          mf.virtualKeyboards = 'none';
-          // Prevent focus from triggering virtual keyboard
-          mf.addEventListener('focus', () => {
-            if (mf.virtualKeyboard) {
-              mf.virtualKeyboard.hide();
-            }
-          });
+          mf.virtualKeyboardPolicy = 'auto';
+          mf.virtualKeyboards = 'all';
         }
         
         // Set up event listeners
@@ -89,6 +85,7 @@ export const MathLiveInput = ({
             if (mf.virtualKeyboard && mf.virtualKeyboard.visible) {
               mf.virtualKeyboard.hide();
               setKeyboardVisible(false);
+              onKeyboardChange?.(false, 0);
             }
             onEnter?.();
           } else if (event.key === 'Escape') {
@@ -99,6 +96,7 @@ export const MathLiveInput = ({
             if (mf.virtualKeyboard && mf.virtualKeyboard.visible) {
               mf.virtualKeyboard.hide();
               setKeyboardVisible(false);
+              onKeyboardChange?.(false, 0);
             }
             mf.blur(); // Remove focus from the field
             onEscape?.();
@@ -108,17 +106,23 @@ export const MathLiveInput = ({
         // Monitor virtual keyboard state
         mf.addEventListener('virtual-keyboard-toggle', (event: any) => {
           console.log('[DEBUG] Virtual keyboard toggle:', event.detail);
-          setKeyboardVisible(event.detail.visible);
+          const isVisible = event.detail.visible;
+          setKeyboardVisible(isVisible);
+          
+          // Get keyboard height from MathLive's virtual keyboard
+          let keyboardHeight = 0;
+          if (isVisible && mf.virtualKeyboard) {
+            // MathLive keyboard is typically around 280px height
+            keyboardHeight = 280;
+          }
+          
+          // Notify parent component of keyboard state change
+          onKeyboardChange?.(isVisible, keyboardHeight);
         });
 
         // Set initial value
         if (value) {
           mf.value = value;
-        }
-
-        // Ensure virtual keyboard stays hidden
-        if (mf.virtualKeyboard) {
-          mf.virtualKeyboard.hide();
         }
 
         setIsMathLiveReady(true);
@@ -168,6 +172,8 @@ export const MathLiveInput = ({
     if (mathfieldRef.current?.virtualKeyboard && mathfieldRef.current.virtualKeyboard.visible) {
       mathfieldRef.current.virtualKeyboard.hide();
       setKeyboardVisible(false);
+      // Notify parent that keyboard is dismissed
+      onKeyboardChange?.(false, 0);
     }
     if (mathfieldRef.current) {
       mathfieldRef.current.blur();
