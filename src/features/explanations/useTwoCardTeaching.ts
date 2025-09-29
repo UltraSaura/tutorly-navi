@@ -181,8 +181,8 @@ function generateSimpleArithmeticExplanation(exercise: string, language: string)
         `Attention aux erreurs de calcul mental.` :
         `Be careful with mental math mistakes.`,
       check: isFrench ?
-        `Vérifiez: ${n1} ${operator} ${n2} = ${result}` :
-        `Check: ${n1} ${operator} ${n2} = ${result}`,
+        `Vérifiez votre calcul en refaisant l'opération étape par étape.` :
+        `Check your work by redoing the operation step by step.`,
       practice: isFrench ?
         `Pratiquez avec d'autres nombres similaires.` :
         `Practice with other similar numbers.`
@@ -224,8 +224,8 @@ function generateSimpleArithmeticExplanation(exercise: string, language: string)
         `Erreur commune: faire les opérations de gauche à droite sans respecter l'ordre des opérations.` :
         `Common mistake: doing operations left to right without following order of operations.`,
       check: isFrench ?
-        `Vérifiez: ${cleanExpr} = ${result}` :
-        `Check: ${cleanExpr} = ${result}`,
+        `Refaites chaque étape pour vérifier que vous avez suivi l'ordre des opérations correctement.` :
+        `Redo each step to verify you followed the order of operations correctly.`,
       practice: isFrench ?
         `Pratiquez avec d'autres expressions multi-opérations.` :
         `Practice with other multi-operation expressions.`

@@ -11,7 +11,11 @@ function maskDigits(s: string) {
     /(\b(?:answer|solution|result|equals?)\s*:?\s*)(\d+(?:\.\d+)?)/gi,
     /(\b(?:so|therefore|thus)\s+.*?)(\d+(?:\.\d+)?)/gi,
     /(\s*=\s*)(\d+(?:\.\d+)?)/g,
-    /(\b(?:the answer is|we get|this gives us)\s+)(\d+(?:\.\d+)?)/gi
+    /(\b(?:the answer is|we get|this gives us)\s+)(\d+(?:\.\d+)?)/gi,
+    // Catch mathematical expressions with results (e.g., "2*3*4 = 24", "3 × 2 + 5 = 11")
+    /(\d+(?:\s*[\*×\/÷\+\-]\s*\d+)+\s*=\s*)(\d+(?:\.\d+)?)/g,
+    // Catch simple operations with results (e.g., "5 + 3 = 8")
+    /(\d+\s*[\*×\/÷\+\-]\s*\d+\s*=\s*)(\d+(?:\.\d+)?)/g
   ];
   
   let masked = s;
