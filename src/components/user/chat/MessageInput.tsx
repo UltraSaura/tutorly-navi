@@ -71,6 +71,23 @@ const MessageInput = ({
 
   const toggleMathMode = () => {
     setIsMathMode(!isMathMode);
+    // If switching to text mode, ensure input gets focus
+    if (isMathMode) {
+      setTimeout(() => {
+        const textarea = document.querySelector('textarea');
+        if (textarea) textarea.focus();
+      }, 100);
+    }
+  };
+
+  const handleMathEscape = () => {
+    console.log('[DEBUG] Math input escape pressed, switching to text mode');
+    setIsMathMode(false);
+    // Focus the textarea after switching
+    setTimeout(() => {
+      const textarea = document.querySelector('textarea');
+      if (textarea) textarea.focus();
+    }, 100);
   };
 
   // Auto-detect math content and suggest math mode
@@ -212,6 +229,7 @@ const MessageInput = ({
                   setInputMessage(value);
                 }}
                 onEnter={handleMathEnter}
+                onEscape={handleMathEscape}
                 placeholder={t('chat.mathInputPlaceholder', 'Type mathematical expressions...')}
                 className="border-0 shadow-none focus-visible:ring-0 bg-transparent"
                 disabled={isLoading}
