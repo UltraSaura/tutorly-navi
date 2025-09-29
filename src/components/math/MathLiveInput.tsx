@@ -61,6 +61,74 @@ export const MathLiveInput = ({
           mf.virtualKeyboards = 'all';
         }
         
+        // Robust keyboard detection using MutationObserver
+        const keyboardObserver = new MutationObserver(() => {
+          const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
+          if (keyboardElement) {
+            const rect = keyboardElement.getBoundingClientRect();
+            const isVisible = rect.height > 0 && window.getComputedStyle(keyboardElement).display !== 'none';
+            const height = isVisible ? rect.height : 0;
+            
+            console.log('[DEBUG] MutationObserver detected keyboard:', { isVisible, height });
+            setKeyboardVisible(isVisible);
+            onKeyboardChange?.(isVisible, height);
+          }
+        });
+        
+        // Start observing for keyboard changes
+        keyboardObserver.observe(document.body, { 
+          childList: true, 
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['style', 'class']
+        });
+        
+        // Additional detection via window resize
+        const handleResize = () => {
+          const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
+          if (keyboardElement) {
+            const rect = keyboardElement.getBoundingClientRect();
+            const isVisible = rect.height > 0 && window.getComputedStyle(keyboardElement).display !== 'none';
+            const height = isVisible ? rect.height : 0;
+            
+            console.log('[DEBUG] Window resize keyboard check:', { isVisible, height });
+            if (isVisible !== keyboardVisible) {
+              setKeyboardVisible(isVisible);
+              onKeyboardChange?.(isVisible, height);
+            }
+          }
+        };
+        
+        window.addEventListener('resize', handleResize);
+        
+        // Focus detection for additional keyboard state tracking
+        const handleFocus = () => {
+          setTimeout(() => {
+            const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
+            if (keyboardElement) {
+              const rect = keyboardElement.getBoundingClientRect();
+              const isVisible = rect.height > 0 && window.getComputedStyle(keyboardElement).display !== 'none';
+              const height = isVisible ? rect.height : 0;
+              
+              console.log('[DEBUG] Focus keyboard check:', { isVisible, height });
+              setKeyboardVisible(isVisible);
+              onKeyboardChange?.(isVisible, height);
+            }
+          }, 100);
+        };
+        
+        mf.addEventListener('focus', handleFocus);
+        
+        // Cleanup function
+        const cleanup = () => {
+          keyboardObserver.disconnect();
+          window.removeEventListener('resize', handleResize);
+          mf.removeEventListener('focus', handleFocus);
+        };
+        
+        // Store cleanup for later use
+        (mf as any)._keyboardCleanup = cleanup;
+        
         // Set up event listeners
         const handleInput = () => {
           const latex = mf.getValue('latex') || '';
@@ -103,20 +171,21 @@ export const MathLiveInput = ({
           }
         });
 
-        // Monitor virtual keyboard state
+        // Monitor virtual keyboard state (fallback detection)
         mf.addEventListener('virtual-keyboard-toggle', (event: any) => {
-          console.log('[DEBUG] Virtual keyboard toggle:', event.detail);
+          console.log('[DEBUG] Virtual keyboard toggle event:', event.detail);
           const isVisible = event.detail.visible;
-          setKeyboardVisible(isVisible);
           
-          // Get keyboard height from MathLive's virtual keyboard
-          let keyboardHeight = 0;
-          if (isVisible && mf.virtualKeyboard) {
-            // MathLive keyboard is typically around 280px height
-            keyboardHeight = 280;
+          // Get actual keyboard height from DOM if possible
+          let keyboardHeight = 280; // Default fallback
+          const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
+          if (keyboardElement) {
+            const rect = keyboardElement.getBoundingClientRect();
+            keyboardHeight = rect.height || 280;
           }
           
-          // Notify parent component of keyboard state change
+          console.log('[DEBUG] Virtual keyboard toggle - setting state:', { isVisible, keyboardHeight });
+          setKeyboardVisible(isVisible);
           onKeyboardChange?.(isVisible, keyboardHeight);
         });
 
@@ -135,6 +204,13 @@ export const MathLiveInput = ({
     };
 
     initMathField();
+    
+    // Cleanup on unmount
+    return () => {
+      if (mathfieldRef.current && (mathfieldRef.current as any)._keyboardCleanup) {
+        (mathfieldRef.current as any)._keyboardCleanup();
+      }
+    };
   }, [value, onChange, onEnter]);
 
   // Update value when prop changes

@@ -256,13 +256,12 @@ const ChatInterface = () => {
 
       {/* Message Input - Fixed at bottom like mobile tabs */}
       <div 
-        className={`fixed left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-t border-border transition-all duration-300 ease-in-out`}
+        className={`fixed left-0 right-0 z-60 bg-background/80 backdrop-blur-md border-t border-border transition-all duration-300 ease-in-out`}
         style={{ 
-          bottom: `${keyboardVisible ? keyboardHeight : 0}px`,
-          transform: keyboardVisible ? 'translateY(0)' : 'translateY(0)',
-          marginBottom: isMobile 
-            ? 'calc(4rem + max(env(safe-area-inset-bottom), 0px))' 
-            : 'max(env(safe-area-inset-bottom), 0px)'
+          bottom: `${keyboardVisible ? keyboardHeight + (isMobile ? 64 : 0) : isMobile ? 64 : 0}px`,
+          marginBottom: !keyboardVisible && isMobile 
+            ? 'max(env(safe-area-inset-bottom), 0px)' 
+            : '0px'
         }}
       >
         <div className="p-4">
