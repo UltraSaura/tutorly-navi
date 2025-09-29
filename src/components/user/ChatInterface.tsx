@@ -239,9 +239,14 @@ const ChatInterface = () => {
       </div>
 
       {/* Message Input - Fixed at bottom like mobile tabs */}
-      <div className={`fixed left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-t border-border ${
-        isMobile ? 'bottom-16' : 'bottom-0'
-      }`}>
+      <div 
+        className={`fixed left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-t border-border`}
+        style={{ 
+          bottom: isMobile 
+            ? 'calc(4rem + max(env(safe-area-inset-bottom), 0px))' 
+            : 'max(env(safe-area-inset-bottom), 0px)'
+        }}
+      >
         <div className="p-4">
           <MessageInput
             inputMessage={inputMessage}

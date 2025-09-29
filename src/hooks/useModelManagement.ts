@@ -37,16 +37,16 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
       'gpt-3.5-turbo': 'deepseek-chat',   // Migrate GPT-3.5 to DeepSeek
     };
     
-    // Check if saved model needs migration
-    const shouldMigrate = savedModel && legacyMigrations[savedModel];
-    if (shouldMigrate) {
-      console.log('[ModelManagement] Migrating from', savedModel, 'to', legacyMigrations[savedModel]);
-      // Clear the old value from localStorage
+    // Force DeepSeek as default - clear any non-DeepSeek selection
+    if (savedModel && savedModel !== 'deepseek-chat') {
+      console.log('[ModelManagement] Forcing migration from', savedModel, 'to deepseek-chat');
       localStorage.removeItem('selectedModelId');
+      localStorage.setItem('selectedModelId', 'deepseek-chat');
+      return 'deepseek-chat';
     }
     
-    const migratedModel = shouldMigrate ? legacyMigrations[savedModel] : savedModel;
-    const finalModel = migratedModel || getDefaultAvailableModel();
+    // If no saved model, default to DeepSeek
+    const finalModel = savedModel || 'deepseek-chat';
     
     console.log('[ModelManagement] Final selected model:', finalModel);
     return finalModel;

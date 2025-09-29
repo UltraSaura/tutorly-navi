@@ -61,7 +61,8 @@ export function MobileBottomTabs() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border/40">
+      <div className="fixed left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border/40" 
+           style={{ bottom: 'max(env(safe-area-inset-bottom), 0px)' }}>
         <div className="flex items-center justify-around h-16 px-2">
           {bottomTabItems.map((item) => {
             const isActiveTab = isActive(item.url);
