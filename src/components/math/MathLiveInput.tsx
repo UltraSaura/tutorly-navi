@@ -66,10 +66,21 @@ export const MathLiveInput = ({
           const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
           if (keyboardElement) {
             const rect = keyboardElement.getBoundingClientRect();
-            const isVisible = rect.height > 0 && window.getComputedStyle(keyboardElement).display !== 'none';
+            const computedStyle = window.getComputedStyle(keyboardElement);
+            const isVisible = rect.height > 0 && 
+                            computedStyle.display !== 'none' &&
+                            computedStyle.visibility !== 'hidden';
             const height = isVisible ? rect.height : 0;
             
-            console.log('[DEBUG] MutationObserver detected keyboard:', { isVisible, height });
+            console.log('[DEBUG] MutationObserver detected keyboard:', { 
+              isVisible, 
+              height,
+              top: rect.top,
+              bottom: rect.bottom,
+              display: computedStyle.display,
+              visibility: computedStyle.visibility,
+              viewportHeight: window.innerHeight
+            });
             setKeyboardVisible(isVisible);
             onKeyboardChange?.(isVisible, height);
           }
@@ -88,10 +99,18 @@ export const MathLiveInput = ({
           const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
           if (keyboardElement) {
             const rect = keyboardElement.getBoundingClientRect();
-            const isVisible = rect.height > 0 && window.getComputedStyle(keyboardElement).display !== 'none';
+            const computedStyle = window.getComputedStyle(keyboardElement);
+            const isVisible = rect.height > 0 && 
+                            computedStyle.display !== 'none' &&
+                            computedStyle.visibility !== 'hidden';
             const height = isVisible ? rect.height : 0;
             
-            console.log('[DEBUG] Window resize keyboard check:', { isVisible, height });
+            console.log('[DEBUG] Window resize keyboard check:', { 
+              isVisible, 
+              height,
+              rect: { top: rect.top, bottom: rect.bottom, height: rect.height },
+              viewportHeight: window.innerHeight
+            });
             if (isVisible !== keyboardVisible) {
               setKeyboardVisible(isVisible);
               onKeyboardChange?.(isVisible, height);
@@ -173,20 +192,25 @@ export const MathLiveInput = ({
 
         // Monitor virtual keyboard state (fallback detection)
         mf.addEventListener('virtual-keyboard-toggle', (event: any) => {
-          console.log('[DEBUG] Virtual keyboard toggle event:', event.detail);
-          const isVisible = event.detail.visible;
+          console.log('[DEBUG] Virtual keyboard toggle event:', event);
+          const isVisible = event?.detail?.visible ?? false;
           
           // Get actual keyboard height from DOM if possible
           let keyboardHeight = 280; // Default fallback
-          const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
-          if (keyboardElement) {
-            const rect = keyboardElement.getBoundingClientRect();
-            keyboardHeight = rect.height || 280;
-          }
-          
-          console.log('[DEBUG] Virtual keyboard toggle - setting state:', { isVisible, keyboardHeight });
-          setKeyboardVisible(isVisible);
-          onKeyboardChange?.(isVisible, keyboardHeight);
+          setTimeout(() => {
+            const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
+            if (keyboardElement) {
+              const rect = keyboardElement.getBoundingClientRect();
+              keyboardHeight = rect.height || 280;
+              console.log('[DEBUG] Virtual keyboard measured after toggle:', { 
+                isVisible, 
+                keyboardHeight,
+                rect: { top: rect.top, bottom: rect.bottom }
+              });
+              setKeyboardVisible(isVisible);
+              onKeyboardChange?.(isVisible, keyboardHeight);
+            }
+          }, 100); // Small delay to let keyboard render
         });
 
         // Set initial value
