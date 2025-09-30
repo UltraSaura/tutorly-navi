@@ -31,6 +31,7 @@ export const MathLiveInput = ({
   const [isMathLiveReady, setIsMathLiveReady] = useState(false);
   const [lastValue, setLastValue] = useState(value);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const keyboardHeight = useRef<number>(0);
 
   useEffect(() => {
     const initMathField = async () => {
@@ -79,22 +80,30 @@ export const MathLiveInput = ({
             const computedStyle = window.getComputedStyle(keyboardElement);
             const isVisible = rect.height > 0 && 
                             computedStyle.display !== 'none' &&
-                            computedStyle.visibility !== 'hidden';
-            // Ensure reasonable height - cap at 40% of viewport
-            const height = isVisible ? Math.min(rect.height, window.innerHeight * 0.4) : 0;
+                            computedStyle.visibility !== 'hidden' &&
+                            rect.bottom > 0 &&
+                            rect.top < window.innerHeight;
+            
+            // Get actual keyboard height from bottom of viewport
+            const height = isVisible ? (window.innerHeight - rect.top) : 0;
             
             console.log('[DEBUG] MutationObserver detected keyboard:', { 
               isVisible, 
               height,
-              originalHeight: rect.height,
+              rectHeight: rect.height,
               top: rect.top,
               bottom: rect.bottom,
+              fromBottom: window.innerHeight - rect.top,
               display: computedStyle.display,
               visibility: computedStyle.visibility,
               viewportHeight: window.innerHeight
             });
-            setKeyboardVisible(isVisible);
-            onKeyboardChange?.(isVisible, height);
+            
+            if (isVisible !== keyboardVisible || Math.abs(height - keyboardHeight.current) > 10) {
+              setKeyboardVisible(isVisible);
+              keyboardHeight.current = height;
+              onKeyboardChange?.(isVisible, height);
+            }
           }
         });
         
@@ -114,19 +123,25 @@ export const MathLiveInput = ({
             const computedStyle = window.getComputedStyle(keyboardElement);
             const isVisible = rect.height > 0 && 
                             computedStyle.display !== 'none' &&
-                            computedStyle.visibility !== 'hidden';
-            // Cap height at 40% of viewport
-            const height = isVisible ? Math.min(rect.height, window.innerHeight * 0.4) : 0;
+                            computedStyle.visibility !== 'hidden' &&
+                            rect.bottom > 0 &&
+                            rect.top < window.innerHeight;
+            
+            // Get actual keyboard height from bottom of viewport
+            const height = isVisible ? (window.innerHeight - rect.top) : 0;
             
             console.log('[DEBUG] Window resize keyboard check:', { 
               isVisible, 
               height,
-              originalHeight: rect.height,
-              rect: { top: rect.top, bottom: rect.bottom, height: rect.height },
+              rectHeight: rect.height,
+              rect: { top: rect.top, bottom: rect.bottom },
+              fromBottom: window.innerHeight - rect.top,
               viewportHeight: window.innerHeight
             });
-            if (isVisible !== keyboardVisible) {
+            
+            if (isVisible !== keyboardVisible || Math.abs(height - keyboardHeight.current) > 10) {
               setKeyboardVisible(isVisible);
+              keyboardHeight.current = height;
               onKeyboardChange?.(isVisible, height);
             }
           }
