@@ -49,16 +49,26 @@ export const MathLiveInput = ({
         const mf = mathfieldRef.current;
         
         // Configure for proper rendering - enable virtual keyboards with layout awareness
-        mf.virtualKeyboardPolicy = 'auto';
+        const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || 
+                              window.screen.width < 768;
+        
+        mf.virtualKeyboardPolicy = isMobileDevice ? 'manual' : 'auto';
         mf.virtualKeyboards = 'all';  // Enable virtual keyboards
         mf.smartFence = true;
         mf.smartSuperscript = true;
         mf.removeExtraneousParentheses = true;
         
-        // On mobile platforms, allow virtual keyboard with proper configuration
-        if (Capacitor.isNativePlatform()) {
-          mf.virtualKeyboardPolicy = 'auto';
-          mf.virtualKeyboards = 'all';
+        // Force keyboard to show on focus for mobile
+        if (isMobileDevice) {
+          mf.addEventListener('focus', () => {
+            console.log('[DEBUG] MathLive focused, showing keyboard');
+            mf.virtualKeyboardVisible = true;
+          });
+          
+          mf.addEventListener('blur', () => {
+            console.log('[DEBUG] MathLive blurred, hiding keyboard');
+            mf.virtualKeyboardVisible = false;
+          });
         }
         
         // Robust keyboard detection using MutationObserver
@@ -279,6 +289,14 @@ export const MathLiveInput = ({
       mathfieldRef.current.blur();
     }
   };
+  
+  const showKeyboard = () => {
+    if (mathfieldRef.current) {
+      mathfieldRef.current.focus();
+      mathfieldRef.current.virtualKeyboardVisible = true;
+      setKeyboardVisible(true);
+    }
+  };
 
   return (
     <div className="relative">
@@ -297,7 +315,19 @@ export const MathLiveInput = ({
         } as any}
       />
       
-      {/* Keyboard Dismiss Button - only show if keyboard is visible */}
+      {/* Keyboard Toggle Buttons */}
+      {!keyboardVisible && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={showKeyboard}
+          className="absolute top-2 right-2 h-6 px-2 bg-background/80 backdrop-blur-sm text-xs"
+          title="Show keyboard"
+        >
+          ⌨️
+        </Button>
+      )}
       {keyboardVisible && (
         <Button
           type="button"
