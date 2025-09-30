@@ -73,18 +73,20 @@ export const MathLiveInput = ({
         
         // Robust keyboard detection using MutationObserver
         const keyboardObserver = new MutationObserver(() => {
-          const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
+          const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard, .ML__virtual-keyboard');
           if (keyboardElement) {
             const rect = keyboardElement.getBoundingClientRect();
             const computedStyle = window.getComputedStyle(keyboardElement);
             const isVisible = rect.height > 0 && 
                             computedStyle.display !== 'none' &&
                             computedStyle.visibility !== 'hidden';
-            const height = isVisible ? rect.height : 0;
+            // Ensure reasonable height - cap at 40% of viewport
+            const height = isVisible ? Math.min(rect.height, window.innerHeight * 0.4) : 0;
             
             console.log('[DEBUG] MutationObserver detected keyboard:', { 
               isVisible, 
               height,
+              originalHeight: rect.height,
               top: rect.top,
               bottom: rect.bottom,
               display: computedStyle.display,
@@ -106,18 +108,20 @@ export const MathLiveInput = ({
         
         // Additional detection via window resize
         const handleResize = () => {
-          const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
+          const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard, .ML__virtual-keyboard');
           if (keyboardElement) {
             const rect = keyboardElement.getBoundingClientRect();
             const computedStyle = window.getComputedStyle(keyboardElement);
             const isVisible = rect.height > 0 && 
                             computedStyle.display !== 'none' &&
                             computedStyle.visibility !== 'hidden';
-            const height = isVisible ? rect.height : 0;
+            // Cap height at 40% of viewport
+            const height = isVisible ? Math.min(rect.height, window.innerHeight * 0.4) : 0;
             
             console.log('[DEBUG] Window resize keyboard check:', { 
               isVisible, 
               height,
+              originalHeight: rect.height,
               rect: { top: rect.top, bottom: rect.bottom, height: rect.height },
               viewportHeight: window.innerHeight
             });

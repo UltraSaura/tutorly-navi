@@ -261,7 +261,7 @@
     right: 0 !important;
     top: auto !important;
     width: 100% !important;
-    z-index: 9999 !important; /* High z-index to be above everything */
+    z-index: 10000 !important; /* Below message input when keyboard is visible (10001) */
     max-height: 40vh !important; /* Limit keyboard height */
     overflow-y: auto !important;
     transform: translateZ(0) !important; /* Force hardware acceleration */
@@ -274,6 +274,20 @@
   ml-virtual-keyboard:not([style*="display: none"]) {
     display: block !important;
     visibility: visible !important;
+  }
+  
+  /* Ensure message input is always visible when keyboard is shown */
+  @media (max-width: 768px) {
+    /* When MathLive keyboard is visible, adjust layout */
+    body:has(.ML__keyboard:not([style*="display: none"])) .fixed[style*="z-index"] {
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    /* Prevent input from going off-screen */
+    .fixed[style*="bottom"] {
+      max-height: calc(100vh - 64px); /* Prevent overflow */
+    }
   }
 
   /* Style the virtual keyboard */

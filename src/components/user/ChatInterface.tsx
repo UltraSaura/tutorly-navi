@@ -242,7 +242,7 @@ const ChatInterface = () => {
       <div 
         className={`h-full overflow-auto transition-all duration-300 ease-in-out`}
         style={{
-          paddingBottom: `${(isMobile ? 128 : 80) + (keyboardVisible ? keyboardHeight : 0)}px`
+          paddingBottom: `${(isMobile ? 128 : 80) + (keyboardVisible ? Math.min(keyboardHeight, window.innerHeight * 0.4) : 0)}px`
         }}
       >
         <ExerciseList
@@ -256,11 +256,13 @@ const ChatInterface = () => {
 
       {/* Message Input - Fixed at bottom like mobile tabs */}
       <div 
-        className={`fixed left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border transition-transform duration-300 ease-in-out`}
+        className={`fixed left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border transition-all duration-300 ease-in-out`}
         style={{ 
-          bottom: isMobile ? '64px' : '0px',
+          bottom: keyboardVisible 
+            ? `${Math.min(keyboardHeight, window.innerHeight * 0.4)}px` 
+            : (isMobile ? '64px' : '0px'),
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          transform: keyboardVisible ? `translateY(-${keyboardHeight}px)` : 'translateY(0)'
+          zIndex: keyboardVisible ? 10001 : 50  // Above keyboard when visible
         }}
       >
         <div className="p-4">
