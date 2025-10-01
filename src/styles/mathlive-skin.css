@@ -9,8 +9,8 @@
   --tn-shadow: 0 10px 30px rgba(110,92,245,.18);
 }
 
-/* Hard-disable Mathlive built-in keyboard (safety net) */
-.ML__keyboard { display: none !important; visibility: hidden !important; }
+/* Allow Mathlive keyboard to show when needed */
+/* .ML__keyboard { display: none !important; visibility: hidden !important; } */
 
 /* Hide Mathlive menu & internal toggle inside the field */
 math-field.tn-chat-mathfield .ML__menu-toggle,

@@ -31,6 +31,7 @@ export const MathLiveInput = ({
   const [isMathLiveReady, setIsMathLiveReady] = useState(false);
   const [lastValue, setLastValue] = useState(value);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const keyboardHeight = useRef<number>(0);
 
   useEffect(() => {
     const initMathField = async () => {
@@ -49,29 +50,69 @@ export const MathLiveInput = ({
         const mf = mathfieldRef.current;
         
         // Configure for proper rendering - enable virtual keyboards with layout awareness
-        mf.virtualKeyboardPolicy = 'auto';
+        const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || 
+                              window.screen.width < 768;
+        
+        mf.virtualKeyboardPolicy = isMobileDevice ? 'manual' : 'auto';
         mf.virtualKeyboards = 'all';  // Enable virtual keyboards
         mf.smartFence = true;
         mf.smartSuperscript = true;
         mf.removeExtraneousParentheses = true;
         
-        // On mobile platforms, allow virtual keyboard with proper configuration
-        if (Capacitor.isNativePlatform()) {
-          mf.virtualKeyboardPolicy = 'auto';
-          mf.virtualKeyboards = 'all';
+        // Force keyboard to show on focus for mobile
+        if (isMobileDevice) {
+          mf.addEventListener('focus', () => {
+            console.log('[DEBUG] MathLive focused, showing keyboard');
+            mf.virtualKeyboardVisible = true;
+          });
+          
+          mf.addEventListener('blur', () => {
+            console.log('[DEBUG] MathLive blurred, hiding keyboard');
+            mf.virtualKeyboardVisible = false;
+          });
         }
         
         // Robust keyboard detection using MutationObserver
         const keyboardObserver = new MutationObserver(() => {
-          const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
+          const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard, .ML__virtual-keyboard');
           if (keyboardElement) {
             const rect = keyboardElement.getBoundingClientRect();
-            const isVisible = rect.height > 0 && window.getComputedStyle(keyboardElement).display !== 'none';
-            const height = isVisible ? rect.height : 0;
+            const computedStyle = window.getComputedStyle(keyboardElement);
+            const isVisible = rect.height > 0 && 
+                            computedStyle.display !== 'none' &&
+                            computedStyle.visibility !== 'hidden' &&
+                            rect.bottom > 0 &&
+                            rect.top < window.innerHeight;
             
-            console.log('[DEBUG] MutationObserver detected keyboard:', { isVisible, height });
-            setKeyboardVisible(isVisible);
-            onKeyboardChange?.(isVisible, height);
+            // Get actual keyboard height (capped at 40% of viewport)
+            // Only count as keyboard height if it's actually visible from the bottom
+            let height = 0;
+            if (isVisible && rect.bottom === window.innerHeight) {
+              // Keyboard is anchored to bottom, use its actual height
+              height = Math.min(rect.height, window.innerHeight * 0.4);
+            } else if (isVisible && rect.top > window.innerHeight * 0.5) {
+              // Keyboard is in lower half of screen
+              height = Math.min(window.innerHeight - rect.top, window.innerHeight * 0.4);
+            }
+            
+            console.log('[DEBUG] Keyboard detection:', { 
+              isVisible, 
+              height,
+              rectHeight: rect.height,
+              top: rect.top,
+              bottom: rect.bottom,
+              isAnchoredToBottom: rect.bottom === window.innerHeight,
+              display: computedStyle.display,
+              visibility: computedStyle.visibility,
+              viewportHeight: window.innerHeight,
+              maxAllowedHeight: window.innerHeight * 0.4
+            });
+            
+            if (isVisible !== keyboardVisible || Math.abs(height - keyboardHeight.current) > 10) {
+              setKeyboardVisible(isVisible);
+              keyboardHeight.current = height;
+              onKeyboardChange?.(isVisible, height);
+            }
           }
         });
         
@@ -85,15 +126,39 @@ export const MathLiveInput = ({
         
         // Additional detection via window resize
         const handleResize = () => {
-          const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
+          const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard, .ML__virtual-keyboard');
           if (keyboardElement) {
             const rect = keyboardElement.getBoundingClientRect();
-            const isVisible = rect.height > 0 && window.getComputedStyle(keyboardElement).display !== 'none';
-            const height = isVisible ? rect.height : 0;
+            const computedStyle = window.getComputedStyle(keyboardElement);
+            const isVisible = rect.height > 0 && 
+                            computedStyle.display !== 'none' &&
+                            computedStyle.visibility !== 'hidden' &&
+                            rect.bottom > 0 &&
+                            rect.top < window.innerHeight;
             
-            console.log('[DEBUG] Window resize keyboard check:', { isVisible, height });
-            if (isVisible !== keyboardVisible) {
+            // Get actual keyboard height (capped at 40% of viewport)
+            // Only count as keyboard height if it's actually visible from the bottom
+            let height = 0;
+            if (isVisible && rect.bottom === window.innerHeight) {
+              // Keyboard is anchored to bottom, use its actual height
+              height = Math.min(rect.height, window.innerHeight * 0.4);
+            } else if (isVisible && rect.top > window.innerHeight * 0.5) {
+              // Keyboard is in lower half of screen
+              height = Math.min(window.innerHeight - rect.top, window.innerHeight * 0.4);
+            }
+            
+            console.log('[DEBUG] Window resize keyboard check:', { 
+              isVisible, 
+              height,
+              rectHeight: rect.height,
+              rect: { top: rect.top, bottom: rect.bottom },
+              fromBottom: window.innerHeight - rect.top,
+              viewportHeight: window.innerHeight
+            });
+            
+            if (isVisible !== keyboardVisible || Math.abs(height - keyboardHeight.current) > 10) {
               setKeyboardVisible(isVisible);
+              keyboardHeight.current = height;
               onKeyboardChange?.(isVisible, height);
             }
           }
@@ -108,7 +173,15 @@ export const MathLiveInput = ({
             if (keyboardElement) {
               const rect = keyboardElement.getBoundingClientRect();
               const isVisible = rect.height > 0 && window.getComputedStyle(keyboardElement).display !== 'none';
-              const height = isVisible ? rect.height : 0;
+              // Get actual keyboard height (capped at 40% of viewport)
+              let height = 0;
+              if (isVisible && rect.bottom === window.innerHeight) {
+                // Keyboard is anchored to bottom
+                height = Math.min(rect.height, window.innerHeight * 0.4);
+              } else if (isVisible && rect.top > window.innerHeight * 0.5) {
+                // Keyboard is in lower half of screen
+                height = Math.min(window.innerHeight - rect.top, window.innerHeight * 0.4);
+              }
               
               console.log('[DEBUG] Focus keyboard check:', { isVisible, height });
               setKeyboardVisible(isVisible);
@@ -173,20 +246,32 @@ export const MathLiveInput = ({
 
         // Monitor virtual keyboard state (fallback detection)
         mf.addEventListener('virtual-keyboard-toggle', (event: any) => {
-          console.log('[DEBUG] Virtual keyboard toggle event:', event.detail);
-          const isVisible = event.detail.visible;
+          console.log('[DEBUG] Virtual keyboard toggle event:', event);
+          const isVisible = event?.detail?.visible ?? false;
           
           // Get actual keyboard height from DOM if possible
           let keyboardHeight = 280; // Default fallback
-          const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
-          if (keyboardElement) {
-            const rect = keyboardElement.getBoundingClientRect();
-            keyboardHeight = rect.height || 280;
-          }
-          
-          console.log('[DEBUG] Virtual keyboard toggle - setting state:', { isVisible, keyboardHeight });
-          setKeyboardVisible(isVisible);
-          onKeyboardChange?.(isVisible, keyboardHeight);
+          setTimeout(() => {
+            const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
+            if (keyboardElement) {
+              const rect = keyboardElement.getBoundingClientRect();
+              // Calculate height properly, capped at 40% of viewport
+              if (rect.bottom === window.innerHeight) {
+                keyboardHeight = Math.min(rect.height, window.innerHeight * 0.4);
+              } else if (rect.top > window.innerHeight * 0.5) {
+                keyboardHeight = Math.min(window.innerHeight - rect.top, window.innerHeight * 0.4);
+              } else {
+                keyboardHeight = Math.min(rect.height || 280, window.innerHeight * 0.4);
+              }
+              console.log('[DEBUG] Virtual keyboard measured after toggle:', { 
+                isVisible, 
+                keyboardHeight,
+                rect: { top: rect.top, bottom: rect.bottom }
+              });
+              setKeyboardVisible(isVisible);
+              onKeyboardChange?.(isVisible, keyboardHeight);
+            }
+          }, 100); // Small delay to let keyboard render
         });
 
         // Set initial value
@@ -255,6 +340,14 @@ export const MathLiveInput = ({
       mathfieldRef.current.blur();
     }
   };
+  
+  const showKeyboard = () => {
+    if (mathfieldRef.current) {
+      mathfieldRef.current.focus();
+      mathfieldRef.current.virtualKeyboardVisible = true;
+      setKeyboardVisible(true);
+    }
+  };
 
   return (
     <div className="relative">
@@ -273,7 +366,19 @@ export const MathLiveInput = ({
         } as any}
       />
       
-      {/* Keyboard Dismiss Button - only show if keyboard is visible */}
+      {/* Keyboard Toggle Buttons */}
+      {!keyboardVisible && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={showKeyboard}
+          className="absolute top-2 right-2 h-6 px-2 bg-background/80 backdrop-blur-sm text-xs"
+          title="Show keyboard"
+        >
+          ⌨️
+        </Button>
+      )}
       {keyboardVisible && (
         <Button
           type="button"

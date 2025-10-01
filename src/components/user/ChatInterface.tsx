@@ -242,7 +242,9 @@ const ChatInterface = () => {
       <div 
         className={`h-full overflow-auto transition-all duration-300 ease-in-out`}
         style={{
-          paddingBottom: `${(isMobile ? 128 : 80) + (keyboardVisible ? keyboardHeight : 0)}px`
+          paddingBottom: keyboardVisible && keyboardHeight > 0
+            ? `${Math.min(keyboardHeight, window.innerHeight * 0.4) + 100}px`  // Keyboard height (capped) + input height + buffer
+            : `${isMobile ? 128 : 80}px`  // Normal bottom padding
         }}
       >
         <ExerciseList
@@ -256,12 +258,16 @@ const ChatInterface = () => {
 
       {/* Message Input - Fixed at bottom like mobile tabs */}
       <div 
-        className={`fixed left-0 right-0 z-60 bg-background/80 backdrop-blur-md border-t border-border transition-all duration-300 ease-in-out`}
+        className={`fixed left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border`}
         style={{ 
-          bottom: `${keyboardVisible ? keyboardHeight + (isMobile ? 64 : 0) : isMobile ? 64 : 0}px`,
-          marginBottom: !keyboardVisible && isMobile 
-            ? 'max(env(safe-area-inset-bottom), 0px)' 
-            : '0px'
+          bottom: keyboardVisible && keyboardHeight > 0
+            ? `${Math.min(keyboardHeight, window.innerHeight * 0.4)}px`  // Position above keyboard, capped at 40vh
+            : (isMobile ? '64px' : '0px'),  // Default position
+          paddingBottom: keyboardVisible ? '0px' : 'env(safe-area-inset-bottom, 0px)',
+          zIndex: keyboardVisible ? 10001 : 50,  // Above keyboard when visible
+          transition: 'bottom 0.3s ease-in-out',
+          maxHeight: '50vh',  // Prevent input from taking too much space
+          overflow: 'auto'
         }}
       >
         <div className="p-4">
