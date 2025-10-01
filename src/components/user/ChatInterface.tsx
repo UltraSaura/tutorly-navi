@@ -243,7 +243,7 @@ const ChatInterface = () => {
         className={`h-full overflow-auto transition-all duration-300 ease-in-out`}
         style={{
           paddingBottom: keyboardVisible && keyboardHeight > 0
-            ? `${keyboardHeight + 80}px`  // Keyboard height + input height
+            ? `${Math.min(keyboardHeight, window.innerHeight * 0.4) + 100}px`  // Keyboard height (capped) + input height + buffer
             : `${isMobile ? 128 : 80}px`  // Normal bottom padding
         }}
       >
@@ -261,11 +261,13 @@ const ChatInterface = () => {
         className={`fixed left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border`}
         style={{ 
           bottom: keyboardVisible && keyboardHeight > 0
-            ? `${keyboardHeight}px`  // Position directly above keyboard
+            ? `${Math.min(keyboardHeight, window.innerHeight * 0.4)}px`  // Position above keyboard, capped at 40vh
             : (isMobile ? '64px' : '0px'),  // Default position
           paddingBottom: keyboardVisible ? '0px' : 'env(safe-area-inset-bottom, 0px)',
           zIndex: keyboardVisible ? 10001 : 50,  // Above keyboard when visible
-          transition: 'bottom 0.3s ease-in-out'
+          transition: 'bottom 0.3s ease-in-out',
+          maxHeight: '50vh',  // Prevent input from taking too much space
+          overflow: 'auto'
         }}
       >
         <div className="p-4">

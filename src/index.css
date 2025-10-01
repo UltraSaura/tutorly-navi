@@ -262,11 +262,14 @@
     top: auto !important;
     width: 100% !important;
     z-index: 10000 !important; /* Below message input when keyboard is visible (10001) */
-    max-height: 40vh !important; /* Limit keyboard height */
+    max-height: 40vh !important; /* Limit keyboard height to 40% of viewport */
+    height: auto !important; /* Let content determine height up to max */
     overflow-y: auto !important;
+    overflow-x: hidden !important;
     transform: translateZ(0) !important; /* Force hardware acceleration */
     background: white !important;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15) !important;
+    contain: layout style !important; /* Optimize rendering */
   }
   
   /* Force keyboard visibility when it should be shown */
@@ -287,6 +290,22 @@
     /* Prevent input from going off-screen */
     .fixed[style*="bottom"] {
       max-height: calc(100vh - 64px); /* Prevent overflow */
+      max-bottom: calc(100vh - 100px) !important; /* Never push input above this point */
+    }
+    
+    /* Ensure input container stays within viewport */
+    .fixed.left-0.right-0.bg-background\/95 {
+      max-height: 50vh !important; /* Limit input container height */
+    }
+    
+    /* When keyboard is visible, ensure proper stacking */
+    body:has(.ML__keyboard:not([style*="display: none"])) {
+      /* Ensure keyboard doesn't exceed 40vh */
+      .ML__keyboard,
+      ml-virtual-keyboard {
+        max-height: 40vh !important;
+        overflow-y: auto !important;
+      }
     }
   }
 

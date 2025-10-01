@@ -84,19 +84,28 @@ export const MathLiveInput = ({
                             rect.bottom > 0 &&
                             rect.top < window.innerHeight;
             
-            // Get actual keyboard height from bottom of viewport
-            const height = isVisible ? (window.innerHeight - rect.top) : 0;
+            // Get actual keyboard height (capped at 40% of viewport)
+            // Only count as keyboard height if it's actually visible from the bottom
+            let height = 0;
+            if (isVisible && rect.bottom === window.innerHeight) {
+              // Keyboard is anchored to bottom, use its actual height
+              height = Math.min(rect.height, window.innerHeight * 0.4);
+            } else if (isVisible && rect.top > window.innerHeight * 0.5) {
+              // Keyboard is in lower half of screen
+              height = Math.min(window.innerHeight - rect.top, window.innerHeight * 0.4);
+            }
             
-            console.log('[DEBUG] MutationObserver detected keyboard:', { 
+            console.log('[DEBUG] Keyboard detection:', { 
               isVisible, 
               height,
               rectHeight: rect.height,
               top: rect.top,
               bottom: rect.bottom,
-              fromBottom: window.innerHeight - rect.top,
+              isAnchoredToBottom: rect.bottom === window.innerHeight,
               display: computedStyle.display,
               visibility: computedStyle.visibility,
-              viewportHeight: window.innerHeight
+              viewportHeight: window.innerHeight,
+              maxAllowedHeight: window.innerHeight * 0.4
             });
             
             if (isVisible !== keyboardVisible || Math.abs(height - keyboardHeight.current) > 10) {
@@ -127,8 +136,16 @@ export const MathLiveInput = ({
                             rect.bottom > 0 &&
                             rect.top < window.innerHeight;
             
-            // Get actual keyboard height from bottom of viewport
-            const height = isVisible ? (window.innerHeight - rect.top) : 0;
+            // Get actual keyboard height (capped at 40% of viewport)
+            // Only count as keyboard height if it's actually visible from the bottom
+            let height = 0;
+            if (isVisible && rect.bottom === window.innerHeight) {
+              // Keyboard is anchored to bottom, use its actual height
+              height = Math.min(rect.height, window.innerHeight * 0.4);
+            } else if (isVisible && rect.top > window.innerHeight * 0.5) {
+              // Keyboard is in lower half of screen
+              height = Math.min(window.innerHeight - rect.top, window.innerHeight * 0.4);
+            }
             
             console.log('[DEBUG] Window resize keyboard check:', { 
               isVisible, 
@@ -156,7 +173,15 @@ export const MathLiveInput = ({
             if (keyboardElement) {
               const rect = keyboardElement.getBoundingClientRect();
               const isVisible = rect.height > 0 && window.getComputedStyle(keyboardElement).display !== 'none';
-              const height = isVisible ? rect.height : 0;
+              // Get actual keyboard height (capped at 40% of viewport)
+              let height = 0;
+              if (isVisible && rect.bottom === window.innerHeight) {
+                // Keyboard is anchored to bottom
+                height = Math.min(rect.height, window.innerHeight * 0.4);
+              } else if (isVisible && rect.top > window.innerHeight * 0.5) {
+                // Keyboard is in lower half of screen
+                height = Math.min(window.innerHeight - rect.top, window.innerHeight * 0.4);
+              }
               
               console.log('[DEBUG] Focus keyboard check:', { isVisible, height });
               setKeyboardVisible(isVisible);
@@ -230,7 +255,14 @@ export const MathLiveInput = ({
             const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard');
             if (keyboardElement) {
               const rect = keyboardElement.getBoundingClientRect();
-              keyboardHeight = rect.height || 280;
+              // Calculate height properly, capped at 40% of viewport
+              if (rect.bottom === window.innerHeight) {
+                keyboardHeight = Math.min(rect.height, window.innerHeight * 0.4);
+              } else if (rect.top > window.innerHeight * 0.5) {
+                keyboardHeight = Math.min(window.innerHeight - rect.top, window.innerHeight * 0.4);
+              } else {
+                keyboardHeight = Math.min(rect.height || 280, window.innerHeight * 0.4);
+              }
               console.log('[DEBUG] Virtual keyboard measured after toggle:', { 
                 isVisible, 
                 keyboardHeight,
