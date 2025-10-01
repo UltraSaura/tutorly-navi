@@ -56,8 +56,8 @@ const ChatInterface = () => {
   // Upload sheet state
   const [showUploadSheet, setShowUploadSheet] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
-  
-  // Keyboard state for layout adjustment
+
+  // Keyboard handling
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -82,14 +82,7 @@ const ChatInterface = () => {
             console.log('AI Math Detection Result:', mathDetection);
             
             if (mathDetection.isMath && mathDetection.confidence > 50) {
-              if (mathDetection.isQuestion) {
-                // Create exercise from math question
-                console.log('Processing math question as exercise');
-                const existingExercise = exercises.find(ex => ex.question.toLowerCase().trim() === lastMessage.content.toLowerCase().trim());
-                if (!existingExercise) {
-                  createExerciseFromAI(lastMessage.content, "");
-                }
-              } else if (mathDetection.isMultiple) {
+              if (mathDetection.isMultiple) {
                 console.log('Processing multiple exercises from AI detection');
                 processMultipleAIExercises(
                   lastMessage.content, 
@@ -156,7 +149,14 @@ const ChatInterface = () => {
     }
   }, [messages, processedMessageIds, selectedModelId, language]);
 
-  // Create wrappers for the file upload handlers to pass the homework processor function and subject ID
+  // Keyboard change handler
+  const handleKeyboardChange = (visible: boolean, height?: number) => {
+    console.log('[DEBUG] Keyboard change:', visible, height);
+    setKeyboardVisible(visible);
+    setKeyboardHeight(height || 0);
+  };
+
+  // Create wrappers for the file upload handlers
   const handleDocumentFileUpload = (file: File) => {
     console.log('=== DOCUMENT UPLOAD TRIGGERED ===');
     console.log('File details:', { name: file.name, size: file.size, type: file.type });
@@ -228,21 +228,16 @@ const ChatInterface = () => {
     setShowCamera(false);
   };
 
-  // Handle keyboard visibility changes
-  const handleKeyboardChange = (isVisible: boolean, height: number) => {
-    console.log('[DEBUG] Keyboard state changed:', { isVisible, height });
-    setKeyboardVisible(isVisible);
-    setKeyboardHeight(height);
-  };
-
-  // Exercise-Focused Layout with Fixed Input at Bottom
+  // Exercise-Focused Layout with Chat Input
   return (
-    <div className="relative h-[calc(100vh-4rem)] bg-background">
-      {/* Exercise List - Takes full height with bottom padding for fixed input and keyboard */}
+    <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg">
+      {/* Exercise List */}
       <div 
-        className={`h-full overflow-auto transition-all duration-300 ease-in-out`}
+        className="h-full overflow-auto"
         style={{
-          paddingBottom: `${(isMobile ? 128 : 80) + (keyboardVisible ? keyboardHeight : 0)}px`
+          paddingBottom: keyboardVisible && keyboardHeight > 0
+            ? `${keyboardHeight + 80}px`  // Keyboard height + input height
+            : `${isMobile ? 128 : 80}px`  // Normal bottom padding
         }}
       >
         <ExerciseList
@@ -254,28 +249,32 @@ const ChatInterface = () => {
         />
       </div>
 
-      {/* Message Input - Fixed at bottom like mobile tabs */}
-      <div 
-        className={`fixed left-0 right-0 z-60 bg-background/80 backdrop-blur-md border-t border-border transition-all duration-300 ease-in-out`}
-        style={{ 
-          bottom: `${keyboardVisible ? keyboardHeight + (isMobile ? 64 : 0) : isMobile ? 64 : 0}px`,
-          marginBottom: !keyboardVisible && isMobile 
-            ? 'max(env(safe-area-inset-bottom), 0px)' 
-            : '0px'
-        }}
-      >
-        <div className="p-4">
-          <MessageInput
-            inputMessage={inputMessage}
-            setInputMessage={setInputMessage}
-            handleSendMessage={handleSendMessage}
-            handleFileUpload={handleDocumentFileUpload}
-            handlePhotoUpload={handlePhotoFileUpload}
-            isLoading={isLoading}
-            onKeyboardChange={handleKeyboardChange}
-          />
+      {/* Fixed Chat Input - Only show on /chat route when no overlays are active */}
+      {location.pathname === '/chat' && !hasActiveOverlay && (
+        <div 
+          className={`fixed left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border transition-all duration-300 ease-in-out`}
+          style={{ 
+            bottom: keyboardVisible && keyboardHeight > 0
+              ? `${Math.max(keyboardHeight, 0)}px`  // Ensure non-negative
+              : (isMobile ? '64px' : '0px'),  // Default position
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+            zIndex: keyboardVisible ? 10001 : 50,  // Above keyboard when visible
+            maxHeight: '30vh'  // Prevent input from taking too much space
+          }}
+        >
+          <div className="px-[10px] py-1">
+            <MessageInput
+              inputMessage={inputMessage}
+              setInputMessage={setInputMessage}
+              handleSendMessage={handleSendMessage}
+              handleFileUpload={handleDocumentFileUpload}
+              handlePhotoUpload={handlePhotoFileUpload}
+              isLoading={isLoading}
+              onKeyboardChange={handleKeyboardChange}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Upload Bottom Sheet */}
       <Sheet open={showUploadSheet} onOpenChange={setShowUploadSheet}>

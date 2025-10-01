@@ -1,11 +1,11 @@
 
 
-/* MathLive CSS - must come before Tailwind directives */
-@import url('https://unpkg.com/mathlive/dist/mathlive-fonts.css');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* MathLive CSS */
+@import url('https://unpkg.com/mathlive/dist/mathlive-fonts.css');
 
 @layer base {
   :root {
@@ -308,13 +308,45 @@
   }
 }
 
-/* Safe area insets for mobile devices */
-@supports (padding: max(0px)) {
-  .safe-area-inset-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+/* Keyboard-aware positioning for mobile chat input */
+@media (max-width: 768px) {
+  .keyboard-visible {
+    bottom: 0 !important;
+    transform: translateY(calc(-1 * env(keyboard-inset-height, 0px)));
+  }
+}
+
+/* Container for the entire chat interface */
+.chat-interface-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Exercise list takes remaining space */
+.exercise-list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px; /* Space for input */
+}
+
+/* Message input at bottom */
+.message-input-container {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  border-top: 1px solid #e5e7ab;
+  padding: 0.75rem;
+  z-index: 60;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .exercise-list-container {
+    padding-bottom: 144px; /* More space on mobile for input + bottom tabs */
   }
   
-  .safe-area-inset-top {
-    padding-top: max(env(safe-area-inset-top), 0px);
+  .message-input-container {
+    bottom: 64px; /* Above mobile tabs */
   }
 }

@@ -18,7 +18,7 @@
   /* --keycap-primary-text: #ffffff;         */
 }
 
-/* Keep the keyboard above bottom sheets or sticky footers */
+/* Keep the keyboard above bottom sheets, chat input, and mobile tabs */
 body {
-  --keyboard-zindex: 3000;
+  --keyboard-zindex: 100; /* Changed from 3000 to match the z-index in positioning rules */
 }

@@ -16,10 +16,10 @@ interface MessageInputProps {
   inputMessage: string;
   setInputMessage: (message: string) => void;
   handleSendMessage: () => void;
-  handleFileUpload: (file: File) => void;
-  handlePhotoUpload: (file: File) => void;
-  isLoading: boolean;
-  onKeyboardChange?: (isVisible: boolean, height: number) => void;
+  handleFileUpload?: (file: File) => void;
+  handlePhotoUpload?: (file: File) => void;
+  isLoading?: boolean;
+  onKeyboardChange?: (visible: boolean, height?: number) => void; // Add this
 }
 
 const MessageInput = ({ 
@@ -28,7 +28,7 @@ const MessageInput = ({
   handleSendMessage, 
   handleFileUpload, 
   handlePhotoUpload, 
-  isLoading,
+  isLoading, 
   onKeyboardChange 
 }: MessageInputProps) => {
   const { toast } = useToast();
@@ -73,43 +73,14 @@ const MessageInput = ({
 
   const toggleMathMode = () => {
     setIsMathMode(!isMathMode);
-    // If switching to text mode, ensure input gets focus
-    if (isMathMode) {
-      setTimeout(() => {
-        const textarea = document.querySelector('textarea');
-        if (textarea) textarea.focus();
-      }, 100);
-    }
-  };
-
-  const handleMathEscape = () => {
-    console.log('[DEBUG] Math input escape pressed, switching to text mode');
-    setIsMathMode(false);
-    // Focus the textarea after switching
-    setTimeout(() => {
-      const textarea = document.querySelector('textarea');
-      if (textarea) textarea.focus();
-    }, 100);
   };
 
   // Auto-detect math content and suggest math mode
-  // Only suggest math mode for LaTeX syntax or algebraic expressions with variables
-  // NOT for natural language math expressions like "four times two = five"
   const shouldSuggestMathMode = !isMathMode && (
-    // LaTeX commands
-    /\\[a-zA-Z]/.test(inputMessage) ||
-    // Fractions with LaTeX syntax
-    /\\frac\{/.test(inputMessage) ||
-    // Algebraic expressions with variables
-    /[a-zA-Z]\s*[\+\-\*/\^]\s*\d+/.test(inputMessage) ||
-    /\d+\s*[\+\-\*/\^]\s*[a-zA-Z]/.test(inputMessage) ||
-    // Mathematical notation with exponents or complex expressions
-    /[a-zA-Z]\^/.test(inputMessage) ||
-    // Fraction notation (numbers only, not words)
-    /^\s*\d+\s*\/\s*\d+\s*$/.test(inputMessage)
-  ) && 
-  // Exclude natural language patterns
-  !/\b(one|two|three|four|five|six|seven|eight|nine|ten|plus|minus|times|divided|equals)\b/i.test(inputMessage);
+    /[+\-*/=()^]/.test(inputMessage) || 
+    /\d+\/\d+/.test(inputMessage) ||
+    /\\[a-zA-Z]/.test(inputMessage)
+  );
 
   const triggerFileUpload = () => {
     fileInputRef.current?.click();
@@ -184,13 +155,18 @@ const MessageInput = ({
     }
   };
 
+  const handleKeyboardChange = (visible: boolean, height?: number) => {
+    // This will bubble up to ChatInterface if needed
+    console.log('Keyboard visibility changed:', visible, height);
+  };
+
   return (
     <div className="space-y-2">
       {/* Math Mode Suggestion */}
       {shouldSuggestMathMode && (
         <div className="flex justify-center">
           <div className="bg-brand-primary/10 text-brand-primary text-xs px-3 py-2 rounded-md">
-            LaTeX notation detected - <button onClick={toggleMathMode} className="underline font-medium">Switch to math mode</button> for advanced formatting
+            Math detected - <button onClick={toggleMathMode} className="underline font-medium">Switch to math mode</button>
           </div>
         </div>
       )}
@@ -231,8 +207,7 @@ const MessageInput = ({
                   setInputMessage(value);
                 }}
                 onEnter={handleMathEnter}
-                onEscape={handleMathEscape}
-                onKeyboardChange={onKeyboardChange}
+                onKeyboardChange={onKeyboardChange} // Add this
                 placeholder={t('chat.mathInputPlaceholder', 'Type mathematical expressions...')}
                 className="border-0 shadow-none focus-visible:ring-0 bg-transparent"
                 disabled={isLoading}
