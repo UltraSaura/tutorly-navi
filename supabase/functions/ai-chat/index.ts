@@ -30,6 +30,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Simple in-memory rate limiter
+const rateLimiter = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 30; // 30 requests per minute
+
+const checkRateLimit = (identifier: string): boolean => {
+  const now = Date.now();
+  const limit = rateLimiter.get(identifier);
+
+  if (!limit || now > limit.resetTime) {
+    rateLimiter.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+
+  if (limit.count >= MAX_REQUESTS_PER_WINDOW) {
+    return false;
+  }
+
+  limit.count++;
+  return true;
+};
+
 serve(async (req) => {
   // Set CORS headers for all responses
   const corsHeaders = {
@@ -43,6 +65,16 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Rate limiting based on IP or auth header
+  const clientId = req.headers.get('x-forwarded-for') || req.headers.get('authorization') || 'anonymous';
+  if (!checkRateLimit(clientId)) {
+    console.warn('⚠️ Rate limit exceeded for client:', clientId);
+    return new Response(
+      JSON.stringify({ error: 'Rate limit exceeded. Please wait before making more requests.' }),
+      { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   console.log(`🚀 ${req.method} request to ai-chat function at ${new Date().toISOString()}`);
   console.log('📋 Request headers:', Object.fromEntries(req.headers.entries()));
 
@@ -50,6 +82,15 @@ serve(async (req) => {
     // Parse request body with detailed logging
     const requestText = await req.text();
     console.log('📥 Raw request received, length:', requestText.length);
+    
+    // Validate request size (max 1MB)
+    if (requestText.length > 1024 * 1024) {
+      console.error('❌ Request too large:', requestText.length);
+      return new Response(
+        JSON.stringify({ error: 'Request payload too large. Maximum 1MB allowed.' }),
+        { status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     let parsedBody;
     try {

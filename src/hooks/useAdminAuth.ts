@@ -6,24 +6,23 @@ import { supabase } from '@/integrations/supabase/client';
 export const useAdminAuth = () => {
   const { user, loading: authLoading } = useAuth();
 
-  const { data: userContext, isLoading } = useQuery({
-    queryKey: ['user-context', user?.id],
+  const { data: userRoles, isLoading } = useQuery({
+    queryKey: ['user-roles', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
 
       const { data, error } = await supabase
-        .from('users')
-        .select('user_type')
-        .eq('id', user.id)
-        .single();
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
 
       if (error || !data) return null;
-      return data;
+      return data.map(r => r.role);
     },
     enabled: !!user?.id,
   });
 
-  const isAdmin = userContext?.user_type === 'admin';
+  const isAdmin = userRoles?.includes('admin') ?? false;
   const isAuthenticated = !!user;
   // Only consider loading if auth is loading OR if user exists and we're fetching their context
   const isLoading_ = authLoading || (!!user && isLoading);
@@ -33,5 +32,6 @@ export const useAdminAuth = () => {
     isAuthenticated,
     canAccessAdmin: isAuthenticated && isAdmin,
     isLoading: isLoading_,
+    userRoles: userRoles || [],
   };
 };
