@@ -85,20 +85,21 @@ export const useAiModelManagementSecure = () => {
     }
   };
 
-  // Add new API key (admin only)
+  // Add new API key (admin only) - Now uses encrypted Vault storage
   const addApiKey = async (providerId: string, name: string, keyValue: string) => {
     try {
-      const { error } = await supabase
-        .from('ai_model_keys')
-        .insert({
-          provider_id: providerId,
-          name: name,
-          key_value: keyValue
-        });
+      const { error } = await supabase.functions.invoke('manage-api-keys', {
+        body: {
+          action: 'add',
+          providerId,
+          name,
+          keyValue
+        }
+      });
 
       if (error) throw error;
       
-      toast.success('API key added successfully');
+      toast.success('API key added successfully and encrypted');
       await fetchApiKeys(); // Refresh the list
     } catch (error) {
       console.error('Error adding API key:', error);
@@ -106,13 +107,15 @@ export const useAiModelManagementSecure = () => {
     }
   };
 
-  // Delete API key (admin only) - soft delete by setting is_active to false
+  // Delete API key (admin only) - soft delete and removes from vault
   const deleteApiKey = async (keyId: string) => {
     try {
-      const { error } = await supabase
-        .from('ai_model_keys')
-        .update({ is_active: false })
-        .eq('id', keyId);
+      const { error } = await supabase.functions.invoke('manage-api-keys', {
+        body: {
+          action: 'delete',
+          keyId
+        }
+      });
 
       if (error) throw error;
       
