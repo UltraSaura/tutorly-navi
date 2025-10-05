@@ -82,17 +82,18 @@ export const useChat = () => {
     setMessages(prev => [...prev, message]);
   };
   
-  const handleSendMessage = async () => {
+  const handleSendMessage = async (overrideMessage?: string) => {
     console.log('[DEBUG] handleSendMessage called');
-    console.log('[DEBUG] Current inputMessage before send:', inputMessage);
-    console.log('[DEBUG] inputMessage length:', inputMessage.length);
+    const effectiveMessage = overrideMessage ?? inputMessage;
+    console.log('[DEBUG] Effective message before send:', effectiveMessage);
+    console.log('[DEBUG] effectiveMessage length:', effectiveMessage?.length || 0);
     
-    if (inputMessage.trim() === '') {
+    if (!effectiveMessage || effectiveMessage.trim() === '') {
       console.log('[DEBUG] Empty message, returning early');
       return;
     }
     
-    const messageToSend = inputMessage; // Capture the message before clearing
+    const messageToSend = effectiveMessage; // Use passed-in value if provided
     console.log('[DEBUG] Message to send:', messageToSend);
     
     const newMessage: Message = {
@@ -102,7 +103,7 @@ export const useChat = () => {
       timestamp: new Date(),
     };
     
-    setMessages([...messages, newMessage]);
+    setMessages(prev => [...prev, newMessage]);
     setInputMessage('');
     console.log('[DEBUG] Sending unified message with model:', selectedModelId);
     setIsLoading(true);
@@ -114,7 +115,7 @@ export const useChat = () => {
         messages, 
         selectedModelId, 
         language,
-        activePromptTemplate?.prompt_content,
+        undefined,
         userContext
       );
       

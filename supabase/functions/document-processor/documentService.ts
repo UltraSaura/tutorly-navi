@@ -7,11 +7,12 @@ function minimalPreprocessing(text: string): string {
   console.log('Raw text length:', text.length);
   console.log('Raw text (first 500 chars):', text.substring(0, 500));
   
-  // Only remove obvious LaTeX artifacts while preserving structure
+  // Only remove non-essential LaTeX commands while preserving important math structure
   let cleanedText = text
-    // Remove LaTeX commands but keep content
-    .replace(/\\[a-zA-Z]+/g, ' ')
-    .replace(/[{}]/g, ' ')
+    // Preserve key LaTeX commands like \frac and \sqrt; remove others
+    .replace(/\\(?!frac|sqrt)[a-zA-Z]+/g, ' ')
+    // Preserve braces to keep LaTeX structure intact
+    // .replace(/[{}]/g, ' ')
     
     // Normalize whitespace but preserve line breaks
     .replace(/\s+/g, ' ')

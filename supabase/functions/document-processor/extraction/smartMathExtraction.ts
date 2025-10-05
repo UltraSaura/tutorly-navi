@@ -15,11 +15,18 @@ export function extractSmartMathExercises(text: string): Array<{ question: strin
     console.log(`LaTeX extraction found ${latexExercises.length} exercises`);
   }
   
-  // Try OCR-friendly extraction
+  // Try OCR-friendly extraction (fractions and simple equations)
   const ocrExercises = extractFromOCRFormat(text);
   if (ocrExercises.length > 0) {
     exercises.push(...ocrExercises);
     console.log(`OCR extraction found ${ocrExercises.length} exercises`);
+  }
+
+  // Try Square Root extraction (√25 = 6, \\sqrt{25} = 6, sqrt 25 = 6)
+  const sqrtExercises = extractSquareRootExercises(text);
+  if (sqrtExercises.length > 0) {
+    exercises.push(...sqrtExercises);
+    console.log(`Square root extraction found ${sqrtExercises.length} exercises`);
   }
   
   console.log(`Smart extraction total: ${exercises.length} exercises`);
@@ -130,6 +137,54 @@ function extractFromOCRFormat(text: string): Array<{ question: string, answer: s
     console.log(`✅ Created OCR exercise ${index + 1}: ${exercise.question} -> Answer: "${exercise.answer || 'NEEDS STUDENT INPUT'}"`);
   });
   
+  return exercises;
+}
+
+// Extract equations with square roots from OCR or LaTeX-like text
+function extractSquareRootExercises(text: string): Array<{ question: string, answer: string }> {
+  console.log('--- Square Root Extraction ---');
+  const exercises: Array<{ question: string, answer: string }> = [];
+  const seen = new Set<string>();
+
+  // Patterns with an equals sign (student provided an answer)
+  const eqPatterns: RegExp[] = [
+    /√\s*(\d+(?:\.\d+)?)\s*=\s*([-]?\d+(?:\.\d+)?)/g, // Unicode root
+    /\\sqrt\{(\d+)\}\s*=\s*([-]?\d+(?:\.\d+)?)/g,     // LaTeX \sqrt{n} = x
+    /\bsqrt\s*(\d+(?:\.\d+)?)\s*=\s*([-]?\d+(?:\.\d+)?)/g // Plain 'sqrt 25 = 6'
+  ];
+
+  for (const r of eqPatterns) {
+    let m: RegExpExecArray | null;
+    while ((m = r.exec(text)) !== null) {
+      const rad = m[1];
+      const ans = m[2];
+      const key = `sqrt(${rad})`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      exercises.push({ question: `Calcule √${rad}` , answer: ans });
+    }
+  }
+
+  // If none with '=', also capture expressions without an explicit answer
+  if (exercises.length === 0) {
+    const barePatterns: RegExp[] = [
+      /√\s*(\d+(?:\.\d+)?)/g,
+      /\\sqrt\{(\d+)\}/g,
+      /\bsqrt\s*(\d+(?:\.\d+)?)/g,
+    ];
+    for (const r of barePatterns) {
+      let m: RegExpExecArray | null;
+      while ((m = r.exec(text)) !== null) {
+        const rad = m[1];
+        const key = `sqrt(${rad})`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        exercises.push({ question: `Calcule √${rad}`, answer: '' });
+      }
+    }
+  }
+
+  console.log(`Square root extraction found ${exercises.length} exercises`);
   return exercises;
 }
 
