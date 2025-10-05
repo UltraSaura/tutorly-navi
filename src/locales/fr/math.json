@@ -1,9 +1,49 @@
 {
   "actionVerbs": [
-    "calculer", "résoudre", "simplifier", "évaluer", "déterminer", "démontrer", "prouver", 
-    "montrer que", "factoriser", "développer", "tracer", "trouver", "convertir", "décomposer", 
-    "decompose", "comment", "qu'est-ce que", "comment calculer", "comment résoudre", 
-    "que fait", "expliquer comment", "montrez-moi comment"
+    "calculer", "calculez", "résoudre", "résolvez", "simplifier", "simplifiez",
+    "évaluer", "évaluez", "déterminer", "déterminez", "démontrer", "démontrez",
+    "prouver", "prouvez", "montrer", "montrez", "factoriser", "factorisez",
+    "développer", "développez", "tracer", "tracez", "trouver", "trouvez",
+    "convertir", "convertissez", "décomposer", "décomposez",
+    "intégrer", "intégrez", "dériver", "dérivez", "approcher", "approchez",
+    "estimer", "estimez", "mesurer", "mesurez", "comparer", "comparez",
+    "analyser", "analysez", "transformer", "transformez", "réduire", "réduisez",
+    "comment", "qu'est-ce que", "comment calculer", "comment résoudre", 
+    "que fait", "expliquer comment", "montrez-moi comment", "combien", 
+    "pourquoi", "où", "quand", "montrez-moi", "aidez-moi", "pouvez-vous", 
+    "auriez-vous", "s'il vous plaît", "j'ai besoin", "trouve", "trouver", 
+    "calcule", "calculer"
+  ],
+  "advancedConcepts": [
+    "algèbre", "géométrie", "calcul", "trigonométrie", "statistiques", "probabilité",
+    "algèbre linéaire", "équations différentielles", "nombres complexes", "matrices",
+    "vecteurs", "fonctions", "polynômes", "quadratique", "logarithmique", "exponentiel",
+    "dérivée", "intégrale", "limite", "série", "suite", "convergence",
+    "divergence", "asymptote", "inflexion", "point critique", "extrema"
+  ],
+  "mathematicalObjects": [
+    "équation", "inégalité", "expression", "formule", "théorème", "lemme",
+    "corollaire", "preuve", "axiome", "postulat", "hypothèse", "conclusion",
+    "variable", "constante", "coefficient", "paramètre", "domaine", "image",
+    "fonction", "relation", "application", "transformation", "opération"
+  ],
+  "numberTheory": [
+    "premier", "première", "composé", "composée", "facteur", "facteurs",
+    "multiple", "diviseur", "pgcd", "ppcm", "plus grand commun diviseur",
+    "plus petit commun multiple", "rationnel", "irrationnel", "entier",
+    "nombre naturel", "nombre entier", "nombre réel", "nombre imaginaire",
+    "nombre complexe", "transcendant"
+  ],
+  "geometry": [
+    "triangle", "cercle", "carré", "rectangle", "polygone", "angle", "degré",
+    "radian", "périmètre", "aire", "volume", "surface", "diamètre", "rayon",
+    "circonférence", "parallèle", "perpendiculaire", "congruent", "semblable",
+    "proportion", "rapport", "échelle", "coordonnée", "axe", "origine"
+  ],
+  "statistics": [
+    "moyenne", "médiane", "mode", "écart-type", "variance", "corrélation",
+    "régression", "distribution", "distribution normale", "binomial", "probabilité",
+    "échantillon", "population", "test d'hypothèse", "intervalle de confiance"
   ],
   "operations": {
     "fois": "×",
@@ -13,17 +53,14 @@
     "font": "=",
     "égal": "=",
     "égale": "=",
-    "est": "="
-  },
-  "concepts": {
-    "équation": "equation", 
-    "expression": "expression",
-    "fonction": "function",
-    "formule": "formula",
-    "théorème": "theorem",
-    "algèbre": "algebra",
-    "géométrie": "geometry",
-    "calcul": "calculus", 
-    "trigonométrie": "trigonometry"
+    "est": "=",
+    "racine carrée": "√",
+    "racine cubique": "∛",
+    "puissance": "^",
+    "exposant": "^",
+    "logarithme": "log",
+    "sinus": "sin",
+    "cosinus": "cos",
+    "tangente": "tan"
   }
 }

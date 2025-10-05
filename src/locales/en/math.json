@@ -1,25 +1,56 @@
 {
   "actionVerbs": [
     "calculate", "solve", "simplify", "evaluate", "determine", "prove", "show that", 
-    "factor", "expand", "graph", "find", "convert", "decompose", "how do", "what is", 
-    "how to calculate", "how to solve", "what does", "explain how", "show me how"
+    "factor", "expand", "graph", "find", "convert", "decompose", "compute", "derive",
+    "integrate", "differentiate", "approximate", "estimate", "measure", "compare",
+    "analyze", "transform", "reduce", "optimize", "maximize", "minimize",
+    "how do", "what is", "how to calculate", "how to solve", "what does", "explain how", 
+    "show me how", "how much", "how many", "how to", "help me", "can you", "would you", 
+    "please", "i need"
+  ],
+  "advancedConcepts": [
+    "algebra", "geometry", "calculus", "trigonometry", "statistics", "probability",
+    "linear algebra", "differential equations", "complex numbers", "matrices",
+    "vectors", "functions", "polynomials", "quadratic", "logarithmic", "exponential",
+    "derivative", "integral", "limit", "series", "sequence", "convergence",
+    "divergence", "asymptote", "inflection", "critical point", "extrema"
+  ],
+  "mathematicalObjects": [
+    "equation", "inequality", "expression", "formula", "theorem", "lemma",
+    "corollary", "proof", "axiom", "postulate", "hypothesis", "conclusion",
+    "variable", "constant", "coefficient", "parameter", "domain", "range",
+    "function", "relation", "mapping", "transformation", "operation"
+  ],
+  "numberTheory": [
+    "prime", "composite", "factor", "multiple", "divisor", "gcd", "lcm",
+    "greatest common divisor", "least common multiple", "hcf", "highest common factor",
+    "rational", "irrational", "integer", "natural number", "whole number",
+    "real number", "imaginary number", "complex number", "transcendental"
+  ],
+  "geometry": [
+    "triangle", "circle", "square", "rectangle", "polygon", "angle", "degree",
+    "radian", "perimeter", "area", "volume", "surface area", "diameter", "radius",
+    "circumference", "parallel", "perpendicular", "congruent", "similar",
+    "proportion", "ratio", "scale", "coordinate", "axis", "origin"
+  ],
+  "statistics": [
+    "mean", "median", "mode", "standard deviation", "variance", "correlation",
+    "regression", "distribution", "normal distribution", "binomial", "probability",
+    "sample", "population", "hypothesis testing", "confidence interval"
   ],
   "operations": {
     "plus": "+",
     "minus": "-", 
     "times": "*",
     "divided_by": "/",
-    "equals": "="
-  },
-  "concepts": {
-    "equation": "equation",
-    "expression": "expression", 
-    "function": "function",
-    "formula": "formula",
-    "theorem": "theorem",
-    "algebra": "algebra",
-    "geometry": "geometry",
-    "calculus": "calculus",
-    "trigonometry": "trigonometry"
+    "equals": "=",
+    "square root": "√",
+    "cube root": "∛",
+    "power": "^",
+    "exponent": "^",
+    "logarithm": "log",
+    "sine": "sin",
+    "cosine": "cos",
+    "tangent": "tan"
   }
 }

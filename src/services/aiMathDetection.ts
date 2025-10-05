@@ -178,37 +178,37 @@ export async function detectMathWithAI(
     return cached;
   }
 
-  // Smart pre-filtering: Check for obvious math patterns or action verbs
+  // Smart pre-filtering: Check for obvious math patterns (keep this optimization)
   const hasObviousPattern = OBVIOUS_MATH_PATTERNS.some(pattern => pattern.test(message.trim()));
-  const hasActionPattern = MATH_ACTION_PATTERNS.some(pattern => pattern.test(message.trim()));
-  const hasActionVerb = MATH_ACTION_VERBS.en.some(verb => 
-    message.toLowerCase().includes(verb)) || MATH_ACTION_VERBS.fr.some(verb => 
-    message.toLowerCase().includes(verb));
-
-  console.log('[MathDetection] Pattern checks:', { 
-    hasObviousPattern, 
-    hasActionPattern, 
-    hasActionVerb,
-    message 
-  });
-
-  // Quick fallback for obvious math patterns (optimization)
+  
   if (hasObviousPattern) {
     console.log('[MathDetection] Using regex fallback for obvious math pattern');
     const result = createSimpleMathResult(message.trim());
-    console.log('[MathDetection] Simple math result:', result);
     detectionCache.set(cacheKey, { ...result, timestamp: Date.now() } as any);
     return result;
   }
 
-  // Skip AI call for obviously non-math content (performance optimization)
-  if (!hasActionPattern && !hasActionVerb && !containsMathSymbols(message)) {
-    console.log('[aiMathDetection] Skipping AI call - no math indicators found');
+  // NEW APPROACH: Only skip AI call for obviously non-math content like greetings
+  // This makes the system much more permissive and comprehensive
+  const isObviouslyNonMath = (
+    // Very short greetings
+    (/^(hi|hello|hey|bonjour|salut|thanks|thank you|merci|bye|goodbye|à bientôt)$/i.test(message.trim()) && message.length < 20) ||
+    // Very short responses
+    (message.trim().length < 5 && !containsAnyMathContent(message)) ||
+    // Pure emoji or punctuation
+    (/^[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`\s]*$/i.test(message.trim()))
+  );
+
+  if (isObviouslyNonMath) {
+    console.log('[MathDetection] Skipping AI call - obviously non-math content:', message);
     const result = createFallbackResult(message);
     detectionCache.set(cacheKey, { ...result, timestamp: Date.now() } as any);
     return result;
   }
 
+  // For everything else, let the AI decide!
+  console.log('[MathDetection] Sending to AI for analysis - comprehensive math detection');
+  
   try {
     // Detect language if not provided
     const detectedLang = language || detectLanguage(message);
@@ -425,6 +425,135 @@ function containsMathSymbols(message: string): boolean {
   const result = mathSymbols.some(pattern => pattern.test(message));
   console.log('[MathDetection] Math symbols check result:', { message, result });
   return result;
+}
+
+/**
+ * Enhanced comprehensive math vocabulary - ALL possible math terms
+ */
+const COMPREHENSIVE_MATH_TERMS = {
+  // Basic operations
+  en: [
+    'calculate', 'solve', 'simplify', 'evaluate', 'determine', 'prove', 'show that', 
+    'factor', 'expand', 'graph', 'find', 'convert', 'decompose', 'compute', 'derive',
+    'integrate', 'differentiate', 'approximate', 'estimate', 'measure', 'compare',
+    'analyze', 'transform', 'reduce', 'optimize', 'maximize', 'minimize',
+    
+    // Advanced math concepts
+    'algebra', 'geometry', 'calculus', 'trigonometry', 'statistics', 'probability',
+    'linear algebra', 'differential equations', 'complex numbers', 'matrices',
+    'vectors', 'functions', 'polynomials', 'quadratic', 'logarithmic', 'exponential',
+    'derivative', 'integral', 'limit', 'series', 'sequence', 'convergence',
+    'divergence', 'asymptote', 'inflection', 'critical point', 'extrema',
+    
+    // Mathematical objects and concepts
+    'equation', 'inequality', 'expression', 'formula', 'theorem', 'lemma',
+    'corollary', 'proof', 'axiom', 'postulate', 'hypothesis', 'conclusion',
+    'variable', 'constant', 'coefficient', 'parameter', 'domain', 'range',
+    'function', 'relation', 'mapping', 'transformation', 'operation',
+    
+    // Number theory and advanced concepts
+    'prime', 'composite', 'factor', 'multiple', 'divisor', 'gcd', 'lcm',
+    'greatest common divisor', 'least common multiple', 'hcf', 'highest common factor',
+    'rational', 'irrational', 'integer', 'natural number', 'whole number',
+    'real number', 'imaginary number', 'complex number', 'transcendental',
+    
+    // Geometry terms
+    'triangle', 'circle', 'square', 'rectangle', 'polygon', 'angle', 'degree',
+    'radian', 'perimeter', 'area', 'volume', 'surface area', 'diameter', 'radius',
+    'circumference', 'parallel', 'perpendicular', 'congruent', 'similar',
+    'proportion', 'ratio', 'scale', 'coordinate', 'axis', 'origin',
+    
+    // Statistics and probability
+    'mean', 'median', 'mode', 'standard deviation', 'variance', 'correlation',
+    'regression', 'distribution', 'normal distribution', 'binomial', 'probability',
+    'sample', 'population', 'hypothesis testing', 'confidence interval',
+    
+    // Question words and phrases
+    'what is', 'how much', 'how many', 'how to', 'what does', 'explain',
+    'show me', 'help me', 'can you', 'would you', 'please', 'i need',
+    
+    // Mathematical symbols and notation
+    'plus', 'minus', 'times', 'divided by', 'equals', 'greater than', 'less than',
+    'square root', 'cube root', 'power', 'exponent', 'base', 'logarithm',
+    'sine', 'cosine', 'tangent', 'cotangent', 'secant', 'cosecant'
+  ],
+  
+  fr: [
+    // Basic operations
+    'calculer', 'calculez', 'résoudre', 'résolvez', 'simplifier', 'simplifiez',
+    'évaluer', 'évaluez', 'déterminer', 'déterminez', 'démontrer', 'démontrez',
+    'prouver', 'prouvez', 'montrer', 'montrez', 'factoriser', 'factorisez',
+    'développer', 'développez', 'tracer', 'tracez', 'trouver', 'trouvez',
+    'convertir', 'convertissez', 'décomposer', 'décomposez', 'calculer',
+    'intégrer', 'intégrez', 'dériver', 'dérivez', 'approcher', 'approchez',
+    'estimer', 'estimez', 'mesurer', 'mesurez', 'comparer', 'comparez',
+    'analyser', 'analysez', 'transformer', 'transformez', 'réduire', 'réduisez',
+    
+    // Advanced math concepts
+    'algèbre', 'géométrie', 'calcul', 'trigonométrie', 'statistiques', 'probabilité',
+    'algèbre linéaire', 'équations différentielles', 'nombres complexes', 'matrices',
+    'vecteurs', 'fonctions', 'polynômes', 'quadratique', 'logarithmique', 'exponentiel',
+    'dérivée', 'intégrale', 'limite', 'série', 'suite', 'convergence',
+    'divergence', 'asymptote', 'inflexion', 'point critique', 'extrema',
+    
+    // Mathematical objects
+    'équation', 'inégalité', 'expression', 'formule', 'théorème', 'lemme',
+    'corollaire', 'preuve', 'axiome', 'postulat', 'hypothèse', 'conclusion',
+    'variable', 'constante', 'coefficient', 'paramètre', 'domaine', 'image',
+    'fonction', 'relation', 'application', 'transformation', 'opération',
+    
+    // Number theory
+    'premier', 'première', 'composé', 'composée', 'facteur', 'facteurs',
+    'multiple', 'diviseur', 'pgcd', 'ppcm', 'plus grand commun diviseur',
+    'plus petit commun multiple', 'rationnel', 'irrationnel', 'entier',
+    'nombre naturel', 'nombre entier', 'nombre réel', 'nombre imaginaire',
+    'nombre complexe', 'transcendant',
+    
+    // Geometry
+    'triangle', 'cercle', 'carré', 'rectangle', 'polygone', 'angle', 'degré',
+    'radian', 'périmètre', 'aire', 'volume', 'surface', 'diamètre', 'rayon',
+    'circonférence', 'parallèle', 'perpendiculaire', 'congruent', 'semblable',
+    'proportion', 'rapport', 'échelle', 'coordonnée', 'axe', 'origine',
+    
+    // Statistics
+    'moyenne', 'médiane', 'mode', 'écart-type', 'variance', 'corrélation',
+    'régression', 'distribution', 'distribution normale', 'binomial', 'probabilité',
+    'échantillon', 'population', 'test d\'hypothèse', 'intervalle de confiance',
+    
+    // Question words
+    'qu\'est-ce que', 'combien', 'comment', 'pourquoi', 'où', 'quand',
+    'montrez-moi', 'aidez-moi', 'pouvez-vous', 'auriez-vous', 's\'il vous plaît',
+    'j\'ai besoin', 'trouve', 'trouver', 'calcule', 'calculer',
+    
+    // Operations
+    'fois', 'plus', 'moins', 'divisé par', 'égal', 'égale', 'est', 'font',
+    'plus grand que', 'plus petit que', 'racine carrée', 'racine cubique',
+    'puissance', 'exposant', 'base', 'logarithme', 'sinus', 'cosinus',
+    'tangente', 'cotangente', 'sécante', 'cosécante'
+  ]
+};
+
+// Enhanced function to check for any math-related content
+function containsAnyMathContent(message: string): boolean {
+  const lowerMessage = message.toLowerCase();
+  
+  // Check for numbers (strong math indicator)
+  if (/\d/.test(message)) {
+    return true;
+  }
+  
+  // Check for mathematical symbols
+  if (/[+\-*/=<>()^√∫∑∆π∞]/.test(message)) {
+    return true;
+  }
+  
+  // Check for comprehensive math terms in all languages
+  const allMathTerms = [
+    ...COMPREHENSIVE_MATH_TERMS.en,
+    ...COMPREHENSIVE_MATH_TERMS.fr
+  ];
+  
+  return allMathTerms.some(term => lowerMessage.includes(term));
 }
 
 /**
