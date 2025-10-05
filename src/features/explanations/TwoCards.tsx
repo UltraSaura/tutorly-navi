@@ -3,19 +3,32 @@ import type { TeachingSections } from "./twoCardParser";
 import { useResolveText } from "@/hooks/useResolveText";
 
 function maskDigits(s: string) {
-  // Smart masking: show problem values, hide only solutions/answers
+  // Aggressive masking: hide ALL final answers and results
   if (!s) return s;
   
   // Patterns that indicate solution contexts (mask these numbers)
   const solutionPatterns = [
-    /(\b(?:answer|solution|result|equals?)\s*:?\s*)(\d+(?:\.\d+)?)/gi,
-    /(\b(?:so|therefore|thus)\s+.*?)(\d+(?:\.\d+)?)/gi,
-    /(\s*=\s*)(\d+(?:\.\d+)?)/g,
-    /(\b(?:the answer is|we get|this gives us)\s+)(\d+(?:\.\d+)?)/gi,
-    // Catch mathematical expressions with results (e.g., "2*3*4 = 24", "3 × 2 + 5 = 11")
+    // English result indicators
+    /(\b(?:answer|solution|result|equals?|total)\s*:?\s*)(\d+(?:\.\d+)?)/gi,
+    /(\b(?:so|therefore|thus|finally)\s+.*?)(\d+(?:\.\d+)?)/gi,
+    /(\b(?:the answer is|we get|this gives us|you get|your result)\s+)(\d+(?:\.\d+)?)/gi,
+    
+    // French result indicators
+    /(\b(?:réponse|résultat|solution|total|égal)\s*:?\s*)(\d+(?:\.\d+)?)/gi,
+    /(\b(?:donc|ainsi|finalement)\s+.*?)(\d+(?:\.\d+)?)/gi,
+    /(\b(?:la réponse est|on obtient|cela donne)\s+)(\d+(?:\.\d+)?)/gi,
+    
+    // Mathematical expressions with results
+    // Repeated addition: "3 + 3 + 3 + 3 + 3 = 15"
+    /(\d+(?:\s*\+\s*\d+){2,}\s*=\s*)(\d+(?:\.\d+)?)/g,
+    // Multi-step equations: "3 × 2 + 5 = 6 + 5 = 11"
+    /(\d+(?:\s*[\*×\/÷\+\-]\s*\d+)+\s*=\s*\d+(?:\s*[\*×\/÷\+\-]\s*\d+)*\s*=\s*)(\d+(?:\.\d+)?)/g,
+    // Complex operations: "2*3*4 = 24"
     /(\d+(?:\s*[\*×\/÷\+\-]\s*\d+)+\s*=\s*)(\d+(?:\.\d+)?)/g,
-    // Catch simple operations with results (e.g., "5 + 3 = 8")
-    /(\d+\s*[\*×\/÷\+\-]\s*\d+\s*=\s*)(\d+(?:\.\d+)?)/g
+    // Simple operations: "5 + 3 = 8"
+    /(\d+\s*[\*×\/÷\+\-]\s*\d+\s*=\s*)(\d+(?:\.\d+)?)/g,
+    // Just equals sign followed by number at end of line
+    /(\s*=\s*)(\d+(?:\.\d+)?)(?=\s*$|\s*\.|\s*,)/gm
   ];
   
   let masked = s;
@@ -33,7 +46,9 @@ function maskDigits(s: string) {
 function Section({ title, text }: { title: string; text: string }) {
   const resolveText = useResolveText();
   if (!text) return null;
-  const content = resolveText(text);
+  // Apply masking to ALL sections to prevent answer leakage
+  const maskedText = maskDigits(text);
+  const content = resolveText(maskedText);
   return (
     <div className="mt-3 first:mt-0">
       <div className="font-medium">{title}</div>

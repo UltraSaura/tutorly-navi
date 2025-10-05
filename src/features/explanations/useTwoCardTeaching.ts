@@ -44,12 +44,26 @@ function evaluateArithmetic(expression: string): number {
   return parseFloat(expr);
 }
 
-// Helper function to generate step-by-step solution
+// Helper function to generate distinctly different example numbers
+function generateDifferentNumbers(n1: number, n2: number): { ex1: number; ex2: number } {
+  // If both single digit, use double digit
+  if (n1 < 10 && n2 < 10) {
+    return { ex1: n1 * 2 + 3, ex2: n2 * 2 + 2 };
+  }
+  // If any double digit, use single digit
+  if (n1 >= 10 || n2 >= 10) {
+    return { ex1: Math.max(2, Math.floor(n1 / 3) + 2), ex2: Math.max(2, Math.floor(n2 / 2) + 1) };
+  }
+  // Default: shift by at least 5
+  return { ex1: n1 + 7, ex2: n2 + 5 };
+}
+
+// Helper function to generate step-by-step solution WITHOUT revealing final answer
 function generateSteps(expression: string, isFrench: boolean): string {
   const steps = [];
   let expr = expression.replace(/\s/g, '');
   
-  // Track each step of evaluation
+  // Track each step of evaluation but mask final result
   const originalExpr = expr;
   
   // First, handle multiplication and division
@@ -60,18 +74,21 @@ function generateSteps(expression: string, isFrench: boolean): string {
     if (multMatch) {
       const [match, n1, op, n2] = multMatch;
       const result = parseInt(n1) * parseInt(n2);
+      // Show intermediate steps but mask if it's getting close to final
+      const showResult = expr.replace(match, String(result)).match(/\d+[\+\-\*×\/÷]\d+/);
       steps.push(isFrench ? 
-        `${n1} × ${n2} = ${result}` :
-        `${n1} × ${n2} = ${result}`);
+        `${n1} × ${n2} = ${showResult ? result : '___'}` :
+        `${n1} × ${n2} = ${showResult ? result : '___'}`);
       expr = expr.replace(match, String(result));
     }
     
     if (divMatch && (!multMatch || expr.indexOf(divMatch[0]) < expr.indexOf(multMatch[0]))) {
       const [match, n1, op, n2] = divMatch;
       const result = parseInt(n1) / parseInt(n2);
+      const showResult = expr.replace(match, String(result)).match(/\d+[\+\-\*×\/÷]\d+/);
       steps.push(isFrench ? 
-        `${n1} ÷ ${n2} = ${result}` :
-        `${n1} ÷ ${n2} = ${result}`);
+        `${n1} ÷ ${n2} = ${showResult ? result : '___'}` :
+        `${n1} ÷ ${n2} = ${showResult ? result : '___'}`);
       expr = expr.replace(match, String(result));
     }
   }
@@ -84,18 +101,20 @@ function generateSteps(expression: string, isFrench: boolean): string {
     if (addMatch && (!subMatch || expr.indexOf(addMatch[0]) < expr.indexOf(subMatch[0]))) {
       const [match, n1, op, n2] = addMatch;
       const result = parseInt(n1) + parseInt(n2);
+      const showResult = expr.replace(match, String(result)).match(/\d+[\+\-]/);
       steps.push(isFrench ? 
-        `${n1} + ${n2} = ${result}` :
-        `${n1} + ${n2} = ${result}`);
+        `${n1} + ${n2} = ${showResult ? result : '___'}` :
+        `${n1} + ${n2} = ${showResult ? result : '___'}`);
       expr = expr.replace(match, String(result));
     }
     
     if (subMatch) {
       const [match, n1, op, n2] = subMatch;
       const result = parseInt(n1) - parseInt(n2);
+      const showResult = expr.replace(match, String(result)).match(/\d+[\-]/);
       steps.push(isFrench ? 
-        `${n1} - ${n2} = ${result}` :
-        `${n1} - ${n2} = ${result}`);
+        `${n1} - ${n2} = ${showResult ? result : '___'}` :
+        `${n1} - ${n2} = ${showResult ? result : '___'}`);
       expr = expr.replace(match, String(result));
     }
   }
@@ -122,6 +141,9 @@ function generateSimpleArithmeticExplanation(exercise: string, language: string)
     let example = '';
     let strategy = '';
     
+    // Generate different numbers for examples
+    const { ex1, ex2 } = generateDifferentNumbers(n1, n2);
+    
     if (operator === '+') {
       operation = isFrench ? 'addition' : 'addition';
       result = n1 + n2;
@@ -129,8 +151,8 @@ function generateSimpleArithmeticExplanation(exercise: string, language: string)
         `L'addition consiste à combiner deux nombres pour obtenir leur somme totale.` :
         `Addition means combining two numbers to get their total sum.`;
       example = isFrench ? 
-        `Par exemple: ${n1 + 1} + ${n2 + 1} = ${(n1 + 1) + (n2 + 1)}` :
-        `For example: ${n1 + 1} + ${n2 + 1} = ${(n1 + 1) + (n2 + 1)}`;
+        `Par exemple: ${ex1} + ${ex2} = ___` :
+        `For example: ${ex1} + ${ex2} = ___`;
       strategy = isFrench ?
         `Comptez en partant du premier nombre et ajoutez le second nombre.` :
         `Start with the first number and count up by the second number.`;
@@ -141,8 +163,8 @@ function generateSimpleArithmeticExplanation(exercise: string, language: string)
         `La soustraction consiste à enlever un nombre d'un autre.` :
         `Subtraction means taking one number away from another.`;
       example = isFrench ?
-        `Par exemple: ${n1 + 1} - ${n2} = ${(n1 + 1) - n2}` :
-        `For example: ${n1 + 1} - ${n2} = ${(n1 + 1) - n2}`;
+        `Par exemple: ${ex1} - ${ex2} = ___` :
+        `For example: ${ex1} - ${ex2} = ___`;
       strategy = isFrench ?
         `Commencez par le premier nombre et comptez en arrière.` :
         `Start with the first number and count backwards.`;
@@ -153,11 +175,11 @@ function generateSimpleArithmeticExplanation(exercise: string, language: string)
         `La multiplication consiste à additionner un nombre plusieurs fois.` :
         `Multiplication means adding a number multiple times.`;
       example = isFrench ?
-        `Par exemple: ${n1} × ${n2 + 1} = ${n1 * (n2 + 1)}` :
-        `For example: ${n1} × ${n2 + 1} = ${n1 * (n2 + 1)}`;
+        `Par exemple: ${ex1} × ${ex2} = ___` :
+        `For example: ${ex1} × ${ex2} = ___`;
       strategy = isFrench ?
-        `Additionnez ${n1} un total de ${n2} fois: ${Array(n2).fill(n1).join(' + ')} = ${result}` :
-        `Add ${n1} a total of ${n2} times: ${Array(n2).fill(n1).join(' + ')} = ${result}`;
+        `Additionnez le premier nombre plusieurs fois.` :
+        `Add the first number multiple times.`;
     } else if (operator === '/' || operator === '÷') {
       operation = isFrench ? 'division' : 'division';
       result = n1 / n2;
@@ -165,11 +187,11 @@ function generateSimpleArithmeticExplanation(exercise: string, language: string)
         `La division consiste à partager un nombre en groupes égaux.` :
         `Division means splitting a number into equal groups.`;
       example = isFrench ?
-        `Par exemple: ${n1 * 2} ÷ ${n2} = ${(n1 * 2) / n2}` :
-        `For example: ${n1 * 2} ÷ ${n2} = ${(n1 * 2) / n2}`;
+        `Par exemple: ${ex1} ÷ ${ex2} = ___` :
+        `For example: ${ex1} ÷ ${ex2} = ___`;
       strategy = isFrench ?
-        `Combien de fois ${n2} rentre-t-il dans ${n1}?` :
-        `How many times does ${n2} go into ${n1}?`;
+        `Divisez le premier nombre par le second.` :
+        `Divide the first number by the second.`;
     }
     
     return {
@@ -207,12 +229,12 @@ function generateSimpleArithmeticExplanation(exercise: string, language: string)
     
     if (isFrench) {
       concept = `Ordre des opérations (PEMDAS): Multiplication et division d'abord, puis addition et soustraction de gauche à droite.`;
-      example = `Autre exemple: 3 × 2 + 5 = 6 + 5 = 11`;
-      strategy = `1. Identifiez toutes les opérations\n2. Faites d'abord × et ÷ (de gauche à droite)\n3. Puis + et - (de gauche à droite)\n4. Étapes: ${steps}`;
+      example = `Autre exemple: 8 × 3 - 4 = ___ (pensez d'abord à la multiplication)`;
+      strategy = `1. Identifiez toutes les opérations\n2. Faites d'abord × et ÷ (de gauche à droite)\n3. Puis + et - (de gauche à droite)\n4. Vérifiez chaque étape`;
     } else {
       concept = `Order of operations (PEMDAS): Multiply and divide first, then add and subtract from left to right.`;
-      example = `Another example: 3 × 2 + 5 = 6 + 5 = 11`;
-      strategy = `1. Identify all operations\n2. Do × and ÷ first (left to right)\n3. Then + and - (left to right)\n4. Steps: ${steps}`;
+      example = `Another example: 8 × 3 - 4 = ___ (think multiplication first)`;
+      strategy = `1. Identify all operations\n2. Do × and ÷ first (left to right)\n3. Then + and - (left to right)\n4. Check each step`;
     }
     
     return {
@@ -364,20 +386,27 @@ Please provide a clear educational explanation with these EXACT sections and emo
 💡 Concept
 Explain the key concept needed to solve this problem.
 
-🔍 Example
-Show a similar example with different numbers.
+🔍 Example (CRITICAL RULES)
+1. Use numbers with DIFFERENT MAGNITUDE than the original exercise
+   - If original uses single digits (1-9), use double digits (10-99)
+   - If original uses double digits, use single digits
+2. NEVER show the final answer - always end with = ___
+3. The numbers should be at least 5 units away from original numbers
+4. Example: If exercise is "5 + 3", write "12 + 7 = ___" NOT "6 + 4 = 8"
 
 ☑️ Strategy
-Explain the step-by-step approach to solve this type of problem.
+Explain the step-by-step approach. NEVER reveal the final answer to the original exercise. Use "your result" or "___" instead of the actual answer.
 
 ⚠️ Pitfall
 Common mistakes students make with this type of problem.
 
 🎯 Check yourself
-How to verify the answer is correct.
+How to verify the answer is correct WITHOUT revealing the actual answer.
 
 📈 Practice Tip
 Suggestion for improving at this type of problem.
+
+CRITICAL: Never reveal the final answer to {{exercise_content}} in ANY section. Use ___ or "your result" instead.
 
 Write all content in {{response_language}}. Keep the section headers in English with emojis exactly as shown above. Return plain text only.`,
           tags: ['fallback', 'explanation'],
@@ -433,20 +462,22 @@ ${exercise_content}
 💡 Concept
 [Key concept]
 
-🔍 Example  
-[Different example]
+🔍 Example (CRITICAL: Use completely different numbers, at least 5 units away. If original uses single digits, use double digits. NEVER show final answer, use = ___ instead)
+[Different example with = ___]
 
 ☑️ Strategy
-[Step by step]
+[Step by step approach WITHOUT revealing the final answer to the original exercise]
 
 ⚠️ Pitfall
 [Common mistake]
 
 🎯 Check yourself
-[Verification]
+[How to verify WITHOUT revealing the answer]
 
 📈 Practice Tip
-[Improvement tip]`;
+[Improvement tip]
+
+CRITICAL: NEVER reveal the final answer to "${exercise_content}" in ANY section. Use ___ instead.`;
 
           const { data: fallbackData, error: fallbackError } = await import('@/services/chatService').then(module => 
             module.sendMessageToAI(fallbackPrompt, [], 'gpt-4o-mini', response_language === 'French' ? 'fr' : 'en')
