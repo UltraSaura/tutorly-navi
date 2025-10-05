@@ -72,9 +72,10 @@ export function MobileBottomTabs() {
                 <NavLink
                   key={item.title}
                   to={item.url}
+                  style={isActiveTab ? { backgroundColor: '#253C7B' } : undefined}
                   className={`flex flex-col items-center justify-center h-12 w-16 rounded-lg transition-colors ${
                     isActiveTab 
-                      ? "bg-primary/10 text-primary" 
+                      ? "text-white" 
                       : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                   }`}
                 >
@@ -90,7 +91,12 @@ export function MobileBottomTabs() {
                 variant="ghost"
                 size="sm"
                 onClick={() => handleTabClick(item)}
-                className="flex flex-col items-center justify-center h-12 w-16 rounded-lg p-0 text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                style={isAccountOpen ? { backgroundColor: '#253C7B' } : undefined}
+                className={`flex flex-col items-center justify-center h-12 w-16 rounded-lg p-0 ${
+                  isAccountOpen 
+                    ? "text-white hover:text-white" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                }`}
               >
                 <item.icon className="h-5 w-5 mb-1" />
                 <span className="text-xs font-medium">{t(item.title)}</span>
