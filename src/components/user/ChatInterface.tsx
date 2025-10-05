@@ -9,8 +9,6 @@ import { useExercises } from '@/hooks/useExercises';
 import { useAdmin } from '@/context/AdminContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useOverlay } from '@/context/OverlayContext';
-import { detectMathWithAI } from '@/services/aiMathDetection';
-import { processAIDetectedExercise, processMultipleAIExercises } from '@/utils/exerciseProcessor';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -68,89 +66,8 @@ const ChatInterface = () => {
   const activeSubjects = getActiveSubjects();
   const defaultSubject = activeSubjects.length > 0 ? activeSubjects[0].id : undefined;
   
-  useEffect(() => {
-    if (messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-
-      // Skip if we've already processed this message
-      if (processedMessageIds.has(lastMessage.id)) {
-        return;
-      }
-      
-      if (lastMessage.role === 'user') {
-        // Use AI-powered math detection
-        (async () => {
-          try {
-            const mathDetection = await detectMathWithAI(lastMessage.content, selectedModelId, language);
-            console.log('AI Math Detection Result:', mathDetection);
-            
-            if (mathDetection.isMath && mathDetection.confidence > 50) {
-              if (mathDetection.isMultiple) {
-                console.log('Processing multiple exercises from AI detection');
-                processMultipleAIExercises(
-                  lastMessage.content, 
-                  mathDetection, 
-                  exercises, 
-                  processedMessageIds, 
-                  language,
-                  selectedModelId
-                ).then(newExercises => {
-                  if (newExercises.length > 0) {
-                    addExercises(newExercises);
-                  }
-                });
-              } else {
-                console.log('Processing single exercise from AI detection');
-                processAIDetectedExercise(
-                  lastMessage.content,
-                  mathDetection,
-                  exercises,
-                  processedMessageIds,
-                  language,
-                  selectedModelId
-                ).then(result => {
-                  if (result) {
-                    if (result.isUpdate) {
-                      // Update existing exercise
-                      const updatedExercises = exercises.map(ex => 
-                        ex.id === result.exercise.id ? result.exercise : ex
-                      );
-                      addExercises(updatedExercises);
-                    } else {
-                      // Add new exercise
-                      addExercises([result.exercise]);
-                    }
-                  }
-                });
-              }
-              
-              // Mark this message as processed
-              setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
-            }
-          } catch (error) {
-            console.error('Error in AI math detection:', error);
-          }
-        })();
-      } else if (lastMessage.role === 'assistant') {
-        // Find the most recent user message to link with this AI response
-        const recentUserMsgIndex = messages.slice(0, messages.length - 1).reverse().findIndex(msg => msg.role === 'user');
-        if (recentUserMsgIndex !== -1) {
-          const recentUserMsg = messages[messages.length - 2 - recentUserMsgIndex];
-          const userMsgId = recentUserMsg.id;
-
-          // Check if the user message was a homework submission
-          if (processedMessageIds.has(userMsgId)) {
-            // Link this AI response to the exercise created from the user message
-            console.log('Linking AI response to exercise from user message:', recentUserMsg.content);
-            linkAIResponseToExercise(recentUserMsg.content, lastMessage);
-          }
-        }
-
-        // Mark this message as processed
-        setProcessedMessageIds(prev => new Set([...prev, lastMessage.id]));
-      }
-    }
-  }, [messages, processedMessageIds, selectedModelId, language]);
+  // Simplified: AI now handles all detection and processing directly
+  // No need for complex client-side math detection anymore
 
   // Keyboard change handler
   const handleKeyboardChange = (visible: boolean, height?: number) => {

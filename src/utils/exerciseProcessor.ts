@@ -3,7 +3,17 @@ import { toast } from 'sonner';
 import { evaluateHomework } from '@/services/homeworkGrading';
 import { extractHomeworkFromMessage } from '@/utils/homework';
 import { hasMultipleExercises, parseMultipleExercises } from '@/utils/homework/multiExerciseParser';
-import { MathDetectionResult } from '@/services/aiMathDetection';
+
+// Simple type definition for backwards compatibility
+export interface MathDetectionResult {
+  isMath: boolean;
+  confidence: number;
+  question?: string;
+  answer?: string;
+  hasAnswer: boolean;
+  isMultiple?: boolean;
+  exercises: Array<{ question: string; answer?: string; index?: number }>;
+}
 
 /**
  * Process exercise from AI-detected math content

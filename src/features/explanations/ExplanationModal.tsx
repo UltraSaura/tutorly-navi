@@ -4,9 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showXpToast } from '@/components/game/XpToast';
 import { TwoCards } from './TwoCards';
-import { useTwoCardTeaching } from './useTwoCardTeaching';
+import { useTwoCardTeaching, TeachingSections } from './useTwoCardTeaching';
 import { useLanguage } from '@/context/SimpleLanguageContext';
-import type { TeachingSections } from './twoCardParser';
 
 interface ExplanationModalProps {
   open: boolean;

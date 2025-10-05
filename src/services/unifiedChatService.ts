@@ -1,6 +1,5 @@
 import { Message } from '@/types/chat';
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from 'sonner';
 
 export interface UnifiedChatResponse {
   content: string;
@@ -12,7 +11,8 @@ export interface UnifiedChatResponse {
 }
 
 /**
- * Unified chat service that handles math detection, education, and grading in one AI call
+ * Unified chat service - simplified to just forward to AI
+ * AI now handles all math detection, grading, and formatting
  */
 export async function sendUnifiedMessage(
   inputMessage: string,
@@ -23,7 +23,7 @@ export async function sendUnifiedMessage(
   userContext?: any
 ): Promise<{ data: UnifiedChatResponse | null; error: any }> {
   try {
-    console.log('[UnifiedChatService] Sending unified message:', { inputMessage, selectedModelId });
+    console.log('[UnifiedChatService] Sending message to AI:', { inputMessage, selectedModelId });
 
     // Format message history for AI
     const messageHistory = messages
@@ -33,7 +33,7 @@ export async function sendUnifiedMessage(
         content: msg.content
       }));
 
-    // Call the AI with unified prompt template (unified_math_chat usage type)
+    // Just forward to AI - it handles everything
     const { data, error } = await supabase.functions.invoke('ai-chat', {
       body: {
         message: inputMessage,
@@ -42,7 +42,7 @@ export async function sendUnifiedMessage(
         language,
         customPrompt,
         userContext,
-        isUnified: true // Flag to use unified_math_chat template
+        isUnified: true
       },
     });
 
@@ -56,65 +56,28 @@ export async function sendUnifiedMessage(
       return { data: null, error: 'No content received from AI service' };
     }
 
-    // Parse the unified response
-    const unifiedResponse = parseUnifiedResponse(data.content, inputMessage);
+    // Simple parsing - AI is smart enough to structure its own response
+    const response: UnifiedChatResponse = {
+      content: data.content,
+      isMath: !data.content.includes('NOT_MATH'),
+      isCorrect: /\bCORRECT\b/i.test(data.content) ? true : (/\bINCORRECT\b/i.test(data.content) ? false : undefined),
+      needsRetry: /\bINCORRECT\b/i.test(data.content),
+      hasAnswer: /=\s*[^=]*$/.test(inputMessage),
+      confidence: data.content.includes('NOT_MATH') ? 95 : 85
+    };
     
-    console.log('[UnifiedChatService] Parsed unified response:', unifiedResponse);
+    console.log('[UnifiedChatService] Response parsed:', response);
     
-    return { data: unifiedResponse, error: null };
+    return { data: response, error: null };
 
   } catch (error) {
-    console.error('[UnifiedChatService] Error in unified chat:', error);
+    console.error('[UnifiedChatService] Error:', error);
     return { data: null, error };
   }
 }
 
 /**
- * Parse the unified AI response to extract all necessary information
- */
-function parseUnifiedResponse(content: string, originalMessage: string): UnifiedChatResponse {
-  console.log('[UnifiedChatService] Parsing response:', content);
-
-  // Check if it's not math
-  const isNotMath = content.includes('NOT_MATH');
-  
-  // Check for grading markers in the response
-  const hasGradeMarker = /\b(CORRECT|INCORRECT)\b/i.test(content);
-  const isCorrect = /\bCORRECT\b/i.test(content);
-  const isIncorrect = /\bINCORRECT\b/i.test(content);
-  
-  // Check if user provided an answer (looking for = or answer patterns)
-  const hasAnswer = /=\s*[^=]*$/.test(originalMessage) || 
-                   /answer[:\s]+/i.test(originalMessage) ||
-                   /solution[:\s]+/i.test(originalMessage) ||
-                   /result[:\s]+/i.test(originalMessage);
-
-  // Determine confidence based on content analysis
-  let confidence = 50;
-  if (isNotMath) {
-    confidence = 95;
-  } else if (hasGradeMarker) {
-    confidence = 90;
-  } else {
-    // Math content without grading
-    confidence = 85;
-  }
-
-  const result: UnifiedChatResponse = {
-    content,
-    isMath: !isNotMath,
-    isCorrect: hasGradeMarker ? isCorrect : undefined,
-    needsRetry: hasGradeMarker ? isIncorrect : false,
-    hasAnswer,
-    confidence
-  };
-
-  console.log('[UnifiedChatService] Unified response result:', result);
-  return result;
-}
-
-/**
- * Generate fallback response when unified service fails
+ * Generate fallback response when service fails
  */
 export function generateUnifiedFallback(message: string, language: string = 'en'): UnifiedChatResponse {
   const fallbackContent = language === 'fr'

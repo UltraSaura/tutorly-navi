@@ -5,8 +5,9 @@ export async function callOpenAI(
   history: any[], 
   userMessage: string, 
   model: string, 
-  isExercise: boolean = false
-): Promise<string> {
+  isExercise: boolean = false,
+  requestExplanation: boolean = false
+): Promise<any> {
   const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
   
   if (!openAIApiKey) {
@@ -32,16 +33,8 @@ export async function callOpenAI(
     }
   ];
   
-  // If this is likely an exercise, add a formatting instruction
-  if (isExercise) {
-    messages.push({
-      role: 'system',
-      content: 'Format your response with "**Problem:**" at the beginning followed by the problem statement, and then "**Guidance:**" followed by your explanation.'
-    });
-  }
-  
   try {
-    console.log(`Calling OpenAI API with model: ${actualModel}`);
+    console.log(`Calling OpenAI API with model: ${actualModel}, requestExplanation: ${requestExplanation}`);
     
     // Prepare request body based on model type
     const requestBody: any = {
@@ -49,10 +42,65 @@ export async function callOpenAI(
       messages: messages,
     };
     
+    // Add tool calling for explanation requests
+    if (requestExplanation) {
+      requestBody.tools = [{
+        type: "function",
+        function: {
+          name: "generate_math_explanation",
+          description: "Generate structured math explanation with distinct examples",
+          parameters: {
+            type: "object",
+            properties: {
+              isMath: { 
+                type: "boolean",
+                description: "Whether this is math-related content"
+              },
+              exercise: { 
+                type: "string",
+                description: "The original exercise statement"
+              },
+              sections: {
+                type: "object",
+                properties: {
+                  concept: { 
+                    type: "string",
+                    description: "Core mathematical concept explanation"
+                  },
+                  example: { 
+                    type: "string",
+                    description: "Example with DIFFERENT numbers (different magnitude, at least 5 units away), NEVER revealing final answer (use ___)"
+                  },
+                  strategy: { 
+                    type: "string",
+                    description: "Step-by-step approach WITHOUT revealing the actual answer"
+                  },
+                  pitfall: { 
+                    type: "string",
+                    description: "Common mistakes students make"
+                  },
+                  check: { 
+                    type: "string",
+                    description: "How to verify the answer WITHOUT revealing it"
+                  },
+                  practice: { 
+                    type: "string",
+                    description: "Suggestion for improving at this topic"
+                  }
+                },
+                required: ["concept", "example", "strategy", "pitfall", "check", "practice"]
+              }
+            },
+            required: ["isMath", "exercise", "sections"]
+          }
+        }
+      }];
+      requestBody.tool_choice = { type: "function", function: { name: "generate_math_explanation" }};
+    }
+    
     // Use different parameters for newer vs legacy models
     if (isNewerModel) {
       requestBody.max_completion_tokens = 800;
-      // Newer models don't support temperature parameter
     } else {
       requestBody.max_tokens = 800;
       requestBody.temperature = 0.7;
@@ -72,7 +120,6 @@ export async function callOpenAI(
       const errorMessage = errorData.error?.message || 'Unknown error';
       console.error(`OpenAI API error (${response.status}): ${errorMessage}`);
       
-      // For grading requests, return a simple INCORRECT to fail gracefully
       if (userMessage.startsWith('Grade this answer')) {
         console.log('Falling back to INCORRECT for failed grading request');
         return "INCORRECT";
@@ -82,6 +129,15 @@ export async function callOpenAI(
     }
     
     const data = await response.json();
+    
+    // Handle tool calling response
+    if (requestExplanation && data.choices?.[0]?.message?.tool_calls) {
+      return {
+        tool_calls: data.choices[0].message.tool_calls,
+        content: data.choices[0].message.content
+      };
+    }
+    
     if (!data.choices || !data.choices[0]?.message?.content) {
       console.error('Invalid response format from OpenAI:', data);
       throw new Error('Invalid response received from OpenAI');
@@ -91,7 +147,6 @@ export async function callOpenAI(
   } catch (error) {
     console.error('Error in OpenAI API call:', error);
     
-    // For grading requests, return a simple INCORRECT to fail gracefully
     if (userMessage.startsWith('Grade this answer')) {
       console.log('Falling back to INCORRECT after error for grading request');
       return "INCORRECT";

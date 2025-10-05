@@ -112,6 +112,7 @@ serve(async (req) => {
       history = [], 
       isGradingRequest = false, 
       isUnified = false,
+      requestExplanation = false,
       language = 'en',
       customPrompt,
       userContext
@@ -245,7 +246,8 @@ serve(async (req) => {
             formattedHistory, 
             message, 
             modelConfig.model, 
-            isExercise
+            isExercise,
+            requestExplanation
           );
           break;
         case 'Anthropic':
