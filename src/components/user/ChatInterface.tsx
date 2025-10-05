@@ -15,6 +15,7 @@ import { useLanguage } from '@/context/SimpleLanguageContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { FileText, Image, Camera, Upload } from 'lucide-react';
+import CalculationStatus from './chat/CalculationStatus';
 
 const ChatInterface = () => {
   const { t, language } = useLanguage();
@@ -32,7 +33,9 @@ const ChatInterface = () => {
     handleSendMessage,
     handleFileUpload,
     handlePhotoUpload,
-    filteredMessages
+    filteredMessages,
+    // Add calculation state
+    calculationState
   } = useChat();
   const {
     exercises,
@@ -246,6 +249,13 @@ const ChatInterface = () => {
           toggleExerciseExpansion={toggleExerciseExpansion}
           onSubmitAnswer={submitAnswer}
           onClearExercises={clearExercises}
+        />
+        
+        {/* Add Calculation Status */}
+        <CalculationStatus
+          isProcessing={calculationState.isProcessing}
+          status={calculationState.currentStep}
+          message={calculationState.message}
         />
       </div>
 

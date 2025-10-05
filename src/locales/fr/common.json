@@ -59,5 +59,13 @@
     "password": "Mot de passe", 
     "parentRegistration": "Inscription des parents",
     "parentInformation": "Informations sur les parents"
+  },
+  "calculation": {
+    "detecting": "Détection du contenu mathématique...",
+    "analyzing": "Analyse du problème...",
+    "solving": "Résolution du calcul...",
+    "grading": "Évaluation de votre réponse...",
+    "processing": "Traitement en cours...",
+    "complete": "Terminé !"
   }
 }

@@ -7,6 +7,12 @@ import { sendUnifiedMessage, generateUnifiedFallback } from '@/services/unifiedC
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useUserContext } from './useUserContext';
 
+interface CalculationState {
+  isProcessing: boolean;
+  currentStep: 'detecting' | 'analyzing' | 'solving' | 'grading' | 'complete';
+  message?: string;
+}
+
 export const useChat = () => {
   const { selectedModelId, getAvailableModels, activePromptTemplate } = useAdmin();
   const { language, t } = useLanguage();
@@ -25,6 +31,29 @@ export const useChat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [lastResponse, setLastResponse] = useState<any>(null);
 
+  // Add calculation state
+  const [calculationState, setCalculationState] = useState<CalculationState>({
+    isProcessing: false,
+    currentStep: 'detecting'
+  });
+
+  const updateCalculationStatus = (
+    step: CalculationState['currentStep'], 
+    message?: string
+  ) => {
+    console.log('[useChat] updateCalculationStatus called with:', { step, message });
+    setCalculationState({
+      isProcessing: step !== 'complete',
+      currentStep: step,
+      message
+    });
+    console.log('[useChat] calculationState updated to:', { 
+      isProcessing: step !== 'complete', 
+      currentStep: step, 
+      message 
+    });
+  };
+  
   // Debug logging for input state changes
   const debugSetInputMessage = (message: string) => {
     console.log('[DEBUG] setInputMessage called with:', message);
@@ -190,6 +219,9 @@ export const useChat = () => {
     addMessage,
     handleSendMessage,
     handleFileUpload: handleDocumentUpload,
-    handlePhotoUpload: handleImageUpload
+    handlePhotoUpload: handleImageUpload,
+    // Add calculation state back to return
+    calculationState,
+    updateCalculationStatus
   };
 };
