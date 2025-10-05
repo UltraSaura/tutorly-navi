@@ -109,7 +109,7 @@ export const useChat = () => {
     setIsLoading(true);
     
     try {
-      console.log('[DEBUG] Sending unified message to AI:', messageToSend);
+      console.log('[useChat] Sending unified message to AI:', messageToSend);
       const { data, error } = await sendUnifiedMessage(
         messageToSend, 
         messages, 
@@ -119,12 +119,25 @@ export const useChat = () => {
         userContext
       );
       
+      console.log('[useChat] Response received:', { 
+        hasData: !!data, 
+        hasError: !!error,
+        data: data ? { isMath: data.isMath, contentLength: data.content?.length } : null
+      });
+      
       // Store the full response for potential exercise handling
       if (data) {
+        console.log('[useChat] Processing response with data:', {
+          isMath: data.isMath,
+          includesNotMath: data.content.includes('NOT_MATH'),
+          contentPreview: data.content.substring(0, 100)
+        });
+        
         setLastResponse(data);
         
         // Check if this is a NOT_MATH response
         if (!data.isMath || data.content.includes('NOT_MATH')) {
+          console.log('[useChat] Detected NOT_MATH response, showing redirect');
           const redirectMessage = language === 'fr' 
             ? "Cette question ne semble pas être liée aux mathématiques. Cette interface est dédiée uniquement aux questions mathématiques. Pour les questions générales, veuillez utiliser la page de chat général."
             : "This question doesn't appear to be math-related. This interface is dedicated to mathematics questions only. For general questions, please use the general chat page.";
@@ -136,8 +149,12 @@ export const useChat = () => {
             timestamp: new Date(),
           };
           
-          setMessages(prev => [...prev, aiResponse]);
+          setMessages(prev => {
+            console.log('[useChat] Adding redirect message to chat');
+            return [...prev, aiResponse];
+          });
         } else {
+          console.log('[useChat] Math response detected, adding to messages');
           // Add AI response to messages - now includes automatic grading if answer provided
           const aiResponse: Message = {
             id: (Date.now() + 1).toString(),
@@ -146,18 +163,24 @@ export const useChat = () => {
             timestamp: new Date(),
           };
           
-          console.log('[DEBUG] Unified AI response created:', { 
+          console.log('[useChat] Unified AI response created:', { 
             isMath: data.isMath, 
             hasAnswer: data.hasAnswer,
             isCorrect: data.isCorrect,
             confidence: data.confidence,
             selectedModelId, 
+            messageId: aiResponse.id,
             content: data.content.substring(0, 100) 
           });
           
-          setMessages(prev => [...prev, aiResponse]);
+          setMessages(prev => {
+            const updated = [...prev, aiResponse];
+            console.log('[useChat] Messages updated, new count:', updated.length);
+            return updated;
+          });
         }
       } else if (error) {
+        console.error('[useChat] Error in response:', error);
         // Use unified fallback response if the API call fails
         const fallbackResponse = generateUnifiedFallback(messageToSend, language);
         const aiResponse: Message = {
@@ -167,8 +190,11 @@ export const useChat = () => {
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, aiResponse]);
+      } else {
+        console.error('[useChat] No data and no error - unexpected state');
       }
     } finally {
+      console.log('[useChat] Request complete, setting isLoading to false');
       setIsLoading(false);
     }
   };

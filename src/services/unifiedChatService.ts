@@ -33,6 +33,14 @@ export async function sendUnifiedMessage(
         content: msg.content
       }));
 
+    console.log('[UnifiedChatService] Calling ai-chat with body:', {
+      message: inputMessage,
+      modelId: selectedModelId,
+      historyLength: messageHistory.length,
+      language,
+      isUnified: true
+    });
+
     // Just forward to AI - it handles everything
     const { data, error } = await supabase.functions.invoke('ai-chat', {
       body: {
@@ -46,10 +54,24 @@ export async function sendUnifiedMessage(
       },
     });
 
+    console.log('[UnifiedChatService] Raw response from ai-chat:', { data, error, hasData: !!data, hasError: !!error });
+
     if (error) {
       console.error('[UnifiedChatService] AI service error:', error);
       return { data: null, error };
     }
+
+    if (!data) {
+      console.error('[UnifiedChatService] No data in response');
+      return { data: null, error: 'No data received from AI service' };
+    }
+
+    console.log('[UnifiedChatService] Data structure:', {
+      hasContent: !!data?.content,
+      contentType: typeof data?.content,
+      contentLength: data?.content?.length,
+      dataKeys: Object.keys(data)
+    });
 
     if (!data?.content) {
       console.error('[UnifiedChatService] No content in response:', data);
@@ -66,12 +88,17 @@ export async function sendUnifiedMessage(
       confidence: data.content.includes('NOT_MATH') ? 95 : 85
     };
     
-    console.log('[UnifiedChatService] Response parsed:', response);
+    console.log('[UnifiedChatService] Response parsed successfully:', {
+      isMath: response.isMath,
+      isCorrect: response.isCorrect,
+      hasAnswer: response.hasAnswer,
+      contentPreview: response.content.substring(0, 200)
+    });
     
     return { data: response, error: null };
 
   } catch (error) {
-    console.error('[UnifiedChatService] Error:', error);
+    console.error('[UnifiedChatService] Caught error:', error);
     return { data: null, error };
   }
 }
