@@ -42,10 +42,12 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
   if (!latestUserMessage && !isLoading) {
     console.log('[AIResponse] No user message and not loading, showing placeholder');
     return (
-      <div className="p-6">
+      <div className="p-6" style={{ backgroundColor: '#f0f9ff', border: '2px solid #3b82f6', borderRadius: '8px', margin: '20px' }}>
         <div className="max-w-6xl mx-auto">
-          <div className="text-center text-neutral-muted">
-            <p>Send a math problem to get started!</p>
+          <div className="text-center" style={{ fontSize: '20px', color: '#1e40af', fontWeight: 'bold' }}>
+            <p>🔢 AI Response Component is Active! 🔢</p>
+            <p style={{ fontSize: '16px', marginTop: '10px' }}>Send a math problem like "3×5=77" to get started!</p>
+            <p style={{ fontSize: '14px', marginTop: '10px', color: '#6b7280' }}>Messages in array: {messages.length}</p>
           </div>
         </div>
       </div>
@@ -54,20 +56,14 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="p-6" style={{ backgroundColor: '#fef3c7', border: '2px solid #f59e0b', borderRadius: '8px', margin: '20px' }}>
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="p-4 rounded-card border bg-brand-tint border-brand-primary/20 animate-pulse">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-10 h-10 rounded-button bg-neutral-surface animate-pulse" />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-2 h-2 rounded-full bg-brand-primary/40 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-brand-primary/40 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-brand-primary/40 animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                  </div>
-                </div>
-              </div>
+          <div className="text-center" style={{ fontSize: '18px', color: '#d97706' }}>
+            <p style={{ fontSize: '24px' }}>⏳ Loading AI Response...</p>
+            <div className="flex justify-center items-center gap-2 mt-4">
+              <div className="w-3 h-3 rounded-full bg-amber-600 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-3 h-3 rounded-full bg-amber-600 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-3 h-3 rounded-full bg-amber-600 animate-bounce" style={{ animationDelay: '300ms' }}></div>
             </div>
           </div>
         </div>
@@ -151,9 +147,14 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
 
   const correctAnswer = isIncorrect ? extractCorrectAnswer() : null;
 
+  console.log('[AIResponse] Rendering full response card with content:', content.substring(0, 100));
+  
   return (
-    <div className="p-6">
+    <div className="p-6" style={{ backgroundColor: '#f0fdf4', border: '3px dashed #22c55e', borderRadius: '12px', margin: '20px' }}>
       <div className="max-w-6xl mx-auto">
+        <h2 style={{ fontSize: '24px', color: '#16a34a', fontWeight: 'bold', marginBottom: '20px', textAlign: 'center' }}>
+          ✅ AI Response Component - Response Received!
+        </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Response Card - styled like ExerciseCard */}
           <div 
@@ -161,6 +162,7 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
               'p-4 rounded-card border transition-all duration-200 hover:shadow-md',
               getCardStyle()
             )}
+            style={{ minHeight: '200px', backgroundColor: isIncorrect ? '#fef2f2' : isCorrect ? '#f0fdf4' : '#f0f9ff' }}
           >
             <div className="flex items-start gap-3">
               {/* Math Icon */}
