@@ -171,15 +171,21 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
                 )}
                 
                 {/* User Answer Badge (if this is a grading response) */}
-                {isIncorrect && (
+                {isIncorrect && latestUserMessage && (
                   <div className="mb-3">
                     <Badge 
                       variant="secondary" 
-                      className="px-3 py-1 bg-neutral-bg text-neutral-muted flex items-center gap-1"
+                      className="px-3 py-1 bg-neutral-bg text-neutral-muted inline-flex items-center gap-1"
                     >
-                      <span>{t('exercise.yourAnswer')}:</span>
-                      <span className="font-semibold">
-                        {latestUserMessage ? latestUserMessage.content : ''}
+                      <span className="text-xs font-normal">{t('exercise.yourAnswer')}:</span>
+                      <span className="text-xs font-semibold text-neutral-text">
+                        {(() => {
+                          const processed = processMathContentForDisplay(latestUserMessage.content);
+                          if (processed.isMath) {
+                            return latestUserMessage.content; // Show raw for now
+                          }
+                          return latestUserMessage.content;
+                        })()}
                       </span>
                     </Badge>
                   </div>
@@ -205,24 +211,105 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
 
                 {/* Explanation Box */}
                 {cleanContent && (
-                  <div className="mb-3 p-3 bg-neutral-bg rounded-md border border-neutral-border">
-                    <div className="text-xs text-neutral-muted mb-1 font-medium uppercase tracking-wider">
+                  <div className="mb-3 p-4 bg-neutral-bg rounded-md border border-neutral-border">
+                    <div className="text-xs text-neutral-muted mb-2 font-medium uppercase tracking-wider">
                       {isCorrect ? 'Great work!' : isIncorrect ? 'Explanation' : 'Solution'}
                     </div>
-                    <div className="text-sm text-neutral-text">
+                    <div className="text-sm text-neutral-text space-y-2">
                       {(() => {
+                        // First, check if the entire content is a math expression
                         const processed = processMathContentForDisplay(cleanContent);
                         if (processed.isMath) {
-                          return <MathRenderer latex={processed.processed} inline={false} className="my-1" />;
+                          return (
+                            <div className="my-2">
+                              <MathRenderer 
+                                latex={processed.processed} 
+                                inline={false} 
+                                className="text-base"
+                              />
+                            </div>
+                          );
                         }
                         
-                        // Split and render line by line
-                        return cleanContent.split('\n').filter(line => line.trim()).map((line, index) => {
-                          const lineProcessed = processMathContentForDisplay(line);
-                          if (lineProcessed.isMath) {
-                            return <MathRenderer key={index} latex={lineProcessed.processed} inline={false} className="my-1" />;
+                        // Split content into paragraphs and sentences for better formatting
+                        const paragraphs = cleanContent.split(/\n\n+/);
+                        
+                        return paragraphs.map((paragraph, pIndex) => {
+                          // Check if this paragraph is a math expression
+                          const parProcessed = processMathContentForDisplay(paragraph);
+                          if (parProcessed.isMath) {
+                            return (
+                              <div key={pIndex} className="my-2">
+                                <MathRenderer 
+                                  latex={parProcessed.processed} 
+                                  inline={false} 
+                                  className="text-base"
+                                />
+                              </div>
+                            );
                           }
-                          return <p key={index} className="my-1">{line}</p>;
+                          
+                          // Split into lines for mixed content
+                          const lines = paragraph.split('\n').filter(line => line.trim());
+                          
+                          if (lines.length === 1) {
+                            // Single line paragraph
+                            const line = lines[0];
+                            // Check for inline math
+                            if (line.includes('$') || line.includes('=') || /\d+\s*[×*]\s*\d+/.test(line)) {
+                              const lineProcessed = processMathContentForDisplay(line);
+                              if (lineProcessed.isMath) {
+                                return (
+                                  <div key={pIndex} className="my-2">
+                                    <MathRenderer 
+                                      latex={lineProcessed.processed} 
+                                      inline={false} 
+                                      className="text-base"
+                                    />
+                                  </div>
+                                );
+                              }
+                            }
+                            
+                            // Regular text with proper formatting
+                            return (
+                              <p key={pIndex} className="text-sm leading-relaxed text-neutral-text">
+                                {line}
+                              </p>
+                            );
+                          }
+                          
+                          // Multiple lines - format as list or steps
+                          return (
+                            <div key={pIndex} className="space-y-1">
+                              {lines.map((line, lIndex) => {
+                                // Check if this line is a step (starts with number or bullet)
+                                const isStep = /^[\d\-•*]/.test(line.trim());
+                                const lineProcessed = processMathContentForDisplay(line);
+                                
+                                if (lineProcessed.isMath) {
+                                  return (
+                                    <div key={lIndex} className="my-1">
+                                      <MathRenderer 
+                                        latex={lineProcessed.processed} 
+                                        inline={false} 
+                                        className="text-base"
+                                      />
+                                    </div>
+                                  );
+                                }
+                                
+                                return (
+                                  <p 
+                                    key={lIndex} 
+                                    className={`text-sm leading-relaxed text-neutral-text ${isStep ? 'ml-4' : ''}`}
+                                  >
+                                    {line}
+                                  </p>
+                                );
+                              })}
+                            </div>
+                          );
                         });
                       })()}
                     </div>
@@ -234,10 +321,11 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
                   <div className="mb-3">
                     <Badge 
                       variant="secondary" 
-                      className="px-3 py-1 bg-state-success/10 text-state-success border-state-success/30"
+                      className="px-3 py-1 bg-state-success/10 text-state-success border-state-success/30 inline-flex items-center gap-1"
                     >
-                      <span className="mr-1">Correct answer:</span>
-                      <span className="font-semibold">{extractCorrectAnswer()}</span>
+                      <CheckCircle size={12} className="mr-1" />
+                      <span className="text-xs font-normal">Correct answer:</span>
+                      <span className="text-xs font-bold">{extractCorrectAnswer()}</span>
                     </Badge>
                   </div>
                 )}
