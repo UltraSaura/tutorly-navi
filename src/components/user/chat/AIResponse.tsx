@@ -133,12 +133,6 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
                         Correct!
                       </Badge>
                     )}
-                    {isIncorrect && (
-                      <Badge className="bg-state-danger/20 text-state-danger border-0">
-                        <XCircle size={14} className="mr-1" />
-                        Incorrect
-                      </Badge>
-                    )}
                   </div>
                 )}
 
