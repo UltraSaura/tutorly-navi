@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
-import { Calculator, CheckCircle, XCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { Calculator, CheckCircle, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { MathRenderer } from '@/components/math/MathRenderer';
-import { processMathContentForDisplay } from '@/utils/mathDisplayProcessor';
 import { Message } from '@/types/chat';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/SimpleLanguageContext';
-import ExplanationTwoCards from './ExplanationTwoCards';
+import DOMPurify from 'dompurify';
 
 interface AIResponseProps {
   messages: Message[];
@@ -17,6 +15,7 @@ interface AIResponseProps {
 
 const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
   const { t } = useLanguage();
+  const [showExplanation, setShowExplanation] = useState(false);
   
   // Get the latest AI response message (skip welcome message)
   const latestAIResponse = messages
@@ -44,46 +43,7 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
                 <div className="flex-shrink-0 w-10 h-10 rounded-button bg-neutral-bg animate-pulse" />
                 <div className="flex-1">
                   <div className="h-4 bg-neutral-bg rounded w-3/4 mb-3"></div>
-                  <div className="h-3 bg-neutral-bg rounded w-1/2 mb-2"></div>
-                  <div className="h-12 bg-neutral-bg rounded mb-3"></div>
-                  <div className="flex gap-2">
-                    <div className="h-6 bg-neutral-bg rounded w-24"></div>
-                    <div className="h-6 bg-neutral-bg rounded w-20"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show waiting state if no AI response yet
-  if (!latestAIResponse && latestUserMessage) {
-    return (
-      <div className="p-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="p-4 rounded-card border bg-neutral-surface border-neutral-border">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center bg-neutral-surface border border-neutral-border text-blue-600">
-                  <Calculator size={20} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-body font-semibold text-neutral-text mb-3">
-                    {(() => {
-                      const processed = processMathContentForDisplay(latestUserMessage.content);
-                      return processed.isMath ? (
-                        <MathRenderer latex={processed.processed} inline={false} className="math-content" />
-                      ) : (
-                        latestUserMessage.content
-                      );
-                    })()}
-                  </div>
-                  <div className="text-sm text-neutral-muted animate-pulse">
-                    Processing your answer...
-                  </div>
+                  <div className="h-3 bg-neutral-bg rounded w-1/2"></div>
                 </div>
               </div>
             </div>
@@ -97,125 +57,69 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
 
   const content = latestAIResponse.content;
   
-  // Determine the type of response based on content - be more strict about detection
-  const isCorrect = /\bCORRECT\b/i.test(content) && !/\bINCORRECT\b/i.test(content);
-  const isIncorrect = /\bINCORRECT\b/i.test(content) || (!isCorrect && content.includes('try again'));
+  // Determine the type of response based on content
+  const isCorrect = /\bCORRECT\b/i.test(content);
+  const isIncorrect = /\bINCORRECT\b/i.test(content);
   
-  // Get appropriate styling matching ExerciseCard exactly
+  // Get appropriate styling matching ExerciseCard
   const getStatusStyles = () => {
     if (isCorrect) return 'bg-state-success/10 border-state-success';
     if (isIncorrect) return 'bg-state-danger/10 border-state-danger';
     return 'bg-brand-tint border-brand-primary/20';
   };
 
-  // Clean content for display
+  // Simple content cleaning - just remove the status words
   const cleanContent = content
     .replace(/\b(CORRECT|INCORRECT|NOT_MATH)\b/gi, '')
-    .replace(/\*\*Problem:\*\*\s*\*\*([^*]+)\*\*/g, '**Problem:** $1')
-    .replace(/\*\*Guidance:\*\*\s*\*\*([^*]+)\*\*/g, '**Guidance:** $1')
-    .replace(/\*\*([^*]+)\*\*\s*\*\*([^*]+)\*\*/g, '**$1:** $2')
-    .replace(/\*\*Problem:\*\*\s*([^*]+)/g, '**Problem:** $1')
-    .replace(/\*\*Guidance:\*\*\s*([^*]+)/g, '**Guidance:** $1')
     .trim();
 
-  // Extract correct answer if available - fix the math calculation
-  const extractCorrectAnswer = () => {
-    // First try to extract from the problem itself
-    const problemMatch = latestUserMessage?.content.match(/(\d+)\s*[×⋅•]\s*(\d+)/);
-    if (problemMatch) {
-      const num1 = parseInt(problemMatch[1]);
-      const num2 = parseInt(problemMatch[2]);
-      const correctAnswer = num1 * num2;
-      return correctAnswer.toString();
-    }
-    
-    // Fallback patterns
-    const patterns = [
-      /correct.*?(?:is|answer)[:\s]+([^\n.]+)/i,
-      /=\s*(\d+)/
-    ];
-    
-    for (const pattern of patterns) {
-      const match = content.match(pattern);
-      if (match && match[1]) {
-        return match[1].trim();
-      }
-    }
-    return "6"; // Default for 2×3
-  };
-
-  // Helper function to get translation with fallback
-  const getTranslation = (key: string, fallback: string) => {
-    const translation = t(key);
-    return translation === key ? fallback : translation;
-  };
-
-  // Parse explanation into two cards
-  const parseExplanation = (text: string) => {
-    const problemMatch = text.match(/\*\*Problem:\*\*\s*([^*]+)/);
-    const guidanceMatch = text.match(/\*\*Guidance:\*\*\s*([^*]+)/);
-    
-    return {
-      problem: problemMatch ? problemMatch[1].trim() : '',
-      guidance: guidanceMatch ? guidanceMatch[1].trim() : ''
-    };
-  };
-
-  const explanation = parseExplanation(cleanContent);
+  // Format explanation for popup display
+  const formattedExplanation = cleanContent
+    .replace(/\*\*Problem:\*\*/g, `<strong class="text-studywhiz-600 dark:text-studywhiz-400">${t('exercise.problem')}:</strong>`)
+    .replace(/\*\*Guidance:\*\*/g, `<strong class="text-studywhiz-600 dark:text-studywhiz-400">${t('exercise.guidance')}:</strong>`)
+    .replace(/^Guidance:\s*Problem:\s*/gm, '') // Remove "Guidance: Problem: " lines
+    .replace(/^exercise\.guidance:\s*exercise\.problem:\s*.*$/gm, '') // Remove entire "exercise.guidance: exercise.problem: ..." lines
+    .replace(/^\s*$/gm, '') // Remove empty lines
+    .split('\n')
+    .filter(line => line.trim() !== '') // Filter out empty lines
+    .join('<br />');
 
   return (
-    <div className="flex flex-col">
-      {/* Content Area - matching ExerciseList structure */}
-      <div className="p-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Response Card - styled EXACTLY like ExerciseCard */}
+    <div className="p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Response Card - styled like ExerciseCard */}
           <div 
             className={cn(
               'p-4 rounded-card border transition-all duration-200 hover:shadow-md',
               getStatusStyles()
             )}
-            role="article"
           >
             <div className="flex items-start gap-3">
-              {/* Subject Icon */}
+              {/* Math Icon */}
               <div className={cn(
                 'flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center',
                 'bg-neutral-surface border border-neutral-border text-blue-600'
               )}>
-                <Calculator size={20} aria-hidden="true" />
+                <Calculator size={20} />
               </div>
               
               <div className="flex-1 min-w-0">
-                {/* Title/Prompt - User's Question */}
+                {/* User's Question */}
                 {latestUserMessage && (
-                  <div className="text-body font-semibold text-neutral-text mb-3 line-clamp-2">
-                    {(() => {
-                      const processedPrompt = processMathContentForDisplay(latestUserMessage.content);
-                      return processedPrompt.isMath ? (
-                        <MathRenderer 
-                          latex={processedPrompt.processed} 
-                          inline={true}
-                          className="inline-math"
-                        />
-                      ) : (
-                        latestUserMessage.content
-                      );
-                    })()}
+                  <div className="text-body font-semibold text-neutral-text mb-3">
+                    {latestUserMessage.content}
                   </div>
                 )}
                 
-                {/* User Answer Badge (if this is a grading response) */}
-                {isIncorrect && (
+                {/* Your Answer Badge (for incorrect answers) */}
+                {isIncorrect && latestUserMessage && (
                   <div className="mb-3">
                     <Badge 
                       variant="secondary" 
-                      className="px-3 py-1 bg-neutral-bg text-neutral-muted flex items-center gap-1"
+                      className="px-3 py-1 bg-neutral-bg text-neutral-muted"
                     >
-                      <span>{getTranslation('exercise.yourAnswer', 'Your Answer')}:</span>
-                      <span className="font-semibold">
-                        {latestUserMessage ? latestUserMessage.content : ''}
-                      </span>
+                      {t('exercise.yourAnswer')}: {latestUserMessage.content}
                     </Badge>
                   </div>
                 )}
@@ -226,68 +130,77 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
                     {isCorrect && (
                       <Badge className="bg-state-success/20 text-state-success border-0">
                         <CheckCircle size={14} className="mr-1" />
-                        {getTranslation('exercise.correct', 'Correct! Well done!')}
+                        Correct!
                       </Badge>
                     )}
                     {isIncorrect && (
                       <Badge className="bg-state-danger/20 text-state-danger border-0">
                         <XCircle size={14} className="mr-1" />
-                        {getTranslation('exercise.tryAgain', 'Let\'s try again')}
+                        Incorrect
                       </Badge>
                     )}
                   </div>
                 )}
 
-                {/* Correct Answer (if incorrect) */}
-                {isIncorrect && (
-                  <div className="mb-3">
-                    <Badge 
-                      variant="secondary" 
-                      className="px-3 py-1 bg-state-success/10 text-state-success border-state-success/30"
-                    >
-                      <span className="mr-1">{getTranslation('exercise.correctAnswer', 'Correct answer')}:</span>
-                      <span className="font-semibold">{extractCorrectAnswer()}</span>
-                    </Badge>
-                  </div>
-                )}
-
-                {/* Actions - exactly like ExerciseCard */}
+                {/* Actions */}
                 <div className="flex items-center gap-2">
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-xs px-2 py-0.5 h-6 flex items-center gap-1"
+                        className="text-xs px-2 py-0.5 h-6"
                       >
-                        <ChevronRight size={12} />
-                        {getTranslation('exercise.showExplanation', 'Show explanation')}
+                        {t('exercise.showExplanation')}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle className="text-left">
-                          {latestUserMessage && (() => {
-                            const processedPrompt = processMathContentForDisplay(latestUserMessage.content);
-                            return processedPrompt.isMath ? (
-                              <MathRenderer 
-                                latex={processedPrompt.processed} 
-                                inline={true}
-                                className="inline-math"
-                              />
-                            ) : (
-                              latestUserMessage.content
-                            );
-                          })()}
+                          {latestUserMessage?.content}
                         </DialogTitle>
                       </DialogHeader>
                       
                       <div className="space-y-4">
-                        {/* Use the new ExplanationTwoCards component */}
-                        <ExplanationTwoCards
-                          problem={explanation.problem}
-                          guidance={explanation.guidance}
-                        />
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">{t('exercise.yourAnswer')}:</h4>
+                          <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                              {latestUserMessage?.content}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className={cn(
+                          "p-4 rounded-lg",
+                          isCorrect 
+                            ? "bg-green-50 dark:bg-green-950/20" 
+                            : "bg-amber-50 dark:bg-amber-950/20"
+                        )}>
+                          <div className="space-y-3">
+                            <div className="flex items-center mb-2">
+                              {isCorrect 
+                                ? <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                                : <XCircle className="w-4 h-4 mr-2 text-amber-600" />
+                              }
+                              <h4 className="text-sm font-medium">
+                                {isCorrect 
+                                  ? t('exercise.greatWork')
+                                  : t('exercise.learningOpportunity')}
+                              </h4>
+                            </div>
+                            
+                            <div 
+                              className="text-sm text-gray-700 dark:text-gray-300 prose-sm max-w-full"
+                              dangerouslySetInnerHTML={{ 
+                                __html: DOMPurify.sanitize(formattedExplanation, { 
+                                  ALLOWED_TAGS: ['strong', 'br', 'em', 'p'],
+                                  ALLOWED_ATTR: ['class']
+                                }) 
+                              }}
+                            />
+                          </div>
+                        </div>
                       </div>
                     </DialogContent>
                   </Dialog>
@@ -298,7 +211,7 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
                       size="sm"
                       className="text-xs px-2 py-0.5 h-6"
                     >
-                      {getTranslation('exercise.tryAgain', 'Try again')}
+                      {t('exercise.tryAgain')}
                     </Button>
                   )}
                 </div>
@@ -307,7 +220,6 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
           </div>
         </div>
       </div>
-    </div>
     </div>
   );
 };
