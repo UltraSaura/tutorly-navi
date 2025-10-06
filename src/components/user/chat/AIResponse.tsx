@@ -1,5 +1,5 @@
-import React from 'react';
-import { Calculator, CheckCircle, XCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calculator, CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Message } from '@/types/chat';
@@ -13,6 +13,7 @@ interface AIResponseProps {
 
 const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
   const { t } = useLanguage();
+  const [showExplanation, setShowExplanation] = useState(false);
   
   // Get the latest AI response message (skip welcome message)
   const latestAIResponse = messages
@@ -128,16 +129,7 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
                   </div>
                 )}
 
-                {/* AI Explanation - Simple display */}
-                {cleanContent && (
-                  <div className="mb-3 p-3 bg-neutral-bg rounded-md">
-                    <p className="text-sm text-neutral-text whitespace-pre-wrap">
-                      {cleanContent}
-                    </p>
-                  </div>
-                )}
-
-                {/* Correct Answer (for incorrect) */}
+                {/* Correct Answer (for incorrect) - Always visible */}
                 {isIncorrect && (
                   <div className="mb-3">
                     <Badge 
@@ -150,13 +142,24 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mb-3">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-xs px-2 py-0.5 h-6"
+                    onClick={() => setShowExplanation(!showExplanation)}
+                    className="text-xs px-2 py-0.5 h-6 flex items-center gap-1"
                   >
-                    {t('exercise.showExplanation')}
+                    {showExplanation ? (
+                      <>
+                        <ChevronUp size={12} />
+                        {t('exercise.hideExplanation') || 'Hide Explanation'}
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown size={12} />
+                        {t('exercise.showExplanation')}
+                      </>
+                    )}
                   </Button>
                   
                   {isIncorrect && (
@@ -169,6 +172,18 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
                     </Button>
                   )}
                 </div>
+
+                {/* AI Explanation - Show only when button clicked */}
+                {showExplanation && cleanContent && (
+                  <div className="mt-3 p-3 bg-neutral-bg rounded-md border border-neutral-border">
+                    <div className="text-xs text-neutral-muted font-medium uppercase mb-2">
+                      Explanation
+                    </div>
+                    <p className="text-sm text-neutral-text whitespace-pre-wrap">
+                      {cleanContent}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
