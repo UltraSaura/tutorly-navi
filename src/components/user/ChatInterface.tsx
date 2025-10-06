@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Message } from '@/types/chat';
 import ExerciseList from './chat/ExerciseList';
+import MessageList from './chat/MessageList';
 import MessageInput from './chat/MessageInput';
 import CameraCapture from './chat/CameraCapture';
 import { useChat } from '@/hooks/useChat';
@@ -151,7 +152,7 @@ const ChatInterface = () => {
   // Exercise-Focused Layout with Chat Input
   return (
     <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg">
-      {/* Exercise List */}
+      {/* Scrollable Content Area */}
       <div 
         className="h-full overflow-auto"
         style={{
@@ -160,13 +161,22 @@ const ChatInterface = () => {
             : `${isMobile ? 128 : 80}px`  // Normal bottom padding
         }}
       >
-        <ExerciseList
-          exercises={exercises}
-          grade={grade}
-          toggleExerciseExpansion={toggleExerciseExpansion}
-          onSubmitAnswer={submitAnswer}
-          onClearExercises={clearExercises}
+        {/* Message List - Display chat messages */}
+        <MessageList
+          messages={filteredMessages}
+          isLoading={isLoading}
         />
+        
+        {/* Exercise List - Display exercises if any */}
+        {exercises.length > 0 && (
+          <ExerciseList
+            exercises={exercises}
+            grade={grade}
+            toggleExerciseExpansion={toggleExerciseExpansion}
+            onSubmitAnswer={submitAnswer}
+            onClearExercises={clearExercises}
+          />
+        )}
         
         {/* Add Calculation Status */}
         <CalculationStatus
