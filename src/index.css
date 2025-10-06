@@ -1,5 +1,3 @@
-
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -203,6 +201,16 @@
 @layer components {
   .studywhiz-container {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Explanation typography reset (prevents squished/nowrap text) */
+  .explain-text,
+  .explain-text * {
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    white-space: inherit !important;
+    text-wrap: pretty;
+    overflow-wrap: anywhere;
   }
 
   .nav-item {
