@@ -71,6 +71,34 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
     .replace(/\b(CORRECT|INCORRECT|NOT_MATH)\b/gi, '')
     .trim();
 
+  // Extract just the answer from user's message (e.g., "77" from "3×5=77")
+  const extractUserAnswer = () => {
+    if (!latestUserMessage) return '';
+    const userContent = latestUserMessage.content;
+    
+    // Look for patterns like "= answer" or just the answer after equals
+    const patterns = [
+      /=\s*(.+)$/,  // Everything after equals sign
+      /(?:is|equals?)\s+(.+)$/i,  // After "is" or "equals"
+    ];
+    
+    for (const pattern of patterns) {
+      const match = userContent.match(pattern);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+    }
+    
+    // If no equals sign, might be just the answer
+    // Check if it's just a number
+    if (/^\d+$/.test(userContent.trim())) {
+      return userContent.trim();
+    }
+    
+    // Default to showing the full content if we can't extract
+    return userContent;
+  };
+
   return (
     <div className="p-6">
       <div className="max-w-6xl mx-auto">
@@ -106,7 +134,7 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
                       variant="secondary" 
                       className="px-3 py-1 bg-neutral-bg text-neutral-muted"
                     >
-                      {t('exercise.yourAnswer')}: {latestUserMessage.content}
+                      {t('exercise.yourAnswer')}: {extractUserAnswer()}
                     </Badge>
                   </div>
                 )}
@@ -136,7 +164,24 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
                       variant="secondary" 
                       className="px-3 py-1 bg-state-success/10 text-state-success"
                     >
-                      Correct answer: 15
+                      Correct answer: {(() => {
+                        // Try to extract correct answer from AI response
+                        const patterns = [
+                          /correct.*?(?:is|answer)[:\s]+(\d+)/i,
+                          /3\s*[×*]\s*5\s*=\s*(\d+)/,
+                          /answer[:\s]+(\d+)/i,
+                          /=\s*(\d+)/
+                        ];
+                        
+                        for (const pattern of patterns) {
+                          const match = content.match(pattern);
+                          if (match && match[1]) {
+                            return match[1];
+                          }
+                        }
+                        // Default for 3×5 if not found
+                        return "15";
+                      })()}
                     </Badge>
                   </div>
                 )}
