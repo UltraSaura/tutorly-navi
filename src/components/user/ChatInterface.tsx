@@ -161,31 +161,6 @@ const ChatInterface = () => {
             : `${isMobile ? 128 : 80}px`  // Normal bottom padding
         }}
       >
-        {/* DEBUG: Highly visible test div */}
-        <div style={{ 
-          backgroundColor: '#ff0000', 
-          color: 'white', 
-          padding: '20px', 
-          fontSize: '18px', 
-          margin: '10px'
-        }}>
-          <div style={{ fontSize: '24px', textAlign: 'center', marginBottom: '10px' }}>
-            🚨 ChatInterface Debug Info 🚨
-          </div>
-          <div>
-            <p>📊 Messages Count: {filteredMessages.length}</p>
-            <p>⏳ Is Loading: {isLoading ? 'YES' : 'NO'}</p>
-            <p>📝 Input Message: "{inputMessage}"</p>
-            <p>📍 Current Path: {location.pathname}</p>
-            <details style={{ marginTop: '10px' }}>
-              <summary style={{ cursor: 'pointer' }}>Click to see messages</summary>
-              <pre style={{ fontSize: '12px', marginTop: '10px', whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
-                {JSON.stringify(filteredMessages, null, 2)}
-              </pre>
-            </details>
-          </div>
-        </div>
-        
         {/* AI Response - Display the latest AI explanation/response */}
         <AIResponse
           messages={filteredMessages}
