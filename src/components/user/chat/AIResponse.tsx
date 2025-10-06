@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calculator, CheckCircle, XCircle, Info, Book } from 'lucide-react';
+import { Calculator, CheckCircle, XCircle, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MathRenderer } from '@/components/math/MathRenderer';
@@ -16,9 +16,16 @@ interface AIResponseProps {
 const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
   const { t } = useLanguage();
   
+  // Debug logging
+  console.log('[AIResponse] Component rendered with:', {
+    messagesCount: messages.length,
+    messages: messages,
+    isLoading
+  });
+  
   // Get the latest AI response message (skip welcome message)
   const latestAIResponse = messages
-    .filter(msg => msg.role === 'assistant' && msg.id !== '1') // Skip initial welcome message
+    .filter(msg => msg.role === 'assistant' && msg.id !== '1')
     .pop();
 
   // Get the latest user message to understand context
@@ -26,9 +33,23 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
     .filter(msg => msg.role === 'user')
     .pop();
 
-  // Don't show anything if there's no user message yet
+  console.log('[AIResponse] Latest messages:', {
+    latestAIResponse,
+    latestUserMessage
+  });
+
+  // Show a placeholder if no messages yet
   if (!latestUserMessage && !isLoading) {
-    return null;
+    console.log('[AIResponse] No user message and not loading, showing placeholder');
+    return (
+      <div className="p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center text-neutral-muted">
+            <p>Send a math problem to get started!</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (isLoading) {
@@ -54,7 +75,36 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
     );
   }
 
-  if (!latestAIResponse) return null;
+  if (!latestAIResponse) {
+    console.log('[AIResponse] No AI response found, showing waiting state');
+    // Show the user's message while waiting for response
+    if (latestUserMessage) {
+      return (
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="p-4 rounded-card border bg-neutral-surface border-neutral-border">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center bg-neutral-surface border border-neutral-border text-blue-600">
+                    <Calculator size={20} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-body font-semibold text-neutral-text mb-3">
+                      {latestUserMessage.content}
+                    </div>
+                    <div className="text-sm text-neutral-muted">
+                      Waiting for response...
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  }
 
   const content = latestAIResponse.content;
   
