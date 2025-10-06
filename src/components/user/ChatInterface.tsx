@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Message } from '@/types/chat';
 import ExerciseList from './chat/ExerciseList';
-import MessageList from './chat/MessageList';
+import AIResponse from './chat/AIResponse';
 import MessageInput from './chat/MessageInput';
 import CameraCapture from './chat/CameraCapture';
 import { useChat } from '@/hooks/useChat';
@@ -161,8 +161,8 @@ const ChatInterface = () => {
             : `${isMobile ? 128 : 80}px`  // Normal bottom padding
         }}
       >
-        {/* Message List - Display chat messages */}
-        <MessageList
+        {/* AI Response - Display the latest AI explanation/response */}
+        <AIResponse
           messages={filteredMessages}
           isLoading={isLoading}
         />
@@ -178,7 +178,7 @@ const ChatInterface = () => {
           />
         )}
         
-        {/* Add Calculation Status */}
+        {/* Add Calculation Status - Shows processing status */}
         <CalculationStatus
           isProcessing={calculationState.isProcessing}
           status={calculationState.currentStep}
