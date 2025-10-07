@@ -103,6 +103,17 @@ const ChatInterface = () => {
     }
   };
 
+  // Handle answer submission from AIResponse
+  const handleAnswerSubmit = async (question: string, answer: string) => {
+    console.log('[ChatInterface] Submitting answer:', { question, answer });
+    
+    // Format the message as "question response answer"
+    const formattedMessage = `${question} response ${answer}`;
+    
+    // Send through the chat system for grading
+    await handleSendMessage(formattedMessage);
+  };
+
   // Handle upload sheet opening
   const handleUploadHomework = () => {
     setShowUploadSheet(true);
@@ -165,6 +176,7 @@ const ChatInterface = () => {
         <AIResponse
           messages={filteredMessages}
           isLoading={isLoading}
+          onSubmitAnswer={handleAnswerSubmit}
         />
         
         {/* Exercise List - Display exercises if any */}

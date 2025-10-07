@@ -39,8 +39,19 @@ export async function callDeepSeek(
   });
   
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(`DeepSeek API error: ${errorData.error?.message || 'Unknown error'}`);
+    const errorText = await response.text();
+    let errorData;
+    try {
+      errorData = JSON.parse(errorText);
+    } catch {
+      errorData = { error: { message: errorText } };
+    }
+    console.error('DeepSeek API error details:', {
+      status: response.status,
+      statusText: response.statusText,
+      errorData: errorData
+    });
+    throw new Error(`DeepSeek API error (${response.status}): ${errorData.error?.message || errorText || 'Unknown error'}`);
   }
   
   const data = await response.json();

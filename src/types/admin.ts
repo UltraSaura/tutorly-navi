@@ -25,6 +25,7 @@ export interface ModelOption {
   bestFor: string[];
   disabled?: boolean;
   usesSupabaseSecret?: boolean;
+  modelFunction?: 'default' | 'fallback_primary' | 'fallback_secondary' | null;
 }
 
 // Define the User interface for use with Supabase
