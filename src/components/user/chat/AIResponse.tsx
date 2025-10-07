@@ -532,18 +532,44 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
+const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAnswer }) => {
   const exercisePairs = useMemo(() => {
     const userMessages = messages.filter(msg => msg.role === 'user');
     const aiMessages = messages.filter(msg => msg.role === 'assistant' && msg.id !== '1');
     
-    return userMessages.map((userMsg, index) => ({
+    // Create pairs and filter out duplicates
+    const pairs = userMessages.map((userMsg, index) => ({
       userMessage: userMsg,
       aiResponse: aiMessages[index] || null
     })).filter(pair => pair.aiResponse !== null) as Array<{
       userMessage: Message;
       aiResponse: Message;
     }>;
+
+    // Remove duplicates based on question content
+    const uniquePairs = [];
+    const seenQuestions = new Set<string>();
+    
+    for (const pair of pairs) {
+      const { question } = parseUserMessage(pair.userMessage.content);
+      
+      if (!seenQuestions.has(question)) {
+        seenQuestions.add(question);
+        uniquePairs.push(pair);
+      } else {
+        // Replace the existing pair with the new one (latest answer)
+        const existingIndex = uniquePairs.findIndex(existingPair => {
+          const existingQuestion = parseUserMessage(existingPair.userMessage.content).question;
+          return existingQuestion === question;
+        });
+        
+        if (existingIndex !== -1) {
+          uniquePairs[existingIndex] = pair; // Replace with latest
+        }
+      }
+    }
+    
+    return uniquePairs;
   }, [messages]);
 
   if (exercisePairs.length === 0 && !isLoading) {
@@ -558,6 +584,7 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading }) => {
             key={pair.userMessage.id}
             userMessage={pair.userMessage}
             aiResponse={pair.aiResponse}
+            onSubmitAnswer={onSubmitAnswer}
           />
         ))}
         
