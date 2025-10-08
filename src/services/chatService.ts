@@ -50,7 +50,10 @@ export const sendMessageToAI = async (
       history: messageHistory,
       language,
       customPrompt,
-      userContext
+      userContext: {
+        ...userContext,
+        response_language: language === 'fr' ? 'French' : 'English'
+      }
     };
 
     console.log('📋 Request payload preview:', {
@@ -123,7 +126,10 @@ export const sendMessageToAI = async (
       history: getMessageHistory(messages),
       language,
       customPrompt,
-      userContext
+      userContext: {
+        ...userContext,
+        response_language: language === 'fr' ? 'French' : 'English'
+      }
     };
     
     return await attemptDirectFallback(requestBody);

@@ -49,7 +49,10 @@ export async function sendUnifiedMessage(
         history: messageHistory,
         language,
         customPrompt,
-        userContext,
+        userContext: {
+          ...userContext,
+          response_language: language === 'fr' ? 'French' : 'English'
+        },
         isUnified: true
       },
     });

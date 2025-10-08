@@ -210,12 +210,18 @@ serve(async (req) => {
       usageType = 'chat';
     }
 
+    // Create variables object with language information
+    const variables = {
+      ...userContext,
+      response_language: language === 'fr' ? 'French' : 'English'
+    };
+
     let systemMessage = await generateSystemMessage(
       isExercise, 
       isGradingRequest, 
       language, 
       customPrompt,
-      userContext,
+      variables,  // Pass the variables object instead of userContext
       usageType,
       isUnified
     );

@@ -26,9 +26,10 @@ export interface PromptVariables {
  * 
  * @param promptTemplate The template with {{variable}} placeholders
  * @param variables The variables to substitute
+ * @param language The language for fallback values
  * @returns The prompt with variables replaced
  */
-export function substitutePromptVariables(promptTemplate: string, variables: PromptVariables): string {
+export function substitutePromptVariables(promptTemplate: string, variables: PromptVariables, language: string = 'en'): string {
   let result = promptTemplate;
   
   // Replace all {{variable_name}} patterns with actual values
@@ -61,7 +62,7 @@ export function substitutePromptVariables(promptTemplate: string, variables: Pro
       case 'correct_answer':
         return 'the correct answer';
       case 'response_language':
-        return 'English';
+        return language === 'fr' ? 'French' : 'English';
       default:
         return 'student';
     }
@@ -124,7 +125,7 @@ export async function generateSystemMessage(
 ): Promise<{ role: string, content: string }> {
   // If custom prompt provided, use it directly
   if (customPrompt) {
-    const finalPrompt = substitutePromptVariables(customPrompt, variables || {});
+    const finalPrompt = substitutePromptVariables(customPrompt, variables || {}, language);
     return { role: "system", content: finalPrompt };
   }
 
@@ -175,7 +176,7 @@ export async function generateSystemMessage(
   
   if (activeTemplate) {
     console.log(`Using database prompt: ${activeTemplate.name} (${usageType})`);
-    const finalPrompt = substitutePromptVariables(activeTemplate.prompt_content, variables || {});
+    const finalPrompt = substitutePromptVariables(activeTemplate.prompt_content, variables || {}, language);
     return { role: "system", content: finalPrompt };
   }
 
