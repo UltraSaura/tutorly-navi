@@ -5,17 +5,34 @@ export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
 // Translation loaders - dynamically import translation files
 const loadTranslations = async (language: SupportedLanguage) => {
   try {
-    const [common, exercises, math] = await Promise.all([
-      import(`./${language}/common.json`),
-      import(`./${language}/exercises.json`), 
-      import(`./${language}/math.json`)
-    ]);
+    const translations: any = {};
+    
+    // Load common.json
+    try {
+      const common = await import(`./${language}/common.json`);
+      translations.common = common.default;
+    } catch (error) {
+      console.warn(`Failed to load common.json for ${language}:`, error);
+    }
+    
+    // Load exercises.json
+    try {
+      const exercises = await import(`./${language}/exercises.json`);
+      translations.exercises = exercises.default;
+    } catch (error) {
+      console.warn(`Failed to load exercises.json for ${language}:`, error);
+    }
+    
+    // Load math.json (optional)
+    try {
+      const math = await import(`./${language}/math.json`);
+      translations.math = math.default;
+    } catch (error) {
+      console.warn(`math.json not found for ${language}, skipping...`);
+    }
 
-    return {
-      common: common.default,
-      exercises: exercises.default,
-      math: math.default
-    };
+    console.log(`[Translation] Loaded translations for ${language}:`, Object.keys(translations));
+    return translations;
   } catch (error) {
     console.error(`Failed to load translations for ${language}:`, error);
     // Fallback to English if loading fails

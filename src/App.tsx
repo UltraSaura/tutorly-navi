@@ -9,7 +9,7 @@ import { AdminProvider } from "./context/AdminContext";
 import { AuthProvider } from "./context/AuthContext";
 import { OverlayProvider } from "./context/OverlayContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { LanguageProvider } from "./context/LanguageProvider";
+import { SimpleLanguageProvider } from "./context/SimpleLanguageContext";
 
 // Layouts
 import MainLayout from "./components/layout/MainLayout";
@@ -62,8 +62,8 @@ const App = () => {
           <Toaster />
           <Sonner />
           <OverlayProvider>
-            <LanguageProvider>
-              <AuthProvider>
+            <AuthProvider>
+              <SimpleLanguageProvider>
                 <AdminProvider>
                   <BrowserRouter>
                     <AnimatePresence mode="wait">
@@ -119,8 +119,8 @@ const App = () => {
                   </AnimatePresence>
                 </BrowserRouter>
               </AdminProvider>
-            </AuthProvider>
-          </LanguageProvider>
+            </SimpleLanguageProvider>
+          </AuthProvider>
         </OverlayProvider>
       </TooltipProvider>
     </ErrorBoundary>

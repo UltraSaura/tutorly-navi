@@ -8,6 +8,7 @@ export const defaultLang = "en";
 
 interface LanguageContextType {
   language: string;
+  isLoading: boolean;
   changeLanguage: (lng: string) => void;
   setLanguageFromCountry: (countryCode: string) => void;
   detectLanguageNow: () => Promise<void>;
@@ -41,11 +42,15 @@ function flattenTranslations(obj: any, prefix = ''): Record<string, any> {
 
 export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState(() => {
-    return localStorage.getItem('lang') || defaultLang;
+    const storedLang = localStorage.getItem('lang') || defaultLang;
+    console.log('[Translation] SimpleLanguageProvider initialized with language:', storedLang);
+    return storedLang;
   });
   
   const [translations, setTranslations] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
+  
+  console.log('[Translation] SimpleLanguageProvider render, language:', language, 'isLoading:', isLoading);
   
   const { user } = useAuth();
   const { detection, getLanguageFromDetection, detectCountry } = useCountryDetection();
@@ -53,7 +58,10 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   // Load translations when language changes
   useEffect(() => {
     const loadLanguageTranslations = async () => {
+      console.log('[Translation] useEffect triggered for language:', language);
+      
       if (translationCache.has(language)) {
+        console.log('[Translation] Using cached translations for:', language);
         setTranslations(translationCache.get(language));
         setIsLoading(false);
         return;
@@ -61,14 +69,20 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
 
       try {
         setIsLoading(true);
+        console.log('[Translation] Loading translations for language:', language);
         const loadedTranslations = await loadTranslations(language as SupportedLanguage);
+        console.log('[Translation] Loaded translations:', loadedTranslations);
         
         // Flatten translations for legacy key support
         const flattened = flattenTranslations(loadedTranslations);
         const combined = { ...loadedTranslations, ...flattened };
         
+        console.log('[Translation] Combined translations:', combined);
+        console.log('[Translation] Sample translation test - exercise.answer:', combined['exercise.answer']);
+        console.log('[Translation] Sample translation test - exercises.exercise.answer:', combined['exercises.exercise.answer']);
         translationCache.set(language, combined);
         setTranslations(combined);
+        console.log('[Translation] Translations set successfully for:', language);
       } catch (error) {
         console.error('Failed to load translations:', error);
         // Fallback to English if current language fails
@@ -202,19 +216,49 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   };
 
   const t = (key: string, params?: Record<string, string | number>): string => {
+    // Debug logging for ALL translation function calls
+    console.log('[Translation] t() function called:', {
+      key,
+      isLoading,
+      language,
+      hasTranslations: !!translations,
+      translationsKeys: translations ? Object.keys(translations) : [],
+      timestamp: new Date().toISOString()
+    });
+    
     if (isLoading) return key;
     
-    // Navigate through nested object using dot notation
-    const keys = key.split('.');
-    let value: any = translations;
+    // First try to find the key directly (for flattened keys like 'exercises.exercise.answer')
+    let value = translations[key];
     
-    for (const k of keys) {
-      value = value?.[k];
-      if (value === undefined) break;
+    // If not found directly, try nested object navigation (for keys like 'exercise.answer')
+    if (value === undefined) {
+      const keys = key.split('.');
+      value = translations;
+      
+      for (const k of keys) {
+        value = value?.[k];
+        if (value === undefined) break;
+      }
+    }
+    
+    // If still not found, try with 'exercises.' prefix (for legacy support)
+    if (value === undefined && !key.startsWith('exercises.')) {
+      value = translations[`exercises.${key}`];
     }
     
     // Fallback to key if translation not found
     let result = value || key;
+    
+    // Debug logging for result
+    if (key.includes('exercise.answer') || key.includes('explanation.modal_title')) {
+      console.log('[Translation] Result:', {
+        key,
+        result,
+        wasTranslated: result !== key,
+        timestamp: new Date().toISOString()
+      });
+    }
     
     // Handle interpolation if params provided
     if (params && typeof result === 'string') {
@@ -294,6 +338,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   return (
     <LanguageContext.Provider value={{
       language,
+      isLoading,
       changeLanguage,
       setLanguageFromCountry,
       detectLanguageNow,
@@ -307,16 +352,25 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
 
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
+  console.log('[Translation] useLanguage hook called, context available:', !!context);
+  
   if (!context) {
+    console.log('[Translation] No context available, using fallback');
     // Fallback if context is not available
     return {
       language: defaultLang,
+      isLoading: false,
       changeLanguage: () => {},
       setLanguageFromCountry: () => {},
       detectLanguageNow: async () => {},
       resetLanguageDetection: async () => {},
-      t: (key: string, params?: Record<string, string | number>) => key
+      t: (key: string, params?: Record<string, string | number>) => {
+        console.log('[Translation] Fallback t() function called with key:', key);
+        return key;
+      }
     };
   }
+  
+  console.log('[Translation] Context available, language:', context.language);
   return context;
 };

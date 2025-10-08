@@ -1,24 +1,23 @@
-import React, { memo, useMemo } from 'react';
-import { Calculator, CheckCircle, XCircle } from 'lucide-react';
+import React, { memo, useMemo, useState } from 'react';
+import { Calculator, CheckCircle, XCircle, Send } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Message } from '@/types/chat';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import DOMPurify from 'dompurify';
-import { Input } from '@/components/ui/input';
-import { Send } from 'lucide-react';
-import { useState } from 'react';
 
 interface AIResponseProps {
   messages: Message[];
   isLoading: boolean;
+  onSubmitAnswer?: (question: string, answer: string) => void;
 }
-
 interface ExerciseCardProps {
   userMessage: Message;
   aiResponse: Message;
+  onSubmitAnswer?: (question: string, answer: string) => void;
 }
 
 // Helper functions moved outside component to prevent recreation
@@ -56,20 +55,25 @@ const getStatusStyles = (content: string) => {
   const isCorrect = /^CORRECT\b/i.test(contentTrimmed) || /\bCORRECT\b/i.test(firstLine);
   const isIncorrect = /^INCORRECT\b/i.test(contentTrimmed) || /\bINCORRECT\b/i.test(firstLine);
   
-  // Use explicit color classes
-  if (isIncorrect) {
-    return 'bg-red-50 dark:bg-red-950/20 border-2 border-red-300 dark:border-red-800';
-  }
   if (isCorrect) {
-    return 'bg-green-50 dark:bg-green-950/20 border-2 border-green-300 dark:border-green-800';
+    return 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800';
+  } else if (isIncorrect) {
+    return 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800';
+  } else {
+    return 'bg-neutral-surface border-neutral-border';
   }
-  
-  return 'bg-gray-50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700';
 };
 
 const formatExplanation = (content: string) => {
-  const cleanContent = content.replace(/\b(CORRECT|INCORRECT|NOT_MATH)\b/gi, '').trim();
-  
+  // Remove status prefixes and clean up the content
+  const cleanContent = content
+    .replace(/^(CORRECT|INCORRECT)\s*/i, '')
+    .replace(/^Great work!\s*/i, '')
+    .replace(/^Learning Opportunity\s*/i, '')
+    .replace(/^Guidance:\s*/i, '')
+    .replace(/^Problem:\s*/i, '')
+    .trim();
+
   return cleanContent
     .replace(/\*\*Problem:\*\*/g, '<strong class="text-studywhiz-600 dark:text-studywhiz-400">Problem:</strong>')
     .replace(/\*\*Guidance:\*\*/g, '<strong class="text-studywhiz-600 dark:text-studywhiz-400">Guidance:</strong>')
@@ -103,6 +107,17 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const content = aiResponse.content;
   const [userAnswerInput, setUserAnswerInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { t, language } = useLanguage();
+  
+  // Debug logging for translation issues
+  console.log('[ExerciseCard] Translation Debug:', {
+    language,
+    testTranslation: t('exercise.answer'),
+    testExplanation: t('explanation.modal_title'),
+    testHeaders: t('explanation.headers.exercise'),
+    rawKey: 'exercise.answer',
+    timestamp: new Date().toISOString()
+  });
   
   // Check if this is a question without an answer
   const hasNoAnswer = !answer || answer === question;
@@ -116,12 +131,29 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const formattedExplanation = formatExplanation(content);
 
   const handleSubmitAnswer = async () => {
-    if (!userAnswerInput.trim() || !onSubmitAnswer) return;
+    console.log('[ExerciseCard] handleSubmitAnswer called');
+    console.log('[ExerciseCard] userAnswerInput:', userAnswerInput);
+    console.log('[ExerciseCard] onSubmitAnswer function:', onSubmitAnswer);
+    console.log('[ExerciseCard] question:', question);
+    
+    if (!userAnswerInput.trim()) {
+      console.log('[ExerciseCard] No answer input, returning early');
+      return;
+    }
+    
+    if (!onSubmitAnswer) {
+      console.log('[ExerciseCard] No onSubmitAnswer function, returning early');
+      return;
+    }
     
     setIsSubmitting(true);
     try {
+      console.log('[ExerciseCard] Calling onSubmitAnswer with:', { question, answer: userAnswerInput.trim() });
       await onSubmitAnswer(question, userAnswerInput.trim());
+      console.log('[ExerciseCard] onSubmitAnswer completed successfully');
       setUserAnswerInput(''); // Clear input after submission
+    } catch (error) {
+      console.error('[ExerciseCard] Error in handleSubmitAnswer:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -131,17 +163,6 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmitAnswer();
-    }
-  };
-
-  // Get status image based on answer state
-  const getStatusImage = () => {
-    if (isCorrect === true) {
-      return '/images/Happy Green Right Answer.png';
-    } else if (isCorrect === false) {
-      return '/images/Sad Face wrong Answer.png';
-    } else {
-      return null; // No image for neutral state, we'll use a question mark icon
     }
   };
 
@@ -170,13 +191,13 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
             {isCorrect === true ? (
               <img 
                 src="/images/Happy Green Right Answer.png" 
-                alt="Correct answer" 
+                alt={t('exercise.correct')}
                 className="w-6 h-6 object-contain"
               />
             ) : isCorrect === false ? (
               <img 
                 src="/images/Sad Face wrong Answer.png" 
-                alt="Incorrect answer" 
+                alt={t('exercise.incorrect')}
                 className="w-6 h-6 object-contain"
               />
             ) : (
@@ -208,7 +229,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                 {hasNoAnswer ? (
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-neutral-text">
-                      Your Answer:
+                      {t('exercise.answer')}:
                     </label>
                     <div className="flex items-center gap-2">
                       <Input
@@ -216,18 +237,22 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                         value={userAnswerInput}
                         onChange={(e) => setUserAnswerInput(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        placeholder="Enter your answer..."
+                        placeholder={t('exercise.pleaseProvideAnswer')}
                         className="flex-1"
                         disabled={isSubmitting}
                       />
                       <Button
-                        onClick={handleSubmitAnswer}
+                        onClick={(e) => {
+                          console.log('[ExerciseCard] Submit button clicked!');
+                          console.log('[ExerciseCard] Event:', e);
+                          handleSubmitAnswer();
+                        }}
                         disabled={!userAnswerInput.trim() || isSubmitting}
                         size="sm"
                         className="px-3"
                       >
                         <Send size={16} className="mr-1" />
-                        Submit
+                        {t('exercise.answerSubmitted')}
                       </Button>
                     </div>
                   </div>
@@ -244,7 +269,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                           : 'bg-neutral-bg text-neutral-muted'
                       )}
                     >
-                      Your Answer: {answer}
+                      {t('exercise.answer')}: {answer}
                     </Badge>
                   </div>
                 )}
@@ -259,19 +284,19 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                       size="sm"
                       className="text-xs px-2 py-0.5 h-6"
                     >
-                      Show Explanation
+                      {t('exercise.showExplanation')}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
-                      <DialogTitle>Exercise Explanation</DialogTitle>
+                      <DialogTitle>{t('explanation.modal_title')}</DialogTitle>
                     </DialogHeader>
                     
                     {/* 2-Card Teaching Format in Popup */}
                     <div className="space-y-4">
                       {/* Exercise card */}
                       <div className="rounded-xl border bg-muted p-4">
-                        <div className="font-semibold text-blue-800 dark:text-blue-200 mb-2">📘 Exercise</div>
+                        <div className="font-semibold text-blue-800 dark:text-blue-200 mb-2">{t('explanation.headers.exercise')}</div>
                         <div className="text-blue-700 dark:text-blue-300">
                           {jsonResponse.exercise || question}
                         </div>
@@ -282,8 +307,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                         <div className="space-y-4">
                           <div>
                             <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <span>💡</span>
-                              <span>Concept</span>
+                              <span>{t('explanation.headers.concept')}</span>
                             </div>
                             <div className="text-sm text-muted-foreground leading-relaxed">
                               {jsonResponse.sections.concept}
@@ -292,8 +316,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                           
                           <div>
                             <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <span>🔍</span>
-                              <span>Example</span>
+                              <span>{t('explanation.headers.example')}</span>
                             </div>
                             <div className="text-sm text-muted-foreground leading-relaxed">
                               {jsonResponse.sections.example}
@@ -302,8 +325,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                           
                           <div>
                             <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <span>☑️</span>
-                              <span>Strategy</span>
+                              <span>{t('explanation.headers.strategy')}</span>
                             </div>
                             <div className="text-sm text-muted-foreground leading-relaxed">
                               {jsonResponse.sections.strategy}
@@ -312,8 +334,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                           
                           <div>
                             <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <span>⚠️</span>
-                              <span>Pitfall</span>
+                              <span>{t('explanation.headers.pitfall')}</span>
                             </div>
                             <div className="text-sm text-muted-foreground leading-relaxed">
                               {jsonResponse.sections.pitfall}
@@ -322,8 +343,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                           
                           <div>
                             <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <span>🎯</span>
-                              <span>Check yourself</span>
+                              <span>{t('explanation.headers.check')}</span>
                             </div>
                             <div className="text-sm text-muted-foreground leading-relaxed">
                               {jsonResponse.sections.check}
@@ -332,8 +352,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                           
                           <div>
                             <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <span>📈</span>
-                              <span>Practice Tip</span>
+                              <span>{t('explanation.headers.practice')}</span>
                             </div>
                             <div className="text-sm text-muted-foreground leading-relaxed">
                               {jsonResponse.sections.practice}
@@ -341,7 +360,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                           </div>
                         </div>
                       </div>
-                    </div>
+                </div>
                   </DialogContent>
                 </Dialog>
                 
@@ -355,7 +374,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                       setUserAnswerInput('');
                     }}
                   >
-                    Try Again
+                    {t('exercise.tryAgain')}
                   </Button>
                 )}
               </div>
@@ -369,8 +388,8 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   // Fallback to old format for non-JSON responses
   return (
     <div className="w-full">
-      <div 
-        className={cn(
+          <div 
+            className={cn(
           'p-4 rounded-card transition-all duration-200 hover:shadow-md relative',
           getStatusStyles(content)
         )}
@@ -380,13 +399,13 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
           {isCorrect ? (
             <img 
               src="/images/Happy Green Right Answer.png" 
-              alt="Correct answer" 
+              alt={t('exercise.correct')}
               className="w-6 h-6 object-contain"
             />
           ) : isIncorrect ? (
             <img 
               src="/images/Sad Face wrong Answer.png" 
-              alt="Incorrect answer" 
+              alt={t('exercise.incorrect')}
               className="w-6 h-6 object-contain"
             />
           ) : (
@@ -397,15 +416,15 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
         </div>
 
         <div className="flex items-start gap-3 pr-8"> {/* Add right padding to avoid overlap with status image */}
-          <div className={cn(
-            'flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center',
-            'bg-neutral-surface border border-neutral-border text-blue-600'
-          )}>
-            <Calculator size={20} />
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <div className="text-body font-semibold text-neutral-text mb-3">
+              <div className={cn(
+                'flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center',
+                'bg-neutral-surface border border-neutral-border text-blue-600'
+              )}>
+                <Calculator size={20} />
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                  <div className="text-body font-semibold text-neutral-text mb-3">
               {question}
             </div>
             
@@ -414,7 +433,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
               {hasNoAnswer ? (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-neutral-text">
-                    Your Answer:
+                    {t('exercise.answer')}:
                   </label>
                   <div className="flex items-center gap-2">
                     <Input
@@ -422,32 +441,36 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                       value={userAnswerInput}
                       onChange={(e) => setUserAnswerInput(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder="Enter your answer..."
+                      placeholder={t('exercise.pleaseProvideAnswer')}
                       className="flex-1"
                       disabled={isSubmitting}
                     />
                     <Button
-                      onClick={handleSubmitAnswer}
+                      onClick={(e) => {
+                        console.log('[ExerciseCard] Submit button clicked!');
+                        console.log('[ExerciseCard] Event:', e);
+                        handleSubmitAnswer();
+                      }}
                       disabled={!userAnswerInput.trim() || isSubmitting}
                       size="sm"
                       className="px-3"
                     >
                       <Send size={16} className="mr-1" />
-                      Submit
+                      {t('exercise.answerSubmitted')}
                     </Button>
                   </div>
                 </div>
               ) : (
-                <Badge 
-                  variant="secondary" 
-                  className="px-3 py-1 bg-neutral-bg text-neutral-muted"
-                >
-                  Your Answer: {answer}
-                </Badge>
-              )}
-            </div>
+                    <Badge 
+                      variant="secondary" 
+                      className="px-3 py-1 bg-neutral-bg text-neutral-muted"
+                    >
+                  {t('exercise.answer')}: {answer}
+                      </Badge>
+                    )}
+                  </div>
             
-            <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
               <Dialog>
                 <DialogTrigger asChild>
                   <Button
@@ -455,12 +478,12 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                     size="sm"
                     className="text-xs px-2 py-0.5 h-6"
                   >
-                    Show Explanation
+                    {t('exercise.showExplanation')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle>Exercise Explanation</DialogTitle>
+                    <DialogTitle>{t('explanation.modal_title')}</DialogTitle>
                   </DialogHeader>
                   <div className={cn(
                     "p-4 rounded-lg",
@@ -475,7 +498,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                           : <XCircle className="w-4 h-4 mr-2 text-amber-600" />
                         }
                         <h4 className="text-sm font-medium">
-                          {isCorrect ? 'Great work!' : 'Learning Opportunity'}
+                          {isCorrect ? t('exercise.greatWork') : t('exercise.learningOpportunity')}
                         </h4>
                       </div>
                       
@@ -492,24 +515,24 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                   </div>
                 </DialogContent>
               </Dialog>
-              
-              {isIncorrect && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="text-xs px-2 py-0.5 h-6"
+                  
+                  {isIncorrect && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="text-xs px-2 py-0.5 h-6"
                   onClick={() => {
                     setUserAnswerInput('');
                   }}
-                >
-                  Try Again
-                </Button>
-              )}
+                    >
+                      {t('exercise.tryAgain')}
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
   );
 }, (prevProps, nextProps) => {
   return prevProps.userMessage.id === nextProps.userMessage.id &&
@@ -533,6 +556,16 @@ const LoadingSkeleton = () => (
 );
 
 const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAnswer }) => {
+  const { t, language } = useLanguage();
+  
+  // Debug logging for translation context
+  console.log('[AIResponse] Translation Context Debug:', {
+    language,
+    testTranslation: t('exercise.answer'),
+    testExplanation: t('explanation.modal_title'),
+    timestamp: new Date().toISOString()
+  });
+  
   const exercisePairs = useMemo(() => {
     const userMessages = messages.filter(msg => msg.role === 'user');
     const aiMessages = messages.filter(msg => msg.role === 'assistant' && msg.id !== '1');
