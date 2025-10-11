@@ -171,6 +171,50 @@ export type Database = {
           },
         ]
       }
+      children: {
+        Row: {
+          contact_email: string | null
+          created_at: string | null
+          curriculum: string | null
+          grade: string | null
+          id: string
+          settings_json: Json | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_email?: string | null
+          created_at?: string | null
+          curriculum?: string | null
+          grade?: string | null
+          id?: string
+          settings_json?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_email?: string | null
+          created_at?: string | null
+          curriculum?: string | null
+          grade?: string | null
+          id?: string
+          settings_json?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "children_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           code: string
@@ -308,6 +352,86 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      guardian_child_links: {
+        Row: {
+          child_id: string
+          created_at: string | null
+          guardian_id: string
+          id: string
+          permissions_json: Json | null
+          relation: string | null
+        }
+        Insert: {
+          child_id: string
+          created_at?: string | null
+          guardian_id: string
+          id?: string
+          permissions_json?: Json | null
+          relation?: string | null
+        }
+        Update: {
+          child_id?: string
+          created_at?: string | null
+          guardian_id?: string
+          id?: string
+          permissions_json?: Json | null
+          relation?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guardian_child_links_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guardian_child_links_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guardians: {
+        Row: {
+          address_json: Json | null
+          billing_customer_id: string | null
+          created_at: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address_json?: Json | null
+          billing_customer_id?: string | null
+          created_at?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address_json?: Json | null
+          billing_customer_id?: string | null
+          created_at?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guardians_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       parent_child: {
         Row: {
