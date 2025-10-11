@@ -105,10 +105,22 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     loadLanguageTranslations();
   }, [language]);
 
-  const changeLanguage = (lng: string) => {
+  const changeLanguage = async (lng: string) => {
+    console.log('[Translation] changeLanguage called with:', lng);
     setLanguage(lng);
     localStorage.setItem('lang', lng);
     localStorage.setItem('languageManuallySet', 'true');
+    
+    // SYNC WITH i18next - Ensure both language systems are synchronized
+    try {
+      const i18n = await import('i18next').then(m => m.default);
+      if (i18n.changeLanguage) {
+        console.log('[Translation] Syncing with i18next:', lng);
+        await i18n.changeLanguage(lng);
+      }
+    } catch (error) {
+      console.warn('[Translation] Could not sync with i18next:', error);
+    }
     
     // Show notification about language change
     import('@/hooks/use-toast').then(({ toast }) => {

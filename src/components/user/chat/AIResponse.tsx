@@ -8,6 +8,7 @@ import { Message } from '@/types/chat';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import DOMPurify from 'dompurify';
+import { parseUserMessage } from '@/utils/messageParser';
 
 interface AIResponseProps {
   messages: Message[];
@@ -20,32 +21,8 @@ interface ExerciseCardProps {
   onSubmitAnswer?: (question: string, answer: string) => void;
 }
 
-// Helper functions moved outside component to prevent recreation
-const parseUserMessage = (message: string) => {
-  // Try to find "response" keyword to split question and answer
-  const responseMatch = message.match(/^(.+?)\s+response\s+(.+)$/i);
-  if (responseMatch) {
-    return {
-      question: responseMatch[1].trim(),
-      answer: responseMatch[2].trim()
-    };
-  }
-  
-  // Fallback: try to split by "=" for math equations like "2+2=33"
-  const equalsMatch = message.match(/^(.+?)=(.+)$/);
-  if (equalsMatch) {
-    return {
-      question: equalsMatch[1].trim(),
-      answer: equalsMatch[2].trim()
-    };
-  }
-  
-  // If no pattern found, treat entire message as question
-  return {
-    question: message,
-    answer: message
-  };
-};
+// Note: parseUserMessage is now imported from @/utils/messageParser
+// This provides enhanced detection with better pattern matching
 
 const getStatusStyles = (content: string) => {
   // Check the first line or beginning of content for status
@@ -103,7 +80,8 @@ const parseAIResponse = (content: string) => {
 
 // Memoized ExerciseCard component
 const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmitAnswer }) => {
-  const { question, answer } = parseUserMessage(userMessage.content);
+  const parsed = parseUserMessage(userMessage.content);
+  const { question, answer, hasAnswer } = parsed;
   const content = aiResponse.content;
   const [userAnswerInput, setUserAnswerInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -119,8 +97,8 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
     timestamp: new Date().toISOString()
   });
   
-  // Check if this is a question without an answer
-  const hasNoAnswer = !answer || answer === question;
+  // Check if this is a question without an answer - now using enhanced detection
+  const hasNoAnswer = !hasAnswer || !answer;
   
   const contentTrimmed = content.trim();
   const firstLine = contentTrimmed.split('\n')[0];
@@ -584,7 +562,8 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
     const seenQuestions = new Set<string>();
     
     for (const pair of pairs) {
-      const { question } = parseUserMessage(pair.userMessage.content);
+      const parsed = parseUserMessage(pair.userMessage.content);
+      const { question } = parsed;
       
       if (!seenQuestions.has(question)) {
         seenQuestions.add(question);
@@ -592,8 +571,8 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
       } else {
         // Replace the existing pair with the new one (latest answer)
         const existingIndex = uniquePairs.findIndex(existingPair => {
-          const existingQuestion = parseUserMessage(existingPair.userMessage.content).question;
-          return existingQuestion === question;
+          const existingParsed = parseUserMessage(existingPair.userMessage.content);
+          return existingParsed.question === question;
         });
         
         if (existingIndex !== -1) {

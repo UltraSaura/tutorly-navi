@@ -26,7 +26,11 @@ const LanguageSelector = () => {
         {languages.map((lang) => (
           <DropdownMenuItem
             key={lang.code}
-            onClick={() => changeLanguage(lang.code)}
+            onClick={() => {
+              changeLanguage(lang.code);
+              // Reload page to ensure all components pick up the language change
+              setTimeout(() => window.location.reload(), 100);
+            }}
             className={language === lang.code ? 'bg-accent' : ''}
           >
             <span className="mr-2">{lang.flag}</span>
