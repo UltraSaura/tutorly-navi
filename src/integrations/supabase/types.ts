@@ -370,8 +370,10 @@ export type Database = {
           attempts_count: number | null
           created_at: string
           exercise_content: string
+          explanation_generated_at: string | null
           id: string
           is_correct: boolean | null
+          show_correct_answer_to_child: boolean | null
           subject_id: string | null
           updated_at: string
           user_answer: string | null
@@ -381,8 +383,10 @@ export type Database = {
           attempts_count?: number | null
           created_at?: string
           exercise_content: string
+          explanation_generated_at?: string | null
           id?: string
           is_correct?: boolean | null
+          show_correct_answer_to_child?: boolean | null
           subject_id?: string | null
           updated_at?: string
           user_answer?: string | null
@@ -392,14 +396,51 @@ export type Database = {
           attempts_count?: number | null
           created_at?: string
           exercise_content?: string
+          explanation_generated_at?: string | null
           id?: string
           is_correct?: boolean | null
+          show_correct_answer_to_child?: boolean | null
           subject_id?: string | null
           updated_at?: string
           user_answer?: string | null
           user_id?: string
         }
         Relationships: []
+      }
+      explanations_cache: {
+        Row: {
+          attempt_id: string
+          correct_answer: string
+          generated_at: string | null
+          id: string
+          steps_json: Json
+          tips_for_parent: string | null
+        }
+        Insert: {
+          attempt_id: string
+          correct_answer: string
+          generated_at?: string | null
+          id?: string
+          steps_json: Json
+          tips_for_parent?: string | null
+        }
+        Update: {
+          attempt_id?: string
+          correct_answer?: string
+          generated_at?: string | null
+          id?: string
+          steps_json?: Json
+          tips_for_parent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "explanations_cache_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: true
+            referencedRelation: "exercise_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       guardian_child_links: {
         Row: {
