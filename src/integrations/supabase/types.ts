@@ -123,6 +123,7 @@ export type Database = {
           id: string
           is_active: boolean
           max_tokens: number | null
+          model_function: string | null
           model_id: string
           name: string
           pricing_input: number | null
@@ -137,6 +138,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_tokens?: number | null
+          model_function?: string | null
           model_id: string
           name: string
           pricing_input?: number | null
@@ -151,6 +153,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_tokens?: number | null
+          model_function?: string | null
           model_id?: string
           name?: string
           pricing_input?: number | null
@@ -519,9 +522,10 @@ export type Database = {
       }
       users: {
         Row: {
+          contact_email: string | null
           country: string | null
           created_at: string
-          email: string
+          email: string | null
           first_name: string | null
           id: string
           last_name: string | null
@@ -530,11 +534,14 @@ export type Database = {
           style: string | null
           updated_at: string
           user_type: string
+          username: string
+          username_set_at: string | null
         }
         Insert: {
+          contact_email?: string | null
           country?: string | null
           created_at?: string
-          email: string
+          email?: string | null
           first_name?: string | null
           id: string
           last_name?: string | null
@@ -543,11 +550,14 @@ export type Database = {
           style?: string | null
           updated_at?: string
           user_type: string
+          username: string
+          username_set_at?: string | null
         }
         Update: {
+          contact_email?: string | null
           country?: string | null
           created_at?: string
-          email?: string
+          email?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
@@ -556,17 +566,34 @@ export type Database = {
           style?: string | null
           updated_at?: string
           user_type?: string
+          username?: string
+          username_set_at?: string | null
         }
         Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      configured_models: {
+        Row: {
+          default_model_id: string | null
+          fallback_primary_model_id: string | null
+          fallback_secondary_model_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_vault_secret: {
         Args: { secret_name: string; secret_value: string }
         Returns: undefined
+      }
+      get_model_with_fallback: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          default_model_id: string
+          fallback_primary_model_id: string
+          fallback_secondary_model_id: string
+        }[]
       }
       has_role: {
         Args: {
