@@ -7,3 +7,5 @@ verify_jwt = false
 verify_jwt = true
 [functions.manage-api-keys]
 verify_jwt = true
+[functions.create-child-account]
+verify_jwt = true

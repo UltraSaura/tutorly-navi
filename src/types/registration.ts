@@ -37,4 +37,14 @@ export interface ParentRegistrationData {
   children: ChildInfo[];
 }
 
+export interface ChildRegistrationData {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  country: string;
+  phoneNumber?: string;
+  schoolLevel: string;
+}
+
 export type UserType = 'student' | 'parent';

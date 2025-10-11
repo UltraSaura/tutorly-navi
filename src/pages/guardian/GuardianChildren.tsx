@@ -6,17 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Plus, Mail, GraduationCap, Calendar, Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { ChildWithUser } from '@/types/guardian';
+import AddChildForm from '@/components/guardian/AddChildForm';
+import { ChildRegistrationData } from '@/types/registration';
 
 export default function GuardianChildren() {
-  const { guardianId } = useGuardianAuth();
+  const { guardianId, guardianCountry } = useGuardianAuth();
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newChildEmail, setNewChildEmail] = useState('');
   const [relation, setRelation] = useState('parent');
 
   // Fetch children
@@ -57,49 +57,33 @@ export default function GuardianChildren() {
 
   // Add child mutation
   const addChildMutation = useMutation({
-    mutationFn: async (email: string) => {
+    mutationFn: async (data: ChildRegistrationData & { relation: string }) => {
       if (!guardianId) throw new Error('Guardian ID not found');
 
-      // Find user by email
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', email)
-        .single();
+      const { data: result, error } = await supabase.functions.invoke('create-child-account', {
+        body: {
+          email: data.email,
+          password: data.password,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          country: data.country,
+          phoneNumber: data.phoneNumber,
+          schoolLevel: data.schoolLevel,
+          relation: data.relation,
+        },
+      });
 
-      if (userError || !userData) {
-        throw new Error('User not found with this email');
-      }
+      if (error) throw error;
+      if (!result.success) throw new Error(result.error || 'Failed to create child account');
 
-      // Check if user has a child profile
-      const { data: childData, error: childError } = await supabase
-        .from('children')
-        .select('id')
-        .eq('user_id', userData.id)
-        .single();
-
-      if (childError || !childData) {
-        throw new Error('This user does not have a child profile');
-      }
-
-      // Create guardian-child link
-      const { error: linkError } = await supabase
-        .from('guardian_child_links')
-        .insert({
-          guardian_id: guardianId,
-          child_id: childData.id,
-          relation,
-        });
-
-      if (linkError) throw linkError;
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guardian-children'] });
       setIsAddDialogOpen(false);
-      setNewChildEmail('');
       toast({
         title: 'Success',
-        description: 'Child added successfully',
+        description: 'Child account created successfully',
       });
     },
     onError: (error: Error) => {
@@ -110,6 +94,10 @@ export default function GuardianChildren() {
       });
     },
   });
+
+  const handleAddChild = (formData: ChildRegistrationData) => {
+    addChildMutation.mutate({ ...formData, relation });
+  };
 
   if (isLoading) {
     return (
@@ -139,24 +127,14 @@ export default function GuardianChildren() {
               Add Child
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add a Child</DialogTitle>
+              <DialogTitle>Create Child Account</DialogTitle>
               <DialogDescription>
-                Enter the email address of your child's account
+                Create a new student account for your child
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Child's Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="child@example.com"
-                  value={newChildEmail}
-                  onChange={(e) => setNewChildEmail(e.target.value)}
-                />
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="relation">Relation</Label>
                 <Select value={relation} onValueChange={setRelation}>
@@ -170,13 +148,12 @@ export default function GuardianChildren() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button 
-                onClick={() => addChildMutation.mutate(newChildEmail)}
-                disabled={!newChildEmail || addChildMutation.isPending}
-                className="w-full"
-              >
-                {addChildMutation.isPending ? 'Adding...' : 'Add Child'}
-              </Button>
+              
+              <AddChildForm
+                defaultCountry={guardianCountry || 'US'}
+                onSubmit={handleAddChild}
+                isSubmitting={addChildMutation.isPending}
+              />
             </div>
           </DialogContent>
         </Dialog>
