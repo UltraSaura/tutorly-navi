@@ -69,6 +69,9 @@ Deno.serve(async (req) => {
       throw new Error('Missing required fields');
     }
 
+    // Generate username from email (remove @ and domain, add random suffix)
+    const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') + '_' + Math.random().toString(36).substring(2, 8);
+
     // Create auth user
     const { data: authData, error: authCreateError } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -80,6 +83,7 @@ Deno.serve(async (req) => {
         user_type: 'student',
         country,
         phone_number: phoneNumber || null,
+        username: username,
       },
     });
 
