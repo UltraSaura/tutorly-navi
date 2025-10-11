@@ -42,6 +42,7 @@ const AuthPage = lazy(() => import("./pages/AuthPage"));
 // Guardian Pages
 const GuardianHome = lazy(() => import("./pages/guardian/GuardianHome"));
 const GuardianChildren = lazy(() => import("./pages/guardian/GuardianChildren"));
+const GuardianResults = lazy(() => import("./pages/guardian/GuardianResults"));
 
 // Loading Component
 const LoadingFallback = () => (
@@ -117,10 +118,11 @@ const App = () => {
                           <Route path="prompts" element={<PromptManagement />} />
                         </Route>
                         
-                        {/* Guardian Portal Routes */}
+          {/* Guardian Portal Routes */}
           <Route path="/guardian" element={<GuardianLayout />}>
             <Route index element={<GuardianHome />} />
             <Route path="children" element={<GuardianChildren />} />
+            <Route path="results" element={<Suspense fallback={<LoadingFallback />}><GuardianResults /></Suspense>} />
           </Route>
                         
                         {/* 404 Route */}
