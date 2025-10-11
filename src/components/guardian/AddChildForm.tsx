@@ -33,7 +33,7 @@ interface AddChildFormProps {
 }
 
 export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }: AddChildFormProps) {
-  const { countries, schoolLevels } = useCountriesAndLevels(defaultCountry || 'US');
+  const { countries, schoolLevels, getSchoolLevelsByCountry } = useCountriesAndLevels(defaultCountry || 'US');
   const [selectedCountry, setSelectedCountry] = useState(defaultCountry || 'US');
   
   const {
@@ -154,6 +154,7 @@ export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }:
           onValueChange={(value) => {
             setValue('country', value);
             setSelectedCountry(value);
+            setValue('schoolLevel', ''); // Reset school level when country changes
           }}
         >
           <SelectTrigger>
@@ -199,7 +200,7 @@ export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }:
             <SelectValue placeholder="Select school level" />
           </SelectTrigger>
           <SelectContent>
-            {schoolLevels.map((level) => (
+            {getSchoolLevelsByCountry(selectedCountry).map((level) => (
               <SelectItem key={level.level_code} value={level.level_code}>
                 {level.level_name}
               </SelectItem>
