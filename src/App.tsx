@@ -14,6 +14,7 @@ import { SimpleLanguageProvider } from "./context/SimpleLanguageContext";
 // Layouts
 import MainLayout from "./components/layout/MainLayout";
 import AdminLayout from "./components/admin/AdminLayout";
+import GuardianLayout from "./components/guardian/GuardianLayout";
 
 // User Pages
 import NotFound from "./pages/NotFound";
@@ -37,6 +38,9 @@ import ConnectionDiagnostics from "./components/admin/ConnectionDiagnostics";
 
 // Auth Pages  
 const AuthPage = lazy(() => import("./pages/AuthPage"));
+
+// Guardian Pages
+const GuardianHome = lazy(() => import("./pages/guardian/GuardianHome"));
 
 // Loading Component
 const LoadingFallback = () => (
@@ -110,6 +114,11 @@ const App = () => {
                           <Route path="subjects" element={<SubjectManagement />} />
                           <Route path="users" element={<UserManagement />} />
                           <Route path="prompts" element={<PromptManagement />} />
+                        </Route>
+                        
+                        {/* Guardian Portal Routes */}
+                        <Route path="/guardian" element={<GuardianLayout />}>
+                          <Route index element={<GuardianHome />} />
                         </Route>
                         
                         {/* 404 Route */}

@@ -18,30 +18,36 @@ export type Database = {
         Row: {
           action: string
           admin_id: string
+          context: string | null
           created_at: string
           details: Json | null
           id: string
           ip_address: unknown | null
+          metadata: Json | null
           target_id: string | null
           target_table: string | null
         }
         Insert: {
           action: string
           admin_id: string
+          context?: string | null
           created_at?: string
           details?: Json | null
           id?: string
           ip_address?: unknown | null
+          metadata?: Json | null
           target_id?: string | null
           target_table?: string | null
         }
         Update: {
           action?: string
           admin_id?: string
+          context?: string | null
           created_at?: string
           details?: Json | null
           id?: string
           ip_address?: unknown | null
+          metadata?: Json | null
           target_id?: string | null
           target_table?: string | null
         }
