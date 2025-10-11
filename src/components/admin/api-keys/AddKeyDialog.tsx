@@ -35,7 +35,7 @@ const AddKeyDialog = ({ onAddKey }: AddKeyDialogProps) => {
   return (
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
       <DialogTrigger asChild>
-        <Button className="bg-studywhiz-600 hover:bg-studywhiz-700">
+        <Button className="bg-stuwy-600 hover:bg-stuwy-700">
           <Plus className="mr-2 h-4 w-4" /> Add New Key
         </Button>
       </DialogTrigger>
@@ -93,7 +93,7 @@ const AddKeyDialog = ({ onAddKey }: AddKeyDialogProps) => {
         
         <DialogFooter>
           <Button variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
-          <Button className="bg-studywhiz-600 hover:bg-studywhiz-700" onClick={handleAddKey}>
+          <Button className="bg-stuwy-600 hover:bg-stuwy-700" onClick={handleAddKey}>
             Add Key
           </Button>
         </DialogFooter>

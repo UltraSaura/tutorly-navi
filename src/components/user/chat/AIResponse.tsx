@@ -52,8 +52,8 @@ const formatExplanation = (content: string) => {
     .trim();
 
   return cleanContent
-    .replace(/\*\*Problem:\*\*/g, '<strong class="text-studywhiz-600 dark:text-studywhiz-400">Problem:</strong>')
-    .replace(/\*\*Guidance:\*\*/g, '<strong class="text-studywhiz-600 dark:text-studywhiz-400">Guidance:</strong>')
+    .replace(/\*\*Problem:\*\*/g, '<strong class="text-stuwy-600 dark:text-stuwy-400">Problem:</strong>')
+    .replace(/\*\*Guidance:\*\*/g, '<strong class="text-stuwy-600 dark:text-stuwy-400">Guidance:</strong>')
     .replace(/^Guidance:\s*Problem:\s*/gm, '')
     .replace(/^\s*$/gm, '')
     .split('\n')

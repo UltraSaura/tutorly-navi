@@ -64,7 +64,7 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				// Custom colors for our app
-				studywhiz: {
+				stuwy: {
 					50: '#f0f7ff',
 					100: '#e0efff',
 					200: '#c7e1ff',

@@ -24,9 +24,7 @@ const AdminSidebarMobile = ({ open, onOpenChange, closeMenu }: AdminSidebarMobil
       <SheetContent side="left" className="p-0 w-64">
         <div className="flex items-center justify-between h-16 px-6 border-b">
           <Link to="/" className="flex items-center">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-studywhiz-600 text-white font-bold text-sm">
-              SW
-            </div>
+            <img src="/logo.png" alt="Stuwy Logo" className="w-8 h-8" />
             <span className="ml-2 font-semibold">Admin Panel</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={closeMenu}>
@@ -49,8 +47,8 @@ const AdminSidebarMobile = ({ open, onOpenChange, closeMenu }: AdminSidebarMobil
                       className={cn(
                         "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
                         location.pathname === item.path
-                          ? "bg-studywhiz-100 text-studywhiz-700 dark:bg-studywhiz-900/20 dark:text-studywhiz-400"
-                          : "text-gray-600 hover:bg-studywhiz-50 hover:text-studywhiz-600 dark:text-gray-400 dark:hover:bg-studywhiz-900/10 dark:hover:text-studywhiz-400"
+                          ? "bg-stuwy-100 text-stuwy-700 dark:bg-stuwy-900/20 dark:text-stuwy-400"
+                          : "text-gray-600 hover:bg-stuwy-50 hover:text-stuwy-600 dark:text-gray-400 dark:hover:bg-stuwy-900/10 dark:hover:text-stuwy-400"
                       )}
                       onClick={closeMenu}
                     >

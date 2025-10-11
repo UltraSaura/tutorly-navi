@@ -133,7 +133,7 @@ export const PromptEditor = ({
         <Button 
           onClick={onSave}
           disabled={editedPrompt === selectedTemplate.prompt_content}
-          className="bg-studywhiz-600 hover:bg-studywhiz-700"
+          className="bg-stuwy-600 hover:bg-stuwy-700"
         >
           <Save className="mr-2 h-4 w-4" />
           Save Changes

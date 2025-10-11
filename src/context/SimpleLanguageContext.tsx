@@ -4,7 +4,40 @@ import { useAuth } from '@/context/AuthContext';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
 import { loadTranslations, type SupportedLanguage, SUPPORTED_LANGUAGES } from '@/locales';
 
-export const defaultLang = "en";
+// Smart default language detection
+const getInitialLanguage = (): string => {
+  // 1. Check if user manually set language
+  const storedLang = localStorage.getItem('lang');
+  const manuallySet = localStorage.getItem('languageManuallySet');
+  
+  if (storedLang && manuallySet === 'true') {
+    console.log('[Language Init] Using manually set language:', storedLang);
+    return storedLang;
+  }
+  
+  // 2. Try browser language detection
+  const browserLang = navigator.language || (navigator as any).userLanguage;
+  if (browserLang) {
+    const langCode = browserLang.split('-')[0].toLowerCase();
+    if (SUPPORTED_LANGUAGES.includes(langCode as SupportedLanguage)) {
+      console.log('[Language Init] Using browser language:', langCode);
+      return langCode;
+    }
+  }
+  
+  // 3. Try timezone-based detection for French
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (timezone.includes('Paris') || timezone.includes('Europe/Brussels') || timezone.includes('Europe/Luxembourg')) {
+    console.log('[Language Init] Detected French timezone:', timezone);
+    return 'fr';
+  }
+  
+  // 4. Default to stored language or English
+  console.log('[Language Init] Falling back to stored or default language:', storedLang || 'en');
+  return storedLang || 'en';
+};
+
+export const defaultLang = getInitialLanguage();
 
 interface LanguageContextType {
   language: string;
@@ -42,9 +75,16 @@ function flattenTranslations(obj: any, prefix = ''): Record<string, any> {
 
 export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState(() => {
-    const storedLang = localStorage.getItem('lang') || defaultLang;
-    console.log('[Translation] SimpleLanguageProvider initialized with language:', storedLang);
-    return storedLang;
+    const initialLang = defaultLang;
+    console.log('[Translation] SimpleLanguageProvider initialized with language:', initialLang);
+    
+    // Persist the initial language if it was detected (not manually set)
+    if (!localStorage.getItem('languageManuallySet')) {
+      localStorage.setItem('lang', initialLang);
+      console.log('[Translation] Persisted initial language to localStorage:', initialLang);
+    }
+    
+    return initialLang;
   });
   
   const [translations, setTranslations] = useState<any>({});
@@ -64,6 +104,17 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         console.log('[Translation] Using cached translations for:', language);
         setTranslations(translationCache.get(language));
         setIsLoading(false);
+        
+        // Sync with i18next even when using cache
+        try {
+          const i18n = await import('i18next').then(m => m.default);
+          if (i18n.language !== language && i18n.changeLanguage) {
+            console.log('[Translation] Syncing i18next to:', language);
+            await i18n.changeLanguage(language);
+          }
+        } catch (error) {
+          console.warn('[Translation] Could not sync with i18next:', error);
+        }
         return;
       }
 
@@ -83,6 +134,17 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         translationCache.set(language, combined);
         setTranslations(combined);
         console.log('[Translation] Translations set successfully for:', language);
+        
+        // Sync with i18next
+        try {
+          const i18n = await import('i18next').then(m => m.default);
+          if (i18n.changeLanguage) {
+            console.log('[Translation] Syncing i18next to:', language);
+            await i18n.changeLanguage(language);
+          }
+        } catch (error) {
+          console.warn('[Translation] Could not sync with i18next:', error);
+        }
       } catch (error) {
         console.error('Failed to load translations:', error);
         // Fallback to English if current language fails
@@ -282,11 +344,21 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     return result;
   };
 
-  // Auto-detect language from multiple sources when user loads
+  // Auto-detect language from user profile (only if not already detected)
   useEffect(() => {
     const detectLanguageFromUser = async () => {
       const languageManuallySet = localStorage.getItem('languageManuallySet') === 'true';
-      if (languageManuallySet) return;
+      if (languageManuallySet) {
+        console.log('[Auto-detect] Language was manually set, skipping auto-detection');
+        return;
+      }
+      
+      // Only auto-detect if we're still on the default English and browser detection didn't already set French
+      const browserDetectedFrench = defaultLang === 'fr';
+      if (browserDetectedFrench) {
+        console.log('[Auto-detect] Browser/timezone already detected French, skipping redundant detection');
+        return;
+      }
       
       let detectedLanguage = null;
       
@@ -302,23 +374,24 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
           );
           
           if (data?.country) {
-            console.log('User loaded with country:', data.country);
+            console.log('[Auto-detect] User loaded with country:', data.country);
             const norm = normalizeCountryCode(data.country) || data.country;
             detectedLanguage = getLanguageFromCountry(norm);
+            console.log('[Auto-detect] Detected language from profile:', detectedLanguage);
           }
         } catch (error) {
-          console.warn('Failed to detect language from user profile:', error);
+          console.warn('[Auto-detect] Failed to detect language from user profile:', error);
         }
       }
       
-      // Fallback to automatic country detection
-      if (!detectedLanguage && detection.country) {
+      // Fallback to automatic country detection (only if language is still English)
+      if (!detectedLanguage && detection.country && language === 'en') {
         detectedLanguage = getLanguageFromDetection();
-        console.log('Using automatic detection:', detection.country, '->', detectedLanguage);
+        console.log('[Auto-detect] Using automatic detection:', detection.country, '->', detectedLanguage);
       }
       
       if (detectedLanguage && detectedLanguage !== language) {
-        console.log('Changing language from', language, 'to', detectedLanguage);
+        console.log('[Auto-detect] Changing language from', language, 'to', detectedLanguage);
         setLanguage(detectedLanguage);
         localStorage.setItem('lang', detectedLanguage);
         

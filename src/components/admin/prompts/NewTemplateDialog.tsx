@@ -180,7 +180,7 @@ export const NewTemplateDialog = ({
             Cancel
           </Button>
           <Button 
-            className="bg-studywhiz-600 hover:bg-studywhiz-700"
+            className="bg-stuwy-600 hover:bg-stuwy-700"
             onClick={onAddTemplate}
           >
             Create Template

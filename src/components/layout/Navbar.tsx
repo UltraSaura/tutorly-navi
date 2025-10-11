@@ -99,12 +99,10 @@ const Navbar = () => {
   
   return (
     <header className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
-      <div className="studywhiz-container">
+      <div className="stuwy-container">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-studywhiz-600 text-white font-bold">
-              {t('brand.short')}
-            </div>
+            <img src="/logo.png" alt="Stuwy Logo" className="w-10 h-10" />
             <span className="text-lg font-semibold">{t('brand.name')}</span>
             <div className="hidden md:block">
               <SubjectSelector />
@@ -185,7 +183,7 @@ const Navbar = () => {
               to={tab.path}
               className={`flex flex-col items-center p-2 rounded-md ${
                 location.pathname === tab.path 
-                  ? 'text-studywhiz-600 dark:text-studywhiz-400' 
+                  ? 'text-stuwy-600 dark:text-stuwy-400' 
                   : 'text-gray-500 dark:text-gray-400'
               }`}
             >

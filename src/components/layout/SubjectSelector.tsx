@@ -238,7 +238,7 @@ const SubjectSelector = () => {
         }
       }}
     >
-      <SelectTrigger className="w-[180px] bg-studywhiz-100 text-studywhiz-700 dark:bg-studywhiz-900/20 dark:text-studywhiz-400 border-none">
+      <SelectTrigger className="w-[180px] bg-stuwy-100 text-stuwy-700 dark:bg-stuwy-900/20 dark:text-stuwy-400 border-none">
         <SelectValue placeholder={t('common.selectSubject')} />
       </SelectTrigger>
       <SelectContent>

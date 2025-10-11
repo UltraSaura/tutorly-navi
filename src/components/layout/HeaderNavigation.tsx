@@ -128,10 +128,8 @@ export function HeaderNavigation() {
     <div className="flex items-center justify-between w-full h-full px-6">
       {/* Logo and App Name */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-          SW
-        </div>
-        <span className="text-lg font-semibold text-foreground">StudyWhiz</span>
+        <img src="/logo.png" alt="Stuwy Logo" className="w-8 h-8" />
+        <span className="text-lg font-semibold text-foreground">Stuwy</span>
       </div>
 
       {/* Navigation Links - Hidden on mobile as MobileBottomTabs handles it */}

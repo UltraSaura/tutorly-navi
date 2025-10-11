@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import LanguageSelector from "@/components/ui/language-selector";
 import { useAuth } from "@/context/AuthContext";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { MessageCircle, BookOpen, BarChart3, Award, Settings, Sparkles, Brain, LogIn } from "lucide-react";
+import { MessageCircle, BookOpen, BarChart3, Award, Settings, Sparkles, LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const Index = () => {
@@ -67,9 +67,9 @@ const Index = () => {
       {/* Header */}
       <header className="container mx-auto px-4 py-6 flex justify-between items-center">
         <div className="flex items-center space-x-2">
-          <Brain className="h-8 w-8 text-primary" />
+          <img src="/logo.png" alt="Stuwy Logo" className="h-8 w-8" />
           <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            StudyWhiz AI
+            Stuwy AI
           </span>
         </div>
         <LanguageSelector />
@@ -147,14 +147,14 @@ const Index = () => {
       {/* Footer */}
       <footer className="container mx-auto px-4 py-8 text-center border-t border-border/50 mt-16">
         <div className="flex items-center justify-center space-x-2 mb-4">
-          <Brain className="h-6 w-6 text-primary" />
-          <span className="text-lg font-semibold">StudyWhiz AI</span>
+          <img src="/logo.png" alt="Stuwy Logo" className="h-6 w-6" />
+          <span className="text-lg font-semibold">Stuwy AI</span>
         </div>
         <p className="text-muted-foreground text-sm mb-2">
           Submit your homework and exercises and get personalized tutoring.
         </p>
         <p className="text-muted-foreground text-xs">
-          © 2024 StudyWhiz AI. All rights reserved.
+          © 2024 Stuwy AI. All rights reserved.
         </p>
       </footer>
     </div>

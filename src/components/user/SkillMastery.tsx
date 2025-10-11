@@ -214,7 +214,7 @@ const SkillMastery = () => {
           </div>
           
           <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-            <button className="inline-flex items-center text-sm text-studywhiz-600 dark:text-studywhiz-400 hover:underline">
+            <button className="inline-flex items-center text-sm text-stuwy-600 dark:text-stuwy-400 hover:underline">
               Practice now <ChevronRight className="w-4 h-4 ml-1" />
             </button>
           </div>
@@ -247,12 +247,12 @@ const SkillMastery = () => {
                       {idx === 0 ? (
                         <Trophy className="h-8 w-8 text-yellow-500" />
                       ) : (
-                        <Star className="h-8 w-8 text-studywhiz-500" />
+                        <Star className="h-8 w-8 text-stuwy-500" />
                       )}
                     </div>
                     <h3 className="font-medium text-center">{skill.name}</h3>
                     <div className="mt-2 text-center">
-                      <span className="text-2xl font-bold text-studywhiz-600">{skill.progress}%</span>
+                      <span className="text-2xl font-bold text-stuwy-600">{skill.progress}%</span>
                       <Badge className={`mt-1 block mx-auto font-normal ${getLevelColor(skill.level)}`}>
                         {skill.level}
                       </Badge>
@@ -286,7 +286,7 @@ const SkillMastery = () => {
               })}
               
               <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 text-center">
-                <button className="inline-flex items-center text-sm text-studywhiz-600 dark:text-studywhiz-400 hover:underline">
+                <button className="inline-flex items-center text-sm text-stuwy-600 dark:text-stuwy-400 hover:underline">
                   View personalized study plan <ChevronRight className="w-4 h-4 ml-1" />
                 </button>
               </div>

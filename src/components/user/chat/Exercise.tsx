@@ -58,8 +58,8 @@ const Exercise = ({
     processMathContentForDisplay(exercise.userAnswer) : null;
   
   const formattedExplanation = exercise.explanation ? exercise.explanation
-    .replace(/\*\*Problem:\*\*/g, `<strong class="text-studywhiz-600 dark:text-studywhiz-400">${t('exercise.problem')}:</strong>`)
-    .replace(/\*\*Guidance:\*\*/g, `<strong class="text-studywhiz-600 dark:text-studywhiz-400">${t('exercise.guidance')}:</strong>`)
+    .replace(/\*\*Problem:\*\*/g, `<strong class="text-stuwy-600 dark:text-stuwy-400">${t('exercise.problem')}:</strong>`)
+    .replace(/\*\*Guidance:\*\*/g, `<strong class="text-stuwy-600 dark:text-stuwy-400">${t('exercise.guidance')}:</strong>`)
     .replace(/^Guidance:\s*Problem:\s*/gm, '') // Remove "Guidance: Problem: " lines
     .replace(/^exercise\.guidance:\s*exercise\.problem:\s*.*$/gm, '') // Remove entire "exercise.guidance: exercise.problem: ..." lines
     .replace(/^\s*$/gm, '') // Remove empty lines

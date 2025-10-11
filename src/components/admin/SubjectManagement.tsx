@@ -226,7 +226,7 @@ const SubjectManagement = () => {
               
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowAddCategoryDialog(false)}>Cancel</Button>
-                <Button className="bg-studywhiz-600 hover:bg-studywhiz-700" onClick={handleAddCategory}>
+                <Button className="bg-stuwy-600 hover:bg-stuwy-700" onClick={handleAddCategory}>
                   Add Category
                 </Button>
               </DialogFooter>
@@ -235,7 +235,7 @@ const SubjectManagement = () => {
           
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
-              <Button className="bg-studywhiz-600 hover:bg-studywhiz-700">
+              <Button className="bg-stuwy-600 hover:bg-stuwy-700">
                 <Plus className="mr-2 h-4 w-4" /> Add Subject
               </Button>
             </DialogTrigger>
@@ -303,7 +303,7 @@ const SubjectManagement = () => {
               
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</Button>
-                <Button className="bg-studywhiz-600 hover:bg-studywhiz-700" onClick={handleAddSubject}>
+                <Button className="bg-stuwy-600 hover:bg-stuwy-700" onClick={handleAddSubject}>
                   Add Subject
                 </Button>
               </DialogFooter>

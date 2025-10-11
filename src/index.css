@@ -199,7 +199,7 @@
 }
 
 @layer components {
-  .studywhiz-container {
+  .stuwy-container {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 
@@ -218,11 +218,11 @@
   }
 
   .nav-item-active {
-    @apply bg-white dark:bg-slate-800 text-studywhiz-700 dark:text-studywhiz-400 shadow-sm;
+    @apply bg-white dark:bg-slate-800 text-stuwy-700 dark:text-stuwy-400 shadow-sm;
   }
 
   .nav-item-inactive {
-    @apply text-gray-600 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-slate-800/60 hover:text-studywhiz-600 dark:hover:text-studywhiz-400;
+    @apply text-gray-600 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-slate-800/60 hover:text-stuwy-600 dark:hover:text-stuwy-400;
   }
 
   .shimmer {

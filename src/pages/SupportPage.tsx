@@ -66,7 +66,7 @@ const SupportPage = () => {
     },
     {
       question: "What subjects are supported?",
-      answer: "StudyWhiz supports mathematics, science, literature, history, and many other subjects. Our AI adapts to different academic levels and curricula."
+      answer: "Stuwy supports mathematics, science, literature, history, and many other subjects. Our AI adapts to different academic levels and curricula."
     },
     {
       question: "Is my data secure?",
@@ -106,7 +106,7 @@ const SupportPage = () => {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Support Center</h1>
         <p className="text-muted-foreground">
-          Get help with StudyWhiz AI and make the most of your learning experience
+          Get help with Stuwy AI and make the most of your learning experience
         </p>
       </div>
 

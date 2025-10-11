@@ -154,7 +154,7 @@ const LearningRoadmap = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2 text-sm">
-              <Badge className="bg-studywhiz-500 hover:bg-studywhiz-600 mr-1">14 Skills Mastered</Badge>
+              <Badge className="bg-stuwy-500 hover:bg-stuwy-600 mr-1">14 Skills Mastered</Badge>
               <Badge className="bg-green-500 hover:bg-green-600 mr-1">3 Topics Completed</Badge>
               <Badge className="bg-amber-500 hover:bg-amber-600">
                 5 {t('game.dayStreak')}
@@ -226,7 +226,7 @@ const LearningRoadmap = () => {
                   
                   {topic.status !== 'completed' && (
                     <div className="mt-4 flex justify-end">
-                      <button className="inline-flex items-center text-sm text-studywhiz-600 dark:text-studywhiz-400 hover:underline">
+                      <button className="inline-flex items-center text-sm text-stuwy-600 dark:text-stuwy-400 hover:underline">
                         Continue learning <ChevronRight className="w-4 h-4 ml-1" />
                       </button>
                     </div>

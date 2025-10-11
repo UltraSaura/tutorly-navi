@@ -20,12 +20,23 @@ export const processUploadedDocument = async (
   subjectId?: string
 ): Promise<{ exercises: Exercise[], rawText: string } | null> => {
   try {
-    console.log('=== FRONTEND DOCUMENT PROCESSING START ===', { fileName: file.name, fileType: file.type });
+    console.log('=== FRONTEND DOCUMENT PROCESSING START ===', { 
+      fileName: file.name, 
+      fileType: file.type,
+      fileSize: `${(file.size / 1024).toFixed(2)} KB`,
+      subjectId: subjectId || 'none'
+    });
+    
+    // Show processing toast
+    const processingToastId = toast.loading('Processing photo with OCR...');
     
     // Convert blob to base64
+    console.log('Converting file to base64...');
     const base64Data = await convertBlobToBase64(file);
+    console.log('Base64 conversion complete, data length:', base64Data.length);
     
     // Call the document processor edge function
+    console.log('Calling document-processor edge function...');
     const { data, error } = await supabase.functions.invoke('document-processor', {
       body: {
         fileData: base64Data,
@@ -35,15 +46,34 @@ export const processUploadedDocument = async (
       },
     });
     
+    // Dismiss the processing toast
+    toast.dismiss(processingToastId);
+    
     if (error) {
-      console.error('Error calling document processor:', error);
-      toast.error('Could not process document. Please try uploading again.');
+      console.error('❌ Error calling document processor:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      toast.error(`OCR processing failed: ${error.message || 'Unknown error'}`);
       return null;
     }
     
-    console.log('=== EDGE FUNCTION RESPONSE ===', data);
-    console.log('Raw text length:', data.rawText?.length || 0);
-    console.log('Exercises found by edge function:', data.exercises?.length || 0);
+    console.log('=== EDGE FUNCTION RESPONSE ===');
+    console.log('Success:', data?.success);
+    console.log('Raw text length:', data?.rawText?.length || 0);
+    console.log('Exercises found by edge function:', data?.exercises?.length || 0);
+    
+    if (data?.rawText) {
+      console.log('Raw text preview:', data.rawText.substring(0, 200));
+    }
+    
+    console.log('Edge function response received, processing data...');
+    console.log('Data structure:', {
+      hasData: !!data,
+      hasSuccess: data?.success,
+      hasExercises: !!data?.exercises,
+      exerciseCount: data?.exercises?.length || 0,
+      hasRawText: !!data?.rawText,
+      rawTextLength: data?.rawText?.length || 0
+    });
     
     // Log each exercise received from edge function
     if (data.exercises && data.exercises.length > 0) {

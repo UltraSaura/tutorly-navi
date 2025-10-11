@@ -54,8 +54,8 @@ export const DraggableSubject = ({ subject, onDelete, onToggle }: DraggableSubje
               
               <div>
                 <div className="flex items-center gap-2">
-                  <div className="bg-studywhiz-100 p-2 rounded-lg">
-                    <DynamicIcon name={subject.icon as any} className="h-5 w-5 text-studywhiz-600" />
+                  <div className="bg-stuwy-100 p-2 rounded-lg">
+                    <DynamicIcon name={subject.icon as any} className="h-5 w-5 text-stuwy-600" />
                   </div>
                   <CardTitle>{subject.name}</CardTitle>
                 </div>

@@ -23,7 +23,7 @@ export const PromptTemplateCard = ({
   return (
     <Card 
       className={`glass cursor-pointer transition-all ${
-        isSelected ? 'ring-2 ring-studywhiz-500' : ''
+        isSelected ? 'ring-2 ring-stuwy-500' : ''
       }`}
       onClick={() => onSelect(template)}
     >
