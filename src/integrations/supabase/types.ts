@@ -236,6 +236,54 @@ export type Database = {
         }
         Relationships: []
       }
+      delegation_tokens: {
+        Row: {
+          child_id: string
+          created_at: string | null
+          expires_at: string
+          guardian_id: string
+          id: string
+          jti_hash: string
+          scope: string | null
+          used_at: string | null
+        }
+        Insert: {
+          child_id: string
+          created_at?: string | null
+          expires_at: string
+          guardian_id: string
+          id?: string
+          jti_hash: string
+          scope?: string | null
+          used_at?: string | null
+        }
+        Update: {
+          child_id?: string
+          created_at?: string | null
+          expires_at?: string
+          guardian_id?: string
+          id?: string
+          jti_hash?: string
+          scope?: string | null
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delegation_tokens_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delegation_tokens_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercise_attempts: {
         Row: {
           attempt_number: number
