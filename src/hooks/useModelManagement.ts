@@ -5,9 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export const useModelManagement = (apiKeys: ApiKey[]) => {
-  // ADD THESE TWO STATE VARIABLES
-  const [modelFunctions, setModelFunctions] = useState<Record<string, 'default' | 'fallback_primary' | 'fallback_secondary' | null>>({});
-  const [loading, setLoading] = useState(true);
 
   // Helper function to get default available model based on Supabase secrets
   const getDefaultAvailableModel = () => {
@@ -27,83 +24,6 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
     return availableModel?.id || 'deepseek-chat'; // Always fallback to DeepSeek
   };
 
-  // ADD THIS NEW FUNCTION
-  const fetchModelFunctions = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('ai_models')
-        .select('model_id, model_function')
-        .eq('is_active', true)
-        .not('model_function', 'is', null);
-      
-      if (error) throw error;
-      
-      const functions: Record<string, 'default' | 'fallback_primary' | 'fallback_secondary' | null> = {};
-      data?.forEach(model => {
-        const internalId = AVAILABLE_MODELS.find(m => m.id.includes(model.model_id) || model.model_id.includes(m.id))?.id;
-        if (internalId && model.model_function) {
-          functions[internalId] = model.model_function as 'default' | 'fallback_primary' | 'fallback_secondary';
-        }
-      });
-      
-      setModelFunctions(functions);
-    } catch (error) {
-      console.error('Error fetching model functions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ADD THIS NEW FUNCTION
-  const setModelFunction = async (modelId: string, functionType: 'default' | 'fallback_primary' | 'fallback_secondary' | null) => {
-    try {
-      const model = AVAILABLE_MODELS.find(m => m.id === modelId);
-      if (!model) {
-        toast.error('Model not found');
-        return;
-      }
-
-      const { data: dbModel, error: fetchError } = await supabase
-        .from('ai_models')
-        .select('id, model_id')
-        .ilike('name', model.name)
-        .eq('is_active', true)
-        .single();
-
-      if (fetchError || !dbModel) {
-        console.error('Model not found in database:', fetchError);
-        toast.error('Model not found in database');
-        return;
-      }
-
-      const { error } = await supabase
-        .from('ai_models')
-        .update({ model_function: functionType })
-        .eq('id', dbModel.id);
-
-      if (error) throw error;
-
-      setModelFunctions(prev => ({
-        ...prev,
-        [modelId]: functionType
-      }));
-
-      const functionLabel = functionType === 'default' ? 'Default Model' :
-                           functionType === 'fallback_primary' ? 'Primary Fallback' :
-                           functionType === 'fallback_secondary' ? 'Secondary Fallback' : 'Unassigned';
-      
-      toast.success(`Model set as ${functionLabel}`);
-      await fetchModelFunctions();
-    } catch (error) {
-      console.error('Error setting model function:', error);
-      toast.error('Failed to update model function');
-    }
-  };
-
-  // ADD THIS useEffect
-  useEffect(() => {
-    fetchModelFunctions();
-  }, []);
 
   const [selectedModelId, setSelectedModelIdState] = useState<string>(() => {
     const savedModel = localStorage.getItem('selectedModelId');
@@ -142,7 +62,6 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
     localStorage.setItem('selectedModelId', selectedModelId);
   }, [selectedModelId]);
 
-  // MODIFY getAvailableModels to include modelFunction
   const getAvailableModels = () => {
     const configuredProviders = ['DeepSeek', 'OpenAI'];
     
@@ -154,8 +73,7 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
       return {
         ...model,
         disabled: !isAvailable,
-        usesSupabaseSecret: hasSupabaseSecret && !hasLocalApiKey,
-        modelFunction: modelFunctions[model.id] || null
+        usesSupabaseSecret: hasSupabaseSecret && !hasLocalApiKey
       };
     })
     .sort((a, b) => {
@@ -172,9 +90,6 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
       console.log('[ModelManagement] Model selection changing from', selectedModelId, 'to', id);
       setSelectedModelIdState(id);
     },
-    getAvailableModels,
-    setModelFunction,
-    modelFunctions,
-    loading
+    getAvailableModels
   };
 };
