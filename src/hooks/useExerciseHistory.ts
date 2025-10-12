@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { ExerciseHistoryRecord, ExerciseHistoryWithAttempts } from '@/types/exercise-history';
+import { toast } from 'sonner';
 
 interface UseExerciseHistoryOptions {
   limit?: number;
@@ -145,8 +146,21 @@ export const useExerciseHistory = (options: UseExerciseHistoryOptions = {}) => {
 
       if (attemptError) {
         console.error('Error creating attempt record:', attemptError);
+        toast.error('Failed to save attempt record');
+        return null;
       }
 
+      // Log successful save
+      console.log('✅ Exercise saved successfully:', {
+        userId: user.user.id,
+        exerciseHistoryId,
+        attemptNumber,
+        isCorrect,
+        subjectId
+      });
+
+      toast.success('Exercise saved to history');
+      
       return exerciseHistoryId;
     } catch (err) {
       console.error('Unexpected error saving exercise:', err);

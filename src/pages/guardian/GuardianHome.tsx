@@ -29,6 +29,35 @@ export default function GuardianHome() {
   const totalChildren = childrenData?.length || 0;
   const activeChildren = childrenData?.filter(c => c.children?.status === 'active')?.length || 0;
 
+  // Fetch exercises this week
+  const { data: exercisesThisWeek } = useQuery({
+    queryKey: ['guardian-exercises-week', guardianId],
+    queryFn: async () => {
+      if (!guardianId || !childrenData) return 0;
+      
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const childUserIds = childrenData.map(c => c.children?.user_id).filter(Boolean);
+      
+      if (childUserIds.length === 0) return 0;
+      
+      const { data, error } = await supabase
+        .from('exercise_history')
+        .select('id')
+        .in('user_id', childUserIds)
+        .gte('created_at', sevenDaysAgo.toISOString());
+      
+      if (error) {
+        console.error('Error fetching exercises this week:', error);
+        return 0;
+      }
+      
+      return data?.length || 0;
+    },
+    enabled: !!guardianId && !!childrenData,
+  });
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -60,8 +89,10 @@ export default function GuardianHome() {
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">--</div>
-            <p className="text-xs text-muted-foreground">Coming soon</p>
+            <div className="text-2xl font-bold">{exercisesThisWeek ?? 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Past 7 days
+            </p>
           </CardContent>
         </Card>
 
