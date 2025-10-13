@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { useGuardianExerciseHistory } from '@/hooks/useGuardianExerciseHistory';
+import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
+import { ExplanationModal } from '@/features/explanations/ExplanationModal';
 import ResultsSummary from '@/components/guardian/ResultsSummary';
 import ResultsFilter from '@/components/guardian/ResultsFilter';
 import ExerciseResultCard from '@/components/guardian/ExerciseResultCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
+import type { ExerciseHistoryWithAttempts } from '@/types/exercise-history';
 
 export default function GuardianResults() {
   const { guardianId } = useGuardianAuth();
@@ -14,6 +17,8 @@ export default function GuardianResults() {
   const [correctnessFilter, setCorrectnessFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [selectedExercise, setSelectedExercise] = useState<ExerciseHistoryWithAttempts | null>(null);
+  const teaching = useTwoCardTeaching();
 
   const { children, exerciseHistory, loading, stats } = useGuardianExerciseHistory({
     guardianId,
@@ -37,6 +42,25 @@ export default function GuardianResults() {
   const getChildName = (userId: string) => {
     const child = children.find((c) => c.user_id === userId);
     return child ? `${child.firstName} ${child.lastName}` : undefined;
+  };
+
+  const handleRequestExplanation = async (exercise: ExerciseHistoryWithAttempts) => {
+    const exerciseData = {
+      prompt: exercise.exercise_content,
+      userAnswer: exercise.user_answer || '',
+      subject: exercise.subject_id || 'math'
+    };
+    
+    await teaching.openFor(exerciseData, {
+      response_language: 'English',
+      grade_level: 'High School'
+    });
+    
+    setSelectedExercise(exercise);
+  };
+
+  const handleViewExplanation = (exercise: ExerciseHistoryWithAttempts) => {
+    setSelectedExercise(exercise);
   };
 
   if (loading) {
@@ -111,10 +135,30 @@ export default function GuardianResults() {
               key={exercise.id}
               exercise={exercise}
               childName={selectedChild === 'all' ? getChildName(exercise.user_id) : undefined}
+              onViewExplanation={handleViewExplanation}
+              onRequestExplanation={handleRequestExplanation}
             />
           ))}
         </div>
       )}
+
+      <ExplanationModal
+        open={teaching.open || !!selectedExercise?.explanation}
+        onClose={() => {
+          teaching.setOpen(false);
+          setSelectedExercise(null);
+        }}
+        loading={teaching.loading}
+        sections={
+          teaching.sections || 
+          (selectedExercise?.explanation && !Array.isArray(selectedExercise.explanation) 
+            ? selectedExercise.explanation.explanation_data 
+            : null)
+        }
+        error={teaching.error}
+        onTryAgain={() => {}}
+        exerciseQuestion={selectedExercise?.exercise_content || ''}
+      />
     </div>
   );
 }

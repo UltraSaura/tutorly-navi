@@ -74,8 +74,7 @@ export const useGuardianExerciseHistory = (options: UseGuardianExerciseHistoryOp
         .from('exercise_history')
         .select(`
           *,
-          attempts:exercise_attempts(*),
-          explanation:exercise_explanations_cache(*)
+          attempts:exercise_attempts(*)
         `)
         .in('user_id', childUserIds)
         .order('created_at', { ascending: false });
@@ -100,7 +99,23 @@ export const useGuardianExerciseHistory = (options: UseGuardianExerciseHistoryOp
 
       if (error) throw error;
 
-      return data as ExerciseHistoryWithAttempts[];
+      // Manually join explanations by exercise_content match
+      const exercisesWithExplanations = await Promise.all(
+        (data || []).map(async (exercise) => {
+          const { data: explanation } = await supabase
+            .from('exercise_explanations_cache')
+            .select('*')
+            .eq('exercise_content', exercise.exercise_content)
+            .maybeSingle();
+
+          return {
+            ...exercise,
+            explanation: explanation || null
+          };
+        })
+      );
+
+      return exercisesWithExplanations as ExerciseHistoryWithAttempts[];
     },
     enabled: !!guardianId && !!children && children.length > 0,
   });

@@ -92,6 +92,34 @@ Please provide your response in ${response_language}.`;
 
         console.log('[TwoCardTeaching] Explanation sections generated:', explanationSections);
         setSections(explanationSections);
+
+        // Save explanation to cache for guardian visibility
+        try {
+          const { data: user } = await supabase.auth.getUser();
+          if (!user.user) throw new Error('No authenticated user');
+
+          // Create explanation cache entry
+          const { data: cacheEntry, error: cacheError } = await supabase
+            .from('exercise_explanations_cache')
+            .insert([{
+              exercise_content: exercise_content,
+              exercise_hash: exercise_content.toLowerCase().replace(/\s+/g, ''),
+              subject_id: subject.toLowerCase(),
+              explanation_data: explanationSections as any,
+              quality_score: 0,
+              usage_count: 1
+            }])
+            .select('id')
+            .single();
+
+          if (cacheError) {
+            console.error('[TwoCardTeaching] Failed to save to cache:', cacheError);
+          } else {
+            console.log('[TwoCardTeaching] Explanation saved to cache:', cacheEntry.id);
+          }
+        } catch (err) {
+          console.error('[TwoCardTeaching] Error saving explanation:', err);
+        }
         
       } else {
         console.error('[TwoCardTeaching] No tool calls in response');

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
+import { useGuardianProgress } from '@/hooks/useGuardianProgress';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, Target, BookOpen, Award } from 'lucide-react';
+import { TrendingUp, Target, BookOpen, Award, Loader2 } from 'lucide-react';
 
 interface ChildProgress {
   id: string;
@@ -55,25 +56,23 @@ export default function GuardianProgress() {
     enabled: !!guardianId,
   });
 
-  // Mock progress data (replace with real queries)
-  const progressData: ChildProgress[] = children?.map(child => ({
-    id: child.id,
-    name: child.name,
-    overallProgress: Math.floor(Math.random() * 100),
-    subjects: [
-      { name: 'Mathematics', progress: 75, exercisesCompleted: 15, totalExercises: 20 },
-      { name: 'Science', progress: 60, exercisesCompleted: 12, totalExercises: 20 },
-      { name: 'English', progress: 85, exercisesCompleted: 17, totalExercises: 20 },
-    ],
-    recentAchievements: [
-      { title: 'Completed 10 Math Exercises', date: '2024-10-10' },
-      { title: 'Perfect Score in Science Quiz', date: '2024-10-08' },
-    ],
-  })) || [];
+  // Fetch REAL progress data
+  const { data: progressData, isLoading } = useGuardianProgress(
+    guardianId,
+    selectedChild === 'all' ? undefined : selectedChild
+  );
 
   const currentData = selectedChild === 'all' 
-    ? progressData[0]  // Show first child or aggregate
-    : progressData.find(p => p.id === selectedChild);
+    ? progressData?.[0] 
+    : progressData?.find(p => p.id === selectedChild);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

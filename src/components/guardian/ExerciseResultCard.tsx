@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, XCircle, Clock, Eye } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Eye, Lightbulb } from 'lucide-react';
 import { ExerciseHistoryWithAttempts } from '@/types/exercise-history';
 import { format } from 'date-fns';
 import { MathRenderer } from '@/components/math';
@@ -10,12 +10,14 @@ interface ExerciseResultCardProps {
   exercise: ExerciseHistoryWithAttempts;
   childName?: string;
   onViewExplanation?: (exercise: ExerciseHistoryWithAttempts) => void;
+  onRequestExplanation?: (exercise: ExerciseHistoryWithAttempts) => void;
 }
 
 export default function ExerciseResultCard({
   exercise,
   childName,
   onViewExplanation,
+  onRequestExplanation,
 }: ExerciseResultCardProps) {
   const hasExplanation = Array.isArray(exercise.explanation)
     ? exercise.explanation.length > 0
@@ -79,16 +81,28 @@ export default function ExerciseResultCard({
             <Clock className="h-3 w-3" />
             {format(new Date(exercise.created_at), 'PPp')}
           </div>
-          {hasExplanation && onViewExplanation && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onViewExplanation(exercise)}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              View Explanation
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {hasExplanation && onViewExplanation && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onViewExplanation(exercise)}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                View Explanation
+              </Button>
+            )}
+            {!hasExplanation && exercise.user_answer && onRequestExplanation && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onRequestExplanation(exercise)}
+              >
+                <Lightbulb className="h-4 w-4 mr-2" />
+                Generate Explanation
+              </Button>
+            )}
+          </div>
         </div>
 
         {exercise.attempts && exercise.attempts.length > 1 && (
