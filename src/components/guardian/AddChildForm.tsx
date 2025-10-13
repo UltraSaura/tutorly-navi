@@ -16,6 +16,10 @@ const childSchema = z.object({
   confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
+  username: z.string()
+    .min(3, 'Username must be at least 3 characters')
+    .max(20, 'Username must be at most 20 characters')
+    .regex(/^[a-z0-9_]+$/, 'Username can only contain lowercase letters, numbers, and underscores'),
   country: z.string().min(1, 'Country is required'),
   phoneNumber: z.string().optional(),
   schoolLevel: z.string().min(1, 'School level is required'),
@@ -70,6 +74,7 @@ export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }:
       password: registrationData.password,
       firstName: registrationData.firstName,
       lastName: registrationData.lastName,
+      username: registrationData.username,
       country: registrationData.country,
       schoolLevel: registrationData.schoolLevel,
       phoneNumber: formattedPhone,
@@ -116,6 +121,21 @@ export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }:
         />
         {errors.email && (
           <p className="text-sm text-destructive">{errors.email.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="username">Username (for login)</Label>
+        <Input
+          id="username"
+          {...register('username')}
+          placeholder="e.g., sarah_2024"
+        />
+        <p className="text-xs text-muted-foreground">
+          Child will use this username to log in (not email)
+        </p>
+        {errors.username && (
+          <p className="text-sm text-destructive">{errors.username.message}</p>
         )}
       </div>
 

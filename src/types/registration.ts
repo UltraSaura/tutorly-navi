@@ -49,6 +49,7 @@ export interface ChildRegistrationData {
   country: string;
   phoneNumber?: string;
   schoolLevel: string;
+  username: string;
 }
 
 export type UserType = 'student' | 'parent';

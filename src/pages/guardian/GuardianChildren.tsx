@@ -63,6 +63,7 @@ export default function GuardianChildren() {
 
       const { data: result, error } = await supabase.functions.invoke('create-child-account', {
         body: {
+          username: data.username,
           email: data.email,
           password: data.password,
           firstName: data.firstName,

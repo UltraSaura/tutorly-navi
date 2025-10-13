@@ -184,20 +184,78 @@ const AuthPage: React.FC = () => {
         return;
       }
 
-      // Step 2: Wait for email confirmation
-      toast({
-        title: t('auth.registrationSuccess'),
-        description: t('auth.checkEmailParent'),
-      });
-      
-      // Step 3: Create child accounts (will happen after email confirmation via separate flow)
-      // Store children data temporarily in localStorage for post-confirmation creation
+      // Step 2: Wait for session to be established (polling for up to 5 seconds)
+      let session = null;
+      for (let i = 0; i < 10; i++) {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (currentSession) {
+          session = currentSession;
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      if (!session) {
+        // Email confirmation required - fall back to localStorage flow
+        toast({
+          title: t('auth.registrationSuccess'),
+          description: t('auth.checkEmailParent'),
+        });
+        
+        if (data.children && data.children.length > 0) {
+          localStorage.setItem('pending_children', JSON.stringify({
+            children: data.children,
+            sharedPassword: data.sharedChildPassword,
+            guardianEmail: data.email
+          }));
+        }
+        setStep('login');
+        return;
+      }
+
+      // Step 3: Create children immediately since we have a session
       if (data.children && data.children.length > 0) {
-        localStorage.setItem('pending_children', JSON.stringify({
-          children: data.children,
-          sharedPassword: data.sharedChildPassword,
-          guardianEmail: data.email
-        }));
+        const childrenPromises = data.children.map(async (child) => {
+          const childPassword = child.password || data.sharedChildPassword;
+          
+          const { error } = await supabase.functions.invoke('create-child-account', {
+            body: {
+              username: child.username,
+              password: childPassword,
+              firstName: child.firstName,
+              lastName: data.lastName,
+              email: child.email || null,
+              country: data.country,
+              phoneNumber: fullPhoneNumber,
+              schoolLevel: child.schoolLevel,
+              relation: 'parent',
+            },
+          });
+
+          if (error) {
+            console.error(`Failed to create child ${child.username}:`, error);
+            throw error;
+          }
+        });
+
+        try {
+          await Promise.all(childrenPromises);
+          toast({
+            title: t('auth.registrationSuccess'),
+            description: `Guardian account and ${data.children.length} child account(s) created successfully!`,
+          });
+        } catch (error) {
+          toast({
+            title: 'Partial Success',
+            description: 'Guardian created but some children failed. You can add them later in the guardian portal.',
+            variant: 'default',
+          });
+        }
+      } else {
+        toast({
+          title: t('auth.registrationSuccess'),
+          description: 'Guardian account created successfully!',
+        });
       }
       
       setStep('login');
