@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, Navigate, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, Navigate, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { Home, Users, FileText, Lightbulb, TrendingUp, CreditCard, Settings, Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,10 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { GuardianBottomNav } from './GuardianBottomNav';
+import { GuardianStickyHeader } from './GuardianStickyHeader';
+import { PrototypeFlowPanel } from './PrototypeFlowPanel';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const guardianNavigation = [
   { title: 'Home', url: '/guardian', icon: Home },
@@ -22,7 +26,26 @@ const GuardianLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { canAccessGuardianPortal, loading } = useGuardianAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
+
+  // Determine page title based on route
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path === '/guardian') return 'Home';
+    if (path.includes('/children')) return 'Children';
+    if (path.includes('/results')) return 'Results';
+    if (path.includes('/explanations')) return 'Explanations';
+    if (path.includes('/progress')) return 'Progress';
+    if (path.includes('/billing')) return 'Billing';
+    if (path.includes('/settings')) return 'Settings';
+    if (path.includes('/child/')) {
+      if (path.includes('/subject/')) return 'Subject Detail';
+      return 'Child Dashboard';
+    }
+    return 'Guardian Portal';
+  };
 
   const handleSignOut = async () => {
     try {
@@ -122,33 +145,25 @@ const GuardianLayout = () => {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto">
-          {/* Mobile Header */}
-          <div className="lg:hidden sticky top-0 z-10 bg-background border-b p-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMobileMenuOpen(true)}
-              >
-                <Menu className="h-6 w-6" />
-              </Button>
-              <h1 className="text-lg font-semibold">Guardian Portal</h1>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleSignOut}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
-          </div>
+          {/* Sticky Header (mobile-first) */}
+          <GuardianStickyHeader 
+            title={getPageTitle()}
+            onMenuClick={() => setIsMobileMenuOpen(true)}
+            onSignOut={handleSignOut}
+          />
 
-          <div className="p-4 md:p-8 max-w-7xl mx-auto">
+          {/* Content Area */}
+          <div className={`p-4 md:p-8 max-w-7xl mx-auto ${isMobile ? 'pb-20' : ''}`}>
             <Outlet />
           </div>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <GuardianBottomNav />
+
+      {/* Prototype Flow Panel (demo only) */}
+      <PrototypeFlowPanel />
     </div>
   );
 };
