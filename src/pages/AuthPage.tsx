@@ -167,7 +167,7 @@ const AuthPage: React.FC = () => {
       const fullPhoneNumber = areaCode ? `${areaCode}${data.phoneNumber}` : data.phoneNumber;
       
       // Step 1: Register the guardian with email authentication
-      const { error: signUpError, data: authData } = await signUp(data.email, data.password, {
+      const { error: signUpError } = await signUp(data.email, data.password, {
         user_type: 'parent',
         first_name: data.firstName,
         last_name: data.lastName,

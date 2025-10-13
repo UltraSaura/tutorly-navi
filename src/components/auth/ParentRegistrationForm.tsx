@@ -337,6 +337,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
                   <div>
                     <Label>{t('auth.schoolLevel')}</Label>
                     <Select 
+                      value={watchedChildren[index]?.schoolLevel || ''}
                       onValueChange={(value) => setValue(`children.${index}.schoolLevel`, value)}
                       disabled={!watchedCountry}
                     >

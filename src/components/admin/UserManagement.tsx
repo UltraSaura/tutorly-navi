@@ -182,6 +182,7 @@ const UserManagement = () => {
         .single();
       
       // Create guardian profile if it doesn't exist
+      let guardianId: string;
       if (guardianProfile.error || !guardianProfile.data) {
         const { data: newGuardian, error: createGuardianError } = await supabase
           .from('guardians')
@@ -193,10 +194,10 @@ const UserManagement = () => {
           toast.error('Failed to create guardian profile');
           return;
         }
-        guardianProfile = { data: newGuardian, error: null };
+        guardianId = newGuardian.id;
+      } else {
+        guardianId = guardianProfile.data.id;
       }
-      
-      const guardianId = guardianProfile.data!.id;
       
       // Create the child account in auth
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
