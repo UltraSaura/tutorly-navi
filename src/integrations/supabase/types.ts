@@ -298,6 +298,7 @@ export type Database = {
           explanation_id: string | null
           id: string
           is_correct: boolean | null
+          time_spent_seconds: number | null
           user_answer: string
         }
         Insert: {
@@ -307,6 +308,7 @@ export type Database = {
           explanation_id?: string | null
           id?: string
           is_correct?: boolean | null
+          time_spent_seconds?: number | null
           user_answer: string
         }
         Update: {
@@ -316,6 +318,7 @@ export type Database = {
           explanation_id?: string | null
           id?: string
           is_correct?: boolean | null
+          time_spent_seconds?: number | null
           user_answer?: string
         }
         Relationships: [
@@ -341,6 +344,7 @@ export type Database = {
           exercise_content: string
           exercise_hash: string
           explanation_data: Json
+          explanation_image_url: string | null
           id: string
           quality_score: number | null
           subject_id: string | null
@@ -352,6 +356,7 @@ export type Database = {
           exercise_content: string
           exercise_hash: string
           explanation_data: Json
+          explanation_image_url?: string | null
           id?: string
           quality_score?: number | null
           subject_id?: string | null
@@ -363,6 +368,7 @@ export type Database = {
           exercise_content?: string
           exercise_hash?: string
           explanation_data?: Json
+          explanation_image_url?: string | null
           id?: string
           quality_score?: number | null
           subject_id?: string | null
@@ -381,6 +387,7 @@ export type Database = {
           is_correct: boolean | null
           show_correct_answer_to_child: boolean | null
           subject_id: string | null
+          time_spent_seconds: number | null
           updated_at: string
           user_answer: string | null
           user_id: string
@@ -394,6 +401,7 @@ export type Database = {
           is_correct?: boolean | null
           show_correct_answer_to_child?: boolean | null
           subject_id?: string | null
+          time_spent_seconds?: number | null
           updated_at?: string
           user_answer?: string | null
           user_id: string
@@ -407,6 +415,7 @@ export type Database = {
           is_correct?: boolean | null
           show_correct_answer_to_child?: boolean | null
           subject_id?: string | null
+          time_spent_seconds?: number | null
           updated_at?: string
           user_answer?: string | null
           user_id?: string

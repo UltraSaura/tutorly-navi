@@ -7,6 +7,8 @@ interface SubjectProgress {
   exercisesCompleted: number;
   totalExercises: number;
   successRate: number;
+  trend: "up" | "down" | "flat";
+  next?: string;
 }
 
 interface ChildProgress {
@@ -71,13 +73,43 @@ export const useGuardianProgress = (guardianId?: string, childId?: string) => {
           subjectMap.set(subject, current);
         });
 
-        const subjects: SubjectProgress[] = Array.from(subjectMap.entries()).map(([name, stats]) => ({
-          name: name.charAt(0).toUpperCase() + name.slice(1),
-          progress: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
-          exercisesCompleted: stats.correct,
-          totalExercises: stats.total,
-          successRate: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0
-        }));
+        const subjects: SubjectProgress[] = Array.from(subjectMap.entries()).map(([name, stats]) => {
+          // Calculate trend: compare recent (last 7 days) vs previous performance
+          const now = new Date();
+          const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+          const recentExercises = exercises?.filter(
+            ex => ex.subject_id === name && new Date(ex.created_at) >= sevenDaysAgo
+          ) || [];
+          const previousExercises = exercises?.filter(
+            ex => ex.subject_id === name && 
+            new Date(ex.created_at) >= fourteenDaysAgo && 
+            new Date(ex.created_at) < sevenDaysAgo
+          ) || [];
+
+          const recentRate = recentExercises.length > 0
+            ? (recentExercises.filter(ex => ex.is_correct).length / recentExercises.length) * 100
+            : 0;
+          const previousRate = previousExercises.length > 0
+            ? (previousExercises.filter(ex => ex.is_correct).length / previousExercises.length) * 100
+            : 0;
+
+          let trend: "up" | "down" | "flat" = "flat";
+          if (recentExercises.length >= 3 && previousExercises.length >= 3) {
+            if (recentRate > previousRate + 5) trend = "up";
+            else if (recentRate < previousRate - 5) trend = "down";
+          }
+
+          return {
+            name: name.charAt(0).toUpperCase() + name.slice(1),
+            progress: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
+            exercisesCompleted: stats.correct,
+            totalExercises: stats.total,
+            successRate: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
+            trend,
+          };
+        });
 
         // Calculate recent achievements
         const recentAchievements: Array<{ title: string; date: string }> = [];

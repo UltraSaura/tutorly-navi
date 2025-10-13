@@ -15,6 +15,7 @@ interface ExplanationModalProps {
   error: string | null;
   onTryAgain?: () => void;
   exerciseQuestion?: string;
+  imageUrl?: string;
 }
 
 export function ExplanationModal({ 
@@ -24,7 +25,8 @@ export function ExplanationModal({
   sections, 
   error,
   onTryAgain,
-  exerciseQuestion 
+  exerciseQuestion,
+  imageUrl 
 }: ExplanationModalProps) {
   const { t } = useLanguage();
   
@@ -63,7 +65,21 @@ export function ExplanationModal({
           ) : error ? (
             <p className="text-sm text-destructive">{error}</p>
           ) : sections ? (
-            <TwoCards s={sections} />
+            <>
+              {imageUrl && (
+                <div className="mb-6">
+                  <img 
+                    src={imageUrl} 
+                    alt="Exercise explanation" 
+                    className="max-h-[60vh] w-auto mx-auto rounded-xl shadow-lg"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+              <TwoCards s={sections} />
+            </>
           ) : null}
         </div>
 

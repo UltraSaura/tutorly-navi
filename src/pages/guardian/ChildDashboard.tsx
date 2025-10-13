@@ -1,11 +1,13 @@
 import { useParams } from 'react-router-dom';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { useGuardianExerciseHistory } from '@/hooks/useGuardianExerciseHistory';
+import { useGuardianProgress } from '@/hooks/useGuardianProgress';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ChildHeader } from '@/components/guardian/ChildHeader';
 import { KPICards } from '@/components/guardian/KPICards';
 import { ExercisesPanel } from '@/components/guardian/ExercisesPanel';
+import { SubjectsGrid } from '@/components/guardian/SubjectsGrid';
 
 export default function ChildDashboard() {
   const { childId } = useParams<{ childId: string }>();
@@ -54,6 +56,9 @@ export default function ChildDashboard() {
     childId,
   });
 
+  // Fetch progress data for subjects
+  const { data: progressData } = useGuardianProgress(guardianId, childId);
+
   if (authLoading || childLoading || historyLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -83,6 +88,13 @@ export default function ChildDashboard() {
       />
 
       <KPICards />
+
+      {progressData?.[0]?.subjects && progressData[0].subjects.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold">Subjects</h2>
+          <SubjectsGrid subjects={progressData[0].subjects} childId={childId!} />
+        </div>
+      )}
 
       <ExercisesPanel
         exercises={exerciseHistory}

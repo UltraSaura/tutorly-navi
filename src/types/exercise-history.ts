@@ -8,6 +8,7 @@ export interface ExerciseHistoryRecord {
   attempts_count: number;
   created_at: string;
   updated_at: string;
+  time_spent_seconds?: number;
 }
 
 export interface ExerciseExplanationCache {
@@ -20,6 +21,7 @@ export interface ExerciseExplanationCache {
   usage_count: number;
   created_at: string;
   updated_at: string;
+  explanation_image_url?: string;
 }
 
 export interface ExerciseAttemptRecord {

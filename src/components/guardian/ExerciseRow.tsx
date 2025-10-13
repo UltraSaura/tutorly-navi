@@ -8,6 +8,7 @@ import { ExerciseTimeline } from './ExerciseTimeline';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
 import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { format } from 'date-fns';
+import { toast } from '@/hooks/use-toast';
 
 interface ExerciseRowProps {
   exercise: ExerciseHistoryWithAttempts;
@@ -49,16 +50,42 @@ export function ExerciseRow({ exercise, allAttempts, childId }: ExerciseRowProps
     }
   };
 
-  // Quick text summary (for now, just show a simple alert)
+  // Quick text summary
   const handleQuickSummary = () => {
     const explanationData = Array.isArray(exercise.explanation)
       ? exercise.explanation[0]?.explanation_data
       : exercise.explanation?.explanation_data;
     
-    const summary = explanationData
-      ? JSON.stringify(explanationData)
-      : 'No explanation available yet. Click "View explanation" to generate one.';
-    alert(summary);
+    if (!explanationData) {
+      toast({
+        title: "No explanation available",
+        description: "Click 'View explanation' to generate one.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const summary = `
+📖 Concept: ${explanationData.concept || 'N/A'}
+
+🎯 Strategy: ${explanationData.strategy || 'N/A'}
+
+⚠️ Common Pitfall: ${explanationData.pitfall || 'N/A'}
+    `.trim();
+    
+    toast({
+      title: "Quick Summary",
+      description: summary,
+      duration: 8000,
+    });
+  };
+
+  const formatTime = (seconds: number): string => {
+    if (!seconds || seconds === 0) return '—';
+    if (seconds < 60) return `${seconds}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
   };
 
   return (
@@ -94,6 +121,8 @@ export function ExerciseRow({ exercise, allAttempts, childId }: ExerciseRowProps
           {/* Metrics row */}
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span>Score: <span className="font-semibold text-foreground">{score}%</span></span>
+            <span>•</span>
+            <span>Time: <span className="font-semibold text-foreground">{formatTime(exercise.time_spent_seconds || 0)}</span></span>
             <span>•</span>
             <span>Attempts: <span className="font-semibold text-foreground">{exercise.attempts_count}</span></span>
             <span>•</span>
@@ -153,12 +182,18 @@ export function ExerciseRow({ exercise, allAttempts, childId }: ExerciseRowProps
 
       {/* Explanation Modal - use teaching hook's state */}
       <ExplanationModal
-        open={teaching.open}
-        onClose={() => teaching.setOpen(false)}
+        open={teaching.open || showExplanationModal}
+        onClose={() => {
+          teaching.setOpen(false);
+          setShowExplanationModal(false);
+        }}
         loading={teaching.loading}
         sections={teaching.sections || (Array.isArray(exercise.explanation) ? exercise.explanation[0]?.explanation_data : exercise.explanation?.explanation_data)}
         error={teaching.error}
         exerciseQuestion={exercise.exercise_content}
+        imageUrl={Array.isArray(exercise.explanation) 
+          ? exercise.explanation[0]?.explanation_image_url 
+          : exercise.explanation?.explanation_image_url}
       />
     </>
   );
