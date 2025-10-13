@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 import { useMemo } from 'react';
 
 interface ChildOverview {
@@ -24,6 +25,8 @@ interface ActivityItem {
 }
 
 export function useGuardianHomeData(guardianId?: string) {
+  const queryClient = useQueryClient();
+
   // Fetch children and their basic info
   const { data: childrenData, isLoading: childrenLoading } = useQuery({
     queryKey: ['guardian-children-home', guardianId],
@@ -55,9 +58,10 @@ export function useGuardianHomeData(guardianId?: string) {
     enabled: !!guardianId,
   });
 
-  // Fetch exercise history for all children
+  // Fetch exercise history for all children with optimized caching
   const { data: exerciseData, isLoading: exerciseLoading } = useQuery({
     queryKey: ['guardian-exercises-home', guardianId, childrenData],
+    staleTime: 30000, // Cache for 30 seconds
     queryFn: async () => {
       if (!guardianId || !childrenData) return null;
       
@@ -78,6 +82,38 @@ export function useGuardianHomeData(guardianId?: string) {
     },
     enabled: !!guardianId && !!childrenData,
   });
+
+  // Real-time subscription for new exercise history
+  useEffect(() => {
+    if (!guardianId || !childrenData || childrenData.length === 0) return;
+
+    const childUserIds = childrenData
+      .map(link => link.children?.user_id)
+      .filter(Boolean);
+
+    if (childUserIds.length === 0) return;
+    
+    const channel = supabase
+      .channel('guardian-exercise-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'exercise_history',
+          filter: `user_id=in.(${childUserIds.join(',')})`
+        },
+        () => {
+          // Invalidate queries to refetch data
+          queryClient.invalidateQueries({ queryKey: ['guardian-exercises-home', guardianId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [guardianId, childrenData, queryClient]);
 
   // Calculate children overview data
   const childrenOverview: ChildOverview[] = useMemo(() => {

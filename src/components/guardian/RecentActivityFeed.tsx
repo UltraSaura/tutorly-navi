@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow, isToday, isYesterday, isThisWeek } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 interface ActivityItem {
   id: string;
@@ -23,6 +24,9 @@ interface RecentActivityFeedProps {
 }
 
 export function RecentActivityFeed({ activities, loading }: RecentActivityFeedProps) {
+  const [showAll, setShowAll] = useState(false);
+  const ITEMS_TO_SHOW = 8;
+  
   if (loading) {
     return (
       <Card>
@@ -40,7 +44,9 @@ export function RecentActivityFeed({ activities, loading }: RecentActivityFeedPr
     );
   }
 
-  const groupedActivities = groupActivitiesByDate(activities);
+  const displayedActivities = showAll ? activities : activities.slice(0, ITEMS_TO_SHOW);
+  const groupedActivities = groupActivitiesByDate(displayedActivities);
+  const hasMore = activities.length > ITEMS_TO_SHOW;
 
   return (
     <Card>
@@ -75,6 +81,17 @@ export function RecentActivityFeed({ activities, loading }: RecentActivityFeedPr
                 </div>
               ))}
             </div>
+            {hasMore && !showAll && (
+              <div className="flex justify-center mt-4 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowAll(true)}
+                >
+                  Show More Activities
+                </Button>
+              </div>
+            )}
           </ScrollArea>
         )}
       </CardContent>

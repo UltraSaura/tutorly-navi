@@ -8,6 +8,7 @@ import { ChildHeader } from '@/components/guardian/ChildHeader';
 import { KPICards } from '@/components/guardian/KPICards';
 import { ExercisesPanel } from '@/components/guardian/ExercisesPanel';
 import { SubjectsGrid } from '@/components/guardian/SubjectsGrid';
+import { ExportReportButton } from '@/components/guardian/ExportReportButton';
 
 export default function ChildDashboard() {
   const { childId } = useParams<{ childId: string }>();
@@ -80,12 +81,20 @@ export default function ChildDashboard() {
 
   return (
     <div className="space-y-6">
-      <ChildHeader
-        name={`${child.firstName} ${child.lastName}`}
-        grade={child.grade}
-        status={child.status}
-        exerciseHistory={exerciseHistory}
-      />
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <ChildHeader
+            name={`${child.firstName} ${child.lastName}`}
+            grade={child.grade}
+            status={child.status}
+            exerciseHistory={exerciseHistory}
+          />
+        </div>
+        <ExportReportButton 
+          childId={childId!} 
+          childName={`${child.firstName} ${child.lastName}`}
+        />
+      </div>
 
       <KPICards />
 
