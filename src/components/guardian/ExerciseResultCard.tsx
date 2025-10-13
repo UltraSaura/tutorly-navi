@@ -27,7 +27,9 @@ export default function ExerciseResultCard({
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <CardTitle className="text-base flex items-center gap-2">
-              {exercise.is_correct ? (
+              {exercise.is_correct === null ? (
+                <Clock className="h-5 w-5 text-muted-foreground" />
+              ) : exercise.is_correct ? (
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
               ) : (
                 <XCircle className="h-5 w-5 text-red-600" />
@@ -55,7 +57,7 @@ export default function ExerciseResultCard({
           </div>
         </div>
 
-        {exercise.user_answer && (
+        {exercise.user_answer ? (
           <div>
             <p className="text-sm font-medium mb-2">
               {exercise.is_correct ? 'Correct Answer:' : 'Student Answer:'}
@@ -63,6 +65,12 @@ export default function ExerciseResultCard({
             <div className="p-3 bg-muted rounded-md">
               <MathRenderer latex={exercise.user_answer} />
             </div>
+          </div>
+        ) : (
+          <div className="p-3 bg-muted/50 rounded-md border border-dashed">
+            <p className="text-sm text-muted-foreground italic">
+              Question asked - Not answered yet
+            </p>
           </div>
         )}
 
