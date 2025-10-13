@@ -58,7 +58,12 @@
     "email": "Email", 
     "password": "Password",
     "parentRegistration": "Parent Registration",
-    "parentInformation": "Parent Information"
+    "parentInformation": "Parent Information",
+    "username": "Username",
+    "usernameOrEmail": "Username or Email",
+    "emailOptional": "Email (Optional)",
+    "individualPassword": "Individual Password",
+    "sharedChildPassword": "Shared Password for Children"
   },
   "calculation": {
     "detecting": "Detecting math content...",

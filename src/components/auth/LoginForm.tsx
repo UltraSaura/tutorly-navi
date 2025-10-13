@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().min(1, 'Username or email is required'),  // Changed validation
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -40,10 +40,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, loading = false 
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <Label htmlFor="email">{t('auth.email')}</Label>
+            <Label htmlFor="email">{t('auth.usernameOrEmail')}</Label>
             <Input
               id="email"
-              type="email"
+              type="text"
               {...register('email')}
               className={errors.email ? 'border-destructive' : ''}
             />

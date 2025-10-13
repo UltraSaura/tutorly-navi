@@ -114,12 +114,17 @@
     "registrationError": "Registration Failed",
     "registrationSuccess": "Registration Successful",
     "checkEmail": "Please check your email to verify your account",
-    "checkEmailParent": "Please check your email to verify your account. You can then add your children's information.",
+    "checkEmailParent": "Please check your email to confirm your account. After confirmation, your children's accounts will be created.",
     "genericError": "An unexpected error occurred. Please try again.",
     "adminAccessRequired": "Admin Access Required",
     "adminAccessMessage": "You are logged in but don't have admin privileges. Please sign out and log in with an admin account to access the admin panel.",
     "signOutAndSwitch": "Sign Out & Switch Account",
-    "backToHome": "Back to Home"
+    "backToHome": "Back to Home",
+    "username": "Username",
+    "usernameOrEmail": "Username or Email",
+    "emailOptional": "Email (Optional)",
+    "individualPassword": "Individual Password",
+    "sharedChildPassword": "Shared Password for Children"
   },
   "profile": {
     "title": "Profile",

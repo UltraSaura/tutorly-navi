@@ -98,11 +98,17 @@ ON public.subject_prompt_assignments
 FOR ALL
 USING (public.has_role(auth.uid(), 'admin'));
 
-DROP POLICY IF EXISTS "Allow admins to manage sidebar tabs" ON public.sidebar_tabs;
-CREATE POLICY "Only admins with role can manage sidebar tabs"
-ON public.sidebar_tabs
-FOR ALL
-USING (public.has_role(auth.uid(), 'admin'));
+-- Update sidebar_tabs policy only if table exists
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'sidebar_tabs') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "Allow admins to manage sidebar tabs" ON public.sidebar_tabs';
+    EXECUTE 'CREATE POLICY "Only admins with role can manage sidebar tabs"
+    ON public.sidebar_tabs
+    FOR ALL
+    USING (public.has_role(auth.uid(), ''admin''))';
+  END IF;
+END $$;
 
 -- Migrate existing admin users to role system
 INSERT INTO public.user_roles (user_id, role)

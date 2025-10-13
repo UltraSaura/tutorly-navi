@@ -15,6 +15,9 @@ export interface SchoolLevel {
 export interface ChildInfo {
   firstName: string;
   schoolLevel: string;
+  username: string;        // NEW: Unique username for login
+  password?: string;       // NEW: Individual password (optional)
+  email?: string;          // NEW: Optional email for notifications
 }
 
 export interface StudentRegistrationData {
@@ -35,6 +38,7 @@ export interface ParentRegistrationData {
   country: string;
   phoneNumber: string;
   children: ChildInfo[];
+  sharedChildPassword?: string;  // NEW: Shared password for all children
 }
 
 export interface ChildRegistrationData {

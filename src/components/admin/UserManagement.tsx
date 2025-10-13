@@ -67,46 +67,70 @@ const UserManagement = () => {
         const parentUsers = processedUsers.filter(user => user.user_type === 'parent');
         
         for (const parent of parentUsers) {
-          // Get all child IDs for this parent
+          // First, get the guardian profile for this parent user
+          const { data: guardianProfile, error: guardianError } = await supabase
+            .from('guardians')
+            .select('id')
+            .eq('user_id', parent.id)
+            .single();
+          
+          if (guardianError || !guardianProfile) {
+            console.log('No guardian profile found for parent:', parent.id);
+            continue;
+          }
+          
+          // Get all child IDs for this guardian
           const { data: relationships, error: relError } = await supabase
-            .from('parent_child')
-            .select('child_id')
-            .eq('parent_id', parent.id);
+            .from('guardian_child_links')
+            .select(`
+              child_id,
+              children!inner(
+                id,
+                user_id,
+                grade,
+                status
+              )
+            `)
+            .eq('guardian_id', guardianProfile.id);
           
           if (relError) {
-            console.error('Error fetching parent-child relationships:', relError);
+            console.error('Error fetching guardian-child relationships:', relError);
             continue;
           }
           
           if (relationships && relationships.length > 0) {
-            const childIds = relationships.map(rel => rel.child_id);
+            const childUserIds = relationships
+              .map(rel => (rel.children as any)?.user_id)
+              .filter(Boolean);
             
-            // Get all children data
-            const { data: childrenData, error: childrenError } = await supabase
-              .from('users')
-              .select('*')
-              .in('id', childIds);
-            
-            if (childrenError) {
-              console.error('Error fetching children data:', childrenError);
-              continue;
-            }
-            
-            if (childrenData) {
-              // Process children data and attach to parent
-              const children = childrenData.map(child => ({
-                ...child,
-                user_type: child.user_type as 'student' | 'parent', // Cast to ensure type safety
-                activity: [...defaultActivity],
-                subjects: [...defaultSubjects],
-              })) as User[];
+            if (childUserIds.length > 0) {
+              // Get all children user data
+              const { data: childrenData, error: childrenError } = await supabase
+                .from('users')
+                .select('*')
+                .in('id', childUserIds);
               
-              // Find and update the parent in our state
-              const updatedUsers = processedUsers.map(u => 
-                u.id === parent.id ? { ...u, children } : u
-              ) as User[];
+              if (childrenError) {
+                console.error('Error fetching children data:', childrenError);
+                continue;
+              }
               
-              setUsers(updatedUsers);
+              if (childrenData) {
+                // Process children data and attach to parent
+                const children = childrenData.map(child => ({
+                  ...child,
+                  user_type: child.user_type as 'student' | 'parent', // Cast to ensure type safety
+                  activity: [...defaultActivity],
+                  subjects: [...defaultSubjects],
+                })) as User[];
+                
+                // Find and update the parent in our state
+                const updatedUsers = processedUsers.map(u => 
+                  u.id === parent.id ? { ...u, children } : u
+                ) as User[];
+                
+                setUsers(updatedUsers);
+              }
             }
           }
         }
@@ -150,6 +174,30 @@ const UserManagement = () => {
     }
     
     try {
+      // First, ensure the parent has a guardian profile
+      let guardianProfile = await supabase
+        .from('guardians')
+        .select('id')
+        .eq('user_id', selectedUser.id)
+        .single();
+      
+      // Create guardian profile if it doesn't exist
+      if (guardianProfile.error || !guardianProfile.data) {
+        const { data: newGuardian, error: createGuardianError } = await supabase
+          .from('guardians')
+          .insert({ user_id: selectedUser.id })
+          .select()
+          .single();
+        
+        if (createGuardianError || !newGuardian) {
+          toast.error('Failed to create guardian profile');
+          return;
+        }
+        guardianProfile = { data: newGuardian, error: null };
+      }
+      
+      const guardianId = guardianProfile.data!.id;
+      
       // Create the child account in auth
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: email,
@@ -158,7 +206,8 @@ const UserManagement = () => {
           data: {
             user_type: 'student',
             first_name: firstName,
-            last_name: lastName
+            last_name: lastName,
+            country: selectedUser.country || 'US'
           }
         }
       });
@@ -174,31 +223,39 @@ const UserManagement = () => {
         return;
       }
       
-      // Update the first_name and last_name in the users table
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          first_name: firstName,
-          last_name: lastName
-        })
-        .eq('id', signUpData.user.id);
+      const childUserId = signUpData.user.id;
       
-      if (updateError) {
-        console.error('Error updating child profile:', updateError);
-        toast.error('Failed to update child profile');
+      // Wait for the trigger to create the user record
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Create child profile
+      const { data: childProfile, error: childProfileError } = await supabase
+        .from('children')
+        .insert({
+          user_id: childUserId,
+          contact_email: email,
+          status: 'active'
+        })
+        .select()
+        .single();
+      
+      if (childProfileError || !childProfile) {
+        console.error('Error creating child profile:', childProfileError);
+        toast.error('Failed to create child profile');
         return;
       }
       
-      // Create the parent-child relationship
-      const { error: relationshipError } = await supabase
-        .from('parent_child')
+      // Create the guardian-child link
+      const { error: linkError } = await supabase
+        .from('guardian_child_links')
         .insert({
-          parent_id: selectedUser.id,
-          child_id: signUpData.user.id
+          guardian_id: guardianId,
+          child_id: childProfile.id,
+          relation: 'parent'
         });
       
-      if (relationshipError) {
-        console.error('Error creating parent-child relationship:', relationshipError);
+      if (linkError) {
+        console.error('Error creating guardian-child link:', linkError);
         toast.error('Failed to link child to parent');
         return;
       }
@@ -208,7 +265,7 @@ const UserManagement = () => {
       
       // Add the child to the parent's children array
       const newChild: User = {
-        id: signUpData.user.id,
+        id: childUserId,
         email: email,
         first_name: firstName,
         last_name: lastName,

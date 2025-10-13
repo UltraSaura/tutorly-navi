@@ -83,7 +83,8 @@ Remember: ONE unified response handles everything - detection, education, and gr
   true,
   100,
   ARRAY['unified', 'math', 'education', 'grading', 'detection']
-);
+)
+ON CONFLICT (name) DO NOTHING;
 
 -- Update existing chat templates to lower priority since unified template is primary
 UPDATE prompt_templates 

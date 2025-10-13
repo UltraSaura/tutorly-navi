@@ -44,6 +44,9 @@ const GuardianHome = lazy(() => import("./pages/guardian/GuardianHome"));
 const GuardianChildren = lazy(() => import("./pages/guardian/GuardianChildren"));
 const GuardianResults = lazy(() => import("./pages/guardian/GuardianResults"));
 const GuardianExplanations = lazy(() => import("./pages/guardian/GuardianExplanations"));
+const GuardianProgress = lazy(() => import("./pages/guardian/GuardianProgress"));
+const GuardianBilling = lazy(() => import("./pages/guardian/GuardianBilling"));
+const GuardianSettings = lazy(() => import("./pages/guardian/GuardianSettings"));
 
 // Loading Component
 const LoadingFallback = () => (
@@ -125,6 +128,9 @@ const App = () => {
             <Route path="children" element={<GuardianChildren />} />
             <Route path="results" element={<Suspense fallback={<LoadingFallback />}><GuardianResults /></Suspense>} />
             <Route path="explanations" element={<Suspense fallback={<LoadingFallback />}><GuardianExplanations /></Suspense>} />
+            <Route path="progress" element={<Suspense fallback={<LoadingFallback />}><GuardianProgress /></Suspense>} />
+            <Route path="billing" element={<Suspense fallback={<LoadingFallback />}><GuardianBilling /></Suspense>} />
+            <Route path="settings" element={<Suspense fallback={<LoadingFallback />}><GuardianSettings /></Suspense>} />
           </Route>
                         
                         {/* 404 Route */}

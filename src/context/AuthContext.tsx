@@ -91,12 +91,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, [detectLanguageFromUser]); // Use the memoized callback
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+  const signIn = async (emailOrUsername: string, password: string) => {
+    // Check if input is email or username
+    const isEmail = emailOrUsername.includes('@');
+    
+    if (isEmail) {
+      // Standard email login
+      const { error } = await supabase.auth.signInWithPassword({
+        email: emailOrUsername,
+        password,
+      });
+      return { error };
+    } else {
+      // Username login: lookup email from username first
+      const { data: userData, error: lookupError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('username', emailOrUsername)
+        .maybeSingle();
+
+      if (lookupError || !userData) {
+        return { error: new Error('Invalid username or password') };
+      }
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: userData.email,
+        password,
+      });
+      return { error };
+    }
   };
 
   const signUp = async (email: string, password: string, userData?: any) => {

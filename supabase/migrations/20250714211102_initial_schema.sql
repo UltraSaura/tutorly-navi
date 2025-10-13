@@ -1,5 +1,5 @@
 -- Create countries table with common countries
-CREATE TABLE public.countries (
+CREATE TABLE IF NOT EXISTS public.countries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
@@ -7,7 +7,7 @@ CREATE TABLE public.countries (
 );
 
 -- Create school levels table
-CREATE TABLE public.school_levels (
+CREATE TABLE IF NOT EXISTS public.school_levels (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   country_code TEXT NOT NULL,
   level_code TEXT NOT NULL,
@@ -23,10 +23,12 @@ ALTER TABLE public.countries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.school_levels ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for public read access (everyone can see countries and school levels)
+DROP POLICY IF EXISTS "Countries are publicly readable" ON public.countries;
 CREATE POLICY "Countries are publicly readable"
   ON public.countries FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "School levels are publicly readable" ON public.school_levels;
 CREATE POLICY "School levels are publicly readable"
   ON public.school_levels FOR SELECT
   USING (true);
@@ -42,7 +44,8 @@ INSERT INTO public.countries (code, name) VALUES
   ('IN', 'India'),
   ('BR', 'Brazil'),
   ('MX', 'Mexico'),
-  ('ES', 'Spain');
+  ('ES', 'Spain')
+ON CONFLICT (code) DO NOTHING;
 
 -- Insert school levels for different countries
 -- United States
@@ -59,7 +62,8 @@ INSERT INTO public.school_levels (country_code, level_code, level_name, sort_ord
   ('US', '9', 'Grade 9 (Freshman)', 10),
   ('US', '10', 'Grade 10 (Sophomore)', 11),
   ('US', '11', 'Grade 11 (Junior)', 12),
-  ('US', '12', 'Grade 12 (Senior)', 13);
+  ('US', '12', 'Grade 12 (Senior)', 13)
+ON CONFLICT (country_code, level_code) DO NOTHING;
 
 -- Canada
 INSERT INTO public.school_levels (country_code, level_code, level_name, sort_order) VALUES
@@ -75,7 +79,8 @@ INSERT INTO public.school_levels (country_code, level_code, level_name, sort_ord
   ('CA', '9', 'Grade 9', 10),
   ('CA', '10', 'Grade 10', 11),
   ('CA', '11', 'Grade 11', 12),
-  ('CA', '12', 'Grade 12', 13);
+  ('CA', '12', 'Grade 12', 13)
+ON CONFLICT (country_code, level_code) DO NOTHING;
 
 -- United Kingdom
 INSERT INTO public.school_levels (country_code, level_code, level_name, sort_order) VALUES
@@ -92,7 +97,8 @@ INSERT INTO public.school_levels (country_code, level_code, level_name, sort_ord
   ('GB', 'Y10', 'Year 10', 11),
   ('GB', 'Y11', 'Year 11', 12),
   ('GB', 'Y12', 'Year 12', 13),
-  ('GB', 'Y13', 'Year 13', 14);
+  ('GB', 'Y13', 'Year 13', 14)
+ON CONFLICT (country_code, level_code) DO NOTHING;
 
 -- France
 INSERT INTO public.school_levels (country_code, level_code, level_name, sort_order) VALUES
@@ -107,7 +113,8 @@ INSERT INTO public.school_levels (country_code, level_code, level_name, sort_ord
   ('FR', '3EME', '3ème', 9),
   ('FR', '2NDE', 'Seconde', 10),
   ('FR', '1ERE', 'Première', 11),
-  ('FR', 'TERM', 'Terminale', 12);
+  ('FR', 'TERM', 'Terminale', 12)
+ON CONFLICT (country_code, level_code) DO NOTHING;
 
 -- Australia
 INSERT INTO public.school_levels (country_code, level_code, level_name, sort_order) VALUES
@@ -123,4 +130,5 @@ INSERT INTO public.school_levels (country_code, level_code, level_name, sort_ord
   ('AU', 'Y9', 'Year 9', 10),
   ('AU', 'Y10', 'Year 10', 11),
   ('AU', 'Y11', 'Year 11', 12),
-  ('AU', 'Y12', 'Year 12', 13);
+  ('AU', 'Y12', 'Year 12', 13)
+ON CONFLICT (country_code, level_code) DO NOTHING;

@@ -5,17 +5,19 @@ import { Badge } from "@/components/ui/badge";
 import LanguageSelector from "@/components/ui/language-selector";
 import { useAuth } from "@/context/AuthContext";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useGuardianAuth } from "@/hooks/useGuardianAuth";
 import { MessageCircle, BookOpen, BarChart3, Award, Settings, Sparkles, LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const Index = () => {
   const { user, loading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminAuth();
+  const { isGuardian, loading: guardianLoading } = useGuardianAuth();
   const { t } = useTranslation();
   const location = useLocation();
 
   // Show loading while checking auth and admin status
-  if (loading || adminLoading) {
+  if (loading || adminLoading || guardianLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -30,7 +32,13 @@ const Index = () => {
       // Let the admin routes handle the navigation
       return null;
     }
-    // Otherwise, redirect to chat for regular users
+    
+    // If user is a guardian, redirect to guardian portal
+    if (isGuardian) {
+      return <Navigate to="/guardian" replace />;
+    }
+    
+    // Otherwise, redirect to chat for regular students
     return <Navigate to="/chat" replace />;
   }
 

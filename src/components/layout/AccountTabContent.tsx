@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { User, HeadphonesIcon, Globe, LogOut, Settings } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ interface AccountTabContentProps {
 }
 
 export function AccountTabContent({ onClose }: AccountTabContentProps) {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -35,6 +36,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
         description: "You have been logged out of your account.",
       });
       onClose();
+      navigate('/auth');
     } catch (error) {
       console.error('Sign out error:', error);
       toast({

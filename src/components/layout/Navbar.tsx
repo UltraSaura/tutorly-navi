@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MessageSquare, BookOpen, BarChart3, CheckSquare, User, Settings, Globe, ChevronDown, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -60,6 +60,7 @@ const LanguageMenuItems = () => {
 };
 
 const Navbar = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -78,6 +79,7 @@ const Navbar = () => {
         description: t('common.signOutSuccessDescription'),
       });
       setMobileMenuOpen(false);
+      navigate('/auth');
     } catch (error) {
       console.error('Sign out error:', error);
       toast({

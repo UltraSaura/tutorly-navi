@@ -7,6 +7,7 @@ import { UserTypeSelection } from '@/components/auth/UserTypeSelection';
 import { StudentRegistrationForm } from '@/components/auth/StudentRegistrationForm';
 import { ParentRegistrationForm } from '@/components/auth/ParentRegistrationForm';
 import { LoginForm } from '@/components/auth/LoginForm';
+import { CreateChildrenAfterConfirmation } from '@/components/auth/CreateChildrenAfterConfirmation';
 import { Button } from '@/components/ui/button';
 import { UserType, StudentRegistrationData, ParentRegistrationData } from '@/types/registration';
 import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
@@ -165,8 +166,8 @@ const AuthPage: React.FC = () => {
       const areaCode = getPhoneAreaCode(data.country);
       const fullPhoneNumber = areaCode ? `${areaCode}${data.phoneNumber}` : data.phoneNumber;
       
-      // Register the parent
-      const { error: signUpError } = await signUp(data.email, data.password, {
+      // Step 1: Register the guardian with email authentication
+      const { error: signUpError, data: authData } = await signUp(data.email, data.password, {
         user_type: 'parent',
         first_name: data.firstName,
         last_name: data.lastName,
@@ -183,10 +184,22 @@ const AuthPage: React.FC = () => {
         return;
       }
 
+      // Step 2: Wait for email confirmation
       toast({
         title: t('auth.registrationSuccess'),
         description: t('auth.checkEmailParent'),
       });
+      
+      // Step 3: Create child accounts (will happen after email confirmation via separate flow)
+      // Store children data temporarily in localStorage for post-confirmation creation
+      if (data.children && data.children.length > 0) {
+        localStorage.setItem('pending_children', JSON.stringify({
+          children: data.children,
+          sharedPassword: data.sharedChildPassword,
+          guardianEmail: data.email
+        }));
+      }
+      
       setStep('login');
     } catch (error) {
       toast({
@@ -200,8 +213,11 @@ const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
+    <>
+      {/* Run child creation component if user is authenticated and there are pending children */}
+      <CreateChildrenAfterConfirmation />
+      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex items-center justify-center p-4">
+        <div className="w-full max-w-4xl">
         {step === 'login' && (
           <div className="space-y-6">
             <LoginForm onSubmit={handleLogin} loading={loading} />
@@ -244,6 +260,7 @@ const AuthPage: React.FC = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

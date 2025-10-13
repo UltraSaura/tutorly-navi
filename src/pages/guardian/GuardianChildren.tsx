@@ -12,6 +12,7 @@ import { toast } from '@/hooks/use-toast';
 import { ChildWithUser } from '@/types/guardian';
 import AddChildForm from '@/components/guardian/AddChildForm';
 import { ChildRegistrationData } from '@/types/registration';
+import { ManualChildCreationTrigger } from '@/components/guardian/ManualChildCreationTrigger';
 
 export default function GuardianChildren() {
   const { guardianId, guardianCountry } = useGuardianAuth();
@@ -112,6 +113,9 @@ export default function GuardianChildren() {
 
   return (
     <div className="space-y-6">
+      {/* Check for pending children and show manual trigger */}
+      <ManualChildCreationTrigger />
+      
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Children</h1>

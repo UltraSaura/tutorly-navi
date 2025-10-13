@@ -6,11 +6,12 @@ const corsHeaders = {
 };
 
 interface CreateChildRequest {
-  email: string;
-  password: string;
+  username: string;        // NEW: Required username
+  password: string;        // Required password
   firstName: string;
-  lastName: string;
-  country: string;
+  lastName?: string;
+  email?: string;          // NEW: Optional email for notifications
+  country?: string;
   phoneNumber?: string;
   schoolLevel: string;
   relation: string;
@@ -62,28 +63,29 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body: CreateChildRequest = await req.json();
-    const { email, password, firstName, lastName, country, phoneNumber, schoolLevel, relation } = body;
+    const { username, password, firstName, lastName, email, country, phoneNumber, schoolLevel, relation } = body;
 
     // Validate required fields
-    if (!email || !password || !firstName || !lastName || !country || !schoolLevel || !relation) {
-      throw new Error('Missing required fields');
+    if (!username || !password || !firstName || !schoolLevel || !relation) {
+      throw new Error('Missing required fields: username, password, firstName, schoolLevel, and relation are required');
     }
 
-    // Generate username from email (remove @ and domain, add random suffix)
-    const username = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') + '_' + Math.random().toString(36).substring(2, 8);
+    // Generate a temporary email if none provided (required by Supabase Auth)
+    const tempEmail = email || `${username}@child.local`;
 
-    // Create auth user
+    // Create auth user with username
     const { data: authData, error: authCreateError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: tempEmail,
       password,
-      email_confirm: true,
+      email_confirm: true,  // Auto-confirm since no real email
       user_metadata: {
         first_name: firstName,
-        last_name: lastName,
+        last_name: lastName || '',
         user_type: 'student',
-        country,
-        phone_number: phoneNumber || null,
         username: username,
+        country: country || null,
+        phone_number: phoneNumber || null,
+        actual_email: email || null,  // Store real email separately if provided
       },
     });
 
@@ -98,15 +100,15 @@ Deno.serve(async (req) => {
     // Wait a moment for the trigger to complete
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Create child profile
+    // Create child profile with optional email
     const { data: childData, error: childError } = await supabaseAdmin
       .from('children')
       .insert({
         user_id: childUserId,
         grade: schoolLevel,
-        curriculum: country,
+        curriculum: country || null,
         status: 'active',
-        contact_email: email,
+        contact_email: email || null,  // Use actual email if provided
       })
       .select()
       .single();

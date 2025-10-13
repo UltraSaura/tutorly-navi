@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { MessageSquare, LayoutDashboard, HeadphonesIcon, History, User, Globe, LogOut, ChevronDown, Settings } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,6 +89,7 @@ const LanguageMenuItems = () => {
 };
 
 export function HeaderNavigation() {
+  const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -110,6 +111,7 @@ export function HeaderNavigation() {
         title: "Signed out successfully",
         description: "You have been logged out of your account.",
       });
+      navigate('/auth');
     } catch (error) {
       console.error('Sign out error:', error);
       toast({

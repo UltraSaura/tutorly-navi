@@ -1,5 +1,5 @@
 -- Create AI model providers table
-CREATE TABLE public.ai_model_providers (
+CREATE TABLE IF NOT EXISTS public.ai_model_providers (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
   api_base_url TEXT NOT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE public.ai_model_providers (
 );
 
 -- Create AI models table
-CREATE TABLE public.ai_models (
+CREATE TABLE IF NOT EXISTS public.ai_models (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   provider_id UUID NOT NULL REFERENCES public.ai_model_providers(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE public.ai_models (
 );
 
 -- Create AI API keys table
-CREATE TABLE public.ai_model_keys (
+CREATE TABLE IF NOT EXISTS public.ai_model_keys (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   provider_id UUID NOT NULL REFERENCES public.ai_model_providers(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -42,6 +42,7 @@ ALTER TABLE public.ai_models ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ai_model_keys ENABLE ROW LEVEL SECURITY;
 
 -- RLS policies for ai_model_providers
+DROP POLICY IF EXISTS "Allow admins to manage AI model providers" ON public.ai_model_providers;
 CREATE POLICY "Allow admins to manage AI model providers"
 ON public.ai_model_providers
 FOR ALL
@@ -53,6 +54,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Allow users to view active AI model providers" ON public.ai_model_providers;
 CREATE POLICY "Allow users to view active AI model providers"
 ON public.ai_model_providers
 FOR SELECT
@@ -60,6 +62,7 @@ TO authenticated
 USING (is_active = true);
 
 -- RLS policies for ai_models
+DROP POLICY IF EXISTS "Allow admins to manage AI models" ON public.ai_models;
 CREATE POLICY "Allow admins to manage AI models"
 ON public.ai_models
 FOR ALL
@@ -71,6 +74,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Allow users to view active AI models" ON public.ai_models;
 CREATE POLICY "Allow users to view active AI models"
 ON public.ai_models
 FOR SELECT
@@ -78,6 +82,7 @@ TO authenticated
 USING (is_active = true);
 
 -- RLS policies for ai_model_keys (restricted to admins only)
+DROP POLICY IF EXISTS "Allow admins to manage AI model keys" ON public.ai_model_keys;
 CREATE POLICY "Allow admins to manage AI model keys"
 ON public.ai_model_keys
 FOR ALL
@@ -90,16 +95,19 @@ USING (
 );
 
 -- Create triggers for updated_at timestamps
+DROP TRIGGER IF EXISTS update_ai_model_providers_updated_at ON public.ai_model_providers;
 CREATE TRIGGER update_ai_model_providers_updated_at
   BEFORE UPDATE ON public.ai_model_providers
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_ai_models_updated_at ON public.ai_models;
 CREATE TRIGGER update_ai_models_updated_at
   BEFORE UPDATE ON public.ai_models
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_ai_model_keys_updated_at ON public.ai_model_keys;
 CREATE TRIGGER update_ai_model_keys_updated_at
   BEFORE UPDATE ON public.ai_model_keys
   FOR EACH ROW

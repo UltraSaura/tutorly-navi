@@ -16,8 +16,14 @@ import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
 const childSchema = z.object({
-  firstName: z.string().min(1),
-  schoolLevel: z.string().min(1),
+  firstName: z.string().min(1, "First name is required"),
+  schoolLevel: z.string().min(1, "School level is required"),
+  username: z.string()
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be at most 20 characters")
+    .regex(/^[a-z0-9_]+$/, "Username can only contain lowercase letters, numbers, and underscores"),
+  password: z.string().optional(),
+  email: z.string().email().optional().or(z.literal('')),
 });
 
 const parentSchema = z.object({
@@ -29,6 +35,7 @@ const parentSchema = z.object({
   country: z.string().min(1),
   phoneNumber: z.string().min(1),
   children: z.array(childSchema).min(1, "At least one child is required"),
+  sharedChildPassword: z.string().min(6).optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -62,7 +69,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
   } = useForm<ParentFormData>({
     resolver: zodResolver(parentSchema),
     defaultValues: {
-      children: [{ firstName: '', schoolLevel: '' }]
+      children: [{ firstName: '', schoolLevel: '', username: '', password: '', email: '' }]
     }
   });
 
@@ -80,7 +87,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
   };
 
   const addChild = () => {
-    append({ firstName: '', schoolLevel: '' });
+    append({ firstName: '', schoolLevel: '', username: '', password: '', email: '' });
   };
 
   const removeChild = (index: number) => {
@@ -224,6 +231,22 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
             </div>
           </div>
 
+          {/* NEW: Shared Password for Children */}
+          <div>
+            <Label htmlFor="sharedChildPassword">
+              {t('auth.sharedChildPassword')} (Optional)
+            </Label>
+            <Input
+              id="sharedChildPassword"
+              type="password"
+              {...register('sharedChildPassword')}
+              placeholder="Password for all children (or set individually)"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Use one password for all children, or set individual passwords below
+            </p>
+          </div>
+
           {/* Children Information */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -260,6 +283,53 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
                     {errors.children?.[index]?.firstName && (
                       <p className="text-sm text-destructive mt-1">
                         {errors.children[index]?.firstName?.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* NEW: Username field */}
+                  <div>
+                    <Label>{t('auth.username')}</Label>
+                    <Input 
+                      {...register(`children.${index}.username`)} 
+                      placeholder="e.g., john_2024"
+                      className={errors.children?.[index]?.username ? 'border-destructive' : ''}
+                    />
+                    {errors.children?.[index]?.username && (
+                      <p className="text-sm text-destructive mt-1">
+                        {errors.children[index]?.username?.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* NEW: Optional email field */}
+                  <div>
+                    <Label>{t('auth.emailOptional')}</Label>
+                    <Input 
+                      {...register(`children.${index}.email`)} 
+                      type="email"
+                      placeholder="For notifications (optional)"
+                      className={errors.children?.[index]?.email ? 'border-destructive' : ''}
+                    />
+                    {errors.children?.[index]?.email && (
+                      <p className="text-sm text-destructive mt-1">
+                        {errors.children[index]?.email?.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* NEW: Optional individual password */}
+                  <div>
+                    <Label>{t('auth.individualPassword')} (Optional)</Label>
+                    <Input 
+                      {...register(`children.${index}.password`)} 
+                      type="password"
+                      placeholder="Leave empty to use shared password"
+                      className={errors.children?.[index]?.password ? 'border-destructive' : ''}
+                    />
+                    {errors.children?.[index]?.password && (
+                      <p className="text-sm text-destructive mt-1">
+                        {errors.children[index]?.password?.message}
                       </p>
                     )}
                   </div>

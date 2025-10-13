@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Outlet, Navigate, NavLink } from 'react-router-dom';
+import { Outlet, Navigate, NavLink, useNavigate } from 'react-router-dom';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
-import { Home, Users, FileText, Lightbulb, TrendingUp, CreditCard, Settings, Menu } from 'lucide-react';
+import { Home, Users, FileText, Lightbulb, TrendingUp, CreditCard, Settings, Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const guardianNavigation = [
   { title: 'Home', url: '/guardian', icon: Home },
@@ -19,6 +21,26 @@ const guardianNavigation = [
 const GuardianLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { canAccessGuardianPortal, loading } = useGuardianAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: 'Signed out successfully',
+        description: 'You have been logged out of your account.',
+      });
+      navigate('/auth');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        title: 'Error signing out',
+        description: 'There was an error signing out. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -65,6 +87,21 @@ const GuardianLayout = () => {
           </NavLink>
         ))}
       </nav>
+      
+      {/* Logout Button */}
+      <div className="p-4 border-t">
+        <Button
+          variant="ghost"
+          onClick={() => {
+            handleSignOut();
+            if (mobile) setIsMobileMenuOpen(false);
+          }}
+          className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent"
+        >
+          <LogOut className="h-5 w-5 mr-3" />
+          <span className="font-medium">Sign Out</span>
+        </Button>
+      </div>
     </div>
   );
 
@@ -86,15 +123,25 @@ const GuardianLayout = () => {
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto">
           {/* Mobile Header */}
-          <div className="lg:hidden sticky top-0 z-10 bg-background border-b p-4 flex items-center gap-4">
+          <div className="lg:hidden sticky top-0 z-10 bg-background border-b p-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileMenuOpen(true)}
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+              <h1 className="text-lg font-semibold">Guardian Portal</h1>
+            </div>
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setIsMobileMenuOpen(true)}
+              onClick={handleSignOut}
+              className="text-muted-foreground hover:text-foreground"
             >
-              <Menu className="h-6 w-6" />
+              <LogOut className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-semibold">Guardian Portal</h1>
           </div>
 
           <div className="p-4 md:p-8 max-w-7xl mx-auto">

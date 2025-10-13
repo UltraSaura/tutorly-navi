@@ -14,6 +14,17 @@ CREATE TABLE IF NOT EXISTS public.prompt_templates (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Add unique constraint if it doesn't exist
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'prompt_templates_name_key'
+    ) THEN
+        ALTER TABLE public.prompt_templates ADD CONSTRAINT prompt_templates_name_key UNIQUE (name);
+    END IF;
+END $$;
+
 -- Create subject-prompt assignments table
 CREATE TABLE IF NOT EXISTS public.subject_prompt_assignments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -29,22 +40,26 @@ ALTER TABLE public.prompt_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subject_prompt_assignments ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for prompt templates
+DROP POLICY IF EXISTS "Allow admins to manage prompt templates" ON public.prompt_templates;
 CREATE POLICY "Allow admins to manage prompt templates" 
 ON public.prompt_templates 
 FOR ALL 
 USING ((auth.role() = 'authenticated'::text) AND (auth.uid() IN ( SELECT users.id FROM users WHERE (users.user_type = 'admin'::text))));
 
-CREATE POLICY "Allow users to view active prompt templates" 
-ON public.prompt_templates 
-FOR SELECT 
+DROP POLICY IF EXISTS "Allow users to view active prompt templates" ON public.prompt_templates;
+CREATE POLICY "Allow users to view active prompt templates"
+ON public.prompt_templates
+FOR SELECT
 USING (auth.role() = 'authenticated'::text AND is_active = true);
 
 -- Create policies for subject assignments
+DROP POLICY IF EXISTS "Allow admins to manage subject assignments" ON public.subject_prompt_assignments;
 CREATE POLICY "Allow admins to manage subject assignments" 
 ON public.subject_prompt_assignments 
 FOR ALL 
 USING ((auth.role() = 'authenticated'::text) AND (auth.uid() IN ( SELECT users.id FROM users WHERE (users.user_type = 'admin'::text))));
 
+DROP POLICY IF EXISTS "Allow users to view subject assignments" ON public.subject_prompt_assignments;
 CREATE POLICY "Allow users to view subject assignments" 
 ON public.subject_prompt_assignments 
 FOR SELECT 
@@ -162,7 +177,8 @@ Approach:
 - Guide literature discussions with thoughtful questions
 - Support diverse learning styles and backgrounds
 
-Always encourage students to think critically about texts and express their unique perspectives.', 'Language Arts', 'chat', false, true, 6, '{"language", "writing", "reading", "literature", "grammar"}');
+Always encourage students to think critically about texts and express their unique perspectives.', 'Language Arts', 'chat', false, true, 6, '{"language", "writing", "reading", "literature", "grammar"}')
+ON CONFLICT (name) DO NOTHING;
 
 -- Create function to automatically update updated_at timestamp
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
@@ -174,14 +190,15 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create trigger for automatic timestamp updates
+DROP TRIGGER IF EXISTS update_prompt_templates_updated_at ON public.prompt_templates;
 CREATE TRIGGER update_prompt_templates_updated_at
   BEFORE UPDATE ON public.prompt_templates
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Create indexes for better performance
-CREATE INDEX idx_prompt_templates_usage_type ON public.prompt_templates(usage_type);
-CREATE INDEX idx_prompt_templates_subject ON public.prompt_templates(subject);
-CREATE INDEX idx_prompt_templates_active ON public.prompt_templates(is_active);
-CREATE INDEX idx_subject_assignments_subject_id ON public.subject_prompt_assignments(subject_id);
-CREATE INDEX idx_subject_assignments_usage_type ON public.subject_prompt_assignments(usage_type);
+CREATE INDEX IF NOT EXISTS idx_prompt_templates_usage_type ON public.prompt_templates(usage_type);
+CREATE INDEX IF NOT EXISTS idx_prompt_templates_subject ON public.prompt_templates(subject);
+CREATE INDEX IF NOT EXISTS idx_prompt_templates_active ON public.prompt_templates(is_active);
+CREATE INDEX IF NOT EXISTS idx_subject_assignments_subject_id ON public.subject_prompt_assignments(subject_id);
+CREATE INDEX IF NOT EXISTS idx_subject_assignments_usage_type ON public.subject_prompt_assignments(usage_type);
