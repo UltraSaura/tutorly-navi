@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +16,7 @@ import { ChildRegistrationData } from '@/types/registration';
 import { ManualChildCreationTrigger } from '@/components/guardian/ManualChildCreationTrigger';
 
 export default function GuardianChildren() {
+  const navigate = useNavigate();
   const { guardianId, guardianCountry } = useGuardianAuth();
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -220,11 +222,13 @@ export default function GuardianChildren() {
                   </div>
                   
                   <div className="pt-4 flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      View Progress
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
-                      View Results
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => navigate(`/guardian/child/${child.id}`)}
+                    >
+                      Open Dashboard
                     </Button>
                   </div>
                 </CardContent>
