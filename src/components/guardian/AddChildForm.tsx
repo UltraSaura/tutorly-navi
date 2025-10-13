@@ -11,7 +11,7 @@ import { ChildRegistrationData } from '@/types/registration';
 import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
 
 const childSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
   firstName: z.string().min(1, 'First name is required'),
@@ -70,7 +70,7 @@ export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }:
     }
 
     const childData: ChildRegistrationData = {
-      email: registrationData.email,
+      email: registrationData.email || undefined,
       password: registrationData.password,
       firstName: registrationData.firstName,
       lastName: registrationData.lastName,
@@ -112,13 +112,16 @@ export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }:
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Email (Optional - for notifications)</Label>
         <Input
           id="email"
           type="email"
           {...register('email')}
-          placeholder="child@example.com"
+          placeholder="child@example.com (optional)"
         />
+        <p className="text-xs text-muted-foreground">
+          Leave blank if child doesn't need email notifications
+        </p>
         {errors.email && (
           <p className="text-sm text-destructive">{errors.email.message}</p>
         )}
@@ -214,6 +217,7 @@ export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }:
       <div className="space-y-2">
         <Label htmlFor="schoolLevel">School Level</Label>
         <Select
+          value={watch('schoolLevel') || ''}
           onValueChange={(value) => setValue('schoolLevel', value)}
         >
           <SelectTrigger>

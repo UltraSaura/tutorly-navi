@@ -70,14 +70,14 @@ Deno.serve(async (req) => {
       throw new Error('Missing required fields: username, password, firstName, schoolLevel, and relation are required');
     }
 
-    // Generate a temporary email if none provided (required by Supabase Auth)
-    const tempEmail = email || `${username}@child.local`;
+    // Always use username@child.local as auth email for consistent username login
+    const authEmail = `${username}@child.local`;
 
     // Create auth user with username
     const { data: authData, error: authCreateError } = await supabaseAdmin.auth.admin.createUser({
-      email: tempEmail,
+      email: authEmail,
       password,
-      email_confirm: true,  // Auto-confirm since no real email
+      email_confirm: true,  // Auto-confirm since using placeholder email
       user_metadata: {
         first_name: firstName,
         last_name: lastName || '',
@@ -100,24 +100,38 @@ Deno.serve(async (req) => {
     // Wait a moment for the trigger to complete
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Create child profile with optional email
-    const { data: childData, error: childError } = await supabaseAdmin
+    // Check if child profile already exists (idempotent creation)
+    const { data: existingChild } = await supabaseAdmin
       .from('children')
-      .insert({
-        user_id: childUserId,
-        grade: schoolLevel,
-        curriculum: country || null,
-        status: 'active',
-        contact_email: email || null,  // Use actual email if provided
-      })
-      .select()
-      .single();
+      .select('id')
+      .eq('user_id', childUserId)
+      .maybeSingle();
 
-    if (childError || !childData) {
-      console.error('Child creation error:', childError);
-      // Cleanup: delete auth user if child creation fails
-      await supabaseAdmin.auth.admin.deleteUser(childUserId);
-      throw new Error(`Failed to create child profile: ${childError?.message}`);
+    let childData;
+    if (existingChild) {
+      // Child already exists, reuse it
+      childData = existingChild;
+    } else {
+      // Create child profile with optional email
+      const { data: newChildData, error: childError } = await supabaseAdmin
+        .from('children')
+        .insert({
+          user_id: childUserId,
+          grade: schoolLevel,
+          curriculum: country || null,
+          status: 'active',
+          contact_email: email || null,  // Use actual email if provided
+        })
+        .select()
+        .single();
+
+      if (childError || !newChildData) {
+        console.error('Child creation error:', childError);
+        // Cleanup: delete auth user if child creation fails
+        await supabaseAdmin.auth.admin.deleteUser(childUserId);
+        throw new Error(`Failed to create child profile: ${childError?.message}`);
+      }
+      childData = newChildData;
     }
 
     // Create guardian-child link

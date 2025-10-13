@@ -103,22 +103,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       return { error };
     } else {
-      // Username login: lookup email from username first
-      const { data: userData, error: lookupError } = await supabase
-        .from('users')
-        .select('email')
-        .eq('username', emailOrUsername)
-        .maybeSingle();
-
-      if (lookupError || !userData) {
-        return { error: new Error('Invalid username or password') };
-      }
-
+      // Username login: try with constructed child email (username@child.local)
       const { error } = await supabase.auth.signInWithPassword({
-        email: userData.email,
+        email: `${emailOrUsername}@child.local`,
         password,
       });
-      return { error };
+      
+      if (error) {
+        return { error: new Error('Invalid username or password') };
+      }
+      return { error: null };
     }
   };
 

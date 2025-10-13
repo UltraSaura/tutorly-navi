@@ -213,6 +213,24 @@ const AuthPage: React.FC = () => {
         return;
       }
 
+      // Step 2.5: Ensure guardian record exists before creating children
+      const { error: guardianError } = await supabase
+        .from('guardians')
+        .upsert({
+          user_id: session.user.id,
+          phone: fullPhoneNumber,
+        }, {
+          onConflict: 'user_id',
+          ignoreDuplicates: true,
+        });
+
+      if (guardianError) {
+        console.error('Failed to ensure guardian record:', guardianError);
+      }
+
+      // Wait a moment for guardian record to be fully committed
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       // Step 3: Create children immediately since we have a session
       if (data.children && data.children.length > 0) {
         const childrenPromises = data.children.map(async (child) => {

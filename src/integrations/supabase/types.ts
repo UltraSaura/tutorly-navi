@@ -753,7 +753,7 @@ export type Database = {
           style: string | null
           updated_at: string
           user_type: string
-          username: string
+          username: string | null
           username_set_at: string | null
         }
         Insert: {
@@ -769,7 +769,7 @@ export type Database = {
           style?: string | null
           updated_at?: string
           user_type: string
-          username: string
+          username?: string | null
           username_set_at?: string | null
         }
         Update: {
@@ -785,7 +785,7 @@ export type Database = {
           style?: string | null
           updated_at?: string
           user_type?: string
-          username?: string
+          username?: string | null
           username_set_at?: string | null
         }
         Relationships: []
@@ -821,9 +821,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_guardian_of_child: {
+        Args: { _child_user_id: string; _guardian_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "student" | "parent"
+      app_role: "admin" | "moderator" | "student" | "parent" | "guardian"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -951,7 +955,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "student", "parent"],
+      app_role: ["admin", "moderator", "student", "parent", "guardian"],
     },
   },
 } as const
