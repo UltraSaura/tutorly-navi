@@ -9,18 +9,19 @@ import { ExplanationModal } from '@/features/explanations/ExplanationModal';
 import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
-
 interface ExerciseRowProps {
   exercise: ExerciseHistoryWithAttempts;
   allAttempts: ExerciseHistoryWithAttempts[];
   childId: string;
 }
-
-export function ExerciseRow({ exercise, allAttempts, childId }: ExerciseRowProps) {
+export function ExerciseRow({
+  exercise,
+  allAttempts,
+  childId
+}: ExerciseRowProps) {
   const [showTimeline, setShowTimeline] = useState(false);
   const [showExplanationModal, setShowExplanationModal] = useState(false);
   const teaching = useTwoCardTeaching();
-
   const hasMultipleAttempts = allAttempts.length > 1;
 
   // Status badge
@@ -43,28 +44,28 @@ export function ExerciseRow({ exercise, allAttempts, childId }: ExerciseRowProps
       setShowExplanationModal(true);
     } else {
       // Use the teaching hook to generate explanation
-      teaching.openFor(
-        { exercise_content: exercise.exercise_content, userAnswer: exercise.user_answer, subject: exercise.subject_id },
-        { response_language: 'English', grade_level: 'High School' }
-      );
+      teaching.openFor({
+        exercise_content: exercise.exercise_content,
+        userAnswer: exercise.user_answer,
+        subject: exercise.subject_id
+      }, {
+        response_language: 'English',
+        grade_level: 'High School'
+      });
     }
   };
 
   // Quick text summary
   const handleQuickSummary = () => {
-    const explanationData = Array.isArray(exercise.explanation)
-      ? exercise.explanation[0]?.explanation_data
-      : exercise.explanation?.explanation_data;
-    
+    const explanationData = Array.isArray(exercise.explanation) ? exercise.explanation[0]?.explanation_data : exercise.explanation?.explanation_data;
     if (!explanationData) {
       toast({
         title: "No explanation available",
         description: "Click 'View explanation' to generate one.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     const summary = `
 📖 Concept: ${explanationData.concept || 'N/A'}
 
@@ -72,14 +73,12 @@ export function ExerciseRow({ exercise, allAttempts, childId }: ExerciseRowProps
 
 ⚠️ Common Pitfall: ${explanationData.pitfall || 'N/A'}
     `.trim();
-    
     toast({
       title: "Quick Summary",
       description: summary,
-      duration: 8000,
+      duration: 8000
     });
   };
-
   const formatTime = (seconds: number): string => {
     if (!seconds || seconds === 0) return '—';
     if (seconds < 60) return `${seconds}s`;
@@ -87,9 +86,7 @@ export function ExerciseRow({ exercise, allAttempts, childId }: ExerciseRowProps
     const secs = seconds % 60;
     return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
   };
-
-  return (
-    <>
+  return <>
       <Card className="p-4 hover:shadow-md transition-shadow">
         <div className="space-y-3">
           {/* Main row */}
@@ -110,11 +107,9 @@ export function ExerciseRow({ exercise, allAttempts, childId }: ExerciseRowProps
             {/* Status and metrics */}
             <div className="flex items-center gap-2 flex-wrap">
               {getStatusBadge()}
-              {hasMultipleAttempts && (
-                <Badge variant="outline" className="text-xs">
+              {hasMultipleAttempts && <Badge variant="outline" className="text-xs">
                   Retried ×{allAttempts.length}
-                </Badge>
-              )}
+                </Badge>}
             </div>
           </div>
 
@@ -131,70 +126,33 @@ export function ExerciseRow({ exercise, allAttempts, childId }: ExerciseRowProps
 
           {/* Action buttons */}
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleViewExplanation}
-              className="text-xs"
-            >
+            <Button variant="outline" size="sm" onClick={handleViewExplanation} className="text-xs">
               <ImageIcon className="h-3 w-3 mr-1" />
               View explanation
             </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleQuickSummary}
-              className="text-xs"
-            >
-              <FileText className="h-3 w-3 mr-1" />
-              Quick summary
-            </Button>
+            
 
-            {hasMultipleAttempts && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowTimeline(!showTimeline)}
-                className="text-xs ml-auto"
-              >
-                {showTimeline ? (
-                  <>
+            {hasMultipleAttempts && <Button variant="ghost" size="sm" onClick={() => setShowTimeline(!showTimeline)} className="text-xs ml-auto">
+                {showTimeline ? <>
                     <ChevronUp className="h-3 w-3 mr-1" />
                     Hide history
-                  </>
-                ) : (
-                  <>
+                  </> : <>
                     <ChevronDown className="h-3 w-3 mr-1" />
                     Show history
-                  </>
-                )}
-              </Button>
-            )}
+                  </>}
+              </Button>}
           </div>
 
           {/* Timeline (collapsible) */}
-          {showTimeline && hasMultipleAttempts && (
-            <ExerciseTimeline attempts={allAttempts} />
-          )}
+          {showTimeline && hasMultipleAttempts && <ExerciseTimeline attempts={allAttempts} />}
         </div>
       </Card>
 
       {/* Explanation Modal - use teaching hook's state */}
-      <ExplanationModal
-        open={teaching.open || showExplanationModal}
-        onClose={() => {
-          teaching.setOpen(false);
-          setShowExplanationModal(false);
-        }}
-        loading={teaching.loading}
-        sections={teaching.sections || (Array.isArray(exercise.explanation) ? exercise.explanation[0]?.explanation_data : exercise.explanation?.explanation_data)}
-        error={teaching.error}
-        exerciseQuestion={exercise.exercise_content}
-        imageUrl={Array.isArray(exercise.explanation) 
-          ? exercise.explanation[0]?.explanation_image_url 
-          : exercise.explanation?.explanation_image_url}
-      />
-    </>
-  );
+      <ExplanationModal open={teaching.open || showExplanationModal} onClose={() => {
+      teaching.setOpen(false);
+      setShowExplanationModal(false);
+    }} loading={teaching.loading} sections={teaching.sections || (Array.isArray(exercise.explanation) ? exercise.explanation[0]?.explanation_data : exercise.explanation?.explanation_data)} error={teaching.error} exerciseQuestion={exercise.exercise_content} imageUrl={Array.isArray(exercise.explanation) ? exercise.explanation[0]?.explanation_image_url : exercise.explanation?.explanation_image_url} />
+    </>;
 }
