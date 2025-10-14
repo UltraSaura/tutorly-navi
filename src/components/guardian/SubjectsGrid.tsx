@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ArrowUp, ArrowDown, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { GaugeScore } from "@/components/GaugeScore";
 
 interface SubjectProgress {
   name: string;
@@ -61,15 +62,21 @@ export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
       {subjects.map((subject, index) => (
         <Card key={index} className="p-2.5 md:p-3.5 hover:shadow-lg transition-shadow">
           <div className="space-y-2.5 md:space-y-3">
-            {/* Header: Badge and Success Rate */}
-            <div className="flex items-center justify-between">
+            {/* Header: Badge and Gauge */}
+            <div className="flex items-start justify-between">
               <Badge className={`${getSubjectColor(subject.name)} text-sm md:text-base px-3 md:px-4 py-1.5 md:py-2 rounded-full border-0`}>
                 {subject.name}
               </Badge>
-              <div className={`flex items-center gap-1 font-semibold text-base md:text-lg ${getSuccessRateColor(subject.successRate)}`}>
-                {getTrendIcon(subject.trend)}
-                {subject.successRate}%
-              </div>
+              <GaugeScore
+                value={subject.successRate}
+                variant="mini"
+                size={64}
+                thickness={6}
+                centerIndicator="emoji"
+                className="shrink-0 -mt-0.5"
+                label={subject.name}
+                animate={true}
+              />
             </div>
             
             {/* Progress Bar */}
