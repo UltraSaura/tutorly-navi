@@ -59,8 +59,8 @@ export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {subjects.map((subject, index) => (
-        <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
-          <div className="space-y-4">
+        <Card key={index} className="p-4 hover:shadow-lg transition-shadow">
+          <div className="space-y-3">
             {/* Header: Badge and Success Rate */}
             <div className="flex items-center justify-between">
               <Badge className={`${getSubjectColor(subject.name)} text-base px-4 py-2 rounded-full border-0`}>
@@ -83,7 +83,7 @@ export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
             )}
 
             {/* Buttons */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-2 pt-1">
               <Button 
                 className="flex-1 rounded-full bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
                 onClick={() => handleOpenSubject(subject.name)}
