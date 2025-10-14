@@ -104,23 +104,39 @@ export const useGuardianProgress = (guardianId?: string, childId?: string) => {
             else if (recentRate < previousRate - 5) trend = "down";
           }
 
-          // Determine next activity type and date based on exercise count
-          let next: { type: string; date: string } | undefined;
+          // Always determine next activity type and date based on exercise count
           const exerciseCount = stats.total;
-
-          // Calculate a dummy date (3-7 days from now based on activity type)
-          const daysAhead = exerciseCount % 10 === 9 ? 7 : (exerciseCount % 5 === 4 ? 5 : 3);
+          let next: { type: string; date: string };
+          
+          // Calculate what's next based on current progress
+          const exercisesUntilTest = 10 - (exerciseCount % 10);
+          const exercisesUntilQuiz = 5 - (exerciseCount % 5);
+          
+          let nextType: string;
+          let exercisesUntil: number;
+          
+          // Determine the nearest upcoming milestone
+          if (exercisesUntilTest <= 1) {
+            nextType = "Test";
+            exercisesUntil = exercisesUntilTest;
+          } else if (exercisesUntilQuiz <= 1) {
+            nextType = "Quiz";
+            exercisesUntil = exercisesUntilQuiz;
+          } else if (exercisesUntilQuiz < exercisesUntilTest) {
+            nextType = "Quiz";
+            exercisesUntil = exercisesUntilQuiz;
+          } else {
+            nextType = "Test";
+            exercisesUntil = exercisesUntilTest;
+          }
+          
+          // Calculate a dummy date (1-7 days from now based on exercises remaining)
+          const daysAhead = Math.max(1, Math.min(exercisesUntil, 7));
           const nextDate = new Date();
           nextDate.setDate(nextDate.getDate() + daysAhead);
           const formattedDate = nextDate.toISOString().split('T')[0]; // YYYY-MM-DD
-
-          if (exerciseCount % 10 === 9) {
-            next = { type: "Test", date: formattedDate };
-          } else if (exerciseCount % 5 === 4) {
-            next = { type: "Quiz", date: formattedDate };
-          } else if (exerciseCount >= 15 && exerciseCount % 15 === 14) {
-            next = { type: "Essay", date: formattedDate };
-          }
+          
+          next = { type: nextType, date: formattedDate };
 
           return {
             name: name.charAt(0).toUpperCase() + name.slice(1),
