@@ -101,6 +101,17 @@ export const useGuardianProgress = (guardianId?: string, childId?: string) => {
             else if (recentRate < previousRate - 5) trend = "down";
           }
 
+          // Determine next activity type based on exercise count
+          let next: string | undefined;
+          const exerciseCount = stats.total;
+          if (exerciseCount % 10 === 9) {
+            next = "Test";
+          } else if (exerciseCount % 5 === 4) {
+            next = "Quiz";
+          } else if (exerciseCount >= 15 && exerciseCount % 15 === 14) {
+            next = "Essay";
+          }
+
           return {
             name: name.charAt(0).toUpperCase() + name.slice(1),
             progress: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
@@ -108,6 +119,7 @@ export const useGuardianProgress = (guardianId?: string, childId?: string) => {
             totalExercises: stats.total,
             successRate: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
             trend,
+            next,
           };
         });
 
