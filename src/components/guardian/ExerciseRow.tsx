@@ -90,7 +90,7 @@ export function ExerciseRow({
       <Card className="p-4 hover:shadow-md transition-shadow">
         <div className="space-y-3">
           {/* Main row */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-0">
             {/* Subject chip */}
             <Badge variant="outline" className="w-fit">
               {exercise.subject_id || 'General'}
