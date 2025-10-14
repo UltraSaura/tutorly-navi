@@ -98,7 +98,7 @@ export function ExerciseRow({
 
             {/* Exercise title */}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
+              <p className="text-sm font-medium text-foreground truncate mx-0.5">
                 {exercise.exercise_content.substring(0, 80)}
                 {exercise.exercise_content.length > 80 ? '...' : ''}
               </p>
