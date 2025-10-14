@@ -36,9 +36,9 @@ const getSuccessRateColor = (rate: number) => {
 };
 
 const getTrendIcon = (trend: "up" | "down" | "flat") => {
-  if (trend === "up") return <ArrowUp className="h-5 w-5" />;
-  if (trend === "down") return <ArrowDown className="h-5 w-5" />;
-  return <ArrowRight className="h-5 w-5" />;
+  if (trend === "up") return <ArrowUp className="h-4 w-4 md:h-5 md:w-5" />;
+  if (trend === "down") return <ArrowDown className="h-4 w-4 md:h-5 md:w-5" />;
+  return <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />;
 };
 
 export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
@@ -59,34 +59,34 @@ export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {subjects.map((subject, index) => (
-        <Card key={index} className="p-3.5 hover:shadow-lg transition-shadow">
-          <div className="space-y-3">
+        <Card key={index} className="p-2.5 md:p-3.5 hover:shadow-lg transition-shadow">
+          <div className="space-y-2.5 md:space-y-3">
             {/* Header: Badge and Success Rate */}
             <div className="flex items-center justify-between">
-              <Badge className={`${getSubjectColor(subject.name)} text-base px-4 py-2 rounded-full border-0`}>
+              <Badge className={`${getSubjectColor(subject.name)} text-sm md:text-base px-3 md:px-4 py-1.5 md:py-2 rounded-full border-0`}>
                 {subject.name}
               </Badge>
-              <div className={`flex items-center gap-1 font-semibold text-lg ${getSuccessRateColor(subject.successRate)}`}>
+              <div className={`flex items-center gap-1 font-semibold text-base md:text-lg ${getSuccessRateColor(subject.successRate)}`}>
                 {getTrendIcon(subject.trend)}
                 {subject.successRate}%
               </div>
             </div>
             
             {/* Progress Bar */}
-            <Progress value={subject.successRate} className="h-3 bg-gray-200 dark:bg-gray-700" />
+            <Progress value={subject.successRate} className="h-2.5 md:h-3 bg-gray-200 dark:bg-gray-700" />
 
             {/* Next Information */}
             {subject.next && (
-              <div className="text-base text-muted-foreground">
+              <div className="text-sm md:text-base text-muted-foreground">
                 Next: {subject.next}
               </div>
             )}
 
             {/* Buttons */}
-            <div className="flex gap-2 pt-1">
+            <div className="flex gap-1.5 md:gap-2 pt-1">
               <Button 
                 size="sm"
-                className="rounded-full bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 px-14"
+                className="rounded-full bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 px-10 md:px-14"
                 onClick={() => handleOpenSubject(subject.name)}
               >
                 Open
