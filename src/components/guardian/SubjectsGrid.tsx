@@ -70,8 +70,8 @@ export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
               <GaugeScore
                 value={subject.successRate}
                 variant="mini"
-                size={64}
-                thickness={6}
+                size={51}
+                thickness={5}
                 centerIndicator="emoji"
                 className="shrink-0 -mt-0.5"
                 label={subject.name}
