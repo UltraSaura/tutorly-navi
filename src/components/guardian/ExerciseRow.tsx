@@ -111,10 +111,6 @@ export function ExerciseRow({
                   Retried ×{allAttempts.length}
                 </Badge>}
               <span className="text-xs text-muted-foreground">•</span>
-              <span className="text-xs text-muted-foreground">Score: <span className="font-semibold text-foreground">{score}%</span></span>
-              <span className="text-xs text-muted-foreground">•</span>
-              <span className="text-xs text-muted-foreground">Time: <span className="font-semibold text-foreground">{formatTime(exercise.time_spent_seconds || 0)}</span></span>
-              <span className="text-xs text-muted-foreground">•</span>
               <span className="text-xs text-muted-foreground">Attempts: <span className="font-semibold text-foreground">{exercise.attempts_count}</span></span>
               <span className="text-xs text-muted-foreground">•</span>
               <span className="text-xs text-muted-foreground">{format(new Date(exercise.created_at), 'MMM d, h:mm a')}</span>
