@@ -1,9 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { ArrowUp, ArrowDown, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import GaugeScore from "@/components/GaugeScore";
 
 interface SubjectProgress {
   name: string;
@@ -61,28 +61,19 @@ export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
       {subjects.map((subject, index) => (
         <Card key={index} className="p-2.5 md:p-3.5 hover:shadow-lg transition-shadow">
           <div className="space-y-2.5 md:space-y-3">
-            {/* Header: Badge */}
+            {/* Header: Badge and Success Rate */}
             <div className="flex items-center justify-between">
               <Badge className={`${getSubjectColor(subject.name)} text-sm md:text-base px-3 md:px-4 py-1.5 md:py-2 rounded-full border-0`}>
                 {subject.name}
               </Badge>
-            </div>
-            
-            {/* Gauge Score */}
-            <div className="flex flex-col items-center gap-1 py-2">
-              <GaugeScore 
-                value={subject.successRate} 
-                variant="mini" 
-                centerIndicator="emoji"
-                size={100}
-                thickness={10}
-                animate={true}
-                label={subject.name}
-              />
-              <div className="flex items-center gap-1">
+              <div className={`flex items-center gap-1 font-semibold text-base md:text-lg ${getSuccessRateColor(subject.successRate)}`}>
                 {getTrendIcon(subject.trend)}
+                {subject.successRate}%
               </div>
             </div>
+            
+            {/* Progress Bar */}
+            <Progress value={subject.successRate} className="h-2.5 md:h-3 bg-gray-200 dark:bg-gray-700" />
 
             {/* Next Information */}
             {subject.next && (

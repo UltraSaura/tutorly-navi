@@ -13,7 +13,6 @@ import { FocusAreasPanel } from "@/components/guardian/FocusAreasPanel";
 import { TrendIcon } from "@/components/guardian/TrendIcon";
 import { useGuardianProgress } from "@/hooks/useGuardianProgress";
 import { Calendar, MessageCircle, Video } from "lucide-react";
-import GaugeScore from "@/components/GaugeScore";
 
 export default function SubjectDetail() {
   const { childId, subjectId } = useParams<{ childId: string; subjectId: string }>();
@@ -68,20 +67,9 @@ export default function SubjectDetail() {
             <TrendIcon trend={subjectProgress?.trend || "flat"} className="h-6 w-6" />
           </div>
 
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-4 mb-4">
-            <GaugeScore 
-              value={subjectProgress?.successRate || 0} 
-              variant="full" 
-              centerIndicator="emoji"
-              size={200}
-              thickness={16}
-              animate={true}
-              showLegend={true}
-              label={decodeURIComponent(subjectId || '')}
-            />
-            <div className="text-center md:text-left md:mt-8">
-              <span className="text-muted-foreground">overall success rate</span>
-            </div>
+          <div className="flex items-baseline gap-3 mb-3">
+            <span className="text-4xl font-bold">{subjectProgress?.successRate || 0}%</span>
+            <span className="text-muted-foreground">overall success rate</span>
           </div>
 
           <Progress value={subjectProgress?.successRate || 0} className="h-3 mb-4" />
