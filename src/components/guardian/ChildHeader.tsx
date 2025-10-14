@@ -23,7 +23,7 @@ export function ChildHeader({
   const alerts = exerciseHistory.filter(ex => ex.is_correct === false).length;
   const statusColor = alerts === 0 ? 'bg-green-500/10 text-green-700 dark:text-green-400' : 'bg-red-500/10 text-red-700 dark:text-red-400';
   const statusText = alerts === 0 ? 'On track' : `${alerts} alert${alerts > 1 ? 's' : ''}`;
-  return <Card className="p-6">
+  return <Card className="p-6 w-1/2">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary rounded-sm">
