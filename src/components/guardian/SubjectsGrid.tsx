@@ -59,7 +59,7 @@ export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {subjects.map((subject, index) => (
-        <Card key={index} className="p-4 hover:shadow-lg transition-shadow">
+        <Card key={index} className="p-3.5 hover:shadow-lg transition-shadow">
           <div className="space-y-3">
             {/* Header: Badge and Success Rate */}
             <div className="flex items-center justify-between">
