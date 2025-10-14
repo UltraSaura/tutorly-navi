@@ -8,7 +8,10 @@ interface SubjectProgress {
   totalExercises: number;
   successRate: number;
   trend: "up" | "down" | "flat";
-  next?: string;
+  next?: {
+    type: string;
+    date: string;
+  };
 }
 
 interface ChildProgress {
@@ -101,15 +104,22 @@ export const useGuardianProgress = (guardianId?: string, childId?: string) => {
             else if (recentRate < previousRate - 5) trend = "down";
           }
 
-          // Determine next activity type based on exercise count
-          let next: string | undefined;
+          // Determine next activity type and date based on exercise count
+          let next: { type: string; date: string } | undefined;
           const exerciseCount = stats.total;
+
+          // Calculate a dummy date (3-7 days from now based on activity type)
+          const daysAhead = exerciseCount % 10 === 9 ? 7 : (exerciseCount % 5 === 4 ? 5 : 3);
+          const nextDate = new Date();
+          nextDate.setDate(nextDate.getDate() + daysAhead);
+          const formattedDate = nextDate.toISOString().split('T')[0]; // YYYY-MM-DD
+
           if (exerciseCount % 10 === 9) {
-            next = "Test";
+            next = { type: "Test", date: formattedDate };
           } else if (exerciseCount % 5 === 4) {
-            next = "Quiz";
+            next = { type: "Quiz", date: formattedDate };
           } else if (exerciseCount >= 15 && exerciseCount % 15 === 14) {
-            next = "Essay";
+            next = { type: "Essay", date: formattedDate };
           }
 
           return {

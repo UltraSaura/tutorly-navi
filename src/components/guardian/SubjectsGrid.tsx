@@ -13,7 +13,10 @@ interface SubjectProgress {
   totalExercises: number;
   successRate: number;
   trend: "up" | "down" | "flat";
-  next?: string;
+  next?: {
+    type: string;
+    date: string;
+  };
 }
 
 interface SubjectsGridProps {
@@ -84,8 +87,16 @@ export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
 
             {/* Next Information */}
             {subject.next && (
-              <div className="text-sm md:text-base text-muted-foreground">
-                Next: {subject.next}
+              <div className="flex items-center justify-between text-sm md:text-base">
+                <span className="text-muted-foreground">
+                  Next: <span className="font-medium text-foreground">{subject.next.type}</span>
+                </span>
+                <span className="text-xs md:text-sm text-muted-foreground">
+                  {new Date(subject.next.date).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </span>
               </div>
             )}
 
