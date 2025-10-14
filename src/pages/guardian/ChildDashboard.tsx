@@ -9,10 +9,12 @@ import { KPICards } from '@/components/guardian/KPICards';
 import { ExercisesPanel } from '@/components/guardian/ExercisesPanel';
 import { SubjectsGrid } from '@/components/guardian/SubjectsGrid';
 import { ExportReportButton } from '@/components/guardian/ExportReportButton';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function ChildDashboard() {
   const { childId } = useParams<{ childId: string }>();
   const { guardianId, loading: authLoading } = useGuardianAuth();
+  const isMobile = useIsMobile();
 
   // Fetch child details
   const { data: child, isLoading: childLoading } = useQuery({
@@ -90,10 +92,12 @@ export default function ChildDashboard() {
             exerciseHistory={exerciseHistory}
           />
         </div>
-        <ExportReportButton 
-          childId={childId!} 
-          childName={`${child.firstName} ${child.lastName}`}
-        />
+        {!isMobile && (
+          <ExportReportButton 
+            childId={childId!} 
+            childName={`${child.firstName} ${child.lastName}`}
+          />
+        )}
       </div>
 
       <KPICards />
