@@ -37,16 +37,16 @@ export function KPICards() {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div className="grid grid-cols-3 gap-2 md:gap-4">
       {kpis.map((kpi) => (
-        <Card key={kpi.label} className="p-4">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${kpi.bgColor}`}>
-              <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
+        <Card key={kpi.label} className="p-2 md:p-4">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className={`p-1.5 md:p-2 rounded-lg ${kpi.bgColor}`}>
+              <kpi.icon className={`h-4 w-4 md:h-5 md:w-5 ${kpi.color}`} />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{kpi.label}</p>
-              <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">{kpi.label}</p>
+              <p className="text-lg md:text-2xl font-bold text-foreground">{kpi.value}</p>
             </div>
           </div>
         </Card>
