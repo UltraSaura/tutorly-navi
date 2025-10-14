@@ -85,12 +85,14 @@ export function SubjectsGrid({ subjects, childId }: SubjectsGridProps) {
             {/* Buttons */}
             <div className="flex gap-2 pt-1">
               <Button 
+                size="sm"
                 className="flex-1 rounded-full bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
                 onClick={() => handleOpenSubject(subject.name)}
               >
                 Open
               </Button>
               <Button 
+                size="sm"
                 className="rounded-full bg-white text-black border-2 border-gray-300 hover:bg-gray-50 dark:bg-transparent dark:text-white dark:border-gray-600"
               >
                 Message
