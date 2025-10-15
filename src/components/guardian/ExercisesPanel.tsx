@@ -62,7 +62,7 @@ export function ExercisesPanel({ exercises, childId }: ExercisesPanelProps) {
   };
 
   return (
-    <Card className="py-6 px-0.5">
+    <Card className="py-6 mx-[5px]">
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h2 className="text-xl font-semibold text-foreground">Exercises</h2>
