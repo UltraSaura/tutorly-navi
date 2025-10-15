@@ -87,7 +87,7 @@ export function ExerciseRow({
     return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
   };
   return <>
-      <Card className="py-4 px-0 hover:shadow-md transition-shadow">
+      <Card className="py-4 px-0 mx-[10px] hover:shadow-md transition-shadow">
         <div className="space-y-3">
           {/* Main row */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
