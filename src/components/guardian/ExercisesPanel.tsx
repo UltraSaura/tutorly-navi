@@ -63,7 +63,7 @@ export function ExercisesPanel({ exercises, childId }: ExercisesPanelProps) {
 
   return (
     <Card className="py-6 px-0.5">
-      <div className="space-y-4">
+      <div className="space-y-4 px-[10px]">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h2 className="text-xl font-semibold text-foreground">Exercises</h2>
           <div className="flex items-center gap-2">
@@ -85,7 +85,7 @@ export function ExercisesPanel({ exercises, childId }: ExercisesPanelProps) {
             placeholder="Search exercises..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 mx-[10px]"
+            className="pl-10"
           />
         </div>
 
