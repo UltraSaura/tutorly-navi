@@ -49,6 +49,13 @@ export function areMathematicallyEquivalent(
       return areFractionsEquivalent(plainTextQuestion, plainTextAnswer);
     }
     
+    // Check for equation solving exercises (must be before other checks)
+    const equationResult = validateEquationSolution(plainTextQuestion, plainTextAnswer);
+    if (equationResult !== null) {
+      console.log('[mathValidation] Equation solving detected, result:', equationResult);
+      return equationResult;
+    }
+    
     // Extract the correct answer from the plain text question
     const correctAnswer = extractCorrectAnswer(plainTextQuestion);
     if (correctAnswer === null) return null;
@@ -130,6 +137,54 @@ function extractCorrectAnswer(question: string): number | null {
   }
 
   return null;
+}
+
+/**
+ * Validates if a value satisfies an equation
+ * Supports formats like: "3x+66=0", "2x-5=11", "-4x+8=20"
+ */
+function validateEquationSolution(question: string, userAnswer: string): boolean | null {
+  try {
+    // Match equation patterns: ax+b=c or ax-b=c
+    const equationMatch = question.match(/([+-]?\d*\.?\d*)x\s*([+-])\s*(\d+\.?\d*)\s*=\s*([+-]?\d+\.?\d*)/);
+    
+    if (!equationMatch) return null; // Not an equation
+    
+    const [, coeffStr, operator, constantStr, result] = equationMatch;
+    
+    // Parse coefficient (handles "", "+", "-", or number)
+    const coefficient = coeffStr === '' || coeffStr === '+' ? 1 : 
+                       coeffStr === '-' ? -1 : 
+                       parseFloat(coeffStr);
+    
+    const constant = parseFloat(operator + constantStr);
+    const expectedResult = parseFloat(result);
+    
+    // Extract numeric value from user's answer (remove "x=", spaces, etc.)
+    const userValue = parseFloat(userAnswer.replace(/[^-\d.]/g, ''));
+    
+    if (isNaN(userValue) || isNaN(coefficient) || isNaN(constant)) {
+      return null;
+    }
+    
+    // Substitute user's answer into equation: coefficient*x + constant = expectedResult
+    const leftSide = coefficient * userValue + constant;
+    const isCorrect = Math.abs(leftSide - expectedResult) < 0.01;
+    
+    console.log('[mathValidation] Equation validation:', {
+      equation: `${coefficient}x ${operator} ${constantStr} = ${expectedResult}`,
+      userAnswer: userValue,
+      leftSide,
+      expectedResult,
+      difference: Math.abs(leftSide - expectedResult),
+      isCorrect
+    });
+    
+    return isCorrect;
+  } catch (error) {
+    console.warn('[mathValidation] Error in equation validation:', error);
+    return null;
+  }
 }
 
 /**

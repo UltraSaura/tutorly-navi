@@ -105,7 +105,7 @@ export const useGuardianExerciseHistory = (options: UseGuardianExerciseHistoryOp
           const { data: explanation } = await supabase
             .from('exercise_explanations_cache')
             .select('*')
-            .eq('exercise_content', exercise.exercise_content)
+            .like('exercise_content', `${exercise.exercise_content}%`)
             .maybeSingle();
 
           return {
