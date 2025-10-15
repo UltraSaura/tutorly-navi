@@ -85,7 +85,7 @@ export function ExercisesPanel({ exercises, childId }: ExercisesPanelProps) {
             placeholder="Search exercises..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 mx-[10px]"
           />
         </div>
 
