@@ -71,59 +71,96 @@ Please provide your response in ${response_language}.`;
 
       console.log('[TwoCardTeaching] AI response received:', data);
 
-      // Parse tool calling response
+      let result: any = null;
+
+      // Try parsing tool calling response first
       if (data?.tool_calls?.[0]?.function?.arguments) {
-        const result = JSON.parse(data.tool_calls[0].function.arguments);
+        console.log('[TwoCardTeaching] Parsing from tool_calls');
+        result = JSON.parse(data.tool_calls[0].function.arguments);
+      } 
+      // Fallback: parse from content (handles plain JSON strings or fenced blocks)
+      else if (data?.content) {
+        console.log('[TwoCardTeaching] Parsing from content');
+        const rawContent = data.content;
         
-        if (!result.isMath) {
-          throw new Error('This does not appear to be a math problem');
-        }
-
-        // Set the sections from AI response
-        const explanationSections: TeachingSections = {
-          exercise: result.exercise || exercise_content,
-          concept: result.sections.concept || 'No concept provided',
-          example: result.sections.example || 'No example provided',
-          strategy: result.sections.strategy || 'No strategy provided',
-          pitfall: result.sections.pitfall || 'No common pitfalls identified',
-          check: result.sections.check || 'No verification method provided',
-          practice: result.sections.practice || 'Practice similar problems'
-        };
-
-        console.log('[TwoCardTeaching] Explanation sections generated:', explanationSections);
-        setSections(explanationSections);
-
-        // Save explanation to cache for guardian visibility
         try {
-          const { data: user } = await supabase.auth.getUser();
-          if (!user.user) throw new Error('No authenticated user');
-
-          // Create explanation cache entry
-          const { data: cacheEntry, error: cacheError } = await supabase
-            .from('exercise_explanations_cache')
-            .insert([{
-              exercise_content: exercise_content,
-              exercise_hash: exercise_content.toLowerCase().replace(/\s+/g, ''),
-              subject_id: subject.toLowerCase(),
-              explanation_data: explanationSections as any,
-              quality_score: 0,
-              usage_count: 1
-            }])
-            .select('id')
-            .single();
-
-          if (cacheError) {
-            console.error('[TwoCardTeaching] Failed to save to cache:', cacheError);
+          // Try to extract JSON from fenced code block: ```json ... ```
+          const fenceMatch = rawContent.match(/```(?:json)?\s*([\s\S]*?)```/i);
+          let jsonStr = '';
+          
+          if (fenceMatch) {
+            jsonStr = fenceMatch[1].trim();
           } else {
-            console.log('[TwoCardTeaching] Explanation saved to cache:', cacheEntry.id);
+            // Fallback: extract between first "{" and last "}"
+            const firstBrace = rawContent.indexOf('{');
+            const lastBrace = rawContent.lastIndexOf('}');
+            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+              jsonStr = rawContent.substring(firstBrace, lastBrace + 1);
+            } else {
+              // Try parsing the whole content as JSON
+              jsonStr = rawContent;
+            }
           }
-        } catch (err) {
-          console.error('[TwoCardTeaching] Error saving explanation:', err);
+          
+          result = JSON.parse(jsonStr);
+          console.log('[TwoCardTeaching] Successfully parsed JSON from content');
+        } catch (parseError) {
+          console.error('[TwoCardTeaching] Failed to parse JSON from content:', parseError);
+          console.error('[TwoCardTeaching] Raw content:', rawContent);
+          throw new Error('The AI returned an unexpected format. Please try again.');
         }
-        
       } else {
-        console.error('[TwoCardTeaching] No tool calls in response');
+        console.error('[TwoCardTeaching] No tool calls or content in response');
         throw new Error('Invalid response format from AI');
+      }
+
+      // Validate and extract sections (allow missing isMath flag)
+      if (result.isMath === false) {
+        throw new Error('This does not appear to be a math problem');
+      }
+
+      const sections = result.sections || {};
+
+      // Set the sections from AI response
+      const explanationSections: TeachingSections = {
+        exercise: result.exercise || exercise_content,
+        concept: sections.concept || 'No concept provided',
+        example: sections.example || 'No example provided',
+        strategy: sections.strategy || 'No strategy provided',
+        pitfall: sections.pitfall || 'No common pitfalls identified',
+        check: sections.check || 'No verification method provided',
+        practice: sections.practice || 'Practice similar problems'
+      };
+
+      console.log('[TwoCardTeaching] Explanation sections generated:', explanationSections);
+      setSections(explanationSections);
+
+      // Save explanation to cache for guardian visibility
+      try {
+        const { data: user } = await supabase.auth.getUser();
+        if (!user.user) throw new Error('No authenticated user');
+
+        // Create explanation cache entry
+        const { data: cacheEntry, error: cacheError } = await supabase
+          .from('exercise_explanations_cache')
+          .insert([{
+            exercise_content: exercise_content,
+            exercise_hash: exercise_content.toLowerCase().replace(/\s+/g, ''),
+            subject_id: subject.toLowerCase(),
+            explanation_data: explanationSections as any,
+            quality_score: 0,
+            usage_count: 1
+          }])
+          .select('id')
+          .single();
+
+        if (cacheError) {
+          console.error('[TwoCardTeaching] Failed to save to cache:', cacheError);
+        } else {
+          console.log('[TwoCardTeaching] Explanation saved to cache:', cacheEntry.id);
+        }
+      } catch (err) {
+        console.error('[TwoCardTeaching] Error saving explanation:', err);
       }
 
       setLoading(false);
