@@ -88,7 +88,7 @@ export function ExerciseRow({
   };
   return <>
       <Card className="py-4 px-0 hover:shadow-md transition-shadow">
-        <div className="space-y-3">
+        <div className="space-y-3 px-4">
           {/* Main row */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             {/* Subject chip */}
