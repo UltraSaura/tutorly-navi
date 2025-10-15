@@ -29,7 +29,7 @@ export function ExerciseTimeline({ attempts }: ExerciseTimelineProps) {
               key={attempt.id}
               className="flex items-center justify-between py-2 border-l-2 border-border pl-3"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-xs font-medium text-muted-foreground">
                   #{attempts.length - index}
                 </span>
@@ -39,8 +39,14 @@ export function ExerciseTimeline({ attempts }: ExerciseTimelineProps) {
                 <span className="text-xs text-muted-foreground">
                   {score}%
                 </span>
+                {attempt.user_answer && (
+                  <>
+                    <span className="text-xs text-muted-foreground">•</span>
+                    <span className="text-xs text-foreground">Answer: {attempt.user_answer}</span>
+                  </>
+                )}
               </div>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
                 {format(new Date(attempt.created_at), 'MMM d, h:mm a')}
               </span>
             </div>

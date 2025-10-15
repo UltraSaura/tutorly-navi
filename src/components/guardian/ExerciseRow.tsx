@@ -39,19 +39,34 @@ export function ExerciseRow({
   const score = exercise.is_correct ? 100 : 0;
 
   // Handle explanation request
-  const handleViewExplanation = () => {
+  const handleViewExplanation = async () => {
     if (exercise.explanation) {
       setShowExplanationModal(true);
     } else {
-      // Use the teaching hook to generate explanation
-      teaching.openFor({
-        exercise_content: exercise.exercise_content,
-        userAnswer: exercise.user_answer,
-        subject: exercise.subject_id
-      }, {
-        response_language: 'English',
-        grade_level: 'High School'
+      // Show loading toast
+      toast({
+        title: "Generating explanation...",
+        description: "This may take a few seconds",
       });
+      
+      try {
+        // Use the teaching hook to generate explanation
+        await teaching.openFor({
+          prompt: exercise.exercise_content,
+          userAnswer: exercise.user_answer,
+          subject: exercise.subject_id || 'math'
+        }, {
+          response_language: 'English',
+          grade_level: 'High School'
+        });
+      } catch (error) {
+        console.error('Failed to generate explanation:', error);
+        toast({
+          title: "Failed to generate explanation",
+          description: "Please try again later",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -96,12 +111,18 @@ export function ExerciseRow({
               {exercise.subject_id || 'General'}
             </Badge>
 
-            {/* Exercise title */}
-            <div className="flex-1 min-w-0">
+            {/* Exercise title and student's answer */}
+            <div className="flex-1 min-w-0 space-y-1">
               <p className="text-sm font-medium text-foreground truncate mx-0.5">
                 {exercise.exercise_content.substring(0, 80)}
                 {exercise.exercise_content.length > 80 ? '...' : ''}
               </p>
+              {exercise.user_answer && (
+                <div className="flex items-center gap-2 mx-0.5">
+                  <span className="text-xs text-muted-foreground">Student's answer:</span>
+                  <span className="text-sm font-medium text-foreground">{exercise.user_answer}</span>
+                </div>
+              )}
             </div>
 
             {/* Status and metrics */}
