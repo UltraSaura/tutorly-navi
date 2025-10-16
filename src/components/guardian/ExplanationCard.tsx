@@ -82,6 +82,18 @@ export default function ExplanationCard({
           </div>
         )}
 
+        {/* NEW: Show correct answer for guardians */}
+        {exercise.correct_answer && (
+          <div>
+            <p className="text-sm font-medium mb-2 text-green-700 dark:text-green-400">
+              Correct Answer:
+            </p>
+            <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-md border border-green-200 dark:border-green-800">
+              <MathRenderer latex={exercise.correct_answer} />
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <Clock className="h-3 w-3" />

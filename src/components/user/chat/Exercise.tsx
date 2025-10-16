@@ -60,6 +60,9 @@ const Exercise = ({
   const formattedExplanation = exercise.explanation ? exercise.explanation
     .replace(/\*\*Problem:\*\*/g, `<strong class="text-stuwy-600 dark:text-stuwy-400">${t('exercise.problem')}:</strong>`)
     .replace(/\*\*Guidance:\*\*/g, `<strong class="text-stuwy-600 dark:text-stuwy-400">${t('exercise.guidance')}:</strong>`)
+    // NEW: Remove any correct answer mentions
+    .replace(/correct\s+answer[:\s]*[^\n]+/gi, '')
+    .replace(/\bcorrectAnswer\b[:\s]*[^\n]+/gi, '')
     .replace(/^Guidance:\s*Problem:\s*/gm, '') // Remove "Guidance: Problem: " lines
     .replace(/^exercise\.guidance:\s*exercise\.problem:\s*.*$/gm, '') // Remove entire "exercise.guidance: exercise.problem: ..." lines
     .replace(/^\s*$/gm, '') // Remove empty lines

@@ -1,6 +1,8 @@
 import React from "react";
 import type { TeachingSections } from "./useTwoCardTeaching";
 import { useResolveText } from "@/hooks/useResolveText";
+import { useEffect, useState } from 'react'; // NEW
+import { supabase } from '@/integrations/supabase/client'; // NEW
 
 function Section({ title, text }: { title: string; text: string }) {
   const resolveText = useResolveText();
@@ -34,6 +36,24 @@ function Section({ title, text }: { title: string; text: string }) {
 
 export function TwoCards({ s }: { s: TeachingSections }) {
   const resolveText = useResolveText();
+  const [isGuardian, setIsGuardian] = useState(false); // NEW
+  
+  // NEW: Check if user is guardian
+  useEffect(() => {
+    async function checkUserRole() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('users')
+        .select('user_type')
+        .eq('id', user.id)
+        .single();
+      
+      setIsGuardian(data?.user_type === 'parent' || data?.user_type === 'guardian');
+    }
+    checkUserRole();
+  }, []);
 
   return (
     <div className="space-y-3">
@@ -67,6 +87,18 @@ export function TwoCards({ s }: { s: TeachingSections }) {
         <Section title="🎯 Check yourself" text={s.check} />
         <Section title="📈 Practice Tip" text={s.practice} />
       </div>
+
+      {/* NEW: Show correct answer ONLY to guardians */}
+      {isGuardian && s.correctAnswer && (
+        <div className="rounded-xl border border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800 p-4">
+          <div className="font-semibold text-green-800 dark:text-green-200">
+            ✓ Correct Answer (Guardian View)
+          </div>
+          <div className="mt-2 text-sm text-green-900 dark:text-green-100">
+            {resolveText(s.correctAnswer)}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

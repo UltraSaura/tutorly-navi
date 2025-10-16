@@ -11,6 +11,7 @@ export interface TeachingSections {
   pitfall: string;
   check: string;
   practice: string;
+  correctAnswer?: string; // NEW
 }
 
 export function useTwoCardTeaching() {
@@ -42,13 +43,29 @@ Exercise: ${exercise_content}
 Student's answer: ${student_answer}
 Grade level: ${grade_level}
 
-CRITICAL RULES for your explanation:
-1. NEVER reveal the final answer to the student's exercise
-2. In examples, use DIFFERENT number magnitudes (if original is single digits 1-9, use double digits 10-99; if original is double digits, use single digits)
-3. Example numbers should be at least 5 units away from original numbers
-4. Examples MUST end with = ___ (never show the result)
-5. Strategy should guide toward solution without giving the answer
-6. Use "your result" or "___" instead of actual answers
+IMPORTANT: Your response MUST include the correct answer in a separate field for guardian/parent review.
+
+RESPONSE FORMAT:
+{
+  "isMath": true,
+  "exercise": "${exercise_content}",
+  "sections": {
+    "concept": "Explain the core concept without revealing the answer",
+    "example": "Show a worked example with similar (but different) numbers",
+    "strategy": "Guide toward solution without giving the answer",
+    "pitfall": "Common mistakes to avoid",
+    "check": "How to verify your work",
+    "practice": "Practice tips"
+  },
+  "correctAnswer": "THE_CORRECT_ANSWER_HERE"
+}
+
+RULES:
+1. Compute the correct answer and store it ONLY in the "correctAnswer" field
+2. In the teaching sections (concept, example, strategy), use different numbers or guide without revealing the answer
+3. Examples should use numbers at least 5 units away from the original
+4. Strategy should guide toward solution process, not the final answer
+5. The correctAnswer field is for guardian review only - do NOT mention it in teaching sections
 
 Please provide your response in ${response_language}.`;
 
@@ -120,6 +137,7 @@ Please provide your response in ${response_language}.`;
       }
 
       const sections = result.sections || {};
+      const correctAnswer = result.correctAnswer || null; // NEW
 
       // Set the sections from AI response
       const explanationSections: TeachingSections = {
@@ -129,7 +147,8 @@ Please provide your response in ${response_language}.`;
         strategy: sections.strategy || 'No strategy provided',
         pitfall: sections.pitfall || 'No common pitfalls identified',
         check: sections.check || 'No verification method provided',
-        practice: sections.practice || 'Practice similar problems'
+        practice: sections.practice || 'Practice similar problems',
+        correctAnswer: correctAnswer // NEW
       };
 
       console.log('[TwoCardTeaching] Explanation sections generated:', explanationSections);
@@ -148,6 +167,7 @@ Please provide your response in ${response_language}.`;
             exercise_hash: exercise_content.toLowerCase().replace(/\s+/g, ''),
             subject_id: subject.toLowerCase(),
             explanation_data: explanationSections as any,
+            correct_answer: correctAnswer, // NEW
             quality_score: 0,
             usage_count: 1
           }])

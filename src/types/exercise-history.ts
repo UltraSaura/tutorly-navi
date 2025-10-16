@@ -9,6 +9,12 @@ export interface ExerciseHistoryRecord {
   created_at: string;
   updated_at: string;
   time_spent_seconds?: number;
+  correct_answer?: string; // NEW
+  explanation_metadata?: {
+    correctAnswer?: string;
+    revealAnswer?: boolean;
+    mode?: string;
+  }; // NEW
 }
 
 export interface ExerciseExplanationCache {
@@ -22,6 +28,7 @@ export interface ExerciseExplanationCache {
   created_at: string;
   updated_at: string;
   explanation_image_url?: string;
+  correct_answer?: string; // NEW
 }
 
 export interface ExerciseAttemptRecord {
