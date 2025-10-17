@@ -37,8 +37,6 @@ export interface ParentRegistrationData {
   lastName: string;
   country: string;
   phoneNumber: string;
-  children: ChildInfo[];
-  sharedChildPassword?: string;  // NEW: Shared password for all children
 }
 
 export interface ChildRegistrationData {

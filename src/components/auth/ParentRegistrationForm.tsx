@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import React from 'react';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -10,21 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCountriesAndLevels } from '@/hooks/useCountriesAndLevels';
 import { ParentRegistrationData } from '@/types/registration';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
-
-const childSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  schoolLevel: z.string().min(1, "School level is required"),
-  username: z.string()
-    .min(3, "Username must be at least 3 characters")
-    .max(20, "Username must be at most 20 characters")
-    .regex(/^[a-z0-9_]+$/, "Username can only contain lowercase letters, numbers, and underscores"),
-  password: z.string().optional(),
-  email: z.string().email().optional().or(z.literal('')),
-});
 
 const parentSchema = z.object({
   email: z.string().email(),
@@ -34,8 +23,6 @@ const parentSchema = z.object({
   lastName: z.string().min(1),
   country: z.string().min(1),
   phoneNumber: z.string().min(1),
-  children: z.array(childSchema).min(1, "At least one child is required"),
-  sharedChildPassword: z.string().min(6).optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -65,35 +52,15 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
     formState: { errors },
     setValue,
     watch,
-    control
   } = useForm<ParentFormData>({
     resolver: zodResolver(parentSchema),
-    defaultValues: {
-      children: [{ firstName: '', schoolLevel: '', username: '', password: '', email: '' }]
-    }
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'children'
-  });
-
-  const watchedChildren = watch('children');
   const watchedCountry = watch('country');
 
   const onFormSubmit = async (data: ParentFormData) => {
     const { confirmPassword, ...parentData } = data;
     await onSubmit(parentData as ParentRegistrationData);
-  };
-
-  const addChild = () => {
-    append({ firstName: '', schoolLevel: '', username: '', password: '', email: '' });
-  };
-
-  const removeChild = (index: number) => {
-    if (fields.length > 1) {
-      remove(index);
-    }
   };
 
   if (dataLoading) {
@@ -190,10 +157,6 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
               <Select onValueChange={(value) => {
                 setValue('country', value);
                 setLanguageFromCountry(value);
-                // Reset all children's school levels when parent's country changes
-                for (let i = 0; i < fields.length; i++) {
-                  setValue(`children.${i}.schoolLevel`, '');
-                }
               }} value={selectedCountry}>
                 <SelectTrigger className={errors.country ? 'border-destructive' : ''}>
                   <SelectValue placeholder={t('auth.selectCountry')} />
@@ -229,144 +192,6 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
                 <p className="text-sm text-destructive mt-1">{errors.phoneNumber.message}</p>
               )}
             </div>
-          </div>
-
-          {/* NEW: Shared Password for Children */}
-          <div>
-            <Label htmlFor="sharedChildPassword">
-              {t('auth.sharedChildPassword')} (Optional)
-            </Label>
-            <Input
-              id="sharedChildPassword"
-              type="password"
-              {...register('sharedChildPassword')}
-              placeholder="Password for all children (or set individually)"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Use one password for all children, or set individual passwords below
-            </p>
-          </div>
-
-          {/* Children Information */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">{t('auth.childrenInformation')}</h3>
-              <Button type="button" variant="outline" onClick={addChild}>
-                <Plus className="w-4 h-4 mr-2" />
-                {t('auth.addChild')}
-              </Button>
-            </div>
-
-            {fields.map((field, index) => (
-              <Card key={field.id} className="p-4">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium">{t('auth.child')} {index + 1}</h4>
-                    {fields.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeChild(index)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label>{t('auth.firstName')}</Label>
-                    <Input
-                      {...register(`children.${index}.firstName`)}
-                      className={errors.children?.[index]?.firstName ? 'border-destructive' : ''}
-                    />
-                    {errors.children?.[index]?.firstName && (
-                      <p className="text-sm text-destructive mt-1">
-                        {errors.children[index]?.firstName?.message}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* NEW: Username field */}
-                  <div>
-                    <Label>{t('auth.username')}</Label>
-                    <Input 
-                      {...register(`children.${index}.username`)} 
-                      placeholder="e.g., john_2024"
-                      className={errors.children?.[index]?.username ? 'border-destructive' : ''}
-                    />
-                    {errors.children?.[index]?.username && (
-                      <p className="text-sm text-destructive mt-1">
-                        {errors.children[index]?.username?.message}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* NEW: Optional email field */}
-                  <div>
-                    <Label>{t('auth.emailOptional')}</Label>
-                    <Input 
-                      {...register(`children.${index}.email`)} 
-                      type="email"
-                      placeholder="For notifications (optional)"
-                      className={errors.children?.[index]?.email ? 'border-destructive' : ''}
-                    />
-                    {errors.children?.[index]?.email && (
-                      <p className="text-sm text-destructive mt-1">
-                        {errors.children[index]?.email?.message}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* NEW: Optional individual password */}
-                  <div>
-                    <Label>{t('auth.individualPassword')} (Optional)</Label>
-                    <Input 
-                      {...register(`children.${index}.password`)} 
-                      type="password"
-                      placeholder="Leave empty to use shared password"
-                      className={errors.children?.[index]?.password ? 'border-destructive' : ''}
-                    />
-                    {errors.children?.[index]?.password && (
-                      <p className="text-sm text-destructive mt-1">
-                        {errors.children[index]?.password?.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label>{t('auth.schoolLevel')}</Label>
-                    <Select 
-                      value={watchedChildren[index]?.schoolLevel || ''}
-                      onValueChange={(value) => setValue(`children.${index}.schoolLevel`, value)}
-                      disabled={!watchedCountry}
-                    >
-                      <SelectTrigger className={errors.children?.[index]?.schoolLevel ? 'border-destructive' : ''}>
-                        <SelectValue placeholder={t('auth.selectSchoolLevel')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {watchedCountry && 
-                          getSchoolLevelsByCountry(watchedCountry).map((level) => (
-                            <SelectItem key={level.level_code} value={level.level_code}>
-                              {level.level_name}
-                            </SelectItem>
-                          ))
-                        }
-                      </SelectContent>
-                    </Select>
-                    {errors.children?.[index]?.schoolLevel && (
-                      <p className="text-sm text-destructive mt-1">
-                        {errors.children[index]?.schoolLevel?.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ))}
-
-            {errors.children?.root && (
-              <p className="text-sm text-destructive">{errors.children.root.message}</p>
-            )}
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
