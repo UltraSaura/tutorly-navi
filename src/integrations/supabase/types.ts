@@ -340,6 +340,7 @@ export type Database = {
       }
       exercise_explanations_cache: {
         Row: {
+          correct_answer: string | null
           created_at: string
           exercise_content: string
           exercise_hash: string
@@ -352,6 +353,7 @@ export type Database = {
           usage_count: number | null
         }
         Insert: {
+          correct_answer?: string | null
           created_at?: string
           exercise_content: string
           exercise_hash: string
@@ -364,6 +366,7 @@ export type Database = {
           usage_count?: number | null
         }
         Update: {
+          correct_answer?: string | null
           created_at?: string
           exercise_content?: string
           exercise_hash?: string

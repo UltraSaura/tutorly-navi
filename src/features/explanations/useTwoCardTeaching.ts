@@ -8,10 +8,12 @@ export interface TeachingSections {
   concept: string;
   example: string;
   strategy: string;
+  currentExercise: string;  // Full step-by-step solution with correct answer
   pitfall: string;
   check: string;
   practice: string;
-  correctAnswer?: string; // NEW
+  parentHelpHint: string;   // Guidance for parents
+  correctAnswer?: string;   // For backwards compatibility
 }
 
 export function useTwoCardTeaching() {
@@ -145,10 +147,12 @@ Please provide your response in ${response_language}.`;
         concept: sections.concept || 'No concept provided',
         example: sections.example || 'No example provided',
         strategy: sections.strategy || 'No strategy provided',
+        currentExercise: sections.currentExercise || 'No solution provided',
         pitfall: sections.pitfall || 'No common pitfalls identified',
         check: sections.check || 'No verification method provided',
         practice: sections.practice || 'Practice similar problems',
-        correctAnswer: correctAnswer // NEW
+        parentHelpHint: sections.parentHelpHint || 'Encourage your child to break down the problem step by step',
+        correctAnswer: correctAnswer // For backwards compatibility
       };
 
       console.log('[TwoCardTeaching] Explanation sections generated:', explanationSections);
@@ -198,5 +202,5 @@ Please provide your response in ${response_language}.`;
     }
   }
 
-  return { open, setOpen, loading, sections, error, openFor };
+  return { open, setOpen, loading, sections, error, openFor, setSections };
 }

@@ -78,26 +78,53 @@ export function TwoCards({ s }: { s: TeachingSections }) {
         </div>
       </div>
 
-      {/* Guidance card */}
-      <div className="rounded-xl border bg-card p-4 shadow-sm">
-        <Section title="💡 Concept" text={s.concept} />
-        <Section title="🔍 Example" text={s.example} />
-        <Section title="☑️ Strategy" text={s.strategy} />
-        <Section title="⚠️ Pitfall" text={s.pitfall} />
-        <Section title="🎯 Check yourself" text={s.check} />
-        <Section title="📈 Practice Tip" text={s.practice} />
-      </div>
-
-      {/* NEW: Show correct answer ONLY to guardians */}
-      {isGuardian && s.correctAnswer && (
-        <div className="rounded-xl border border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800 p-4">
-          <div className="font-semibold text-green-800 dark:text-green-200">
-            ✓ Correct Answer (Guardian View)
-          </div>
-          <div className="mt-2 text-sm text-green-900 dark:text-green-100">
-            {resolveText(s.correctAnswer)}
-          </div>
+      {/* Student View - Generic Guidance (NO answer reveal) */}
+      {!isGuardian && (
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
+          <Section title="💡 Concept" text={s.concept} />
+          <Section title="🔍 Example" text={s.example} />
+          <Section title="☑️ Strategy" text={s.strategy} />
+          <Section title="⚠️ Pitfall" text={s.pitfall} />
+          <Section title="🎯 Check yourself" text={s.check} />
+          <Section title="📈 Practice Tip" text={s.practice} />
         </div>
+      )}
+
+      {/* Guardian View - Concept + Parent Help + Detailed Solution */}
+      {isGuardian && (
+        <>
+          {/* Top Card: Concept & Parent Guidance */}
+          <div className="rounded-xl border bg-card p-4 shadow-sm space-y-4">
+            <Section title="💡 Concept from Two Cards" text={s.concept} />
+            <Section title="👨‍👩‍👧 Parent Help Hint" text={s.parentHelpHint} />
+            <Section title="⚠️ Pitfall" text={s.pitfall} />
+          </div>
+          
+          {/* Bottom Card: Current Exercise Solution */}
+          <div className="rounded-xl border-2 border-blue-300 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-700 p-5 shadow-md">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-2xl">📝</span>
+              <h3 className="font-bold text-lg text-blue-800 dark:text-blue-200">
+                Current Exercise - Step-by-Step Solution
+              </h3>
+            </div>
+            <div
+              className={[
+                "prose prose-neutral max-w-none",
+                "leading-relaxed break-words",
+                "whitespace-pre-wrap",
+                "text-base text-blue-900 dark:text-blue-100",
+              ].join(" ")}
+              style={{
+                whiteSpace: "pre-wrap",
+                letterSpacing: "normal",
+                wordSpacing: "normal",
+              }}
+            >
+              {resolveText(s.currentExercise)}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

@@ -38,15 +38,38 @@ function detectSubject(message: string): string | null {
   return 'mathematics';
 }
 
-async function generateAutoExplanation(
+/**
+ * Extract the correct answer from the solution text
+ */
+function extractCorrectAnswerFromSolution(solutionText: string): string | null {
+  if (!solutionText) return null;
+  
+  // Look for common answer patterns
+  const patterns = [
+    /=\s*([0-9]+(?:[.,][0-9]+)?)/,              // = 42 or = 3.14
+    /Answer:\s*([^\n]+)/i,                       // Answer: 42
+    /Result:\s*([^\n]+)/i,                       // Result: 42
+    /Quotient\s*=\s*([0-9]+)/i,                  // Quotient = 12
+    /Solution:\s*([^\n]+)/i,                     // Solution: 42
+  ];
+  
+  for (const pattern of patterns) {
+    const match = solutionText.match(pattern);
+    if (match) return match[1].trim();
+  }
+  
+  return null;
+}
+
+/**
+ * Save explanation data to cache (from AI response, no additional call needed)
+ */
+async function saveExplanationToCache(
   exerciseContent: string,
-  userAnswer: string,
+  sections: any,
   subjectId: string | null
 ): Promise<void> {
   try {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return;
-
     // Check if explanation already exists
     const { data: existing } = await supabase
       .from('exercise_explanations_cache')
@@ -55,64 +78,33 @@ async function generateAutoExplanation(
       .maybeSingle();
 
     if (existing) {
-      console.log('[AutoExplanation] Explanation already exists');
+      console.log('[SaveExplanation] Explanation already exists in cache');
       return;
     }
 
-    console.log('[AutoExplanation] Generating explanation for wrong answer...');
+    // Extract correct answer from currentExercise section
+    const correctAnswer = extractCorrectAnswerFromSolution(sections.currentExercise);
 
-    // Call AI to generate explanation
-    const { data: aiResponse, error: aiError } = await supabase.functions.invoke('ai-chat', {
-      body: {
-        message: `Please explain this ${subjectId || 'math'} exercise to help the student learn.
+    // Save to cache
+    const { error: insertError } = await supabase
+      .from('exercise_explanations_cache')
+      .insert({
+        exercise_content: exerciseContent,
+        exercise_hash: exerciseContent.toLowerCase().replace(/\s+/g, ''),
+        subject_id: subjectId,
+        explanation_data: sections,
+        correct_answer: correctAnswer,
+        quality_score: 0,
+        usage_count: 1
+      });
 
-Exercise: ${exerciseContent}
-Student's answer: ${userAnswer}
-
-CRITICAL RULES:
-1. NEVER reveal the final answer
-2. Use different examples with different number magnitudes
-3. Guide toward solution without giving the answer
-4. Structure your response with sections: concept, example, strategy, pitfall, check, practice`,
-        requestExplanation: true,
-        language: 'english',
-      }
-    });
-
-    if (aiError) throw aiError;
-
-    // Parse and save explanation
-    if (aiResponse?.tool_calls?.[0]?.function?.arguments) {
-      const result = JSON.parse(aiResponse.tool_calls[0].function.arguments);
-      
-      if (!result.isMath) return;
-
-      const explanationSections = {
-        exercise: result.exercise || exerciseContent,
-        concept: result.sections.concept || 'No concept provided',
-        example: result.sections.example || 'No example provided',
-        strategy: result.sections.strategy || 'No strategy provided',
-        pitfall: result.sections.pitfall || 'No common pitfalls identified',
-        check: result.sections.check || 'No verification method provided',
-        practice: result.sections.practice || 'Practice similar problems'
-      };
-
-      // Save to cache
-      await supabase
-        .from('exercise_explanations_cache')
-        .insert({
-          exercise_content: exerciseContent,
-          exercise_hash: exerciseContent.toLowerCase().replace(/\s+/g, ''),
-          subject_id: subjectId,
-          explanation_data: explanationSections,
-          quality_score: 0,
-          usage_count: 1
-        });
-
-      console.log('[AutoExplanation] Explanation auto-generated and saved');
+    if (insertError) {
+      console.error('[SaveExplanation] Error saving to cache:', insertError);
+    } else {
+      console.log('[SaveExplanation] ✅ Explanation saved to cache');
     }
   } catch (err) {
-    console.error('[AutoExplanation] Error:', err);
+    console.error('[SaveExplanation] Unexpected error:', err);
   }
 }
 
@@ -308,10 +300,10 @@ export async function sendUnifiedMessage(
         subject
       ).catch(err => console.error('[UnifiedChatService] Failed to auto-save exercise:', err));
 
-      // Auto-generate explanation for incorrect answers
-      if (response.isCorrect === false && answer) {
-        generateAutoExplanation(question, answer, subject)
-          .catch(err => console.error('[UnifiedChatService] Auto-explanation failed:', err));
+      // Auto-save explanation from AI response (no additional AI call needed!)
+      if (response.isCorrect === false && data.sections) {
+        saveExplanationToCache(question, data.sections, subject)
+          .catch(err => console.error('[UnifiedChatService] Failed to save explanation:', err));
       }
     }
     

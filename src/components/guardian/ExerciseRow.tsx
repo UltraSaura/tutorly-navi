@@ -9,6 +9,7 @@ import { ExplanationModal } from '@/features/explanations/ExplanationModal';
 import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 interface ExerciseRowProps {
   exercise: ExerciseHistoryWithAttempts;
   allAttempts: ExerciseHistoryWithAttempts[];
@@ -40,9 +41,30 @@ export function ExerciseRow({
 
   // Handle explanation request
   const handleViewExplanation = async () => {
-    if (exercise.explanation) {
-      setShowExplanationModal(true);
+    console.log('[ExerciseRow] Opening explanation for:', exercise.exercise_content);
+    
+    // First, check if we have a cached explanation
+    const { data: cachedExplanation, error: cacheError } = await supabase
+      .from('exercise_explanations_cache')
+      .select('*')
+      .eq('exercise_content', exercise.exercise_content)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (cacheError) {
+      console.error('[ExerciseRow] Error fetching cached explanation:', cacheError);
+    }
+    
+    if (cachedExplanation?.explanation_data) {
+      console.log('[ExerciseRow] ✅ Using cached explanation (no AI call)');
+      
+      // Use cached explanation directly - guardian sees full solution
+      teaching.setSections(cachedExplanation.explanation_data as any);
+      teaching.setOpen(true);
     } else {
+      console.log('[ExerciseRow] ⚠️ No cache found, generating new explanation (legacy support)');
+      
       // Show loading toast
       toast({
         title: "Generating explanation...",
@@ -50,7 +72,7 @@ export function ExerciseRow({
       });
       
       try {
-        // Use the teaching hook to generate explanation
+        // Fallback: Generate new explanation for legacy exercises
         await teaching.openFor({
           prompt: exercise.exercise_content,
           userAnswer: exercise.user_answer,
