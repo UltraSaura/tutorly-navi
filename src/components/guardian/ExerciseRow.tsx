@@ -25,14 +25,12 @@ export function ExerciseRow({
   const teaching = useTwoCardTeaching();
   const hasMultipleAttempts = allAttempts.length > 1;
 
-  // Status badge
+  // Status badge - Only "Correct" or "Incorrect"
   const getStatusBadge = () => {
     if (exercise.is_correct === true) {
       return <Badge className="bg-green-500/10 text-green-700 dark:text-green-400">Correct</Badge>;
-    } else if (exercise.is_correct === false) {
-      return <Badge className="bg-red-500/10 text-red-700 dark:text-red-400">Incorrect</Badge>;
     } else {
-      return <Badge className="bg-amber-500/10 text-amber-700 dark:text-amber-400">Partially correct</Badge>;
+      return <Badge className="bg-red-500/10 text-red-700 dark:text-red-400">Incorrect</Badge>;
     }
   };
 

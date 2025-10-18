@@ -261,7 +261,9 @@ export async function sendUnifiedMessage(
       hasContent: !!data?.content,
       contentType: typeof data?.content,
       contentLength: data?.content?.length,
-      dataKeys: Object.keys(data)
+      dataKeys: Object.keys(data),
+      hasSections: !!data?.sections,
+      sectionsKeys: data?.sections ? Object.keys(data.sections) : []
     });
 
     if (!data?.content) {
@@ -301,9 +303,28 @@ export async function sendUnifiedMessage(
       ).catch(err => console.error('[UnifiedChatService] Failed to auto-save exercise:', err));
 
       // Auto-save explanation from AI response (no additional AI call needed!)
-      if (response.isCorrect === false && data.sections) {
-        saveExplanationToCache(question, data.sections, subject)
-          .catch(err => console.error('[UnifiedChatService] Failed to save explanation:', err));
+      if (response.isCorrect === false) {
+        // Try to extract sections from the response
+        let sections = data.sections;
+        
+        // If sections not directly available, try parsing from content
+        if (!sections && data.content) {
+          try {
+            const parsed = JSON.parse(data.content);
+            sections = parsed.sections;
+            console.log('[UnifiedChat] Parsed sections from content');
+          } catch (e) {
+            console.log('[UnifiedChat] Could not parse sections from content');
+          }
+        }
+        
+        if (sections) {
+          console.log('[UnifiedChat] Caching explanation with sections:', Object.keys(sections));
+          saveExplanationToCache(question, sections, subject)
+            .catch(err => console.error('[UnifiedChatService] Failed to save explanation:', err));
+        } else {
+          console.warn('[UnifiedChat] No sections found in AI response for caching');
+        }
       }
     }
     

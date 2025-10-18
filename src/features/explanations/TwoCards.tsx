@@ -105,24 +105,29 @@ export function TwoCards({ s }: { s: TeachingSections }) {
             <div className="flex items-center gap-2 mb-4">
               <span className="text-2xl">📝</span>
               <h3 className="font-bold text-lg text-blue-800 dark:text-blue-200">
-                Current Exercise - Step-by-Step Solution
+                Current Exercise - Solution
               </h3>
             </div>
-            <div
-              className={[
-                "prose prose-neutral max-w-none",
-                "leading-relaxed break-words",
-                "whitespace-pre-wrap",
-                "text-base text-blue-900 dark:text-blue-100",
-              ].join(" ")}
-              style={{
-                whiteSpace: "pre-wrap",
-                letterSpacing: "normal",
-                wordSpacing: "normal",
-              }}
-            >
-              {resolveText(s.currentExercise)}
-            </div>
+            
+            {s.currentExercise && s.currentExercise !== 'No solution provided' ? (
+              <div className="prose prose-neutral max-w-none leading-relaxed break-words whitespace-pre-wrap text-base text-blue-900 dark:text-blue-100">
+                {resolveText(s.currentExercise)}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="text-sm text-blue-900 dark:text-blue-100">
+                  <strong>Exercise:</strong> {resolveText(s.exercise)}
+                </div>
+                <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/20 p-3">
+                  <div className="font-semibold text-green-800 dark:text-green-200">
+                    ✓ Correct Answer
+                  </div>
+                  <div className="text-lg font-mono text-green-900 dark:text-green-100 mt-1">
+                    {resolveText(s.correctAnswer || 'Answer not available')}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}
