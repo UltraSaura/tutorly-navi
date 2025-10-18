@@ -95,7 +95,7 @@ export function TwoCards({ s }: { s: TeachingSections }) {
         <>
           {/* Top Card: Concept & Parent Guidance */}
           <div className="rounded-xl border bg-card p-4 shadow-sm space-y-4">
-            <Section title="💡 Concept from Two Cards" text={s.concept} />
+            <Section title="💡 Concept" text={s.concept} />
             <Section title="👨‍👩‍👧 Parent Help Hint" text={s.parentHelpHint} />
             <Section title="⚠️ Pitfall" text={s.pitfall} />
           </div>

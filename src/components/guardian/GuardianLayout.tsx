@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { GuardianBottomNav } from './GuardianBottomNav';
 import { GuardianStickyHeader } from './GuardianStickyHeader';
-import { PrototypeFlowPanel } from './PrototypeFlowPanel';
+
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const guardianNavigation = [
@@ -162,8 +162,6 @@ const GuardianLayout = () => {
       {/* Mobile Bottom Navigation */}
       <GuardianBottomNav />
 
-      {/* Prototype Flow Panel (demo only) */}
-      <PrototypeFlowPanel />
     </div>
   );
 };
