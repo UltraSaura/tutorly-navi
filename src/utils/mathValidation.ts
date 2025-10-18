@@ -13,16 +13,15 @@ export function areMathematicallyEquivalent(
   tolerance: number = 0.01
 ): boolean | null {
   try {
-    console.log('[mathValidation] Checking equivalency:', { question, userAnswer });
+    console.log('[mathValidation] ========== EQUIVALENCY CHECK START ==========');
+    console.log('[mathValidation] Raw inputs:', { question, userAnswer, tolerance });
     
     // Convert LaTeX to plain text for both question and answer
     const plainTextQuestion = isLatex(question) ? latexToPlainText(question) : question;
     const plainTextAnswer = isLatex(userAnswer) ? latexToPlainText(userAnswer) : userAnswer;
     
-    console.log('[mathValidation] Converted to plain text:', { 
-      originalQuestion: question, 
+    console.log('[mathValidation] After LaTeX conversion:', { 
       plainTextQuestion,
-      originalAnswer: userAnswer,
       plainTextAnswer 
     });
     
@@ -45,39 +44,84 @@ export function areMathematicallyEquivalent(
     ) || (plainTextQuestion.match(/\d+\/\d+/) && (plainTextQuestion.toLowerCase().includes('simplify') || plainTextQuestion.toLowerCase().includes('reduce')));
     
     if (isFractionExercise) {
-      console.log('[mathValidation] Detected French fraction exercise');
-      return areFractionsEquivalent(plainTextQuestion, plainTextAnswer);
+      console.log('[mathValidation] Detected fraction simplification exercise');
+      const result = areFractionsEquivalent(plainTextQuestion, plainTextAnswer);
+      console.log('[mathValidation] ========== EQUIVALENCY CHECK END (fraction) ==========');
+      return result;
     }
     
     // Check for equation solving exercises (must be before other checks)
     const equationResult = validateEquationSolution(plainTextQuestion, plainTextAnswer);
     if (equationResult !== null) {
       console.log('[mathValidation] Equation solving detected, result:', equationResult);
+      console.log('[mathValidation] ========== EQUIVALENCY CHECK END (equation) ==========');
       return equationResult;
     }
     
     // Extract the correct answer from the plain text question
     const correctAnswer = extractCorrectAnswer(plainTextQuestion);
-    if (correctAnswer === null) return null;
+    console.log('[mathValidation] Extracted correct answer:', correctAnswer);
+    
+    if (correctAnswer === null) {
+      console.log('[mathValidation] Could not extract correct answer - returning null');
+      console.log('[mathValidation] ========== EQUIVALENCY CHECK END (no answer) ==========');
+      return null;
+    }
 
     // Evaluate mathematical functions in the answer
     const evaluatedAnswer = evaluateMathematicalFunctions(plainTextAnswer);
+    console.log('[mathValidation] After function evaluation:', evaluatedAnswer);
     
     // Normalize and parse user answer
     const normalizedUserAnswer = normalizeAnswer(evaluatedAnswer);
-    const userValue = parseFloat(normalizedUserAnswer);
+    console.log('[mathValidation] Normalized user answer:', normalizedUserAnswer);
     
-    if (isNaN(userValue)) return null;
+    const userValue = parseFloat(normalizedUserAnswer);
+    console.log('[mathValidation] Parsed user value:', userValue);
+    
+    if (isNaN(userValue)) {
+      console.log('[mathValidation] User value is NaN - returning null');
+      console.log('[mathValidation] ========== EQUIVALENCY CHECK END (NaN) ==========');
+      return null;
+    }
+
+    // Calculate the difference
+    const difference = Math.abs(userValue - correctAnswer);
+    console.log('[mathValidation] Comparison:', { 
+      userValue, 
+      correctAnswer, 
+      difference, 
+      tolerance,
+      withinTolerance: difference <= tolerance 
+    });
+
+    // CRITICAL SANITY CHECK: Flag mathematically impossible answers
+    // If the difference is greater than 1.0, it's likely wrong
+    if (difference > 1.0) {
+      console.warn('[mathValidation] ⚠️ SANITY CHECK FAILED: Difference exceeds 1.0');
+      console.warn('[mathValidation] This answer is mathematically impossible as equivalent');
+      console.warn('[mathValidation] Question:', question);
+      console.warn('[mathValidation] User answer:', userAnswer);
+      console.warn('[mathValidation] Expected:', correctAnswer, 'Got:', userValue);
+      console.log('[mathValidation] ========== EQUIVALENCY CHECK END (sanity fail) ==========');
+      return false; // Definitely wrong
+    }
 
     // Check for exact equality first
     if (Math.abs(userValue - correctAnswer) < Number.EPSILON) {
+      console.log('[mathValidation] ✅ EXACT MATCH (within epsilon)');
+      console.log('[mathValidation] ========== EQUIVALENCY CHECK END (exact) ==========');
       return true;
     }
 
     // Check within tolerance for decimal/fraction equivalency
-    return Math.abs(userValue - correctAnswer) <= tolerance;
+    const result = difference <= tolerance;
+    console.log('[mathValidation] Final result:', result ? '✅ EQUIVALENT' : '❌ NOT EQUIVALENT');
+    console.log('[mathValidation] ========== EQUIVALENCY CHECK END ==========');
+    return result;
   } catch (error) {
-    console.log('[mathValidation] Error checking equivalency:', error);
+    console.error('[mathValidation] ❌ ERROR in equivalency check:', error);
+    console.log('[mathValidation] ========== EQUIVALENCY CHECK END (error) ==========');
     return null;
   }
 }
