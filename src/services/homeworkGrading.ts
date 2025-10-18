@@ -140,26 +140,6 @@ export const evaluateHomework = async (
       isCorrect = true;
     }
     
-    // Check for likely OCR misreads in fraction exercises if still incorrect
-    if (!isCorrect) {
-      const ocrCheck = detectFractionOcrMisread(exercise.question, exercise.userAnswer);
-      if (ocrCheck.isLikely) {
-        console.log('[homeworkGrading] OCR misread detected - overriding to CORRECT:', ocrCheck);
-        console.log('[homeworkGrading] Original question:', exercise.question);
-        
-        // Replace the misread fraction in the question with the corrected one
-        if (ocrCheck.correctedFraction) {
-          const fractionMatch = exercise.question.match(/\d+\/\d+/);
-          if (fractionMatch) {
-            correctedQuestion = exercise.question.replace(fractionMatch[0], ocrCheck.correctedFraction);
-            console.log('[homeworkGrading] Corrected question:', correctedQuestion);
-          }
-        }
-        
-        isCorrect = true;
-        ocrCorrectionNote = `\n\n**OCR Correction:** Your answer is correct! The system detected a likely OCR misread where "${ocrCheck.correctedFraction}" was read as the original fraction. ${ocrCheck.reason}.`;
-      }
-    }
     
     console.log(`[homeworkGrading] Exercise graded as: ${isCorrect ? 'CORRECT' : 'INCORRECT'}`);
 
