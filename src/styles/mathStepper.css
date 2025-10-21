@@ -1,0 +1,277 @@
+/**
+ * CSS Animations and Styles for Interactive Math Stepper
+ * Provides smooth transitions and visual feedback for step-by-step math operations
+ */
+
+/* Math Stepper Animations */
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes highlightPulse {
+  0%, 100% {
+    background-color: rgb(59 130 246 / 0.2);
+  }
+  50% {
+    background-color: rgb(59 130 246 / 0.4);
+  }
+}
+
+@keyframes carryAnimation {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes borrowAnimation {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(10px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Math Stepper Component Styles */
+.math-stepper-container {
+  @apply space-y-4;
+}
+
+.math-stepper-step {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+.math-stepper-step.active {
+  @apply border-blue-500 bg-blue-50 dark:bg-blue-950/20 shadow-md;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.math-stepper-step.inactive {
+  @apply border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800;
+}
+
+/* Operation Grid Styles */
+.operation-grid {
+  @apply font-mono text-center space-y-1;
+}
+
+.operation-grid-row {
+  @apply flex justify-center items-center;
+}
+
+.operation-grid-cell {
+  @apply inline-block px-1 transition-colors duration-300;
+}
+
+.operation-grid-cell.highlighted {
+  @apply bg-blue-200 dark:bg-blue-800 rounded;
+  animation: highlightPulse 1s ease-in-out;
+}
+
+.operation-grid-cell.carry {
+  @apply border-t-2 border-red-500;
+  animation: carryAnimation 0.8s ease-out;
+}
+
+.operation-grid-cell.borrow {
+  @apply border-b-2 border-orange-500;
+  animation: borrowAnimation 0.8s ease-out;
+}
+
+/* Step Controls */
+.step-controls {
+  @apply flex items-center justify-between gap-2;
+}
+
+.step-controls-group {
+  @apply flex items-center gap-2;
+}
+
+.step-button {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+.step-button:hover {
+  @apply scale-105;
+}
+
+.step-button:active {
+  @apply scale-95;
+}
+
+.step-button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Progress Indicator */
+.progress-indicator {
+  @apply flex items-center justify-between;
+}
+
+.progress-badge {
+  @apply transition-all duration-300;
+}
+
+.progress-badge.active {
+  @apply bg-blue-500 text-white;
+}
+
+/* Expression Input */
+.expression-input {
+  @apply transition-all duration-200;
+}
+
+.expression-input:focus {
+  @apply ring-2 ring-blue-500 border-blue-500;
+}
+
+.expression-input.error {
+  @apply border-red-500 ring-red-500;
+}
+
+/* Error Display */
+.error-display {
+  @apply flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-md;
+  animation: slideInFromLeft 0.3s ease-out;
+}
+
+/* Final Answer Card */
+.final-answer-card {
+  @apply border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.final-answer-number {
+  @apply text-2xl font-mono font-bold text-green-900 dark:text-green-100;
+  animation: slideInFromRight 0.8s ease-out;
+}
+
+/* Help Card */
+.help-card {
+  @apply bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800;
+  animation: fadeInUp 0.4s ease-out;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 640px) {
+  .step-controls {
+    @apply flex-col gap-3;
+  }
+  
+  .step-controls-group {
+    @apply justify-center;
+  }
+  
+  .operation-grid-cell {
+    @apply px-0.5 text-sm;
+  }
+  
+  .final-answer-number {
+    @apply text-xl;
+  }
+}
+
+/* Touch-friendly controls for mobile */
+@media (hover: none) and (pointer: coarse) {
+  .step-button {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  .expression-input {
+    @apply min-h-[44px] text-base;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .operation-grid-cell.highlighted {
+    @apply bg-blue-300 dark:bg-blue-700 border-2 border-blue-600;
+  }
+  
+  .operation-grid-cell.carry {
+    @apply border-t-4 border-red-600;
+  }
+  
+  .operation-grid-cell.borrow {
+    @apply border-b-4 border-orange-600;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .math-stepper-step,
+  .operation-grid-cell,
+  .step-button,
+  .expression-input,
+  .error-display,
+  .final-answer-card,
+  .help-card {
+    animation: none;
+    transition: none;
+  }
+  
+  .step-button:hover {
+    transform: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .step-controls,
+  .expression-input,
+  .help-card {
+    @apply hidden;
+  }
+  
+  .math-stepper-step {
+    @apply border border-gray-400 bg-white;
+  }
+  
+  .operation-grid-cell.highlighted {
+    @apply bg-gray-200;
+  }
+}

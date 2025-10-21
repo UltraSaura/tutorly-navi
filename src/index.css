@@ -1,9 +1,12 @@
+/* MathLive CSS */
+@import url('https://unpkg.com/mathlive/dist/mathlive-fonts.css');
+
+/* Interactive Math Stepper CSS */
+@import './styles/mathStepper.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* MathLive CSS */
-@import url('https://unpkg.com/mathlive/dist/mathlive-fonts.css');
 
 @layer base {
   :root {

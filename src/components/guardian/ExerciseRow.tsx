@@ -56,10 +56,18 @@ export function ExerciseRow({
     
     if (cachedExplanation?.explanation_data) {
       console.log('[ExerciseRow] ✅ Using cached explanation (no AI call)');
+      console.log('[ExerciseRow] Cached explanation data:', cachedExplanation.explanation_data);
       
       // Use cached explanation directly - guardian sees full solution
+      console.log('[ExerciseRow] Setting sections with cached data:', cachedExplanation.explanation_data);
       teaching.setSections(cachedExplanation.explanation_data as any);
       teaching.setOpen(true);
+      
+      // Debug: Check if sections were set
+      setTimeout(() => {
+        console.log('[ExerciseRow] Teaching sections after setSections:', teaching.sections);
+        console.log('[ExerciseRow] Teaching open state:', teaching.open);
+      }, 100);
     } else {
       console.log('[ExerciseRow] ⚠️ No cache found, generating new explanation (legacy support)');
       
@@ -187,6 +195,19 @@ export function ExerciseRow({
       <ExplanationModal open={teaching.open || showExplanationModal} onClose={() => {
       teaching.setOpen(false);
       setShowExplanationModal(false);
-    }} loading={teaching.loading} sections={teaching.sections || (Array.isArray(exercise.explanation) ? exercise.explanation[0]?.explanation_data : exercise.explanation?.explanation_data)} error={teaching.error} exerciseQuestion={exercise.exercise_content} imageUrl={Array.isArray(exercise.explanation) ? exercise.explanation[0]?.explanation_image_url : exercise.explanation?.explanation_image_url} />
+    }} loading={teaching.loading} sections={(() => {
+      const teachingSections = teaching.sections;
+      const fallbackSections = Array.isArray(exercise.explanation) ? exercise.explanation[0]?.explanation_data : exercise.explanation?.explanation_data;
+      const finalSections = teachingSections || fallbackSections;
+      
+      console.log('[ExerciseRow] Modal sections debug:', {
+        teachingSections: teachingSections ? 'Present' : 'Null',
+        fallbackSections: fallbackSections ? 'Present' : 'Null',
+        finalSections: finalSections ? 'Present' : 'Null',
+        exerciseExplanation: exercise.explanation ? 'Present' : 'Null'
+      });
+      
+      return finalSections;
+    })()} error={teaching.error} exerciseQuestion={exercise.exercise_content} imageUrl={Array.isArray(exercise.explanation) ? exercise.explanation[0]?.explanation_image_url : exercise.explanation?.explanation_image_url} />
     </>;
 }

@@ -30,6 +30,17 @@ export function ExplanationModal({
 }: ExplanationModalProps) {
   const { t } = useLanguage();
   
+  // Debug logging
+  console.log('[ExplanationModal] Props received:', {
+    open,
+    loading,
+    sections: sections ? 'Present' : 'Null',
+    sectionsType: typeof sections,
+    sectionsContent: sections,
+    error,
+    exerciseQuestion: exerciseQuestion?.substring(0, 50) + '...'
+  });
+  
   if (!open) return null;
 
   const handleTryAgain = () => {
@@ -66,6 +77,7 @@ export function ExplanationModal({
             <p className="text-sm text-destructive">{error}</p>
           ) : sections ? (
             <>
+              {console.log('[ExplanationModal] Rendering TwoCards with sections:', sections)}
               {imageUrl && (
                 <div className="mb-6">
                   <img 
@@ -80,7 +92,15 @@ export function ExplanationModal({
               )}
               <TwoCards s={sections} />
             </>
-          ) : null}
+          ) : (
+            <>
+              {console.log('[ExplanationModal] No sections available, showing fallback')}
+              <div className="text-center text-muted-foreground">
+                <p>No explanation data available</p>
+                <p className="text-xs mt-2">Sections: {sections ? 'Present' : 'Null'}</p>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="p-5 border-t border-border">

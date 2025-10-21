@@ -24,6 +24,20 @@ export function useTwoCardTeaching() {
   
   const { selectedModelId } = useAdmin();
 
+  // Debug wrapper for setSections
+  const debugSetSections = (newSections: TeachingSections | null) => {
+    console.log('[useTwoCardTeaching] setSections called with:', newSections);
+    console.log('[useTwoCardTeaching] Current sections state before update:', sections);
+    console.log('[useTwoCardTeaching] New sections type:', typeof newSections);
+    console.log('[useTwoCardTeaching] New sections keys:', newSections ? Object.keys(newSections) : 'null');
+    setSections(newSections);
+    // Check state after update
+    setTimeout(() => {
+      console.log('[useTwoCardTeaching] Sections state after update:', sections);
+      console.log('[useTwoCardTeaching] Sections state type after update:', typeof sections);
+    }, 100);
+  };
+
   async function openFor(row: any, profile: { response_language?: string; grade_level?: string }) {
     console.log('[TwoCardTeaching] Opening explanation for:', { row, profile });
     setOpen(true);
@@ -53,7 +67,7 @@ RESPONSE FORMAT:
   "exercise": "${exercise_content}",
   "sections": {
     "concept": "Explain the core concept without revealing the answer",
-    "example": "Show a worked example with similar (but different) numbers",
+    "example": "Show a complete worked example with different numbers in format: '23 + 45 = 68' (must include the equals sign and answer for interactive stepper)",
     "strategy": "Guide toward solution without giving the answer",
     "pitfall": "Common mistakes to avoid",
     "check": "How to verify your work",
@@ -65,9 +79,14 @@ RESPONSE FORMAT:
 RULES:
 1. Compute the correct answer and store it ONLY in the "correctAnswer" field
 2. In the teaching sections (concept, example, strategy), use different numbers or guide without revealing the answer
-3. Examples should use numbers at least 5 units away from the original
-4. Strategy should guide toward solution process, not the final answer
-5. The correctAnswer field is for guardian review only - do NOT mention it in teaching sections
+3. Examples should use numbers at least 5 units away from the original AND use the SAME operation type as the student's exercise
+4. If student exercise is division (÷ or /), show a division example.
+5. If student exercise is multiplication (× or *), show a multiplication example.
+6. If student exercise is addition (+), show an addition example.
+7. If student exercise is subtraction (-), show a subtraction example.
+8. Strategy should guide toward solution process, not the final answer
+9. The correctAnswer field is for guardian review only - do NOT mention it in teaching sections
+10. IMPORTANT: The "example" field must be in format "number operator number = result" (e.g., "23 + 45 = 68") for interactive math stepper compatibility
 
 Please provide your response in ${response_language}.`;
 
@@ -202,5 +221,5 @@ Please provide your response in ${response_language}.`;
     }
   }
 
-  return { open, setOpen, loading, sections, error, openFor, setSections };
+  return { open, setOpen, loading, sections, error, openFor, setSections: debugSetSections };
 }

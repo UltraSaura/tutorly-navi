@@ -9,6 +9,10 @@ import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import DOMPurify from 'dompurify';
 import { parseUserMessage } from '@/utils/messageParser';
+import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
+import { extractExpressionFromText } from '@/utils/mathStepper/parser';
+import { CompactMathStepper } from '@/components/math/CompactMathStepper';
+import { useUserContext } from '@/hooks/useUserContext';
 
 interface AIResponseProps {
   messages: Message[];
@@ -86,6 +90,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const [userAnswerInput, setUserAnswerInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { t, language } = useLanguage();
+  const { userContext } = useUserContext();
   
   // Debug logging for translation issues
   console.log('[ExerciseCard] Translation Debug:', {
@@ -292,13 +297,43 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                             </div>
                           </div>
                           
+                          {/* Example Section - Interactive for young students */}
                           <div>
                             <div className="font-semibold text-sm mb-2 flex items-center gap-2">
                               <span>{t('explanation.headers.example')}</span>
                             </div>
-                            <div className="text-sm text-muted-foreground leading-relaxed">
-                              {jsonResponse.sections.example}
-                            </div>
+                            {(() => {
+                              // Check if student is under 11 years old
+                              const gradeLevel = userContext?.student_level || '';
+                              const isYoungStudent = isUnder11YearsOld(gradeLevel);
+                              const exampleExpression = extractExpressionFromText(jsonResponse.sections.example || '');
+                              
+                              console.log('[AIResponse] Interactive Stepper Debug:', {
+                                gradeLevel,
+                                isYoungStudent,
+                                exampleText: jsonResponse.sections.example,
+                                extractedExpression: exampleExpression,
+                                hasUserContext: !!userContext
+                              });
+                              
+                              if (isYoungStudent && exampleExpression) {
+                                return (
+                                  <div className="mt-2">
+                                    <CompactMathStepper 
+                                      expression={exampleExpression}
+                                      className="text-sm"
+                                    />
+                                  </div>
+                                );
+                              }
+                              
+                              // Fallback to regular text
+                              return (
+                                <div className="text-sm text-muted-foreground leading-relaxed">
+                                  {jsonResponse.sections.example}
+                                </div>
+                              );
+                            })()}
                           </div>
                           
                           <div>
