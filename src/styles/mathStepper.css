@@ -76,6 +76,21 @@
   }
 }
 
+@keyframes strikethroughAnimation {
+  0% {
+    text-decoration: none;
+    opacity: 1;
+  }
+  50% {
+    text-decoration: line-through;
+    opacity: 0.8;
+  }
+  100% {
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
+}
+
 /* Math Stepper Component Styles */
 .math-stepper-container {
   @apply space-y-4;
@@ -120,6 +135,20 @@
 .operation-grid-cell.borrow {
   @apply border-b-2 border-orange-500;
   animation: borrowAnimation 0.8s ease-out;
+}
+
+/* Strikethrough effects for used carries and borrows */
+.math-stepper-strikethrough {
+  @apply line-through opacity-60 transition-all duration-300;
+  animation: strikethroughAnimation 0.5s ease-out;
+}
+
+.math-stepper-strikethrough.carry-used {
+  @apply text-red-500 dark:text-red-400;
+}
+
+.math-stepper-strikethrough.borrow-used {
+  @apply text-purple-500 dark:text-purple-400;
 }
 
 /* Step Controls */

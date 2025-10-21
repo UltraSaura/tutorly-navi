@@ -341,6 +341,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
 
               const carriesToShow = (() => {
                 const row = Array(resLen).fill('');
+                const strikeRow = Array(resLen).fill(false);
                 let carryCount = 0;
                 if (withinColumns) {
                   carryCount = Math.floor((colPhaseIndex as number) / 2) + 1;
@@ -353,12 +354,16 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   const visualCol = additionData.offset + inputIndex;
                   if (info && info.carryIn > 0 && visualCol >= 0 && visualCol < resLen) {
                     row[visualCol] = String(info.carryIn);
+                    // Mark for strikethrough if this carry has been used (processed in previous steps)
+                    if (k < carryCount - 1) {
+                      strikeRow[visualCol] = true;
+                    }
                   }
                 }
                 if (currentStep >= totalColumnPhases && additionData.finalCarry > 0) {
                   row[0] = String(additionData.finalCarry);
                 }
-                return row;
+                return { carries: row, strikes: strikeRow };
               })();
 
               const revealedStr = (() => {
@@ -387,11 +392,16 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 <div className="relative font-mono">
                   {/* Carries row */}
                   <div className="ml-auto grid justify-end min-h-[28px]" style={{ gridTemplateColumns: `repeat(${additionData.resLen}, 2rem)` }}>
-                    {carriesToShow.map((val, i) => (
+                    {carriesToShow.carries.map((val, i) => (
                       <div key={i} className="w-8 text-center text-slate-400 font-semibold">
                         <AnimatePresence>
                           {val && (
-                            <motion.div initial={{ y: -6, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ opacity: 0 }}>
+                            <motion.div 
+                              initial={{ y: -6, opacity: 0 }} 
+                              animate={{ y: 0, opacity: 1 }} 
+                              exit={{ opacity: 0 }}
+                              className={carriesToShow.strikes[i] ? 'math-stepper-strikethrough carry-used' : ''}
+                            >
                               {val}
                             </motion.div>
                           )}
@@ -466,9 +476,11 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 ? stepsRTL[colIndexFromRight].index
                 : null;
 
-              // Build French-style borrow indicators
+              // Build French-style borrow indicators with strikethrough tracking
               const showBorrow1 = Array(n).fill(false);
               const showBottomPlus1 = Array(n).fill(false);
+              const strikeBorrow1 = Array(n).fill(false);
+              const strikeBottomPlus1 = Array(n).fill(false);
               
               // Only show borrow indicators for columns we've already processed
               let processedColumns = 0;
@@ -487,6 +499,14 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   // The "+1" appears on the column to the left (where we borrowed from)
                   if (colIndex > 0) {
                     showBottomPlus1[colIndex - 1] = true;
+                  }
+                  
+                  // Mark for strikethrough if this column has been processed
+                  if (k < processedColumns - 1) {
+                    strikeBorrow1[colIndex] = true;
+                    if (colIndex > 0) {
+                      strikeBottomPlus1[colIndex - 1] = true;
+                    }
                   }
                 }
               }
@@ -541,7 +561,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                               <AnimatePresence>
                                 {showBorrow1[i] && (
                                   <motion.span
-                                    className="absolute -left-2 -top-1 text-xs text-purple-600 dark:text-purple-400 font-semibold"
+                                    className={`absolute -left-2 -top-1 text-xs text-purple-600 dark:text-purple-400 font-semibold ${
+                                      strikeBorrow1[i] ? 'math-stepper-strikethrough borrow-used' : ''
+                                    }`}
                                     aria-hidden
                                     initial={{ opacity: 0, scale: 0.5 }}
                                     animate={{ opacity: 1, scale: 1 }}
@@ -562,7 +584,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                               <AnimatePresence>
                                 {showBottomPlus1[i] && (
                                   <motion.span
-                                    className="absolute -left-4 -top-1 text-sm text-purple-600 dark:text-purple-400 font-semibold"
+                                    className={`absolute -left-4 -top-1 text-sm text-purple-600 dark:text-purple-400 font-semibold ${
+                                      strikeBottomPlus1[i] ? 'math-stepper-strikethrough borrow-used' : ''
+                                    }`}
                                     aria-hidden
                                     initial={{ opacity: 0, x: -5 }}
                                     animate={{ opacity: 1, x: 0 }}
