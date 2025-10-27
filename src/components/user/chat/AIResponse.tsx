@@ -13,6 +13,7 @@ import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
 import { extractExpressionFromText } from '@/utils/mathStepper/parser';
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { useUserContext } from '@/hooks/useUserContext';
+import { validateExampleOperationType, getOperationTypeDisplay } from '@/utils/operationTypeDetector';
 
 interface AIResponseProps {
   messages: Message[];
@@ -308,19 +309,43 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                               const isYoungStudent = isUnder11YearsOld(gradeLevel);
                               const exampleExpression = extractExpressionFromText(jsonResponse.sections.example || '');
                               
+                              // Validate that the example matches the student's operation type
+                              const validation = validateExampleOperationType(question, jsonResponse.sections.example || '');
+                              
                               console.log('[AIResponse] Interactive Stepper Debug:', {
                                 gradeLevel,
                                 isYoungStudent,
                                 exampleText: jsonResponse.sections.example,
                                 extractedExpression: exampleExpression,
-                                hasUserContext: !!userContext
+                                hasUserContext: !!userContext,
+                                validation: validation
                               });
                               
+                              // If validation fails, show warning and use fallback
+                              if (!validation.isValid && validation.suggestedFix) {
+                                console.warn('[AIResponse] Operation type mismatch detected:', {
+                                  studentExercise: question,
+                                  studentOperation: getOperationTypeDisplay(validation.studentOperation),
+                                  exampleOperation: getOperationTypeDisplay(validation.exampleOperation),
+                                  suggestedFix: validation.suggestedFix
+                                });
+                              }
+                              
                               if (isYoungStudent && exampleExpression) {
+                                // Use fallback example if validation fails
+                                const finalExpression = !validation.isValid && validation.suggestedFix 
+                                  ? extractExpressionFromText(validation.suggestedFix) || exampleExpression
+                                  : exampleExpression;
+                                
                                 return (
                                   <div className="mt-2">
+                                    {!validation.isValid && (
+                                      <div className="mb-2 p-2 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200">
+                                        ⚠️ Example corrected to match {getOperationTypeDisplay(validation.studentOperation)} operation
+                                      </div>
+                                    )}
                                     <CompactMathStepper 
-                                      expression={exampleExpression}
+                                      expression={finalExpression}
                                       className="text-sm"
                                     />
                                   </div>

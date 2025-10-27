@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { buildStepsGeneral, type AnimatorStep, computeCols, toPaddedDigits } from '@/utils/mathStepper/animator';
+import { calculateSteps, getMaxStepIndex } from '@/utils/flexibleStepCalculator';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -62,8 +63,46 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     generateStepperSteps();
   }, [expression]);
 
+  // Calculate the max step dynamically based on current operation type
+  const getMaxStep = () => {
+    // Use the actual multiplication data if available (most accurate)
+    if (multiplicationData) {
+      const maxStep = multiplicationData.maxStep;
+      console.log(`[CompactMathStepper] Using multiplication data: ${multiplicationData.multiplicationSteps.length} steps, max step index: ${maxStep}`);
+      return maxStep;
+    }
+    
+    // Use addition data if available
+    if (additionData) {
+      const maxStep = additionData.maxStep;
+      console.log(`[CompactMathStepper] Using addition data: max step ${maxStep}`);
+      return maxStep;
+    }
+    
+    // Use subtraction data if available
+    if (subtractionData) {
+      const maxStep = subtractionData.maxStep - 1; // -1 because steps are 0-indexed
+      console.log(`[CompactMathStepper] Using subtraction data: max step ${maxStep}`);
+      return maxStep;
+    }
+    
+    // Use division data if available
+    if (divisionData) {
+      const maxStep = divisionData.totalPhases - 1;
+      console.log(`[CompactMathStepper] Using division data: max step ${maxStep}`);
+      return maxStep;
+    }
+    
+    // Fallback to flexibleStepCalculator
+    const maxStep = getMaxStepIndex(expression);
+    const stepCalculation = calculateSteps(expression);
+    console.log(`[CompactMathStepper] Using flexibleStepCalculator: Expression: ${expression}, Operation: ${stepCalculation.operationType}, Total Steps: ${stepCalculation.totalSteps}, Max Step Index: ${maxStep}`);
+    return maxStep;
+  };
+
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
+    const maxStep = getMaxStep();
+    if (currentStep < maxStep) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -238,7 +277,15 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     
     // Partial products from rightmost digit of B
     const partials: string[] = [];
-    let stepCounter = 1; // Start from 1 since step 0 is just the problem setup
+    let stepCounter = 0; // Start from 0 for proper step counting
+    
+    console.log('[CompactMathStepper] Multiplication data generation:', {
+      expression,
+      A,
+      B,
+      aIn,
+      bIn
+    });
     
     for (let j = B.length - 1; j >= 0; j--) {
       const bj = B.charCodeAt(j) - 48;
@@ -253,75 +300,75 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         const digit = p % 10;
         const newCarry = Math.floor(p / 10);
         
-        // Track carry for this position
-        if (newCarry > 0) {
-          carries.push({
-            position: A.length - 1 - i,
-            value: newCarry,
-            used: false
-          });
-        }
+        // Check if this is the last digit (leftmost position)
+        const isLastDigit = i === 0;
         
-        row = String(digit) + row;
-        carry = newCarry;
-        
-        // Create a step for each digit multiplication (right to left order)
-        multiplicationSteps.push({
-          step: stepCounter++,
-          multiplierDigit: String(bj),
-          multiplierPosition: B.length - 1 - j,
-          multiplicandDigit: String(ai),
-          multiplicandPosition: A.length - 1 - i,
-          partialResult: String(digit),
-          carries: [], // Don't show carries in the same step they're generated
-          explanation: `${ai} × ${bj} = ${p} (write ${digit}, carry ${newCarry})`,
-          isPartialProductComplete: i === 0,
-          partialProduct: row
-        });
-        
-        // If there's a carry, create a separate step to show it
-        if (newCarry > 0) {
+        if (isLastDigit) {
+          // For the last digit: show the complete result instead of creating a carry
+          row = String(p) + row;
+          carry = 0; // No carry for the last digit
+          
+          // Create a step showing the complete result
           multiplicationSteps.push({
             step: stepCounter++,
             multiplierDigit: String(bj),
             multiplierPosition: B.length - 1 - j,
-            multiplicandDigit: '',
-            multiplicandPosition: -1,
-            partialResult: '',
-            carries: [...carries], // Show carries in the next step
-            explanation: `Carry ${newCarry} to next column`,
+            multiplicandDigit: String(ai),
+            multiplicandPosition: A.length - 1 - i,
+            partialResult: String(p), // Show complete result
+            carries: [], // No carries for the last digit
+            explanation: `${ai} × ${bj} + ${carry} = ${p} (write ${p})`,
+            isPartialProductComplete: true,
+            partialProduct: row
+          });
+        } else {
+          // For intermediate digits: show digit and create carry
+          // Track carry for this position
+          if (newCarry > 0) {
+            carries.push({
+              position: A.length - 1 - i,
+              value: newCarry,
+              used: false
+            });
+          }
+          
+          row = String(digit) + row;
+          carry = newCarry;
+          
+          // Create a step for each digit multiplication (right to left order)
+          multiplicationSteps.push({
+            step: stepCounter++,
+            multiplierDigit: String(bj),
+            multiplierPosition: B.length - 1 - j,
+            multiplicandDigit: String(ai),
+            multiplicandPosition: A.length - 1 - i,
+            partialResult: String(digit),
+            carries: newCarry > 0 ? [{
+              position: A.length - 1 - i,
+              value: newCarry,
+              used: false
+            }] : [], // Show carry immediately when generated
+            explanation: `${ai} × ${bj} + ${carry} = ${p} (write ${digit}${newCarry > 0 ? `, carry ${newCarry}` : ''})`,
             isPartialProductComplete: false,
             partialProduct: row
           });
         }
       }
       
-      if (carry) {
-        row = String(carry) + row;
-        carries.push({
-          position: A.length,
-          value: carry,
-          used: false
-        });
-        
-        // Add final carry step
-        multiplicationSteps.push({
-          step: stepCounter++,
-          multiplierDigit: String(bj),
-          multiplierPosition: B.length - 1 - j,
-          multiplicandDigit: '',
-          multiplicandPosition: -1,
-          partialResult: String(carry),
-          carries: [...carries],
-          explanation: `Final carry: ${carry}`,
-          isPartialProductComplete: true,
-          partialProduct: row
-        });
-      }
+      // No need for final carry step since last digit handles complete result
       
       // Add trailing zeros for proper positioning
       row = row + '0'.repeat((B.length - 1) - j);
       partials.push(row);
+      
+      // Debug logging for partial product generation
+      console.log(`[PartialProductGeneration] Row ${B.length - 1 - j} (${A} × ${bj}):`, {
+        multiplierDigit: bj,
+        multiplierPosition: B.length - 1 - j,
+        finalRow: row,
+        finalCarry: carry,
+        stepsGenerated: multiplicationSteps.filter(s => s.multiplierPosition === B.length - 1 - j).length
+      });
     }
     
     // Sum partials for final result with carry tracking
@@ -357,18 +404,69 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       sumFinal = (carry ? String(carry) : '') + outStr;
     }
     
-    // Add final sum step
+    // Add final sum steps - digit by digit
+    // Break down the final sum calculation into individual digit steps
+    const finalSumDigits = sumFinal.split('').reverse(); // Start from rightmost digit
+    
+    for (let digitIndex = 0; digitIndex < finalSumDigits.length; digitIndex++) {
+      const digit = finalSumDigits[digitIndex];
+      const position = digitIndex;
+      
+      // Find relevant carries for this position
+      const relevantCarries = sumCarries.filter(carry => carry.position === position);
+      
+      multiplicationSteps.push({
+        step: stepCounter++,
+        multiplierDigit: '',
+        multiplierPosition: -1,
+        multiplicandDigit: '',
+        multiplicandPosition: -1,
+        partialResult: digit,
+        carries: relevantCarries,
+        explanation: `Final sum digit ${digitIndex + 1}: ${digit}`,
+        isPartialProductComplete: false,
+        partialProduct: sumFinal.substring(0, sumFinal.length - digitIndex) // Show progress
+      });
+    }
+    
+    // Add final completion step to reach step 17
     multiplicationSteps.push({
       step: stepCounter++,
       multiplierDigit: '',
       multiplierPosition: -1,
-      partialProduct: sumFinal,
-      carries: sumCarries,
-      explanation: 'Add all partial products to get final result'
+      multiplicandDigit: '',
+      multiplicandPosition: -1,
+      partialResult: '',
+      carries: [],
+      explanation: `Multiplication complete: ${A} × ${B} = ${sumFinal}`,
+      isPartialProductComplete: true,
+      partialProduct: sumFinal
     });
     
-    // Calculate total phases (each multiplication step + final sum)
+    // Calculate total phases (each multiplication step + final sum + completion step)
     const totalPhases = multiplicationSteps.length;
+    
+    // Safety check: ensure partials array is properly populated
+    console.log('[CompactMathStepper] Multiplication data validation:', {
+      expression,
+      partialsLength: partials.length,
+      partials: partials,
+      BLength: B.length,
+      totalPhases,
+      multiplicationStepsLength: multiplicationSteps.length,
+      maxStep: totalPhases - 1,
+      stepCounter: stepCounter,
+      finalResult: sumFinal
+    });
+    
+    if (partials.length === 0) {
+      console.error('[CompactMathStepper] Empty partials array detected!', {
+        A,
+        B,
+        expression,
+        multiplicationSteps
+      });
+    }
     
     return { 
       A, 
@@ -384,13 +482,13 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
 
   // Auto-play effect - supports both animator steps and two-phase addition mode
   useEffect(() => {
-    const total = additionData ? additionData.maxStep : subtractionData ? subtractionData.maxStep : multiplicationData ? multiplicationData.maxStep : divisionData ? divisionData.totalPhases : steps.length - 1;
-    if (isAutoPlaying && currentStep < total) {
+    const maxStep = getMaxStep();
+    if (isAutoPlaying && currentStep < maxStep) {
       const timer = setTimeout(() => {
         setCurrentStep(s => s + 1);
       }, additionData || subtractionData || multiplicationData || divisionData ? 950 : 2000);
       return () => clearTimeout(timer);
-    } else if (isAutoPlaying && currentStep >= total) {
+    } else if (isAutoPlaying && currentStep >= maxStep) {
       setIsAutoPlaying(false);
     }
   }, [isAutoPlaying, currentStep, steps.length, additionData, subtractionData, multiplicationData, divisionData]);
@@ -448,9 +546,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
           </span>
         </div>
         <Badge variant="outline" className="text-xs">
-          {additionData ? Math.min(currentStep + 1, additionData.maxStep + 1) : subtractionData ? Math.min(currentStep + 1, subtractionData.maxStep) : multiplicationData ? Math.min(currentStep + 1, multiplicationData.totalPhases) : divisionData ? Math.min(currentStep + 1, divisionData.totalPhases) : currentStep + 1}
+          {currentStep}
           {" "}of{" "}
-          {additionData ? additionData.maxStep + 1 : subtractionData ? subtractionData.maxStep : multiplicationData ? multiplicationData.totalPhases : divisionData ? divisionData.totalPhases : steps.length}
+          {getMaxStep() + 1}
         </Badge>
       </div>
 
@@ -519,7 +617,10 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               return (
                 <div className="relative font-mono">
                   {/* Carries row */}
-                  <div className="ml-auto grid justify-end min-h-[28px]" style={{ gridTemplateColumns: `repeat(${additionData.resLen}, 2rem)` }}>
+                  <div className="ml-auto grid justify-end min-h-[28px]" style={{ gridTemplateColumns: `repeat(${additionData.resLen + 1}, 2rem)` }}>
+                    {/* Empty column for operator */}
+                    <div className="w-8 text-center text-slate-400 font-semibold"></div>
+                    {/* Carries for digits */}
                     {carriesToShow.carries.map((val, i) => (
                       <div key={i} className="w-8 text-center text-slate-400 font-semibold">
                         <AnimatePresence>
@@ -539,23 +640,29 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
 
                   {/* First number row */}
-                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${additionData.resLen}, 2rem)` }}>
+                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${additionData.resLen + 1}, 2rem)` }}>
+                    {/* Empty column for operator */}
+                    <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200"></div>
+                    {/* First number digits */}
                     {Array.from({ length: additionData.resLen }).map((_, i) => {
                       const j = i - offset;
                       return (
-                        <div key={i} className="w-8 text-center text-lg md:text-xl">
+                        <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
                           {j >= 0 ? aDigits[j] : ''}
                         </div>
                       );
                     })}
                   </div>
 
-                  {/* Second number row */}
-                  <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${additionData.resLen}, 2rem)` }}>
+                  {/* Second number row with + operator */}
+                  <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${additionData.resLen + 1}, 2rem)` }}>
+                    {/* + operator in first column */}
+                    <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">+</div>
+                    {/* Second number digits */}
                     {Array.from({ length: additionData.resLen }).map((_, i) => {
                       const j = i - offset;
                       return (
-                        <div key={i} className="w-8 text-center text-lg md:text-xl">
+                        <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
                           {j >= 0 ? bDigits[j] : ''}
                         </div>
                       );
@@ -565,7 +672,10 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   <div className="my-2 h-[2px] w-full bg-slate-200" />
 
                   {/* Result row (digit-phase reveal) */}
-                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${additionData.resLen}, 2rem)` }}>
+                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${additionData.resLen + 1}, 2rem)` }}>
+                    {/* Empty column for operator */}
+                    <div className="w-8 text-center text-lg md:text-xl font-bold"></div>
+                    {/* Result digits */}
                     {revealedStr.split('').map((ch, i) => (
                       <motion.div key={i} className="w-8 text-center text-lg md:text-xl font-bold" initial={{ opacity: 0.2 }} animate={{ opacity: ch.trim() ? 1 : 0.2 }}>
                         {ch}
@@ -576,10 +686,10 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   {/* Active column highlight */}
                   <AnimatePresence>
                     {activeVisualCol != null && (
-                      <motion.div key={`hl-${activeVisualCol}`} className="pointer-events-none absolute inset-y-4 right-0 grid" style={{ gridTemplateColumns: `repeat(${additionData.resLen}, 2rem)` }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        {Array.from({ length: additionData.resLen }).map((_, i) => (
+                      <motion.div key={`hl-${activeVisualCol}`} className="pointer-events-none absolute inset-y-4 right-0 grid" style={{ gridTemplateColumns: `repeat(${additionData.resLen + 1}, 2rem)` }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        {Array.from({ length: additionData.resLen + 1 }).map((_, i) => (
                           <div key={i} className="w-8 h-[92px]" style={{ gridColumn: `${i + 1} / ${i + 2}` }}>
-                            {i === activeVisualCol && (
+                            {i === activeVisualCol + 1 && (
                               <motion.div className="h-full w-full rounded-xl ring-2 ring-sky-300/90" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 20 }} />
                             )}
                           </div>
@@ -659,97 +769,54 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               })();
 
               return (
-                <div className="inline-block p-4 bg-white dark:bg-gray-800 rounded-2xl border border-blue-200 dark:border-blue-700 shadow-sm">
-                  {/* Minus sign at left */}
-                  <div className="flex items-end gap-3 mb-1">
-                    <div className="text-3xl font-bold select-none text-gray-800 dark:text-gray-200">−</div>
+                <div className="relative font-mono">
+                  {/* Carries row above minuend - right-aligned like addition */}
+                  <div className="ml-auto grid justify-end min-h-[28px]" style={{ gridTemplateColumns: `repeat(${n}, 2rem)` }}>
+                    {Array.from({ length: n }).map((_, i) => (
+                      <div key={i} className="w-8 text-center text-slate-400 font-semibold">
+                        <AnimatePresence>
+                          {showBorrow1[i] && (
+                            <motion.div 
+                              initial={{ y: -6, opacity: 0 }} 
+                              animate={{ y: 0, opacity: 1 }} 
+                              exit={{ opacity: 0 }}
+                              className={strikeBorrow1[i] ? 'math-stepper-strikethrough borrow-used' : ''}
+                            >
+                              1
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    ))}
+                  </div>
 
-                    {/* Columns */}
-                    <div
-                      className="grid items-start"
-                      style={{ gridTemplateColumns: `repeat(${n}, minmax(42px, 1fr))`, gap: "8px" }}
-                    >
-                      {Array.from({ length: n }).map((_, i) => {
-                        const isActive = i === activeColumnIndex;
-                        const top = aDigits[i];
-                        const bot = bDigits[i];
+                  {/* Minuend row - right-aligned like addition */}
+                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${n}, 2rem)` }}>
+                    {Array.from({ length: n }).map((_, i) => (
+                      <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
+                        {aDigits[i]}
+                        </div>
+                    ))}
+                  </div>
 
-                        return (
-                          <motion.div
-                            key={i}
-                            className={`relative text-center p-1 rounded-xl border transition-all ${
-                              isActive ? "ring-2 ring-blue-400 bg-blue-50 dark:bg-blue-950/30" : "border-gray-200 dark:border-gray-700"
-                            }`}
-                            initial={{ opacity: 0, y: -5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.05 }}
-                          >
-                            {/* TOP digit with tiny purple '1' in front when borrowing */}
-                            <div className="relative text-2xl font-bold leading-none h-8 flex items-center justify-center text-gray-800 dark:text-gray-200">
-                              <AnimatePresence>
-                                {showBorrow1[i] && (
-                                  <motion.span
-                                    className={`absolute -left-2 -top-1 text-xs text-purple-600 dark:text-purple-400 font-semibold ${
-                                      strikeBorrow1[i] ? 'math-stepper-strikethrough borrow-used' : ''
-                                    }`}
-                                    aria-hidden
-                                    initial={{ opacity: 0, scale: 0.5 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0 }}
-                                  >
-                                    1
-                                  </motion.span>
-                                )}
-                              </AnimatePresence>
-                              <span>{top}</span>
-                            </div>
-
-                            {/* divider line (between top and bottom rows) */}
-                            <div className="h-[2px] bg-gray-800 dark:bg-gray-200 my-1" />
-
-                            {/* BOTTOM digit with '+1' tied to bottom row (left side) */}
-                            <div className="relative text-2xl font-bold leading-none h-8 flex items-center justify-center text-gray-800 dark:text-gray-200">
-                              <AnimatePresence>
-                                {showBottomPlus1[i] && (
-                                  <motion.span
-                                    className={`absolute -left-4 -top-1 text-sm text-purple-600 dark:text-purple-400 font-semibold ${
-                                      strikeBottomPlus1[i] ? 'math-stepper-strikethrough borrow-used' : ''
-                                    }`}
-                                    aria-hidden
-                                    initial={{ opacity: 0, x: -5 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0 }}
-                                  >
-                                    +1
-                                  </motion.span>
-                                )}
-                              </AnimatePresence>
-                              <span>{bot}</span>
-                            </div>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
+                  {/* Subtrahend row with minus sign - right-aligned like addition */}
+                  <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${n}, 2rem)` }}>
+                    {Array.from({ length: n }).map((_, i) => (
+                      <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
+                        {i === 0 ? '−' : ''}{bDigits[i]}
+                        </div>
+                    ))}
                   </div>
 
                   {/* Result underline spanning all columns */}
-                  <div className="mt-2 ml-8 h-2">
-                    <div className="h-[4px] bg-gray-800 dark:bg-gray-200 rounded" />
-                  </div>
+                  <div className="my-2 h-[2px] w-full bg-gray-800 dark:bg-gray-200" />
 
-                  {/* Result row */}
-                  <div
-                    className="grid mt-2"
-                    style={{ 
-                      gridTemplateColumns: `repeat(${n}, minmax(42px, 1fr))`, 
-                      gap: "8px", 
-                      marginLeft: "34px" 
-                    }}
-                  >
+                  {/* Result row - right-aligned like addition */}
+                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${n}, 2rem)` }}>
                     {Array.from({ length: n }).map((_, i) => (
                       <motion.div
                         key={`res-${i}`}
-                        className="text-center text-2xl font-bold select-none"
+                        className="w-8 text-center text-lg md:text-xl font-bold select-none"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                       >
@@ -826,36 +893,53 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
             // Enhanced multiplication with true step-by-step reveal
             (() => {
               const { A, B, partials, sumFinal, sumWidth, multiplicationSteps, maxStep } = multiplicationData;
+              
+              // Safety check: ensure all required data exists
+              if (!A || !B || !partials || !Array.isArray(partials) || !multiplicationSteps || !Array.isArray(multiplicationSteps)) {
+                console.error('[CompactMathStepper] Invalid multiplication data:', {
+                  A,
+                  B,
+                  partials,
+                  multiplicationSteps,
+                  multiplicationData
+                });
+                return (
+                  <div className="text-center text-red-600 dark:text-red-400">
+                    Error: Invalid multiplication data
+                  </div>
+                );
+              }
+              
               const currentStepData = multiplicationSteps[currentStep - 1]; // Adjust for 0-based indexing
               
               // Handle step 0 (initial problem setup)
               if (currentStep === 0) {
-                return (
-                  <div className="relative font-mono">
+              return (
+                <div className="relative font-mono">
                     {/* Top multiplicand */}
-                    <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
-                      {A.padStart(sumWidth, ' ').split('').map((ch, i) => (
+                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
+                    {A.padStart(sumWidth, ' ').split('').map((ch, i) => (
                         <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
                           {ch.trim()}
                         </div>
-                      ))}
-                    </div>
+                    ))}
+                  </div>
                     
                     {/* Multiplier with × symbol */}
-                    <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
-                      {('×' + B.padStart(sumWidth - 1, ' ')).split('').map((ch, i) => (
+                  <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
+                    {('×' + B.padStart(sumWidth - 1, ' ')).split('').map((ch, i) => (
                         <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
                           {ch.trim()}
                         </div>
-                      ))}
-                    </div>
+                    ))}
+                  </div>
                     
                     {/* Horizontal line */}
                     <div className="my-2 h-[2px] w-full bg-gray-800 dark:bg-gray-200" />
                     
                     {/* Placeholder rows for partial products */}
                     {partials.map((_, idx) => (
-                      <div key={idx} className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
+                    <div key={idx} className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
                         {Array(sumWidth).fill('').map((_, i) => (
                           <div key={i} className="w-8 text-center text-lg md:text-xl text-gray-300 dark:text-gray-600">
                             •
@@ -890,11 +974,37 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 
                 // Find which partial product this step belongs to
                 const multiplierPos = currentStepData.multiplierPosition;
-                const partialProduct = partials[multiplierPos];
+                
+                // Handle final sum steps (multiplierPosition === -1)
+                if (multiplierPos === -1) {
+                  // This is a final sum step - return empty string as it's handled separately
+                  return '';
+                }
+                
+                const partialProduct = partials?.[multiplierPos];
+                
+                // Safety check: ensure partialProduct exists and is a string
+                if (!partialProduct || typeof partialProduct !== 'string') {
+                  console.warn('[CompactMathStepper] Invalid partial product:', {
+                    multiplierPos,
+                    partialProduct,
+                    partialsLength: partials?.length,
+                    currentStepData
+                  });
+                  return '';
+                }
                 
                 // Calculate how much of this partial product should be revealed
                 const stepsForThisPartial = multiplicationSteps.filter(s => s.multiplierPosition === multiplierPos);
                 const currentStepInPartial = stepsForThisPartial.findIndex(s => s.step === currentStepData.step);
+                
+                // Debug logging for partial product display
+                console.log(`[PartialProduct] Row ${multiplierPos}, Step ${currentStepInPartial + 1}/${stepsForThisPartial.length}:`, {
+                  partialProduct,
+                  partialProductLength: partialProduct.length,
+                  currentStepInPartial,
+                  stepsForThisPartial: stepsForThisPartial.length
+                });
                 
                 // Show partial product from RIGHT to LEFT (ones place first)
                 const revealedLength = Math.min(currentStepInPartial + 1, partialProduct.length);
@@ -913,16 +1023,75 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 const carries = Array(sumWidth).fill('');
                 const strikes = Array(sumWidth).fill(false);
                 
-                // Show carries above the multiplicand row, but shifted one column to the left
-                // If carry is generated from column i, show it above column i+1
-                currentStepData.carries.forEach(carry => {
-                  // Shift carry position one column to the left (add 1 to position)
-                  const shiftedPosition = carry.position + 1;
-                  const uiIndex = sumWidth - 1 - shiftedPosition;
-                  if (uiIndex >= 0 && uiIndex < sumWidth) {
-                    carries[uiIndex] = String(carry.value);
-                    strikes[uiIndex] = false; // Current step carries are not struck through
+                // Determine which partial product row we're in
+                const currentMultiplierPos = currentStepData.multiplierPosition;
+                
+                // If this is a final sum step (multiplierPosition === -1)
+                if (currentMultiplierPos === -1) {
+                  // Show carries for final sum calculation
+                  if (currentStepData.carries && Array.isArray(currentStepData.carries)) {
+                    currentStepData.carries.forEach(carry => {
+                      const shiftedPosition = carry.position + 1;
+                      const uiIndex = sumWidth - 1 - shiftedPosition;
+                      if (uiIndex >= 0 && uiIndex < sumWidth) {
+                        carries[uiIndex] = String(carry.value);
+                        strikes[uiIndex] = false;
+                      }
+                    });
                   }
+                  
+                  // Debug logging for final sum carries
+                  console.log(`[CarryPersistence] Final Sum Step ${currentStepData.step}:`, {
+                    currentStep: currentStepData.step,
+                    carries: carries.filter(c => c !== ''),
+                    totalCarries: carries.filter(c => c !== '').length
+                  });
+                  
+                  return { carries, strikes };
+                }
+                
+                // For partial product steps: show carries immediately when generated
+                const stepsForCurrentRow = multiplicationSteps.filter(s => s.multiplierPosition === currentMultiplierPos);
+                const currentStepIndex = stepsForCurrentRow.findIndex(s => s.step === currentStepData.step);
+                
+                // Show carries from current step (immediately when generated)
+                if (currentStepData.carries && Array.isArray(currentStepData.carries)) {
+                  currentStepData.carries.forEach(carry => {
+                    const shiftedPosition = carry.position + 1;
+                    const uiIndex = sumWidth - 1 - shiftedPosition;
+                    if (uiIndex >= 0 && uiIndex < sumWidth) {
+                      carries[uiIndex] = String(carry.value);
+                      strikes[uiIndex] = false;
+                    }
+                  });
+                }
+                
+                // Also show carries from previous steps in the same row (persist until used)
+                for (let i = 0; i < currentStepIndex; i++) {
+                  const stepData = stepsForCurrentRow[i];
+                  if (stepData.carries && Array.isArray(stepData.carries)) {
+                    stepData.carries.forEach(carry => {
+                      const shiftedPosition = carry.position + 1;
+                      const uiIndex = sumWidth - 1 - shiftedPosition;
+                      if (uiIndex >= 0 && uiIndex < sumWidth) {
+                        // Only show if not already shown by current step
+                        if (!carries[uiIndex]) {
+                          carries[uiIndex] = String(carry.value);
+                          strikes[uiIndex] = false;
+                        }
+                      }
+                    });
+                  }
+                }
+                
+                // Debug logging for carry persistence
+                console.log(`[CarryPersistence] Row ${currentMultiplierPos}, Step ${currentStepIndex + 1}/${stepsForCurrentRow.length}:`, {
+                  currentStep: currentStepData.step,
+                  multiplierPosition: currentMultiplierPos,
+                  stepsInRow: stepsForCurrentRow.length,
+                  currentStepIndex,
+                  carries: carries.filter(c => c !== ''),
+                  totalCarries: carries.filter(c => c !== '').length
                 });
                 
                 return { carries, strikes };
@@ -957,7 +1126,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
                     {A.padStart(sumWidth, ' ').split('').map((ch, i) => (
                       <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
-                        {ch.trim()}
+                          {ch.trim()}
                       </div>
                     ))}
                   </div>
@@ -977,7 +1146,10 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   {/* Progressive partial products */}
                   {partials.map((row, idx) => {
                     const isCurrentPartial = currentStepData && currentStepData.multiplierPosition === idx;
-                    const isRevealed = currentStepData && currentStepData.multiplierPosition >= idx;
+                    const isRevealed = currentStepData && (
+                      currentStepData.multiplierPosition >= idx || 
+                      currentStepData.multiplierPosition === -1 // Final sum steps show all partial products
+                    );
                     
                     if (!isRevealed) {
                       // Show placeholder dots
@@ -992,7 +1164,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                       );
                     }
                     
-                    if (isCurrentPartial) {
+                    if (isCurrentPartial && currentStepData.multiplierPosition !== -1) {
                       // Show progressive reveal for current partial product
                       return (
                         <div key={idx} className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
@@ -1010,8 +1182,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                               transition={{ duration: 0.3 }}
                             >
                               {ch}
-                            </motion.div>
-                          ))}
+                        </motion.div>
+                      ))}
                         </div>
                       );
                     } else {
@@ -1021,8 +1193,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                           {row.padStart(sumWidth, ' ').split('').map((ch, i) => (
                             <div key={i} className="w-8 text-center text-lg md:text-xl text-gray-800 dark:text-gray-200">
                               {ch.trim()}
-                            </div>
-                          ))}
+                    </div>
+                  ))}
                         </div>
                       );
                     }
@@ -1031,30 +1203,66 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   {/* Final sum line */}
                   <div className="my-2 h-[2px] w-full bg-gray-800 dark:bg-gray-200" />
                   
-                  {/* Final sum - only show if all partial products are complete */}
+                  {/* Final sum - show digit by digit for final sum steps */}
                   <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
-                    {currentStep >= multiplicationSteps.length ? (
-                      sumFinal.padStart(sumWidth, ' ').split('').map((ch, i) => (
-                        <motion.div 
-                          key={i} 
-                          className="w-8 text-center text-lg md:text-xl font-bold text-green-700 dark:text-green-300" 
-                          initial={{ opacity: 0, scale: 0.8 }} 
-                          animate={{ 
-                            opacity: 1,
-                            scale: 1.1
-                          }}
-                          transition={{ duration: 0.5 }}
-                        >
-                          {ch.trim()}
-                        </motion.div>
-                      ))
-                    ) : (
-                      Array(sumWidth).fill('').map((_, i) => (
-                        <div key={i} className="w-8 text-center text-lg md:text-xl text-gray-300 dark:text-gray-600">
-                          •
-                        </div>
-                      ))
-                    )}
+                    {(() => {
+                      // Check if this is a final sum step (multiplierPosition === -1)
+                      if (currentStepData && currentStepData.multiplierPosition === -1) {
+                        // This is a final sum step - show progressive reveal
+                        const finalSumSteps = multiplicationSteps.filter(s => s.multiplierPosition === -1);
+                        const currentFinalSumStepIndex = finalSumSteps.findIndex(s => s.step === currentStepData.step);
+                        
+                        // Show final sum from right to left (ones place first)
+                        const revealedLength = Math.min(currentFinalSumStepIndex + 1, sumFinal.length);
+                        const hiddenLength = sumFinal.length - revealedLength;
+                        
+                        const hidden = '•'.repeat(hiddenLength);
+                        const revealed = sumFinal.substring(hiddenLength);
+                        const displayString = hidden + revealed;
+                        
+                        return displayString.padStart(sumWidth, ' ').split('').map((ch, i) => (
+                          <motion.div 
+                            key={i} 
+                            className={`w-8 text-center text-lg md:text-xl font-bold ${
+                              ch === '•' 
+                                ? 'text-gray-300 dark:text-gray-600' 
+                                : 'text-green-700 dark:text-green-300'
+                            }`}
+                            initial={{ opacity: 0, scale: 0.8 }} 
+                            animate={{ 
+                              opacity: 1,
+                              scale: ch === '•' ? 1 : 1.1
+                            }}
+                            transition={{ duration: 0.5 }}
+                          >
+                        {ch.trim()}
+                      </motion.div>
+                        ));
+                      } else if (currentStep >= multiplicationSteps.length) {
+                        // All steps complete - show full final sum
+                        return sumFinal.padStart(sumWidth, ' ').split('').map((ch, i) => (
+                          <motion.div 
+                            key={i} 
+                            className="w-8 text-center text-lg md:text-xl font-bold text-green-700 dark:text-green-300" 
+                            initial={{ opacity: 0, scale: 0.8 }} 
+                            animate={{ 
+                              opacity: 1,
+                              scale: 1.1
+                            }}
+                            transition={{ duration: 0.5 }}
+                          >
+                            {ch.trim()}
+                          </motion.div>
+                        ));
+                      } else {
+                        // Show placeholder dots
+                        return Array(sumWidth).fill('').map((_, i) => (
+                          <div key={i} className="w-8 text-center text-lg md:text-xl text-gray-300 dark:text-gray-600">
+                            •
+                  </div>
+                        ));
+                      }
+                    })()}
                   </div>
                   
                   {/* Current step explanation */}
@@ -1166,7 +1374,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
           variant="outline"
           size="sm"
           onClick={handleNext}
-          disabled={currentStep === steps.length - 1}
+          disabled={currentStep >= getMaxStep()}
           className="h-8 px-3"
         >
           <ChevronRight className="w-4 h-4" />
@@ -1187,7 +1395,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
           <div 
             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${additionData ? ((Math.min(currentStep + 1, additionData.maxStep + 1)) / (additionData.maxStep + 1)) * 100 : subtractionData ? ((Math.min(currentStep + 1, subtractionData.maxStep)) / subtractionData.maxStep) * 100 : multiplicationData ? ((Math.min(currentStep + 1, multiplicationData.maxStep + 1)) / (multiplicationData.maxStep + 1)) * 100 : divisionData ? ((Math.min(currentStep + 1, divisionData.totalPhases)) / divisionData.totalPhases) * 100 : (((currentStep + 1) / steps.length) * 100)}%` }}
+            style={{ width: `${((currentStep + 1) / (getMaxStep() + 1)) * 100}%` }}
           />
         </div>
       </div>

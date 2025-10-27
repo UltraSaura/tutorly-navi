@@ -87,6 +87,7 @@ RULES:
 8. Strategy should guide toward solution process, not the final answer
 9. The correctAnswer field is for guardian review only - do NOT mention it in teaching sections
 10. IMPORTANT: The "example" field must be in format "number operator number = result" (e.g., "23 + 45 = 68") for interactive math stepper compatibility
+11. CRITICAL: The example MUST use the EXACT SAME operation type as the student's exercise. If student has multiplication, example must be multiplication. If student has addition, example must be addition. This is mandatory for educational consistency.
 
 Please provide your response in ${response_language}.`;
 
