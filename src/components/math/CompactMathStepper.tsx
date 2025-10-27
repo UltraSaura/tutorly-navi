@@ -1028,16 +1028,24 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 
                 // If this is a final sum step (multiplierPosition === -1)
                 if (currentMultiplierPos === -1) {
-                  // Show carries for final sum calculation
-                  if (currentStepData.carries && Array.isArray(currentStepData.carries)) {
-                    currentStepData.carries.forEach(carry => {
-                      const shiftedPosition = carry.position + 1;
-                      const uiIndex = sumWidth - 1 - shiftedPosition;
-                      if (uiIndex >= 0 && uiIndex < sumWidth) {
-                        carries[uiIndex] = String(carry.value);
-                        strikes[uiIndex] = false;
-                      }
-                    });
+                  // Get all sum steps and current index
+                  const sumSteps = multiplicationSteps.filter(s => s.multiplierPosition === -1);
+                  const currentSumStepIndex = sumSteps.findIndex(s => s.step === currentStepData.step);
+                  
+                  // Show carries from all steps up to and including current step
+                  for (let i = 0; i <= currentSumStepIndex; i++) {
+                    const stepData = sumSteps[i];
+                    if (stepData.carries && Array.isArray(stepData.carries)) {
+                      stepData.carries.forEach(carry => {
+                        const shiftedPosition = carry.position + 1;
+                        const uiIndex = sumWidth - 1 - shiftedPosition;
+                        if (uiIndex >= 0 && uiIndex < sumWidth) {
+                          carries[uiIndex] = String(carry.value);
+                          // Mark as struck if it's from a previous step (strikethrough when moving to next column)
+                          strikes[uiIndex] = i < currentSumStepIndex;
+                        }
+                      });
+                    }
                   }
                   
                   // Debug logging for final sum carries
@@ -1050,39 +1058,39 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   return { carries, strikes };
                 }
                 
-                // For partial product steps: show carries immediately when generated
+                // For partial product steps: show carries with strikethrough
                 const stepsForCurrentRow = multiplicationSteps.filter(s => s.multiplierPosition === currentMultiplierPos);
                 const currentStepIndex = stepsForCurrentRow.findIndex(s => s.step === currentStepData.step);
                 
-                // Show carries from current step (immediately when generated)
-                if (currentStepData.carries && Array.isArray(currentStepData.carries)) {
-                  currentStepData.carries.forEach(carry => {
-                    const shiftedPosition = carry.position + 1;
-                    const uiIndex = sumWidth - 1 - shiftedPosition;
-                    if (uiIndex >= 0 && uiIndex < sumWidth) {
-                      carries[uiIndex] = String(carry.value);
-                      strikes[uiIndex] = false;
-                    }
-                  });
-                }
+                // Collect all carries from all steps in current row up to current step
+                const allCarries: Array<{ position: number; value: number; stepIndex: number }> = [];
                 
-                // Also show carries from previous steps in the same row (persist until used)
-                for (let i = 0; i < currentStepIndex; i++) {
+                for (let i = 0; i <= currentStepIndex; i++) {
                   const stepData = stepsForCurrentRow[i];
                   if (stepData.carries && Array.isArray(stepData.carries)) {
                     stepData.carries.forEach(carry => {
-                      const shiftedPosition = carry.position + 1;
-                      const uiIndex = sumWidth - 1 - shiftedPosition;
-                      if (uiIndex >= 0 && uiIndex < sumWidth) {
-                        // Only show if not already shown by current step
-                        if (!carries[uiIndex]) {
-                          carries[uiIndex] = String(carry.value);
-                          strikes[uiIndex] = false;
-                        }
-                      }
+                      allCarries.push({
+                        position: carry.position,
+                        value: carry.value,
+                        stepIndex: i
+                      });
                     });
                   }
                 }
+                
+                // Display all carries, marking previous ones as struck
+                allCarries.forEach(({ position, value, stepIndex }) => {
+                  const shiftedPosition = position + 1;
+                  const uiIndex = sumWidth - 1 - shiftedPosition;
+                  if (uiIndex >= 0 && uiIndex < sumWidth) {
+                    // Only update if not already set (keeps the most recent carry at each position)
+                    if (!carries[uiIndex]) {
+                      carries[uiIndex] = String(value);
+                      // Mark as struck if it's from a previous step (not current)
+                      strikes[uiIndex] = stepIndex < currentStepIndex;
+                    }
+                  }
+                });
                 
                 // Debug logging for carry persistence
                 console.log(`[CarryPersistence] Row ${currentMultiplierPos}, Step ${currentStepIndex + 1}/${stepsForCurrentRow.length}:`, {
