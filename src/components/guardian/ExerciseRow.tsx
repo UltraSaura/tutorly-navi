@@ -112,7 +112,7 @@ export function ExerciseRow({
     const summary = `
 📖 Concept: ${explanationData.concept || 'N/A'}
 
-🎯 Strategy: ${explanationData.strategy || 'N/A'}
+🎯 Method: ${explanationData.method || explanationData.strategy || 'N/A'}
 
 ⚠️ Common Pitfall: ${explanationData.pitfall || 'N/A'}
     `.trim();
