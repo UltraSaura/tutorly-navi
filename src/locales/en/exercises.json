@@ -37,7 +37,7 @@
       "exercise": "This is your exercise. Try to restate it in your own words.",
       "concept": "We'll focus on the exact math idea you need here.",
       "example": "Here's a similar example with different numbers.",
-      "strategy": "1) Understand the goal  2) Apply the rules  3) Check your result.", 
+      "method": "1) Understand the goal  2) Apply the rules  3) Check your result.", 
       "pitfall": "Avoid applying an operation to only one part.",
       "check": "Explain why each step is valid.",
       "practice": "Practice a few similar problems and explain your steps aloud."
@@ -46,7 +46,7 @@
       "exercise": "📘 Exercise",
       "concept": "💡 Concept", 
       "example": "🔍 Example (different numbers)",
-      "strategy": "☑️ Strategy",
+      "method": "☑️ Method",
       "pitfall": "⚠️ Pitfall",
       "check": "🎯 Check yourself",
       "practice": "📈 Practice Tip"

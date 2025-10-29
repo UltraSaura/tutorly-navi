@@ -139,7 +139,7 @@ export function TwoCards({ s }: { s: TeachingSections }) {
           
           <Section title="💡 Concept" text={s.concept} />
           <Section title="🔍 Example" text={s.example} />
-          <Section title="☑️ Strategy" text={s.strategy} />
+          <Section title="☑️ Method" text={s.method} />
           <Section title="⚠️ Pitfall" text={s.pitfall} />
           <Section title="🎯 Check yourself" text={s.check} />
           <Section title="📈 Practice Tip" text={s.practice} />

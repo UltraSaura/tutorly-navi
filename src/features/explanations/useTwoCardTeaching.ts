@@ -7,7 +7,7 @@ export interface TeachingSections {
   exercise: string;
   concept: string;
   example: string;
-  strategy: string;
+  method: string;  // Renamed from strategy
   currentExercise: string;  // Full step-by-step solution with correct answer
   pitfall: string;
   check: string;
@@ -68,24 +68,25 @@ RESPONSE FORMAT:
   "sections": {
     "concept": "Explain the core concept without revealing the answer",
     "example": "Show a complete worked example with different numbers in format: '23 + 45 = 68' (must include the equals sign and answer for interactive stepper)",
-    "strategy": "Guide toward solution without giving the answer",
+    "method": "Explain the exact steps of the example, guiding step-by-step through calculation",
+    "currentExercise": "Full solution for student's exact problem with correct result",
     "pitfall": "Common mistakes to avoid",
-    "check": "How to verify your work",
-    "practice": "Practice tips"
-  },
-  "correctAnswer": "THE_CORRECT_ANSWER_HERE"
+    "check": "Explain HOW to verify without revealing the correct result",
+    "practice": "Practice tips",
+    "parentHelpHint": "Advice for parents to help at home"
+  }
 }
 
 RULES:
-1. Compute the correct answer and store it ONLY in the "correctAnswer" field
-2. In the teaching sections (concept, example, strategy), use different numbers or guide without revealing the answer
+1. Compute the correct answer and store it in the "currentExercise" field with full solution
+2. In the teaching sections (concept, example, method), use different numbers or guide without revealing the student's answer
 3. Examples should use numbers at least 5 units away from the original AND use the SAME operation type as the student's exercise
 4. If student exercise is division (÷ or /), show a division example.
 5. If student exercise is multiplication (× or *), show a multiplication example.
 6. If student exercise is addition (+), show an addition example.
 7. If student exercise is subtraction (-), show a subtraction example.
-8. Strategy should guide toward solution process, not the final answer
-9. The correctAnswer field is for guardian review only - do NOT mention it in teaching sections
+8. Method should explain the steps of the example, guiding through the calculation process
+9. The currentExercise field should contain the full solution with the correct answer
 10. IMPORTANT: The "example" field must be in format "number operator number = result" (e.g., "23 + 45 = 68") for interactive math stepper compatibility
 11. CRITICAL: The example MUST use the EXACT SAME operation type as the student's exercise. If student has multiplication, example must be multiplication. If student has addition, example must be addition. This is mandatory for educational consistency.
 
@@ -166,7 +167,7 @@ Please provide your response in ${response_language}.`;
         exercise: result.exercise || exercise_content,
         concept: sections.concept || 'No concept provided',
         example: sections.example || 'No example provided',
-        strategy: sections.strategy || 'No strategy provided',
+        method: sections.method || sections.strategy || 'No method provided',  // Support both new and old field names
         currentExercise: sections.currentExercise || 'No solution provided',
         pitfall: sections.pitfall || 'No common pitfalls identified',
         check: sections.check || 'No verification method provided',

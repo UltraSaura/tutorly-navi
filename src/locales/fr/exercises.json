@@ -37,7 +37,7 @@
       "exercise": "Voici votre exercice. Reformulez-le avec vos propres mots.",
       "concept": "Concentrons-nous sur l'idée mathématique essentielle.",
       "example": "Voici un exemple semblable avec d'autres nombres.",
-      "strategy": "1) Comprendre l'objectif  2) Appliquer les règles  3) Vérifier le résultat.",
+      "method": "1) Comprendre l'objectif  2) Appliquer les règles  3) Vérifier le résultat.",
       "pitfall": "N'appliquez jamais une opération à une seule partie.", 
       "check": "Expliquez pourquoi chaque étape est valide.",
       "practice": "Entraînez-vous avec quelques exercices similaires en expliquant vos étapes."
@@ -46,7 +46,7 @@
       "exercise": "📘 Exercice",
       "concept": "💡 Concept",
       "example": "🔍 Exemple (autres nombres)", 
-      "strategy": "☑️ Stratégie",
+      "method": "☑️ Méthode",
       "pitfall": "⚠️ Piège",
       "check": "🎯 Auto-vérification",
       "practice": "📈 Astuce de pratique"

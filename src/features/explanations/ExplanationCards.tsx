@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 const SECTION_CONFIG = {
   concept: { emoji: "💡", title: "Concept" },
   example: { emoji: "🔍", title: "Example" },
-  strategy: { emoji: "☑️", title: "Strategy" },
+  method: { emoji: "☑️", title: "Method" },
   pitfall: { emoji: "⚠️", title: "Pitfall" },
   check: { emoji: "🎯", title: "Check yourself" }
 } as const;
@@ -25,7 +25,7 @@ export default function ExplanationCards({ steps }: { steps: Step[] }) {
   }, {} as Record<Step["kind"], Step[]>);
 
   // Define order of sections
-  const sectionOrder: Step["kind"][] = ["concept", "example", "strategy", "pitfall", "check"];
+  const sectionOrder: Step["kind"][] = ["concept", "example", "method", "pitfall", "check"];
 
   return (
     <div className="space-y-6">
