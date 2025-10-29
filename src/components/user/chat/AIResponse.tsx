@@ -377,7 +377,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                             <div className="font-semibold text-sm mb-2 flex items-center gap-2">
                               <span>{t('explanation.headers.method')}</span>
                             </div>
-                            <div className="text-sm text-muted-foreground leading-relaxed">
+                            <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
                               {jsonResponse.sections.method || jsonResponse.sections.strategy}
                             </div>
                           </div>
