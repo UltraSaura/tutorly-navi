@@ -77,7 +77,7 @@ const Message = ({
                 />
               </div>
             ) : (
-              <p className="text-sm">{content}</p>
+              <p className="text-sm break-words whitespace-pre-wrap">{content}</p>
             )}
             {explanation && role === 'assistant' && (
               <div className="mt-3 pt-3 border-t border-neutral-border">
@@ -125,7 +125,7 @@ const Message = ({
       )}
       
       <div 
-        className={`max-w-[85%] p-4 ${
+        className={`max-w-[85%] p-4 break-words overflow-wrap-anywhere overflow-hidden ${
           role === 'user' 
             ? 'bg-brand-primary text-white rounded-xl rounded-tr-none' 
             : 'bg-neutral-surface text-neutral-text rounded-xl rounded-tl-none shadow-sm border border-neutral-border'

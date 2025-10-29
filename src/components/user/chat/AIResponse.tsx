@@ -158,10 +158,10 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
     const isIncorrect = jsonResponse.isCorrect === false;
     
     return (
-      <div className="w-full">
+      <div className="w-full overflow-hidden">
         <div 
           className={cn(
-            'p-4 rounded-card transition-all duration-200 hover:shadow-md relative',
+            'p-4 rounded-card transition-all duration-200 hover:shadow-md relative break-words overflow-hidden',
             // Add bolder, darker borders based on JSON response
             isCorrect === true 
               ? 'bg-green-50 border-2 border-green-600' // Dark green border for correct
@@ -204,7 +204,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
             </div>
             
             <div className="flex-1 min-w-0">
-              <div className="text-body font-semibold text-neutral-text mb-3">
+              <div className="text-body font-semibold text-neutral-text mb-3 break-words whitespace-pre-wrap">
                 {question || jsonResponse.exercise}
               </div>
               
@@ -279,21 +279,21 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                     {/* 2-Card Teaching Format in Popup */}
                     <div className="space-y-4">
                       {/* Exercise card */}
-                      <div className="rounded-xl border bg-muted p-4">
+                      <div className="rounded-xl border bg-muted p-4 break-words overflow-hidden">
                         <div className="font-semibold text-blue-800 dark:text-blue-200 mb-2">{t('explanation.headers.exercise')}</div>
-                        <div className="text-blue-700 dark:text-blue-300">
+                        <div className="text-blue-700 dark:text-blue-300 break-words whitespace-pre-wrap">
                           {jsonResponse.exercise || question}
                         </div>
                       </div>
 
                       {/* Guidance card */}
-                      <div className="rounded-xl border bg-card p-4 shadow-sm">
+                      <div className="rounded-xl border bg-card p-4 shadow-sm break-words overflow-hidden">
                         <div className="space-y-4">
                           <div>
                             <div className="font-semibold text-sm mb-2 flex items-center gap-2">
                               <span>{t('explanation.headers.concept')}</span>
                             </div>
-                            <div className="text-sm text-muted-foreground leading-relaxed">
+                            <div className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-wrap">
                               {jsonResponse.sections.concept}
                             </div>
                           </div>
@@ -355,11 +355,11 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                               
                               // Fallback to regular text with validation correction
                               return (
-                                <div className="text-sm text-muted-foreground leading-relaxed">
+                                <div className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-wrap">
                                   {!validation.isValid && validation.suggestedFix ? (
                                     <>
                                       {validation.reason && (
-                                        <div className="mb-2 p-2 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200">
+                                        <div className="mb-2 p-2 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200 break-words">
                                           ⚠️ Example corrected: {validation.reason}
                                         </div>
                                       )}

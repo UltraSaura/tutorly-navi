@@ -162,10 +162,10 @@ const ChatInterface = () => {
 
   // Exercise-Focused Layout with Chat Input
   return (
-    <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg">
+    <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg overflow-x-hidden max-w-full">
       {/* Scrollable Content Area */}
       <div 
-        className="h-full overflow-auto"
+        className="h-full overflow-auto overflow-x-hidden"
         style={{
           paddingBottom: keyboardVisible && keyboardHeight > 0
             ? `${keyboardHeight + 80}px`  // Keyboard height + input height

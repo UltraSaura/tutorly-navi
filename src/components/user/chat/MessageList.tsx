@@ -19,7 +19,7 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
   }, [messages]);
 
   return (
-    <ScrollArea className="flex-1 bg-neutral-bg">
+    <ScrollArea className="flex-1 bg-neutral-bg overflow-x-hidden">
       <div className="py-4">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-64 text-center px-6">

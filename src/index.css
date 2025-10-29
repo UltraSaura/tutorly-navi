@@ -325,6 +325,22 @@
     bottom: 0 !important;
     transform: translateY(calc(-1 * env(keyboard-inset-height, 0px)));
   }
+
+  /* Prevent horizontal overflow on mobile */
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
+  * {
+    max-width: 100%;
+  }
+  
+  /* Ensure long strings break */
+  p, div, span, pre {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
 }
 
 /* Container for the entire chat interface */
