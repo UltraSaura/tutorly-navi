@@ -273,6 +273,12 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       explanation: string;
       isPartialProductComplete: boolean;
       partialProduct: string;
+      columnPosition?: number;
+      contributingDigits?: Array<{
+        partialIndex: number;
+        digit: string;
+        position: number;
+      }>;
     }> = [];
     
     // Partial products from rightmost digit of B
@@ -415,6 +421,17 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       // Find relevant carries for this position
       const relevantCarries = sumCarries.filter(carry => carry.position === position);
       
+      // Calculate which digits from each partial product contribute to this column
+      const contributingDigits = partials.map((partial, partialIndex) => {
+        const paddedPartial = partial.padStart(sumFinal.length, '0');
+        const digitFromPartial = paddedPartial[sumFinal.length - 1 - position];
+        return {
+          partialIndex,
+          digit: digitFromPartial,
+          position
+        };
+      }).filter(item => item.digit !== '0' || position === 0); // Filter out leading zeros except for ones place
+      
       multiplicationSteps.push({
         step: stepCounter++,
         multiplierDigit: '',
@@ -423,7 +440,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         multiplicandPosition: -1,
         partialResult: digit,
         carries: relevantCarries,
-        explanation: `Final sum digit ${digitIndex + 1}: ${digit}`,
+        columnPosition: position, // NEW: track which column we're adding
+        contributingDigits, // NEW: track which partial product digits contribute
+        explanation: `Adding column ${position + 1}: ${digit}`,
         isPartialProductComplete: false,
         partialProduct: sumFinal.substring(0, sumFinal.length - digitIndex) // Show progress
       });
@@ -1274,14 +1293,43 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                         </div>
                       );
                     } else {
-                      // Show completed partial product
+                      // Show completed partial product WITH FRAMES during addition
+                      const isInFinalSumMode = currentStepData && currentStepData.multiplierPosition === -1;
+                      const currentColumnPos = (currentStepData as any)?.columnPosition ?? -1;
+                      
                       return (
                         <div key={idx} className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
-                          {row.padStart(sumWidth, ' ').split('').map((ch, i) => (
-                            <div key={i} className="w-8 text-center text-lg md:text-xl text-gray-800 dark:text-gray-200">
-                              {ch.trim()}
-                    </div>
-                  ))}
+                          {row.padStart(sumWidth, ' ').split('').map((ch, i) => {
+                            // Calculate if this digit should be framed during final sum
+                            let isActiveInAddition = false;
+                            if (isInFinalSumMode && currentColumnPos >= 0) {
+                              // Map display position to actual digit position from right
+                              const digitPosition = sumWidth - 1 - i; // Position from right (0 = ones, 1 = tens, etc.)
+                              
+                              // Check if this digit contributes to the current column being added
+                              const contributingDigits = (currentStepData as any)?.contributingDigits || [];
+                              isActiveInAddition = contributingDigits.some(
+                                (contrib: any) => contrib.partialIndex === idx && digitPosition === currentColumnPos
+                              );
+                            }
+                            
+                            return (
+                              <div key={i} className={`w-8 text-center text-lg md:text-xl text-gray-800 dark:text-gray-200 ${isActiveInAddition ? 'relative' : ''}`}>
+                                <AnimatePresence>
+                                  {isActiveInAddition && (
+                                    <motion.div
+                                      initial={{ scale: 0.9, opacity: 0 }}
+                                      animate={{ scale: 1, opacity: 1 }}
+                                      exit={{ scale: 0.9, opacity: 0 }}
+                                      className="math-digit-frame-purple absolute inset-0"
+                                      style={{ pointerEvents: 'none' }}
+                                    />
+                                  )}
+                                </AnimatePresence>
+                                {ch.trim()}
+                              </div>
+                            );
+                          })}
                         </div>
                       );
                     }
@@ -1307,24 +1355,42 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                         const revealed = sumFinal.substring(hiddenLength);
                         const displayString = hidden + revealed;
                         
-                        return displayString.padStart(sumWidth, ' ').split('').map((ch, i) => (
-                          <motion.div 
-                            key={i} 
-                            className={`w-8 text-center text-lg md:text-xl font-bold ${
-                              ch === '•' 
-                                ? 'text-gray-300 dark:text-gray-600' 
-                                : 'text-green-700 dark:text-green-300'
-                            }`}
-                            initial={{ opacity: 0, scale: 0.8 }} 
-                            animate={{ 
-                              opacity: 1,
-                              scale: ch === '•' ? 1 : 1.1
-                            }}
-                            transition={{ duration: 0.5 }}
-                          >
-                        {ch.trim()}
-                      </motion.div>
-                        ));
+                        return displayString.padStart(sumWidth, ' ').split('').map((ch, i) => {
+                          // Calculate if this is the digit being revealed in current step
+                          const digitPosition = sumWidth - 1 - i;
+                          const currentColumnPos = (currentStepData as any)?.columnPosition ?? -1;
+                          const isActiveDigit = digitPosition === currentColumnPos && ch !== '•' && ch !== ' ';
+                          
+                          return (
+                            <motion.div 
+                              key={i} 
+                              className={`w-8 text-center text-lg md:text-xl font-bold relative ${
+                                ch === '•' 
+                                  ? 'text-gray-300 dark:text-gray-600' 
+                                  : 'text-green-700 dark:text-green-300'
+                              }`}
+                              initial={{ opacity: 0, scale: 0.8 }} 
+                              animate={{ 
+                                opacity: 1,
+                                scale: ch === '•' ? 1 : 1.1
+                              }}
+                              transition={{ duration: 0.5 }}
+                            >
+                              <AnimatePresence>
+                                {isActiveDigit && (
+                                  <motion.div
+                                    initial={{ scale: 0.9, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0.9, opacity: 0 }}
+                                    className="math-digit-frame-purple absolute inset-0"
+                                    style={{ pointerEvents: 'none' }}
+                                  />
+                                )}
+                              </AnimatePresence>
+                              {ch.trim()}
+                            </motion.div>
+                          );
+                        });
                       } else if (currentStep >= multiplicationSteps.length) {
                         // All steps complete - show full final sum
                         return sumFinal.padStart(sumWidth, ' ').split('').map((ch, i) => (
