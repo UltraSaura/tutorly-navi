@@ -3,8 +3,8 @@
  * Generates visual steps for arithmetic operations with animations
  */
 
-import { MathStep, VisualStepData, HighlightData, CarryData, BorrowData } from './types';
-import { Token, parseExpression } from './parser';
+import { MathStep, VisualStepData, HighlightData, CarryData, BorrowData, Token } from './types';
+import { parseExpression } from './parser';
 
 /**
  * Generates steps for addition with carries

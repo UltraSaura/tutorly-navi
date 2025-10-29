@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { VisualStepData, HighlightData, CarryData, BorrowData } from '../utils/mathStepper/types';
+import { VisualStepData, HighlightData, CarryData, BorrowData } from '@/utils/mathStepper/types';
 import { cn } from '@/lib/utils';
 
 interface OperationGridProps {

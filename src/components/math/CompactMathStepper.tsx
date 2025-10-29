@@ -1157,73 +1157,56 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                     })}
                   </div>
                   
-                  {/* Multiplier with × symbol */}
-                  <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
-                    {('×' + B.padStart(sumWidth - 1, ' ')).split('').map((ch, i) => {
-                      // Skip the × symbol at position 0
-                      if (ch === '×') {
-                        return <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">×</div>;
-                      }
-                      
-                      // The string is '×' + B.padStart, so:
-                      // i=0 is ×, i=1 onwards are B digits (with padding)
-                      // Map to actual B digit position (right-to-left)
-                      const bStartIdx = sumWidth - B.length; // Where B digits start after × and padding
-                      if (i - 1 < bStartIdx) {
-                        // This is padding, not a real digit
-                        return (
-                          <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
-                            {ch.trim()}
-                          </div>
-                        );
-                      }
-                      
-                      // Map display position to B digit (rightmost = index 0 in multiplierPosition)
-                      // For string '×' + B.padStart, we need to map to B's index
-                      // digitIndex gives us position in the padded string
-                      // We need to map to actual B index, then to multiplierPosition
-                      const displayPos = i - 1; // Position in padded string (0 = first char after '×')
-                      const digitIndex = displayPos - bStartIdx; // Index in actual B string (0='4', 1='5', 2='6' for "456")
-                      // Now map to multiplierPosition (right-to-left: 0='6', 1='5', 2='4')
-                      const digitPos = B.length - 1 - digitIndex; // Position in right-to-left order
-                      const isActive = currentStepData && digitPos === currentStepData.multiplierPosition;
-                      
-                      // Debug logging
-                      if (ch.trim()) {
-                        console.log('[MultiplierFrame] Full Debug:', {
-                          ch,
-                          i,
-                          bStartIdx,
-                          displayPos,
-                          digitIndex,
-                          digitPos,
-                          'B.length': B.length,
-                          'sumWidth': sumWidth,
-                          'currentStepMultiplierPos': currentStepData?.multiplierPosition,
-                          isActive,
-                          B,
-                          'calculation': `${digitPos} = B.length(${B.length}) - 1 - digitIndex(${digitIndex})`
-                        });
-                      }
-                      
-                      return (
-                        <div key={i} className={`w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200 ${isActive ? 'relative' : ''}`}>
-                          <AnimatePresence>
-                            {isActive && ch.trim() && (
-                              <motion.div
-                                initial={{ scale: 0.9, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.9, opacity: 0 }}
-                                className="math-digit-frame-blue absolute inset-0"
-                                style={{ pointerEvents: 'none' }}
-                              />
-                            )}
-                          </AnimatePresence>
-                          {ch.trim()}
-                        </div>
-                      );
-                    })}
-                  </div>
+        {/* Multiplier with × symbol */}
+        <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
+          {('×' + B.padStart(sumWidth - 1, ' ')).split('').map((ch, i) => {
+            // Skip the × symbol at position 0
+            if (ch === '×') {
+              return <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">×</div>;
+            }
+            
+            // Check if this is a padding space (not a real B digit)
+            if (ch === ' ' || !ch.trim()) {
+              return (
+                <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
+                  {/* Empty space */}
+                </div>
+              );
+            }
+            
+            // This is a real B digit - find which position it corresponds to
+            // The string is '×' + B.padStart(sumWidth - 1, ' ')
+            // We need to map display position to actual B index (0-based from left)
+            const paddedB = B.padStart(sumWidth - 1, ' ');
+            const bIndex = i - 1; // Remove the × offset
+            
+            // Map bIndex to actual position in B string (removing padding)
+            const actualBIndex = bIndex - (sumWidth - 1 - B.length); // Account for left padding
+            
+            // Convert to right-to-left position (multiplierPosition convention)
+            const multiplierPos = B.length - 1 - actualBIndex;
+            
+            // Check if this digit is active in current step
+            const isActive = currentStepData && currentStepData.multiplierPosition === multiplierPos;
+            
+            return (
+              <div key={i} className={`w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200 ${isActive ? 'relative' : ''}`}>
+                <AnimatePresence>
+                  {isActive && (
+                    <motion.div
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.9, opacity: 0 }}
+                      className="math-digit-frame-blue absolute inset-0"
+                      style={{ pointerEvents: 'none' }}
+                    />
+                  )}
+                </AnimatePresence>
+                {ch}
+              </div>
+            );
+          })}
+        </div>
                   
                   {/* Horizontal line */}
                   <div className="my-2 h-[2px] w-full bg-gray-800 dark:bg-gray-200" />

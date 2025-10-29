@@ -394,7 +394,7 @@ function stepsForMultiplication(a: string, b: string, lang: Locale): AnimatorSte
     { role: 'op', value: '×' + ' '.repeat(sumWidth - 1) },
     { role: 'bottom', value: bottom.padStart(sumWidth, ' ') },
     { role: 'line', value: '-'.repeat(sumWidth + 2) },
-    ...partials.map(p => ({ role: 'result', value: p.padStart(sumWidth, ' ') })),
+    ...partials.map(p => ({ role: 'result' as RowRole, value: p.padStart(sumWidth, ' ') })),
     { role: 'line', value: '-'.repeat(sumWidth + 2) },
     { role: 'result', value: finalWithDec.padStart(sumWidth + (finalWithDec.includes('.') ? 1 : 0), ' ') },
   ];
