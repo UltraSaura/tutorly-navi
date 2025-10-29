@@ -7,6 +7,7 @@ import { UserTypeSelection } from '@/components/auth/UserTypeSelection';
 import { StudentRegistrationForm } from '@/components/auth/StudentRegistrationForm';
 import { ParentRegistrationForm } from '@/components/auth/ParentRegistrationForm';
 import { LoginForm } from '@/components/auth/LoginForm';
+import { PasswordResetForm } from '@/components/auth/PasswordResetForm';
 import { Button } from '@/components/ui/button';
 import { UserType, StudentRegistrationData, ParentRegistrationData } from '@/types/registration';
 import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
@@ -14,10 +15,10 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
-type AuthStep = 'login' | 'userType' | 'studentForm' | 'parentForm';
+type AuthStep = 'login' | 'userType' | 'studentForm' | 'parentForm' | 'resetPassword';
 
 const AuthPage: React.FC = () => {
-  const { user, loading: authLoading, signIn, signUp, signOut } = useAuth();
+  const { user, loading: authLoading, signIn, signUp, signOut, resetPassword } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminAuth();
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -158,6 +159,34 @@ const AuthPage: React.FC = () => {
     }
   };
 
+  const handleResetPassword = async (email: string) => {
+    setLoading(true);
+    try {
+      const { error } = await resetPassword(email);
+      if (error) {
+        toast({
+          title: t('auth.resetPasswordError'),
+          description: error.message,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: t('auth.resetPasswordSuccess'),
+          description: t('auth.checkEmailResetLink'),
+        });
+        setStep('login');
+      }
+    } catch (error) {
+      toast({
+        title: t('auth.resetPasswordError'),
+        description: t('auth.genericError'),
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleParentRegistration = async (data: ParentRegistrationData) => {
     setLoading(true);
     try {
@@ -203,7 +232,11 @@ const AuthPage: React.FC = () => {
         <div className="w-full max-w-4xl">
         {step === 'login' && (
           <div className="space-y-6">
-            <LoginForm onSubmit={handleLogin} loading={loading} />
+            <LoginForm 
+              onSubmit={handleLogin} 
+              onForgotPassword={() => setStep('resetPassword')} 
+              loading={loading} 
+            />
             <div className="text-center">
               <p className="text-muted-foreground mb-2">
                 {t('auth.noAccount')}
@@ -238,6 +271,14 @@ const AuthPage: React.FC = () => {
           <ParentRegistrationForm
             onSubmit={handleParentRegistration}
             onBack={() => setStep('userType')}
+            loading={loading}
+          />
+        )}
+
+        {step === 'resetPassword' && (
+          <PasswordResetForm
+            onSubmit={handleResetPassword}
+            onBack={() => setStep('login')}
             loading={loading}
           />
         )}

@@ -94,23 +94,92 @@ export function hasSameOperationType(expr1: string, expr2: string): boolean {
 }
 
 /**
+ * Count the maximum number of digits in operands of a math expression
+ * @param expression - The math expression to analyze
+ * @returns Object with max digits and operand lengths
+ */
+export function countOperandDigits(expression: string): { maxDigits: number; operand1: number; operand2: number } {
+  if (!expression) return { maxDigits: 0, operand1: 0, operand2: 0 };
+  
+  // Extract operands by splitting on operators
+  const parts = expression.split(/[+\-×*÷/\s=]/).filter(p => p.trim() && /^\d+$/.test(p.trim()));
+  
+  if (parts.length === 0) return { maxDigits: 0, operand1: 0, operand2: 0 };
+  
+  const operand1 = parts[0]?.length || 0;
+  const operand2 = parts[1]?.length || 0;
+  
+  return {
+    maxDigits: Math.max(operand1, operand2),
+    operand1,
+    operand2
+  };
+}
+
+/**
+ * Generate a fallback example with specified digit count
+ * @param operationType - The operation type
+ * @param minDigits - Minimum number of digits each operand should have
+ * @returns Example expression with appropriate digit count
+ */
+export function generateFallbackExampleWithDigits(
+  operationType: OperationType, 
+  minDigits: number = 2
+): string {
+  if (minDigits < 2) minDigits = 2;
+  
+  switch (operationType) {
+    case 'addition':
+      if (minDigits === 2) return '23 + 45 = 68';
+      if (minDigits === 3) return '123 + 456 = 579';
+      if (minDigits === 4) return '1234 + 5678 = 6912';
+      if (minDigits === 5) return '12345 + 67890 = 80235';
+      // For 6+ digits
+      const addA = '9'.repeat(minDigits);
+      const addB = '1'.repeat(minDigits);
+      const addSum = String(BigInt(addA) + BigInt(addB));
+      return `${addA} + ${addB} = ${addSum}`;
+      
+    case 'subtraction':
+      if (minDigits === 2) return '87 - 23 = 64';
+      if (minDigits === 3) return '654 - 321 = 333';
+      if (minDigits === 4) return '8765 - 4321 = 4444';
+      if (minDigits === 5) return '98765 - 12345 = 86420';
+      // For 6+ digits
+      const subA = '8'.repeat(minDigits);
+      const subB = '4'.repeat(minDigits);
+      const subDiff = String(BigInt(subA) - BigInt(subB));
+      return `${subA} - ${subB} = ${subDiff}`;
+      
+    case 'multiplication':
+      if (minDigits === 2) return '12 × 8 = 96';
+      if (minDigits === 3) return '234 × 56 = 13104';
+      if (minDigits === 4) return '2345 × 678 = 1589910';
+      if (minDigits === 5) return '12345 × 678 = 8369910';
+      // For 6+ digits, use simpler approach
+      return '123456 × 78 = 9629568';
+      
+    case 'division':
+      if (minDigits === 2) return '84 ÷ 7 = 12';
+      if (minDigits === 3) return '144 ÷ 12 = 12';
+      if (minDigits === 4) return '1155 ÷ 77 = 15';
+      if (minDigits === 5) return '12345 ÷ 823 = 15';
+      // For 6+ digits
+      return '123456 ÷ 823 = 150';
+      
+    default:
+      if (minDigits === 2) return '15 + 25 = 40';
+      return '123 + 456 = 579';
+  }
+}
+
+/**
  * Generate a fallback example for a given operation type
  * @param operationType - The operation type to generate an example for
  * @returns A simple example expression
  */
 export function generateFallbackExample(operationType: OperationType): string {
-  switch (operationType) {
-    case 'addition':
-      return '23 + 45 = 68';
-    case 'subtraction':
-      return '87 - 23 = 64';
-    case 'multiplication':
-      return '12 × 8 = 96';
-    case 'division':
-      return '84 ÷ 7 = 12';
-    default:
-      return '15 + 25 = 40'; // Default to addition
-  }
+  return generateFallbackExampleWithDigits(operationType, 2);
 }
 
 /**
@@ -127,19 +196,33 @@ export function validateExampleOperationType(
   studentOperation: OperationType;
   exampleOperation: OperationType;
   suggestedFix?: string;
+  reason?: string;
 } {
   const studentOp = detectOperationType(studentExercise);
   const exampleOp = detectOperationType(aiExample);
   
-  const isValid = studentOp.type === exampleOp.type && 
+  const isValidOperation = studentOp.type === exampleOp.type &&
                   studentOp.type !== 'unknown' && 
                   exampleOp.type !== 'unknown';
 
+  // Check digit count
+  const studentDigits = countOperandDigits(studentExercise);
+  const exampleDigits = countOperandDigits(aiExample);
+  
+  const digitCountValid = exampleDigits.maxDigits >= studentDigits.maxDigits;
+  
+  const overallValid = isValidOperation && digitCountValid;
+  
+  let reason = '';
+  if (!isValidOperation) reason = 'Different operation type';
+  else if (!digitCountValid) reason = `Example too short (${exampleDigits.maxDigits} vs ${studentDigits.maxDigits} digits)`;
+  
   return {
-    isValid,
+    isValid: overallValid,
     studentOperation: studentOp.type,
     exampleOperation: exampleOp.type,
-    suggestedFix: !isValid ? generateFallbackExample(studentOp.type) : undefined
+    suggestedFix: !overallValid ? generateFallbackExampleWithDigits(studentOp.type, studentDigits.maxDigits) : undefined,
+    reason
   };
 }
 

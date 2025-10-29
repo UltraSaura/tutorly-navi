@@ -18,10 +18,11 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 interface LoginFormProps {
   onSubmit: (data: LoginFormData) => Promise<void>;
+  onForgotPassword?: () => void;
   loading?: boolean;
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, loading = false }) => {
+export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onForgotPassword, loading = false }) => {
   const { t } = useTranslation();
 
   const {
@@ -70,6 +71,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, loading = false 
             {t('auth.signIn')}
           </Button>
         </form>
+
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={onForgotPassword}
+            className="text-sm text-primary hover:underline"
+            disabled={loading}
+          >
+            {t('auth.forgotPassword')}
+          </button>
+        </div>
       </CardContent>
     </Card>
   );

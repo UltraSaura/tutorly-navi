@@ -323,10 +323,11 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                               
                               // If validation fails, show warning and use fallback
                               if (!validation.isValid && validation.suggestedFix) {
-                                console.warn('[AIResponse] Operation type mismatch detected:', {
+                                console.warn('[AIResponse] Validation failed:', {
                                   studentExercise: question,
                                   studentOperation: getOperationTypeDisplay(validation.studentOperation),
                                   exampleOperation: getOperationTypeDisplay(validation.exampleOperation),
+                                  reason: validation.reason,
                                   suggestedFix: validation.suggestedFix
                                 });
                               }
@@ -341,7 +342,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                                   <div className="mt-2">
                                     {!validation.isValid && (
                                       <div className="mb-2 p-2 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200">
-                                        ⚠️ Example corrected to match {getOperationTypeDisplay(validation.studentOperation)} operation
+                                        ⚠️ Example corrected: {validation.reason || 'to match operation type'}
                                       </div>
                                     )}
                                     <CompactMathStepper 
@@ -352,10 +353,21 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                                 );
                               }
                               
-                              // Fallback to regular text
+                              // Fallback to regular text with validation correction
                               return (
                                 <div className="text-sm text-muted-foreground leading-relaxed">
-                                  {jsonResponse.sections.example}
+                                  {!validation.isValid && validation.suggestedFix ? (
+                                    <>
+                                      {validation.reason && (
+                                        <div className="mb-2 p-2 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200">
+                                          ⚠️ Example corrected: {validation.reason}
+                                        </div>
+                                      )}
+                                      {validation.suggestedFix}
+                                    </>
+                                  ) : (
+                                    jsonResponse.sections.example
+                                  )}
                                 </div>
                               );
                             })()}
