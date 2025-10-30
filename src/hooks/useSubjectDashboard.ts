@@ -19,7 +19,7 @@ export function useSubjectDashboard(subjectSlug: string) {
       const { data: { user } } = await supabase.auth.getUser();
 
       // Get subject
-      const { data: subject, error: subjectError } = await supabase
+      const { data: subject, error: subjectError } = await (supabase as any)
         .from('learning_subjects')
         .select('*')
         .eq('slug', subjectSlug)
@@ -29,7 +29,7 @@ export function useSubjectDashboard(subjectSlug: string) {
       if (subjectError) throw subjectError;
 
       // Get categories with topics
-      const { data: categories, error: categoriesError } = await supabase
+      const { data: categories, error: categoriesError } = await (supabase as any)
         .from('learning_categories')
         .select(`
           *,
@@ -48,7 +48,7 @@ export function useSubjectDashboard(subjectSlug: string) {
           (categories as any[]).map(async (category: any) => {
             const topicsWithProgress = await Promise.all(
               (category.topics || []).map(async (topic: any) => {
-                const { data: videos } = await supabase
+                const { data: videos } = await (supabase as any)
                   .from('learning_videos')
                   .select('id')
                   .eq('topic_id', topic.id)
@@ -60,7 +60,7 @@ export function useSubjectDashboard(subjectSlug: string) {
                   return { ...topic, completed_videos: 0, progress_percentage: 0 };
                 }
 
-                const { count: completedCount } = await supabase
+                const { count: completedCount } = await (supabase as any)
                   .from('user_learning_progress')
                   .select('video_id', { count: 'exact', head: true })
                   .eq('user_id', user.id)

@@ -15,7 +15,7 @@ export function useCoursePlaylist(topicSlug: string) {
       const { data: { user } } = await supabase.auth.getUser();
 
       // Get topic
-      const { data: topic, error: topicError } = await supabase
+      const { data: topic, error: topicError } = await (supabase as any)
         .from('learning_topics')
         .select('*')
         .eq('slug', topicSlug)
@@ -25,7 +25,7 @@ export function useCoursePlaylist(topicSlug: string) {
       if (topicError) throw topicError;
 
       // Get videos
-      const { data: videos, error: videosError } = await supabase
+      const { data: videos, error: videosError } = await (supabase as any)
         .from('learning_videos')
         .select('*')
         .eq('topic_id', (topic as any).id)
@@ -39,7 +39,7 @@ export function useCoursePlaylist(topicSlug: string) {
       let featuredVideo = (videos as any[])[0] || null;
 
       if (user && videos && videos.length > 0) {
-        const { data: progress } = await supabase
+        const { data: progress } = await (supabase as any)
           .from('user_learning_progress')
           .select('*')
           .eq('user_id', user.id)

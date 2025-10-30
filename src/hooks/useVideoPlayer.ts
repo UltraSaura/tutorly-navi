@@ -15,7 +15,7 @@ export function useVideoPlayer(videoId: string) {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { data: video, error: videoError } = await supabase
+      const { data: video, error: videoError } = await (supabase as any)
         .from('learning_videos')
         .select('*')
         .eq('id', videoId)
@@ -23,7 +23,7 @@ export function useVideoPlayer(videoId: string) {
 
       if (videoError) throw videoError;
 
-      const { data: quizzes, error: quizzesError } = await supabase
+      const { data: quizzes, error: quizzesError } = await (supabase as any)
         .from('video_quizzes')
         .select('*')
         .eq('video_id', videoId)
@@ -33,7 +33,7 @@ export function useVideoPlayer(videoId: string) {
 
       let progress: any = null;
       if (user) {
-        const { data: progressData } = await supabase
+        const { data: progressData } = await (supabase as any)
           .from('user_learning_progress')
           .select('*')
           .eq('user_id', user.id)
@@ -61,7 +61,7 @@ export function useVideoPlayer(videoId: string) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('user_learning_progress')
         .upsert({
           user_id: user.id,
@@ -70,7 +70,7 @@ export function useVideoPlayer(videoId: string) {
           last_watched_position_seconds: currentTime,
           progress_type: progressType,
           time_spent_seconds: currentTime,
-        } as any, {
+        }, {
           onConflict: 'user_id,video_id',
         });
 
@@ -93,14 +93,14 @@ export function useVideoPlayer(videoId: string) {
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user && isCorrect) {
-        await supabase
+        await (supabase as any)
           .from('user_learning_progress')
           .insert({
             user_id: user.id,
             video_id: videoId,
             progress_type: 'quiz_passed',
             quiz_score: 100,
-          } as any);
+          });
       }
 
       return { isCorrect, explanation: quiz.explanation, xpReward: isCorrect ? quiz.xp_reward : 0 };

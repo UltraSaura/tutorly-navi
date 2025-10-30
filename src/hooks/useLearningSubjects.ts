@@ -9,7 +9,7 @@ export function useLearningSubjects() {
       const { data: { user } } = await supabase.auth.getUser();
       
       // Get all active subjects
-      const { data: subjects, error } = await supabase
+      const { data: subjects, error } = await (supabase as any)
         .from('learning_subjects')
         .select('*')
         .eq('is_active', true)
@@ -30,24 +30,13 @@ export function useLearningSubjects() {
       const subjectProgress = await Promise.all(
         (subjects as any[]).map(async (subject: any) => {
           // Get total videos for this subject
-          const { count: totalVideos } = await supabase
+          const { count: totalVideos } = await (supabase as any)
             .from('learning_videos')
             .select('id', { count: 'exact', head: true })
-            .eq('is_active', true)
-            .in('topic_id', 
-              supabase
-                .from('learning_topics')
-                .select('id')
-                .in('category_id',
-                  supabase
-                    .from('learning_categories')
-                    .select('id')
-                    .eq('subject_id', subject.id)
-                ) as any
-            ) as any;
+            .eq('is_active', true);
 
           // Get completed videos
-          const { count: completedVideos } = await supabase
+          const { count: completedVideos } = await (supabase as any)
             .from('user_learning_progress')
             .select('video_id', { count: 'exact', head: true })
             .eq('user_id', user.id)
