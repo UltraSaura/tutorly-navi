@@ -5,6 +5,11 @@
     "retry": "Réessayer", 
     "cancel": "Annuler"
   },
+  "learning": {
+    "chooseSubject": "Choisissez votre matière",
+    "ready": "prêt",
+    "completed": "complété"
+  },
   "nav": {
     "tutor": "Tuteur",
     "homework": "Devoirs",

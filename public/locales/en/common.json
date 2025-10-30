@@ -1,4 +1,9 @@
 {
+  "learning": {
+    "chooseSubject": "Choose Your Subject",
+    "ready": "ready",
+    "completed": "completed"
+  },
   "common": {
     "selectSubject": "Choose a subject",
     "loading": "Loading...",

@@ -5,6 +5,11 @@
     "retry": "Retry",
     "cancel": "Cancel"
   },
+  "learning": {
+    "chooseSubject": "Choose Your Subject",
+    "ready": "ready",
+    "completed": "completed"
+  },
   "nav": {
     "tutor": "Tutor",
     "homework": "Homework", 

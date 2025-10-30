@@ -29,18 +29,64 @@ export function useLearningSubjects() {
       // Get progress for each subject
       const subjectProgress = await Promise.all(
         (subjects as any[]).map(async (subject: any) => {
-          // Get total videos for this subject
-          const { count: totalVideos } = await (supabase as any)
-            .from('learning_videos')
-            .select('id', { count: 'exact', head: true })
+          // Get topics for this subject through categories
+          const { data: categories } = await supabase
+            .from('learning_categories')
+            .select('id')
+            .eq('subject_id', subject.id)
             .eq('is_active', true);
 
-          // Get completed videos
-          const { count: completedVideos } = await (supabase as any)
+          const categoryIds = categories?.map(c => c.id) || [];
+
+          if (categoryIds.length === 0) {
+            return {
+              subject,
+              videos_ready: 0,
+              videos_completed: 0,
+              progress_percentage: 0,
+            };
+          }
+
+          const { data: topics } = await supabase
+            .from('learning_topics')
+            .select('id')
+            .in('category_id', categoryIds)
+            .eq('is_active', true);
+
+          const topicIds = topics?.map(t => t.id) || [];
+
+          if (topicIds.length === 0) {
+            return {
+              subject,
+              videos_ready: 0,
+              videos_completed: 0,
+              progress_percentage: 0,
+            };
+          }
+
+          // Get total videos for this subject's topics
+          const { count: totalVideos } = await supabase
+            .from('learning_videos')
+            .select('id', { count: 'exact', head: true })
+            .in('topic_id', topicIds)
+            .eq('is_active', true);
+
+          // Get video IDs for this subject
+          const { data: subjectVideos } = await supabase
+            .from('learning_videos')
+            .select('id')
+            .in('topic_id', topicIds)
+            .eq('is_active', true);
+
+          const videoIds = subjectVideos?.map(v => v.id) || [];
+
+          // Get completed videos for this subject
+          const { count: completedVideos } = videoIds.length > 0 ? await supabase
             .from('user_learning_progress')
             .select('video_id', { count: 'exact', head: true })
             .eq('user_id', user.id)
-            .eq('progress_type', 'video_completed');
+            .in('video_id', videoIds)
+            .eq('progress_type', 'video_completed') : { count: 0 };
 
           const progress = totalVideos ? Math.round((completedVideos || 0) / totalVideos * 100) : 0;
 

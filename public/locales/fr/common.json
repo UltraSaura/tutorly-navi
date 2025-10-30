@@ -1,4 +1,9 @@
 {
+  "learning": {
+    "chooseSubject": "Choisissez votre matière",
+    "ready": "prêt",
+    "completed": "complété"
+  },
   "common": {
     "selectSubject": "Choisir une matière",
     "loading": "Chargement...",

@@ -3,6 +3,7 @@ import { useLearningSubjects } from '@/hooks/useLearningSubjects';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
 
 const LearningPage = () => {
   const navigate = useNavigate();
@@ -38,7 +39,9 @@ const LearningPage = () => {
             onClick={() => navigate(`/learning/${subject.slug}`)}
           >
             <div className="p-6 flex items-center gap-6">
-              <div className="text-6xl flex-shrink-0">{subject.icon_name}</div>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${subject.color_scheme}30` }}>
+                <DynamicIcon name={subject.icon_name as any} className="w-10 h-10" style={{ color: subject.color_scheme }} />
+              </div>
               
               <div className="flex-1">
                 <h2 className="text-2xl font-semibold mb-2">{subject.name}</h2>
