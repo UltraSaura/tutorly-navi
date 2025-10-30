@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { useVideoPlayer } from '@/hooks/useVideoPlayer';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { isYouTubeUrl, extractYouTubeVideoId, getYouTubeEmbedUrl, loadYouTubeAPI } from '@/utils/youtube';
 
 interface InlineVideoPlayerProps {
   videoId: string;
@@ -16,12 +17,15 @@ interface InlineVideoPlayerProps {
 export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const youtubePlayerRef = useRef<any>(null);
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
   const [showQuiz, setShowQuiz] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [quizResult, setQuizResult] = useState<{ isCorrect: boolean; explanation: string } | null>(null);
+  const [isYouTube, setIsYouTube] = useState(false);
+  const [youtubeReady, setYoutubeReady] = useState(false);
 
   const {
     video,
@@ -40,8 +44,71 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
     containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
-  // Video event handlers
+  // Check if video is YouTube
   useEffect(() => {
+    if (video?.video_url) {
+      const isYT = isYouTubeUrl(video.video_url);
+      setIsYouTube(isYT);
+      
+      if (isYT) {
+        loadYouTubeAPI().then(() => setYoutubeReady(true));
+      }
+    }
+  }, [video?.video_url]);
+
+  // Initialize YouTube Player
+  useEffect(() => {
+    if (!isYouTube || !youtubeReady || !video?.video_url) return;
+
+    const videoIdYT = extractYouTubeVideoId(video.video_url);
+    if (!videoIdYT) return;
+
+    const player = new window.YT.Player('youtube-player', {
+      videoId: videoIdYT,
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        modestbranding: 1,
+        rel: 0,
+        start: video.last_watched_position_seconds || 0,
+      },
+      events: {
+        onReady: (event: any) => {
+          youtubePlayerRef.current = event.target;
+          setDuration(event.target.getDuration());
+        },
+        onStateChange: (event: any) => {
+          if (event.data === window.YT.PlayerState.PLAYING) {
+            setIsPlaying(true);
+          } else if (event.data === window.YT.PlayerState.PAUSED) {
+            setIsPlaying(false);
+          }
+        },
+      },
+    });
+
+    // Poll for current time
+    const interval = setInterval(() => {
+      if (youtubePlayerRef.current && youtubePlayerRef.current.getCurrentTime) {
+        const time = youtubePlayerRef.current.getCurrentTime();
+        setCurrentTime(time);
+        if (duration > 0) {
+          updateProgress(time, duration);
+        }
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      if (youtubePlayerRef.current && youtubePlayerRef.current.destroy) {
+        youtubePlayerRef.current.destroy();
+      }
+    };
+  }, [isYouTube, youtubeReady, video, duration, setCurrentTime, updateProgress, setIsPlaying]);
+
+  // HTML5 Video event handlers (for non-YouTube videos)
+  useEffect(() => {
+    if (isYouTube) return;
     const videoElement = videoRef.current;
     if (!videoElement) return;
 
@@ -75,20 +142,30 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
       videoElement.removeEventListener('play', handlePlay);
       videoElement.removeEventListener('pause', handlePause);
     };
-  }, [duration, updateProgress, setCurrentTime, setIsPlaying, video?.progress_percentage, video?.last_watched_position_seconds]);
+  }, [isYouTube, duration, updateProgress, setCurrentTime, setIsPlaying, video?.progress_percentage, video?.last_watched_position_seconds]);
 
   // Quiz trigger
   useEffect(() => {
     if (currentQuiz && isPlaying && !showQuiz) {
       setShowQuiz(true);
-      videoRef.current?.pause();
+      if (isYouTube && youtubePlayerRef.current) {
+        youtubePlayerRef.current.pauseVideo();
+      } else {
+        videoRef.current?.pause();
+      }
       setSelectedAnswer(null);
       setQuizResult(null);
     }
-  }, [currentQuiz, isPlaying, showQuiz]);
+  }, [currentQuiz, isPlaying, showQuiz, isYouTube]);
 
   const togglePlayPause = () => {
-    if (videoRef.current) {
+    if (isYouTube && youtubePlayerRef.current) {
+      if (isPlaying) {
+        youtubePlayerRef.current.pauseVideo();
+      } else {
+        youtubePlayerRef.current.playVideo();
+      }
+    } else if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
       } else {
@@ -98,21 +175,39 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
   };
 
   const handleSeek = (value: number[]) => {
-    if (videoRef.current) {
+    if (isYouTube && youtubePlayerRef.current) {
+      youtubePlayerRef.current.seekTo(value[0], true);
+      setCurrentTime(value[0]);
+    } else if (videoRef.current) {
       videoRef.current.currentTime = value[0];
       setCurrentTime(value[0]);
     }
   };
 
   const toggleMute = () => {
-    if (videoRef.current) {
+    if (isYouTube && youtubePlayerRef.current) {
+      if (isMuted) {
+        youtubePlayerRef.current.unMute();
+      } else {
+        youtubePlayerRef.current.mute();
+      }
+      setIsMuted(!isMuted);
+    } else if (videoRef.current) {
       videoRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
     }
   };
 
   const handleVolumeChange = (value: number[]) => {
-    if (videoRef.current) {
+    if (isYouTube && youtubePlayerRef.current) {
+      youtubePlayerRef.current.setVolume(value[0] * 100);
+      setVolume(value[0]);
+      if (value[0] === 0) {
+        setIsMuted(true);
+      } else if (isMuted) {
+        setIsMuted(false);
+      }
+    } else if (videoRef.current) {
       videoRef.current.volume = value[0];
       setVolume(value[0]);
       if (value[0] === 0) {
@@ -124,7 +219,9 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
   };
 
   const handleFullscreen = () => {
-    videoRef.current?.requestFullscreen();
+    if (containerRef.current) {
+      containerRef.current.requestFullscreen();
+    }
   };
 
   const handleQuizSubmit = async () => {
@@ -138,7 +235,11 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
     setShowQuiz(false);
     setSelectedAnswer(null);
     setQuizResult(null);
-    videoRef.current?.play();
+    if (isYouTube && youtubePlayerRef.current) {
+      youtubePlayerRef.current.playVideo();
+    } else {
+      videoRef.current?.play();
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -172,12 +273,16 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
       <Card ref={containerRef} className="w-full overflow-hidden">
         <div className="relative bg-black">
           <AspectRatio ratio={16 / 9}>
-            <video
-              ref={videoRef}
-              src={video.video_url}
-              className="w-full h-full"
-              playsInline
-            />
+            {isYouTube ? (
+              <div id="youtube-player" className="w-full h-full" />
+            ) : (
+              <video
+                ref={videoRef}
+                src={video.video_url}
+                className="w-full h-full"
+                playsInline
+              />
+            )}
           </AspectRatio>
 
           {/* Video Controls Overlay */}
