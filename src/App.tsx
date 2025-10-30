@@ -39,6 +39,7 @@ import SubjectManagement from "./components/admin/SubjectManagement";
 import UserManagement from "./components/admin/UserManagement";
 import PromptManagement from "./components/admin/PromptManagement";
 import ConnectionDiagnostics from "./components/admin/ConnectionDiagnostics";
+import LearningContentManagement from "./components/admin/LearningContentManagement";
 
 // Auth Pages  
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -132,6 +133,7 @@ const App = () => {
                           <Route path="subjects" element={<SubjectManagement />} />
                           <Route path="users" element={<UserManagement />} />
                           <Route path="prompts" element={<PromptManagement />} />
+                          <Route path="learning" element={<LearningContentManagement />} />
                         </Route>
                         
           {/* Guardian Portal Routes */}

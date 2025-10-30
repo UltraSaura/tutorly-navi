@@ -13,7 +13,7 @@ type IconName =
   | 'pencil' | 'palette' | 'music' | 'stethoscope';
 
 interface DynamicIconProps extends LucideProps {
-  name: IconName;
+  name: string;
 }
 
 const iconComponents = {
@@ -34,7 +34,12 @@ const iconComponents = {
 };
 
 export const DynamicIcon: React.FC<DynamicIconProps> = ({ name, ...props }) => {
-  const IconComponent = iconComponents[name];
+  // Check if it's an emoji (single character that's not alphanumeric)
+  if (name.length <= 2 && !/^[a-zA-Z0-9-]+$/.test(name)) {
+    return <span className={props.className} style={{ fontSize: props.size || 24 }}>{name}</span>;
+  }
+  
+  const IconComponent = iconComponents[name as IconName];
   
   if (!IconComponent) {
     return <Book {...props} />;

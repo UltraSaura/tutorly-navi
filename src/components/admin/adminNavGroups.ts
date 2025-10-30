@@ -1,5 +1,5 @@
 
-import { Settings, Book, Users, Wifi } from "lucide-react";
+import { Settings, Book, Users, Wifi, GraduationCap } from "lucide-react";
 
 export const adminNavGroups = [
   {
@@ -30,6 +30,11 @@ export const adminNavGroups = [
         path: '/admin/prompts',
         iconName: 'Settings',
       },
+      {
+        title: 'Learning Content',
+        path: '/admin/learning',
+        iconName: 'GraduationCap',
+      },
     ],
   }
 ];
@@ -38,5 +43,6 @@ export const iconMap = {
   Settings,
   Book,
   Users,
-  Wifi
+  Wifi,
+  GraduationCap
 };
