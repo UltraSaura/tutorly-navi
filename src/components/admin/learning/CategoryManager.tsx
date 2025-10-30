@@ -14,9 +14,9 @@ import { DynamicIcon } from '../subjects/DynamicIcon';
 import type { Category } from '@/types/learning';
 
 const CategoryManager = () => {
-  const { data: subjects = [] } = useLearningSubjects();
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
-  const { data: categories = [], isLoading } = useLearningCategories(selectedSubjectId || undefined);
+  const { data: subjects = [], isLoading: subjectsLoading, error: subjectsError } = useLearningSubjects();
+  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useLearningCategories(selectedSubjectId || undefined);
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
@@ -79,8 +79,16 @@ const CategoryManager = () => {
     });
   };
 
-  if (isLoading) {
-    return <div>Loading categories...</div>;
+  if (subjectsError) {
+    return <div className="text-destructive">Error loading subjects: {subjectsError.message}</div>;
+  }
+
+  if (categoriesError) {
+    return <div className="text-destructive">Error loading categories: {categoriesError.message}</div>;
+  }
+
+  if (subjectsLoading) {
+    return <div className="text-muted-foreground">Loading subjects...</div>;
   }
 
   return (
@@ -180,13 +188,12 @@ const CategoryManager = () => {
       </div>
 
       <div className="mb-4">
-        <Label>Filter by Subject</Label>
+        <Label>Select Subject</Label>
         <Select value={selectedSubjectId} onValueChange={setSelectedSubjectId}>
           <SelectTrigger>
-            <SelectValue placeholder="All subjects" />
+            <SelectValue placeholder="Select a subject to view categories" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All subjects</SelectItem>
             {subjects.map((subject) => (
               <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>
             ))}
@@ -194,20 +201,36 @@ const CategoryManager = () => {
         </Select>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Icon</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Slug</TableHead>
-            <TableHead>Subject</TableHead>
-            <TableHead>Order</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {categories.map((category) => (
+      {!selectedSubjectId ? (
+        <div className="text-center py-12 text-muted-foreground">
+          Select a subject above to view and manage categories
+        </div>
+      ) : categoriesLoading ? (
+        <div className="text-center py-12 text-muted-foreground">
+          Loading categories...
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Icon</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Slug</TableHead>
+              <TableHead>Subject</TableHead>
+              <TableHead>Order</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {categories.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  No categories found for this subject
+                </TableCell>
+              </TableRow>
+            ) : (
+              categories.map((category) => (
             <TableRow key={category.id}>
               <TableCell>
                 <DynamicIcon name={category.icon_name} className="w-6 h-6" />
@@ -231,10 +254,11 @@ const CategoryManager = () => {
                   </Button>
                 </div>
               </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+              </TableRow>
+            )))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 };

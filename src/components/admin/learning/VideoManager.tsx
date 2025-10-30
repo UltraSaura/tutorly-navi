@@ -12,9 +12,9 @@ import { useLearningTopics, useLearningVideos, useCreateVideo, useUpdateVideo, u
 import type { Video } from '@/types/learning';
 
 const VideoManager = () => {
-  const { data: topics = [] } = useLearningTopics();
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
-  const { data: videos = [], isLoading } = useLearningVideos(selectedTopicId || undefined);
+  const { data: topics = [], isLoading: topicsLoading, error: topicsError } = useLearningTopics();
+  const { data: videos = [], isLoading: videosLoading, error: videosError } = useLearningVideos(selectedTopicId || undefined);
   const createVideo = useCreateVideo();
   const updateVideo = useUpdateVideo();
   const deleteVideo = useDeleteVideo();
@@ -86,8 +86,16 @@ const VideoManager = () => {
     });
   };
 
-  if (isLoading) {
-    return <div>Loading videos...</div>;
+  if (topicsError) {
+    return <div className="text-destructive">Error loading topics: {topicsError.message}</div>;
+  }
+
+  if (videosError) {
+    return <div className="text-destructive">Error loading videos: {videosError.message}</div>;
+  }
+
+  if (topicsLoading) {
+    return <div className="text-muted-foreground">Loading topics...</div>;
   }
 
   return (
@@ -220,13 +228,12 @@ const VideoManager = () => {
       </div>
 
       <div className="mb-4">
-        <Label>Filter by Topic</Label>
+        <Label>Select Topic</Label>
         <Select value={selectedTopicId} onValueChange={setSelectedTopicId}>
           <SelectTrigger>
-            <SelectValue placeholder="All topics" />
+            <SelectValue placeholder="Select a topic to view videos" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All topics</SelectItem>
             {topics.map((topic) => (
               <SelectItem key={topic.id} value={topic.id}>{topic.name}</SelectItem>
             ))}
@@ -234,20 +241,36 @@ const VideoManager = () => {
         </Select>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Topic</TableHead>
-            <TableHead>Duration</TableHead>
-            <TableHead>XP</TableHead>
-            <TableHead>Order</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {videos.map((video) => (
+      {!selectedTopicId ? (
+        <div className="text-center py-12 text-muted-foreground">
+          Select a topic above to view and manage videos
+        </div>
+      ) : videosLoading ? (
+        <div className="text-center py-12 text-muted-foreground">
+          Loading videos...
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Topic</TableHead>
+              <TableHead>Duration</TableHead>
+              <TableHead>XP</TableHead>
+              <TableHead>Order</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {videos.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  No videos found for this topic
+                </TableCell>
+              </TableRow>
+            ) : (
+              videos.map((video) => (
             <TableRow key={video.id}>
               <TableCell className="font-medium">{video.title}</TableCell>
               <TableCell>{topics.find(t => t.id === video.topic_id)?.name}</TableCell>
@@ -269,10 +292,11 @@ const VideoManager = () => {
                   </Button>
                 </div>
               </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+              </TableRow>
+            )))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 };

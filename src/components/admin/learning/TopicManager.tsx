@@ -12,9 +12,9 @@ import { useLearningCategories, useLearningTopics, useCreateTopic, useUpdateTopi
 import type { Topic } from '@/types/learning';
 
 const TopicManager = () => {
-  const { data: categories = [] } = useLearningCategories();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  const { data: topics = [], isLoading } = useLearningTopics(selectedCategoryId || undefined);
+  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useLearningCategories();
+  const { data: topics = [], isLoading: topicsLoading, error: topicsError } = useLearningTopics(selectedCategoryId || undefined);
   const createTopic = useCreateTopic();
   const updateTopic = useUpdateTopic();
   const deleteTopic = useDeleteTopic();
@@ -83,8 +83,16 @@ const TopicManager = () => {
     });
   };
 
-  if (isLoading) {
-    return <div>Loading topics...</div>;
+  if (categoriesError) {
+    return <div className="text-destructive">Error loading categories: {categoriesError.message}</div>;
+  }
+
+  if (topicsError) {
+    return <div className="text-destructive">Error loading topics: {topicsError.message}</div>;
+  }
+
+  if (categoriesLoading) {
+    return <div className="text-muted-foreground">Loading categories...</div>;
   }
 
   return (
@@ -207,13 +215,12 @@ const TopicManager = () => {
       </div>
 
       <div className="mb-4">
-        <Label>Filter by Category</Label>
+        <Label>Select Category</Label>
         <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
           <SelectTrigger>
-            <SelectValue placeholder="All categories" />
+            <SelectValue placeholder="Select a category to view topics" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All categories</SelectItem>
             {categories.map((category) => (
               <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
             ))}
@@ -221,21 +228,37 @@ const TopicManager = () => {
         </Select>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Videos</TableHead>
-            <TableHead>Quizzes</TableHead>
-            <TableHead>Duration</TableHead>
-            <TableHead>Order</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {topics.map((topic) => (
+      {!selectedCategoryId ? (
+        <div className="text-center py-12 text-muted-foreground">
+          Select a category above to view and manage topics
+        </div>
+      ) : topicsLoading ? (
+        <div className="text-center py-12 text-muted-foreground">
+          Loading topics...
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Videos</TableHead>
+              <TableHead>Quizzes</TableHead>
+              <TableHead>Duration</TableHead>
+              <TableHead>Order</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {topics.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
+                  No topics found for this category
+                </TableCell>
+              </TableRow>
+            ) : (
+              topics.map((topic) => (
             <TableRow key={topic.id}>
               <TableCell className="font-medium">{topic.name}</TableCell>
               <TableCell>{categories.find(c => c.id === topic.category_id)?.name}</TableCell>
@@ -258,10 +281,11 @@ const TopicManager = () => {
                   </Button>
                 </div>
               </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+              </TableRow>
+            )))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 };

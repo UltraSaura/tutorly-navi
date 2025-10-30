@@ -11,9 +11,9 @@ import { useLearningVideos, useLearningQuizzes, useCreateQuiz, useUpdateQuiz, us
 import type { Quiz } from '@/types/learning';
 
 const QuizManager = () => {
-  const { data: videos = [] } = useLearningVideos();
   const [selectedVideoId, setSelectedVideoId] = useState<string>('');
-  const { data: quizzes = [], isLoading } = useLearningQuizzes(selectedVideoId || undefined);
+  const { data: videos = [], isLoading: videosLoading, error: videosError } = useLearningVideos();
+  const { data: quizzes = [], isLoading: quizzesLoading, error: quizzesError } = useLearningQuizzes(selectedVideoId || undefined);
   const createQuiz = useCreateQuiz();
   const updateQuiz = useUpdateQuiz();
   const deleteQuiz = useDeleteQuiz();
@@ -82,6 +82,18 @@ const QuizManager = () => {
     });
   };
 
+  if (videosError) {
+    return <div className="text-destructive">Error loading videos: {videosError.message}</div>;
+  }
+
+  if (quizzesError) {
+    return <div className="text-destructive">Error loading quizzes: {quizzesError.message}</div>;
+  }
+
+  if (videosLoading) {
+    return <div className="text-muted-foreground">Loading videos...</div>;
+  }
+
   const addOption = () => {
     setFormData({ ...formData, options: [...formData.options, ''] });
   };
@@ -100,10 +112,6 @@ const QuizManager = () => {
     newOptions[index] = value;
     setFormData({ ...formData, options: newOptions });
   };
-
-  if (isLoading) {
-    return <div>Loading quizzes...</div>;
-  }
 
   return (
     <div className="space-y-4">
@@ -247,13 +255,12 @@ const QuizManager = () => {
       </div>
 
       <div className="mb-4">
-        <Label>Filter by Video</Label>
+        <Label>Select Video</Label>
         <Select value={selectedVideoId} onValueChange={setSelectedVideoId}>
           <SelectTrigger>
-            <SelectValue placeholder="All videos" />
+            <SelectValue placeholder="Select a video to view quizzes" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All videos</SelectItem>
             {videos.map((video) => (
               <SelectItem key={video.id} value={video.id}>{video.title}</SelectItem>
             ))}
@@ -261,19 +268,35 @@ const QuizManager = () => {
         </Select>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Question</TableHead>
-            <TableHead>Video</TableHead>
-            <TableHead>Timestamp</TableHead>
-            <TableHead>XP</TableHead>
-            <TableHead>Order</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {quizzes.map((quiz) => (
+      {!selectedVideoId ? (
+        <div className="text-center py-12 text-muted-foreground">
+          Select a video above to view and manage quizzes
+        </div>
+      ) : quizzesLoading ? (
+        <div className="text-center py-12 text-muted-foreground">
+          Loading quizzes...
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Question</TableHead>
+              <TableHead>Video</TableHead>
+              <TableHead>Timestamp</TableHead>
+              <TableHead>XP</TableHead>
+              <TableHead>Order</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {quizzes.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  No quizzes found for this video
+                </TableCell>
+              </TableRow>
+            ) : (
+              quizzes.map((quiz) => (
             <TableRow key={quiz.id}>
               <TableCell className="font-medium max-w-md truncate">{quiz.question}</TableCell>
               <TableCell>{videos.find(v => v.id === quiz.video_id)?.title}</TableCell>
@@ -290,10 +313,11 @@ const QuizManager = () => {
                   </Button>
                 </div>
               </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+              </TableRow>
+            )))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 };
