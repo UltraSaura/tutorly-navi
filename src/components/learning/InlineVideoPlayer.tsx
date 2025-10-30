@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { X, Play, Pause, Volume2, VolumeX, Maximize, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { MathRenderer } from '@/components/math/MathRenderer';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { isYouTubeUrl, extractYouTubeVideoId, getYouTubeWatchUrl, loadYouTubeAPI } from '@/utils/youtube';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface InlineVideoPlayerProps {
   videoId: string;
@@ -33,6 +34,8 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
   const [youtubeReady, setYoutubeReady] = useState(false);
   const [ytError, setYtError] = useState<number | null>(null);
   const [playerReady, setPlayerReady] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
     video,
@@ -49,6 +52,25 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
   // Scroll to player when mounted
   useEffect(() => {
     containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
+  // Manage control visibility based on play state
+  useEffect(() => {
+    if (!isPlaying) {
+      setShowControls(true);
+      if (hideControlsTimeoutRef.current) {
+        clearTimeout(hideControlsTimeoutRef.current);
+      }
+    }
+  }, [isPlaying]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hideControlsTimeoutRef.current) {
+        clearTimeout(hideControlsTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Check if video is YouTube
@@ -352,6 +374,20 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const showControlsTemporarily = useCallback(() => {
+    setShowControls(true);
+    
+    if (hideControlsTimeoutRef.current) {
+      clearTimeout(hideControlsTimeoutRef.current);
+    }
+    
+    if (isPlaying) {
+      hideControlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    }
+  }, [isPlaying]);
+
   if (isLoading) {
     return (
       <Card ref={containerRef} className="w-full p-6">
@@ -375,7 +411,25 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
   return (
     <>
       <Card ref={containerRef} className="w-full overflow-hidden">
-        <div className="relative bg-black">
+        <div 
+          className={cn(
+            "relative bg-black",
+            !showControls && isPlaying && "cursor-none"
+          )}
+          onMouseMove={showControlsTemporarily}
+          onMouseEnter={showControlsTemporarily}
+          onMouseLeave={() => {
+            if (isPlaying) {
+              if (hideControlsTimeoutRef.current) {
+                clearTimeout(hideControlsTimeoutRef.current);
+              }
+              hideControlsTimeoutRef.current = setTimeout(() => {
+                setShowControls(false);
+              }, 1000);
+            }
+          }}
+          onTouchStart={showControlsTemporarily}
+        >
           <AspectRatio ratio={16 / 9}>
             {isYouTube ? (
               <>
@@ -432,8 +486,13 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
             )}
           </AspectRatio>
 
-          {/* Video Controls Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 space-y-2">
+            {/* Video Controls Overlay */}
+            <div 
+              className={cn(
+                "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 space-y-2 transition-opacity duration-300",
+                showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+              )}
+            >
             {/* Progress Bar */}
             <div className="flex items-center gap-2">
               <span className="text-white text-sm">{formatTime(currentTime)}</span>
