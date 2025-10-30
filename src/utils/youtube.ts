@@ -31,6 +31,10 @@ export function getYouTubeEmbedUrl(videoId: string): string {
   return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}`;
 }
 
+export function getYouTubeWatchUrl(videoId: string): string {
+  return `https://www.youtube.com/watch?v=${videoId}`;
+}
+
 // Declare YouTube IFrame Player API types
 declare global {
   interface Window {

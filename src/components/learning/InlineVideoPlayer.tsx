@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { X, Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react';
+import { X, Play, Pause, Volume2, VolumeX, Maximize, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -7,7 +7,8 @@ import { Progress } from '@/components/ui/progress';
 import { useVideoPlayer } from '@/hooks/useVideoPlayer';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { isYouTubeUrl, extractYouTubeVideoId, getYouTubeEmbedUrl, loadYouTubeAPI } from '@/utils/youtube';
+import { isYouTubeUrl, extractYouTubeVideoId, getYouTubeWatchUrl, loadYouTubeAPI } from '@/utils/youtube';
+import { toast } from 'sonner';
 
 interface InlineVideoPlayerProps {
   videoId: string;
@@ -20,6 +21,8 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
   const youtubePlayerRef = useRef<any>(null);
   const youtubeContainerRef = useRef<HTMLDivElement>(null);
   const playerInitializedRef = useRef(false);
+  const triedNoCookieRef = useRef(false);
+  const pollingIntervalRef = useRef<number | null>(null);
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
@@ -28,6 +31,8 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
   const [quizResult, setQuizResult] = useState<{ isCorrect: boolean; explanation: string } | null>(null);
   const [isYouTube, setIsYouTube] = useState(false);
   const [youtubeReady, setYoutubeReady] = useState(false);
+  const [ytError, setYtError] = useState<number | null>(null);
+  const [playerReady, setPlayerReady] = useState(false);
 
   const {
     video,
@@ -61,7 +66,7 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
   // Initialize YouTube Player
   useEffect(() => {
     if (!isYouTube || !youtubeReady || !video?.video_url || !youtubeContainerRef.current) return;
-    if (playerInitializedRef.current) return; // Prevent double initialization
+    if (playerInitializedRef.current) return;
 
     const videoIdYT = extractYouTubeVideoId(video.video_url);
     if (!videoIdYT) return;
@@ -69,53 +74,122 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
     console.log('Initializing YouTube Player with video ID:', videoIdYT);
     playerInitializedRef.current = true;
 
-    const player = new window.YT.Player(youtubeContainerRef.current, {
-      videoId: videoIdYT,
-      playerVars: {
-        autoplay: 0,
-        controls: 0,
-        modestbranding: 1,
-        rel: 0,
-        start: video.last_watched_position_seconds || 0,
-      },
-      events: {
-        onReady: (event: any) => {
-          console.log('YouTube Player ready');
-          youtubePlayerRef.current = event.target;
-          setDuration(event.target.getDuration());
+    const initPlayer = (useNoCookie = false) => {
+      const playerConfig: any = {
+        videoId: videoIdYT,
+        width: '100%',
+        height: '100%',
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+          modestbranding: 1,
+          rel: 0,
+          playsinline: 1,
+          fs: 1,
+          iv_load_policy: 3,
+          start: Math.floor(video.last_watched_position_seconds || 0),
         },
-        onStateChange: (event: any) => {
-          if (event.data === window.YT.PlayerState.PLAYING) {
-            setIsPlaying(true);
-          } else if (event.data === window.YT.PlayerState.PAUSED) {
-            setIsPlaying(false);
-          }
-        },
-        onError: (event: any) => {
-          console.error('YouTube Player error:', event.data);
-        },
-      },
-    });
+        events: {
+          onReady: (event: any) => {
+            console.log('YouTube Player ready');
+            youtubePlayerRef.current = event.target;
+            const videoDuration = event.target.getDuration();
+            setDuration(videoDuration);
+            setPlayerReady(true);
+            
+            // Set iframe attributes for better compatibility
+            try {
+              const iframe = event.target.getIframe?.();
+              if (iframe) {
+                iframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media');
+              }
+            } catch (e) {
+              console.warn('Could not set iframe attributes:', e);
+            }
 
-    // Poll for current time
-    const interval = setInterval(() => {
-      if (youtubePlayerRef.current && youtubePlayerRef.current.getCurrentTime) {
-        const time = youtubePlayerRef.current.getCurrentTime();
-        setCurrentTime(time);
-        if (duration > 0) {
-          updateProgress(time, duration);
-        }
+            // Seek to last position if available
+            if (video.last_watched_position_seconds && video.last_watched_position_seconds > 0) {
+              event.target.seekTo(video.last_watched_position_seconds, true);
+            }
+
+            // Start polling after player is ready
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+            }
+            
+            pollingIntervalRef.current = window.setInterval(() => {
+              if (youtubePlayerRef.current?.getCurrentTime) {
+                const time = youtubePlayerRef.current.getCurrentTime();
+                setCurrentTime(time);
+                
+                // Refresh duration if it's 0
+                const currentDuration = youtubePlayerRef.current.getDuration();
+                if (currentDuration > 0 && duration === 0) {
+                  setDuration(currentDuration);
+                }
+                
+                if (currentDuration > 0) {
+                  updateProgress(time, currentDuration);
+                }
+              }
+            }, 1000);
+          },
+          onStateChange: (event: any) => {
+            if (event.data === window.YT.PlayerState.PLAYING) {
+              setIsPlaying(true);
+            } else if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.ENDED) {
+              setIsPlaying(false);
+            }
+          },
+          onError: (event: any) => {
+            console.error('YouTube Player error:', event.data);
+            setYtError(event.data);
+            
+            // Error codes: 2=invalid param, 5=HTML5 error, 100=not found, 101/150=embedding disabled
+            if ((event.data === 101 || event.data === 150) && !triedNoCookieRef.current) {
+              toast.error('Video embedding restricted. Trying privacy mode...');
+              triedNoCookieRef.current = true;
+              
+              // Destroy and retry with youtube-nocookie
+              if (youtubePlayerRef.current?.destroy) {
+                youtubePlayerRef.current.destroy();
+              }
+              playerInitializedRef.current = false;
+              
+              setTimeout(() => {
+                if (youtubeContainerRef.current) {
+                  initPlayer(true);
+                }
+              }, 500);
+            } else if (event.data === 101 || event.data === 150) {
+              toast.error('This video cannot be embedded. Use "Open on YouTube" to watch.');
+            } else {
+              toast.error(`Video playback error (code ${event.data})`);
+            }
+          },
+        },
+      };
+
+      if (useNoCookie) {
+        playerConfig.host = 'https://www.youtube-nocookie.com';
       }
-    }, 1000);
+
+      new window.YT.Player(youtubeContainerRef.current, playerConfig);
+    };
+
+    initPlayer();
 
     return () => {
-      clearInterval(interval);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
       playerInitializedRef.current = false;
-      if (youtubePlayerRef.current && youtubePlayerRef.current.destroy) {
+      if (youtubePlayerRef.current?.destroy) {
         youtubePlayerRef.current.destroy();
       }
     };
-  }, [isYouTube, youtubeReady, video?.video_url, duration, setCurrentTime, updateProgress, setIsPlaying]);
+  }, [isYouTube, youtubeReady, video?.video_url, video?.last_watched_position_seconds]);
 
   // HTML5 Video event handlers (for non-YouTube videos)
   useEffect(() => {
@@ -174,7 +248,26 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
       if (isPlaying) {
         youtubePlayerRef.current.pauseVideo();
       } else {
-        youtubePlayerRef.current.playVideo();
+        const state = youtubePlayerRef.current.getPlayerState();
+        // States: -1=UNSTARTED, 0=ENDED, 1=PLAYING, 2=PAUSED, 3=BUFFERING, 5=CUED
+        if (state === -1 || state === 5) {
+          // Try to start video from cued/unstarted state
+          youtubePlayerRef.current.playVideo();
+          
+          // Fallback: if still not playing after a moment, try cueVideoById
+          setTimeout(() => {
+            const newState = youtubePlayerRef.current?.getPlayerState();
+            if (newState !== 1 && newState !== 3) {
+              const videoIdYT = extractYouTubeVideoId(video?.video_url || '');
+              if (videoIdYT) {
+                youtubePlayerRef.current.cueVideoById(videoIdYT, currentTime);
+                youtubePlayerRef.current.playVideo();
+              }
+            }
+          }, 500);
+        } else {
+          youtubePlayerRef.current.playVideo();
+        }
       }
     } else if (videoRef.current) {
       if (isPlaying) {
@@ -285,7 +378,50 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
         <div className="relative bg-black">
           <AspectRatio ratio={16 / 9}>
             {isYouTube ? (
-              <div ref={youtubeContainerRef} className="w-full h-full" />
+              <>
+                <div ref={youtubeContainerRef} className="w-full h-full" />
+                
+                {/* Loading overlay for YouTube */}
+                {!playerReady && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                    <div className="text-center space-y-2">
+                      <Loader2 className="h-8 w-8 animate-spin text-white mx-auto" />
+                      <p className="text-white text-sm">Initializing player...</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error overlay for YouTube */}
+                {ytError && (ytError === 101 || ytError === 150) && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-6">
+                    <Card className="max-w-md p-6 space-y-4">
+                      <div className="space-y-2">
+                        <h3 className="font-semibold text-lg">Video Playback Restricted</h3>
+                        <p className="text-sm text-muted-foreground">
+                          This video can't be played here due to the owner's embedding settings.
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => {
+                            const videoIdYT = extractYouTubeVideoId(video.video_url);
+                            if (videoIdYT) {
+                              window.open(getYouTubeWatchUrl(videoIdYT), '_blank');
+                            }
+                          }}
+                          className="flex-1"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Open on YouTube
+                        </Button>
+                        <Button variant="outline" onClick={onClose}>
+                          Close
+                        </Button>
+                      </div>
+                    </Card>
+                  </div>
+                )}
+              </>
             ) : (
               <video
                 ref={videoRef}
