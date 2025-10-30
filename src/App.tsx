@@ -28,6 +28,10 @@ const TokensPreview = lazy(() => import("./pages/TokensPreview"));
 const GamePreview = lazy(() => import("./pages/GamePreview"));
 const ExerciseHistoryPage = lazy(() => import("./pages/ExerciseHistoryPage"));
 const GeneralChatPage = lazy(() => import("./pages/GeneralChatPage"));
+const LearningPage = lazy(() => import("./pages/learning/LearningPage"));
+const SubjectDashboardPage = lazy(() => import("./pages/learning/SubjectDashboardPage"));
+const CoursePlaylistPage = lazy(() => import("./pages/learning/CoursePlaylistPage"));
+const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
 
 // Admin Pages
 import AIModelManagement from "./components/admin/AIModelManagement";
