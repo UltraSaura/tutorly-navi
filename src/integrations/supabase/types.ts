@@ -22,7 +22,7 @@ export type Database = {
           created_at: string
           details: Json | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           metadata: Json | null
           target_id: string | null
           target_table: string | null
@@ -34,7 +34,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           metadata?: Json | null
           target_id?: string | null
           target_table?: string | null
@@ -46,7 +46,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           metadata?: Json | null
           target_id?: string | null
           target_table?: string | null
@@ -540,6 +540,198 @@ export type Database = {
           },
         ]
       }
+      learning_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon_name: string
+          id: string
+          is_active: boolean
+          name: string
+          order_index: number
+          slug: string
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon_name: string
+          id?: string
+          is_active?: boolean
+          name: string
+          order_index?: number
+          slug: string
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon_name?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          order_index?: number
+          slug?: string
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_categories_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "learning_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_subjects: {
+        Row: {
+          color_scheme: string
+          created_at: string
+          icon_name: string
+          id: string
+          is_active: boolean
+          name: string
+          order_index: number
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          color_scheme: string
+          created_at?: string
+          icon_name: string
+          id?: string
+          is_active?: boolean
+          name: string
+          order_index?: number
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          color_scheme?: string
+          created_at?: string
+          icon_name?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          order_index?: number
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      learning_topics: {
+        Row: {
+          category_id: string
+          created_at: string
+          description: string | null
+          estimated_duration_minutes: number
+          id: string
+          is_active: boolean
+          name: string
+          order_index: number
+          quiz_count: number
+          slug: string
+          updated_at: string
+          video_count: number
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          description?: string | null
+          estimated_duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          order_index?: number
+          quiz_count?: number
+          slug: string
+          updated_at?: string
+          video_count?: number
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          description?: string | null
+          estimated_duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          order_index?: number
+          quiz_count?: number
+          slug?: string
+          updated_at?: string
+          video_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_topics_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "learning_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_videos: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          is_active: boolean
+          order_index: number
+          thumbnail_url: string | null
+          title: string
+          topic_id: string
+          transcript: string | null
+          updated_at: string
+          video_url: string
+          xp_reward: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          thumbnail_url?: string | null
+          title: string
+          topic_id: string
+          transcript?: string | null
+          updated_at?: string
+          video_url: string
+          xp_reward?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          thumbnail_url?: string | null
+          title?: string
+          topic_id?: string
+          transcript?: string | null
+          updated_at?: string
+          video_url?: string
+          xp_reward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_videos_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "learning_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parent_child: {
         Row: {
           child_id: string
@@ -727,6 +919,90 @@ export type Database = {
           },
         ]
       }
+      user_learning_progress: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          id: string
+          last_watched_position_seconds: number
+          progress_percentage: number
+          progress_type: string
+          quiz_score: number | null
+          subject_id: string | null
+          time_spent_seconds: number
+          topic_id: string | null
+          updated_at: string
+          user_id: string
+          video_id: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          last_watched_position_seconds?: number
+          progress_percentage?: number
+          progress_type: string
+          quiz_score?: number | null
+          subject_id?: string | null
+          time_spent_seconds?: number
+          topic_id?: string | null
+          updated_at?: string
+          user_id: string
+          video_id?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          last_watched_position_seconds?: number
+          progress_percentage?: number
+          progress_type?: string
+          quiz_score?: number | null
+          subject_id?: string | null
+          time_spent_seconds?: number
+          topic_id?: string | null
+          updated_at?: string
+          user_id?: string
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_learning_progress_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "learning_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_learning_progress_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "learning_subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_learning_progress_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "learning_topics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_learning_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_learning_progress_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "learning_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -802,6 +1078,59 @@ export type Database = {
         }
         Relationships: []
       }
+      video_quizzes: {
+        Row: {
+          correct_answer_index: number
+          created_at: string
+          explanation: string
+          id: string
+          options: string[]
+          order_index: number
+          question: string
+          question_latex: string | null
+          timestamp_seconds: number
+          updated_at: string
+          video_id: string
+          xp_reward: number
+        }
+        Insert: {
+          correct_answer_index: number
+          created_at?: string
+          explanation: string
+          id?: string
+          options: string[]
+          order_index?: number
+          question: string
+          question_latex?: string | null
+          timestamp_seconds?: number
+          updated_at?: string
+          video_id: string
+          xp_reward?: number
+        }
+        Update: {
+          correct_answer_index?: number
+          created_at?: string
+          explanation?: string
+          id?: string
+          options?: string[]
+          order_index?: number
+          question?: string
+          question_latex?: string | null
+          timestamp_seconds?: number
+          updated_at?: string
+          video_id?: string
+          xp_reward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_quizzes_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "learning_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       configured_models: {
@@ -819,7 +1148,7 @@ export type Database = {
         Returns: undefined
       }
       get_model_with_fallback: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           default_model_id: string
           fallback_primary_model_id: string
