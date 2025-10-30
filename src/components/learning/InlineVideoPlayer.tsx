@@ -18,6 +18,8 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const youtubePlayerRef = useRef<any>(null);
+  const youtubeContainerRef = useRef<HTMLDivElement>(null);
+  const playerInitializedRef = useRef(false);
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
@@ -58,12 +60,16 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
 
   // Initialize YouTube Player
   useEffect(() => {
-    if (!isYouTube || !youtubeReady || !video?.video_url) return;
+    if (!isYouTube || !youtubeReady || !video?.video_url || !youtubeContainerRef.current) return;
+    if (playerInitializedRef.current) return; // Prevent double initialization
 
     const videoIdYT = extractYouTubeVideoId(video.video_url);
     if (!videoIdYT) return;
 
-    const player = new window.YT.Player('youtube-player', {
+    console.log('Initializing YouTube Player with video ID:', videoIdYT);
+    playerInitializedRef.current = true;
+
+    const player = new window.YT.Player(youtubeContainerRef.current, {
       videoId: videoIdYT,
       playerVars: {
         autoplay: 0,
@@ -74,6 +80,7 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
       },
       events: {
         onReady: (event: any) => {
+          console.log('YouTube Player ready');
           youtubePlayerRef.current = event.target;
           setDuration(event.target.getDuration());
         },
@@ -83,6 +90,9 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
           } else if (event.data === window.YT.PlayerState.PAUSED) {
             setIsPlaying(false);
           }
+        },
+        onError: (event: any) => {
+          console.error('YouTube Player error:', event.data);
         },
       },
     });
@@ -100,11 +110,12 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
 
     return () => {
       clearInterval(interval);
+      playerInitializedRef.current = false;
       if (youtubePlayerRef.current && youtubePlayerRef.current.destroy) {
         youtubePlayerRef.current.destroy();
       }
     };
-  }, [isYouTube, youtubeReady, video, duration, setCurrentTime, updateProgress, setIsPlaying]);
+  }, [isYouTube, youtubeReady, video?.video_url, duration, setCurrentTime, updateProgress, setIsPlaying]);
 
   // HTML5 Video event handlers (for non-YouTube videos)
   useEffect(() => {
@@ -274,7 +285,7 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
         <div className="relative bg-black">
           <AspectRatio ratio={16 / 9}>
             {isYouTube ? (
-              <div id="youtube-player" className="w-full h-full" />
+              <div ref={youtubeContainerRef} className="w-full h-full" />
             ) : (
               <video
                 ref={videoRef}
