@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Play, CheckCircle2, Clock } from 'lucide-react';
 import { useCoursePlaylist } from '@/hooks/useCoursePlaylist';
@@ -6,12 +7,14 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { cn } from '@/lib/utils';
+import { InlineVideoPlayer } from '@/components/learning/InlineVideoPlayer';
 
 const CoursePlaylistPage = () => {
   const { subjectSlug, topicSlug } = useParams<{ subjectSlug: string; topicSlug: string }>();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { data, isLoading } = useCoursePlaylist(topicSlug || '');
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -49,6 +52,14 @@ const CoursePlaylistPage = () => {
         </Button>
         <h1 className="text-2xl font-bold">{topic.name}</h1>
       </div>
+
+      {/* Inline Video Player */}
+      {selectedVideoId && (
+        <InlineVideoPlayer 
+          videoId={selectedVideoId} 
+          onClose={() => setSelectedVideoId(null)}
+        />
+      )}
 
       {featuredVideo && (
         <Card className="overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20">
@@ -90,7 +101,7 @@ const CoursePlaylistPage = () => {
             </div>
             <Button 
               className="w-full"
-              onClick={() => navigate(`/learning/video/${featuredVideo.id}`)}
+              onClick={() => setSelectedVideoId(featuredVideo.id)}
             >
               <Play className="w-4 h-4 mr-2" />
               {(featuredVideo.progress_percentage || 0) > 0 ? t('learning.continue') || 'Continue' : t('learning.start') || 'Start'}
@@ -111,7 +122,7 @@ const CoursePlaylistPage = () => {
                 "p-4 cursor-pointer transition-all hover:shadow-md border-2",
                 getProgressColor(video.progress_percentage || 0)
               )}
-              onClick={() => navigate(`/learning/video/${video.id}`)}
+              onClick={() => setSelectedVideoId(video.id)}
             >
               <div className="flex items-center gap-4">
                 <div className="relative flex-shrink-0">
