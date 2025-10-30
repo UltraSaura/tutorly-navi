@@ -36,6 +36,27 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
   const [playerReady, setPlayerReady] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const showControlsTemporarily = useCallback(() => {
+    setShowControls(true);
+    
+    if (hideControlsTimeoutRef.current) {
+      clearTimeout(hideControlsTimeoutRef.current);
+    }
+    
+    // Check player state at timeout execution time, not callback creation time
+    hideControlsTimeoutRef.current = setTimeout(() => {
+      // Only hide if actually playing
+      if (youtubePlayerRef.current) {
+        const state = youtubePlayerRef.current.getPlayerState?.();
+        if (state === 1) { // YT.PlayerState.PLAYING
+          setShowControls(false);
+        }
+      } else if (videoRef.current && !videoRef.current.paused) {
+        setShowControls(false);
+      }
+    }, 4000); // Increased from 3000 to 4000ms
+  }, []); // Remove isPlaying dependency to avoid stale closures
 
   const {
     video,
@@ -374,19 +395,6 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const showControlsTemporarily = useCallback(() => {
-    setShowControls(true);
-    
-    if (hideControlsTimeoutRef.current) {
-      clearTimeout(hideControlsTimeoutRef.current);
-    }
-    
-    if (isPlaying) {
-      hideControlsTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
-    }
-  }, [isPlaying]);
 
   if (isLoading) {
     return (
