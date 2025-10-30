@@ -110,6 +110,12 @@ const App = () => {
                         <Route path="/exercise-history" element={<MainLayout />}>
                           <Route index element={<ExerciseHistoryPage />} />
                         </Route>
+                        <Route path="/learning" element={<MainLayout />}>
+                          <Route index element={<LearningPage />} />
+                          <Route path=":subjectSlug" element={<SubjectDashboardPage />} />
+                          <Route path=":subjectSlug/:topicSlug" element={<CoursePlaylistPage />} />
+                        </Route>
+                        <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
                         
                         {/* Management Dashboard */}
                         <Route path="/management" element={<ManagementDashboard />} />

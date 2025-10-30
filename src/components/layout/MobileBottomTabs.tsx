@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageSquare, LayoutDashboard, User, History } from "lucide-react";
+import { MessageSquare, LayoutDashboard, User, History, GraduationCap } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -18,6 +18,11 @@ const bottomTabItems = [
     title: "nav.home", 
     url: "/chat", 
     icon: MessageSquare 
+  },
+  { 
+    title: "nav.learning", 
+    url: "/learning", 
+    icon: GraduationCap 
   },
   { 
     title: "nav.dashboard", 
@@ -63,7 +68,7 @@ export function MobileBottomTabs() {
     <>
       <div className="fixed left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border/40" 
            style={{ bottom: 'max(env(safe-area-inset-bottom), 0px)' }}>
-        <div className="flex items-center justify-around h-16 px-2">
+        <div className="grid grid-cols-5 items-center h-16 px-2">
           {bottomTabItems.map((item) => {
             const isActiveTab = isActive(item.url);
             
