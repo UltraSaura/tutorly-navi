@@ -73,26 +73,51 @@ export function useVideoPlayer(videoId: string) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await (supabase as any)
+      // First, check if a record exists
+      const { data: existing } = await (supabase as any)
         .from('user_learning_progress')
-        .upsert({
-          user_id: user.id,
-          video_id: videoId,
-          progress_percentage: progressPercentage,
-          last_watched_position_seconds: lastPosition,
-          progress_type: progressType,
-          time_spent_seconds: timeSpent,
-        }, {
-          onConflict: 'user_id,video_id',
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('video_id', videoId)
+        .maybeSingle();
 
-      if (error) {
-        console.error('Failed to update progress:', error);
-        throw error;
+      if (existing) {
+        // Update existing record
+        const { error } = await (supabase as any)
+          .from('user_learning_progress')
+          .update({
+            progress_percentage: progressPercentage,
+            last_watched_position_seconds: lastPosition,
+            progress_type: progressType,
+            time_spent_seconds: timeSpent,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existing.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new record
+        const { error } = await (supabase as any)
+          .from('user_learning_progress')
+          .insert({
+            user_id: user.id,
+            video_id: videoId,
+            progress_percentage: progressPercentage,
+            last_watched_position_seconds: lastPosition,
+            progress_type: progressType,
+            time_spent_seconds: timeSpent,
+          });
+
+        if (error) throw error;
       }
     },
-    onError: (error) => {
-      console.error('Progress update error:', error);
+    onError: (error: any) => {
+      console.error('Progress update error:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      });
       // Silent fail - don't bother user with progress tracking errors
     },
     onSuccess: () => {

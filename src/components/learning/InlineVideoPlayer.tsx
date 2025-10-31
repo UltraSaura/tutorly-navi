@@ -180,8 +180,10 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
           onStateChange: (event: any) => {
             if (event.data === window.YT.PlayerState.PLAYING) {
               setIsPlaying(true);
+              showControlsTemporarily();
             } else if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.ENDED) {
               setIsPlaying(false);
+              setShowControls(true);
             }
           },
           onError: (event: any) => {
@@ -492,82 +494,82 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
                 playsInline
               />
             )}
-          </AspectRatio>
-
-            {/* Video Controls Overlay */}
+            
+            {/* Video Controls Overlay - Moved inside AspectRatio */}
             <div 
               className={cn(
                 "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 space-y-2 transition-opacity duration-300",
                 showControls ? "opacity-100" : "opacity-0 pointer-events-none"
               )}
             >
-            {/* Progress Bar */}
-            <div className="flex items-center gap-2">
-              <span className="text-white text-sm">{formatTime(currentTime)}</span>
-              <input
-                type="range"
-                min="0"
-                max={duration}
-                value={currentTime}
-                onChange={(e) => handleSeek([parseFloat(e.target.value)])}
-                className="flex-1"
-              />
-              <span className="text-white text-sm">{formatTime(duration)}</span>
-            </div>
-
-            {/* Control Buttons */}
-            <div className="flex items-center justify-between">
+              {/* Progress Bar */}
               <div className="flex items-center gap-2">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={togglePlayPause}
-                  className="text-white hover:bg-white/20"
-                >
-                  {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                </Button>
+                <span className="text-white text-sm">{formatTime(currentTime)}</span>
+                <input
+                  type="range"
+                  min="0"
+                  max={duration}
+                  value={currentTime}
+                  onChange={(e) => handleSeek([parseFloat(e.target.value)])}
+                  className="flex-1"
+                />
+                <span className="text-white text-sm">{formatTime(duration)}</span>
+              </div>
+
+              {/* Control Buttons */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={togglePlayPause}
+                    className="text-white hover:bg-white/20"
+                  >
+                    {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                  </Button>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={toggleMute}
+                      className="text-white hover:bg-white/20"
+                    >
+                      {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                    </Button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={isMuted ? 0 : volume}
+                      onChange={(e) => handleVolumeChange([parseFloat(e.target.value)])}
+                      className="w-20"
+                    />
+                  </div>
+                </div>
 
                 <div className="flex items-center gap-2">
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={toggleMute}
+                    onClick={handleFullscreen}
                     className="text-white hover:bg-white/20"
                   >
-                    {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                    <Maximize className="h-5 w-5" />
                   </Button>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={isMuted ? 0 : volume}
-                    onChange={(e) => handleVolumeChange([parseFloat(e.target.value)])}
-                    className="w-20"
-                  />
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={onClose}
+                    className="text-white hover:bg-white/20"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={handleFullscreen}
-                  className="text-white hover:bg-white/20"
-                >
-                  <Maximize className="h-5 w-5" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={onClose}
-                  className="text-white hover:bg-white/20"
-                >
-                  <X className="h-5 w-5" />
-                </Button>
-              </div>
             </div>
-          </div>
+          </AspectRatio>
         </div>
 
         {/* Video Info */}
