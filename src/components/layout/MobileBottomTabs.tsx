@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageSquare, Grid, User, Settings } from "lucide-react";
+import { MessageSquare, LayoutDashboard, User, History, GraduationCap } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -15,24 +15,29 @@ import { AccountTabContent } from "./AccountTabContent";
 
 const bottomTabItems = [
   { 
-    title: "Tutor", 
-    url: "/", 
+    title: "nav.home", 
+    url: "/chat", 
     icon: MessageSquare 
   },
   { 
-    title: "Dashboard", 
+    title: "nav.learning", 
     url: "/learning", 
-    icon: Grid 
+    icon: GraduationCap 
   },
   { 
-    title: "Account", 
+    title: "nav.dashboard", 
+    url: "/dashboard", 
+    icon: LayoutDashboard 
+  },
+  { 
+    title: "nav.history", 
+    url: "/exercise-history", 
+    icon: History 
+  },
+  { 
+    title: "nav.account", 
     url: null, // Special case - opens sheet
     icon: User 
-  },
-  { 
-    title: "Tools", 
-    url: "/exercise-history", 
-    icon: Settings 
   },
 ];
 
@@ -54,16 +59,16 @@ export function MobileBottomTabs() {
   const isActive = (url: string | null) => url && currentPath === url;
 
   const handleTabClick = (item: typeof bottomTabItems[0]) => {
-    if (item.title === "Account") {
+    if (item.title === "nav.account") {
       setIsAccountOpen(true);
     }
   };
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-white shadow-2xl rounded-t-xl flex justify-around items-center max-w-xl mx-auto z-50" 
-           style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0px)' }}>
-        <div className="flex items-center justify-around w-full h-full px-2">
+      <div className="fixed left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border/40" 
+           style={{ bottom: 'max(env(safe-area-inset-bottom), 0px)' }}>
+        <div className="grid grid-cols-5 items-center h-16 px-2">
           {bottomTabItems.map((item) => {
             const isActiveTab = isActive(item.url);
             
@@ -72,14 +77,15 @@ export function MobileBottomTabs() {
                 <NavLink
                   key={item.title}
                   to={item.url}
-                  className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${
+                  style={isActiveTab ? { backgroundColor: '#253C7B' } : undefined}
+                  className={`flex flex-col items-center justify-center h-12 w-16 rounded-lg transition-colors ${
                     isActiveTab 
-                      ? "text-indigo-700 font-bold" 
-                      : "text-gray-500 hover:text-indigo-600"
+                      ? "text-white" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                   }`}
                 >
-                  <item.icon className={`w-6 h-6 ${isActiveTab ? 'fill-indigo-100/50' : ''}`} />
-                  <span className="text-xs mt-1">{item.title}</span>
+                  <item.icon className="h-5 w-5 mb-1" />
+                  <span className="text-xs font-medium">{t(item.title)}</span>
                 </NavLink>
               );
             }
@@ -88,15 +94,17 @@ export function MobileBottomTabs() {
               <Button
                 key={item.title}
                 variant="ghost"
+                size="sm"
                 onClick={() => handleTabClick(item)}
-                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${
+                style={isAccountOpen ? { backgroundColor: '#253C7B' } : undefined}
+                className={`flex flex-col items-center justify-center h-12 w-16 rounded-lg p-0 ${
                   isAccountOpen 
-                    ? "text-indigo-700 font-bold" 
-                    : "text-gray-500 hover:text-indigo-600"
+                    ? "text-white hover:text-white" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                 }`}
               >
-                <item.icon className={`w-6 h-6 ${isAccountOpen ? 'fill-indigo-100/50' : ''}`} />
-                <span className="text-xs mt-1">{item.title}</span>
+                <item.icon className="h-5 w-5 mb-1" />
+                <span className="text-xs font-medium">{t(item.title)}</span>
               </Button>
             );
           })}
@@ -107,7 +115,7 @@ export function MobileBottomTabs() {
       <Sheet open={isAccountOpen} onOpenChange={setIsAccountOpen}>
         <SheetContent side="bottom" className="h-[80vh] z-[70]">
           <SheetHeader>
-            <SheetTitle>Account</SheetTitle>
+            <SheetTitle>{t('nav.account')}</SheetTitle>
           </SheetHeader>
           <AccountTabContent onClose={() => setIsAccountOpen(false)} />
         </SheetContent>
