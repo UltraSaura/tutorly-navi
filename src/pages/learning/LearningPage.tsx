@@ -5,6 +5,20 @@ import { useLanguage } from '@/context/SimpleLanguageContext';
 import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
 import { toast } from 'sonner';
 
+// Checkmark icon for status
+const CheckmarkIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+  </svg>
+);
+
+// Right arrow icon for navigation
+const ArrowRightIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+  </svg>
+);
+
 // Map hex colors to Tailwind background classes
 const getColorClass = (colorScheme: string): string => {
   const colorMap: Record<string, string> = {
@@ -43,9 +57,9 @@ const LearningPage = () => {
           <Skeleton className="h-10 w-64 mb-2" />
           <Skeleton className="h-4 w-96" />
         </div>
-        <div className="p-6 grid grid-cols-2 gap-4">
+        <div className="py-4">
           {[1, 2, 3, 4, 5, 6].map(i => (
-            <Skeleton key={i} className="h-36 w-full rounded-xl" />
+            <Skeleton key={i} className="h-24 mx-4 my-2 rounded-xl" />
           ))}
         </div>
       </div>
@@ -71,8 +85,8 @@ const LearningPage = () => {
         </p>
       </header>
 
-      {/* Subject Grid */}
-      <main className="p-6 grid grid-cols-2 gap-4">
+      {/* Subject List */}
+      <main className="py-4">
         {subjects?.map(({ subject, videos_ready }) => {
           const isReady = videos_ready > 0;
           const bgColorClass = getColorClass(subject.color_scheme);
@@ -90,41 +104,32 @@ const LearningPage = () => {
                 }
               }}
               className={`
-                relative flex flex-col items-center justify-center 
-                p-4 h-36 w-full ${bgColorClass} text-white 
-                rounded-xl shadow-lg transition-transform transform 
-                hover:scale-[1.03] active:scale-[0.98]
-                ${isReady ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed'}
+                flex items-center justify-between 
+                p-4 my-2 mx-4 h-24
+                ${bgColorClass} text-white 
+                rounded-xl shadow-md cursor-pointer
+                transition-transform transform 
+                hover:scale-[1.01] active:scale-[0.99]
+                ${!isReady ? 'opacity-60 cursor-not-allowed' : ''}
               `}
             >
-              {/* Icon with white circle background */}
-              <div className="p-4 rounded-full bg-white bg-opacity-20 mb-3">
+              {/* Left: Icon + Name */}
+              <div className="flex items-center flex-grow">
                 <DynamicIcon 
                   name={subject.icon_name as any} 
-                  className="w-8 h-8" 
+                  className="w-10 h-10" 
                 />
+                <span className="ml-4 text-xl font-semibold">{subject.name}</span>
               </div>
               
-              {/* Subject Name */}
-              <span className="text-xl font-semibold text-center line-clamp-1 px-2">
-                {subject.name}
-              </span>
-              
-              {/* Status Badge */}
-              <div className={`
-                absolute top-2 right-2 flex items-center 
-                text-xs font-medium px-2 py-0.5 rounded-full 
-                ${isReady 
-                  ? 'bg-white text-indigo-700' 
-                  : 'bg-gray-300 text-gray-700'
-                }
-              `}>
-                {isReady ? 'Ready' : 'Coming soon'}
-                <span className={`
-                  ml-1 w-2 h-2 rounded-full 
-                  ${isReady ? 'bg-green-400' : 'bg-gray-500'}
-                `} />
+              {/* Center: Status Indicator */}
+              <div className="flex items-center text-sm font-medium pr-2">
+                <CheckmarkIcon className="w-4 h-4 mr-1" />
+                {videos_ready} {t('learning.ready') || 'ready'}
               </div>
+              
+              {/* Right: Arrow */}
+              <ArrowRightIcon className="w-6 h-6 text-white ml-2" />
             </div>
           );
         })}
