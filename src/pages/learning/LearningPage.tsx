@@ -6,18 +6,22 @@ import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
 import { toast } from 'sonner';
 
 // Checkmark icon for status
-const CheckmarkIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+const CheckmarkIcon = ({
+  className
+}: {
+  className?: string;
+}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-  </svg>
-);
+  </svg>;
 
 // Right arrow icon for navigation
-const ArrowRightIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+const ArrowRightIcon = ({
+  className
+}: {
+  className?: string;
+}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-  </svg>
-);
+  </svg>;
 
 // Map hex colors to Tailwind background classes
 const getColorClass = (colorScheme: string): string => {
@@ -39,39 +43,34 @@ const getColorClass = (colorScheme: string): string => {
     '#14B8A6': 'bg-teal-600',
     '#06B6D4': 'bg-cyan-600',
     '#0EA5E9': 'bg-sky-600',
-    '#3B82F6': 'bg-blue-600',
+    '#3B82F6': 'bg-blue-600'
   };
-  
   return colorMap[colorScheme?.toUpperCase()] || 'bg-indigo-600';
 };
-
 const LearningPage = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
-  const { data: subjects, isLoading } = useLearningSubjects();
-
+  const {
+    t
+  } = useLanguage();
+  const {
+    data: subjects,
+    isLoading
+  } = useLearningSubjects();
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-background pb-20">
+    return <div className="min-h-screen bg-gray-50 dark:bg-background pb-20">
         <div className="p-6 pb-4 bg-white dark:bg-card shadow-md">
           <Skeleton className="h-10 w-64 mb-2" />
           <Skeleton className="h-4 w-96" />
         </div>
         <div className="py-4">
-          {[1, 2, 3, 4, 5, 6].map(i => (
-            <Skeleton key={i} className="h-24 mx-4 my-2 rounded-xl" />
-          ))}
+          {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-24 mx-4 my-2 rounded-xl" />)}
         </div>
-      </div>
-    );
+      </div>;
   }
-
   const readyCount = subjects?.filter(s => s.videos_ready > 0).length || 0;
-
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background pb-20">
+  return <div className="min-h-screen bg-gray-50 dark:bg-background pb-20">
       {/* Header */}
-      <header className="p-6 pb-4 bg-[#253c7b] shadow-md">
+      <header className="p-6 pb-4 bg-[#253c7b] shadow-md px-base">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-extrabold text-white">
             {t('learning.chooseSubject') || 'Choose Your Subject'}
@@ -87,23 +86,21 @@ const LearningPage = () => {
 
       {/* Subject List */}
       <main className="py-4">
-        {subjects?.map(({ subject, videos_ready }) => {
-          const isReady = videos_ready > 0;
-          const bgColorClass = getColorClass(subject.color_scheme);
-          
-          return (
-            <div
-              key={subject.id}
-              onClick={() => {
-                if (isReady) {
-                  navigate(`/learning/${subject.slug}`);
-                } else {
-                  toast.info(`${subject.name} is coming soon!`, {
-                    description: "We're working hard to bring you this content."
-                  });
-                }
-              }}
-              className={`
+        {subjects?.map(({
+        subject,
+        videos_ready
+      }) => {
+        const isReady = videos_ready > 0;
+        const bgColorClass = getColorClass(subject.color_scheme);
+        return <div key={subject.id} onClick={() => {
+          if (isReady) {
+            navigate(`/learning/${subject.slug}`);
+          } else {
+            toast.info(`${subject.name} is coming soon!`, {
+              description: "We're working hard to bring you this content."
+            });
+          }
+        }} className={`
                 flex items-center justify-between 
                 p-4 my-2 mx-4 h-24
                 ${bgColorClass} text-white 
@@ -111,14 +108,10 @@ const LearningPage = () => {
                 transition-transform transform 
                 hover:scale-[1.01] active:scale-[0.99]
                 ${!isReady ? 'opacity-60 cursor-not-allowed' : ''}
-              `}
-            >
+              `}>
               {/* Left: Icon + Name */}
               <div className="flex items-center flex-grow">
-                <DynamicIcon 
-                  name={subject.icon_name as any} 
-                  className="w-10 h-10" 
-                />
+                <DynamicIcon name={subject.icon_name as any} className="w-10 h-10" />
                 <span className="ml-4 text-xl font-semibold">{subject.name}</span>
               </div>
               
@@ -130,12 +123,9 @@ const LearningPage = () => {
               
               {/* Right: Arrow */}
               <ArrowRightIcon className="w-6 h-6 text-white ml-2" />
-            </div>
-          );
-        })}
+            </div>;
+      })}
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default LearningPage;

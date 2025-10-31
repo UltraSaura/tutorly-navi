@@ -56,8 +56,7 @@ const ChildDashboard = lazy(() => import("./pages/guardian/ChildDashboard"));
 const SubjectDetail = lazy(() => import("./pages/guardian/SubjectDetail"));
 
 // Loading Component
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
+const LoadingFallback = () => <div className="flex items-center justify-center min-h-screen">
     <div className="flex flex-col items-center">
       <div className="w-16 h-16 relative">
         <div className="absolute top-0 left-0 w-full h-full border-4 border-muted rounded-full"></div>
@@ -65,15 +64,12 @@ const LoadingFallback = () => (
       </div>
       <p className="mt-4 text-lg font-medium">Loading...</p>
     </div>
-  </div>
-);
-
+  </div>;
 const queryClient = new QueryClient();
 
 // Simple App Component (no language detection for now)
 const App = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
+  return <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <TooltipProvider>
           <Toaster />
@@ -116,7 +112,7 @@ const App = () => {
                           <Route index element={<ExerciseHistoryPage />} />
                         </Route>
                         <Route path="/learning" element={<MainLayout />}>
-                          <Route index element={<LearningPage />} />
+                          <Route index element={<LearningPage />} className="mx-0" />
                           <Route path=":subjectSlug" element={<SubjectDashboardPage />} />
                           <Route path=":subjectSlug/:topicSlug" element={<CoursePlaylistPage />} />
                         </Route>
@@ -161,8 +157,6 @@ const App = () => {
         </OverlayProvider>
       </TooltipProvider>
     </ErrorBoundary>
-  </QueryClientProvider>
-);
+  </QueryClientProvider>;
 };
-
 export default App;
