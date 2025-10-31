@@ -1,0 +1,13 @@
+project_id = "sibprjxhbxahouejygeu"
+[functions.ai-chat]
+verify_jwt = false
+[functions.document-processor]
+verify_jwt = false
+[functions.delete-account]
+verify_jwt = true
+[functions.manage-api-keys]
+verify_jwt = true
+[functions.create-child-account]
+verify_jwt = true
+[functions.export-guardian-report]
+verify_jwt = true

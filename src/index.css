@@ -1,0 +1,379 @@
+/* MathLive CSS */
+@import url('https://unpkg.com/mathlive/dist/mathlive-fonts.css');
+
+/* Interactive Math Stepper CSS */
+@import './styles/mathStepper.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221.2 83% 53.9%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.8rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Design Token CSS Variables */
+    --brand-primary: #2F6BFF;
+    --brand-navy: #1E3A8A;
+    --brand-tint: #EEF4FF;
+    --game-xp: #7C3AED;
+    --game-coin: #FFB020;
+    --game-streak: #FF7A45;
+    --state-success: #22C55E;
+    --state-danger: #EF4444;
+    --neutral-bg: #F5F7FB;
+    --neutral-surface: #FFFFFF;
+    --neutral-text: #0F172A;
+    --neutral-muted: #475569;
+    --neutral-border: #E2E8F0;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Dark mode design tokens - adjust as needed */
+    --neutral-bg: #1a1a1a;
+    --neutral-surface: #2a2a2a;
+    --neutral-text: #ffffff;
+    --neutral-muted: #94a3b8;
+    --neutral-border: #374151;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-neutral-bg text-neutral-text;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/30;
+  }
+
+  /* Glass effect for components */
+  .glass {
+    @apply bg-white/80 dark:bg-black/70 backdrop-blur-md border border-white/20 dark:border-slate-800/60;
+  }
+
+  /* Animations for page transitions */
+  .page-transition-enter {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  .page-transition-enter-active {
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 300ms, transform 300ms;
+  }
+
+  .page-transition-exit {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .page-transition-exit-active {
+    opacity: 0;
+    transform: scale(0.96);
+    transition: opacity 300ms, transform 300ms;
+  }
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer components {
+  .stuwy-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Explanation typography reset (prevents squished/nowrap text) */
+  .explain-text,
+  .explain-text * {
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    white-space: inherit !important;
+    text-wrap: pretty;
+    overflow-wrap: anywhere;
+  }
+
+  .nav-item {
+    @apply relative flex items-center justify-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out;
+  }
+
+  .nav-item-active {
+    @apply bg-white dark:bg-slate-800 text-stuwy-700 dark:text-stuwy-400 shadow-sm;
+  }
+
+  .nav-item-inactive {
+    @apply text-gray-600 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-slate-800/60 hover:text-stuwy-600 dark:hover:text-stuwy-400;
+  }
+
+  .shimmer {
+    @apply relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent;
+  }
+
+  /* MathLive custom styling */
+  .mathlive-input {
+    --ml-color: var(--neutral-text);
+    --ml-background: transparent;
+    --ml-color-secondary: var(--neutral-muted);
+    --ml-border-color: var(--neutral-border);
+    --ml-focus-border-color: var(--brand-primary);
+  }
+
+  .math-renderer {
+    color: inherit;
+    font-size: inherit;
+  }
+
+  .math-renderer .ML__latex {
+    color: inherit;
+  }
+
+  /* Condensed MathLive virtual keyboard */
+  :root {
+    --keycap-height: 28px;
+    --keycap-font-size: 16px;
+    --keycap-gap: 2px;
+
+    --keyboard-toolbar-font-size: 14px;
+    --keyboard-padding-top: 4px;
+    --keyboard-padding-bottom: 4px;
+    --keyboard-padding-horizontal: 6px;
+  }
+
+  /* Ensure virtual keyboard is visible */
+  .ML__keyboard {
+    display: block !important;
+    visibility: visible !important;
+    z-index: 1000 !important;
+  }
+
+  /* Style the virtual keyboard */
+  .ML__keyboard .ML__keyboard-layer {
+    background: var(--neutral-surface);
+    border: 1px solid var(--neutral-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .ML__keyboard .ML__keyboard-layer .ML__keyboard-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .ML__keyboard .ML__keyboard-layer .ML__keyboard-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .ML__keyboard .ML__keyboard-layer .ML__keyboard-row .ML__keyboard-key {
+    background: var(--neutral-surface);
+    border: 1px solid var(--neutral-border);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--neutral-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 40px;
+    text-align: center;
+  }
+
+  .ML__keyboard .ML__keyboard-layer .ML__keyboard-row .ML__keyboard-key:hover {
+    background: var(--brand-tint);
+    border-color: var(--brand-primary);
+  }
+
+  .ML__keyboard .ML__keyboard-layer .ML__keyboard-row .ML__keyboard-key:active {
+    transform: translateY(1px);
+    background: var(--brand-primary);
+    color: white;
+  }
+
+  /* Optional: make the toggle icon smaller or move it */
+  math-field::part(container) {
+    /* example: put the toggle at the right */
+    /* flex-flow: row-reverse; */
+  }
+}
+
+/* Keyboard-aware positioning for mobile chat input */
+@media (max-width: 768px) {
+  .keyboard-visible {
+    bottom: 0 !important;
+    transform: translateY(calc(-1 * env(keyboard-inset-height, 0px)));
+  }
+
+  /* Prevent horizontal overflow on mobile */
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
+  * {
+    max-width: 100%;
+  }
+  
+  /* Ensure long strings break */
+  p, div, span, pre {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
+/* Container for the entire chat interface */
+.chat-interface-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Exercise list takes remaining space */
+.exercise-list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px; /* Space for input */
+}
+
+/* Message input at bottom */
+.message-input-container {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  border-top: 1px solid #e5e7ab;
+  padding: 0.75rem;
+  z-index: 60;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .exercise-list-container {
+    padding-bottom: 144px; /* More space on mobile for input + bottom tabs */
+  }
+  
+  .message-input-container {
+    bottom: 64px; /* Above mobile tabs */
+  }
+}

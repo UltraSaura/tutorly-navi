@@ -1,0 +1,24 @@
+/* Make the virtual keyboard compact/condensed */
+:root {
+  /* Size & spacing */
+  --keycap-height: 28px;
+  --keycap-font-size: 15px;
+  --keycap-small-font-size: 10px;
+  --keycap-extra-small-font-size: 9px;
+  --keycap-shift-font-size: 10px;
+  --keycap-gap: 2px;
+  --keyboard-toolbar-font-size: 14px;
+  --keyboard-padding-horizontal: 6px;
+  --keyboard-padding-top: 4px;
+  --keyboard-padding-bottom: 4px;
+
+  /* Optional: visual tweaks for your brand */
+  /* --keyboard-accent-color: #0ea5e9;       */
+  /* --keycap-primary-background: #0ea5e9;   */
+  /* --keycap-primary-text: #ffffff;         */
+}
+
+/* Keep the keyboard above bottom sheets, chat input, and mobile tabs */
+body {
+  --keyboard-zindex: 100; /* Changed from 3000 to match the z-index in positioning rules */
+}

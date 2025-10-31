@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "android:setup": "echo 'Setting up Android environment...' && export ANDROID_HOME='/Users/hiroshigawa/Library/Android/sdk' && export PATH='$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin'",
+    "android:build": "npm run build && npx cap sync android",
+    "android:dev": "npm run build && npx cap sync android && npx cap run android",
+    "android:studio": "npx cap open android",
+    "mobile:init": "npx cap add android",
+    "mobile:sync": "npx cap sync",
+    "capacitor:init": "npx cap init 'Tutorly Math Tutor' app.lovable.tutorly --web-dir=dist"
+  }
+}

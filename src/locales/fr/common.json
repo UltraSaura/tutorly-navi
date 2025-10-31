@@ -1,0 +1,76 @@
+{
+  "app": {
+    "title": "Stuwy",
+    "loading": "Chargement…",
+    "retry": "Réessayer", 
+    "cancel": "Annuler"
+  },
+  "learning": {
+    "chooseSubject": "Choisissez votre matière",
+    "ready": "prêt",
+    "completed": "complété"
+  },
+  "nav": {
+    "tutor": "Tuteur",
+    "homework": "Devoirs",
+    "progress": "Progrès", 
+    "rewards": "Récompenses",
+    "home": "Tuteur",
+    "grades": "Notes",
+    "roadmap": "Suivi",
+    "skills": "Compétences", 
+    "myAccount": "Mon compte",
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "language": "Langue"
+  },
+  "language": {
+    "english": "English",
+    "french": "Français",
+    "autoDetected": "Détection automatique selon le pays", 
+    "auto": "Auto",
+    "detectNow": "Détecter maintenant",
+    "resetAuto": "Réinitialiser la détection auto"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès", 
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "close": "Fermer",
+    "submit": "Soumettre", 
+    "retry": "Réessayer",
+    "selectSubject": "Sélectionner une matière"
+  },
+  "chat": {
+    "placeholder": "Saisissez votre question ou devoir…",
+    "attach": "Joindre",
+    "send": "Envoyer", 
+    "upload_doc": "Importer un document",
+    "upload_photo": "Importer une photo",
+    "take_photo": "Prendre une photo",
+    "inputPlaceholder": "Tapez votre question ou devoir ici...",
+    "uploadFile": "Télécharger un fichier", 
+    "takePhoto": "Prendre une photo",
+    "loading": "L'IA réfléchit...",
+    "sendMessage": "Envoyer le message"
+  },
+  "auth": {
+    "signIn": "Se connecter",
+    "email": "Email",
+    "password": "Mot de passe", 
+    "parentRegistration": "Inscription des parents",
+    "parentInformation": "Informations sur les parents"
+  },
+  "calculation": {
+    "detecting": "Détection du contenu mathématique...",
+    "analyzing": "Analyse du problème...",
+    "solving": "Résolution du calcul...",
+    "grading": "Évaluation de votre réponse...",
+    "processing": "Traitement en cours...",
+    "complete": "Terminé !"
+  }
+}

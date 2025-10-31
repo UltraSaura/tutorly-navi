@@ -1,0 +1,60 @@
+{
+  "exercise": {
+    "tryAgain": "Réessayer",
+    "showExplanation": "Afficher l'explication",
+    "hideExplanation": "Masquer l'explication", 
+    "greatWork": "Excellent travail !",
+    "learningOpportunity": "Opportunité d'apprentissage",
+    "attempt": "Tentative",
+    "exerciseList": "Liste des exercices",
+    "problem": "Problème", 
+    "guidance": "Guide",
+    "pleaseProvideAnswer": "Veuillez fournir une réponse",
+    "answerSubmitted": "Réponse soumise avec succès",
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "pending": "En attente de révision", 
+    "feedback": "Commentaires",
+    "answer": "Votre réponse",
+    "question": "Question",
+    "expand": "Développer",
+    "collapse": "Réduire",
+    "noExercises": "Aucun exercice soumis pour le moment. Commencez par poser des questions ou télécharger des devoirs !"
+  },
+  "exercises": {
+    "list_title": "Liste d'exercices",
+    "header_grade": "Note globale", 
+    "summary": "{correct}/{total} correct",
+    "empty_title": "Aucun exercice soumis",
+    "empty_sub": "Commencez par poser une question ou téléverser un devoir !",
+    "show_explanation": "Afficher l'explication",
+    "try_again": "Réessayer → +{xp} XP"
+  },
+  "explanation": {
+    "modal_title": "Afficher l'explication",
+    "error": "Erreur lors du chargement de l'explication. Veuillez réessayer.",
+    "fallback": { 
+      "exercise": "Voici votre exercice. Reformulez-le avec vos propres mots.",
+      "concept": "Concentrons-nous sur l'idée mathématique essentielle.",
+      "example": "Voici un exemple semblable avec d'autres nombres.",
+      "method": "1) Comprendre l'objectif  2) Appliquer les règles  3) Vérifier le résultat.",
+      "pitfall": "N'appliquez jamais une opération à une seule partie.", 
+      "check": "Expliquez pourquoi chaque étape est valide.",
+      "practice": "Entraînez-vous avec quelques exercices similaires en expliquant vos étapes."
+    },
+    "headers": {
+      "exercise": "📘 Exercice",
+      "concept": "💡 Concept",
+      "example": "🔍 Exemple (autres nombres)", 
+      "method": "☑️ Méthode",
+      "pitfall": "⚠️ Piège",
+      "check": "🎯 Auto-vérification",
+      "practice": "📈 Astuce de pratique"
+    }
+  },
+  "badges": {
+    "streak": "Série de {n} jours !",
+    "xp_gain": "+{xp} XP", 
+    "level": "Niveau {n}"
+  }
+}
