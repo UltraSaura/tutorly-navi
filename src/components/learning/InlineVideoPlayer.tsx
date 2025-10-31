@@ -36,27 +36,6 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
   const [playerReady, setPlayerReady] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const showControlsTemporarily = useCallback(() => {
-    setShowControls(true);
-    
-    if (hideControlsTimeoutRef.current) {
-      clearTimeout(hideControlsTimeoutRef.current);
-    }
-    
-    // Check player state at timeout execution time, not callback creation time
-    hideControlsTimeoutRef.current = setTimeout(() => {
-      // Only hide if actually playing
-      if (youtubePlayerRef.current) {
-        const state = youtubePlayerRef.current.getPlayerState?.();
-        if (state === 1) { // YT.PlayerState.PLAYING
-          setShowControls(false);
-        }
-      } else if (videoRef.current && !videoRef.current.paused) {
-        setShowControls(false);
-      }
-    }, 4000); // Increased from 3000 to 4000ms
-  }, []); // Remove isPlaying dependency to avoid stale closures
 
   const {
     video,
@@ -180,10 +159,8 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
           onStateChange: (event: any) => {
             if (event.data === window.YT.PlayerState.PLAYING) {
               setIsPlaying(true);
-              showControlsTemporarily();
             } else if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.ENDED) {
               setIsPlaying(false);
-              setShowControls(true);
             }
           },
           onError: (event: any) => {
@@ -290,27 +267,37 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
 
   const togglePlayPause = () => {
     if (isYouTube && youtubePlayerRef.current) {
-      const state = youtubePlayerRef.current.getPlayerState?.();
-      // States: -1=UNSTARTED, 0=ENDED, 1=PLAYING, 2=PAUSED, 3=BUFFERING, 5=CUED
-      if (state === 1 || state === 3) {
-        // Currently playing or buffering - pause it
+      if (isPlaying) {
         youtubePlayerRef.current.pauseVideo();
-        setIsPlaying(false);
       } else {
-        // Paused, ended, unstarted, or cued - play it
-        youtubePlayerRef.current.playVideo();
-        setIsPlaying(true);
+        const state = youtubePlayerRef.current.getPlayerState();
+        // States: -1=UNSTARTED, 0=ENDED, 1=PLAYING, 2=PAUSED, 3=BUFFERING, 5=CUED
+        if (state === -1 || state === 5) {
+          // Try to start video from cued/unstarted state
+          youtubePlayerRef.current.playVideo();
+          
+          // Fallback: if still not playing after a moment, try cueVideoById
+          setTimeout(() => {
+            const newState = youtubePlayerRef.current?.getPlayerState();
+            if (newState !== 1 && newState !== 3) {
+              const videoIdYT = extractYouTubeVideoId(video?.video_url || '');
+              if (videoIdYT) {
+                youtubePlayerRef.current.cueVideoById(videoIdYT, currentTime);
+                youtubePlayerRef.current.playVideo();
+              }
+            }
+          }, 500);
+        } else {
+          youtubePlayerRef.current.playVideo();
+        }
       }
     } else if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play();
-        setIsPlaying(true);
-      } else {
+      if (isPlaying) {
         videoRef.current.pause();
-        setIsPlaying(false);
+      } else {
+        videoRef.current.play();
       }
     }
-    showControlsTemporarily();
   };
 
   const handleSeek = (value: number[]) => {
@@ -387,6 +374,19 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const showControlsTemporarily = useCallback(() => {
+    setShowControls(true);
+    
+    if (hideControlsTimeoutRef.current) {
+      clearTimeout(hideControlsTimeoutRef.current);
+    }
+    
+    if (isPlaying) {
+      hideControlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    }
+  }, [isPlaying]);
 
   if (isLoading) {
     return (
@@ -416,7 +416,6 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
             "relative bg-black",
             !showControls && isPlaying && "cursor-none"
           )}
-          onClick={showControlsTemporarily}
           onMouseMove={showControlsTemporarily}
           onMouseEnter={showControlsTemporarily}
           onMouseLeave={() => {
@@ -485,82 +484,82 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
                 playsInline
               />
             )}
-            
-            {/* Video Controls Overlay - Moved inside AspectRatio */}
+          </AspectRatio>
+
+            {/* Video Controls Overlay */}
             <div 
               className={cn(
                 "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 space-y-2 transition-opacity duration-300",
-                showControls ? "opacity-100 z-20 pointer-events-auto" : "opacity-0 pointer-events-none"
+                showControls ? "opacity-100" : "opacity-0 pointer-events-none"
               )}
             >
-              {/* Progress Bar */}
+            {/* Progress Bar */}
+            <div className="flex items-center gap-2">
+              <span className="text-white text-sm">{formatTime(currentTime)}</span>
+              <input
+                type="range"
+                min="0"
+                max={duration}
+                value={currentTime}
+                onChange={(e) => handleSeek([parseFloat(e.target.value)])}
+                className="flex-1"
+              />
+              <span className="text-white text-sm">{formatTime(duration)}</span>
+            </div>
+
+            {/* Control Buttons */}
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-white text-sm">{formatTime(currentTime)}</span>
-                <input
-                  type="range"
-                  min="0"
-                  max={duration}
-                  value={currentTime}
-                  onChange={(e) => handleSeek([parseFloat(e.target.value)])}
-                  className="flex-1 accent-white"
-                />
-                <span className="text-white text-sm">{formatTime(duration)}</span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={togglePlayPause}
+                  className="text-white hover:bg-white/20"
+                >
+                  {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={toggleMute}
+                    className="text-white hover:bg-white/20"
+                  >
+                    {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                  </Button>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={isMuted ? 0 : volume}
+                    onChange={(e) => handleVolumeChange([parseFloat(e.target.value)])}
+                    className="w-20"
+                  />
+                </div>
               </div>
 
-              {/* Control Buttons */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={togglePlayPause}
-                    className="text-white hover:bg-white/20"
-                  >
-                    {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                  </Button>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={toggleMute}
-                      className="text-white hover:bg-white/20"
-                    >
-                      {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                    </Button>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.1"
-                      value={isMuted ? 0 : volume}
-                      onChange={(e) => handleVolumeChange([parseFloat(e.target.value)])}
-                      className="w-24 accent-white"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={handleFullscreen}
-                    className="text-white hover:bg-white/20"
-                  >
-                    <Maximize className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={onClose}
-                    className="text-white hover:bg-white/20"
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleFullscreen}
+                  className="text-white hover:bg-white/20"
+                >
+                  <Maximize className="h-5 w-5" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={onClose}
+                  className="text-white hover:bg-white/20"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
               </div>
             </div>
-          </AspectRatio>
+          </div>
         </div>
 
         {/* Video Info */}

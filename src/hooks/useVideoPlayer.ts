@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Video, Quiz } from '@/types/learning';
@@ -8,8 +8,6 @@ export function useVideoPlayer(videoId: string) {
   const queryClient = useQueryClient();
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const lastUpdateTimeRef = useRef(0);
-  const lastUpdatePercentageRef = useRef(0);
 
   // Fetch video and quizzes
   const { data, isLoading, error } = useQuery({
@@ -59,66 +57,24 @@ export function useVideoPlayer(videoId: string) {
 
   // Update progress mutation
   const updateProgressMutation = useMutation({
-    mutationFn: async ({ 
-      progressPercentage, 
-      progressType,
-      timeSpent,
-      lastPosition
-    }: { 
-      progressPercentage: number; 
-      progressType: string;
-      timeSpent: number;
-      lastPosition: number;
-    }) => {
+    mutationFn: async ({ progressPercentage, progressType }: { progressPercentage: number; progressType: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // First, check if a record exists
-      const { data: existing } = await (supabase as any)
+      const { error } = await (supabase as any)
         .from('user_learning_progress')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('video_id', videoId)
-        .maybeSingle();
+        .upsert({
+          user_id: user.id,
+          video_id: videoId,
+          progress_percentage: progressPercentage,
+          last_watched_position_seconds: currentTime,
+          progress_type: progressType,
+          time_spent_seconds: currentTime,
+        }, {
+          onConflict: 'user_id,video_id',
+        });
 
-      if (existing) {
-        // Update existing record
-        const { error } = await (supabase as any)
-          .from('user_learning_progress')
-          .update({
-            progress_percentage: progressPercentage,
-            last_watched_position_seconds: lastPosition,
-            progress_type: progressType,
-            time_spent_seconds: timeSpent,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', existing.id);
-
-        if (error) throw error;
-      } else {
-        // Insert new record
-        const { error } = await (supabase as any)
-          .from('user_learning_progress')
-          .insert({
-            user_id: user.id,
-            video_id: videoId,
-            progress_percentage: progressPercentage,
-            last_watched_position_seconds: lastPosition,
-            progress_type: progressType,
-            time_spent_seconds: timeSpent,
-          });
-
-        if (error) throw error;
-      }
-    },
-    onError: (error: any) => {
-      console.error('Progress update error:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-      });
-      // Silent fail - don't bother user with progress tracking errors
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['video-player', videoId] });
@@ -166,35 +122,10 @@ export function useVideoPlayer(videoId: string) {
     setCurrentTime(time);
     const percentage = Math.round((time / duration) * 100);
     
-    const now = Date.now();
-    const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
-    
-    // Only update if:
-    // 1. Percentage changed AND at least 5 seconds passed, OR
-    // 2. Reached completion milestone (90%)
-    const shouldUpdate = 
-      (percentage !== lastUpdatePercentageRef.current && timeSinceLastUpdate > 5000) ||
-      (percentage >= 90 && lastUpdatePercentageRef.current < 90);
-    
-    if (shouldUpdate) {
-      lastUpdateTimeRef.current = now;
-      lastUpdatePercentageRef.current = percentage;
-      
-      if (percentage >= 90) {
-        updateProgressMutation.mutate({ 
-          progressPercentage: 100, 
-          progressType: 'video_completed',
-          timeSpent: Math.round(time),
-          lastPosition: Math.round(time)
-        });
-      } else if (percentage > (data?.video.progress_percentage || 0)) {
-        updateProgressMutation.mutate({ 
-          progressPercentage: percentage, 
-          progressType: 'video_started',
-          timeSpent: Math.round(time),
-          lastPosition: Math.round(time)
-        });
-      }
+    if (percentage >= 90) {
+      updateProgressMutation.mutate({ progressPercentage: 100, progressType: 'video_completed' });
+    } else if (percentage > (data?.video.progress_percentage || 0)) {
+      updateProgressMutation.mutate({ progressPercentage: percentage, progressType: 'video_started' });
     }
   }, [data?.video.progress_percentage, updateProgressMutation]);
 
