@@ -71,16 +71,16 @@ const LearningPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-background pb-20">
       {/* Header */}
-      <header className="p-6 pb-4 bg-white dark:bg-card shadow-md">
+      <header className="p-6 pb-4 bg-[#253c7b] shadow-md">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-extrabold text-indigo-700 dark:text-indigo-400">
+          <h1 className="text-3xl font-extrabold text-white">
             {t('learning.chooseSubject') || 'Choose Your Subject'}
           </h1>
-          <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          <div className="text-sm font-medium text-white/80">
             {readyCount} ready
           </div>
         </div>
-        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+        <p className="text-white/70 mt-1 text-sm">
           {t('learning.selectSubject') || 'Select a subject to begin exploring learning resources.'}
         </p>
       </header>
