@@ -25,11 +25,6 @@ const bottomTabItems = [
     icon: GraduationCap 
   },
   { 
-    title: "nav.dashboard", 
-    url: "/dashboard", 
-    icon: LayoutDashboard 
-  },
-  { 
     title: "nav.history", 
     url: "/exercise-history", 
     icon: History 
@@ -66,9 +61,9 @@ export function MobileBottomTabs() {
 
   return (
     <>
-      <div className="fixed left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border/40" 
+      <div className="fixed left-0 right-0 z-50 bg-white dark:bg-card shadow-2xl rounded-t-xl border-t border-border/40" 
            style={{ bottom: 'max(env(safe-area-inset-bottom), 0px)' }}>
-        <div className="grid grid-cols-5 items-center h-16 px-2">
+        <div className="grid grid-cols-4 items-center h-16 px-2">
           {bottomTabItems.map((item) => {
             const isActiveTab = isActive(item.url);
             
