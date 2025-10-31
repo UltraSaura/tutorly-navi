@@ -21,6 +21,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
   
   const [cameraState, setCameraState] = useState<'idle' | 'starting' | 'ready' | 'error'>('idle');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedBlob, setCapturedBlob] = useState<Blob | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
@@ -191,6 +192,7 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
       if (blob) {
         const imageUrl = URL.createObjectURL(blob);
         setCapturedImage(imageUrl);
+        setCapturedBlob(blob); // Store the blob for later use
         stopCamera();
       }
       setIsCapturing(false);
@@ -212,21 +214,19 @@ const CameraCapture = ({ isOpen, onClose, onCapture }: CameraCaptureProps) => {
     if (capturedImage) {
       URL.revokeObjectURL(capturedImage);
       setCapturedImage(null);
+      setCapturedBlob(null); // Clear the blob
     }
     startCamera();
   }, [capturedImage, startCamera]);
 
   const confirmPhoto = useCallback(() => {
-    if (capturedImage && canvasRef.current) {
-      canvasRef.current.toBlob((blob) => {
-        if (blob) {
-          const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-          onCapture(file);
-          onClose();
-        }
-      }, 'image/jpeg', 0.8);
+    if (capturedBlob) {
+      // Use the stored blob instead of recreating from canvas
+      const file = new File([capturedBlob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      onCapture(file);
+      onClose();
     }
-  }, [capturedImage, onCapture, onClose]);
+  }, [capturedBlob, onCapture, onClose]);
 
   useEffect(() => {
     if (isOpen) {

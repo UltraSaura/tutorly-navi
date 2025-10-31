@@ -60,7 +60,16 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
       setShowControls(true);
       if (hideControlsTimeoutRef.current) {
         clearTimeout(hideControlsTimeoutRef.current);
+        hideControlsTimeoutRef.current = null;
       }
+    } else {
+      // When video starts playing, automatically hide controls after a delay
+      if (hideControlsTimeoutRef.current) {
+        clearTimeout(hideControlsTimeoutRef.current);
+      }
+      hideControlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000); // Hide after 3 seconds of playing
     }
   }, [isPlaying]);
 
@@ -419,13 +428,13 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
           onMouseMove={showControlsTemporarily}
           onMouseEnter={showControlsTemporarily}
           onMouseLeave={() => {
-            if (isPlaying) {
+            if (isPlaying && showControls) {
               if (hideControlsTimeoutRef.current) {
                 clearTimeout(hideControlsTimeoutRef.current);
               }
               hideControlsTimeoutRef.current = setTimeout(() => {
                 setShowControls(false);
-              }, 1000);
+              }, 1000); // Faster hide on mouse leave
             }
           }}
           onTouchStart={showControlsTemporarily}

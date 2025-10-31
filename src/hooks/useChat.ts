@@ -231,7 +231,8 @@ export const useChat = () => {
       selectedModelId, // selectedModelId is now required parameter
       undefined, // No longer need processHomeworkFromChat as primary processor
       addExercises, // Pass the exercise processor directly
-      subjectId // Pass the subject ID
+      subjectId, // Pass the subject ID
+      handleSendMessage // Pass handleSendMessage to route through chat flow
     );
   };
   

@@ -106,7 +106,8 @@ export const handlePhotoUpload = async (
   selectedModelId: string,
   processHomeworkFromChat?: (content: string) => Promise<void>,
   addExercises?: (exercises: any[]) => Promise<void>,
-  subjectId?: string
+  subjectId?: string,
+  handleSendMessage?: (text: string) => Promise<void>
 ) => {
   console.log('[Photo Upload] Starting photo upload process', { 
     fileName: file.name, 
@@ -151,9 +152,33 @@ export const handlePhotoUpload = async (
       rawTextLength: processingResult?.rawText?.length || 0
     });
     
-    if (processingResult && processingResult.exercises.length > 0) {
-      console.log('[Photo Upload] Exercises found, starting grading...');
+    // Check if we have extracted text and handleSendMessage callback
+    if (processingResult && processingResult.rawText && processingResult.rawText.trim().length > 0) {
+      console.log('[Photo Upload] Text extracted successfully, length:', processingResult.rawText.length);
       
+      if (handleSendMessage) {
+        // Send the extracted text through the normal chat flow
+        console.log('[Photo Upload] Sending extracted text to chat flow...');
+        
+        // Update processing message
+        setMessages(prev => prev.map(msg => 
+          msg.id === processingMessage.id 
+            ? { ...msg, content: `✅ Text extracted! Processing through AI...` }
+            : msg
+        ));
+        
+        // Remove the processing message before sending to chat
+        setMessages(prev => prev.filter(msg => msg.id !== processingMessage.id));
+        
+        // Send the extracted text as if user typed it
+        await handleSendMessage(processingResult.rawText);
+        
+        console.log('[Photo Upload] ✅ Text sent to chat flow successfully');
+      } else {
+        // Fallback to old behavior: create exercises directly
+        console.log('[Photo Upload] No handleSendMessage callback, falling back to direct exercise processing');
+        
+        if (processingResult.exercises.length > 0) {
       // Update processing message
       setMessages(prev => prev.map(msg => 
         msg.id === processingMessage.id 
@@ -164,68 +189,44 @@ export const handlePhotoUpload = async (
       // Grade the extracted exercises
       const gradedExercises = await gradeDocumentExercises(processingResult.exercises, selectedModelId);
       
-      console.log('[Photo Upload] Grading complete', {
-        gradedCount: gradedExercises.length,
-        correctCount: gradedExercises.filter(ex => ex.isCorrect === true).length
-      });
-      
       // Add the exercises to the exercise list if the handler is provided
       if (addExercises) {
-        console.log('[Photo Upload] Adding exercises to exercise list...');
         await addExercises(gradedExercises);
-      } else {
-        console.warn('[Photo Upload] No addExercises handler provided!');
       }
       
-      // Create a summary of the extracted exercises
       const exerciseCount = gradedExercises.length;
       const correctCount = gradedExercises.filter(ex => ex.isCorrect === true).length;
-      const incorrectCount = gradedExercises.filter(ex => ex.isCorrect === false).length;
-      const pendingCount = exerciseCount - correctCount - incorrectCount;
-      
-      // Generate detailed AI response with the results
-      let resultSummary = `✅ Successfully processed your photo!\n\n📊 **Results:**\n- ${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''} found\n`;
-      
-      if (correctCount > 0) {
-        resultSummary += `- ✅ ${correctCount} correct\n`;
-      }
-      if (incorrectCount > 0) {
-        resultSummary += `- ❌ ${incorrectCount} incorrect\n`;
-      }
-      if (pendingCount > 0) {
-        resultSummary += `- ⏳ ${pendingCount} pending review\n`;
-      }
-      
-      resultSummary += `\n📝 **View your graded exercises in the "Graded Homework" section below.**`;
-      
-      if (processingResult.rawText && processingResult.rawText.length > 0) {
-        resultSummary += `\n\n📄 **Extracted text:**\n\`\`\`\n${processingResult.rawText.substring(0, 500)}${processingResult.rawText.length > 500 ? '...' : ''}\n\`\`\``;
-      }
       
       // Update the processing message with final results
       setMessages(prev => prev.map(msg => 
         msg.id === processingMessage.id 
-          ? { ...msg, content: resultSummary }
+              ? { ...msg, content: `✅ Successfully processed your photo!\n\n📊 Found ${exerciseCount} exercises (${correctCount} correct). View in Graded Homework section.` }
           : msg
       ));
       
-      toast.success(`✅ Graded ${exerciseCount} exercise${exerciseCount !== 1 ? 's' : ''} from your photo!`);
-      
-      console.log('[Photo Upload] ✅ Process completed successfully');
+          toast.success(`✅ Graded ${exerciseCount} exercises from your photo!`);
+        } else {
+          // No exercises found
+          setMessages(prev => prev.map(msg => 
+            msg.id === processingMessage.id 
+              ? { ...msg, content: `⚠️ Could not extract exercises from photo. Please try typing them directly.` }
+              : msg
+          ));
+          
+          toast.warning('No exercises found in photo.');
+        }
+      }
     } else {
-      console.warn('[Photo Upload] No exercises extracted from photo');
+      console.warn('[Photo Upload] No text extracted from photo');
       
       // Provide helpful feedback
-      const noExercisesMessage = `⚠️ I received your photo but couldn't extract any exercises from it.\n\n**Possible reasons:**\n- The image might be blurry or low quality\n- The text might be too small\n- The handwriting might be difficult to read\n- The photo might not contain math exercises\n\n**Tips for better results:**\n1. Ensure good lighting\n2. Hold the camera steady\n3. Make sure the text is clearly visible\n4. Try typing the exercises directly instead`;
-      
-      // Update the processing message
       setMessages(prev => prev.map(msg => 
         msg.id === processingMessage.id 
-          ? { ...msg, content: noExercisesMessage }
+          ? { ...msg, content: `⚠️ Could not extract text from photo. Please try typing the exercises directly.` }
           : msg
       ));
       
-      toast.warning('No exercises found in photo. Try typing them directly or retake with better lighting.');
+      toast.warning('Could not extract text from photo. Try typing exercises directly.');
     }
   } catch (error) {
     console.error('[Photo Upload] ❌ Error processing image:', error);
