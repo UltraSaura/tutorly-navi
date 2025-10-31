@@ -112,7 +112,7 @@ const App = () => {
                           <Route index element={<ExerciseHistoryPage />} />
                         </Route>
                         <Route path="/learning" element={<MainLayout />}>
-                          <Route index element={<LearningPage />} className="mx-0" />
+                          <Route index element={<LearningPage />} />
                           <Route path=":subjectSlug" element={<SubjectDashboardPage />} />
                           <Route path=":subjectSlug/:topicSlug" element={<CoursePlaylistPage />} />
                         </Route>
