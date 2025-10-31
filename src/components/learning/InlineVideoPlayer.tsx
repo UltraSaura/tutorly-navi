@@ -290,37 +290,27 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
 
   const togglePlayPause = () => {
     if (isYouTube && youtubePlayerRef.current) {
-      if (isPlaying) {
+      const state = youtubePlayerRef.current.getPlayerState?.();
+      // States: -1=UNSTARTED, 0=ENDED, 1=PLAYING, 2=PAUSED, 3=BUFFERING, 5=CUED
+      if (state === 1 || state === 3) {
+        // Currently playing or buffering - pause it
         youtubePlayerRef.current.pauseVideo();
+        setIsPlaying(false);
       } else {
-        const state = youtubePlayerRef.current.getPlayerState();
-        // States: -1=UNSTARTED, 0=ENDED, 1=PLAYING, 2=PAUSED, 3=BUFFERING, 5=CUED
-        if (state === -1 || state === 5) {
-          // Try to start video from cued/unstarted state
-          youtubePlayerRef.current.playVideo();
-          
-          // Fallback: if still not playing after a moment, try cueVideoById
-          setTimeout(() => {
-            const newState = youtubePlayerRef.current?.getPlayerState();
-            if (newState !== 1 && newState !== 3) {
-              const videoIdYT = extractYouTubeVideoId(video?.video_url || '');
-              if (videoIdYT) {
-                youtubePlayerRef.current.cueVideoById(videoIdYT, currentTime);
-                youtubePlayerRef.current.playVideo();
-              }
-            }
-          }, 500);
-        } else {
-          youtubePlayerRef.current.playVideo();
-        }
+        // Paused, ended, unstarted, or cued - play it
+        youtubePlayerRef.current.playVideo();
+        setIsPlaying(true);
       }
     } else if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
+      if (videoRef.current.paused) {
         videoRef.current.play();
+        setIsPlaying(true);
+      } else {
+        videoRef.current.pause();
+        setIsPlaying(false);
       }
     }
+    showControlsTemporarily();
   };
 
   const handleSeek = (value: number[]) => {
@@ -426,6 +416,7 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
             "relative bg-black",
             !showControls && isPlaying && "cursor-none"
           )}
+          onClick={showControlsTemporarily}
           onMouseMove={showControlsTemporarily}
           onMouseEnter={showControlsTemporarily}
           onMouseLeave={() => {
@@ -499,7 +490,7 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
             <div 
               className={cn(
                 "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 space-y-2 transition-opacity duration-300",
-                showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+                showControls ? "opacity-100 z-20 pointer-events-auto" : "opacity-0 pointer-events-none"
               )}
             >
               {/* Progress Bar */}
@@ -511,7 +502,7 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
                   max={duration}
                   value={currentTime}
                   onChange={(e) => handleSeek([parseFloat(e.target.value)])}
-                  className="flex-1"
+                  className="flex-1 accent-white"
                 />
                 <span className="text-white text-sm">{formatTime(duration)}</span>
               </div>
@@ -544,7 +535,7 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
                       step="0.1"
                       value={isMuted ? 0 : volume}
                       onChange={(e) => handleVolumeChange([parseFloat(e.target.value)])}
-                      className="w-20"
+                      className="w-24 accent-white"
                     />
                   </div>
                 </div>
