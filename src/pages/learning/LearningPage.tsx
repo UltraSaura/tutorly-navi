@@ -63,7 +63,7 @@ const LearningPage = () => {
           <Skeleton className="h-4 w-96" />
         </div>
         <div className="py-4">
-          {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-24 mx-4 my-2 rounded-xl" />)}
+          {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-24 mx-6 my-2 rounded-xl" />)}
         </div>
       </div>;
   }
@@ -102,7 +102,7 @@ const LearningPage = () => {
           }
         }} className={`
                 flex items-center justify-between 
-                p-4 my-2 mx-4 h-24
+                p-4 my-2 mx-6 h-24
                 ${bgColorClass} text-white 
                 rounded-xl shadow-md cursor-pointer
                 transition-transform transform 
