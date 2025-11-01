@@ -12,7 +12,10 @@
     "myAccount": "My Account",
     "language": "Language",
     "profile": "Profile",
-    "settings": "Settings"
+    "settings": "Settings",
+    "learning": "Learning",
+    "history": "History",
+    "account": "Account"
   },
   "chat": {
     "inputPlaceholder": "Type your question or homework here...",

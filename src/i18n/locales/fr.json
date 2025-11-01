@@ -12,7 +12,10 @@
     "myAccount": "Mon compte",
     "language": "Langue",
     "profile": "Profil",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "learning": "Apprentissage",
+    "history": "Historique",
+    "account": "Compte"
   },
   "chat": {
     "inputPlaceholder": "Tapez votre question ou devoir ici...",
