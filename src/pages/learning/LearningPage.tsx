@@ -70,7 +70,7 @@ const LearningPage = () => {
   const readyCount = subjects?.filter(s => s.videos_ready > 0).length || 0;
   return <div className="min-h-screen bg-gray-50 dark:bg-background pb-20">
       {/* Header */}
-      <header className="p-6 pb-4 bg-[#253c7b] shadow-md px-base">
+      <header className="p-6 pb-4 bg-[#253c7b] shadow-md">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-extrabold text-white">
             {t('learning.chooseSubject') || 'Choose Your Subject'}
