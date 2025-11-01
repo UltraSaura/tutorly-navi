@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Play, Clock, Zap } from 'lucide-react';
 import { useVideoPlayer } from '@/hooks/useVideoPlayer';
+import { loadYouTubeAPI, extractYouTubeVideoId, isYouTubeUrl } from '@/utils/youtube';
 
 interface VideoPlayerBoxProps {
   videoId: string | null;
@@ -18,59 +19,53 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
   useEffect(() => {
     if (!video?.video_url) return;
     
-    const isYT = video.video_url.includes('youtube.com') || video.video_url.includes('youtu.be');
+    const isYT = isYouTubeUrl(video.video_url);
     setIsYouTube(isYT);
 
     if (isYT) {
-      const videoId = extractYouTubeVideoId(video.video_url);
-      if (!videoId) return;
+      const ytVideoId = extractYouTubeVideoId(video.video_url);
+      if (!ytVideoId) return;
 
-      // Load YouTube IFrame API
-      if (!(window as any).YT) {
-        const tag = document.createElement('script');
-        tag.src = 'https://www.youtube.com/iframe_api';
-        document.head.appendChild(tag);
-      }
+      const initPlayer = async () => {
+        try {
+          await loadYouTubeAPI();
+          
+          // Destroy existing player before creating new one
+          if (youtubePlayer?.destroy) {
+            youtubePlayer.destroy();
+          }
 
-      const initPlayer = () => {
-        const player = new (window as any).YT.Player(iframeRef.current, {
-          videoId,
-          playerVars: {
-            autoplay: 1,
-            controls: 1,
-            modestbranding: 1,
-          },
-          events: {
-            onStateChange: (event: any) => {
-              if (event.data === 0 && onVideoEnd) {
-                onVideoEnd();
-              }
+          const player = new (window as any).YT.Player(`youtube-player-${videoId}`, {
+            videoId: ytVideoId,
+            playerVars: {
+              autoplay: 1,
+              controls: 1,
+              modestbranding: 1,
             },
-          },
-        });
-        setYoutubePlayer(player);
+            events: {
+              onStateChange: (event: any) => {
+                if (event.data === 0 && onVideoEnd) {
+                  onVideoEnd();
+                }
+              },
+            },
+          });
+          setYoutubePlayer(player);
+        } catch (error) {
+          console.error('Failed to load YouTube player:', error);
+        }
       };
 
-      if ((window as any).YT?.Player) {
-        initPlayer();
-      } else {
-        (window as any).onYouTubeIframeAPIReady = initPlayer;
-      }
-    }
-  }, [video?.video_url, onVideoEnd]);
+      initPlayer();
 
-  const extractYouTubeVideoId = (url: string): string | null => {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
-      /youtube\.com\/embed\/([^&\n?#]+)/,
-    ];
-    
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return match[1];
+      return () => {
+        if (youtubePlayer?.destroy) {
+          youtubePlayer.destroy();
+        }
+      };
     }
-    return null;
-  };
+  }, [video?.video_url, videoId, onVideoEnd]);
+
 
   if (!videoId || !video) {
     return (
@@ -91,11 +86,10 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
     <div className="mx-4 mt-4 mb-4 bg-card rounded-xl overflow-hidden shadow-lg border">
       <div className="relative pt-[56.25%] bg-black">
         {isYouTube ? (
-          <iframe
+          <div
+            id={`youtube-player-${videoId}`}
             ref={iframeRef}
             className="absolute top-0 left-0 w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
           />
         ) : (
           <video
