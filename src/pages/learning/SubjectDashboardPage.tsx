@@ -1,10 +1,10 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search } from 'lucide-react';
+import { ArrowLeft, Play, Zap } from 'lucide-react';
 import { useSubjectDashboard } from '@/hooks/useSubjectDashboard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import * as Icons from 'lucide-react';
 const SubjectDashboardPage = () => {
@@ -42,69 +42,98 @@ const SubjectDashboardPage = () => {
     const Icon = (Icons as any)[iconName];
     return Icon ? <Icon className="w-6 h-6" /> : null;
   };
-  return <div className="px-[5px] mx-0 py-4 space-y-6 max-w-6xl pb-24">
-      <div className="flex items-center justify-between sticky top-0 z-10 bg-background/95 backdrop-blur pb-4 rounded-none">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/learning')}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-2xl font-bold">{subject.name}</h1>
-        </div>
-        <Button variant="ghost" size="icon">
-          <Search className="w-5 h-5" />
+  return (
+    <div className="flex flex-col h-screen bg-background">
+      {/* Header */}
+      <div className="flex items-center gap-4 px-4 py-3 bg-card border-b">
+        <Button variant="ghost" size="icon" onClick={() => navigate('/learning')}>
+          <ArrowLeft className="w-5 h-5" />
         </Button>
+        <h1 className="text-xl font-bold flex-1">{subject.name}</h1>
       </div>
 
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">{t('learning.overallProgress') || 'Overall Progress'}</h3>
-        <Progress value={overallProgress.percentage} className="h-3 mb-3" />
-        <p className="text-sm text-muted-foreground">
-          {overallProgress.completedTopics}/{overallProgress.totalTopics} {t('learning.topicsMastered') || 'Topics Mastered'}
-        </p>
-      </Card>
-
-      <div className="space-y-8">
-        {categories.map(category => <div key={category.id}>
-            <div className="mb-4 pb-2 border-l-4 pl-4" style={{
-          borderColor: subject.color_scheme
-        }}>
-              <h2 className="text-xl font-semibold">{category.name}</h2>
-              {category.description && <p className="text-sm text-muted-foreground mt-1">{category.description}</p>}
+      {/* Scrollable Content */}
+      <ScrollArea className="flex-1">
+        <div className="pb-24">
+          {/* Subject Header with Progress */}
+          <div 
+            className="p-6 text-white shadow-lg" 
+            style={{ backgroundColor: subject.color_scheme }}
+          >
+            <h2 className="text-3xl font-extrabold mb-1">{t('learning.subjectMastery') || 'Subject Mastery'}</h2>
+            <p className="text-sm opacity-90 mb-3">{t('learning.yourProgress') || 'Your overall progress in this subject'}</p>
+            
+            <div className="w-full bg-white/30 rounded-full h-3 mt-3">
+              <div 
+                className="h-3 rounded-full bg-white shadow-inner transition-all" 
+                style={{ width: `${overallProgress.percentage}%` }}
+              />
             </div>
+            <p className="text-lg font-bold mt-2">{overallProgress.percentage}% {t('learning.complete') || 'Complete'}</p>
+            <p className="text-sm opacity-90">
+              {overallProgress.completedTopics}/{overallProgress.totalTopics} {t('learning.topicsMastered') || 'topics mastered'}
+            </p>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {category.topics?.map(topic => <Card key={topic.id} className="p-5 cursor-pointer transition-all hover:shadow-lg border-2 relative overflow-hidden" style={{
-            borderColor: `${subject.color_scheme}40`
-          }} onClick={() => navigate(`/learning/${subjectSlug}/${topic.slug}`)}>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{
-                backgroundColor: `${subject.color_scheme}20`
-              }}>
-                      {getIconComponent(category.icon_name)}
-                    </div>
-                    
-                    <div className="relative w-12 h-12">
-                      <svg className="w-12 h-12 transform -rotate-90">
-                        <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4" fill="none" className="text-muted" />
-                        <circle cx="24" cy="24" r="20" stroke={subject.color_scheme} strokeWidth="4" fill="none" strokeDasharray={`${2 * Math.PI * 20}`} strokeDashoffset={`${2 * Math.PI * 20 * (1 - (topic.progress_percentage || 0) / 100)}`} className="transition-all" />
-                      </svg>
-                      <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
-                        {topic.progress_percentage || 0}%
-                      </span>
-                    </div>
-                  </div>
+          {/* Topics List */}
+          <div className="py-4">
+            <h2 className="text-xl font-bold text-foreground mx-4 mt-2 mb-3">
+              {t('learning.learningTopics') || 'Learning Topics'}
+            </h2>
 
-                  <h3 className="font-semibold mb-2 line-clamp-2">{topic.name}</h3>
-                  
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span>{topic.video_count} {t('learning.videos') || 'Videos'}</span>
-                    <span>•</span>
-                    <span>{topic.quiz_count} {t('learning.quizzes') || 'Quizzes'}</span>
-                  </div>
-                </Card>)}
+            <div className="space-y-3 px-4">
+              {categories.map(category => 
+                category.topics?.map(topic => {
+                  const Icon = (Icons as any)[category.icon_name] || Play;
+                  const progressColor = topic.progress_percentage === 100 
+                    ? 'bg-green-500' 
+                    : topic.progress_percentage && topic.progress_percentage > 50 
+                    ? 'bg-yellow-500' 
+                    : 'bg-red-500';
+
+                  return (
+                    <Card
+                      key={topic.id}
+                      className="p-4 cursor-pointer transition-all hover:shadow-lg border-2"
+                      style={{ borderColor: `${subject.color_scheme}40` }}
+                      onClick={() => navigate(`/learning/${subjectSlug}/${topic.slug}`)}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div 
+                            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: `${subject.color_scheme}20` }}
+                          >
+                            <Icon className="w-5 h-5" style={{ color: subject.color_scheme }} />
+                          </div>
+                          <h3 className="text-lg font-bold text-foreground">{topic.name}</h3>
+                        </div>
+                        
+                        <div className="flex items-center text-sm font-semibold text-muted-foreground ml-2">
+                          <Zap className="w-4 h-4 mr-1" style={{ color: subject.color_scheme }} />
+                          {topic.video_count} {t('learning.videos') || 'videos'}
+                        </div>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="w-full bg-muted rounded-full h-2.5">
+                        <div 
+                          className={`h-2.5 rounded-full ${progressColor} transition-all`}
+                          style={{ width: `${topic.progress_percentage || 0}%` }}
+                        />
+                      </div>
+                      <div className="text-right text-sm font-medium mt-1 text-muted-foreground">
+                        {topic.progress_percentage || 0}% {t('learning.complete') || 'Complete'}
+                      </div>
+                    </Card>
+                  );
+                })
+              )}
             </div>
-          </div>)}
-      </div>
-    </div>;
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
+  );
 };
 export default SubjectDashboardPage;

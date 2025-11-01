@@ -17,6 +17,32 @@ const CoursePlaylistPage = () => {
   const { data, isLoading } = useCoursePlaylist(topicSlug || '');
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
+  // Set initial playing video to featured video
+  useEffect(() => {
+    if (data?.featuredVideo && !playingVideoId) {
+      setPlayingVideoId(data.featuredVideo.id);
+    }
+  }, [data?.featuredVideo, playingVideoId]);
+
+  // Group videos into sections (every 4 videos)
+  const videoSections = useMemo(() => {
+    if (!data?.videos) return [];
+    
+    const sections: { title: string; videos: Video[] }[] = [];
+    const sectionSize = 4;
+    
+    for (let i = 0; i < data.videos.length; i += sectionSize) {
+      const sectionVideos = data.videos.slice(i, i + sectionSize);
+      const sectionNumber = Math.floor(i / sectionSize) + 1;
+      sections.push({
+        title: `Section ${sectionNumber}`,
+        videos: sectionVideos,
+      });
+    }
+    
+    return sections;
+  }, [data?.videos]);
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-4 space-y-6 max-w-4xl">
@@ -37,31 +63,7 @@ const CoursePlaylistPage = () => {
     );
   }
 
-  const { topic, videos, featuredVideo } = data;
-
-  // Set initial playing video to featured video
-  useEffect(() => {
-    if (featuredVideo && !playingVideoId) {
-      setPlayingVideoId(featuredVideo.id);
-    }
-  }, [featuredVideo, playingVideoId]);
-
-  // Group videos into sections (every 4 videos)
-  const videoSections = useMemo(() => {
-    const sections: { title: string; videos: Video[] }[] = [];
-    const sectionSize = 4;
-    
-    for (let i = 0; i < videos.length; i += sectionSize) {
-      const sectionVideos = videos.slice(i, i + sectionSize);
-      const sectionNumber = Math.floor(i / sectionSize) + 1;
-      sections.push({
-        title: `Section ${sectionNumber}`,
-        videos: sectionVideos,
-      });
-    }
-    
-    return sections;
-  }, [videos]);
+  const { topic, videos } = data;
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -81,9 +83,10 @@ const CoursePlaylistPage = () => {
             videoId={playingVideoId}
             onVideoEnd={() => {
               // Auto-play next video
-              const currentIndex = videos.findIndex(v => v.id === playingVideoId);
-              if (currentIndex !== -1 && currentIndex < videos.length - 1) {
-                setPlayingVideoId(videos[currentIndex + 1].id);
+              if (!data?.videos) return;
+              const currentIndex = data.videos.findIndex(v => v.id === playingVideoId);
+              if (currentIndex !== -1 && currentIndex < data.videos.length - 1) {
+                setPlayingVideoId(data.videos[currentIndex + 1].id);
               }
             }}
           />
