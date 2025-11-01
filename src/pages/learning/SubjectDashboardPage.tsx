@@ -40,7 +40,7 @@ const SubjectDashboardPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6 max-w-6xl pb-24">
+    <div className="container mx-0 p-4 space-y-6 max-w-6xl pb-24">
       <div className="flex items-center justify-between sticky top-0 z-10 bg-background/95 backdrop-blur pb-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/learning')}>
