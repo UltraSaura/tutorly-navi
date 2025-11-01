@@ -79,9 +79,6 @@ const LearningPage = () => {
             {readyCount} ready
           </div>
         </div>
-        <p className="text-white/70 mt-1 text-sm">
-          {t('learning.selectSubject') || 'Select a subject to begin exploring learning resources.'}
-        </p>
       </header>
 
       {/* Subject List */}
