@@ -16,7 +16,7 @@ const SubjectDashboardPage = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4 space-y-6 max-w-6xl">
+      <div className="container mx-0 p-4 space-y-6 max-w-6xl">
         <Skeleton className="h-10 w-48" />
         <Skeleton className="h-24 w-full" />
         <Skeleton className="h-64 w-full" />
@@ -26,7 +26,7 @@ const SubjectDashboardPage = () => {
 
   if (!data?.subject) {
     return (
-      <div className="container mx-auto p-4 text-center">
+      <div className="container mx-0 p-4 text-center">
         <p className="text-muted-foreground">{t('learning.subjectNotFound') || 'Subject not found'}</p>
       </div>
     );
@@ -40,7 +40,7 @@ const SubjectDashboardPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6 max-w-6xl pb-24">
+    <div className="container mx-0 p-4 space-y-6 max-w-6xl pb-24">
       <div className="flex items-center justify-between sticky top-0 z-10 bg-background/95 backdrop-blur pb-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/learning')}>
