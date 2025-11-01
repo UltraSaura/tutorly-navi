@@ -40,8 +40,8 @@ const SubjectDashboardPage = () => {
   };
 
   return (
-    <div className="container mx-0 p-4 space-y-6 max-w-6xl pb-24">
-      <div className="flex items-center justify-between sticky top-0 z-10 bg-background/95 backdrop-blur pb-4 -ml-4 px-4">
+    <div className="container mx-0 py-4 space-y-6 max-w-6xl pb-24">
+      <div className="flex items-center justify-between sticky top-0 z-10 bg-background/95 backdrop-blur pb-4 px-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/learning')}>
             <ArrowLeft className="w-5 h-5" />
@@ -53,15 +53,17 @@ const SubjectDashboardPage = () => {
         </Button>
       </div>
 
-      <Card className="p-6">
+      <div className="px-4">
+        <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">{t('learning.overallProgress') || 'Overall Progress'}</h3>
         <Progress value={overallProgress.percentage} className="h-3 mb-3" />
         <p className="text-sm text-muted-foreground">
           {overallProgress.completedTopics}/{overallProgress.totalTopics} {t('learning.topicsMastered') || 'Topics Mastered'}
         </p>
-      </Card>
+        </Card>
+      </div>
 
-      <div className="space-y-8">
+      <div className="space-y-8 px-4">
         {categories.map(category => (
           <div key={category.id}>
             <div 
