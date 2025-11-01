@@ -68,7 +68,7 @@ const LearningPage = () => {
       </div>;
   }
   const readyCount = subjects?.filter(s => s.videos_ready > 0).length || 0;
-  return <div className="min-h-screen bg-gray-50 dark:bg-background pb-20">
+  return <div className="min-h-screen bg-gray-50 dark:bg-background pb-20 mx-[5px]">
       {/* Header */}
       <header className="p-6 pb-4 bg-[#253c7b] shadow-md">
         <div className="flex justify-between items-center">
