@@ -126,7 +126,16 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         
         // Flatten translations for legacy key support
         const flattened = flattenTranslations(loadedTranslations);
-        const combined = { ...loadedTranslations, ...flattened };
+        
+        // IMPORTANT: Also merge 'common' namespace to root for direct access
+        // This allows t('learning.chooseSubject') to work instead of requiring t('common.learning.chooseSubject')
+        const commonAtRoot = loadedTranslations.common ? { ...loadedTranslations.common } : {};
+        
+        const combined = { 
+          ...loadedTranslations,  // Keep original structure (common.*, exercises.*, etc.)
+          ...commonAtRoot,        // Add common.* keys directly at root (learning.*, nav.*, etc.)
+          ...flattened           // Add all flattened keys (common.learning.chooseSubject, etc.)
+        };
         
         console.log('[Translation] Combined translations:', combined);
         console.log('[Translation] Sample translation test - exercise.answer:', combined['exercise.answer']);
@@ -152,7 +161,12 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
           try {
             const fallbackTranslations = await loadTranslations('en');
             const flattened = flattenTranslations(fallbackTranslations);
-            const combined = { ...fallbackTranslations, ...flattened };
+            const commonAtRoot = fallbackTranslations.common ? { ...fallbackTranslations.common } : {};
+            const combined = { 
+              ...fallbackTranslations, 
+              ...commonAtRoot, 
+              ...flattened 
+            };
             setTranslations(combined);
           } catch (fallbackError) {
             console.error('Failed to load fallback translations:', fallbackError);
