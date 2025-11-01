@@ -101,8 +101,8 @@ const LearningPage = () => {
             });
           }
         }} className={`
-                flex items-center justify-between 
-                p-4 my-2 mx-6 h-24
+              flex items-center justify-between 
+                p-4 my-2 mx-2 h-24
                 ${bgColorClass} text-white 
                 rounded-xl shadow-md cursor-pointer
                 transition-transform transform 
