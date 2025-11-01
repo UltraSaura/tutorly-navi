@@ -127,7 +127,7 @@ export function HeaderNavigation() {
   const userInitials = user?.email?.charAt(0).toUpperCase() || 'U';
 
   return (
-    <div className="flex items-center justify-between w-full h-full px-[5px]">
+    <div className="flex items-center justify-between w-full h-full px-6">
       {/* Logo and App Name */}
       <div className="flex items-center gap-3">
         <img src="/logo.png" alt="Stuwy Logo" className="w-8 h-8" />
