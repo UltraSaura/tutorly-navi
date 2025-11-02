@@ -45,36 +45,24 @@ const SubjectDashboardPage = () => {
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
-      <div className="flex items-center gap-4 px-4 py-3 bg-card border-b">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/learning')}>
+      <div 
+        className="flex items-center gap-4 px-4 py-3 border-b"
+        style={{ backgroundColor: subject.color_scheme }}
+      >
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => navigate('/learning')}
+          className="text-white hover:bg-white/20"
+        >
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-xl font-bold flex-1">{subject.name}</h1>
+        <h1 className="text-xl font-bold flex-1 text-white">{subject.name}</h1>
       </div>
 
       {/* Scrollable Content */}
       <ScrollArea className="flex-1">
         <div className="pb-24">
-          {/* Subject Header with Progress */}
-          <div 
-            className="p-6 text-white shadow-lg" 
-            style={{ backgroundColor: subject.color_scheme }}
-          >
-            <h2 className="text-3xl font-extrabold mb-1">{t('learning.subjectMastery') || 'Subject Mastery'}</h2>
-            <p className="text-sm opacity-90 mb-3">{t('learning.yourProgress') || 'Your overall progress in this subject'}</p>
-            
-            <div className="w-full bg-white/30 rounded-full h-3 mt-3">
-              <div 
-                className="h-3 rounded-full bg-white shadow-inner transition-all" 
-                style={{ width: `${overallProgress.percentage}%` }}
-              />
-            </div>
-            <p className="text-lg font-bold mt-2">{overallProgress.percentage}% {t('learning.complete') || 'Complete'}</p>
-            <p className="text-sm opacity-90">
-              {overallProgress.completedTopics}/{overallProgress.totalTopics} {t('learning.topicsMastered') || 'topics mastered'}
-            </p>
-          </div>
-
           {/* Topics List */}
           <div className="py-4">
             <h2 className="text-xl font-bold text-foreground mx-4 mt-2 mb-3">

@@ -9,7 +9,15 @@
     "chooseSubject": "Choose Your Subject",
     "selectSubject": "Select a subject to begin exploring learning resources.",
     "ready": "ready",
-    "completed": "completed"
+    "completed": "completed",
+    "subjectMastery": "Subject Mastery",
+    "yourProgress": "Your overall progress in this subject",
+    "complete": "Complete",
+    "topicsMastered": "topics mastered",
+    "learningTopics": "Learning Topics",
+    "videos": "videos",
+    "start": "Start",
+    "subjectNotFound": "Subject not found"
   },
   "nav": {
     "tutor": "Tutor",

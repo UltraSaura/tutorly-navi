@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useCoursePlaylist } from '@/hooks/useCoursePlaylist';
@@ -17,12 +17,8 @@ const CoursePlaylistPage = () => {
   const { data, isLoading } = useCoursePlaylist(topicSlug || '');
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
-  // Set initial playing video to featured video
-  useEffect(() => {
-    if (data?.featuredVideo && !playingVideoId) {
-      setPlayingVideoId(data.featuredVideo.id);
-    }
-  }, [data?.featuredVideo, playingVideoId]);
+  // REMOVED: Auto-play featured video on load
+  // Videos will only play when clicked via onVideoSelect
 
   // Group videos into sections (every 4 videos)
   const videoSections = useMemo(() => {

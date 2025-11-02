@@ -10,6 +10,7 @@ import { ExercisesPanel } from '@/components/guardian/ExercisesPanel';
 import { SubjectsGrid } from '@/components/guardian/SubjectsGrid';
 import { ExportReportButton } from '@/components/guardian/ExportReportButton';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { SubjectMasteryCard } from '@/components/user/SubjectMasteryCard';
 
 export default function ChildDashboard() {
   const { childId } = useParams<{ childId: string }>();
@@ -99,6 +100,15 @@ export default function ChildDashboard() {
           />
         )}
       </div>
+
+      {/* Subject Mastery Card */}
+      {progressData?.[0] && (
+        <SubjectMasteryCard
+          percentage={progressData[0].overallProgress}
+          completedTopics={progressData[0].subjects.filter(s => s.progress === 100).length}
+          totalTopics={progressData[0].subjects.length}
+        />
+      )}
 
       <KPICards />
 

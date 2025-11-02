@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Topic, Video } from '@/types/learning';
+import { useUserSchoolLevel } from './useUserSchoolLevel';
+import { filterContentByUserLevel } from '@/utils/schoolLevelFilter';
 
 interface CoursePlaylistData {
   topic: Topic | null;
@@ -9,8 +11,10 @@ interface CoursePlaylistData {
 }
 
 export function useCoursePlaylist(topicSlug: string) {
+  const { data: userLevelData } = useUserSchoolLevel();
+  
   return useQuery({
-    queryKey: ['course-playlist', topicSlug],
+    queryKey: ['course-playlist', topicSlug, userLevelData?.level],
     queryFn: async (): Promise<CoursePlaylistData> => {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -25,27 +29,49 @@ export function useCoursePlaylist(topicSlug: string) {
       if (topicError) throw topicError;
 
       // Get videos
-      const { data: videos, error: videosError } = await (supabase as any)
+      const { data: allVideos, error: allVideosError } = await (supabase as any)
         .from('learning_videos')
         .select('*')
-        .eq('topic_id', (topic as any).id)
+        .eq('topic_id', topic.id)
         .eq('is_active', true)
         .order('order_index');
 
-      if (videosError) throw videosError;
+      if (allVideosError) throw allVideosError;
+      
+      // Filter videos by user's age/level
+      const suitableVideos = filterContentByUserLevel(
+        allVideos as any,
+        userLevelData?.level || null,
+        userLevelData?.age || null
+      );
+      
+      // Get quizzes for suitable videos
+      const videoIds = suitableVideos.map(v => v.id);
+      const { data: allQuizzes } = await supabase
+        .from('video_quizzes')
+        .select('*')
+        .in('video_id', videoIds)
+        .order('order_index');
+      
+      // Filter quizzes by user's age/level
+      const suitableQuizzes = filterContentByUserLevel(
+        allQuizzes as any,
+        userLevelData?.level || null,
+        userLevelData?.age || null
+      );
 
       // Get user progress for videos
-      let videosWithProgress = videos as any[];
-      let featuredVideo = (videos as any[])[0] || null;
+      let videosWithProgress = suitableVideos as any[];
+      let featuredVideo = (suitableVideos as any[])[0] || null;
 
-      if (user && videos && videos.length > 0) {
+      if (user && suitableVideos && suitableVideos.length > 0) {
         const { data: progress } = await (supabase as any)
           .from('user_learning_progress')
           .select('*')
           .eq('user_id', user.id)
-          .in('video_id', (videos as any[]).map((v: any) => v.id));
+          .in('video_id', (suitableVideos as any[]).map((v: any) => v.id));
 
-        videosWithProgress = (videos as any[]).map((video: any) => {
+        videosWithProgress = (suitableVideos as any[]).map((video: any) => {
           const videoProgress = (progress as any[])?.find((p: any) => p.video_id === video.id);
           return {
             ...video,
@@ -63,7 +89,7 @@ export function useCoursePlaylist(topicSlug: string) {
 
         const firstUnwatched = videosWithProgress.find((v: any) => !v.progress_percentage || v.progress_percentage === 0);
 
-        featuredVideo = lastWatched || firstUnwatched || (videos as any[])[0];
+        featuredVideo = lastWatched || firstUnwatched || (suitableVideos as any[])[0];
       }
 
       return {

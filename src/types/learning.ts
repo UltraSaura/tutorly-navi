@@ -61,6 +61,10 @@ export interface Video {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Age and level filtering
+  min_age?: number | null;
+  max_age?: number | null;
+  school_levels?: string[] | null;
   // User progress
   progress_percentage?: number;
   last_watched_position_seconds?: number;
@@ -81,6 +85,10 @@ export interface Quiz {
   order_index: number;
   created_at: string;
   updated_at: string;
+  // Age and level filtering
+  min_age?: number | null;
+  max_age?: number | null;
+  school_levels?: string[] | null;
 }
 
 export interface UserProgress {

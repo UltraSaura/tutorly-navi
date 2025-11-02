@@ -9,7 +9,15 @@
     "chooseSubject": "Choisissez votre matière",
     "selectSubject": "Sélectionnez une matière pour commencer à explorer les ressources d'apprentissage.",
     "ready": "prêt",
-    "completed": "complété"
+    "completed": "complété",
+    "subjectMastery": "Maîtrise de la matière",
+    "yourProgress": "Votre progression globale dans cette matière",
+    "complete": "Terminé",
+    "topicsMastered": "sujets maîtrisés",
+    "learningTopics": "Sujets d'apprentissage",
+    "videos": "vidéos",
+    "start": "Commencer",
+    "subjectNotFound": "Matière introuvable"
   },
   "nav": {
     "tutor": "Tuteur",

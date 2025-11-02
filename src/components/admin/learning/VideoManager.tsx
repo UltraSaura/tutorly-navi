@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useLearningTopics, useLearningVideos, useCreateVideo, useUpdateVideo, useDeleteVideo } from '@/hooks/useManageLearningContent';
 import type { Video } from '@/types/learning';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AgeBasedSchoolLevelSelector } from './AgeBasedSchoolLevelSelector';
 
 const VideoManager = () => {
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
@@ -32,6 +34,9 @@ const VideoManager = () => {
     transcript: '',
     order_index: 0,
     is_active: true,
+    min_age: null as number | null,
+    max_age: null as number | null,
+    school_levels: [] as string[],
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,6 +65,9 @@ const VideoManager = () => {
       transcript: video.transcript || '',
       order_index: video.order_index,
       is_active: video.is_active,
+      min_age: video.min_age,
+      max_age: video.max_age,
+      school_levels: video.school_levels || [],
     });
     setDialogOpen(true);
   };
@@ -83,6 +91,9 @@ const VideoManager = () => {
       transcript: '',
       order_index: 0,
       is_active: true,
+      min_age: null,
+      max_age: null,
+      school_levels: [],
     });
   };
 
@@ -218,6 +229,55 @@ const VideoManager = () => {
                   />
                   <Label htmlFor="is_active">Active</Label>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Minimum Age</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="18"
+                    value={formData.min_age || ''}
+                    onChange={(e) => setFormData({
+                      ...formData, 
+                      min_age: e.target.value ? parseInt(e.target.value) : null
+                    })}
+                    placeholder="e.g., 6"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Leave empty for no minimum age
+                  </p>
+                </div>
+                <div>
+                  <Label>Maximum Age</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="18"
+                    value={formData.max_age || ''}
+                    onChange={(e) => setFormData({
+                      ...formData, 
+                      max_age: e.target.value ? parseInt(e.target.value) : null
+                    })}
+                    placeholder="e.g., 11"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Leave empty for no maximum age
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <Label>School Levels</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Select school levels this video is suitable for. Use the "Select All" checkbox 
+                  to select all levels for a specific age across all countries, or select individual 
+                  country/level combinations. Leave empty to show for all levels.
+                </p>
+                <AgeBasedSchoolLevelSelector
+                  selectedLevels={formData.school_levels}
+                  onLevelsChange={(levels) => setFormData({...formData, school_levels: levels})}
+                />
               </div>
               <Button type="submit" className="w-full">
                 {editingVideo ? 'Update Video' : 'Create Video'}
