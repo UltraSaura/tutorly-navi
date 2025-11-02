@@ -17,7 +17,9 @@
     "learningTopics": "Sujets d'apprentissage",
     "videos": "vidéos",
     "start": "Commencer",
-    "subjectNotFound": "Matière introuvable"
+    "subjectNotFound": "Matière introuvable",
+    "suggestedVideos": "Vidéos d'apprentissage suggérées",
+    "suggestedVideosDescription": "Regardez ces vidéos pour mieux comprendre ce sujet"
   },
   "nav": {
     "tutor": "Tuteur",

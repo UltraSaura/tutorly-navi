@@ -90,6 +90,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const content = aiResponse.content;
   const [userAnswerInput, setUserAnswerInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [answerSubmitted, setAnswerSubmitted] = useState(false); // Add this line
   const { t, language } = useLanguage();
   const { userContext } = useUserContext();
   
@@ -136,8 +137,10 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
       await onSubmitAnswer(question, userAnswerInput.trim());
       console.log('[ExerciseCard] onSubmitAnswer completed successfully');
       setUserAnswerInput(''); // Clear input after submission
+      setAnswerSubmitted(true); // Add this line to mark as submitted
     } catch (error) {
       console.error('[ExerciseCard] Error in handleSubmitAnswer:', error);
+      setAnswerSubmitted(false); // Add this line to reset on error
     } finally {
       setIsSubmitting(false);
     }
@@ -236,7 +239,9 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                         className="px-3"
                       >
                         <Send size={16} className="mr-1" />
-                        {t('exercise.answerSubmitted')}
+                        {answerSubmitted && userAnswerInput.trim() === '' 
+                          ? t('exercise.answerSubmitted') 
+                          : t('common.submit')}
                       </Button>
                     </div>
                   </div>
@@ -506,7 +511,9 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                       className="px-3"
                     >
                       <Send size={16} className="mr-1" />
-                      {t('exercise.answerSubmitted')}
+                      {answerSubmitted && userAnswerInput.trim() === '' 
+                        ? t('exercise.answerSubmitted') 
+                        : t('common.submit')}
                     </Button>
                   </div>
                 </div>

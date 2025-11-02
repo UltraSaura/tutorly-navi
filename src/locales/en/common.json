@@ -17,7 +17,9 @@
     "learningTopics": "Learning Topics",
     "videos": "videos",
     "start": "Start",
-    "subjectNotFound": "Subject not found"
+    "subjectNotFound": "Subject not found",
+    "suggestedVideos": "Suggested Learning Videos",
+    "suggestedVideosDescription": "Watch these videos to better understand this topic"
   },
   "nav": {
     "tutor": "Tutor",

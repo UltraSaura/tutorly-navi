@@ -65,6 +65,8 @@ export interface Video {
   min_age?: number | null;
   max_age?: number | null;
   school_levels?: string[] | null;
+  // Tags for homework matching
+  tags?: string[] | null;
   // User progress
   progress_percentage?: number;
   last_watched_position_seconds?: number;

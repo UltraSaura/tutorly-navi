@@ -12,6 +12,7 @@ import { useLanguage } from '@/context/SimpleLanguageContext';
 import { toast } from 'sonner';
 import { MathLiveInput, MathInputToggle, MathRenderer } from '@/components/math';
 import { processMathContentForDisplay } from '@/utils/mathDisplayProcessor';
+import { VideoSuggestions } from '@/components/learning/VideoSuggestions';
 
 interface ExerciseProps {
   exercise: {
@@ -330,6 +331,12 @@ const Exercise = ({
               </DialogContent>
             </Dialog>
           </div>
+        )}
+        {!exercise.isCorrect && exercise.question && (
+          <VideoSuggestions 
+            homeworkContent={exercise.question}
+            subjectSlug={exercise.subjectId}
+          />
         )}
       </div>
     </motion.div>
