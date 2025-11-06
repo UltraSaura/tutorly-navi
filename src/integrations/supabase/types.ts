@@ -683,7 +683,10 @@ export type Database = {
           duration_minutes: number
           id: string
           is_active: boolean
+          max_age: number | null
+          min_age: number | null
           order_index: number
+          school_levels: string[] | null
           subject_id: string | null
           thumbnail_url: string | null
           title: string
@@ -699,7 +702,10 @@ export type Database = {
           duration_minutes?: number
           id?: string
           is_active?: boolean
+          max_age?: number | null
+          min_age?: number | null
           order_index?: number
+          school_levels?: string[] | null
           subject_id?: string | null
           thumbnail_url?: string | null
           title: string
@@ -715,7 +721,10 @@ export type Database = {
           duration_minutes?: number
           id?: string
           is_active?: boolean
+          max_age?: number | null
+          min_age?: number | null
           order_index?: number
+          school_levels?: string[] | null
           subject_id?: string | null
           thumbnail_url?: string | null
           title?: string
