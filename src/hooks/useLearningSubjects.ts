@@ -85,7 +85,7 @@ export function useLearningSubjects() {
           // Count completed videos if user is logged in
           let videos_completed = 0;
           if (user && videos_ready > 0) {
-            const videoIds = suitableVideos.map(v => v.id);
+            const videoIds = suitableVideos.map((v: any) => v.id);
             const { count } = await supabase
               .from('user_learning_progress')
               .select('video_id', { count: 'exact', head: true })

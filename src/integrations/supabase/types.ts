@@ -684,6 +684,7 @@ export type Database = {
           id: string
           is_active: boolean
           order_index: number
+          subject_id: string | null
           thumbnail_url: string | null
           title: string
           topic_id: string
@@ -699,6 +700,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           order_index?: number
+          subject_id?: string | null
           thumbnail_url?: string | null
           title: string
           topic_id: string
@@ -714,6 +716,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           order_index?: number
+          subject_id?: string | null
           thumbnail_url?: string | null
           title?: string
           topic_id?: string
@@ -723,6 +726,13 @@ export type Database = {
           xp_reward?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "learning_videos_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "learning_subjects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "learning_videos_topic_id_fkey"
             columns: ["topic_id"]
