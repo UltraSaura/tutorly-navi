@@ -46,12 +46,12 @@ export function useCoursePlaylist(topicSlug: string) {
       );
       
       // Get quizzes for suitable videos
-      const videoIds = suitableVideos.map(v => v.id);
-      const { data: allQuizzes } = await supabase
+      const videoIds = suitableVideos.map((v: any) => v.id);
+      const { data: allQuizzes } = videoIds.length > 0 ? await supabase
         .from('video_quizzes')
         .select('*')
         .in('video_id', videoIds)
-        .order('order_index');
+        .order('order_index') : { data: [] };
       
       // Filter quizzes by user's age/level
       const suitableQuizzes = filterContentByUserLevel(

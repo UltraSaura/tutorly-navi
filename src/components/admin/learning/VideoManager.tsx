@@ -8,9 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { useLearningTopics, useLearningVideos, useCreateVideo, useUpdateVideo, useDeleteVideo } from '@/hooks/useManageLearningContent';
+import { useLearningTopics, useLearningVideos, useCreateVideo, useUpdateVideo, useDeleteVideo, useLearningSubjects } from '@/hooks/useManageLearningContent';
 import type { Video } from '@/types/learning';
-import { Checkbox } from '@/components/ui/checkbox';
 import { AgeBasedSchoolLevelSelector } from './AgeBasedSchoolLevelSelector';
 import { Badge } from '@/components/ui/badge';
 
@@ -132,6 +131,8 @@ export function scoreVideoMatch(videoTags: string[], homeworkKeywords: string[])
 
 const VideoManager = () => {
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+  const { data: subjects = [], isLoading: subjectsLoading } = useLearningSubjects();
   const { data: topics = [], isLoading: topicsLoading, error: topicsError } = useLearningTopics();
   const { data: videos = [], isLoading: videosLoading, error: videosError } = useLearningVideos(selectedTopicId || undefined);
   const createVideo = useCreateVideo();
@@ -142,6 +143,7 @@ const VideoManager = () => {
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
   const [formData, setFormData] = useState({
     topic_id: '',
+    subject_id: '',
     title: '',
     video_url: '',
     thumbnail_url: '',
@@ -174,6 +176,7 @@ const VideoManager = () => {
     setEditingVideo(video);
     setFormData({
       topic_id: video.topic_id,
+      subject_id: video.subject_id || '',
       title: video.title,
       video_url: video.video_url,
       thumbnail_url: video.thumbnail_url || '',
@@ -201,6 +204,7 @@ const VideoManager = () => {
     setEditingVideo(null);
     setFormData({
       topic_id: selectedTopicId,
+      subject_id: selectedSubjectId,
       title: '',
       video_url: '',
       thumbnail_url: '',
@@ -251,6 +255,19 @@ const VideoManager = () => {
               <DialogTitle>{editingVideo ? 'Edit Video' : 'Add New Video'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="subject_id">Subject</Label>
+                <Select value={formData.subject_id} onValueChange={(value) => setFormData({ ...formData, subject_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select subject (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjects.map((subject) => (
+                      <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label htmlFor="topic_id">Topic</Label>
                 <Select value={formData.topic_id} onValueChange={(value) => setFormData({ ...formData, topic_id: value })}>
@@ -390,9 +407,7 @@ const VideoManager = () => {
               <div>
                 <Label>School Levels</Label>
                 <p className="text-xs text-muted-foreground mb-2">
-                  Select school levels this video is suitable for. Use the "Select All" checkbox 
-                  to select all levels for a specific age across all countries, or select individual 
-                  country/level combinations. Leave empty to show for all levels.
+                  Select school levels this video is suitable for. Leave empty to show for all levels.
                 </p>
                 <AgeBasedSchoolLevelSelector
                   selectedLevels={formData.school_levels}
@@ -463,6 +478,7 @@ const VideoManager = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
+              <TableHead>Subject</TableHead>
               <TableHead>Topic</TableHead>
               <TableHead>Duration</TableHead>
               <TableHead>XP</TableHead>
@@ -474,7 +490,7 @@ const VideoManager = () => {
           <TableBody>
             {videos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
                   No videos found for this topic
                 </TableCell>
               </TableRow>
@@ -482,6 +498,7 @@ const VideoManager = () => {
               videos.map((video) => (
             <TableRow key={video.id}>
               <TableCell className="font-medium">{video.title}</TableCell>
+              <TableCell>{subjects.find(s => s.id === video.subject_id)?.name || '-'}</TableCell>
               <TableCell>{topics.find(t => t.id === video.topic_id)?.name}</TableCell>
               <TableCell>{video.duration_minutes}m</TableCell>
               <TableCell>{video.xp_reward} XP</TableCell>

@@ -50,6 +50,7 @@ export interface Topic {
 export interface Video {
   id: string;
   topic_id: string;
+  subject_id?: string | null;
   title: string;
   video_url: string;
   thumbnail_url: string | null;
