@@ -8,6 +8,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { cn } from '@/lib/utils';
+import { TestYourselfInline } from '@/components/learning/TestYourselfInline';
+import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
+import { useVisibleBanks } from '@/hooks/useQuizBank';
+import { useAuth } from '@/context/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const VideoPlayerPage = () => {
   const { videoId } = useParams<{ videoId: string }>();
@@ -30,6 +36,35 @@ const VideoPlayerPage = () => {
     submitQuizAnswer,
     isLoading,
   } = useVideoPlayer(videoId || '');
+
+  const { user } = useAuth();
+
+  // Fetch completed video IDs for the topic
+  const { data: completedVideoIds = [] } = useQuery({
+    queryKey: ['completed-videos', video?.topic_id, user?.id],
+    queryFn: async () => {
+      if (!user || !video?.topic_id) return [];
+      
+      const { data, error } = await supabase
+        .from('user_learning_progress')
+        .select('video_id')
+        .eq('user_id', user.id)
+        .eq('progress_type', 'video_completed')
+        .not('video_id', 'is', null);
+
+      if (error) throw error;
+      return (data || []).map((d: any) => d.video_id).filter(Boolean) as string[];
+    },
+    enabled: !!user && !!video?.topic_id,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Fetch visible quiz banks
+  const { data: visibleBanks } = useVisibleBanks(
+    video?.topic_id || '',
+    completedVideoIds,
+    user?.id || ''
+  );
 
   useEffect(() => {
     if (currentQuiz && !showQuiz) {
@@ -166,6 +201,18 @@ const VideoPlayerPage = () => {
           {video.description && (
             <p className="text-muted-foreground mb-6">{video.description}</p>
           )}
+          
+          {/* Test Yourself section */}
+          {visibleBanks?.visible && visibleBanks.visible.length > 0 && (
+            <div className="mb-6 p-4 border rounded-xl">
+              <h4 className="font-semibold mb-2">Test yourself</h4>
+              <div className="flex flex-wrap gap-3">
+                {visibleBanks.visible.map(v => (
+                  <TestYourselfInline key={v.id} bankId={v.bankId} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -231,6 +278,9 @@ const VideoPlayerPage = () => {
           </Card>
         </div>
       )}
+
+      {/* Quiz Overlay Controller */}
+      <QuizOverlayController />
     </div>
   );
 };
