@@ -34,6 +34,7 @@ interface ExerciseProps {
     }>;
     lastAttemptDate: Date;
     needsRetry: boolean;
+    subjectId?: string;
   };
   toggleExerciseExpansion: (id: string) => void;
   onSubmitAnswer?: (exerciseId: string, answer: string) => void;

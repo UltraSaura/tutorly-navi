@@ -832,6 +832,153 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_bank_assignments: {
+        Row: {
+          bank_id: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          min_completed_in_set: number | null
+          topic_id: string | null
+          trigger_after_n_videos: number | null
+          updated_at: string
+          video_ids: string[] | null
+        }
+        Insert: {
+          bank_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          min_completed_in_set?: number | null
+          topic_id?: string | null
+          trigger_after_n_videos?: number | null
+          updated_at?: string
+          video_ids?: string[] | null
+        }
+        Update: {
+          bank_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          min_completed_in_set?: number | null
+          topic_id?: string | null
+          trigger_after_n_videos?: number | null
+          updated_at?: string
+          video_ids?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_bank_assignments_bank_id_fkey"
+            columns: ["bank_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_banks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_bank_attempts: {
+        Row: {
+          bank_id: string
+          created_at: string
+          id: string
+          max_score: number
+          score: number
+          took_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          bank_id: string
+          created_at?: string
+          id?: string
+          max_score: number
+          score: number
+          took_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          bank_id?: string
+          created_at?: string
+          id?: string
+          max_score?: number
+          score?: number
+          took_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_bank_attempts_bank_id_fkey"
+            columns: ["bank_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_banks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_bank_questions: {
+        Row: {
+          bank_id: string
+          created_at: string
+          id: string
+          payload: Json
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          bank_id: string
+          created_at?: string
+          id: string
+          payload: Json
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          bank_id?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_bank_questions_bank_id_fkey"
+            columns: ["bank_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_banks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_banks: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          shuffle: boolean | null
+          time_limit_sec: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id: string
+          shuffle?: boolean | null
+          time_limit_sec?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          shuffle?: boolean | null
+          time_limit_sec?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       school_levels: {
         Row: {
           country_code: string
