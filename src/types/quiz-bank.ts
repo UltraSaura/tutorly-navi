@@ -1,3 +1,5 @@
+import type { VisualUnion } from "@/lib/quiz/visual-types";
+
 export type Choice = { id: string; label: string; correct?: boolean };
 
 export type BaseQ = {
@@ -10,10 +12,11 @@ export type BaseQ = {
 
 export type SingleQ = BaseQ & { kind: "single"; choices: Choice[] };
 export type MultiQ = BaseQ & { kind: "multi"; choices: Choice[] };
-export type NumericQ = BaseQ & { kind: "numeric"; answer: number; range?: {min:number; max:number} };
+export type NumericQ = BaseQ & { kind: "numeric"; answer: number; range?: { min: number; max: number } };
 export type OrderingQ = BaseQ & { kind: "ordering"; items: string[]; correctOrder: string[] };
+export type VisualQ = BaseQ & { kind: "visual"; visual: VisualUnion };
 
-export type Question = SingleQ | MultiQ | NumericQ | OrderingQ;
+export type Question = SingleQ | MultiQ | NumericQ | OrderingQ | VisualQ;
 
 export type QuizBank = {
   quizBankId: string;
@@ -40,7 +43,7 @@ export const DEFAULT_BANK: QuizBank = {
   description: "",
   timeLimitSec: 0,
   shuffle: false,
-  questions: []
+  questions: [],
 };
 
 export function ensureQuizBank(bank?: Partial<QuizBank> | null): QuizBank {
@@ -51,7 +54,6 @@ export function ensureQuizBank(bank?: Partial<QuizBank> | null): QuizBank {
     description: bank.description ?? DEFAULT_BANK.description,
     timeLimitSec: bank.timeLimitSec ?? DEFAULT_BANK.timeLimitSec,
     shuffle: bank.shuffle ?? DEFAULT_BANK.shuffle,
-    questions: Array.isArray(bank.questions) ? bank.questions : []
+    questions: Array.isArray(bank.questions) ? bank.questions : [],
   };
 }
-

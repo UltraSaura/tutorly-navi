@@ -32,7 +32,7 @@ BEGIN
       AND table_name = 'learning_videos'
       AND column_name = 'school_levels'
   ) THEN
-    ALTER TABLE public.learning_videos
-      ADD COLUMN school_levels text[] DEFAULT ARRAY[]::text[];
+ALTER TABLE public.learning_videos
+ADD COLUMN school_levels text[] DEFAULT ARRAY[]::text[];
   END IF;
 END $$;

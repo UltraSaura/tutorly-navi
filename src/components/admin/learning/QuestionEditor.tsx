@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import VisualQuestionBuilder from '@/components/admin/VisualQuestionBuilder';
+import type { VisualUnion } from '@/lib/quiz/visual-types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X, Plus, GripVertical } from 'lucide-react';
-import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ } from '@/types/quiz-bank';
+import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ } from '@/types/quiz-bank';
 
 interface QuestionEditorProps {
   question?: Question & { dbId?: string; position?: number };
@@ -16,6 +18,18 @@ interface QuestionEditorProps {
   position: number;
 }
 
+const randomVisualId = () => `visual-${Math.random().toString(36).slice(2, 8)}`;
+
+const createDefaultVisual = (): VisualUnion => ({
+  subtype: 'pie',
+  multi: false,
+  segments: [
+    { id: randomVisualId(), value: 0.25, label: 'Slice A', correct: true },
+    { id: randomVisualId(), value: 0.25, label: 'Slice B' },
+    { id: randomVisualId(), value: 0.25, label: 'Slice C', correct: true },
+    { id: randomVisualId(), value: 0.25, label: 'Slice D' },
+  ],
+});
 export function QuestionEditor({ question, isOpen, onClose, onSave, position }: QuestionEditorProps) {
   const [kind, setKind] = useState<Question['kind']>(question?.kind || 'single');
   const [prompt, setPrompt] = useState(question?.prompt || '');
@@ -50,6 +64,12 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       : []
   );
 
+  const [visual, setVisual] = useState<VisualUnion>(
+    question && question.kind === 'visual'
+      ? (question as VisualQ).visual
+      : createDefaultVisual()
+  );
+
   useEffect(() => {
     if (question) {
       setKind(question.kind);
@@ -69,6 +89,9 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         setOrderingItems(ordQ.items);
         setCorrectOrder(ordQ.correctOrder);
       }
+      else if (question.kind === 'visual') {
+        setVisual((question as VisualQ).visual);
+      }
     } else {
       // Reset for new question
       setKind('single');
@@ -81,6 +104,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setNumericRange({});
       setOrderingItems(['', '']);
       setCorrectOrder([]);
+      setVisual(createDefaultVisual());
     }
   }, [question, isOpen]);
 
@@ -176,7 +200,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         answer: numericAnswer,
         range: numericRange.min !== undefined || numericRange.max !== undefined ? numericRange : undefined,
       } as NumericQ;
-    } else {
+    } else if (kind === 'ordering') {
       const validItems = orderingItems.filter(i => i.trim());
       if (validItems.length < 2) {
         alert('Please add at least 2 items');
@@ -195,6 +219,18 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         items: validItems,
         correctOrder,
       } as OrderingQ;
+    } else if (kind === 'visual') {
+      questionData = {
+        id,
+        kind: 'visual',
+        prompt,
+        hint: hint || undefined,
+        points,
+        visual,
+      } as VisualQ;
+    } else {
+      alert('Unsupported question type');
+      return;
     }
 
     onSave(questionData, position);
@@ -220,6 +256,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <SelectItem value="multi">Multiple Choice</SelectItem>
                 <SelectItem value="numeric">Numeric Answer</SelectItem>
                 <SelectItem value="ordering">Ordering</SelectItem>
+                <SelectItem value="visual">Visual</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -429,6 +466,13 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             </div>
           )}
 
+          {kind === 'visual' && (
+            <div className="space-y-2">
+              <Label className="text-sm">Visual configuration</Label>
+              <VisualQuestionBuilder value={visual} onChange={setVisual} />
+            </div>
+          )}
+
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
@@ -442,4 +486,3 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
     </Dialog>
   );
 }
-

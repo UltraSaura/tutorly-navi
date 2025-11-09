@@ -1,4 +1,5 @@
 import type { Question } from '@/types/quiz-bank';
+import { evaluateVisual } from '@/lib/quiz/visual-evaluate';
 
 export function evaluateQuestion(q: Question, answer: any): boolean {
   if (q.kind === "single") {
@@ -15,6 +16,9 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
   }
   if (q.kind === "ordering") {
     return JSON.stringify(answer) === JSON.stringify((q as any).correctOrder);
+  }
+  if (q.kind === "visual") {
+    return evaluateVisual(q.visual, answer);
   }
   return false;
 }
