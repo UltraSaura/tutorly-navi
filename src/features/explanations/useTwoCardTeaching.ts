@@ -87,79 +87,36 @@ export function useTwoCardTeaching() {
       const operationInfo = detectOperationType(exercise_content);
       console.log('[TwoCardTeaching] Detected operation:', operationInfo);
 
-      // Build the explanation request message with STRONG emphasis on operation type
-      const explanationMessage = `🚨 CRITICAL REQUIREMENT - OPERATION TYPE 🚨
+      // Build the exercise message (NOT a prompt - just the exercise)
+      const exerciseMessage = `${exercise_content}${student_answer ? `\nStudent's answer: ${student_answer}` : ''}`;
 
-DETECTED OPERATION IN STUDENT'S EXERCISE: ${operationInfo.type}
-OPERATION SYMBOL IN STUDENT'S EXERCISE: "${operationInfo.symbol}"
+      // Build context for variable substitution in the database prompt
+      const explanationContext = {
+        exercise_content: exercise_content,
+        student_answer: student_answer || 'Not provided',
+        correct_answer: '', // Don't provide, let AI guide discovery
+        first_name: 'Student',
+        grade_level: grade_level,
+        country: 'your country',
+        learning_style: 'balanced',
+        subject: subject,
+        user_type: 'student',
+        response_language: response_language
+      };
 
-YOU MUST USE THE EXACT SAME OPERATION IN YOUR EXAMPLE.
-- If the exercise has "${operationInfo.symbol}", your example MUST have "${operationInfo.symbol}"
-- NO EXCEPTIONS. NO SUBSTITUTIONS.
-- DO NOT change ${operationInfo.type} to a different operation type.
+      console.log('[TwoCardTeaching] Using unified database prompt with context:', explanationContext);
 
-❌ WRONG EXAMPLES (DO NOT DO THIS):
-- Student has: 2 × 3 = ?
-- Your example: 4 + 4 = 8  ← WRONG! This is addition, not multiplication!
+      console.log('[TwoCardTeaching] Sending explanation request to AI using database prompt');
 
-✅ CORRECT EXAMPLE:
-- Student has: 2 × 3 = ?
-- Your example: 4 × 5 = 20  ← CORRECT! Same operation type!
-
----
-
-🚨 CRITICAL REQUIREMENT - METHOD FIELD 🚨
-
-The "method" field is MANDATORY and must contain 2-4 sentences explaining HOW to solve the example step-by-step.
-
-✅ GOOD METHOD EXAMPLE:
-"First, identify the two numbers to multiply: 4 and 5. Then, you can think of it as 4 groups of 5, which makes 20. Write the answer: 4 × 5 = 20."
-
-❌ DO NOT return empty method field
-❌ DO NOT return "No method provided"
-❌ DO NOT skip the method field
-
----
-
-NOW EXPLAIN THIS ${subject} EXERCISE:
-
-Exercise: ${exercise_content}
-Student's answer: ${student_answer}
-Grade level: ${grade_level}
-
-RESPONSE FORMAT (JSON):
-{
-  "isMath": true,
-  "exercise": "${exercise_content}",
-  "sections": {
-    "concept": "Explain the core concept (2-3 sentences)",
-    "example": "MUST be: [number] ${operationInfo.symbol} [number] = [result] with complete calculation",
-    "method": "MANDATORY: 2-4 sentences explaining step-by-step how to solve the example",
-    "currentExercise": "Full solution for student's exact problem: ${exercise_content} with correct result",
-    "pitfall": "Common mistakes to avoid with this operation",
-    "check": "How to verify the answer",
-    "practice": "Practice tips",
-    "parentHelpHint": "Guidance for parents"
-  }
-}
-
-VALIDATION CHECKLIST (CONFIRM BEFORE RESPONDING):
-☑ Does my example use "${operationInfo.symbol}"? (operation: ${operationInfo.type})
-☑ Is the method field filled with 2-4 sentences?
-☑ Does the example show a complete calculation with = and result?
-☑ Are the example numbers different from the student's exercise?
-
-Please respond in ${response_language}.`;
-
-      console.log('[TwoCardTeaching] Sending explanation request to AI');
-
-      // Call AI with tool calling for structured output
+      // Call AI with unified database prompt
       const { data, error: aiError } = await supabase.functions.invoke('ai-chat', {
         body: {
-          message: explanationMessage,
+          message: exerciseMessage,
           modelId: selectedModelId || 'gpt-5',
+          isUnified: true,
           requestExplanation: true,
           language: response_language.toLowerCase(),
+          userContext: explanationContext
         }
       });
 
@@ -221,80 +178,32 @@ Please respond in ${response_language}.`;
       const sections = result.sections || {};
       const correctAnswer = result.correctAnswer || null;
 
-      // VALIDATION & CORRECTION: Check operation type in example
+      // VALIDATION LOGGING: Track what the AI returned
       const studentOp = detectOperationType(exercise_content);
       const exampleOp = detectOperationType(sections.example || '');
       
-      let correctedExample = sections.example || 'No example provided';
-      let correctedMethod = sections.method || sections.strategy || '';
-
-      const exerciseParts = parseOpAndOperands(exercise_content);
-      const exampleParts = parseOpAndOperands(correctedExample);
-
-      const templates: Record<string, { example: string; method: string }> = {
-        multiplication: { 
-          example: '4 × 5 = 20', 
-          method: `First, identify the two numbers to multiply in 4 × 5 = 20. Think of it as groups: 4 groups of 5 make 20. Write the product: 4 × 5 = 20.`
-        },
-        division: { 
-          example: '20 ÷ 4 = 5', 
-          method: `First, identify the dividend and divisor in 20 ÷ 4 = 5. Determine how many times 4 fits into 20: five times. Write the quotient: 5.`
-        },
-        addition: { 
-          example: '23 + 45 = 68', 
-          method: `First, align the numbers by place value in 23 + 45 = 68. Add ones, then tens, carrying if needed. Write the sum: 68.`
-        },
-        subtraction: { 
-          example: '50 - 17 = 33', 
-          method: `First, align the numbers by place value in 50 - 17 = 33. Subtract ones, then tens, borrowing when needed. Write the difference: 33.`
-        },
-      };
-      
-      // Auto-correct if wrong operation
       if (studentOp.type !== 'unknown' && exampleOp.type !== studentOp.type) {
-        console.error(`❌ AI USED WRONG OPERATION! Auto-correcting...`);
-        console.error(`   Expected: ${studentOp.type} (${studentOp.symbol})`);
-        console.error(`   Got: ${exampleOp.type} (${exampleOp.symbol})`);
-        correctedExample = templates[studentOp.type]?.example || correctedExample;
-        console.log(`   ✓ Corrected to: ${correctedExample}`);
+        console.warn(`⚠️ Operation mismatch - Expected: ${studentOp.type}, Got: ${exampleOp.type}`);
+        console.warn('Database prompt may need refinement');
       }
 
-      // Ensure example numbers are different from the student's exact exercise
+      const exerciseParts = parseOpAndOperands(exercise_content);
+      const exampleParts = parseOpAndOperands(sections.example || '');
+      
       if (
-        studentOp.type !== 'unknown' && exerciseParts && exampleParts &&
-        exerciseParts.symbol === exampleParts.symbol &&
+        exerciseParts && exampleParts &&
         exerciseParts.a === exampleParts.a &&
         exerciseParts.b === exampleParts.b
       ) {
-        console.warn('Example duplicates the exact exercise. Replacing example to comply with policy.');
-        correctedExample = templates[studentOp.type]?.example || correctedExample;
+        console.warn('⚠️ Example uses same numbers as exercise - prompt needs refinement');
       }
 
-      const needsMethodSanitize = (text: string) => {
-        if (!text) return true;
-        if (!exerciseParts) return false;
-        const containsExercise = text.includes(exercise_content);
-        const containsBoth = text.includes(exerciseParts.a) && text.includes(exerciseParts.b) && text.includes(exerciseParts.symbol);
-        return containsExercise || containsBoth;
-      };
-
-      // Auto-generate or sanitize method if insufficient or if it uses the exact exercise
-      if (
-        !correctedMethod || correctedMethod.trim().length < 20 ||
-        correctedMethod === 'No method provided' ||
-        needsMethodSanitize(correctedMethod)
-      ) {
-        correctedMethod = templates[studentOp.type]?.method
-          || `Break down the calculation step by step using ${correctedExample}. Perform the operation and verify your result.`;
-        console.log(`   ✓ Using sanitized/generated method.`);
-      }
-
-      // Set the sections from AI response with corrections
+      // Set the sections from AI response (trust the database prompt)
       const explanationSections: TeachingSections = {
         exercise: result.exercise || exercise_content,
         concept: sections.concept || 'No concept provided',
-        example: correctedExample,
-        method: correctedMethod,
+        example: sections.example || 'No example provided',
+        method: sections.method || sections.strategy || 'No method provided',
         currentExercise: sections.currentExercise || 'No solution provided',
         pitfall: sections.pitfall || 'No common pitfalls identified',
         check: sections.check || 'No verification method provided',
