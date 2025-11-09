@@ -68,8 +68,23 @@ export const useExercises = () => {
         needsRetry: false,
       };
 
+      console.log('[useExercises] About to call evaluateHomework with:', {
+        exerciseId,
+        question: updatedExercise.question,
+        userAnswer: updatedExercise.userAnswer,
+        attemptNumber,
+        language,
+        selectedModelId
+      });
+      
       // Grade the exercise
       const gradedExercise = await evaluateHomework(updatedExercise, attemptNumber, language, selectedModelId);
+      
+      console.log('[useExercises] evaluateHomework returned:', {
+        exerciseId: gradedExercise.id,
+        isCorrect: gradedExercise.isCorrect,
+        explanation: gradedExercise.explanation?.substring(0, 100)
+      });
       
       // Save to exercise history
       await saveExerciseToHistory(
@@ -84,9 +99,17 @@ export const useExercises = () => {
         prev.map(ex => ex.id === exerciseId ? gradedExercise : ex)
       );
 
-      console.log('[useExercises] Answer submitted and graded successfully:', gradedExercise);
+      console.log('[useExercises] Answer submitted and graded successfully:', {
+        exerciseId: gradedExercise.id,
+        isCorrect: gradedExercise.isCorrect
+      });
     } catch (error) {
       console.error('[useExercises] Error submitting answer:', error);
+      console.error('[useExercises] Error details:', {
+        message: (error as Error).message,
+        stack: (error as Error).stack,
+        exerciseId
+      });
       throw error;
     }
   };

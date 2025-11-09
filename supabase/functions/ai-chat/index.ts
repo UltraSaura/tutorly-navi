@@ -129,13 +129,17 @@ serve(async (req) => {
       hasUserContext: !!userContext
     });
 
-    // Validate required parameters
-    if (!message || !modelId) {
-      console.error('❌ Missing required parameters');
+    // Validate required parameters - allow empty message for grading requests
+    if ((!message && !isGradingRequest) || !modelId) {
+      console.error('❌ Missing required parameters', { 
+        hasMessage: !!message, 
+        hasModelId: !!modelId, 
+        isGradingRequest 
+      });
       return new Response(
         JSON.stringify({ 
           error: 'Missing required parameters: message or modelId',
-          received: { hasMessage: !!message, hasModelId: !!modelId }
+          received: { hasMessage: !!message, hasModelId: !!modelId, isGradingRequest }
         }),
         { 
           status: 400, 
