@@ -103,7 +103,7 @@ export default function ShapeEditor({
     if (!selectedId) return;
     const shape = state.shapes.find((s) => s.id === selectedId);
     if (!shape || shape.type !== "polygon" || !shape.polygon) return;
-    const nextPoints = addPolygonSide(shape.polygon.points);
+    const nextPoints = addPolygonSide(shape.polygon.points) as [number, number][];
     setShape(shape.id, (current) =>
       current.type === "polygon" && current.polygon ? { ...current, polygon: { points: nextPoints } } : current
     );
@@ -231,12 +231,12 @@ export default function ShapeEditor({
         updateShape(drag.id, (shape) => {
           if (shape.type === "triangle" && shape.triangle) {
             const moved = drag.origin.map(([px, py]) => clampPoint(px + dx, py + dy));
-            const flattened = flattenPointPairs(moved.map(({ x, y }) => [x, y] as [number, number]));
+            const flattened = flattenPointPairs(moved.map(({ x, y }) => [x, y] as [number, number])) as [number, number, number, number, number, number];
             return { ...shape, triangle: { points: flattened } };
           }
           if (shape.type === "polygon" && shape.polygon) {
             const moved = drag.origin.map(([px, py]) => clampPoint(px + dx, py + dy));
-            return { ...shape, polygon: { points: moved.map(({ x, y }) => [x, y] as [number, number]) } };
+            return { ...shape, polygon: { points: moved.map(({ x, y }) => [x, y] as [number, number]) as [number, number][] } };
           }
           return shape;
         });
@@ -251,7 +251,7 @@ export default function ShapeEditor({
         break;
       }
       case "vertex": {
-        updateShape(drag.id, (shape) => moveVertex(shape, drag.vertexIndex, snapped));
+        updateShape(drag.id, (shape) => moveVertex(shape, drag.vertexIndex, snapped) as typeof shape);
         break;
       }
     }
