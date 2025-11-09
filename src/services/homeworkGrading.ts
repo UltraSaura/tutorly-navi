@@ -49,10 +49,16 @@ export const evaluateHomework = async (
     // Step 1: Get quick grade (just correct/incorrect)
     const { data: gradeData, error: gradeError } = await supabase.functions.invoke('ai-chat', {
       body: {
-        message: `Grade this answer. Question: "${exercise.question}" Answer: "${exercise.userAnswer}"`,
+        message: '', // Empty - prompt template will construct the message
         modelId: selectedModelId,
         history: [],
-        isGradingRequest: true
+        isGradingRequest: true,
+        userContext: {
+          exercise: exercise.question,
+          studentAnswer: exercise.userAnswer,
+          exercise_content: exercise.question,
+          student_answer: exercise.userAnswer
+        }
       },
     });
 

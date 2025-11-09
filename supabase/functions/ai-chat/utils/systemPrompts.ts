@@ -19,6 +19,9 @@ export interface PromptVariables {
   student_answer?: string;
   correct_answer?: string;
   response_language?: string;
+  // CamelCase aliases for backward compatibility
+  exercise?: string;
+  studentAnswer?: string;
 }
 
 /**
@@ -32,8 +35,17 @@ export interface PromptVariables {
 export function substitutePromptVariables(promptTemplate: string, variables: PromptVariables, language: string = 'en'): string {
   let result = promptTemplate;
   
+  // Map camelCase to snake_case for backward compatibility
+  const normalizedVars = { ...variables };
+  if (variables.exercise && !variables.exercise_content) {
+    normalizedVars.exercise_content = variables.exercise;
+  }
+  if (variables.studentAnswer && !variables.student_answer) {
+    normalizedVars.student_answer = variables.studentAnswer;
+  }
+  
   // Replace all {{variable_name}} patterns with actual values
-  Object.entries(variables).forEach(([key, value]) => {
+  Object.entries(normalizedVars).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
       result = result.replace(regex, value);
@@ -43,6 +55,7 @@ export function substitutePromptVariables(promptTemplate: string, variables: Pro
   // Clean up any remaining unreplaced variables (fallback handling)
   result = result.replace(/\{\{[^}]+\}\}/g, (match) => {
     const varName = match.slice(2, -2);
+    console.log(`[substitutePromptVariables] Unreplaced variable: ${varName}`);
     switch (varName) {
       case 'student_level':
       case 'grade_level':
@@ -56,8 +69,10 @@ export function substitutePromptVariables(promptTemplate: string, variables: Pro
       case 'subject':
         return 'this subject';
       case 'exercise_content':
+      case 'exercise':
         return 'the exercise';
       case 'student_answer':
+      case 'studentAnswer':
         return 'your answer';
       case 'correct_answer':
         return 'the correct answer';
