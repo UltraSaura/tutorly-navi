@@ -25,6 +25,15 @@ function detectOperationType(exercise: string): { type: string; symbol: string }
   return { type: 'unknown', symbol: '' };
 }
 
+function parseOpAndOperands(text: string): { symbol: string; a: string; b: string } | null {
+  const cleaned = text.replace(/\s+/g, ' ').trim();
+  const m = cleaned.match(/(-?\d+(?:[.,]\d+)?)(?:\s*)([×*÷\/+\-])(?:\s*)(-?\d+(?:[.,]\d+)?)/);
+  if (m) {
+    return { a: m[1], symbol: m[2], b: m[3] };
+  }
+  return null;
+}
+
 export interface TeachingSections {
   exercise: string;
   concept: string;
@@ -218,36 +227,66 @@ Please respond in ${response_language}.`;
       
       let correctedExample = sections.example || 'No example provided';
       let correctedMethod = sections.method || sections.strategy || '';
+
+      const exerciseParts = parseOpAndOperands(exercise_content);
+      const exampleParts = parseOpAndOperands(correctedExample);
+
+      const templates: Record<string, { example: string; method: string }> = {
+        multiplication: { 
+          example: '4 × 5 = 20', 
+          method: `First, identify the two numbers to multiply in 4 × 5 = 20. Think of it as groups: 4 groups of 5 make 20. Write the product: 4 × 5 = 20.`
+        },
+        division: { 
+          example: '20 ÷ 4 = 5', 
+          method: `First, identify the dividend and divisor in 20 ÷ 4 = 5. Determine how many times 4 fits into 20: five times. Write the quotient: 5.`
+        },
+        addition: { 
+          example: '23 + 45 = 68', 
+          method: `First, align the numbers by place value in 23 + 45 = 68. Add ones, then tens, carrying if needed. Write the sum: 68.`
+        },
+        subtraction: { 
+          example: '50 - 17 = 33', 
+          method: `First, align the numbers by place value in 50 - 17 = 33. Subtract ones, then tens, borrowing when needed. Write the difference: 33.`
+        },
+      };
       
       // Auto-correct if wrong operation
       if (studentOp.type !== 'unknown' && exampleOp.type !== studentOp.type) {
         console.error(`❌ AI USED WRONG OPERATION! Auto-correcting...`);
         console.error(`   Expected: ${studentOp.type} (${studentOp.symbol})`);
         console.error(`   Got: ${exampleOp.type} (${exampleOp.symbol})`);
-        
-        // Synthesize correct example with matching operation
-        const examples: Record<string, string> = {
-          'multiplication': '4 × 5 = 20',
-          'division': '20 ÷ 4 = 5',
-          'addition': '23 + 45 = 68',
-          'subtraction': '50 - 17 = 33'
-        };
-        correctedExample = examples[studentOp.type] || correctedExample;
+        correctedExample = templates[studentOp.type]?.example || correctedExample;
         console.log(`   ✓ Corrected to: ${correctedExample}`);
       }
 
-      // Auto-generate method if insufficient
-      if (!correctedMethod || correctedMethod.trim().length < 20 || correctedMethod === 'No method provided') {
-        console.error(`❌ AI RETURNED INSUFFICIENT METHOD! Auto-generating...`);
-        const methodTemplates: Record<string, string> = {
-          'multiplication': `First, identify the two numbers to multiply in ${correctedExample}. Think of it as repeated addition or groups. Calculate the product and write your answer.`,
-          'division': `First, identify the dividend and divisor in ${correctedExample}. Determine how many times the divisor fits into the dividend. Write the quotient as your answer.`,
-          'addition': `First, align the numbers by place value in ${correctedExample}. Add from right to left, carrying when needed. Write the sum as your answer.`,
-          'subtraction': `First, align the numbers by place value in ${correctedExample}. Subtract from right to left, borrowing when needed. Write the difference as your answer.`
-        };
-        correctedMethod = methodTemplates[studentOp.type] || 
-          `Break down the calculation step by step. Look at each number in ${correctedExample}, perform the operation, and verify your result.`;
-        console.log(`   ✓ Generated method: ${correctedMethod.substring(0, 50)}...`);
+      // Ensure example numbers are different from the student's exact exercise
+      if (
+        studentOp.type !== 'unknown' && exerciseParts && exampleParts &&
+        exerciseParts.symbol === exampleParts.symbol &&
+        exerciseParts.a === exampleParts.a &&
+        exerciseParts.b === exampleParts.b
+      ) {
+        console.warn('Example duplicates the exact exercise. Replacing example to comply with policy.');
+        correctedExample = templates[studentOp.type]?.example || correctedExample;
+      }
+
+      const needsMethodSanitize = (text: string) => {
+        if (!text) return true;
+        if (!exerciseParts) return false;
+        const containsExercise = text.includes(exercise_content);
+        const containsBoth = text.includes(exerciseParts.a) && text.includes(exerciseParts.b) && text.includes(exerciseParts.symbol);
+        return containsExercise || containsBoth;
+      };
+
+      // Auto-generate or sanitize method if insufficient or if it uses the exact exercise
+      if (
+        !correctedMethod || correctedMethod.trim().length < 20 ||
+        correctedMethod === 'No method provided' ||
+        needsMethodSanitize(correctedMethod)
+      ) {
+        correctedMethod = templates[studentOp.type]?.method
+          || `Break down the calculation step by step using ${correctedExample}. Perform the operation and verify your result.`;
+        console.log(`   ✓ Using sanitized/generated method.`);
       }
 
       // Set the sections from AI response with corrections
