@@ -212,34 +212,50 @@ Please respond in ${response_language}.`;
       const sections = result.sections || {};
       const correctAnswer = result.correctAnswer || null;
 
-      // VALIDATION: Check operation type in example
+      // VALIDATION & CORRECTION: Check operation type in example
       const studentOp = detectOperationType(exercise_content);
       const exampleOp = detectOperationType(sections.example || '');
       
+      let correctedExample = sections.example || 'No example provided';
+      let correctedMethod = sections.method || sections.strategy || '';
+      
+      // Auto-correct if wrong operation
       if (studentOp.type !== 'unknown' && exampleOp.type !== studentOp.type) {
-        console.error(`❌ AI USED WRONG OPERATION!`);
+        console.error(`❌ AI USED WRONG OPERATION! Auto-correcting...`);
         console.error(`   Expected: ${studentOp.type} (${studentOp.symbol})`);
         console.error(`   Got: ${exampleOp.type} (${exampleOp.symbol})`);
-        console.error(`   Student exercise: ${exercise_content}`);
-        console.error(`   AI example: ${sections.example}`);
+        
+        // Synthesize correct example with matching operation
+        const examples: Record<string, string> = {
+          'multiplication': '4 × 5 = 20',
+          'division': '20 ÷ 4 = 5',
+          'addition': '23 + 45 = 68',
+          'subtraction': '50 - 17 = 33'
+        };
+        correctedExample = examples[studentOp.type] || correctedExample;
+        console.log(`   ✓ Corrected to: ${correctedExample}`);
       }
 
-      // VALIDATION: Check method field
-      const methodContent = sections.method || sections.strategy || '';
-      if (!methodContent || methodContent.trim().length < 20 || methodContent === 'No method provided') {
-        console.error(`❌ AI RETURNED INSUFFICIENT METHOD CONTENT!`);
-        console.error(`   Method length: ${methodContent.length} characters`);
-        console.error(`   Method content: "${methodContent}"`);
+      // Auto-generate method if insufficient
+      if (!correctedMethod || correctedMethod.trim().length < 20 || correctedMethod === 'No method provided') {
+        console.error(`❌ AI RETURNED INSUFFICIENT METHOD! Auto-generating...`);
+        const methodTemplates: Record<string, string> = {
+          'multiplication': `First, identify the two numbers to multiply in ${correctedExample}. Think of it as repeated addition or groups. Calculate the product and write your answer.`,
+          'division': `First, identify the dividend and divisor in ${correctedExample}. Determine how many times the divisor fits into the dividend. Write the quotient as your answer.`,
+          'addition': `First, align the numbers by place value in ${correctedExample}. Add from right to left, carrying when needed. Write the sum as your answer.`,
+          'subtraction': `First, align the numbers by place value in ${correctedExample}. Subtract from right to left, borrowing when needed. Write the difference as your answer.`
+        };
+        correctedMethod = methodTemplates[studentOp.type] || 
+          `Break down the calculation step by step. Look at each number in ${correctedExample}, perform the operation, and verify your result.`;
+        console.log(`   ✓ Generated method: ${correctedMethod.substring(0, 50)}...`);
       }
 
-      // Set the sections from AI response with improved fallback
+      // Set the sections from AI response with corrections
       const explanationSections: TeachingSections = {
         exercise: result.exercise || exercise_content,
         concept: sections.concept || 'No concept provided',
-        example: sections.example || 'No example provided',
-        method: (methodContent && methodContent.trim() && methodContent !== 'No method provided') 
-          ? methodContent 
-          : `Break down the calculation step by step. Look at each number in ${sections.example || 'the problem'}, perform the operation, and verify your result.`,
+        example: correctedExample,
+        method: correctedMethod,
         currentExercise: sections.currentExercise || 'No solution provided',
         pitfall: sections.pitfall || 'No common pitfalls identified',
         check: sections.check || 'No verification method provided',

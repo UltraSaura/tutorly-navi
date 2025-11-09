@@ -62,48 +62,39 @@ export function TwoCards({ s }: { s: TeachingSections }) {
     checkUserRole();
   }, []);
 
+  // Detect operation type from example or exercise
+  const detectOp = (text: string): string => {
+    if (text.includes('×') || text.includes('*')) return '×';
+    if (text.includes('÷') || text.includes('/')) return '÷';
+    if (text.includes('-')) return '-';
+    if (text.includes('+')) return '+';
+    return '+';
+  };
+  
   // NEW: Extract math expression from example for InteractiveMathStepper
   let exampleExpression = s.example ? extractExpressionFromText(s.example) : null;
   
-  // Fallback: If no expression extracted, create a simple addition example
-  if (!exampleExpression && s.example && s.example.includes('+')) {
-    exampleExpression = '23 + 45'; // Simple fallback example
-  }
-  
-  // Additional fallback: Always provide an example for young students
+  // Fallback: If no expression extracted, synthesize one matching the operation type
   if (!exampleExpression) {
-    exampleExpression = '123 + 456'; // Default example
+    const opSymbol = detectOp(s.example || s.exercise || '');
+    const fallbacks: Record<string, string> = {
+      '×': '4 × 5',
+      '÷': '20 ÷ 4',
+      '-': '50 - 17',
+      '+': '23 + 45'
+    };
+    exampleExpression = fallbacks[opSymbol] || '23 + 45';
   }
   
-  // Debug logging for Interactive Math Stepper
-  console.log('[TwoCards] Debug Interactive Stepper:', {
-    isGuardian,
-    userContext: userContext?.student_level,
-    userContextFull: userContext,
-    isUnder11: userContext?.student_level ? isUnder11YearsOld(userContext.student_level) : false,
-    exampleText: s.example,
-    extractedExpression: exampleExpression,
-    hasUserContext: !!userContext,
-    hasStudentLevel: !!userContext?.student_level,
-    shouldShow: !isGuardian && userContext?.student_level && isUnder11YearsOld(userContext.student_level) && exampleExpression
-  });
+  // Show interactive stepper for young students
+  const shouldShowInteractiveStepper = !isGuardian && userContext?.student_level && 
+    isUnder11YearsOld(userContext.student_level) && exampleExpression;
   
-  // More permissive condition - show for any student (not guardian) with an example
-  // TEMPORARY: Always show for testing
-  const shouldShowInteractiveStepper = true; // TEMPORARY: Always show for debugging
+  // Ensure method text is never empty
+  const methodText = s.method?.trim() || "Step-by-step reasoning for the example.";
 
   return (
     <div className="space-y-3">
-      {/* TEST: Simple debug section */}
-      <div className="rounded-xl border-2 border-red-300 bg-red-50 dark:bg-red-950/20 dark:border-red-700 p-4">
-        <div className="text-sm font-bold text-red-800 dark:text-red-200 mb-2">
-          🔧 DEBUG: TwoCards Component is Working!
-        </div>
-        <div className="text-xs text-red-600 dark:text-red-400">
-          Component rendered at: {new Date().toLocaleTimeString()}
-        </div>
-      </div>
-
       {/* Problem card */}
       <div className="rounded-xl border bg-muted p-4">
         <div className="font-semibold">📘 Exercise</div>
@@ -125,20 +116,11 @@ export function TwoCards({ s }: { s: TeachingSections }) {
         </div>
       </div>
 
-      {/* Student View - Part 1: Regular Explanation */}
+      {/* Student View - Regular Explanation */}
       {!isGuardian && (
         <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
-            <div className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
-              📚 Part 1: Regular Explanation
-            </div>
-            <div className="text-xs text-blue-600 dark:text-blue-400">
-              Debug: User Level = "{userContext?.student_level || 'Unknown'}", Is Guardian = {isGuardian.toString()}
-            </div>
-          </div>
-          
           <Section title="💡 Concept" text={s.concept} />
-          <Section title="☑️ Method" text={s.method} />
+          <Section title="☑️ Method" text={methodText} />
           <Section title="🔍 Example" text={s.example} />
           <Section title="⚠️ Pitfall" text={s.pitfall} />
           <Section title="🎯 Check yourself" text={s.check} />
@@ -146,36 +128,14 @@ export function TwoCards({ s }: { s: TeachingSections }) {
         </div>
       )}
 
-      {/* Student View - Part 2: Interactive Math Stepper */}
-      {!isGuardian && (
-        <div className="rounded-xl border-2 border-green-300 bg-green-50 dark:bg-green-950/20 dark:border-green-700 p-4 shadow-lg">
-          <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-md">
-            <div className="text-sm font-semibold text-green-800 dark:text-green-200 mb-2">
-              🧮 Part 2: Interactive Math Practice
-            </div>
-            <div className="text-xs text-green-600 dark:text-green-400 mb-2">
-              Debug: Expression = "{exampleExpression}", Should Show = {shouldShowInteractiveStepper.toString()}
-            </div>
-            <div className="text-xs text-green-600 dark:text-green-400">
-              This section is always visible for students (not guardians) for testing purposes.
-            </div>
-          </div>
-          
-          {exampleExpression ? (
-            <CompactMathStepper 
-              expression={exampleExpression}
-              className="text-sm"
-            />
-          ) : (
-            <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
-              <div className="text-sm text-yellow-800 dark:text-yellow-200">
-                ⚠️ No math expression found for Interactive Stepper
-              </div>
-              <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
-                Example text: "{s.example?.substring(0, 100)}..."
-              </div>
-            </div>
-          )}
+      {/* Student View - Interactive Math Stepper */}
+      {shouldShowInteractiveStepper && (
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
+          <div className="font-semibold mb-3">🧮 Interactive Practice</div>
+          <CompactMathStepper 
+            expression={exampleExpression}
+            className="text-sm"
+          />
         </div>
       )}
 
