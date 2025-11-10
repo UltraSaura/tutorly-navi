@@ -99,6 +99,8 @@ const ChatInterface = () => {
       // Wait for next tick to ensure inputMessage is set
       setTimeout(async () => {
         await handleSendMessage();
+        // Also process and grade the exercise locally so the UI updates immediately
+        await processHomeworkFromChat(question);
       }, 0);
     }
   };
@@ -112,6 +114,8 @@ const ChatInterface = () => {
     
     // Send through the chat system for grading
     await handleSendMessage(formattedMessage);
+    // Also process and grade via the exercises pipeline
+    await processHomeworkFromChat(formattedMessage);
   };
 
   // Handle upload sheet opening
