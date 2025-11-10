@@ -92,15 +92,39 @@ const ChatInterface = () => {
     handlePhotoUpload(file, addExercises, defaultSubject);
   };
 
+  // Wrapper that sends message AND processes homework for grading
+  const handleSendMessageWithGrading = async (overrideMessage?: string) => {
+    console.log('[ChatInterface] handleSendMessageWithGrading called');
+    
+    // Get the message that will be sent
+    const messageToSend = overrideMessage ?? inputMessage;
+    
+    if (!messageToSend || messageToSend.trim() === '') {
+      console.log('[ChatInterface] Empty message, not sending');
+      return;
+    }
+    
+    console.log('[ChatInterface] Sending message and processing for grading:', messageToSend);
+    
+    // Send through chat system
+    await handleSendMessage(overrideMessage);
+    
+    // Also process and grade the exercise so UI updates with correct/incorrect
+    try {
+      await processHomeworkFromChat(messageToSend);
+      console.log('[ChatInterface] Exercise processed and graded successfully');
+    } catch (error) {
+      console.error('[ChatInterface] Error processing homework:', error);
+    }
+  };
+
   // Handle question submission through chat pipeline
   const handleSubmitQuestion = async (question: string) => {
     if (question.trim()) {
       setInputMessage(question);
       // Wait for next tick to ensure inputMessage is set
       setTimeout(async () => {
-        await handleSendMessage();
-        // Also process and grade the exercise locally so the UI updates immediately
-        await processHomeworkFromChat(question);
+        await handleSendMessageWithGrading();
       }, 0);
     }
   };
@@ -109,13 +133,11 @@ const ChatInterface = () => {
   const handleAnswerSubmit = async (question: string, answer: string) => {
     console.log('[ChatInterface] Submitting answer:', { question, answer });
     
-    // Format the message as "question response answer"
-    const formattedMessage = `${question} response ${answer}`;
+    // Format the message as "question=answer"
+    const formattedMessage = `${question}=${answer}`;
     
-    // Send through the chat system for grading
-    await handleSendMessage(formattedMessage);
-    // Also process and grade via the exercises pipeline
-    await processHomeworkFromChat(formattedMessage);
+    // Send through the unified system which handles both chat and grading
+    await handleSendMessageWithGrading(formattedMessage);
   };
 
   // Handle upload sheet opening
@@ -219,7 +241,7 @@ const ChatInterface = () => {
             <MessageInput
               inputMessage={inputMessage}
               setInputMessage={setInputMessage}
-              handleSendMessage={handleSendMessage}
+              handleSendMessage={handleSendMessageWithGrading}
               handleFileUpload={handleDocumentFileUpload}
               handlePhotoUpload={handlePhotoFileUpload}
               isLoading={isLoading}
