@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Message } from '@/types/chat';
-import ExerciseList from './chat/ExerciseList';
 import AIResponse from './chat/AIResponse';
 import MessageInput from './chat/MessageInput';
 import CameraCapture from './chat/CameraCapture';
@@ -37,15 +36,10 @@ const ChatInterface = () => {
     calculationState
   } = useChat();
   const {
-    exercises,
-    grade,
-    toggleExerciseExpansion,
     createExerciseFromAI,
     processHomeworkFromChat,
     linkAIResponseToExercise,
-    addExercises,
-    submitAnswer,
-    clearExercises
+    addExercises
   } = useExercises();
   const {
     getActiveSubjects,
@@ -204,17 +198,6 @@ const ChatInterface = () => {
           isLoading={isLoading}
           onSubmitAnswer={handleAnswerSubmit}
         />
-        
-        {/* Exercise List - Display exercises if any */}
-        {exercises.length > 0 && (
-          <ExerciseList
-            exercises={exercises}
-            grade={grade}
-            toggleExerciseExpansion={toggleExerciseExpansion}
-            onSubmitAnswer={submitAnswer}
-            onClearExercises={clearExercises}
-          />
-        )}
         
         {/* Add Calculation Status - Shows processing status */}
         <CalculationStatus

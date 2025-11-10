@@ -1,12 +1,11 @@
 
 import { useExercises } from '@/hooks/useExercises';
-import ExerciseList from './chat/ExerciseList';
 import { BarChart3, GraduationCap } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 
 const GradeDashboard = () => {
-  const { exercises, grade, toggleExerciseExpansion } = useExercises();
+  const { exercises, grade } = useExercises();
   const { t } = useLanguage();
 
   const totalExercises = exercises.length;
@@ -68,11 +67,11 @@ const GradeDashboard = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ExerciseList
-            exercises={exercises}
-            grade={grade}
-            toggleExerciseExpansion={toggleExerciseExpansion}
-          />
+          <p className="text-sm text-muted-foreground text-center py-8">
+            {exercises.length === 0 
+              ? 'No exercises yet. Start solving problems in the chat!' 
+              : `${exercises.length} exercises tracked. View them in the chat interface.`}
+          </p>
         </CardContent>
       </Card>
     </div>
