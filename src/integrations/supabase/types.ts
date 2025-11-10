@@ -688,6 +688,7 @@ export type Database = {
           order_index: number
           school_levels: string[] | null
           subject_id: string | null
+          tags: string[] | null
           thumbnail_url: string | null
           title: string
           topic_id: string
@@ -707,6 +708,7 @@ export type Database = {
           order_index?: number
           school_levels?: string[] | null
           subject_id?: string | null
+          tags?: string[] | null
           thumbnail_url?: string | null
           title: string
           topic_id: string
@@ -726,6 +728,7 @@ export type Database = {
           order_index?: number
           school_levels?: string[] | null
           subject_id?: string | null
+          tags?: string[] | null
           thumbnail_url?: string | null
           title?: string
           topic_id?: string
