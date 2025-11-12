@@ -71,6 +71,16 @@ const CoursePlaylistPage = () => {
     return sections;
   }, [data?.videos]);
 
+  // Memoize onVideoEnd to prevent VideoPlayerBox from re-rendering
+  const handleVideoEnd = useCallback(() => {
+    // Auto-play next video
+    if (!data?.videos) return;
+    const currentIndex = data.videos.findIndex(v => v.id === playingVideoId);
+    if (currentIndex !== -1 && currentIndex < data.videos.length - 1) {
+      setPlayingVideoId(data.videos[currentIndex + 1].id);
+    }
+  }, [data?.videos, playingVideoId]);
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-4 space-y-6 max-w-4xl">
@@ -92,16 +102,6 @@ const CoursePlaylistPage = () => {
   }
 
   const { topic, videos } = data;
-
-  // Memoize onVideoEnd to prevent VideoPlayerBox from re-rendering
-  const handleVideoEnd = useCallback(() => {
-    // Auto-play next video
-    if (!data?.videos) return;
-    const currentIndex = data.videos.findIndex(v => v.id === playingVideoId);
-    if (currentIndex !== -1 && currentIndex < data.videos.length - 1) {
-      setPlayingVideoId(data.videos[currentIndex + 1].id);
-    }
-  }, [data?.videos, playingVideoId]);
 
   return (
     <div className="flex flex-col h-screen bg-background">
