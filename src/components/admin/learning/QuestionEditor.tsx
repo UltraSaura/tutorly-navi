@@ -22,13 +22,25 @@ const randomVisualId = () => `visual-${Math.random().toString(36).slice(2, 8)}`;
 
 const createDefaultVisual = (): VisualUnion => ({
   subtype: 'pie',
-  multi: false,
+  multi: true,
+  baseCorrect: true,
   segments: [
-    { id: randomVisualId(), value: 0.25, label: 'Slice A', correct: true },
-    { id: randomVisualId(), value: 0.25, label: 'Slice B' },
-    { id: randomVisualId(), value: 0.25, label: 'Slice C', correct: true },
-    { id: randomVisualId(), value: 0.25, label: 'Slice D' },
+    { id: randomVisualId(), value: 0.25, colored: true },
+    { id: randomVisualId(), value: 0.25, colored: true },
+    { id: randomVisualId(), value: 0.25, colored: false },
+    { id: randomVisualId(), value: 0.25, colored: false },
   ],
+  variants: [
+    {
+      id: randomVisualId(),
+      segments: [
+        { id: randomVisualId(), value: 0.333, colored: true },
+        { id: randomVisualId(), value: 0.333, colored: false },
+        { id: randomVisualId(), value: 0.333, colored: false },
+      ],
+      correct: false,
+    }
+  ]
 });
 export function QuestionEditor({ question, isOpen, onClose, onSave, position }: QuestionEditorProps) {
   const [kind, setKind] = useState<Question['kind']>(question?.kind || 'single');

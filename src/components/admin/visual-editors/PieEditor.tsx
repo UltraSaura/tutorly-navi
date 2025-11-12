@@ -11,7 +11,7 @@ const uuid = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.
 
 type PieVariant = {
   id: string;
-  segments: { id: string; value: number; label?: string }[];
+  segments: { id: string; value: number; label?: string; colored?: boolean }[];
   correct?: boolean;
 };
 
@@ -26,7 +26,6 @@ export default function PieEditor({
   const [activePieId, setActivePieId] = useState<string>("base");
 
   const variants = state.variants ?? [];
-  const isMultiMode = !!state.multi && variants.length > 0;
 
   // Get current pie configuration
   const getCurrentPie = (): { id: string; label: string; segments: typeof state.segments; correct: boolean } => {
@@ -63,7 +62,7 @@ export default function PieEditor({
 
   const addSeg = () => {
     const currentSegments = currentPie.segments;
-    const nextSegment = { id: uuid(), value: 0.25, label: `Slice ${currentSegments.length + 1}` };
+    const nextSegment = { id: uuid(), value: 0.25, label: `Slice ${currentSegments.length + 1}`, colored: false };
     
     if (activePieId === "base") {
       setState({
@@ -103,26 +102,6 @@ export default function PieEditor({
         return v;
       });
       setState({ ...state, variants: nextVariants });
-    }
-  };
-
-  const toggleMulti = (checked: boolean) => {
-    if (checked) {
-      setState({
-        ...state,
-        multi: true,
-        baseCorrect: state.baseCorrect ?? false,
-        variants: [...variants],
-      });
-      setActivePieId("base");
-    } else {
-      setState({
-        ...state,
-        multi: undefined,
-        baseCorrect: undefined,
-        variants: undefined,
-      });
-      setActivePieId("base");
     }
   };
 
@@ -174,11 +153,12 @@ export default function PieEditor({
     }
   }, [selectedId, currentPie.segments]);
 
-  useEffect(() => {
-    if (!state.multi && activePieId !== "base") {
-      setActivePieId("base");
-    }
-  }, [state.multi, activePieId]);
+  // Calculate fraction for each pie
+  const calculateFraction = (segments: typeof state.segments) => {
+    const totalSlices = segments.length;
+    const coloredSlices = segments.filter(s => s.colored).length;
+    return `${coloredSlices}/${totalSlices}`;
+  };
 
   const allPies = [
     { id: "base", label: "Pie 1", segments: state.segments, correct: state.baseCorrect ?? false },
@@ -188,83 +168,75 @@ export default function PieEditor({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Label className="text-sm">Multiple pie choices</Label>
-          <input
-            type="checkbox"
-            checked={!!state.multi}
-            onChange={(e) => toggleMulti(e.target.checked)}
-          />
+        <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+          <div className="text-sm font-medium text-foreground">Fraction Visualization</div>
+          <p className="text-xs text-muted-foreground">
+            Create multiple pie charts to represent fractions. Mark slices as "colored" to show the fraction visually. 
+            Mark the entire pie as "correct" if it represents the right answer.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            <strong>Example:</strong> For "Select 1/2", create a pie with 4 slices where 2 are colored (2/4 = 1/2).
+          </p>
         </div>
 
-        {state.multi && variants.length >= 0 && (
-          <div className="space-y-2 border rounded-md p-2">
-            <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-              <span>Pie Charts</span>
-              <Button 
-                type="button" 
-                size="sm" 
-                variant="ghost" 
-                className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700" 
-                onClick={addVariant}
+        <div className="space-y-2 border rounded-md p-2">
+          <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+            <span>Pie Charts</span>
+            <Button 
+              type="button" 
+              size="sm" 
+              variant="ghost" 
+              className="h-6 px-2 text-xs" 
+              onClick={addVariant}
+            >
+              Add pie
+            </Button>
+          </div>
+          <div className="flex flex-col gap-1">
+            {allPies.map((pie) => (
+              <div
+                key={pie.id}
+                className={`flex items-center justify-between rounded-md px-2 py-1 text-sm cursor-pointer ${
+                  activePieId === pie.id ? "bg-primary/10 text-primary" : "hover:bg-muted/60"
+                }`}
+                onClick={() => setActivePieId(pie.id)}
               >
-                Add pie
-              </Button>
-            </div>
-            <div className="flex flex-col gap-1">
-              {allPies.map((pie) => (
-                <div
-                  key={pie.id}
-                  className={`flex items-center justify-between rounded-md px-2 py-1 text-sm cursor-pointer ${
-                    activePieId === pie.id ? "bg-blue-50 text-blue-700" : "hover:bg-muted/60"
-                  }`}
-                  onClick={() => setActivePieId(pie.id)}
-                >
-                  <span>{pie.label}</span>
-                  <div className="flex items-center gap-2">
-                    <label 
-                      className="flex items-center gap-1 text-xs text-muted-foreground" 
-                      onClick={(evt) => evt.stopPropagation()}
+                <span>{pie.label}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">{calculateFraction(pie.segments)}</span>
+                  <label 
+                    className="flex items-center gap-1 text-xs text-muted-foreground" 
+                    onClick={(evt) => evt.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={pie.correct}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleCorrect(pie.id, e.target.checked);
+                      }}
+                    />
+                    correct
+                  </label>
+                  {pie.id !== "base" && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-xs text-destructive hover:text-destructive"
+                      onClick={(evt) => {
+                        evt.stopPropagation();
+                        removeVariant(pie.id);
+                      }}
                     >
-                      <input
-                        type="checkbox"
-                        checked={pie.correct}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          toggleCorrect(pie.id, e.target.checked);
-                        }}
-                      />
-                      correct
-                    </label>
-                    {pie.id !== "base" && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 px-2 text-xs text-red-500 hover:text-red-600"
-                        onClick={(evt) => {
-                          evt.stopPropagation();
-                          removeVariant(pie.id);
-                        }}
-                      >
-                        Remove
-                      </Button>
-                    )}
-                  </div>
+                      Remove
+                    </Button>
+                  )}
                 </div>
-              ))}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Add multiple pie charts and mark the correct ones. Students will select the correct pie chart(s).
-            </div>
+              </div>
+            ))}
           </div>
-        )}
-
-        {!isMultiMode && (
-          <div className="text-xs text-muted-foreground">
-            Configure segments. Students will select the correct segment(s) within this pie.
-          </div>
-        )}
+        </div>
 
         <div className="space-y-2">
           <Label className="text-sm font-medium">Segments for {allPies.find(p => p.id === activePieId)?.label}</Label>
@@ -272,7 +244,7 @@ export default function PieEditor({
             <div
               key={seg.id}
               className={`grid grid-cols-6 gap-2 rounded-md p-2 transition border ${
-                selectedId === seg.id ? "border-blue-500 bg-blue-50" : "border-transparent"
+                selectedId === seg.id ? "border-primary bg-primary/5" : "border-transparent"
               }`}
               onClick={() => setSelectedId(seg.id)}
             >
@@ -288,17 +260,14 @@ export default function PieEditor({
                 value={seg.value}
                 onChange={(e) => updateSeg(i, { value: parseFloat(e.target.value || "0") })}
               />
-              {!isMultiMode && (
-                <label className="col-span-2 inline-flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={!!(seg as any).correct}
-                    onChange={(e) => updateSeg(i, { correct: e.target.checked })}
-                  />
-                  correct
-                </label>
-              )}
-              {isMultiMode && <div className="col-span-2" />}
+              <label className="col-span-2 inline-flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={!!seg.colored}
+                  onChange={(e) => updateSeg(i, { colored: e.target.checked })}
+                />
+                colored
+              </label>
               <Button type="button" variant="outline" onClick={() => handleRemove(seg.id)}>
                 Remove
               </Button>
@@ -321,25 +290,24 @@ export default function PieEditor({
         </div>
       </div>
 
-      <div className={state.multi && variants.length > 0 ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "flex items-center justify-center"}>
-        {(state.multi && variants.length > 0 ? allPies : [currentPie]).map((pie) => {
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {allPies.map((pie) => {
           const total = pie.segments.reduce((sum, seg) => sum + (Number(seg.value) || 0), 0) || 1;
           let start = 0;
           const isActive = pie.id === activePieId;
-          const isMultiDisplay = state.multi && variants.length > 0;
 
           return (
             <div
               key={pie.id}
-              className={isMultiDisplay ? `relative rounded-lg border p-3 transition ${
-                isActive ? "border-blue-500 bg-blue-50/40 shadow-sm" : "border-border bg-white"
-              }` : ""}
-              onClick={() => isMultiDisplay && setActivePieId(pie.id)}
+              className={`relative rounded-lg border p-3 transition cursor-pointer ${
+                isActive ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-white"
+              }`}
+              onClick={() => setActivePieId(pie.id)}
             >
               <svg
                 viewBox="0 0 100 100"
-                width={isMultiDisplay ? 140 : 220}
-                height={isMultiDisplay ? 140 : 220}
+                width={140}
+                height={140}
                 className="bg-white rounded-xl shadow-inner mx-auto"
                 role="img"
                 aria-label={`${pie.label} preview`}
@@ -355,18 +323,17 @@ export default function PieEditor({
                   const d = `M50,50 L${x1},${y1} A45,45 0 ${largeArc} 1 ${x2},${y2} Z`;
                   start = end;
                   const isSelected = selectedId === seg.id && isActive;
-                  const showCorrect = !isMultiDisplay && (seg as any).correct;
                   return (
                     <path
                       key={seg.id}
                       d={d}
-                      fill={showCorrect ? "#2563eb" : "#cbd5e1"}
-                      stroke={isSelected ? "#1d4ed8" : "#fff"}
+                      fill={seg.colored ? "hsl(var(--primary))" : "#e5e7eb"}
+                      stroke={isSelected ? "hsl(var(--primary))" : "#fff"}
                       strokeWidth={isSelected ? 2 : 1}
                       className="cursor-pointer transition"
                       onPointerDown={(evt) => {
                         evt.preventDefault();
-                        if (!isActive && isMultiDisplay) {
+                        if (!isActive) {
                           setActivePieId(pie.id);
                         }
                         setSelectedId(seg.id);
@@ -375,11 +342,13 @@ export default function PieEditor({
                   );
                 })}
               </svg>
-              {isMultiDisplay && (
-                <div className="mt-2 text-center text-xs text-muted-foreground">
-                  {pie.label}
-                </div>
-              )}
+              <div className="mt-2 text-center">
+                <div className="text-xs text-muted-foreground">{pie.label}</div>
+                <div className="text-sm font-medium">{calculateFraction(pie.segments)}</div>
+                {pie.correct && (
+                  <div className="text-xs text-primary font-medium">✓ Correct</div>
+                )}
+              </div>
             </div>
           );
         })}

@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import type { Question } from "@/types/quiz-bank";
 import { evaluateQuestion } from "@/utils/quizEvaluation";
 import { cn } from "@/lib/utils";
-import type { VisualAngle, VisualUnion } from "@/lib/quiz/visual-types";
+import type { VisualAngle, VisualUnion, VisualPie } from "@/lib/quiz/visual-types";
 import { normalizeAngle } from "@/lib/quiz/visual-geometry";
 import { Button } from "@/components/ui/button";
 
@@ -196,6 +196,14 @@ function renderVisualQuestion(
   setValue: (next: any) => void
 ) {
   switch (visual.subtype) {
+    case "pie":
+      return (
+        <PieStudentView
+          visual={visual as any}
+          value={value}
+          onChange={setValue}
+        />
+      );
     case "angle":
       return (
         <AngleStudentView
@@ -374,5 +382,106 @@ function describeArc(cx: number, cy: number, r: number, start: number, end: numb
 function angleBetween(aDeg: number, bDeg: number) {
   const diff = Math.abs(normalizeAngle(aDeg) - normalizeAngle(bDeg));
   return Math.min(diff, Math.abs(diff - 360));
+}
+
+function PieStudentView({
+  visual,
+  value,
+  onChange,
+}: {
+  visual: VisualPie;
+  value: any;
+  onChange: (next: any) => void;
+}) {
+  const selected: string[] = Array.isArray(value) ? value : [];
+
+  const allPies = [
+    { id: "base", label: "Pie 1", segments: visual.segments },
+    ...(visual.variants ?? []).map((v, index) => ({ 
+      id: v.id, 
+      label: `Pie ${index + 2}`, 
+      segments: v.segments 
+    })),
+  ];
+
+  const calculateFraction = (segments: typeof visual.segments) => {
+    const totalSlices = segments.length;
+    const coloredSlices = segments.filter(s => s.colored).length;
+    return `${coloredSlices}/${totalSlices}`;
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-neutral-600">
+        Sélectionne le(s) diagramme(s) qui représente(nt) la fraction correcte.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {allPies.map((pie) => {
+          const isActive = selected.includes(pie.id);
+          const total = pie.segments.reduce((sum, seg) => sum + (Number(seg.value) || 0), 0) || 1;
+          let start = 0;
+
+          return (
+            <button
+              key={pie.id}
+              type="button"
+              onClick={() => {
+                const next = isActive
+                  ? selected.filter((id) => id !== pie.id)
+                  : [...selected, pie.id];
+                onChange(next);
+              }}
+              className={cn(
+                "group relative rounded-xl border p-3 text-left transition",
+                isActive
+                  ? "border-primary bg-primary/5 shadow-sm"
+                  : "border-border hover:border-primary/40"
+              )}
+              aria-pressed={isActive}
+            >
+              <svg
+                viewBox="0 0 100 100"
+                width={160}
+                height={160}
+                className="mx-auto bg-white rounded-lg shadow-inner"
+              >
+                {pie.segments.map((seg) => {
+                  const angle = ((Number(seg.value) || 0) / total) * Math.PI * 2;
+                  const end = start + angle;
+                  const x1 = 50 + 45 * Math.cos(start);
+                  const y1 = 50 + 45 * Math.sin(start);
+                  const x2 = 50 + 45 * Math.cos(end);
+                  const y2 = 50 + 45 * Math.sin(end);
+                  const largeArc = angle > Math.PI ? 1 : 0;
+                  const d = `M50,50 L${x1},${y1} A45,45 0 ${largeArc} 1 ${x2},${y2} Z`;
+                  start = end;
+                  return (
+                    <path
+                      key={seg.id}
+                      d={d}
+                      fill={seg.colored ? "#3b82f6" : "#e5e7eb"}
+                      stroke="#fff"
+                      strokeWidth={1}
+                    />
+                  );
+                })}
+              </svg>
+              <div className="mt-2 text-center">
+                <div className="text-xs text-neutral-500">{pie.label}</div>
+                <div className="text-sm font-medium">{calculateFraction(pie.segments)}</div>
+              </div>
+              {isActive && (
+                <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 

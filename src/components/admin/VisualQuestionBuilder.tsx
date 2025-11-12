@@ -20,13 +20,25 @@ const uuid = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.
 
 const defaultPie = (): VisualPie => ({
   subtype: "pie",
-  multi: false,
+  multi: true,
+  baseCorrect: true,
   segments: [
-    { id: uuid(), value: 0.25, label: "A", correct: true },
-    { id: uuid(), value: 0.25, label: "B" },
-    { id: uuid(), value: 0.25, label: "C", correct: true },
-    { id: uuid(), value: 0.25, label: "D" },
+    { id: uuid(), value: 0.25, colored: true },
+    { id: uuid(), value: 0.25, colored: true },
+    { id: uuid(), value: 0.25, colored: false },
+    { id: uuid(), value: 0.25, colored: false },
   ],
+  variants: [
+    {
+      id: uuid(),
+      segments: [
+        { id: uuid(), value: 0.333, colored: true },
+        { id: uuid(), value: 0.333, colored: false },
+        { id: uuid(), value: 0.333, colored: false },
+      ],
+      correct: false,
+    }
+  ]
 });
 
 const defaultGrid = (): VisualGrid => ({
