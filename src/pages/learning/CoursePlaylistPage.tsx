@@ -12,7 +12,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { VideoPlayerBox } from '@/components/learning/VideoPlayerBox';
 import { CollapsibleVideoSection } from '@/components/learning/CollapsibleVideoSection';
-import { TestYourselfInline } from '@/components/learning/TestYourselfInline';
 import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
 import type { Video } from '@/types/learning';
 
@@ -120,28 +119,6 @@ const CoursePlaylistPage = () => {
             }}
           />
 
-          {/* Test Yourself section */}
-          {allBanksError && (
-            <div className="mx-4 mb-4 p-4 border border-destructive rounded-xl bg-destructive/10">
-              <p className="text-sm text-destructive">Error loading quiz banks: {allBanksError.message}</p>
-            </div>
-          )}
-          {allBanks?.banks && allBanks.banks.length > 0 && (
-            <div className="mx-4 mb-4 p-4 border rounded-xl bg-card">
-              <h4 className="font-semibold mb-3">Test yourself</h4>
-              <div className="space-y-2">
-                {allBanks.banks.map((bank) => (
-                  <TestYourselfInline
-                    key={bank.id}
-                    bankId={bank.bankId}
-                    locked={!bank.isUnlocked}
-                    progressMessage={bank.progressMessage}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Course Sections */}
           <div className="space-y-1">
             {videoSections.map((section, index) => (
@@ -151,6 +128,8 @@ const CoursePlaylistPage = () => {
                 videos={section.videos}
                 playingVideoId={playingVideoId}
                 onVideoSelect={setPlayingVideoId}
+                allBanks={allBanks?.banks}
+                topicId={data?.topic?.id}
               />
             ))}
           </div>
