@@ -95,7 +95,9 @@ serve(async (req) => {
         isUnlocked,
         progressMessage,
         completedCount,
-        requiredCount
+        requiredCount,
+        videoIds: a.video_ids || [],
+        topicId: a.topic_id || null
       };
     });
 
