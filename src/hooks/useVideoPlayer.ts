@@ -75,12 +75,27 @@ export function useVideoPlayer(videoId: string) {
         });
 
       if (error) throw error;
+      
+      // Show completion toast
+      if (progressType === 'video_completed') {
+        toast.success('Video completed!', {
+          description: 'Great job! New quizzes may now be available.'
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['video-player', videoId] });
       queryClient.invalidateQueries({ queryKey: ['course-playlist'] });
       queryClient.invalidateQueries({ queryKey: ['subject-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['completed-videos'] });
+      queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
     },
+    onError: (error) => {
+      console.error('Failed to update progress:', error);
+      toast.error('Failed to save progress', {
+        description: 'Your progress may not have been saved properly.'
+      });
+    }
   });
 
   // Submit quiz answer mutation

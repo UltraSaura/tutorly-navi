@@ -11,3 +11,9 @@ verify_jwt = true
 verify_jwt = true
 [functions.export-guardian-report]
 verify_jwt = true
+[functions.quiz-bank-visible]
+verify_jwt = false
+[functions.quiz-bank-all]
+verify_jwt = false
+[functions.quiz-bank-attempt]
+verify_jwt = true

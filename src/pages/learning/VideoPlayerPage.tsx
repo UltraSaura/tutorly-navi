@@ -10,7 +10,7 @@ import { MathRenderer } from '@/components/math/MathRenderer';
 import { cn } from '@/lib/utils';
 import { TestYourselfInline } from '@/components/learning/TestYourselfInline';
 import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
-import { useVisibleBanks } from '@/hooks/useQuizBank';
+import { useAllBanks } from '@/hooks/useQuizBank';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,8 +59,8 @@ const VideoPlayerPage = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Fetch visible quiz banks
-  const { data: visibleBanks } = useVisibleBanks(
+  // Fetch all quiz banks (both locked and unlocked)
+  const { data: allBanks } = useAllBanks(
     video?.topic_id || '',
     completedVideoIds,
     user?.id || ''
@@ -203,12 +203,17 @@ const VideoPlayerPage = () => {
           )}
           
           {/* Test Yourself section */}
-          {visibleBanks?.visible && visibleBanks.visible.length > 0 && (
+          {allBanks?.banks && allBanks.banks.length > 0 && (
             <div className="mb-6 p-4 border rounded-xl">
-              <h4 className="font-semibold mb-2">Test yourself</h4>
+              <h4 className="font-semibold mb-3">Test yourself</h4>
               <div className="flex flex-wrap gap-3">
-                {visibleBanks.visible.map(v => (
-                  <TestYourselfInline key={v.id} bankId={v.bankId} />
+                {allBanks.banks.map(bank => (
+                  <TestYourselfInline 
+                    key={bank.id} 
+                    bankId={bank.bankId}
+                    locked={!bank.isUnlocked}
+                    progressMessage={bank.progressMessage}
+                  />
                 ))}
               </div>
             </div>
