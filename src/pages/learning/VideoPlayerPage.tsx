@@ -60,11 +60,25 @@ const VideoPlayerPage = () => {
   });
 
   // Fetch all quiz banks (both locked and unlocked)
-  const { data: allBanks } = useAllBanks(
+  const { data: allBanks, error: allBanksError, isLoading: allBanksLoading } = useAllBanks(
     video?.topic_id || '',
+    videoId || '',
     completedVideoIds,
     user?.id || ''
   );
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🎯 Quiz Banks Debug:', {
+      videoId,
+      topicId: video?.topic_id,
+      completedVideoIds,
+      userId: user?.id,
+      allBanks,
+      allBanksError,
+      allBanksLoading,
+    });
+  }, [allBanks, allBanksError, allBanksLoading, video?.topic_id, videoId, completedVideoIds, user?.id]);
 
   useEffect(() => {
     if (currentQuiz && !showQuiz) {
@@ -203,6 +217,11 @@ const VideoPlayerPage = () => {
           )}
           
           {/* Test Yourself section */}
+          {allBanksError && (
+            <div className="mb-6 p-4 border border-destructive rounded-xl bg-destructive/10">
+              <p className="text-sm text-destructive">Error loading quiz banks: {allBanksError.message}</p>
+            </div>
+          )}
           {allBanks?.banks && allBanks.banks.length > 0 && (
             <div className="mb-6 p-4 border rounded-xl">
               <h4 className="font-semibold mb-3">Test yourself</h4>

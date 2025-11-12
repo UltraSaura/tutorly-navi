@@ -39,12 +39,12 @@ export function useVisibleBanks(topicId: string, completedVideoIds: string[], us
   });
 }
 
-export function useAllBanks(topicId: string, completedVideoIds: string[], userId: string) {
+export function useAllBanks(topicId: string, videoId: string, completedVideoIds: string[], userId: string) {
   return useQuery({
-    queryKey: ['quiz-banks-all', topicId, completedVideoIds.join(',')],
+    queryKey: ['quiz-banks-all', topicId, videoId, completedVideoIds.join(',')],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('quiz-bank-all', {
-        body: { topicId, completedVideoIds, userId },
+        body: { topicId, videoId, completedVideoIds, userId },
         method: 'POST'
       });
 
@@ -60,7 +60,7 @@ export function useAllBanks(topicId: string, completedVideoIds: string[], userId
         }[] 
       };
     },
-    enabled: !!topicId,
+    enabled: !!userId && (!!topicId || !!videoId),
     staleTime: 2 * 60 * 1000,
   });
 }

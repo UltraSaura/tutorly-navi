@@ -13,11 +13,13 @@ serve(async (req) => {
   }
 
   try {
-    const { topicId, completedVideoIds, userId } = await req.json();
+    const { topicId, videoId, completedVideoIds, userId } = await req.json();
 
-    if (!topicId) {
+    console.log('quiz-bank-all called with:', { topicId, videoId, completedVideoIds, userId });
+
+    if (!topicId && !videoId) {
       return new Response(
-        JSON.stringify({ error: 'Topic ID required' }),
+        JSON.stringify({ error: 'Topic ID or Video ID required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -27,16 +29,13 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY')!
     );
 
-    // Fetch active assignments
-    let query = supabase
+    // Fetch all active assignments
+    const { data: assigns, error } = await supabase
       .from('quiz_bank_assignments')
       .select('*')
       .eq('is_active', true);
-
-    // Filter by topic_id or video_ids
-    query = query.or(`topic_id.eq.${topicId},video_ids.not.is.null`);
-
-    const { data: assigns, error } = await query;
+    
+    console.log('All assignments fetched:', assigns?.length);
 
     if (error) {
       console.error('Error fetching assignments:', error);
@@ -49,7 +48,20 @@ serve(async (req) => {
     const doneCount = Array.isArray(completedVideoIds) ? completedVideoIds.length : 0;
     const completedIds = Array.isArray(completedVideoIds) ? completedVideoIds : [];
 
-    const allBanks = (assigns || []).map((a: any) => {
+    // Filter assignments to only those relevant to this video/topic
+    const relevantAssignments = (assigns || []).filter((a: any) => {
+      // Include if topic_id matches
+      if (a.topic_id === topicId) return true;
+      
+      // Include if video_ids contains current videoId
+      if (videoId && Array.isArray(a.video_ids) && a.video_ids.includes(videoId)) return true;
+      
+      return false;
+    });
+
+    console.log('Relevant assignments:', relevantAssignments.length);
+
+    const allBanks = relevantAssignments.map((a: any) => {
       let isUnlocked = false;
       let progressMessage = '';
       let completedCount = 0;
