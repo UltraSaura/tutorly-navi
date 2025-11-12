@@ -179,6 +179,19 @@ export default function PieEditor({
           </p>
         </div>
 
+        <div className="flex items-center gap-2 p-2 border rounded-md bg-background">
+          <input
+            type="checkbox"
+            id="show-fraction-label"
+            checked={state.showFractionLabel || false}
+            onChange={(e) => setState({ ...state, showFractionLabel: e.target.checked })}
+            className="h-4 w-4 rounded border-border"
+          />
+          <Label htmlFor="show-fraction-label" className="text-xs cursor-pointer">
+            Show fraction label (e.g., "2/4") below each pie in quiz
+          </Label>
+        </div>
+
         <div className="space-y-2 border rounded-md p-2">
           <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
             <span>Pie Charts</span>

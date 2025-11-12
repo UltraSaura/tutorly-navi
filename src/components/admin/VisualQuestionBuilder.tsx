@@ -18,28 +18,29 @@ import type {
 
 const uuid = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
 
-const defaultPie = (): VisualPie => ({
-  subtype: "pie",
-  multi: true,
-  baseCorrect: true,
-  segments: [
-    { id: uuid(), value: 0.25, colored: true },
-    { id: uuid(), value: 0.25, colored: true },
-    { id: uuid(), value: 0.25, colored: false },
-    { id: uuid(), value: 0.25, colored: false },
-  ],
-  variants: [
-    {
-      id: uuid(),
-      segments: [
-        { id: uuid(), value: 0.333, colored: true },
-        { id: uuid(), value: 0.333, colored: false },
-        { id: uuid(), value: 0.333, colored: false },
-      ],
-      correct: false,
-    }
-  ]
-});
+  const defaultPie = (): VisualPie => ({
+    subtype: "pie",
+    multi: true,
+    baseCorrect: true,
+    showFractionLabel: false,
+    segments: [
+      { id: uuid(), value: 0.25, colored: true },
+      { id: uuid(), value: 0.25, colored: true },
+      { id: uuid(), value: 0.25, colored: false },
+      { id: uuid(), value: 0.25, colored: false },
+    ],
+    variants: [
+      {
+        id: uuid(),
+        segments: [
+          { id: uuid(), value: 0.333, colored: true },
+          { id: uuid(), value: 0.333, colored: false },
+          { id: uuid(), value: 0.333, colored: false },
+        ],
+        correct: false,
+      }
+    ]
+  });
 
 const defaultGrid = (): VisualGrid => ({
   subtype: "grid",

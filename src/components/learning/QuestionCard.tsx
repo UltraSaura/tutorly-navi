@@ -468,7 +468,9 @@ function PieStudentView({
               </svg>
               <div className="mt-2 text-center">
                 <div className="text-xs text-neutral-500">{pie.label}</div>
-                <div className="text-sm font-medium">{calculateFraction(pie.segments)}</div>
+                {visual.showFractionLabel && (
+                  <div className="text-sm font-medium">{calculateFraction(pie.segments)}</div>
+                )}
               </div>
               {isActive && (
                 <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">

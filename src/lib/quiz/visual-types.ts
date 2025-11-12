@@ -2,6 +2,7 @@ export type VisualPie = {
   subtype: "pie";
   multi?: boolean;
   baseCorrect?: boolean;
+  showFractionLabel?: boolean;
   segments: { id: string; value: number; label?: string; colored?: boolean }[];
   variants?: {
     id: string;
