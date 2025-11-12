@@ -1,7 +1,13 @@
 export type VisualPie = {
   subtype: "pie";
   multi?: boolean;
+  baseCorrect?: boolean;
   segments: { id: string; value: number; label?: string; correct?: boolean }[];
+  variants?: {
+    id: string;
+    segments: { id: string; value: number; label?: string; correct?: boolean }[];
+    correct?: boolean;
+  }[];
 };
 
 export type VisualGrid = {

@@ -24,6 +24,18 @@ export function evaluateVisual(visual: VisualUnion, answer: unknown): boolean {
   switch (visual.subtype) {
     case "pie": {
       const v = visual as VisualPie;
+      if (v.multi && v.variants && v.variants.length > 0) {
+        // Multiple pie charts - student selects correct pie(s)
+        const selectedArray = Array.isArray(answer) ? (answer as string[]) : [];
+        const selected = new Set<string>(selectedArray);
+        const correctIds = new Set<string>();
+        if (v.baseCorrect) correctIds.add("base");
+        (v.variants ?? [])
+          .filter((variant) => variant.correct)
+          .forEach((variant) => correctIds.add(variant.id));
+        return setsEqual(selected, correctIds);
+      }
+      // Single pie chart - student selects correct segment(s)
       const selected = new Set<string>(Array.isArray(answer) ? (answer as string[]) : []);
       const correctIds = new Set(v.segments.filter((s) => s.correct).map((s) => s.id));
       return setsEqual(selected, correctIds);
