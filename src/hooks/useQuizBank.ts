@@ -57,6 +57,8 @@ export function useAllBanks(topicId: string, videoId: string, completedVideoIds:
           progressMessage: string;
           completedCount: number;
           requiredCount: number;
+          videoIds: string[];
+          topicId: string | null;
         }[] 
       };
     },
