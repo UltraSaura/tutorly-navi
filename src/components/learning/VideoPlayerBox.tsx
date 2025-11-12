@@ -13,9 +13,15 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const youtubePlayerRef = useRef<any>(null);
+  const updateProgressRef = useRef<any>(null);
   const [isYouTube, setIsYouTube] = useState(false);
 
   const { video, updateProgress } = useVideoPlayer(videoId || '');
+
+  // Keep updateProgress ref current
+  useEffect(() => {
+    updateProgressRef.current = updateProgress;
+  }, [updateProgress]);
 
   useEffect(() => {
     if (!video?.video_url) return;
@@ -67,9 +73,9 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
                   const current = player.getCurrentTime?.();
                   const duration = player.getDuration?.();
                   if (current && duration && duration > 0) {
-                    updateProgress(current, duration);
+                    updateProgressRef.current?.(current, duration);
                   }
-                }, 1000);
+                }, 5000); // Update every 5 seconds instead of 1
               },
               onStateChange: (event: any) => {
                 // State 0 = ended
@@ -107,7 +113,7 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
         }
       };
     }
-  }, [video?.video_url, videoId, onVideoEnd, updateProgress]);
+  }, [video?.video_url, videoId, onVideoEnd]); // Removed updateProgress from dependencies
 
 
   if (!videoId || !video) {

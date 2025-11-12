@@ -82,13 +82,18 @@ export function useVideoPlayer(videoId: string) {
           description: 'Great job! New quizzes may now be available.'
         });
       }
+      
+      return { progressType };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['video-player', videoId] });
-      queryClient.invalidateQueries({ queryKey: ['course-playlist'] });
-      queryClient.invalidateQueries({ queryKey: ['subject-dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['completed-videos'] });
-      queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
+    onSuccess: (result) => {
+      // Only invalidate queries when video is completed, not on every progress update
+      if (result?.progressType === 'video_completed') {
+        queryClient.invalidateQueries({ queryKey: ['video-player', videoId] });
+        queryClient.invalidateQueries({ queryKey: ['course-playlist'] });
+        queryClient.invalidateQueries({ queryKey: ['subject-dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['completed-videos'] });
+        queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
+      }
     },
     onError: (error) => {
       console.error('Failed to update progress:', error);

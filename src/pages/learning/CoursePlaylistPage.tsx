@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -93,6 +93,16 @@ const CoursePlaylistPage = () => {
 
   const { topic, videos } = data;
 
+  // Memoize onVideoEnd to prevent VideoPlayerBox from re-rendering
+  const handleVideoEnd = useCallback(() => {
+    // Auto-play next video
+    if (!data?.videos) return;
+    const currentIndex = data.videos.findIndex(v => v.id === playingVideoId);
+    if (currentIndex !== -1 && currentIndex < data.videos.length - 1) {
+      setPlayingVideoId(data.videos[currentIndex + 1].id);
+    }
+  }, [data?.videos, playingVideoId]);
+
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header - Sticky */}
@@ -109,14 +119,7 @@ const CoursePlaylistPage = () => {
           {/* Video Player - Always Visible */}
           <VideoPlayerBox 
             videoId={playingVideoId}
-            onVideoEnd={() => {
-              // Auto-play next video
-              if (!data?.videos) return;
-              const currentIndex = data.videos.findIndex(v => v.id === playingVideoId);
-              if (currentIndex !== -1 && currentIndex < data.videos.length - 1) {
-                setPlayingVideoId(data.videos[currentIndex + 1].id);
-              }
-            }}
+            onVideoEnd={handleVideoEnd}
           />
 
           {/* Course Sections */}
