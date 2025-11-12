@@ -12,6 +12,7 @@ import type { Subject as LearningSubject } from '@/types/learning';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { iconOptions } from './DynamicIcon';
 import { toast } from 'sonner';
+import { ColorPicker } from './ColorPicker';
 
 interface LearningSubjectData {
   slug: string;
@@ -235,14 +236,19 @@ const LearningSubjectManager = () => {
                   </TableCell>
                   <TableCell>
                     {isEditing ? (
-                      <Input
+                      <ColorPicker
                         value={data.color_scheme}
-                        onChange={(e) => updateField(chatSubject.id, 'color_scheme', e.target.value)}
-                        className="w-32"
-                        placeholder="bg-blue-500"
+                        onChange={(color) => updateField(chatSubject.id, 'color_scheme', color)}
+                        format="rgb"
                       />
                     ) : (
-                      <span className="text-sm font-mono">{data.color_scheme}</span>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-6 h-6 rounded border border-border flex-shrink-0" 
+                          style={{ backgroundColor: data.color_scheme }}
+                        />
+                        <span className="text-sm font-mono">{data.color_scheme}</span>
+                      </div>
                     )}
                   </TableCell>
                   <TableCell>
@@ -316,7 +322,7 @@ const LearningSubjectManager = () => {
         <ul className="list-disc list-inside space-y-1">
           <li><strong>Slug:</strong> URL-friendly identifier (e.g., "mathematics" becomes "mathematics")</li>
           <li><strong>Icon Name:</strong> Lucide icon name or emoji</li>
-          <li><strong>Color Scheme:</strong> Tailwind CSS class for subject color (e.g., "bg-blue-500")</li>
+          <li><strong>Color Scheme:</strong> Visual color picker supporting RGB (e.g., "rgb(255, 192, 203)") or hex (e.g., "#FFC0CB") formats</li>
           <li><strong>Order:</strong> Display order in the learning platform</li>
           <li><strong>Active:</strong> Whether the subject is visible in the learning platform</li>
         </ul>
