@@ -12,16 +12,20 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const youtubePlayerRef = useRef<any>(null);
   const [isYouTube, setIsYouTube] = useState(false);
-  const [youtubePlayer, setYoutubePlayer] = useState<any>(null);
 
   const { video, updateProgress } = useVideoPlayer(videoId || '');
 
   useEffect(() => {
     if (!video?.video_url) return;
     
+    console.log('🎬 VideoPlayerBox - videoId changed:', videoId);
+    console.log('🎬 Video data:', video?.title);
+    
     const isYT = isYouTubeUrl(video.video_url);
     setIsYouTube(isYT);
+    console.log('🎬 Is YouTube:', isYT);
 
     if (isYT) {
       const ytVideoId = extractYouTubeVideoId(video.video_url);
@@ -31,11 +35,20 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
         try {
           await loadYouTubeAPI();
           
+          // Clear any existing interval first
+          if (progressIntervalRef.current) {
+            clearInterval(progressIntervalRef.current);
+            progressIntervalRef.current = null;
+          }
+          
           // Destroy existing player before creating new one
-          if (youtubePlayer?.destroy) {
-            youtubePlayer.destroy();
+          if (youtubePlayerRef.current?.destroy) {
+            console.log('🎬 Destroying existing player');
+            youtubePlayerRef.current.destroy();
+            youtubePlayerRef.current = null;
           }
 
+          console.log('🎬 Creating new YouTube player');
           const player = new (window as any).YT.Player(`youtube-player-${videoId}`, {
             videoId: ytVideoId,
             playerVars: {
@@ -45,6 +58,7 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
             },
             events: {
               onReady: () => {
+                console.log('🎬 Player ready');
                 // Start progress tracking interval
                 if (progressIntervalRef.current) {
                   clearInterval(progressIntervalRef.current);
@@ -71,22 +85,25 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
               },
             },
           });
-          setYoutubePlayer(player);
+          youtubePlayerRef.current = player;
         } catch (error) {
-          console.error('Failed to load YouTube player:', error);
+          console.error('❌ Failed to load YouTube player:', error);
         }
       };
 
       initPlayer();
 
       return () => {
+        console.log('🎬 Cleanup: destroying player');
         // Clear progress interval
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
         }
         // Destroy YouTube player
-        if (youtubePlayer?.destroy) {
-          youtubePlayer.destroy();
+        if (youtubePlayerRef.current?.destroy) {
+          youtubePlayerRef.current.destroy();
+          youtubePlayerRef.current = null;
         }
       };
     }
