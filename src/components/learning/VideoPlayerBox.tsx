@@ -11,6 +11,7 @@ interface VideoPlayerBoxProps {
 export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isYouTube, setIsYouTube] = useState(false);
   const [youtubePlayer, setYoutubePlayer] = useState<any>(null);
 
@@ -43,9 +44,29 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
               modestbranding: 1,
             },
             events: {
+              onReady: () => {
+                // Start progress tracking interval
+                if (progressIntervalRef.current) {
+                  clearInterval(progressIntervalRef.current);
+                }
+                progressIntervalRef.current = setInterval(() => {
+                  const current = player.getCurrentTime?.();
+                  const duration = player.getDuration?.();
+                  if (current && duration && duration > 0) {
+                    updateProgress(current, duration);
+                  }
+                }, 1000);
+              },
               onStateChange: (event: any) => {
-                if (event.data === 0 && onVideoEnd) {
-                  onVideoEnd();
+                // State 0 = ended
+                if (event.data === 0) {
+                  const duration = player.getDuration?.();
+                  if (duration) {
+                    updateProgress(duration, duration);
+                  }
+                  if (onVideoEnd) {
+                    onVideoEnd();
+                  }
                 }
               },
             },
@@ -59,12 +80,17 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
       initPlayer();
 
       return () => {
+        // Clear progress interval
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+        }
+        // Destroy YouTube player
         if (youtubePlayer?.destroy) {
           youtubePlayer.destroy();
         }
       };
     }
-  }, [video?.video_url, videoId, onVideoEnd]);
+  }, [video?.video_url, videoId, onVideoEnd, updateProgress]);
 
 
   if (!videoId || !video) {
