@@ -936,20 +936,22 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               return (
                 <div className="relative font-mono">
                     {/* Top multiplicand */}
-                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
+                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+                    <div className="w-8" />
                     {A.padStart(sumWidth, ' ').split('').map((ch, i) => (
-                        <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
-                          {ch.trim()}
-                        </div>
+                      <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
+                        {ch.trim()}
+                      </div>
                     ))}
                   </div>
                     
                     {/* Multiplier with × symbol */}
-                  <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
-                    {('×' + B.padStart(sumWidth - 1, ' ')).split('').map((ch, i) => (
-                        <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
-                          {ch.trim()}
-                        </div>
+                  <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+                    <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">×</div>
+                    {B.padStart(sumWidth, ' ').split('').map((ch, i) => (
+                      <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
+                        {ch.trim()}
+                      </div>
                     ))}
                   </div>
                     
@@ -958,11 +960,10 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                     
                     {/* Placeholder rows for partial products */}
                     {partials.map((_, idx) => (
-                    <div key={idx} className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
+                      <div key={idx} className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+                        <div className="w-8" />
                         {Array(sumWidth).fill('').map((_, i) => (
-                          <div key={i} className="w-8 text-center text-lg md:text-xl text-gray-300 dark:text-gray-600">
-                            •
-                          </div>
+                          <div key={i} className="w-8 text-center text-lg md:text-xl text-gray-300 dark:text-gray-600">•</div>
                         ))}
                       </div>
                     ))}
@@ -971,11 +972,10 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                     <div className="my-2 h-[2px] w-full bg-gray-800 dark:bg-gray-200" />
                     
                     {/* Placeholder for final sum */}
-                    <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
+                    <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+                      <div className="w-8" />
                       {Array(sumWidth).fill('').map((_, i) => (
-                        <div key={i} className="w-8 text-center text-lg md:text-xl text-gray-300 dark:text-gray-600">
-                          •
-                        </div>
+                        <div key={i} className="w-8 text-center text-lg md:text-xl text-gray-300 dark:text-gray-600">•</div>
                       ))}
                     </div>
                     
@@ -989,51 +989,44 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               
               // For actual multiplication steps, show progressive reveal from RIGHT to LEFT
               const getCurrentPartialProduct = () => {
-                if (!currentStepData) return '';
+                if (!currentStepData) return '•'.repeat(sumWidth);
                 
-                // Find which partial product this step belongs to
                 const multiplierPos = currentStepData.multiplierPosition;
-                
-                // Handle final sum steps (multiplierPosition === -1)
                 if (multiplierPos === -1) {
-                  // This is a final sum step - return empty string as it's handled separately
-                  return '';
+                  return '•'.repeat(sumWidth);
                 }
                 
-                const partialProduct = partials?.[multiplierPos];
-                
-                // Safety check: ensure partialProduct exists and is a string
-                if (!partialProduct || typeof partialProduct !== 'string') {
-                  console.warn('[CompactMathStepper] Invalid partial product:', {
-                    multiplierPos,
-                    partialProduct,
-                    partialsLength: partials?.length,
-                    currentStepData
-                  });
-                  return '';
-                }
-                
-                // Calculate how much of this partial product should be revealed
                 const stepsForThisPartial = multiplicationSteps.filter(s => s.multiplierPosition === multiplierPos);
                 const currentStepInPartial = stepsForThisPartial.findIndex(s => s.step === currentStepData.step);
+                const workingValue = currentStepData.partialProduct ?? '';
                 
-                // Debug logging for partial product display
                 console.log(`[PartialProduct] Row ${multiplierPos}, Step ${currentStepInPartial + 1}/${stepsForThisPartial.length}:`, {
-                  partialProduct,
-                  partialProductLength: partialProduct.length,
-                  currentStepInPartial,
-                  stepsForThisPartial: stepsForThisPartial.length
+                  workingValue,
+                  multiplierPos,
+                  currentStepData
                 });
                 
-                // Show partial product from RIGHT to LEFT (ones place first)
-                const revealedLength = Math.min(currentStepInPartial + 1, partialProduct.length);
-                const hiddenLength = partialProduct.length - revealedLength;
+                const display: string[] = Array(sumWidth).fill('•');
                 
-                // Create string with revealed digits from right, hidden dots from left
-                const hidden = '•'.repeat(hiddenLength);
-                const revealed = partialProduct.substring(hiddenLength);
+                // Always show positional shift zeros immediately (muted later)
+                for (let z = 0; z < multiplierPos; z++) {
+                  const pos = sumWidth - 1 - z;
+                  if (pos >= 0 && pos < sumWidth) {
+                    display[pos] = '0';
+                  }
+                }
                 
-                return hidden + revealed;
+                const digits = workingValue.split('');
+                
+                for (let idx = 0; idx < digits.length; idx++) {
+                  const digit = digits[digits.length - 1 - idx];
+                  const pos = sumWidth - 1 - (multiplierPos + idx);
+                  if (pos >= 0 && pos < sumWidth) {
+                    display[pos] = digit;
+                  }
+                }
+                
+                return display.join('');
               };
               
               const getCarriesToShow = () => {
@@ -1130,7 +1123,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               return (
                 <div className="relative font-mono">
                   {/* Carries row above multiplicand - shifted one column to the left */}
-                  <div className="ml-auto grid justify-end min-h-[28px]" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
+                  <div className="ml-auto grid justify-end min-h-[28px]" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+                    <div className="w-8" />
                     {carriesToShow.carries.map((val, i) => (
                       <div key={i} className="w-8 text-center text-slate-400 font-semibold">
                         <AnimatePresence>
@@ -1150,7 +1144,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
                   
                   {/* Top multiplicand */}
-                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
+                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+                    <div className="w-8" />
                     {A.padStart(sumWidth, ' ').split('').map((ch, i) => {
                       // Map display index to actual A digit position (right-to-left)
                       const offset = sumWidth - A.length;
@@ -1177,37 +1172,13 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
                   
         {/* Multiplier with × symbol */}
-        <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
-          {('×' + B.padStart(sumWidth - 1, ' ')).split('').map((ch, i) => {
-            // Skip the × symbol at position 0
-            if (ch === '×') {
-              return <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">×</div>;
-            }
-            
-            // Check if this is a padding space (not a real B digit)
-            if (ch === ' ' || !ch.trim()) {
-              return (
-                <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
-                  {/* Empty space */}
-                </div>
-              );
-            }
-            
-            // This is a real B digit - find which position it corresponds to
-            // The string is '×' + B.padStart(sumWidth - 1, ' ')
-            // We need to map display position to actual B index (0-based from left)
-            const paddedB = B.padStart(sumWidth - 1, ' ');
-            const bIndex = i - 1; // Remove the × offset
-            
-            // Map bIndex to actual position in B string (removing padding)
-            const actualBIndex = bIndex - (sumWidth - 1 - B.length); // Account for left padding
-            
-            // Convert to right-to-left position (multiplierPosition convention)
-            const multiplierPos = B.length - 1 - actualBIndex;
-            
-            // Check if this digit is active in current step
+        <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+          <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">×</div>
+          {B.padStart(sumWidth, ' ').split('').map((ch, i) => {
+            // Map display position to actual B index (0-based from left)
+            const actualBIndex = i - (sumWidth - B.length); // Account for left padding
+            const multiplierPos = B.length - 1 - actualBIndex; // right-to-left position
             const isActive = currentStepData && currentStepData.multiplierPosition === multiplierPos;
-            
             return (
               <div key={i} className={`w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200 ${isActive ? 'relative' : ''}`}>
                 <AnimatePresence>
@@ -1221,7 +1192,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                     />
                   )}
                 </AnimatePresence>
-                {ch}
+                {ch.trim()}
               </div>
             );
           })}
@@ -1241,11 +1212,10 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                     if (!isRevealed) {
                       // Show placeholder dots
                       return (
-                        <div key={idx} className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
+                        <div key={idx} className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+                          <div className="w-8" />
                           {Array(sumWidth).fill('').map((_, i) => (
-                            <div key={i} className="w-8 text-center text-lg md:text-xl text-gray-300 dark:text-gray-600">
-                              •
-                            </div>
+                            <div key={i} className="w-8 text-center text-lg md:text-xl text-gray-300 dark:text-gray-600">•</div>
                           ))}
                         </div>
                       );
@@ -1254,24 +1224,37 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                     if (isCurrentPartial && currentStepData.multiplierPosition !== -1) {
                       // Show progressive reveal for current partial product
                       return (
-                        <div key={idx} className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
-                          {currentPartial.padStart(sumWidth, ' ').split('').map((ch, i) => {
-                            // Frame the digit that corresponds to currentStepData.multiplicandPosition
-                            // Reverse the mapping: i is display index, need to find corresponding A position
-                            const offset = sumWidth - currentPartial.length;
-                            const actualIdx = Math.max(0, i - offset);
-                            const digitPos = currentPartial.length - 1 - actualIdx; // Reverse index
-                            const isActiveDigit = digitPos === currentStepData?.multiplicandPosition && ch !== '•' && ch !== ' ';
+                        <div key={idx} className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+                          <div className="w-8" />
+                          {currentPartial.split('').map((ch, i) => {
+                            const highlightIndex = currentStepData
+                              ? sumWidth - 1 - (currentStepData.multiplierPosition + currentStepData.multiplicandPosition)
+                              : -1;
+                            // Determine if this cell is a positional shift zero (to the right of the row)
+                            const digitPosFromRight = sumWidth - 1 - i;
+                            const isShiftZero = currentStepData
+                              ? digitPosFromRight < currentStepData.multiplierPosition
+                              : false;
+                            const isActiveDigit =
+                              currentStepData &&
+                              highlightIndex >= 0 &&
+                              i === highlightIndex &&
+                              ch !== '•' &&
+                              !isShiftZero;
                             return (
                               <motion.div 
                                 key={i} 
                                 className={`w-8 text-center text-lg md:text-xl relative ${
-                                  ch === '•' ? 'text-gray-300 dark:text-gray-600' : 'text-blue-600 dark:text-blue-400 font-bold'
+                                  ch === '•'
+                                    ? 'text-gray-300 dark:text-gray-600'
+                                    : isShiftZero
+                                      ? 'text-gray-400 dark:text-gray-500'
+                                      : 'text-blue-600 dark:text-blue-400 font-bold'
                                 }`}
                                 initial={{ opacity: 0, scale: 0.8 }} 
                                 animate={{ 
                                   opacity: 1,
-                                  scale: ch === '•' ? 1 : 1.1
+                                  scale: ch === '•' || isShiftZero ? 1 : 1.1
                                 }}
                                 transition={{ duration: 0.3 }}
                               >
@@ -1298,7 +1281,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                       const currentColumnPos = (currentStepData as any)?.columnPosition ?? -1;
                       
                       return (
-                        <div key={idx} className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
+                        <div key={idx} className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+                          <div className="w-8" />
                           {row.padStart(sumWidth, ' ').split('').map((ch, i) => {
                             // Calculate if this digit should be framed during final sum
                             let isActiveInAddition = false;
@@ -1339,7 +1323,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   <div className="my-2 h-[2px] w-full bg-gray-800 dark:bg-gray-200" />
                   
                   {/* Final sum - show digit by digit for final sum steps */}
-                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth}, 2rem)` }}>
+                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+                    <div className="w-8" />
                     {(() => {
                       // Check if this is a final sum step (multiplierPosition === -1)
                       if (currentStepData && currentStepData.multiplierPosition === -1) {
