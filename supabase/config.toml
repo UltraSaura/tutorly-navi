@@ -17,3 +17,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.quiz-bank-attempt]
 verify_jwt = true
+[functions.import-curriculum-bundle]
+verify_jwt = true

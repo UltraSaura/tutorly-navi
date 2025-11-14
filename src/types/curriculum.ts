@@ -1,0 +1,78 @@
+export interface Domain {
+  domain: string;
+}
+
+export interface Subdomain {
+  id: number;
+  domain: string;
+  subdomain: string;
+}
+
+export interface Objective {
+  id: string;
+  level: string;
+  domain: string | null;
+  subdomain: string;
+  text: string;
+  notes_from_prog: string | null;
+}
+
+export interface SuccessCriterion {
+  id: string;
+  objective_id: string | null;
+  text: string;
+}
+
+export interface Task {
+  id: string;
+  success_criterion_id: string | null;
+  type: string;
+  stem: string;
+  solution: string | null;
+  rubric: string | null;
+}
+
+export interface Unit {
+  id: string;
+  level: string;
+  domain: string;
+  subdomain: string;
+  title: string;
+  duration_weeks: number | null;
+}
+
+export interface Lesson {
+  id: string;
+  unit_id: string | null;
+  title: string;
+  objective_ids: any;
+  success_criterion_ids: any;
+  materials: string | null;
+  misconceptions: string | null;
+  teacher_talk: string | null;
+  student_worksheet: string | null;
+}
+
+export interface CurriculumBundle {
+  domains?: Domain[];
+  subdomains?: Subdomain[];
+  objectives?: Objective[];
+  success_criteria?: SuccessCriterion[];
+  tasks?: Task[];
+  units?: Unit[];
+  lessons?: Lesson[];
+}
+
+export interface ImportCounts {
+  domains: number;
+  subdomains: number;
+  objectives: number;
+  success_criteria: number;
+  tasks: number;
+  units: number;
+  lessons: number;
+}
+
+export interface ObjectiveWithSuccessCriteria extends Objective {
+  success_criteria: SuccessCriterion[];
+}
