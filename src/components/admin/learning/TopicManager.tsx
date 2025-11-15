@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useLearningCategories, useLearningTopics, useCreateTopic, useUpdateTopic, useDeleteTopic } from '@/hooks/useManageLearningContent';
 import type { Topic } from '@/types/learning';
+import { CurriculumSelector } from '@/components/admin/curriculum/CurriculumSelector';
+import { CurriculumLocation } from '@/components/admin/curriculum/CurriculumLocation';
 
 const TopicManager = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
@@ -31,6 +33,11 @@ const TopicManager = () => {
     estimated_duration_minutes: 0,
     order_index: 0,
     is_active: true,
+    curriculum_country_code: null as string | null,
+    curriculum_level_code: null as string | null,
+    curriculum_subject_id: null as string | null,
+    curriculum_domain_id: null as string | null,
+    curriculum_subdomain_id: null as string | null,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,6 +65,11 @@ const TopicManager = () => {
       estimated_duration_minutes: topic.estimated_duration_minutes,
       order_index: topic.order_index,
       is_active: topic.is_active,
+      curriculum_country_code: topic.curriculum_country_code || null,
+      curriculum_level_code: topic.curriculum_level_code || null,
+      curriculum_subject_id: topic.curriculum_subject_id || null,
+      curriculum_domain_id: topic.curriculum_domain_id || null,
+      curriculum_subdomain_id: topic.curriculum_subdomain_id || null,
     });
     setDialogOpen(true);
   };
@@ -80,6 +92,11 @@ const TopicManager = () => {
       estimated_duration_minutes: 0,
       order_index: 0,
       is_active: true,
+      curriculum_country_code: null,
+      curriculum_level_code: null,
+      curriculum_subject_id: null,
+      curriculum_domain_id: null,
+      curriculum_subdomain_id: null,
     });
   };
 
@@ -158,6 +175,20 @@ const TopicManager = () => {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </div>
+              
+              {/* Curriculum Location Selector */}
+              <CurriculumSelector
+                value={{
+                  curriculum_country_code: formData.curriculum_country_code,
+                  curriculum_level_code: formData.curriculum_level_code,
+                  curriculum_subject_id: formData.curriculum_subject_id,
+                  curriculum_domain_id: formData.curriculum_domain_id,
+                  curriculum_subdomain_id: formData.curriculum_subdomain_id,
+                }}
+                onChange={(selection) => setFormData({ ...formData, ...selection })}
+                locale="en"
+              />
+              
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="video_count">Video Count</Label>
@@ -242,6 +273,7 @@ const TopicManager = () => {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead>Curriculum</TableHead>
               <TableHead>Videos</TableHead>
               <TableHead>Quizzes</TableHead>
               <TableHead>Duration</TableHead>
@@ -253,7 +285,7 @@ const TopicManager = () => {
           <TableBody>
             {topics.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
+                <TableCell colSpan={9} className="text-center text-muted-foreground">
                   No topics found for this category
                 </TableCell>
               </TableRow>
@@ -262,6 +294,16 @@ const TopicManager = () => {
             <TableRow key={topic.id}>
               <TableCell className="font-medium">{topic.name}</TableCell>
               <TableCell>{categories.find(c => c.id === topic.category_id)?.name}</TableCell>
+              <TableCell>
+                <CurriculumLocation
+                  countryId={topic.curriculum_country_code}
+                  levelId={topic.curriculum_level_code}
+                  subjectId={topic.curriculum_subject_id}
+                  domainId={topic.curriculum_domain_id}
+                  subdomainId={topic.curriculum_subdomain_id}
+                  variant="compact"
+                />
+              </TableCell>
               <TableCell>{topic.video_count}</TableCell>
               <TableCell>{topic.quiz_count}</TableCell>
               <TableCell>{topic.estimated_duration_minutes}m</TableCell>

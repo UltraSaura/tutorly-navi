@@ -13,6 +13,7 @@ import { useLanguage } from '@/context/SimpleLanguageContext';
 import { VideoPlayerBox } from '@/components/learning/VideoPlayerBox';
 import { CollapsibleVideoSection } from '@/components/learning/CollapsibleVideoSection';
 import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
+import { CurriculumLocation } from '@/components/admin/curriculum/CurriculumLocation';
 import type { Video } from '@/types/learning';
 
 const CoursePlaylistPage = () => {
@@ -110,7 +111,21 @@ const CoursePlaylistPage = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate(`/learning/${subjectSlug}`)}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-xl font-bold flex-1">{topic.name}</h1>
+        <div className="flex-1">
+          <h1 className="text-xl font-bold">{topic.name}</h1>
+          {/* Curriculum location under title */}
+          {topic.curriculum_country_code && (
+            <CurriculumLocation
+              countryId={topic.curriculum_country_code}
+              levelId={topic.curriculum_level_code}
+              subjectId={topic.curriculum_subject_id}
+              domainId={topic.curriculum_domain_id}
+              subdomainId={topic.curriculum_subdomain_id}
+              variant="compact"
+              locale="en"
+            />
+          )}
+        </div>
       </div>
 
       {/* Scrollable Content */}
