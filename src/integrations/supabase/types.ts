@@ -704,6 +704,11 @@ export type Database = {
         Row: {
           category_id: string
           created_at: string
+          curriculum_country_code: string | null
+          curriculum_domain_id: string | null
+          curriculum_level_code: string | null
+          curriculum_subdomain_id: string | null
+          curriculum_subject_id: string | null
           description: string | null
           estimated_duration_minutes: number
           id: string
@@ -718,6 +723,11 @@ export type Database = {
         Insert: {
           category_id: string
           created_at?: string
+          curriculum_country_code?: string | null
+          curriculum_domain_id?: string | null
+          curriculum_level_code?: string | null
+          curriculum_subdomain_id?: string | null
+          curriculum_subject_id?: string | null
           description?: string | null
           estimated_duration_minutes?: number
           id?: string
@@ -732,6 +742,11 @@ export type Database = {
         Update: {
           category_id?: string
           created_at?: string
+          curriculum_country_code?: string | null
+          curriculum_domain_id?: string | null
+          curriculum_level_code?: string | null
+          curriculum_subdomain_id?: string | null
+          curriculum_subject_id?: string | null
           description?: string | null
           estimated_duration_minutes?: number
           id?: string

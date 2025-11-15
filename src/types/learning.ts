@@ -45,6 +45,12 @@ export interface Topic {
   // User progress
   completed_videos?: number;
   progress_percentage?: number;
+  // Curriculum location fields
+  curriculum_country_code?: string | null;
+  curriculum_level_code?: string | null;
+  curriculum_subject_id?: string | null;
+  curriculum_domain_id?: string | null;
+  curriculum_subdomain_id?: string | null;
 }
 
 export interface Video {
