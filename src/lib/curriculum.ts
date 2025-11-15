@@ -192,3 +192,98 @@ export function searchSkills(
   
   return results;
 }
+
+/**
+ * Resolve curriculum IDs to a human-readable path
+ * @returns Formatted string like "France / CM1 / Mathématiques / Nombres et calculs / Fractions"
+ * or "Not mapped yet" if IDs are null
+ */
+export function resolveCurriculumPath(
+  countryId: string | null,
+  levelId: string | null,
+  subjectId: string | null,
+  domainId: string | null,
+  subdomainId: string | null,
+  locale: string = 'en'
+): string {
+  // Return early if any required field is missing
+  if (!countryId || !levelId || !subjectId) {
+    return 'Not mapped yet';
+  }
+
+  const parts: string[] = [];
+
+  // Get country
+  const country = getCountry(countryId);
+  if (country) parts.push(country.name);
+
+  // Get level
+  const level = getLevel(countryId, levelId);
+  if (level) parts.push(level.label);
+
+  // Get subject
+  const subject = getSubject(countryId, levelId, subjectId);
+  if (subject) {
+    const subjectLabel = getLocalizedLabel(subject.labels, locale);
+    parts.push(subjectLabel);
+  }
+
+  // Get domain (optional)
+  if (domainId) {
+    const domain = getDomain(countryId, levelId, subjectId, domainId);
+    if (domain) {
+      const domainLabel = getLocalizedLabel(domain.labels, locale);
+      parts.push(domainLabel);
+    }
+  }
+
+  // Get subdomain (optional)
+  if (subdomainId && domainId) {
+    const subdomain = getSubdomain(countryId, levelId, subjectId, domainId, subdomainId);
+    if (subdomain) {
+      const subdomainLabel = getLocalizedLabel(subdomain.labels, locale);
+      parts.push(subdomainLabel);
+    }
+  }
+
+  return parts.length > 0 ? parts.join(' / ') : 'Not mapped yet';
+}
+
+/**
+ * Get curriculum location details as an object
+ */
+export function getCurriculumLocation(
+  countryId: string | null,
+  levelId: string | null,
+  subjectId: string | null,
+  domainId: string | null,
+  subdomainId: string | null,
+  locale: string = 'en'
+) {
+  if (!countryId || !levelId || !subjectId) {
+    return null;
+  }
+
+  const country = getCountry(countryId);
+  const level = getLevel(countryId, levelId);
+  const subject = getSubject(countryId, levelId, subjectId);
+  const domain = domainId ? getDomain(countryId, levelId, subjectId, domainId) : null;
+  const subdomain = (domainId && subdomainId) 
+    ? getSubdomain(countryId, levelId, subjectId, domainId, subdomainId) 
+    : null;
+
+  return {
+    country,
+    level,
+    subject,
+    domain,
+    subdomain,
+    labels: {
+      country: country?.name || '',
+      level: level?.label || '',
+      subject: subject ? getLocalizedLabel(subject.labels, locale) : '',
+      domain: domain ? getLocalizedLabel(domain.labels, locale) : '',
+      subdomain: subdomain ? getLocalizedLabel(subdomain.labels, locale) : '',
+    }
+  };
+}
