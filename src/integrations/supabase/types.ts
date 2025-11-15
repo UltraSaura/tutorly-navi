@@ -935,26 +935,38 @@ export type Database = {
       objectives: {
         Row: {
           domain: string | null
+          domain_id: string | null
           id: string
           level: string
           notes_from_prog: string | null
+          skill_id: string | null
           subdomain: string
+          subdomain_id: string | null
+          subject_id: string | null
           text: string
         }
         Insert: {
           domain?: string | null
+          domain_id?: string | null
           id: string
           level: string
           notes_from_prog?: string | null
+          skill_id?: string | null
           subdomain: string
+          subdomain_id?: string | null
+          subject_id?: string | null
           text: string
         }
         Update: {
           domain?: string | null
+          domain_id?: string | null
           id?: string
           level?: string
           notes_from_prog?: string | null
+          skill_id?: string | null
           subdomain?: string
+          subdomain_id?: string | null
+          subject_id?: string | null
           text?: string
         }
         Relationships: [
@@ -1386,18 +1398,30 @@ export type Database = {
       }
       success_criteria: {
         Row: {
+          domain_id: string | null
           id: string
           objective_id: string | null
+          skill_id: string | null
+          subdomain_id: string | null
+          subject_id: string | null
           text: string
         }
         Insert: {
+          domain_id?: string | null
           id: string
           objective_id?: string | null
+          skill_id?: string | null
+          subdomain_id?: string | null
+          subject_id?: string | null
           text: string
         }
         Update: {
+          domain_id?: string | null
           id?: string
           objective_id?: string | null
+          skill_id?: string | null
+          subdomain_id?: string | null
+          subject_id?: string | null
           text?: string
         }
         Relationships: [
@@ -1413,33 +1437,45 @@ export type Database = {
       tasks: {
         Row: {
           difficulty: string | null
+          domain_id: string | null
           id: string
           rubric: string | null
+          skill_id: string | null
           solution: string | null
           source: string | null
           stem: string
+          subdomain_id: string | null
+          subject_id: string | null
           success_criterion_id: string | null
           tags: string[] | null
           type: string
         }
         Insert: {
           difficulty?: string | null
+          domain_id?: string | null
           id: string
           rubric?: string | null
+          skill_id?: string | null
           solution?: string | null
           source?: string | null
           stem: string
+          subdomain_id?: string | null
+          subject_id?: string | null
           success_criterion_id?: string | null
           tags?: string[] | null
           type: string
         }
         Update: {
           difficulty?: string | null
+          domain_id?: string | null
           id?: string
           rubric?: string | null
+          skill_id?: string | null
           solution?: string | null
           source?: string | null
           stem?: string
+          subdomain_id?: string | null
+          subject_id?: string | null
           success_criterion_id?: string | null
           tags?: string[] | null
           type?: string
