@@ -76,3 +76,54 @@ export interface ImportCounts {
 export interface ObjectiveWithSuccessCriteria extends Objective {
   success_criteria: SuccessCriterion[];
 }
+
+// New curriculum bundle types
+export interface CurriculumBundle {
+  version: string;
+  schema: string;
+  countries: CurriculumCountry[];
+}
+
+export interface CurriculumCountry {
+  id: string;
+  name: string;
+  levels: CurriculumLevel[];
+}
+
+export interface CurriculumLevel {
+  id: string;
+  label: string;
+  grade: number;
+  cycle?: string;
+  subjects: CurriculumSubject[];
+}
+
+export interface CurriculumSubject {
+  id: string;
+  label: string;
+  labels: Record<string, string>;
+  color?: string;
+  icon?: string;
+  domains: CurriculumDomain[];
+}
+
+export interface CurriculumDomain {
+  id: string;
+  code: string;
+  labels: Record<string, string>;
+  subdomains: CurriculumSubdomain[];
+}
+
+export interface CurriculumSubdomain {
+  id: string;
+  code: string;
+  labels: Record<string, string>;
+  skills?: CurriculumSkill[];
+}
+
+export interface CurriculumSkill {
+  id: string;
+  code: string;
+  labels: Record<string, string>;
+  description?: Record<string, string>;
+}

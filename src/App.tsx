@@ -32,6 +32,7 @@ const LearningPage = lazy(() => import("./pages/learning/LearningPage"));
 const SubjectDashboardPage = lazy(() => import("./pages/learning/SubjectDashboardPage"));
 const CoursePlaylistPage = lazy(() => import("./pages/learning/CoursePlaylistPage"));
 const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
+const CurriculumBrowser = lazy(() => import("./components/curriculum/CurriculumBrowser"));
 
 // Admin Pages
 import AIModelManagement from "./components/admin/AIModelManagement";
@@ -118,6 +119,9 @@ const App = () => {
                           <Route path=":subjectSlug/:topicSlug" element={<CoursePlaylistPage />} />
                         </Route>
                         <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
+                        <Route path="/curriculum" element={<MainLayout />}>
+                          <Route index element={<CurriculumBrowser />} />
+                        </Route>
                         
                         {/* Management Dashboard */}
                         <Route path="/management" element={<ManagementDashboard />} />

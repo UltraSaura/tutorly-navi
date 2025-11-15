@@ -10,6 +10,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useDomains, useSubdomains, useObjectives, useCurriculumStats } from '@/hooks/useCurriculumData';
+import { useCurriculumCountries, useCurriculumLevels, useAllCurriculumSubjects } from '@/hooks/useCurriculumBundle';
+import { getLocalizedLabel } from '@/lib/curriculum';
 import type { ImportCounts } from '@/types/curriculum';
 import { toast } from '@/hooks/use-toast';
 
@@ -23,10 +25,17 @@ export default function CurriculumManager() {
   } | null>(null);
 
   // Filters
+  const [filterCountry, setFilterCountry] = useState('fr');
   const [level, setLevel] = useState<string>('');
+  const [filterSubject, setFilterSubject] = useState('');
   const [domain, setDomain] = useState<string>('');
   const [subdomain, setSubdomain] = useState<string>('');
   const [search, setSearch] = useState<string>('');
+  
+  // New curriculum bundle hooks
+  const countries = useCurriculumCountries();
+  const levels = useCurriculumLevels(filterCountry);
+  const allSubjects = useAllCurriculumSubjects(filterCountry);
 
   // Queries
   const { data: domains } = useDomains();
@@ -108,7 +117,9 @@ export default function CurriculumManager() {
   };
 
   const resetFilters = () => {
+    setFilterCountry('fr');
     setLevel('');
+    setFilterSubject('');
     setDomain('');
     setSubdomain('');
     setSearch('');
@@ -229,7 +240,23 @@ export default function CurriculumManager() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="country-filter">Country</Label>
+              <Select value={filterCountry} onValueChange={setFilterCountry}>
+                <SelectTrigger id="country-filter">
+                  <SelectValue placeholder="Select country" />
+                </SelectTrigger>
+                <SelectContent>
+                  {countries.map((country) => (
+                    <SelectItem key={country.id} value={country.id}>
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="level-filter">Level</Label>
               <Select value={level} onValueChange={setLevel}>
@@ -237,12 +264,27 @@ export default function CurriculumManager() {
                   <SelectValue placeholder="All levels" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CM1">CM1</SelectItem>
-                  <SelectItem value="CM2">CM2</SelectItem>
-                  <SelectItem value="6e">6e</SelectItem>
-                  <SelectItem value="5e">5e</SelectItem>
-                  <SelectItem value="4e">4e</SelectItem>
-                  <SelectItem value="3e">3e</SelectItem>
+                  {levels.map((lvl) => (
+                    <SelectItem key={lvl.id} value={lvl.id}>
+                      {lvl.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="subject-filter">Subject</Label>
+              <Select value={filterSubject} onValueChange={setFilterSubject}>
+                <SelectTrigger id="subject-filter">
+                  <SelectValue placeholder="All subjects" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allSubjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.id}>
+                      {getLocalizedLabel(subject.labels, 'en')}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -306,22 +348,35 @@ export default function CurriculumManager() {
           {/* Objectives List */}
           {objectives && objectives.length > 0 ? (
             <Accordion type="single" collapsible className="space-y-2">
-              {objectives.map((objective) => (
-                <AccordionItem key={objective.id} value={objective.id} className="border rounded-lg">
-                  <AccordionTrigger className="px-4 hover:no-underline">
-                    <div className="flex items-start gap-2 text-left">
-                      <div className="flex-1">
-                        <div className="font-medium">{objective.text}</div>
-                        <div className="flex gap-2 mt-2">
-                          <Badge variant="outline">{objective.level}</Badge>
-                          {objective.domain && (
-                            <Badge variant="secondary">{objective.domain}</Badge>
-                          )}
-                          <Badge variant="secondary">{objective.subdomain}</Badge>
+              {objectives.map((objective) => {
+                // Determine subject badge color based on domain
+                const subjectBadgeColor = objective.domain?.toLowerCase().includes('number') || 
+                                           objective.domain?.toLowerCase().includes('géométrie') ||
+                                           objective.domain?.toLowerCase().includes('geometry')
+                  ? 'hsl(var(--chart-1))' 
+                  : 'hsl(var(--chart-2))';
+                
+                return (
+                  <AccordionItem key={objective.id} value={objective.id} className="border rounded-lg">
+                    <AccordionTrigger className="px-4 hover:no-underline">
+                      <div className="flex items-start gap-2 text-left">
+                        <div className="flex-1">
+                          <div className="font-medium">{objective.text}</div>
+                          <div className="flex gap-2 mt-2 flex-wrap">
+                            <Badge variant="outline">{objective.level}</Badge>
+                            {objective.domain && (
+                              <Badge 
+                                style={{ backgroundColor: subjectBadgeColor }}
+                                className="text-white"
+                              >
+                                {objective.domain}
+                              </Badge>
+                            )}
+                            <Badge variant="secondary">{objective.subdomain}</Badge>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </AccordionTrigger>
+                    </AccordionTrigger>
                   <AccordionContent className="px-4 pb-4">
                     <div className="space-y-2 mt-2">
                       <div className="text-sm font-medium">Success Criteria:</div>
@@ -345,7 +400,8 @@ export default function CurriculumManager() {
                     </div>
                   </AccordionContent>
                 </AccordionItem>
-              ))}
+              );
+            })}
             </Accordion>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
