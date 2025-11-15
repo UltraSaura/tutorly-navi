@@ -439,6 +439,139 @@
           ]
         },
         {
+          "id": "cm1",
+          "label": "CM1",
+          "grade": 4,
+          "cycle": "Cycle 3",
+          "subjects": [
+            {
+              "id": "math",
+              "label": "Mathematics",
+              "labels": {
+                "fr": "Mathématiques",
+                "en": "Mathematics"
+              },
+              "color": "#2563eb",
+              "domains": [
+                {
+                  "id": "numbers",
+                  "code": "M-CM1-01",
+                  "labels": {
+                    "fr": "Nombres et calculs",
+                    "en": "Numbers & calculation"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "whole_numbers",
+                      "code": "M-CM1-01-01",
+                      "labels": {
+                        "fr": "Nombres entiers",
+                        "en": "Whole numbers"
+                      },
+                      "skills": []
+                    },
+                    {
+                      "id": "fractions",
+                      "code": "M-CM1-01-02",
+                      "labels": {
+                        "fr": "Fractions",
+                        "en": "Fractions"
+                      },
+                      "skills": []
+                    },
+                    {
+                      "id": "decimals",
+                      "code": "M-CM1-01-03",
+                      "labels": {
+                        "fr": "Nombres décimaux",
+                        "en": "Decimals"
+                      },
+                      "skills": []
+                    }
+                  ]
+                },
+                {
+                  "id": "geometry",
+                  "code": "M-CM1-02",
+                  "labels": {
+                    "fr": "Géométrie",
+                    "en": "Geometry"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "angles",
+                      "code": "M-CM1-02-01",
+                      "labels": {
+                        "fr": "Angles",
+                        "en": "Angles"
+                      },
+                      "skills": []
+                    }
+                  ]
+                },
+                {
+                  "id": "data",
+                  "code": "M-CM1-03",
+                  "labels": {
+                    "fr": "Organisation et gestion de données",
+                    "en": "Data handling"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "tables_graphs",
+                      "code": "M-CM1-03-01",
+                      "labels": {
+                        "fr": "Tableaux et graphiques",
+                        "en": "Tables and graphs"
+                      },
+                      "skills": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "history",
+              "label": "History",
+              "labels": {
+                "fr": "Histoire",
+                "en": "History"
+              },
+              "color": "#16a34a",
+              "domains": [
+                {
+                  "id": "french_revolution",
+                  "code": "H-CM1-01",
+                  "labels": {
+                    "fr": "Révolution française",
+                    "en": "French Revolution"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "causes",
+                      "code": "H-CM1-01-01",
+                      "labels": {
+                        "fr": "Causes",
+                        "en": "Causes"
+                      },
+                      "skills": []
+                    },
+                    {
+                      "id": "key_events",
+                      "code": "H-CM1-01-02",
+                      "labels": {
+                        "fr": "Événements clés",
+                        "en": "Key events"
+                      },
+                      "skills": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
           "id": "cm2",
           "label": "CM2",
           "grade": 5,

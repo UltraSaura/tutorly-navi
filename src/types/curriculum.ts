@@ -15,12 +15,20 @@ export interface Objective {
   subdomain: string;
   text: string;
   notes_from_prog: string | null;
+  subject_id: string | null;
+  domain_id: string | null;
+  subdomain_id: string | null;
+  skill_id: string | null;
 }
 
 export interface SuccessCriterion {
   id: string;
   objective_id: string | null;
   text: string;
+  subject_id: string | null;
+  domain_id: string | null;
+  subdomain_id: string | null;
+  skill_id: string | null;
 }
 
 export interface Task {
@@ -30,6 +38,10 @@ export interface Task {
   stem: string;
   solution: string | null;
   rubric: string | null;
+  subject_id: string | null;
+  domain_id: string | null;
+  subdomain_id: string | null;
+  skill_id: string | null;
 }
 
 export interface Unit {
@@ -53,7 +65,7 @@ export interface Lesson {
   student_worksheet: string | null;
 }
 
-export interface CurriculumBundle {
+export interface ImportBundle {
   domains?: Domain[];
   subdomains?: Subdomain[];
   objectives?: Objective[];
@@ -77,7 +89,7 @@ export interface ObjectiveWithSuccessCriteria extends Objective {
   success_criteria: SuccessCriterion[];
 }
 
-// New curriculum bundle types
+// Curriculum bundle structure types
 export interface CurriculumBundle {
   version: string;
   schema: string;
