@@ -237,7 +237,6 @@ export default function CurriculumManager() {
                   <SelectValue placeholder="All levels" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All levels</SelectItem>
                   <SelectItem value="CM1">CM1</SelectItem>
                   <SelectItem value="CM2">CM2</SelectItem>
                   <SelectItem value="6e">6e</SelectItem>
@@ -255,7 +254,6 @@ export default function CurriculumManager() {
                   <SelectValue placeholder="All domains" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All domains</SelectItem>
                   {domains?.map((d) => (
                     <SelectItem key={d.domain} value={d.domain}>
                       {d.domain}
@@ -272,7 +270,6 @@ export default function CurriculumManager() {
                   <SelectValue placeholder="All subdomains" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All subdomains</SelectItem>
                   {subdomains?.map((sd) => (
                     <SelectItem key={sd.id} value={sd.subdomain}>
                       {sd.subdomain}
