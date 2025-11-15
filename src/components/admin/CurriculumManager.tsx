@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,9 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useDomains, useSubdomains, useObjectives, useCurriculumStats } from '@/hooks/useCurriculumData';
+import { useObjectives, useCurriculumStats } from '@/hooks/useCurriculumData';
 import { useCurriculumCountries, useCurriculumLevels, useAllCurriculumSubjects } from '@/hooks/useCurriculumBundle';
-import { getLocalizedLabel } from '@/lib/curriculum';
+import { getLocalizedLabel, getDomainsBySubject, getSubdomainsByDomain } from '@/lib/curriculum';
 import type { ImportCounts } from '@/types/curriculum';
 import { toast } from '@/hooks/use-toast';
 
@@ -37,9 +37,18 @@ export default function CurriculumManager() {
   const levels = useCurriculumLevels(filterCountry);
   const allSubjects = useAllCurriculumSubjects(filterCountry);
 
+  // Get filtered domains and subdomains from curriculumBundle.json
+  const filteredDomains = useMemo(() => {
+    if (!filterCountry || !level || !filterSubject) return [];
+    return getDomainsBySubject(filterCountry, level, filterSubject);
+  }, [filterCountry, level, filterSubject]);
+
+  const filteredSubdomains = useMemo(() => {
+    if (!filterCountry || !level || !filterSubject || !domain) return [];
+    return getSubdomainsByDomain(filterCountry, level, filterSubject, domain);
+  }, [filterCountry, level, filterSubject, domain]);
+
   // Queries
-  const { data: domains } = useDomains();
-  const { data: subdomains } = useSubdomains(domain || undefined);
   const { data: objectives, refetch: refetchObjectives } = useObjectives({
     level: level || undefined,
     domain: domain || undefined,
@@ -259,7 +268,12 @@ export default function CurriculumManager() {
             
             <div className="space-y-2">
               <Label htmlFor="level-filter">Level</Label>
-              <Select value={level} onValueChange={setLevel}>
+              <Select value={level} onValueChange={(newLevel) => {
+                setLevel(newLevel);
+                setFilterSubject('');
+                setDomain('');
+                setSubdomain('');
+              }}>
                 <SelectTrigger id="level-filter">
                   <SelectValue placeholder="All levels" />
                 </SelectTrigger>
@@ -275,7 +289,11 @@ export default function CurriculumManager() {
             
             <div className="space-y-2">
               <Label htmlFor="subject-filter">Subject</Label>
-              <Select value={filterSubject} onValueChange={setFilterSubject}>
+              <Select value={filterSubject} onValueChange={(newSubject) => {
+                setFilterSubject(newSubject);
+                setDomain('');
+                setSubdomain('');
+              }}>
                 <SelectTrigger id="subject-filter">
                   <SelectValue placeholder="All subjects" />
                 </SelectTrigger>
@@ -291,14 +309,17 @@ export default function CurriculumManager() {
 
             <div className="space-y-2">
               <Label htmlFor="domain-filter">Domain</Label>
-              <Select value={domain} onValueChange={setDomain}>
+              <Select value={domain} onValueChange={(newDomain) => {
+                setDomain(newDomain);
+                setSubdomain('');
+              }} disabled={!filterSubject}>
                 <SelectTrigger id="domain-filter">
                   <SelectValue placeholder="All domains" />
                 </SelectTrigger>
                 <SelectContent>
-                  {domains?.map((d) => (
-                    <SelectItem key={d.domain} value={d.domain}>
-                      {d.domain}
+                  {filteredDomains.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {getLocalizedLabel(d.labels, 'en')}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -312,9 +333,9 @@ export default function CurriculumManager() {
                   <SelectValue placeholder="All subdomains" />
                 </SelectTrigger>
                 <SelectContent>
-                  {subdomains?.map((sd) => (
-                    <SelectItem key={sd.id} value={sd.subdomain}>
-                      {sd.subdomain}
+                  {filteredSubdomains.map((sd) => (
+                    <SelectItem key={sd.id} value={sd.id}>
+                      {getLocalizedLabel(sd.labels, 'en')}
                     </SelectItem>
                   ))}
                 </SelectContent>
