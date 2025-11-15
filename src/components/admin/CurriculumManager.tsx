@@ -7,11 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useObjectives, useCurriculumStats } from '@/hooks/useCurriculumData';
 import { useCurriculumCountries, useCurriculumLevels, useAllCurriculumSubjects } from '@/hooks/useCurriculumBundle';
 import { getLocalizedLabel, getDomainsBySubject, getSubdomainsByDomain } from '@/lib/curriculum';
+import { CurriculumLocation } from './curriculum/CurriculumLocation';
+import { TaskViewer } from './curriculum/TaskViewer';
 import type { ImportCounts } from '@/types/curriculum';
 import { toast } from '@/hooks/use-toast';
 
@@ -399,21 +402,68 @@ export default function CurriculumManager() {
                       </div>
                     </AccordionTrigger>
                   <AccordionContent className="px-4 pb-4">
-                    <div className="space-y-2 mt-2">
-                      <div className="text-sm font-medium">Success Criteria:</div>
-                      {objective.success_criteria && objective.success_criteria.length > 0 ? (
-                        <ul className="space-y-2">
-                          {objective.success_criteria.map((sc) => (
-                            <li key={sc.id} className="text-sm pl-4 border-l-2 border-primary/20">
-                              {sc.text}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">No success criteria defined</p>
-                      )}
+                    <div className="space-y-4 mt-2">
+                      {/* Curriculum Location Section */}
+                      <div className="p-3 bg-muted/50 rounded-md border border-border">
+                        <div className="text-xs font-semibold mb-2 text-muted-foreground uppercase">
+                          Curriculum Location
+                        </div>
+                        <CurriculumLocation
+                          countryId={filterCountry || 'fr'}
+                          levelId={objective.level?.toLowerCase()}
+                          subjectId={objective.subject_id}
+                          domainId={objective.domain_id}
+                          subdomainId={objective.subdomain_id}
+                          locale="en"
+                          variant="full"
+                        />
+                      </div>
+
+                      {/* Success Criteria Section */}
+                      <div>
+                        <div className="text-sm font-medium mb-2">Success Criteria:</div>
+                        {objective.success_criteria && objective.success_criteria.length > 0 ? (
+                          <ul className="space-y-4">
+                            {objective.success_criteria.map((sc) => (
+                              <li key={sc.id} className="pl-4 border-l-2 border-primary/20 space-y-2">
+                                <div className="text-sm">{sc.text}</div>
+                                
+                                {/* Success Criterion Curriculum Location */}
+                                <div className="pl-2">
+                                  <CurriculumLocation
+                                    countryId={filterCountry || 'fr'}
+                                    levelId={objective.level?.toLowerCase()}
+                                    subjectId={sc.subject_id}
+                                    domainId={sc.domain_id}
+                                    subdomainId={sc.subdomain_id}
+                                    locale="en"
+                                    variant="compact"
+                                  />
+                                </div>
+
+                                {/* Tasks for this success criterion */}
+                                <Collapsible>
+                                  <CollapsibleTrigger className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                                    View tasks for this criterion →
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent>
+                                    <TaskViewer 
+                                      successCriterionId={sc.id} 
+                                      countryId={filterCountry || 'fr'}
+                                    />
+                                  </CollapsibleContent>
+                                </Collapsible>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No success criteria defined</p>
+                        )}
+                      </div>
+
+                      {/* Notes Section */}
                       {objective.notes_from_prog && (
-                        <div className="mt-4 p-3 bg-muted rounded-md">
+                        <div className="p-3 bg-muted rounded-md">
                           <div className="text-xs font-medium mb-1">Notes:</div>
                           <div className="text-sm">{objective.notes_from_prog}</div>
                         </div>
