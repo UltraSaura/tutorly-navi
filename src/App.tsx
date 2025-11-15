@@ -33,6 +33,7 @@ const SubjectDashboardPage = lazy(() => import("./pages/learning/SubjectDashboar
 const CoursePlaylistPage = lazy(() => import("./pages/learning/CoursePlaylistPage"));
 const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
 const CurriculumBrowser = lazy(() => import("./components/curriculum/CurriculumBrowser"));
+const CurriculumDebug = lazy(() => import("./pages/CurriculumDebug"));
 
 // Admin Pages
 import AIModelManagement from "./components/admin/AIModelManagement";
@@ -150,6 +151,9 @@ const App = () => {
             <Route path="billing" element={<Suspense fallback={<LoadingFallback />}><GuardianBilling /></Suspense>} />
             <Route path="settings" element={<Suspense fallback={<LoadingFallback />}><GuardianSettings /></Suspense>} />
           </Route>
+                        
+                        {/* Curriculum Debug */}
+                        <Route path="/curriculum-debug" element={<CurriculumDebug />} />
                         
                         {/* 404 Route */}
                         <Route path="*" element={<NotFound />} />
