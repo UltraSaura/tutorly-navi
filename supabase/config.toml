@@ -19,3 +19,5 @@ verify_jwt = false
 verify_jwt = true
 [functions.import-curriculum-bundle]
 verify_jwt = true
+[functions.recommendations]
+verify_jwt = true
