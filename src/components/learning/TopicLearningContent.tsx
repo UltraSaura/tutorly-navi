@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, Target, ClipboardList, GraduationCap, CheckCircle, Circle, Clock } from 'lucide-react';
 import { useTopicObjectives, useTasksForSuccessCriteria } from '@/hooks/useTopicObjectives';
 import { useTopicMastery } from '@/hooks/useObjectiveMastery';
+import { NextStepsRecommendations } from './NextStepsRecommendations';
 
 interface TopicLearningContentProps {
   topicId: string;
@@ -211,6 +212,12 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* What to do after this topic */}
+      <NextStepsRecommendations 
+        currentTopicId={topicId}
+        currentSubdomainId={objectives[0]?.subdomain_id}
+      />
     </div>
   );
 }

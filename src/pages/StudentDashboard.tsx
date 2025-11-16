@@ -5,6 +5,7 @@ import { useStudentMasteryOverview } from '@/hooks/useObjectiveMastery';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Trophy, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RecommendedNextSteps } from '@/components/dashboard/RecommendedNextSteps';
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
@@ -82,6 +83,9 @@ export default function StudentDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Recommended Next Steps */}
+      <RecommendedNextSteps />
       
       {/* Subject Cards */}
       <div>
