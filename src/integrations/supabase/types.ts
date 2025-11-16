@@ -182,6 +182,8 @@ export type Database = {
           contact_email: string | null
           created_at: string | null
           curriculum: string | null
+          curriculum_country_code: string | null
+          curriculum_level_code: string | null
           grade: string | null
           id: string
           settings_json: Json | null
@@ -193,6 +195,8 @@ export type Database = {
           contact_email?: string | null
           created_at?: string | null
           curriculum?: string | null
+          curriculum_country_code?: string | null
+          curriculum_level_code?: string | null
           grade?: string | null
           id?: string
           settings_json?: Json | null
@@ -204,6 +208,8 @@ export type Database = {
           contact_email?: string | null
           created_at?: string | null
           curriculum?: string | null
+          curriculum_country_code?: string | null
+          curriculum_level_code?: string | null
           grade?: string | null
           id?: string
           settings_json?: Json | null
@@ -1645,6 +1651,8 @@ export type Database = {
           contact_email: string | null
           country: string | null
           created_at: string
+          curriculum_country_code: string | null
+          curriculum_level_code: string | null
           email: string | null
           first_name: string | null
           id: string
@@ -1661,6 +1669,8 @@ export type Database = {
           contact_email?: string | null
           country?: string | null
           created_at?: string
+          curriculum_country_code?: string | null
+          curriculum_level_code?: string | null
           email?: string | null
           first_name?: string | null
           id: string
@@ -1677,6 +1687,8 @@ export type Database = {
           contact_email?: string | null
           country?: string | null
           created_at?: string
+          curriculum_country_code?: string | null
+          curriculum_level_code?: string | null
           email?: string | null
           first_name?: string | null
           id?: string

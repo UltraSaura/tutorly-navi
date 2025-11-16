@@ -32,6 +32,7 @@ const LearningPage = lazy(() => import("./pages/learning/LearningPage"));
 const SubjectDashboardPage = lazy(() => import("./pages/learning/SubjectDashboardPage"));
 const CoursePlaylistPage = lazy(() => import("./pages/learning/CoursePlaylistPage"));
 const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
+const MyProgramPage = lazy(() => import("./pages/learning/MyProgramPage"));
 const CurriculumBrowser = lazy(() => import("./components/curriculum/CurriculumBrowser"));
 const CurriculumDebug = lazy(() => import("./pages/CurriculumDebug"));
 
@@ -120,6 +121,9 @@ const App = () => {
                           <Route path=":subjectSlug/:topicSlug" element={<CoursePlaylistPage />} />
                         </Route>
                         <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
+                        <Route path="/my-program" element={<MainLayout />}>
+                          <Route index element={<MyProgramPage />} />
+                        </Route>
                         <Route path="/curriculum" element={<MainLayout />}>
                           <Route index element={<CurriculumBrowser />} />
                         </Route>
