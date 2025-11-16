@@ -227,6 +227,86 @@ export type Database = {
           },
         ]
       }
+      class_student_links: {
+        Row: {
+          class_id: string
+          enrolled_at: string
+          id: string
+          student_id: string
+        }
+        Insert: {
+          class_id: string
+          enrolled_at?: string
+          id?: string
+          student_id: string
+        }
+        Update: {
+          class_id?: string
+          enrolled_at?: string
+          id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_student_links_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_student_links_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          id: string
+          level_code: string | null
+          name: string
+          school_year: string | null
+          subject_id: string | null
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          level_code?: string | null
+          name: string
+          school_year?: string | null
+          subject_id?: string | null
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          level_code?: string | null
+          name?: string
+          school_year?: string | null
+          subject_id?: string | null
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           code: string
@@ -1578,6 +1658,30 @@ export type Database = {
           },
         ]
       }
+      teachers: {
+        Row: {
+          created_at: string
+          department: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       topic_objectives: {
         Row: {
           created_at: string
@@ -1899,7 +2003,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "student" | "parent" | "guardian"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "student"
+        | "parent"
+        | "guardian"
+        | "teacher"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2027,7 +2137,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "student", "parent", "guardian"],
+      app_role: [
+        "admin",
+        "moderator",
+        "student",
+        "parent",
+        "guardian",
+        "teacher",
+      ],
     },
   },
 } as const

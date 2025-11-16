@@ -21,3 +21,12 @@ verify_jwt = true
 verify_jwt = true
 [functions.recommendations]
 verify_jwt = true
+
+[functions.student-progress]
+verify_jwt = true
+
+[functions.teacher-classes]
+verify_jwt = true
+
+[functions.class-students]
+verify_jwt = true

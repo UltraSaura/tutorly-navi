@@ -15,6 +15,7 @@ import { SimpleLanguageProvider } from "./context/SimpleLanguageContext";
 import MainLayout from "./components/layout/MainLayout";
 import AdminLayout from "./components/admin/AdminLayout";
 import GuardianLayout from "./components/guardian/GuardianLayout";
+import TeacherLayout from "./components/teacher/TeacherLayout";
 
 // User Pages
 import NotFound from "./pages/NotFound";
@@ -59,6 +60,13 @@ const GuardianBilling = lazy(() => import("./pages/guardian/GuardianBilling"));
 const GuardianSettings = lazy(() => import("./pages/guardian/GuardianSettings"));
 const ChildDashboard = lazy(() => import("./pages/guardian/ChildDashboard"));
 const SubjectDetail = lazy(() => import("./pages/guardian/SubjectDetail"));
+const ChildDetailPage = lazy(() => import("./pages/guardian/ChildDetailPage"));
+
+// Teacher Pages
+const TeacherHome = lazy(() => import("./pages/teacher/TeacherHome"));
+const TeacherClasses = lazy(() => import("./pages/teacher/TeacherClasses"));
+const ClassDetailPage = lazy(() => import("./pages/teacher/ClassDetailPage"));
+const TeacherStudentDetail = lazy(() => import("./pages/teacher/TeacherStudentDetail"));
 
 // Loading Component
 const LoadingFallback = () => <div className="flex items-center justify-center min-h-screen">
@@ -153,11 +161,23 @@ const App = () => {
             <Route path="children" element={<GuardianChildren />} />
             <Route path="child/:childId" element={<Suspense fallback={<LoadingFallback />}><ChildDashboard /></Suspense>} />
             <Route path="child/:childId/subject/:subjectId" element={<Suspense fallback={<LoadingFallback />}><SubjectDetail /></Suspense>} />
+            <Route path="child/:childId/detail" element={<Suspense fallback={<LoadingFallback />}><ChildDetailPage /></Suspense>} />
             <Route path="results" element={<Suspense fallback={<LoadingFallback />}><GuardianResults /></Suspense>} />
             <Route path="explanations" element={<Suspense fallback={<LoadingFallback />}><GuardianExplanations /></Suspense>} />
             <Route path="progress" element={<Suspense fallback={<LoadingFallback />}><GuardianProgress /></Suspense>} />
             <Route path="billing" element={<Suspense fallback={<LoadingFallback />}><GuardianBilling /></Suspense>} />
             <Route path="settings" element={<Suspense fallback={<LoadingFallback />}><GuardianSettings /></Suspense>} />
+          </Route>
+
+          {/* Teacher Portal Routes */}
+          <Route path="/teacher" element={<TeacherLayout />}>
+            <Route index element={<TeacherHome />} />
+            <Route path="classes" element={<TeacherClasses />} />
+            <Route path="classes/:classId" element={<ClassDetailPage />} />
+            <Route path="students/:studentId" element={<TeacherStudentDetail />} />
+            <Route path="resources" element={<div className="p-8">Resources (Coming Soon)</div>} />
+            <Route path="analytics" element={<div className="p-8">Analytics (Coming Soon)</div>} />
+            <Route path="settings" element={<div className="p-8">Settings (Coming Soon)</div>} />
           </Route>
                         
                         {/* Curriculum Debug */}
