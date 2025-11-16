@@ -68,3 +68,61 @@ export interface MasteryStats {
   total_attempts: number;
   recent_sessions: number;
 }
+
+// Objective-level mastery tracking (topic-aware)
+export interface ObjectiveMastery {
+  id: string;
+  student_id: string;
+  topic_id: string;
+  objective_id: string;
+  status: 'not_started' | 'in_progress' | 'mastered';
+  score_percent: number;
+  attempts_count: number;
+  last_attempt_at: string | null;
+  country_code: string | null;
+  level_code: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Extended interface with objective details
+export interface ObjectiveMasteryWithDetails extends ObjectiveMastery {
+  objective?: {
+    id: string;
+    text: string;
+    subject_id: string | null;
+    domain_id: string | null;
+    subdomain_id: string | null;
+  };
+  topic?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+}
+
+// Aggregated mastery by subject
+export interface SubjectMasteryOverview {
+  subject_id: string;
+  subject_name: string;
+  subject_color: string;
+  total_objectives: number;
+  mastered_objectives: number;
+  in_progress_objectives: number;
+  mastery_percentage: number;
+}
+
+// Topic-level mastery progress
+export interface TopicMasteryProgress {
+  topic_id: string;
+  topic_name: string;
+  objectives: Array<{
+    objective_id: string;
+    objective_text: string;
+    status: 'not_started' | 'in_progress' | 'mastered';
+    score_percent: number;
+  }>;
+  total_objectives: number;
+  mastered_objectives: number;
+  mastery_percentage: number;
+}

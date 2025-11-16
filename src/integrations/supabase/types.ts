@@ -953,6 +953,73 @@ export type Database = {
           },
         ]
       }
+      objective_mastery: {
+        Row: {
+          attempts_count: number
+          country_code: string | null
+          created_at: string
+          id: string
+          last_attempt_at: string | null
+          level_code: string | null
+          objective_id: string
+          score_percent: number
+          status: string
+          student_id: string
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          attempts_count?: number
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          level_code?: string | null
+          objective_id: string
+          score_percent?: number
+          status?: string
+          student_id: string
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          attempts_count?: number
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          level_code?: string | null
+          objective_id?: string
+          score_percent?: number
+          status?: string
+          student_id?: string
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "objective_mastery_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "objectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "objective_mastery_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "objective_mastery_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "learning_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       objectives: {
         Row: {
           domain: string | null
