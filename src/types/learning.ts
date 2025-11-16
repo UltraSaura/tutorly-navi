@@ -51,6 +51,8 @@ export interface Topic {
   curriculum_subject_id?: string | null;
   curriculum_domain_id?: string | null;
   curriculum_subdomain_id?: string | null;
+  // Linked objectives (when joined)
+  topic_objectives?: import('@/types/curriculum').TopicObjectiveWithDetails[];
 }
 
 export interface Video {

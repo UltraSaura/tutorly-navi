@@ -14,6 +14,7 @@ import { VideoPlayerBox } from '@/components/learning/VideoPlayerBox';
 import { CollapsibleVideoSection } from '@/components/learning/CollapsibleVideoSection';
 import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
 import { CurriculumLocation } from '@/components/admin/curriculum/CurriculumLocation';
+import { TopicLearningContent } from '@/components/learning/TopicLearningContent';
 import type { Video } from '@/types/learning';
 
 const CoursePlaylistPage = () => {
@@ -136,6 +137,9 @@ const CoursePlaylistPage = () => {
             videoId={playingVideoId}
             onVideoEnd={handleVideoEnd}
           />
+
+          {/* NEW: Learning Content (Objectives, Success Criteria, Tasks) */}
+          <TopicLearningContent topicId={topic.id} />
 
           {/* Course Sections */}
           <div className="space-y-1">

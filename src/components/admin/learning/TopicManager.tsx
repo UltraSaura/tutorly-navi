@@ -12,6 +12,7 @@ import { useLearningCategories, useLearningTopics, useCreateTopic, useUpdateTopi
 import type { Topic } from '@/types/learning';
 import { CurriculumSelector } from '@/components/admin/curriculum/CurriculumSelector';
 import { CurriculumLocation } from '@/components/admin/curriculum/CurriculumLocation';
+import { TopicObjectivesSelector } from './TopicObjectivesSelector';
 
 const TopicManager = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
@@ -188,6 +189,16 @@ const TopicManager = () => {
                 onChange={(selection) => setFormData({ ...formData, ...selection })}
                 locale="en"
               />
+
+              {/* Topic Objectives Selector - Only show when editing */}
+              {editingTopic && (
+                <TopicObjectivesSelector
+                  topicId={editingTopic.id}
+                  curriculumSubjectId={formData.curriculum_subject_id || undefined}
+                  curriculumDomainId={formData.curriculum_domain_id || undefined}
+                  curriculumSubdomainId={formData.curriculum_subdomain_id || undefined}
+                />
+              )}
               
               <div className="grid grid-cols-3 gap-4">
                 <div>

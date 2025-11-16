@@ -139,3 +139,21 @@ export interface CurriculumSkill {
   labels: Record<string, string>;
   description?: Record<string, string>;
 }
+
+// Topic-Objective linking types
+export interface TopicObjective {
+  id: string;
+  topic_id: string;
+  objective_id: string;
+  order_index: number;
+  created_at: string;
+}
+
+export interface TopicObjectiveWithDetails extends TopicObjective {
+  objective: ObjectiveWithSuccessCriteria;
+}
+
+export interface TaskWithDetails extends Task {
+  success_criterion?: SuccessCriterion;
+  objective?: Objective;
+}

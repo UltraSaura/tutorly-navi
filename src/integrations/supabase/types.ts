@@ -1511,6 +1511,45 @@ export type Database = {
           },
         ]
       }
+      topic_objectives: {
+        Row: {
+          created_at: string
+          id: string
+          objective_id: string
+          order_index: number
+          topic_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          objective_id: string
+          order_index?: number
+          topic_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          objective_id?: string
+          order_index?: number
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_objectives_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "objectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topic_objectives_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "learning_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       units: {
         Row: {
           domain: string
