@@ -1,8 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Target, ClipboardList, GraduationCap } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { CheckCircle2, Target, ClipboardList, GraduationCap, CheckCircle, Circle, Clock } from 'lucide-react';
 import { useTopicObjectives, useTasksForSuccessCriteria } from '@/hooks/useTopicObjectives';
+import { useTopicMastery } from '@/hooks/useObjectiveMastery';
 
 interface TopicLearningContentProps {
   topicId: string;
@@ -10,6 +12,7 @@ interface TopicLearningContentProps {
 
 export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
   const { data: objectives = [], isLoading } = useTopicObjectives(topicId);
+  const { data: masteryProgress, isLoading: masteryLoading } = useTopicMastery(topicId);
   
   // Extract all success criterion IDs
   const successCriteriaIds = objectives.flatMap(
@@ -32,6 +35,67 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
   
   return (
     <div className="space-y-6 p-4">
+      {/* Your Progress Section */}
+      {!masteryLoading && masteryProgress && masteryProgress.total_objectives > 0 && (
+        <Card className="bg-primary/5 border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Target className="w-5 h-5" />
+                Your Progress in This Topic
+              </span>
+              <span className="text-2xl font-bold">
+                {masteryProgress.mastery_percentage}%
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Overall Progress Bar */}
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-muted-foreground">
+                  {masteryProgress.mastered_objectives} of {masteryProgress.total_objectives} objectives mastered
+                </span>
+              </div>
+              <Progress value={masteryProgress.mastery_percentage} className="h-2" />
+            </div>
+            
+            {/* Objective-by-Objective Status */}
+            <div className="space-y-2">
+              {masteryProgress.objectives.map(obj => (
+                <div key={obj.objective_id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50">
+                  {obj.status === 'mastered' ? (
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  ) : obj.status === 'in_progress' ? (
+                    <Clock className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                  )}
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium">{obj.objective_text}</span>
+                      <Badge 
+                        variant={
+                          obj.status === 'mastered' ? 'default' : 
+                          obj.status === 'in_progress' ? 'secondary' : 
+                          'outline'
+                        }
+                        className="text-xs"
+                      >
+                        {obj.status === 'mastered' ? 'Mastered' : 
+                         obj.status === 'in_progress' ? `${obj.score_percent}%` : 
+                         'Not started'}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       {/* (A) What You Will Learn */}
       <Card>
         <CardHeader>
