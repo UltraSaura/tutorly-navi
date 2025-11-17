@@ -13,6 +13,8 @@ import type { Topic } from '@/types/learning';
 import { CurriculumSelector } from '@/components/admin/curriculum/CurriculumSelector';
 import { CurriculumLocation } from '@/components/admin/curriculum/CurriculumLocation';
 import { TopicObjectivesSelector } from './TopicObjectivesSelector';
+import { GenerateLessonButton } from './GenerateLessonButton';
+import { LessonContentDisplay } from './LessonContentDisplay';
 
 const TopicManager = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
@@ -248,6 +250,28 @@ const TopicManager = () => {
                   <Label htmlFor="is_active">Active</Label>
                 </div>
               </div>
+              
+              {/* Lesson Content Section */}
+              {editingTopic && (
+                <div className="space-y-4 border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-lg font-semibold">Lesson Content</Label>
+                    <GenerateLessonButton 
+                      topicId={editingTopic.id} 
+                      hasExistingContent={!!editingTopic.lesson_content}
+                    />
+                  </div>
+                  
+                  {editingTopic.lesson_content ? (
+                    <LessonContentDisplay content={editingTopic.lesson_content as any} />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No lesson content generated yet. Click "Generate Lesson Content" to create it automatically.
+                    </p>
+                  )}
+                </div>
+              )}
+              
               <Button type="submit" className="w-full">
                 {editingTopic ? 'Update Topic' : 'Create Topic'}
               </Button>

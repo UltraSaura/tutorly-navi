@@ -67,6 +67,7 @@ const TeacherHome = lazy(() => import("./pages/teacher/TeacherHome"));
 const TeacherClasses = lazy(() => import("./pages/teacher/TeacherClasses"));
 const ClassDetailPage = lazy(() => import("./pages/teacher/ClassDetailPage"));
 const TeacherStudentDetail = lazy(() => import("./pages/teacher/TeacherStudentDetail"));
+const TeacherTopicDetail = lazy(() => import("./pages/teacher/TeacherTopicDetail"));
 
 // Loading Component
 const LoadingFallback = () => <div className="flex items-center justify-center min-h-screen">
@@ -175,6 +176,7 @@ const App = () => {
             <Route path="classes" element={<TeacherClasses />} />
             <Route path="classes/:classId" element={<ClassDetailPage />} />
             <Route path="students/:studentId" element={<TeacherStudentDetail />} />
+            <Route path="topics/:topicId" element={<TeacherTopicDetail />} />
             <Route path="resources" element={<div className="p-8">Resources (Coming Soon)</div>} />
             <Route path="analytics" element={<div className="p-8">Analytics (Coming Soon)</div>} />
             <Route path="settings" element={<div className="p-8">Settings (Coming Soon)</div>} />

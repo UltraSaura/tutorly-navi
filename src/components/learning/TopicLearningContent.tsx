@@ -6,6 +6,7 @@ import { CheckCircle2, Target, ClipboardList, GraduationCap, CheckCircle, Circle
 import { useTopicObjectives, useTasksForSuccessCriteria } from '@/hooks/useTopicObjectives';
 import { useTopicMastery } from '@/hooks/useObjectiveMastery';
 import { NextStepsRecommendations } from './NextStepsRecommendations';
+import { LessonContentStudent } from './LessonContentStudent';
 
 interface TopicLearningContentProps {
   topicId: string;
@@ -36,6 +37,9 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
   
   return (
     <div className="space-y-6 p-4">
+      {/* Lesson Content */}
+      <LessonContentStudent topicId={topicId} />
+      
       {/* Your Progress Section */}
       {!masteryLoading && masteryProgress && masteryProgress.total_objectives > 0 && (
         <Card className="bg-primary/5 border-primary/20">
