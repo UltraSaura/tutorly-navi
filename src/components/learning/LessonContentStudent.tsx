@@ -45,7 +45,7 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
   const content = topic.lesson_content as unknown as LessonContent;
 
   return (
-    <div className="space-y-6">
+    <div id="lesson-section" className="space-y-6">
       {/* Explanation */}
       <Card>
         <CardHeader>
