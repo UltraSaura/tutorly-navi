@@ -16,6 +16,7 @@ interface ExplanationModalProps {
   onTryAgain?: () => void;
   exerciseQuestion?: string;
   imageUrl?: string;
+  topicId?: string;
 }
 
 export function ExplanationModal({ 
@@ -26,7 +27,8 @@ export function ExplanationModal({
   error,
   onTryAgain,
   exerciseQuestion,
-  imageUrl 
+  imageUrl,
+  topicId
 }: ExplanationModalProps) {
   const { t } = useLanguage();
   
@@ -90,7 +92,7 @@ export function ExplanationModal({
                   />
                 </div>
               )}
-              <TwoCards s={sections} />
+              <TwoCards s={sections} topicId={topicId} onClose={onClose} />
             </>
           ) : (
             <>
