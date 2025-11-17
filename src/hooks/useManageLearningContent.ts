@@ -198,7 +198,7 @@ export const useLearningTopics = (categoryId?: string) => {
       
       const { data, error } = await query;
       if (error) throw error;
-      return data as Topic[];
+      return data as unknown as Topic[];
     },
   });
 };
@@ -210,7 +210,7 @@ export const useCreateTopic = () => {
     mutationFn: async (topic: Omit<Topic, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
         .from('learning_topics')
-        .insert(topic)
+        .insert(topic as any)
         .select()
         .single();
       
@@ -234,7 +234,7 @@ export const useUpdateTopic = () => {
     mutationFn: async ({ id, ...updates }: Partial<Topic> & { id: string }) => {
       const { data, error } = await supabase
         .from('learning_topics')
-        .update(updates)
+        .update(updates as any)
         .eq('id', id)
         .select()
         .single();

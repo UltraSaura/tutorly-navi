@@ -799,6 +799,7 @@ export type Database = {
           estimated_duration_minutes: number
           id: string
           is_active: boolean
+          lesson_content: Json | null
           name: string
           order_index: number
           quiz_count: number
@@ -818,6 +819,7 @@ export type Database = {
           estimated_duration_minutes?: number
           id?: string
           is_active?: boolean
+          lesson_content?: Json | null
           name: string
           order_index?: number
           quiz_count?: number
@@ -837,6 +839,7 @@ export type Database = {
           estimated_duration_minutes?: number
           id?: string
           is_active?: boolean
+          lesson_content?: Json | null
           name?: string
           order_index?: number
           quiz_count?: number
