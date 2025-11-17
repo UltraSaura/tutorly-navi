@@ -3,7 +3,7 @@ import { Calculator, CheckCircle, XCircle, Send } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Message } from '@/types/chat';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/SimpleLanguageContext';
@@ -405,13 +405,24 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                             </div>
                           </div>
                           
-                          <div>
-                            <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <span>{t('explanation.headers.practice')}</span>
-                            </div>
-                            <div className="text-sm text-muted-foreground leading-relaxed">
-                              {jsonResponse.sections.practice}
-                            </div>
+                          {/* View Full Lesson Footer */}
+                          <div className="mt-4 pt-3 border-t border-border">
+                            <p className="text-xs text-muted-foreground mb-2">Need more help?</p>
+                            <DialogClose asChild>
+                              <button
+                                onClick={() => {
+                                  setTimeout(() => {
+                                    const lessonSection = document.getElementById('lesson-section');
+                                    if (lessonSection) {
+                                      lessonSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }
+                                  }, 180);
+                                }}
+                                className="text-sm text-primary hover:underline flex items-center gap-1"
+                              >
+                                View Full Lesson →
+                              </button>
+                            </DialogClose>
                           </div>
                         </div>
                       </div>
