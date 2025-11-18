@@ -404,26 +404,6 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                               {jsonResponse.sections.check}
                             </div>
                           </div>
-                          
-                          {/* View Full Lesson Footer */}
-                          <div className="mt-4 pt-3 border-t border-border">
-                            <p className="text-xs text-muted-foreground mb-2">Need more help?</p>
-                            <DialogClose asChild>
-                              <button
-                                onClick={() => {
-                                  setTimeout(() => {
-                                    const lessonSection = document.getElementById('lesson-section');
-                                    if (lessonSection) {
-                                      lessonSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                    }
-                                  }, 180);
-                                }}
-                                className="text-sm text-primary hover:underline flex items-center gap-1"
-                              >
-                                View Full Lesson →
-                              </button>
-                            </DialogClose>
-                          </div>
                         </div>
                       </div>
                 </div>

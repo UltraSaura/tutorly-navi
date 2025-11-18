@@ -163,6 +163,7 @@ export function TwoCards({ s, topicId, onClose }: { s: TeachingSections; topicId
             <div className="mt-4 pt-3 border-t border-border">
               <p className="text-xs text-muted-foreground mb-2">Need more help?</p>
               <button
+                type="button"
                 onClick={handleViewLesson}
                 className="text-sm text-primary hover:underline flex items-center gap-1"
               >
