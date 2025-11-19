@@ -263,12 +263,43 @@ Return your response as JSON:
 
     let generatedContent;
     try {
-      const contentText = aiData.content || aiData.data?.content || aiData;
-      generatedContent = typeof contentText === 'string' 
-        ? JSON.parse(contentText) 
-        : contentText;
+      const rawContent = aiData.content || aiData.data?.content || aiData;
+      let jsonStr = '';
+      
+      if (typeof rawContent === 'string') {
+        // Try to extract JSON from markdown code block: ```json ... ```
+        const fenceMatch = rawContent.match(/```(?:json)?\s*([\s\S]*?)```/i);
+        
+        if (fenceMatch) {
+          // Found markdown code block - extract content inside
+          jsonStr = fenceMatch[1].trim();
+          console.log('[generate-lesson-content] Extracted JSON from code block');
+        } else {
+          // No code block - try to find JSON between { and }
+          const firstBrace = rawContent.indexOf('{');
+          const lastBrace = rawContent.lastIndexOf('}');
+          
+          if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            jsonStr = rawContent.substring(firstBrace, lastBrace + 1);
+            console.log('[generate-lesson-content] Extracted JSON between braces');
+          } else {
+            // Use the whole content as-is
+            jsonStr = rawContent;
+            console.log('[generate-lesson-content] Using raw content');
+          }
+        }
+        
+        generatedContent = JSON.parse(jsonStr);
+      } else {
+        // Content is already an object
+        generatedContent = rawContent;
+      }
+      
+      console.log('[generate-lesson-content] Successfully parsed AI response');
+      
     } catch (parseError) {
       console.error('[generate-lesson-content] Failed to parse AI response:', parseError);
+      console.error('[generate-lesson-content] Raw AI data:', JSON.stringify(aiData, null, 2));
       throw new Error('AI returned invalid JSON format');
     }
 
