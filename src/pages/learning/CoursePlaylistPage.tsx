@@ -138,9 +138,6 @@ const CoursePlaylistPage = () => {
             onVideoEnd={handleVideoEnd}
           />
 
-          {/* NEW: Learning Content (Objectives, Success Criteria, Tasks) */}
-          <TopicLearningContent topicId={topic.id} />
-
           {/* Course Sections */}
           <div className="space-y-1">
             {videoSections.map((section, index) => (
@@ -155,6 +152,9 @@ const CoursePlaylistPage = () => {
               />
             ))}
           </div>
+
+          {/* Full Lesson - Below Video Sections */}
+          <TopicLearningContent topicId={topic.id} />
         </div>
       </ScrollArea>
 
