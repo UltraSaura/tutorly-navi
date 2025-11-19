@@ -1,17 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, Lightbulb, AlertCircle } from 'lucide-react';
+import { BookOpen, Lightbulb, AlertCircle, Wand2, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import type { LessonContent } from '@/types/learning';
 import { useEffect } from 'react';
+import { useGenerateLessonContent } from '@/hooks/useGenerateLessonContent';
 
 interface LessonContentStudentProps {
   topicId: string;
 }
 
 export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
+  const generateLesson = useGenerateLessonContent();
+  
   // Scroll to lesson section if URL has hash
   useEffect(() => {
     if (window.location.hash === '#lesson-section') {
@@ -45,14 +49,41 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
 
   if (!topic?.lesson_content) {
     return (
-      <Card className="border-dashed">
-        <CardContent className="pt-6 text-center">
-          <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">
-            Lesson content is being prepared. Check back soon!
-          </p>
-        </CardContent>
-      </Card>
+      <div id="lesson-section" className="space-y-6">
+        <Card className="border-dashed">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-blue-500" />
+              Full Lesson
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-muted-foreground">
+              This topic doesn't have a full lesson yet.
+            </p>
+            <Button 
+              onClick={() => generateLesson.mutate({ topicId })}
+              disabled={generateLesson.isPending}
+              size="lg"
+            >
+              {generateLesson.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating lesson...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="w-4 h-4 mr-2" />
+                  Generate Full Lesson
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              This will take 30-60 seconds
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
