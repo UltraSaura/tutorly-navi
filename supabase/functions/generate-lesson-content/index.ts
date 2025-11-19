@@ -7,6 +7,46 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Supported models by the AI runtime
+const SUPPORTED_MODELS = ['gpt-5', 'gpt-4.1', 'deepseek-chat', 'claude-3-5-sonnet-20241022'];
+
+// Map database model IDs to AI runtime model IDs
+function normalizeModelId(modelId: string): string {
+  const modelMap: Record<string, string> = {
+    'gpt-5-2025-08-07': 'gpt-5',
+    'gpt-5-mini-2025-08-07': 'gpt-5',
+    'gpt-5-nano-2025-08-07': 'gpt-5',
+    'gpt-4.1-2025-04-14': 'gpt-4.1',
+    'gpt-4.1-mini-2025-04-14': 'gpt-4.1',
+    'gpt-4o': 'gpt-4.1',
+    'gpt-4o-mini': 'gpt-4.1',
+    'deepseek-chat': 'deepseek-chat',
+    'claude-3-5-sonnet-20241022': 'claude-3-5-sonnet-20241022',
+    'google/gemini-2.5-flash': 'gpt-5',
+    'google/gemini-2.5-pro': 'gpt-5',
+  };
+  
+  return modelMap[modelId] || modelId;
+}
+
+// Validate and resolve model to a supported one
+function resolveModel(modelId: string | undefined): string {
+  if (!modelId) {
+    console.log('[resolveModel] No model provided, using gpt-5');
+    return 'gpt-5';
+  }
+  
+  const normalized = normalizeModelId(modelId);
+  
+  if (SUPPORTED_MODELS.includes(normalized)) {
+    console.log(`[resolveModel] Using model: ${normalized}${normalized !== modelId ? ` (normalized from ${modelId})` : ''}`);
+    return normalized;
+  }
+  
+  console.warn(`[resolveModel] Model "${modelId}" (normalized: "${normalized}") is not supported. Falling back to gpt-5`);
+  return 'gpt-5';
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -49,7 +89,32 @@ serve(async (req) => {
       );
     }
 
-    const { topicId, modelId = 'google/gemini-2.5-flash' } = await req.json();
+    const { topicId, modelId: requestModelId } = await req.json();
+
+    // Query the default model from database
+    let adminSelectedModel = 'deepseek-chat';
+    try {
+      const { data: modelConfig, error: modelError } = await supabase
+        .rpc('get_model_with_fallback')
+        .single();
+
+      if (!modelError && modelConfig?.default_model_id) {
+        adminSelectedModel = modelConfig.default_model_id;
+        console.log('[generate-lesson-content] Admin-configured model:', adminSelectedModel);
+      }
+    } catch (err) {
+      console.warn('[generate-lesson-content] Error fetching model config:', err);
+    }
+
+    // Use provided modelId or fall back to admin-configured default
+    const rawModelId = requestModelId || adminSelectedModel;
+    const modelId = resolveModel(rawModelId);
+
+    console.log('[generate-lesson-content] Model selection:', {
+      requested: requestModelId,
+      adminDefault: adminSelectedModel,
+      resolved: modelId
+    });
 
     if (!topicId) {
       return new Response(

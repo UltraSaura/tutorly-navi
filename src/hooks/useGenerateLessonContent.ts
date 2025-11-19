@@ -9,7 +9,7 @@ export function useGenerateLessonContent() {
   return useMutation({
     mutationFn: async ({ 
       topicId, 
-      modelId = 'google/gemini-2.5-flash' 
+      modelId
     }: { 
       topicId: string; 
       modelId?: string;
