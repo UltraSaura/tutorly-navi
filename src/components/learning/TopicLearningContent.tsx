@@ -31,14 +31,14 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
     return <div className="p-4 text-center text-muted-foreground">Loading learning content...</div>;
   }
   
-  if (objectives.length === 0) {
-    return null; // Don't show anything if no objectives
-  }
-  
   return (
     <div className="space-y-6 p-4">
-      {/* Lesson Content */}
+      {/* Lesson Content - Always visible */}
       <LessonContentStudent topicId={topicId} />
+      
+      {/* Only show objectives/progress sections if objectives exist */}
+      {objectives.length > 0 && (
+        <>
       
       {/* Your Progress Section */}
       {!masteryLoading && masteryProgress && masteryProgress.total_objectives > 0 && (
@@ -217,11 +217,13 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
         </Card>
       )}
 
-      {/* What to do after this topic */}
-      <NextStepsRecommendations 
-        currentTopicId={topicId}
-        currentSubdomainId={objectives[0]?.subdomain_id}
-      />
+        {/* What to do after this topic */}
+        <NextStepsRecommendations 
+          currentTopicId={topicId}
+          currentSubdomainId={objectives[0]?.subdomain_id}
+        />
+        </>
+      )}
     </div>
   );
 }
