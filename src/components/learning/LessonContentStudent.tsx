@@ -130,16 +130,43 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
-              {content.common_mistakes.map((mistake, idx) => (
-                <li key={idx} className="flex gap-3">
-                  <Badge variant="outline" className="h-fit mt-0.5">
-                    {idx + 1}
-                  </Badge>
-                  <span className="flex-1 text-amber-900 dark:text-amber-100">
-                    {mistake}
-                  </span>
-                </li>
-              ))}
+        {content.common_mistakes.map((mistake, idx) => {
+          const mistakeItem = mistake as any;
+          const mistakeText = typeof mistake === 'string' 
+            ? mistake 
+            : mistakeItem.mistake || mistakeItem.tip || '';
+          
+          const mistakeWhy = typeof mistake === 'object' && mistake !== null && mistakeItem.why 
+            ? mistakeItem.why 
+            : null;
+          
+          const mistakeTip = typeof mistake === 'object' && mistake !== null && mistakeItem.tip 
+            ? mistakeItem.tip 
+            : null;
+          
+          return (
+            <li key={idx} className="flex gap-3">
+              <Badge variant="outline" className="h-fit mt-0.5">
+                {idx + 1}
+              </Badge>
+              <div className="flex-1 space-y-1">
+                <p className="text-amber-900 dark:text-amber-100 font-medium">
+                  {mistakeText}
+                </p>
+                {mistakeWhy && (
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    <span className="font-semibold">Why: </span>{mistakeWhy}
+                  </p>
+                )}
+                {mistakeTip && (
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    <span className="font-semibold">Tip: </span>{mistakeTip}
+                  </p>
+                )}
+              </div>
+            </li>
+          );
+        })}
             </ul>
           </CardContent>
         </Card>
