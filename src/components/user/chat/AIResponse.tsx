@@ -427,10 +427,9 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                             </div>
                           </div>
                           
-                          {/* View Full Lesson Footer - Context aware */}
+                          {/* Watch Video Footer - Context aware */}
                           {aiResponse.topicId && topicInfo ? (
                             <div className="mt-4 pt-3 border-t border-border">
-                              <p className="text-xs text-muted-foreground mb-2">Need more help?</p>
                               <DialogClose asChild>
                                 <button
                                   onClick={() => {
@@ -438,19 +437,19 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                                     const topicSlug = topicInfo.slug;
                                     if (subjectSlug && topicSlug) {
                                       setTimeout(() => {
-                                        window.location.href = `/learning/${subjectSlug}/${topicSlug}#lesson-section`;
+                                        window.location.href = `/learning/${subjectSlug}/${topicSlug}`;
                                       }, 200);
                                     }
                                   }}
                                   className="text-sm text-primary hover:underline flex items-center gap-1"
                                 >
-                                  View Full Lesson →
+                                  {t('explanation.watch_video')}
                                 </button>
                               </DialogClose>
                             </div>
                           ) : aiResponse.topicId && topicInfoLoading ? (
                             <div className="mt-4 pt-3 border-t border-border">
-                              <p className="text-xs text-muted-foreground">Loading lesson information...</p>
+                              <p className="text-xs text-muted-foreground">Loading...</p>
                             </div>
                           ) : null}
                         </div>
@@ -557,10 +556,9 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                     </Button>
                     </div>
                     
-                    {/* View Full Lesson Footer - Context aware */}
+                    {/* Watch Video Footer - Context aware */}
                     {aiResponse.topicId && topicInfo ? (
                       <div className="mt-4 pt-3 border-t border-border">
-                        <p className="text-xs text-muted-foreground mb-2">Need more help?</p>
                         <DialogClose asChild>
                           <button
                             onClick={() => {
@@ -568,19 +566,19 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                               const topicSlug = topicInfo.slug;
                               if (subjectSlug && topicSlug) {
                                 setTimeout(() => {
-                                  window.location.href = `/learning/${subjectSlug}/${topicSlug}#lesson-section`;
+                                  window.location.href = `/learning/${subjectSlug}/${topicSlug}`;
                                 }, 200);
                               }
                             }}
                             className="text-sm text-primary hover:underline flex items-center gap-1"
                           >
-                            View Full Lesson →
+                            {t('explanation.watch_video')}
                           </button>
                         </DialogClose>
                       </div>
                     ) : aiResponse.topicId && topicInfoLoading ? (
                       <div className="mt-4 pt-3 border-t border-border">
-                        <p className="text-xs text-muted-foreground">Loading lesson information...</p>
+                        <p className="text-xs text-muted-foreground">Loading...</p>
                       </div>
                     ) : null}
                   </div>
