@@ -9,6 +9,7 @@ import { useUserContext } from '@/hooks/useUserContext';
 import { extractExpressionFromText } from '@/utils/mathStepper/parser';
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 function Section({ title, text }: { title: string; text: string }) {
   const resolveText = useResolveText();
@@ -57,6 +58,7 @@ export function TwoCards({
   const resolveText = useResolveText();
   const [isGuardian, setIsGuardian] = useState(false); // NEW
   const { userContext } = useUserContext(); // NEW: Get user context for grade level
+  const { t } = useLanguage();
   
   // Fetch topic routing info if we have topicId but not slugs
   const { data: topicData, isLoading: topicDataLoading } = useQuery({
@@ -89,30 +91,17 @@ export function TwoCards({
   const finalTopicSlug = topicSlug || topicData?.slug;
   const hasLessonContent = !!(topicData?.lesson_content || subjectSlug);
   
-  // Handle view lesson - navigate to topic page or scroll if already there
+  // Handle view lesson - navigate to topic page (no scroll)
   const handleViewLesson = () => {
     if (!finalSubjectSlug || !finalTopicSlug) return;
-    
-    const currentPath = window.location.pathname;
-    const targetPath = `/learning/${finalSubjectSlug}/${finalTopicSlug}`;
     
     // Close modal first
     onClose?.();
     
-    // If already on topic page, just scroll
-    if (currentPath === targetPath) {
-      setTimeout(() => {
-        const lessonSection = document.getElementById('lesson-section');
-        if (lessonSection) {
-          lessonSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 200);
-    } else {
-      // Navigate to topic page with hash
-      setTimeout(() => {
-        window.location.href = `${targetPath}#lesson-section`;
-      }, 200);
-    }
+    // Navigate to topic page (no hash, user lands at top)
+    setTimeout(() => {
+      window.location.href = `/learning/${finalSubjectSlug}/${finalTopicSlug}`;
+    }, 200);
   };
   
   // NEW: Check if user is guardian
@@ -195,24 +184,16 @@ export function TwoCards({
           <Section title="⚠️ Pitfall" text={s.pitfall} />
           <Section title="🎯 Check yourself" text={s.check} />
           
-          {/* View Full Lesson link - only show if we have routing info */}
-          {canShowLessonLink && hasLessonContent && (
+          {/* Watch Video link - only show if we have routing info */}
+          {canShowLessonLink && (
             <div className="mt-4 pt-3 border-t border-border">
-              <p className="text-xs text-muted-foreground mb-2">Need more help?</p>
               <button
                 type="button"
                 onClick={handleViewLesson}
                 className="text-sm text-primary hover:underline flex items-center gap-1"
               >
-                View Full Lesson →
+                {t('explanation.watch_video')}
               </button>
-            </div>
-          )}
-          
-          {/* Show loading state if we have topicId but still fetching data */}
-          {topicId && !canShowLessonLink && topicDataLoading && (
-            <div className="mt-4 pt-3 border-t border-border">
-              <p className="text-xs text-muted-foreground">Loading lesson information...</p>
             </div>
           )}
         </div>

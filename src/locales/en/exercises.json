@@ -32,7 +32,8 @@
   },
   "explanation": {
     "modal_title": "Explanation",
-    "error": "Error loading explanation. Please try again.", 
+    "error": "Error loading explanation. Please try again.",
+    "watch_video": "🎬 Watch the video →",
     "fallback": {
       "exercise": "This is your exercise. Try to restate it in your own words.",
       "concept": "We'll focus on the exact math idea you need here.",
