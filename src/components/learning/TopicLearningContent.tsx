@@ -1,18 +1,22 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, Target, ClipboardList, GraduationCap, CheckCircle, Circle, Clock } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { CheckCircle2, Target, ClipboardList, GraduationCap, CheckCircle, Circle, Clock, ChevronDown, BookOpen } from 'lucide-react';
 import { useTopicObjectives, useTasksForSuccessCriteria } from '@/hooks/useTopicObjectives';
 import { useTopicMastery } from '@/hooks/useObjectiveMastery';
 import { NextStepsRecommendations } from './NextStepsRecommendations';
 import { LessonContentStudent } from './LessonContentStudent';
+import { cn } from '@/lib/utils';
 
 interface TopicLearningContentProps {
   topicId: string;
 }
 
 export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
+  const [lessonOpen, setLessonOpen] = useState(true);
   const { data: objectives = [], isLoading } = useTopicObjectives(topicId);
   const { data: masteryProgress, isLoading: masteryLoading } = useTopicMastery(topicId);
   
@@ -33,8 +37,29 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
   
   return (
     <div className="space-y-6 p-4">
-      {/* Lesson Content - Always visible */}
-      <LessonContentStudent topicId={topicId} />
+      {/* Full Lesson - Now Collapsible */}
+      <Collapsible open={lessonOpen} onOpenChange={setLessonOpen} className="my-3">
+        <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+          <CollapsibleTrigger className="w-full flex items-center justify-between p-4 bg-muted/50 hover:bg-muted transition-colors">
+            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              Full Lesson
+            </h3>
+            <ChevronDown
+              className={cn(
+                'w-5 h-5 text-foreground transition-transform',
+                lessonOpen && 'rotate-180'
+              )}
+            />
+          </CollapsibleTrigger>
+
+          <CollapsibleContent>
+            <div className="p-4">
+              <LessonContentStudent topicId={topicId} />
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
       
       {/* Only show objectives/progress sections if objectives exist */}
       {objectives.length > 0 && (
