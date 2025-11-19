@@ -9,7 +9,7 @@ export function useGenerateLessonContent() {
   return useMutation({
     mutationFn: async ({ 
       topicId, 
-      modelId = 'openai/gpt-4o-mini' 
+      modelId = 'google/gemini-2.5-flash' 
     }: { 
       topicId: string; 
       modelId?: string;
