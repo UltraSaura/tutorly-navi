@@ -40,42 +40,79 @@ function Section({ title, text }: { title: string; text: string }) {
   );
 }
 
-export function TwoCards({ s, topicId, onClose }: { s: TeachingSections; topicId?: string; onClose?: () => void }) {
+export function TwoCards({ 
+  s, 
+  topicId, 
+  onClose,
+  subjectSlug,
+  topicSlug 
+}: { 
+  s: TeachingSections; 
+  topicId?: string; 
+  onClose?: () => void;
+  subjectSlug?: string;
+  topicSlug?: string;
+}) {
   console.log('[TwoCards] Component rendered with sections:', s);
   const resolveText = useResolveText();
   const [isGuardian, setIsGuardian] = useState(false); // NEW
   const { userContext } = useUserContext(); // NEW: Get user context for grade level
   
-  // Query lesson content if topicId is provided
-  const { data: topicData } = useQuery({
-    queryKey: ['topic-lesson-check', topicId],
+  // Fetch topic routing info if we have topicId but not slugs
+  const { data: topicData, isLoading: topicDataLoading } = useQuery({
+    queryKey: ['topic-for-lesson-link', topicId],
     queryFn: async () => {
       if (!topicId) return null;
       const { data } = await supabase
         .from('learning_topics')
-        .select('lesson_content')
+        .select(`
+          slug,
+          lesson_content,
+          category:learning_categories!inner(
+            subject:learning_subjects!inner(slug)
+          )
+        `)
         .eq('id', topicId)
         .single();
       return data;
     },
-    enabled: !!topicId,
+    enabled: !!topicId && (!subjectSlug || !topicSlug)
   });
   
-  const hasLessonContent = !!topicData?.lesson_content;
+  // Determine if we can show the lesson link
+  const canShowLessonLink = topicId && (
+    (subjectSlug && topicSlug) || 
+    (topicData?.slug && topicData?.category?.subject?.slug)
+  );
   
-  // Handle view lesson - close modal and scroll to lesson section
+  const finalSubjectSlug = subjectSlug || topicData?.category?.subject?.slug;
+  const finalTopicSlug = topicSlug || topicData?.slug;
+  const hasLessonContent = !!(topicData?.lesson_content || subjectSlug);
+  
+  // Handle view lesson - navigate to topic page or scroll if already there
   const handleViewLesson = () => {
-    if (onClose) {
-      onClose();
-    }
+    if (!finalSubjectSlug || !finalTopicSlug) return;
     
-    // Wait for modal close animation
-    setTimeout(() => {
-      const lessonSection = document.getElementById('lesson-section');
-      if (lessonSection) {
-        lessonSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 200);
+    const currentPath = window.location.pathname;
+    const targetPath = `/learning/${finalSubjectSlug}/${finalTopicSlug}`;
+    
+    // Close modal first
+    onClose?.();
+    
+    // If already on topic page, just scroll
+    if (currentPath === targetPath) {
+      setTimeout(() => {
+        const lessonSection = document.getElementById('lesson-section');
+        if (lessonSection) {
+          lessonSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 200);
+    } else {
+      // Navigate to topic page with hash
+      setTimeout(() => {
+        window.location.href = `${targetPath}#lesson-section`;
+      }, 200);
+    }
   };
   
   // NEW: Check if user is guardian
@@ -158,11 +195,12 @@ export function TwoCards({ s, topicId, onClose }: { s: TeachingSections; topicId
           <Section title="⚠️ Pitfall" text={s.pitfall} />
           <Section title="🎯 Check yourself" text={s.check} />
           
-          {/* View Full Lesson Link */}
-          {topicId && hasLessonContent && (
+          {/* View Full Lesson link - only show if we have routing info */}
+          {canShowLessonLink && hasLessonContent && (
             <div className="mt-4 pt-3 border-t border-border">
               <p className="text-xs text-muted-foreground mb-2">Need more help?</p>
               <button
+                type="button"
                 onClick={handleViewLesson}
                 className="text-sm text-primary hover:underline flex items-center gap-1"
               >
@@ -170,11 +208,11 @@ export function TwoCards({ s, topicId, onClose }: { s: TeachingSections; topicId
               </button>
             </div>
           )}
-          {topicId && !hasLessonContent && (
+          
+          {/* Show loading state if we have topicId but still fetching data */}
+          {topicId && !canShowLessonLink && topicDataLoading && (
             <div className="mt-4 pt-3 border-t border-border">
-              <p className="text-xs text-muted-foreground">
-                Full lesson not available yet.
-              </p>
+              <p className="text-xs text-muted-foreground">Loading lesson information...</p>
             </div>
           )}
         </div>

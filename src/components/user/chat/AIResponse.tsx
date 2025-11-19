@@ -14,6 +14,8 @@ import { extractExpressionFromText } from '@/utils/mathStepper/parser';
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { useUserContext } from '@/hooks/useUserContext';
 import { validateExampleOperationType, getOperationTypeDisplay } from '@/utils/operationTypeDetector';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AIResponseProps {
   messages: Message[];
@@ -93,6 +95,26 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const [answerSubmitted, setAnswerSubmitted] = useState(false); // Add this line
   const { t, language } = useLanguage();
   const { userContext } = useUserContext();
+  
+  // Fetch topic routing info if aiResponse has topicId
+  const { data: topicInfo, isLoading: topicInfoLoading } = useQuery({
+    queryKey: ['topic-info-for-lesson', aiResponse.topicId],
+    queryFn: async () => {
+      if (!aiResponse.topicId) return null;
+      const { data } = await supabase
+        .from('learning_topics')
+        .select(`
+          slug,
+          category:learning_categories!inner(
+            subject:learning_subjects!inner(slug)
+          )
+        `)
+        .eq('id', aiResponse.topicId)
+        .single();
+      return data;
+    },
+    enabled: !!aiResponse.topicId
+  });
   
   // Debug logging for translation issues
   console.log('[ExerciseCard] Translation Debug:', {
@@ -405,25 +427,32 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                             </div>
                           </div>
                           
-                          {/* View Full Lesson Footer */}
-                          <div className="mt-4 pt-3 border-t border-border">
-                            <p className="text-xs text-muted-foreground mb-2">Need more help?</p>
-                            <DialogClose asChild>
-                              <button
-                                onClick={() => {
-                                  setTimeout(() => {
-                                    const lessonSection = document.getElementById('lesson-section');
-                                    if (lessonSection) {
-                                      lessonSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          {/* View Full Lesson Footer - Context aware */}
+                          {aiResponse.topicId && topicInfo ? (
+                            <div className="mt-4 pt-3 border-t border-border">
+                              <p className="text-xs text-muted-foreground mb-2">Need more help?</p>
+                              <DialogClose asChild>
+                                <button
+                                  onClick={() => {
+                                    const subjectSlug = topicInfo.category?.subject?.slug;
+                                    const topicSlug = topicInfo.slug;
+                                    if (subjectSlug && topicSlug) {
+                                      setTimeout(() => {
+                                        window.location.href = `/learning/${subjectSlug}/${topicSlug}#lesson-section`;
+                                      }, 200);
                                     }
-                                  }, 180);
-                                }}
-                                className="text-sm text-primary hover:underline flex items-center gap-1"
-                              >
-                                View Full Lesson →
-                              </button>
-                            </DialogClose>
-                          </div>
+                                  }}
+                                  className="text-sm text-primary hover:underline flex items-center gap-1"
+                                >
+                                  View Full Lesson →
+                                </button>
+                              </DialogClose>
+                            </div>
+                          ) : aiResponse.topicId && topicInfoLoading ? (
+                            <div className="mt-4 pt-3 border-t border-border">
+                              <p className="text-xs text-muted-foreground">Loading lesson information...</p>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                 </div>
@@ -526,8 +555,35 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                         ? t('exercise.answerSubmitted') 
                         : t('common.submit')}
                     </Button>
+                    </div>
+                    
+                    {/* View Full Lesson Footer - Context aware */}
+                    {aiResponse.topicId && topicInfo ? (
+                      <div className="mt-4 pt-3 border-t border-border">
+                        <p className="text-xs text-muted-foreground mb-2">Need more help?</p>
+                        <DialogClose asChild>
+                          <button
+                            onClick={() => {
+                              const subjectSlug = topicInfo.category?.subject?.slug;
+                              const topicSlug = topicInfo.slug;
+                              if (subjectSlug && topicSlug) {
+                                setTimeout(() => {
+                                  window.location.href = `/learning/${subjectSlug}/${topicSlug}#lesson-section`;
+                                }, 200);
+                              }
+                            }}
+                            className="text-sm text-primary hover:underline flex items-center gap-1"
+                          >
+                            View Full Lesson →
+                          </button>
+                        </DialogClose>
+                      </div>
+                    ) : aiResponse.topicId && topicInfoLoading ? (
+                      <div className="mt-4 pt-3 border-t border-border">
+                        <p className="text-xs text-muted-foreground">Loading lesson information...</p>
+                      </div>
+                    ) : null}
                   </div>
-                </div>
               ) : (
                     <Badge 
                       variant="secondary" 
