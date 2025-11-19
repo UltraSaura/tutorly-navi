@@ -3,6 +3,7 @@ import { getLanguageFromCountry } from '@/utils/countryLanguageMapping';
 import { useAuth } from '@/context/AuthContext';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
 import { loadTranslations, type SupportedLanguage, SUPPORTED_LANGUAGES } from '@/locales';
+import { supabase } from '@/integrations/supabase/client';
 
 // Smart default language detection
 const getInitialLanguage = (): string => {
@@ -281,15 +282,16 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     localStorage.removeItem('languageManuallySet');
     // Prefer profile country, then current detection
     try {
-      if (user?.id) {
-        const { data } = await import('@/integrations/supabase/client').then(m => 
-          m.supabase
-            .from('users')
-            .select('country')
-            .eq('id', user.id)
-            .single()
-        );
-        if (data?.country) {
+      if (user?.id && supabase) {
+        const { data, error } = await supabase
+          .from('users')
+          .select('country')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.warn('[Reset] Error fetching user country:', error.message);
+        } else if (data?.country) {
           const norm = normalizeCountryCode(data.country) || data.country;
           setLanguageFromCountry(norm);
           return;
@@ -377,17 +379,17 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
       let detectedLanguage = null;
       
       // First try user profile country
-      if (user?.id) {
+      if (user?.id && supabase) {
         try {
-          const { data } = await import('@/integrations/supabase/client').then(m => 
-            m.supabase
-              .from('users')
-              .select('country')
-              .eq('id', user.id)
-              .single()
-          );
+          const { data, error } = await supabase
+            .from('users')
+            .select('country')
+            .eq('id', user.id)
+            .single();
           
-          if (data?.country) {
+          if (error) {
+            console.warn('[Auto-detect] Supabase query error:', error.message);
+          } else if (data?.country) {
             console.log('[Auto-detect] User loaded with country:', data.country);
             const norm = normalizeCountryCode(data.country) || data.country;
             detectedLanguage = getLanguageFromCountry(norm);
