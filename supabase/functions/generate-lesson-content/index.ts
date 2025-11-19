@@ -49,7 +49,7 @@ serve(async (req) => {
       );
     }
 
-    const { topicId, modelId = 'openai/gpt-4o-mini' } = await req.json();
+    const { topicId, modelId = 'google/gemini-2.5-flash' } = await req.json();
 
     if (!topicId) {
       return new Response(
