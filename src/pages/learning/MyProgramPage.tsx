@@ -207,7 +207,7 @@ export default function MyProgramPage() {
                             <Card 
                               key={topic.id}
                               className="hover:shadow-lg transition-shadow cursor-pointer"
-                              onClick={() => navigate(`/learning/${subjectSlug}/${topic.slug}`)}
+                              onClick={() => navigate(`/learning/${subjectSlug}/${topic.slug}#lesson-section`)}
                             >
                               <CardContent className="p-4">
                                 <h5 className="font-semibold mb-2 line-clamp-2">{topic.name}</h5>

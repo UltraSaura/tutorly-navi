@@ -554,6 +554,7 @@ export type Database = {
           show_correct_answer_to_child: boolean | null
           subject_id: string | null
           time_spent_seconds: number | null
+          topic_id: string | null
           updated_at: string
           user_answer: string | null
           user_id: string
@@ -568,6 +569,7 @@ export type Database = {
           show_correct_answer_to_child?: boolean | null
           subject_id?: string | null
           time_spent_seconds?: number | null
+          topic_id?: string | null
           updated_at?: string
           user_answer?: string | null
           user_id: string
@@ -582,11 +584,20 @@ export type Database = {
           show_correct_answer_to_child?: boolean | null
           subject_id?: string | null
           time_spent_seconds?: number | null
+          topic_id?: string | null
           updated_at?: string
           user_answer?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "exercise_history_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "learning_topics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       explanations_cache: {
         Row: {

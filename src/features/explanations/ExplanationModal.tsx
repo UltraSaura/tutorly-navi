@@ -17,6 +17,8 @@ interface ExplanationModalProps {
   exerciseQuestion?: string;
   imageUrl?: string;
   topicId?: string;
+  subjectSlug?: string;
+  topicSlug?: string;
 }
 
 export function ExplanationModal({ 
@@ -28,7 +30,9 @@ export function ExplanationModal({
   onTryAgain,
   exerciseQuestion,
   imageUrl,
-  topicId
+  topicId,
+  subjectSlug,
+  topicSlug
 }: ExplanationModalProps) {
   const { t } = useLanguage();
   
@@ -92,7 +96,13 @@ export function ExplanationModal({
                   />
                 </div>
               )}
-              <TwoCards s={sections} topicId={topicId} onClose={onClose} />
+              <TwoCards 
+                s={sections} 
+                topicId={topicId} 
+                subjectSlug={subjectSlug}
+                topicSlug={topicSlug}
+                onClose={onClose} 
+              />
             </>
           ) : (
             <>

@@ -5,12 +5,26 @@ import { BookOpen, Lightbulb, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import type { LessonContent } from '@/types/learning';
+import { useEffect } from 'react';
 
 interface LessonContentStudentProps {
   topicId: string;
 }
 
 export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
+  // Scroll to lesson section if URL has hash
+  useEffect(() => {
+    if (window.location.hash === '#lesson-section') {
+      const timer = setTimeout(() => {
+        const element = document.getElementById('lesson-section');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, []);
   const { data: topic, isLoading } = useQuery({
     queryKey: ['topic-lesson-content', topicId],
     queryFn: async () => {
