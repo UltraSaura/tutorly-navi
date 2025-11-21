@@ -19,7 +19,13 @@
     "start": "Start",
     "subjectNotFound": "Subject not found",
     "suggestedVideos": "Suggested Learning Videos",
-    "suggestedVideosDescription": "Watch these videos to better understand this topic"
+    "suggestedVideosDescription": "Watch these videos to better understand this topic",
+    "setupRequired": "Setup Required",
+    "setupMessage": "Please set up your profile with country and school level to see your personalized learning content.",
+    "goToProfile": "Go to Profile",
+    "noContent": "No Content Available",
+    "noContentMessage": "Learning materials for your level are coming soon! Check back later.",
+    "curriculumLoadError": "Unable to load your learning program. Please try again."
   },
   "nav": {
     "tutor": "Tutor",
