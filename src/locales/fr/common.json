@@ -19,7 +19,13 @@
     "start": "Commencer",
     "subjectNotFound": "Matière introuvable",
     "suggestedVideos": "Vidéos d'apprentissage suggérées",
-    "suggestedVideosDescription": "Regardez ces vidéos pour mieux comprendre ce sujet"
+    "suggestedVideosDescription": "Regardez ces vidéos pour mieux comprendre ce sujet",
+    "setupRequired": "Configuration requise",
+    "setupMessage": "Veuillez configurer votre profil avec votre pays et niveau scolaire pour voir votre contenu d'apprentissage personnalisé.",
+    "goToProfile": "Aller au profil",
+    "noContent": "Aucun contenu disponible",
+    "noContentMessage": "Le matériel pédagogique pour votre niveau arrive bientôt ! Revenez plus tard.",
+    "curriculumLoadError": "Impossible de charger votre programme. Veuillez réessayer."
   },
   "nav": {
     "tutor": "Tuteur",

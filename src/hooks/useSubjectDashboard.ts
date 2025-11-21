@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserCurriculumProfile } from './useUserCurriculumProfile';
 import type { Subject, Category, Topic } from '@/types/learning';
 
 interface SubjectDashboardData {
@@ -13,6 +14,8 @@ interface SubjectDashboardData {
 }
 
 export function useSubjectDashboard(subjectSlug: string) {
+  const { profile } = useUserCurriculumProfile();
+  
   return useQuery({
     queryKey: ['subject-dashboard', subjectSlug],
     queryFn: async (): Promise<SubjectDashboardData> => {
@@ -28,16 +31,25 @@ export function useSubjectDashboard(subjectSlug: string) {
 
       if (subjectError) throw subjectError;
 
-      // Get categories with topics
-      const { data: categories, error: categoriesError } = await (supabase as any)
+      // Get categories with topics filtered by curriculum
+      let topicsQuery = supabase
         .from('learning_categories')
         .select(`
           *,
-          topics:learning_topics(*)
+          topics:learning_topics!inner(*)
         `)
         .eq('subject_id', (subject as any).id)
         .eq('is_active', true)
-        .order('order_index');
+        .eq('topics.is_active', true);
+
+      // Add curriculum filters if profile exists
+      if (profile?.countryCode && profile?.levelCode) {
+        topicsQuery = topicsQuery
+          .eq('topics.curriculum_country_code', profile.countryCode)
+          .eq('topics.curriculum_level_code', profile.levelCode);
+      }
+
+      const { data: categories, error: categoriesError } = await topicsQuery.order('order_index');
 
       if (categoriesError) throw categoriesError;
 
