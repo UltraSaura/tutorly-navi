@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
 import { useLearningCategories, useLearningTopics, useCreateTopic, useUpdateTopic, useDeleteTopic } from '@/hooks/useManageLearningContent';
 import type { Topic } from '@/types/learning';
 import { CurriculumSelector } from '@/components/admin/curriculum/CurriculumSelector';
@@ -15,11 +15,28 @@ import { CurriculumLocation } from '@/components/admin/curriculum/CurriculumLoca
 import { TopicObjectivesSelector } from './TopicObjectivesSelector';
 import { GenerateLessonButton } from './GenerateLessonButton';
 import { LessonContentDisplay } from './LessonContentDisplay';
+import { useProgramTopicsForAdmin } from '@/hooks/useProgramTopicsForAdmin';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useTranslation } from 'react-i18next';
 
 const TopicManager = () => {
+  const { t } = useTranslation();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [curriculumFilters, setCurriculumFilters] = useState({
+    countryCode: '',
+    levelCode: '',
+    subjectId: '',
+  });
+  
   const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useLearningCategories();
   const { data: topics = [], isLoading: topicsLoading, error: topicsError } = useLearningTopics(selectedCategoryId || undefined);
+  const { data: programTopics = [], isLoading: programTopicsLoading } = useProgramTopicsForAdmin({
+    countryCode: curriculumFilters.countryCode,
+    levelCode: curriculumFilters.levelCode,
+    subjectId: curriculumFilters.subjectId,
+  });
   const createTopic = useCreateTopic();
   const updateTopic = useUpdateTopic();
   const deleteTopic = useDeleteTopic();
@@ -120,7 +137,7 @@ const TopicManager = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Learning Topics</h2>
-          <p className="text-muted-foreground">Manage topics within categories</p>
+          <p className="text-muted-foreground">Manage topics within categories and curriculum</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);
@@ -129,13 +146,20 @@ const TopicManager = () => {
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Add Topic
+              Add Custom Topic
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingTopic ? 'Edit Topic' : 'Add New Topic'}</DialogTitle>
             </DialogHeader>
+            <Alert className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>{t('admin.curriculum.curriculumRequired')}</AlertTitle>
+              <AlertDescription>
+                Topics must align with the official curriculum. Populate all curriculum fields (Country, Level, Subject, Domain, Subdomain).
+              </AlertDescription>
+            </Alert>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="category_id">Category</Label>
@@ -279,6 +303,30 @@ const TopicManager = () => {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Curriculum Filter View */}
+      <Card className="p-4 mb-4">
+        <h3 className="font-semibold mb-3">Filter by Curriculum</h3>
+        <CurriculumSelector
+          value={{
+            curriculum_country_code: curriculumFilters.countryCode || null,
+            curriculum_level_code: curriculumFilters.levelCode || null,
+            curriculum_subject_id: curriculumFilters.subjectId || null,
+            curriculum_domain_id: null,
+            curriculum_subdomain_id: null,
+          }}
+          onChange={(selection) => setCurriculumFilters({
+            countryCode: selection.curriculum_country_code || '',
+            levelCode: selection.curriculum_level_code || '',
+            subjectId: selection.curriculum_subject_id || '',
+          })}
+        />
+        {curriculumFilters.countryCode && curriculumFilters.levelCode && curriculumFilters.subjectId && (
+          <Badge variant="secondary" className="mt-2">
+            {programTopicsLoading ? t('common.loading') : `${programTopics.length} ${t('admin.curriculum.topicsMatchingCurriculum')}`}
+          </Badge>
+        )}
+      </Card>
 
       <div className="mb-4">
         <Label>Select Category</Label>

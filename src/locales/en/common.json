@@ -95,5 +95,22 @@
     "grading": "Grading your answer...",
     "processing": "Processing...",
     "complete": "Complete!"
+  },
+  "admin": {
+    "curriculum": {
+      "selectFirst": "Select curriculum filters to see topics",
+      "noTopicsFound": "No topics found for this curriculum",
+      "createTopicsFirst": "No topics for this curriculum. Create topics first in the Topics tab.",
+      "curriculumRequired": "Curriculum alignment required",
+      "topicsMatchingCurriculum": "topics matching this curriculum",
+      "topicRequired": "Topic selection is required",
+      "videoRequired": "Video selection is required",
+      "topicFiltered": "Topic (filtered by curriculum above)",
+      "videoFiltered": "Video (filtered by curriculum above)",
+      "selectTopic": "Select topic",
+      "selectVideo": "Select video",
+      "noVideosFound": "No videos found for this curriculum",
+      "createVideosFirst": "No videos for this curriculum. Create videos first."
+    }
   }
 }

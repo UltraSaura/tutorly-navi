@@ -90,5 +90,22 @@
     "grading": "Évaluation de votre réponse...",
     "processing": "Traitement en cours...",
     "complete": "Terminé !"
+  },
+  "admin": {
+    "curriculum": {
+      "selectFirst": "Sélectionnez les filtres du programme pour voir les sujets",
+      "noTopicsFound": "Aucun sujet trouvé pour ce programme",
+      "createTopicsFirst": "Aucun sujet pour ce programme. Créez d'abord des sujets dans l'onglet Sujets.",
+      "curriculumRequired": "Alignement du programme requis",
+      "topicsMatchingCurriculum": "sujets correspondant à ce programme",
+      "topicRequired": "La sélection d'un sujet est obligatoire",
+      "videoRequired": "La sélection d'une vidéo est obligatoire",
+      "topicFiltered": "Sujet (filtré par programme ci-dessus)",
+      "videoFiltered": "Vidéo (filtrée par programme ci-dessus)",
+      "selectTopic": "Sélectionner un sujet",
+      "selectVideo": "Sélectionner une vidéo",
+      "noVideosFound": "Aucune vidéo trouvée pour ce programme",
+      "createVideosFirst": "Aucune vidéo pour ce programme. Créez d'abord des vidéos."
+    }
   }
 }
