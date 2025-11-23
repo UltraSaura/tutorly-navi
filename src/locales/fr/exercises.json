@@ -33,6 +33,7 @@
   "explanation": {
     "modal_title": "Afficher l'explication",
     "error": "Erreur lors du chargement de l'explication. Veuillez réessayer.",
+    "watch_video": "🎬 Voir la vidéo →",
     "fallback": { 
       "exercise": "Voici votre exercice. Reformulez-le avec vos propres mots.",
       "concept": "Concentrons-nous sur l'idée mathématique essentielle.",

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { User, Mail, Phone, Globe, GraduationCap } from 'lucide-react';
 import AccountDeletion from '@/components/profile/AccountDeletion';
+import { ProfileEditForm } from '@/components/profile/ProfileEditForm';
 
 const ProfilePage = () => {
   const { user } = useAuth();
@@ -123,6 +124,9 @@ const ProfilePage = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* School Program Settings */}
+          <ProfileEditForm />
 
           {/* Account Deletion */}
           <AccountDeletion />

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare, GraduationCap, HeadphonesIcon, History, User, Globe, LogOut, ChevronDown, Settings } from "lucide-react";
+import { MessageSquare, GraduationCap, HeadphonesIcon, History, User, Globe, LogOut, ChevronDown, Settings, BookOpen, Trophy } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
@@ -25,6 +25,16 @@ const desktopNavigation = [
     title: "nav.home", 
     url: "/chat", 
     icon: MessageSquare 
+  },
+  { 
+    title: "My Program", 
+    url: "/my-program", 
+    icon: BookOpen 
+  },
+  { 
+    title: "Dashboard", 
+    url: "/dashboard", 
+    icon: Trophy 
   },
   { 
     title: "nav.learning", 

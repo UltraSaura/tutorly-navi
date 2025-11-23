@@ -3,7 +3,7 @@ import { Calculator, CheckCircle, XCircle, Send } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Message } from '@/types/chat';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/SimpleLanguageContext';
@@ -14,6 +14,8 @@ import { extractExpressionFromText } from '@/utils/mathStepper/parser';
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { useUserContext } from '@/hooks/useUserContext';
 import { validateExampleOperationType, getOperationTypeDisplay } from '@/utils/operationTypeDetector';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AIResponseProps {
   messages: Message[];
@@ -93,6 +95,26 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const [answerSubmitted, setAnswerSubmitted] = useState(false); // Add this line
   const { t, language } = useLanguage();
   const { userContext } = useUserContext();
+  
+  // Fetch topic routing info if aiResponse has topicId
+  const { data: topicInfo, isLoading: topicInfoLoading } = useQuery({
+    queryKey: ['topic-info-for-lesson', aiResponse.topicId],
+    queryFn: async () => {
+      if (!aiResponse.topicId) return null;
+      const { data } = await supabase
+        .from('learning_topics')
+        .select(`
+          slug,
+          category:learning_categories!inner(
+            subject:learning_subjects!inner(slug)
+          )
+        `)
+        .eq('id', aiResponse.topicId)
+        .single();
+      return data;
+    },
+    enabled: !!aiResponse.topicId
+  });
   
   // Debug logging for translation issues
   console.log('[ExerciseCard] Translation Debug:', {
@@ -405,14 +427,31 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                             </div>
                           </div>
                           
-                          <div>
-                            <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <span>{t('explanation.headers.practice')}</span>
+                          {/* Watch Video Footer - Context aware */}
+                          {aiResponse.topicId && topicInfo ? (
+                            <div className="mt-4 pt-3 border-t border-border">
+                              <DialogClose asChild>
+                                <button
+                                  onClick={() => {
+                                    const subjectSlug = topicInfo.category?.subject?.slug;
+                                    const topicSlug = topicInfo.slug;
+                                    if (subjectSlug && topicSlug) {
+                                      setTimeout(() => {
+                                        window.location.href = `/learning/${subjectSlug}/${topicSlug}`;
+                                      }, 200);
+                                    }
+                                  }}
+                                  className="text-sm text-primary hover:underline flex items-center gap-1"
+                                >
+                                  {t('explanation.watch_video')}
+                                </button>
+                              </DialogClose>
                             </div>
-                            <div className="text-sm text-muted-foreground leading-relaxed">
-                              {jsonResponse.sections.practice}
+                          ) : aiResponse.topicId && topicInfoLoading ? (
+                            <div className="mt-4 pt-3 border-t border-border">
+                              <p className="text-xs text-muted-foreground">Loading...</p>
                             </div>
-                          </div>
+                          ) : null}
                         </div>
                       </div>
                 </div>
@@ -515,8 +554,34 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                         ? t('exercise.answerSubmitted') 
                         : t('common.submit')}
                     </Button>
+                    </div>
+                    
+                    {/* Watch Video Footer - Context aware */}
+                    {aiResponse.topicId && topicInfo ? (
+                      <div className="mt-4 pt-3 border-t border-border">
+                        <DialogClose asChild>
+                          <button
+                            onClick={() => {
+                              const subjectSlug = topicInfo.category?.subject?.slug;
+                              const topicSlug = topicInfo.slug;
+                              if (subjectSlug && topicSlug) {
+                                setTimeout(() => {
+                                  window.location.href = `/learning/${subjectSlug}/${topicSlug}`;
+                                }, 200);
+                              }
+                            }}
+                            className="text-sm text-primary hover:underline flex items-center gap-1"
+                          >
+                            {t('explanation.watch_video')}
+                          </button>
+                        </DialogClose>
+                      </div>
+                    ) : aiResponse.topicId && topicInfoLoading ? (
+                      <div className="mt-4 pt-3 border-t border-border">
+                        <p className="text-xs text-muted-foreground">Loading...</p>
+                      </div>
+                    ) : null}
                   </div>
-                </div>
               ) : (
                     <Badge 
                       variant="secondary" 

@@ -15,6 +15,7 @@ import { SimpleLanguageProvider } from "./context/SimpleLanguageContext";
 import MainLayout from "./components/layout/MainLayout";
 import AdminLayout from "./components/admin/AdminLayout";
 import GuardianLayout from "./components/guardian/GuardianLayout";
+import TeacherLayout from "./components/teacher/TeacherLayout";
 
 // User Pages
 import NotFound from "./pages/NotFound";
@@ -32,6 +33,10 @@ const LearningPage = lazy(() => import("./pages/learning/LearningPage"));
 const SubjectDashboardPage = lazy(() => import("./pages/learning/SubjectDashboardPage"));
 const CoursePlaylistPage = lazy(() => import("./pages/learning/CoursePlaylistPage"));
 const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
+const MyProgramPage = lazy(() => import("./pages/learning/MyProgramPage"));
+const CurriculumBrowser = lazy(() => import("./components/curriculum/CurriculumBrowser"));
+const CurriculumDebug = lazy(() => import("./pages/CurriculumDebug"));
+const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 
 // Admin Pages
 import AIModelManagement from "./components/admin/AIModelManagement";
@@ -40,6 +45,7 @@ import UserManagement from "./components/admin/UserManagement";
 import PromptManagement from "./components/admin/PromptManagement";
 import ConnectionDiagnostics from "./components/admin/ConnectionDiagnostics";
 import LearningContentManagement from "./components/admin/LearningContentManagement";
+import CurriculumManager from "./components/admin/CurriculumManager";
 
 // Auth Pages  
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -54,6 +60,14 @@ const GuardianBilling = lazy(() => import("./pages/guardian/GuardianBilling"));
 const GuardianSettings = lazy(() => import("./pages/guardian/GuardianSettings"));
 const ChildDashboard = lazy(() => import("./pages/guardian/ChildDashboard"));
 const SubjectDetail = lazy(() => import("./pages/guardian/SubjectDetail"));
+const ChildDetailPage = lazy(() => import("./pages/guardian/ChildDetailPage"));
+
+// Teacher Pages
+const TeacherHome = lazy(() => import("./pages/teacher/TeacherHome"));
+const TeacherClasses = lazy(() => import("./pages/teacher/TeacherClasses"));
+const ClassDetailPage = lazy(() => import("./pages/teacher/ClassDetailPage"));
+const TeacherStudentDetail = lazy(() => import("./pages/teacher/TeacherStudentDetail"));
+const TeacherTopicDetail = lazy(() => import("./pages/teacher/TeacherTopicDetail"));
 
 // Loading Component
 const LoadingFallback = () => <div className="flex items-center justify-center min-h-screen">
@@ -117,6 +131,15 @@ const App = () => {
                           <Route path=":subjectSlug/:topicSlug" element={<CoursePlaylistPage />} />
                         </Route>
                         <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
+                <Route path="/my-program" element={<MainLayout />}>
+                  <Route index element={<MyProgramPage />} />
+                </Route>
+                <Route path="/dashboard" element={<MainLayout />}>
+                  <Route index element={<StudentDashboard />} />
+                </Route>
+                <Route path="/curriculum" element={<MainLayout />}>
+                  <Route index element={<CurriculumBrowser />} />
+                </Route>
                         
                         {/* Management Dashboard */}
                         <Route path="/management" element={<ManagementDashboard />} />
@@ -130,6 +153,7 @@ const App = () => {
                           <Route path="users" element={<UserManagement />} />
                           <Route path="prompts" element={<PromptManagement />} />
                           <Route path="learning" element={<LearningContentManagement />} />
+                          <Route path="curriculum" element={<CurriculumManager />} />
                         </Route>
                         
           {/* Guardian Portal Routes */}
@@ -138,12 +162,28 @@ const App = () => {
             <Route path="children" element={<GuardianChildren />} />
             <Route path="child/:childId" element={<Suspense fallback={<LoadingFallback />}><ChildDashboard /></Suspense>} />
             <Route path="child/:childId/subject/:subjectId" element={<Suspense fallback={<LoadingFallback />}><SubjectDetail /></Suspense>} />
+            <Route path="child/:childId/detail" element={<Suspense fallback={<LoadingFallback />}><ChildDetailPage /></Suspense>} />
             <Route path="results" element={<Suspense fallback={<LoadingFallback />}><GuardianResults /></Suspense>} />
             <Route path="explanations" element={<Suspense fallback={<LoadingFallback />}><GuardianExplanations /></Suspense>} />
             <Route path="progress" element={<Suspense fallback={<LoadingFallback />}><GuardianProgress /></Suspense>} />
             <Route path="billing" element={<Suspense fallback={<LoadingFallback />}><GuardianBilling /></Suspense>} />
             <Route path="settings" element={<Suspense fallback={<LoadingFallback />}><GuardianSettings /></Suspense>} />
           </Route>
+
+          {/* Teacher Portal Routes */}
+          <Route path="/teacher" element={<TeacherLayout />}>
+            <Route index element={<TeacherHome />} />
+            <Route path="classes" element={<TeacherClasses />} />
+            <Route path="classes/:classId" element={<ClassDetailPage />} />
+            <Route path="students/:studentId" element={<TeacherStudentDetail />} />
+            <Route path="topics/:topicId" element={<TeacherTopicDetail />} />
+            <Route path="resources" element={<div className="p-8">Resources (Coming Soon)</div>} />
+            <Route path="analytics" element={<div className="p-8">Analytics (Coming Soon)</div>} />
+            <Route path="settings" element={<div className="p-8">Settings (Coming Soon)</div>} />
+          </Route>
+                        
+                        {/* Curriculum Debug */}
+                        <Route path="/curriculum-debug" element={<CurriculumDebug />} />
                         
                         {/* 404 Route */}
                         <Route path="*" element={<NotFound />} />

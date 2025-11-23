@@ -1,0 +1,761 @@
+{
+  "version": "1.0.0",
+  "schema": "curriculum-v1",
+  "countries": [
+    {
+      "id": "fr",
+      "name": "France",
+      "levels": [
+        {
+          "id": "ce1",
+          "label": "CE1",
+          "grade": 2,
+          "cycle": "Cycle 2",
+          "subjects": [
+            {
+              "id": "math",
+              "label": "Mathematics",
+              "labels": {
+                "fr": "Mathématiques",
+                "en": "Mathematics"
+              },
+              "color": "hsl(var(--chart-1))",
+              "icon": "Calculator",
+              "domains": [
+                {
+                  "id": "numbers-operations",
+                  "code": "NO",
+                  "labels": {
+                    "fr": "Nombres et calculs",
+                    "en": "Numbers and Operations"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "whole-numbers",
+                      "code": "NO.WN",
+                      "labels": {
+                        "fr": "Nombres entiers",
+                        "en": "Whole Numbers"
+                      },
+                      "skills": [
+                        {
+                          "id": "count-100",
+                          "code": "NO.WN.01",
+                          "labels": {
+                            "fr": "Compter jusqu'à 100",
+                            "en": "Count to 100"
+                          }
+                        },
+                        {
+                          "id": "compare-numbers",
+                          "code": "NO.WN.02",
+                          "labels": {
+                            "fr": "Comparer des nombres",
+                            "en": "Compare numbers"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "addition-subtraction",
+                      "code": "NO.AS",
+                      "labels": {
+                        "fr": "Addition et soustraction",
+                        "en": "Addition and Subtraction"
+                      },
+                      "skills": [
+                        {
+                          "id": "simple-addition",
+                          "code": "NO.AS.01",
+                          "labels": {
+                            "fr": "Addition simple",
+                            "en": "Simple addition"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "geometry",
+                  "code": "GEO",
+                  "labels": {
+                    "fr": "Géométrie",
+                    "en": "Geometry"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "shapes",
+                      "code": "GEO.SH",
+                      "labels": {
+                        "fr": "Formes géométriques",
+                        "en": "Geometric Shapes"
+                      },
+                      "skills": [
+                        {
+                          "id": "recognize-shapes",
+                          "code": "GEO.SH.01",
+                          "labels": {
+                            "fr": "Reconnaître les formes",
+                            "en": "Recognize shapes"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "history",
+              "label": "History",
+              "labels": {
+                "fr": "Histoire",
+                "en": "History"
+              },
+              "color": "hsl(var(--chart-2))",
+              "icon": "BookOpen",
+              "domains": [
+                {
+                  "id": "ancient-history",
+                  "code": "AH",
+                  "labels": {
+                    "fr": "Histoire ancienne",
+                    "en": "Ancient History"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "prehistory",
+                      "code": "AH.PRE",
+                      "labels": {
+                        "fr": "Préhistoire",
+                        "en": "Prehistory"
+                      },
+                      "skills": [
+                        {
+                          "id": "paleolithic",
+                          "code": "AH.PRE.01",
+                          "labels": {
+                            "fr": "Paléolithique",
+                            "en": "Paleolithic"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cm1",
+          "label": "CM1",
+          "grade": 4,
+          "cycle": "Cycle 3",
+          "subjects": [
+            {
+              "id": "math",
+              "label": "Mathematics",
+              "labels": {
+                "fr": "Mathématiques",
+                "en": "Mathematics"
+              },
+              "color": "hsl(var(--chart-1))",
+              "icon": "Calculator",
+              "domains": [
+                {
+                  "id": "numbers-operations",
+                  "code": "NO",
+                  "labels": {
+                    "fr": "Nombres et calculs",
+                    "en": "Numbers and Operations"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "whole-numbers",
+                      "code": "NO.WN",
+                      "labels": {
+                        "fr": "Nombres entiers",
+                        "en": "Whole Numbers"
+                      },
+                      "skills": [
+                        {
+                          "id": "count-10000",
+                          "code": "NO.WN.01",
+                          "labels": {
+                            "fr": "Compter jusqu'à 10 000",
+                            "en": "Count to 10,000"
+                          }
+                        },
+                        {
+                          "id": "compare-numbers",
+                          "code": "NO.WN.02",
+                          "labels": {
+                            "fr": "Comparer des nombres",
+                            "en": "Compare numbers"
+                          }
+                        },
+                        {
+                          "id": "multiplication-division",
+                          "code": "NO.WN.03",
+                          "labels": {
+                            "fr": "Multiplication et division",
+                            "en": "Multiplication and division"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "fractions",
+                      "code": "NO.FR",
+                      "labels": {
+                        "fr": "Fractions",
+                        "en": "Fractions"
+                      },
+                      "skills": [
+                        {
+                          "id": "understand-half",
+                          "code": "NO.FR.01",
+                          "labels": {
+                            "fr": "Comprendre 1/2, 1/4",
+                            "en": "Understand 1/2, 1/4"
+                          }
+                        },
+                        {
+                          "id": "simple-fractions",
+                          "code": "NO.FR.02",
+                          "labels": {
+                            "fr": "Fractions simples",
+                            "en": "Simple fractions"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "decimals",
+                      "code": "NO.DEC",
+                      "labels": {
+                        "fr": "Nombres décimaux",
+                        "en": "Decimals"
+                      },
+                      "skills": [
+                        {
+                          "id": "tenths-hundredths",
+                          "code": "NO.DEC.01",
+                          "labels": {
+                            "fr": "Dixièmes et centièmes",
+                            "en": "Tenths and hundredths"
+                          }
+                        },
+                        {
+                          "id": "ordering-decimals",
+                          "code": "NO.DEC.02",
+                          "labels": {
+                            "fr": "Ordonner les décimaux",
+                            "en": "Ordering decimals"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "geometry",
+                  "code": "GEO",
+                  "labels": {
+                    "fr": "Géométrie",
+                    "en": "Geometry"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "shapes-properties",
+                      "code": "GEO.SP",
+                      "labels": {
+                        "fr": "Propriétés des formes",
+                        "en": "Shape Properties"
+                      },
+                      "skills": [
+                        {
+                          "id": "polygons",
+                          "code": "GEO.SP.01",
+                          "labels": {
+                            "fr": "Polygones",
+                            "en": "Polygons"
+                          }
+                        },
+                        {
+                          "id": "symmetry",
+                          "code": "GEO.SP.02",
+                          "labels": {
+                            "fr": "Symétrie",
+                            "en": "Symmetry"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "measurement",
+                  "code": "MEA",
+                  "labels": {
+                    "fr": "Grandeurs et mesures",
+                    "en": "Measurement"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "length-mass",
+                      "code": "MEA.LM",
+                      "labels": {
+                        "fr": "Longueurs et masses",
+                        "en": "Length and Mass"
+                      },
+                      "skills": [
+                        {
+                          "id": "units-conversion",
+                          "code": "MEA.LM.01",
+                          "labels": {
+                            "fr": "Conversion d'unités",
+                            "en": "Unit conversion"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "history",
+              "label": "History",
+              "labels": {
+                "fr": "Histoire",
+                "en": "History"
+              },
+              "color": "hsl(var(--chart-2))",
+              "icon": "BookOpen",
+              "domains": [
+                {
+                  "id": "ancient-history",
+                  "code": "AH",
+                  "labels": {
+                    "fr": "Histoire ancienne",
+                    "en": "Ancient History"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "prehistory",
+                      "code": "AH.PRE",
+                      "labels": {
+                        "fr": "Préhistoire",
+                        "en": "Prehistory"
+                      },
+                      "skills": [
+                        {
+                          "id": "paleolithic",
+                          "code": "AH.PRE.01",
+                          "labels": {
+                            "fr": "Paléolithique",
+                            "en": "Paleolithic"
+                          }
+                        },
+                        {
+                          "id": "neolithic",
+                          "code": "AH.PRE.02",
+                          "labels": {
+                            "fr": "Néolithique",
+                            "en": "Neolithic"
+                          }
+                        },
+                        {
+                          "id": "cave-paintings",
+                          "code": "AH.PRE.03",
+                          "labels": {
+                            "fr": "Peintures rupestres",
+                            "en": "Cave paintings"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "antiquity",
+                      "code": "AH.ANT",
+                      "labels": {
+                        "fr": "Antiquité",
+                        "en": "Antiquity"
+                      },
+                      "skills": [
+                        {
+                          "id": "ancient-greece",
+                          "code": "AH.ANT.01",
+                          "labels": {
+                            "fr": "Grèce antique",
+                            "en": "Ancient Greece"
+                          }
+                        },
+                        {
+                          "id": "roman-gaul",
+                          "code": "AH.ANT.02",
+                          "labels": {
+                            "fr": "Gaule romaine",
+                            "en": "Roman Gaul"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "medieval-history",
+                  "code": "MH",
+                  "labels": {
+                    "fr": "Histoire médiévale",
+                    "en": "Medieval History"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "middle-ages",
+                      "code": "MH.MA",
+                      "labels": {
+                        "fr": "Moyen Âge",
+                        "en": "Middle Ages"
+                      },
+                      "skills": [
+                        {
+                          "id": "feudalism",
+                          "code": "MH.MA.01",
+                          "labels": {
+                            "fr": "Féodalité",
+                            "en": "Feudalism"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cm1",
+          "label": "CM1",
+          "grade": 4,
+          "cycle": "Cycle 3",
+          "subjects": [
+            {
+              "id": "math",
+              "label": "Mathematics",
+              "labels": {
+                "fr": "Mathématiques",
+                "en": "Mathematics"
+              },
+              "color": "#2563eb",
+              "domains": [
+                {
+                  "id": "numbers",
+                  "code": "M-CM1-01",
+                  "labels": {
+                    "fr": "Nombres et calculs",
+                    "en": "Numbers & calculation"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "whole_numbers",
+                      "code": "M-CM1-01-01",
+                      "labels": {
+                        "fr": "Nombres entiers",
+                        "en": "Whole numbers"
+                      },
+                      "skills": []
+                    },
+                    {
+                      "id": "fractions",
+                      "code": "M-CM1-01-02",
+                      "labels": {
+                        "fr": "Fractions",
+                        "en": "Fractions"
+                      },
+                      "skills": []
+                    },
+                    {
+                      "id": "decimals",
+                      "code": "M-CM1-01-03",
+                      "labels": {
+                        "fr": "Nombres décimaux",
+                        "en": "Decimals"
+                      },
+                      "skills": []
+                    }
+                  ]
+                },
+                {
+                  "id": "geometry",
+                  "code": "M-CM1-02",
+                  "labels": {
+                    "fr": "Géométrie",
+                    "en": "Geometry"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "angles",
+                      "code": "M-CM1-02-01",
+                      "labels": {
+                        "fr": "Angles",
+                        "en": "Angles"
+                      },
+                      "skills": []
+                    }
+                  ]
+                },
+                {
+                  "id": "data",
+                  "code": "M-CM1-03",
+                  "labels": {
+                    "fr": "Organisation et gestion de données",
+                    "en": "Data handling"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "tables_graphs",
+                      "code": "M-CM1-03-01",
+                      "labels": {
+                        "fr": "Tableaux et graphiques",
+                        "en": "Tables and graphs"
+                      },
+                      "skills": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "history",
+              "label": "History",
+              "labels": {
+                "fr": "Histoire",
+                "en": "History"
+              },
+              "color": "#16a34a",
+              "domains": [
+                {
+                  "id": "french_revolution",
+                  "code": "H-CM1-01",
+                  "labels": {
+                    "fr": "Révolution française",
+                    "en": "French Revolution"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "causes",
+                      "code": "H-CM1-01-01",
+                      "labels": {
+                        "fr": "Causes",
+                        "en": "Causes"
+                      },
+                      "skills": []
+                    },
+                    {
+                      "id": "key_events",
+                      "code": "H-CM1-01-02",
+                      "labels": {
+                        "fr": "Événements clés",
+                        "en": "Key events"
+                      },
+                      "skills": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cm2",
+          "label": "CM2",
+          "grade": 5,
+          "cycle": "Cycle 3",
+          "subjects": [
+            {
+              "id": "math",
+              "label": "Mathematics",
+              "labels": {
+                "fr": "Mathématiques",
+                "en": "Mathematics"
+              },
+              "color": "hsl(var(--chart-1))",
+              "icon": "Calculator",
+              "domains": [
+                {
+                  "id": "numbers-operations",
+                  "code": "NO",
+                  "labels": {
+                    "fr": "Nombres et calculs",
+                    "en": "Numbers and Operations"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "large-numbers",
+                      "code": "NO.LN",
+                      "labels": {
+                        "fr": "Grands nombres",
+                        "en": "Large Numbers"
+                      },
+                      "skills": [
+                        {
+                          "id": "millions",
+                          "code": "NO.LN.01",
+                          "labels": {
+                            "fr": "Millions",
+                            "en": "Millions"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "history",
+              "label": "History",
+              "labels": {
+                "fr": "Histoire",
+                "en": "History"
+              },
+              "color": "hsl(var(--chart-2))",
+              "icon": "BookOpen",
+              "domains": [
+                {
+                  "id": "modern-history",
+                  "code": "MOH",
+                  "labels": {
+                    "fr": "Histoire moderne",
+                    "en": "Modern History"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "french-revolution",
+                      "code": "MOH.FR",
+                      "labels": {
+                        "fr": "Révolution française",
+                        "en": "French Revolution"
+                      },
+                      "skills": [
+                        {
+                          "id": "1789-events",
+                          "code": "MOH.FR.01",
+                          "labels": {
+                            "fr": "Événements de 1789",
+                            "en": "1789 Events"
+                          }
+                        },
+                        {
+                          "id": "declaration-rights",
+                          "code": "MOH.FR.02",
+                          "labels": {
+                            "fr": "Déclaration des droits",
+                            "en": "Declaration of Rights"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "6e",
+          "label": "6ème",
+          "grade": 6,
+          "cycle": "Cycle 3",
+          "subjects": [
+            {
+              "id": "math",
+              "label": "Mathematics",
+              "labels": {
+                "fr": "Mathématiques",
+                "en": "Mathematics"
+              },
+              "color": "hsl(var(--chart-1))",
+              "icon": "Calculator",
+              "domains": [
+                {
+                  "id": "numbers-operations",
+                  "code": "NO",
+                  "labels": {
+                    "fr": "Nombres et calculs",
+                    "en": "Numbers and Operations"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "fractions",
+                      "code": "NO.FR",
+                      "labels": {
+                        "fr": "Fractions",
+                        "en": "Fractions"
+                      },
+                      "skills": [
+                        {
+                          "id": "operations-fractions",
+                          "code": "NO.FR.01",
+                          "labels": {
+                            "fr": "Opérations sur les fractions",
+                            "en": "Operations with fractions"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "history",
+              "label": "History",
+              "labels": {
+                "fr": "Histoire",
+                "en": "History"
+              },
+              "color": "hsl(var(--chart-2))",
+              "icon": "BookOpen",
+              "domains": [
+                {
+                  "id": "ancient-history",
+                  "code": "AH",
+                  "labels": {
+                    "fr": "Histoire ancienne",
+                    "en": "Ancient History"
+                  },
+                  "subdomains": [
+                    {
+                      "id": "ancient-civilizations",
+                      "code": "AH.CIV",
+                      "labels": {
+                        "fr": "Civilisations anciennes",
+                        "en": "Ancient Civilizations"
+                      },
+                      "skills": [
+                        {
+                          "id": "egypt",
+                          "code": "AH.CIV.01",
+                          "labels": {
+                            "fr": "Égypte ancienne",
+                            "en": "Ancient Egypt"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

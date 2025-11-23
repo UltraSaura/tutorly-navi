@@ -8,6 +8,8 @@ import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
 import { useUserContext } from '@/hooks/useUserContext';
 import { extractExpressionFromText } from '@/utils/mathStepper/parser';
 import { Badge } from '@/components/ui/badge';
+import { useQuery } from '@tanstack/react-query';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 function Section({ title, text }: { title: string; text: string }) {
   const resolveText = useResolveText();
@@ -39,11 +41,68 @@ function Section({ title, text }: { title: string; text: string }) {
   );
 }
 
-export function TwoCards({ s }: { s: TeachingSections }) {
+export function TwoCards({ 
+  s, 
+  topicId, 
+  onClose,
+  subjectSlug,
+  topicSlug 
+}: { 
+  s: TeachingSections; 
+  topicId?: string; 
+  onClose?: () => void;
+  subjectSlug?: string;
+  topicSlug?: string;
+}) {
   console.log('[TwoCards] Component rendered with sections:', s);
   const resolveText = useResolveText();
   const [isGuardian, setIsGuardian] = useState(false); // NEW
   const { userContext } = useUserContext(); // NEW: Get user context for grade level
+  const { t } = useLanguage();
+  
+  // Fetch topic routing info if we have topicId but not slugs
+  const { data: topicData, isLoading: topicDataLoading } = useQuery({
+    queryKey: ['topic-for-lesson-link', topicId],
+    queryFn: async () => {
+      if (!topicId) return null;
+      const { data } = await supabase
+        .from('learning_topics')
+        .select(`
+          slug,
+          lesson_content,
+          category:learning_categories!inner(
+            subject:learning_subjects!inner(slug)
+          )
+        `)
+        .eq('id', topicId)
+        .single();
+      return data;
+    },
+    enabled: !!topicId && (!subjectSlug || !topicSlug)
+  });
+  
+  // Determine if we can show the lesson link
+  const canShowLessonLink = topicId && (
+    (subjectSlug && topicSlug) || 
+    (topicData?.slug && topicData?.category?.subject?.slug)
+  );
+  
+  const finalSubjectSlug = subjectSlug || topicData?.category?.subject?.slug;
+  const finalTopicSlug = topicSlug || topicData?.slug;
+  const hasLessonContent = !!(topicData?.lesson_content || subjectSlug);
+  
+  // Handle view lesson - navigate to topic page (no scroll)
+  const handleViewLesson = () => {
+    if (!finalSubjectSlug || !finalTopicSlug) return;
+    
+    // Close modal first
+    onClose?.();
+    
+    // Navigate to topic page (no hash, user lands at top)
+    setTimeout(() => {
+      window.location.href = `/learning/${finalSubjectSlug}/${finalTopicSlug}`;
+    }, 200);
+  };
   
   // NEW: Check if user is guardian
   useEffect(() => {
@@ -124,7 +183,19 @@ export function TwoCards({ s }: { s: TeachingSections }) {
           <Section title="🔍 Example" text={s.example} />
           <Section title="⚠️ Pitfall" text={s.pitfall} />
           <Section title="🎯 Check yourself" text={s.check} />
-          <Section title="📈 Practice Tip" text={s.practice} />
+          
+          {/* Watch Video link - only show if we have routing info */}
+          {canShowLessonLink && (
+            <div className="mt-4 pt-3 border-t border-border">
+              <button
+                type="button"
+                onClick={handleViewLesson}
+                className="text-sm text-primary hover:underline flex items-center gap-1"
+              >
+                {t('explanation.watch_video')}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
