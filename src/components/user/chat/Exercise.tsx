@@ -53,6 +53,7 @@ const Exercise = ({
   const [answerInput, setAnswerInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMathMode, setIsMathMode] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   
   // Process math content for display
   const processedQuestion = processMathContentForDisplay(exercise.question);
@@ -93,6 +94,7 @@ const Exercise = ({
     try {
       await onSubmitAnswer(exercise.id, answerInput.trim());
       setAnswerInput('');
+      setIsRetrying(false);
       toast.success(t('exercise.answerSubmitted'));
     } catch (error) {
       console.error('Error submitting answer:', error);
@@ -169,7 +171,7 @@ const Exercise = ({
           </div>
         </div>
         
-        {hasAnswer ? (
+        {hasAnswer && !isRetrying ? (
           <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 py-[10px]">
             <p className="text-sm text-gray-700 dark:text-gray-300">
               {processedUserAnswer?.isMath ? (
@@ -182,12 +184,19 @@ const Exercise = ({
               )}
             </p>
           </div>
-        ) : (
+        ) : (!hasAnswer || isRetrying) ? (
           <div className="mt-3 space-y-3">
             <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50">
-              <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                {t('exercise.pleaseProvideAnswer')}
-              </p>
+              {isRetrying && (
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-3 font-medium">
+                  {t('exercise.tryAgain')} - {t('exercise.pleaseProvideAnswer')}
+                </p>
+              )}
+              {!isRetrying && (
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                  {t('exercise.pleaseProvideAnswer')}
+                </p>
+              )}
               <div className="flex gap-2">
                 {isMathMode ? (
                   <MathLiveInput
@@ -221,6 +230,20 @@ const Exercise = ({
                   />
                 )}
                 
+                {isRetrying && (
+                  <Button
+                    onClick={() => {
+                      setIsRetrying(false);
+                      setAnswerInput('');
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0"
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                )}
+                
                 <Button
                   onClick={handleSubmitAnswer}
                   disabled={isSubmitting || !answerInput.trim()}
@@ -238,6 +261,20 @@ const Exercise = ({
                 </Button>
               </div>
             </div>
+          </div>
+        ) : null}
+        
+        {hasAnswer && exercise.isCorrect === false && !isRetrying && (
+          <div className="mt-4 flex justify-start">
+            <Button 
+              onClick={() => setIsRetrying(true)}
+              variant="outline"
+              size="sm"
+              className="text-amber-600 border-amber-300 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950/20"
+            >
+              <AlertCircle className="w-4 h-4 mr-2" />
+              {t('exercise.tryAgain')}
+            </Button>
           </div>
         )}
         
