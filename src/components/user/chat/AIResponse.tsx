@@ -90,7 +90,8 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const content = aiResponse.content;
   const [userAnswerInput, setUserAnswerInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [answerSubmitted, setAnswerSubmitted] = useState(false); // Add this line
+  const [answerSubmitted, setAnswerSubmitted] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const { t, language } = useLanguage();
   const { userContext } = useUserContext();
   
@@ -105,7 +106,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   });
   
   // Check if this is a question without an answer - now using enhanced detection
-  const hasNoAnswer = !hasAnswer || !answer;
+  const hasNoAnswer = isRetrying || !hasAnswer || !answer;
   
   const contentTrimmed = content.trim();
   const firstLine = contentTrimmed.split('\n')[0];
@@ -136,8 +137,9 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
       console.log('[ExerciseCard] Calling onSubmitAnswer with:', { question, answer: userAnswerInput.trim() });
       await onSubmitAnswer(question, userAnswerInput.trim());
       console.log('[ExerciseCard] onSubmitAnswer completed successfully');
-      setUserAnswerInput(''); // Clear input after submission
-      setAnswerSubmitted(true); // Add this line to mark as submitted
+      setUserAnswerInput('');
+      setAnswerSubmitted(true);
+      setIsRetrying(false);
     } catch (error) {
       console.error('[ExerciseCard] Error in handleSubmitAnswer:', error);
       setAnswerSubmitted(false); // Add this line to reset on error
@@ -420,12 +422,13 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                 </Dialog>
                 
                 {/* Add Try Again button for incorrect answers */}
-                {isCorrect === false && (
+                {isCorrect === false && !isRetrying && (
                   <Button
                     variant="default"
                     size="sm"
                     className="text-xs px-2 py-0.5 h-6"
                     onClick={() => {
+                      setIsRetrying(true);
                       setUserAnswerInput('');
                     }}
                   >
