@@ -431,9 +431,10 @@ const VideoManager = () => {
                 <p className="text-xs text-muted-foreground mb-2">
                   Select school levels this video is suitable for. Leave empty to show for all levels.
                 </p>
-                <AgeBasedSchoolLevelSelector
+              <AgeBasedSchoolLevelSelector
                   selectedLevels={formData.school_levels}
                   onLevelsChange={(levels) => setFormData({...formData, school_levels: levels})}
+                  selectedLanguage={formData.language}
                 />
               </div>
               <div>
