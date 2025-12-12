@@ -153,18 +153,24 @@ export function isContentSuitableForUser(
 }
 
 /**
- * Filters an array of content based on user's age and level
+ * Filters an array of content based on user's age, level, and language
  */
 export function filterContentByUserLevel<T extends { 
   min_age?: number | null; 
   max_age?: number | null; 
   school_levels?: string[] | null;
+  language?: string | null;
 }>(
   content: T[],
   userLevel: string | null,
-  userAge?: number | null
+  userAge?: number | null,
+  userLanguage?: string | null
 ): T[] {
-  return content.filter(item => 
-    isContentSuitableForUser(item, userLevel, userAge)
-  );
+  return content.filter(item => {
+    // Check language first - if content has language set and it doesn't match user's, filter it out
+    if (userLanguage && item.language && item.language !== userLanguage) {
+      return false;
+    }
+    return isContentSuitableForUser(item, userLevel, userAge);
+  });
 }
