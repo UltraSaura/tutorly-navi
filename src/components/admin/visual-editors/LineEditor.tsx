@@ -455,7 +455,7 @@ export default function LineEditor({
           <input
             type="checkbox"
             checked={!!state.multi}
-            onChange={(e) => setState({ ...state, multi: e.target.checked })}
+            onChange={(e) => setState({ ...state, multi: e.target.checked ? true : undefined })}
           />
         </div>
 

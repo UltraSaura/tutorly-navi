@@ -103,7 +103,7 @@ export default function ShapeEditor({
     if (!selectedId) return;
     const shape = state.shapes.find((s) => s.id === selectedId);
     if (!shape || shape.type !== "polygon" || !shape.polygon) return;
-    const nextPoints = addPolygonSide(shape.polygon.points);
+    const nextPoints = addPolygonSide(shape.polygon.points) as [number, number][];
     setShape(shape.id, (current) =>
       current.type === "polygon" && current.polygon ? { ...current, polygon: { points: nextPoints } } : current
     );
@@ -114,7 +114,7 @@ export default function ShapeEditor({
     const shape = state.shapes.find((s) => s.id === selectedId);
     if (!shape || shape.type !== "polygon" || !shape.polygon) return;
     if (shape.polygon.points.length <= 4) return;
-    const trimmed = removePolygonSide(shape.polygon.points);
+    const trimmed = removePolygonSide(shape.polygon.points) as [number, number][];
     setShape(shape.id, (current) =>
       current.type === "polygon" && current.polygon ? { ...current, polygon: { points: trimmed } } : current
     );
@@ -231,7 +231,7 @@ export default function ShapeEditor({
         updateShape(drag.id, (shape) => {
           if (shape.type === "triangle" && shape.triangle) {
             const moved = drag.origin.map(([px, py]) => clampPoint(px + dx, py + dy));
-            const flattened = flattenPointPairs(moved.map(({ x, y }) => [x, y] as [number, number]));
+            const flattened = flattenPointPairs(moved.map(({ x, y }) => [x, y] as [number, number])) as [number, number, number, number, number, number];
             return { ...shape, triangle: { points: flattened } };
           }
           if (shape.type === "polygon" && shape.polygon) {
@@ -638,7 +638,7 @@ function moveVertex(
   point: { x: number; y: number }
 ) {
   if (shape.type === "triangle" && shape.triangle) {
-    const points = [...shape.triangle.points];
+    const points = [...shape.triangle.points] as [number, number, number, number, number, number];
     const clamped = clampPoint(point.x, point.y);
     points[vertexIndex * 2] = clamped.x;
     points[vertexIndex * 2 + 1] = clamped.y;
