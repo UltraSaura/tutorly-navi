@@ -89,6 +89,8 @@ export interface Video {
   school_levels?: string[] | null;
   // Tags for homework matching
   tags?: string[] | null;
+  // Language
+  language?: string;
   // User progress
   progress_percentage?: number;
   last_watched_position_seconds?: number;
@@ -113,6 +115,8 @@ export interface Quiz {
   min_age?: number | null;
   max_age?: number | null;
   school_levels?: string[] | null;
+  // Language
+  language?: string;
 }
 
 export interface UserProgress {

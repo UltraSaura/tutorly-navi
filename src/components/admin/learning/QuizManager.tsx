@@ -23,7 +23,7 @@ const QuizManager = () => {
     levelCode: '',
     subjectId: '',
   });
-  
+  const [selectedLanguageFilter, setSelectedLanguageFilter] = useState<string>('all');
   const { data: videos = [], isLoading: videosLoading, error: videosError } = useLearningVideos();
   const { data: quizzes = [], isLoading: quizzesLoading, error: quizzesError } = useLearningQuizzes(selectedVideoId || undefined);
   const { data: availableTopics = [], isLoading: availableTopicsLoading } = useProgramTopicsForAdmin({
@@ -40,6 +40,11 @@ const QuizManager = () => {
     if (!quizCurriculum.subjectId) return true; // Show all if no filter
     return availableTopics.some(topic => topic.id === video.topic_id);
   });
+
+  // Filter quizzes by language
+  const filteredQuizzes = selectedLanguageFilter === 'all' 
+    ? quizzes 
+    : quizzes.filter(q => (q.language || 'en') === selectedLanguageFilter);
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
@@ -53,6 +58,7 @@ const QuizManager = () => {
     timestamp_seconds: 0,
     xp_reward: 0,
     order_index: 0,
+    language: 'en',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,6 +96,7 @@ const QuizManager = () => {
       timestamp_seconds: quiz.timestamp_seconds,
       xp_reward: quiz.xp_reward,
       order_index: quiz.order_index,
+      language: quiz.language || 'en',
     });
     setDialogOpen(true);
   };
@@ -112,6 +119,7 @@ const QuizManager = () => {
       timestamp_seconds: 0,
       xp_reward: 0,
       order_index: 0,
+      language: 'en',
     });
   };
 
@@ -220,6 +228,19 @@ const QuizManager = () => {
                 </div>
               </div>
               <div>
+                <Label htmlFor="language">Language</Label>
+                <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">🇺🇸 English</SelectItem>
+                    <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                    <SelectItem value="ar">🇸🇦 العربية</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Label htmlFor="question">Question</Label>
                 <Textarea
                   id="question"
@@ -325,18 +346,34 @@ const QuizManager = () => {
         </Dialog>
       </div>
 
-      <div className="mb-4">
-        <Label>Select Video</Label>
-        <Select value={selectedVideoId} onValueChange={setSelectedVideoId}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a video to view quizzes" />
-          </SelectTrigger>
-          <SelectContent>
-            {videos.map((video) => (
-              <SelectItem key={video.id} value={video.id}>{video.title}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <Label>Select Video</Label>
+          <Select value={selectedVideoId} onValueChange={setSelectedVideoId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a video to view quizzes" />
+            </SelectTrigger>
+            <SelectContent>
+              {videos.map((video) => (
+                <SelectItem key={video.id} value={video.id}>{video.title}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Filter by Language</Label>
+          <Select value={selectedLanguageFilter} onValueChange={setSelectedLanguageFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="All languages" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Languages</SelectItem>
+              <SelectItem value="en">🇺🇸 English</SelectItem>
+              <SelectItem value="fr">🇫🇷 Français</SelectItem>
+              <SelectItem value="ar">🇸🇦 العربية</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {!selectedVideoId ? (
@@ -352,6 +389,7 @@ const QuizManager = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Question</TableHead>
+              <TableHead>Language</TableHead>
               <TableHead>Video</TableHead>
               <TableHead>Timestamp</TableHead>
               <TableHead>XP</TableHead>
@@ -360,16 +398,19 @@ const QuizManager = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {quizzes.length === 0 ? (
+            {filteredQuizzes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
                   No quizzes found for this video
                 </TableCell>
               </TableRow>
             ) : (
-              quizzes.map((quiz) => (
+              filteredQuizzes.map((quiz) => (
             <TableRow key={quiz.id}>
               <TableCell className="font-medium max-w-md truncate">{quiz.question}</TableCell>
+              <TableCell>
+                {quiz.language === 'fr' ? '🇫🇷' : quiz.language === 'ar' ? '🇸🇦' : '🇺🇸'}
+              </TableCell>
               <TableCell>{videos.find(v => v.id === quiz.video_id)?.title}</TableCell>
               <TableCell>{quiz.timestamp_seconds}s</TableCell>
               <TableCell>{quiz.xp_reward} XP</TableCell>

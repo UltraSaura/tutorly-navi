@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { extractKeywordsFromHomework, scoreVideoMatch } from '@/utils/homeworkKeywordExtractor';
 import { filterContentByUserLevel } from '@/utils/schoolLevelFilter';
 import { useUserSchoolLevel } from './useUserSchoolLevel';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 import type { Video } from '@/types/learning';
 
 interface SuggestedVideo extends Video {
@@ -11,9 +12,10 @@ interface SuggestedVideo extends Video {
 
 export function useSuggestedVideos(homeworkContent: string | null, limit: number = 3) {
   const { data: userLevelData } = useUserSchoolLevel();
+  const { language: userLanguage } = useLanguage();
   
   return useQuery({
-    queryKey: ['suggested-videos', homeworkContent, userLevelData?.level],
+    queryKey: ['suggested-videos', homeworkContent, userLevelData?.level, userLanguage],
     queryFn: async (): Promise<SuggestedVideo[]> => {
       if (!homeworkContent || homeworkContent.trim() === '') {
         return [];
@@ -37,11 +39,12 @@ export function useSuggestedVideos(homeworkContent: string | null, limit: number
         return [];
       }
       
-      // Filter by user's age/level
+      // Filter by user's age/level and language
       const suitableVideos = filterContentByUserLevel(
         allVideos as any,
         userLevelData?.level || null,
-        userLevelData?.age || null
+        userLevelData?.age || null,
+        userLanguage
       ) as Video[];
       
       // Score and rank videos
