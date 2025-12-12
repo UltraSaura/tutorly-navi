@@ -182,6 +182,8 @@ export type Database = {
           contact_email: string | null
           created_at: string | null
           curriculum: string | null
+          curriculum_country_code: string | null
+          curriculum_level_code: string | null
           grade: string | null
           id: string
           settings_json: Json | null
@@ -193,6 +195,8 @@ export type Database = {
           contact_email?: string | null
           created_at?: string | null
           curriculum?: string | null
+          curriculum_country_code?: string | null
+          curriculum_level_code?: string | null
           grade?: string | null
           id?: string
           settings_json?: Json | null
@@ -204,6 +208,8 @@ export type Database = {
           contact_email?: string | null
           created_at?: string | null
           curriculum?: string | null
+          curriculum_country_code?: string | null
+          curriculum_level_code?: string | null
           grade?: string | null
           id?: string
           settings_json?: Json | null
@@ -217,6 +223,86 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_student_links: {
+        Row: {
+          class_id: string
+          enrolled_at: string
+          id: string
+          student_id: string
+        }
+        Insert: {
+          class_id: string
+          enrolled_at?: string
+          id?: string
+          student_id: string
+        }
+        Update: {
+          class_id?: string
+          enrolled_at?: string
+          id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_student_links_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_student_links_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          id: string
+          level_code: string | null
+          name: string
+          school_year: string | null
+          subject_id: string | null
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          level_code?: string | null
+          name: string
+          school_year?: string | null
+          subject_id?: string | null
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          level_code?: string | null
+          name?: string
+          school_year?: string | null
+          subject_id?: string | null
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
@@ -241,6 +327,71 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      curriculum_task_attempts: {
+        Row: {
+          answer_data: Json | null
+          child_id: string
+          created_at: string | null
+          id: string
+          is_correct: boolean | null
+          objective_id: string | null
+          success_criterion_id: string | null
+          task_id: string
+          time_spent_seconds: number | null
+        }
+        Insert: {
+          answer_data?: Json | null
+          child_id: string
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          objective_id?: string | null
+          success_criterion_id?: string | null
+          task_id: string
+          time_spent_seconds?: number | null
+        }
+        Update: {
+          answer_data?: Json | null
+          child_id?: string
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          objective_id?: string | null
+          success_criterion_id?: string | null
+          task_id?: string
+          time_spent_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_task_attempts_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_task_attempts_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "objectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_task_attempts_success_criterion_id_fkey"
+            columns: ["success_criterion_id"]
+            isOneToOne: false
+            referencedRelation: "success_criteria"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_task_attempts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       delegation_tokens: {
         Row: {
@@ -289,6 +440,18 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      domains: {
+        Row: {
+          domain: string
+        }
+        Insert: {
+          domain: string
+        }
+        Update: {
+          domain?: string
+        }
+        Relationships: []
       }
       exercise_attempts: {
         Row: {
@@ -391,6 +554,7 @@ export type Database = {
           show_correct_answer_to_child: boolean | null
           subject_id: string | null
           time_spent_seconds: number | null
+          topic_id: string | null
           updated_at: string
           user_answer: string | null
           user_id: string
@@ -405,6 +569,7 @@ export type Database = {
           show_correct_answer_to_child?: boolean | null
           subject_id?: string | null
           time_spent_seconds?: number | null
+          topic_id?: string | null
           updated_at?: string
           user_answer?: string | null
           user_id: string
@@ -419,11 +584,20 @@ export type Database = {
           show_correct_answer_to_child?: boolean | null
           subject_id?: string | null
           time_spent_seconds?: number | null
+          topic_id?: string | null
           updated_at?: string
           user_answer?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "exercise_history_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "learning_topics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       explanations_cache: {
         Row: {
@@ -627,10 +801,16 @@ export type Database = {
         Row: {
           category_id: string
           created_at: string
+          curriculum_country_code: string | null
+          curriculum_domain_id: string | null
+          curriculum_level_code: string | null
+          curriculum_subdomain_id: string | null
+          curriculum_subject_id: string | null
           description: string | null
           estimated_duration_minutes: number
           id: string
           is_active: boolean
+          lesson_content: Json | null
           name: string
           order_index: number
           quiz_count: number
@@ -641,10 +821,16 @@ export type Database = {
         Insert: {
           category_id: string
           created_at?: string
+          curriculum_country_code?: string | null
+          curriculum_domain_id?: string | null
+          curriculum_level_code?: string | null
+          curriculum_subdomain_id?: string | null
+          curriculum_subject_id?: string | null
           description?: string | null
           estimated_duration_minutes?: number
           id?: string
           is_active?: boolean
+          lesson_content?: Json | null
           name: string
           order_index?: number
           quiz_count?: number
@@ -655,10 +841,16 @@ export type Database = {
         Update: {
           category_id?: string
           created_at?: string
+          curriculum_country_code?: string | null
+          curriculum_domain_id?: string | null
+          curriculum_level_code?: string | null
+          curriculum_subdomain_id?: string | null
+          curriculum_subject_id?: string | null
           description?: string | null
           estimated_duration_minutes?: number
           id?: string
           is_active?: boolean
+          lesson_content?: Json | null
           name?: string
           order_index?: number
           quiz_count?: number
@@ -683,11 +875,13 @@ export type Database = {
           duration_minutes: number
           id: string
           is_active: boolean
+          language: string | null
           max_age: number | null
           min_age: number | null
           order_index: number
           school_levels: string[] | null
           subject_id: string | null
+          tags: string[] | null
           thumbnail_url: string | null
           title: string
           topic_id: string
@@ -702,11 +896,13 @@ export type Database = {
           duration_minutes?: number
           id?: string
           is_active?: boolean
+          language?: string | null
           max_age?: number | null
           min_age?: number | null
           order_index?: number
           school_levels?: string[] | null
           subject_id?: string | null
+          tags?: string[] | null
           thumbnail_url?: string | null
           title: string
           topic_id: string
@@ -721,11 +917,13 @@ export type Database = {
           duration_minutes?: number
           id?: string
           is_active?: boolean
+          language?: string | null
           max_age?: number | null
           min_age?: number | null
           order_index?: number
           school_levels?: string[] | null
           subject_id?: string | null
+          tags?: string[] | null
           thumbnail_url?: string | null
           title?: string
           topic_id?: string
@@ -748,6 +946,221 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "learning_topics"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_sessions: {
+        Row: {
+          child_id: string
+          completed_at: string | null
+          completion_percentage: number | null
+          created_at: string | null
+          duration_minutes: number | null
+          id: string
+          lesson_id: string | null
+          notes: string | null
+          objective_ids: Json | null
+          started_at: string | null
+          success_criterion_ids: Json | null
+        }
+        Insert: {
+          child_id: string
+          completed_at?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          lesson_id?: string | null
+          notes?: string | null
+          objective_ids?: Json | null
+          started_at?: string | null
+          success_criterion_ids?: Json | null
+        }
+        Update: {
+          child_id?: string
+          completed_at?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          lesson_id?: string | null
+          notes?: string | null
+          objective_ids?: Json | null
+          started_at?: string | null
+          success_criterion_ids?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_sessions_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_sessions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lessons: {
+        Row: {
+          id: string
+          materials: string | null
+          misconceptions: string | null
+          objective_ids: Json
+          student_worksheet: string | null
+          success_criterion_ids: Json
+          teacher_talk: string | null
+          title: string
+          unit_id: string | null
+        }
+        Insert: {
+          id: string
+          materials?: string | null
+          misconceptions?: string | null
+          objective_ids?: Json
+          student_worksheet?: string | null
+          success_criterion_ids?: Json
+          teacher_talk?: string | null
+          title: string
+          unit_id?: string | null
+        }
+        Update: {
+          id?: string
+          materials?: string | null
+          misconceptions?: string | null
+          objective_ids?: Json
+          student_worksheet?: string | null
+          success_criterion_ids?: Json
+          teacher_talk?: string | null
+          title?: string
+          unit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      objective_mastery: {
+        Row: {
+          attempts_count: number
+          country_code: string | null
+          created_at: string
+          id: string
+          last_attempt_at: string | null
+          level_code: string | null
+          objective_id: string
+          score_percent: number
+          status: string
+          student_id: string
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          attempts_count?: number
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          level_code?: string | null
+          objective_id: string
+          score_percent?: number
+          status?: string
+          student_id: string
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          attempts_count?: number
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          level_code?: string | null
+          objective_id?: string
+          score_percent?: number
+          status?: string
+          student_id?: string
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "objective_mastery_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "objectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "objective_mastery_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "objective_mastery_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "learning_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      objectives: {
+        Row: {
+          domain: string | null
+          domain_id: string | null
+          id: string
+          level: string
+          notes_from_prog: string | null
+          skill_id: string | null
+          subdomain: string
+          subdomain_id: string | null
+          subject_id: string | null
+          text: string
+        }
+        Insert: {
+          domain?: string | null
+          domain_id?: string | null
+          id: string
+          level: string
+          notes_from_prog?: string | null
+          skill_id?: string | null
+          subdomain: string
+          subdomain_id?: string | null
+          subject_id?: string | null
+          text: string
+        }
+        Update: {
+          domain?: string | null
+          domain_id?: string | null
+          id?: string
+          level?: string
+          notes_from_prog?: string | null
+          skill_id?: string | null
+          subdomain?: string
+          subdomain_id?: string | null
+          subject_id?: string | null
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "objectives_domain_fkey"
+            columns: ["domain"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["domain"]
           },
         ]
       }
@@ -1050,6 +1463,89 @@ export type Database = {
         }
         Relationships: []
       }
+      student_mastery: {
+        Row: {
+          attempts_count: number | null
+          child_id: string
+          created_at: string | null
+          first_attempt_at: string | null
+          id: string
+          last_attempt_at: string | null
+          mastered_at: string | null
+          mastery_score: number | null
+          status: string
+          success_criterion_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          attempts_count?: number | null
+          child_id: string
+          created_at?: string | null
+          first_attempt_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          mastered_at?: string | null
+          mastery_score?: number | null
+          status?: string
+          success_criterion_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          attempts_count?: number | null
+          child_id?: string
+          created_at?: string | null
+          first_attempt_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          mastered_at?: string | null
+          mastery_score?: number | null
+          status?: string
+          success_criterion_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_mastery_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_mastery_success_criterion_id_fkey"
+            columns: ["success_criterion_id"]
+            isOneToOne: false
+            referencedRelation: "success_criteria"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subdomains: {
+        Row: {
+          domain: string | null
+          id: number
+          subdomain: string
+        }
+        Insert: {
+          domain?: string | null
+          id?: number
+          subdomain: string
+        }
+        Update: {
+          domain?: string | null
+          id?: number
+          subdomain?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subdomains_domain_fkey"
+            columns: ["domain"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["domain"]
+          },
+        ]
+      }
       subject_prompt_assignments: {
         Row: {
           created_at: string | null
@@ -1084,6 +1580,190 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      success_criteria: {
+        Row: {
+          domain_id: string | null
+          id: string
+          objective_id: string | null
+          skill_id: string | null
+          subdomain_id: string | null
+          subject_id: string | null
+          text: string
+        }
+        Insert: {
+          domain_id?: string | null
+          id: string
+          objective_id?: string | null
+          skill_id?: string | null
+          subdomain_id?: string | null
+          subject_id?: string | null
+          text: string
+        }
+        Update: {
+          domain_id?: string | null
+          id?: string
+          objective_id?: string | null
+          skill_id?: string | null
+          subdomain_id?: string | null
+          subject_id?: string | null
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "success_criteria_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "objectives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          difficulty: string | null
+          domain_id: string | null
+          id: string
+          rubric: string | null
+          skill_id: string | null
+          solution: string | null
+          source: string | null
+          stem: string
+          subdomain_id: string | null
+          subject_id: string | null
+          success_criterion_id: string | null
+          tags: string[] | null
+          type: string
+        }
+        Insert: {
+          difficulty?: string | null
+          domain_id?: string | null
+          id: string
+          rubric?: string | null
+          skill_id?: string | null
+          solution?: string | null
+          source?: string | null
+          stem: string
+          subdomain_id?: string | null
+          subject_id?: string | null
+          success_criterion_id?: string | null
+          tags?: string[] | null
+          type: string
+        }
+        Update: {
+          difficulty?: string | null
+          domain_id?: string | null
+          id?: string
+          rubric?: string | null
+          skill_id?: string | null
+          solution?: string | null
+          source?: string | null
+          stem?: string
+          subdomain_id?: string | null
+          subject_id?: string | null
+          success_criterion_id?: string | null
+          tags?: string[] | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_success_criterion_id_fkey"
+            columns: ["success_criterion_id"]
+            isOneToOne: false
+            referencedRelation: "success_criteria"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teachers: {
+        Row: {
+          created_at: string
+          department: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      topic_objectives: {
+        Row: {
+          created_at: string
+          id: string
+          objective_id: string
+          order_index: number
+          topic_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          objective_id: string
+          order_index?: number
+          topic_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          objective_id?: string
+          order_index?: number
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_objectives_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "objectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topic_objectives_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "learning_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          domain: string
+          duration_weeks: number | null
+          id: string
+          level: string
+          subdomain: string
+          title: string
+        }
+        Insert: {
+          domain: string
+          duration_weeks?: number | null
+          id: string
+          level: string
+          subdomain: string
+          title: string
+        }
+        Update: {
+          domain?: string
+          duration_weeks?: number | null
+          id?: string
+          level?: string
+          subdomain?: string
+          title?: string
+        }
+        Relationships: []
       }
       user_learning_progress: {
         Row: {
@@ -1198,6 +1878,8 @@ export type Database = {
           contact_email: string | null
           country: string | null
           created_at: string
+          curriculum_country_code: string | null
+          curriculum_level_code: string | null
           email: string | null
           first_name: string | null
           id: string
@@ -1214,6 +1896,8 @@ export type Database = {
           contact_email?: string | null
           country?: string | null
           created_at?: string
+          curriculum_country_code?: string | null
+          curriculum_level_code?: string | null
           email?: string | null
           first_name?: string | null
           id: string
@@ -1230,6 +1914,8 @@ export type Database = {
           contact_email?: string | null
           country?: string | null
           created_at?: string
+          curriculum_country_code?: string | null
+          curriculum_level_code?: string | null
           email?: string | null
           first_name?: string | null
           id?: string
@@ -1250,6 +1936,7 @@ export type Database = {
           created_at: string
           explanation: string
           id: string
+          language: string | null
           options: string[]
           order_index: number
           question: string
@@ -1264,6 +1951,7 @@ export type Database = {
           created_at?: string
           explanation: string
           id?: string
+          language?: string | null
           options: string[]
           order_index?: number
           question: string
@@ -1278,6 +1966,7 @@ export type Database = {
           created_at?: string
           explanation?: string
           id?: string
+          language?: string | null
           options?: string[]
           order_index?: number
           question?: string
@@ -1334,7 +2023,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "student" | "parent" | "guardian"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "student"
+        | "parent"
+        | "guardian"
+        | "teacher"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1462,7 +2157,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "student", "parent", "guardian"],
+      app_role: [
+        "admin",
+        "moderator",
+        "student",
+        "parent",
+        "guardian",
+        "teacher",
+      ],
     },
   },
 } as const

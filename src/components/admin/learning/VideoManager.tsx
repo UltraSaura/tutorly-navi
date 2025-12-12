@@ -132,12 +132,18 @@ export function scoreVideoMatch(videoTags: string[], homeworkKeywords: string[])
 const VideoManager = () => {
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+  const [selectedLanguageFilter, setSelectedLanguageFilter] = useState<string>('all');
   const { data: subjects = [], isLoading: subjectsLoading } = useLearningSubjects();
   const { data: topics = [], isLoading: topicsLoading, error: topicsError } = useLearningTopics();
   const { data: videos = [], isLoading: videosLoading, error: videosError } = useLearningVideos(selectedTopicId || undefined);
   const createVideo = useCreateVideo();
   const updateVideo = useUpdateVideo();
   const deleteVideo = useDeleteVideo();
+  
+  // Filter videos by language
+  const filteredVideos = selectedLanguageFilter === 'all' 
+    ? videos 
+    : videos.filter(v => (v.language || 'en') === selectedLanguageFilter);
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
@@ -157,6 +163,7 @@ const VideoManager = () => {
     max_age: null as number | null,
     school_levels: [] as string[],
     tags: [] as string[],
+    language: 'en',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -190,6 +197,7 @@ const VideoManager = () => {
       max_age: video.max_age,
       school_levels: video.school_levels || [],
       tags: video.tags || [],
+      language: video.language || 'en',
     });
     setDialogOpen(true);
   };
@@ -218,6 +226,7 @@ const VideoManager = () => {
       max_age: null,
       school_levels: [],
       tags: [],
+      language: 'en',
     });
   };
 
@@ -266,7 +275,7 @@ const VideoManager = () => {
                       <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
+              </Select>
               </div>
               <div>
                 <Label htmlFor="topic_id">Topic</Label>
@@ -278,6 +287,19 @@ const VideoManager = () => {
                     {topics.map((topic) => (
                       <SelectItem key={topic.id} value={topic.id}>{topic.name}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="language">Language</Label>
+                <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">🇺🇸 English</SelectItem>
+                    <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                    <SelectItem value="ar">🇸🇦 العربية</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -451,18 +473,34 @@ const VideoManager = () => {
         </Dialog>
       </div>
 
-      <div className="mb-4">
-        <Label>Select Topic</Label>
-        <Select value={selectedTopicId} onValueChange={setSelectedTopicId}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a topic to view videos" />
-          </SelectTrigger>
-          <SelectContent>
-            {topics.map((topic) => (
-              <SelectItem key={topic.id} value={topic.id}>{topic.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <Label>Select Topic</Label>
+          <Select value={selectedTopicId} onValueChange={setSelectedTopicId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a topic to view videos" />
+            </SelectTrigger>
+            <SelectContent>
+              {topics.map((topic) => (
+                <SelectItem key={topic.id} value={topic.id}>{topic.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Filter by Language</Label>
+          <Select value={selectedLanguageFilter} onValueChange={setSelectedLanguageFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="All languages" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Languages</SelectItem>
+              <SelectItem value="en">🇺🇸 English</SelectItem>
+              <SelectItem value="fr">🇫🇷 Français</SelectItem>
+              <SelectItem value="ar">🇸🇦 العربية</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {!selectedTopicId ? (
@@ -478,6 +516,7 @@ const VideoManager = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
+              <TableHead>Language</TableHead>
               <TableHead>Subject</TableHead>
               <TableHead>Topic</TableHead>
               <TableHead>Duration</TableHead>
@@ -488,16 +527,19 @@ const VideoManager = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {videos.length === 0 ? (
+            {filteredVideos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
+                <TableCell colSpan={9} className="text-center text-muted-foreground">
                   No videos found for this topic
                 </TableCell>
               </TableRow>
             ) : (
-              videos.map((video) => (
+              filteredVideos.map((video) => (
             <TableRow key={video.id}>
               <TableCell className="font-medium">{video.title}</TableCell>
+              <TableCell>
+                {video.language === 'fr' ? '🇫🇷' : video.language === 'ar' ? '🇸🇦' : '🇺🇸'}
+              </TableCell>
               <TableCell>{subjects.find(s => s.id === video.subject_id)?.name || '-'}</TableCell>
               <TableCell>{topics.find(t => t.id === video.topic_id)?.name}</TableCell>
               <TableCell>{video.duration_minutes}m</TableCell>
