@@ -12,10 +12,6 @@ import { useLearningTopics, useLearningVideos, useCreateVideo, useUpdateVideo, u
 import type { Video } from '@/types/learning';
 import { AgeBasedSchoolLevelSelector } from './AgeBasedSchoolLevelSelector';
 import { Badge } from '@/components/ui/badge';
-import { CurriculumSelector } from '@/components/admin/curriculum/CurriculumSelector';
-import { useProgramTopicsForAdmin } from '@/hooks/useProgramTopicsForAdmin';
-import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
 
 /**
  * Extracts relevant keywords/tags from homework content
@@ -134,26 +130,20 @@ export function scoreVideoMatch(videoTags: string[], homeworkKeywords: string[])
 }
 
 const VideoManager = () => {
-  const { t } = useTranslation();
-  const { toast } = useToast();
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
-  const [videoCurriculum, setVideoCurriculum] = useState({
-    countryCode: '',
-    levelCode: '',
-    subjectId: '',
-  });
-  
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+  const [selectedLanguageFilter, setSelectedLanguageFilter] = useState<string>('all');
   const { data: subjects = [], isLoading: subjectsLoading } = useLearningSubjects();
   const { data: topics = [], isLoading: topicsLoading, error: topicsError } = useLearningTopics();
   const { data: videos = [], isLoading: videosLoading, error: videosError } = useLearningVideos(selectedTopicId || undefined);
-  const { data: availableTopics = [], isLoading: availableTopicsLoading } = useProgramTopicsForAdmin({
-    countryCode: videoCurriculum.countryCode,
-    levelCode: videoCurriculum.levelCode,
-    subjectId: videoCurriculum.subjectId,
-  });
   const createVideo = useCreateVideo();
   const updateVideo = useUpdateVideo();
   const deleteVideo = useDeleteVideo();
+  
+  // Filter videos by language
+  const filteredVideos = selectedLanguageFilter === 'all' 
+    ? videos 
+    : videos.filter(v => (v.language || 'en') === selectedLanguageFilter);
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
@@ -173,20 +163,11 @@ const VideoManager = () => {
     max_age: null as number | null,
     school_levels: [] as string[],
     tags: [] as string[],
+    language: 'en',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate topic_id is selected
-    if (!formData.topic_id) {
-      toast({
-        title: t('common.error'),
-        description: t('admin.curriculum.topicRequired'),
-        variant: 'destructive',
-      });
-      return;
-    }
     
     if (editingVideo) {
       await updateVideo.mutateAsync({ id: editingVideo.id, ...formData });
@@ -216,6 +197,7 @@ const VideoManager = () => {
       max_age: video.max_age,
       school_levels: video.school_levels || [],
       tags: video.tags || [],
+      language: video.language || 'en',
     });
     setDialogOpen(true);
   };
@@ -229,8 +211,8 @@ const VideoManager = () => {
   const resetForm = () => {
     setEditingVideo(null);
     setFormData({
-      topic_id: '',
-      subject_id: '',
+      topic_id: selectedTopicId,
+      subject_id: selectedSubjectId,
       title: '',
       video_url: '',
       thumbnail_url: '',
@@ -244,6 +226,7 @@ const VideoManager = () => {
       max_age: null,
       school_levels: [],
       tags: [],
+      language: 'en',
     });
   };
 
@@ -281,61 +264,44 @@ const VideoManager = () => {
               <DialogTitle>{editingVideo ? 'Edit Video' : 'Add New Video'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Curriculum Selection */}
-              <div className="space-y-4 border rounded-lg p-4 bg-muted/10">
-                <Label className="text-base font-semibold">{t('admin.curriculum.selectFirst')}</Label>
-                <CurriculumSelector
-                  value={{
-                    curriculum_country_code: videoCurriculum.countryCode || null,
-                    curriculum_level_code: videoCurriculum.levelCode || null,
-                    curriculum_subject_id: videoCurriculum.subjectId || null,
-                    curriculum_domain_id: null,
-                    curriculum_subdomain_id: null,
-                  }}
-                  onChange={(selection) => {
-                    setVideoCurriculum({
-                      countryCode: selection.curriculum_country_code || '',
-                      levelCode: selection.curriculum_level_code || '',
-                      subjectId: selection.curriculum_subject_id || '',
-                    });
-                    // Reset topic when curriculum changes
-                    setFormData({ ...formData, topic_id: '' });
-                  }}
-                />
-
-                <div>
-                  <Label htmlFor="topic_id">{t('admin.curriculum.topicFiltered')} *</Label>
-                  <Select 
-                    value={formData.topic_id} 
-                    onValueChange={(value) => setFormData({ ...formData, topic_id: value })}
-                    disabled={!videoCurriculum.subjectId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={
-                        availableTopicsLoading ? t('common.loading') : 
-                        !videoCurriculum.subjectId ? t('admin.curriculum.selectFirst') :
-                        availableTopics.length === 0 ? t('admin.curriculum.noTopicsFound') :
-                        t('admin.curriculum.selectTopic')
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableTopics.map((topic) => (
-                        <SelectItem key={topic.id} value={topic.id}>
-                          {topic.topicLabel}
-                          <span className="text-xs text-muted-foreground ml-2">
-                            ({topic.curriculumLocation})
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  {availableTopics.length === 0 && videoCurriculum.subjectId && !availableTopicsLoading && (
-                    <p className="text-sm text-amber-600 mt-2">
-                      ⚠️ {t('admin.curriculum.createTopicsFirst')}
-                    </p>
-                  )}
-                </div>
+              <div>
+                <Label htmlFor="subject_id">Subject</Label>
+                <Select value={formData.subject_id} onValueChange={(value) => setFormData({ ...formData, subject_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select subject (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjects.map((subject) => (
+                      <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+              </Select>
+              </div>
+              <div>
+                <Label htmlFor="topic_id">Topic</Label>
+                <Select value={formData.topic_id} onValueChange={(value) => setFormData({ ...formData, topic_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select topic" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {topics.map((topic) => (
+                      <SelectItem key={topic.id} value={topic.id}>{topic.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="language">Language</Label>
+                <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">🇺🇸 English</SelectItem>
+                    <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                    <SelectItem value="ar">🇸🇦 العربية</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="title">Title</Label>
@@ -465,9 +431,10 @@ const VideoManager = () => {
                 <p className="text-xs text-muted-foreground mb-2">
                   Select school levels this video is suitable for. Leave empty to show for all levels.
                 </p>
-                <AgeBasedSchoolLevelSelector
+              <AgeBasedSchoolLevelSelector
                   selectedLevels={formData.school_levels}
                   onLevelsChange={(levels) => setFormData({...formData, school_levels: levels})}
+                  selectedLanguage={formData.language}
                 />
               </div>
               <div>
@@ -507,18 +474,34 @@ const VideoManager = () => {
         </Dialog>
       </div>
 
-      <div className="mb-4">
-        <Label>Select Topic</Label>
-        <Select value={selectedTopicId} onValueChange={setSelectedTopicId}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a topic to view videos" />
-          </SelectTrigger>
-          <SelectContent>
-            {topics.map((topic) => (
-              <SelectItem key={topic.id} value={topic.id}>{topic.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <Label>Select Topic</Label>
+          <Select value={selectedTopicId} onValueChange={setSelectedTopicId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a topic to view videos" />
+            </SelectTrigger>
+            <SelectContent>
+              {topics.map((topic) => (
+                <SelectItem key={topic.id} value={topic.id}>{topic.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Filter by Language</Label>
+          <Select value={selectedLanguageFilter} onValueChange={setSelectedLanguageFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="All languages" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Languages</SelectItem>
+              <SelectItem value="en">🇺🇸 English</SelectItem>
+              <SelectItem value="fr">🇫🇷 Français</SelectItem>
+              <SelectItem value="ar">🇸🇦 العربية</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {!selectedTopicId ? (
@@ -534,6 +517,7 @@ const VideoManager = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
+              <TableHead>Language</TableHead>
               <TableHead>Subject</TableHead>
               <TableHead>Topic</TableHead>
               <TableHead>Duration</TableHead>
@@ -544,16 +528,19 @@ const VideoManager = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {videos.length === 0 ? (
+            {filteredVideos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
+                <TableCell colSpan={9} className="text-center text-muted-foreground">
                   No videos found for this topic
                 </TableCell>
               </TableRow>
             ) : (
-              videos.map((video) => (
+              filteredVideos.map((video) => (
             <TableRow key={video.id}>
               <TableCell className="font-medium">{video.title}</TableCell>
+              <TableCell>
+                {video.language === 'fr' ? '🇫🇷' : video.language === 'ar' ? '🇸🇦' : '🇺🇸'}
+              </TableCell>
               <TableCell>{subjects.find(s => s.id === video.subject_id)?.name || '-'}</TableCell>
               <TableCell>{topics.find(t => t.id === video.topic_id)?.name}</TableCell>
               <TableCell>{video.duration_minutes}m</TableCell>

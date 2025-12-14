@@ -3,7 +3,6 @@ import { getLanguageFromCountry } from '@/utils/countryLanguageMapping';
 import { useAuth } from '@/context/AuthContext';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
 import { loadTranslations, type SupportedLanguage, SUPPORTED_LANGUAGES } from '@/locales';
-import { supabase } from '@/integrations/supabase/client';
 
 // Smart default language detection
 const getInitialLanguage = (): string => {
@@ -282,16 +281,15 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     localStorage.removeItem('languageManuallySet');
     // Prefer profile country, then current detection
     try {
-      if (user?.id && supabase) {
-        const { data, error } = await supabase
-          .from('users')
-          .select('country')
-          .eq('id', user.id)
-          .single();
-        
-        if (error) {
-          console.warn('[Reset] Error fetching user country:', error.message);
-        } else if (data?.country) {
+      if (user?.id) {
+        const { data } = await import('@/integrations/supabase/client').then(m => 
+          m.supabase
+            .from('users')
+            .select('country')
+            .eq('id', user.id)
+            .single()
+        );
+        if (data?.country) {
           const norm = normalizeCountryCode(data.country) || data.country;
           setLanguageFromCountry(norm);
           return;
@@ -360,36 +358,43 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     return result;
   };
 
-  // Auto-detect language from user profile (only if not already detected)
+  // Auto-detect language from user profile on login
+  // Clear languageManuallySet when a new user logs in to allow profile-based detection
   useEffect(() => {
     const detectLanguageFromUser = async () => {
-      const languageManuallySet = localStorage.getItem('languageManuallySet') === 'true';
-      if (languageManuallySet) {
-        console.log('[Auto-detect] Language was manually set, skipping auto-detection');
-        return;
+      const previousUserId = localStorage.getItem('lastUserId');
+      const isNewUserLogin = user?.id && user.id !== previousUserId;
+      
+      // If a new user logged in, clear the manual language flag and update lastUserId
+      if (isNewUserLogin) {
+        console.log('[Auto-detect] New user logged in, clearing languageManuallySet flag');
+        localStorage.removeItem('languageManuallySet');
+        localStorage.setItem('lastUserId', user.id);
       }
       
-      // Only auto-detect if we're still on the default English and browser detection didn't already set French
-      const browserDetectedFrench = defaultLang === 'fr';
-      if (browserDetectedFrench) {
-        console.log('[Auto-detect] Browser/timezone already detected French, skipping redundant detection');
+      const languageManuallySet = localStorage.getItem('languageManuallySet') === 'true';
+      
+      // For new user logins, always try to detect from profile
+      // For existing sessions, skip if language was manually set
+      if (languageManuallySet && !isNewUserLogin) {
+        console.log('[Auto-detect] Language was manually set, skipping auto-detection');
         return;
       }
       
       let detectedLanguage = null;
       
-      // First try user profile country
-      if (user?.id && supabase) {
+      // First try user profile country (highest priority for logged-in users)
+      if (user?.id) {
         try {
-          const { data, error } = await supabase
-            .from('users')
-            .select('country')
-            .eq('id', user.id)
-            .single();
+          const { data } = await import('@/integrations/supabase/client').then(m => 
+            m.supabase
+              .from('users')
+              .select('country')
+              .eq('id', user.id)
+              .single()
+          );
           
-          if (error) {
-            console.warn('[Auto-detect] Supabase query error:', error.message);
-          } else if (data?.country) {
+          if (data?.country) {
             console.log('[Auto-detect] User loaded with country:', data.country);
             const norm = normalizeCountryCode(data.country) || data.country;
             detectedLanguage = getLanguageFromCountry(norm);
@@ -400,7 +405,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         }
       }
       
-      // Fallback to automatic country detection (only if language is still English)
+      // Fallback to automatic country detection (only if no profile language and current is English)
       if (!detectedLanguage && detection.country && language === 'en') {
         detectedLanguage = getLanguageFromDetection();
         console.log('[Auto-detect] Using automatic detection:', detection.country, '->', detectedLanguage);
@@ -411,7 +416,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         setLanguage(detectedLanguage);
         localStorage.setItem('lang', detectedLanguage);
         
-        const methodText = detection.method === 'geolocation' ? 'location' :
+        const methodText = user?.id ? 'profile' :
+                          detection.method === 'geolocation' ? 'location' :
                           detection.method === 'ip' ? 'IP address' :
                           detection.method === 'timezone' ? 'timezone' : 'profile';
         

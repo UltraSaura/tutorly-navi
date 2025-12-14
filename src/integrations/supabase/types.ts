@@ -875,6 +875,7 @@ export type Database = {
           duration_minutes: number
           id: string
           is_active: boolean
+          language: string | null
           max_age: number | null
           min_age: number | null
           order_index: number
@@ -895,6 +896,7 @@ export type Database = {
           duration_minutes?: number
           id?: string
           is_active?: boolean
+          language?: string | null
           max_age?: number | null
           min_age?: number | null
           order_index?: number
@@ -915,6 +917,7 @@ export type Database = {
           duration_minutes?: number
           id?: string
           is_active?: boolean
+          language?: string | null
           max_age?: number | null
           min_age?: number | null
           order_index?: number
@@ -1933,6 +1936,7 @@ export type Database = {
           created_at: string
           explanation: string
           id: string
+          language: string | null
           options: string[]
           order_index: number
           question: string
@@ -1947,6 +1951,7 @@ export type Database = {
           created_at?: string
           explanation: string
           id?: string
+          language?: string | null
           options: string[]
           order_index?: number
           question: string
@@ -1961,6 +1966,7 @@ export type Database = {
           created_at?: string
           explanation?: string
           id?: string
+          language?: string | null
           options?: string[]
           order_index?: number
           question?: string
