@@ -98,8 +98,8 @@ serve(async (req) => {
         .rpc('get_model_with_fallback')
         .single();
 
-      if (!modelError && modelConfig?.default_model_id) {
-        adminSelectedModel = modelConfig.default_model_id;
+      if (!modelError && (modelConfig as any)?.default_model_id) {
+        adminSelectedModel = (modelConfig as any).default_model_id;
         console.log('[generate-lesson-content] Admin-configured model:', adminSelectedModel);
       }
     } catch (err) {
@@ -170,8 +170,8 @@ serve(async (req) => {
     if (objError) throw objError;
 
     const objectives = topicObjectives?.map(to => to.objectives).filter(Boolean) || [];
-    const successCriteriaIds = objectives.flatMap(obj => 
-      obj.success_criteria?.map(sc => sc.id) || []
+    const successCriteriaIds = objectives.flatMap((obj: any) => 
+      obj.success_criteria?.map((sc: any) => sc.id) || []
     );
 
     // Fetch tasks for these success criteria
@@ -191,7 +191,7 @@ serve(async (req) => {
     });
 
     // Generate AI content
-    const subjectName = topic.learning_categories?.learning_subjects?.name || 'General';
+    const subjectName = (topic.learning_categories as any)?.learning_subjects?.name || 'General';
     
     const prompt = `You are an expert educator creating lesson content for students.
 
@@ -200,10 +200,10 @@ Subject: ${subjectName}
 Description: ${topic.description || 'N/A'}
 
 Learning Objectives:
-${objectives.map((obj, i) => `${i + 1}. ${obj.text}`).join('\n')}
+${objectives.map((obj: any, i: number) => `${i + 1}. ${obj.text}`).join('\n')}
 
 Success Criteria:
-${objectives.flatMap(obj => obj.success_criteria || []).map((sc, i) => `${i + 1}. ${sc.text}`).join('\n')}
+${objectives.flatMap((obj: any) => obj.success_criteria || []).map((sc: any, i: number) => `${i + 1}. ${sc.text}`).join('\n')}
 
 Create a comprehensive lesson with:
 
