@@ -2,25 +2,42 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Subject, SubjectProgress } from '@/types/learning';
 import { useUserSchoolLevel } from './useUserSchoolLevel';
+import { useUserCurriculumProfile } from './useUserCurriculumProfile';
 import { filterContentByUserLevel } from '@/utils/schoolLevelFilter';
-import { useLanguage } from '@/context/SimpleLanguageContext';
 
 export function useLearningSubjects() {
   const { data: userLevelData } = useUserSchoolLevel();
-  const { language: userLanguage } = useLanguage();
+  const { profile } = useUserCurriculumProfile();
   
   return useQuery({
-    queryKey: ['learning-subjects', userLevelData?.level, userLanguage],
+    queryKey: ['learning-subjects', userLevelData?.level, profile?.countryCode, profile?.levelCode],
     queryFn: async (): Promise<SubjectProgress[]> => {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Get active subjects filtered by language
-      const { data: subjects, error: subjectsError } = await supabase
+      // Get active subjects filtered by curriculum if profile exists
+      let subjectsQuery = supabase
         .from('learning_subjects')
-        .select('*')
-        .eq('is_active', true)
-        .or(`language.eq.${userLanguage},language.is.null`)
-        .order('order_index');
+        .select(`
+          *,
+          learning_categories!inner (
+            id,
+            learning_topics!inner (
+              id,
+              curriculum_country_code,
+              curriculum_level_code
+            )
+          )
+        `)
+        .eq('is_active', true);
+
+      // Add curriculum filters if profile exists
+      if (profile?.countryCode && profile?.levelCode) {
+        subjectsQuery = subjectsQuery
+          .eq('learning_categories.learning_topics.curriculum_country_code', profile.countryCode)
+          .eq('learning_categories.learning_topics.curriculum_level_code', profile.levelCode);
+      }
+
+      const { data: subjects, error: subjectsError } = await subjectsQuery.order('order_index');
       
       if (subjectsError) throw subjectsError;
       if (!subjects) return [];

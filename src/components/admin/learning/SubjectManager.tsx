@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
@@ -26,7 +25,6 @@ const SubjectManager = () => {
     color_scheme: '',
     order_index: 0,
     is_active: true,
-    language: 'en',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,7 +49,6 @@ const SubjectManager = () => {
       color_scheme: subject.color_scheme,
       order_index: subject.order_index,
       is_active: subject.is_active,
-      language: (subject as any).language || 'en',
     });
     setDialogOpen(true);
   };
@@ -71,7 +68,6 @@ const SubjectManager = () => {
       color_scheme: '',
       order_index: 0,
       is_active: true,
-      language: 'en',
     });
   };
 
@@ -149,21 +145,6 @@ const SubjectManager = () => {
                   required
                 />
               </div>
-              <div>
-                <Label htmlFor="language">Language</Label>
-                <Select
-                  value={formData.language}
-                  onValueChange={(value) => setFormData({ ...formData, language: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="fr">Français</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="flex items-center space-x-2">
                 <Switch
                   id="is_active"
@@ -185,7 +166,6 @@ const SubjectManager = () => {
           <TableRow>
             <TableHead>Icon</TableHead>
             <TableHead>Name</TableHead>
-            <TableHead>Language</TableHead>
             <TableHead>Slug</TableHead>
             <TableHead>Order</TableHead>
             <TableHead>Status</TableHead>
@@ -199,7 +179,6 @@ const SubjectManager = () => {
                 <DynamicIcon name={subject.icon_name} className="w-6 h-6" />
               </TableCell>
               <TableCell className="font-medium">{subject.name}</TableCell>
-              <TableCell>{(subject as any).language || 'en'}</TableCell>
               <TableCell>{subject.slug}</TableCell>
               <TableCell>{subject.order_index}</TableCell>
               <TableCell>

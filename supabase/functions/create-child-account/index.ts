@@ -177,7 +177,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: (error as Error).message,
+        error: error.message,
       }),
       {
         status: 400,
