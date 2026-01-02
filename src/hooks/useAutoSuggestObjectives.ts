@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -50,10 +50,10 @@ export function useAutoSuggestObjectives() {
   });
 }
 
-// Hook to auto-suggest and link objectives for a topic
+// Auto-suggest then auto-link high-confidence objectives
 export function useAutoLinkObjectives() {
   const { toast } = useToast();
-  const suggestMutation = useAutoSuggestObjectives();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
@@ -63,7 +63,7 @@ export function useAutoLinkObjectives() {
       topicKeywords,
       levelCode,
       countryCode,
-      confidenceThreshold = 0.9,
+      confidenceThreshold = 0.85,
     }: {
       topicId: string;
       topicName: string;
@@ -72,64 +72,63 @@ export function useAutoLinkObjectives() {
       levelCode?: string;
       countryCode?: string;
       confidenceThreshold?: number;
-    }): Promise<{ linkedCount: number; suggestions: ObjectiveSuggestion[] }> => {
-      // Get suggestions from AI
-      const result = await suggestMutation.mutateAsync({
-        topicName,
-        topicDescription,
-        topicKeywords,
-        levelCode,
-        countryCode,
+    }): Promise<{ linkedCount: number }> => {
+      // 1) Ask AI
+      const { data, error } = await supabase.functions.invoke('suggest-topic-objectives', {
+        body: {
+          topicName,
+          topicDescription,
+          topicKeywords,
+          levelCode,
+          countryCode,
+        },
       });
 
-      const suggestions = result.suggestions || [];
-      const highConfidence = suggestions.filter(s => s.confidence >= confidenceThreshold);
+      if (error) throw new Error(error.message || 'Failed to get suggestions');
 
-      // Get existing linked objectives to avoid duplicates
-      const { data: existingLinks } = await supabase
+      const suggestions = (data as SuggestObjectivesResponse)?.suggestions || [];
+      const highConfidence = suggestions.filter((s) => s.confidence >= confidenceThreshold);
+
+      if (highConfidence.length === 0) return { linkedCount: 0 };
+
+      // 2) Avoid duplicates
+      const { data: existingLinks, error: existingError } = await supabase
         .from('topic_objectives')
         .select('objective_id')
         .eq('topic_id', topicId);
 
-      const existingIds = new Set((existingLinks || []).map(l => l.objective_id));
-      const toLink = highConfidence.filter(s => !existingIds.has(s.objective_id));
+      if (existingError) throw new Error(existingError.message);
 
-      // Link high-confidence objectives
-      if (toLink.length > 0) {
-        const links = toLink.map((s, idx) => ({
-          topic_id: topicId,
-          objective_id: s.objective_id,
-          order_index: existingIds.size + idx,
-        }));
+      const existingIds = new Set((existingLinks || []).map((l) => l.objective_id));
+      const toLink = highConfidence.filter((s) => !existingIds.has(s.objective_id));
 
-        const { error } = await supabase
-          .from('topic_objectives')
-          .insert(links);
+      if (toLink.length === 0) return { linkedCount: 0 };
 
-        if (error) {
-          console.error('Error linking objectives:', error);
-          throw new Error('Failed to link objectives');
-        }
-      }
+      const links = toLink.map((s, idx) => ({
+        topic_id: topicId,
+        objective_id: s.objective_id,
+        order_index: existingIds.size + idx,
+      }));
 
-      return {
-        linkedCount: toLink.length,
-        suggestions: suggestions.filter(s => s.confidence < confidenceThreshold),
-      };
+      const { error: insertError } = await supabase.from('topic_objectives').insert(links);
+      if (insertError) throw new Error(insertError.message);
+
+      return { linkedCount: toLink.length };
     },
-    onSuccess: ({ linkedCount }) => {
+    onSuccess: ({ linkedCount }, variables) => {
       if (linkedCount > 0) {
+        queryClient.invalidateQueries({ queryKey: ['topic-objectives', variables.topicId] });
         toast({
           title: 'Objectives auto-linked',
-          description: `${linkedCount} learning objective${linkedCount > 1 ? 's' : ''} linked automatically based on AI analysis`,
+          description: `${linkedCount} learning objective${linkedCount > 1 ? 's' : ''} linked automatically`,
         });
       }
     },
     onError: (error) => {
-      console.error('Error auto-linking objectives:', error);
+      const msg = error instanceof Error ? error.message : 'Failed to auto-link objectives';
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to auto-link objectives',
+        title: 'Auto-link failed',
+        description: msg.includes('row-level security') ? 'Permission denied: admin role required to link objectives.' : msg,
         variant: 'destructive',
       });
     },

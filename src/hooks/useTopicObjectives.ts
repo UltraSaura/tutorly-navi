@@ -94,11 +94,12 @@ export function useLinkObjectiveToTopic() {
       queryClient.invalidateQueries({ queryKey: ['topic-objectives', variables.topicId] });
       toast({ title: 'Objective linked', description: 'Objective added to topic' });
     },
-    onError: () => {
-      toast({ 
-        title: 'Error', 
-        description: 'Failed to link objective', 
-        variant: 'destructive' 
+    onError: (error) => {
+      const msg = error instanceof Error ? error.message : 'Failed to link objective';
+      toast({
+        title: 'Error',
+        description: msg.includes('row-level security') ? 'Permission denied: admin role required to link objectives.' : msg,
+        variant: 'destructive'
       });
     },
   });
@@ -128,11 +129,12 @@ export function useUnlinkObjectiveFromTopic() {
       queryClient.invalidateQueries({ queryKey: ['topic-objectives', variables.topicId] });
       toast({ title: 'Objective removed', description: 'Objective removed from topic' });
     },
-    onError: () => {
-      toast({ 
-        title: 'Error', 
-        description: 'Failed to unlink objective', 
-        variant: 'destructive' 
+    onError: (error) => {
+      const msg = error instanceof Error ? error.message : 'Failed to unlink objective';
+      toast({
+        title: 'Error',
+        description: msg.includes('row-level security') ? 'Permission denied: admin role required to unlink objectives.' : msg,
+        variant: 'destructive'
       });
     },
   });
