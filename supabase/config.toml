@@ -33,3 +33,6 @@ verify_jwt = true
 
 [functions.generate-lesson-content]
 verify_jwt = true
+
+[functions.suggest-topic-objectives]
+verify_jwt = true

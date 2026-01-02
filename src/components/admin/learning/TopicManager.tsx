@@ -220,10 +220,13 @@ const TopicManager = () => {
               {editingTopic && (
                 <TopicObjectivesSelector
                   topicId={editingTopic.id}
+                  topicName={formData.name}
+                  topicDescription={formData.description}
                   curriculumSubjectId={formData.curriculum_subject_id || undefined}
                   curriculumDomainId={formData.curriculum_domain_id || undefined}
                   curriculumSubdomainId={formData.curriculum_subdomain_id || undefined}
                   curriculumLevelCode={formData.curriculum_level_code || undefined}
+                  curriculumCountryCode={formData.curriculum_country_code || undefined}
                 />
               )}
               
