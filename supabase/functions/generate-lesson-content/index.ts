@@ -270,39 +270,43 @@ Return your response as JSON:
     let generatedContent;
     try {
       const rawContent = aiData.content || aiData.data?.content || aiData;
+
+      // Helper: strip leading/trailing markdown fences even if the closing fence is missing
+      const stripFences = (s: string) => {
+        let out = s.trim();
+        out = out.replace(/^```(?:json)?\s*/i, '');
+        out = out.replace(/```\s*$/i, '');
+        // Also remove any trailing fence that might appear later
+        out = out.replace(/```/g, '');
+        return out.trim();
+      };
+
       let jsonStr = '';
-      
+
       if (typeof rawContent === 'string') {
-        // Try to extract JSON from markdown code block: ```json ... ```
-        const fenceMatch = rawContent.match(/```(?:json)?\s*([\s\S]*?)```/i);
-        
-        if (fenceMatch) {
-          // Found markdown code block - extract content inside
-          jsonStr = fenceMatch[1].trim();
-          console.log('[generate-lesson-content] Extracted JSON from code block');
+        const cleaned = stripFences(rawContent);
+
+        // Prefer extracting between braces (more robust than relying on ``` fences)
+        const firstBrace = cleaned.indexOf('{');
+        const lastBrace = cleaned.lastIndexOf('}');
+
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          jsonStr = cleaned.substring(firstBrace, lastBrace + 1);
+          console.log('[generate-lesson-content] Extracted JSON between braces');
         } else {
-          // No code block - try to find JSON between { and }
-          const firstBrace = rawContent.indexOf('{');
-          const lastBrace = rawContent.lastIndexOf('}');
-          
-          if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-            jsonStr = rawContent.substring(firstBrace, lastBrace + 1);
-            console.log('[generate-lesson-content] Extracted JSON between braces');
-          } else {
-            // Use the whole content as-is
-            jsonStr = rawContent;
-            console.log('[generate-lesson-content] Using raw content');
-          }
+          // Fall back to using cleaned content as-is
+          jsonStr = cleaned;
+          console.log('[generate-lesson-content] Using cleaned content');
         }
-        
+
         generatedContent = JSON.parse(jsonStr);
       } else {
         // Content is already an object
         generatedContent = rawContent;
       }
-      
+
       console.log('[generate-lesson-content] Successfully parsed AI response');
-      
+
     } catch (parseError) {
       console.error('[generate-lesson-content] Failed to parse AI response:', parseError);
       console.error('[generate-lesson-content] Raw AI data:', JSON.stringify(aiData, null, 2));
