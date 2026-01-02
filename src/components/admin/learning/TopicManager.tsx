@@ -223,6 +223,7 @@ const TopicManager = () => {
                   curriculumSubjectId={formData.curriculum_subject_id || undefined}
                   curriculumDomainId={formData.curriculum_domain_id || undefined}
                   curriculumSubdomainId={formData.curriculum_subdomain_id || undefined}
+                  curriculumLevelCode={formData.curriculum_level_code || undefined}
                 />
               )}
               

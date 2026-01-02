@@ -176,15 +176,15 @@ async function getStudentCurriculumProgress(supabase: any, studentId: string, op
   );
 
   const subjects = Array.from(subjectObjectivesMap.values()).map((subjectData: any) => {
-    const objectiveIds = Array.from(subjectData.objective_ids);
+    const objectiveIds = Array.from(subjectData.objective_ids) as string[];
     const totalObjectives = objectiveIds.length;
     
     const masteredCount = objectiveIds.filter(
-      (id: string) => masteryMap.get(id) === 'mastered'
+      (id) => masteryMap.get(id) === 'mastered'
     ).length;
     
     const inProgressCount = objectiveIds.filter(
-      (id: string) => masteryMap.get(id) === 'in_progress'
+      (id) => masteryMap.get(id) === 'in_progress'
     ).length;
 
     return {
