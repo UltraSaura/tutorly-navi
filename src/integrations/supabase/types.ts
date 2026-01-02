@@ -813,6 +813,7 @@ export type Database = {
           estimated_duration_minutes: number
           id: string
           is_active: boolean
+          keywords: string[] | null
           lesson_content: Json | null
           name: string
           order_index: number
@@ -833,6 +834,7 @@ export type Database = {
           estimated_duration_minutes?: number
           id?: string
           is_active?: boolean
+          keywords?: string[] | null
           lesson_content?: Json | null
           name: string
           order_index?: number
@@ -853,6 +855,7 @@ export type Database = {
           estimated_duration_minutes?: number
           id?: string
           is_active?: boolean
+          keywords?: string[] | null
           lesson_content?: Json | null
           name?: string
           order_index?: number
@@ -1125,6 +1128,7 @@ export type Database = {
           domain: string | null
           domain_id: string | null
           id: string
+          keywords: string[] | null
           level: string
           notes_from_prog: string | null
           skill_id: string | null
@@ -1137,6 +1141,7 @@ export type Database = {
           domain?: string | null
           domain_id?: string | null
           id: string
+          keywords?: string[] | null
           level: string
           notes_from_prog?: string | null
           skill_id?: string | null
@@ -1149,6 +1154,7 @@ export type Database = {
           domain?: string | null
           domain_id?: string | null
           id?: string
+          keywords?: string[] | null
           level?: string
           notes_from_prog?: string | null
           skill_id?: string | null

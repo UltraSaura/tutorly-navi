@@ -53,6 +53,8 @@ export interface Topic {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Keywords for AI matching
+  keywords?: string[];
   // User progress
   completed_videos?: number;
   progress_percentage?: number;

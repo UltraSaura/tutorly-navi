@@ -18,6 +18,7 @@ interface TopicObjectivesSelectorProps {
   topicId: string;
   topicName?: string;
   topicDescription?: string;
+  topicKeywords?: string[];
   curriculumSubjectId?: string;
   curriculumDomainId?: string;
   curriculumSubdomainId?: string;
@@ -29,6 +30,7 @@ export function TopicObjectivesSelector({
   topicId,
   topicName,
   topicDescription,
+  topicKeywords,
   curriculumSubjectId,
   curriculumDomainId,
   curriculumSubdomainId,
@@ -80,6 +82,7 @@ export function TopicObjectivesSelector({
     const result = await suggestMutation.mutateAsync({
       topicName,
       topicDescription,
+      topicKeywords,
       levelCode: curriculumLevelCode,
       countryCode: curriculumCountryCode,
     });

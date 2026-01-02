@@ -19,7 +19,7 @@ serve(async (req) => {
   }
 
   try {
-    const { topicName, topicDescription, levelCode, countryCode } = await req.json();
+    const { topicName, topicDescription, topicKeywords, levelCode, countryCode } = await req.json();
 
     if (!topicName) {
       return new Response(
@@ -33,8 +33,8 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch objectives matching the level
-    let query = supabase.from('objectives').select('id, level, domain, subdomain, text');
+    // Fetch objectives matching the level, including keywords
+    let query = supabase.from('objectives').select('id, level, domain, subdomain, text, keywords, notes_from_prog');
     
     if (levelCode) {
       query = query.ilike('level', `%${levelCode}%`);
@@ -54,14 +54,17 @@ serve(async (req) => {
       );
     }
 
-    // Format objectives for the AI prompt
+    // Format objectives for the AI prompt with keywords
     const objectivesList = objectives.map((obj, idx) => 
-      `${idx + 1}. ${obj.id} - Domain: ${obj.domain || 'N/A'}, Subdomain: ${obj.subdomain || 'N/A'} - "${obj.text}"`
-    ).join('\n');
+      `${idx + 1}. ID: ${obj.id}
+   Domain: ${obj.domain || 'N/A'}
+   Subdomain: ${obj.subdomain || 'N/A'}
+   Text: "${obj.text}"
+   Keywords: [${(obj.keywords as string[] || []).join(', ') || 'none'}]
+   Notes: ${obj.notes_from_prog || 'none'}`
+    ).join('\n\n');
 
-    // Get AI model configuration
-    const { data: modelConfig } = await supabase.rpc('get_model_with_fallback');
-    
+    // Get AI API key
     let apiKey = Deno.env.get('OPENAI_API_KEY');
     let apiUrl = 'https://api.openai.com/v1/chat/completions';
     let modelId = 'gpt-4o-mini';
@@ -81,30 +84,47 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are a curriculum expert specializing in educational content alignment. Your task is to match learning topics with the most relevant learning objectives from a curriculum.
+    const systemPrompt = `You are a curriculum expert specializing in educational content alignment for French-speaking African countries (Morocco, Senegal, etc.). Your task is to match learning topics with the most relevant learning objectives from a curriculum.
 
-Given a topic name, description, and a list of available objectives, identify which objectives best match the topic. Consider:
-1. Direct keyword matches (e.g., "périmètre" matches objectives about perimeter/lengths)
-2. Related concepts (e.g., "périmètre du rectangle" relates to geometry, shapes, measurements)
-3. Prerequisites and related skills
-4. Grade-level appropriateness
+Given a topic name, description, keywords, and a list of available objectives, identify which objectives best match the topic.
+
+MATCHING CRITERIA (in order of importance):
+1. **Keyword match**: If topic keywords match objective keywords, this is the strongest signal
+2. **Subdomain match**: The topic name often indicates the subdomain (e.g., "Multiplication" → "Quatre opérations")
+3. **Semantic match**: Topic title/description aligns with objective text
+4. **Domain relevance**: Topic belongs to the same domain family
+
+EXAMPLES:
+- "Multiplication" or "Tables de multiplication" → Match "Quatre opérations" (keywords: multiplication, tables, produit)
+- "Périmètre du rectangle" → Match "Longueurs" (keywords: périmètre, mesurer, longueur)
+- "Fractions équivalentes" → Match "Fractions" (keywords: fractions, numérateur, dénominateur)
 
 Return ONLY a valid JSON array of matching objectives with confidence scores (0-1) and brief reasons.
-Format: [{"objective_id": "id", "confidence": 0.95, "reason": "Brief explanation"}]
-Return an empty array [] if no objectives match well.
-Do not include any text outside the JSON array.`;
+Format: [{"objective_id": "actual_id_from_list", "confidence": 0.95, "reason": "Brief French explanation"}]
+
+IMPORTANT:
+- Use the EXACT objective_id from the list (e.g., "obj_ca993cdc")
+- Only return objectives with confidence >= 0.7
+- Return an empty array [] if no objectives match well
+- Do not include any text outside the JSON array`;
+
+    const keywordsStr = topicKeywords && topicKeywords.length > 0 
+      ? `Keywords: [${topicKeywords.join(', ')}]`
+      : '';
 
     const userPrompt = `Topic: "${topicName}"
 ${topicDescription ? `Description: "${topicDescription}"` : ''}
+${keywordsStr}
 Level: ${levelCode || 'Not specified'}
 Country: ${countryCode || 'Not specified'}
 
-Available objectives:
+Available objectives for ${levelCode || 'this level'}:
 ${objectivesList}
 
 Identify matching objectives and return as JSON array.`;
 
     console.log('Calling AI API for objective suggestions...');
+    console.log('Topic:', topicName, 'Keywords:', topicKeywords);
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -118,7 +138,7 @@ Identify matching objectives and return as JSON array.`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.3,
+        temperature: 0.2,
         max_tokens: 2000,
       }),
     });
@@ -126,6 +146,18 @@ Identify matching objectives and return as JSON array.`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error('AI API error:', response.status, errorText);
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Rate limit exceeded, please try again later' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'Payment required, please add funds' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       throw new Error(`AI API error: ${response.status}`);
     }
 
@@ -164,7 +196,7 @@ Identify matching objectives and return as JSON array.`;
       })
       .sort((a, b) => b.confidence - a.confidence);
 
-    console.log(`Returning ${enrichedSuggestions.length} suggestions`);
+    console.log(`Returning ${enrichedSuggestions.length} suggestions for topic "${topicName}"`);
 
     return new Response(
       JSON.stringify({ suggestions: enrichedSuggestions }),
