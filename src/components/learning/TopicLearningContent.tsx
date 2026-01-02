@@ -131,58 +131,6 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
         </Card>
       )}
       
-      {/* (A) What You Will Learn */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="w-5 h-5" />
-            {t('topic.whatYouWillLearn')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-3">
-            {objectives.map((objective) => (
-              <li key={objective.id} className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                <div>
-                  <Badge variant="outline" className="mb-1">{objective.id}</Badge>
-                  <p className="text-sm">{objective.text}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-      
-      {/* (B) Success Criteria */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ClipboardList className="w-5 h-5" />
-            {t('topic.successCriteria')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {objectives.map((objective) => (
-            objective.success_criteria && objective.success_criteria.length > 0 && (
-              <div key={objective.id} className="mb-4 last:mb-0">
-                <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                  <Badge variant="secondary">{objective.id}</Badge>
-                  {objective.text}
-                </h4>
-                <ul className="space-y-2 ml-6">
-                  {objective.success_criteria.map((criterion) => (
-                    <li key={criterion.id} className="flex items-start gap-2 text-sm">
-                      <span className="text-primary mt-0.5">✓</span>
-                      <span>{criterion.text}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )
-          ))}
-        </CardContent>
-      </Card>
       
       {/* (C) Practice Tasks */}
       {practiceTasks.length > 0 && (
