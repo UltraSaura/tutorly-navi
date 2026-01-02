@@ -5,13 +5,16 @@ export async function callAnthropic(
   history: any[], 
   userMessage: string, 
   model: string, 
-  isExercise: boolean = false
+  isExercise: boolean = false,
+  maxTokens: number = 800
 ): Promise<string> {
   const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
   
   if (!anthropicApiKey) {
     throw new Error('Anthropic API key not configured');
   }
+  
+  console.log(`[Anthropic] Calling with model: ${model}, maxTokens: ${maxTokens}`);
   
   // Build messages array in Anthropic format
   const messages = [
@@ -35,7 +38,7 @@ export async function callAnthropic(
     body: JSON.stringify({
       model: model,
       messages: messages,
-      max_tokens: 800,
+      max_tokens: maxTokens,
     })
   });
   

@@ -239,7 +239,7 @@ Return your response as JSON:
 
     console.log('[generate-lesson-content] Calling AI with model:', modelId);
 
-    // Call AI service
+    // Call AI service with increased token limit for lesson content
     const aiResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/ai-chat`, {
       method: 'POST',
       headers: {
@@ -251,6 +251,7 @@ Return your response as JSON:
         modelId: modelId,
         history: [],
         language: 'en',
+        maxTokens: 3000,  // Increased from default 800 to allow full lesson content
         userContext: {
           response_language: 'English',
           format: 'json'

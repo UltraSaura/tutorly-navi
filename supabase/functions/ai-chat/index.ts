@@ -115,7 +115,8 @@ serve(async (req) => {
       requestExplanation = false,
       language = 'en',
       customPrompt,
-      userContext
+      userContext,
+      maxTokens = 800  // Default to 800 for backward compatibility
     } = parsedBody;
     
     console.log('📊 Request analysis:', { 
@@ -257,7 +258,8 @@ serve(async (req) => {
             message, 
             modelConfig.model, 
             isExercise,
-            requestExplanation
+            requestExplanation,
+            maxTokens
           );
           break;
         case 'Anthropic':
@@ -266,7 +268,8 @@ serve(async (req) => {
             formattedHistory, 
             message, 
             modelConfig.model, 
-            isExercise
+            isExercise,
+            maxTokens
           );
           break;
         case 'Mistral AI':
@@ -275,7 +278,8 @@ serve(async (req) => {
             formattedHistory, 
             message, 
             modelConfig.model, 
-            isExercise
+            isExercise,
+            maxTokens
           );
           break;
         case 'Google':
@@ -284,7 +288,8 @@ serve(async (req) => {
             formattedHistory, 
             message, 
             modelConfig.model, 
-            isExercise
+            isExercise,
+            maxTokens
           );
           break;
         case 'DeepSeek':
@@ -293,7 +298,8 @@ serve(async (req) => {
             formattedHistory, 
             message, 
             modelConfig.model, 
-            isExercise
+            isExercise,
+            maxTokens
           );
           break;
         case 'xAI':
@@ -302,7 +308,8 @@ serve(async (req) => {
             formattedHistory, 
             message, 
             modelConfig.model, 
-            isExercise
+            isExercise,
+            maxTokens
           );
           break;
         default:
