@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpen, Lightbulb, AlertCircle, Wand2, Loader2 } from 'lucide-react';
@@ -14,6 +15,7 @@ interface LessonContentStudentProps {
 }
 
 export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
+  const { t } = useTranslation();
   const generateLesson = useGenerateLessonContent();
   
   // Scroll to lesson section if URL has hash
@@ -44,7 +46,7 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
   });
 
   if (isLoading) {
-    return <div className="p-4 text-center text-muted-foreground">Loading lesson...</div>;
+    return <div className="p-4 text-center text-muted-foreground">{t('topic.loadingLesson')}</div>;
   }
 
   if (!topic?.lesson_content) {
@@ -54,12 +56,12 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-blue-500" />
-              Full Lesson
+              {t('topic.fullLesson')}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-muted-foreground">
-              This topic doesn't have a full lesson yet.
+              {t('topic.noLessonYet')}
             </p>
             <Button 
               onClick={() => generateLesson.mutate({ topicId })}
@@ -69,17 +71,17 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
               {generateLesson.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating lesson...
+                  {t('topic.generatingLesson')}
                 </>
               ) : (
                 <>
                   <Wand2 className="w-4 h-4 mr-2" />
-                  Generate Full Lesson
+                  {t('topic.generateLesson')}
                 </>
               )}
             </Button>
             <p className="text-xs text-muted-foreground">
-              This will take 30-60 seconds
+              {t('topic.generateLessonTime')}
             </p>
           </CardContent>
         </Card>
@@ -96,7 +98,7 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-blue-500" />
-            What you need to know
+            {t('topic.whatYouNeedToKnow')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -109,7 +111,7 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
             <Lightbulb className="w-5 h-5" />
-            See an example
+            {t('topic.seeAnExample')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -125,7 +127,7 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
               <AlertCircle className="w-5 h-5" />
-              Common mistakes to avoid
+              {t('topic.commonMistakes')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -155,12 +157,12 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
                 </p>
                 {mistakeWhy && (
                   <p className="text-sm text-amber-700 dark:text-amber-300">
-                    <span className="font-semibold">Why: </span>{mistakeWhy}
+                    <span className="font-semibold">{t('topic.mistakeWhy')} </span>{mistakeWhy}
                   </p>
                 )}
                 {mistakeTip && (
                   <p className="text-sm text-amber-700 dark:text-amber-300">
-                    <span className="font-semibold">Tip: </span>{mistakeTip}
+                    <span className="font-semibold">{t('topic.mistakeTip')} </span>{mistakeTip}
                   </p>
                 )}
               </div>
