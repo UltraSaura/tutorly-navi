@@ -140,32 +140,58 @@ export function useUnlinkObjectiveFromTopic() {
 
 /**
  * Get objectives filtered by curriculum (for objective selector UI)
+ * Uses legacy text fields (level, subdomain) as fallback when IDs are null
  */
 export function useObjectivesByCurriculum({
   subjectId,
   domainId,
   subdomainId,
+  levelCode,
+  subdomainLabel,
 }: {
   subjectId?: string;
   domainId?: string;
   subdomainId?: string;
+  levelCode?: string;
+  subdomainLabel?: string;
 }) {
   return useQuery({
-    queryKey: ['objectives-by-curriculum', { subjectId, domainId, subdomainId }],
+    queryKey: ['objectives-by-curriculum', { subjectId, domainId, subdomainId, levelCode, subdomainLabel }],
     queryFn: async () => {
-      if (!subjectId || !domainId || !subdomainId) return [];
+      // Try ID-based query first
+      if (subjectId && domainId && subdomainId) {
+        const { data, error } = await supabase
+          .from('objectives')
+          .select('*')
+          .eq('subject_id', subjectId)
+          .eq('domain_id', domainId)
+          .eq('subdomain_id', subdomainId)
+          .order('id');
+        
+        if (error) throw error;
+        if (data && data.length > 0) return data as Objective[];
+      }
       
-      const { data, error } = await supabase
-        .from('objectives')
-        .select('*')
-        .eq('subject_id', subjectId)
-        .eq('domain_id', domainId)
-        .eq('subdomain_id', subdomainId)
-        .order('id');
+      // Fallback: query by legacy text fields (level and subdomain)
+      if (levelCode) {
+        let query = supabase
+          .from('objectives')
+          .select('*')
+          .ilike('level', `%${levelCode}%`);
+        
+        // Also filter by subdomain label if provided
+        if (subdomainLabel) {
+          query = query.eq('subdomain', subdomainLabel);
+        }
+        
+        const { data, error } = await query.order('id');
+        
+        if (error) throw error;
+        return data as Objective[];
+      }
       
-      if (error) throw error;
-      return data as Objective[];
+      return [];
     },
-    enabled: !!subjectId && !!domainId && !!subdomainId,
+    enabled: !!(subjectId && domainId && subdomainId) || !!levelCode,
   });
 }

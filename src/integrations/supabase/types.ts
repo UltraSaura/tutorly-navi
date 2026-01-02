@@ -768,6 +768,7 @@ export type Database = {
           icon_name: string
           id: string
           is_active: boolean
+          language: string | null
           name: string
           order_index: number
           slug: string
@@ -779,6 +780,7 @@ export type Database = {
           icon_name: string
           id?: string
           is_active?: boolean
+          language?: string | null
           name: string
           order_index?: number
           slug: string
@@ -790,6 +792,7 @@ export type Database = {
           icon_name?: string
           id?: string
           is_active?: boolean
+          language?: string | null
           name?: string
           order_index?: number
           slug?: string

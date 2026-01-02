@@ -52,7 +52,8 @@ serve(async (req) => {
       .eq('id', classId)
       .single();
 
-    if (!classData || classData.teachers.user_id !== user.id) {
+    const teacherData = classData?.teachers as { user_id: string } | undefined;
+    if (!classData || teacherData?.user_id !== user.id) {
       return new Response(
         JSON.stringify({ error: 'Forbidden' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -181,15 +182,15 @@ async function getStudentCurriculumProgress(supabase: any, studentId: string) {
   );
 
   const subjects = Array.from(subjectObjectivesMap.values()).map((subjectData: any) => {
-    const objectiveIds = Array.from(subjectData.objective_ids);
+    const objectiveIds = Array.from(subjectData.objective_ids) as string[];
     const totalObjectives = objectiveIds.length;
     
     const masteredCount = objectiveIds.filter(
-      (id: string) => masteryMap.get(id) === 'mastered'
+      (id) => masteryMap.get(id) === 'mastered'
     ).length;
     
     const inProgressCount = objectiveIds.filter(
-      (id: string) => masteryMap.get(id) === 'in_progress'
+      (id) => masteryMap.get(id) === 'in_progress'
     ).length;
 
     return {

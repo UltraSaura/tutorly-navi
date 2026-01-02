@@ -98,8 +98,9 @@ serve(async (req) => {
         .rpc('get_model_with_fallback')
         .single();
 
-      if (!modelError && modelConfig?.default_model_id) {
-        adminSelectedModel = modelConfig.default_model_id;
+      const config = modelConfig as { default_model_id?: string } | null;
+      if (!modelError && config?.default_model_id) {
+        adminSelectedModel = config.default_model_id;
         console.log('[generate-lesson-content] Admin-configured model:', adminSelectedModel);
       }
     } catch (err) {
@@ -169,7 +170,11 @@ serve(async (req) => {
 
     if (objError) throw objError;
 
-    const objectives = topicObjectives?.map(to => to.objectives).filter(Boolean) || [];
+    const objectives = (topicObjectives?.map(to => to.objectives).filter(Boolean) || []) as Array<{
+      id: string;
+      text: string;
+      success_criteria?: Array<{ id: string; text: string }>;
+    }>;
     const successCriteriaIds = objectives.flatMap(obj => 
       obj.success_criteria?.map(sc => sc.id) || []
     );
@@ -191,7 +196,8 @@ serve(async (req) => {
     });
 
     // Generate AI content
-    const subjectName = topic.learning_categories?.learning_subjects?.name || 'General';
+    const categories = topic.learning_categories as { learning_subjects?: { name: string } } | null;
+    const subjectName = categories?.learning_subjects?.name || 'General';
     
     const prompt = `You are an expert educator creating lesson content for students.
 

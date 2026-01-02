@@ -17,6 +17,7 @@ interface TopicObjectivesSelectorProps {
   curriculumSubjectId?: string;
   curriculumDomainId?: string;
   curriculumSubdomainId?: string;
+  curriculumLevelCode?: string;
 }
 
 export function TopicObjectivesSelector({
@@ -24,6 +25,7 @@ export function TopicObjectivesSelector({
   curriculumSubjectId,
   curriculumDomainId,
   curriculumSubdomainId,
+  curriculumLevelCode,
 }: TopicObjectivesSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -31,11 +33,12 @@ export function TopicObjectivesSelector({
   const { data: linkedObjectives = [] } = useTopicObjectives(topicId);
   const linkedObjectiveIds = new Set(linkedObjectives.map(o => o.id));
   
-  // Get available objectives (filtered by curriculum)
+  // Get available objectives (filtered by curriculum with legacy fallback)
   const { data: availableObjectives = [], isLoading } = useObjectivesByCurriculum({
     subjectId: curriculumSubjectId,
     domainId: curriculumDomainId,
     subdomainId: curriculumSubdomainId,
+    levelCode: curriculumLevelCode,
   });
   
   const linkMutation = useLinkObjectiveToTopic();
@@ -56,7 +59,10 @@ export function TopicObjectivesSelector({
     unlinkMutation.mutate({ topicId, objectiveId });
   };
   
-  if (!curriculumSubjectId || !curriculumDomainId || !curriculumSubdomainId) {
+  // Show message if no curriculum info at all
+  const hasCurriculumFilters = (curriculumSubjectId && curriculumDomainId && curriculumSubdomainId) || curriculumLevelCode;
+  
+  if (!hasCurriculumFilters) {
     return (
       <Card>
         <CardHeader>
