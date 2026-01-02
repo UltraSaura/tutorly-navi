@@ -7,7 +7,7 @@ import { sendUnifiedMessage, generateUnifiedFallback } from '@/services/unifiedC
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useUserContext } from './useUserContext';
 
-interface CalculationState {
+export interface CalculationState {
   isProcessing: boolean;
   currentStep: 'detecting' | 'analyzing' | 'solving' | 'grading' | 'complete';
   message?: string;
