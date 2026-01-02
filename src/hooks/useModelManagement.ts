@@ -62,10 +62,10 @@ export const useModelManagement = (apiKeys: ApiKey[]) => {
     localStorage.setItem('selectedModelId', selectedModelId);
   }, [selectedModelId]);
 
-  const getAvailableModels = () => {
+  const getAvailableModels = (): ModelOption[] => {
     const configuredProviders = ['DeepSeek', 'OpenAI'];
     
-    return AVAILABLE_MODELS.map(model => {
+    return AVAILABLE_MODELS.map((model): ModelOption => {
       const hasSupabaseSecret = configuredProviders.includes(model.provider);
       const hasLocalApiKey = apiKeys.some(key => key.provider === model.provider);
       const isAvailable = hasSupabaseSecret || hasLocalApiKey;
