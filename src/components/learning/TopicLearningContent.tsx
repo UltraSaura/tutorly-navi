@@ -10,6 +10,7 @@ import { useTopicObjectives, useTasksForSuccessCriteria } from '@/hooks/useTopic
 import { useTopicMastery } from '@/hooks/useObjectiveMastery';
 import { NextStepsRecommendations } from './NextStepsRecommendations';
 import { LessonContentStudent } from './LessonContentStudent';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { cn } from '@/lib/utils';
 
 interface TopicLearningContentProps {
@@ -57,7 +58,15 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
 
           <CollapsibleContent>
             <div className="p-4">
-              <LessonContentStudent topicId={topicId} />
+              <ErrorBoundary
+                fallback={
+                  <div className="p-4 text-center text-muted-foreground">
+                    Unable to load lesson content. Please try refreshing.
+                  </div>
+                }
+              >
+                <LessonContentStudent topicId={topicId} />
+              </ErrorBoundary>
             </div>
           </CollapsibleContent>
         </div>

@@ -70,16 +70,59 @@ const TeacherStudentDetail = lazy(() => import("./pages/teacher/TeacherStudentDe
 const TeacherTopicDetail = lazy(() => import("./pages/teacher/TeacherTopicDetail"));
 
 // Loading Component
-const LoadingFallback = () => <div className="flex items-center justify-center min-h-screen">
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen bg-background">
     <div className="flex flex-col items-center">
       <div className="w-16 h-16 relative">
         <div className="absolute top-0 left-0 w-full h-full border-4 border-muted rounded-full"></div>
         <div className="absolute top-0 left-0 w-full h-full border-4 border-primary rounded-full animate-spin border-t-transparent"></div>
       </div>
-      <p className="mt-4 text-lg font-medium">Loading...</p>
+      <p className="mt-4 text-lg font-medium text-foreground">Loading...</p>
     </div>
-  </div>;
-const queryClient = new QueryClient();
+  </div>
+);
+
+// Route-level error fallback
+const RouteErrorFallback = ({ section }: { section: string }) => (
+  <div className="flex items-center justify-center min-h-screen bg-background p-6">
+    <div className="max-w-md w-full bg-card border rounded-lg shadow-lg p-6 text-center space-y-4">
+      <div className="w-12 h-12 mx-auto bg-destructive/10 rounded-full flex items-center justify-center">
+        <span className="text-destructive text-xl">!</span>
+      </div>
+      <h2 className="text-xl font-semibold">Unable to load {section}</h2>
+      <p className="text-muted-foreground text-sm">
+        Something went wrong loading this section. Please try again.
+      </p>
+      <div className="flex gap-3 justify-center pt-2">
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+        >
+          Refresh Page
+        </button>
+        <button
+          onClick={() => window.location.href = '/'}
+          className="px-4 py-2 border rounded-md hover:bg-muted"
+        >
+          Go Home
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 // Simple App Component (no language detection for now)
 const App = () => {
@@ -145,7 +188,11 @@ const App = () => {
                         <Route path="/management" element={<ManagementDashboard />} />
                         
                         {/* Admin Panel Routes */}
-                        <Route path="/admin" element={<AdminLayout />}>
+                        <Route path="/admin" element={
+                          <ErrorBoundary fallback={<RouteErrorFallback section="Admin Panel" />}>
+                            <AdminLayout />
+                          </ErrorBoundary>
+                        }>
                           <Route index element={<AIModelManagement />} />
                           <Route path="models" element={<AIModelManagement />} />
                           <Route path="diagnostics" element={<ConnectionDiagnostics />} />
@@ -157,7 +204,11 @@ const App = () => {
                         </Route>
                         
           {/* Guardian Portal Routes */}
-          <Route path="/guardian" element={<GuardianLayout />}>
+          <Route path="/guardian" element={
+            <ErrorBoundary fallback={<RouteErrorFallback section="Guardian Portal" />}>
+              <GuardianLayout />
+            </ErrorBoundary>
+          }>
             <Route index element={<GuardianHome />} />
             <Route path="children" element={<GuardianChildren />} />
             <Route path="child/:childId" element={<Suspense fallback={<LoadingFallback />}><ChildDashboard /></Suspense>} />
@@ -171,7 +222,11 @@ const App = () => {
           </Route>
 
           {/* Teacher Portal Routes */}
-          <Route path="/teacher" element={<TeacherLayout />}>
+          <Route path="/teacher" element={
+            <ErrorBoundary fallback={<RouteErrorFallback section="Teacher Portal" />}>
+              <TeacherLayout />
+            </ErrorBoundary>
+          }>
             <Route index element={<TeacherHome />} />
             <Route path="classes" element={<TeacherClasses />} />
             <Route path="classes/:classId" element={<ClassDetailPage />} />
