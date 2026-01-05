@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Button } from '@/components/ui/button';
 import { FileText, Image, Camera, Upload } from 'lucide-react';
 import CalculationStatus from './chat/CalculationStatus';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const ChatInterface = () => {
   const { t, language } = useLanguage();
@@ -193,11 +194,19 @@ const ChatInterface = () => {
         }}
       >
         {/* AI Response - Display the latest AI explanation/response */}
-        <AIResponse
-          messages={filteredMessages}
-          isLoading={isLoading}
-          onSubmitAnswer={handleAnswerSubmit}
-        />
+        <ErrorBoundary
+          fallback={
+            <div className="p-4 m-4 bg-card border rounded-lg text-center">
+              <p className="text-muted-foreground">Unable to display responses. Please refresh.</p>
+            </div>
+          }
+        >
+          <AIResponse
+            messages={filteredMessages}
+            isLoading={isLoading}
+            onSubmitAnswer={handleAnswerSubmit}
+          />
+        </ErrorBoundary>
         
         {/* Add Calculation Status - Shows processing status */}
         <CalculationStatus
