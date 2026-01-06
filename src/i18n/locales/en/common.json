@@ -355,5 +355,17 @@
   "topic.mistakeTip": "Tip:",
   "topic.whatToDoAfter": "What to do after this topic",
   "topic.sameArea": "Same area",
-  "topic.masteredObjectives": "You have mastered {{mastered}} of {{total}} objectives"
+  "topic.masteredObjectives": "You have mastered {{mastered}} of {{total}} objectives",
+  "topic.tabLearn": "Learn",
+  "topic.tabTranscript": "Transcript",
+  "topic.tabLesson": "Lesson",
+  "topic.keyPoints": "Key Points",
+  "topic.tldr": "Quick Summary",
+  "topic.transcript": "Transcript",
+  "topic.noTranscript": "No transcript available for this video",
+  "topic.selectVideoForTranscript": "Select a video to see its transcript",
+  "topic.searchTranscript": "Search transcript...",
+  "topic.noSearchResults": "No matching text found",
+  "topic.videoWatched": "Video",
+  "topic.quizCompleted": "Quiz"
 }

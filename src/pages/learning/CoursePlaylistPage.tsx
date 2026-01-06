@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -10,12 +10,13 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/context/SimpleLanguageContext';
-import { VideoPlayerBox } from '@/components/learning/VideoPlayerBox';
-import { CollapsibleVideoSection } from '@/components/learning/CollapsibleVideoSection';
-import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
 import { CurriculumLocation } from '@/components/admin/curriculum/CurriculumLocation';
-import { TopicLearningContent } from '@/components/learning/TopicLearningContent';
-import type { Video } from '@/types/learning';
+import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
+import { TopicTabsLayout } from '@/components/learning/TopicTabsLayout';
+import { TopicLearnTab } from '@/components/learning/TopicLearnTab';
+import { TopicTranscriptTab } from '@/components/learning/TopicTranscriptTab';
+import { TopicLessonTab } from '@/components/learning/TopicLessonTab';
+import type { LessonContent } from '@/types/learning';
 
 const CoursePlaylistPage = () => {
   const { subjectSlug, topicSlug } = useParams<{ subjectSlug: string; topicSlug: string }>();
@@ -43,39 +44,16 @@ const CoursePlaylistPage = () => {
     staleTime: 120000,
   });
 
-  // Fetch all quiz banks (locked and unlocked)
-  const { data: allBanks, error: allBanksError } = useAllBanks(
+  // Fetch all quiz banks
+  const { data: allBanks } = useAllBanks(
     data?.topic?.id || '',
     playingVideoId || '',
     completedVideoIds,
     user?.id || ''
   );
 
-  // REMOVED: Auto-play featured video on load
-  // Videos will only play when clicked via onVideoSelect
-
-  // Group videos into sections (every 4 videos)
-  const videoSections = useMemo(() => {
-    if (!data?.videos) return [];
-    
-    const sections: { title: string; videos: Video[] }[] = [];
-    const sectionSize = 4;
-    
-    for (let i = 0; i < data.videos.length; i += sectionSize) {
-      const sectionVideos = data.videos.slice(i, i + sectionSize);
-      const sectionNumber = Math.floor(i / sectionSize) + 1;
-      sections.push({
-        title: `Section ${sectionNumber}`,
-        videos: sectionVideos,
-      });
-    }
-    
-    return sections;
-  }, [data?.videos]);
-
-  // Memoize onVideoEnd to prevent VideoPlayerBox from re-rendering
+  // Handle video end - auto-play next
   const handleVideoEnd = useCallback(() => {
-    // Auto-play next video
     if (!data?.videos) return;
     const currentIndex = data.videos.findIndex(v => v.id === playingVideoId);
     if (currentIndex !== -1 && currentIndex < data.videos.length - 1) {
@@ -104,6 +82,7 @@ const CoursePlaylistPage = () => {
   }
 
   const { topic, videos } = data;
+  const lessonContent = topic.lesson_content as LessonContent | null;
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -114,7 +93,6 @@ const CoursePlaylistPage = () => {
         </Button>
         <div className="flex-1">
           <h1 className="text-xl font-bold">{topic.name}</h1>
-          {/* Curriculum location under title */}
           {topic.curriculum_country_code && (
             <CurriculumLocation
               countryId={topic.curriculum_country_code}
@@ -129,32 +107,35 @@ const CoursePlaylistPage = () => {
         </div>
       </div>
 
-      {/* Scrollable Content */}
+      {/* Scrollable Content with Tabs */}
       <ScrollArea className="flex-1">
         <div className="pb-24">
-          {/* Video Player - Always Visible */}
-          <VideoPlayerBox 
-            videoId={playingVideoId}
-            onVideoEnd={handleVideoEnd}
-          />
-
-          {/* Course Sections */}
-          <div className="space-y-1">
-            {videoSections.map((section, index) => (
-              <CollapsibleVideoSection
-                key={index}
-                title={section.title}
-                videos={section.videos}
+          <TopicTabsLayout
+            learnContent={
+              <TopicLearnTab
+                topicId={topic.id}
+                videos={videos}
                 playingVideoId={playingVideoId}
                 onVideoSelect={setPlayingVideoId}
+                onVideoEnd={handleVideoEnd}
+                completedVideoIds={completedVideoIds}
                 allBanks={allBanks?.banks}
-                topicId={data?.topic?.id}
+                lessonContent={lessonContent}
               />
-            ))}
-          </div>
-
-          {/* Full Lesson - Below Video Sections */}
-          <TopicLearningContent topicId={topic.id} />
+            }
+            transcriptContent={
+              <TopicTranscriptTab
+                videoId={playingVideoId}
+                topicId={topic.id}
+              />
+            }
+            lessonContent={
+              <TopicLessonTab
+                topicId={topic.id}
+                lessonContent={lessonContent}
+              />
+            }
+          />
         </div>
       </ScrollArea>
 
