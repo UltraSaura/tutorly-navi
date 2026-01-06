@@ -4,6 +4,7 @@ import type { Topic, Video } from '@/types/learning';
 import { useUserSchoolLevel } from './useUserSchoolLevel';
 import { filterContentByUserLevel } from '@/utils/schoolLevelFilter';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useAdminAuth } from './useAdminAuth';
 
 interface CoursePlaylistData {
   topic: Topic | null;
@@ -14,9 +15,10 @@ interface CoursePlaylistData {
 export function useCoursePlaylist(topicSlug: string) {
   const { data: userLevelData } = useUserSchoolLevel();
   const { language: userLanguage } = useLanguage();
+  const { isAdmin } = useAdminAuth();
   
   return useQuery({
-    queryKey: ['course-playlist', topicSlug, userLevelData?.level, userLanguage],
+    queryKey: ['course-playlist', topicSlug, userLevelData?.level, userLanguage, isAdmin],
     queryFn: async (): Promise<CoursePlaylistData> => {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -40,13 +42,15 @@ export function useCoursePlaylist(topicSlug: string) {
 
       if (allVideosError) throw allVideosError;
       
-      // Filter videos by user's age/level and language
-      const suitableVideos = filterContentByUserLevel(
-        allVideos as any,
-        userLevelData?.level || null,
-        userLevelData?.age || null,
-        userLanguage
-      );
+      // Admin sees all videos; students get filtered by age/level and language
+      const suitableVideos = isAdmin 
+        ? (allVideos as any[])
+        : filterContentByUserLevel(
+            allVideos as any,
+            userLevelData?.level || null,
+            userLevelData?.age || null,
+            userLanguage
+          );
       
       // Get quizzes for suitable videos
       const videoIds = suitableVideos.map((v: any) => v.id);
@@ -56,13 +60,15 @@ export function useCoursePlaylist(topicSlug: string) {
         .in('video_id', videoIds)
         .order('order_index') : { data: [] };
       
-      // Filter quizzes by user's age/level and language
-      const suitableQuizzes = filterContentByUserLevel(
-        allQuizzes as any,
-        userLevelData?.level || null,
-        userLevelData?.age || null,
-        userLanguage
-      );
+      // Admin sees all quizzes; students get filtered by age/level and language
+      const suitableQuizzes = isAdmin
+        ? (allQuizzes as any[])
+        : filterContentByUserLevel(
+            allQuizzes as any,
+            userLevelData?.level || null,
+            userLevelData?.age || null,
+            userLanguage
+          );
 
       // Get user progress for videos
       let videosWithProgress = suitableVideos as any[];
