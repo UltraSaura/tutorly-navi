@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -25,6 +25,13 @@ const CoursePlaylistPage = () => {
   const { user } = useAuth();
   const { data, isLoading } = useCoursePlaylist(topicSlug || '');
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+
+  // Auto-select featured video when data loads
+  useEffect(() => {
+    if (data?.featuredVideo && !playingVideoId) {
+      setPlayingVideoId(data.featuredVideo.id);
+    }
+  }, [data?.featuredVideo, playingVideoId]);
 
   // Fetch completed video IDs for the current user
   const { data: completedVideoIds = [] } = useQuery({
