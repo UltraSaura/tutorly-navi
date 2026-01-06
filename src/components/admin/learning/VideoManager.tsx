@@ -504,15 +504,17 @@ const VideoManager = () => {
         </div>
       </div>
 
-      {!selectedTopicId ? (
-        <div className="text-center py-12 text-muted-foreground">
-          Select a topic above to view and manage videos
-        </div>
-      ) : videosLoading ? (
+      {videosLoading ? (
         <div className="text-center py-12 text-muted-foreground">
           Loading videos...
         </div>
       ) : (
+        <>
+        {!selectedTopicId && (
+          <p className="text-sm text-muted-foreground mb-4">
+            Showing all videos. Select a topic to filter.
+          </p>
+        )}
         <Table>
           <TableHeader>
             <TableRow>
@@ -565,6 +567,7 @@ const VideoManager = () => {
             )))}
           </TableBody>
         </Table>
+        </>
       )}
     </div>
   );
