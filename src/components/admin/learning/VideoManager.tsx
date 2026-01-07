@@ -1,17 +1,11 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, Languages } from 'lucide-react';
-import { useLearningTopics, useLearningVideos, useCreateVideo, useUpdateVideo, useDeleteVideo, useLearningSubjects } from '@/hooks/useManageLearningContent';
-import type { Video } from '@/types/learning';
-import { AgeBasedSchoolLevelSelector } from './AgeBasedSchoolLevelSelector';
-import { Badge } from '@/components/ui/badge';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { useLearningTopics, useLearningVideos, useDeleteVideo, useLearningSubjects } from '@/hooks/useManageLearningContent';
+import type { Video, VideoVariantGroup } from '@/types/learning';
 import { MultiVariantVideoEditor } from './MultiVariantVideoEditor';
 
 /**
@@ -137,8 +131,6 @@ const VideoManager = () => {
   const { data: subjects = [], isLoading: subjectsLoading } = useLearningSubjects();
   const { data: topics = [], isLoading: topicsLoading, error: topicsError } = useLearningTopics();
   const { data: videos = [], isLoading: videosLoading, error: videosError } = useLearningVideos(selectedTopicId || undefined);
-  const createVideo = useCreateVideo();
-  const updateVideo = useUpdateVideo();
   const deleteVideo = useDeleteVideo();
   
   // Filter videos by language
@@ -147,89 +139,63 @@ const VideoManager = () => {
     : videos.filter(v => (v.language || 'en') === selectedLanguageFilter);
   
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [multiVariantDialogOpen, setMultiVariantDialogOpen] = useState(false);
-  const [editingVideo, setEditingVideo] = useState<Video | null>(null);
-  const [formData, setFormData] = useState({
-    topic_id: '',
-    subject_id: '',
-    title: '',
-    video_url: '',
-    thumbnail_url: '',
-    duration_minutes: 0,
-    xp_reward: 0,
-    description: '',
-    transcript: '',
-    order_index: 0,
-    is_active: true,
-    min_age: null as number | null,
-    max_age: null as number | null,
-    school_levels: [] as string[],
-    tags: [] as string[],
-    language: 'en',
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (editingVideo) {
-      await updateVideo.mutateAsync({ id: editingVideo.id, ...formData });
-    } else {
-      await createVideo.mutateAsync(formData);
-    }
-    
-    setDialogOpen(false);
-    resetForm();
-  };
+  const [editingGroup, setEditingGroup] = useState<VideoVariantGroup | null>(null);
 
   const handleEdit = (video: Video) => {
-    setEditingVideo(video);
-    setFormData({
+    // Convert video to VideoVariantGroup format for editing
+    const group: VideoVariantGroup = {
+      variant_group_id: video.variant_group_id || video.id,
       topic_id: video.topic_id,
-      subject_id: video.subject_id || '',
-      title: video.title,
-      video_url: video.video_url,
-      thumbnail_url: video.thumbnail_url || '',
+      subject_id: video.subject_id || null,
       duration_minutes: video.duration_minutes,
       xp_reward: video.xp_reward,
-      description: video.description || '',
-      transcript: video.transcript || '',
       order_index: video.order_index,
       is_active: video.is_active,
-      min_age: video.min_age,
-      max_age: video.max_age,
+      min_age: video.min_age ?? null,
+      max_age: video.max_age ?? null,
       school_levels: video.school_levels || [],
-      tags: video.tags || [],
-      language: video.language || 'en',
-    });
+      variants: [{
+        id: video.id,
+        language: video.language || 'en',
+        video_url: video.video_url,
+        title: video.title,
+        description: video.description || null,
+        tags: video.tags || [],
+        thumbnail_url: video.thumbnail_url || null,
+        transcript: video.transcript || null,
+      }],
+    };
+    
+    // If video has a variant_group_id, find all related videos
+    if (video.variant_group_id) {
+      const relatedVideos = videos.filter(v => v.variant_group_id === video.variant_group_id);
+      group.variants = relatedVideos.map(v => ({
+        id: v.id,
+        language: v.language || 'en',
+        video_url: v.video_url,
+        title: v.title,
+        description: v.description || null,
+        tags: v.tags || [],
+        thumbnail_url: v.thumbnail_url || null,
+        transcript: v.transcript || null,
+      }));
+    }
+    
+    setEditingGroup(group);
     setDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure? This will delete all quizzes under this video.')) {
+    if (confirm('Are you sure? This will delete the video and all its quizzes.')) {
       await deleteVideo.mutateAsync(id);
     }
   };
 
-  const resetForm = () => {
-    setEditingVideo(null);
-    setFormData({
-      topic_id: selectedTopicId,
-      subject_id: selectedSubjectId,
-      title: '',
-      video_url: '',
-      thumbnail_url: '',
-      duration_minutes: 0,
-      xp_reward: 0,
-      description: '',
-      transcript: '',
-      order_index: 0,
-      is_active: true,
-      min_age: null,
-      max_age: null,
-      school_levels: [],
-      tags: [],
-      language: 'en',
-    });
+  const handleDialogClose = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      setEditingGroup(null);
+    }
   };
 
   if (topicsError) {
@@ -244,6 +210,38 @@ const VideoManager = () => {
     return <div className="text-muted-foreground">Loading topics...</div>;
   }
 
+  // Get language flags for a video (shows all variants if grouped)
+  const getLanguageFlags = (video: Video) => {
+    if (video.variant_group_id) {
+      const relatedVideos = videos.filter(v => v.variant_group_id === video.variant_group_id);
+      const languages = [...new Set(relatedVideos.map(v => v.language || 'en'))];
+      return languages.map(lang => {
+        switch (lang) {
+          case 'fr': return '🇫🇷';
+          case 'ar': return '🇸🇦';
+          default: return '🇺🇸';
+        }
+      }).join(' ');
+    }
+    switch (video.language) {
+      case 'fr': return '🇫🇷';
+      case 'ar': return '🇸🇦';
+      default: return '🇺🇸';
+    }
+  };
+
+  // Group videos by variant_group_id to avoid duplicate rows
+  const displayedVideos = (() => {
+    const seen = new Set<string>();
+    return filteredVideos.filter(video => {
+      if (video.variant_group_id) {
+        if (seen.has(video.variant_group_id)) return false;
+        seen.add(video.variant_group_id);
+      }
+      return true;
+    });
+  })();
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -251,233 +249,10 @@ const VideoManager = () => {
           <h2 className="text-2xl font-bold">Learning Videos</h2>
           <p className="text-muted-foreground">Manage videos within topics</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) resetForm();
-        }}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Video
-            </Button>
-          </DialogTrigger>
-          <Button variant="outline" onClick={() => setMultiVariantDialogOpen(true)}>
-            <Languages className="w-4 h-4 mr-2" />
-            Multi-Language Video
-          </Button>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingVideo ? 'Edit Video' : 'Add New Video'}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="subject_id">Subject</Label>
-                <Select value={formData.subject_id} onValueChange={(value) => setFormData({ ...formData, subject_id: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select subject (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {subjects.map((subject) => (
-                      <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-              </Select>
-              </div>
-              <div>
-                <Label htmlFor="topic_id">Topic</Label>
-                <Select value={formData.topic_id} onValueChange={(value) => setFormData({ ...formData, topic_id: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select topic" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {topics.map((topic) => (
-                      <SelectItem key={topic.id} value={topic.id}>{topic.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="language">Language</Label>
-                <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">🇺🇸 English</SelectItem>
-                    <SelectItem value="fr">🇫🇷 Français</SelectItem>
-                    <SelectItem value="ar">🇸🇦 العربية</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="video_url">Video URL</Label>
-                <Input
-                  id="video_url"
-                  value={formData.video_url}
-                  onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-                  placeholder="YouTube, Vimeo, or direct video URL"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="thumbnail_url">Thumbnail URL</Label>
-                <Input
-                  id="thumbnail_url"
-                  value={formData.thumbnail_url}
-                  onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
-                  placeholder="Optional thumbnail image URL"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="duration_minutes">Duration (minutes)</Label>
-                  <Input
-                    id="duration_minutes"
-                    type="number"
-                    value={formData.duration_minutes}
-                    onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="xp_reward">XP Reward</Label>
-                  <Input
-                    id="xp_reward"
-                    type="number"
-                    value={formData.xp_reward}
-                    onChange={(e) => setFormData({ ...formData, xp_reward: parseInt(e.target.value) })}
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="transcript">Transcript</Label>
-                <Textarea
-                  id="transcript"
-                  value={formData.transcript}
-                  onChange={(e) => setFormData({ ...formData, transcript: e.target.value })}
-                  rows={6}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="order_index">Order Index</Label>
-                  <Input
-                    id="order_index"
-                    type="number"
-                    value={formData.order_index}
-                    onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) })}
-                  />
-                </div>
-                <div className="flex items-center space-x-2 pt-8">
-                  <Switch
-                    id="is_active"
-                    checked={formData.is_active}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                  />
-                  <Label htmlFor="is_active">Active</Label>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Minimum Age</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="18"
-                    value={formData.min_age || ''}
-                    onChange={(e) => setFormData({
-                      ...formData, 
-                      min_age: e.target.value ? parseInt(e.target.value) : null
-                    })}
-                    placeholder="e.g., 6"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Leave empty for no minimum age
-                  </p>
-                </div>
-                <div>
-                  <Label>Maximum Age</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="18"
-                    value={formData.max_age || ''}
-                    onChange={(e) => setFormData({
-                      ...formData, 
-                      max_age: e.target.value ? parseInt(e.target.value) : null
-                    })}
-                    placeholder="e.g., 11"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Leave empty for no maximum age
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <Label>School Levels</Label>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Select school levels this video is suitable for. Leave empty to show for all levels.
-                </p>
-              <AgeBasedSchoolLevelSelector
-                  selectedLevels={formData.school_levels}
-                  onLevelsChange={(levels) => setFormData({...formData, school_levels: levels})}
-                  selectedLanguage={formData.language}
-                />
-              </div>
-              <div>
-                <Label>Tags (for homework matching)</Label>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Add keywords that describe this video. These will be used to suggest this video 
-                  when students submit homework with similar topics. Separate tags with commas.
-                </p>
-                <Input
-                  placeholder="e.g., fractions, simplify, addition, algebra"
-                  value={formData.tags.join(', ')}
-                  onChange={(e) => {
-                    const tagString = e.target.value;
-                    const tags = tagString
-                      .split(',')
-                      .map(t => t.trim())
-                      .filter(t => t.length > 0);
-                    setFormData({...formData, tags});
-                  }}
-                />
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {formData.tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Suggested tags: fractions, equations, algebra, geometry, simplify, solve, calculate
-                </p>
-              </div>
-              <Button type="submit" className="w-full">
-                {editingVideo ? 'Update Video' : 'Create Video'}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setDialogOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Video
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
@@ -525,35 +300,31 @@ const VideoManager = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
-              <TableHead>Language</TableHead>
+              <TableHead>Languages</TableHead>
               <TableHead>Subject</TableHead>
               <TableHead>Topic</TableHead>
               <TableHead>Duration</TableHead>
               <TableHead>XP</TableHead>
-              <TableHead>Order</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredVideos.length === 0 ? (
+            {displayedVideos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
                   No videos found for this topic
                 </TableCell>
               </TableRow>
             ) : (
-              filteredVideos.map((video) => (
+              displayedVideos.map((video) => (
             <TableRow key={video.id}>
               <TableCell className="font-medium">{video.title}</TableCell>
-              <TableCell>
-                {video.language === 'fr' ? '🇫🇷' : video.language === 'ar' ? '🇸🇦' : '🇺🇸'}
-              </TableCell>
+              <TableCell>{getLanguageFlags(video)}</TableCell>
               <TableCell>{subjects.find(s => s.id === video.subject_id)?.name || '-'}</TableCell>
               <TableCell>{topics.find(t => t.id === video.topic_id)?.name}</TableCell>
               <TableCell>{video.duration_minutes}m</TableCell>
               <TableCell>{video.xp_reward} XP</TableCell>
-              <TableCell>{video.order_index}</TableCell>
               <TableCell>
                 <span className={video.is_active ? 'text-green-600' : 'text-red-600'}>
                   {video.is_active ? 'Active' : 'Inactive'}
@@ -577,10 +348,11 @@ const VideoManager = () => {
       )}
 
       <MultiVariantVideoEditor
-        open={multiVariantDialogOpen}
-        onOpenChange={setMultiVariantDialogOpen}
+        open={dialogOpen}
+        onOpenChange={handleDialogClose}
         topics={topics}
         subjects={subjects}
+        editingGroup={editingGroup}
         defaultTopicId={selectedTopicId}
         defaultSubjectId={selectedSubjectId}
       />
