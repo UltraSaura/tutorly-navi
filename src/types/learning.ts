@@ -93,6 +93,8 @@ export interface Video {
   tags?: string[] | null;
   // Language
   language?: string;
+  // Multi-language variant group
+  variant_group_id?: string | null;
   // User progress
   progress_percentage?: number;
   last_watched_position_seconds?: number;
@@ -142,4 +144,30 @@ export interface SubjectProgress {
   videos_ready: number;
   videos_completed: number;
   progress_percentage: number;
+}
+
+// Multi-language video variant types
+export interface VideoVariant {
+  id?: string;
+  language: string;
+  video_url: string;
+  title: string;
+  description: string | null;
+  tags: string[];
+  thumbnail_url: string | null;
+  transcript: string | null;
+}
+
+export interface VideoVariantGroup {
+  variant_group_id: string;
+  topic_id: string;
+  subject_id: string | null;
+  duration_minutes: number;
+  xp_reward: number;
+  order_index: number;
+  is_active: boolean;
+  min_age: number | null;
+  max_age: number | null;
+  school_levels: string[];
+  variants: VideoVariant[];
 }

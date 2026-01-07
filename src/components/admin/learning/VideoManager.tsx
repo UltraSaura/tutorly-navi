@@ -7,11 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Languages } from 'lucide-react';
 import { useLearningTopics, useLearningVideos, useCreateVideo, useUpdateVideo, useDeleteVideo, useLearningSubjects } from '@/hooks/useManageLearningContent';
 import type { Video } from '@/types/learning';
 import { AgeBasedSchoolLevelSelector } from './AgeBasedSchoolLevelSelector';
 import { Badge } from '@/components/ui/badge';
+import { MultiVariantVideoEditor } from './MultiVariantVideoEditor';
 
 /**
  * Extracts relevant keywords/tags from homework content
@@ -146,6 +147,7 @@ const VideoManager = () => {
     : videos.filter(v => (v.language || 'en') === selectedLanguageFilter);
   
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [multiVariantDialogOpen, setMultiVariantDialogOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
   const [formData, setFormData] = useState({
     topic_id: '',
@@ -259,6 +261,10 @@ const VideoManager = () => {
               Add Video
             </Button>
           </DialogTrigger>
+          <Button variant="outline" onClick={() => setMultiVariantDialogOpen(true)}>
+            <Languages className="w-4 h-4 mr-2" />
+            Multi-Language Video
+          </Button>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingVideo ? 'Edit Video' : 'Add New Video'}</DialogTitle>
@@ -569,6 +575,15 @@ const VideoManager = () => {
         </Table>
         </>
       )}
+
+      <MultiVariantVideoEditor
+        open={multiVariantDialogOpen}
+        onOpenChange={setMultiVariantDialogOpen}
+        topics={topics}
+        subjects={subjects}
+        defaultTopicId={selectedTopicId}
+        defaultSubjectId={selectedSubjectId}
+      />
     </div>
   );
 };

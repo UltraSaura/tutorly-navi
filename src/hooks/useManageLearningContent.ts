@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { Subject, Category, Topic, Video, Quiz } from '@/types/learning';
+import type { Subject, Category, Topic, Video, Quiz, VideoVariantGroup } from '@/types/learning';
 
 // Subjects
 export const useLearningSubjects = () => {
@@ -454,6 +454,126 @@ export const useDeleteQuiz = () => {
     },
     onError: (error: Error) => {
       toast.error(`Failed to delete quiz: ${error.message}`);
+    },
+  });
+};
+
+// Video Variants
+export const useCreateVideoVariants = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (group: Omit<VideoVariantGroup, 'variant_group_id'>) => {
+      const variant_group_id = crypto.randomUUID();
+      
+      const videosToInsert = group.variants.map((variant) => ({
+        topic_id: group.topic_id,
+        subject_id: group.subject_id,
+        title: variant.title,
+        video_url: variant.video_url,
+        thumbnail_url: variant.thumbnail_url,
+        description: variant.description,
+        transcript: variant.transcript,
+        duration_minutes: group.duration_minutes,
+        xp_reward: group.xp_reward,
+        order_index: group.order_index,
+        is_active: group.is_active,
+        min_age: group.min_age,
+        max_age: group.max_age,
+        school_levels: group.school_levels,
+        tags: variant.tags,
+        language: variant.language,
+        variant_group_id,
+      }));
+      
+      const { data, error } = await (supabase as any)
+        .from('learning_videos')
+        .insert(videosToInsert)
+        .select();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-learning-videos'] });
+      toast.success('Multi-language video created successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to create variants: ${error.message}`);
+    },
+  });
+};
+
+export const useUpdateVideoVariants = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (group: VideoVariantGroup) => {
+      // Delete existing variants in the group
+      const { error: deleteError } = await (supabase as any)
+        .from('learning_videos')
+        .delete()
+        .eq('variant_group_id', group.variant_group_id);
+      
+      if (deleteError) throw deleteError;
+      
+      // Insert updated variants
+      const videosToInsert = group.variants.map((variant) => ({
+        topic_id: group.topic_id,
+        subject_id: group.subject_id,
+        title: variant.title,
+        video_url: variant.video_url,
+        thumbnail_url: variant.thumbnail_url,
+        description: variant.description,
+        transcript: variant.transcript,
+        duration_minutes: group.duration_minutes,
+        xp_reward: group.xp_reward,
+        order_index: group.order_index,
+        is_active: group.is_active,
+        min_age: group.min_age,
+        max_age: group.max_age,
+        school_levels: group.school_levels,
+        tags: variant.tags,
+        language: variant.language,
+        variant_group_id: group.variant_group_id,
+      }));
+      
+      const { data, error } = await (supabase as any)
+        .from('learning_videos')
+        .insert(videosToInsert)
+        .select();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-learning-videos'] });
+      toast.success('Multi-language video updated successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update variants: ${error.message}`);
+    },
+  });
+};
+
+export const useDeleteVideoVariantGroup = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (variant_group_id: string) => {
+      const { error } = await (supabase as any)
+        .from('learning_videos')
+        .delete()
+        .eq('variant_group_id', variant_group_id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-learning-videos'] });
+      toast.success('Video group deleted successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete video group: ${error.message}`);
     },
   });
 };
