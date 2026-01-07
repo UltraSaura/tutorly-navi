@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertCircle, Tags } from 'lucide-react';
 import { useLearningCategories, useLearningTopics, useCreateTopic, useUpdateTopic, useDeleteTopic } from '@/hooks/useManageLearningContent';
 import type { Topic } from '@/types/learning';
 import { CurriculumSelector } from '@/components/admin/curriculum/CurriculumSelector';
@@ -16,10 +16,12 @@ import { TopicObjectivesSelector } from './TopicObjectivesSelector';
 import { GenerateLessonButton } from './GenerateLessonButton';
 import { LessonContentDisplay } from './LessonContentDisplay';
 import { useProgramTopicsForAdmin } from '@/hooks/useProgramTopicsForAdmin';
+import { useAutoLinkObjectives } from '@/hooks/useAutoSuggestObjectives';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 
 const TopicManager = () => {
   const { t } = useTranslation();
@@ -40,6 +42,7 @@ const TopicManager = () => {
   const createTopic = useCreateTopic();
   const updateTopic = useUpdateTopic();
   const deleteTopic = useDeleteTopic();
+  const autoLinkObjectives = useAutoLinkObjectives();
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
@@ -48,6 +51,7 @@ const TopicManager = () => {
     name: '',
     slug: '',
     description: '',
+    keywords: [] as string[],
     video_count: 0,
     quiz_count: 0,
     estimated_duration_minutes: 0,
@@ -59,14 +63,45 @@ const TopicManager = () => {
     curriculum_domain_id: null as string | null,
     curriculum_subdomain_id: null as string | null,
   });
+  const [keywordsInput, setKeywordsInput] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Parse keywords from input
+    const keywords = keywordsInput
+      .split(',')
+      .map(k => k.trim())
+      .filter(Boolean);
+    
+    const dataToSubmit = { ...formData, keywords };
+    
+    let topicId: string;
+    
     if (editingTopic) {
-      await updateTopic.mutateAsync({ id: editingTopic.id, ...formData });
+      await updateTopic.mutateAsync({ id: editingTopic.id, ...dataToSubmit });
+      topicId = editingTopic.id;
     } else {
-      await createTopic.mutateAsync(formData);
+      const result = await createTopic.mutateAsync(dataToSubmit);
+      topicId = result.id;
+    }
+    
+    // Auto-suggest and link objectives if we have curriculum info
+    if (formData.name && formData.curriculum_level_code) {
+      try {
+        await autoLinkObjectives.mutateAsync({
+          topicId,
+          topicName: formData.name,
+          topicDescription: formData.description,
+          topicKeywords: keywords,
+          levelCode: formData.curriculum_level_code,
+          countryCode: formData.curriculum_country_code || undefined,
+          confidenceThreshold: 0.85,
+        });
+      } catch (error) {
+        console.error('Auto-link failed:', error);
+        // Don't block the save - just log the error
+      }
     }
     
     setDialogOpen(false);
@@ -80,6 +115,7 @@ const TopicManager = () => {
       name: topic.name,
       slug: topic.slug,
       description: topic.description || '',
+      keywords: topic.keywords || [],
       video_count: topic.video_count,
       quiz_count: topic.quiz_count,
       estimated_duration_minutes: topic.estimated_duration_minutes,
@@ -91,6 +127,7 @@ const TopicManager = () => {
       curriculum_domain_id: topic.curriculum_domain_id || null,
       curriculum_subdomain_id: topic.curriculum_subdomain_id || null,
     });
+    setKeywordsInput((topic.keywords || []).join(', '));
     setDialogOpen(true);
   };
 
@@ -107,6 +144,7 @@ const TopicManager = () => {
       name: '',
       slug: '',
       description: '',
+      keywords: [],
       video_count: 0,
       quiz_count: 0,
       estimated_duration_minutes: 0,
@@ -118,6 +156,7 @@ const TopicManager = () => {
       curriculum_domain_id: null,
       curriculum_subdomain_id: null,
     });
+    setKeywordsInput('');
   };
 
   if (categoriesError) {
@@ -203,6 +242,23 @@ const TopicManager = () => {
                 />
               </div>
               
+              {/* Keywords Input */}
+              <div>
+                <Label htmlFor="keywords" className="flex items-center gap-2">
+                  <Tags className="w-4 h-4" />
+                  Keywords (comma-separated)
+                </Label>
+                <Input
+                  id="keywords"
+                  placeholder="multiplication, tables, produit, calcul mental"
+                  value={keywordsInput}
+                  onChange={(e) => setKeywordsInput(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Add keywords to help AI match this topic to the correct learning objectives automatically
+                </p>
+              </div>
+              
               {/* Curriculum Location Selector */}
               <CurriculumSelector
                 value={{
@@ -220,9 +276,14 @@ const TopicManager = () => {
               {editingTopic && (
                 <TopicObjectivesSelector
                   topicId={editingTopic.id}
+                  topicName={formData.name}
+                  topicDescription={formData.description}
+                  topicKeywords={keywordsInput.split(',').map(k => k.trim()).filter(Boolean)}
                   curriculumSubjectId={formData.curriculum_subject_id || undefined}
                   curriculumDomainId={formData.curriculum_domain_id || undefined}
                   curriculumSubdomainId={formData.curriculum_subdomain_id || undefined}
+                  curriculumLevelCode={formData.curriculum_level_code || undefined}
+                  curriculumCountryCode={formData.curriculum_country_code || undefined}
                 />
               )}
               
@@ -296,8 +357,8 @@ const TopicManager = () => {
                 </div>
               )}
               
-              <Button type="submit" className="w-full">
-                {editingTopic ? 'Update Topic' : 'Create Topic'}
+              <Button type="submit" className="w-full" disabled={createTopic.isPending || updateTopic.isPending || autoLinkObjectives.isPending}>
+                {autoLinkObjectives.isPending ? 'Linking Objectives...' : editingTopic ? 'Update Topic' : 'Create Topic'}
               </Button>
             </form>
           </DialogContent>
@@ -357,6 +418,7 @@ const TopicManager = () => {
               <TableHead>Name</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Curriculum</TableHead>
+              <TableHead>Keywords</TableHead>
               <TableHead>Videos</TableHead>
               <TableHead>Quizzes</TableHead>
               <TableHead>Duration</TableHead>
@@ -368,7 +430,7 @@ const TopicManager = () => {
           <TableBody>
             {topics.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-muted-foreground">
+                <TableCell colSpan={10} className="text-center text-muted-foreground">
                   No topics found for this category
                 </TableCell>
               </TableRow>
@@ -386,6 +448,16 @@ const TopicManager = () => {
                   subdomainId={topic.curriculum_subdomain_id}
                   variant="compact"
                 />
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-wrap gap-1 max-w-[150px]">
+                  {(topic.keywords || []).slice(0, 2).map((kw, i) => (
+                    <Badge key={i} variant="outline" className="text-xs">{kw}</Badge>
+                  ))}
+                  {(topic.keywords || []).length > 2 && (
+                    <Badge variant="outline" className="text-xs">+{(topic.keywords || []).length - 2}</Badge>
+                  )}
+                </div>
               </TableCell>
               <TableCell>{topic.video_count}</TableCell>
               <TableCell>{topic.quiz_count}</TableCell>

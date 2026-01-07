@@ -1,21 +1,12 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { useLearningTopics, useLearningVideos, useCreateVideo, useUpdateVideo, useDeleteVideo, useLearningSubjects } from '@/hooks/useManageLearningContent';
-import type { Video } from '@/types/learning';
-import { AgeBasedSchoolLevelSelector } from './AgeBasedSchoolLevelSelector';
-import { Badge } from '@/components/ui/badge';
-import { CurriculumSelector } from '@/components/admin/curriculum/CurriculumSelector';
-import { useProgramTopicsForAdmin } from '@/hooks/useProgramTopicsForAdmin';
-import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
+import { useLearningTopics, useLearningVideos, useDeleteVideo, useLearningSubjects } from '@/hooks/useManageLearningContent';
+import type { Video, VideoVariantGroup } from '@/types/learning';
+import { MultiVariantVideoEditor } from './MultiVariantVideoEditor';
 
 /**
  * Extracts relevant keywords/tags from homework content
@@ -134,25 +125,20 @@ export function scoreVideoMatch(videoTags: string[], homeworkKeywords: string[])
 }
 
 const VideoManager = () => {
-  const { t } = useTranslation();
-  const { toast } = useToast();
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
+<<<<<<< HEAD
   const [videoCurriculum, setVideoCurriculum] = useState({
     countryCode: '',
     levelCode: '',
     subjectId: '',
   });
+=======
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+>>>>>>> learning
   const [selectedLanguageFilter, setSelectedLanguageFilter] = useState<string>('all');
   const { data: subjects = [], isLoading: subjectsLoading } = useLearningSubjects();
   const { data: topics = [], isLoading: topicsLoading, error: topicsError } = useLearningTopics();
   const { data: videos = [], isLoading: videosLoading, error: videosError } = useLearningVideos(selectedTopicId || undefined);
-  const { data: availableTopics = [], isLoading: availableTopicsLoading } = useProgramTopicsForAdmin({
-    countryCode: videoCurriculum.countryCode,
-    levelCode: videoCurriculum.levelCode,
-    subjectId: videoCurriculum.subjectId,
-  });
-  const createVideo = useCreateVideo();
-  const updateVideo = useUpdateVideo();
   const deleteVideo = useDeleteVideo();
   
   // Filter videos by language
@@ -161,98 +147,63 @@ const VideoManager = () => {
     : videos.filter(v => (v.language || 'en') === selectedLanguageFilter);
   
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingVideo, setEditingVideo] = useState<Video | null>(null);
-  const [formData, setFormData] = useState({
-    topic_id: '',
-    subject_id: '',
-    title: '',
-    video_url: '',
-    thumbnail_url: '',
-    duration_minutes: 0,
-    xp_reward: 0,
-    description: '',
-    transcript: '',
-    order_index: 0,
-    is_active: true,
-    min_age: null as number | null,
-    max_age: null as number | null,
-    school_levels: [] as string[],
-    tags: [] as string[],
-    language: 'en',
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate topic_id is selected
-    if (!formData.topic_id) {
-      toast({
-        title: t('common.error'),
-        description: t('admin.curriculum.topicRequired'),
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    if (editingVideo) {
-      await updateVideo.mutateAsync({ id: editingVideo.id, ...formData });
-    } else {
-      await createVideo.mutateAsync(formData);
-    }
-    
-    setDialogOpen(false);
-    resetForm();
-  };
+  const [editingGroup, setEditingGroup] = useState<VideoVariantGroup | null>(null);
 
   const handleEdit = (video: Video) => {
-    setEditingVideo(video);
-    setFormData({
+    // Convert video to VideoVariantGroup format for editing
+    const group: VideoVariantGroup = {
+      variant_group_id: video.variant_group_id || video.id,
       topic_id: video.topic_id,
-      subject_id: video.subject_id || '',
-      title: video.title,
-      video_url: video.video_url,
-      thumbnail_url: video.thumbnail_url || '',
+      subject_id: video.subject_id || null,
       duration_minutes: video.duration_minutes,
       xp_reward: video.xp_reward,
-      description: video.description || '',
-      transcript: video.transcript || '',
       order_index: video.order_index,
       is_active: video.is_active,
-      min_age: video.min_age,
-      max_age: video.max_age,
+      min_age: video.min_age ?? null,
+      max_age: video.max_age ?? null,
       school_levels: video.school_levels || [],
-      tags: video.tags || [],
-      language: video.language || 'en',
-    });
+      variants: [{
+        id: video.id,
+        language: video.language || 'en',
+        video_url: video.video_url,
+        title: video.title,
+        description: video.description || null,
+        tags: video.tags || [],
+        thumbnail_url: video.thumbnail_url || null,
+        transcript: video.transcript || null,
+      }],
+    };
+    
+    // If video has a variant_group_id, find all related videos
+    if (video.variant_group_id) {
+      const relatedVideos = videos.filter(v => v.variant_group_id === video.variant_group_id);
+      group.variants = relatedVideos.map(v => ({
+        id: v.id,
+        language: v.language || 'en',
+        video_url: v.video_url,
+        title: v.title,
+        description: v.description || null,
+        tags: v.tags || [],
+        thumbnail_url: v.thumbnail_url || null,
+        transcript: v.transcript || null,
+      }));
+    }
+    
+    setEditingGroup(group);
     setDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure? This will delete all quizzes under this video.')) {
+    if (confirm('Are you sure? This will delete the video and all its quizzes.')) {
       await deleteVideo.mutateAsync(id);
     }
   };
 
-  const resetForm = () => {
-    setEditingVideo(null);
-    setFormData({
-      topic_id: '',
-      subject_id: '',
-      title: '',
-      video_url: '',
-      thumbnail_url: '',
-      duration_minutes: 0,
-      xp_reward: 0,
-      description: '',
-      transcript: '',
-      order_index: 0,
-      is_active: true,
-      min_age: null,
-      max_age: null,
-      school_levels: [],
-      tags: [],
-      language: 'en',
-    });
+  const handleDialogClose = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      setEditingGroup(null);
+    }
   };
 
   if (topicsError) {
@@ -267,6 +218,38 @@ const VideoManager = () => {
     return <div className="text-muted-foreground">Loading topics...</div>;
   }
 
+  // Get language flags for a video (shows all variants if grouped)
+  const getLanguageFlags = (video: Video) => {
+    if (video.variant_group_id) {
+      const relatedVideos = videos.filter(v => v.variant_group_id === video.variant_group_id);
+      const languages = [...new Set(relatedVideos.map(v => v.language || 'en'))];
+      return languages.map(lang => {
+        switch (lang) {
+          case 'fr': return '🇫🇷';
+          case 'ar': return '🇸🇦';
+          default: return '🇺🇸';
+        }
+      }).join(' ');
+    }
+    switch (video.language) {
+      case 'fr': return '🇫🇷';
+      case 'ar': return '🇸🇦';
+      default: return '🇺🇸';
+    }
+  };
+
+  // Group videos by variant_group_id to avoid duplicate rows
+  const displayedVideos = (() => {
+    const seen = new Set<string>();
+    return filteredVideos.filter(video => {
+      if (video.variant_group_id) {
+        if (seen.has(video.variant_group_id)) return false;
+        seen.add(video.variant_group_id);
+      }
+      return true;
+    });
+  })();
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -274,6 +257,7 @@ const VideoManager = () => {
           <h2 className="text-2xl font-bold">Learning Videos</h2>
           <p className="text-muted-foreground">Manage videos within topics</p>
         </div>
+<<<<<<< HEAD
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);
           if (!open) resetForm();
@@ -527,6 +511,12 @@ const VideoManager = () => {
             </form>
           </DialogContent>
         </Dialog>
+=======
+        <Button onClick={() => setDialogOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Video
+        </Button>
+>>>>>>> learning
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
@@ -559,48 +549,46 @@ const VideoManager = () => {
         </div>
       </div>
 
-      {!selectedTopicId ? (
-        <div className="text-center py-12 text-muted-foreground">
-          Select a topic above to view and manage videos
-        </div>
-      ) : videosLoading ? (
+      {videosLoading ? (
         <div className="text-center py-12 text-muted-foreground">
           Loading videos...
         </div>
       ) : (
+        <>
+        {!selectedTopicId && (
+          <p className="text-sm text-muted-foreground mb-4">
+            Showing all videos. Select a topic to filter.
+          </p>
+        )}
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
-              <TableHead>Language</TableHead>
+              <TableHead>Languages</TableHead>
               <TableHead>Subject</TableHead>
               <TableHead>Topic</TableHead>
               <TableHead>Duration</TableHead>
               <TableHead>XP</TableHead>
-              <TableHead>Order</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredVideos.length === 0 ? (
+            {displayedVideos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
                   No videos found for this topic
                 </TableCell>
               </TableRow>
             ) : (
-              filteredVideos.map((video) => (
+              displayedVideos.map((video) => (
             <TableRow key={video.id}>
               <TableCell className="font-medium">{video.title}</TableCell>
-              <TableCell>
-                {video.language === 'fr' ? '🇫🇷' : video.language === 'ar' ? '🇸🇦' : '🇺🇸'}
-              </TableCell>
+              <TableCell>{getLanguageFlags(video)}</TableCell>
               <TableCell>{subjects.find(s => s.id === video.subject_id)?.name || '-'}</TableCell>
               <TableCell>{topics.find(t => t.id === video.topic_id)?.name}</TableCell>
               <TableCell>{video.duration_minutes}m</TableCell>
               <TableCell>{video.xp_reward} XP</TableCell>
-              <TableCell>{video.order_index}</TableCell>
               <TableCell>
                 <span className={video.is_active ? 'text-green-600' : 'text-red-600'}>
                   {video.is_active ? 'Active' : 'Inactive'}
@@ -620,7 +608,18 @@ const VideoManager = () => {
             )))}
           </TableBody>
         </Table>
+        </>
       )}
+
+      <MultiVariantVideoEditor
+        open={dialogOpen}
+        onOpenChange={handleDialogClose}
+        topics={topics}
+        subjects={subjects}
+        editingGroup={editingGroup}
+        defaultTopicId={selectedTopicId}
+        defaultSubjectId={selectedSubjectId}
+      />
     </div>
   );
 };

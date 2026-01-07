@@ -98,8 +98,9 @@ serve(async (req) => {
         .rpc('get_model_with_fallback')
         .single();
 
-      if (!modelError && modelConfig?.default_model_id) {
-        adminSelectedModel = modelConfig.default_model_id;
+      const config = modelConfig as { default_model_id?: string } | null;
+      if (!modelError && config?.default_model_id) {
+        adminSelectedModel = config.default_model_id;
         console.log('[generate-lesson-content] Admin-configured model:', adminSelectedModel);
       }
     } catch (err) {
@@ -169,7 +170,11 @@ serve(async (req) => {
 
     if (objError) throw objError;
 
-    const objectives = topicObjectives?.map(to => to.objectives).filter(Boolean) || [];
+    const objectives = (topicObjectives?.map(to => to.objectives).filter(Boolean) || []) as Array<{
+      id: string;
+      text: string;
+      success_criteria?: Array<{ id: string; text: string }>;
+    }>;
     const successCriteriaIds = objectives.flatMap(obj => 
       obj.success_criteria?.map(sc => sc.id) || []
     );
@@ -191,7 +196,8 @@ serve(async (req) => {
     });
 
     // Generate AI content
-    const subjectName = topic.learning_categories?.learning_subjects?.name || 'General';
+    const categories = topic.learning_categories as { learning_subjects?: { name: string } } | null;
+    const subjectName = categories?.learning_subjects?.name || 'General';
     
     const prompt = `You are an expert educator creating lesson content for students.
 
@@ -233,7 +239,7 @@ Return your response as JSON:
 
     console.log('[generate-lesson-content] Calling AI with model:', modelId);
 
-    // Call AI service
+    // Call AI service with increased token limit for lesson content
     const aiResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/ai-chat`, {
       method: 'POST',
       headers: {
@@ -245,6 +251,7 @@ Return your response as JSON:
         modelId: modelId,
         history: [],
         language: 'en',
+        maxTokens: 3000,  // Increased from default 800 to allow full lesson content
         userContext: {
           response_language: 'English',
           format: 'json'
@@ -264,39 +271,43 @@ Return your response as JSON:
     let generatedContent;
     try {
       const rawContent = aiData.content || aiData.data?.content || aiData;
+
+      // Helper: strip leading/trailing markdown fences even if the closing fence is missing
+      const stripFences = (s: string) => {
+        let out = s.trim();
+        out = out.replace(/^```(?:json)?\s*/i, '');
+        out = out.replace(/```\s*$/i, '');
+        // Also remove any trailing fence that might appear later
+        out = out.replace(/```/g, '');
+        return out.trim();
+      };
+
       let jsonStr = '';
-      
+
       if (typeof rawContent === 'string') {
-        // Try to extract JSON from markdown code block: ```json ... ```
-        const fenceMatch = rawContent.match(/```(?:json)?\s*([\s\S]*?)```/i);
-        
-        if (fenceMatch) {
-          // Found markdown code block - extract content inside
-          jsonStr = fenceMatch[1].trim();
-          console.log('[generate-lesson-content] Extracted JSON from code block');
+        const cleaned = stripFences(rawContent);
+
+        // Prefer extracting between braces (more robust than relying on ``` fences)
+        const firstBrace = cleaned.indexOf('{');
+        const lastBrace = cleaned.lastIndexOf('}');
+
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          jsonStr = cleaned.substring(firstBrace, lastBrace + 1);
+          console.log('[generate-lesson-content] Extracted JSON between braces');
         } else {
-          // No code block - try to find JSON between { and }
-          const firstBrace = rawContent.indexOf('{');
-          const lastBrace = rawContent.lastIndexOf('}');
-          
-          if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-            jsonStr = rawContent.substring(firstBrace, lastBrace + 1);
-            console.log('[generate-lesson-content] Extracted JSON between braces');
-          } else {
-            // Use the whole content as-is
-            jsonStr = rawContent;
-            console.log('[generate-lesson-content] Using raw content');
-          }
+          // Fall back to using cleaned content as-is
+          jsonStr = cleaned;
+          console.log('[generate-lesson-content] Using cleaned content');
         }
-        
+
         generatedContent = JSON.parse(jsonStr);
       } else {
         // Content is already an object
         generatedContent = rawContent;
       }
-      
+
       console.log('[generate-lesson-content] Successfully parsed AI response');
-      
+
     } catch (parseError) {
       console.error('[generate-lesson-content] Failed to parse AI response:', parseError);
       console.error('[generate-lesson-content] Raw AI data:', JSON.stringify(aiData, null, 2));

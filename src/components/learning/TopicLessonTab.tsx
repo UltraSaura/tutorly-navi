@@ -1,25 +1,31 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { CheckCircle2, Target, ClipboardList, GraduationCap, CheckCircle, Circle, Clock, ChevronDown, BookOpen } from 'lucide-react';
+import { 
+  CheckCircle, 
+  Circle, 
+  Clock, 
+  Target, 
+  GraduationCap, 
+  Sparkles,
+  BookOpen
+} from 'lucide-react';
 import { useTopicObjectives, useTasksForSuccessCriteria } from '@/hooks/useTopicObjectives';
 import { useTopicMastery } from '@/hooks/useObjectiveMastery';
-import { NextStepsRecommendations } from './NextStepsRecommendations';
 import { LessonContentStudent } from './LessonContentStudent';
+import { NextStepsRecommendations } from './NextStepsRecommendations';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { cn } from '@/lib/utils';
+import type { LessonContent } from '@/types/learning';
 
-interface TopicLearningContentProps {
+interface TopicLessonTabProps {
   topicId: string;
+  lessonContent?: LessonContent | null;
 }
 
-export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
+export function TopicLessonTab({ topicId, lessonContent }: TopicLessonTabProps) {
   const { t } = useTranslation();
-  const [lessonOpen, setLessonOpen] = useState(true);
   const { data: objectives = [], isLoading } = useTopicObjectives(topicId);
   const { data: masteryProgress, isLoading: masteryLoading } = useTopicMastery(topicId);
   
@@ -33,52 +39,58 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
   // Group tasks by type
   const practiceTasks = tasks.filter(t => t.type === 'practice');
   const exitTasks = tasks.filter(t => t.type === 'exit');
-  
+
+  // Generate TL;DR summary from lesson content
+  const tldrSummary = lessonContent?.explanation
+    ? extractKeyPoints(lessonContent.explanation, 5)
+    : null;
+
   if (isLoading) {
-    return <div className="p-4 text-center text-muted-foreground">{t('topic.loadingContent')}</div>;
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        {t('topic.loadingContent')}
+      </div>
+    );
   }
-  
+
   return (
     <div className="space-y-6 p-4">
-      {/* Full Lesson - Now Collapsible */}
-      <Collapsible open={lessonOpen} onOpenChange={setLessonOpen} className="my-3">
-        <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
-          <CollapsibleTrigger className="w-full flex items-center justify-between p-4 bg-muted/50 hover:bg-muted transition-colors">
-            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <BookOpen className="w-5 h-5" />
-              {t('topic.fullLesson')}
-            </h3>
-            <ChevronDown
-              className={cn(
-                'w-5 h-5 text-foreground transition-transform',
-                lessonOpen && 'rotate-180'
-              )}
-            />
-          </CollapsibleTrigger>
-
-          <CollapsibleContent>
-            <div className="p-4">
-              <ErrorBoundary
-                fallback={
-                  <div className="p-4 text-center text-muted-foreground">
-                    Unable to load lesson content. Please try refreshing.
-                  </div>
-                }
-              >
-                <LessonContentStudent topicId={topicId} />
-              </ErrorBoundary>
-            </div>
-          </CollapsibleContent>
-        </div>
-      </Collapsible>
-      
-      {/* Only show objectives/progress sections if objectives exist */}
-      {objectives.length > 0 && (
-        <>
-      
-      {/* Your Progress Section */}
-      {!masteryLoading && masteryProgress && masteryProgress.total_objectives > 0 && (
+      {/* TL;DR Summary */}
+      {tldrSummary && tldrSummary.length > 0 && (
         <Card className="bg-primary/5 border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="w-5 h-5 text-primary" />
+              {t('topic.tldr')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {tldrSummary.map((point, idx) => (
+                <li key={idx} className="flex items-start gap-2 text-sm">
+                  <span className="text-primary mt-1">•</span>
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Full Lesson Content */}
+      <ErrorBoundary
+        fallback={
+          <div className="p-4 text-center text-muted-foreground">
+            Unable to load lesson content. Please try refreshing.
+          </div>
+        }
+      >
+        <LessonContentStudent topicId={topicId} />
+      </ErrorBoundary>
+
+      {/* Progress Section */}
+      {!masteryLoading && masteryProgress && masteryProgress.total_objectives > 0 && (
+        <Card className="bg-muted/30">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
@@ -91,7 +103,6 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Overall Progress Bar */}
             <div>
               <div className="flex justify-between text-sm mb-2">
                 <span className="text-muted-foreground">
@@ -104,7 +115,6 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
               <Progress value={masteryProgress.mastery_percentage} className="h-2" />
             </div>
             
-            {/* Objective-by-Objective Status */}
             <div className="space-y-2">
               {masteryProgress.objectives.map(obj => (
                 <div key={obj.objective_id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50">
@@ -139,9 +149,8 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
           </CardContent>
         </Card>
       )}
-      
-      
-      {/* (C) Practice Tasks */}
+
+      {/* Practice Tasks */}
       {practiceTasks.length > 0 && (
         <Card>
           <CardHeader>
@@ -157,7 +166,6 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
                   <CardContent className="pt-4">
                     <div className="flex items-start justify-between mb-2">
                       <Badge variant="outline">{t('topic.practiceNumber', { number: index + 1 })}</Badge>
-                      <Badge variant="secondary">{task.id}</Badge>
                     </div>
                     <p className="text-sm mb-3">{task.stem}</p>
                     <Button size="sm" variant="outline">
@@ -170,8 +178,8 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
           </CardContent>
         </Card>
       )}
-      
-      {/* (D) Exit Ticket */}
+
+      {/* Exit Ticket */}
       {exitTasks.length > 0 && (
         <Card>
           <CardHeader>
@@ -190,7 +198,6 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
                   <CardContent className="pt-4">
                     <div className="flex items-start justify-between mb-2">
                       <Badge variant="outline">{t('topic.questionNumber', { number: index + 1 })}</Badge>
-                      <Badge variant="secondary">{task.id}</Badge>
                     </div>
                     <p className="text-sm mb-3">{task.stem}</p>
                     <Button size="sm" variant="outline">
@@ -204,13 +211,25 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
         </Card>
       )}
 
-        {/* What to do after this topic */}
+      {/* Next Steps */}
+      {objectives.length > 0 && (
         <NextStepsRecommendations 
           currentTopicId={topicId}
           currentSubdomainId={objectives[0]?.subdomain_id}
         />
-        </>
       )}
     </div>
   );
+}
+
+// Helper function to extract key points from text
+function extractKeyPoints(text: string, maxPoints: number): string[] {
+  // Split by sentences
+  const sentences = text
+    .split(/[.!?]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 20 && s.length < 150);
+  
+  // Take first N meaningful sentences as key points
+  return sentences.slice(0, maxPoints);
 }

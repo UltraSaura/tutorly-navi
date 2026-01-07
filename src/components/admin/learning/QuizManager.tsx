@@ -9,38 +9,33 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 import { useLearningVideos, useLearningQuizzes, useCreateQuiz, useUpdateQuiz, useDeleteQuiz } from '@/hooks/useManageLearningContent';
 import type { Quiz } from '@/types/learning';
-import { CurriculumSelector } from '@/components/admin/curriculum/CurriculumSelector';
-import { useProgramTopicsForAdmin } from '@/hooks/useProgramTopicsForAdmin';
-import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
 
 const QuizManager = () => {
-  const { t } = useTranslation();
-  const { toast } = useToast();
   const [selectedVideoId, setSelectedVideoId] = useState<string>('');
+<<<<<<< HEAD
   const [quizCurriculum, setQuizCurriculum] = useState({
     countryCode: '',
     levelCode: '',
     subjectId: '',
   });
+=======
+>>>>>>> learning
   const [selectedLanguageFilter, setSelectedLanguageFilter] = useState<string>('all');
   const { data: videos = [], isLoading: videosLoading, error: videosError } = useLearningVideos();
   const { data: quizzes = [], isLoading: quizzesLoading, error: quizzesError } = useLearningQuizzes(selectedVideoId || undefined);
-  const { data: availableTopics = [], isLoading: availableTopicsLoading } = useProgramTopicsForAdmin({
-    countryCode: quizCurriculum.countryCode,
-    levelCode: quizCurriculum.levelCode,
-    subjectId: quizCurriculum.subjectId,
-  });
   const createQuiz = useCreateQuiz();
   const updateQuiz = useUpdateQuiz();
   const deleteQuiz = useDeleteQuiz();
   
+<<<<<<< HEAD
   // Filter videos by selected curriculum topic
   const filteredVideos = videos.filter(video => {
     if (!quizCurriculum.subjectId) return true; // Show all if no filter
     return availableTopics.some(topic => topic.id === video.topic_id);
   });
 
+=======
+>>>>>>> learning
   // Filter quizzes by language
   const filteredQuizzes = selectedLanguageFilter === 'all' 
     ? quizzes 
@@ -63,16 +58,6 @@ const QuizManager = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate video_id is selected
-    if (!formData.video_id) {
-      toast({
-        title: t('common.error'),
-        description: t('admin.curriculum.videoRequired'),
-        variant: 'destructive',
-      });
-      return;
-    }
     
     if (editingQuiz) {
       await updateQuiz.mutateAsync({ id: editingQuiz.id, ...formData });
@@ -176,56 +161,18 @@ const QuizManager = () => {
               <DialogTitle>{editingQuiz ? 'Edit Quiz' : 'Add New Quiz'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Curriculum Selection */}
-              <div className="space-y-4 border rounded-lg p-4 bg-muted/10">
-                <Label className="text-base font-semibold">{t('admin.curriculum.selectFirst')}</Label>
-                <CurriculumSelector
-                  value={{
-                    curriculum_country_code: quizCurriculum.countryCode || null,
-                    curriculum_level_code: quizCurriculum.levelCode || null,
-                    curriculum_subject_id: quizCurriculum.subjectId || null,
-                    curriculum_domain_id: null,
-                    curriculum_subdomain_id: null,
-                  }}
-                  onChange={(selection) => {
-                    setQuizCurriculum({
-                      countryCode: selection.curriculum_country_code || '',
-                      levelCode: selection.curriculum_level_code || '',
-                      subjectId: selection.curriculum_subject_id || '',
-                    });
-                    // Reset video when curriculum changes
-                    setFormData({ ...formData, video_id: '' });
-                  }}
-                />
-
-                <div>
-                  <Label htmlFor="video_id">{t('admin.curriculum.videoFiltered')} *</Label>
-                  <Select 
-                    value={formData.video_id} 
-                    onValueChange={(value) => setFormData({ ...formData, video_id: value })}
-                    disabled={!quizCurriculum.subjectId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={
-                        videosLoading ? t('common.loading') : 
-                        !quizCurriculum.subjectId ? t('admin.curriculum.selectFirst') :
-                        filteredVideos.length === 0 ? t('admin.curriculum.noVideosFound') :
-                        t('admin.curriculum.selectVideo')
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filteredVideos.map((video) => (
-                        <SelectItem key={video.id} value={video.id}>{video.title}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  {filteredVideos.length === 0 && quizCurriculum.subjectId && !videosLoading && (
-                    <p className="text-sm text-amber-600 mt-2">
-                      ⚠️ {t('admin.curriculum.createVideosFirst')}
-                    </p>
-                  )}
-                </div>
+              <div>
+                <Label htmlFor="video_id">Video</Label>
+                <Select value={formData.video_id} onValueChange={(value) => setFormData({ ...formData, video_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select video" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {videos.map((video) => (
+                      <SelectItem key={video.id} value={video.id}>{video.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="language">Language</Label>
