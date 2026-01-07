@@ -893,6 +893,7 @@ export type Database = {
           topic_id: string
           transcript: string | null
           updated_at: string
+          variant_group_id: string | null
           video_url: string
           xp_reward: number
         }
@@ -914,6 +915,7 @@ export type Database = {
           topic_id: string
           transcript?: string | null
           updated_at?: string
+          variant_group_id?: string | null
           video_url: string
           xp_reward?: number
         }
@@ -935,6 +937,7 @@ export type Database = {
           topic_id?: string
           transcript?: string | null
           updated_at?: string
+          variant_group_id?: string | null
           video_url?: string
           xp_reward?: number
         }

@@ -6,6 +6,39 @@ import { filterContentByUserLevel } from '@/utils/schoolLevelFilter';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useAdminAuth } from './useAdminAuth';
 
+// Select best variant from a group based on user's language preference
+const selectBestVariants = (videos: any[], userLanguage: string): any[] => {
+  // Separate videos into groups and standalone
+  const groupedVideos = new Map<string, any[]>();
+  const standaloneVideos: any[] = [];
+
+  for (const video of videos) {
+    if (video.variant_group_id) {
+      const group = groupedVideos.get(video.variant_group_id) || [];
+      group.push(video);
+      groupedVideos.set(video.variant_group_id, group);
+    } else {
+      standaloneVideos.push(video);
+    }
+  }
+
+  // Select best variant from each group
+  const selectedFromGroups: any[] = [];
+  for (const [, variants] of groupedVideos) {
+    // Priority: user's language → English → first available
+    const bestMatch = 
+      variants.find(v => v.language === userLanguage) ||
+      variants.find(v => v.language === 'en') ||
+      variants[0];
+    
+    if (bestMatch) {
+      selectedFromGroups.push(bestMatch);
+    }
+  }
+
+  return [...standaloneVideos, ...selectedFromGroups];
+};
+
 interface CoursePlaylistData {
   topic: Topic | null;
   videos: Video[];
@@ -43,7 +76,7 @@ export function useCoursePlaylist(topicSlug: string) {
       if (allVideosError) throw allVideosError;
       
       // Admin sees all videos; students get filtered by age/level and language
-      const suitableVideos = isAdmin 
+      let suitableVideos = isAdmin 
         ? (allVideos as any[])
         : filterContentByUserLevel(
             allVideos as any,
@@ -51,6 +84,9 @@ export function useCoursePlaylist(topicSlug: string) {
             userLevelData?.age || null,
             userLanguage
           );
+      
+      // Group videos by variant_group_id and select best match per group
+      suitableVideos = selectBestVariants(suitableVideos, userLanguage);
       
       // Get quizzes for suitable videos
       const videoIds = suitableVideos.map((v: any) => v.id);
