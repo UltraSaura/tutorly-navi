@@ -2,6 +2,8 @@ import type { VisualUnion } from "@/lib/quiz/visual-types";
 
 export type Choice = { id: string; label: string; correct?: boolean };
 
+export type QuizBankSourceType = 'manual' | 'video_transcript' | 'multi_video_transcript';
+
 export type BaseQ = {
   id: string;
   prompt: string;
