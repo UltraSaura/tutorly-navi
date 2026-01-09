@@ -1380,6 +1380,9 @@ export type Database = {
           description: string | null
           id: string
           shuffle: boolean | null
+          source_text_snapshot: string | null
+          source_type: string | null
+          source_video_ids: string[] | null
           time_limit_sec: number | null
           title: string
           updated_at: string
@@ -1389,6 +1392,9 @@ export type Database = {
           description?: string | null
           id: string
           shuffle?: boolean | null
+          source_text_snapshot?: string | null
+          source_type?: string | null
+          source_video_ids?: string[] | null
           time_limit_sec?: number | null
           title: string
           updated_at?: string
@@ -1398,6 +1404,9 @@ export type Database = {
           description?: string | null
           id?: string
           shuffle?: boolean | null
+          source_text_snapshot?: string | null
+          source_type?: string | null
+          source_video_ids?: string[] | null
           time_limit_sec?: number | null
           title?: string
           updated_at?: string
