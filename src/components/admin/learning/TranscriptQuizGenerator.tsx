@@ -8,12 +8,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, ArrowLeft, ArrowRight, Loader2, Check, FileText, X, Pencil, Trash2 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Sparkles, ArrowLeft, ArrowRight, Loader2, Check, FileText, Pencil, Trash2, Play, RotateCcw, CheckCircle2, XCircle } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useGenerateQuizFromTranscripts } from '@/hooks/useGenerateQuizFromTranscripts';
 import { QuestionEditor } from './QuestionEditor';
+import { QuestionCard } from '@/components/learning/QuestionCard';
+import { gradeQuiz } from '@/utils/quizEvaluation';
 import type { Question } from '@/types/quiz-bank';
 
 interface TranscriptQuizGeneratorProps {
@@ -22,7 +25,7 @@ interface TranscriptQuizGeneratorProps {
   onSaved?: () => void;
 }
 
-type Step = 'videos' | 'settings' | 'generating' | 'review' | 'save';
+type Step = 'videos' | 'settings' | 'generating' | 'review' | 'preview' | 'save';
 
 const countWords = (text: string | null | undefined): number => {
   if (!text) return 0;
@@ -42,6 +45,8 @@ const DIFFICULTIES = [
   { value: 'hard', label: 'Hard' },
 ];
 
+const STEP_ORDER: Step[] = ['videos', 'settings', 'review', 'preview', 'save'];
+
 export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: TranscriptQuizGeneratorProps) {
   const queryClient = useQueryClient();
   const generateMutation = useGenerateQuizFromTranscripts();
@@ -58,6 +63,11 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
   // Generated questions
   const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([]);
   const [editingQuestionIndex, setEditingQuestionIndex] = useState<number | null>(null);
+  
+  // Preview state
+  const [previewAnswers, setPreviewAnswers] = useState<Record<string, any>>({});
+  const [previewSubmitted, setPreviewSubmitted] = useState(false);
+  const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
   
   // Save form
   const [bankTitle, setBankTitle] = useState('');
@@ -100,6 +110,12 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
     selectedVideos.reduce((sum, v) => sum + countWords(v.transcript), 0),
     [selectedVideos]
   );
+
+  // Preview results
+  const previewResults = useMemo(() => {
+    if (!previewSubmitted) return null;
+    return gradeQuiz(generatedQuestions, previewAnswers);
+  }, [previewSubmitted, generatedQuestions, previewAnswers]);
 
   const toggleVideo = (videoId: string) => {
     setSelectedVideoIds(prev => 
@@ -146,6 +162,30 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
 
   const handleQuestionDelete = (index: number) => {
     setGeneratedQuestions(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleStartPreview = () => {
+    setPreviewAnswers({});
+    setPreviewSubmitted(false);
+    setCurrentPreviewIndex(0);
+    setStep('preview');
+  };
+
+  const handleRetakePreview = () => {
+    setPreviewAnswers({});
+    setPreviewSubmitted(false);
+    setCurrentPreviewIndex(0);
+  };
+
+  const handleSubmitPreview = () => {
+    setPreviewSubmitted(true);
+  };
+
+  const handleBackToReview = () => {
+    setPreviewAnswers({});
+    setPreviewSubmitted(false);
+    setCurrentPreviewIndex(0);
+    setStep('review');
   };
 
   const handleSave = async () => {
@@ -215,12 +255,20 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
     setDifficulty('medium');
     setGeneratedQuestions([]);
     setEditingQuestionIndex(null);
+    setPreviewAnswers({});
+    setPreviewSubmitted(false);
+    setCurrentPreviewIndex(0);
     setBankTitle('');
     setBankDescription('');
   };
 
   const canProceedFromVideos = selectedVideoIds.length > 0;
   const canProceedFromSettings = questionTypes.length > 0 && questionCount >= 1;
+
+  const getStepIndex = (s: Step) => {
+    if (s === 'generating') return STEP_ORDER.indexOf('review');
+    return STEP_ORDER.indexOf(s);
+  };
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
@@ -237,12 +285,12 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
 
         {/* Step indicator */}
         <div className="flex items-center gap-2 mb-4">
-          {(['videos', 'settings', 'review', 'save'] as const).map((s, i) => (
+          {STEP_ORDER.map((s, i) => (
             <div key={s} className="flex items-center">
-              {i > 0 && <div className="w-8 h-0.5 bg-border mx-1" />}
+              {i > 0 && <div className="w-6 h-0.5 bg-border mx-1" />}
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                step === s ? 'bg-primary text-primary-foreground' : 
-                (['videos', 'settings', 'review', 'save'].indexOf(step) > i ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground')
+                getStepIndex(step) === i ? 'bg-primary text-primary-foreground' : 
+                getStepIndex(step) > i ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
               }`}>
                 {i + 1}
               </div>
@@ -469,10 +517,16 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
-              <Button onClick={() => setStep('save')} disabled={generatedQuestions.length === 0}>
-                Continue to Save
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setStep('save')} disabled={generatedQuestions.length === 0}>
+                  Skip to Save
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+                <Button onClick={handleStartPreview} disabled={generatedQuestions.length === 0}>
+                  <Play className="w-4 h-4 mr-2" />
+                  Preview Quiz
+                </Button>
+              </div>
             </div>
 
             {/* Question Editor Dialog */}
@@ -484,6 +538,152 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                 onSave={(q) => handleQuestionUpdate(editingQuestionIndex, q)}
                 position={editingQuestionIndex}
               />
+            )}
+          </div>
+        )}
+
+        {/* Step: Preview */}
+        {step === 'preview' && (
+          <div className="flex-1 flex flex-col min-h-0">
+            {!previewSubmitted ? (
+              <>
+                {/* Quiz taking mode */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">
+                      Question {currentPreviewIndex + 1} of {generatedQuestions.length}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {Object.keys(previewAnswers).length} answered
+                    </span>
+                  </div>
+                  <Progress value={((currentPreviewIndex + 1) / generatedQuestions.length) * 100} className="h-2" />
+                </div>
+
+                <ScrollArea className="flex-1">
+                  <div className="flex justify-center py-4">
+                    <QuestionCard
+                      question={generatedQuestions[currentPreviewIndex]}
+                      onChange={(value) => {
+                        setPreviewAnswers(prev => ({
+                          ...prev,
+                          [generatedQuestions[currentPreviewIndex].id]: value
+                        }));
+                      }}
+                    />
+                  </div>
+                </ScrollArea>
+
+                {/* Question navigation dots */}
+                <div className="flex justify-center gap-1.5 py-3 flex-wrap">
+                  {generatedQuestions.map((q, i) => {
+                    const hasAnswer = q.id in previewAnswers;
+                    return (
+                      <button
+                        key={q.id}
+                        onClick={() => setCurrentPreviewIndex(i)}
+                        className={`w-3 h-3 rounded-full transition-all ${
+                          i === currentPreviewIndex 
+                            ? 'bg-primary scale-125' 
+                            : hasAnswer 
+                              ? 'bg-primary/50' 
+                              : 'bg-muted hover:bg-muted-foreground/30'
+                        }`}
+                        aria-label={`Go to question ${i + 1}`}
+                      />
+                    );
+                  })}
+                </div>
+
+                <div className="flex justify-between mt-4">
+                  <Button variant="outline" onClick={handleBackToReview}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Review
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline"
+                      onClick={() => setCurrentPreviewIndex(prev => Math.max(0, prev - 1))}
+                      disabled={currentPreviewIndex === 0}
+                    >
+                      Previous
+                    </Button>
+                    {currentPreviewIndex < generatedQuestions.length - 1 ? (
+                      <Button onClick={() => setCurrentPreviewIndex(prev => prev + 1)}>
+                        Next
+                      </Button>
+                    ) : (
+                      <Button onClick={handleSubmitPreview}>
+                        <Check className="w-4 h-4 mr-2" />
+                        Submit Quiz
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Results view */}
+                <div className="text-center py-6">
+                  <h3 className="text-2xl font-bold mb-2">Quiz Results</h3>
+                  <p className="text-4xl font-bold text-primary mb-2">
+                    {previewResults?.score}/{previewResults?.maxScore}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {Math.round(((previewResults?.score || 0) / (previewResults?.maxScore || 1)) * 100)}% correct
+                  </p>
+                  <Progress 
+                    value={((previewResults?.score || 0) / (previewResults?.maxScore || 1)) * 100} 
+                    className="h-3 mt-4 max-w-xs mx-auto"
+                  />
+                </div>
+
+                <ScrollArea className="flex-1 border rounded-lg">
+                  <div className="p-4 space-y-2">
+                    {previewResults?.details.map((detail, index) => {
+                      const question = generatedQuestions.find(q => q.id === detail.questionId);
+                      return (
+                        <div 
+                          key={detail.questionId} 
+                          className={`flex items-center gap-3 p-3 rounded-lg ${
+                            detail.correct ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30'
+                          }`}
+                        >
+                          {detail.correct ? (
+                            <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                          ) : (
+                            <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium">Q{index + 1}:</span>{' '}
+                            <span className="text-sm truncate">{question?.prompt}</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground flex-shrink-0">
+                            {detail.correct ? `+${detail.points}` : '0'} pts
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+
+                <div className="flex justify-between mt-4">
+                  <Button variant="outline" onClick={handleBackToReview}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Edit Questions
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={handleRetakePreview}>
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Retake Quiz
+                    </Button>
+                    <Button onClick={() => setStep('save')}>
+                      Continue to Save
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         )}
@@ -524,7 +724,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
             </div>
 
             <div className="flex justify-between mt-auto pt-6">
-              <Button variant="outline" onClick={() => setStep('review')}>
+              <Button variant="outline" onClick={() => setStep('preview')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
