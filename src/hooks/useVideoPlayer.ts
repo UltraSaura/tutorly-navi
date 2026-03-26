@@ -8,6 +8,7 @@ export function useVideoPlayer(videoId: string) {
   const queryClient = useQueryClient();
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const lastSavedPercentageRef = useRef(0);
 
   // Fetch video and quizzes
   const { data, isLoading, error } = useQuery({
