@@ -144,8 +144,13 @@ export function useVideoPlayer(videoId: string) {
     const percentage = Math.round((time / duration) * 100);
     
     if (percentage >= 90) {
-      updateProgressMutation.mutate({ progressPercentage: 100, progressType: 'video_completed' });
-    } else if (percentage > (data?.video.progress_percentage || 0)) {
+      if (lastSavedPercentageRef.current < 90) {
+        lastSavedPercentageRef.current = 100;
+        updateProgressMutation.mutate({ progressPercentage: 100, progressType: 'video_completed' });
+      }
+    } else if (percentage > (data?.video.progress_percentage || 0) && 
+               percentage - lastSavedPercentageRef.current >= 5) {
+      lastSavedPercentageRef.current = percentage;
       updateProgressMutation.mutate({ progressPercentage: percentage, progressType: 'video_started' });
     }
   }, [data?.video.progress_percentage, updateProgressMutation]);
