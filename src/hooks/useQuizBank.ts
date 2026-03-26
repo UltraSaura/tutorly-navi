@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { QuizBank } from '@/types/quiz-bank';
 import { ensureQuizBank } from '@/types/quiz-bank';
@@ -67,7 +67,33 @@ export function useAllBanks(topicId: string, videoId: string, completedVideoIds:
   });
 }
 
+export function useBankAttemptStatus(bankId?: string, userId?: string) {
+  return useQuery({
+    queryKey: ['bank-attempt-status', bankId, userId],
+    queryFn: async () => {
+      if (!bankId || !userId) return null;
+      
+      const { data, error } = await supabase
+        .from('quiz_bank_attempts')
+        .select('score, max_score')
+        .eq('bank_id', bankId)
+        .eq('user_id', userId)
+        .order('score', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+      if (!data || data.length === 0) return null;
+      
+      return { bestScore: data[0].score, maxScore: data[0].max_score };
+    },
+    enabled: !!bankId && !!userId,
+    staleTime: 60 * 1000,
+  });
+}
+
 export function useSubmitBankAttempt() {
+  const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: async (payload: {
       bankId: string;
@@ -89,6 +115,9 @@ export function useSubmitBankAttempt() {
 
       if (error) throw error;
       return data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['bank-attempt-status', variables.bankId] });
     },
   });
 }
