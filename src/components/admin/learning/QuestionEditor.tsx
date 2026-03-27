@@ -114,6 +114,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         setNumericRange(numQ.range || {});
         setFractionNumerator(numQ.fractionAnswer?.numerator ?? 1);
         setFractionDenominator(numQ.fractionAnswer?.denominator ?? 2);
+        setDragOptions(numQ.dragOptions ?? []);
       } else if (question.kind === 'ordering') {
         const ordQ = question as OrderingQ;
         setOrderingItems(ordQ.items);
