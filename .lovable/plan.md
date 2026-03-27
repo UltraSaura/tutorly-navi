@@ -1,30 +1,41 @@
 
 
-## Fraction Input for Numeric Questions
+## Drag-and-Drop Number Chips for Fraction Answers
 
-### What changes
-Add a `"fraction"` answer format to numeric questions. Admin enters the correct fraction (numerator/denominator). Students see two stacked input boxes styled as a fraction. Evaluation accepts any equivalent fraction (e.g., 2/6 is correct for 1/3).
+### What it does
+Instead of typing numbers into the fraction boxes, the student sees a set of **draggable number chips** (e.g., 1, 2, 3, 4, 5, 6) and two empty drop zones (numerator / denominator). They drag a number into each zone to form their answer. The correct numbers are always included among the choices, mixed with distractors.
 
-### Changes
+### How number suggestions are generated
+The app auto-generates the chip options based on the admin's correct fraction answer:
+- Always include the correct numerator and denominator
+- Add 4-6 distractor numbers (multiples, nearby integers, common wrong answers)
+- Example: correct = 2/5 → chips might be: **1, 2, 3, 4, 5, 10** (shuffled)
+- Store these as `dragOptions?: number[]` on `NumericQ` so admins can optionally customize them
 
-**1. `src/types/quiz-bank.ts`** — Extend `NumericQ`
-- Add `answerFormat?: "number" | "fraction"`
-- Add `fractionAnswer?: { numerator: number; denominator: number }`
+### Admin side (`QuestionEditor.tsx`)
+- Auto-generate suggested drag options when the admin sets the fraction (numerator/denominator)
+- Show the generated chips as editable tags — admin can add/remove numbers
+- Algorithm: include correct numerator, correct denominator, ±1 of each, one multiple of each, and a random small number — deduplicated and shuffled
 
-**2. `src/utils/quizEvaluation.ts`** — Fraction evaluation
-- If `answerFormat === "fraction"`: extract student's `{ numerator, denominator }`, compare via cross-multiplication (`a*d === b*c`), reject denominator 0
-- Otherwise: keep current `Number(answer) === q.answer`
+### Student side (`QuestionCard.tsx`)
+- Replace the two `<input>` fields with two **drop zones** (numerator box / denominator box) separated by a fraction line
+- Below, show a row of **draggable number chips**
+- Use HTML5 drag-and-drop (onDragStart/onDrop) — no external library needed
+- Also support **tap-to-select**: tap a chip, then tap a zone to place it (mobile-friendly)
+- A chip placed in a zone is visually dimmed in the chip row; dropping a new chip replaces the old one
+- Value stored as `{ numerator: string, denominator: string }` (same format, no evaluation changes needed)
 
-**3. `src/components/learning/QuestionCard.tsx`** — Student fraction UI
-- When `kind === "numeric"` and `answerFormat === "fraction"`:
-  - Render two vertically stacked number inputs with a horizontal divider line between them (numerator on top, denominator below)
-  - Store value as `{ numerator: string, denominator: string }`
-- Otherwise: keep current single number input
+### Type change (`quiz-bank.ts`)
+- Add `dragOptions?: number[]` to `NumericQ` — the set of number chips to display
 
-**4. `src/components/admin/learning/QuestionEditor.tsx`** — Admin UI
-- Add answer format toggle (Number / Fraction) inside the numeric section
-- When "Fraction" selected: replace the single "Correct Answer" field with two fields (Numerator + Denominator)
-- Add state: `answerFormat`, `fractionNumerator`, `fractionDenominator`
-- Update `handleSave` to include `answerFormat` and `fractionAnswer` in the saved question
-- Update `useEffect` to restore fraction state when editing
+### Evaluation (`quizEvaluation.ts`)
+- No changes — already uses cross-multiplication equivalence
+
+### Changes summary
+
+| File | Change |
+|------|--------|
+| `src/types/quiz-bank.ts` | Add `dragOptions?: number[]` to `NumericQ` |
+| `src/components/admin/learning/QuestionEditor.tsx` | Auto-generate drag options from fraction; show editable chip list |
+| `src/components/learning/QuestionCard.tsx` | Replace fraction `<input>`s with drag-and-drop zones + number chips |
 
