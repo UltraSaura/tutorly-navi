@@ -1,46 +1,35 @@
 
 
-## Interactive Pie Coloring Question Type
+## Step-by-Step Quiz Flow (One Question at a Time)
 
-### What it does
-A new interaction mode for the existing pie visual question. Instead of selecting which pie chart is correct, the student sees a single pie divided into slices and must **tap/click slices to color them** to represent a fraction (e.g., "Color 1/2 of the pie" → student colors 3 out of 6 slices).
+### Current behavior
+All questions are displayed at once on a single scrollable page. The user answers everything, then clicks "Submit" to grade all at once.
 
-### How it works
+### New behavior
+Questions are shown **one at a time**. For each question:
+1. Student sees the question + a **Submit** button
+2. Student answers and clicks **Submit**
+3. The answer is graded immediately and feedback is shown (correct/incorrect with green/red styling)
+4. If correct → a **Next** button appears to move to the next question
+5. If incorrect → show "Incorrect" feedback + **Next** button (they move on regardless)
+6. After the last question → show the final summary screen (score, retest, close)
 
-**Admin creates the question:**
-- Sets the prompt: "Color 1/2 of the pie"
-- Chooses number of slices (e.g., 6)
-- Sets the required number of colored slices as the correct answer (e.g., 3)
-- All slices start uncolored for the student
-
-**Student answers:**
-- Sees a single pie with N equal slices, all gray
-- Taps slices to toggle color on/off
-- Submits when they think they've colored the right number
-
-**Evaluation:**
-- Correct if the student colored exactly the right number of slices (position doesn't matter, only count)
+A progress indicator (e.g., "Question 2 / 5") is shown at the top.
 
 ### Changes
 
-**1. `src/lib/quiz/visual-types.ts`**
-- Add `interactionMode?: "select_pie" | "color_slices"` to `VisualPie`
-- Add `correctColoredCount?: number` for the color_slices mode answer
+**File: `src/components/learning/QuizOverlay.tsx`**
 
-**2. `src/lib/quiz/visual-evaluate.ts`**
-- Add `color_slices` case inside the `pie` evaluator: count how many slices the student colored and compare to `correctColoredCount`
+Replace the "show all questions + single submit" flow with a stepper:
 
-**3. `src/components/admin/visual-editors/PieEditor.tsx`**
-- Add a toggle at the top: "Select pie charts" vs "Color slices" mode
-- In "Color slices" mode: show simplified UI — number of slices input + correct colored count input (no variants needed)
+- Add state: `currentIndex` (number), `questionSubmitted` (boolean), `questionResult` (boolean | null)
+- Show only `questions[currentIndex]` via `<QuestionCard>`
+- **Submit button**: grades the current question using `evaluateQuestion()`, sets `questionSubmitted = true` and `questionResult`
+- **Next button**: increments `currentIndex`, resets `questionSubmitted` and `questionResult`
+- When `currentIndex` reaches the end after the last "Next" click, submit the full attempt to Supabase and show the existing summary screen
+- Add a progress bar/text: "Question {currentIndex + 1} / {questions.length}"
+- After submitting each question, show a green or red border around the question card with "Correct" or "Incorrect" text
+- The final summary screen (score, retest, close) remains unchanged
 
-**4. `src/components/learning/QuestionCard.tsx` (PieStudentView)**
-- When `interactionMode === "color_slices"`: render a single pie with all slices uncolored, let student tap individual slices to toggle color. Answer is the list of colored slice IDs.
-
-**5. `src/components/admin/VisualQuestionBuilder.tsx`**
-- Pass through the new mode — no structural changes needed since PieEditor handles it internally.
-
-### Technical detail
-- Student answer format for color_slices: `string[]` of selected segment IDs (same format as existing pie, reuses `setsEqual` logic)
-- Evaluation: since any combination of N slices out of total is correct (not position-specific), evaluate by count: `selected.size === correctColoredCount`
+No other files need changes. `QuestionCard` already works standalone — it renders a question and calls `onChange` with the answer.
 
