@@ -105,8 +105,11 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         setChoices((question as SingleQ | MultiQ).choices);
       } else if (question.kind === 'numeric') {
         const numQ = question as NumericQ;
+        setAnswerFormat(numQ.answerFormat || 'number');
         setNumericAnswer(numQ.answer);
         setNumericRange(numQ.range || {});
+        setFractionNumerator(numQ.fractionAnswer?.numerator ?? 1);
+        setFractionDenominator(numQ.fractionAnswer?.denominator ?? 2);
       } else if (question.kind === 'ordering') {
         const ordQ = question as OrderingQ;
         setOrderingItems(ordQ.items);
