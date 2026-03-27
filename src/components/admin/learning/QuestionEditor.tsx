@@ -216,19 +216,37 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         choices: validChoices,
       } as SingleQ | MultiQ;
     } else if (kind === 'numeric') {
-      if (!numericAnswer) {
-        alert('Please enter a correct answer');
-        return;
+      if (answerFormat === 'fraction') {
+        if (!fractionDenominator) {
+          alert('Denominator cannot be zero');
+          return;
+        }
+        questionData = {
+          id,
+          kind: 'numeric',
+          prompt,
+          hint: hint || undefined,
+          points,
+          answer: 0,
+          answerFormat: 'fraction',
+          fractionAnswer: { numerator: fractionNumerator, denominator: fractionDenominator },
+        } as NumericQ;
+      } else {
+        if (!numericAnswer && numericAnswer !== 0) {
+          alert('Please enter a correct answer');
+          return;
+        }
+        questionData = {
+          id,
+          kind: 'numeric',
+          prompt,
+          hint: hint || undefined,
+          points,
+          answer: numericAnswer,
+          answerFormat: 'number',
+          range: numericRange.min !== undefined || numericRange.max !== undefined ? numericRange : undefined,
+        } as NumericQ;
       }
-      questionData = {
-        id,
-        kind: 'numeric',
-        prompt,
-        hint: hint || undefined,
-        points,
-        answer: numericAnswer,
-        range: numericRange.min !== undefined || numericRange.max !== undefined ? numericRange : undefined,
-      } as NumericQ;
     } else if (kind === 'ordering') {
       const validItems = orderingItems.filter(i => i.trim());
       if (validItems.length < 2) {
