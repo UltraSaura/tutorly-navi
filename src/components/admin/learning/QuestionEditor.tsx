@@ -74,6 +74,10 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   const [numericRange, setNumericRange] = useState<{ min?: number; max?: number }>(
     question && question.kind === 'numeric' ? (question as NumericQ).range || {} : {}
   );
+  const [dragOptions, setDragOptions] = useState<number[]>(
+    question && question.kind === 'numeric' && (question as NumericQ).dragOptions
+      ? (question as NumericQ).dragOptions! : []
+  );
 
   // Ordering state
   const [orderingItems, setOrderingItems] = useState<string[]>(
