@@ -29,6 +29,9 @@ export function QuestionCard({
     if (question.kind === "ordering") {
       return [...(question as any).items];
     }
+    if (question.kind === "numeric" && (question as any).answerFormat === "fraction") {
+      return { numerator: "", denominator: "" };
+    }
     return "";
   }, [question]);
 

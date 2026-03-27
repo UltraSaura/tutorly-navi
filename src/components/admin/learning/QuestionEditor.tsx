@@ -393,41 +393,88 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             </div>
           )}
 
-          {/* Numeric Answer Editor */}
           {kind === 'numeric' && (
             <div className="space-y-2">
               <div>
-                <Label htmlFor="numeric-answer">Correct Answer</Label>
-                <Input
-                  id="numeric-answer"
-                  type="number"
-                  value={numericAnswer}
-                  onChange={(e) => setNumericAnswer(parseFloat(e.target.value) || 0)}
-                  step="any"
-                />
+                <Label>Answer Format</Label>
+                <Select value={answerFormat} onValueChange={(v: "number" | "fraction") => setAnswerFormat(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="number">Number</SelectItem>
+                    <SelectItem value="fraction">Fraction</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label htmlFor="numeric-min">Min Value (optional)</Label>
-                  <Input
-                    id="numeric-min"
-                    type="number"
-                    value={numericRange.min || ''}
-                    onChange={(e) => setNumericRange({ ...numericRange, min: e.target.value ? parseFloat(e.target.value) : undefined })}
-                    step="any"
-                  />
+
+              {answerFormat === 'number' && (
+                <>
+                  <div>
+                    <Label htmlFor="numeric-answer">Correct Answer</Label>
+                    <Input
+                      id="numeric-answer"
+                      type="number"
+                      value={numericAnswer}
+                      onChange={(e) => setNumericAnswer(parseFloat(e.target.value) || 0)}
+                      step="any"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="numeric-min">Min Value (optional)</Label>
+                      <Input
+                        id="numeric-min"
+                        type="number"
+                        value={numericRange.min || ''}
+                        onChange={(e) => setNumericRange({ ...numericRange, min: e.target.value ? parseFloat(e.target.value) : undefined })}
+                        step="any"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="numeric-max">Max Value (optional)</Label>
+                      <Input
+                        id="numeric-max"
+                        type="number"
+                        value={numericRange.max || ''}
+                        onChange={(e) => setNumericRange({ ...numericRange, max: e.target.value ? parseFloat(e.target.value) : undefined })}
+                        step="any"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {answerFormat === 'fraction' && (
+                <div className="space-y-2">
+                  <Label>Correct Fraction</Label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-center gap-0">
+                      <Input
+                        type="number"
+                        className="w-20 text-center"
+                        value={fractionNumerator}
+                        onChange={(e) => setFractionNumerator(parseInt(e.target.value) || 0)}
+                        placeholder="Num"
+                      />
+                      <div className="w-20 h-[2px] bg-foreground my-1" />
+                      <Input
+                        type="number"
+                        className="w-20 text-center"
+                        value={fractionDenominator}
+                        onChange={(e) => setFractionDenominator(parseInt(e.target.value) || 0)}
+                        placeholder="Den"
+                      />
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      = {fractionNumerator}/{fractionDenominator}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Any equivalent fraction will be accepted (e.g., 2/6 for 1/3).
+                  </p>
                 </div>
-                <div>
-                  <Label htmlFor="numeric-max">Max Value (optional)</Label>
-                  <Input
-                    id="numeric-max"
-                    type="number"
-                    value={numericRange.max || ''}
-                    onChange={(e) => setNumericRange({ ...numericRange, max: e.target.value ? parseFloat(e.target.value) : undefined })}
-                    step="any"
-                  />
-                </div>
-              </div>
+              )}
             </div>
           )}
 
