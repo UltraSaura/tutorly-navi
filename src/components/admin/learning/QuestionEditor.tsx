@@ -136,6 +136,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setAnswerFormat('number');
       setFractionNumerator(1);
       setFractionDenominator(2);
+      setDragOptions([]);
       setOrderingItems(['', '']);
       setCorrectOrder([]);
       setVisual(createDefaultVisual());
