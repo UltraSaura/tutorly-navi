@@ -36,6 +36,7 @@ export function QuestionCard({
   }, [question]);
 
   const [value, setValue] = useState<any>(initialValue);
+  const [selectedChip, setSelectedChip] = useState<number | null>(null);
   const [tries, setTries] = useState(0);
 
   const setVal = (v: any) => {
