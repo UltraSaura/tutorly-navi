@@ -36,6 +36,7 @@ export function QuestionCard({
   }, [question]);
 
   const [value, setValue] = useState<any>(initialValue);
+  const [selectedChip, setSelectedChip] = useState<number | null>(null);
   const [tries, setTries] = useState(0);
 
   const setVal = (v: any) => {
@@ -109,29 +110,122 @@ export function QuestionCard({
         </div>
       )}
 
-      {question.kind === "numeric" && (question as any).answerFormat === "fraction" && (
-        <div className="flex flex-col items-center gap-0">
-          <input
-            className="w-20 border rounded-lg px-3 py-2 text-center text-lg"
-            inputMode="numeric"
-            type="number"
-            placeholder="?"
-            value={value?.numerator ?? ""}
-            onChange={e => setVal({ ...value, numerator: e.target.value })}
-            aria-label="Numérateur"
-          />
-          <div className="w-20 h-[2px] bg-foreground my-1" />
-          <input
-            className="w-20 border rounded-lg px-3 py-2 text-center text-lg"
-            inputMode="numeric"
-            type="number"
-            placeholder="?"
-            value={value?.denominator ?? ""}
-            onChange={e => setVal({ ...value, denominator: e.target.value })}
-            aria-label="Dénominateur"
-          />
-        </div>
-      )}
+      {question.kind === "numeric" && (question as any).answerFormat === "fraction" && (() => {
+        const dragOpts: number[] = (question as any).dragOptions ?? [];
+        const chips = dragOpts.length > 0 ? dragOpts : [];
+        const numVal = value?.numerator ?? "";
+        const denVal = value?.denominator ?? "";
+
+        const handleDrop = (zone: "numerator" | "denominator") => (e: React.DragEvent) => {
+          e.preventDefault();
+          const num = e.dataTransfer.getData("text/plain");
+          setVal({ ...value, [zone]: num });
+        };
+
+        const handleTapChip = (num: number) => {
+          if (selectedChip === num) {
+            setSelectedChip(null);
+            return;
+          }
+          setSelectedChip(num);
+        };
+
+        const handleTapZone = (zone: "numerator" | "denominator") => {
+          if (selectedChip !== null) {
+            setVal({ ...value, [zone]: String(selectedChip) });
+            setSelectedChip(null);
+          }
+        };
+
+        if (chips.length === 0) {
+          // Fallback: plain inputs if no drag options
+          return (
+            <div className="flex flex-col items-center gap-0">
+              <input
+                className="w-20 border rounded-lg px-3 py-2 text-center text-lg"
+                inputMode="numeric"
+                type="number"
+                placeholder="?"
+                value={numVal}
+                onChange={e => setVal({ ...value, numerator: e.target.value })}
+                aria-label="Numérateur"
+              />
+              <div className="w-20 h-[2px] bg-foreground my-1" />
+              <input
+                className="w-20 border rounded-lg px-3 py-2 text-center text-lg"
+                inputMode="numeric"
+                type="number"
+                placeholder="?"
+                value={denVal}
+                onChange={e => setVal({ ...value, denominator: e.target.value })}
+                aria-label="Dénominateur"
+              />
+            </div>
+          );
+        }
+
+        return (
+          <div className="flex flex-col items-center gap-4">
+            {/* Drop zones */}
+            <div className="flex flex-col items-center gap-0">
+              <div
+                className={cn(
+                  "w-20 h-14 border-2 border-dashed rounded-lg flex items-center justify-center text-2xl font-bold cursor-pointer transition-colors",
+                  numVal ? "border-primary bg-primary/10" : "border-muted-foreground/40 bg-muted/30"
+                )}
+                onDragOver={e => e.preventDefault()}
+                onDrop={handleDrop("numerator")}
+                onClick={() => handleTapZone("numerator")}
+                aria-label="Numérateur"
+              >
+                {numVal || "?"}
+              </div>
+              <div className="w-20 h-[3px] bg-foreground my-1 rounded-full" />
+              <div
+                className={cn(
+                  "w-20 h-14 border-2 border-dashed rounded-lg flex items-center justify-center text-2xl font-bold cursor-pointer transition-colors",
+                  denVal ? "border-primary bg-primary/10" : "border-muted-foreground/40 bg-muted/30"
+                )}
+                onDragOver={e => e.preventDefault()}
+                onDrop={handleDrop("denominator")}
+                onClick={() => handleTapZone("denominator")}
+                aria-label="Dénominateur"
+              >
+                {denVal || "?"}
+              </div>
+            </div>
+
+            {/* Number chips */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              {chips.map((num, i) => {
+                const isUsed = String(num) === String(numVal) || String(num) === String(denVal);
+                const isSelected = selectedChip === num;
+                return (
+                  <div
+                    key={`${num}-${i}`}
+                    draggable
+                    onDragStart={e => e.dataTransfer.setData("text/plain", String(num))}
+                    onClick={() => handleTapChip(num)}
+                    className={cn(
+                      "w-12 h-12 rounded-xl flex items-center justify-center text-lg font-semibold cursor-grab active:cursor-grabbing select-none transition-all",
+                      isSelected
+                        ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2"
+                        : isUsed
+                          ? "bg-muted text-muted-foreground opacity-40"
+                          : "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm"
+                    )}
+                  >
+                    {num}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Glisse un nombre dans chaque case, ou tapote pour sélectionner.
+            </p>
+          </div>
+        );
+      })()}
 
       {question.kind === "numeric" && (question as any).answerFormat !== "fraction" && (
         <input

@@ -74,6 +74,10 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   const [numericRange, setNumericRange] = useState<{ min?: number; max?: number }>(
     question && question.kind === 'numeric' ? (question as NumericQ).range || {} : {}
   );
+  const [dragOptions, setDragOptions] = useState<number[]>(
+    question && question.kind === 'numeric' && (question as NumericQ).dragOptions
+      ? (question as NumericQ).dragOptions! : []
+  );
 
   // Ordering state
   const [orderingItems, setOrderingItems] = useState<string[]>(
@@ -110,6 +114,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         setNumericRange(numQ.range || {});
         setFractionNumerator(numQ.fractionAnswer?.numerator ?? 1);
         setFractionDenominator(numQ.fractionAnswer?.denominator ?? 2);
+        setDragOptions(numQ.dragOptions ?? []);
       } else if (question.kind === 'ordering') {
         const ordQ = question as OrderingQ;
         setOrderingItems(ordQ.items);
@@ -131,6 +136,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setAnswerFormat('number');
       setFractionNumerator(1);
       setFractionDenominator(2);
+      setDragOptions([]);
       setOrderingItems(['', '']);
       setCorrectOrder([]);
       setVisual(createDefaultVisual());
@@ -230,6 +236,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
           answer: 0,
           answerFormat: 'fraction',
           fractionAnswer: { numerator: fractionNumerator, denominator: fractionDenominator },
+          dragOptions: dragOptions.length > 0 ? dragOptions : undefined,
         } as NumericQ;
       } else {
         if (!numericAnswer && numericAnswer !== 0) {
@@ -446,7 +453,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
               )}
 
               {answerFormat === 'fraction' && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label>Correct Fraction</Label>
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col items-center gap-0">
@@ -473,6 +480,76 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                   <p className="text-xs text-muted-foreground">
                     Any equivalent fraction will be accepted (e.g., 2/6 for 1/3).
                   </p>
+
+                  {/* Drag Options */}
+                  <div className="space-y-2 pt-2 border-t">
+                    <div className="flex items-center justify-between">
+                      <Label>Number Chips (drag & drop options for students)</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const nums = new Set<number>();
+                          const n = fractionNumerator;
+                          const d = fractionDenominator;
+                          nums.add(Math.abs(n));
+                          nums.add(Math.abs(d));
+                          if (Math.abs(n) > 1) nums.add(Math.abs(n) - 1);
+                          nums.add(Math.abs(n) + 1);
+                          if (Math.abs(d) > 1) nums.add(Math.abs(d) - 1);
+                          nums.add(Math.abs(d) + 1);
+                          nums.add(Math.abs(n) * 2);
+                          nums.add(Math.abs(d) * 2);
+                          // Add a random small number
+                          for (let i = 1; i <= 10; i++) {
+                            if (nums.size >= 8) break;
+                            nums.add(i);
+                          }
+                          nums.delete(0);
+                          const sorted = Array.from(nums).sort((a, b) => a - b);
+                          setDragOptions(sorted);
+                        }}
+                      >
+                        Auto-generate
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {dragOptions.map((num, i) => (
+                        <div
+                          key={`${num}-${i}`}
+                          className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-lg text-sm"
+                        >
+                          <span>{num}</span>
+                          <button
+                            type="button"
+                            onClick={() => setDragOptions(dragOptions.filter((_, idx) => idx !== i))}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        placeholder="Add number"
+                        className="w-28"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = parseInt((e.target as HTMLInputElement).value);
+                            if (!isNaN(val) && !dragOptions.includes(val)) {
+                              setDragOptions([...dragOptions, val].sort((a, b) => a - b));
+                              (e.target as HTMLInputElement).value = '';
+                            }
+                          }
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground self-center">Press Enter to add</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
