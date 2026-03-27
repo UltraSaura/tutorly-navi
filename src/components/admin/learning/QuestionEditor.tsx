@@ -128,6 +128,9 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setChoices([{ id: 'c1', label: '', correct: false }, { id: 'c2', label: '', correct: false }]);
       setNumericAnswer(0);
       setNumericRange({});
+      setAnswerFormat('number');
+      setFractionNumerator(1);
+      setFractionDenominator(2);
       setOrderingItems(['', '']);
       setCorrectOrder([]);
       setVisual(createDefaultVisual());
