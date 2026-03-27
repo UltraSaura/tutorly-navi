@@ -395,6 +395,54 @@ function PieStudentView({
 }) {
   const selected: string[] = Array.isArray(value) ? value : [];
 
+  // ── Color Slices mode ──
+  if (visual.interactionMode === "color_slices") {
+    const sliceCount = visual.segments.length;
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-neutral-600">
+          Clique sur les parts pour les colorier.
+        </p>
+        <div className="flex flex-col items-center gap-2">
+          <svg viewBox="0 0 100 100" width={200} height={200} className="bg-white rounded-xl shadow-inner">
+            {visual.segments.map((seg, i) => {
+              const angle = (Math.PI * 2) / sliceCount;
+              const startAngle = i * angle;
+              const endAngle = startAngle + angle;
+              const x1 = 50 + 45 * Math.cos(startAngle);
+              const y1 = 50 + 45 * Math.sin(startAngle);
+              const x2 = 50 + 45 * Math.cos(endAngle);
+              const y2 = 50 + 45 * Math.sin(endAngle);
+              const largeArc = angle > Math.PI ? 1 : 0;
+              const d = `M50,50 L${x1},${y1} A45,45 0 ${largeArc} 1 ${x2},${y2} Z`;
+              const isColored = selected.includes(seg.id);
+              return (
+                <path
+                  key={seg.id}
+                  d={d}
+                  fill={isColored ? "#3b82f6" : "#e5e7eb"}
+                  stroke="#fff"
+                  strokeWidth={1.5}
+                  className="cursor-pointer transition-colors"
+                  onClick={() => {
+                    const next = isColored
+                      ? selected.filter((id) => id !== seg.id)
+                      : [...selected, seg.id];
+                    onChange(next);
+                  }}
+                />
+              );
+            })}
+          </svg>
+          <div className="text-sm text-neutral-500">
+            {selected.length}/{sliceCount} parts coloriées
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Select Pie mode (default) ──
   const allPies = [
     { id: "base", label: "Pie 1", segments: visual.segments },
     ...(visual.variants ?? []).map((v, index) => ({ 
