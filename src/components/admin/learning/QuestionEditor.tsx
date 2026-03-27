@@ -57,8 +57,19 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   );
 
   // Numeric state
+  const [answerFormat, setAnswerFormat] = useState<"number" | "fraction">(
+    question && question.kind === 'numeric' ? (question as NumericQ).answerFormat || 'number' : 'number'
+  );
   const [numericAnswer, setNumericAnswer] = useState<number>(
     question && question.kind === 'numeric' ? (question as NumericQ).answer : 0
+  );
+  const [fractionNumerator, setFractionNumerator] = useState<number>(
+    question && question.kind === 'numeric' && (question as NumericQ).fractionAnswer
+      ? (question as NumericQ).fractionAnswer!.numerator : 1
+  );
+  const [fractionDenominator, setFractionDenominator] = useState<number>(
+    question && question.kind === 'numeric' && (question as NumericQ).fractionAnswer
+      ? (question as NumericQ).fractionAnswer!.denominator : 2
   );
   const [numericRange, setNumericRange] = useState<{ min?: number; max?: number }>(
     question && question.kind === 'numeric' ? (question as NumericQ).range || {} : {}
