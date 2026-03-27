@@ -1,8 +1,10 @@
 export type VisualPie = {
   subtype: "pie";
+  interactionMode?: "select_pie" | "color_slices";
   multi?: boolean;
   baseCorrect?: boolean;
   showFractionLabel?: boolean;
+  correctColoredCount?: number;
   segments: { id: string; value: number; label?: string; colored?: boolean }[];
   variants?: {
     id: string;
