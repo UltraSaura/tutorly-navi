@@ -106,7 +106,31 @@ export function QuestionCard({
         </div>
       )}
 
-      {question.kind === "numeric" && (
+      {question.kind === "numeric" && (question as any).answerFormat === "fraction" && (
+        <div className="flex flex-col items-center gap-0">
+          <input
+            className="w-20 border rounded-lg px-3 py-2 text-center text-lg"
+            inputMode="numeric"
+            type="number"
+            placeholder="?"
+            value={value?.numerator ?? ""}
+            onChange={e => setVal({ ...value, numerator: e.target.value })}
+            aria-label="Numérateur"
+          />
+          <div className="w-20 h-[2px] bg-foreground my-1" />
+          <input
+            className="w-20 border rounded-lg px-3 py-2 text-center text-lg"
+            inputMode="numeric"
+            type="number"
+            placeholder="?"
+            value={value?.denominator ?? ""}
+            onChange={e => setVal({ ...value, denominator: e.target.value })}
+            aria-label="Dénominateur"
+          />
+        </div>
+      )}
+
+      {question.kind === "numeric" && (question as any).answerFormat !== "fraction" && (
         <input
           className="w-full border rounded-2xl px-3 py-2"
           inputMode="numeric"
