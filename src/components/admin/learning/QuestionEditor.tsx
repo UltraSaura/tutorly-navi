@@ -236,6 +236,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
           answer: 0,
           answerFormat: 'fraction',
           fractionAnswer: { numerator: fractionNumerator, denominator: fractionDenominator },
+          dragOptions: dragOptions.length > 0 ? dragOptions : undefined,
         } as NumericQ;
       } else {
         if (!numericAnswer && numericAnswer !== 0) {
