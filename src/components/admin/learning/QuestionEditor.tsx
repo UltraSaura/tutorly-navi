@@ -57,8 +57,19 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   );
 
   // Numeric state
+  const [answerFormat, setAnswerFormat] = useState<"number" | "fraction">(
+    question && question.kind === 'numeric' ? (question as NumericQ).answerFormat || 'number' : 'number'
+  );
   const [numericAnswer, setNumericAnswer] = useState<number>(
     question && question.kind === 'numeric' ? (question as NumericQ).answer : 0
+  );
+  const [fractionNumerator, setFractionNumerator] = useState<number>(
+    question && question.kind === 'numeric' && (question as NumericQ).fractionAnswer
+      ? (question as NumericQ).fractionAnswer!.numerator : 1
+  );
+  const [fractionDenominator, setFractionDenominator] = useState<number>(
+    question && question.kind === 'numeric' && (question as NumericQ).fractionAnswer
+      ? (question as NumericQ).fractionAnswer!.denominator : 2
   );
   const [numericRange, setNumericRange] = useState<{ min?: number; max?: number }>(
     question && question.kind === 'numeric' ? (question as NumericQ).range || {} : {}
@@ -94,8 +105,11 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         setChoices((question as SingleQ | MultiQ).choices);
       } else if (question.kind === 'numeric') {
         const numQ = question as NumericQ;
+        setAnswerFormat(numQ.answerFormat || 'number');
         setNumericAnswer(numQ.answer);
         setNumericRange(numQ.range || {});
+        setFractionNumerator(numQ.fractionAnswer?.numerator ?? 1);
+        setFractionDenominator(numQ.fractionAnswer?.denominator ?? 2);
       } else if (question.kind === 'ordering') {
         const ordQ = question as OrderingQ;
         setOrderingItems(ordQ.items);
@@ -114,6 +128,9 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setChoices([{ id: 'c1', label: '', correct: false }, { id: 'c2', label: '', correct: false }]);
       setNumericAnswer(0);
       setNumericRange({});
+      setAnswerFormat('number');
+      setFractionNumerator(1);
+      setFractionDenominator(2);
       setOrderingItems(['', '']);
       setCorrectOrder([]);
       setVisual(createDefaultVisual());
@@ -199,19 +216,37 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         choices: validChoices,
       } as SingleQ | MultiQ;
     } else if (kind === 'numeric') {
-      if (!numericAnswer) {
-        alert('Please enter a correct answer');
-        return;
+      if (answerFormat === 'fraction') {
+        if (!fractionDenominator) {
+          alert('Denominator cannot be zero');
+          return;
+        }
+        questionData = {
+          id,
+          kind: 'numeric',
+          prompt,
+          hint: hint || undefined,
+          points,
+          answer: 0,
+          answerFormat: 'fraction',
+          fractionAnswer: { numerator: fractionNumerator, denominator: fractionDenominator },
+        } as NumericQ;
+      } else {
+        if (!numericAnswer && numericAnswer !== 0) {
+          alert('Please enter a correct answer');
+          return;
+        }
+        questionData = {
+          id,
+          kind: 'numeric',
+          prompt,
+          hint: hint || undefined,
+          points,
+          answer: numericAnswer,
+          answerFormat: 'number',
+          range: numericRange.min !== undefined || numericRange.max !== undefined ? numericRange : undefined,
+        } as NumericQ;
       }
-      questionData = {
-        id,
-        kind: 'numeric',
-        prompt,
-        hint: hint || undefined,
-        points,
-        answer: numericAnswer,
-        range: numericRange.min !== undefined || numericRange.max !== undefined ? numericRange : undefined,
-      } as NumericQ;
     } else if (kind === 'ordering') {
       const validItems = orderingItems.filter(i => i.trim());
       if (validItems.length < 2) {
@@ -358,41 +393,88 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             </div>
           )}
 
-          {/* Numeric Answer Editor */}
           {kind === 'numeric' && (
             <div className="space-y-2">
               <div>
-                <Label htmlFor="numeric-answer">Correct Answer</Label>
-                <Input
-                  id="numeric-answer"
-                  type="number"
-                  value={numericAnswer}
-                  onChange={(e) => setNumericAnswer(parseFloat(e.target.value) || 0)}
-                  step="any"
-                />
+                <Label>Answer Format</Label>
+                <Select value={answerFormat} onValueChange={(v: "number" | "fraction") => setAnswerFormat(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="number">Number</SelectItem>
+                    <SelectItem value="fraction">Fraction</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label htmlFor="numeric-min">Min Value (optional)</Label>
-                  <Input
-                    id="numeric-min"
-                    type="number"
-                    value={numericRange.min || ''}
-                    onChange={(e) => setNumericRange({ ...numericRange, min: e.target.value ? parseFloat(e.target.value) : undefined })}
-                    step="any"
-                  />
+
+              {answerFormat === 'number' && (
+                <>
+                  <div>
+                    <Label htmlFor="numeric-answer">Correct Answer</Label>
+                    <Input
+                      id="numeric-answer"
+                      type="number"
+                      value={numericAnswer}
+                      onChange={(e) => setNumericAnswer(parseFloat(e.target.value) || 0)}
+                      step="any"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="numeric-min">Min Value (optional)</Label>
+                      <Input
+                        id="numeric-min"
+                        type="number"
+                        value={numericRange.min || ''}
+                        onChange={(e) => setNumericRange({ ...numericRange, min: e.target.value ? parseFloat(e.target.value) : undefined })}
+                        step="any"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="numeric-max">Max Value (optional)</Label>
+                      <Input
+                        id="numeric-max"
+                        type="number"
+                        value={numericRange.max || ''}
+                        onChange={(e) => setNumericRange({ ...numericRange, max: e.target.value ? parseFloat(e.target.value) : undefined })}
+                        step="any"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {answerFormat === 'fraction' && (
+                <div className="space-y-2">
+                  <Label>Correct Fraction</Label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-center gap-0">
+                      <Input
+                        type="number"
+                        className="w-20 text-center"
+                        value={fractionNumerator}
+                        onChange={(e) => setFractionNumerator(parseInt(e.target.value) || 0)}
+                        placeholder="Num"
+                      />
+                      <div className="w-20 h-[2px] bg-foreground my-1" />
+                      <Input
+                        type="number"
+                        className="w-20 text-center"
+                        value={fractionDenominator}
+                        onChange={(e) => setFractionDenominator(parseInt(e.target.value) || 0)}
+                        placeholder="Den"
+                      />
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      = {fractionNumerator}/{fractionDenominator}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Any equivalent fraction will be accepted (e.g., 2/6 for 1/3).
+                  </p>
                 </div>
-                <div>
-                  <Label htmlFor="numeric-max">Max Value (optional)</Label>
-                  <Input
-                    id="numeric-max"
-                    type="number"
-                    value={numericRange.max || ''}
-                    onChange={(e) => setNumericRange({ ...numericRange, max: e.target.value ? parseFloat(e.target.value) : undefined })}
-                    step="any"
-                  />
-                </div>
-              </div>
+              )}
             </div>
           )}
 
