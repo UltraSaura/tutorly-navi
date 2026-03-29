@@ -1,19 +1,20 @@
 
 
-## Add Sign Out Button to Profile Page (Mobile)
+## Stop Videos from Auto-Playing on Page Load
 
 ### Problem
-On mobile, the Profile page (`/profile`) has no sign-out button. The sign-out option only exists in the Account bottom sheet (opened from the bottom tab bar), but once the user navigates to the profile page, they lose easy access to it.
+Two things cause videos to play automatically:
+1. **`CoursePlaylistPage.tsx`** auto-selects the featured video on load (`useEffect` sets `playingVideoId`), which mounts the video player immediately
+2. **`VideoPlayerBox.tsx`** has `autoplay: 1` for YouTube and `autoPlay` for HTML5 `<video>`, so any mounted player starts playing instantly
 
-### Solution
-Add a "Sign Out" button at the bottom of the Profile page, visible on all screen sizes but especially important for mobile.
+### Fix
 
-### Changes
+**1. `src/pages/learning/CoursePlaylistPage.tsx`**
+- Remove the `useEffect` that auto-selects `data.featuredVideo` — keep `playingVideoId` as `null` until the user clicks a video title
 
-**`src/pages/ProfilePage.tsx`**
-- Import `LogOut` icon, `Button`, `supabase`, `useNavigate`, `useToast`, and `useState`
-- Add a `handleSignOut` function (same pattern used in `AccountTabContent`)
-- Add a Sign Out button card after the Account Deletion section — styled in red/destructive to match the existing sign-out buttons elsewhere in the app
+**2. `src/components/learning/VideoPlayerBox.tsx`**
+- Change YouTube `playerVars.autoplay` from `1` to `0`
+- Remove `autoPlay` attribute from the HTML5 `<video>` element
 
-This is a single-file change. The button will appear at the bottom of the profile page scroll, below the existing "Account Deletion" section.
+This way, the video list loads but nothing plays until the user explicitly clicks a video.
 
