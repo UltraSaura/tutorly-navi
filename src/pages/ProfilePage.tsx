@@ -12,8 +12,24 @@ import AccountDeletion from '@/components/profile/AccountDeletion';
 import { ProfileEditForm } from '@/components/profile/ProfileEditForm';
 
 const ProfilePage = () => {
-  const { user } = useAuth();
-  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    try {
+      await supabase.auth.signOut();
+      toast({ title: t('profile.signedOut') || 'Signed out successfully' });
+      navigate('/auth');
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({ title: 'Error signing out', variant: 'destructive' });
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   // Mock user data - in real app, fetch from users table
   const userData = {
