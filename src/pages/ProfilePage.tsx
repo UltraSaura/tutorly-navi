@@ -163,6 +163,9 @@ const ProfilePage = () => {
             <LogOut className="mr-2 h-5 w-5" />
             {isSigningOut ? 'Signing out...' : (t('nav.signOut') || 'Sign Out')}
           </Button>
+
+          {/* Extra bottom spacing for mobile bottom tabs */}
+          <div className="h-20 md:h-0" />
         </div>
       </div>
     </div>
