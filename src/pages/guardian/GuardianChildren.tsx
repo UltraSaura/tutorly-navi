@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Mail, GraduationCap, Calendar, Settings } from 'lucide-react';
+import { Plus, Mail, GraduationCap, Calendar, Settings, Globe, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,8 @@ import { ChildWithUser } from '@/types/guardian';
 import AddChildForm from '@/components/guardian/AddChildForm';
 import { ChildRegistrationData } from '@/types/registration';
 import { ManualChildCreationTrigger } from '@/components/guardian/ManualChildCreationTrigger';
+import EditChildDialog from '@/components/guardian/EditChildDialog';
+import { useCountriesAndLevels } from '@/hooks/useCountriesAndLevels';
 
 export default function GuardianChildren() {
   const navigate = useNavigate();
@@ -21,6 +23,22 @@ export default function GuardianChildren() {
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [relation, setRelation] = useState('parent');
+  const [editChild, setEditChild] = useState<any>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const { countries, getSchoolLevelsByCountry } = useCountriesAndLevels();
+
+  // Helper to resolve names
+  const getCountryName = (code: string | null | undefined) => {
+    if (!code) return null;
+    return countries.find(c => c.code === code)?.name || code;
+  };
+
+  const getLevelName = (countryCode: string | null | undefined, levelCode: string | null | undefined) => {
+    if (!countryCode || !levelCode) return null;
+    const levels = getSchoolLevelsByCountry(countryCode);
+    return levels.find(l => l.level_code === levelCode)?.level_name || levelCode;
+  };
 
   // Fetch children
   const { data: children, isLoading } = useQuery({
@@ -39,6 +57,8 @@ export default function GuardianChildren() {
             user_id,
             grade,
             curriculum,
+            curriculum_country_code,
+            curriculum_level_code,
             status,
             settings_json,
             users!inner(
@@ -46,7 +66,9 @@ export default function GuardianChildren() {
               first_name,
               last_name,
               username,
-              email
+              email,
+              country,
+              level
             )
           )
         `)
@@ -103,6 +125,11 @@ export default function GuardianChildren() {
     addChildMutation.mutate({ ...formData, relation });
   };
 
+  const handleEditClick = (child: any) => {
+    setEditChild(child);
+    setIsEditOpen(true);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -116,7 +143,6 @@ export default function GuardianChildren() {
 
   return (
     <div className="space-y-6">
-      {/* Check for pending children and show manual trigger */}
       <ManualChildCreationTrigger />
       
       <div className="flex justify-between items-center">
@@ -185,6 +211,8 @@ export default function GuardianChildren() {
           {children.map((link) => {
             const child = link.children;
             const user = child?.users;
+            const countryCode = user?.country || child?.curriculum_country_code;
+            const levelCode = user?.level || child?.curriculum_level_code;
             
             return (
               <Card key={link.id}>
@@ -193,7 +221,7 @@ export default function GuardianChildren() {
                     <span>
                       {user?.first_name} {user?.last_name}
                     </span>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" onClick={() => handleEditClick(child)}>
                       <Settings className="h-4 w-4" />
                     </Button>
                   </CardTitle>
@@ -202,15 +230,29 @@ export default function GuardianChildren() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  {user?.username && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">@{user.username}</span>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-2 text-sm">
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">{user?.email}</span>
                   </div>
+
+                  {countryCode && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">{getCountryName(countryCode)}</span>
+                    </div>
+                  )}
                   
-                  {child?.grade && (
+                  {levelCode && (
                     <div className="flex items-center gap-2 text-sm">
                       <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Grade: {child.grade}</span>
+                      <span className="text-muted-foreground">{getLevelName(countryCode, levelCode)}</span>
                     </div>
                   )}
                   
@@ -237,6 +279,12 @@ export default function GuardianChildren() {
           })}
         </div>
       )}
+
+      <EditChildDialog
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        child={editChild}
+      />
     </div>
   );
 }
