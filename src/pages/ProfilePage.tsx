@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, Mail, Phone, Globe, GraduationCap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { User, Mail, Phone, Globe, GraduationCap, LogOut } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import AccountDeletion from '@/components/profile/AccountDeletion';
 import { ProfileEditForm } from '@/components/profile/ProfileEditForm';
 
