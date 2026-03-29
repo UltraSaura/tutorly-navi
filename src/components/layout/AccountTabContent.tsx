@@ -111,7 +111,18 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
 
       <Separator />
 
-      {/* Sign Out - placed before language for visibility */}
+      {/* Language Section */}
+      <div className="space-y-2">
+        <div className="flex items-center px-3 py-2">
+          <Globe className="mr-3 h-5 w-5" />
+          <span className="font-medium">{t('nav.language')}</span>
+        </div>
+        <MobileLanguageMenuItems />
+      </div>
+
+      <Separator />
+
+      {/* Sign Out - at the bottom of all options */}
       <Button
         variant="ghost"
         onClick={handleSignOut}
@@ -121,17 +132,6 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
         <LogOut className="mr-3 h-5 w-5" />
         <span>{isSigningOut ? 'Signing out...' : 'Sign Out'}</span>
       </Button>
-
-      <Separator />
-
-      {/* Language Section */}
-      <div className="space-y-2">
-        <div className="flex items-center px-3 py-2">
-          <Globe className="mr-3 h-5 w-5" />
-          <span className="font-medium">{t('nav.language')}</span>
-        </div>
-        <MobileLanguageMenuItems />
-      </div>
     </div>
   );
 }
