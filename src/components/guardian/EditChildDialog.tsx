@@ -163,14 +163,72 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
             </Select>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
+          <div className="flex justify-between items-center pt-4 border-t">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={saving || deleting}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete Child
             </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Child Account</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure? This will permanently remove this child's profile and unlink them from your account. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!child) return;
+                setDeleting(true);
+                try {
+                  const { error: linkError } = await supabase
+                    .from('guardian_child_links')
+                    .delete()
+                    .eq('child_id', child.id);
+                  if (linkError) throw linkError;
+
+                  const { error: childError } = await supabase
+                    .from('children')
+                    .delete()
+                    .eq('id', child.id);
+                  if (childError) throw childError;
+
+                  queryClient.invalidateQueries({ queryKey: ['guardian-children'] });
+                  toast({ title: 'Deleted', description: 'Child account has been removed' });
+                  setShowDeleteConfirm(false);
+                  onOpenChange(false);
+                } catch (err: any) {
+                  toast({ title: 'Error', description: err.message || 'Failed to delete', variant: 'destructive' });
+                } finally {
+                  setDeleting(false);
+                }
+              }}
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
