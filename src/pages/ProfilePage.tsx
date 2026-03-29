@@ -152,6 +152,17 @@ const ProfilePage = () => {
 
           {/* Account Deletion */}
           <AccountDeletion />
+
+          {/* Sign Out */}
+          <Button
+            variant="destructive"
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+            className="w-full h-12"
+          >
+            <LogOut className="mr-2 h-5 w-5" />
+            {isSigningOut ? 'Signing out...' : (t('nav.signOut') || 'Sign Out')}
+          </Button>
         </div>
       </div>
     </div>
