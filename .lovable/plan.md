@@ -1,47 +1,39 @@
 
 
-## Guardian Children Tab: Show Details & Enable Editing
+## Enable Edit & Delete for Guardian Children
 
-### Problem
-1. The child card only shows `grade` (often empty), `email`, and `status` — it does **not** display the child's **country** or **school level**
-2. The **Settings** (gear) button on each child card does nothing
-3. There is no way to **edit** a child's information after creation
+### Current state
+- Edit dialog exists and works (`EditChildDialog.tsx`) — it's wired to the gear icon on each child card
+- No delete functionality exists anywhere
 
-### What the query fetches vs what exists
-- The query joins `children` → `users` but only reads `grade`, `curriculum`, `status` from `children` and `first_name`, `last_name`, `username`, `email` from `users`
-- The `users` table has `country`, `level` (school level code) columns
-- The `children` table has `curriculum_country_code`, `curriculum_level_code`
-- Neither country nor school level is displayed on the child card
+### Changes
 
-### Solution
+**1. Add Delete to `EditChildDialog.tsx`**
+- Add a "Delete Child" button (destructive, red) at the bottom of the edit dialog
+- On click, show an `AlertDialog` confirmation: "Are you sure? This will permanently remove this child account."
+- On confirm, delete in order:
+  1. `guardian_child_links` where `child_id = child.id` (already has DELETE RLS for guardians)
+  2. `children` where `id = child.id` — needs a new DELETE RLS policy
+- Close dialog and refresh the list
 
-**1. Update the query to fetch country and school level** (`GuardianChildren.tsx`)
-- Add `country`, `level` from the `users` join
-- Add `curriculum_country_code`, `curriculum_level_code` from `children`
+**2. Database migration — allow guardians to delete their linked children**
+- Add DELETE policy on `children` table for guardians (currently missing)
+```sql
+CREATE POLICY "Guardians can delete their children"
+ON public.children FOR DELETE TO authenticated
+USING (id IN (
+  SELECT gcl.child_id FROM guardian_child_links gcl
+  JOIN guardians g ON g.id = gcl.guardian_id
+  WHERE g.user_id = auth.uid()
+));
+```
 
-**2. Display country and school level on each child card** (`GuardianChildren.tsx`)
-- Show country name (resolve from `countries` table or the `useCountriesAndLevels` hook)
-- Show school level name (resolve from `school_levels` table)
-- Show username
-
-**3. Create an Edit Child dialog** (new component `EditChildDialog.tsx`)
-- Opens when clicking the Settings gear icon
-- Pre-fills: first name, last name, email, country, school level, username
-- Allows editing: first name, last name, email, country, school level
-- On save: updates `users` table (first_name, last_name, country, level) and `children` table (grade, curriculum_country_code, curriculum_level_code, contact_email)
-
-**4. Wire up the Settings button** (`GuardianChildren.tsx`)
-- Click opens the Edit Child dialog with the selected child's data
-- On successful save, invalidate the `guardian-children` query to refresh the list
-
-### Files changed
+**3. Files changed**
 
 | File | Change |
 |------|--------|
-| `src/pages/guardian/GuardianChildren.tsx` | Expand query to include country/level; display them on cards; add edit dialog state; wire Settings button |
-| `src/components/guardian/EditChildDialog.tsx` | **New** — edit form with country/level selectors, pre-filled with child data, saves to both `users` and `children` tables |
+| `src/components/guardian/EditChildDialog.tsx` | Add delete button with AlertDialog confirmation; delete `guardian_child_links` then `children` row |
+| Migration SQL | Add DELETE policy on `children` for guardians |
 
-### RLS consideration
-- The `children` table already has an UPDATE policy for guardians
-- The `users` table does NOT have a guardian UPDATE policy — we need to verify if guardians can update their children's user records. If not, we'll use the existing `create-child-account` edge function pattern or add an RLS policy allowing guardians to update their linked children's user rows
+Note: The auth user account itself is NOT deleted (that requires admin/service-role access). Only the child profile and guardian link are removed. The user account becomes an unlinked student account.
 
