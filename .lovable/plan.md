@@ -1,20 +1,18 @@
 
 
-## Stop Videos from Auto-Playing on Page Load
+## Auto-Play Video When User Clicks a Video Title
 
 ### Problem
-Two things cause videos to play automatically:
-1. **`CoursePlaylistPage.tsx`** auto-selects the featured video on load (`useEffect` sets `playingVideoId`), which mounts the video player immediately
-2. **`VideoPlayerBox.tsx`** has `autoplay: 1` for YouTube and `autoPlay` for HTML5 `<video>`, so any mounted player starts playing instantly
+After the previous fix to stop auto-play on page load, we set YouTube `autoplay: 0` and removed HTML5 `autoPlay`. Now videos don't play even when the user explicitly clicks a video title — they have to click the play button inside the player too.
 
 ### Fix
+The video should auto-play **only when the user selects it** (clicks the title). Since `playingVideoId` only changes when the user clicks, we can safely auto-play whenever a new video is loaded.
 
-**1. `src/pages/learning/CoursePlaylistPage.tsx`**
-- Remove the `useEffect` that auto-selects `data.featuredVideo` — keep `playingVideoId` as `null` until the user clicks a video title
+### Changes
 
-**2. `src/components/learning/VideoPlayerBox.tsx`**
-- Change YouTube `playerVars.autoplay` from `1` to `0`
-- Remove `autoPlay` attribute from the HTML5 `<video>` element
+**`src/components/learning/VideoPlayerBox.tsx`**
+- YouTube: change `autoplay` back to `1` in `playerVars` — this is fine because the player only mounts when the user clicks a title (since `playingVideoId` starts as `null`)
+- HTML5 `<video>`: add back `autoPlay` attribute for the same reason
 
-This way, the video list loads but nothing plays until the user explicitly clicks a video.
+The key insight: the previous auto-play issue was caused by `CoursePlaylistPage` auto-selecting a video on load (which we already removed). The player itself should auto-play since it only appears after explicit user action.
 
