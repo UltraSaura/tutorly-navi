@@ -149,6 +149,7 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
             ref={videoRef}
             src={video.video_url}
             controls
+            autoPlay
             className="absolute top-0 left-0 w-full h-full"
             onTimeUpdate={(e) => {
               const currentTime = e.currentTarget.currentTime;
