@@ -26,12 +26,7 @@ const CoursePlaylistPage = () => {
   const { data, isLoading } = useCoursePlaylist(topicSlug || '');
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
-  // Auto-select featured video when data loads
-  useEffect(() => {
-    if (data?.featuredVideo && !playingVideoId) {
-      setPlayingVideoId(data.featuredVideo.id);
-    }
-  }, [data?.featuredVideo, playingVideoId]);
+  // Video only plays when user clicks a video title
 
   // Fetch completed video IDs for the current user
   const { data: completedVideoIds = [] } = useQuery({
