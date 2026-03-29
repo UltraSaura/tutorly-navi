@@ -35,6 +35,8 @@ interface EditChildDialogProps {
 export default function EditChildDialog({ open, onOpenChange, child }: EditChildDialogProps) {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
