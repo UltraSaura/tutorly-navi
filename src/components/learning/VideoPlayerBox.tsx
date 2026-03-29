@@ -64,7 +64,7 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
           const player = new (window as any).YT.Player(`youtube-player-${videoId}`, {
             videoId: ytVideoId,
             playerVars: {
-              autoplay: 0,
+              autoplay: 1,
               controls: 1,
               modestbranding: 1,
               start: Math.floor(savedPosition),
