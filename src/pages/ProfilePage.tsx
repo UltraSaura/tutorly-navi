@@ -12,6 +12,8 @@ import AccountDeletion from '@/components/profile/AccountDeletion';
 import { ProfileEditForm } from '@/components/profile/ProfileEditForm';
 
 const ProfilePage = () => {
+  const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSigningOut, setIsSigningOut] = useState(false);
