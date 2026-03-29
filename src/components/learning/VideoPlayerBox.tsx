@@ -64,7 +64,7 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
           const player = new (window as any).YT.Player(`youtube-player-${videoId}`, {
             videoId: ytVideoId,
             playerVars: {
-              autoplay: 0,
+              autoplay: 1,
               controls: 1,
               modestbranding: 1,
               start: Math.floor(savedPosition),
@@ -149,6 +149,7 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
             ref={videoRef}
             src={video.video_url}
             controls
+            autoPlay
             className="absolute top-0 left-0 w-full h-full"
             onTimeUpdate={(e) => {
               const currentTime = e.currentTarget.currentTime;
