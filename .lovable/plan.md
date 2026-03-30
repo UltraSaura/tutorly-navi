@@ -1,22 +1,40 @@
 
 
-## Add Clear Screen & Dismiss Individual Exercises
+## Fix: OCR Exercises Show Empty Answer Field Despite Being Graded
 
-### What you'll get
-1. **"Clear All" button** at the top of the exercise list — clears all chat messages (resets to welcome) and all exercises in one tap
-2. **Small ✕ button** on the top-right corner of each exercise card — removes that single exercise from view
+### Problem
+When OCR extracts exercises that already have student answers (e.g., exercises a and b), the app grades them correctly but still shows an empty input field asking for a response. The grading status (correct/incorrect styling, emoji) appears, but the actual answer text is missing.
 
-### Changes
+### Root cause
+In `chatFileHandlers.ts` line 186, the synthetic user message only contains `exercise.question`:
+```ts
+content: exercise.question,
+```
+
+The `ExerciseCard` component uses `parseUserMessage(userMessage.content)` to extract `question`, `answer`, and `hasAnswer`. Since the user message has no answer embedded, `hasAnswer` is always `false`, so it renders the input field instead of displaying the submitted answer.
+
+The student's answer only exists in the assistant message text (`Your answer: 30/63`), but the card never reads it from there.
+
+### Fix
+
+**`src/utils/chatFileHandlers.ts`** — Include the student answer in the synthetic user message content when the exercise has one:
+
+```ts
+// Line ~186: Change from
+content: exercise.question,
+// To
+content: exercise.userAnswer?.trim()
+  ? `${exercise.question}\nAnswer: ${exercise.userAnswer}`
+  : exercise.question,
+```
+
+This way `parseUserMessage` will detect the answer pattern and set `hasAnswer: true`, causing the card to display the answer badge instead of an empty input field.
+
+### Files changed
 
 | File | Change |
 |------|--------|
-| `src/hooks/useChat.ts` | Add `clearMessages` function that resets `messages` to just the welcome message. Export it. |
-| `src/components/user/ChatInterface.tsx` | Destructure `clearMessages` from `useChat()` and `clearExercises` from `useExercises()`. Pass a combined `onClearAll` and per-card `onDismiss` to `AIResponse`. |
-| `src/components/user/chat/AIResponse.tsx` | **Props**: add `onClearAll?: () => void` and `onDismissExercise?: (messageId: string) => void`. **Clear All**: render a small trash/eraser button above exercise list. **Dismiss**: render an `X` icon button at top-right of each `ExerciseCard`. When dismissed, remove that pair from view by filtering it out via parent callback. |
-| `src/hooks/useChat.ts` | Add `removeMessage(id: string)` that filters out a message + its paired response from state. Export it. |
+| `src/utils/chatFileHandlers.ts` | Include `userAnswer` in synthetic user message content for OCR exercises that have answers |
 
-### UX details
-- Clear All button: small outline button with `Trash2` icon + "Clear" label, positioned top-right above exercise cards
-- Per-exercise dismiss: a subtle `X` circle button at the top-right of each card, gray on hover turns red
-- Clear All shows a confirmation toast before wiping
+Single-line change. No other files affected.
 
