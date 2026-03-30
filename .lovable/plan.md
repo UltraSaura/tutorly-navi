@@ -1,41 +1,58 @@
 
+Goal: make child curriculum assignment reliable so children like **fanta** always get learning content immediately after login.
 
-## Fix: Child's Country & School Level Not Defined After Creation
+What I found (confirmed)
+- `users` row for fanta has: `curriculum_country_code = FR`, `curriculum_level_code = CM1`.
+- `learning_topics` data is stored with lowercase curriculum keys (example: `fr` + `cm1`).
+- Curriculum bundle IDs (`src/data/curriculumBundle.json`) are also lowercase (`fr`, `cm1`).
+- Because matching is exact, uppercase values from child creation/edit lead to “no program defined” and empty learning content.
 
-### Root cause
+Implementation plan
 
-Two gaps in the `create-child-account` edge function:
+1) Normalize curriculum codes at write-time (source of truth fix)
+- File: `supabase/functions/create-child-account/index.ts`
+- Before saving, normalize:
+  - `country` → lowercase curriculum country code
+  - `schoolLevel` → lowercase curriculum level code
+- Save normalized values into:
+  - `users.curriculum_country_code`
+  - `users.curriculum_level_code`
+  - `children.curriculum_country_code`
+  - `children.curriculum_level_code`
+- Keep existing display/profile fields (`users.country`, `users.level`, `children.grade`) as-is for UI compatibility.
 
-1. **`children` table**: The insert sets `grade` and `curriculum` but does NOT set `curriculum_country_code` or `curriculum_level_code`. The app reads from `curriculum_country_code` / `curriculum_level_code` to display the child's program.
+2) Fix guardian edit flow so edits don’t re-break curriculum
+- File: `src/components/guardian/EditChildDialog.tsx`
+- On save:
+  - continue updating `users.country` and `users.level`
+  - also update `users.curriculum_country_code` / `users.curriculum_level_code` using normalized values
+  - keep `children.curriculum_*` updates, but normalized
 
-2. **`users` table**: The `handle_new_user` trigger populates `country` from `user_metadata.country`, but the guardian's `ManualChildCreationTrigger` does NOT send a `country` field in the request body. Also, `users.curriculum_country_code` and `users.curriculum_level_code` are never set — the `useUserCurriculumProfile` hook reads these columns and finds them null.
+3) Add read-time safety normalization (defensive)
+- File: `src/hooks/useUserCurriculumProfile.ts`
+- Normalize fetched `users.curriculum_*` before:
+  - `getCountry(...)` / `getLevel(...)`
+  - returning `profile.countryCode` and `profile.levelCode`
+- This ensures legacy uppercase values still resolve while data is being cleaned.
 
-### Fix
+4) Backfill existing bad rows (including fanta)
+- Add a migration to normalize historical data:
+  - `users.curriculum_country_code = lower(...)`
+  - `users.curriculum_level_code = lower(...)`
+  - `children.curriculum_country_code = lower(...)`
+  - `children.curriculum_level_code = lower(...)`
+- Restrict updates to non-null fields only.
 
-**`supabase/functions/create-child-account/index.ts`**
+5) Verify end-to-end
+- Guardian creates child with country + school level.
+- Child logs in:
+  - Profile “School Program” is pre-filled
+  - Learning page shows subjects/topics (not empty setup state)
+- Re-test edit flow (change country/level in guardian edit dialog) and confirm learning updates correctly after child login/refresh.
 
-1. In the `children` insert (line ~175), add:
-   - `curriculum_country_code: country || null`
-   - `curriculum_level_code: schoolLevel || null`
-
-2. After the trigger populates the `users` row, update it with curriculum fields:
-   ```sql
-   UPDATE users SET
-     curriculum_country_code = country,
-     curriculum_level_code = schoolLevel,
-     country = country,
-     level = schoolLevel
-   WHERE id = childUserId
-   ```
-
-**`src/components/guardian/ManualChildCreationTrigger.tsx`**
-
-3. Pass the `country` field in the request body (it's currently missing — check if the form collects it; if not, it needs to be added to the guardian child creation form).
-
-### Files changed
-
-| File | Change |
-|------|--------|
-| `supabase/functions/create-child-account/index.ts` | Add `curriculum_country_code` and `curriculum_level_code` to children insert; update `users` row with curriculum fields after trigger |
-| `src/components/guardian/ManualChildCreationTrigger.tsx` | Pass `country` in the request body if available from the form |
-
+Technical details
+- Core mismatch is **case/ID format inconsistency** between:
+  - write paths (`FR`, `CM1`)
+  - content filters (`fr`, `cm1`)
+- Durable fix = enforce normalization at all write points + backfill old data + defensive read normalization.
+- No auth model or RLS policy changes required for this bug.
