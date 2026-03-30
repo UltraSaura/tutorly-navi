@@ -1,37 +1,41 @@
 
 
-## Fix: OCR Exercises Not Displayed After Photo Upload
-
-### Problem
-OCR successfully extracts 5 exercises and the toast confirms "Graded 5 exercises from your photo!" but nothing appears in the tutor page.
+## Fix: Exercise Graded Incorrect Despite No Answer
 
 ### Root cause
-`AIResponse` renders exercise cards by pairing user messages with assistant responses. But:
-1. The photo upload creates a user message with `type: 'image'` which is **excluded** from pairing (line 715 of AIResponse.tsx)
-2. `addExercises()` stores exercises in `useExercises` hook state, but `AIResponse` does not read from that state -- it only reads from chat messages
-3. So the exercises exist in memory but have no visible rendering path
+`AIResponse.tsx` pairs user and assistant messages by **global array index** (line 719: `aiMessages[index]`). When there are any other messages in the chat (welcome message, previous conversations, the photo upload message), the OCR exercise pairs get **misaligned** — exercise 1's question gets paired with a wrong assistant response (possibly one containing "INCORRECT" from a previous interaction), making it look incorrectly graded.
 
 ### Fix
-In `src/utils/chatFileHandlers.ts`, after OCR extracts exercises, inject each exercise as a synthetic user+assistant message pair into the chat messages. This way `AIResponse` can pick them up and render exercise cards.
 
-Specifically, in the photo upload success branch (where `processingResult.exercises.length > 0`):
-- For each graded exercise, create a user message (type='text') with the exercise question
-- Create a matching assistant message with the grading result (CORRECT/INCORRECT + explanation)
-- Add all these messages to the chat via `setMessages`
-- Keep `addExercises()` call for the exercises state (grade tracking)
+**`src/components/user/chat/AIResponse.tsx`** — Replace index-based pairing with **adjacency-based pairing**. Instead of separating all user and assistant messages into two arrays and matching by index, iterate through messages sequentially and pair each user message with the immediately following assistant message. This guarantees OCR synthetic message pairs stay together regardless of other messages in the chat.
 
-Also fix: the "Could not grade exercises" false warning. Exercises without student answers (`userAnswer = ""`) should skip grading, not fail it. Update `gradeDocumentExercises` in `src/utils/documentProcessor.ts` to only grade exercises that have a non-empty answer, and leave others as ungraded (no warning).
+```text
+Current (broken):
+  userMessages = messages.filter(user + not image)
+  aiMessages = messages.filter(assistant)
+  pairs[i] = (userMessages[i], aiMessages[i])  ← offset breaks everything
+
+Fixed:
+  for each message:
+    if user (not image/file) → save as pendingUser
+    if assistant (not welcome) and pendingUser exists → create pair, clear pendingUser
+```
+
+### Also fix: Exercises with no answer should explicitly show neutral status
+
+**`src/utils/chatFileHandlers.ts`** — For exercises with empty `userAnswer`, prefix the synthetic assistant message with `UNANSWERED` instead of plain text, so `AIResponse` can explicitly detect and render a neutral "awaiting answer" card style (not accidentally matching any grading keywords).
+
+**`src/components/user/chat/AIResponse.tsx`** — Add `UNANSWERED` detection in `getStatusStyles` to return a distinct neutral/blue style, ensuring these cards never accidentally show as correct or incorrect.
 
 ### Files changed
 
 | File | Change |
 |------|--------|
-| `src/utils/chatFileHandlers.ts` | After OCR success, inject exercise question/answer pairs as chat messages so AIResponse renders them |
-| `src/utils/documentProcessor.ts` | Skip grading for exercises with empty answers; remove false "Could not grade" warning |
+| `src/components/user/chat/AIResponse.tsx` | Replace index-based pairing with adjacency-based pairing; add UNANSWERED status style |
+| `src/utils/chatFileHandlers.ts` | Prefix empty-answer exercise messages with `UNANSWERED` keyword |
 
 ### Expected result
-- Upload worksheet image
-- 5 exercise cards appear in tutor page with math rendering
-- Exercises with no student answer show as "needs answer" (no false warning)
-- Exercises with answers show grading result
+- Exercises without student answers show a neutral "awaiting answer" card
+- Exercises with answers show correct/incorrect based on grading
+- No misalignment regardless of other messages in the chat
 
