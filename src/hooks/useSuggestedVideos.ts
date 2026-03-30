@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { extractKeywordsFromHomework, scoreVideoMatch } from '@/utils/homeworkKeywordExtractor';
-import { filterContentByUserLevel } from '@/utils/schoolLevelFilter';
+import { filterContentByAgeAndLevel } from '@/utils/schoolLevelFilter';
 import { useUserSchoolLevel } from './useUserSchoolLevel';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import type { Video } from '@/types/learning';
@@ -39,12 +39,11 @@ export function useSuggestedVideos(homeworkContent: string | null, limit: number
         return [];
       }
       
-      // Filter by user's age/level and language
-      const suitableVideos = filterContentByUserLevel(
+      // Filter by user's age/level only (no strict language filter — prefer available content)
+      const suitableVideos = filterContentByAgeAndLevel(
         allVideos as any,
         userLevelData?.level || null,
-        userLevelData?.age || null,
-        userLanguage
+        userLevelData?.age || null
       ) as Video[];
       
       // Score and rank videos

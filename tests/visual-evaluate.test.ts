@@ -6,14 +6,39 @@ describe("visual evaluate", () => {
   test("pie exact match", () => {
     const v: VisualUnion = {
       subtype: "pie",
+      baseCorrect: true,
       segments: [
-        { id: "a", value: 0.25, correct: true },
+        { id: "a", value: 0.25 },
         { id: "b", value: 0.5 },
-        { id: "c", value: 0.25, correct: true },
+        { id: "c", value: 0.25 },
+      ],
+      variants: [
+        { id: "v1", segments: [{ id: "x", value: 0.5 }] },
       ],
     };
-    expect(evaluateVisual(v, ["a", "c"])).toBe(true);
-    expect(evaluateVisual(v, ["a"])).toBe(false);
+    expect(evaluateVisual(v, ["base"])).toBe(true);
+    expect(evaluateVisual(v, ["base", "v1"])).toBe(false);
+    expect(evaluateVisual(v, ["v1"])).toBe(false);
+  });
+
+  test("pie color_slices mode", () => {
+    const v: VisualUnion = {
+      subtype: "pie",
+      interactionMode: "color_slices",
+      correctColoredCount: 3,
+      segments: [
+        { id: "s1", value: 1 },
+        { id: "s2", value: 1 },
+        { id: "s3", value: 1 },
+        { id: "s4", value: 1 },
+        { id: "s5", value: 1 },
+        { id: "s6", value: 1 },
+      ],
+    };
+    expect(evaluateVisual(v, ["s1", "s3", "s5"])).toBe(true);
+    expect(evaluateVisual(v, ["s1", "s2", "s4"])).toBe(true);
+    expect(evaluateVisual(v, ["s1", "s2"])).toBe(false);
+    expect(evaluateVisual(v, ["s1", "s2", "s3", "s4"])).toBe(false);
   });
 
   test("grid pattern vs count", () => {

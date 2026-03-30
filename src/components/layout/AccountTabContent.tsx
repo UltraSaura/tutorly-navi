@@ -122,7 +122,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
 
       <Separator />
 
-      {/* Sign Out */}
+      {/* Sign Out - at the bottom of all options */}
       <Button
         variant="ghost"
         onClick={handleSignOut}

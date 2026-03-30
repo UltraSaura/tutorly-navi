@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { VideoPlayerBox } from './VideoPlayerBox';
 import { CollapsibleVideoSection } from './CollapsibleVideoSection';
-import { KeyPointsSummary } from './KeyPointsSummary';
+
 import { TopicProgressIndicator } from './TopicProgressIndicator';
 import type { Video } from '@/types/learning';
 
@@ -86,12 +86,6 @@ export function TopicLearnTab({
         onVideoEnd={handleVideoEnd}
       />
 
-      {/* Key Points Summary */}
-      {lessonContent && (
-        <div className="px-4 py-3">
-          <KeyPointsSummary content={lessonContent} />
-        </div>
-      )}
 
       {/* Quiz Section - Shown after video */}
       <div ref={quizSectionRef}>

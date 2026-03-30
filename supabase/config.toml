@@ -36,3 +36,6 @@ verify_jwt = true
 
 [functions.suggest-topic-objectives]
 verify_jwt = true
+
+[functions.generate-quiz-from-transcripts]
+verify_jwt = true

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Video, Quiz } from '@/types/learning';
@@ -8,6 +8,7 @@ export function useVideoPlayer(videoId: string) {
   const queryClient = useQueryClient();
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const lastSavedPercentageRef = useRef(0);
 
   // Fetch video and quizzes
   const { data, isLoading, error } = useQuery({
@@ -143,8 +144,13 @@ export function useVideoPlayer(videoId: string) {
     const percentage = Math.round((time / duration) * 100);
     
     if (percentage >= 90) {
-      updateProgressMutation.mutate({ progressPercentage: 100, progressType: 'video_completed' });
-    } else if (percentage > (data?.video.progress_percentage || 0)) {
+      if (lastSavedPercentageRef.current < 90) {
+        lastSavedPercentageRef.current = 100;
+        updateProgressMutation.mutate({ progressPercentage: 100, progressType: 'video_completed' });
+      }
+    } else if (percentage > (data?.video.progress_percentage || 0) && 
+               percentage - lastSavedPercentageRef.current >= 5) {
+      lastSavedPercentageRef.current = percentage;
       updateProgressMutation.mutate({ progressPercentage: percentage, progressType: 'video_started' });
     }
   }, [data?.video.progress_percentage, updateProgressMutation]);

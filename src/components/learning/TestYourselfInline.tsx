@@ -1,7 +1,9 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Lock } from 'lucide-react';
+import { Lock, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useBankAttemptStatus } from '@/hooks/useQuizBank';
+import { useAuth } from '@/context/AuthContext';
 
 interface TestYourselfInlineProps {
   bankId: string;
@@ -18,6 +20,8 @@ export function TestYourselfInline({
 }: TestYourselfInlineProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const { data: attemptStatus } = useBankAttemptStatus(bankId, user?.id);
 
   const handleClick = () => {
     if (locked) return;
@@ -26,18 +30,20 @@ export function TestYourselfInline({
     navigate({ search: params.toString() }, { replace: true });
   };
 
+  const isPassed = attemptStatus?.bestScore != null && attemptStatus.bestScore === attemptStatus.maxScore;
+  const hasAttempted = attemptStatus?.bestScore != null;
+
   return (
     <div className="flex flex-col gap-1">
       <Button
         variant="outline"
         onClick={handleClick}
-        className={cn(
-          className,
-          locked && "opacity-50 cursor-not-allowed"
-        )}
+        className={cn(className, locked && "opacity-50 cursor-not-allowed")}
         disabled={locked}
       >
         {locked && <Lock className="w-4 h-4 mr-2" />}
+        {isPassed && <ThumbsUp className="w-4 h-4 mr-2 text-green-600" />}
+        {hasAttempted && !isPassed && <ThumbsDown className="w-4 h-4 mr-2 text-red-600" />}
         Test yourself
       </Button>
       {locked && progressMessage && (

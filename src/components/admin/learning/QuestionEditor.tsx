@@ -57,11 +57,26 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   );
 
   // Numeric state
+  const [answerFormat, setAnswerFormat] = useState<"number" | "fraction">(
+    question && question.kind === 'numeric' ? (question as NumericQ).answerFormat || 'number' : 'number'
+  );
   const [numericAnswer, setNumericAnswer] = useState<number>(
     question && question.kind === 'numeric' ? (question as NumericQ).answer : 0
   );
+  const [fractionNumerator, setFractionNumerator] = useState<number>(
+    question && question.kind === 'numeric' && (question as NumericQ).fractionAnswer
+      ? (question as NumericQ).fractionAnswer!.numerator : 1
+  );
+  const [fractionDenominator, setFractionDenominator] = useState<number>(
+    question && question.kind === 'numeric' && (question as NumericQ).fractionAnswer
+      ? (question as NumericQ).fractionAnswer!.denominator : 2
+  );
   const [numericRange, setNumericRange] = useState<{ min?: number; max?: number }>(
     question && question.kind === 'numeric' ? (question as NumericQ).range || {} : {}
+  );
+  const [dragOptions, setDragOptions] = useState<number[]>(
+    question && question.kind === 'numeric' && (question as NumericQ).dragOptions
+      ? (question as NumericQ).dragOptions! : []
   );
 
   // Ordering state
@@ -94,8 +109,12 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         setChoices((question as SingleQ | MultiQ).choices);
       } else if (question.kind === 'numeric') {
         const numQ = question as NumericQ;
+        setAnswerFormat(numQ.answerFormat || 'number');
         setNumericAnswer(numQ.answer);
         setNumericRange(numQ.range || {});
+        setFractionNumerator(numQ.fractionAnswer?.numerator ?? 1);
+        setFractionDenominator(numQ.fractionAnswer?.denominator ?? 2);
+        setDragOptions(numQ.dragOptions ?? []);
       } else if (question.kind === 'ordering') {
         const ordQ = question as OrderingQ;
         setOrderingItems(ordQ.items);
@@ -114,6 +133,10 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setChoices([{ id: 'c1', label: '', correct: false }, { id: 'c2', label: '', correct: false }]);
       setNumericAnswer(0);
       setNumericRange({});
+      setAnswerFormat('number');
+      setFractionNumerator(1);
+      setFractionDenominator(2);
+      setDragOptions([]);
       setOrderingItems(['', '']);
       setCorrectOrder([]);
       setVisual(createDefaultVisual());
@@ -199,19 +222,38 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         choices: validChoices,
       } as SingleQ | MultiQ;
     } else if (kind === 'numeric') {
-      if (!numericAnswer) {
-        alert('Please enter a correct answer');
-        return;
+      if (answerFormat === 'fraction') {
+        if (!fractionDenominator) {
+          alert('Denominator cannot be zero');
+          return;
+        }
+        questionData = {
+          id,
+          kind: 'numeric',
+          prompt,
+          hint: hint || undefined,
+          points,
+          answer: 0,
+          answerFormat: 'fraction',
+          fractionAnswer: { numerator: fractionNumerator, denominator: fractionDenominator },
+          dragOptions: dragOptions.length > 0 ? dragOptions : undefined,
+        } as NumericQ;
+      } else {
+        if (!numericAnswer && numericAnswer !== 0) {
+          alert('Please enter a correct answer');
+          return;
+        }
+        questionData = {
+          id,
+          kind: 'numeric',
+          prompt,
+          hint: hint || undefined,
+          points,
+          answer: numericAnswer,
+          answerFormat: 'number',
+          range: numericRange.min !== undefined || numericRange.max !== undefined ? numericRange : undefined,
+        } as NumericQ;
       }
-      questionData = {
-        id,
-        kind: 'numeric',
-        prompt,
-        hint: hint || undefined,
-        points,
-        answer: numericAnswer,
-        range: numericRange.min !== undefined || numericRange.max !== undefined ? numericRange : undefined,
-      } as NumericQ;
     } else if (kind === 'ordering') {
       const validItems = orderingItems.filter(i => i.trim());
       if (validItems.length < 2) {
@@ -358,41 +400,158 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             </div>
           )}
 
-          {/* Numeric Answer Editor */}
           {kind === 'numeric' && (
             <div className="space-y-2">
               <div>
-                <Label htmlFor="numeric-answer">Correct Answer</Label>
-                <Input
-                  id="numeric-answer"
-                  type="number"
-                  value={numericAnswer}
-                  onChange={(e) => setNumericAnswer(parseFloat(e.target.value) || 0)}
-                  step="any"
-                />
+                <Label>Answer Format</Label>
+                <Select value={answerFormat} onValueChange={(v: "number" | "fraction") => setAnswerFormat(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="number">Number</SelectItem>
+                    <SelectItem value="fraction">Fraction</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label htmlFor="numeric-min">Min Value (optional)</Label>
-                  <Input
-                    id="numeric-min"
-                    type="number"
-                    value={numericRange.min || ''}
-                    onChange={(e) => setNumericRange({ ...numericRange, min: e.target.value ? parseFloat(e.target.value) : undefined })}
-                    step="any"
-                  />
+
+              {answerFormat === 'number' && (
+                <>
+                  <div>
+                    <Label htmlFor="numeric-answer">Correct Answer</Label>
+                    <Input
+                      id="numeric-answer"
+                      type="number"
+                      value={numericAnswer}
+                      onChange={(e) => setNumericAnswer(parseFloat(e.target.value) || 0)}
+                      step="any"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="numeric-min">Min Value (optional)</Label>
+                      <Input
+                        id="numeric-min"
+                        type="number"
+                        value={numericRange.min || ''}
+                        onChange={(e) => setNumericRange({ ...numericRange, min: e.target.value ? parseFloat(e.target.value) : undefined })}
+                        step="any"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="numeric-max">Max Value (optional)</Label>
+                      <Input
+                        id="numeric-max"
+                        type="number"
+                        value={numericRange.max || ''}
+                        onChange={(e) => setNumericRange({ ...numericRange, max: e.target.value ? parseFloat(e.target.value) : undefined })}
+                        step="any"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {answerFormat === 'fraction' && (
+                <div className="space-y-3">
+                  <Label>Correct Fraction</Label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-center gap-0">
+                      <Input
+                        type="number"
+                        className="w-20 text-center"
+                        value={fractionNumerator}
+                        onChange={(e) => setFractionNumerator(parseInt(e.target.value) || 0)}
+                        placeholder="Num"
+                      />
+                      <div className="w-20 h-[2px] bg-foreground my-1" />
+                      <Input
+                        type="number"
+                        className="w-20 text-center"
+                        value={fractionDenominator}
+                        onChange={(e) => setFractionDenominator(parseInt(e.target.value) || 0)}
+                        placeholder="Den"
+                      />
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      = {fractionNumerator}/{fractionDenominator}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Any equivalent fraction will be accepted (e.g., 2/6 for 1/3).
+                  </p>
+
+                  {/* Drag Options */}
+                  <div className="space-y-2 pt-2 border-t">
+                    <div className="flex items-center justify-between">
+                      <Label>Number Chips (drag & drop options for students)</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const nums = new Set<number>();
+                          const n = fractionNumerator;
+                          const d = fractionDenominator;
+                          nums.add(Math.abs(n));
+                          nums.add(Math.abs(d));
+                          if (Math.abs(n) > 1) nums.add(Math.abs(n) - 1);
+                          nums.add(Math.abs(n) + 1);
+                          if (Math.abs(d) > 1) nums.add(Math.abs(d) - 1);
+                          nums.add(Math.abs(d) + 1);
+                          nums.add(Math.abs(n) * 2);
+                          nums.add(Math.abs(d) * 2);
+                          // Add a random small number
+                          for (let i = 1; i <= 10; i++) {
+                            if (nums.size >= 8) break;
+                            nums.add(i);
+                          }
+                          nums.delete(0);
+                          const sorted = Array.from(nums).sort((a, b) => a - b);
+                          setDragOptions(sorted);
+                        }}
+                      >
+                        Auto-generate
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {dragOptions.map((num, i) => (
+                        <div
+                          key={`${num}-${i}`}
+                          className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-lg text-sm"
+                        >
+                          <span>{num}</span>
+                          <button
+                            type="button"
+                            onClick={() => setDragOptions(dragOptions.filter((_, idx) => idx !== i))}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        placeholder="Add number"
+                        className="w-28"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = parseInt((e.target as HTMLInputElement).value);
+                            if (!isNaN(val) && !dragOptions.includes(val)) {
+                              setDragOptions([...dragOptions, val].sort((a, b) => a - b));
+                              (e.target as HTMLInputElement).value = '';
+                            }
+                          }
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground self-center">Press Enter to add</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="numeric-max">Max Value (optional)</Label>
-                  <Input
-                    id="numeric-max"
-                    type="number"
-                    value={numericRange.max || ''}
-                    onChange={(e) => setNumericRange({ ...numericRange, max: e.target.value ? parseFloat(e.target.value) : undefined })}
-                    step="any"
-                  />
-                </div>
-              </div>
+              )}
             </div>
           )}
 

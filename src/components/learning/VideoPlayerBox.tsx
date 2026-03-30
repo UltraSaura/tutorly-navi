@@ -14,6 +14,7 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const youtubePlayerRef = useRef<any>(null);
   const updateProgressRef = useRef<any>(null);
+  const lastInitVideoIdRef = useRef<string | null>(null);
   const [isYouTube, setIsYouTube] = useState(false);
 
   const { video, updateProgress } = useVideoPlayer(videoId || '');
@@ -24,48 +25,56 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
   }, [updateProgress]);
 
   useEffect(() => {
-    if (!video?.video_url) return;
+    if (!video?.video_url || !videoId) return;
+    
+    // Skip re-initialization if same videoId
+    if (lastInitVideoIdRef.current === videoId && youtubePlayerRef.current) {
+      console.log('🎬 Skipping re-init, same videoId:', videoId);
+      return;
+    }
     
     console.log('🎬 VideoPlayerBox - videoId changed:', videoId);
-    console.log('🎬 Video data:', video?.title);
     
     const isYT = isYouTubeUrl(video.video_url);
     setIsYouTube(isYT);
-    console.log('🎬 Is YouTube:', isYT);
 
     if (isYT) {
       const ytVideoId = extractYouTubeVideoId(video.video_url);
       if (!ytVideoId) return;
 
+      const savedPosition = video.last_watched_position_seconds || 0;
+
       const initPlayer = async () => {
         try {
           await loadYouTubeAPI();
           
-          // Clear any existing interval first
           if (progressIntervalRef.current) {
             clearInterval(progressIntervalRef.current);
             progressIntervalRef.current = null;
           }
           
-          // Destroy existing player before creating new one
           if (youtubePlayerRef.current?.destroy) {
-            console.log('🎬 Destroying existing player');
             youtubePlayerRef.current.destroy();
             youtubePlayerRef.current = null;
           }
 
           console.log('🎬 Creating new YouTube player');
+          lastInitVideoIdRef.current = videoId;
+          
           const player = new (window as any).YT.Player(`youtube-player-${videoId}`, {
             videoId: ytVideoId,
             playerVars: {
               autoplay: 1,
               controls: 1,
               modestbranding: 1,
+              start: Math.floor(savedPosition),
             },
             events: {
               onReady: () => {
-                console.log('🎬 Player ready');
-                // Start progress tracking interval
+                console.log('🎬 Player ready, seeking to:', savedPosition);
+                if (savedPosition > 0) {
+                  player.seekTo(savedPosition, true);
+                }
                 if (progressIntervalRef.current) {
                   clearInterval(progressIntervalRef.current);
                 }
@@ -75,18 +84,15 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
                   if (current && duration && duration > 0) {
                     updateProgressRef.current?.(current, duration);
                   }
-                }, 5000); // Update every 5 seconds instead of 1
+                }, 5000);
               },
               onStateChange: (event: any) => {
-                // State 0 = ended
                 if (event.data === 0) {
                   const duration = player.getDuration?.();
                   if (duration) {
-                    updateProgress(duration, duration);
+                    updateProgressRef.current?.(duration, duration);
                   }
-                  if (onVideoEnd) {
-                    onVideoEnd();
-                  }
+                  onVideoEnd?.();
                 }
               },
             },
@@ -100,20 +106,18 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
       initPlayer();
 
       return () => {
-        console.log('🎬 Cleanup: destroying player');
-        // Clear progress interval
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current);
           progressIntervalRef.current = null;
         }
-        // Destroy YouTube player
         if (youtubePlayerRef.current?.destroy) {
           youtubePlayerRef.current.destroy();
           youtubePlayerRef.current = null;
+          lastInitVideoIdRef.current = null;
         }
       };
     }
-  }, [video?.video_url, videoId, onVideoEnd]); // Removed updateProgress from dependencies
+  }, [video?.video_url, videoId]);
 
 
   if (!videoId || !video) {
