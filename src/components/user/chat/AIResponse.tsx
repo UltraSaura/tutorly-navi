@@ -252,7 +252,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
             
             <div className="flex-1 min-w-0">
               <div className="text-body font-semibold text-neutral-text mb-3 break-words whitespace-pre-wrap">
-                {question || jsonResponse.exercise}
+                <MathText text={question || jsonResponse.exercise} />
               </div>
               
               {/* Answer section - either show existing answer or input field */}
