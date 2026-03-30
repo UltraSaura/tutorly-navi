@@ -74,27 +74,84 @@ Deno.serve(async (req) => {
     const authEmail = `${username}@child.local`;
 
     // Create auth user with username
+    const userMetadata = {
+      first_name: firstName,
+      last_name: lastName || '',
+      user_type: 'student',
+      username: username,
+      country: country || null,
+      phone_number: phoneNumber || null,
+      actual_email: email || null,
+    };
+
+    let childUserId: string;
+
     const { data: authData, error: authCreateError } = await supabaseAdmin.auth.admin.createUser({
       email: authEmail,
       password,
-      email_confirm: true,  // Auto-confirm since using placeholder email
-      user_metadata: {
-        first_name: firstName,
-        last_name: lastName || '',
-        user_type: 'student',
-        username: username,
-        country: country || null,
-        phone_number: phoneNumber || null,
-        actual_email: email || null,  // Store real email separately if provided
-      },
+      email_confirm: true,
+      user_metadata: userMetadata,
     });
 
-    if (authCreateError || !authData.user) {
-      console.error('Auth creation error:', authCreateError);
-      throw new Error(`Failed to create auth account: ${authCreateError?.message}`);
-    }
+    if (authCreateError) {
+      // Handle case where auth user already exists (e.g. child was deleted and re-created)
+      const isEmailExists = authCreateError.message?.toLowerCase().includes('already been registered') ||
+        authCreateError.message?.toLowerCase().includes('email_exists') ||
+        (authCreateError as any).code === 'email_exists';
 
-    const childUserId = authData.user.id;
+      if (!isEmailExists) {
+        console.error('Auth creation error:', authCreateError);
+        throw new Error(`Failed to create auth account: ${authCreateError.message}`);
+      }
+
+      console.log('Auth user already exists for', authEmail, '— attempting to reuse');
+
+      // Look up existing user by email
+      const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+      if (listError) throw new Error(`Failed to list users: ${listError.message}`);
+
+      const existingUser = listData.users.find((u: any) => u.email === authEmail);
+      if (!existingUser) {
+        throw new Error('User reportedly exists but could not be found');
+      }
+
+      // Check if this user is already an active child linked to ANOTHER guardian
+      const { data: activeLinks } = await supabaseAdmin
+        .from('guardian_child_links')
+        .select('guardian_id, child_id')
+        .eq('child_id', (await supabaseAdmin.from('children').select('id').eq('user_id', existingUser.id).maybeSingle()).data?.id || '00000000-0000-0000-0000-000000000000');
+
+      if (activeLinks && activeLinks.length > 0) {
+        // Check if any link belongs to a different guardian
+        const { data: currentGuardian } = await supabaseAdmin
+          .from('guardians')
+          .select('id')
+          .eq('user_id', user!.id)
+          .single();
+
+        const otherGuardianLink = activeLinks.find((l: any) => l.guardian_id !== currentGuardian?.id);
+        if (otherGuardianLink) {
+          throw new Error('This username is already linked to another guardian');
+        }
+      }
+
+      // Update the existing auth user's metadata and password
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+        password,
+        user_metadata: userMetadata,
+      });
+
+      if (updateError) {
+        console.error('Auth update error:', updateError);
+        throw new Error(`Failed to update existing auth account: ${updateError.message}`);
+      }
+
+      childUserId = existingUser.id;
+    } else if (!authData.user) {
+      throw new Error('Failed to create auth account: no user returned');
+    } else {
+      childUserId = authData.user.id;
+    }
 
     // The users table will be populated by the trigger (handle_new_user)
     // Wait a moment for the trigger to complete
