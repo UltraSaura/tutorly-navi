@@ -157,6 +157,21 @@ Deno.serve(async (req) => {
     // Wait a moment for the trigger to complete
     await new Promise(resolve => setTimeout(resolve, 500));
 
+    // Update users row with curriculum fields (trigger doesn't set these)
+    const { error: userUpdateError } = await supabaseAdmin
+      .from('users')
+      .update({
+        curriculum_country_code: country || null,
+        curriculum_level_code: schoolLevel || null,
+        country: country || null,
+        level: schoolLevel || null,
+      })
+      .eq('id', childUserId);
+
+    if (userUpdateError) {
+      console.error('User curriculum update error:', userUpdateError);
+    }
+
     // Check if child profile already exists (idempotent creation)
     const { data: existingChild } = await supabaseAdmin
       .from('children')
@@ -166,7 +181,16 @@ Deno.serve(async (req) => {
 
     let childData;
     if (existingChild) {
-      // Child already exists, reuse it
+      // Child already exists, update curriculum fields
+      await supabaseAdmin
+        .from('children')
+        .update({
+          curriculum_country_code: country || null,
+          curriculum_level_code: schoolLevel || null,
+          grade: schoolLevel,
+          curriculum: country || null,
+        })
+        .eq('id', existingChild.id);
       childData = existingChild;
     } else {
       // Create child profile with optional email
@@ -176,15 +200,16 @@ Deno.serve(async (req) => {
           user_id: childUserId,
           grade: schoolLevel,
           curriculum: country || null,
+          curriculum_country_code: country || null,
+          curriculum_level_code: schoolLevel || null,
           status: 'active',
-          contact_email: email || null,  // Use actual email if provided
+          contact_email: email || null,
         })
         .select()
         .single();
 
       if (childError || !newChildData) {
         console.error('Child creation error:', childError);
-        // Cleanup: delete auth user if child creation fails
         await supabaseAdmin.auth.admin.deleteUser(childUserId);
         throw new Error(`Failed to create child profile: ${childError?.message}`);
       }

@@ -18,6 +18,7 @@ export interface ChildInfo {
   username: string;        // NEW: Unique username for login
   password?: string;       // NEW: Individual password (optional)
   email?: string;          // NEW: Optional email for notifications
+  country?: string;        // Country code for curriculum
 }
 
 export interface StudentRegistrationData {
