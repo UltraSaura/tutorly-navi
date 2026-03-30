@@ -76,7 +76,7 @@ const getStatusStyles = (content: string) => {
 const formatExplanation = (content: string) => {
   // Remove status prefixes and clean up the content
   const cleanContent = content
-    .replace(/^(CORRECT|INCORRECT)\s*/i, '')
+    .replace(/^(CORRECT|INCORRECT|UNANSWERED)\s*/i, '')
     .replace(/^Great work!\s*/i, '')
     .replace(/^Learning Opportunity\s*/i, '')
     .replace(/^Guidance:\s*/i, '')
