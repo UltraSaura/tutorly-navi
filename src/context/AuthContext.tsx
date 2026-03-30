@@ -35,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Move the language detection logic to useCallback to avoid hook order issues
   const detectLanguageFromUser = useCallback((user: User) => {
     if (user?.user_metadata?.country && i18n?.changeLanguage) {
-      const country = user.user_metadata.country;
+      const country = user.user_metadata.country.toUpperCase();
       
       // Map countries to languages
       const countryLanguageMap: Record<string, string> = {
