@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { extractKeywordsFromHomework, scoreVideoMatch } from '@/utils/homeworkKeywordExtractor';
-import { filterContentByUserLevel } from '@/utils/schoolLevelFilter';
+import { filterContentByAgeAndLevel } from '@/utils/schoolLevelFilter';
 import { useUserSchoolLevel } from './useUserSchoolLevel';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import type { Video } from '@/types/learning';
