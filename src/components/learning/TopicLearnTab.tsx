@@ -86,12 +86,6 @@ export function TopicLearnTab({
         onVideoEnd={handleVideoEnd}
       />
 
-      {/* Key Points Summary */}
-      {lessonContent && (
-        <div className="px-4 py-3">
-          <KeyPointsSummary content={lessonContent} />
-        </div>
-      )}
 
       {/* Quiz Section - Shown after video */}
       <div ref={quizSectionRef}>
