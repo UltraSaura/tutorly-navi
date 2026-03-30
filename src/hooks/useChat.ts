@@ -268,6 +268,8 @@ export const useChat = () => {
     activeModel,
     lastResponse,
     addMessage,
+    clearMessages,
+    removeMessage,
     handleSendMessage,
     handleFileUpload: handleDocumentUpload,
     handlePhotoUpload: handleImageUpload,
