@@ -1,52 +1,41 @@
-I checked the data for child `fanta` and the database is correct:
-- `users.curriculum_country_code = fr`
-- `users.curriculum_level_code = cm1`
-- the `Fraction` topic exists for `fr/cm1`
-- the topic has an active video allowed for `FR:CM1`
 
-Do I know what the issue is? Yes.
 
-### Root cause
-This is not a curriculum/RLS problem anymore. The video is being removed by strict language filtering.
+## Add Mistral OCR to Document Processor
 
-In `src/hooks/useCoursePlaylist.ts`:
-1. topic videos are fetched
-2. `filterContentByUserLevel(...)` removes any video whose `language !== userLanguage`
-3. only after that, `selectBestVariants(...)` runs
+### Step 0: Add MISTRAL_API_KEY as Supabase Secret
+The key you added in the admin UI is stored in the database — edge functions can't see it. I'll prompt you to add it as a Supabase secret so the edge function can access it via `Deno.env.get('MISTRAL_API_KEY')`.
 
-So if `fanta` opens a topic where the only available video is French, and the app language is currently English, the French video gets filtered out before fallback logic can choose it. That leaves the page empty.
+### Step 1: Create `supabase/functions/document-processor/extractors/mistral.ts`
+- Export `extractTextWithMistralOCR(fileData: string, fileType: string): Promise<string>`
+- Strip data URL prefix, reconstruct as `data:<mime>;base64,...` for Mistral's `image_url` type
+- Call `POST https://api.mistral.ai/v1/ocr` with:
+  - `model: "mistral-ocr-latest"`
+  - `document: { type: "image_url", image_url: "<data_url>" }`
+  - `include_image_base64: false`
+- Concatenate all `pages[].markdown` into structured text
 
-### Fix
-1. `src/hooks/useCoursePlaylist.ts`
-- Stop filtering playlist videos by exact UI language before variant selection
-- First filter only by age/school level
-- Then choose the best available variant:
-  - user language first
-  - else English
-  - else first available variant
-- Keep standalone videos if they match level/age, even when their language differs from the UI language
+### Step 2: Create `supabase/functions/document-processor/extractors/mathpix.ts`
+- Stubbed provider — checks for `MATHPIX_APP_ID` / `MATHPIX_APP_KEY`, throws "not configured" if missing
+- Ready for future activation
 
-2. `src/utils/schoolLevelFilter.ts`
-- Split the helper so language filtering is optional
-- Keep age/level filtering reusable without forcing exact language matches
+### Step 3: Update `supabase/functions/document-processor/extractors.ts`
+- Import Mistral and MathPix extractors
+- Reorder OCR chain:
+  1. **Mistral OCR** (active, primary)
+  2. **MathPix** (stubbed, falls through)
+  3. **SimpleTex** (existing)
+  4. **Google Vision** (existing)
+  5. **Azure** (existing)
+  6. **Emergency** (existing)
 
-3. `src/hooks/useSuggestedVideos.ts`
-- Apply the same fallback-aware behavior there, so suggested videos do not disappear for the same reason
+### No frontend changes needed
+The existing Tutor upload flow calls `document-processor` already — only the backend OCR layer changes.
 
-4. `src/context/AuthContext.tsx` (defensive)
-- Normalize `user.user_metadata.country` before language detection so `FR` and `fr` behave the same
-- This is not the main bug, but it prevents wrong fallback to English during login/session switches
+### Files
 
-### Result after implementation
-- `fanta` will see the `Fraction` video again
-- French-only content will still appear even if the interface is in English
-- when both French and English variants exist, the app will still prefer the current language
+| File | Action |
+|------|--------|
+| `supabase/functions/document-processor/extractors/mistral.ts` | Create |
+| `supabase/functions/document-processor/extractors/mathpix.ts` | Create |
+| `supabase/functions/document-processor/extractors.ts` | Modify — new chain order |
 
-### Verification
-- Log in as `fanta`
-- Open `/learning/mathematics/Fraction`
-- Confirm the playlist is visible again
-- Confirm language preference still works when multiple variants exist
-- Confirm switching between guardian and child accounts no longer makes the topic appear empty
-
-No database change is needed for this fix.
