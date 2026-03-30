@@ -70,14 +70,20 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
     setSaving(true);
 
     try {
+      // Normalize curriculum codes to lowercase for consistent matching
+      const normalizedCountry = country?.toLowerCase() || '';
+      const normalizedLevel = schoolLevel?.toLowerCase() || '';
+
       // Update users table
       const { error: userError } = await supabase
         .from('users')
         .update({
           first_name: firstName,
           last_name: lastName,
-          country,
-          level: schoolLevel,
+          country: normalizedCountry,
+          level: normalizedLevel,
+          curriculum_country_code: normalizedCountry,
+          curriculum_level_code: normalizedLevel,
         })
         .eq('id', child.user_id);
 
@@ -87,8 +93,8 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
       const { error: childError } = await supabase
         .from('children')
         .update({
-          curriculum_country_code: country,
-          curriculum_level_code: schoolLevel,
+          curriculum_country_code: normalizedCountry,
+          curriculum_level_code: normalizedLevel,
           contact_email: email,
         })
         .eq('id', child.id);

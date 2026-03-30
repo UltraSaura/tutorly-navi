@@ -25,12 +25,16 @@ export function useUserCurriculumProfile() {
         return null;
       }
       
-      const country = getCountry(data.curriculum_country_code);
-      const level = getLevel(data.curriculum_country_code, data.curriculum_level_code);
+      // Normalize to lowercase for consistent matching with curriculum content
+      const countryCode = data.curriculum_country_code.toLowerCase();
+      const levelCode = data.curriculum_level_code.toLowerCase();
+      
+      const country = getCountry(countryCode);
+      const level = getLevel(countryCode, levelCode);
       
       return {
-        countryCode: data.curriculum_country_code,
-        levelCode: data.curriculum_level_code,
+        countryCode,
+        levelCode,
         countryName: country?.name,
         levelLabel: level?.label,
       } as CurriculumProfile;
