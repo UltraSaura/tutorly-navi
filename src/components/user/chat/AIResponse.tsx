@@ -705,19 +705,10 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAnswer }) => {
+const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAnswer, onClearAll, onDismissExercise }) => {
   const { t, language } = useLanguage();
   
-  // Debug logging for translation context
-  console.log('[AIResponse] Translation Context Debug:', {
-    language,
-    testTranslation: t('exercise.answer'),
-    testExplanation: t('explanation.modal_title'),
-    timestamp: new Date().toISOString()
-  });
-  
   const exercisePairs = useMemo(() => {
-    // Adjacency-based pairing: pair each user message with the immediately following assistant message
     const pairs: Array<{ userMessage: Message; aiResponse: Message }> = [];
     let pendingUser: Message | null = null;
     
@@ -728,12 +719,10 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
         pairs.push({ userMessage: pendingUser, aiResponse: msg });
         pendingUser = null;
       } else if (msg.role === 'assistant') {
-        // Non-paired assistant message (e.g. welcome), skip and reset
         pendingUser = null;
       }
     }
 
-    // Remove duplicates based on question content
     const uniquePairs = [];
     const seenQuestions = new Set<string>();
     
@@ -745,14 +734,13 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
         seenQuestions.add(question);
         uniquePairs.push(pair);
       } else {
-        // Replace the existing pair with the new one (latest answer)
         const existingIndex = uniquePairs.findIndex(existingPair => {
           const existingParsed = parseUserMessage(existingPair.userMessage.content);
           return existingParsed.question === question;
         });
         
         if (existingIndex !== -1) {
-          uniquePairs[existingIndex] = pair; // Replace with latest
+          uniquePairs[existingIndex] = pair;
         }
       }
     }
@@ -767,13 +755,39 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
   return (
     <div className="p-6">
       <div className="max-w-6xl mx-auto space-y-4">
+        {/* Clear All button */}
+        {exercisePairs.length > 0 && onClearAll && (
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClearAll}
+              className="text-muted-foreground hover:text-destructive hover:border-destructive"
+            >
+              <Trash2 size={14} />
+              {language === 'fr' ? 'Tout effacer' : 'Clear all'}
+            </Button>
+          </div>
+        )}
+
         {exercisePairs.map((pair) => (
-          <ExerciseCard
-            key={pair.userMessage.id}
-            userMessage={pair.userMessage}
-            aiResponse={pair.aiResponse}
-            onSubmitAnswer={onSubmitAnswer}
-          />
+          <div key={pair.userMessage.id} className="relative group">
+            {/* Dismiss button */}
+            {onDismissExercise && (
+              <button
+                onClick={() => onDismissExercise(pair.userMessage.id)}
+                className="absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full bg-muted border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground hover:border-destructive"
+                title={language === 'fr' ? 'Supprimer' : 'Dismiss'}
+              >
+                <X size={12} />
+              </button>
+            )}
+            <ExerciseCard
+              userMessage={pair.userMessage}
+              aiResponse={pair.aiResponse}
+              onSubmitAnswer={onSubmitAnswer}
+            />
+          </div>
         ))}
         
         {isLoading && <LoadingSkeleton />}
