@@ -198,7 +198,7 @@ export const handlePhotoUpload = async (
             assistantContent = `Answer submitted: ${exercise.userAnswer}`;
           }
         } else {
-          assistantContent = `Please provide your answer for this exercise.`;
+          assistantContent = `UNANSWERED\n\nThis exercise has not been answered yet. Please provide your answer.`;
         }
         
         const assistantMsg: Message = {

@@ -60,8 +60,11 @@ const getStatusStyles = (content: string) => {
   
   const isCorrect = /^CORRECT\b/i.test(contentTrimmed) || /\bCORRECT\b/i.test(firstLine);
   const isIncorrect = /^INCORRECT\b/i.test(contentTrimmed) || /\bINCORRECT\b/i.test(firstLine);
+  const isUnanswered = /^UNANSWERED\b/i.test(contentTrimmed);
   
-  if (isCorrect) {
+  if (isUnanswered) {
+    return 'bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800';
+  } else if (isCorrect) {
     return 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800';
   } else if (isIncorrect) {
     return 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800';
@@ -73,7 +76,7 @@ const getStatusStyles = (content: string) => {
 const formatExplanation = (content: string) => {
   // Remove status prefixes and clean up the content
   const cleanContent = content
-    .replace(/^(CORRECT|INCORRECT)\s*/i, '')
+    .replace(/^(CORRECT|INCORRECT|UNANSWERED)\s*/i, '')
     .replace(/^Great work!\s*/i, '')
     .replace(/^Learning Opportunity\s*/i, '')
     .replace(/^Guidance:\s*/i, '')
@@ -711,18 +714,21 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
   });
   
   const exercisePairs = useMemo(() => {
-    // Exclude image/file placeholder messages from exercise pairing
-    const userMessages = messages.filter(msg => msg.role === 'user' && msg.type !== 'image' && msg.type !== 'file');
-    const aiMessages = messages.filter(msg => msg.role === 'assistant' && msg.id !== '1');
+    // Adjacency-based pairing: pair each user message with the immediately following assistant message
+    const pairs: Array<{ userMessage: Message; aiResponse: Message }> = [];
+    let pendingUser: Message | null = null;
     
-    // Create pairs and filter out duplicates
-    const pairs = userMessages.map((userMsg, index) => ({
-      userMessage: userMsg,
-      aiResponse: aiMessages[index] || null
-    })).filter(pair => pair.aiResponse !== null) as Array<{
-      userMessage: Message;
-      aiResponse: Message;
-    }>;
+    for (const msg of messages) {
+      if (msg.role === 'user' && msg.type !== 'image' && msg.type !== 'file') {
+        pendingUser = msg;
+      } else if (msg.role === 'assistant' && msg.id !== '1' && pendingUser) {
+        pairs.push({ userMessage: pendingUser, aiResponse: msg });
+        pendingUser = null;
+      } else if (msg.role === 'assistant') {
+        // Non-paired assistant message (e.g. welcome), skip and reset
+        pendingUser = null;
+      }
+    }
 
     // Remove duplicates based on question content
     const uniquePairs = [];
