@@ -714,18 +714,21 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
   });
   
   const exercisePairs = useMemo(() => {
-    // Exclude image/file placeholder messages from exercise pairing
-    const userMessages = messages.filter(msg => msg.role === 'user' && msg.type !== 'image' && msg.type !== 'file');
-    const aiMessages = messages.filter(msg => msg.role === 'assistant' && msg.id !== '1');
+    // Adjacency-based pairing: pair each user message with the immediately following assistant message
+    const pairs: Array<{ userMessage: Message; aiResponse: Message }> = [];
+    let pendingUser: Message | null = null;
     
-    // Create pairs and filter out duplicates
-    const pairs = userMessages.map((userMsg, index) => ({
-      userMessage: userMsg,
-      aiResponse: aiMessages[index] || null
-    })).filter(pair => pair.aiResponse !== null) as Array<{
-      userMessage: Message;
-      aiResponse: Message;
-    }>;
+    for (const msg of messages) {
+      if (msg.role === 'user' && msg.type !== 'image' && msg.type !== 'file') {
+        pendingUser = msg;
+      } else if (msg.role === 'assistant' && msg.id !== '1' && pendingUser) {
+        pairs.push({ userMessage: pendingUser, aiResponse: msg });
+        pendingUser = null;
+      } else if (msg.role === 'assistant') {
+        // Non-paired assistant message (e.g. welcome), skip and reset
+        pendingUser = null;
+      }
+    }
 
     // Remove duplicates based on question content
     const uniquePairs = [];
