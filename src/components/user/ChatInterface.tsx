@@ -29,18 +29,20 @@ const ChatInterface = () => {
     isLoading,
     activeModel,
     addMessage,
+    clearMessages,
+    removeMessage,
     handleSendMessage,
     handleFileUpload,
     handlePhotoUpload,
     filteredMessages,
-    // Add calculation state
     calculationState
   } = useChat();
   const {
     createExerciseFromAI,
     processHomeworkFromChat,
     linkAIResponseToExercise,
-    addExercises
+    addExercises,
+    clearExercises
   } = useExercises();
   const {
     getActiveSubjects,
