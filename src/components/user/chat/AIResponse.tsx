@@ -1,5 +1,5 @@
 import React, { memo, useMemo, useState } from 'react';
-import { Calculator, CheckCircle, XCircle, Send } from 'lucide-react';
+import { Calculator, CheckCircle, XCircle, Send, Trash2, X } from 'lucide-react';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { containsMathContent, textToMathDisplay, answerToLatex } from '@/utils/mathFormatUtils';
 import { Badge } from '@/components/ui/badge';
