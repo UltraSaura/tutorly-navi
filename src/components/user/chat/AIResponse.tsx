@@ -609,7 +609,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                       variant="secondary" 
                       className="px-3 py-1 bg-neutral-bg text-neutral-muted"
                     >
-                  {t('exercise.answer')}: {answer}
+                  <MathAnswer label={t('exercise.answer')} answer={answer} />
                       </Badge>
                     )}
                   </div>
