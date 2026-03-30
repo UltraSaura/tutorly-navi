@@ -689,7 +689,8 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
   });
   
   const exercisePairs = useMemo(() => {
-    const userMessages = messages.filter(msg => msg.role === 'user');
+    // Exclude image/file placeholder messages from exercise pairing
+    const userMessages = messages.filter(msg => msg.role === 'user' && msg.type !== 'image' && msg.type !== 'file');
     const aiMessages = messages.filter(msg => msg.role === 'assistant' && msg.id !== '1');
     
     // Create pairs and filter out duplicates

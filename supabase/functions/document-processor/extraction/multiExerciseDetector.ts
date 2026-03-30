@@ -9,67 +9,67 @@ export function detectMultipleExercises(text: string): Array<{ letter: string, q
   console.log('\n=== MULTI-EXERCISE DETECTION ===');
   const exercises: Array<{ letter: string, question: string, answer: string }> = [];
   
-  // Enhanced patterns for detecting multiple exercises
-  const patterns = [
-    // a) (30)/(63)=(13)/(23) format with parentheses
-    /([a-e])\)\s*\((\d+)\)\/\((\d+)\)(?:\s*=\s*\((\d+)\)\/\((\d+)\))?/gi,
-    // a. (30)/(63)=(13)/(23) format with parentheses  
-    /([a-e])\.\s*\((\d+)\)\/\((\d+)\)(?:\s*=\s*\((\d+)\)\/\((\d+)\))?/gi,
-    // a) fraction b) fraction format
-    /([a-e])\)\s*\\?frac\{(\d+)\}\{(\d+)\}(?:\s*=\s*([^a-e\n]+?))?(?=\s*[a-e]\)|$)/gi,
-    // a. fraction b. fraction format
-    /([a-e])\.\s*\\?frac\{(\d+)\}\{(\d+)\}(?:\s*=\s*([^a-e\n]+?))?(?=\s*[a-e]\.|$)/gi,
-    // a) 30/63 b) 45/81 format
-    /([a-e])\)\s*(\d+)\s*\/\s*(\d+)(?:\s*=\s*([^a-e\n]+?))?(?=\s*[a-e]\)|$)/gi,
-    // a. 30/63 b. 45/81 format  
-    /([a-e])\.\s*(\d+)\s*\/\s*(\d+)(?:\s*=\s*([^a-e\n]+?))?(?=\s*[a-e]\.|$)/gi,
-  ];
+  // PHASE 1: Detect LaTeX markdown format from Mistral OCR
+  // Pattern: a.  $\frac{30}{63} = \frac{13}{23}$  or  c.  $\frac{50}{58} =$
+  const latexLinePattern = /([a-e])[\.\)]\s*\$?\\frac\{(\d+)\}\{(\d+)\}\s*=\s*(?:\\frac\{(\d+)\}\{(\d+)\})?\s*\$?/gi;
+  let match;
   
-  for (const pattern of patterns) {
-    let match;
-    while ((match = pattern.exec(text)) !== null) {
-      const letter = match[1].toLowerCase();
-      let numerator, denominator, studentAnswer = "";
-      
-      // Handle parentheses format: (30)/(63)=(13)/(23)
-      if (match[4] && match[5]) {
-        numerator = match[2];
-        denominator = match[3];
-        studentAnswer = `${match[4]}/${match[5]}`;
-      } else {
-        numerator = match[2];
-        denominator = match[3];
-        const rawAnswer = match[4];
-        
-        // Clean up the answer if provided by student
-        if (rawAnswer) {
-          studentAnswer = rawAnswer.trim()
-            .replace(/[^\d\/]/g, '') // Keep only digits and slash
-            .replace(/\s+/g, ''); // Remove spaces
-          
-          // Validate it's a proper fraction
-          if (!/^\d+\/\d+$/.test(studentAnswer)) {
-            studentAnswer = "";
-          }
-        }
-      }
-      
-      const exercise = {
-        letter: letter,
+  while ((match = latexLinePattern.exec(text)) !== null) {
+    const letter = match[1].toLowerCase();
+    const numerator = match[2];
+    const denominator = match[3];
+    const ansNum = match[4];
+    const ansDen = match[5];
+    
+    const studentAnswer = (ansNum && ansDen) ? `${ansNum}/${ansDen}` : "";
+    
+    // Avoid duplicates
+    if (!exercises.some(ex => ex.letter === letter)) {
+      exercises.push({
+        letter,
         question: `Simplifiez la fraction ${numerator}/${denominator}`,
-        answer: studentAnswer // Only student-provided answer, empty if none
-      };
-      
-      exercises.push(exercise);
-      console.log(`Found exercise ${letter}: ${numerator}/${denominator} -> Answer: "${studentAnswer || 'NEEDS STUDENT INPUT'}"`);
+        answer: studentAnswer
+      });
+      console.log(`Found LaTeX exercise ${letter}: ${numerator}/${denominator} -> Answer: "${studentAnswer || 'NEEDS STUDENT INPUT'}"`);
     }
   }
   
-  // Remove duplicates and sort by letter
-  const uniqueExercises = exercises.filter((ex, index, arr) => 
-    arr.findIndex(other => other.letter === ex.letter && other.question === ex.question) === index
-  ).sort((a, b) => a.letter.localeCompare(b.letter));
+  if (exercises.length > 0) {
+    console.log(`Multi-exercise detection found ${exercises.length} unique exercises (LaTeX format)`);
+    return exercises.sort((a, b) => a.letter.localeCompare(b.letter));
+  }
   
-  console.log(`Multi-exercise detection found ${uniqueExercises.length} unique exercises`);
-  return uniqueExercises;
+  // PHASE 2: Detect parentheses format: a) (30)/(63)=(13)/(23)
+  const patterns = [
+    /([a-e])\)\s*\((\d+)\)\/\((\d+)\)(?:\s*=\s*\((\d+)\)\/\((\d+)\))?/gi,
+    /([a-e])\.\s*\((\d+)\)\/\((\d+)\)(?:\s*=\s*\((\d+)\)\/\((\d+)\))?/gi,
+    /([a-e])\)\s*(\d+)\s*\/\s*(\d+)\s*=\s*(\d+)\s*\/\s*(\d+)/gi,
+    /([a-e])\.\s*(\d+)\s*\/\s*(\d+)\s*=\s*(\d+)\s*\/\s*(\d+)/gi,
+    /([a-e])\)\s*(\d+)\s*\/\s*(\d+)\s*=/gi,
+    /([a-e])\.\s*(\d+)\s*\/\s*(\d+)\s*=/gi,
+  ];
+  
+  for (const pattern of patterns) {
+    while ((match = pattern.exec(text)) !== null) {
+      const letter = match[1].toLowerCase();
+      const numerator = match[2];
+      const denominator = match[3];
+      const ansNum = match[4];
+      const ansDen = match[5];
+      const studentAnswer = (ansNum && ansDen) ? `${ansNum}/${ansDen}` : "";
+      
+      if (!exercises.some(ex => ex.letter === letter)) {
+        exercises.push({
+          letter,
+          question: `Simplifiez la fraction ${numerator}/${denominator}`,
+          answer: studentAnswer
+        });
+        console.log(`Found exercise ${letter}: ${numerator}/${denominator} -> Answer: "${studentAnswer || 'NEEDS STUDENT INPUT'}"`);
+      }
+    }
+  }
+  
+  const sorted = exercises.sort((a, b) => a.letter.localeCompare(b.letter));
+  console.log(`Multi-exercise detection found ${sorted.length} unique exercises`);
+  return sorted;
 }
