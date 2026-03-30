@@ -152,33 +152,10 @@ export const handlePhotoUpload = async (
       rawTextLength: processingResult?.rawText?.length || 0
     });
     
-    // Check if we have extracted text and handleSendMessage callback
-    if (processingResult && processingResult.rawText && processingResult.rawText.trim().length > 0) {
-      console.log('[Photo Upload] Text extracted successfully, length:', processingResult.rawText.length);
+    // PRIORITY: Use extracted exercises directly if available
+    if (processingResult && processingResult.exercises && processingResult.exercises.length > 0) {
+      console.log('[Photo Upload] ✅ OCR exercises found:', processingResult.exercises.length);
       
-      if (handleSendMessage) {
-        // Send the extracted text through the normal chat flow
-        console.log('[Photo Upload] Sending extracted text to chat flow...');
-        
-        // Update processing message
-        setMessages(prev => prev.map(msg => 
-          msg.id === processingMessage.id 
-            ? { ...msg, content: `✅ Text extracted! Processing through AI...` }
-            : msg
-        ));
-        
-        // Remove the processing message before sending to chat
-        setMessages(prev => prev.filter(msg => msg.id !== processingMessage.id));
-        
-        // Send the extracted text as if user typed it
-        await handleSendMessage(processingResult.rawText);
-        
-        console.log('[Photo Upload] ✅ Text sent to chat flow successfully');
-      } else {
-        // Fallback to old behavior: create exercises directly
-        console.log('[Photo Upload] No handleSendMessage callback, falling back to direct exercise processing');
-        
-        if (processingResult.exercises.length > 0) {
       // Update processing message
       setMessages(prev => prev.map(msg => 
         msg.id === processingMessage.id 
@@ -200,22 +177,19 @@ export const handlePhotoUpload = async (
       // Update the processing message with final results
       setMessages(prev => prev.map(msg => 
         msg.id === processingMessage.id 
-              ? { ...msg, content: `✅ Successfully processed your photo!\n\n📊 Found ${exerciseCount} exercises (${correctCount} correct). View in Graded Homework section.` }
+          ? { ...msg, content: `✅ Successfully processed your photo!\n\n📊 Found ${exerciseCount} exercises (${correctCount} correct). View in Graded Homework section.` }
           : msg
       ));
       
-          toast.success(`✅ Graded ${exerciseCount} exercises from your photo!`);
-        } else {
-          // No exercises found
-          setMessages(prev => prev.map(msg => 
-            msg.id === processingMessage.id 
-              ? { ...msg, content: `⚠️ Could not extract exercises from photo. Please try typing them directly.` }
-              : msg
-          ));
-          
-          toast.warning('No exercises found in photo.');
-        }
-      }
+      toast.success(`✅ Graded ${exerciseCount} exercises from your photo!`);
+    } else if (processingResult && processingResult.rawText && processingResult.rawText.trim().length > 0 && handleSendMessage) {
+      // Fallback: send raw text through chat if no structured exercises
+      console.log('[Photo Upload] No structured exercises, sending raw text to chat...');
+      
+      setMessages(prev => prev.filter(msg => msg.id !== processingMessage.id));
+      await handleSendMessage(processingResult.rawText);
+      
+      console.log('[Photo Upload] ✅ Text sent to chat flow successfully');
     } else {
       console.warn('[Photo Upload] No text extracted from photo');
       
