@@ -244,19 +244,21 @@ export const gradeDocumentExercises = async (exercises: Exercise[], selectedMode
     
     console.log(`Grading ${exercises.length} exercises from document`);
     
-    // Grade each exercise
-    const gradingPromises = exercises.map(exercise => evaluateHomework(exercise, 1, 'en', selectedModelId));
-    const gradedExercises = await Promise.all(gradingPromises);
+    // Separate exercises with answers from those without
+    const withAnswers = exercises.filter(ex => ex.userAnswer && ex.userAnswer.trim() !== '');
+    const withoutAnswers = exercises.filter(ex => !ex.userAnswer || ex.userAnswer.trim() === '');
     
-    // Check if any exercises were graded (have isCorrect property)
-    const anyGraded = gradedExercises.some(ex => ex.isCorrect !== undefined);
+    console.log(`Exercises with answers: ${withAnswers.length}, without answers: ${withoutAnswers.length}`);
     
-    if (!anyGraded) {
-      console.warn('No exercises were successfully graded');
-      toast.warning('Could not grade exercises. Please check your API key configuration.');
+    // Only grade exercises that have student answers
+    let gradedWithAnswers: Exercise[] = [];
+    if (withAnswers.length > 0) {
+      const gradingPromises = withAnswers.map(exercise => evaluateHomework(exercise, 1, 'en', selectedModelId));
+      gradedWithAnswers = await Promise.all(gradingPromises);
     }
     
-    return gradedExercises;
+    // Return graded + ungraded (no false warning for empty answers)
+    return [...gradedWithAnswers, ...withoutAnswers];
   } catch (error) {
     console.error('Error grading exercises:', error);
     toast.error('Error grading exercises');
