@@ -113,16 +113,8 @@ Suggested Action: Try uploading again or use a clearer image`;
 }
 
 // Re-export individual OCR providers
+export { extractTextWithMistralOCR } from './extractors/mistral.ts';
+export { extractTextWithMathPixOCR } from './extractors/mathpix.ts';
 export { extractTextWithSimpleTexOCR } from './extractors/simpletex.ts';
-
-// Re-export the Azure OCR function from the new modular structure
 export { extractTextWithAzureOCR } from './extractors/azure.ts';
-
-// Re-export the Google Vision OCR function from the new modular structure
 export { extractTextWithGoogleVisionOCR } from './extractors/googleVision.ts';
-
-// Fallback OCR using Tesseract (deprecated - use Azure instead)
-export async function extractTextWithTesseract(fileData: string): Promise<string> {
-  console.log('⚠️ Tesseract OCR called but deprecated - use Azure fallback instead');
-  throw new Error("Tesseract OCR not implemented in Deno environment - use Azure Computer Vision fallback");
-}
