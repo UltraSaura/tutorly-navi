@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Topic, Video } from '@/types/learning';
 import { useUserSchoolLevel } from './useUserSchoolLevel';
-import { filterContentByUserLevel } from '@/utils/schoolLevelFilter';
+import { filterContentByUserLevel, filterContentByAgeAndLevel } from '@/utils/schoolLevelFilter';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useAdminAuth } from './useAdminAuth';
 
