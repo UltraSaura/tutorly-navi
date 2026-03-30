@@ -63,7 +63,11 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body: CreateChildRequest = await req.json();
-    const { username, password, firstName, lastName, email, country, phoneNumber, schoolLevel, relation } = body;
+    const { username, password, firstName, lastName, email, country: rawCountry, phoneNumber, schoolLevel: rawSchoolLevel, relation } = body;
+
+    // Normalize curriculum codes to lowercase for consistent matching with content data
+    const country = rawCountry?.toLowerCase() || undefined;
+    const schoolLevel = rawSchoolLevel?.toLowerCase() || undefined;
 
     // Validate required fields
     if (!username || !password || !firstName || !schoolLevel || !relation) {
