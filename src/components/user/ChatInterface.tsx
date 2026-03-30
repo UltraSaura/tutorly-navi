@@ -29,18 +29,20 @@ const ChatInterface = () => {
     isLoading,
     activeModel,
     addMessage,
+    clearMessages,
+    removeMessage,
     handleSendMessage,
     handleFileUpload,
     handlePhotoUpload,
     filteredMessages,
-    // Add calculation state
     calculationState
   } = useChat();
   const {
     createExerciseFromAI,
     processHomeworkFromChat,
     linkAIResponseToExercise,
-    addExercises
+    addExercises,
+    clearExercises
   } = useExercises();
   const {
     getActiveSubjects,
@@ -205,6 +207,8 @@ const ChatInterface = () => {
             messages={filteredMessages}
             isLoading={isLoading}
             onSubmitAnswer={handleAnswerSubmit}
+            onClearAll={() => { clearMessages(); clearExercises(); }}
+            onDismissExercise={(messageId) => removeMessage(messageId)}
           />
         </ErrorBoundary>
         

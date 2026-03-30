@@ -18,14 +18,14 @@ export const useChat = () => {
   const { language, t } = useLanguage();
   const { userContext } = useUserContext();
   
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: t('chat.welcomeMessage'),
-      timestamp: new Date(Date.now() - 60000),
-    },
-  ]);
+  const welcomeMessage: Message = {
+    id: '1',
+    role: 'assistant',
+    content: t('chat.welcomeMessage'),
+    timestamp: new Date(Date.now() - 60000),
+  };
+  
+  const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
   
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -80,6 +80,29 @@ export const useChat = () => {
   // Add a message directly to the chat
   const addMessage = (message: Message) => {
     setMessages(prev => [...prev, message]);
+  };
+
+  // Clear all messages, reset to welcome
+  const clearMessages = () => {
+    setMessages([{
+      id: '1',
+      role: 'assistant',
+      content: t('chat.welcomeMessage'),
+      timestamp: new Date(Date.now() - 60000),
+    }]);
+  };
+
+  // Remove a specific message and its paired response
+  const removeMessage = (id: string) => {
+    setMessages(prev => {
+      const idx = prev.findIndex(m => m.id === id);
+      if (idx === -1) return prev;
+      // If it's a user message, also remove the next assistant message
+      if (prev[idx].role === 'user' && idx + 1 < prev.length && prev[idx + 1].role === 'assistant') {
+        return prev.filter((_, i) => i !== idx && i !== idx + 1);
+      }
+      return prev.filter((_, i) => i !== idx);
+    });
   };
   
   const handleSendMessage = async (overrideMessage?: string) => {
@@ -245,6 +268,8 @@ export const useChat = () => {
     activeModel,
     lastResponse,
     addMessage,
+    clearMessages,
+    removeMessage,
     handleSendMessage,
     handleFileUpload: handleDocumentUpload,
     handlePhotoUpload: handleImageUpload,
