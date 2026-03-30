@@ -1,39 +1,27 @@
 
 
-## Enable Edit & Delete for Guardian Children
+## Fix: Re-creating a Deleted Child Fails ("email already registered")
 
-### Current state
-- Edit dialog exists and works (`EditChildDialog.tsx`) — it's wired to the gear icon on each child card
-- No delete functionality exists anywhere
+### Root cause
+When a guardian deletes a child, only the `children` row and `guardian_child_links` are removed. The **auth user** (`fanta@child.local`) remains in Supabase Auth. When the guardian tries to recreate the same username, `createUser` fails with "A user with this email address has already been registered."
+
+### Solution
+Update the `create-child-account` edge function to handle the case where the auth user already exists:
+
+1. Try to create the auth user as before
+2. If it fails with `email_exists`, look up the existing auth user by email (`username@child.local`)
+3. Check if there's already an active `children` profile linked to another guardian — if so, reject (prevent hijacking)
+4. If the user exists but has no active child profile, reuse the auth user ID:
+   - Update the auth user's metadata (name, country, etc.) and password
+   - Create a new `children` row and `guardian_child_links` entry
 
 ### Changes
 
-**1. Add Delete to `EditChildDialog.tsx`**
-- Add a "Delete Child" button (destructive, red) at the bottom of the edit dialog
-- On click, show an `AlertDialog` confirmation: "Are you sure? This will permanently remove this child account."
-- On confirm, delete in order:
-  1. `guardian_child_links` where `child_id = child.id` (already has DELETE RLS for guardians)
-  2. `children` where `id = child.id` — needs a new DELETE RLS policy
-- Close dialog and refresh the list
+**`supabase/functions/create-child-account/index.ts`**
+- After the `createUser` call, catch the `email_exists` error
+- Use `supabaseAdmin.auth.admin.listUsers()` filtered by email to find the existing user
+- Update their metadata and password via `supabaseAdmin.auth.admin.updateUserById()`
+- Continue with the existing child profile creation logic (which already handles idempotent creation)
 
-**2. Database migration — allow guardians to delete their linked children**
-- Add DELETE policy on `children` table for guardians (currently missing)
-```sql
-CREATE POLICY "Guardians can delete their children"
-ON public.children FOR DELETE TO authenticated
-USING (id IN (
-  SELECT gcl.child_id FROM guardian_child_links gcl
-  JOIN guardians g ON g.id = gcl.guardian_id
-  WHERE g.user_id = auth.uid()
-));
-```
-
-**3. Files changed**
-
-| File | Change |
-|------|--------|
-| `src/components/guardian/EditChildDialog.tsx` | Add delete button with AlertDialog confirmation; delete `guardian_child_links` then `children` row |
-| Migration SQL | Add DELETE policy on `children` for guardians |
-
-Note: The auth user account itself is NOT deleted (that requires admin/service-role access). Only the child profile and guardian link are removed. The user account becomes an unlinked student account.
+Single file change + redeploy.
 
