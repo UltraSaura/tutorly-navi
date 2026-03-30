@@ -1,5 +1,7 @@
 import React, { memo, useMemo, useState } from 'react';
 import { Calculator, CheckCircle, XCircle, Send } from 'lucide-react';
+import { MathRenderer } from '@/components/math/MathRenderer';
+import { containsMathContent, textToMathDisplay, answerToLatex } from '@/utils/mathFormatUtils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +32,26 @@ interface ExerciseCardProps {
 
 // Note: parseUserMessage is now imported from @/utils/messageParser
 // This provides enhanced detection with better pattern matching
+
+// Inline helper to render text that may contain math
+const MathText = ({ text, className }: { text: string; className?: string }) => {
+  if (!containsMathContent(text)) return <span className={className}>{text}</span>;
+  const { prefix, latex } = textToMathDisplay(text);
+  return (
+    <span className={className}>
+      {prefix && <span>{prefix} </span>}
+      {latex && <MathRenderer latex={latex} inline className="inline-block align-middle" />}
+    </span>
+  );
+};
+
+const MathAnswer = ({ label, answer }: { label: string; answer: string }) => {
+  const latex = answerToLatex(answer);
+  if (latex) {
+    return <span>{label}: <MathRenderer latex={latex} inline className="inline-block align-middle" /></span>;
+  }
+  return <span>{label}: {answer}</span>;
+};
 
 const getStatusStyles = (content: string) => {
   // Check the first line or beginning of content for status
@@ -230,7 +252,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
             
             <div className="flex-1 min-w-0">
               <div className="text-body font-semibold text-neutral-text mb-3 break-words whitespace-pre-wrap">
-                {question || jsonResponse.exercise}
+                <MathText text={question || jsonResponse.exercise} />
               </div>
               
               {/* Answer section - either show existing answer or input field */}
@@ -280,7 +302,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                           : 'bg-neutral-bg text-neutral-muted'
                       )}
                     >
-                      {t('exercise.answer')}: {answer}
+                      <MathAnswer label={t('exercise.answer')} answer={answer} />
                     </Badge>
                   </div>
                 )}
@@ -519,7 +541,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
               
               <div className="flex-1 min-w-0">
                   <div className="text-body font-semibold text-neutral-text mb-3">
-              {question}
+              <MathText text={question} />
             </div>
             
             {/* Answer section - either show existing answer or input field */}
@@ -587,7 +609,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                       variant="secondary" 
                       className="px-3 py-1 bg-neutral-bg text-neutral-muted"
                     >
-                  {t('exercise.answer')}: {answer}
+                  <MathAnswer label={t('exercise.answer')} answer={answer} />
                       </Badge>
                     )}
                   </div>
