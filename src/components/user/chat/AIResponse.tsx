@@ -33,6 +33,26 @@ interface ExerciseCardProps {
 // Note: parseUserMessage is now imported from @/utils/messageParser
 // This provides enhanced detection with better pattern matching
 
+// Inline helper to render text that may contain math
+const MathText = ({ text, className }: { text: string; className?: string }) => {
+  if (!containsMathContent(text)) return <span className={className}>{text}</span>;
+  const { prefix, latex } = textToMathDisplay(text);
+  return (
+    <span className={className}>
+      {prefix && <span>{prefix} </span>}
+      {latex && <MathRenderer latex={latex} inline className="inline-block align-middle" />}
+    </span>
+  );
+};
+
+const MathAnswer = ({ label, answer }: { label: string; answer: string }) => {
+  const latex = answerToLatex(answer);
+  if (latex) {
+    return <span>{label}: <MathRenderer latex={latex} inline className="inline-block align-middle" /></span>;
+  }
+  return <span>{label}: {answer}</span>;
+};
+
 const getStatusStyles = (content: string) => {
   // Check the first line or beginning of content for status
   const contentTrimmed = content.trim();
