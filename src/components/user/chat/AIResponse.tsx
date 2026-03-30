@@ -23,11 +23,14 @@ interface AIResponseProps {
   messages: Message[];
   isLoading: boolean;
   onSubmitAnswer?: (question: string, answer: string) => void;
+  onClearAll?: () => void;
+  onDismissExercise?: (messageId: string) => void;
 }
 interface ExerciseCardProps {
   userMessage: Message;
   aiResponse: Message;
   onSubmitAnswer?: (question: string, answer: string) => void;
+  onDismiss?: () => void;
 }
 
 // Note: parseUserMessage is now imported from @/utils/messageParser
