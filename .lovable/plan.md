@@ -1,27 +1,41 @@
 
 
-## Fix: Re-creating a Deleted Child Fails ("email already registered")
+## Fix: Child's Country & School Level Not Defined After Creation
 
 ### Root cause
-When a guardian deletes a child, only the `children` row and `guardian_child_links` are removed. The **auth user** (`fanta@child.local`) remains in Supabase Auth. When the guardian tries to recreate the same username, `createUser` fails with "A user with this email address has already been registered."
 
-### Solution
-Update the `create-child-account` edge function to handle the case where the auth user already exists:
+Two gaps in the `create-child-account` edge function:
 
-1. Try to create the auth user as before
-2. If it fails with `email_exists`, look up the existing auth user by email (`username@child.local`)
-3. Check if there's already an active `children` profile linked to another guardian — if so, reject (prevent hijacking)
-4. If the user exists but has no active child profile, reuse the auth user ID:
-   - Update the auth user's metadata (name, country, etc.) and password
-   - Create a new `children` row and `guardian_child_links` entry
+1. **`children` table**: The insert sets `grade` and `curriculum` but does NOT set `curriculum_country_code` or `curriculum_level_code`. The app reads from `curriculum_country_code` / `curriculum_level_code` to display the child's program.
 
-### Changes
+2. **`users` table**: The `handle_new_user` trigger populates `country` from `user_metadata.country`, but the guardian's `ManualChildCreationTrigger` does NOT send a `country` field in the request body. Also, `users.curriculum_country_code` and `users.curriculum_level_code` are never set — the `useUserCurriculumProfile` hook reads these columns and finds them null.
+
+### Fix
 
 **`supabase/functions/create-child-account/index.ts`**
-- After the `createUser` call, catch the `email_exists` error
-- Use `supabaseAdmin.auth.admin.listUsers()` filtered by email to find the existing user
-- Update their metadata and password via `supabaseAdmin.auth.admin.updateUserById()`
-- Continue with the existing child profile creation logic (which already handles idempotent creation)
 
-Single file change + redeploy.
+1. In the `children` insert (line ~175), add:
+   - `curriculum_country_code: country || null`
+   - `curriculum_level_code: schoolLevel || null`
+
+2. After the trigger populates the `users` row, update it with curriculum fields:
+   ```sql
+   UPDATE users SET
+     curriculum_country_code = country,
+     curriculum_level_code = schoolLevel,
+     country = country,
+     level = schoolLevel
+   WHERE id = childUserId
+   ```
+
+**`src/components/guardian/ManualChildCreationTrigger.tsx`**
+
+3. Pass the `country` field in the request body (it's currently missing — check if the form collects it; if not, it needs to be added to the guardian child creation form).
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `supabase/functions/create-child-account/index.ts` | Add `curriculum_country_code` and `curriculum_level_code` to children insert; update `users` row with curriculum fields after trigger |
+| `src/components/guardian/ManualChildCreationTrigger.tsx` | Pass `country` in the request body if available from the form |
 
