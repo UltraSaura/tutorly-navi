@@ -60,8 +60,11 @@ const getStatusStyles = (content: string) => {
   
   const isCorrect = /^CORRECT\b/i.test(contentTrimmed) || /\bCORRECT\b/i.test(firstLine);
   const isIncorrect = /^INCORRECT\b/i.test(contentTrimmed) || /\bINCORRECT\b/i.test(firstLine);
+  const isUnanswered = /^UNANSWERED\b/i.test(contentTrimmed);
   
-  if (isCorrect) {
+  if (isUnanswered) {
+    return 'bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800';
+  } else if (isCorrect) {
     return 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800';
   } else if (isIncorrect) {
     return 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800';
