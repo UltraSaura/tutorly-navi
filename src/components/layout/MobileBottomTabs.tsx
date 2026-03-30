@@ -51,7 +51,7 @@ export function MobileBottomTabs() {
   if (!isMobile) return null;
   
   const currentPath = location.pathname;
-  const isActive = (url: string | null) => url && currentPath === url;
+  const isActive = (url: string | null) => url ? (currentPath === url || currentPath.startsWith(url + '/')) : false;
 
   const handleTabClick = (item: typeof bottomTabItems[0]) => {
     if (item.title === "nav.account") {
