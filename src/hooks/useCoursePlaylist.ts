@@ -75,17 +75,17 @@ export function useCoursePlaylist(topicSlug: string) {
 
       if (allVideosError) throw allVideosError;
       
-      // Admin sees all videos; students get filtered by age/level and language
+      // Admin sees all videos; students get filtered by age/level only (no language filter yet)
       let suitableVideos = isAdmin 
         ? (allVideos as any[])
-        : filterContentByUserLevel(
+        : filterContentByAgeAndLevel(
             allVideos as any,
             userLevelData?.level || null,
-            userLevelData?.age || null,
-            userLanguage
+            userLevelData?.age || null
           );
       
-      // Group videos by variant_group_id and select best match per group
+      // Group videos by variant_group_id and select best language match per group
+      // This handles language preference with fallback (user lang → en → first available)
       suitableVideos = selectBestVariants(suitableVideos, userLanguage);
       
       // Get quizzes for suitable videos
