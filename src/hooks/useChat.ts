@@ -18,14 +18,14 @@ export const useChat = () => {
   const { language, t } = useLanguage();
   const { userContext } = useUserContext();
   
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: t('chat.welcomeMessage'),
-      timestamp: new Date(Date.now() - 60000),
-    },
-  ]);
+  const welcomeMessage: Message = {
+    id: '1',
+    role: 'assistant',
+    content: t('chat.welcomeMessage'),
+    timestamp: new Date(Date.now() - 60000),
+  };
+  
+  const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
   
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
