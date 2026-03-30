@@ -174,14 +174,50 @@ export const handlePhotoUpload = async (
       const exerciseCount = gradedExercises.length;
       const correctCount = gradedExercises.filter(ex => ex.isCorrect === true).length;
       
-      // Update the processing message with final results
-      setMessages(prev => prev.map(msg => 
-        msg.id === processingMessage.id 
-          ? { ...msg, content: `✅ Successfully processed your photo!\n\n📊 Found ${exerciseCount} exercises (${correctCount} correct). View in Graded Homework section.` }
-          : msg
-      ));
+      // Remove the processing message and inject synthetic user+assistant message pairs
+      // so AIResponse can render exercise cards
+      const syntheticMessages: Message[] = [];
+      const baseTimestamp = Date.now();
       
-      toast.success(`✅ Graded ${exerciseCount} exercises from your photo!`);
+      gradedExercises.forEach((exercise, index) => {
+        const userMsg: Message = {
+          id: `${baseTimestamp}-ocr-user-${index}`,
+          role: 'user',
+          content: exercise.question,
+          timestamp: new Date(baseTimestamp + index * 2),
+          type: 'text',
+        };
+        
+        let assistantContent = '';
+        if (exercise.userAnswer && exercise.userAnswer.trim()) {
+          if (exercise.isCorrect === true) {
+            assistantContent = `CORRECT ✅\n\nYour answer: ${exercise.userAnswer}${exercise.explanation ? '\n\n' + exercise.explanation : ''}`;
+          } else if (exercise.isCorrect === false) {
+            assistantContent = `INCORRECT ❌\n\nYour answer: ${exercise.userAnswer}${exercise.explanation ? '\n\n' + exercise.explanation : ''}`;
+          } else {
+            assistantContent = `Answer submitted: ${exercise.userAnswer}`;
+          }
+        } else {
+          assistantContent = `Please provide your answer for this exercise.`;
+        }
+        
+        const assistantMsg: Message = {
+          id: `${baseTimestamp}-ocr-assistant-${index}`,
+          role: 'assistant',
+          content: assistantContent,
+          timestamp: new Date(baseTimestamp + index * 2 + 1),
+        };
+        
+        syntheticMessages.push(userMsg, assistantMsg);
+      });
+      
+      // Replace processing message with all exercise pairs
+      setMessages(prev => {
+        const filtered = prev.filter(msg => msg.id !== processingMessage.id);
+        return [...filtered, ...syntheticMessages];
+      });
+      
+      toast.success(`✅ Extracted ${exerciseCount} exercises from your photo!${correctCount > 0 ? ` ${correctCount} correct.` : ''}`);
     } else if (processingResult && processingResult.rawText && processingResult.rawText.trim().length > 0 && handleSendMessage) {
       // Fallback: send raw text through chat if no structured exercises
       console.log('[Photo Upload] No structured exercises, sending raw text to chat...');
