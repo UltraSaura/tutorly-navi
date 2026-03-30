@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { VideoPlayerBox } from './VideoPlayerBox';
 import { CollapsibleVideoSection } from './CollapsibleVideoSection';
-import { KeyPointsSummary } from './KeyPointsSummary';
+
 import { TopicProgressIndicator } from './TopicProgressIndicator';
 import type { Video } from '@/types/learning';
 
