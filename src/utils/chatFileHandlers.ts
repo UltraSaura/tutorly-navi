@@ -183,7 +183,9 @@ export const handlePhotoUpload = async (
         const userMsg: Message = {
           id: `${baseTimestamp}-ocr-user-${index}`,
           role: 'user',
-          content: exercise.question,
+          content: exercise.userAnswer?.trim()
+            ? `${exercise.question}\nAnswer: ${exercise.userAnswer}`
+            : exercise.question,
           timestamp: new Date(baseTimestamp + index * 2),
           type: 'text',
         };
