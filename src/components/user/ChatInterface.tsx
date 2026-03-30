@@ -207,6 +207,8 @@ const ChatInterface = () => {
             messages={filteredMessages}
             isLoading={isLoading}
             onSubmitAnswer={handleAnswerSubmit}
+            onClearAll={() => { clearMessages(); clearExercises(); }}
+            onDismissExercise={(messageId) => removeMessage(messageId)}
           />
         </ErrorBoundary>
         
