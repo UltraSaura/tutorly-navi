@@ -1,5 +1,6 @@
 import { extractTextFromFile } from "./extractors.ts";
 import { extractExercisesFromText } from "./exerciseExtractors.ts";
+import { extractWithMistralVision } from "./extractors/mistral.ts";
 
 // Minimal text preprocessing that preserves exercise structure
 function minimalPreprocessing(text: string): string {
