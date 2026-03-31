@@ -7,8 +7,18 @@ type Exercise = {
 export function extractSmartMathExercises(text: string): Array<{ question: string, answer: string }> {
   console.log('\n=== SMART MATH EXTRACTION ===');
   const exercises: Array<{ question: string, answer: string }> = [];
-  
-  // Try vertical arithmetic first (e.g. "23\nx 4\n---\n92" or "23\nx 4\n6")
+
+  // First: try inline arithmetic on a reconstructed single line (handles OCR that splits vertically)
+  const joinedLine = text.split('\n').map(l => l.trim()).filter(l => l.length > 0 && !/^[-=_─]{2,}$/.test(l)).join(' ');
+  console.log(`Joined line for inline check: "${joinedLine}"`);
+  const inlineFirst = extractInlineArithmetic(joinedLine);
+  if (inlineFirst.length > 0) {
+    exercises.push(...inlineFirst);
+    console.log(`Inline-first extraction found ${inlineFirst.length} exercises`);
+    return exercises;
+  }
+
+  // Try vertical arithmetic (e.g. "23\nx 4\n---\n92")
   const verticalExercises = extractVerticalArithmetic(text);
   if (verticalExercises.length > 0) {
     exercises.push(...verticalExercises);
@@ -16,7 +26,7 @@ export function extractSmartMathExercises(text: string): Array<{ question: strin
     return exercises;
   }
 
-  // Try inline arithmetic (e.g. "23 x 4 = 92", "5 + 3 = 8")
+  // Try inline arithmetic on original text
   const inlineExercises = extractInlineArithmetic(text);
   if (inlineExercises.length > 0) {
     exercises.push(...inlineExercises);
@@ -24,7 +34,7 @@ export function extractSmartMathExercises(text: string): Array<{ question: strin
     return exercises;
   }
 
-  // Try line-by-line LaTeX extraction (best for Mistral OCR output)
+  // Try line-by-line LaTeX extraction
   const lineExercises = extractFromLines(text);
   if (lineExercises.length > 0) {
     exercises.push(...lineExercises);
@@ -32,7 +42,7 @@ export function extractSmartMathExercises(text: string): Array<{ question: strin
     return exercises;
   }
   
-  // Try OCR-friendly extraction (fractions and simple equations)
+  // Try OCR-friendly extraction
   const ocrExercises = extractFromOCRFormat(text);
   if (ocrExercises.length > 0) {
     exercises.push(...ocrExercises);
@@ -248,8 +258,19 @@ function extractVerticalArithmetic(text: string): Array<{ question: string, answ
     if (nextIdx < lines.length) {
       const ansLine = lines[nextIdx].match(/^(\d+)$/);
       if (ansLine) {
-        answer = ansLine[1];
-        i = nextIdx + 1; // Skip past the answer
+        // Look ahead: if there's a separator + number after this, the REAL answer is further down
+        const peekSep = nextIdx + 1;
+        const peekAns = nextIdx + 2;
+        if (peekSep < lines.length && /^[-=_─]{2,}$/.test(lines[peekSep]) &&
+            peekAns < lines.length && /^(\d+)$/.test(lines[peekAns])) {
+          // The bare number at nextIdx is likely part of the expression (OCR artifact)
+          answer = lines[peekAns].match(/^(\d+)$/)![1];
+          i = peekAns + 1;
+          console.log(`  ⤷ Look-ahead: skipped OCR artifact "${ansLine[1]}", real answer: ${answer}`);
+        } else {
+          answer = ansLine[1];
+          i = nextIdx + 1;
+        }
       } else {
         i = nextIdx;
       }
