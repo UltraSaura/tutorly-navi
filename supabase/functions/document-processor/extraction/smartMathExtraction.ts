@@ -258,8 +258,19 @@ function extractVerticalArithmetic(text: string): Array<{ question: string, answ
     if (nextIdx < lines.length) {
       const ansLine = lines[nextIdx].match(/^(\d+)$/);
       if (ansLine) {
-        answer = ansLine[1];
-        i = nextIdx + 1; // Skip past the answer
+        // Look ahead: if there's a separator + number after this, the REAL answer is further down
+        const peekSep = nextIdx + 1;
+        const peekAns = nextIdx + 2;
+        if (peekSep < lines.length && /^[-=_─]{2,}$/.test(lines[peekSep]) &&
+            peekAns < lines.length && /^(\d+)$/.test(lines[peekAns])) {
+          // The bare number at nextIdx is likely part of the expression (OCR artifact)
+          answer = lines[peekAns].match(/^(\d+)$/)![1];
+          i = peekAns + 1;
+          console.log(`  ⤷ Look-ahead: skipped OCR artifact "${ansLine[1]}", real answer: ${answer}`);
+        } else {
+          answer = ansLine[1];
+          i = nextIdx + 1;
+        }
       } else {
         i = nextIdx;
       }
