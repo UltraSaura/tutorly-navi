@@ -243,8 +243,17 @@ function extractVerticalArithmetic(text: string): Array<{ question: string, answ
     const numLine = lines[i].match(/^(\d+)$/);
     if (!numLine) { i++; continue; }
     
-    // Line 2: operator + second number (e.g. "x 4", "+ 7", "- 12")
-    const opLine = lines[i + 1].match(/^([xX×\*\+\-−÷\/])\s*(\d+)$/);
+    // Line 2: operator + second number — OR separator then operator
+    let opLineIdx = i + 1;
+    
+    // Skip separator between number and operator (handles: 58, ---, × 32, answer)
+    if (opLineIdx < lines.length && /^[-=_─]{2,}$/.test(lines[opLineIdx])) {
+      opLineIdx++;
+    }
+    
+    if (opLineIdx >= lines.length) { i++; continue; }
+    
+    const opLine = lines[opLineIdx].match(/^([xX×\*\+\-−÷\/])\s*(\d+)$/);
     if (!opLine) { i++; continue; }
     
     const num1 = numLine[1];
@@ -252,9 +261,9 @@ function extractVerticalArithmetic(text: string): Array<{ question: string, answ
     const num2 = opLine[2];
     const question = `${num1} ${op} ${num2}`;
     
-    // Check for answer: skip separator lines (---, ===, ___) and take next number
+    // Check for answer: skip separator lines and take next number
     let answer = '';
-    let nextIdx = i + 2;
+    let nextIdx = opLineIdx + 1;
     
     // Skip separator line if present
     if (nextIdx < lines.length && /^[-=_─]{2,}$/.test(lines[nextIdx])) {
@@ -270,7 +279,6 @@ function extractVerticalArithmetic(text: string): Array<{ question: string, answ
         const peekAns = nextIdx + 2;
         if (peekSep < lines.length && /^[-=_─]{2,}$/.test(lines[peekSep]) &&
             peekAns < lines.length && /^(\d+)$/.test(lines[peekAns])) {
-          // The bare number at nextIdx is likely part of the expression (OCR artifact)
           answer = lines[peekAns].match(/^(\d+)$/)![1];
           i = peekAns + 1;
           console.log(`  ⤷ Look-ahead: skipped OCR artifact "${ansLine[1]}", real answer: ${answer}`);
@@ -282,7 +290,7 @@ function extractVerticalArithmetic(text: string): Array<{ question: string, answ
         i = nextIdx;
       }
     } else {
-      i = i + 2;
+      i = opLineIdx + 2;
     }
     
     exercises.push({ question, answer });
