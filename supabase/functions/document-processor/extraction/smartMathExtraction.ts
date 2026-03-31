@@ -8,7 +8,23 @@ export function extractSmartMathExercises(text: string): Array<{ question: strin
   console.log('\n=== SMART MATH EXTRACTION ===');
   const exercises: Array<{ question: string, answer: string }> = [];
   
-  // Try line-by-line LaTeX extraction first (best for Mistral OCR output)
+  // Try vertical arithmetic first (e.g. "23\nx 4\n---\n92" or "23\nx 4\n6")
+  const verticalExercises = extractVerticalArithmetic(text);
+  if (verticalExercises.length > 0) {
+    exercises.push(...verticalExercises);
+    console.log(`Vertical arithmetic extraction found ${verticalExercises.length} exercises`);
+    return exercises;
+  }
+
+  // Try inline arithmetic (e.g. "23 x 4 = 92", "5 + 3 = 8")
+  const inlineExercises = extractInlineArithmetic(text);
+  if (inlineExercises.length > 0) {
+    exercises.push(...inlineExercises);
+    console.log(`Inline arithmetic extraction found ${inlineExercises.length} exercises`);
+    return exercises;
+  }
+
+  // Try line-by-line LaTeX extraction (best for Mistral OCR output)
   const lineExercises = extractFromLines(text);
   if (lineExercises.length > 0) {
     exercises.push(...lineExercises);
