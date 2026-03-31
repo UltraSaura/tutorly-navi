@@ -251,11 +251,12 @@ export const useChat = () => {
       messages, 
       setMessages, 
       setIsLoading, 
-      selectedModelId, // selectedModelId is now required parameter
-      undefined, // No longer need processHomeworkFromChat as primary processor
-      addExercises, // Pass the exercise processor directly
-      subjectId, // Pass the subject ID
-      handleSendMessage // Pass handleSendMessage to route through chat flow
+      selectedModelId,
+      undefined,
+      addExercises,
+      subjectId,
+      handleSendMessage,
+      language
     );
   };
   
