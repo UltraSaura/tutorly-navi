@@ -176,12 +176,37 @@ export const handlePhotoUpload = async (
       const exerciseCount = gradedExercises.length;
       const correctCount = gradedExercises.filter(ex => ex.isCorrect === true).length;
       
-      // Remove the processing message and inject synthetic user+assistant message pairs
-      // so AIResponse can render exercise cards
+      // Route each exercise through sendUnifiedMessage for rich AI responses
       const syntheticMessages: Message[] = [];
       const baseTimestamp = Date.now();
+      const lang = language || 'en';
       
-      gradedExercises.forEach((exercise, index) => {
+      // Update status
+      setMessages(prev => prev.map(msg => 
+        msg.id === processingMessage.id 
+          ? { ...msg, content: `✅ Found ${exerciseCount} exercises! Generating explanations...` }
+          : msg
+      ));
+      
+      // Process all exercises in parallel through the AI pipeline
+      const aiResults = await Promise.all(
+        gradedExercises.map(async (exercise, index) => {
+          const inputText = exercise.userAnswer?.trim()
+            ? `${exercise.question} = ${exercise.userAnswer}`
+            : exercise.question;
+          
+          try {
+            const { data } = await sendUnifiedMessage(inputText, [], selectedModelId, lang);
+            return { exercise, index, aiContent: data?.content || null };
+          } catch (err) {
+            console.warn(`[Photo Upload] AI call failed for exercise ${index}:`, err);
+            return { exercise, index, aiContent: null };
+          }
+        })
+      );
+      
+      // Build message pairs from AI results
+      aiResults.forEach(({ exercise, index, aiContent }) => {
         const userMsg: Message = {
           id: `${baseTimestamp}-ocr-user-${index}`,
           role: 'user',
@@ -192,8 +217,11 @@ export const handlePhotoUpload = async (
           type: 'text',
         };
         
+        // Use AI structured response if available, otherwise fall back to plain text
         let assistantContent = '';
-        if (exercise.userAnswer && exercise.userAnswer.trim()) {
+        if (aiContent) {
+          assistantContent = aiContent;
+        } else if (exercise.userAnswer && exercise.userAnswer.trim()) {
           if (exercise.isCorrect === true) {
             assistantContent = `CORRECT ✅\n\nYour answer: ${exercise.userAnswer}${exercise.explanation ? '\n\n' + exercise.explanation : ''}`;
           } else if (exercise.isCorrect === false) {
