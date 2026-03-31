@@ -253,7 +253,21 @@ function extractVerticalArithmetic(text: string): Array<{ question: string, answ
     
     if (opLineIdx >= lines.length) { i++; continue; }
     
-    const opLine = lines[opLineIdx].match(/^([xX×\*\+\-−÷\/])\s*(\d+)$/);
+    let opLine = lines[opLineIdx].match(/^([xX×\*\+\-−÷\/])\s*(\d+)$/);
+    
+    // Handle operator-only line: "X" followed by a number on the next line
+    if (!opLine) {
+      const opOnly = lines[opLineIdx].match(/^([xX×\*\+\-−÷\/])$/);
+      if (opOnly && opLineIdx + 1 < lines.length) {
+        const nextNum = lines[opLineIdx + 1].match(/^(\d+)$/);
+        if (nextNum) {
+          console.log(`  ⤷ Operator-only line "${lines[opLineIdx]}" + number "${nextNum[1]}"`);
+          opLine = [lines[opLineIdx] + nextNum[1], opOnly[1], nextNum[1]] as unknown as RegExpMatchArray;
+          opLineIdx++; // advance past the number line
+        }
+      }
+    }
+    
     if (!opLine) { i++; continue; }
     
     const num1 = numLine[1];

@@ -5,6 +5,90 @@
  * Returns structured markdown text preserving headings, lists, tables, and math.
  */
 
+/**
+ * Extract exercises from an image using Mistral Vision (chat/completions with image).
+ * Returns a JSON array of {question, answer} or null if it fails.
+ */
+export async function extractWithMistralVision(fileData: string, fileType: string): Promise<Array<{question: string, answer: string}> | null> {
+  const apiKey = Deno.env.get('MISTRAL_API_KEY');
+  if (!apiKey) {
+    console.log('🔮 Mistral Vision: No API key, skipping');
+    return null;
+  }
+
+  console.log('🔮 Mistral Vision: Starting LLM-based extraction...');
+
+  let dataUrl: string;
+  if (fileData.startsWith('data:')) {
+    dataUrl = fileData;
+  } else {
+    const mime = fileType || 'image/png';
+    dataUrl = `data:${mime};base64,${fileData}`;
+  }
+
+  try {
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'mistral-small-latest',
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: dataUrl } },
+            { type: 'text', text: 'Extract ALL math exercises from this image. For each exercise, identify the complete math expression/question and the student\'s written answer if one is visible. Return ONLY a JSON array like: [{"question": "23 × 4", "answer": "92"}]. If no answer is visible for an exercise, set answer to empty string "". Use × for multiplication, ÷ for division. Include ALL exercises you can see. Do not add any explanation, just the JSON array.' }
+          ]
+        }],
+        temperature: 0,
+        max_tokens: 2000,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`🔮 Mistral Vision: API error ${response.status}: ${errorText}`);
+      return null;
+    }
+
+    const result = await response.json();
+    const content = result.choices?.[0]?.message?.content?.trim();
+    console.log(`🔮 Mistral Vision: Raw response: ${content}`);
+
+    if (!content) return null;
+
+    // Extract JSON array from response (may be wrapped in markdown code block)
+    const jsonMatch = content.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      console.log('🔮 Mistral Vision: No JSON array found in response');
+      return null;
+    }
+
+    const exercises = JSON.parse(jsonMatch[0]);
+    if (!Array.isArray(exercises) || exercises.length === 0) {
+      console.log('🔮 Mistral Vision: Parsed but empty or not an array');
+      return null;
+    }
+
+    // Validate structure
+    const valid = exercises.filter((ex: any) => ex.question && typeof ex.question === 'string');
+    console.log(`🔮 Mistral Vision: Successfully extracted ${valid.length} exercises`);
+    valid.forEach((ex: any, i: number) => {
+      console.log(`  Exercise ${i + 1}: "${ex.question}" -> "${ex.answer || ''}"`);
+    });
+
+    return valid.map((ex: any) => ({
+      question: ex.question,
+      answer: ex.answer || '',
+    }));
+  } catch (error) {
+    console.error('🔮 Mistral Vision: Error:', (error as Error).message);
+    return null;
+  }
+}
+
 export async function extractTextWithMistralOCR(fileData: string, fileType: string): Promise<string> {
   const apiKey = Deno.env.get('MISTRAL_API_KEY');
   if (!apiKey) {
