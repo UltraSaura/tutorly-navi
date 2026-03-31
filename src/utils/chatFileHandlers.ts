@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { extractHomeworkFromMessage } from '@/utils/homework';
 import { evaluateHomework } from '@/services/homeworkGrading';
 import { processUploadedDocument, gradeDocumentExercises } from '@/utils/documentProcessor';
+import { sendUnifiedMessage } from '@/services/unifiedChatService';
 
 /**
  * Handles document file uploads in the chat
