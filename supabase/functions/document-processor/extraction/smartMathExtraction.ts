@@ -8,7 +8,23 @@ export function extractSmartMathExercises(text: string): Array<{ question: strin
   console.log('\n=== SMART MATH EXTRACTION ===');
   const exercises: Array<{ question: string, answer: string }> = [];
   
-  // Try line-by-line LaTeX extraction first (best for Mistral OCR output)
+  // Try vertical arithmetic first (e.g. "23\nx 4\n---\n92" or "23\nx 4\n6")
+  const verticalExercises = extractVerticalArithmetic(text);
+  if (verticalExercises.length > 0) {
+    exercises.push(...verticalExercises);
+    console.log(`Vertical arithmetic extraction found ${verticalExercises.length} exercises`);
+    return exercises;
+  }
+
+  // Try inline arithmetic (e.g. "23 x 4 = 92", "5 + 3 = 8")
+  const inlineExercises = extractInlineArithmetic(text);
+  if (inlineExercises.length > 0) {
+    exercises.push(...inlineExercises);
+    console.log(`Inline arithmetic extraction found ${inlineExercises.length} exercises`);
+    return exercises;
+  }
+
+  // Try line-by-line LaTeX extraction (best for Mistral OCR output)
   const lineExercises = extractFromLines(text);
   if (lineExercises.length > 0) {
     exercises.push(...lineExercises);
@@ -173,5 +189,109 @@ function extractSquareRootExercises(text: string): Array<{ question: string, ans
   }
 
   console.log(`Square root extraction found ${exercises.length} exercises`);
+  return exercises;
+}
+
+/**
+ * Detect vertical arithmetic format from OCR output.
+ * Handles patterns like:
+ *   23        15        48
+ *   x 4       + 7       - 12
+ *   ---       ---       ----
+ *   92        22        36
+ * 
+ * OCR typically outputs this as multi-line text:
+ *   "23\nx 4\n92"  or  "23\nx 4\n---\n92"
+ */
+function extractVerticalArithmetic(text: string): Array<{ question: string, answer: string }> {
+  console.log('--- Vertical Arithmetic Extraction ---');
+  const exercises: Array<{ question: string, answer: string }> = [];
+  
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  console.log(`Lines for vertical detection: ${JSON.stringify(lines)}`);
+  
+  if (lines.length < 2) return exercises;
+  
+  // Map operator symbols to display symbols
+  const opMap: Record<string, string> = {
+    'x': '×', 'X': '×', '×': '×', '*': '×',
+    '+': '+',
+    '-': '-', '−': '-',
+    '÷': '÷', '/': '÷',
+  };
+  
+  let i = 0;
+  while (i < lines.length - 1) {
+    // Line 1: first number (e.g. "23")
+    const numLine = lines[i].match(/^(\d+)$/);
+    if (!numLine) { i++; continue; }
+    
+    // Line 2: operator + second number (e.g. "x 4", "+ 7", "- 12")
+    const opLine = lines[i + 1].match(/^([xX×\*\+\-−÷\/])\s*(\d+)$/);
+    if (!opLine) { i++; continue; }
+    
+    const num1 = numLine[1];
+    const op = opMap[opLine[1]] || opLine[1];
+    const num2 = opLine[2];
+    const question = `${num1} ${op} ${num2}`;
+    
+    // Check for answer: skip separator lines (---, ===, ___) and take next number
+    let answer = '';
+    let nextIdx = i + 2;
+    
+    // Skip separator line if present
+    if (nextIdx < lines.length && /^[-=_─]{2,}$/.test(lines[nextIdx])) {
+      nextIdx++;
+    }
+    
+    // Next line should be the answer (a number)
+    if (nextIdx < lines.length) {
+      const ansLine = lines[nextIdx].match(/^(\d+)$/);
+      if (ansLine) {
+        answer = ansLine[1];
+        i = nextIdx + 1; // Skip past the answer
+      } else {
+        i = nextIdx;
+      }
+    } else {
+      i = i + 2;
+    }
+    
+    exercises.push({ question, answer });
+    console.log(`✅ Vertical arithmetic: ${question} = ${answer || 'NEEDS INPUT'}`);
+  }
+  
+  return exercises;
+}
+
+/**
+ * Detect inline arithmetic expressions like:
+ *   "23 x 4 = 92", "5 + 3 = 8", "15 - 7 = 8", "20 ÷ 4 = 5"
+ *   Also handles: "23 × 4 =", "5 + 3 ="
+ */
+function extractInlineArithmetic(text: string): Array<{ question: string, answer: string }> {
+  console.log('--- Inline Arithmetic Extraction ---');
+  const exercises: Array<{ question: string, answer: string }> = [];
+  
+  // Pattern: number op number = answer (or just =)
+  const pattern = /(\d+)\s*([xX×\*\+\-−÷\/])\s*(\d+)\s*=\s*(\d+)?/g;
+  let m: RegExpExecArray | null;
+  
+  const opMap: Record<string, string> = {
+    'x': '×', 'X': '×', '×': '×', '*': '×',
+    '+': '+',
+    '-': '-', '−': '-',
+    '÷': '÷', '/': '÷',
+  };
+  
+  while ((m = pattern.exec(text)) !== null) {
+    const op = opMap[m[2]] || m[2];
+    const question = `${m[1]} ${op} ${m[3]}`;
+    const answer = m[4] || '';
+    
+    exercises.push({ question, answer });
+    console.log(`✅ Inline arithmetic: ${question} = ${answer || 'NEEDS INPUT'}`);
+  }
+  
   return exercises;
 }
