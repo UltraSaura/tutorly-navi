@@ -1,5 +1,6 @@
 import { extractTextFromFile } from "./extractors.ts";
 import { extractExercisesFromText } from "./exerciseExtractors.ts";
+import { extractWithMistralVision } from "./extractors/mistral.ts";
 
 // Minimal text preprocessing that preserves exercise structure
 function minimalPreprocessing(text: string): string {
@@ -51,21 +52,38 @@ export async function processDocument(
   subjectId?: string
 ): Promise<{ success: boolean, exercises: any[], rawText: string, error?: string }> {
   try {
-    console.log(`=== PROCESSING DOCUMENT WITH ENHANCED MULTI-EXERCISE SUPPORT: ${fileName} (${fileType}) ===`);
+    console.log(`=== PROCESSING DOCUMENT: ${fileName} (${fileType}) ===`);
     
-    // Use enhanced extraction that preserves structure
-    const extractedText = await enhancedExtraction(fileData, fileType);
-    console.log(`Enhanced extraction result - text length: ${extractedText.length} characters`);
+    // PHASE 0: Try Mistral Vision (LLM-based) for images — much better for handwriting
+    const isImage = fileType.startsWith('image/');
+    let exercises: any[] = [];
+    let extractedText = '';
     
-    // Log the full text in manageable chunks for debugging
-    const textChunks = extractedText.match(/.{1,300}/g) || [];
-    textChunks.forEach((chunk, index) => {
-      console.log(`Text chunk ${index + 1}:`, chunk);
-    });
+    if (isImage) {
+      console.log('📸 Image detected — trying Mistral Vision first');
+      const visionExercises = await extractWithMistralVision(fileData, fileType);
+      if (visionExercises && visionExercises.length > 0) {
+        console.log(`✅ Mistral Vision extracted ${visionExercises.length} exercises directly`);
+        exercises = visionExercises;
+        extractedText = visionExercises.map(ex => `${ex.question} = ${ex.answer}`).join('\n');
+      } else {
+        console.log('⚠️ Mistral Vision returned no exercises, falling back to OCR pipeline');
+      }
+    }
     
-    // Use the enhanced multi-exercise extraction system
-    console.log('=== STARTING ENHANCED MULTI-EXERCISE EXTRACTION ===');
-    const exercises = extractExercisesFromText(extractedText);
+    // PHASE 1: Fall back to OCR + regex pipeline if vision didn't produce results
+    if (exercises.length === 0) {
+      extractedText = await enhancedExtraction(fileData, fileType);
+      console.log(`Enhanced extraction result - text length: ${extractedText.length} characters`);
+      
+      const textChunks = extractedText.match(/.{1,300}/g) || [];
+      textChunks.forEach((chunk, index) => {
+        console.log(`Text chunk ${index + 1}:`, chunk);
+      });
+      
+      console.log('=== STARTING ENHANCED MULTI-EXERCISE EXTRACTION ===');
+      exercises = extractExercisesFromText(extractedText);
+    }
     
     console.log(`=== ENHANCED EXTRACTION COMPLETE: Found ${exercises.length} exercises ===`);
     
