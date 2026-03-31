@@ -6,6 +6,13 @@ type Exercise = {
 
 export function extractSmartMathExercises(text: string): Array<{ question: string, answer: string }> {
   console.log('\n=== SMART MATH EXTRACTION ===');
+
+  // Strip markdown table pipes: "| 58 |" → "58"
+  text = text.split('\n')
+    .map(l => l.replace(/^\|+\s*|\s*\|+$/g, '').replace(/\|/g, ' ').trim())
+    .join('\n');
+  console.log(`Normalized text (pipes stripped):\n${text}`);
+
   const exercises: Array<{ question: string, answer: string }> = [];
 
   // First: try inline arithmetic on a reconstructed single line (handles OCR that splits vertically)
