@@ -108,7 +108,8 @@ export const handlePhotoUpload = async (
   processHomeworkFromChat?: (content: string) => Promise<void>,
   addExercises?: (exercises: any[]) => Promise<void>,
   subjectId?: string,
-  handleSendMessage?: (text: string) => Promise<void>
+  handleSendMessage?: (text: string) => Promise<void>,
+  language?: string
 ) => {
   console.log('[Photo Upload] Starting photo upload process', { 
     fileName: file.name, 
