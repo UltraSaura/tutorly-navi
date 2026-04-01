@@ -1,29 +1,85 @@
 
 
-## Fix: Video Reloads/Refreshes Periodically During Playback
+## Fix: Video Still Reloads at ~21 Seconds
 
 ### Root cause
 
-Two issues combine to cause the video to stutter/reload:
+The `updateProgress` callback depends on `updateProgressMutation` (line 165). `useMutation` returns a **new object on every state change** (idle → loading → success). When the first progress save fires at ~5% (~20s), the mutation state changes 2-3 times, each time:
 
-1. **No `staleTime` on the video-player query** — `useVideoPlayer`'s `['video-player', videoId]` query has no `staleTime` (defaults to 0). On mobile, tapping the YouTube iframe can trigger window focus events, causing react-query to refetch. Each refetch creates a new `data` object reference, triggering re-renders.
+1. `updateProgressMutation` gets a new reference
+2. `updateProgress` is recreated (new useCallback)
+3. The `useEffect` updating `updateProgressRef` runs
+4. `VideoPlayerBox` re-renders
 
-2. **`setCurrentTime` causes re-renders every 5 seconds** — The progress interval fires every 5s, calling `updateProgress` which calls `setCurrentTime(time)`. This state update re-renders `VideoPlayerBox` and the entire hook. While the YouTube player guard prevents full re-initialization, frequent re-renders can destabilize the YouTube iframe DOM node that was injected outside React's control.
+While the guard (`lastInitVideoIdRef`) prevents full re-init, the rapid re-renders during mutation state transitions can destabilize the YouTube iframe. Additionally, `updateProgress` depends on `data?.video.progress_percentage` and `data?.quizzes` — if the query data object changes for any reason, `updateProgress` is recreated again.
 
 ### Fix
 
+Stabilize `updateProgress` by using refs for all its dependencies, eliminating re-renders from mutation state changes entirely.
+
 | File | Change |
 |------|--------|
-| `src/hooks/useVideoPlayer.ts` | Add `staleTime: 5 * 60 * 1000` to the query. Replace `currentTime` state with a ref to eliminate re-renders from progress tracking. Only use state for `currentQuiz` when a quiz is actually detected near the current time. |
-| `src/components/learning/VideoPlayerBox.tsx` | Read `currentTimeRef` instead of `currentTime` state (no functional change needed since it already uses `updateProgressRef`). |
+| `src/hooks/useVideoPlayer.ts` | Store mutation function and data deps in refs; remove them from `updateProgress` deps; add `refetchOnWindowFocus: false` to query |
 
 ### Detail
 
-In `useVideoPlayer.ts`:
-- Add `staleTime: 5 * 60 * 1000` to the query options
-- Change `const [currentTime, setCurrentTime] = useState(0)` → `const currentTimeRef = useRef(0)`
-- In `updateProgress`, use `currentTimeRef.current = time` instead of `setCurrentTime(time)` — no re-render
-- For `currentQuiz` detection, keep a `[currentQuiz, setCurrentQuiz]` state but only update it when the quiz actually changes (compare by ID)
+1. **Add refs for mutation and data dependencies**:
+```typescript
+const mutateRef = useRef(updateProgressMutation.mutate);
+const dataRef = useRef(data);
+// Keep refs current
+useEffect(() => { mutateRef.current = updateProgressMutation.mutate; });
+useEffect(() => { dataRef.current = data; });
+```
 
-This eliminates all unnecessary re-renders during playback, keeping the YouTube iframe stable.
+2. **Make `updateProgress` dependency-free**:
+```typescript
+const updateProgress = useCallback((time: number, duration: number) => {
+  currentTimeRef.current = time;
+  const percentage = Math.round((time / duration) * 100);
+  
+  const quizzes = dataRef.current?.quizzes;
+  const matchedQuiz = quizzes?.find(q => Math.abs(q.timestamp_seconds - time) < 2) || null;
+  setCurrentQuiz(prev => prev?.id === matchedQuiz?.id ? prev : matchedQuiz);
+  
+  const savedProgress = dataRef.current?.video.progress_percentage || 0;
+  if (percentage >= 90) {
+    if (lastSavedPercentageRef.current < 90) {
+      lastSavedPercentageRef.current = 100;
+      mutateRef.current({ progressPercentage: 100, progressType: 'video_completed' });
+    }
+  } else if (percentage > savedProgress && percentage - lastSavedPercentageRef.current >= 5) {
+    lastSavedPercentageRef.current = percentage;
+    mutateRef.current({ progressPercentage: percentage, progressType: 'video_started' });
+  }
+}, []); // No dependencies — all accessed via refs
+```
+
+3. **Add `refetchOnWindowFocus: false`** to the query to prevent mobile focus-triggered refetches:
+```typescript
+staleTime: 5 * 60 * 1000,
+refetchOnWindowFocus: false,
+```
+
+4. **Use `queryClient.setQueryData` instead of invalidation** in `onSuccess` for `video_completed`:
+```typescript
+onSuccess: (result) => {
+  if (result?.progressType === 'video_completed') {
+    // Update cache in-place instead of refetching
+    queryClient.setQueryData(['video-player', videoId], (old: any) =>
+      old ? { ...old, video: { ...old.video, progress_percentage: 100 } } : old
+    );
+    // Only invalidate non-video queries
+    queryClient.invalidateQueries({ queryKey: ['course-playlist'] });
+    queryClient.invalidateQueries({ queryKey: ['subject-dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['completed-videos'] });
+    queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
+  }
+},
+```
+
+### Expected result
+- `updateProgress` is created once and never recreated
+- Mutation state changes cause zero re-renders in VideoPlayerBox
+- Video plays continuously without interruption
 
