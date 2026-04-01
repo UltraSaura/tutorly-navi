@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, useMemo, memo } from 'react';
 import { Play, Clock, Zap } from 'lucide-react';
+
+// Module-level player references for external pause/resume
+export let activeYouTubePlayer: any = null;
+export let activeVideoElement: HTMLVideoElement | null = null;
 import { useVideoPlayer } from '@/hooks/useVideoPlayer';
 import { loadYouTubeAPI, extractYouTubeVideoId, isYouTubeUrl } from '@/utils/youtube';
 
@@ -103,6 +107,7 @@ export const VideoPlayerBox = memo(({ videoId, onVideoEnd }: VideoPlayerBoxProps
             },
           });
           youtubePlayerRef.current = player;
+          activeYouTubePlayer = player;
         } catch (error) {
           console.error('❌ Failed to load YouTube player:', error);
         }
@@ -118,6 +123,7 @@ export const VideoPlayerBox = memo(({ videoId, onVideoEnd }: VideoPlayerBoxProps
         if (youtubePlayerRef.current?.destroy) {
           youtubePlayerRef.current.destroy();
           youtubePlayerRef.current = null;
+          activeYouTubePlayer = null;
           lastInitVideoIdRef.current = null;
         }
       };
@@ -145,7 +151,10 @@ export const VideoPlayerBox = memo(({ videoId, onVideoEnd }: VideoPlayerBoxProps
       <div className="relative pt-[56.25%] bg-black">
         {isYouTube ? youtubeContainer : (
           <video
-            ref={videoRef}
+            ref={(el) => {
+              (videoRef as any).current = el;
+              activeVideoElement = el;
+            }}
             src={video.video_url}
             controls
             autoPlay
