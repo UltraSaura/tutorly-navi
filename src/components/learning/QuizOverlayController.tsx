@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuizBank } from '@/hooks/useQuizBank';
 import { QuizOverlay } from './QuizOverlay';
 import { useAuth } from '@/context/AuthContext';
+import { activeYouTubePlayer, activeVideoElement } from './VideoPlayerBox';
 
 export function QuizOverlayController() {
   const [searchParams, setSearchParams] = useSearchParams();
