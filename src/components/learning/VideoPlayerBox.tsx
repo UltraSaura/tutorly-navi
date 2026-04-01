@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo, memo } from 'react';
 import { Play, Clock, Zap } from 'lucide-react';
 import { useVideoPlayer } from '@/hooks/useVideoPlayer';
 import { loadYouTubeAPI, extractYouTubeVideoId, isYouTubeUrl } from '@/utils/youtube';
@@ -8,7 +8,7 @@ interface VideoPlayerBoxProps {
   onVideoEnd?: () => void;
 }
 
-export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => {
+export const VideoPlayerBox = memo(({ videoId, onVideoEnd }: VideoPlayerBoxProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
