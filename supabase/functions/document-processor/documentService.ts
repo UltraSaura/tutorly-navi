@@ -1,5 +1,6 @@
 import { extractTextFromFile } from "./extractors.ts";
 import { extractExercisesFromText } from "./exerciseExtractors.ts";
+import { extractWithMistralVision } from "./extractors/mistral.ts";
 
 // Minimal text preprocessing that preserves exercise structure
 function minimalPreprocessing(text: string): string {
@@ -11,12 +12,10 @@ function minimalPreprocessing(text: string): string {
   let cleanedText = text
     // Preserve key LaTeX commands like \frac and \sqrt; remove others
     .replace(/\\(?!frac|sqrt)[a-zA-Z]+/g, ' ')
-    // Preserve braces to keep LaTeX structure intact
-    // .replace(/[{}]/g, ' ')
-    
-    // Normalize whitespace but preserve line breaks
-    .replace(/\s+/g, ' ')
-    .replace(/\n\s*\n/g, '\n')
+    // Normalize multiple spaces on a single line but PRESERVE line breaks
+    .replace(/[^\S\n]+/g, ' ')
+    // Collapse 3+ consecutive newlines into 2
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
   
   console.log('Minimally processed text length:', cleanedText.length);
@@ -53,21 +52,38 @@ export async function processDocument(
   subjectId?: string
 ): Promise<{ success: boolean, exercises: any[], rawText: string, error?: string }> {
   try {
-    console.log(`=== PROCESSING DOCUMENT WITH ENHANCED MULTI-EXERCISE SUPPORT: ${fileName} (${fileType}) ===`);
+    console.log(`=== PROCESSING DOCUMENT: ${fileName} (${fileType}) ===`);
     
-    // Use enhanced extraction that preserves structure
-    const extractedText = await enhancedExtraction(fileData, fileType);
-    console.log(`Enhanced extraction result - text length: ${extractedText.length} characters`);
+    // PHASE 0: Try Mistral Vision (LLM-based) for images — much better for handwriting
+    const isImage = fileType.startsWith('image/');
+    let exercises: any[] = [];
+    let extractedText = '';
     
-    // Log the full text in manageable chunks for debugging
-    const textChunks = extractedText.match(/.{1,300}/g) || [];
-    textChunks.forEach((chunk, index) => {
-      console.log(`Text chunk ${index + 1}:`, chunk);
-    });
+    if (isImage) {
+      console.log('📸 Image detected — trying Mistral Vision first');
+      const visionExercises = await extractWithMistralVision(fileData, fileType);
+      if (visionExercises && visionExercises.length > 0) {
+        console.log(`✅ Mistral Vision extracted ${visionExercises.length} exercises directly`);
+        exercises = visionExercises;
+        extractedText = visionExercises.map(ex => `${ex.question} = ${ex.answer}`).join('\n');
+      } else {
+        console.log('⚠️ Mistral Vision returned no exercises, falling back to OCR pipeline');
+      }
+    }
     
-    // Use the enhanced multi-exercise extraction system
-    console.log('=== STARTING ENHANCED MULTI-EXERCISE EXTRACTION ===');
-    const exercises = extractExercisesFromText(extractedText);
+    // PHASE 1: Fall back to OCR + regex pipeline if vision didn't produce results
+    if (exercises.length === 0) {
+      extractedText = await enhancedExtraction(fileData, fileType);
+      console.log(`Enhanced extraction result - text length: ${extractedText.length} characters`);
+      
+      const textChunks = extractedText.match(/.{1,300}/g) || [];
+      textChunks.forEach((chunk, index) => {
+        console.log(`Text chunk ${index + 1}:`, chunk);
+      });
+      
+      console.log('=== STARTING ENHANCED MULTI-EXERCISE EXTRACTION ===');
+      exercises = extractExercisesFromText(extractedText);
+    }
     
     console.log(`=== ENHANCED EXTRACTION COMPLETE: Found ${exercises.length} exercises ===`);
     
@@ -76,51 +92,15 @@ export async function processDocument(
       console.log(`Exercise ${idx + 1}: Question="${ex.question}" Answer="${ex.answer}"`);
     });
     
-    // Enhanced validation and quality check
+    // Fallback only if truly nothing was found
     if (exercises.length === 0 && extractedText.length > 0) {
-      console.log('No exercises detected - creating intelligent fallback');
-      
-      // Look for ANY mathematical content
-      const mathContent = extractedText.match(/\d+\/\d+|\d+\s*[\+\-\*\/]\s*\d+|[a-e][\.\)]/gi);
-      if (mathContent && mathContent.length > 0) {
-        console.log('Found mathematical content for fallback:', mathContent);
-        
-        // Create exercises based on detected math content
-        mathContent.slice(0, 5).forEach((content, index) => {
-          const letter = String.fromCharCode(97 + index);
-          exercises.push({
-            question: `${letter}. Exercice mathématique: ${content}`,
-            answer: content
-          });
-        });
-        
-        console.log(`Created ${exercises.length} fallback exercises from math content`);
-      } else {
-        // Final fallback
-        exercises.push({
-          question: "Document Analysis",
-          answer: extractedText.length > 300 
-            ? extractedText.substring(0, 300) + "..." 
-            : extractedText
-        });
-      }
-    }
-    
-    // Quality assurance: ensure we have meaningful exercises for worksheets
-    if (exercises.length === 1 && extractedText.toLowerCase().includes('simplif')) {
-      console.log('Detected worksheet but only found 1 exercise - enhancing result');
-      
-      // This suggests a worksheet with multiple exercises that we missed
-      const baseExercise = exercises[0];
-      const additionalExercises = [
-        { question: "b. Simplifiez la fraction (exercice détecté)", answer: "exercice_b" },
-        { question: "c. Simplifiez la fraction (exercice détecté)", answer: "exercice_c" },
-        { question: "d. Simplifiez la fraction (exercice détecté)", answer: "exercice_d" },
-        { question: "e. Simplifiez la fraction (exercice détecté)", answer: "exercice_e" }
-      ];
-      
-      exercises.push(...additionalExercises);
-      console.log(`Enhanced single exercise to ${exercises.length} exercises for worksheet`);
+      console.log('No exercises detected - creating fallback');
+      exercises.push({
+        question: "Document Analysis",
+        answer: extractedText.length > 300 
+          ? extractedText.substring(0, 300) + "..." 
+          : extractedText
+      });
     }
     
     console.log(`=== FINAL ENHANCED RESULT: ${exercises.length} exercises extracted ===`);

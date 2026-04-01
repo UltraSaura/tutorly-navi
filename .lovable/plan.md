@@ -1,52 +1,58 @@
-I checked the data for child `fanta` and the database is correct:
-- `users.curriculum_country_code = fr`
-- `users.curriculum_level_code = cm1`
-- the `Fraction` topic exists for `fr/cm1`
-- the topic has an active video allowed for `FR:CM1`
 
-Do I know what the issue is? Yes.
 
-### Root cause
-This is not a curriculum/RLS problem anymore. The video is being removed by strict language filtering.
+## Unify OCR Upload Response Format with Chat Response Format
 
-In `src/hooks/useCoursePlaylist.ts`:
-1. topic videos are fetched
-2. `filterContentByUserLevel(...)` removes any video whose `language !== userLanguage`
-3. only after that, `selectBestVariants(...)` runs
+### Problem
+When a user types a math exercise in chat (e.g., `23×4=92`), the AI returns a structured JSON response with `isMath`, `sections` (explanation, example, steps), and `isCorrect`. The `AIResponse` component detects this JSON and renders a rich card with color-coded borders, emoji status, and an explanation dialog.
 
-So if `fanta` opens a topic where the only available video is French, and the app language is currently English, the French video gets filtered out before fallback logic can choose it. That leaves the page empty.
+When a photo is uploaded, OCR extracts exercises but the synthetic assistant messages are plain text like `"CORRECT ✅\nYour answer: 92"`. Since `parseAIResponse()` can't find JSON in this text, it falls back to a basic text-only card — no explanation, no step-by-step, no rich formatting.
 
-### Fix
-1. `src/hooks/useCoursePlaylist.ts`
-- Stop filtering playlist videos by exact UI language before variant selection
-- First filter only by age/school level
-- Then choose the best available variant:
-  - user language first
-  - else English
-  - else first available variant
-- Keep standalone videos if they match level/age, even when their language differs from the UI language
+### Solution
+After OCR extracts and grades exercises, **route each exercise through `sendUnifiedMessage`** (the same AI pipeline used for chat-typed exercises) so the response comes back as structured JSON. This way `AIResponse` renders the exact same rich card format for both upload and chat input.
 
-2. `src/utils/schoolLevelFilter.ts`
-- Split the helper so language filtering is optional
-- Keep age/level filtering reusable without forcing exact language matches
+### Changes
 
-3. `src/hooks/useSuggestedVideos.ts`
-- Apply the same fallback-aware behavior there, so suggested videos do not disappear for the same reason
+| File | Change |
+|------|--------|
+| `src/utils/chatFileHandlers.ts` | In `handlePhotoUpload`, after OCR extracts exercises, instead of creating plain-text synthetic messages, call `sendUnifiedMessage()` for each exercise (with question + answer as input). Use the AI's structured JSON response as the assistant message content. |
 
-4. `src/context/AuthContext.tsx` (defensive)
-- Normalize `user.user_metadata.country` before language detection so `FR` and `fr` behave the same
-- This is not the main bug, but it prevents wrong fallback to English during login/session switches
+### Detail
 
-### Result after implementation
-- `fanta` will see the `Fraction` video again
-- French-only content will still appear even if the interface is in English
-- when both French and English variants exist, the app will still prefer the current language
+In `handlePhotoUpload` (line ~182 onwards), replace the current synthetic message generation:
 
-### Verification
-- Log in as `fanta`
-- Open `/learning/mathematics/Fraction`
-- Confirm the playlist is visible again
-- Confirm language preference still works when multiple variants exist
-- Confirm switching between guardian and child accounts no longer makes the topic appear empty
+```typescript
+// Current: plain text synthetic messages
+assistantContent = `CORRECT ✅\nYour answer: ${exercise.userAnswer}...`;
+```
 
-No database change is needed for this fix.
+With:
+
+```typescript
+// New: route through AI for structured JSON response
+import { sendUnifiedMessage } from '@/services/unifiedChatService';
+
+for (const exercise of gradedExercises) {
+  const inputText = exercise.userAnswer?.trim()
+    ? `${exercise.question} = ${exercise.userAnswer}`
+    : exercise.question;
+  
+  const { data } = await sendUnifiedMessage(inputText, [], selectedModelId, language);
+  
+  // Use AI's structured JSON as assistant content
+  const assistantContent = data?.content || fallbackPlainText;
+  // Create user+assistant message pair with this content
+}
+```
+
+This ensures every OCR exercise gets the same rich JSON response (with `isMath`, `sections`, `isCorrect`) that chat-typed exercises receive.
+
+### Trade-off
+- Each uploaded exercise requires one AI call (~1-2s each). For 5 exercises this adds ~5-10s total.
+- Could parallelize with `Promise.all` to reduce to ~2-3s.
+- The alternative (constructing fake JSON locally) would miss explanations and step-by-step breakdowns.
+
+### Expected result
+- Photo upload exercises render identically to chat-typed exercises
+- Same color-coded cards, same explanation dialog, same step-by-step format
+- Grading + explanation handled by the AI, not by local heuristics
+
