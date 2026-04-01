@@ -6,9 +6,10 @@ import { toast } from 'sonner';
 
 export function useVideoPlayer(videoId: string) {
   const queryClient = useQueryClient();
-  const [currentTime, setCurrentTime] = useState(0);
+  const currentTimeRef = useRef(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const lastSavedPercentageRef = useRef(0);
+  const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
 
   // Fetch video and quizzes
   const { data, isLoading, error } = useQuery({
@@ -54,6 +55,7 @@ export function useVideoPlayer(videoId: string) {
       };
     },
     enabled: !!videoId,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Update progress mutation
@@ -68,16 +70,15 @@ export function useVideoPlayer(videoId: string) {
           user_id: user.id,
           video_id: videoId,
           progress_percentage: progressPercentage,
-          last_watched_position_seconds: currentTime,
+          last_watched_position_seconds: currentTimeRef.current,
           progress_type: progressType,
-          time_spent_seconds: currentTime,
+          time_spent_seconds: currentTimeRef.current,
         }, {
           onConflict: 'user_id,video_id',
         });
 
       if (error) throw error;
       
-      // Show completion toast
       if (progressType === 'video_completed') {
         toast.success('Video completed!', {
           description: 'Great job! New quizzes may now be available.'
@@ -87,7 +88,6 @@ export function useVideoPlayer(videoId: string) {
       return { progressType };
     },
     onSuccess: (result) => {
-      // Only invalidate queries when video is completed, not on every progress update
       if (result?.progressType === 'video_completed') {
         queryClient.invalidateQueries({ queryKey: ['video-player', videoId] });
         queryClient.invalidateQueries({ queryKey: ['course-playlist'] });
@@ -140,8 +140,17 @@ export function useVideoPlayer(videoId: string) {
   });
 
   const updateProgress = useCallback((time: number, duration: number) => {
-    setCurrentTime(time);
+    currentTimeRef.current = time;
     const percentage = Math.round((time / duration) * 100);
+
+    // Update currentQuiz only when it actually changes
+    const matchedQuiz = data?.quizzes.find(
+      q => Math.abs(q.timestamp_seconds - time) < 2
+    ) || null;
+    setCurrentQuiz(prev => {
+      if (prev?.id === matchedQuiz?.id) return prev;
+      return matchedQuiz;
+    });
     
     if (percentage >= 90) {
       if (lastSavedPercentageRef.current < 90) {
@@ -153,25 +162,20 @@ export function useVideoPlayer(videoId: string) {
       lastSavedPercentageRef.current = percentage;
       updateProgressMutation.mutate({ progressPercentage: percentage, progressType: 'video_started' });
     }
-  }, [data?.video.progress_percentage, updateProgressMutation]);
+  }, [data?.video.progress_percentage, data?.quizzes, updateProgressMutation]);
 
   const submitQuizAnswer = useCallback((quizId: string, answerIndex: number) => {
     return submitQuizMutation.mutateAsync({ quizId, answerIndex });
   }, [submitQuizMutation]);
 
-  // Find current quiz based on time
-  const currentQuiz = data?.quizzes.find(
-    q => Math.abs(q.timestamp_seconds - currentTime) < 2
-  ) || null;
-
   return {
     video: data?.video || null,
     quizzes: data?.quizzes || [],
     currentQuiz,
-    currentTime,
+    currentTime: currentTimeRef.current,
     isPlaying,
     setIsPlaying,
-    setCurrentTime,
+    setCurrentTime: (time: number) => { currentTimeRef.current = time; },
     updateProgress,
     submitQuizAnswer,
     isLoading,
