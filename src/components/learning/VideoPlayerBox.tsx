@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo, memo } from 'react';
 import { Play, Clock, Zap } from 'lucide-react';
 import { useVideoPlayer } from '@/hooks/useVideoPlayer';
 import { loadYouTubeAPI, extractYouTubeVideoId, isYouTubeUrl } from '@/utils/youtube';
@@ -8,7 +8,7 @@ interface VideoPlayerBoxProps {
   onVideoEnd?: () => void;
 }
 
-export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => {
+export const VideoPlayerBox = memo(({ videoId, onVideoEnd }: VideoPlayerBoxProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -18,6 +18,11 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
   const [isYouTube, setIsYouTube] = useState(false);
 
   const { video, updateProgress } = useVideoPlayer(videoId || '');
+
+  // Stable YouTube container that React won't recreate on re-renders
+  const youtubeContainer = useMemo(() => (
+    videoId ? <div id={`youtube-player-${videoId}`} className="absolute top-0 left-0 w-full h-full" /> : null
+  ), [videoId]);
 
   // Keep updateProgress ref current
   useEffect(() => {
@@ -138,13 +143,7 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
   return (
     <div className="mx-4 mt-4 mb-4 bg-card rounded-xl overflow-hidden shadow-lg border">
       <div className="relative pt-[56.25%] bg-black">
-        {isYouTube ? (
-          <div
-            id={`youtube-player-${videoId}`}
-            ref={iframeRef}
-            className="absolute top-0 left-0 w-full h-full"
-          />
-        ) : (
+        {isYouTube ? youtubeContainer : (
           <video
             ref={videoRef}
             src={video.video_url}
@@ -179,4 +178,4 @@ export const VideoPlayerBox = ({ videoId, onVideoEnd }: VideoPlayerBoxProps) => 
       </div>
     </div>
   );
-};
+});

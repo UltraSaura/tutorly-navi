@@ -94,7 +94,6 @@ export function useVideoPlayer(videoId: string) {
         queryClient.setQueryData(['video-player', videoId], (old: any) =>
           old ? { ...old, video: { ...old.video, progress_percentage: 100 } } : old
         );
-        queryClient.invalidateQueries({ queryKey: ['course-playlist'] });
         queryClient.invalidateQueries({ queryKey: ['subject-dashboard'] });
         queryClient.invalidateQueries({ queryKey: ['completed-videos'] });
         queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
@@ -175,9 +174,12 @@ export function useVideoPlayer(videoId: string) {
     }
   }, []); // No dependencies — all accessed via refs
 
+  const submitQuizRef = useRef(submitQuizMutation.mutateAsync);
+  useEffect(() => { submitQuizRef.current = submitQuizMutation.mutateAsync; });
+
   const submitQuizAnswer = useCallback((quizId: string, answerIndex: number) => {
-    return submitQuizMutation.mutateAsync({ quizId, answerIndex });
-  }, [submitQuizMutation]);
+    return submitQuizRef.current({ quizId, answerIndex });
+  }, []);
 
   return {
     video: data?.video || null,
