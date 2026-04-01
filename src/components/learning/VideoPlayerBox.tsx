@@ -19,6 +19,11 @@ export const VideoPlayerBox = memo(({ videoId, onVideoEnd }: VideoPlayerBoxProps
 
   const { video, updateProgress } = useVideoPlayer(videoId || '');
 
+  // Stable YouTube container that React won't recreate on re-renders
+  const youtubeContainer = useMemo(() => (
+    videoId ? <div id={`youtube-player-${videoId}`} className="absolute top-0 left-0 w-full h-full" /> : null
+  ), [videoId]);
+
   // Keep updateProgress ref current
   useEffect(() => {
     updateProgressRef.current = updateProgress;
