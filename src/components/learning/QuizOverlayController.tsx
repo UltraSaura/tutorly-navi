@@ -13,6 +13,18 @@ export function QuizOverlayController() {
 
   const { data: bank, isLoading } = useQuizBank(quizBankId || undefined);
 
+  // Pause video when quiz opens, resume when it closes
+  useEffect(() => {
+    if (quizBankId) {
+      activeYouTubePlayer?.pauseVideo?.();
+      activeVideoElement?.pause?.();
+    }
+    return () => {
+      activeYouTubePlayer?.playVideo?.();
+      activeVideoElement?.play?.();
+    };
+  }, [quizBankId]);
+
   const handleClose = () => {
     const params = new URLSearchParams(searchParams);
     params.delete('quiz');
