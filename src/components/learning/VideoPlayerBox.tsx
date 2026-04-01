@@ -151,7 +151,10 @@ export const VideoPlayerBox = memo(({ videoId, onVideoEnd }: VideoPlayerBoxProps
       <div className="relative pt-[56.25%] bg-black">
         {isYouTube ? youtubeContainer : (
           <video
-            ref={videoRef}
+            ref={(el) => {
+              (videoRef as any).current = el;
+              activeVideoElement = el;
+            }}
             src={video.video_url}
             controls
             autoPlay
