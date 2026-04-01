@@ -1,58 +1,33 @@
 
 
-## Unify OCR Upload Response Format with Chat Response Format
+## Fix: Quiz Questions Overflow on Mobile
 
 ### Problem
-When a user types a math exercise in chat (e.g., `23×4=92`), the AI returns a structured JSON response with `isMath`, `sections` (explanation, example, steps), and `isCorrect`. The `AIResponse` component detects this JSON and renders a rich card with color-coded borders, emoji status, and an explanation dialog.
-
-When a photo is uploaded, OCR extracts exercises but the synthetic assistant messages are plain text like `"CORRECT ✅\nYour answer: 92"`. Since `parseAIResponse()` can't find JSON in this text, it falls back to a basic text-only card — no explanation, no step-by-step, no rich formatting.
+Visual questions (pie charts, angles) with multiple options overflow the screen on mobile. The SVG previews are 160px fixed, cards have generous padding, and `QuestionCard` uses `max-w-md` — all fine on desktop but too tall for mobile viewports (390×726).
 
 ### Solution
-After OCR extracts and grades exercises, **route each exercise through `sendUnifiedMessage`** (the same AI pipeline used for chat-typed exercises) so the response comes back as structured JSON. This way `AIResponse` renders the exact same rich card format for both upload and chat input.
+Make the quiz card and its visual content responsive to screen size:
+
+1. **QuestionCard container** — reduce padding on mobile, allow scrolling
+2. **Pie/Angle SVGs** — shrink from 160px to ~120px on small screens  
+3. **Grid layout** — use 2 columns on mobile for visual options (they're just pie charts, they fit at smaller sizes)
+4. **QuizOverlay wrapper** — ensure `overflow-y-auto` works properly with max-height constraints
 
 ### Changes
 
 | File | Change |
 |------|--------|
-| `src/utils/chatFileHandlers.ts` | In `handlePhotoUpload`, after OCR extracts exercises, instead of creating plain-text synthetic messages, call `sendUnifiedMessage()` for each exercise (with question + answer as input). Use the AI's structured JSON response as the assistant message content. |
+| `src/components/learning/QuestionCard.tsx` | Reduce SVG `width`/`height` from 160 to 120 on pie/angle cards; use `grid-cols-2` instead of `grid-cols-1 sm:grid-cols-2` for visual options; reduce card padding on small screens |
+| `src/components/learning/QuizOverlay.tsx` | Already has `max-h-[90vh] overflow-y-auto` — no change needed |
 
-### Detail
+### Technical detail
+In `PieStudentView` (select_pie mode, ~line 465) and `AngleStudentView` (~line 310):
+- Change SVG dimensions: `width={120} height={120}` (from 160)
+- Change grid: `grid-cols-2 gap-3` (from `grid-cols-1 sm:grid-cols-2 gap-4`)
+- Reduce button padding: `p-2` (from `p-3`)
 
-In `handlePhotoUpload` (line ~182 onwards), replace the current synthetic message generation:
+In `QuestionCard` outer div (line 64):
+- Change to `p-3 sm:p-4` for tighter mobile spacing
 
-```typescript
-// Current: plain text synthetic messages
-assistantContent = `CORRECT ✅\nYour answer: ${exercise.userAnswer}...`;
-```
-
-With:
-
-```typescript
-// New: route through AI for structured JSON response
-import { sendUnifiedMessage } from '@/services/unifiedChatService';
-
-for (const exercise of gradedExercises) {
-  const inputText = exercise.userAnswer?.trim()
-    ? `${exercise.question} = ${exercise.userAnswer}`
-    : exercise.question;
-  
-  const { data } = await sendUnifiedMessage(inputText, [], selectedModelId, language);
-  
-  // Use AI's structured JSON as assistant content
-  const assistantContent = data?.content || fallbackPlainText;
-  // Create user+assistant message pair with this content
-}
-```
-
-This ensures every OCR exercise gets the same rich JSON response (with `isMath`, `sections`, `isCorrect`) that chat-typed exercises receive.
-
-### Trade-off
-- Each uploaded exercise requires one AI call (~1-2s each). For 5 exercises this adds ~5-10s total.
-- Could parallelize with `Promise.all` to reduce to ~2-3s.
-- The alternative (constructing fake JSON locally) would miss explanations and step-by-step breakdowns.
-
-### Expected result
-- Photo upload exercises render identically to chat-typed exercises
-- Same color-coded cards, same explanation dialog, same step-by-step format
-- Grading + explanation handled by the AI, not by local heuristics
+These are small CSS/prop changes across ~6 lines in one file.
 
