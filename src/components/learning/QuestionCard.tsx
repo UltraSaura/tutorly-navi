@@ -584,7 +584,7 @@ function PieStudentView({
       <p className="text-sm text-neutral-600">
         Sélectionne le(s) diagramme(s) qui représente(nt) la fraction correcte.
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         {allPies.map((pie) => {
           const isActive = selected.includes(pie.id);
           const total = pie.segments.reduce((sum, seg) => sum + (Number(seg.value) || 0), 0) || 1;
@@ -601,7 +601,7 @@ function PieStudentView({
                 onChange(next);
               }}
               className={cn(
-                "group relative rounded-xl border p-3 text-left transition",
+                "group relative rounded-xl border p-2 text-left transition",
                 isActive
                   ? "border-primary bg-primary/5 shadow-sm"
                   : "border-border hover:border-primary/40"
@@ -610,8 +610,8 @@ function PieStudentView({
             >
               <svg
                 viewBox="0 0 100 100"
-                width={160}
-                height={160}
+                width={120}
+                height={120}
                 className="mx-auto bg-white rounded-lg shadow-inner"
               >
                 {pie.segments.map((seg) => {
