@@ -146,5 +146,6 @@ export function useCoursePlaylist(topicSlug: string) {
     },
     enabled: !!topicSlug,
     staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }

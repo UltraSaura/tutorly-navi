@@ -174,9 +174,12 @@ export function useVideoPlayer(videoId: string) {
     }
   }, []); // No dependencies — all accessed via refs
 
+  const submitQuizRef = useRef(submitQuizMutation.mutateAsync);
+  useEffect(() => { submitQuizRef.current = submitQuizMutation.mutateAsync; });
+
   const submitQuizAnswer = useCallback((quizId: string, answerIndex: number) => {
-    return submitQuizMutation.mutateAsync({ quizId, answerIndex });
-  }, [submitQuizMutation]);
+    return submitQuizRef.current({ quizId, answerIndex });
+  }, []);
 
   return {
     video: data?.video || null,

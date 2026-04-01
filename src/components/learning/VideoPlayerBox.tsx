@@ -178,4 +178,4 @@ export const VideoPlayerBox = memo(({ videoId, onVideoEnd }: VideoPlayerBoxProps
       </div>
     </div>
   );
-};
+});
