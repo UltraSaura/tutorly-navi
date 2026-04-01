@@ -107,6 +107,7 @@ export const VideoPlayerBox = memo(({ videoId, onVideoEnd }: VideoPlayerBoxProps
             },
           });
           youtubePlayerRef.current = player;
+          activeYouTubePlayer = player;
         } catch (error) {
           console.error('❌ Failed to load YouTube player:', error);
         }
