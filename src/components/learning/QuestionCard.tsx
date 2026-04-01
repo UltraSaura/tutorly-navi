@@ -61,7 +61,7 @@ export function QuestionCard({
   };
 
   return (
-    <div className="max-w-md w-full rounded-2xl bg-white dark:bg-card shadow-xl p-4">
+    <div className="max-w-md w-full rounded-2xl bg-white dark:bg-card shadow-xl p-3 sm:p-4">
       <h3 className="text-lg font-semibold mb-3">{question.prompt}</h3>
       
       {question.kind === "single" && (
