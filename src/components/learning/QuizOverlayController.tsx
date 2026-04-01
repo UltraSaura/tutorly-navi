@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuizBank } from '@/hooks/useQuizBank';
 import { QuizOverlay } from './QuizOverlay';
 import { useAuth } from '@/context/AuthContext';
+import { activeYouTubePlayer, activeVideoElement } from './VideoPlayerBox';
 
 export function QuizOverlayController() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -11,6 +12,18 @@ export function QuizOverlayController() {
   const quizBankId = searchParams.get('quiz');
 
   const { data: bank, isLoading } = useQuizBank(quizBankId || undefined);
+
+  // Pause video when quiz opens, resume when it closes
+  useEffect(() => {
+    if (quizBankId) {
+      activeYouTubePlayer?.pauseVideo?.();
+      activeVideoElement?.pause?.();
+    }
+    return () => {
+      activeYouTubePlayer?.playVideo?.();
+      activeVideoElement?.play?.();
+    };
+  }, [quizBankId]);
 
   const handleClose = () => {
     const params = new URLSearchParams(searchParams);
