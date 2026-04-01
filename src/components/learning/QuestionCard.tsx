@@ -404,7 +404,7 @@ function AngleStudentView({
       <p className="text-sm text-neutral-600">
         Sélectionne toutes les cartes qui correspondent à la consigne.
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         {options.map((option) => {
           const isActive = selected.includes(option.id);
           const rayA = polarToCartesian(option.aDeg, option.radius);
@@ -422,21 +422,21 @@ function AngleStudentView({
                 onChange(next);
               }}
               className={cn(
-                "group relative rounded-xl border px-3 py-2 text-left transition",
+                "group relative rounded-xl border px-2 py-2 text-left transition",
                 isActive
                   ? "border-primary bg-primary/5 shadow-sm"
                   : "border-border hover:border-primary/40"
               )}
               aria-pressed={isActive}
             >
-              <div className="flex items-center justify-between text-xs text-neutral-500 mb-2">
+              <div className="flex items-center justify-between text-xs text-neutral-500 mb-1">
                 <span>{option.label}</span>
                 <span>{measurement}°</span>
               </div>
               <svg
                 viewBox="-50 -50 100 100"
-                width={160}
-                height={160}
+                width={120}
+                height={120}
                 className="mx-auto bg-white rounded-lg shadow-inner"
               >
                 <circle cx={0} cy={0} r={option.radius} fill="#fff" stroke={isActive ? "#2563eb" : "#d1d5db"} strokeWidth={isActive ? 2 : 1.2} />
