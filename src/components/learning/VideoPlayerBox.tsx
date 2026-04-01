@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, useMemo, memo } from 'react';
 import { Play, Clock, Zap } from 'lucide-react';
+
+// Module-level player references for external pause/resume
+export let activeYouTubePlayer: any = null;
+export let activeVideoElement: HTMLVideoElement | null = null;
 import { useVideoPlayer } from '@/hooks/useVideoPlayer';
 import { loadYouTubeAPI, extractYouTubeVideoId, isYouTubeUrl } from '@/utils/youtube';
 
