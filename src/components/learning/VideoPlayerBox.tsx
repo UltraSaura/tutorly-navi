@@ -123,6 +123,7 @@ export const VideoPlayerBox = memo(({ videoId, onVideoEnd }: VideoPlayerBoxProps
         if (youtubePlayerRef.current?.destroy) {
           youtubePlayerRef.current.destroy();
           youtubePlayerRef.current = null;
+          activeYouTubePlayer = null;
           lastInitVideoIdRef.current = null;
         }
       };
