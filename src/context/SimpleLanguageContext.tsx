@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { getLanguageFromCountry } from '@/utils/countryLanguageMapping';
 import { useAuth } from '@/context/AuthContext';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
@@ -304,16 +304,6 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   };
 
   const t = (key: string, params?: Record<string, string | number>): string => {
-    // Debug logging for ALL translation function calls
-    console.log('[Translation] t() function called:', {
-      key,
-      isLoading,
-      language,
-      hasTranslations: !!translations,
-      translationsKeys: translations ? Object.keys(translations) : [],
-      timestamp: new Date().toISOString()
-    });
-    
     if (isLoading) return key;
     
     // First try to find the key directly (for flattened keys like 'exercises.exercise.answer')
@@ -338,16 +328,6 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     // Fallback to key if translation not found
     let result = value || key;
     
-    // Debug logging for result
-    if (key.includes('exercise.answer') || key.includes('explanation.modal_title')) {
-      console.log('[Translation] Result:', {
-        key,
-        result,
-        wasTranslated: result !== key,
-        timestamp: new Date().toISOString()
-      });
-    }
-    
     // Handle interpolation if params provided
     if (params && typeof result === 'string') {
       result = result.replace(/\{(\w+)\}/g, (match, paramKey) => {
@@ -357,6 +337,10 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     
     return result;
   };
+
+  // Track current language via ref to avoid dependency loops
+  const languageRef = useRef(language);
+  useEffect(() => { languageRef.current = language; }, [language]);
 
   // Auto-detect language from user profile on login
   // Clear languageManuallySet when a new user logs in to allow profile-based detection
@@ -406,13 +390,13 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
       }
       
       // Fallback to automatic country detection (only if no profile language and current is English)
-      if (!detectedLanguage && detection.country && language === 'en') {
-        detectedLanguage = getLanguageFromDetection();
+      if (!detectedLanguage && detection.country && languageRef.current === 'en') {
+        detectedLanguage = getLanguageFromCountry(detection.country);
         console.log('[Auto-detect] Using automatic detection:', detection.country, '->', detectedLanguage);
       }
       
-      if (detectedLanguage && detectedLanguage !== language) {
-        console.log('[Auto-detect] Changing language from', language, 'to', detectedLanguage);
+      if (detectedLanguage && detectedLanguage !== languageRef.current) {
+        console.log('[Auto-detect] Changing language from', languageRef.current, 'to', detectedLanguage);
         setLanguage(detectedLanguage);
         localStorage.setItem('lang', detectedLanguage);
         
@@ -432,7 +416,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     };
     
     detectLanguageFromUser();
-  }, [user?.id, detection.country, detection.method, language, getLanguageFromDetection]);
+  }, [user?.id, detection.country]);
 
   if (isLoading) {
     return (
