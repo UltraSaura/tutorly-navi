@@ -328,16 +328,6 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     // Fallback to key if translation not found
     let result = value || key;
     
-    // Debug logging for result
-    if (key.includes('exercise.answer') || key.includes('explanation.modal_title')) {
-      console.log('[Translation] Result:', {
-        key,
-        result,
-        wasTranslated: result !== key,
-        timestamp: new Date().toISOString()
-      });
-    }
-    
     // Handle interpolation if params provided
     if (params && typeof result === 'string') {
       result = result.replace(/\{(\w+)\}/g, (match, paramKey) => {
