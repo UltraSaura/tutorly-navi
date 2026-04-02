@@ -28,8 +28,6 @@ const LanguageSelector = () => {
             key={lang.code}
             onClick={() => {
               changeLanguage(lang.code);
-              // Reload page to ensure all components pick up the language change
-              setTimeout(() => window.location.reload(), 100);
             }}
             className={language === lang.code ? 'bg-accent' : ''}
           >

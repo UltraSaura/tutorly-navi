@@ -81,9 +81,6 @@ const LanguageMenuItems = () => {
             i18n.changeLanguage(lang.code);
             localStorage.setItem('lang', lang.code);
             localStorage.setItem('languageManuallySet', 'true');
-            
-            // Reload page to ensure all components pick up the language change
-            window.location.reload();
           }}
           className={i18n.resolvedLanguage === lang.code ? 'bg-accent' : ''}
         >

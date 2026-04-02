@@ -34,6 +34,19 @@ const AuthPage: React.FC = () => {
 
   const state = location.state as { message?: string; returnTo?: string } | null;
 
+  // Persist auth step to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem('authStep', step);
+  }, [step]);
+
+  useEffect(() => {
+    if (selectedUserType) {
+      sessionStorage.setItem('authUserType', selectedUserType);
+    } else {
+      sessionStorage.removeItem('authUserType');
+    }
+  }, [selectedUserType]);
+
   // Show message if redirected from admin panel
   useEffect(() => {
     if (state?.message) {

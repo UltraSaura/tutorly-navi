@@ -87,8 +87,7 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
     setValue('country', countryCode);
     setValue('schoolLevel', ''); // Reset school level when country changes
     setCountry(countryCode); // Update the hook's selected country
-    // Set language based on country
-    setLanguageFromCountry(countryCode);
+    // Don't auto-switch language during registration - it causes form reset
   };
 
   const onFormSubmit = async (data: StudentFormData) => {
