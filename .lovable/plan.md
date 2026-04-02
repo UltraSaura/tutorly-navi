@@ -1,38 +1,52 @@
 
+Issue summary
+- I checked for explicit auto-refresh logic and did not find a timer or redirect loop tied to the auth page itself.
+- The session replay shows the app returning to `/auth` and showing `Loading translations...`, then `Loading...`, multiple times.
+- The current language fix is only partial: it prevents unmounting during a language change inside the same provider instance, but if `SimpleLanguageProvider` remounts, `translations` starts again as `{}` with `isLoading=true`, so the whole auth tree still unmounts and looks like a page refresh.
+- That explains why the problem can still happen even on the Sign in page.
 
-## Fix: Registration Form Resets When Selecting Country
+Implementation plan
 
-### Problem
-When selecting a country during registration, `setLanguageFromCountry()` is called, which changes the language state. This triggers the translation loading effect in `SimpleLanguageContext`, which sets `isLoading = true`. The provider (line 437-443) renders a full-screen "Loading translations..." placeholder instead of its children, **unmounting the entire component tree** including the registration form. When translations finish loading, the form remounts fresh with `step` reset to `'login'`.
+1. Make translation bootstrap non-blocking after the first cold load
+- File: `src/context/SimpleLanguageContext.tsx`
+- Initialize `translations` from `translationCache` for the current language instead of always starting from `{}`.
+- Add a one-time bootstrap flag/ref so the full-screen `Loading translations...` screen appears only on the first cold app load, not on later remounts.
+- Keep syncing i18next in the background, but never replace the whole app with the loader once translations have already been available.
 
-### Root cause
-`SimpleLanguageContext.tsx` line 437-443 — the provider blocks rendering of all children while translations load:
-```tsx
-if (isLoading) {
-  return <div>Loading translations...</div>;
-}
-```
+2. Disable auto language switching during auth
+- Files:
+  - `src/context/SimpleLanguageContext.tsx`
+  - `src/components/auth/StudentRegistrationForm.tsx`
+  - `src/components/auth/ParentRegistrationForm.tsx`
+- Guard country-detection / auto-language effects when the route starts with `/auth`.
+- In the registration forms, selecting a country should update country and school-level data only; do not auto-call `setLanguageFromCountry()` during signup.
+- This removes the biggest auth-flow trigger for mid-form translation reloads.
 
-### Fix (1 file)
+3. Preserve auth state even if a remount still happens
+- File: `src/pages/AuthPage.tsx`
+- Persist the current auth step (`login`, `userType`, `studentForm`, `parentForm`, `resetPassword`) in `sessionStorage` or the URL.
+- Restore that step on mount so the page does not jump back to Sign in unexpectedly.
+- Recommended safety net: persist registration draft values in `sessionStorage` so typed data survives any unexpected remount.
 
-**`src/context/SimpleLanguageContext.tsx`** — Stop unmounting children during translation reloads. Instead, always render children and only show the loading screen on the very first load (when no translations have been loaded yet).
+4. Remove remaining forced reloads in the app
+- Files:
+  - `src/components/ui/language-select.tsx`
+  - `src/components/ui/language-selector.tsx`
+  - `src/components/layout/HeaderNavigation.tsx`
+  - `src/components/layout/Navbar.tsx`
+- Remove `window.location.reload()` after language changes.
+- These are not the direct `/auth` trigger, but they are real hard-refresh points elsewhere and should be cleaned up to prevent similar reset behavior.
 
-Replace lines 437-443:
-```tsx
-if (isLoading && Object.keys(translations).length === 0) {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-muted-foreground">Loading translations...</div>
-    </div>
-  );
-}
-```
+Technical detail
+- Why the previous fix did not fully solve it:
+  - Current guard:
+    `if (isLoading && Object.keys(translations).length === 0) ...`
+  - Remaining problem:
+    when the provider remounts, `translations` is reset to `{}` before the effect repopulates from cache, so the loader still replaces the whole app.
+  - Better fix:
+    seed translations synchronously from cache and treat the loader as a first-boot-only state.
 
-This way:
-- First page load with no cached translations: shows loading screen (correct)
-- Language change mid-session (e.g., country selection): keeps children mounted, translations update seamlessly once loaded (form state preserved)
-
-### Expected result
-- User selects country during registration → language may change in background but form stays visible and form state is preserved
-- No more unexpected "refresh" when filling out registration forms
-
+Expected result
+- No more visible refresh/reset while typing on Sign in or Create Account.
+- Country selection no longer resets the auth flow.
+- Even if the app re-renders, the auth step and typed form data remain intact.
