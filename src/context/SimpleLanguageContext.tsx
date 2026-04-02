@@ -304,16 +304,6 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   };
 
   const t = (key: string, params?: Record<string, string | number>): string => {
-    // Debug logging for ALL translation function calls
-    console.log('[Translation] t() function called:', {
-      key,
-      isLoading,
-      language,
-      hasTranslations: !!translations,
-      translationsKeys: translations ? Object.keys(translations) : [],
-      timestamp: new Date().toISOString()
-    });
-    
     if (isLoading) return key;
     
     // First try to find the key directly (for flattened keys like 'exercises.exercise.answer')
