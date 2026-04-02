@@ -126,15 +126,8 @@ export function scoreVideoMatch(videoTags: string[], homeworkKeywords: string[])
 
 const VideoManager = () => {
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
-<<<<<<< HEAD
-  const [videoCurriculum, setVideoCurriculum] = useState({
-    countryCode: '',
-    levelCode: '',
-    subjectId: '',
-  });
-=======
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
->>>>>>> learning
+
   const [selectedLanguageFilter, setSelectedLanguageFilter] = useState<string>('all');
   const { data: subjects = [], isLoading: subjectsLoading } = useLearningSubjects();
   const { data: topics = [], isLoading: topicsLoading, error: topicsError } = useLearningTopics();
