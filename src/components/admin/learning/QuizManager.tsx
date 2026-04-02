@@ -12,14 +12,6 @@ import type { Quiz } from '@/types/learning';
 
 const QuizManager = () => {
   const [selectedVideoId, setSelectedVideoId] = useState<string>('');
-<<<<<<< HEAD
-  const [quizCurriculum, setQuizCurriculum] = useState({
-    countryCode: '',
-    levelCode: '',
-    subjectId: '',
-  });
-=======
->>>>>>> learning
   const [selectedLanguageFilter, setSelectedLanguageFilter] = useState<string>('all');
   const { data: videos = [], isLoading: videosLoading, error: videosError } = useLearningVideos();
   const { data: quizzes = [], isLoading: quizzesLoading, error: quizzesError } = useLearningQuizzes(selectedVideoId || undefined);
@@ -27,15 +19,6 @@ const QuizManager = () => {
   const updateQuiz = useUpdateQuiz();
   const deleteQuiz = useDeleteQuiz();
   
-<<<<<<< HEAD
-  // Filter videos by selected curriculum topic
-  const filteredVideos = videos.filter(video => {
-    if (!quizCurriculum.subjectId) return true; // Show all if no filter
-    return availableTopics.some(topic => topic.id === video.topic_id);
-  });
-
-=======
->>>>>>> learning
   // Filter quizzes by language
   const filteredQuizzes = selectedLanguageFilter === 'all' 
     ? quizzes 
