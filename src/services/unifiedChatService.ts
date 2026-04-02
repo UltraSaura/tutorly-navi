@@ -271,12 +271,12 @@ export async function sendUnifiedMessage(
       return { data: null, error: 'No content received from AI service' };
     }
 
-    // Simple parsing - AI is smart enough to structure its own response
+    // Use server-parsed structured fields instead of unreliable regex
     const response: UnifiedChatResponse = {
       content: data.content,
-      isMath: !data.content.includes('NOT_MATH'),
-      isCorrect: /\bCORRECT\b/i.test(data.content) ? true : (/\bINCORRECT\b/i.test(data.content) ? false : undefined),
-      needsRetry: /\bINCORRECT\b/i.test(data.content),
+      isMath: data.isMath ?? !data.content.includes('NOT_MATH'),
+      isCorrect: data.isCorrect ?? undefined,
+      needsRetry: data.isCorrect === false,
       hasAnswer: /=\s*[^=]*$/.test(inputMessage),
       confidence: data.content.includes('NOT_MATH') ? 95 : 85
     };
