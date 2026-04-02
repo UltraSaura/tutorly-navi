@@ -1,73 +1,38 @@
 
 
-## Diagnosis: Exercise Not Graded on Android
+## Fix: Registration Form Resets When Selecting Country
 
-### What's working
-- The prompt **IS available** in Supabase — "Unified Math Chat Assistant" is active with priority 100
-- The edge function reads it using `SUPABASE_SERVICE_ROLE_KEY` (bypasses RLS)
-- Variable substitution has sensible fallbacks for missing user data
-- `AIResponse.tsx` correctly parses JSON and reads `isCorrect` from the AI response
+### Problem
+When selecting a country during registration, `setLanguageFromCountry()` is called, which changes the language state. This triggers the translation loading effect in `SimpleLanguageContext`, which sets `isLoading = true`. The provider (line 437-443) renders a full-screen "Loading translations..." placeholder instead of its children, **unmounting the entire component tree** including the registration form. When translations finish loading, the form remounts fresh with `step` reset to `'login'`.
 
-### Root cause: DeepSeek JSON reliability
-
-The default model is **DeepSeek Chat** (`deepseek-chat`). The prompt instructs the AI to return structured JSON with `"isCorrect": true/false`. However:
-
-1. **DeepSeek frequently returns non-strict JSON** — it may wrap JSON in markdown fences differently, add conversational text before/after the JSON, or return partially malformed JSON. When `parseAIResponse()` in `AIResponse.tsx` fails to parse, it returns `null` and the card renders as ungraded plain text.
-
-2. **Dual grading detection conflict** — `unifiedChatService.ts` (line 278) uses regex `/\bCORRECT\b/i` to detect grading. When the AI returns JSON containing `"isCorrect": false`, the regex matches the word "CORRECT" inside the key name `isCorrect`, so it always evaluates to `true`. The `INCORRECT` marker is never present in JSON output. This means `data.isCorrect` in `useChat.ts` is unreliable.
-
-3. **Silent failures on Android** — if the edge function errors (API key issue, timeout, model not found), the fallback response has no grading. The user sees a generic message with no grading UI.
-
-### Fix (2 files)
-
-| File | Change |
-|------|--------|
-| `src/services/unifiedChatService.ts` | Parse `isCorrect` from JSON response instead of regex; add JSON extraction from response content |
-| `supabase/functions/ai-chat/index.ts` | Extract JSON fields from AI response content and include them as top-level response fields (`isCorrect`, `isMath`, `sections`) |
-
-### Detail
-
-**1. Edge function — extract structured data from AI response** (`ai-chat/index.ts`, after getting `responseContent`):
-
-Before returning the response, try to parse the AI's text as JSON. If it contains `isCorrect`, `isMath`, or `sections`, include them as top-level fields in the response:
-
-```typescript
-let parsedFields: any = {};
-try {
-  const jsonMatch = responseContent.match(/```json\n([\s\S]*?)\n```/);
-  const jsonStr = jsonMatch ? jsonMatch[1] : responseContent;
-  const parsed = JSON.parse(jsonStr);
-  if (parsed.isCorrect !== undefined) parsedFields.isCorrect = parsed.isCorrect;
-  if (parsed.isMath !== undefined) parsedFields.isMath = parsed.isMath;
-  if (parsed.sections) parsedFields.sections = parsed.sections;
-} catch (e) { /* not JSON, that's fine */ }
-
-return new Response(JSON.stringify({
-  content: responseContent,
-  ...parsedFields,  // Include structured fields if available
-  modelId, modelUsed: modelConfig.model, provider: modelConfig.provider
-}));
+### Root cause
+`SimpleLanguageContext.tsx` line 437-443 — the provider blocks rendering of all children while translations load:
+```tsx
+if (isLoading) {
+  return <div>Loading translations...</div>;
+}
 ```
 
-**2. Client service — use structured fields from response** (`unifiedChatService.ts`):
+### Fix (1 file)
 
-Replace the regex-based detection with the structured fields from the edge function:
+**`src/context/SimpleLanguageContext.tsx`** — Stop unmounting children during translation reloads. Instead, always render children and only show the loading screen on the very first load (when no translations have been loaded yet).
 
-```typescript
-const response: UnifiedChatResponse = {
-  content: data.content,
-  isMath: data.isMath ?? !data.content.includes('NOT_MATH'),
-  isCorrect: data.isCorrect ?? undefined,  // Use server-parsed value
-  needsRetry: data.isCorrect === false,
-  hasAnswer: /=\s*[^=]*$/.test(inputMessage),
-  confidence: data.content.includes('NOT_MATH') ? 95 : 85,
-  sections: data.sections ?? undefined
-};
+Replace lines 437-443:
+```tsx
+if (isLoading && Object.keys(translations).length === 0) {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-muted-foreground">Loading translations...</div>
+    </div>
+  );
+}
 ```
+
+This way:
+- First page load with no cached translations: shows loading screen (correct)
+- Language change mid-session (e.g., country selection): keeps children mounted, translations update seamlessly once loaded (form state preserved)
 
 ### Expected result
-- AI returns JSON with `isCorrect` — edge function extracts it and passes it through
-- Client uses the parsed boolean directly instead of unreliable regex
-- Grading displays correctly on Android and all platforms
-- Falls back gracefully if AI doesn't return JSON
+- User selects country during registration → language may change in background but form stays visible and form state is preserved
+- No more unexpected "refresh" when filling out registration forms
 
