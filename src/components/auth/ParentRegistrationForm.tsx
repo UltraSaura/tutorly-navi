@@ -156,7 +156,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
               <Label htmlFor="country">{t('auth.country')}</Label>
               <Select onValueChange={(value) => {
                 setValue('country', value);
-                // Don't auto-switch language during registration - it causes form reset
+                setLanguageFromCountry(value);
               }} value={selectedCountry}>
                 <SelectTrigger className={errors.country ? 'border-destructive' : ''}>
                   <SelectValue placeholder={t('auth.selectCountry')} />

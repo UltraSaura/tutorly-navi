@@ -1,52 +1,73 @@
 
-Issue summary
-- I checked for explicit auto-refresh logic and did not find a timer or redirect loop tied to the auth page itself.
-- The session replay shows the app returning to `/auth` and showing `Loading translations...`, then `Loading...`, multiple times.
-- The current language fix is only partial: it prevents unmounting during a language change inside the same provider instance, but if `SimpleLanguageProvider` remounts, `translations` starts again as `{}` with `isLoading=true`, so the whole auth tree still unmounts and looks like a page refresh.
-- That explains why the problem can still happen even on the Sign in page.
 
-Implementation plan
+## Diagnosis: Exercise Not Graded on Android
 
-1. Make translation bootstrap non-blocking after the first cold load
-- File: `src/context/SimpleLanguageContext.tsx`
-- Initialize `translations` from `translationCache` for the current language instead of always starting from `{}`.
-- Add a one-time bootstrap flag/ref so the full-screen `Loading translations...` screen appears only on the first cold app load, not on later remounts.
-- Keep syncing i18next in the background, but never replace the whole app with the loader once translations have already been available.
+### What's working
+- The prompt **IS available** in Supabase — "Unified Math Chat Assistant" is active with priority 100
+- The edge function reads it using `SUPABASE_SERVICE_ROLE_KEY` (bypasses RLS)
+- Variable substitution has sensible fallbacks for missing user data
+- `AIResponse.tsx` correctly parses JSON and reads `isCorrect` from the AI response
 
-2. Disable auto language switching during auth
-- Files:
-  - `src/context/SimpleLanguageContext.tsx`
-  - `src/components/auth/StudentRegistrationForm.tsx`
-  - `src/components/auth/ParentRegistrationForm.tsx`
-- Guard country-detection / auto-language effects when the route starts with `/auth`.
-- In the registration forms, selecting a country should update country and school-level data only; do not auto-call `setLanguageFromCountry()` during signup.
-- This removes the biggest auth-flow trigger for mid-form translation reloads.
+### Root cause: DeepSeek JSON reliability
 
-3. Preserve auth state even if a remount still happens
-- File: `src/pages/AuthPage.tsx`
-- Persist the current auth step (`login`, `userType`, `studentForm`, `parentForm`, `resetPassword`) in `sessionStorage` or the URL.
-- Restore that step on mount so the page does not jump back to Sign in unexpectedly.
-- Recommended safety net: persist registration draft values in `sessionStorage` so typed data survives any unexpected remount.
+The default model is **DeepSeek Chat** (`deepseek-chat`). The prompt instructs the AI to return structured JSON with `"isCorrect": true/false`. However:
 
-4. Remove remaining forced reloads in the app
-- Files:
-  - `src/components/ui/language-select.tsx`
-  - `src/components/ui/language-selector.tsx`
-  - `src/components/layout/HeaderNavigation.tsx`
-  - `src/components/layout/Navbar.tsx`
-- Remove `window.location.reload()` after language changes.
-- These are not the direct `/auth` trigger, but they are real hard-refresh points elsewhere and should be cleaned up to prevent similar reset behavior.
+1. **DeepSeek frequently returns non-strict JSON** — it may wrap JSON in markdown fences differently, add conversational text before/after the JSON, or return partially malformed JSON. When `parseAIResponse()` in `AIResponse.tsx` fails to parse, it returns `null` and the card renders as ungraded plain text.
 
-Technical detail
-- Why the previous fix did not fully solve it:
-  - Current guard:
-    `if (isLoading && Object.keys(translations).length === 0) ...`
-  - Remaining problem:
-    when the provider remounts, `translations` is reset to `{}` before the effect repopulates from cache, so the loader still replaces the whole app.
-  - Better fix:
-    seed translations synchronously from cache and treat the loader as a first-boot-only state.
+2. **Dual grading detection conflict** — `unifiedChatService.ts` (line 278) uses regex `/\bCORRECT\b/i` to detect grading. When the AI returns JSON containing `"isCorrect": false`, the regex matches the word "CORRECT" inside the key name `isCorrect`, so it always evaluates to `true`. The `INCORRECT` marker is never present in JSON output. This means `data.isCorrect` in `useChat.ts` is unreliable.
 
-Expected result
-- No more visible refresh/reset while typing on Sign in or Create Account.
-- Country selection no longer resets the auth flow.
-- Even if the app re-renders, the auth step and typed form data remain intact.
+3. **Silent failures on Android** — if the edge function errors (API key issue, timeout, model not found), the fallback response has no grading. The user sees a generic message with no grading UI.
+
+### Fix (2 files)
+
+| File | Change |
+|------|--------|
+| `src/services/unifiedChatService.ts` | Parse `isCorrect` from JSON response instead of regex; add JSON extraction from response content |
+| `supabase/functions/ai-chat/index.ts` | Extract JSON fields from AI response content and include them as top-level response fields (`isCorrect`, `isMath`, `sections`) |
+
+### Detail
+
+**1. Edge function — extract structured data from AI response** (`ai-chat/index.ts`, after getting `responseContent`):
+
+Before returning the response, try to parse the AI's text as JSON. If it contains `isCorrect`, `isMath`, or `sections`, include them as top-level fields in the response:
+
+```typescript
+let parsedFields: any = {};
+try {
+  const jsonMatch = responseContent.match(/```json\n([\s\S]*?)\n```/);
+  const jsonStr = jsonMatch ? jsonMatch[1] : responseContent;
+  const parsed = JSON.parse(jsonStr);
+  if (parsed.isCorrect !== undefined) parsedFields.isCorrect = parsed.isCorrect;
+  if (parsed.isMath !== undefined) parsedFields.isMath = parsed.isMath;
+  if (parsed.sections) parsedFields.sections = parsed.sections;
+} catch (e) { /* not JSON, that's fine */ }
+
+return new Response(JSON.stringify({
+  content: responseContent,
+  ...parsedFields,  // Include structured fields if available
+  modelId, modelUsed: modelConfig.model, provider: modelConfig.provider
+}));
+```
+
+**2. Client service — use structured fields from response** (`unifiedChatService.ts`):
+
+Replace the regex-based detection with the structured fields from the edge function:
+
+```typescript
+const response: UnifiedChatResponse = {
+  content: data.content,
+  isMath: data.isMath ?? !data.content.includes('NOT_MATH'),
+  isCorrect: data.isCorrect ?? undefined,  // Use server-parsed value
+  needsRetry: data.isCorrect === false,
+  hasAnswer: /=\s*[^=]*$/.test(inputMessage),
+  confidence: data.content.includes('NOT_MATH') ? 95 : 85,
+  sections: data.sections ?? undefined
+};
+```
+
+### Expected result
+- AI returns JSON with `isCorrect` — edge function extracts it and passes it through
+- Client uses the parsed boolean directly instead of unreliable regex
+- Grading displays correctly on Android and all platforms
+- Falls back gracefully if AI doesn't return JSON
+

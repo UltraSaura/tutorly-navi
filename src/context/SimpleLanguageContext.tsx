@@ -87,12 +87,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     return initialLang;
   });
   
-  // Initialize translations from cache to avoid blocking on remount
-  const [translations, setTranslations] = useState<any>(() => {
-    const cached = translationCache.get(defaultLang);
-    return cached || {};
-  });
-  const [isLoading, setIsLoading] = useState(() => !translationCache.has(defaultLang));
+  const [translations, setTranslations] = useState<any>({});
+  const [isLoading, setIsLoading] = useState(true);
   
   console.log('[Translation] SimpleLanguageProvider render, language:', language, 'isLoading:', isLoading);
   
@@ -438,9 +434,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     detectLanguageFromUser();
   }, [user?.id, detection.country, detection.method, language, getLanguageFromDetection]);
 
-  // Only block on the very first cold load when no translations exist at all
-  // Once translations have been loaded even once, never unmount children
-  if (isLoading && Object.keys(translations).length === 0 && !translationCache.has(language)) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-muted-foreground">Loading translations...</div>
