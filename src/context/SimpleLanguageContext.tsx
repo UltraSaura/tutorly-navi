@@ -338,6 +338,10 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     return result;
   };
 
+  // Track current language via ref to avoid dependency loops
+  const languageRef = useRef(language);
+  useEffect(() => { languageRef.current = language; }, [language]);
+
   // Auto-detect language from user profile on login
   // Clear languageManuallySet when a new user logs in to allow profile-based detection
   useEffect(() => {
@@ -386,13 +390,13 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
       }
       
       // Fallback to automatic country detection (only if no profile language and current is English)
-      if (!detectedLanguage && detection.country && language === 'en') {
-        detectedLanguage = getLanguageFromDetection();
+      if (!detectedLanguage && detection.country && languageRef.current === 'en') {
+        detectedLanguage = getLanguageFromCountry(detection.country);
         console.log('[Auto-detect] Using automatic detection:', detection.country, '->', detectedLanguage);
       }
       
-      if (detectedLanguage && detectedLanguage !== language) {
-        console.log('[Auto-detect] Changing language from', language, 'to', detectedLanguage);
+      if (detectedLanguage && detectedLanguage !== languageRef.current) {
+        console.log('[Auto-detect] Changing language from', languageRef.current, 'to', detectedLanguage);
         setLanguage(detectedLanguage);
         localStorage.setItem('lang', detectedLanguage);
         
@@ -412,7 +416,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     };
     
     detectLanguageFromUser();
-  }, [user?.id, detection.country, detection.method, language, getLanguageFromDetection]);
+  }, [user?.id, detection.country]);
 
   if (isLoading) {
     return (
