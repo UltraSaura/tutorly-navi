@@ -89,6 +89,12 @@ APP_BASE_NAME=${0##*/}
 APP_HOME=$( cd -P "${APP_HOME:-./}" > /dev/null && printf '%s
 ' "$PWD" ) || exit
 
+# Cursor (and similar) sandboxes may set GRADLE_USER_HOME to a transient cache path where
+# wrapper distribution downloads fail with NoSuchFileException. Use the real user Gradle home.
+case "${GRADLE_USER_HOME:-}" in
+  *cursor-sandbox-cache*) export GRADLE_USER_HOME="${HOME}/.gradle" ;;
+esac
+
 # Use the maximum available, or set MAX_FD != -1 to use that value.
 MAX_FD=maximum
 

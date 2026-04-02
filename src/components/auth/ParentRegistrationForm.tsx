@@ -12,7 +12,6 @@ import { ParentRegistrationData } from '@/types/registration';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
-import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
 const parentSchema = z.object({
@@ -42,7 +41,6 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
   loading = false
 }) => {
   const { t } = useTranslation();
-  const { setLanguageFromCountry } = useLanguage();
   const { profile } = useUserProfile();
   const { countries, getSchoolLevelsByCountry, loading: dataLoading, selectedCountry, setCountry } = useCountriesAndLevels(profile?.country);
 
@@ -156,8 +154,8 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
               <Label htmlFor="country">{t('auth.country')}</Label>
               <Select onValueChange={(value) => {
                 setValue('country', value);
-                setLanguageFromCountry(value);
-              }} value={selectedCountry}>
+                setCountry(value);
+              }} value={watchedCountry || selectedCountry}>
                 <SelectTrigger className={errors.country ? 'border-destructive' : ''}>
                   <SelectValue placeholder={t('auth.selectCountry')} />
                 </SelectTrigger>

@@ -9,6 +9,9 @@ verify_jwt = true
 verify_jwt = true
 [functions.create-child-account]
 verify_jwt = true
+
+[functions.create-student-account]
+verify_jwt = false
 [functions.export-guardian-report]
 verify_jwt = true
 [functions.quiz-bank-visible]

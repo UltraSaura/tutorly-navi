@@ -89,6 +89,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   
   const [translations, setTranslations] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
+  /** After first successful translation load; avoids unmounting the whole app when language changes. */
+  const [initialAppReady, setInitialAppReady] = useState(false);
   
   console.log('[Translation] SimpleLanguageProvider render, language:', language, 'isLoading:', isLoading);
   
@@ -104,7 +106,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         console.log('[Translation] Using cached translations for:', language);
         setTranslations(translationCache.get(language));
         setIsLoading(false);
-        
+        setInitialAppReady(true);
+
         // Sync with i18next even when using cache
         try {
           const i18n = await import('i18next').then(m => m.default);
@@ -175,6 +178,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         }
       } finally {
         setIsLoading(false);
+        setInitialAppReady(true);
       }
     };
 
@@ -314,7 +318,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
       timestamp: new Date().toISOString()
     });
     
-    if (isLoading) return key;
+    // First load only: no strings yet. On language change keep showing previous bundle until swap.
+    if (isLoading && Object.keys(translations).length === 0) return key;
     
     // First try to find the key directly (for flattened keys like 'exercises.exercise.answer')
     let value = translations[key];
@@ -434,7 +439,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     detectLanguageFromUser();
   }, [user?.id, detection.country, detection.method, language, getLanguageFromDetection]);
 
-  if (isLoading) {
+  if (!initialAppReady) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-muted-foreground">Loading translations...</div>

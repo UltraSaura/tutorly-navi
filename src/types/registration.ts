@@ -22,6 +22,9 @@ export interface ChildInfo {
 }
 
 export interface StudentRegistrationData {
+  /** Login id (stored as username@student.local in Auth) */
+  username: string;
+  /** Contact / notification email (separate from login) */
   email: string;
   password: string;
   firstName: string;
