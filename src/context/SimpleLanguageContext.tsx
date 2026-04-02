@@ -87,8 +87,12 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     return initialLang;
   });
   
-  const [translations, setTranslations] = useState<any>({});
-  const [isLoading, setIsLoading] = useState(true);
+  // Initialize translations from cache to avoid blocking on remount
+  const [translations, setTranslations] = useState<any>(() => {
+    const cached = translationCache.get(defaultLang);
+    return cached || {};
+  });
+  const [isLoading, setIsLoading] = useState(() => !translationCache.has(defaultLang));
   
   console.log('[Translation] SimpleLanguageProvider render, language:', language, 'isLoading:', isLoading);
   
