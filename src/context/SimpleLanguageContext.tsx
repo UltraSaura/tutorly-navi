@@ -434,7 +434,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     detectLanguageFromUser();
   }, [user?.id, detection.country, detection.method, language, getLanguageFromDetection]);
 
-  if (isLoading) {
+  if (isLoading && Object.keys(translations).length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-muted-foreground">Loading translations...</div>
