@@ -23,8 +23,13 @@ const AuthPage: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const location = useLocation();
-  const [step, setStep] = useState<AuthStep>('login');
-  const [selectedUserType, setSelectedUserType] = useState<UserType | null>(null);
+  const [step, setStep] = useState<AuthStep>(() => {
+    const saved = sessionStorage.getItem('authStep');
+    return (saved as AuthStep) || 'login';
+  });
+  const [selectedUserType, setSelectedUserType] = useState<UserType | null>(() => {
+    return sessionStorage.getItem('authUserType') as UserType | null;
+  });
   const [loading, setLoading] = useState(false);
 
   const state = location.state as { message?: string; returnTo?: string } | null;
