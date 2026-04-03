@@ -402,7 +402,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
       }
       
       // Fallback to automatic country detection (only if no profile language and current is English)
-      if (!detectedLanguage && detection.country && language === 'en') {
+      if (!detectedLanguage && detection.country && languageRef.current === 'en') {
         detectedLanguage = getLanguageFromDetection();
         console.log('[Auto-detect] Using automatic detection:', detection.country, '->', detectedLanguage);
       }
