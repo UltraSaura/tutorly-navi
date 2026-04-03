@@ -60,10 +60,17 @@ export function getGradeLevelInfo(level: string): GradeLevelInfo {
     'ce2': { ageRange: [8, 9], isUnder11: true, system: 'French' },
     'cm1': { ageRange: [9, 10], isUnder11: true, system: 'French' },
     'cm2': { ageRange: [10, 11], isUnder11: true, system: 'French' },
+    '6eme': { ageRange: [11, 12], isUnder11: false, system: 'French' },
     '6ème': { ageRange: [11, 12], isUnder11: false, system: 'French' },
+    '5eme': { ageRange: [12, 13], isUnder11: false, system: 'French' },
     '5ème': { ageRange: [12, 13], isUnder11: false, system: 'French' },
+    '4eme': { ageRange: [13, 14], isUnder11: false, system: 'French' },
     '4ème': { ageRange: [13, 14], isUnder11: false, system: 'French' },
+    '3eme': { ageRange: [14, 15], isUnder11: false, system: 'French' },
     '3ème': { ageRange: [14, 15], isUnder11: false, system: 'French' },
+    '2nde': { ageRange: [15, 16], isUnder11: false, system: 'French' },
+    '1ere': { ageRange: [16, 17], isUnder11: false, system: 'French' },
+    'term': { ageRange: [17, 18], isUnder11: false, system: 'French' },
   };
 
   for (const [key, info] of Object.entries(frenchClassMap)) {
