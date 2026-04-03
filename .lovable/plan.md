@@ -1,52 +1,60 @@
 
 
-## Fix: Build Error + Language Re-render Loop + Exercise Not Displaying
+## Analysis: Explanation Panel Filtering for Animations
 
-Three issues to fix:
+### Current behavior
 
-### 1. Build error in `generate-lesson-content/index.ts` (line 173)
+In `src/features/explanations/TwoCards.tsx` (line 149-150), the decision to show the interactive math stepper animation is:
 
-The `.map(to => to.objectives)` produces a nested array (`[][]`) which can't be cast to a flat array. Need to `.flat()` it.
-
-**File**: `supabase/functions/generate-lesson-content/index.ts` line 173
 ```typescript
-// Change:
-const objectives = (topicObjectives?.map(to => to.objectives).filter(Boolean) || []) as Array<...>;
-// To:
-const objectives = (topicObjectives?.map(to => to.objectives).filter(Boolean).flat() || []) as Array<...>;
+const shouldShowInteractiveStepper = !isGuardian && userContext?.student_level && 
+  isUnder11YearsOld(userContext.student_level) && exampleExpression;
 ```
 
-### 2. Language re-render loop in `SimpleLanguageContext.tsx` (line 440)
+This uses `isUnder11YearsOld()` from `src/utils/gradeLevelMapping.ts`, which maps levels as follows:
 
-The `useEffect` dependency array includes `language` and `getLanguageFromDetection` (unstable). This creates a loop: effect fires → sets language → triggers effect again.
+| Level | Age | isUnder11 | Gets Animation? |
+|-------|-----|-----------|-----------------|
+| CP | 6-7 | true | Yes |
+| CE1 | 7-8 | true | Yes |
+| CE2 | 8-9 | true | Yes |
+| CM1 | 9-10 | true | Yes |
+| CM2 | 10-11 | true | Yes |
+| 6eme | 11-12 | false | No |
+| 5eme+ | 12+ | false | No |
 
-**File**: `src/hooks/useCountryDetection.ts` line 158-163 — wrap in `useCallback`:
+### The problem
+
+The current `isUnder11` threshold already aligns with French "college" (6eme+). CP through CM2 get animations; 6eme and above do not. **This is already correct for the French system.**
+
+However, `student_level` comes from `useUserContext` which reads the `level` field from the `users` table (line 30). If a user was registered via the guardian flow, their level is in the `children` table (`grade` field) — not in `users.level`. The `useUserContext` hook does NOT check the `children` table.
+
+### What needs to change
+
+The filtering logic itself is correct. The issue is that `student_level` may be **missing** for child accounts, causing `shouldShowInteractiveStepper` to be `false` (no animation shown even for young students).
+
+### Proposed fix
+
+1. **`src/hooks/useUserContext.ts`** — After fetching from `users`, also check the `children` table for `grade` (same pattern as `useUserSchoolLevel.ts`). If `children.grade` exists, use it as `student_level` (it takes precedence, matching existing convention).
+
+2. **`src/features/explanations/TwoCards.tsx`** — No logic change needed. The existing `isUnder11YearsOld` check already maps French college (6eme+) correctly. Once `student_level` is reliably populated, animations will show for CP-CM2 and the multi-card method will show for 6eme+.
+
+### Technical detail
+
+In `useUserContext.ts`, after the `users` query:
 ```typescript
-const getLanguageFromDetection = useCallback(() => {
-  if (detection.country) {
-    return getLanguageFromCountry(detection.country);
-  }
-  return 'en';
-}, [detection.country]);
+// Check children table for grade (takes precedence)
+const { data: childData } = await supabase
+  .from('children')
+  .select('grade')
+  .eq('user_id', user.id)
+  .single();
+
+return {
+  student_level: childData?.grade || data.level || undefined,
+  // ... rest unchanged
+};
 ```
 
-**File**: `src/context/SimpleLanguageContext.tsx`:
-- Add `useRef` to imports (line 1)
-- After line 364, add a `languageRef` that tracks current language
-- Line 414: use `languageRef.current` instead of `language`
-- Line 419: use `languageRef.current` instead of `language`  
-- Line 440: change deps to `[user?.id, detection.country]` only
-- Lines 311-319: remove the verbose `console.log` in `t()` that fires on every translation call (floods console, degrades performance)
-
-### 3. Exercise display issue
-
-The page reloading from the language loop prevents exercises from being displayed — once the loop is fixed, exercises should render and grade normally. The session replay confirms the page keeps navigating to `/chat` repeatedly with "Loading translations..." appearing each time.
-
-### Summary
-
-| File | Change |
-|------|--------|
-| `supabase/functions/generate-lesson-content/index.ts` | Add `.flat()` to fix TS2352 type error |
-| `src/hooks/useCountryDetection.ts` | Wrap `getLanguageFromDetection` in `useCallback` |
-| `src/context/SimpleLanguageContext.tsx` | Fix effect deps, add `languageRef`, remove verbose `t()` logging |
+This is a one-file change that ensures the animation gate works for all user types.
 
