@@ -86,7 +86,10 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     
     return initialLang;
   });
-  
+
+  const languageRef = useRef(language);
+  useEffect(() => { languageRef.current = language; }, [language]);
+
   const [translations, setTranslations] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
   /** After first successful translation load; avoids unmounting the whole app when language changes. */
