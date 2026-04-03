@@ -1,60 +1,54 @@
 
 
-## Analysis: Explanation Panel Filtering for Animations
+## Fix: College-Level Students Still See Math Animations
 
-### Current behavior
+### Root Cause
 
-In `src/features/explanations/TwoCards.tsx` (line 149-150), the decision to show the interactive math stepper animation is:
+Two bugs in `src/utils/gradeLevelMapping.ts`:
+
+1. **Accent mismatch**: The French level keys use accented characters (`6ème`, `5ème`, etc.) but the database stores values without accents (`6EME`, `5EME`, `3eme`). After `.toLowerCase()`, `"6eme"` never matches `"6ème"` — the lookup always fails.
+
+2. **Dangerous default**: Line 100 falls back to `isUnder11: true` when no level matches. So any unrecognized level (including all college levels) incorrectly shows animations.
+
+### Fix
+
+**`src/utils/gradeLevelMapping.ts`** — Two changes:
+
+1. Add non-accented variants to the French class map and also add the missing lycée levels:
 
 ```typescript
-const shouldShowInteractiveStepper = !isGuardian && userContext?.student_level && 
-  isUnder11YearsOld(userContext.student_level) && exampleExpression;
-```
-
-This uses `isUnder11YearsOld()` from `src/utils/gradeLevelMapping.ts`, which maps levels as follows:
-
-| Level | Age | isUnder11 | Gets Animation? |
-|-------|-----|-----------|-----------------|
-| CP | 6-7 | true | Yes |
-| CE1 | 7-8 | true | Yes |
-| CE2 | 8-9 | true | Yes |
-| CM1 | 9-10 | true | Yes |
-| CM2 | 10-11 | true | Yes |
-| 6eme | 11-12 | false | No |
-| 5eme+ | 12+ | false | No |
-
-### The problem
-
-The current `isUnder11` threshold already aligns with French "college" (6eme+). CP through CM2 get animations; 6eme and above do not. **This is already correct for the French system.**
-
-However, `student_level` comes from `useUserContext` which reads the `level` field from the `users` table (line 30). If a user was registered via the guardian flow, their level is in the `children` table (`grade` field) — not in `users.level`. The `useUserContext` hook does NOT check the `children` table.
-
-### What needs to change
-
-The filtering logic itself is correct. The issue is that `student_level` may be **missing** for child accounts, causing `shouldShowInteractiveStepper` to be `false` (no animation shown even for young students).
-
-### Proposed fix
-
-1. **`src/hooks/useUserContext.ts`** — After fetching from `users`, also check the `children` table for `grade` (same pattern as `useUserSchoolLevel.ts`). If `children.grade` exists, use it as `student_level` (it takes precedence, matching existing convention).
-
-2. **`src/features/explanations/TwoCards.tsx`** — No logic change needed. The existing `isUnder11YearsOld` check already maps French college (6eme+) correctly. Once `student_level` is reliably populated, animations will show for CP-CM2 and the multi-card method will show for 6eme+.
-
-### Technical detail
-
-In `useUserContext.ts`, after the `users` query:
-```typescript
-// Check children table for grade (takes precedence)
-const { data: childData } = await supabase
-  .from('children')
-  .select('grade')
-  .eq('user_id', user.id)
-  .single();
-
-return {
-  student_level: childData?.grade || data.level || undefined,
-  // ... rest unchanged
+const frenchClassMap: Record<string, GradeLevelInfo> = {
+  'cp': { ageRange: [6, 7], isUnder11: true, system: 'French' },
+  'ce1': { ageRange: [7, 8], isUnder11: true, system: 'French' },
+  'ce2': { ageRange: [8, 9], isUnder11: true, system: 'French' },
+  'cm1': { ageRange: [9, 10], isUnder11: true, system: 'French' },
+  'cm2': { ageRange: [10, 11], isUnder11: true, system: 'French' },
+  '6eme': { ageRange: [11, 12], isUnder11: false, system: 'French' },
+  '6ème': { ageRange: [11, 12], isUnder11: false, system: 'French' },
+  '5eme': { ageRange: [12, 13], isUnder11: false, system: 'French' },
+  '5ème': { ageRange: [12, 13], isUnder11: false, system: 'French' },
+  '4eme': { ageRange: [13, 14], isUnder11: false, system: 'French' },
+  '4ème': { ageRange: [13, 14], isUnder11: false, system: 'French' },
+  '3eme': { ageRange: [14, 15], isUnder11: false, system: 'French' },
+  '3ème': { ageRange: [14, 15], isUnder11: false, system: 'French' },
+  '2nde': { ageRange: [15, 16], isUnder11: false, system: 'French' },
+  '1ere': { ageRange: [16, 17], isUnder11: false, system: 'French' },
+  'term': { ageRange: [17, 18], isUnder11: false, system: 'French' },
 };
 ```
 
-This is a one-file change that ensures the animation gate works for all user types.
+2. Change the default fallback (line 100) from `isUnder11: true` to `isUnder11: false`:
+
+```typescript
+// Default fallback - assume NOT under 11 if unclear (safer: no animations for unknown levels)
+return { ageRange: [6, 18], isUnder11: false, system: 'Generic' };
+```
+
+### Why this works
+- College levels (`6EME`, `5EME`, `4EME`, `3EME`) now correctly match and return `isUnder11: false` → no animation
+- Lycée levels (`2NDE`, `1ERE`, `TERM`) also matched → no animation
+- Primary levels (`CP`–`CM2`) still match → animation shown
+- Unknown levels default to no animation (safer behavior)
+
+One file, ~15 lines changed.
 
