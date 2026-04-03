@@ -308,15 +308,6 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   };
 
   const t = (key: string, params?: Record<string, string | number>): string => {
-    // Debug logging for ALL translation function calls
-    console.log('[Translation] t() function called:', {
-      key,
-      isLoading,
-      language,
-      hasTranslations: !!translations,
-      translationsKeys: translations ? Object.keys(translations) : [],
-      timestamp: new Date().toISOString()
-    });
     
     // First load only: no strings yet. On language change keep showing previous bundle until swap.
     if (isLoading && Object.keys(translations).length === 0) return key;
