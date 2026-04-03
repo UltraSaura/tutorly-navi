@@ -5,13 +5,16 @@ export async function callGoogle(
   history: any[], 
   userMessage: string, 
   model: string, 
-  isExercise: boolean = false
+  isExercise: boolean = false,
+  maxTokens: number = 800
 ): Promise<string> {
   const googleApiKey = Deno.env.get('GOOGLE_API_KEY');
   
   if (!googleApiKey) {
     throw new Error('Google API key not configured');
   }
+  
+  console.log(`[Google] Calling with model: ${model}, maxTokens: ${maxTokens}`);
   
   // Google has a different API structure
   const combinedHistory = history.map(msg => msg.content).join("\n");
@@ -32,7 +35,7 @@ export async function callGoogle(
       }],
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 800,
+        maxOutputTokens: maxTokens,
       }
     })
   });

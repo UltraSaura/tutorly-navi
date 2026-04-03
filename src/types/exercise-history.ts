@@ -5,6 +5,7 @@ export interface ExerciseHistoryRecord {
   user_answer: string | null;
   is_correct: boolean | null;
   subject_id: string | null;
+  topic_id: string | null;
   attempts_count: number;
   created_at: string;
   updated_at: string;

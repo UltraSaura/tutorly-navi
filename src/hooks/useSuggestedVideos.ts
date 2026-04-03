@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { extractKeywordsFromHomework, scoreVideoMatch } from '@/utils/homeworkKeywordExtractor';
-import { filterContentByUserLevel } from '@/utils/schoolLevelFilter';
+import { filterContentByAgeAndLevel } from '@/utils/schoolLevelFilter';
 import { useUserSchoolLevel } from './useUserSchoolLevel';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 import type { Video } from '@/types/learning';
 
 interface SuggestedVideo extends Video {
@@ -11,9 +12,10 @@ interface SuggestedVideo extends Video {
 
 export function useSuggestedVideos(homeworkContent: string | null, limit: number = 3) {
   const { data: userLevelData } = useUserSchoolLevel();
+  const { language: userLanguage } = useLanguage();
   
   return useQuery({
-    queryKey: ['suggested-videos', homeworkContent, userLevelData?.level],
+    queryKey: ['suggested-videos', homeworkContent, userLevelData?.level, userLanguage],
     queryFn: async (): Promise<SuggestedVideo[]> => {
       if (!homeworkContent || homeworkContent.trim() === '') {
         return [];
@@ -37,8 +39,8 @@ export function useSuggestedVideos(homeworkContent: string | null, limit: number
         return [];
       }
       
-      // Filter by user's age/level
-      const suitableVideos = filterContentByUserLevel(
+      // Filter by user's age/level only (no strict language filter — prefer available content)
+      const suitableVideos = filterContentByAgeAndLevel(
         allVideos as any,
         userLevelData?.level || null,
         userLevelData?.age || null

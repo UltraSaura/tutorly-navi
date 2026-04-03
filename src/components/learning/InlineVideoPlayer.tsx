@@ -10,6 +10,8 @@ import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { isYouTubeUrl, extractYouTubeVideoId, getYouTubeWatchUrl, loadYouTubeAPI } from '@/utils/youtube';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useUpdateObjectiveMastery } from '@/hooks/useObjectiveMastery';
+import { useAuth } from '@/context/AuthContext';
 
 interface InlineVideoPlayerProps {
   videoId: string;
@@ -36,6 +38,9 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
   const [playerReady, setPlayerReady] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const { user } = useAuth();
+  const updateMastery = useUpdateObjectiveMastery();
 
   const {
     video,
@@ -364,6 +369,34 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
 
     const result = await submitQuizAnswer(currentQuiz.id, selectedAnswer);
     setQuizResult(result);
+
+    // Update mastery tracking if quiz has objective linkage
+    // This connects task results → objective mastery for progress tracking
+    if (user?.id && video?.topic_id) {
+      try {
+        // Simple scoring: correct = 100%, incorrect = 0%
+        // For more sophisticated scoring (multiple questions per objective), 
+        // batch results and calculate average before updating
+        const scorePercent = result.isCorrect ? 100 : 0;
+        
+        // Note: currentQuiz would need objective_id field for this to work
+        // For now, this is a placeholder - extend video_quizzes table to include objective_id
+        // when implementing full objective linkage
+        if ((currentQuiz as any).objective_id) {
+          await updateMastery.mutateAsync({
+            studentId: user.id,
+            topicId: video.topic_id,
+            objectiveId: (currentQuiz as any).objective_id,
+            scorePercent,
+          });
+          
+          console.log('[Mastery] Updated from quiz result');
+        }
+      } catch (error) {
+        console.error('[Mastery] Failed to update mastery:', error);
+        // Don't block the UI if mastery update fails
+      }
+    }
   };
 
   const handleQuizContinue = () => {

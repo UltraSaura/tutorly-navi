@@ -6,7 +6,8 @@ export async function callOpenAI(
   userMessage: string, 
   model: string, 
   isExercise: boolean = false,
-  requestExplanation: boolean = false
+  requestExplanation: boolean = false,
+  maxTokens: number = 800
 ): Promise<any> {
   const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
   
@@ -34,7 +35,7 @@ export async function callOpenAI(
   ];
   
   try {
-    console.log(`Calling OpenAI API with model: ${actualModel}, requestExplanation: ${requestExplanation}`);
+    console.log(`Calling OpenAI API with model: ${actualModel}, maxTokens: ${maxTokens}, requestExplanation: ${requestExplanation}`);
     
     // Prepare request body based on model type
     const requestBody: any = {
@@ -100,9 +101,9 @@ export async function callOpenAI(
     
     // Use different parameters for newer vs legacy models
     if (isNewerModel) {
-      requestBody.max_completion_tokens = 800;
+      requestBody.max_completion_tokens = maxTokens;
     } else {
-      requestBody.max_tokens = 800;
+      requestBody.max_tokens = maxTokens;
       requestBody.temperature = 0.7;
     }
     

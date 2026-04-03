@@ -115,7 +115,8 @@ serve(async (req) => {
       requestExplanation = false,
       language = 'en',
       customPrompt,
-      userContext
+      userContext,
+      maxTokens = 800  // Default to 800 for backward compatibility
     } = parsedBody;
     
     console.log('📊 Request analysis:', { 
@@ -257,7 +258,8 @@ serve(async (req) => {
             message, 
             modelConfig.model, 
             isExercise,
-            requestExplanation
+            requestExplanation,
+            maxTokens
           );
           break;
         case 'Anthropic':
@@ -266,7 +268,8 @@ serve(async (req) => {
             formattedHistory, 
             message, 
             modelConfig.model, 
-            isExercise
+            isExercise,
+            maxTokens
           );
           break;
         case 'Mistral AI':
@@ -275,7 +278,8 @@ serve(async (req) => {
             formattedHistory, 
             message, 
             modelConfig.model, 
-            isExercise
+            isExercise,
+            maxTokens
           );
           break;
         case 'Google':
@@ -284,7 +288,8 @@ serve(async (req) => {
             formattedHistory, 
             message, 
             modelConfig.model, 
-            isExercise
+            isExercise,
+            maxTokens
           );
           break;
         case 'DeepSeek':
@@ -293,7 +298,8 @@ serve(async (req) => {
             formattedHistory, 
             message, 
             modelConfig.model, 
-            isExercise
+            isExercise,
+            maxTokens
           );
           break;
         case 'xAI':
@@ -302,7 +308,8 @@ serve(async (req) => {
             formattedHistory, 
             message, 
             modelConfig.model, 
-            isExercise
+            isExercise,
+            maxTokens
           );
           break;
         default:
@@ -320,10 +327,25 @@ serve(async (req) => {
     
     console.log('📤 Returning successful response, content length:', responseContent?.length || 0);
     
+    // Extract structured fields from AI response (handles markdown-wrapped JSON)
+    let parsedFields: Record<string, any> = {};
+    try {
+      const jsonMatch = responseContent.match(/```json\s*\n([\s\S]*?)\n\s*```/);
+      const jsonStr = jsonMatch ? jsonMatch[1] : responseContent;
+      const parsed = JSON.parse(jsonStr);
+      if (parsed.isCorrect !== undefined) parsedFields.isCorrect = parsed.isCorrect;
+      if (parsed.isMath !== undefined) parsedFields.isMath = parsed.isMath;
+      if (parsed.sections) parsedFields.sections = parsed.sections;
+      console.log('✅ Extracted structured fields from AI response:', Object.keys(parsedFields));
+    } catch (e) {
+      console.log('ℹ️ AI response is not JSON, using raw content');
+    }
+    
     // Return the AI's response
     return new Response(
       JSON.stringify({ 
         content: responseContent,
+        ...parsedFields,
         modelId: modelId,
         modelUsed: modelConfig.model,
         provider: modelConfig.provider,

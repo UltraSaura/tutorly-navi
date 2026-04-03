@@ -768,6 +768,7 @@ export type Database = {
           icon_name: string
           id: string
           is_active: boolean
+          language: string | null
           name: string
           order_index: number
           slug: string
@@ -779,6 +780,7 @@ export type Database = {
           icon_name: string
           id?: string
           is_active?: boolean
+          language?: string | null
           name: string
           order_index?: number
           slug: string
@@ -790,6 +792,7 @@ export type Database = {
           icon_name?: string
           id?: string
           is_active?: boolean
+          language?: string | null
           name?: string
           order_index?: number
           slug?: string
@@ -810,7 +813,8 @@ export type Database = {
           estimated_duration_minutes: number
           id: string
           is_active: boolean
-          lesson_content: Json | null
+           keywords: string[] | null
+           lesson_content: Json | null
           name: string
           order_index: number
           quiz_count: number
@@ -830,7 +834,8 @@ export type Database = {
           estimated_duration_minutes?: number
           id?: string
           is_active?: boolean
-          lesson_content?: Json | null
+           keywords?: string[] | null
+           lesson_content?: Json | null
           name: string
           order_index?: number
           quiz_count?: number
@@ -850,7 +855,8 @@ export type Database = {
           estimated_duration_minutes?: number
           id?: string
           is_active?: boolean
-          lesson_content?: Json | null
+           keywords?: string[] | null
+           lesson_content?: Json | null
           name?: string
           order_index?: number
           quiz_count?: number
@@ -875,6 +881,7 @@ export type Database = {
           duration_minutes: number
           id: string
           is_active: boolean
+          language: string | null
           max_age: number | null
           min_age: number | null
           order_index: number
@@ -886,6 +893,7 @@ export type Database = {
           topic_id: string
           transcript: string | null
           updated_at: string
+          variant_group_id: string | null
           video_url: string
           xp_reward: number
         }
@@ -895,6 +903,7 @@ export type Database = {
           duration_minutes?: number
           id?: string
           is_active?: boolean
+          language?: string | null
           max_age?: number | null
           min_age?: number | null
           order_index?: number
@@ -906,6 +915,7 @@ export type Database = {
           topic_id: string
           transcript?: string | null
           updated_at?: string
+          variant_group_id?: string | null
           video_url: string
           xp_reward?: number
         }
@@ -915,6 +925,7 @@ export type Database = {
           duration_minutes?: number
           id?: string
           is_active?: boolean
+          language?: string | null
           max_age?: number | null
           min_age?: number | null
           order_index?: number
@@ -926,6 +937,7 @@ export type Database = {
           topic_id?: string
           transcript?: string | null
           updated_at?: string
+          variant_group_id?: string | null
           video_url?: string
           xp_reward?: number
         }
@@ -1119,7 +1131,8 @@ export type Database = {
           domain: string | null
           domain_id: string | null
           id: string
-          level: string
+           keywords: string[] | null
+           level: string
           notes_from_prog: string | null
           skill_id: string | null
           subdomain: string
@@ -1131,7 +1144,8 @@ export type Database = {
           domain?: string | null
           domain_id?: string | null
           id: string
-          level: string
+           keywords?: string[] | null
+           level: string
           notes_from_prog?: string | null
           skill_id?: string | null
           subdomain: string
@@ -1143,7 +1157,8 @@ export type Database = {
           domain?: string | null
           domain_id?: string | null
           id?: string
-          level?: string
+           keywords?: string[] | null
+           level?: string
           notes_from_prog?: string | null
           skill_id?: string | null
           subdomain?: string
@@ -1365,6 +1380,9 @@ export type Database = {
           description: string | null
           id: string
           shuffle: boolean | null
+          source_text_snapshot: string | null
+          source_type: string | null
+          source_video_ids: string[] | null
           time_limit_sec: number | null
           title: string
           updated_at: string
@@ -1374,6 +1392,9 @@ export type Database = {
           description?: string | null
           id: string
           shuffle?: boolean | null
+          source_text_snapshot?: string | null
+          source_type?: string | null
+          source_video_ids?: string[] | null
           time_limit_sec?: number | null
           title: string
           updated_at?: string
@@ -1383,6 +1404,9 @@ export type Database = {
           description?: string | null
           id?: string
           shuffle?: boolean | null
+          source_text_snapshot?: string | null
+          source_type?: string | null
+          source_video_ids?: string[] | null
           time_limit_sec?: number | null
           title?: string
           updated_at?: string
@@ -1933,6 +1957,7 @@ export type Database = {
           created_at: string
           explanation: string
           id: string
+          language: string | null
           options: string[]
           order_index: number
           question: string
@@ -1947,6 +1972,7 @@ export type Database = {
           created_at?: string
           explanation: string
           id?: string
+          language?: string | null
           options: string[]
           order_index?: number
           question: string
@@ -1961,6 +1987,7 @@ export type Database = {
           created_at?: string
           explanation?: string
           id?: string
+          language?: string | null
           options?: string[]
           order_index?: number
           question?: string

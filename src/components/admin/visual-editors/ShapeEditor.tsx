@@ -114,7 +114,7 @@ export default function ShapeEditor({
     const shape = state.shapes.find((s) => s.id === selectedId);
     if (!shape || shape.type !== "polygon" || !shape.polygon) return;
     if (shape.polygon.points.length <= 4) return;
-    const trimmed = removePolygonSide(shape.polygon.points);
+    const trimmed = removePolygonSide(shape.polygon.points) as [number, number][];
     setShape(shape.id, (current) =>
       current.type === "polygon" && current.polygon ? { ...current, polygon: { points: trimmed } } : current
     );
@@ -638,7 +638,7 @@ function moveVertex(
   point: { x: number; y: number }
 ) {
   if (shape.type === "triangle" && shape.triangle) {
-    const points = [...shape.triangle.points];
+    const points = [...shape.triangle.points] as [number, number, number, number, number, number];
     const clamped = clampPoint(point.x, point.y);
     points[vertexIndex * 2] = clamped.x;
     points[vertexIndex * 2 + 1] = clamped.y;

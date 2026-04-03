@@ -35,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Move the language detection logic to useCallback to avoid hook order issues
   const detectLanguageFromUser = useCallback((user: User) => {
     if (user?.user_metadata?.country && i18n?.changeLanguage) {
-      const country = user.user_metadata.country;
+      const country = user.user_metadata.country.toUpperCase();
       
       // Map countries to languages
       const countryLanguageMap: Record<string, string> = {
@@ -104,16 +104,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       return { error };
     } else {
-      // Username login: try with constructed child email (username@child.local)
-      const { error } = await supabase.auth.signInWithPassword({
-        email: `${emailOrUsername}@child.local`,
+      const normalized = emailOrUsername.trim().toLowerCase();
+      const tryStudent = await supabase.auth.signInWithPassword({
+        email: `${normalized}@student.local`,
         password,
       });
-      
-      if (error) {
-        return { error: new Error('Invalid username or password') };
+      if (!tryStudent.error) {
+        return { error: null };
       }
-      return { error: null };
+      const tryChild = await supabase.auth.signInWithPassword({
+        email: `${normalized}@child.local`,
+        password,
+      });
+      if (!tryChild.error) {
+        return { error: null };
+      }
+      return { error: new Error('Invalid username or password') };
     }
   };
 

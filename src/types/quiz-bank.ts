@@ -2,6 +2,8 @@ import type { VisualUnion } from "@/lib/quiz/visual-types";
 
 export type Choice = { id: string; label: string; correct?: boolean };
 
+export type QuizBankSourceType = 'manual' | 'video_transcript' | 'multi_video_transcript';
+
 export type BaseQ = {
   id: string;
   prompt: string;
@@ -12,7 +14,7 @@ export type BaseQ = {
 
 export type SingleQ = BaseQ & { kind: "single"; choices: Choice[] };
 export type MultiQ = BaseQ & { kind: "multi"; choices: Choice[] };
-export type NumericQ = BaseQ & { kind: "numeric"; answer: number; range?: { min: number; max: number } };
+export type NumericQ = BaseQ & { kind: "numeric"; answer: number; range?: { min: number; max: number }; answerFormat?: "number" | "fraction"; fractionAnswer?: { numerator: number; denominator: number }; dragOptions?: number[] };
 export type OrderingQ = BaseQ & { kind: "ordering"; items: string[]; correctOrder: string[] };
 export type VisualQ = BaseQ & { kind: "visual"; visual: VisualUnion };
 

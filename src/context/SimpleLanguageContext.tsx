@@ -89,6 +89,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   
   const [translations, setTranslations] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
+  /** After first successful translation load; avoids unmounting the whole app when language changes. */
+  const [initialAppReady, setInitialAppReady] = useState(false);
   
   console.log('[Translation] SimpleLanguageProvider render, language:', language, 'isLoading:', isLoading);
   
@@ -104,7 +106,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         console.log('[Translation] Using cached translations for:', language);
         setTranslations(translationCache.get(language));
         setIsLoading(false);
-        
+        setInitialAppReady(true);
+
         // Sync with i18next even when using cache
         try {
           const i18n = await import('i18next').then(m => m.default);
@@ -175,6 +178,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         }
       } finally {
         setIsLoading(false);
+        setInitialAppReady(true);
       }
     };
 
@@ -314,7 +318,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
       timestamp: new Date().toISOString()
     });
     
-    if (isLoading) return key;
+    // First load only: no strings yet. On language change keep showing previous bundle until swap.
+    if (isLoading && Object.keys(translations).length === 0) return key;
     
     // First try to find the key directly (for flattened keys like 'exercises.exercise.answer')
     let value = translations[key];
@@ -358,25 +363,32 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     return result;
   };
 
-  // Auto-detect language from user profile (only if not already detected)
+  // Auto-detect language from user profile on login
+  // Clear languageManuallySet when a new user logs in to allow profile-based detection
   useEffect(() => {
     const detectLanguageFromUser = async () => {
-      const languageManuallySet = localStorage.getItem('languageManuallySet') === 'true';
-      if (languageManuallySet) {
-        console.log('[Auto-detect] Language was manually set, skipping auto-detection');
-        return;
+      const previousUserId = localStorage.getItem('lastUserId');
+      const isNewUserLogin = user?.id && user.id !== previousUserId;
+      
+      // If a new user logged in, clear the manual language flag and update lastUserId
+      if (isNewUserLogin) {
+        console.log('[Auto-detect] New user logged in, clearing languageManuallySet flag');
+        localStorage.removeItem('languageManuallySet');
+        localStorage.setItem('lastUserId', user.id);
       }
       
-      // Only auto-detect if we're still on the default English and browser detection didn't already set French
-      const browserDetectedFrench = defaultLang === 'fr';
-      if (browserDetectedFrench) {
-        console.log('[Auto-detect] Browser/timezone already detected French, skipping redundant detection');
+      const languageManuallySet = localStorage.getItem('languageManuallySet') === 'true';
+      
+      // For new user logins, always try to detect from profile
+      // For existing sessions, skip if language was manually set
+      if (languageManuallySet && !isNewUserLogin) {
+        console.log('[Auto-detect] Language was manually set, skipping auto-detection');
         return;
       }
       
       let detectedLanguage = null;
       
-      // First try user profile country
+      // First try user profile country (highest priority for logged-in users)
       if (user?.id) {
         try {
           const { data } = await import('@/integrations/supabase/client').then(m => 
@@ -398,7 +410,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         }
       }
       
-      // Fallback to automatic country detection (only if language is still English)
+      // Fallback to automatic country detection (only if no profile language and current is English)
       if (!detectedLanguage && detection.country && language === 'en') {
         detectedLanguage = getLanguageFromDetection();
         console.log('[Auto-detect] Using automatic detection:', detection.country, '->', detectedLanguage);
@@ -409,7 +421,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         setLanguage(detectedLanguage);
         localStorage.setItem('lang', detectedLanguage);
         
-        const methodText = detection.method === 'geolocation' ? 'location' :
+        const methodText = user?.id ? 'profile' :
+                          detection.method === 'geolocation' ? 'location' :
                           detection.method === 'ip' ? 'IP address' :
                           detection.method === 'timezone' ? 'timezone' : 'profile';
         
@@ -426,7 +439,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     detectLanguageFromUser();
   }, [user?.id, detection.country, detection.method, language, getLanguageFromDetection]);
 
-  if (isLoading) {
+  if (!initialAppReady) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-muted-foreground">Loading translations...</div>

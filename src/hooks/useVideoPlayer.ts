@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Video, Quiz } from '@/types/learning';
@@ -6,8 +6,10 @@ import { toast } from 'sonner';
 
 export function useVideoPlayer(videoId: string) {
   const queryClient = useQueryClient();
-  const [currentTime, setCurrentTime] = useState(0);
+  const currentTimeRef = useRef(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const lastSavedPercentageRef = useRef(0);
+  const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
 
   // Fetch video and quizzes
   const { data, isLoading, error } = useQuery({
@@ -53,6 +55,8 @@ export function useVideoPlayer(videoId: string) {
       };
     },
     enabled: !!videoId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   // Update progress mutation
@@ -67,16 +71,15 @@ export function useVideoPlayer(videoId: string) {
           user_id: user.id,
           video_id: videoId,
           progress_percentage: progressPercentage,
-          last_watched_position_seconds: currentTime,
+          last_watched_position_seconds: currentTimeRef.current,
           progress_type: progressType,
-          time_spent_seconds: currentTime,
+          time_spent_seconds: currentTimeRef.current,
         }, {
           onConflict: 'user_id,video_id',
         });
 
       if (error) throw error;
       
-      // Show completion toast
       if (progressType === 'video_completed') {
         toast.success('Video completed!', {
           description: 'Great job! New quizzes may now be available.'
@@ -86,10 +89,11 @@ export function useVideoPlayer(videoId: string) {
       return { progressType };
     },
     onSuccess: (result) => {
-      // Only invalidate queries when video is completed, not on every progress update
       if (result?.progressType === 'video_completed') {
-        queryClient.invalidateQueries({ queryKey: ['video-player', videoId] });
-        queryClient.invalidateQueries({ queryKey: ['course-playlist'] });
+        // Update cache in-place instead of refetching
+        queryClient.setQueryData(['video-player', videoId], (old: any) =>
+          old ? { ...old, video: { ...old.video, progress_percentage: 100 } } : old
+        );
         queryClient.invalidateQueries({ queryKey: ['subject-dashboard'] });
         queryClient.invalidateQueries({ queryKey: ['completed-videos'] });
         queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
@@ -138,34 +142,53 @@ export function useVideoPlayer(videoId: string) {
     },
   });
 
+  // Store mutation and data in refs to stabilize updateProgress
+  const mutateRef = useRef(updateProgressMutation.mutate);
+  const dataRef = useRef(data);
+  useEffect(() => { mutateRef.current = updateProgressMutation.mutate; });
+  useEffect(() => { dataRef.current = data; });
+
   const updateProgress = useCallback((time: number, duration: number) => {
-    setCurrentTime(time);
+    currentTimeRef.current = time;
     const percentage = Math.round((time / duration) * 100);
-    
+
+    const quizzes = dataRef.current?.quizzes;
+    const matchedQuiz = quizzes?.find(
+      q => Math.abs(q.timestamp_seconds - time) < 2
+    ) || null;
+    setCurrentQuiz(prev => {
+      if (prev?.id === matchedQuiz?.id) return prev;
+      return matchedQuiz;
+    });
+
+    const savedProgress = dataRef.current?.video.progress_percentage || 0;
     if (percentage >= 90) {
-      updateProgressMutation.mutate({ progressPercentage: 100, progressType: 'video_completed' });
-    } else if (percentage > (data?.video.progress_percentage || 0)) {
-      updateProgressMutation.mutate({ progressPercentage: percentage, progressType: 'video_started' });
+      if (lastSavedPercentageRef.current < 90) {
+        lastSavedPercentageRef.current = 100;
+        mutateRef.current({ progressPercentage: 100, progressType: 'video_completed' });
+      }
+    } else if (percentage > savedProgress && 
+               percentage - lastSavedPercentageRef.current >= 5) {
+      lastSavedPercentageRef.current = percentage;
+      mutateRef.current({ progressPercentage: percentage, progressType: 'video_started' });
     }
-  }, [data?.video.progress_percentage, updateProgressMutation]);
+  }, []); // No dependencies — all accessed via refs
+
+  const submitQuizRef = useRef(submitQuizMutation.mutateAsync);
+  useEffect(() => { submitQuizRef.current = submitQuizMutation.mutateAsync; });
 
   const submitQuizAnswer = useCallback((quizId: string, answerIndex: number) => {
-    return submitQuizMutation.mutateAsync({ quizId, answerIndex });
-  }, [submitQuizMutation]);
-
-  // Find current quiz based on time
-  const currentQuiz = data?.quizzes.find(
-    q => Math.abs(q.timestamp_seconds - currentTime) < 2
-  ) || null;
+    return submitQuizRef.current({ quizId, answerIndex });
+  }, []);
 
   return {
     video: data?.video || null,
     quizzes: data?.quizzes || [],
     currentQuiz,
-    currentTime,
+    currentTime: currentTimeRef.current,
     isPlaying,
     setIsPlaying,
-    setCurrentTime,
+    setCurrentTime: (time: number) => { currentTimeRef.current = time; },
     updateProgress,
     submitQuizAnswer,
     isLoading,

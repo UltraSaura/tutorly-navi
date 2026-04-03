@@ -9,6 +9,7 @@ export interface Message {
   filename?: string;
   fileUrl?: string;
   subjectId?: string;
+  topicId?: string;
   explanation?: string;
 }
 
@@ -31,6 +32,7 @@ export interface Exercise {
   isCorrect?: boolean;
   explanation?: string;
   subjectId?: string;
+  topicId?: string;
   relatedMessages?: Message[]; // Add related messages for AI responses
   attemptCount: number;
   attempts: ExerciseAttempt[];

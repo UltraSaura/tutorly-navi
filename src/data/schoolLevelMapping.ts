@@ -40,6 +40,29 @@ export const COUNTRY_CODES = {
   Canada: 'CA',
 } as const;
 
+// Language to country mapping (which countries speak which language)
+export const LANGUAGE_COUNTRIES: Record<string, string[]> = {
+  'en': ['UK', 'US', 'Canada'],
+  'fr': ['France', 'Canada'],
+  'ar': ['Turkey'], // Placeholder - could add Arabic-speaking countries
+  'de': ['Germany'],
+  'tr': ['Turkey'],
+};
+
+// Country display info (flags and names)
+export const COUNTRY_INFO: Record<string, { flag: string; name: string }> = {
+  UK: { flag: '🇬🇧', name: 'UK' },
+  France: { flag: '🇫🇷', name: 'France' },
+  US: { flag: '🇺🇸', name: 'US' },
+  Germany: { flag: '🇩🇪', name: 'Germany' },
+  Turkey: { flag: '🇹🇷', name: 'Turkey' },
+  Canada: { flag: '🇨🇦', name: 'Canada' },
+};
+
+// All available countries
+export const ALL_COUNTRIES = ['UK', 'France', 'US', 'Germany', 'Turkey', 'Canada'] as const;
+export type CountryName = typeof ALL_COUNTRIES[number];
+
 // Generate level codes from level names
 export function getLevelCode(levelName: string, country: string): string {
   // Extract codes from level names

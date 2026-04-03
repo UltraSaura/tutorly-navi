@@ -2,7 +2,42 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Topic, Video } from '@/types/learning';
 import { useUserSchoolLevel } from './useUserSchoolLevel';
-import { filterContentByUserLevel } from '@/utils/schoolLevelFilter';
+import { filterContentByUserLevel, filterContentByAgeAndLevel } from '@/utils/schoolLevelFilter';
+import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useAdminAuth } from './useAdminAuth';
+
+// Select best variant from a group based on user's language preference
+const selectBestVariants = (videos: any[], userLanguage: string): any[] => {
+  // Separate videos into groups and standalone
+  const groupedVideos = new Map<string, any[]>();
+  const standaloneVideos: any[] = [];
+
+  for (const video of videos) {
+    if (video.variant_group_id) {
+      const group = groupedVideos.get(video.variant_group_id) || [];
+      group.push(video);
+      groupedVideos.set(video.variant_group_id, group);
+    } else {
+      standaloneVideos.push(video);
+    }
+  }
+
+  // Select best variant from each group
+  const selectedFromGroups: any[] = [];
+  for (const [, variants] of groupedVideos) {
+    // Priority: user's language → English → first available
+    const bestMatch = 
+      variants.find(v => v.language === userLanguage) ||
+      variants.find(v => v.language === 'en') ||
+      variants[0];
+    
+    if (bestMatch) {
+      selectedFromGroups.push(bestMatch);
+    }
+  }
+
+  return [...standaloneVideos, ...selectedFromGroups];
+};
 
 interface CoursePlaylistData {
   topic: Topic | null;
@@ -12,9 +47,11 @@ interface CoursePlaylistData {
 
 export function useCoursePlaylist(topicSlug: string) {
   const { data: userLevelData } = useUserSchoolLevel();
+  const { language: userLanguage } = useLanguage();
+  const { isAdmin } = useAdminAuth();
   
   return useQuery({
-    queryKey: ['course-playlist', topicSlug, userLevelData?.level],
+    queryKey: ['course-playlist', topicSlug, userLevelData?.level, userLanguage, isAdmin],
     queryFn: async (): Promise<CoursePlaylistData> => {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -38,12 +75,18 @@ export function useCoursePlaylist(topicSlug: string) {
 
       if (allVideosError) throw allVideosError;
       
-      // Filter videos by user's age/level
-      const suitableVideos = filterContentByUserLevel(
-        allVideos as any,
-        userLevelData?.level || null,
-        userLevelData?.age || null
-      );
+      // Admin sees all videos; students get filtered by age/level only (no language filter yet)
+      let suitableVideos = isAdmin 
+        ? (allVideos as any[])
+        : filterContentByAgeAndLevel(
+            allVideos as any,
+            userLevelData?.level || null,
+            userLevelData?.age || null
+          );
+      
+      // Group videos by variant_group_id and select best language match per group
+      // This handles language preference with fallback (user lang → en → first available)
+      suitableVideos = selectBestVariants(suitableVideos, userLanguage);
       
       // Get quizzes for suitable videos
       const videoIds = suitableVideos.map((v: any) => v.id);
@@ -53,12 +96,15 @@ export function useCoursePlaylist(topicSlug: string) {
         .in('video_id', videoIds)
         .order('order_index') : { data: [] };
       
-      // Filter quizzes by user's age/level
-      const suitableQuizzes = filterContentByUserLevel(
-        allQuizzes as any,
-        userLevelData?.level || null,
-        userLevelData?.age || null
-      );
+      // Admin sees all quizzes; students get filtered by age/level and language
+      const suitableQuizzes = isAdmin
+        ? (allQuizzes as any[])
+        : filterContentByUserLevel(
+            allQuizzes as any,
+            userLevelData?.level || null,
+            userLevelData?.age || null,
+            userLanguage
+          );
 
       // Get user progress for videos
       let videosWithProgress = suitableVideos as any[];
@@ -100,5 +146,6 @@ export function useCoursePlaylist(topicSlug: string) {
     },
     enabled: !!topicSlug,
     staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }

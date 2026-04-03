@@ -1,19 +1,52 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { extractTextWithMistralOCR } from './extractors/mistral.ts';
+import { extractTextWithMathPixOCR } from './extractors/mathpix.ts';
 import { extractTextWithSimpleTexOCR } from './extractors/simpletex.ts';
 import { extractTextWithGoogleVisionOCR } from './extractors/googleVision.ts';
 import { extractTextWithAzureOCR } from './extractors/azure.ts';
 
 /**
- * Extract text from a document using multiple OCR providers with SimpleTex priority for math content
+ * Extract text from a document using multi-provider OCR chain:
+ * Mistral OCR → MathPix → SimpleTex → Google Vision → Azure → Emergency
  */
 export async function extractTextFromFile(fileData: string, fileType: string): Promise<string> {
-  console.log(`🚀 Processing file of type: ${fileType} with SimpleTex-prioritized OCR approach`);
+  console.log(`🚀 Processing file of type: ${fileType} with multi-provider OCR chain`);
   console.log(`📊 File data length: ${fileData.length} characters, starts with: ${fileData.substring(0, 50)}...`);
 
-  // PHASE 1: SimpleTex for Math Content (primary for mathematical worksheets)
+  // PHASE 1: Mistral OCR (primary provider)
   try {
-    console.log('🧮 Phase 1: SimpleTex Math OCR for specialized formula recognition');
+    console.log('🔮 Phase 1: Mistral OCR (primary)');
+    const mistralResult = await extractTextWithMistralOCR(fileData, fileType);
+    
+    if (mistralResult && mistralResult.length > 5) {
+      console.log(`✅ Mistral OCR succeeded with ${mistralResult.length} characters`);
+      return mistralResult;
+    } else {
+      console.log(`⚠️ Mistral OCR returned insufficient text (${mistralResult?.length || 0} chars)`);
+    }
+  } catch (mistralError) {
+    console.error('❌ Mistral OCR failed:', (mistralError as Error).message || String(mistralError));
+    console.log('🔄 Falling back to MathPix...');
+  }
+
+  // PHASE 2: MathPix (future provider, currently stubbed)
+  try {
+    console.log('📐 Phase 2: MathPix OCR');
+    const mathPixResult = await extractTextWithMathPixOCR(fileData);
+    
+    if (mathPixResult && mathPixResult.length > 5) {
+      console.log(`✅ MathPix OCR succeeded with ${mathPixResult.length} characters`);
+      return mathPixResult;
+    }
+  } catch (mathPixError) {
+    console.error('❌ MathPix failed:', (mathPixError as Error).message || String(mathPixError));
+    console.log('🔄 Falling back to SimpleTex...');
+  }
+
+  // PHASE 3: SimpleTex for Math Content
+  try {
+    console.log('🧮 Phase 3: SimpleTex Math OCR');
     const simpleTexResult = await extractTextWithSimpleTexOCR(fileData);
     
     if (simpleTexResult && simpleTexResult.length > 5) {
@@ -27,10 +60,10 @@ export async function extractTextFromFile(fileData: string, fileType: string): P
     console.log('🔄 Falling back to Google Vision...');
   }
 
-  // PHASE 2: Google Vision with retry logic
+  // PHASE 4: Google Vision with retry logic
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      console.log(`🔍 Phase 2 - Attempt ${attempt}: Google Vision Text Detection API`);
+      console.log(`🔍 Phase 4 - Attempt ${attempt}: Google Vision Text Detection API`);
       const result = await extractTextWithGoogleVisionOCR(fileData);
       console.log('✅ Google Vision OCR succeeded');
       return result;
@@ -40,27 +73,24 @@ export async function extractTextFromFile(fileData: string, fileType: string): P
       if (attempt === 2) {
         console.log('🔄 Google Vision exhausted, trying Azure fallback...');
         
-        // PHASE 3: Azure fallback
+        // PHASE 5: Azure fallback
         try {
           const result = await extractTextWithAzureOCR(fileData);
           console.log('✅ Azure OCR fallback succeeded');
           return result;
         } catch (azureError) {
           console.error('❌ Azure OCR fallback failed:', (azureError as Error).message || String(azureError));
-          console.log('💡 To enable Azure OCR, add AZURE_COMPUTER_VISION_KEY and AZURE_COMPUTER_VISION_ENDPOINT to Supabase secrets');
           
-          // PHASE 4: Emergency extraction
+          // PHASE 6: Emergency extraction
           console.log('🆘 Using emergency text extraction');
           return createEmergencyExtraction(fileData, fileType);
         }
       } else {
-        // Wait before retry
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
   }
   
-  // This should never be reached due to the loop structure above
   throw new Error('Unexpected error in OCR processing');
 }
 
@@ -83,16 +113,8 @@ Suggested Action: Try uploading again or use a clearer image`;
 }
 
 // Re-export individual OCR providers
+export { extractTextWithMistralOCR } from './extractors/mistral.ts';
+export { extractTextWithMathPixOCR } from './extractors/mathpix.ts';
 export { extractTextWithSimpleTexOCR } from './extractors/simpletex.ts';
-
-// Re-export the Azure OCR function from the new modular structure
 export { extractTextWithAzureOCR } from './extractors/azure.ts';
-
-// Re-export the Google Vision OCR function from the new modular structure
 export { extractTextWithGoogleVisionOCR } from './extractors/googleVision.ts';
-
-// Fallback OCR using Tesseract (deprecated - use Azure instead)
-export async function extractTextWithTesseract(fileData: string): Promise<string> {
-  console.log('⚠️ Tesseract OCR called but deprecated - use Azure fallback instead');
-  throw new Error("Tesseract OCR not implemented in Deno environment - use Azure Computer Vision fallback");
-}

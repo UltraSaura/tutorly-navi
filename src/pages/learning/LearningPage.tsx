@@ -1,6 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { useLearningSubjects } from '@/hooks/useLearningSubjects';
+import { useUserCurriculumProfile } from '@/hooks/useUserCurriculumProfile';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { BookOpen } from 'lucide-react';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
 import { toast } from 'sonner';
@@ -25,13 +29,10 @@ const ArrowRightIcon = ({
 
 const LearningPage = () => {
   const navigate = useNavigate();
-  const {
-    t
-  } = useLanguage();
-  const {
-    data: subjects,
-    isLoading
-  } = useLearningSubjects();
+  const { t } = useLanguage();
+  const { profile } = useUserCurriculumProfile();
+  const { data: subjects, isLoading } = useLearningSubjects();
+
   if (isLoading) {
     return <div className="min-h-screen bg-gray-50 dark:bg-background pb-20">
         <div className="p-6 pb-4 bg-white dark:bg-card shadow-md">
@@ -43,6 +44,47 @@ const LearningPage = () => {
         </div>
       </div>;
   }
+
+  // Check if user has curriculum profile
+  if (!profile?.countryCode || !profile?.levelCode) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center p-6">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>{t('learning.setupRequired')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">
+              {t('learning.setupMessage')}
+            </p>
+            <Button onClick={() => navigate('/profile')}>
+              {t('learning.goToProfile')}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Check if no subjects available
+  if (!subjects || subjects.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center p-6">
+        <Card className="max-w-md text-center">
+          <CardContent className="pt-6">
+            <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">
+              {t('learning.noContent')}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {t('learning.noContentMessage')}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const readyCount = subjects?.filter(s => s.videos_ready > 0).length || 0;
   return <div className="min-h-screen bg-gray-50 dark:bg-background pb-20 mx-[5px]">
       {/* Header */}

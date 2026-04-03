@@ -1,9 +1,11 @@
 import React, { memo, useMemo, useState } from 'react';
-import { Calculator, CheckCircle, XCircle, Send } from 'lucide-react';
+import { Calculator, CheckCircle, XCircle, Send, Trash2, X } from 'lucide-react';
+import { MathRenderer } from '@/components/math/MathRenderer';
+import { containsMathContent, textToMathDisplay, answerToLatex } from '@/utils/mathFormatUtils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Message } from '@/types/chat';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/SimpleLanguageContext';
@@ -14,20 +16,45 @@ import { extractExpressionFromText } from '@/utils/mathStepper/parser';
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { useUserContext } from '@/hooks/useUserContext';
 import { validateExampleOperationType, getOperationTypeDisplay } from '@/utils/operationTypeDetector';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AIResponseProps {
   messages: Message[];
   isLoading: boolean;
   onSubmitAnswer?: (question: string, answer: string) => void;
+  onClearAll?: () => void;
+  onDismissExercise?: (messageId: string) => void;
 }
 interface ExerciseCardProps {
   userMessage: Message;
   aiResponse: Message;
   onSubmitAnswer?: (question: string, answer: string) => void;
+  onDismiss?: () => void;
 }
 
 // Note: parseUserMessage is now imported from @/utils/messageParser
 // This provides enhanced detection with better pattern matching
+
+// Inline helper to render text that may contain math
+const MathText = ({ text, className }: { text: string; className?: string }) => {
+  if (!containsMathContent(text)) return <span className={className}>{text}</span>;
+  const { prefix, latex } = textToMathDisplay(text);
+  return (
+    <span className={className}>
+      {prefix && <span>{prefix} </span>}
+      {latex && <MathRenderer latex={latex} inline className="inline-block align-middle" />}
+    </span>
+  );
+};
+
+const MathAnswer = ({ label, answer }: { label: string; answer: string }) => {
+  const latex = answerToLatex(answer);
+  if (latex) {
+    return <span>{label}: <MathRenderer latex={latex} inline className="inline-block align-middle" /></span>;
+  }
+  return <span>{label}: {answer}</span>;
+};
 
 const getStatusStyles = (content: string) => {
   // Check the first line or beginning of content for status
@@ -36,8 +63,11 @@ const getStatusStyles = (content: string) => {
   
   const isCorrect = /^CORRECT\b/i.test(contentTrimmed) || /\bCORRECT\b/i.test(firstLine);
   const isIncorrect = /^INCORRECT\b/i.test(contentTrimmed) || /\bINCORRECT\b/i.test(firstLine);
+  const isUnanswered = /^UNANSWERED\b/i.test(contentTrimmed);
   
-  if (isCorrect) {
+  if (isUnanswered) {
+    return 'bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800';
+  } else if (isCorrect) {
     return 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800';
   } else if (isIncorrect) {
     return 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800';
@@ -49,7 +79,7 @@ const getStatusStyles = (content: string) => {
 const formatExplanation = (content: string) => {
   // Remove status prefixes and clean up the content
   const cleanContent = content
-    .replace(/^(CORRECT|INCORRECT)\s*/i, '')
+    .replace(/^(CORRECT|INCORRECT|UNANSWERED)\s*/i, '')
     .replace(/^Great work!\s*/i, '')
     .replace(/^Learning Opportunity\s*/i, '')
     .replace(/^Guidance:\s*/i, '')
@@ -94,6 +124,26 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const [isRetrying, setIsRetrying] = useState(false);
   const { t, language } = useLanguage();
   const { userContext } = useUserContext();
+  
+  // Fetch topic routing info if aiResponse has topicId
+  const { data: topicInfo, isLoading: topicInfoLoading } = useQuery({
+    queryKey: ['topic-info-for-lesson', aiResponse.topicId],
+    queryFn: async () => {
+      if (!aiResponse.topicId) return null;
+      const { data } = await supabase
+        .from('learning_topics')
+        .select(`
+          slug,
+          category:learning_categories!inner(
+            subject:learning_subjects!inner(slug)
+          )
+        `)
+        .eq('id', aiResponse.topicId)
+        .single();
+      return data;
+    },
+    enabled: !!aiResponse.topicId
+  });
   
   // Debug logging for translation issues
   console.log('[ExerciseCard] Translation Debug:', {
@@ -210,7 +260,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
             
             <div className="flex-1 min-w-0">
               <div className="text-body font-semibold text-neutral-text mb-3 break-words whitespace-pre-wrap">
-                {question || jsonResponse.exercise}
+                <MathText text={question || jsonResponse.exercise} />
               </div>
               
               {/* Answer section - either show existing answer or input field */}
@@ -260,7 +310,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                           : 'bg-neutral-bg text-neutral-muted'
                       )}
                     >
-                      {t('exercise.answer')}: {answer}
+                      <MathAnswer label={t('exercise.answer')} answer={answer} />
                     </Badge>
                   </div>
                 )}
@@ -407,14 +457,31 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                             </div>
                           </div>
                           
-                          <div>
-                            <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <span>{t('explanation.headers.practice')}</span>
+                          {/* Watch Video Footer - Context aware */}
+                          {aiResponse.topicId && topicInfo ? (
+                            <div className="mt-4 pt-3 border-t border-border">
+                              <DialogClose asChild>
+                                <button
+                                  onClick={() => {
+                                    const subjectSlug = topicInfo.category?.subject?.slug;
+                                    const topicSlug = topicInfo.slug;
+                                    if (subjectSlug && topicSlug) {
+                                      setTimeout(() => {
+                                        window.location.href = `/learning/${subjectSlug}/${topicSlug}`;
+                                      }, 200);
+                                    }
+                                  }}
+                                  className="text-sm text-primary hover:underline flex items-center gap-1"
+                                >
+                                  {t('explanation.watch_video')}
+                                </button>
+                              </DialogClose>
                             </div>
-                            <div className="text-sm text-muted-foreground leading-relaxed">
-                              {jsonResponse.sections.practice}
+                          ) : aiResponse.topicId && topicInfoLoading ? (
+                            <div className="mt-4 pt-3 border-t border-border">
+                              <p className="text-xs text-muted-foreground">Loading...</p>
                             </div>
-                          </div>
+                          ) : null}
                         </div>
                       </div>
                 </div>
@@ -483,7 +550,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
               
               <div className="flex-1 min-w-0">
                   <div className="text-body font-semibold text-neutral-text mb-3">
-              {question}
+              <MathText text={question} />
             </div>
             
             {/* Answer section - either show existing answer or input field */}
@@ -518,14 +585,40 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                         ? t('exercise.answerSubmitted') 
                         : t('common.submit')}
                     </Button>
+                    </div>
+                    
+                    {/* Watch Video Footer - Context aware */}
+                    {aiResponse.topicId && topicInfo ? (
+                      <div className="mt-4 pt-3 border-t border-border">
+                        <DialogClose asChild>
+                          <button
+                            onClick={() => {
+                              const subjectSlug = topicInfo.category?.subject?.slug;
+                              const topicSlug = topicInfo.slug;
+                              if (subjectSlug && topicSlug) {
+                                setTimeout(() => {
+                                  window.location.href = `/learning/${subjectSlug}/${topicSlug}`;
+                                }, 200);
+                              }
+                            }}
+                            className="text-sm text-primary hover:underline flex items-center gap-1"
+                          >
+                            {t('explanation.watch_video')}
+                          </button>
+                        </DialogClose>
+                      </div>
+                    ) : aiResponse.topicId && topicInfoLoading ? (
+                      <div className="mt-4 pt-3 border-t border-border">
+                        <p className="text-xs text-muted-foreground">Loading...</p>
+                      </div>
+                    ) : null}
                   </div>
-                </div>
               ) : (
                     <Badge 
                       variant="secondary" 
                       className="px-3 py-1 bg-neutral-bg text-neutral-muted"
                     >
-                  {t('exercise.answer')}: {answer}
+                  <MathAnswer label={t('exercise.answer')} answer={answer} />
                       </Badge>
                     )}
                   </div>
@@ -615,31 +708,24 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAnswer }) => {
+const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAnswer, onClearAll, onDismissExercise }) => {
   const { t, language } = useLanguage();
   
-  // Debug logging for translation context
-  console.log('[AIResponse] Translation Context Debug:', {
-    language,
-    testTranslation: t('exercise.answer'),
-    testExplanation: t('explanation.modal_title'),
-    timestamp: new Date().toISOString()
-  });
-  
   const exercisePairs = useMemo(() => {
-    const userMessages = messages.filter(msg => msg.role === 'user');
-    const aiMessages = messages.filter(msg => msg.role === 'assistant' && msg.id !== '1');
+    const pairs: Array<{ userMessage: Message; aiResponse: Message }> = [];
+    let pendingUser: Message | null = null;
     
-    // Create pairs and filter out duplicates
-    const pairs = userMessages.map((userMsg, index) => ({
-      userMessage: userMsg,
-      aiResponse: aiMessages[index] || null
-    })).filter(pair => pair.aiResponse !== null) as Array<{
-      userMessage: Message;
-      aiResponse: Message;
-    }>;
+    for (const msg of messages) {
+      if (msg.role === 'user' && msg.type !== 'image' && msg.type !== 'file') {
+        pendingUser = msg;
+      } else if (msg.role === 'assistant' && msg.id !== '1' && pendingUser) {
+        pairs.push({ userMessage: pendingUser, aiResponse: msg });
+        pendingUser = null;
+      } else if (msg.role === 'assistant') {
+        pendingUser = null;
+      }
+    }
 
-    // Remove duplicates based on question content
     const uniquePairs = [];
     const seenQuestions = new Set<string>();
     
@@ -651,14 +737,13 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
         seenQuestions.add(question);
         uniquePairs.push(pair);
       } else {
-        // Replace the existing pair with the new one (latest answer)
         const existingIndex = uniquePairs.findIndex(existingPair => {
           const existingParsed = parseUserMessage(existingPair.userMessage.content);
           return existingParsed.question === question;
         });
         
         if (existingIndex !== -1) {
-          uniquePairs[existingIndex] = pair; // Replace with latest
+          uniquePairs[existingIndex] = pair;
         }
       }
     }
@@ -673,13 +758,39 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
   return (
     <div className="p-6">
       <div className="max-w-6xl mx-auto space-y-4">
+        {/* Clear All button */}
+        {exercisePairs.length > 0 && onClearAll && (
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClearAll}
+              className="text-muted-foreground hover:text-destructive hover:border-destructive"
+            >
+              <Trash2 size={14} />
+              {language === 'fr' ? 'Tout effacer' : 'Clear all'}
+            </Button>
+          </div>
+        )}
+
         {exercisePairs.map((pair) => (
-          <ExerciseCard
-            key={pair.userMessage.id}
-            userMessage={pair.userMessage}
-            aiResponse={pair.aiResponse}
-            onSubmitAnswer={onSubmitAnswer}
-          />
+          <div key={pair.userMessage.id} className="relative group">
+            {/* Dismiss button */}
+            {onDismissExercise && (
+              <button
+                onClick={() => onDismissExercise(pair.userMessage.id)}
+                className="absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full bg-muted border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground hover:border-destructive"
+                title={language === 'fr' ? 'Supprimer' : 'Dismiss'}
+              >
+                <X size={12} />
+              </button>
+            )}
+            <ExerciseCard
+              userMessage={pair.userMessage}
+              aiResponse={pair.aiResponse}
+              onSubmitAnswer={onSubmitAnswer}
+            />
+          </div>
         ))}
         
         {isLoading && <LoadingSkeleton />}

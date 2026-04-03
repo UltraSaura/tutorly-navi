@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { CurriculumLocation } from '@/components/admin/curriculum/CurriculumLocation';
 import * as Icons from 'lucide-react';
 const SubjectDashboardPage = () => {
   const {
@@ -102,6 +103,21 @@ const SubjectDashboardPage = () => {
                           {topic.video_count} {t('learning.videos') || 'videos'}
                         </div>
                       </div>
+
+                      {/* Curriculum Location */}
+                      {topic.curriculum_country_code && (
+                        <div className="mb-2">
+                          <CurriculumLocation
+                            countryId={topic.curriculum_country_code}
+                            levelId={topic.curriculum_level_code}
+                            subjectId={topic.curriculum_subject_id}
+                            domainId={topic.curriculum_domain_id}
+                            subdomainId={topic.curriculum_subdomain_id}
+                            variant="compact"
+                            locale="en"
+                          />
+                        </div>
+                      )}
 
                       {/* Progress Bar */}
                       <div className="w-full bg-muted rounded-full h-2.5">

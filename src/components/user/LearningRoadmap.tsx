@@ -1,242 +1,212 @@
-
+import { useStudentCurriculum } from '@/hooks/useStudentCurriculum';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { ChevronRight, Check, Clock, Star } from 'lucide-react';
+import { ChevronRight, Check, Clock } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useLanguage } from '@/context/SimpleLanguageContext';
-import { useTranslation } from 'react-i18next';
-
-interface Topic {
-  id: string;
-  title: string;
-  description: string;
-  progress: number;
-  status: 'completed' | 'in-progress' | 'upcoming';
-  subtopics: { name: string; completed: boolean }[];
-}
-
-const topics: Topic[] = [
-  {
-    id: '1',
-    title: 'Algebra Fundamentals',
-    description: 'Master the basic concepts of algebra including equations, inequalities, and functions',
-    progress: 100,
-    status: 'completed',
-    subtopics: [
-      { name: 'Linear Equations', completed: true },
-      { name: 'Quadratic Equations', completed: true },
-      { name: 'Systems of Equations', completed: true },
-    ],
-  },
-  {
-    id: '2',
-    title: 'Geometry and Trigonometry',
-    description: 'Learn shapes, angles, triangles, and trigonometric functions',
-    progress: 65,
-    status: 'in-progress',
-    subtopics: [
-      { name: 'Euclidean Geometry', completed: true },
-      { name: 'Trigonometric Functions', completed: true },
-      { name: 'Circles and Ellipses', completed: false },
-      { name: 'Vectors and Transformations', completed: false },
-    ],
-  },
-  {
-    id: '3',
-    title: 'Calculus Foundations',
-    description: 'Introduction to limits, derivatives, and integrals',
-    progress: 30,
-    status: 'in-progress',
-    subtopics: [
-      { name: 'Limits and Continuity', completed: true },
-      { name: 'Derivatives', completed: false },
-      { name: 'Integrals', completed: false },
-      { name: 'Applications of Calculus', completed: false },
-    ],
-  },
-  {
-    id: '4',
-    title: 'Statistics and Probability',
-    description: 'Analyze data, understand randomness, and make predictions',
-    progress: 0,
-    status: 'upcoming',
-    subtopics: [
-      { name: 'Descriptive Statistics', completed: false },
-      { name: 'Probability Theory', completed: false },
-      { name: 'Statistical Inference', completed: false },
-      { name: 'Regression Analysis', completed: false },
-    ],
-  },
-];
+import { CurriculumErrorState } from '@/components/learning/CurriculumErrorState';
+import { useAuth } from '@/context/AuthContext';
 
 const LearningRoadmap = () => {
-  const { t } = useTranslation();
-  const getStatusIcon = (status: Topic['status']) => {
+  const { subjects, isLoading, error } = useStudentCurriculum();
+  const { user } = useAuth();
+  const { t } = useLanguage();
+
+  // Fetch user progress for all topics
+  const { data: progressData } = useQuery({
+    queryKey: ['user-topic-progress', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return new Map();
+
+      const { data } = await supabase
+        .from('user_learning_progress')
+        .select('video_id, topic_id, progress_type')
+        .eq('user_id', user.id);
+
+      // Calculate progress per topic
+      const topicProgress = new Map();
+      data?.forEach(progress => {
+        if (!progress.topic_id) return;
+
+        if (!topicProgress.has(progress.topic_id)) {
+          topicProgress.set(progress.topic_id, {
+            total: 0,
+            completed: 0,
+          });
+        }
+
+        const tp = topicProgress.get(progress.topic_id);
+        if (progress.progress_type === 'video_completed') {
+          tp.completed++;
+        }
+        tp.total++;
+      });
+
+      return topicProgress;
+    },
+    enabled: !!user?.id,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-4">
+        {[1, 2, 3].map(i => (
+          <Skeleton key={i} className="h-48 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return <CurriculumErrorState error={error} onRetry={() => window.location.reload()} />;
+  }
+
+  if (subjects.length === 0) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-muted-foreground">
+          {t('learning.noContentMessage')}
+        </p>
+      </div>
+    );
+  }
+
+  const getTopicStatus = (topicId: string): 'completed' | 'in-progress' | 'upcoming' => {
+    if (!progressData) return 'upcoming';
+    const progress = progressData.get(topicId);
+    if (!progress) return 'upcoming';
+    const percentage = progress.total > 0 ? (progress.completed / progress.total) * 100 : 0;
+    if (percentage === 100) return 'completed';
+    if (percentage > 0) return 'in-progress';
+    return 'upcoming';
+  };
+
+  const getTopicProgress = (topicId: string): number => {
+    if (!progressData) return 0;
+    const progress = progressData.get(topicId);
+    if (!progress || progress.total === 0) return 0;
+    return Math.round((progress.completed / progress.total) * 100);
+  };
+
+  const getStatusIcon = (status: 'completed' | 'in-progress' | 'upcoming') => {
     switch (status) {
       case 'completed':
         return <Check className="w-5 h-5 text-green-500" />;
       case 'in-progress':
         return <Clock className="w-5 h-5 text-amber-500" />;
-      case 'upcoming':
-        return <Star className="w-5 h-5 text-blue-500" />;
-    }
-  };
-
-  const getStatusColor = (status: Topic['status']) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-500';
-      case 'in-progress':
-        return 'bg-amber-500';
-      case 'upcoming':
-        return 'bg-blue-500';
-    }
-  };
-
-  const getStatusText = (status: Topic['status']) => {
-    switch (status) {
-      case 'completed':
-        return t('roadmap.complete');
-      case 'in-progress':
-        return t('roadmap.inProgress');
-      case 'upcoming':
-        return t('roadmap.notStarted');
+      default:
+        return <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />;
     }
   };
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">{t('roadmap.title')}</h1>
-        <p className="text-muted-foreground">
-          {t('roadmap.description')}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="col-span-full md:col-span-2 glass">
-          <CardHeader className="pb-2">
-            <CardTitle>{t('roadmap.progress')}</CardTitle>
+    <div className="container max-w-5xl mx-auto p-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="space-y-6"
+      >
+        {/* Header */}
+        <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-3xl">{t('nav.roadmap')}</CardTitle>
+            <p className="text-muted-foreground mt-2">
+              Track your learning journey through your curriculum
+            </p>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm font-medium">Math Mastery</span>
-                  <span className="text-sm">48%</span>
-                </div>
-                <Progress value={48} className="h-2" />
-              </div>
-              
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm font-medium">Science Understanding</span>
-                  <span className="text-sm">62%</span>
-                </div>
-                <Progress value={62} className="h-2" />
-              </div>
-              
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm font-medium">Language Arts</span>
-                  <span className="text-sm">75%</span>
-                </div>
-                <Progress value={75} className="h-2" />
-              </div>
-            </div>
-          </CardContent>
         </Card>
 
-        <Card className="col-span-full md:col-span-1 glass">
-          <CardHeader className="pb-2">
-            <CardTitle>Learning Achievements</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <Badge className="bg-stuwy-500 hover:bg-stuwy-600 mr-1">14 Skills Mastered</Badge>
-              <Badge className="bg-green-500 hover:bg-green-600 mr-1">3 Topics Completed</Badge>
-              <Badge className="bg-amber-500 hover:bg-amber-600">
-                5 {t('game.dayStreak')}
-              </Badge>
-              
-              <div className="flex justify-between items-center mt-4">
-                <span className="font-medium">Next Achievement:</span>
-                <span>10 {t('game.dayStreak')}</span>
-              </div>
-              <Progress value={50} className="h-2" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="space-y-6">
-        <h2 className="text-2xl font-semibold">Math Track</h2>
-        
-        <div className="relative flex flex-col">
-          {/* Connecting line */}
-          <div className="absolute left-4 top-10 bottom-10 w-0.5 bg-gray-200 dark:bg-gray-700 z-0"></div>
-          
-          {topics.map((topic, index) => (
-            <motion.div
-              key={topic.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
-              className="relative z-10 mb-6 last:mb-0"
-            >
-              <div className={`flex items-start gap-4`}>
-                <div className={`rounded-full p-2 ${getStatusColor(topic.status)} text-white shrink-0`}>
-                  {getStatusIcon(topic.status)}
+        {/* Subject Cards */}
+        {subjects.map((subject, subjectIndex) => (
+          <motion.div
+            key={subject.id}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: subjectIndex * 0.1 }}
+          >
+            <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-2xl">{subject.subjectLabel}</CardTitle>
+                  <Badge variant="secondary">{subject.totalTopics} topics</Badge>
                 </div>
-                
-                <div className="flex-1 glass rounded-xl p-4 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between">
-                    <h3 className="text-lg font-semibold">{topic.title}</h3>
-                    <Badge variant="outline" className="font-normal">
-                      {getStatusText(topic.status)}
-                    </Badge>
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground mt-1">{topic.description}</p>
-                  
-                  <div className="mt-3">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>{t('roadmap.progress')}</span>
-                      <span>{topic.progress}%</span>
-                    </div>
-                    <Progress value={topic.progress} className="h-1.5" />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 mt-4">
-                    {topic.subtopics.map((subtopic, idx) => (
-                      <div 
-                        key={idx} 
-                        className={`text-xs px-3 py-2 rounded-md flex items-center gap-1.5 ${
-                          subtopic.completed 
-                            ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400' 
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                        }`}
-                      >
-                        {subtopic.completed && <Check className="w-3 h-3" />}
-                        {subtopic.name}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Domains */}
+                {subject.domains.map(domain => (
+                  <div key={domain.domainId} className="space-y-3">
+                    <h3 className="font-semibold text-lg text-primary/80">
+                      {domain.domainLabel}
+                    </h3>
+                    {/* Subdomains */}
+                    {domain.subdomains.map(subdomain => (
+                      <div key={subdomain.subdomainId} className="space-y-2 ml-4">
+                        <h4 className="font-medium text-foreground/70">
+                          {subdomain.subdomainLabel}
+                        </h4>
+                        {/* Topics */}
+                        <div className="space-y-2">
+                          {subdomain.topics.map(topic => {
+                            const status = getTopicStatus(topic.id);
+                            const progress = getTopicProgress(topic.id);
+                            return (
+                              <motion.div
+                                key={topic.id}
+                                whileHover={{ scale: 1.01 }}
+                                className="border rounded-lg p-4 bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                              >
+                                <div className="flex items-start gap-4">
+                                  <div className="flex-shrink-0 mt-1">
+                                    {getStatusIcon(status)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div>
+                                        <h4 className="font-semibold text-foreground">
+                                          {topic.topicLabel}
+                                        </h4>
+                                        {topic.description && (
+                                          <p className="text-sm text-muted-foreground mt-1">
+                                            {topic.description}
+                                          </p>
+                                        )}
+                                        <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
+                                          <span>{topic.videoCount} videos</span>
+                                          <span>{topic.quizCount} quizzes</span>
+                                          <span>~{topic.estimatedDurationMinutes} min</span>
+                                        </div>
+                                      </div>
+                                      <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                                    </div>
+                                    {status !== 'upcoming' && (
+                                      <div className="mt-3">
+                                        <div className="flex items-center justify-between text-xs mb-1">
+                                          <span className="text-muted-foreground">Progress</span>
+                                          <span className="font-medium">{progress}%</span>
+                                        </div>
+                                        <Progress value={progress} className="h-2" />
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
                       </div>
                     ))}
                   </div>
-                  
-                  {topic.status !== 'completed' && (
-                    <div className="mt-4 flex justify-end">
-                      <button className="inline-flex items-center text-sm text-stuwy-600 dark:text-stuwy-400 hover:underline">
-                        Continue learning <ChevronRight className="w-4 h-4 ml-1" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
+                ))}
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </motion.div>
     </div>
   );
 };

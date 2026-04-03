@@ -5,13 +5,16 @@ export async function callDeepSeek(
   history: any[], 
   userMessage: string, 
   model: string, 
-  isExercise: boolean = false
+  isExercise: boolean = false,
+  maxTokens: number = 800
 ): Promise<string> {
   const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
   
   if (!deepseekApiKey) {
     throw new Error('DeepSeek API key not configured');
   }
+  
+  console.log(`[DeepSeek] Calling with model: ${model}, maxTokens: ${maxTokens}`);
   
   const messages = [
     systemMessage,
@@ -34,7 +37,7 @@ export async function callDeepSeek(
       model: model,
       messages: messages,
       temperature: 0.7,
-      max_tokens: 800,
+      max_tokens: maxTokens,
     })
   });
   

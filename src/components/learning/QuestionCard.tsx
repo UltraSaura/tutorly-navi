@@ -29,10 +29,14 @@ export function QuestionCard({
     if (question.kind === "ordering") {
       return [...(question as any).items];
     }
+    if (question.kind === "numeric" && (question as any).answerFormat === "fraction") {
+      return { numerator: "", denominator: "" };
+    }
     return "";
   }, [question]);
 
   const [value, setValue] = useState<any>(initialValue);
+  const [selectedChip, setSelectedChip] = useState<number | null>(null);
   const [tries, setTries] = useState(0);
 
   const setVal = (v: any) => {
@@ -57,7 +61,7 @@ export function QuestionCard({
   };
 
   return (
-    <div className="max-w-md w-full rounded-2xl bg-white dark:bg-card shadow-xl p-4">
+    <div className="max-w-md w-full rounded-2xl bg-white dark:bg-card shadow-xl p-3 sm:p-4">
       <h3 className="text-lg font-semibold mb-3">{question.prompt}</h3>
       
       {question.kind === "single" && (
@@ -106,7 +110,124 @@ export function QuestionCard({
         </div>
       )}
 
-      {question.kind === "numeric" && (
+      {question.kind === "numeric" && (question as any).answerFormat === "fraction" && (() => {
+        const dragOpts: number[] = (question as any).dragOptions ?? [];
+        const chips = dragOpts.length > 0 ? dragOpts : [];
+        const numVal = value?.numerator ?? "";
+        const denVal = value?.denominator ?? "";
+
+        const handleDrop = (zone: "numerator" | "denominator") => (e: React.DragEvent) => {
+          e.preventDefault();
+          const num = e.dataTransfer.getData("text/plain");
+          setVal({ ...value, [zone]: num });
+        };
+
+        const handleTapChip = (num: number) => {
+          if (selectedChip === num) {
+            setSelectedChip(null);
+            return;
+          }
+          setSelectedChip(num);
+        };
+
+        const handleTapZone = (zone: "numerator" | "denominator") => {
+          if (selectedChip !== null) {
+            setVal({ ...value, [zone]: String(selectedChip) });
+            setSelectedChip(null);
+          }
+        };
+
+        if (chips.length === 0) {
+          // Fallback: plain inputs if no drag options
+          return (
+            <div className="flex flex-col items-center gap-0">
+              <input
+                className="w-20 border rounded-lg px-3 py-2 text-center text-lg"
+                inputMode="numeric"
+                type="number"
+                placeholder="?"
+                value={numVal}
+                onChange={e => setVal({ ...value, numerator: e.target.value })}
+                aria-label="Numérateur"
+              />
+              <div className="w-20 h-[2px] bg-foreground my-1" />
+              <input
+                className="w-20 border rounded-lg px-3 py-2 text-center text-lg"
+                inputMode="numeric"
+                type="number"
+                placeholder="?"
+                value={denVal}
+                onChange={e => setVal({ ...value, denominator: e.target.value })}
+                aria-label="Dénominateur"
+              />
+            </div>
+          );
+        }
+
+        return (
+          <div className="flex flex-col items-center gap-4">
+            {/* Drop zones */}
+            <div className="flex flex-col items-center gap-0">
+              <div
+                className={cn(
+                  "w-20 h-14 border-2 border-dashed rounded-lg flex items-center justify-center text-2xl font-bold cursor-pointer transition-colors",
+                  numVal ? "border-primary bg-primary/10" : "border-muted-foreground/40 bg-muted/30"
+                )}
+                onDragOver={e => e.preventDefault()}
+                onDrop={handleDrop("numerator")}
+                onClick={() => handleTapZone("numerator")}
+                aria-label="Numérateur"
+              >
+                {numVal || "?"}
+              </div>
+              <div className="w-20 h-[3px] bg-foreground my-1 rounded-full" />
+              <div
+                className={cn(
+                  "w-20 h-14 border-2 border-dashed rounded-lg flex items-center justify-center text-2xl font-bold cursor-pointer transition-colors",
+                  denVal ? "border-primary bg-primary/10" : "border-muted-foreground/40 bg-muted/30"
+                )}
+                onDragOver={e => e.preventDefault()}
+                onDrop={handleDrop("denominator")}
+                onClick={() => handleTapZone("denominator")}
+                aria-label="Dénominateur"
+              >
+                {denVal || "?"}
+              </div>
+            </div>
+
+            {/* Number chips */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              {chips.map((num, i) => {
+                const isUsed = String(num) === String(numVal) || String(num) === String(denVal);
+                const isSelected = selectedChip === num;
+                return (
+                  <div
+                    key={`${num}-${i}`}
+                    draggable
+                    onDragStart={e => e.dataTransfer.setData("text/plain", String(num))}
+                    onClick={() => handleTapChip(num)}
+                    className={cn(
+                      "w-12 h-12 rounded-xl flex items-center justify-center text-lg font-semibold cursor-grab active:cursor-grabbing select-none transition-all",
+                      isSelected
+                        ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2"
+                        : isUsed
+                          ? "bg-muted text-muted-foreground opacity-40"
+                          : "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm"
+                    )}
+                  >
+                    {num}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Glisse un nombre dans chaque case, ou tapote pour sélectionner.
+            </p>
+          </div>
+        );
+      })()}
+
+      {question.kind === "numeric" && (question as any).answerFormat !== "fraction" && (
         <input
           className="w-full border rounded-2xl px-3 py-2"
           inputMode="numeric"
@@ -283,7 +404,7 @@ function AngleStudentView({
       <p className="text-sm text-neutral-600">
         Sélectionne toutes les cartes qui correspondent à la consigne.
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         {options.map((option) => {
           const isActive = selected.includes(option.id);
           const rayA = polarToCartesian(option.aDeg, option.radius);
@@ -301,21 +422,21 @@ function AngleStudentView({
                 onChange(next);
               }}
               className={cn(
-                "group relative rounded-xl border px-3 py-2 text-left transition",
+                "group relative rounded-xl border px-2 py-2 text-left transition",
                 isActive
                   ? "border-primary bg-primary/5 shadow-sm"
                   : "border-border hover:border-primary/40"
               )}
               aria-pressed={isActive}
             >
-              <div className="flex items-center justify-between text-xs text-neutral-500 mb-2">
+              <div className="flex items-center justify-between text-xs text-neutral-500 mb-1">
                 <span>{option.label}</span>
                 <span>{measurement}°</span>
               </div>
               <svg
                 viewBox="-50 -50 100 100"
-                width={160}
-                height={160}
+                width={120}
+                height={120}
                 className="mx-auto bg-white rounded-lg shadow-inner"
               >
                 <circle cx={0} cy={0} r={option.radius} fill="#fff" stroke={isActive ? "#2563eb" : "#d1d5db"} strokeWidth={isActive ? 2 : 1.2} />
@@ -395,6 +516,54 @@ function PieStudentView({
 }) {
   const selected: string[] = Array.isArray(value) ? value : [];
 
+  // ── Color Slices mode ──
+  if (visual.interactionMode === "color_slices") {
+    const sliceCount = visual.segments.length;
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-neutral-600">
+          Clique sur les parts pour les colorier.
+        </p>
+        <div className="flex flex-col items-center gap-2">
+          <svg viewBox="0 0 100 100" width={200} height={200} className="bg-white rounded-xl shadow-inner">
+            {visual.segments.map((seg, i) => {
+              const angle = (Math.PI * 2) / sliceCount;
+              const startAngle = i * angle;
+              const endAngle = startAngle + angle;
+              const x1 = 50 + 45 * Math.cos(startAngle);
+              const y1 = 50 + 45 * Math.sin(startAngle);
+              const x2 = 50 + 45 * Math.cos(endAngle);
+              const y2 = 50 + 45 * Math.sin(endAngle);
+              const largeArc = angle > Math.PI ? 1 : 0;
+              const d = `M50,50 L${x1},${y1} A45,45 0 ${largeArc} 1 ${x2},${y2} Z`;
+              const isColored = selected.includes(seg.id);
+              return (
+                <path
+                  key={seg.id}
+                  d={d}
+                  fill={isColored ? "#3b82f6" : "#e5e7eb"}
+                  stroke="#fff"
+                  strokeWidth={1.5}
+                  className="cursor-pointer transition-colors"
+                  onClick={() => {
+                    const next = isColored
+                      ? selected.filter((id) => id !== seg.id)
+                      : [...selected, seg.id];
+                    onChange(next);
+                  }}
+                />
+              );
+            })}
+          </svg>
+          <div className="text-sm text-neutral-500">
+            {selected.length}/{sliceCount} parts coloriées
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Select Pie mode (default) ──
   const allPies = [
     { id: "base", label: "Pie 1", segments: visual.segments },
     ...(visual.variants ?? []).map((v, index) => ({ 
@@ -415,7 +584,7 @@ function PieStudentView({
       <p className="text-sm text-neutral-600">
         Sélectionne le(s) diagramme(s) qui représente(nt) la fraction correcte.
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         {allPies.map((pie) => {
           const isActive = selected.includes(pie.id);
           const total = pie.segments.reduce((sum, seg) => sum + (Number(seg.value) || 0), 0) || 1;
@@ -432,7 +601,7 @@ function PieStudentView({
                 onChange(next);
               }}
               className={cn(
-                "group relative rounded-xl border p-3 text-left transition",
+                "group relative rounded-xl border p-2 text-left transition",
                 isActive
                   ? "border-primary bg-primary/5 shadow-sm"
                   : "border-border hover:border-primary/40"
@@ -441,8 +610,8 @@ function PieStudentView({
             >
               <svg
                 viewBox="0 0 100 100"
-                width={160}
-                height={160}
+                width={120}
+                height={120}
                 className="mx-auto bg-white rounded-lg shadow-inner"
               >
                 {pie.segments.map((seg) => {

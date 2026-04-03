@@ -12,7 +12,15 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
     return correct === yours;
   }
   if (q.kind === "numeric") {
-    return Number(answer) === (q as any).answer;
+    const numQ = q as any;
+    if (numQ.answerFormat === "fraction" && numQ.fractionAnswer) {
+      const studentNum = Number(answer?.numerator);
+      const studentDen = Number(answer?.denominator);
+      if (!studentDen || isNaN(studentNum) || isNaN(studentDen)) return false;
+      const { numerator: correctNum, denominator: correctDen } = numQ.fractionAnswer;
+      return studentNum * correctDen === studentDen * correctNum;
+    }
+    return Number(answer) === numQ.answer;
   }
   if (q.kind === "ordering") {
     return JSON.stringify(answer) === JSON.stringify((q as any).correctOrder);

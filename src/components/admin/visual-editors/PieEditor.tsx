@@ -165,6 +165,192 @@ export default function PieEditor({
     ...variants.map((v, index) => ({ id: v.id, label: `Pie ${index + 2}`, segments: v.segments, correct: v.correct ?? false })),
   ];
 
+  const isColorSlices = state.interactionMode === "color_slices";
+
+  return (
+    <div className="space-y-4">
+      {/* Mode toggle */}
+      <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
+        <Label className="text-sm font-medium">Interaction mode:</Label>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={!isColorSlices ? "default" : "outline"}
+            onClick={() => setState({ ...state, interactionMode: "select_pie" })}
+          >
+            Select pie charts
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={isColorSlices ? "default" : "outline"}
+            onClick={() => setState({ ...state, interactionMode: "color_slices" })}
+          >
+            Color slices
+          </Button>
+        </div>
+      </div>
+
+      {isColorSlices ? (
+        <ColorSlicesEditor state={state} setState={setState} />
+      ) : (
+        <SelectPieEditor
+          state={state}
+          setState={setState}
+          selectedId={selectedId}
+          setSelectedId={setSelectedId}
+          activePieId={activePieId}
+          setActivePieId={setActivePieId}
+          variants={variants}
+          currentPie={currentPie}
+          allPies={allPies}
+          updateSeg={updateSeg}
+          addSeg={addSeg}
+          handleRemove={handleRemove}
+          addVariant={addVariant}
+          removeVariant={removeVariant}
+          toggleCorrect={toggleCorrect}
+          calculateFraction={calculateFraction}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ── Color Slices Editor ── */
+function ColorSlicesEditor({
+  state,
+  setState,
+}: {
+  state: VisualPie;
+  setState: (s: VisualPie) => void;
+}) {
+  const uuid = () => crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
+
+  const sliceCount = state.segments.length;
+  const correctCount = state.correctColoredCount ?? 0;
+
+  const setSliceCount = (count: number) => {
+    const clamped = Math.max(2, Math.min(12, count));
+    const segments = Array.from({ length: clamped }, (_, i) => ({
+      id: state.segments[i]?.id ?? uuid(),
+      value: 1,
+      label: `Slice ${i + 1}`,
+      colored: false,
+    }));
+    setState({ ...state, segments, correctColoredCount: Math.min(correctCount, clamped) });
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+      <div className="space-y-3">
+        <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+          <div className="text-sm font-medium text-foreground">Color Slices Mode</div>
+          <p className="text-xs text-muted-foreground">
+            The student sees a single pie with equal slices (all gray). They tap slices to color them.
+            The answer is correct if they color exactly the right number of slices.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm">Number of slices</Label>
+          <Input
+            type="number"
+            min={2}
+            max={12}
+            value={sliceCount}
+            onChange={(e) => setSliceCount(parseInt(e.target.value) || 2)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm">Correct colored count</Label>
+          <Input
+            type="number"
+            min={0}
+            max={sliceCount}
+            value={correctCount}
+            onChange={(e) =>
+              setState({ ...state, correctColoredCount: Math.min(parseInt(e.target.value) || 0, sliceCount) })
+            }
+          />
+          <p className="text-xs text-muted-foreground">
+            The student must color exactly {correctCount} out of {sliceCount} slices ({correctCount}/{sliceCount}).
+          </p>
+        </div>
+      </div>
+
+      {/* Preview */}
+      <div className="flex flex-col items-center gap-2">
+        <div className="text-xs text-muted-foreground font-medium">Preview (correct answer)</div>
+        <div className="rounded-lg border p-4 bg-white">
+          <svg viewBox="0 0 100 100" width={180} height={180} className="rounded-xl shadow-inner">
+            {state.segments.map((seg, i) => {
+              const angle = (Math.PI * 2) / sliceCount;
+              const startAngle = i * angle;
+              const endAngle = startAngle + angle;
+              const x1 = 50 + 45 * Math.cos(startAngle);
+              const y1 = 50 + 45 * Math.sin(startAngle);
+              const x2 = 50 + 45 * Math.cos(endAngle);
+              const y2 = 50 + 45 * Math.sin(endAngle);
+              const largeArc = angle > Math.PI ? 1 : 0;
+              const d = `M50,50 L${x1},${y1} A45,45 0 ${largeArc} 1 ${x2},${y2} Z`;
+              const isColored = i < correctCount;
+              return (
+                <path
+                  key={seg.id}
+                  d={d}
+                  fill={isColored ? "hsl(var(--primary))" : "#e5e7eb"}
+                  stroke="#fff"
+                  strokeWidth={1}
+                />
+              );
+            })}
+          </svg>
+        </div>
+        <div className="text-sm font-medium">{correctCount}/{sliceCount}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Select Pie Editor (original) ── */
+function SelectPieEditor({
+  state,
+  setState,
+  selectedId,
+  setSelectedId,
+  activePieId,
+  setActivePieId,
+  variants,
+  currentPie,
+  allPies,
+  updateSeg,
+  addSeg,
+  handleRemove,
+  addVariant,
+  removeVariant,
+  toggleCorrect,
+  calculateFraction,
+}: {
+  state: VisualPie;
+  setState: (s: VisualPie) => void;
+  selectedId: string | null;
+  setSelectedId: (id: string | null) => void;
+  activePieId: string;
+  setActivePieId: (id: string) => void;
+  variants: NonNullable<VisualPie["variants"]>;
+  currentPie: { id: string; label: string; segments: VisualPie["segments"]; correct: boolean };
+  allPies: { id: string; label: string; segments: VisualPie["segments"]; correct: boolean }[];
+  updateSeg: (i: number, patch: Partial<VisualPie["segments"][number]>) => void;
+  addSeg: () => void;
+  handleRemove: (id: string) => void;
+  addVariant: () => void;
+  removeVariant: (id: string) => void;
+  toggleCorrect: (id: string, checked: boolean) => void;
+  calculateFraction: (segments: VisualPie["segments"]) => string;
+}) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
       <div className="space-y-3">

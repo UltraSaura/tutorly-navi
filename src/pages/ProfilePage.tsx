@@ -1,14 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, Mail, Phone, Globe, GraduationCap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { User, Mail, Phone, Globe, GraduationCap, LogOut } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import AccountDeletion from '@/components/profile/AccountDeletion';
+import { ProfileEditForm } from '@/components/profile/ProfileEditForm';
 
 const ProfilePage = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    try {
+      await supabase.auth.signOut();
+      toast({ title: t('profile.signedOut') || 'Signed out successfully' });
+      navigate('/auth');
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({ title: 'Error signing out', variant: 'destructive' });
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   // Mock user data - in real app, fetch from users table
   const userData = {
@@ -124,8 +147,25 @@ const ProfilePage = () => {
             </CardContent>
           </Card>
 
+          {/* School Program Settings */}
+          <ProfileEditForm />
+
           {/* Account Deletion */}
           <AccountDeletion />
+
+          {/* Sign Out */}
+          <Button
+            variant="destructive"
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+            className="w-full h-12"
+          >
+            <LogOut className="mr-2 h-5 w-5" />
+            {isSigningOut ? 'Signing out...' : (t('nav.signOut') || 'Sign Out')}
+          </Button>
+
+          {/* Extra bottom spacing for mobile bottom tabs */}
+          <div className="h-20 md:h-0" />
         </div>
       </div>
     </div>

@@ -13,9 +13,13 @@ import { StudentRegistrationData } from '@/types/registration';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
-import { useLanguage } from '@/context/SimpleLanguageContext';
 
 const studentSchema = z.object({
+  username: z
+    .string()
+    .min(3, 'Username must be at least 3 characters')
+    .max(30)
+    .regex(/^[a-zA-Z0-9_]+$/, 'Use only letters, numbers, and underscores'),
   email: z.string().email(),
   password: z.string().min(6),
   confirmPassword: z.string().min(6),
@@ -43,7 +47,6 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
   loading = false
 }) => {
   const { t } = useTranslation();
-  const { setLanguageFromCountry } = useLanguage();
   const { profile } = useUserProfile();
   const { countries, getSchoolLevelsByCountry, loading: dataLoading, selectedCountry, setCountry } = useCountriesAndLevels(profile?.country);
   const [localSelectedCountry, setLocalSelectedCountry] = useState<string>(profile?.country || '');
@@ -57,6 +60,7 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
   } = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema),
     defaultValues: {
+      username: '',
       country: profile?.country || '',
       firstName: profile?.firstName || '',
       lastName: profile?.lastName || '',
@@ -87,13 +91,14 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
     setValue('country', countryCode);
     setValue('schoolLevel', ''); // Reset school level when country changes
     setCountry(countryCode); // Update the hook's selected country
-    // Set language based on country
-    setLanguageFromCountry(countryCode);
   };
 
   const onFormSubmit = async (data: StudentFormData) => {
-    const { confirmPassword, ...studentData } = data;
-    await onSubmit(studentData as StudentRegistrationData);
+    const { confirmPassword, ...rest } = data;
+    await onSubmit({
+      ...rest,
+      username: rest.username.trim().toLowerCase(),
+    } as StudentRegistrationData);
   };
 
   if (dataLoading) {
@@ -142,10 +147,26 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
           </div>
 
           <div>
-            <Label htmlFor="email">{t('auth.email')} (Username)</Label>
+            <Label htmlFor="username">{t('auth.loginUsername')}</Label>
+            <Input
+              id="username"
+              type="text"
+              autoComplete="username"
+              {...register('username')}
+              className={errors.username ? 'border-destructive' : ''}
+            />
+            <p className="text-xs text-muted-foreground mt-1">{t('auth.usernameRules')}</p>
+            {errors.username && (
+              <p className="text-sm text-destructive mt-1">{errors.username.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="email">{t('auth.contactEmail')}</Label>
             <Input
               id="email"
               type="email"
+              autoComplete="email"
               {...register('email')}
               className={errors.email ? 'border-destructive' : ''}
             />
