@@ -407,8 +407,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         console.log('[Auto-detect] Using automatic detection:', detection.country, '->', detectedLanguage);
       }
       
-      if (detectedLanguage && detectedLanguage !== language) {
-        console.log('[Auto-detect] Changing language from', language, 'to', detectedLanguage);
+      if (detectedLanguage && detectedLanguage !== languageRef.current) {
+        console.log('[Auto-detect] Changing language from', languageRef.current, 'to', detectedLanguage);
         setLanguage(detectedLanguage);
         localStorage.setItem('lang', detectedLanguage);
         
