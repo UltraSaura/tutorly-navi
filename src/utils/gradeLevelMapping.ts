@@ -103,8 +103,8 @@ export function getGradeLevelInfo(level: string): GradeLevelInfo {
     };
   }
 
-  // Default fallback - assume primary/elementary if unclear
-  return { ageRange: [6, 11], isUnder11: true, system: 'Generic' };
+  // Default fallback - assume NOT under 11 if unclear (safer: no animations for unknown levels)
+  return { ageRange: [6, 18], isUnder11: false, system: 'Generic' };
 }
 
 /**
