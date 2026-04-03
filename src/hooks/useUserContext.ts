@@ -26,8 +26,15 @@ export const useUserContext = () => {
 
       if (error || !data) return null;
 
+      // Check children table for grade (takes precedence)
+      const { data: childData } = await supabase
+        .from('children')
+        .select('grade')
+        .eq('user_id', user.id)
+        .single();
+
       return {
-        student_level: data.level || undefined,
+        student_level: childData?.grade || data.level || undefined,
         country: data.country || undefined,
         learning_style: data.style || undefined,
         first_name: data.first_name || undefined,
