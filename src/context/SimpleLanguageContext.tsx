@@ -428,7 +428,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     };
     
     detectLanguageFromUser();
-  }, [user?.id, detection.country, detection.method, language, getLanguageFromDetection]);
+  }, [user?.id, detection.country]);
 
   if (!initialAppReady) {
     return (

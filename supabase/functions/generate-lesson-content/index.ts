@@ -170,7 +170,7 @@ serve(async (req) => {
 
     if (objError) throw objError;
 
-    const objectives = (topicObjectives?.map(to => to.objectives).filter(Boolean) || []) as Array<{
+    const objectives = (topicObjectives?.map(to => to.objectives).filter(Boolean).flat() || []) as Array<{
       id: string;
       text: string;
       success_criteria?: Array<{ id: string; text: string }>;
