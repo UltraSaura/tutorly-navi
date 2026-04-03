@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getLanguageFromCountry } from '@/utils/countryLanguageMapping';
 
 interface CountryDetectionResult {
@@ -155,12 +155,12 @@ export const useCountryDetection = () => {
     }
   }, []);
 
-  const getLanguageFromDetection = () => {
+  const getLanguageFromDetection = useCallback(() => {
     if (detection.country) {
       return getLanguageFromCountry(detection.country);
     }
     return 'en';
-  };
+  }, [detection.country]);
 
   return {
     detection,
