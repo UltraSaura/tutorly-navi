@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { getLanguageFromCountry } from '@/utils/countryLanguageMapping';
 import { useAuth } from '@/context/AuthContext';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
