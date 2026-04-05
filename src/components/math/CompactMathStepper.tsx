@@ -369,7 +369,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     });
 
     return { dividendStr, divisorStr, dividend, divisor, phases, quotientSoFar, finalRemainder, totalPhases: phases.length };
-  }, [isSimpleDivision, expression]);
+  }, [isSimpleDivision, expression, language]);
 
   const multiplicationData = useMemo(() => {
     if (!isSimpleMultiplication) return null;
