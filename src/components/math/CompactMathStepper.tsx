@@ -359,8 +359,12 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         ? `${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} reste ${finalRemainder}`
         : `${dividendStr} ÷ ${divisorStr} = ${quotientSoFar}`,
       explanationTeacher: finalRemainder > 0
-        ? `La division est terminée ! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} avec un reste de ${finalRemainder}.`
-        : `La division est terminée ! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} exactement.`
+        ? (language === 'fr'
+          ? `La division est terminée ! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} avec un reste de ${finalRemainder}.`
+          : `Division complete! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} remainder ${finalRemainder}.`)
+        : (language === 'fr'
+          ? `La division est terminée ! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} exactement.`
+          : `Division complete! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} exactly.`)
     });
 
     return { dividendStr, divisorStr, dividend, divisor, phases, quotientSoFar, finalRemainder, totalPhases: phases.length };
