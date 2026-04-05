@@ -282,7 +282,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         quotientSoFar,
         workRows: [...inspectRows],
         explanationShort: `${partial} ÷ ${divisor} = ${qDigit}`,
-        explanationTeacher: `${divisor} × ${qDigit} = ${qDigit * divisor}${qDigit * divisor <= partial ? ` ≤ ${partial}` : ''}, donc on écrit ${qDigit} au quotient.`
+        explanationTeacher: language === 'fr'
+          ? `${divisor} × ${qDigit} = ${qDigit * divisor}${qDigit * divisor <= partial ? ` ≤ ${partial}` : ''}, donc on écrit ${qDigit} au quotient.`
+          : `${divisor} × ${qDigit} = ${qDigit * divisor}${qDigit * divisor <= partial ? ` ≤ ${partial}` : ''}, so write ${qDigit} in the quotient.`
       });
 
       const product = qDigit * divisor;
