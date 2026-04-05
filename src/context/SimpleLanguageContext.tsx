@@ -95,7 +95,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   /** After first successful translation load; avoids unmounting the whole app when language changes. */
   const [initialAppReady, setInitialAppReady] = useState(false);
   
-  console.log('[Translation] SimpleLanguageProvider render, language:', language, 'isLoading:', isLoading);
+  
   
   const { user } = useAuth();
   const { detection, getLanguageFromDetection, detectCountry } = useCountryDetection();
@@ -338,14 +338,6 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     let result = value || key;
     
     // Debug logging for result
-    if (key.includes('exercise.answer') || key.includes('explanation.modal_title')) {
-      console.log('[Translation] Result:', {
-        key,
-        result,
-        wasTranslated: result !== key,
-        timestamp: new Date().toISOString()
-      });
-    }
     
     // Handle interpolation if params provided
     if (params && typeof result === 'string') {
@@ -458,11 +450,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
 
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
-  console.log('[Translation] useLanguage hook called, context available:', !!context);
   
   if (!context) {
-    console.log('[Translation] No context available, using fallback');
-    // Fallback if context is not available
     return {
       language: defaultLang,
       isLoading: false,
@@ -470,13 +459,9 @@ export const useLanguage = () => {
       setLanguageFromCountry: () => {},
       detectLanguageNow: async () => {},
       resetLanguageDetection: async () => {},
-      t: (key: string, params?: Record<string, string | number>) => {
-        console.log('[Translation] Fallback t() function called with key:', key);
-        return key;
-      }
+      t: (key: string) => key
     };
   }
   
-  console.log('[Translation] Context available, language:', context.language);
   return context;
 };
