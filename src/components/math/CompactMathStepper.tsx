@@ -1299,8 +1299,16 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                     </div>
                     
                     {/* Initial explanation */}
-                    <div className="mt-3 text-sm text-gray-600 dark:text-gray-400 text-center">
-                      Ready to multiply {A} × {B} step by step
+                    <div className="mt-3">
+                      <motion.div
+                        key="mul-exp-init"
+                        className="text-sm text-center text-muted-foreground leading-relaxed px-2"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.25 }}
+                      >
+                        {language === 'fr' ? `On va multiplier ${A} × ${B} étape par étape.` : `We will multiply ${A} × ${B} step by step.`}
+                      </motion.div>
                     </div>
                   </div>
                 );
