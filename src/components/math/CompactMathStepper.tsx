@@ -337,7 +337,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         quotientSoFar,
         workRows: [...workRows],
         explanationShort: `On descend ${nextDigit} → ${newPartial}`,
-        explanationTeacher: `On descend le ${nextDigit} du dividende à côté du reste ${rem}, ce qui donne ${newPartial}.`
+        explanationTeacher: language === 'fr'
+          ? `On descend le ${nextDigit} du dividende à côté du reste ${rem}, ce qui donne ${newPartial}.`
+          : `Bring down ${nextDigit} from the dividend next to the remainder ${rem}, giving ${newPartial}.`
       });
 
       partial = newPartial;
