@@ -230,7 +230,6 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     const padTo = (s: string, len: number) => s.padStart(len, '0').split('').map(Number);
     let A = padTo(numA, maxLen);
     let B = padTo(numB, maxLen);
-    // Ensure we subtract smaller from larger; track sign
     let neg = false;
     const aStr = A.join('');
     const bStr = B.join('');
@@ -245,7 +244,6 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       const diff = t - bd;
       stepsRTL.push({ index: i, top: t, bottom: bd, borrowed, diff });
     }
-    // Build final result string (without sign yet)
     const resultArr: number[] = new Array(maxLen).fill(0);
     stepsRTL.forEach((s, idx) => {
       const pos = maxLen - 1 - idx;
@@ -255,10 +253,46 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     if (neg && finalStr !== '0') finalStr = '-' + finalStr;
     const resLen = finalStr.length;
     const offset = resLen - maxLen;
-    const totalColumnPhases = maxLen * 2; // even=borrow/show, odd=reveal digit
-    const maxStep = totalColumnPhases; // no extra carry step like addition
-    return { numA, numB, aDigits: A, bDigits: B, stepsRTL, finalStr, resLen, offset, totalColumnPhases, maxStep };
-  }, [isSimpleSubtraction, expression]);
+    const totalColumnPhases = maxLen * 2;
+    const maxStep = totalColumnPhases;
+
+    // Build explanations array
+    const explanations: string[] = [];
+    for (let k = 0; k < stepsRTL.length; k++) {
+      const info = stepsRTL[k];
+      const colFromRight = k;
+      const pn = placeName(colFromRight);
+      const origTop = A[info.index];
+      // Even phase: borrow check
+      if (info.borrowed) {
+        if (language === 'fr') {
+          explanations.push(`On regarde la colonne des ${pn} : ${origTop} − ${info.bottom}. Comme ${origTop} < ${info.bottom}, on emprunte 1 à la colonne suivante.`);
+        } else {
+          explanations.push(`Look at the ${pn} column: ${origTop} − ${info.bottom}. Since ${origTop} < ${info.bottom}, borrow 1 from the next column.`);
+        }
+      } else {
+        if (language === 'fr') {
+          explanations.push(`On regarde la colonne des ${pn} : ${info.top} − ${info.bottom}.`);
+        } else {
+          explanations.push(`Look at the ${pn} column: ${info.top} − ${info.bottom}.`);
+        }
+      }
+      // Odd phase: write digit
+      if (language === 'fr') {
+        explanations.push(`${info.top} − ${info.bottom} = ${info.diff}. On écrit ${info.diff} dans la colonne des ${pn}.`);
+      } else {
+        explanations.push(`${info.top} − ${info.bottom} = ${info.diff}. Write ${info.diff} in the ${pn} column.`);
+      }
+    }
+    // Completion
+    if (language === 'fr') {
+      explanations.push(`La soustraction est terminée ! ${numA} − ${numB} = ${finalStr}.`);
+    } else {
+      explanations.push(`Subtraction complete! ${numA} − ${numB} = ${finalStr}.`);
+    }
+
+    return { numA, numB, aDigits: A, bDigits: B, stepsRTL, finalStr, resLen, offset, totalColumnPhases, maxStep, explanations };
+  }, [isSimpleSubtraction, expression, language]);
 
   const divisionData = useMemo(() => {
     if (!isSimpleDivision) return null;
