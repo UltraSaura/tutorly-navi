@@ -554,7 +554,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               value: newCarry,
               used: false
             }] : [], // Show carry immediately when generated
-            explanation: `${ai} × ${bj} + ${carry} = ${p} (write ${digit}${newCarry > 0 ? `, carry ${newCarry}` : ''})`,
+             explanation: language === 'fr'
+              ? `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. On écrit ${digit}${newCarry > 0 ? ` et on retient ${newCarry}` : ''}.`
+              : `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. Write ${digit}${newCarry > 0 ? `, carry ${newCarry}` : ''}.`,
             isPartialProductComplete: false,
             partialProduct: row
           });
