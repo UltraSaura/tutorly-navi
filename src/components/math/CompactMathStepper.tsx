@@ -661,7 +661,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       multiplicandPosition: -1,
       partialResult: '',
       carries: [],
-      explanation: `Multiplication complete: ${A} × ${B} = ${sumFinal}`,
+       explanation: language === 'fr'
+        ? `La multiplication est terminée ! ${A} × ${B} = ${sumFinal}.`
+        : `Multiplication complete! ${A} × ${B} = ${sumFinal}.`,
       isPartialProductComplete: true,
       partialProduct: sumFinal
     });
