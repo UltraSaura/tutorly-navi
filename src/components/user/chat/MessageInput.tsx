@@ -283,6 +283,16 @@ const MessageInput = ({
         onClose={() => setIsCameraOpen(false)}
         onCapture={handleCameraCapture}
       />
+
+      {/* Image Crop Dialog */}
+      <ImageCropDialog
+        isOpen={isCropOpen}
+        imageUrl={cropImageUrl}
+        originalFile={cropFile}
+        onCropConfirm={handleCropConfirm}
+        onSendFull={handleSendFull}
+        onCancel={closeCropDialog}
+      />
     </div>
   );
 };
