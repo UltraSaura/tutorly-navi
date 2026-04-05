@@ -98,12 +98,40 @@ const MessageInput = ({
     setIsCameraOpen(true);
   };
 
-  const handleCameraCapture = (file: File) => {
-    handlePhotoUpload(file);
+  const openCropDialog = (file: File) => {
+    const url = URL.createObjectURL(file);
+    setCropFile(file);
+    setCropImageUrl(url);
+    setIsCropOpen(true);
+  };
+
+  const closeCropDialog = () => {
+    if (cropImageUrl) URL.revokeObjectURL(cropImageUrl);
+    setCropFile(null);
+    setCropImageUrl(null);
+    setIsCropOpen(false);
+  };
+
+  const handleCropConfirm = (croppedFile: File) => {
+    closeCropDialog();
+    handlePhotoUpload?.(croppedFile);
     toast({
       title: t('upload.photoUploaded'),
       description: t('upload.photoSuccess'),
     });
+  };
+
+  const handleSendFull = (file: File) => {
+    closeCropDialog();
+    handlePhotoUpload?.(file);
+    toast({
+      title: t('upload.photoUploaded'),
+      description: t('upload.photoSuccess'),
+    });
+  };
+
+  const handleCameraCapture = (file: File) => {
+    openCropDialog(file);
   };
 
   const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>, isPhoto: boolean) => {
