@@ -32,6 +32,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   className
 }) => {
   console.log('[CompactMathStepper] Rendering with expression:', expression);
+  const { language } = useLanguage();
   
   const [currentStep, setCurrentStep] = useState(0);
   const [steps, setSteps] = useState<AnimatorStep[]>([]);
