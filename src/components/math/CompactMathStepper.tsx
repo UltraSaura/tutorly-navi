@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +32,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   className
 }) => {
   console.log('[CompactMathStepper] Rendering with expression:', expression);
+  const { language } = useLanguage();
   
   const [currentStep, setCurrentStep] = useState(0);
   const [steps, setSteps] = useState<AnimatorStep[]>([]);
@@ -262,8 +264,12 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         workRows: [...inspectRows],
         explanationShort: `${partial} ÷ ${divisor} = ?`,
         explanationTeacher: firstCycle
-          ? `On commence par prendre ${partial} (${partial < 10 ? 'le premier chiffre' : 'les premiers chiffres'} du dividende). Combien de fois ${divisor} entre dans ${partial} ?`
-          : `On obtient ${partial} comme nouveau dividende partiel. Combien de fois ${divisor} entre dans ${partial} ?`
+          ? (language === 'fr'
+            ? `On commence par prendre ${partial} (${partial < 10 ? 'le premier chiffre' : 'les premiers chiffres'} du dividende). Combien de fois ${divisor} entre dans ${partial} ?`
+            : `Start with ${partial} (${partial < 10 ? 'the first digit' : 'the first digits'} of the dividend). How many times does ${divisor} go into ${partial}?`)
+          : (language === 'fr'
+            ? `On obtient ${partial} comme nouveau dividende partiel. Combien de fois ${divisor} entre dans ${partial} ?`
+            : `The new partial dividend is ${partial}. How many times does ${divisor} go into ${partial}?`)
       });
 
       const qDigit = Math.floor(partial / divisor);
@@ -277,7 +283,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         quotientSoFar,
         workRows: [...inspectRows],
         explanationShort: `${partial} ÷ ${divisor} = ${qDigit}`,
-        explanationTeacher: `${divisor} × ${qDigit} = ${qDigit * divisor}${qDigit * divisor <= partial ? ` ≤ ${partial}` : ''}, donc on écrit ${qDigit} au quotient.`
+        explanationTeacher: language === 'fr'
+          ? `${divisor} × ${qDigit} = ${qDigit * divisor}${qDigit * divisor <= partial ? ` ≤ ${partial}` : ''}, donc on écrit ${qDigit} au quotient.`
+          : `${divisor} × ${qDigit} = ${qDigit * divisor}${qDigit * divisor <= partial ? ` ≤ ${partial}` : ''}, so write ${qDigit} in the quotient.`
       });
 
       const product = qDigit * divisor;
@@ -292,7 +300,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         quotientSoFar,
         workRows: [...workRows],
         explanationShort: `${divisor} × ${qDigit} = ${product}`,
-        explanationTeacher: `On écrit ${product} sous ${partial} et on soustrait : ${partial} − ${product} = ${partial - product}.`
+        explanationTeacher: language === 'fr'
+          ? `On écrit ${product} sous ${partial} et on soustrait : ${partial} − ${product} = ${partial - product}.`
+          : `Write ${product} below ${partial} and subtract: ${partial} − ${product} = ${partial - product}.`
       });
 
       const rem = partial - product;
@@ -308,7 +318,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         quotientSoFar,
         workRows: [...workRows],
         explanationShort: `${partial} − ${product} = ${rem}`,
-        explanationTeacher: `${partial} − ${product} = ${rem}. ${digitIndex < dDigits.length ? 'On descend le chiffre suivant.' : `Il ne reste plus de chiffre à descendre.`}`
+        explanationTeacher: language === 'fr'
+          ? `${partial} − ${product} = ${rem}. ${digitIndex < dDigits.length ? 'On descend le chiffre suivant.' : 'Il ne reste plus de chiffre à descendre.'}`
+          : `${partial} − ${product} = ${rem}. ${digitIndex < dDigits.length ? 'Bring down the next digit.' : 'No more digits to bring down.'}`
       });
 
       if (digitIndex >= dDigits.length) break;
@@ -326,7 +338,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         quotientSoFar,
         workRows: [...workRows],
         explanationShort: `On descend ${nextDigit} → ${newPartial}`,
-        explanationTeacher: `On descend le ${nextDigit} du dividende à côté du reste ${rem}, ce qui donne ${newPartial}.`
+        explanationTeacher: language === 'fr'
+          ? `On descend le ${nextDigit} du dividende à côté du reste ${rem}, ce qui donne ${newPartial}.`
+          : `Bring down ${nextDigit} from the dividend next to the remainder ${rem}, giving ${newPartial}.`
       });
 
       partial = newPartial;
@@ -346,12 +360,16 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         ? `${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} reste ${finalRemainder}`
         : `${dividendStr} ÷ ${divisorStr} = ${quotientSoFar}`,
       explanationTeacher: finalRemainder > 0
-        ? `La division est terminée ! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} avec un reste de ${finalRemainder}.`
-        : `La division est terminée ! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} exactement.`
+        ? (language === 'fr'
+          ? `La division est terminée ! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} avec un reste de ${finalRemainder}.`
+          : `Division complete! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} remainder ${finalRemainder}.`)
+        : (language === 'fr'
+          ? `La division est terminée ! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} exactement.`
+          : `Division complete! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} exactly.`)
     });
 
     return { dividendStr, divisorStr, dividend, divisor, phases, quotientSoFar, finalRemainder, totalPhases: phases.length };
-  }, [isSimpleDivision, expression]);
+  }, [isSimpleDivision, expression, language]);
 
   const multiplicationData = useMemo(() => {
     if (!isSimpleMultiplication) return null;
