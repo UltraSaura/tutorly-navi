@@ -450,11 +450,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
 
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
-  console.log('[Translation] useLanguage hook called, context available:', !!context);
   
   if (!context) {
-    console.log('[Translation] No context available, using fallback');
-    // Fallback if context is not available
     return {
       language: defaultLang,
       isLoading: false,
@@ -462,13 +459,9 @@ export const useLanguage = () => {
       setLanguageFromCountry: () => {},
       detectLanguageNow: async () => {},
       resetLanguageDetection: async () => {},
-      t: (key: string, params?: Record<string, string | number>) => {
-        console.log('[Translation] Fallback t() function called with key:', key);
-        return key;
-      }
+      t: (key: string) => key
     };
   }
   
-  console.log('[Translation] Context available, language:', context.language);
   return context;
 };
