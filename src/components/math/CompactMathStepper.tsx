@@ -317,7 +317,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         quotientSoFar,
         workRows: [...workRows],
         explanationShort: `${partial} − ${product} = ${rem}`,
-        explanationTeacher: `${partial} − ${product} = ${rem}. ${digitIndex < dDigits.length ? 'On descend le chiffre suivant.' : `Il ne reste plus de chiffre à descendre.`}`
+        explanationTeacher: language === 'fr'
+          ? `${partial} − ${product} = ${rem}. ${digitIndex < dDigits.length ? 'On descend le chiffre suivant.' : 'Il ne reste plus de chiffre à descendre.'}`
+          : `${partial} − ${product} = ${rem}. ${digitIndex < dDigits.length ? 'Bring down the next digit.' : 'No more digits to bring down.'}`
       });
 
       if (digitIndex >= dDigits.length) break;
