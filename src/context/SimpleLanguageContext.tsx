@@ -95,7 +95,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   /** After first successful translation load; avoids unmounting the whole app when language changes. */
   const [initialAppReady, setInitialAppReady] = useState(false);
   
-  console.log('[Translation] SimpleLanguageProvider render, language:', language, 'isLoading:', isLoading);
+  
   
   const { user } = useAuth();
   const { detection, getLanguageFromDetection, detectCountry } = useCountryDetection();
