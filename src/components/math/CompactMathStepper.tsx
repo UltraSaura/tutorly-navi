@@ -37,7 +37,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [divExplanationMode, setDivExplanationMode] = useState<'short' | 'teacher'>('short');
+  
 
   useEffect(() => {
     const generateStepperSteps = async () => {
@@ -1081,43 +1081,15 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
 
                   {/* Explanation panel */}
-                  <div className="mt-3 space-y-2">
-                    {/* Mode toggle */}
-                    <div className="flex justify-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setDivExplanationMode('short')}
-                        className={cn(
-                          "text-xs px-2 py-0.5 rounded-full border transition-colors",
-                          divExplanationMode === 'short'
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-muted text-muted-foreground border-border hover:bg-accent"
-                        )}
-                      >
-                        Court
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDivExplanationMode('teacher')}
-                        className={cn(
-                          "text-xs px-2 py-0.5 rounded-full border transition-colors",
-                          divExplanationMode === 'teacher'
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-muted text-muted-foreground border-border hover:bg-accent"
-                        )}
-                      >
-                        Enseignant
-                      </button>
-                    </div>
-                    {/* Explanation text */}
+                  <div className="mt-3">
                     <motion.div
-                      key={`exp-${currentStep}-${divExplanationMode}`}
+                      key={`exp-${currentStep}`}
                       className="text-sm text-center text-muted-foreground leading-relaxed px-2"
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.25 }}
                     >
-                      {divExplanationMode === 'short' ? phase.explanationShort : phase.explanationTeacher}
+                      {phase.explanationTeacher}
                     </motion.div>
                   </div>
                 </div>
