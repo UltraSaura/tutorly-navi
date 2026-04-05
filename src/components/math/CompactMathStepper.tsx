@@ -263,8 +263,12 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         workRows: [...inspectRows],
         explanationShort: `${partial} ÷ ${divisor} = ?`,
         explanationTeacher: firstCycle
-          ? `On commence par prendre ${partial} (${partial < 10 ? 'le premier chiffre' : 'les premiers chiffres'} du dividende). Combien de fois ${divisor} entre dans ${partial} ?`
-          : `On obtient ${partial} comme nouveau dividende partiel. Combien de fois ${divisor} entre dans ${partial} ?`
+          ? (language === 'fr'
+            ? `On commence par prendre ${partial} (${partial < 10 ? 'le premier chiffre' : 'les premiers chiffres'} du dividende). Combien de fois ${divisor} entre dans ${partial} ?`
+            : `Start with ${partial} (${partial < 10 ? 'the first digit' : 'the first digits'} of the dividend). How many times does ${divisor} go into ${partial}?`)
+          : (language === 'fr'
+            ? `On obtient ${partial} comme nouveau dividende partiel. Combien de fois ${divisor} entre dans ${partial} ?`
+            : `The new partial dividend is ${partial}. How many times does ${divisor} go into ${partial}?`)
       });
 
       const qDigit = Math.floor(partial / divisor);
