@@ -1,54 +1,61 @@
 
 
-## Fix: College-Level Students Still See Math Animations
+## Add Image Cropping Before Exercise Upload
 
-### Root Cause
+### How it works today
+When a user uploads a photo or captures one via camera, the raw `File` is immediately sent to the OCR pipeline (`handlePhotoUpload` → `chatFileHandlers.ts` → edge function). There is no intermediate step to select a region of the image.
 
-Two bugs in `src/utils/gradeLevelMapping.ts`:
+### Proposed approach
 
-1. **Accent mismatch**: The French level keys use accented characters (`6ème`, `5ème`, etc.) but the database stores values without accents (`6EME`, `5EME`, `3eme`). After `.toLowerCase()`, `"6eme"` never matches `"6ème"` — the lookup always fails.
+Add a **crop dialog** that appears after image selection but before sending to OCR. The user draws a rectangle on the image to isolate the question(s) they want graded. The cropped region is then converted back to a `File` and sent through the existing pipeline unchanged.
 
-2. **Dangerous default**: Line 100 falls back to `isUnder11: true` when no level matches. So any unrecognized level (including all college levels) incorrectly shows animations.
+**Library**: `react-cropper` (wraps Cropper.js) — lightweight, mobile-friendly, supports touch gestures for pinch-zoom and drag. Already well-suited for the 407px mobile viewport.
 
-### Fix
+### Changes
 
-**`src/utils/gradeLevelMapping.ts`** — Two changes:
+**1. Install `react-cropper` + `cropperjs`**
+- Add both as dependencies
 
-1. Add non-accented variants to the French class map and also add the missing lycée levels:
+**2. Create `src/components/user/chat/ImageCropDialog.tsx`**
+- A dialog/sheet component that:
+  - Receives the selected image as a blob URL
+  - Renders a `<Cropper>` with free-aspect-ratio selection
+  - Has "Crop & Send" and "Cancel" buttons
+  - On confirm: extracts the cropped area via `canvas.toBlob()`, creates a new `File`, and calls the provided callback
+  - On mobile, uses a bottom Sheet for better UX
 
-```typescript
-const frenchClassMap: Record<string, GradeLevelInfo> = {
-  'cp': { ageRange: [6, 7], isUnder11: true, system: 'French' },
-  'ce1': { ageRange: [7, 8], isUnder11: true, system: 'French' },
-  'ce2': { ageRange: [8, 9], isUnder11: true, system: 'French' },
-  'cm1': { ageRange: [9, 10], isUnder11: true, system: 'French' },
-  'cm2': { ageRange: [10, 11], isUnder11: true, system: 'French' },
-  '6eme': { ageRange: [11, 12], isUnder11: false, system: 'French' },
-  '6ème': { ageRange: [11, 12], isUnder11: false, system: 'French' },
-  '5eme': { ageRange: [12, 13], isUnder11: false, system: 'French' },
-  '5ème': { ageRange: [12, 13], isUnder11: false, system: 'French' },
-  '4eme': { ageRange: [13, 14], isUnder11: false, system: 'French' },
-  '4ème': { ageRange: [13, 14], isUnder11: false, system: 'French' },
-  '3eme': { ageRange: [14, 15], isUnder11: false, system: 'French' },
-  '3ème': { ageRange: [14, 15], isUnder11: false, system: 'French' },
-  '2nde': { ageRange: [15, 16], isUnder11: false, system: 'French' },
-  '1ere': { ageRange: [16, 17], isUnder11: false, system: 'French' },
-  'term': { ageRange: [17, 18], isUnder11: false, system: 'French' },
-};
+**3. Update `src/components/user/chat/MessageInput.tsx`**
+- After file selection in `onFileSelected` (for photos) and after camera capture in `handleCameraCapture`:
+  - Instead of immediately calling `handlePhotoUpload(file)`, store the file in state and open the crop dialog
+  - When the crop dialog confirms, call `handlePhotoUpload(croppedFile)`
+  - Add a "Skip crop" option for users who want to send the full image
+- For **PDF documents**, skip cropping (not applicable to binary docs)
+
+**4. Flow**
+
+```text
+User taps "Upload Photo" / "Take Photo"
+  → File selected / Camera captures
+  → Crop dialog opens (image preview with draggable crop box)
+  → User adjusts crop region
+  → "Crop & Send" → cropped File created → handlePhotoUpload(croppedFile)
+  → "Send Full Image" → handlePhotoUpload(originalFile)
+  → "Cancel" → discard, return to chat
 ```
 
-2. Change the default fallback (line 100) from `isUnder11: true` to `isUnder11: false`:
+### Technical details
 
-```typescript
-// Default fallback - assume NOT under 11 if unclear (safer: no animations for unknown levels)
-return { ageRange: [6, 18], isUnder11: false, system: 'Generic' };
-```
+- Cropper outputs a `<canvas>` element; call `canvas.toBlob('image/jpeg', 0.9)` to get the cropped image
+- Wrap in `new File([blob], originalFile.name, { type: 'image/jpeg' })` so the downstream pipeline sees a normal File
+- The existing OCR pipeline needs zero changes — it receives a File/base64 either way
+- Mobile touch: Cropper.js natively supports touch drag/pinch-zoom
+- The crop dialog should be full-screen on mobile for maximum workspace
 
-### Why this works
-- College levels (`6EME`, `5EME`, `4EME`, `3EME`) now correctly match and return `isUnder11: false` → no animation
-- Lycée levels (`2NDE`, `1ERE`, `TERM`) also matched → no animation
-- Primary levels (`CP`–`CM2`) still match → animation shown
-- Unknown levels default to no animation (safer behavior)
+### Files affected
 
-One file, ~15 lines changed.
+| File | Change |
+|------|--------|
+| `package.json` | Add `react-cropper`, `cropperjs` |
+| `src/components/user/chat/ImageCropDialog.tsx` | New component |
+| `src/components/user/chat/MessageInput.tsx` | Insert crop step before upload |
 
