@@ -521,7 +521,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
             multiplicandPosition: A.length - 1 - i,
             partialResult: String(p), // Show complete result
             carries: [], // No carries for the last digit
-            explanation: `${ai} × ${bj} + ${carry} = ${p} (write ${p})`,
+            explanation: language === 'fr'
+              ? `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. On écrit ${p} pour compléter la ligne.`
+              : `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. Write ${p} to complete the row.`,
             isPartialProductComplete: true,
             partialProduct: row
           });
