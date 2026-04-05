@@ -131,6 +131,14 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   const isSimpleDivision = useMemo(() => /^(\s*\d+\s*[\/÷]\s*\d+\s*)$/.test(expression), [expression]);
   const isSimpleMultiplication = useMemo(() => /^(\s*\d+\s*[×*]\s*\d+\s*)$/.test(expression), [expression]);
 
+  // Helper: localized place names
+  const placeName = (colFromRight: number) => {
+    const fr = ['unités', 'dizaines', 'centaines', 'milliers', 'dizaines de milliers'];
+    const en = ['ones', 'tens', 'hundreds', 'thousands', 'ten-thousands'];
+    const names = language === 'fr' ? fr : en;
+    return names[colFromRight] || (language === 'fr' ? `colonne ${colFromRight + 1}` : `column ${colFromRight + 1}`);
+  };
+
   // Two-phase column animation data (only used if isSimpleAddition)
   const additionData = useMemo(() => {
     if (!isSimpleAddition) return null;
@@ -172,8 +180,46 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     const finalCarry = carry;
     const totalColumnPhases = maxLen * 2;
     const maxStep = totalColumnPhases + (finalCarry > 0 ? 1 : 0);
-    return { numA, numB, aDigits, bDigits, stepsRTL, fullResult, resLen, offset, finalCarry, totalColumnPhases, maxStep };
-  }, [isSimpleAddition, expression]);
+
+    // Build explanations array
+    const explanations: string[] = [];
+    for (let k = 0; k < stepsRTL.length; k++) {
+      const info = stepsRTL[k];
+      const colFromRight = k;
+      const pn = placeName(colFromRight);
+      const carryText = info.carryIn > 0
+        ? (language === 'fr' ? ` + ${info.carryIn} (retenue)` : ` + ${info.carryIn} (carry)`)
+        : '';
+      // Even phase: carry check / sum
+      if (language === 'fr') {
+        explanations.push(`On regarde la colonne des ${pn} : ${info.ad} + ${info.bd}${carryText} = ${info.raw}.${info.carryOut > 0 ? ` Comme ${info.raw} ≥ 10, on retient ${info.carryOut}.` : ''}`);
+      } else {
+        explanations.push(`Look at the ${pn} column: ${info.ad} + ${info.bd}${carryText} = ${info.raw}.${info.carryOut > 0 ? ` Since ${info.raw} ≥ 10, carry ${info.carryOut}.` : ''}`);
+      }
+      // Odd phase: write digit
+      if (language === 'fr') {
+        explanations.push(`On écrit ${info.digit} dans la colonne des ${pn} du résultat.`);
+      } else {
+        explanations.push(`Write ${info.digit} in the ${pn} column of the result.`);
+      }
+    }
+    // Final carry phase
+    if (finalCarry > 0) {
+      if (language === 'fr') {
+        explanations.push(`On écrit la retenue finale ${finalCarry} pour obtenir le résultat : ${fullResult}.`);
+      } else {
+        explanations.push(`Write the final carry ${finalCarry} to get the answer: ${fullResult}.`);
+      }
+    }
+    // Completion explanation (used when step >= maxStep)
+    if (language === 'fr') {
+      explanations.push(`L'addition est terminée ! ${numA} + ${numB} = ${fullResult}.`);
+    } else {
+      explanations.push(`Addition complete! ${numA} + ${numB} = ${fullResult}.`);
+    }
+
+    return { numA, numB, aDigits, bDigits, stepsRTL, fullResult, resLen, offset, finalCarry, totalColumnPhases, maxStep, explanations };
+  }, [isSimpleAddition, expression, language]);
 
   const subtractionData = useMemo(() => {
     if (!isSimpleSubtraction) return null;
