@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAdmin } from '@/context/AdminContext';
 import CameraCapture from './CameraCapture';
 import AttachmentMenu from './AttachmentMenu';
+import ImageCropDialog from './ImageCropDialog';
 import { MathLiveInput } from '@/components/math';
 
 interface MessageInputProps {
@@ -38,6 +39,9 @@ const MessageInput = ({
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isMathMode, setIsMathMode] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
 
   // Get the model display name
   const activeModel = getAvailableModels().find(model => model.id === selectedModelId);
@@ -94,12 +98,40 @@ const MessageInput = ({
     setIsCameraOpen(true);
   };
 
-  const handleCameraCapture = (file: File) => {
-    handlePhotoUpload(file);
+  const openCropDialog = (file: File) => {
+    const url = URL.createObjectURL(file);
+    setCropFile(file);
+    setCropImageUrl(url);
+    setIsCropOpen(true);
+  };
+
+  const closeCropDialog = () => {
+    if (cropImageUrl) URL.revokeObjectURL(cropImageUrl);
+    setCropFile(null);
+    setCropImageUrl(null);
+    setIsCropOpen(false);
+  };
+
+  const handleCropConfirm = (croppedFile: File) => {
+    closeCropDialog();
+    handlePhotoUpload?.(croppedFile);
     toast({
       title: t('upload.photoUploaded'),
       description: t('upload.photoSuccess'),
     });
+  };
+
+  const handleSendFull = (file: File) => {
+    closeCropDialog();
+    handlePhotoUpload?.(file);
+    toast({
+      title: t('upload.photoUploaded'),
+      description: t('upload.photoSuccess'),
+    });
+  };
+
+  const handleCameraCapture = (file: File) => {
+    openCropDialog(file);
   };
 
   const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>, isPhoto: boolean) => {
@@ -127,11 +159,7 @@ const MessageInput = ({
           });
           return;
         }
-        handlePhotoUpload(file);
-        toast({
-          title: t('upload.photoUploaded'),
-          description: t('upload.photoSuccess'),
-        });
+        handlePhotoUpload && openCropDialog(file);
       } else {
         // For documents, check that it's a valid type
         const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
@@ -254,6 +282,16 @@ const MessageInput = ({
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         onCapture={handleCameraCapture}
+      />
+
+      {/* Image Crop Dialog */}
+      <ImageCropDialog
+        isOpen={isCropOpen}
+        imageUrl={cropImageUrl}
+        originalFile={cropFile}
+        onCropConfirm={handleCropConfirm}
+        onSendFull={handleSendFull}
+        onCancel={closeCropDialog}
       />
     </div>
   );
