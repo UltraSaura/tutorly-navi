@@ -1723,11 +1723,19 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
                   
                   {/* Current step explanation */}
-                  {currentStepData && (
-                    <div className="mt-3 text-sm text-gray-600 dark:text-gray-400 text-center">
-                      {currentStepData.explanation}
-                    </div>
-                  )}
+                  <div className="mt-3">
+                    <motion.div
+                      key={`mul-exp-${currentStep}`}
+                      className="text-sm text-center text-muted-foreground leading-relaxed px-2"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25 }}
+                    >
+                      {currentStep === 0
+                        ? (language === 'fr' ? `On va multiplier ${A} × ${B} étape par étape.` : `We will multiply ${A} × ${B} step by step.`)
+                        : currentStepData?.explanation || ''}
+                    </motion.div>
+                  </div>
                 </div>
               );
             })()
