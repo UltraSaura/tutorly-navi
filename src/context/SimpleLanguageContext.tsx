@@ -311,7 +311,6 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   };
 
   const t = (key: string, params?: Record<string, string | number>): string => {
-    
     // First load only: no strings yet. On language change keep showing previous bundle until swap.
     if (isLoading && Object.keys(translations).length === 0) return key;
     
@@ -336,8 +335,6 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     
     // Fallback to key if translation not found
     let result = value || key;
-    
-    // Debug logging for result
     
     // Handle interpolation if params provided
     if (params && typeof result === 'string') {
