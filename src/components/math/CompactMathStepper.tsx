@@ -921,7 +921,20 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                         ))}
                       </motion.div>
                     )}
-                  </AnimatePresence>
+                   </AnimatePresence>
+
+                  {/* Explanation panel */}
+                  <div className="mt-3">
+                    <motion.div
+                      key={`add-exp-${currentStep}`}
+                      className="text-sm text-center text-muted-foreground leading-relaxed px-2"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25 }}
+                    >
+                      {additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)]}
+                    </motion.div>
+                  </div>
                 </div>
               );
             })()
