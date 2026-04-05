@@ -46,7 +46,7 @@
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "cmdk": "^1.0.0",
-        "cropperjs": "^2.1.0",
+        "cropperjs": "1.6.2",
         "date-fns": "^3.6.0",
         "dompurify": "^3.2.7",
         "embla-carousel-react": "^8.3.0",
@@ -120,28 +120,6 @@
     "@capacitor/core": ["@capacitor/core@7.4.3", "", { "dependencies": { "tslib": "^2.1.0" } }, "sha512-wCWr8fQ9Wxn0466vPg7nMn0tivbNVjNy1yL4GvDSIZuZx7UpU2HeVGNe9QjN/quEd+YLRFeKEBLBw619VqUiNg=="],
 
     "@cortex-js/compute-engine": ["@cortex-js/compute-engine@0.30.2", "", { "dependencies": { "complex-esm": "^2.1.1-esm1", "decimal.js": "^10.6.0" } }, "sha512-Zx+iisk9WWdbxjm8EYsneIBszvjfUs7BHNwf1jBtSINIgfWGpHrTTq9vW0J59iGCFt6bOFxbmWyxNMRSmksHMA=="],
-
-    "@cropper/element": ["@cropper/element@2.1.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@cropper/element/-/element-2.1.0.tgz", { "dependencies": { "@cropper/utils": "^2.1.0" } }, "sha512-2zELddqHQNmlvkPoiYzE5nxEjPE+C8nXoTPuvV3FvLp3YjBinc7qb73Icg9UXP0o9qC4+h9q96JgGo0AyMO/Ng=="],
-
-    "@cropper/element-canvas": ["@cropper/element-canvas@2.1.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@cropper/element-canvas/-/element-canvas-2.1.0.tgz", { "dependencies": { "@cropper/element": "^2.1.0", "@cropper/utils": "^2.1.0" } }, "sha512-el+rfJpZxsD2q5XxDBA4fRczcrOqB65Lb7roqXOq8LKufwf4bPWA9C6DjNJJahh/TP94dsLIEy3tSkgRMDv3Aw=="],
-
-    "@cropper/element-crosshair": ["@cropper/element-crosshair@2.1.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@cropper/element-crosshair/-/element-crosshair-2.1.0.tgz", { "dependencies": { "@cropper/element": "^2.1.0", "@cropper/utils": "^2.1.0" } }, "sha512-0V589dAx8uZAfvJwdINLn76gfPQEafPH94ukjJ76uX0FCUovLaAVX+VRD/MDSYn0Mza/xejzmL9Dhd1DfemvmA=="],
-
-    "@cropper/element-grid": ["@cropper/element-grid@2.1.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@cropper/element-grid/-/element-grid-2.1.0.tgz", { "dependencies": { "@cropper/element": "^2.1.0", "@cropper/utils": "^2.1.0" } }, "sha512-dEnk0rO+vp553LMvsPYgfrqVFcYXeVFrgFeavBYYEhAXtO40p7kN4rmLYLMMjaN+T/Mx2BATv6kUQpALKy2HLw=="],
-
-    "@cropper/element-handle": ["@cropper/element-handle@2.1.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@cropper/element-handle/-/element-handle-2.1.0.tgz", { "dependencies": { "@cropper/element": "^2.1.0", "@cropper/utils": "^2.1.0" } }, "sha512-8BklWA4C/2GGAULupIWleSnGutECvYt3vx9flodqDfZpDEozws4LgLqmmzVuQmVkRVUdLnXdtx28kjgWLtzkHg=="],
-
-    "@cropper/element-image": ["@cropper/element-image@2.1.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@cropper/element-image/-/element-image-2.1.0.tgz", { "dependencies": { "@cropper/element": "^2.1.0", "@cropper/element-canvas": "^2.1.0", "@cropper/utils": "^2.1.0" } }, "sha512-mXOV8ixJvG0XtTxLebYAKDjEkFbFOQnsF02hXPZk1yQSV0J+LLhN7a2NePrtKnoTsEV19fhhX3UorMoyGGxvzg=="],
-
-    "@cropper/element-selection": ["@cropper/element-selection@2.1.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@cropper/element-selection/-/element-selection-2.1.0.tgz", { "dependencies": { "@cropper/element": "^2.1.0", "@cropper/element-canvas": "^2.1.0", "@cropper/element-image": "^2.1.0", "@cropper/utils": "^2.1.0" } }, "sha512-mtFtBl6HIa/s9TWohXw+Z5eJoeYTqylrIcHvS7oVv0uM7IyeRwBW65Q7z+KtLfq/LW+2Sw/XDyvR+VN/DawBPw=="],
-
-    "@cropper/element-shade": ["@cropper/element-shade@2.1.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@cropper/element-shade/-/element-shade-2.1.0.tgz", { "dependencies": { "@cropper/element": "^2.1.0", "@cropper/element-canvas": "^2.1.0", "@cropper/element-selection": "^2.1.0", "@cropper/utils": "^2.1.0" } }, "sha512-zMdyqbb0lc0Vd1oj2Z1miIZvhyZG41OXMHvrNt0hNwblh0dVdrvtw48lnFDgRv+672vt2CNx7Q04GuvCQfPlgg=="],
-
-    "@cropper/element-viewer": ["@cropper/element-viewer@2.1.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@cropper/element-viewer/-/element-viewer-2.1.0.tgz", { "dependencies": { "@cropper/element": "^2.1.0", "@cropper/element-canvas": "^2.1.0", "@cropper/element-image": "^2.1.0", "@cropper/element-selection": "^2.1.0", "@cropper/utils": "^2.1.0" } }, "sha512-XnxlQuqHitd1FOFZ6E0yXAF5NYd/LyIvONLLHI9p1rJw747WYKUPxQaSYtFKF7IOizJu/8mMj++Zc1dZ5ZP3YQ=="],
-
-    "@cropper/elements": ["@cropper/elements@2.1.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@cropper/elements/-/elements-2.1.0.tgz", { "dependencies": { "@cropper/element": "^2.1.0", "@cropper/element-canvas": "^2.1.0", "@cropper/element-crosshair": "^2.1.0", "@cropper/element-grid": "^2.1.0", "@cropper/element-handle": "^2.1.0", "@cropper/element-image": "^2.1.0", "@cropper/element-selection": "^2.1.0", "@cropper/element-shade": "^2.1.0", "@cropper/element-viewer": "^2.1.0" } }, "sha512-qvzlYDn3VQgPPpsCu6Gi1XUO0v3vpXQFSjjxcVijbXeNsl/eiKrN7H9/CEiRgi5vr8kXfd7ZvgYxBjUBbH+y+w=="],
-
-    "@cropper/utils": ["@cropper/utils@2.1.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@cropper/utils/-/utils-2.1.0.tgz", {}, "sha512-wLtpZ4/UWgo+fGmG8NBWge8x5ehjfDe9ovleDfLy8kpwFaw43XXOEXQtRL1UNr0u4JZxaeO8FcXcolRWUUrlRQ=="],
 
     "@dnd-kit/accessibility": ["@dnd-kit/accessibility@3.1.1", "", { "dependencies": { "tslib": "^2.0.0" }, "peerDependencies": { "react": ">=16.8.0" } }, "sha512-2P+YgaXF+gRsIihwwY1gCsQSYnu9Zyj2py8kY5fFvUM1qm2WA2u639R6YNVfU4GWr+ZM5mqEsfHZZLoRONbemw=="],
 
@@ -649,7 +627,7 @@
 
     "confbox": ["confbox@0.1.8", "", {}, "sha512-RMtmw0iFkeR4YV+fUOSucriAQNb9g8zFR52MWCtl+cCZOFRNL6zeB395vPzFhEjjn4fMxXudmELnl/KF/WrK6w=="],
 
-    "cropperjs": ["cropperjs@2.1.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/cropperjs/-/cropperjs-2.1.0.tgz", { "dependencies": { "@cropper/elements": "^2.1.0", "@cropper/utils": "^2.1.0" } }, "sha512-SsSDqdVRl+mjbIBkGWlk1gCGcc+HzBqCbH5EQ+1tkAFUdxq2KUGukXF1RqhmvXrrdrX7PDwSUkWgXS7E36KvGQ=="],
+    "cropperjs": ["cropperjs@1.6.2", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/cropperjs/-/cropperjs-1.6.2.tgz", {}, "sha512-nhymn9GdnV3CqiEHJVai54TULFAE3VshJTXSqSJKa8yXAKyBKDWdhHarnlIPrshJ0WMFTGuFvG02YjLXfPiuOA=="],
 
     "cross-spawn": ["cross-spawn@7.0.6", "", { "dependencies": { "path-key": "^3.1.0", "shebang-command": "^2.0.0", "which": "^2.0.1" } }, "sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA=="],
 
@@ -1314,8 +1292,6 @@
     "prompts/kleur": ["kleur@3.0.3", "", {}, "sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w=="],
 
     "prop-types/react-is": ["react-is@16.13.1", "", {}, "sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ=="],
-
-    "react-cropper/cropperjs": ["cropperjs@1.6.2", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/cropperjs/-/cropperjs-1.6.2.tgz", {}, "sha512-nhymn9GdnV3CqiEHJVai54TULFAE3VshJTXSqSJKa8yXAKyBKDWdhHarnlIPrshJ0WMFTGuFvG02YjLXfPiuOA=="],
 
     "react-mathlive/react": ["react@16.14.0", "", { "dependencies": { "loose-envify": "^1.1.0", "object-assign": "^4.1.1", "prop-types": "^15.6.2" } }, "sha512-0X2CImDkJGApiAlcf0ODKIneSwBPhqJawOa5wCtKbu7ZECrmS26NvtSILynQ66cgkT/RJ4LidJOc3bUESwmU8g=="],
 
