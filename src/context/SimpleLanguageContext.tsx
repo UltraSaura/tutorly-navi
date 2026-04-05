@@ -338,14 +338,6 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     let result = value || key;
     
     // Debug logging for result
-    if (key.includes('exercise.answer') || key.includes('explanation.modal_title')) {
-      console.log('[Translation] Result:', {
-        key,
-        result,
-        wasTranslated: result !== key,
-        timestamp: new Date().toISOString()
-      });
-    }
     
     // Handle interpolation if params provided
     if (params && typeof result === 'string') {
