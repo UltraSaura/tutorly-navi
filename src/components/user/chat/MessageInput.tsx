@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAdmin } from '@/context/AdminContext';
 import CameraCapture from './CameraCapture';
 import AttachmentMenu from './AttachmentMenu';
+import ImageCropDialog from './ImageCropDialog';
 import { MathLiveInput } from '@/components/math';
 
 interface MessageInputProps {
