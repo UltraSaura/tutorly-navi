@@ -1,7 +1,7 @@
 
 import React, { useRef, useCallback } from 'react';
 import Cropper, { ReactCropperElement } from 'react-cropper';
-
+import 'cropperjs/dist/cropper.css';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Crop, Send, X } from 'lucide-react';

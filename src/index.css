@@ -1,9 +1,6 @@
 /* MathLive CSS */
 @import url('https://unpkg.com/mathlive/dist/mathlive-fonts.css');
 
-/* Cropper.js CSS (v2 no longer ships CSS in the package) */
-@import url('https://unpkg.com/cropperjs@2/dist/cropper.min.css');
-
 /* Interactive Math Stepper CSS */
 @import './styles/mathStepper.css';
 
