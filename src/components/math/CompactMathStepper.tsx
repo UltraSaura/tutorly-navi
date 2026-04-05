@@ -957,53 +957,168 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               );
             })()
           ) : divisionData ? (
-            // Simple long division digit-by-digit reveal
+            // French-style long division with animated phases
             (() => {
-              const { dividendStr, divisorStr, A, B, steps: dSteps, finalQuotient, resLen, totalPhases } = divisionData;
-              const revealed = (() => {
-                const qStr = finalQuotient;
-                const arr = qStr.split('');
-                // For division, we want to reveal quotient digits progressively
-                // Each step reveals one more digit of the quotient
-                const upto = Math.min(currentStep + 1, arr.filter(ch => ch !== '.').length);
-                
-                // Build revealed string without weird spacing
-                let revealedStr = '';
-                let digitCount = 0;
-                
-                for (let i = 0; i < arr.length; i++) {
-                  if (arr[i] === '.') {
-                    // Show decimal point if we've revealed at least one digit before it
-                    if (digitCount > 0) {
-                      revealedStr += '.';
-                    } else {
-                      revealedStr += '?';
-                    }
-                  } else {
-                    if (digitCount < upto) {
-                      revealedStr += arr[i];
-                      digitCount++;
-                    } else {
-                      revealedStr += '?'; // Show ? for unrevealed digits
-                    }
-                  }
-                }
-                
-                return revealedStr;
-              })();
+              if (divisionData.error) {
+                return <div className="text-center text-red-600 dark:text-red-400">{divisionData.error}</div>;
+              }
+              const { dividendStr, divisorStr, phases, quotientSoFar: finalQuotient, finalRemainder } = divisionData;
+              const phase = phases[Math.min(currentStep, phases.length - 1)];
+              const dividendDigits = dividendStr.split('');
+              const maxWorkWidth = dividendStr.length + 2; // extra space for indentation
+
+              // Determine which quotient digits to show
+              const qDigitsToShow = phase.quotientSoFar || '';
+
+              // Determine which work rows to show
+              const visibleWorkRows = phase.workRows || [];
 
               return (
-                <div className="relative font-mono">
-                  {/* Proper division format: dividend ÷ divisor = quotient */}
-                  <div className="text-sm text-slate-600 mb-1">
-                    {dividendStr} ÷ {divisorStr} = ?
+                <div className="relative font-mono text-base">
+                  {/* French division layout: dividend | divisor */}
+                  <div className="flex items-start justify-center gap-0">
+                    {/* Left side: dividend + working */}
+                    <div className="flex flex-col items-end min-w-0">
+                      {/* Dividend row */}
+                      <div className="flex items-center">
+                        {dividendDigits.map((d, i) => (
+                          <motion.div
+                            key={`dd-${i}`}
+                            className={cn(
+                              "w-7 h-8 flex items-center justify-center text-lg font-bold",
+                              phase.type === 'inspect' && i < String(phase.partialDividend).length + (dividendStr.length - String(phase.partialDividend).length - (qDigitsToShow.length - (phase.quotientDigit !== undefined ? 0 : 0)))
+                                ? "text-foreground"
+                                : "text-foreground"
+                            )}
+                          >
+                            {d}
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      {/* Working rows (products, remainders, brought-down partials) */}
+                      <AnimatePresence>
+                        {visibleWorkRows.map((row, idx) => (
+                          <motion.div
+                            key={`work-${idx}`}
+                            className="flex items-center"
+                            initial={{ opacity: 0, y: -8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                          >
+                            {/* Indent + value */}
+                            {Array.from({ length: maxWorkWidth }).map((_, ci) => {
+                              const valueStr = row.value;
+                              const startCol = row.indent;
+                              const charIdx = ci - startCol;
+                              const ch = charIdx >= 0 && charIdx < valueStr.length ? valueStr[charIdx] : '';
+                              const isSubtract = row.type === 'subtract';
+                              const isRemainder = row.type === 'remainder';
+                              const isPartial = row.type === 'partial';
+                              const isLastWorkRow = idx === visibleWorkRows.length - 1;
+                              return (
+                                <div
+                                  key={ci}
+                                  className={cn(
+                                    "w-7 h-7 flex items-center justify-center text-sm",
+                                    isSubtract && "text-red-600 dark:text-red-400",
+                                    isRemainder && isLastWorkRow && "text-blue-600 dark:text-blue-400 font-bold",
+                                    isRemainder && !isLastWorkRow && "text-muted-foreground",
+                                    isPartial && isLastWorkRow && "text-blue-600 dark:text-blue-400 font-bold",
+                                    isPartial && !isLastWorkRow && "text-muted-foreground"
+                                  )}
+                                >
+                                  {ch}
+                                </div>
+                              );
+                            })}
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Vertical bar + divisor/quotient on the right */}
+                    <div className="flex flex-col items-start">
+                      {/* Divisor row */}
+                      <div className="flex items-center h-8">
+                        <div className="w-[2px] h-8 bg-foreground mr-1" />
+                        <span className="text-lg font-bold text-foreground px-1">{divisorStr}</span>
+                      </div>
+                      {/* Horizontal line under divisor */}
+                      <div className="flex items-center">
+                        <div className="w-[2px] bg-transparent mr-1" />
+                        <div className="h-[2px] bg-foreground" style={{ width: `${Math.max(divisorStr.length, finalQuotient.length) * 1.75 + 0.5}rem` }} />
+                      </div>
+                      {/* Quotient appearing progressively */}
+                      <div className="flex items-center">
+                        <div className="w-[2px] bg-transparent mr-1" />
+                        <div className="flex">
+                          {qDigitsToShow.split('').map((qd, qi) => (
+                            <motion.div
+                              key={`q-${qi}`}
+                              className="w-7 h-7 flex items-center justify-center text-lg font-bold text-green-700 dark:text-green-300"
+                              initial={{ scale: 0.5, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                            >
+                              {qd}
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Final remainder display */}
+                      {phase.type === 'complete' && finalRemainder > 0 && (
+                        <motion.div
+                          className="flex items-center mt-1"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                        >
+                          <div className="w-[2px] bg-transparent mr-1" />
+                          <span className="text-xs text-muted-foreground">r. {finalRemainder}</span>
+                        </motion.div>
+                      )}
+                    </div>
                   </div>
-                  {/* Quotient row reveal */}
-                  <div className="text-center text-lg md:text-xl font-bold text-green-700 dark:text-green-300">
-                    {revealed}
-                  </div>
-                  <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 text-center">
-                    Long division: reveal one quotient digit per step
+
+                  {/* Explanation panel */}
+                  <div className="mt-3 space-y-2">
+                    {/* Mode toggle */}
+                    <div className="flex justify-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setDivExplanationMode('short')}
+                        className={cn(
+                          "text-xs px-2 py-0.5 rounded-full border transition-colors",
+                          divExplanationMode === 'short'
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted text-muted-foreground border-border hover:bg-accent"
+                        )}
+                      >
+                        Court
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDivExplanationMode('teacher')}
+                        className={cn(
+                          "text-xs px-2 py-0.5 rounded-full border transition-colors",
+                          divExplanationMode === 'teacher'
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted text-muted-foreground border-border hover:bg-accent"
+                        )}
+                      >
+                        Enseignant
+                      </button>
+                    </div>
+                    {/* Explanation text */}
+                    <motion.div
+                      key={`exp-${currentStep}-${divExplanationMode}`}
+                      className="text-sm text-center text-muted-foreground leading-relaxed px-2"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25 }}
+                    >
+                      {divExplanationMode === 'short' ? phase.explanationShort : phase.explanationTeacher}
+                    </motion.div>
                   </div>
                 </div>
               );
