@@ -1,61 +1,40 @@
 
 
-## Add Image Cropping Before Exercise Upload
+## Fix: Constant Page Reloading from Language Context
 
-### How it works today
-When a user uploads a photo or captures one via camera, the raw `File` is immediately sent to the OCR pipeline (`handlePhotoUpload` → `chatFileHandlers.ts` → edge function). There is no intermediate step to select a region of the image.
+### Root Cause
 
-### Proposed approach
+The `useLanguage()` hook (lines 459-482) has `console.log` calls that fire on **every single render** of **every component** that uses translations. The console logs show dozens of `[Translation] useLanguage hook called` and `[Translation] Context available` entries per second. This isn't the reload itself, but it's a symptom of excessive re-renders.
 
-Add a **crop dialog** that appears after image selection but before sending to OCR. The user draws a rectangle on the image to isolate the question(s) they want graded. The cropped region is then converted back to a `File` and sent through the existing pipeline unchanged.
+The actual reload comes from two places:
 
-**Library**: `react-cropper` (wraps Cropper.js) — lightweight, mobile-friendly, supports touch gestures for pinch-zoom and drag. Already well-suited for the 407px mobile viewport.
+1. **`language-select.tsx` and `language-selector.tsx`** both call `setTimeout(() => window.location.reload(), 100)` when the language changes. If anything triggers a language change (like auto-detection on line 362-434), it reloads the page, which re-triggers auto-detection, creating a loop.
 
-### Changes
+2. **Line 98**: `console.log('[Translation] SimpleLanguageProvider render, ...)` fires on every provider render, contributing to performance degradation.
 
-**1. Install `react-cropper` + `cropperjs`**
-- Add both as dependencies
+3. **Line 408**: `getLanguageFromDetection()` is in the effect body but not in deps — however `detection.country` changing can still trigger the effect and call `setLanguage`, which re-renders the provider, which may interact with the reload cycle.
 
-**2. Create `src/components/user/chat/ImageCropDialog.tsx`**
-- A dialog/sheet component that:
-  - Receives the selected image as a blob URL
-  - Renders a `<Cropper>` with free-aspect-ratio selection
-  - Has "Crop & Send" and "Cancel" buttons
-  - On confirm: extracts the cropped area via `canvas.toBlob()`, creates a new `File`, and calls the provided callback
-  - On mobile, uses a bottom Sheet for better UX
+### Fix
 
-**3. Update `src/components/user/chat/MessageInput.tsx`**
-- After file selection in `onFileSelected` (for photos) and after camera capture in `handleCameraCapture`:
-  - Instead of immediately calling `handlePhotoUpload(file)`, store the file in state and open the crop dialog
-  - When the crop dialog confirms, call `handlePhotoUpload(croppedFile)`
-  - Add a "Skip crop" option for users who want to send the full image
-- For **PDF documents**, skip cropping (not applicable to binary docs)
+**1. `src/context/SimpleLanguageContext.tsx`** — Remove noisy logs and prevent reload loops:
+- Remove `console.log` at line 98 (fires every render)
+- Remove `console.log` at lines 461, 480 in `useLanguage()` (fires hundreds of times)
+- Remove debug logs in `t()` function (lines 341-348)
 
-**4. Flow**
+**2. `src/components/ui/language-select.tsx`** — Remove `window.location.reload()`. The context already handles language switching reactively via state; a full page reload is unnecessary and causes the loop.
 
-```text
-User taps "Upload Photo" / "Take Photo"
-  → File selected / Camera captures
-  → Crop dialog opens (image preview with draggable crop box)
-  → User adjusts crop region
-  → "Crop & Send" → cropped File created → handlePhotoUpload(croppedFile)
-  → "Send Full Image" → handlePhotoUpload(originalFile)
-  → "Cancel" → discard, return to chat
-```
+**3. `src/components/ui/language-selector.tsx`** — Same: remove `window.location.reload()`.
 
-### Technical details
-
-- Cropper outputs a `<canvas>` element; call `canvas.toBlob('image/jpeg', 0.9)` to get the cropped image
-- Wrap in `new File([blob], originalFile.name, { type: 'image/jpeg' })` so the downstream pipeline sees a normal File
-- The existing OCR pipeline needs zero changes — it receives a File/base64 either way
-- Mobile touch: Cropper.js natively supports touch drag/pinch-zoom
-- The crop dialog should be full-screen on mobile for maximum workspace
-
-### Files affected
+### Files changed
 
 | File | Change |
 |------|--------|
-| `package.json` | Add `react-cropper`, `cropperjs` |
-| `src/components/user/chat/ImageCropDialog.tsx` | New component |
-| `src/components/user/chat/MessageInput.tsx` | Insert crop step before upload |
+| `src/context/SimpleLanguageContext.tsx` | Remove excessive console.logs from useLanguage hook, provider render, and t() function |
+| `src/components/ui/language-select.tsx` | Remove `setTimeout(() => window.location.reload(), 100)` |
+| `src/components/ui/language-selector.tsx` | Remove `setTimeout(() => window.location.reload(), 100)` |
+
+### Expected result
+- No more page reloads when language is set or auto-detected
+- Console no longer flooded with translation logs
+- Language switching still works reactively through React state
 
