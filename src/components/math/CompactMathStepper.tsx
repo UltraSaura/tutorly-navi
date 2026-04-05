@@ -703,7 +703,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       multiplicationSteps,
       maxStep: totalPhases - 1
     };
-  }, [isSimpleMultiplication, expression]);
+  }, [isSimpleMultiplication, expression, language]);
 
   // Auto-play effect - supports both animator steps and two-phase addition mode
   useEffect(() => {
