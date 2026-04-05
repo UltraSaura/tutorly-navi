@@ -644,7 +644,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         carries: relevantCarries,
         columnPosition: position, // NEW: track which column we're adding
         contributingDigits, // NEW: track which partial product digits contribute
-        explanation: `Adding column ${position + 1}: ${digit}`,
+         explanation: language === 'fr'
+          ? `On additionne la colonne des ${placeName(position)} : ${digit}.`
+          : `Adding the ${placeName(position)} column: ${digit}.`,
         isPartialProductComplete: false,
         partialProduct: sumFinal.substring(0, sumFinal.length - digitIndex) // Show progress
       });
