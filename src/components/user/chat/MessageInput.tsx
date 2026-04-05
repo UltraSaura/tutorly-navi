@@ -39,6 +39,9 @@ const MessageInput = ({
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isMathMode, setIsMathMode] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
 
   // Get the model display name
   const activeModel = getAvailableModels().find(model => model.id === selectedModelId);
