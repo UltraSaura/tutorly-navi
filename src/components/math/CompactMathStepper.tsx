@@ -299,7 +299,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         quotientSoFar,
         workRows: [...workRows],
         explanationShort: `${divisor} × ${qDigit} = ${product}`,
-        explanationTeacher: `On écrit ${product} sous ${partial} et on soustrait : ${partial} − ${product} = ${partial - product}.`
+        explanationTeacher: language === 'fr'
+          ? `On écrit ${product} sous ${partial} et on soustrait : ${partial} − ${product} = ${partial - product}.`
+          : `Write ${product} below ${partial} and subtract: ${partial} − ${product} = ${partial - product}.`
       });
 
       const rem = partial - product;
