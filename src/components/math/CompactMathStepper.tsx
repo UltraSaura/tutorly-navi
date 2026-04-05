@@ -217,41 +217,140 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     const parts = expression.split(/[÷\/]/);
     const dividendStr = (parts[0] || '0').replace(/[^0-9]/g, '');
     const divisorStr = (parts[1] || '1').replace(/[^0-9]/g, '');
-    const dv = Number(dividendStr || '0');
-    const dr = Number(divisorStr || '1');
-    if (!Number.isFinite(dv) || !Number.isFinite(dr) || dr === 0) {
-      return { error: 'Invalid division' } as any;
+    const dividend = parseInt(dividendStr, 10);
+    const divisor = parseInt(divisorStr, 10);
+    if (!Number.isFinite(dividend) || !Number.isFinite(divisor) || divisor === 0) {
+      return { error: 'Division par zéro impossible' } as any;
     }
-    const aStr = Math.abs(dv).toString();
-    const bStr = Math.abs(dr).toString();
-    const [ai, ad = ''] = aStr.split('.');
-    const [bi, bd = ''] = bStr.split('.');
-    // scale to ensure 2 decimals in quotient
-    const A = (ai + (ad || '') + '0'.repeat(Math.max(0, 2 - (ad || '').length))).replace(/^0+/, '') || '0';
-    const B = (bi + (bd || '')).replace(/^0+/, '') || '0';
-    const sign = (dv < 0 ? -1 : 1) * (dr < 0 ? -1 : 1);
 
-    // per-digit long division steps
-    let remainder = 0;
-    let quotient = '';
-    const steps: { cur: number; digit: number; newRem: number }[] = [];
-    const bNum = Number(B);
-    for (let idx = 0; idx < A.length; idx++) {
-      const cur = remainder * 10 + (A.charCodeAt(idx) - 48);
-      const qd = Math.floor(cur / bNum);
-      const newRem = cur - qd * bNum;
-      quotient += String(qd);
-      remainder = newRem;
-      steps.push({ cur, digit: qd, newRem });
+    const dDigits = dividendStr.split('');
+    const phases: Array<{
+      type: 'inspect' | 'writeQuotient' | 'writeProduct' | 'writeRemainder' | 'bringDown' | 'complete';
+      partialDividend: number;
+      quotientDigit?: number;
+      product?: number;
+      remainder?: number;
+      bringDownDigit?: string;
+      quotientSoFar: string;
+      workRows: Array<{ value: string; indent: number; type: 'subtract' | 'remainder' | 'partial' }>;
+      explanationShort: string;
+      explanationTeacher: string;
+    }> = [];
+
+    let partial = 0;
+    let quotientSoFar = '';
+    const workRows: Array<{ value: string; indent: number; type: 'subtract' | 'remainder' | 'partial' }> = [];
+    let digitIndex = 0;
+
+    // Build initial partial dividend (may need multiple digits if divisor > first digit)
+    while (digitIndex < dDigits.length && partial < divisor) {
+      partial = partial * 10 + parseInt(dDigits[digitIndex], 10);
+      digitIndex++;
     }
-    // format quotient to 2dp
-    let qStr = quotient.replace(/^0+/, '') || '0';
-    if (qStr.length <= 2) qStr = '0'.repeat(3 - qStr.length) + qStr;
-    const withDot = qStr.slice(0, qStr.length - 2) + '.' + qStr.slice(qStr.length - 2);
-    const finalQuotient = (sign < 0 ? '-' : '') + withDot;
-    const resLen = withDot.length;
-    const totalPhases = withDot.replace(/[^0-9]/g, '').length; // Count only digit characters for phases
-    return { dividendStr, divisorStr, A, B, steps, finalQuotient, resLen, totalPhases };
+
+    // Process each division cycle
+    let firstCycle = true;
+    while (true) {
+      const currentIndent = digitIndex - String(partial).length;
+
+      // Phase: inspect
+      const inspectRows = [...workRows];
+      phases.push({
+        type: 'inspect',
+        partialDividend: partial,
+        quotientSoFar,
+        workRows: [...inspectRows],
+        explanationShort: `${partial} ÷ ${divisor} = ?`,
+        explanationTeacher: firstCycle
+          ? `On commence par prendre ${partial} (${partial < 10 ? 'le premier chiffre' : 'les premiers chiffres'} du dividende). Combien de fois ${divisor} entre dans ${partial} ?`
+          : `On obtient ${partial} comme nouveau dividende partiel. Combien de fois ${divisor} entre dans ${partial} ?`
+      });
+
+      const qDigit = Math.floor(partial / divisor);
+      quotientSoFar += String(qDigit);
+
+      // Phase: writeQuotient
+      phases.push({
+        type: 'writeQuotient',
+        partialDividend: partial,
+        quotientDigit: qDigit,
+        quotientSoFar,
+        workRows: [...inspectRows],
+        explanationShort: `${partial} ÷ ${divisor} = ${qDigit}`,
+        explanationTeacher: `${divisor} × ${qDigit} = ${qDigit * divisor}${qDigit * divisor <= partial ? ` ≤ ${partial}` : ''}, donc on écrit ${qDigit} au quotient.`
+      });
+
+      const product = qDigit * divisor;
+      workRows.push({ value: `-${product}`, indent: currentIndent, type: 'subtract' });
+
+      // Phase: writeProduct
+      phases.push({
+        type: 'writeProduct',
+        partialDividend: partial,
+        quotientDigit: qDigit,
+        product,
+        quotientSoFar,
+        workRows: [...workRows],
+        explanationShort: `${divisor} × ${qDigit} = ${product}`,
+        explanationTeacher: `On écrit ${product} sous ${partial} et on soustrait : ${partial} − ${product} = ${partial - product}.`
+      });
+
+      const rem = partial - product;
+      workRows.push({ value: String(rem), indent: currentIndent + String(partial).length - String(rem).length, type: 'remainder' });
+
+      // Phase: writeRemainder
+      phases.push({
+        type: 'writeRemainder',
+        partialDividend: partial,
+        quotientDigit: qDigit,
+        product,
+        remainder: rem,
+        quotientSoFar,
+        workRows: [...workRows],
+        explanationShort: `${partial} − ${product} = ${rem}`,
+        explanationTeacher: `${partial} − ${product} = ${rem}. ${digitIndex < dDigits.length ? 'On descend le chiffre suivant.' : `Il ne reste plus de chiffre à descendre.`}`
+      });
+
+      if (digitIndex >= dDigits.length) break;
+
+      // Phase: bringDown
+      const nextDigit = dDigits[digitIndex];
+      const newPartial = rem * 10 + parseInt(nextDigit, 10);
+      workRows.push({ value: String(newPartial), indent: currentIndent + String(partial).length - String(newPartial).length + 1, type: 'partial' });
+
+      phases.push({
+        type: 'bringDown',
+        partialDividend: partial,
+        remainder: rem,
+        bringDownDigit: nextDigit,
+        quotientSoFar,
+        workRows: [...workRows],
+        explanationShort: `On descend ${nextDigit} → ${newPartial}`,
+        explanationTeacher: `On descend le ${nextDigit} du dividende à côté du reste ${rem}, ce qui donne ${newPartial}.`
+      });
+
+      partial = newPartial;
+      digitIndex++;
+      firstCycle = false;
+    }
+
+    // Final complete phase
+    const finalRemainder = partial - Math.floor(partial / divisor) * divisor;
+    phases.push({
+      type: 'complete',
+      partialDividend: partial,
+      quotientSoFar,
+      remainder: finalRemainder,
+      workRows: [...workRows],
+      explanationShort: finalRemainder > 0
+        ? `${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} reste ${finalRemainder}`
+        : `${dividendStr} ÷ ${divisorStr} = ${quotientSoFar}`,
+      explanationTeacher: finalRemainder > 0
+        ? `La division est terminée ! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} avec un reste de ${finalRemainder}.`
+        : `La division est terminée ! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} exactement.`
+    });
+
+    return { dividendStr, divisorStr, dividend, divisor, phases, quotientSoFar, finalRemainder, totalPhases: phases.length };
   }, [isSimpleDivision, expression]);
 
   const multiplicationData = useMemo(() => {
