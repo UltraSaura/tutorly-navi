@@ -159,11 +159,7 @@ const MessageInput = ({
           });
           return;
         }
-        handlePhotoUpload(file);
-        toast({
-          title: t('upload.photoUploaded'),
-          description: t('upload.photoSuccess'),
-        });
+        handlePhotoUpload && openCropDialog(file);
       } else {
         // For documents, check that it's a valid type
         const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
