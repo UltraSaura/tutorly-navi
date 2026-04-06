@@ -1223,23 +1223,21 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
 
                   {/* Explanation panel */}
-                  <div className="mt-3">
-                    <motion.div
-                      key={`exp-${currentStep}`}
-                      className="text-sm text-center text-muted-foreground leading-relaxed px-2 flex items-start justify-center"
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25 }}
-                    >
-                      <span>{phase.explanationTeacher}</span>
-                      <MathExplanationReader
-                        text={phase.explanationTeacher}
-                        language={language}
-                        autoRead={autoRead}
-                        onAutoReadChange={setAutoRead}
-                      />
-                    </motion.div>
-                  </div>
+                  <motion.div
+                    key={`exp-${currentStep}`}
+                    className="mt-2 text-sm text-muted-foreground leading-relaxed px-2 flex items-start justify-center gap-1"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    <span>{phase.explanationTeacher}</span>
+                    <MathExplanationReader
+                      text={phase.explanationTeacher}
+                      language={language}
+                      autoRead={autoRead}
+                      onAutoReadChange={setAutoRead}
+                    />
+                  </motion.div>
                 </div>
               );
             })()
