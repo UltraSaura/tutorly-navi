@@ -929,20 +929,20 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   <div className="mt-3">
                     <motion.div
                       key={`add-exp-${currentStep}`}
-                      className="text-sm text-center text-muted-foreground leading-relaxed px-2"
+                      className="text-sm text-center text-muted-foreground leading-relaxed px-2 flex items-start justify-center"
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.25 }}
                     >
-                      {additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)]}
+                      <span>{additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)]}</span>
+                      <MathExplanationReader
+                        text={additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)]}
+                        language={language}
+                        autoRead={autoRead}
+                        onAutoReadChange={setAutoRead}
+                      />
                     </motion.div>
                   </div>
-                  <MathExplanationReader
-                    text={additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)]}
-                    language={language}
-                    autoRead={autoRead}
-                    onAutoReadChange={setAutoRead}
-                  />
                 </div>
               );
             })()
@@ -1085,20 +1085,20 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   <div className="mt-3">
                     <motion.div
                       key={`sub-exp-${currentStep}`}
-                      className="text-sm text-center text-muted-foreground leading-relaxed px-2"
+                      className="text-sm text-center text-muted-foreground leading-relaxed px-2 flex items-start justify-center"
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.25 }}
                     >
-                      {subtractionData.explanations[Math.min(currentStep, subtractionData.explanations.length - 1)]}
+                      <span>{subtractionData.explanations[Math.min(currentStep, subtractionData.explanations.length - 1)]}</span>
+                      <MathExplanationReader
+                        text={subtractionData.explanations[Math.min(currentStep, subtractionData.explanations.length - 1)]}
+                        language={language}
+                        autoRead={autoRead}
+                        onAutoReadChange={setAutoRead}
+                      />
                     </motion.div>
                   </div>
-                  <MathExplanationReader
-                    text={subtractionData.explanations[Math.min(currentStep, subtractionData.explanations.length - 1)]}
-                    language={language}
-                    autoRead={autoRead}
-                    onAutoReadChange={setAutoRead}
-                  />
                 </div>
               );
             })()
@@ -1230,20 +1230,20 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   <div className="mt-3">
                     <motion.div
                       key={`exp-${currentStep}`}
-                      className="text-sm text-center text-muted-foreground leading-relaxed px-2"
+                      className="text-sm text-center text-muted-foreground leading-relaxed px-2 flex items-start justify-center"
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.25 }}
                     >
-                      {phase.explanationTeacher}
+                      <span>{phase.explanationTeacher}</span>
+                      <MathExplanationReader
+                        text={phase.explanationTeacher}
+                        language={language}
+                        autoRead={autoRead}
+                        onAutoReadChange={setAutoRead}
+                      />
                     </motion.div>
                   </div>
-                  <MathExplanationReader
-                    text={phase.explanationTeacher}
-                    language={language}
-                    autoRead={autoRead}
-                    onAutoReadChange={setAutoRead}
-                  />
                 </div>
               );
             })()
@@ -1754,24 +1754,24 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   <div className="mt-3">
                     <motion.div
                       key={`mul-exp-${currentStep}`}
-                      className="text-sm text-center text-muted-foreground leading-relaxed px-2"
+                      className="text-sm text-center text-muted-foreground leading-relaxed px-2 flex items-start justify-center"
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.25 }}
                     >
-                      {currentStep === 0
+                      <span>{currentStep === 0
                         ? (language === 'fr' ? `On va multiplier ${A} × ${B} étape par étape.` : `We will multiply ${A} × ${B} step by step.`)
-                        : currentStepData?.explanation || ''}
+                        : currentStepData?.explanation || ''}</span>
+                      <MathExplanationReader
+                        text={currentStep === 0
+                          ? (language === 'fr' ? `On va multiplier ${A} × ${B} étape par étape.` : `We will multiply ${A} × ${B} step by step.`)
+                          : currentStepData?.explanation || ''}
+                        language={language}
+                        autoRead={autoRead}
+                        onAutoReadChange={setAutoRead}
+                      />
                     </motion.div>
                    </div>
-                  <MathExplanationReader
-                    text={currentStep === 0
-                      ? (language === 'fr' ? `On va multiplier ${A} × ${B} étape par étape.` : `We will multiply ${A} × ${B} step by step.`)
-                      : currentStepData?.explanation || ''}
-                    language={language}
-                    autoRead={autoRead}
-                    onAutoReadChange={setAutoRead}
-                  />
                 </div>
               );
             })()
@@ -1837,15 +1837,15 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 })}
 
                 {/* Explanation */}
-                <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 text-center">
-                  {currentStepData.explanation}
+                <div className="mt-2 text-sm text-muted-foreground text-center flex items-start justify-center">
+                  <span>{currentStepData.explanation}</span>
+                  <MathExplanationReader
+                    text={currentStepData.explanation}
+                    language={language}
+                    autoRead={autoRead}
+                    onAutoReadChange={setAutoRead}
+                  />
                 </div>
-                <MathExplanationReader
-                  text={currentStepData.explanation}
-                  language={language}
-                  autoRead={autoRead}
-                  onAutoReadChange={setAutoRead}
-                />
               </div>
             );
           })() )}
