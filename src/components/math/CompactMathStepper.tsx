@@ -1840,6 +1840,12 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 text-center">
                   {currentStepData.explanation}
                 </div>
+                <MathExplanationReader
+                  text={currentStepData.explanation}
+                  language={language}
+                  autoRead={autoRead}
+                  onAutoReadChange={setAutoRead}
+                />
               </div>
             );
           })() )}
