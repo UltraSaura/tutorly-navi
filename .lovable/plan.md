@@ -1,22 +1,24 @@
 
 
-## Plan: Fix Read Aloud Button — Ensure Compact Inline Layout
+## Plan: Add Auto-Read Toggle Back to MathExplanationReader
 
-### Problem
-The screenshot shows the old "Read Again" button with visible text and "Auto-read" toggle still rendering in a centered block layout. The current code in `MathExplanationReader.tsx` is already the compact inline version, but the preview may be stale. To ensure the fix takes effect, I'll verify and clean up both files.
+### Change
 
-### Changes
+**1 file modified**: `src/components/math/MathExplanationReader.tsx`
 
-**`src/components/math/MathExplanationReader.tsx`** — Already correct (inline `<span>` with icon-only buttons). No changes needed here.
+Add a small toggle button next to the speaker icon that lets the user enable/disable auto-read. It will be a compact icon-only button (same `h-7 w-7` size) using a `Volume2` with a small indicator dot or a distinct icon like `AudioLines` when auto-read is on vs off.
 
-**`src/components/math/CompactMathStepper.tsx`** — At each of the 5 explanation panels, the `MathExplanationReader` sits inside a `flex items-start justify-center` container alongside a `<span>`. This is correct. However, the wrapping `<div className="mt-3">` adds unnecessary vertical separation. I'll tighten the integration:
+Implementation:
+1. Add a small toggle button after the main speaker button (only visible when not speaking/paused — idle state)
+2. Use `AudioLines` icon (from lucide) when auto-read is ON, with a colored highlight (e.g. `bg-primary/20 text-primary`)
+3. Use a muted style when OFF
+4. On click, call `onAutoReadChange(!autoRead)`
+5. Add a tooltip-like `aria-label`: "Auto-read: on" / "Auto-read: off"
 
-1. Remove the extra wrapper `<div className="mt-3">` around explanation panels — merge the margin into the `motion.div` directly
-2. Ensure all 5 insertion points use consistent `inline` wrapping so the small icon sits right after the text, not on its own line
-3. Force a clean rebuild by touching the file
+The button sits inline in the same `gap-1` row, keeping the compact layout.
 
 ### Files affected
 | File | Change |
 |------|--------|
-| `src/components/math/CompactMathStepper.tsx` | Tighten explanation wrapper divs at all 5 insertion points |
+| `src/components/math/MathExplanationReader.tsx` | Add auto-read toggle icon button in idle state |
 
