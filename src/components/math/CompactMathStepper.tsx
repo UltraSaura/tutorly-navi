@@ -21,6 +21,7 @@ import {
   Calculator,
   AlertCircle
 } from 'lucide-react';
+import { MathExplanationReader } from './MathExplanationReader';
 
 interface CompactMathStepperProps {
   expression: string;
