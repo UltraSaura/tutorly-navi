@@ -1829,7 +1829,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 })}
 
                 {/* Explanation */}
-                <div className="mt-2 text-sm text-muted-foreground text-center flex items-start justify-center">
+                <div className="mt-2 text-sm text-muted-foreground flex items-start justify-center gap-1">
                   <span>{currentStepData.explanation}</span>
                   <MathExplanationReader
                     text={currentStepData.explanation}
