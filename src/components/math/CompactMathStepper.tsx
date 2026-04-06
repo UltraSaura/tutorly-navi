@@ -1763,7 +1763,15 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                         ? (language === 'fr' ? `On va multiplier ${A} × ${B} étape par étape.` : `We will multiply ${A} × ${B} step by step.`)
                         : currentStepData?.explanation || ''}
                     </motion.div>
-                  </div>
+                   </div>
+                  <MathExplanationReader
+                    text={currentStep === 0
+                      ? (language === 'fr' ? `On va multiplier ${A} × ${B} étape par étape.` : `We will multiply ${A} × ${B} step by step.`)
+                      : currentStepData?.explanation || ''}
+                    language={language}
+                    autoRead={autoRead}
+                    onAutoReadChange={setAutoRead}
+                  />
                 </div>
               );
             })()
