@@ -126,19 +126,6 @@ export const MathExplanationReader: React.FC<MathExplanationReaderProps> = ({
           </Button>
         )}
 
-        {/* Rate slider - compact */}
-        <div className="flex items-center gap-1.5 ml-1">
-          <span className="text-[10px] text-muted-foreground whitespace-nowrap">{rate.toFixed(1)}x</span>
-          <Slider
-            value={[rate]}
-            min={0.5}
-            max={1.5}
-            step={0.05}
-            onValueChange={([v]) => setRate(v)}
-            className="w-14"
-            aria-label={isFr ? 'Vitesse de lecture' : 'Speech rate'}
-          />
-        </div>
       </div>
 
       {/* Auto-read toggle */}
