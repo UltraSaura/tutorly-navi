@@ -1,43 +1,22 @@
 
 
-## Plan: Make Read Aloud Button Compact and Side-Positioned
+## Plan: Fix Read Aloud Button — Ensure Compact Inline Layout
 
-### Change
+### Problem
+The screenshot shows the old "Read Again" button with visible text and "Auto-read" toggle still rendering in a centered block layout. The current code in `MathExplanationReader.tsx` is already the compact inline version, but the preview may be stale. To ensure the fix takes effect, I'll verify and clean up both files.
 
-**1 file modified**: `src/components/math/MathExplanationReader.tsx`
+### Changes
 
-Redesign the reader to be a small inline element rather than a centered block:
+**`src/components/math/MathExplanationReader.tsx`** — Already correct (inline `<span>` with icon-only buttons). No changes needed here.
 
-1. **Default state**: Show only a small icon-only button (Volume2 icon, 28×28px) positioned to the right of the explanation text — not in its own centered row
-2. **When speaking**: Show small icon-only Pause + Stop buttons inline (same size)
-3. **When paused**: Show small icon-only Play + Stop buttons inline
-4. **After ended**: Show small RotateCcw icon button
-5. **Auto-read toggle**: Hide it by default, or move it into the button as a long-press/secondary action — simplest approach: remove it from the visible layout entirely (keep state, just don't render the switch)
-6. **Remove** `mt-3 space-y-2` container spacing — make it `inline-flex items-center gap-1`
-7. All buttons become `size="icon"` with `h-7 w-7` and icons at `h-3 w-3`
+**`src/components/math/CompactMathStepper.tsx`** — At each of the 5 explanation panels, the `MathExplanationReader` sits inside a `flex items-start justify-center` container alongside a `<span>`. This is correct. However, the wrapping `<div className="mt-3">` adds unnecessary vertical separation. I'll tighten the integration:
 
-### Layout change in CompactMathStepper
-
-Each `<MathExplanationReader>` currently sits below the explanation div as a separate block. Instead, wrap the explanation text and the reader in a `flex` row so the tiny speaker icon sits at the end of the explanation text:
-
-```text
-Before:
-┌──────────────────────────┐
-│  "Look at the ones..."   │
-├──────────────────────────┤
-│     🔊 Read Aloud        │
-│     □ Auto-read           │
-└──────────────────────────┘
-
-After:
-┌──────────────────────────┐
-│  "Look at the ones..." 🔊│
-└──────────────────────────┘
-```
+1. Remove the extra wrapper `<div className="mt-3">` around explanation panels — merge the margin into the `motion.div` directly
+2. Ensure all 5 insertion points use consistent `inline` wrapping so the small icon sits right after the text, not on its own line
+3. Force a clean rebuild by touching the file
 
 ### Files affected
 | File | Change |
 |------|--------|
-| `src/components/math/MathExplanationReader.tsx` | Shrink to inline icon buttons, remove auto-read toggle UI |
-| `src/components/math/CompactMathStepper.tsx` | Wrap explanation + reader in a flex row at each of the 5 insertion points |
+| `src/components/math/CompactMathStepper.tsx` | Tighten explanation wrapper divs at all 5 insertion points |
 
