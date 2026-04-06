@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Volume2, Pause, Play, Square, RotateCcw } from 'lucide-react';
+import { Volume2, Pause, Play, Square, RotateCcw, AudioLines } from 'lucide-react';
 
 interface MathExplanationReaderProps {
   text: string;
@@ -54,15 +54,31 @@ export const MathExplanationReader: React.FC<MathExplanationReaderProps> = ({
   return (
     <span className={cn('inline-flex items-center gap-1 ml-1.5 align-middle', className)}>
       {!isSpeaking && !isPaused && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => speak(text)}
-          className="h-7 w-7 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
-          aria-label={showEndState ? 'Read Again' : 'Read Aloud'}
-        >
-          {showEndState ? <RotateCcw className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
-        </Button>
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => speak(text)}
+            className="h-7 w-7 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
+            aria-label={showEndState ? 'Read Again' : 'Read Aloud'}
+          >
+            {showEndState ? <RotateCcw className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onAutoReadChange(!autoRead)}
+            className={cn(
+              "h-7 w-7 rounded-full",
+              autoRead
+                ? "bg-primary/20 text-primary hover:bg-primary/30"
+                : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+            )}
+            aria-label={autoRead ? 'Auto-read: on' : 'Auto-read: off'}
+          >
+            <AudioLines className="h-3 w-3" />
+          </Button>
+        </>
       )}
 
       {isSpeaking && !isPaused && (
