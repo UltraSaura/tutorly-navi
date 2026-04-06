@@ -937,7 +937,12 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                       {additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)]}
                     </motion.div>
                   </div>
-                </div>
+                  <MathExplanationReader
+                    text={additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)]}
+                    language={language}
+                    autoRead={autoRead}
+                    onAutoReadChange={setAutoRead}
+                  />
               );
             })()
           ) : subtractionData ? (
