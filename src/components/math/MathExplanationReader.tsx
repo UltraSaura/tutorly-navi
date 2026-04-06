@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Volume2, Pause, Play, Square, RotateCcw } from 'lucide-react';
+import { Volume2, Pause, Play, Square, RotateCcw, AudioLines } from 'lucide-react';
 
 interface MathExplanationReaderProps {
   text: string;
