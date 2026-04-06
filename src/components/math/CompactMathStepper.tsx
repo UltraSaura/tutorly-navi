@@ -943,6 +943,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                     autoRead={autoRead}
                     onAutoReadChange={setAutoRead}
                   />
+                </div>
               );
             })()
           ) : subtractionData ? (
