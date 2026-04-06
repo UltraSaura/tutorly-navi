@@ -1,8 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { Volume2, Pause, Play, Square, RotateCcw } from 'lucide-react';
 
@@ -21,7 +19,6 @@ export const MathExplanationReader: React.FC<MathExplanationReaderProps> = ({
   onAutoReadChange,
   className,
 }) => {
-  const isFr = language === 'fr';
   const prevTextRef = useRef(text);
   const hasEndedRef = useRef(false);
 
@@ -33,15 +30,12 @@ export const MathExplanationReader: React.FC<MathExplanationReaderProps> = ({
     isSpeaking,
     isPaused,
     isSupported,
-    setRate,
-    rate,
   } = useSpeechSynthesis({
     lang: language,
     onEnd: () => { hasEndedRef.current = true; },
     onStart: () => { hasEndedRef.current = false; },
   });
 
-  // Auto-read when text changes
   useEffect(() => {
     if (autoRead && text && text !== prevTextRef.current && isSupported) {
       speak(text);
@@ -49,7 +43,6 @@ export const MathExplanationReader: React.FC<MathExplanationReaderProps> = ({
     prevTextRef.current = text;
   }, [text, autoRead, speak, isSupported]);
 
-  // Stop speech when component unmounts
   useEffect(() => {
     return () => { stop(); };
   }, [stop]);
@@ -59,93 +52,69 @@ export const MathExplanationReader: React.FC<MathExplanationReaderProps> = ({
   const showEndState = hasEndedRef.current && !isSpeaking && !isPaused;
 
   return (
-    <div className={cn('mt-3 space-y-2', className)}>
-      {/* Main controls row */}
-      <div className="flex items-center justify-center gap-2 flex-wrap">
-        {!isSpeaking && !isPaused && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => speak(text)}
-            className="min-h-[40px] rounded-full gap-1.5 text-xs font-medium border-primary/30 text-primary hover:bg-primary/10"
-            aria-label={showEndState 
-              ? (isFr ? 'Réécouter' : 'Read Again')
-              : (isFr ? 'Écouter' : 'Read Aloud')
-            }
-          >
-            {showEndState ? (
-              <>
-                <RotateCcw className="h-3.5 w-3.5" />
-                {isFr ? 'Réécouter' : 'Read Again'}
-              </>
-            ) : (
-              <>
-                <Volume2 className="h-3.5 w-3.5" />
-                {isFr ? 'Écouter' : 'Read Aloud'}
-              </>
-            )}
-          </Button>
-        )}
+    <span className={cn('inline-flex items-center gap-1 ml-1.5 align-middle', className)}>
+      {!isSpeaking && !isPaused && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => speak(text)}
+          className="h-7 w-7 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
+          aria-label={showEndState ? 'Read Again' : 'Read Aloud'}
+        >
+          {showEndState ? <RotateCcw className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+        </Button>
+      )}
 
-        {isSpeaking && !isPaused && (
+      {isSpeaking && !isPaused && (
+        <>
           <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
             onClick={pause}
-            className="min-h-[40px] rounded-full gap-1.5 text-xs font-medium border-amber-400/50 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/20"
-            aria-label={isFr ? 'Pause' : 'Pause'}
+            className="h-7 w-7 rounded-full text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-950/30"
+            aria-label="Pause"
           >
-            <Pause className="h-3.5 w-3.5" />
-            {isFr ? 'Pause' : 'Pause'}
+            <Pause className="h-3 w-3" />
           </Button>
-        )}
-
-        {isPaused && (
           <Button
-            variant="outline"
-            size="sm"
-            onClick={resume}
-            className="min-h-[40px] rounded-full gap-1.5 text-xs font-medium border-green-400/50 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/20"
-            aria-label={isFr ? 'Reprendre' : 'Resume'}
-          >
-            <Play className="h-3.5 w-3.5" />
-            {isFr ? 'Reprendre' : 'Resume'}
-          </Button>
-        )}
-
-        {(isSpeaking || isPaused) && (
-          <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
             onClick={stop}
-            className="min-h-[40px] rounded-full gap-1.5 text-xs font-medium border-destructive/30 text-destructive hover:bg-destructive/10"
-            aria-label={isFr ? 'Arrêter' : 'Stop'}
+            className="h-7 w-7 rounded-full text-destructive hover:bg-destructive/10"
+            aria-label="Stop"
           >
-            <Square className="h-3.5 w-3.5" />
-            {isFr ? 'Arrêter' : 'Stop'}
+            <Square className="h-3 w-3" />
           </Button>
-        )}
+        </>
+      )}
 
-      </div>
+      {isPaused && (
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={resume}
+            className="h-7 w-7 rounded-full text-green-600 hover:bg-green-100 dark:hover:bg-green-950/30"
+            aria-label="Resume"
+          >
+            <Play className="h-3 w-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={stop}
+            className="h-7 w-7 rounded-full text-destructive hover:bg-destructive/10"
+            aria-label="Stop"
+          >
+            <Square className="h-3 w-3" />
+          </Button>
+        </>
+      )}
 
-      {/* Auto-read toggle */}
-      <div className="flex items-center justify-center gap-2">
-        <Switch
-          id="auto-read"
-          checked={autoRead}
-          onCheckedChange={onAutoReadChange}
-          aria-label={isFr ? 'Lecture automatique' : 'Auto-read next step'}
-        />
-        <label htmlFor="auto-read" className="text-[11px] text-muted-foreground cursor-pointer select-none">
-          {isFr ? 'Lecture auto' : 'Auto-read'}
-        </label>
-      </div>
-
-      {/* ARIA live region for status */}
-      <div aria-live="polite" role="status" className="sr-only">
-        {isSpeaking && !isPaused && (isFr ? 'Lecture en cours' : 'Reading started')}
-        {isPaused && (isFr ? 'Lecture en pause' : 'Reading paused')}
-      </div>
-    </div>
+      <span aria-live="polite" role="status" className="sr-only">
+        {isSpeaking && !isPaused && 'Reading'}
+        {isPaused && 'Paused'}
+      </span>
+    </span>
   );
 };
