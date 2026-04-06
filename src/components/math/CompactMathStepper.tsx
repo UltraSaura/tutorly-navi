@@ -40,6 +40,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [autoRead, setAutoRead] = useState(false);
   
 
   useEffect(() => {
