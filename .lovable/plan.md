@@ -1,73 +1,45 @@
 
 
-## Plan: Add Read Aloud Feature to Math Explanation Animations
+## Plan: Optimize Browser Voice Selection for More Natural Speech
 
-### What it does
-A "Read Aloud" button appears below each math explanation text. Tapping it reads the current step's explanation using browser text-to-speech. Controls appear for pause/resume/stop. An optional auto-read toggle reads each new step automatically.
+### Problem
+The current `getVoice()` function in `useSpeechSynthesis.ts` picks the first voice matching the language prefix. This often returns a low-quality robotic voice, even when the browser has premium neural voices available.
 
-### Architecture
+### Fix
 
-**New hook**: `src/hooks/useSpeechSynthesis.ts`
-- Wraps the Web Speech API (`window.speechSynthesis`)
-- Exposes: `speak(text, lang)`, `pause()`, `resume()`, `stop()`, `isSpeaking`, `isPaused`, `isSupported`
-- Accepts `rate` (default 0.85 for kids), `lang` ('en'/'fr')
-- Handles edge cases: cancels on unmount, stops when text changes mid-speech, checks voice availability
-- Selects appropriate voice based on language (French voice for FR, English for EN)
+**1 file modified**: `src/hooks/useSpeechSynthesis.ts`
 
-**New component**: `src/components/math/MathExplanationReader.tsx`
-- Props: `text` (current explanation string), `language` ('en'|'fr'), `autoRead`, `onAutoReadChange`
-- Shows a prominent "Read Aloud" / "Ecouter" button with Volume2 icon
-- When speaking: shows Pause, Stop buttons; when paused: Resume, Stop
-- "Read Again" / "Réécouter" button after speech ends
-- Auto-read toggle with label "Auto-read next step" / "Lecture auto"
-- Speech rate slider (0.5x to 1.5x, default 0.85)
-- Highlights text while reading (wraps text in a pulsing style during speech)
-- ARIA live region announces status changes
-- All buttons have visible text labels + icons (not icon-only)
-- Kid-friendly colors: blue/purple primary buttons, rounded corners, large tap targets (min 44px)
+Update `getVoice()` to rank voices by quality using name-based heuristics:
 
-**Modified file**: `src/components/math/CompactMathStepper.tsx`
-- Import `MathExplanationReader`
-- Add state: `autoRead` (boolean, default false)
-- Extract current explanation text into a variable (already available per operation as `explanations[currentStep]`)
-- Render `<MathExplanationReader>` below each operation's explanation `<motion.div>`
-- Pass `text={currentExplanationText}`, `language={language}`, `autoRead`, `onAutoReadChange`
+1. **Priority 1**: Voices with "Natural", "Neural", "Premium", "Enhanced" in the name
+2. **Priority 2**: Google voices (e.g. "Google UK English Female") — high quality on Chrome
+3. **Priority 3**: Microsoft voices (e.g. "Microsoft Zira") — good quality on Edge/Windows
+4. **Priority 4**: Apple voices (on Safari/macOS) — "Samantha", "Thomas" etc.
+5. **Fallback**: First voice matching the language
 
-### How explanation text flows
+Also add a `voiceschanged` event listener since `getVoices()` often returns an empty array on first call — voices load asynchronously. Store voices in state and re-select when they become available.
 
-Each operation already has a computed `explanations` array:
-- **Addition**: `additionData.explanations[currentStep]`
-- **Subtraction**: `subtractionData.explanations[currentStep]`
-- **Multiplication**: `multiplicationData.multiplicationSteps[currentStep].explanation`
-- **Division**: `divisionData.phases[currentStep].explanationTeacher`
+### Key code shape
 
-The reader component receives the resolved string and doesn't need to know about operation type.
+```typescript
+const rankVoice = (v: SpeechSynthesisVoice): number => {
+  const name = v.name.toLowerCase();
+  if (/natural|neural|premium|enhanced/.test(name)) return 4;
+  if (/google/i.test(name)) return 3;
+  if (/microsoft/i.test(name)) return 2;
+  return 1;
+};
 
-### UI layout (within CompactMathStepper)
-
-```text
-┌─────────────────────────────┐
-│  [Animation visual grid]     │
-│                              │
-│  "Look at the ones column…"  │  ← existing explanation text
-│                              │
-│  🔊 Read Aloud    ⚙ 0.85x   │  ← new reader bar
-│  □ Auto-read next step       │
-└─────────────────────────────┘
+const getVoice = () => {
+  const voices = window.speechSynthesis.getVoices();
+  const matching = voices.filter(v => v.lang.startsWith(langCode));
+  matching.sort((a, b) => rankVoice(b) - rankVoice(a));
+  return matching[0] || null;
+};
 ```
 
-### Accessibility
-- All buttons: `aria-label` + visible text
-- `aria-live="polite"` region for status announcements
-- Keyboard accessible (standard button focus)
-- No auto-play unless user explicitly enables auto-read toggle
-- `role="status"` on the speaking indicator
-
-### Files
-
-| File | Change |
-|------|--------|
-| `src/hooks/useSpeechSynthesis.ts` | New custom hook wrapping Web Speech API |
-| `src/components/math/MathExplanationReader.tsx` | New reusable read-aloud component |
-| `src/components/math/CompactMathStepper.tsx` | Integrate reader below explanation text for all 4 operations |
+### What stays the same
+- All UI controls, MathExplanationReader, auto-read toggle
+- Rate slider, pause/resume/stop behavior
+- Language detection logic
 
