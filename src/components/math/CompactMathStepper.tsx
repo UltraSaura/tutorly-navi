@@ -1745,27 +1745,25 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
                   
                   {/* Current step explanation */}
-                  <div className="mt-3">
-                    <motion.div
-                      key={`mul-exp-${currentStep}`}
-                      className="text-sm text-center text-muted-foreground leading-relaxed px-2 flex items-start justify-center"
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25 }}
-                    >
-                      <span>{currentStep === 0
+                  <motion.div
+                    key={`mul-exp-${currentStep}`}
+                    className="mt-2 text-sm text-muted-foreground leading-relaxed px-2 flex items-start justify-center gap-1"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    <span>{currentStep === 0
+                      ? (language === 'fr' ? `On va multiplier ${A} × ${B} étape par étape.` : `We will multiply ${A} × ${B} step by step.`)
+                      : currentStepData?.explanation || ''}</span>
+                    <MathExplanationReader
+                      text={currentStep === 0
                         ? (language === 'fr' ? `On va multiplier ${A} × ${B} étape par étape.` : `We will multiply ${A} × ${B} step by step.`)
-                        : currentStepData?.explanation || ''}</span>
-                      <MathExplanationReader
-                        text={currentStep === 0
-                          ? (language === 'fr' ? `On va multiplier ${A} × ${B} étape par étape.` : `We will multiply ${A} × ${B} step by step.`)
-                          : currentStepData?.explanation || ''}
-                        language={language}
-                        autoRead={autoRead}
-                        onAutoReadChange={setAutoRead}
-                      />
-                    </motion.div>
-                   </div>
+                        : currentStepData?.explanation || ''}
+                      language={language}
+                      autoRead={autoRead}
+                      onAutoReadChange={setAutoRead}
+                    />
+                  </motion.div>
                 </div>
               );
             })()
