@@ -21,6 +21,7 @@ import {
   Calculator,
   AlertCircle
 } from 'lucide-react';
+import { MathExplanationReader } from './MathExplanationReader';
 
 interface CompactMathStepperProps {
   expression: string;
@@ -39,6 +40,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [autoRead, setAutoRead] = useState(false);
   
 
   useEffect(() => {
@@ -935,6 +937,12 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                       {additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)]}
                     </motion.div>
                   </div>
+                  <MathExplanationReader
+                    text={additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)]}
+                    language={language}
+                    autoRead={autoRead}
+                    onAutoReadChange={setAutoRead}
+                  />
                 </div>
               );
             })()
@@ -1085,6 +1093,12 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                       {subtractionData.explanations[Math.min(currentStep, subtractionData.explanations.length - 1)]}
                     </motion.div>
                   </div>
+                  <MathExplanationReader
+                    text={subtractionData.explanations[Math.min(currentStep, subtractionData.explanations.length - 1)]}
+                    language={language}
+                    autoRead={autoRead}
+                    onAutoReadChange={setAutoRead}
+                  />
                 </div>
               );
             })()
@@ -1224,6 +1238,12 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                       {phase.explanationTeacher}
                     </motion.div>
                   </div>
+                  <MathExplanationReader
+                    text={phase.explanationTeacher}
+                    language={language}
+                    autoRead={autoRead}
+                    onAutoReadChange={setAutoRead}
+                  />
                 </div>
               );
             })()
@@ -1743,7 +1763,15 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                         ? (language === 'fr' ? `On va multiplier ${A} × ${B} étape par étape.` : `We will multiply ${A} × ${B} step by step.`)
                         : currentStepData?.explanation || ''}
                     </motion.div>
-                  </div>
+                   </div>
+                  <MathExplanationReader
+                    text={currentStep === 0
+                      ? (language === 'fr' ? `On va multiplier ${A} × ${B} étape par étape.` : `We will multiply ${A} × ${B} step by step.`)
+                      : currentStepData?.explanation || ''}
+                    language={language}
+                    autoRead={autoRead}
+                    onAutoReadChange={setAutoRead}
+                  />
                 </div>
               );
             })()
@@ -1812,6 +1840,12 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 text-center">
                   {currentStepData.explanation}
                 </div>
+                <MathExplanationReader
+                  text={currentStepData.explanation}
+                  language={language}
+                  autoRead={autoRead}
+                  onAutoReadChange={setAutoRead}
+                />
               </div>
             );
           })() )}
