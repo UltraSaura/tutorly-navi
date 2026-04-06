@@ -1236,7 +1236,12 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                       {phase.explanationTeacher}
                     </motion.div>
                   </div>
-                </div>
+                  <MathExplanationReader
+                    text={phase.explanationTeacher}
+                    language={language}
+                    autoRead={autoRead}
+                    onAutoReadChange={setAutoRead}
+                  />
               );
             })()
           ) : multiplicationData ? (
