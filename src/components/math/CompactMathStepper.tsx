@@ -929,20 +929,20 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   <div className="mt-3">
                     <motion.div
                       key={`add-exp-${currentStep}`}
-                      className="text-sm text-center text-muted-foreground leading-relaxed px-2"
+                      className="text-sm text-center text-muted-foreground leading-relaxed px-2 flex items-start justify-center"
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.25 }}
                     >
-                      {additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)]}
+                      <span>{additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)]}</span>
+                      <MathExplanationReader
+                        text={additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)]}
+                        language={language}
+                        autoRead={autoRead}
+                        onAutoReadChange={setAutoRead}
+                      />
                     </motion.div>
                   </div>
-                  <MathExplanationReader
-                    text={additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)]}
-                    language={language}
-                    autoRead={autoRead}
-                    onAutoReadChange={setAutoRead}
-                  />
                 </div>
               );
             })()
