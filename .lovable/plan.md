@@ -1,44 +1,44 @@
 
 
-## Plan: Skip AI Chat Call When Local Grading Succeeds
+## Plan: Fix Empty Screen / Reload Loop
 
-### Problem
-Local grading IS implemented and works, but the user doesn't see the instant result because `handleSendMessageWithGrading` in `ChatInterface.tsx` **always** calls `handleSendMessage` (AI chat), which takes 20-30 seconds. The loading spinner stays active the entire time, making it feel like grading is slow.
+### Root Cause
 
-The flow currently:
-1. `handleSendMessage` → AI chat call (24s, keeps `isLoading=true`)
-2. `processHomeworkFromChat` → `evaluateHomework` → `localGrade` (instant)
+The console error says it all:
+```
+"Could not find a relationship between 'exercise_history' and 'exercise_explanations_cache'"
+```
 
-Both run, but the user waits for the slow AI chat response.
+In `src/hooks/useExerciseHistory.ts` line 28, the Supabase query tries to join `exercise_explanations_cache` directly from `exercise_history`, but no such foreign key exists. The FK goes from `exercise_attempts` → `exercise_explanations_cache`, not from `exercise_history`. This query fails on every render, which crashes the hook and causes the UI to break and reload.
 
 ### Fix
 
-**1 file modified**: `src/components/user/ChatInterface.tsx`
+**1 file modified**: `src/hooks/useExerciseHistory.ts`
 
-Refactor `handleSendMessageWithGrading` to:
-1. First, check if the message looks like a math exercise (contains `=` with a question and answer)
-2. If so, try `processHomeworkFromChat` first
-3. If local grading succeeds (exercise graded with method `"local"`), **skip** the AI chat call entirely — no `handleSendMessage`
-4. If local grading fails or the message isn't a math exercise, proceed with the normal AI chat flow
+Change the `.select()` query (lines 25-29) to remove the invalid join:
 
-**1 file modified**: `src/hooks/useExercises.ts`
+```typescript
+// Before (broken):
+.select(`
+  *,
+  attempts:exercise_attempts(*),
+  explanation:exercise_explanations_cache(*)
+`)
 
-Make `processHomeworkFromChat` return a result indicating whether local grading succeeded, so `ChatInterface` can decide whether to skip the AI call.
-
-### Technical detail
-
-```text
-handleSendMessageWithGrading(message)
-  ├─ Is it a math exercise? (contains "=" with digits)
-  │   ├─ YES → processHomeworkFromChat(message)
-  │   │         ├─ localGrade succeeded? → Show result instantly, SKIP AI chat
-  │   │         └─ localGrade failed? → Fall through to handleSendMessage (AI)
-  │   └─ NO → handleSendMessage (AI chat as usual)
+// After (fixed — join explanation through attempts):
+.select(`
+  *,
+  attempts:exercise_attempts(
+    *,
+    explanation:exercise_explanations_cache(*)
+  )
+`)
 ```
 
+This nests the explanation under each attempt (where the FK actually exists), instead of trying to join it directly from `exercise_history`.
+
 ### What stays the same
-- All local grading logic (localMathGrader, geometryGrader)
-- AI fallback grading in evaluateHomework
-- The explanation lazy-loading flow
-- All other chat functionality (questions, file uploads, etc.)
+- All local grading logic
+- All other hooks and components
+- The `exercise_explanations_cache` table itself
 
