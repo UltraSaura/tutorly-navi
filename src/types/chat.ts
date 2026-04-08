@@ -38,6 +38,10 @@ export interface Exercise {
   attempts: ExerciseAttempt[];
   lastAttemptDate: Date;
   needsRetry: boolean;
+  gradingMethod?: 'local' | 'ai';
+  explanationLoading?: boolean;
+  explanationRequested?: boolean;
+  correctAnswer?: string; // internal, never displayed directly
 }
 
 // Grade type definition

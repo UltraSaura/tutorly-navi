@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Exercise } from "@/types/chat";
 import { toast } from 'sonner';
 import { areMathematicallyEquivalent, getEquivalencyContext, detectFractionOcrMisread } from "@/utils/mathValidation";
+import { localGrade } from "./localMathGrader";
 
 export const evaluateHomework = async (
   exercise: Exercise,
@@ -36,6 +37,40 @@ export const evaluateHomework = async (
       question: exercise.question, 
       answer: exercise.userAnswer 
     });
+
+    // ===== PHASE 1: Try local grading first (no AI call) =====
+    const localResult = localGrade(exercise.question, exercise.userAnswer);
+    if (localResult && localResult.confidence === 'high') {
+      console.log('[homeworkGrading] ✅ Local grading succeeded:', localResult);
+
+      const isCorrect = localResult.isCorrect;
+      const needsRetry = !isCorrect;
+
+      const successMsg = language === 'fr' ? "Correct ! Bon travail !" : "Correct! Great job!";
+      const incorrectMsg = language === 'fr' ? "Incorrect. Appuyez sur 'Explication' pour comprendre." : "Incorrect. Tap 'Explanation' to understand.";
+      toast.success(isCorrect ? successMsg : incorrectMsg);
+
+      const updatedAttempts = exercise.attempts.map(attempt =>
+        attempt.attemptNumber === attemptNumber
+          ? { ...attempt, isCorrect }
+          : attempt
+      );
+
+      return {
+        ...exercise,
+        isCorrect,
+        explanation: undefined, // Lazy — only loaded on demand
+        needsRetry,
+        attempts: updatedAttempts,
+        gradingMethod: 'local',
+        correctAnswer: localResult.correctAnswer,
+        explanationLoading: false,
+        explanationRequested: false,
+      };
+    }
+
+    console.log('[homeworkGrading] Local grading not confident, falling back to AI');
+
 
     // Step 0: Pre-validate mathematically equivalent answers
     const mathematicalEquivalency = areMathematicallyEquivalent(exercise.question, exercise.userAnswer);

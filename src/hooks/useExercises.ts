@@ -8,6 +8,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { processNewExercise, linkMessageToExercise, processMultipleExercises } from '@/utils/exerciseProcessor';
 import { hasMultipleExercises } from '@/utils/homework/multiExerciseParser';
 import { evaluateHomework } from '@/services/homeworkGrading';
+import { fetchExplanation as fetchExplanationFromAI } from '@/services/explanationService';
 import { useAdmin } from '@/context/AdminContext';
 
 export const useExercises = () => {
@@ -232,6 +233,43 @@ export const useExercises = () => {
     toast.success("All exercises have been cleared.");
   };
 
+  const fetchExplanation = async (exerciseId: string) => {
+    const exercise = exercises.find(ex => ex.id === exerciseId);
+    if (!exercise || exercise.explanation) return; // Already loaded
+
+    // Set loading state
+    setExercises(prev =>
+      prev.map(ex => ex.id === exerciseId ? { ...ex, explanationLoading: true } : ex)
+    );
+
+    try {
+      const explanation = await fetchExplanationFromAI(
+        exerciseId,
+        exercise.question,
+        exercise.userAnswer,
+        !!exercise.isCorrect,
+        exercise.correctAnswer,
+        language,
+        selectedModelId,
+        exercise.attemptCount
+      );
+
+      setExercises(prev =>
+        prev.map(ex =>
+          ex.id === exerciseId
+            ? { ...ex, explanation, explanationLoading: false, explanationRequested: true }
+            : ex
+        )
+      );
+    } catch (error) {
+      console.error('[useExercises] Error fetching explanation:', error);
+      setExercises(prev =>
+        prev.map(ex => ex.id === exerciseId ? { ...ex, explanationLoading: false } : ex)
+      );
+      toast.error('Failed to load explanation');
+    }
+  };
+
   useEffect(() => {
     console.log('[useExercises] Current overall grade state after grade update:', grade);
   }, [grade]);
@@ -245,6 +283,7 @@ export const useExercises = () => {
     linkAIResponseToExercise,
     addExercises,
     submitAnswer,
-    clearExercises
+    clearExercises,
+    fetchExplanation
   };
 };
