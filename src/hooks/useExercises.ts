@@ -8,6 +8,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { processNewExercise, linkMessageToExercise, processMultipleExercises } from '@/utils/exerciseProcessor';
 import { hasMultipleExercises } from '@/utils/homework/multiExerciseParser';
 import { evaluateHomework } from '@/services/homeworkGrading';
+import { fetchExplanation as fetchExplanationFromAI } from '@/services/explanationService';
 import { useAdmin } from '@/context/AdminContext';
 
 export const useExercises = () => {
