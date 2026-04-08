@@ -144,8 +144,10 @@ export const useExercises = () => {
     }
   };
 
-  const processHomeworkFromChat = async (message: string) => {
+  const processHomeworkFromChat = async (message: string): Promise<{ localGraded: boolean }> => {
     console.log('[useExercises] Processing homework from chat message:', message);
+    
+    let localGraded = false;
     
     // Check if the message contains multiple exercises
     if (hasMultipleExercises(message)) {
@@ -161,6 +163,9 @@ export const useExercises = () => {
         setProcessedContent(prev => new Set([...prev, message]));
         console.log('[useExercises] Multi-exercise message marked as processed:', message);
         
+        // Check if any were locally graded
+        localGraded = newExercises.some(ex => ex.gradingMethod === 'local');
+        
         // Show feedback to user
         if (newExercises.length > 1) {
           toast.info(`Found ${newExercises.length} exercises in your message`);
@@ -171,6 +176,10 @@ export const useExercises = () => {
     const result = await processNewExercise(message, exercises, processedContent, language, selectedModelId);
       if (result) {
         const { exercise, isUpdate } = result;
+        
+        // Check if locally graded
+        localGraded = exercise.gradingMethod === 'local';
+        
         setExercises(prev => {
           if (isUpdate) {
             // Update existing exercise
@@ -188,6 +197,8 @@ export const useExercises = () => {
         console.log('[useExercises] Message marked as processed:', message);
       }
     }
+    
+    return { localGraded };
   };
 
   const linkAIResponseToExercise = (userMessage: string, aiMessage: Message) => {
