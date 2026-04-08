@@ -24,8 +24,10 @@ export const useExerciseHistory = (options: UseExerciseHistoryOptions = {}) => {
         .from('exercise_history')
         .select(`
           *,
-          attempts:exercise_attempts(*),
-          explanation:exercise_explanations_cache(*)
+          attempts:exercise_attempts(
+            *,
+            explanation:exercise_explanations_cache(*)
+          )
         `)
         .order('created_at', { ascending: false });
 
