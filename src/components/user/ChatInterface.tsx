@@ -103,7 +103,32 @@ const ChatInterface = () => {
     
     console.log('[ChatInterface] Sending message and processing for grading:', messageToSend);
     
-    // Send through chat system
+    // Check if this looks like a math exercise submission (contains = with digits)
+    const looksLikeMathExercise = /\d.*=.*\d/.test(messageToSend.trim());
+    
+    if (looksLikeMathExercise) {
+      console.log('[ChatInterface] Detected math exercise pattern, trying local grading first');
+      try {
+        const result = await processHomeworkFromChat(messageToSend);
+        if (result.localGraded) {
+          console.log('[ChatInterface] Local grading succeeded, skipping AI chat call');
+          // Add user message to chat for display, but skip the slow AI call
+          addMessage({
+            id: Date.now().toString(),
+            role: 'user',
+            content: messageToSend,
+            timestamp: new Date(),
+          });
+          setInputMessage('');
+          return;
+        }
+        console.log('[ChatInterface] Local grading did not succeed, falling through to AI');
+      } catch (error) {
+        console.error('[ChatInterface] Error in local grading attempt:', error);
+      }
+    }
+    
+    // Send through chat system (AI call)
     await handleSendMessage(overrideMessage);
     
     // Also process and grade the exercise so UI updates with correct/incorrect
