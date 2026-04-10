@@ -124,8 +124,11 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [explanationText, setExplanationText] = useState<string | null>(null);
+  const [explanationLoading, setExplanationLoading] = useState(false);
   const { t, language } = useLanguage();
   const { userContext } = useUserContext();
+  const { selectedModelId } = useAdmin();
   
   // Fetch topic routing info if aiResponse has topicId
   const { data: topicInfo, isLoading: topicInfoLoading } = useQuery({
