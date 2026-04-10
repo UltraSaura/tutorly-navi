@@ -117,7 +117,7 @@ const parseAIResponse = (content: string) => {
 };
 
 // Memoized ExerciseCard component
-const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmitAnswer }) => {
+const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmitAnswer, onShowExplanation }) => {
   const parsed = parseUserMessage(userMessage.content);
   const { question, answer, hasAnswer } = parsed;
   const content = aiResponse.content;
@@ -125,11 +125,8 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
-  const [explanationText, setExplanationText] = useState<string | null>(null);
-  const [explanationLoading, setExplanationLoading] = useState(false);
   const { t, language } = useLanguage();
   const { userContext } = useUserContext();
-  const { selectedModelId } = useAdmin();
   
   // Fetch topic routing info if aiResponse has topicId
   const { data: topicInfo, isLoading: topicInfoLoading } = useQuery({
@@ -150,48 +147,6 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
     },
     enabled: !!aiResponse.topicId
   });
-  
-  // Debug logging for translation issues
-  console.log('[ExerciseCard] Translation Debug:', {
-    language,
-    testTranslation: t('exercise.answer'),
-    testExplanation: t('explanation.modal_title'),
-    testHeaders: t('explanation.headers.exercise'),
-    rawKey: 'exercise.answer',
-    timestamp: new Date().toISOString()
-  });
-  
-  // Check if this is a question without an answer - now using enhanced detection
-  const hasNoAnswer = isRetrying || !hasAnswer || !answer;
-  
-  const contentTrimmed = content.trim();
-  const firstLine = contentTrimmed.split('\n')[0];
-  
-  const isCorrect = /^CORRECT\b/i.test(contentTrimmed) || /\bCORRECT\b/i.test(firstLine);
-  const isIncorrect = /^INCORRECT\b/i.test(contentTrimmed) || /\bINCORRECT\b/i.test(firstLine);
-  
-  const handleShowExplanation = async () => {
-    if (explanationText || explanationLoading) return;
-    setExplanationLoading(true);
-    try {
-      const text = await fetchExplanationFromService(
-        `card-${question}-${answer}`,
-        question,
-        answer || '',
-        isCorrect,
-        undefined,
-        language,
-        selectedModelId || '',
-        1
-      );
-      setExplanationText(text);
-    } catch (e) {
-      console.error('[ExerciseCard] Failed to fetch explanation:', e);
-      setExplanationText(language === 'fr' ? 'Impossible de charger l\'explication.' : 'Failed to load explanation.');
-    } finally {
-      setExplanationLoading(false);
-    }
-  };
 
   const formattedExplanation = formatExplanation(content);
 
