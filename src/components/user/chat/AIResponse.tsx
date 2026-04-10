@@ -1,25 +1,19 @@
-import React, { memo, useMemo, useState } from 'react';
-import { Calculator, CheckCircle, XCircle, Send, Trash2, X, Loader2 } from 'lucide-react';
+import React, { memo, useMemo, useState, useCallback } from 'react';
+import { Calculator, Send, Trash2, X } from 'lucide-react';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { containsMathContent, textToMathDisplay, answerToLatex } from '@/utils/mathFormatUtils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Message } from '@/types/chat';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/SimpleLanguageContext';
-import DOMPurify from 'dompurify';
 import { parseUserMessage } from '@/utils/messageParser';
-import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
-import { extractExpressionFromText } from '@/utils/mathStepper/parser';
-import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { useUserContext } from '@/hooks/useUserContext';
-import { validateExampleOperationType, getOperationTypeDisplay } from '@/utils/operationTypeDetector';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchExplanation as fetchExplanationFromService } from '@/services/explanationService';
-import { useAdmin } from '@/context/AdminContext';
+import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
+import { ExplanationModal } from '@/features/explanations/ExplanationModal';
 
 interface AIResponseProps {
   messages: Message[];
@@ -33,10 +27,8 @@ interface ExerciseCardProps {
   aiResponse: Message;
   onSubmitAnswer?: (question: string, answer: string) => void;
   onDismiss?: () => void;
+  onShowExplanation?: (question: string, answer: string, isCorrect: boolean) => void;
 }
-
-// Note: parseUserMessage is now imported from @/utils/messageParser
-// This provides enhanced detection with better pattern matching
 
 // Inline helper to render text that may contain math
 const MathText = ({ text, className }: { text: string; className?: string }) => {
@@ -59,64 +51,30 @@ const MathAnswer = ({ label, answer }: { label: string; answer: string }) => {
 };
 
 const getStatusStyles = (content: string) => {
-  // Check the first line or beginning of content for status
   const contentTrimmed = content.trim();
   const firstLine = contentTrimmed.split('\n')[0];
-  
   const isCorrect = /^CORRECT\b/i.test(contentTrimmed) || /\bCORRECT\b/i.test(firstLine);
   const isIncorrect = /^INCORRECT\b/i.test(contentTrimmed) || /\bINCORRECT\b/i.test(firstLine);
   const isUnanswered = /^UNANSWERED\b/i.test(contentTrimmed);
   
-  if (isUnanswered) {
-    return 'bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800';
-  } else if (isCorrect) {
-    return 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800';
-  } else if (isIncorrect) {
-    return 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800';
-  } else {
-    return 'bg-neutral-surface border-neutral-border';
-  }
+  if (isUnanswered) return 'bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800';
+  if (isCorrect) return 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800';
+  if (isIncorrect) return 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800';
+  return 'bg-neutral-surface border-neutral-border';
 };
 
-const formatExplanation = (content: string) => {
-  // Remove status prefixes and clean up the content
-  const cleanContent = content
-    .replace(/^(CORRECT|INCORRECT|UNANSWERED)\s*/i, '')
-    .replace(/^Great work!\s*/i, '')
-    .replace(/^Learning Opportunity\s*/i, '')
-    .replace(/^Guidance:\s*/i, '')
-    .replace(/^Problem:\s*/i, '')
-    .trim();
-
-  return cleanContent
-    .replace(/\*\*Problem:\*\*/g, '<strong class="text-stuwy-600 dark:text-stuwy-400">Problem:</strong>')
-    .replace(/\*\*Guidance:\*\*/g, '<strong class="text-stuwy-600 dark:text-stuwy-400">Guidance:</strong>')
-    .replace(/^Guidance:\s*Problem:\s*/gm, '')
-    .replace(/^\s*$/gm, '')
-    .split('\n')
-    .filter(line => line.trim() !== '')
-    .join('<br />');
-};
-
-// Add this new function to parse JSON responses
 const parseAIResponse = (content: string) => {
   try {
-    // Try to extract JSON from markdown code blocks
     const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[1]);
-    }
-    
-    // Try to parse the entire content as JSON
+    if (jsonMatch) return JSON.parse(jsonMatch[1]);
     return JSON.parse(content);
-  } catch (error) {
-    console.error('Failed to parse AI response as JSON:', error);
+  } catch {
     return null;
   }
 };
 
 // Memoized ExerciseCard component
-const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmitAnswer }) => {
+const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmitAnswer, onShowExplanation }) => {
   const parsed = parseUserMessage(userMessage.content);
   const { question, answer, hasAnswer } = parsed;
   const content = aiResponse.content;
@@ -124,103 +82,41 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
-  const [explanationText, setExplanationText] = useState<string | null>(null);
-  const [explanationLoading, setExplanationLoading] = useState(false);
   const { t, language } = useLanguage();
   const { userContext } = useUserContext();
-  const { selectedModelId } = useAdmin();
   
-  // Fetch topic routing info if aiResponse has topicId
   const { data: topicInfo, isLoading: topicInfoLoading } = useQuery({
     queryKey: ['topic-info-for-lesson', aiResponse.topicId],
     queryFn: async () => {
       if (!aiResponse.topicId) return null;
       const { data } = await supabase
         .from('learning_topics')
-        .select(`
-          slug,
-          category:learning_categories!inner(
-            subject:learning_subjects!inner(slug)
-          )
-        `)
+        .select(`slug, category:learning_categories!inner(subject:learning_subjects!inner(slug))`)
         .eq('id', aiResponse.topicId)
         .single();
       return data;
     },
     enabled: !!aiResponse.topicId
   });
-  
-  // Debug logging for translation issues
-  console.log('[ExerciseCard] Translation Debug:', {
-    language,
-    testTranslation: t('exercise.answer'),
-    testExplanation: t('explanation.modal_title'),
-    testHeaders: t('explanation.headers.exercise'),
-    rawKey: 'exercise.answer',
-    timestamp: new Date().toISOString()
-  });
-  
-  // Check if this is a question without an answer - now using enhanced detection
+
   const hasNoAnswer = isRetrying || !hasAnswer || !answer;
   
   const contentTrimmed = content.trim();
   const firstLine = contentTrimmed.split('\n')[0];
-  
   const isCorrect = /^CORRECT\b/i.test(contentTrimmed) || /\bCORRECT\b/i.test(firstLine);
   const isIncorrect = /^INCORRECT\b/i.test(contentTrimmed) || /\bINCORRECT\b/i.test(firstLine);
-  
-  const handleShowExplanation = async () => {
-    if (explanationText || explanationLoading) return;
-    setExplanationLoading(true);
-    try {
-      const text = await fetchExplanationFromService(
-        `card-${question}-${answer}`,
-        question,
-        answer || '',
-        isCorrect,
-        undefined,
-        language,
-        selectedModelId || '',
-        1
-      );
-      setExplanationText(text);
-    } catch (e) {
-      console.error('[ExerciseCard] Failed to fetch explanation:', e);
-      setExplanationText(language === 'fr' ? 'Impossible de charger l\'explication.' : 'Failed to load explanation.');
-    } finally {
-      setExplanationLoading(false);
-    }
-  };
-
-  const formattedExplanation = formatExplanation(content);
 
   const handleSubmitAnswer = async () => {
-    console.log('[ExerciseCard] handleSubmitAnswer called');
-    console.log('[ExerciseCard] userAnswerInput:', userAnswerInput);
-    console.log('[ExerciseCard] onSubmitAnswer function:', onSubmitAnswer);
-    console.log('[ExerciseCard] question:', question);
-    
-    if (!userAnswerInput.trim()) {
-      console.log('[ExerciseCard] No answer input, returning early');
-      return;
-    }
-    
-    if (!onSubmitAnswer) {
-      console.log('[ExerciseCard] No onSubmitAnswer function, returning early');
-      return;
-    }
-    
+    if (!userAnswerInput.trim() || !onSubmitAnswer) return;
     setIsSubmitting(true);
     try {
-      console.log('[ExerciseCard] Calling onSubmitAnswer with:', { question, answer: userAnswerInput.trim() });
       await onSubmitAnswer(question, userAnswerInput.trim());
-      console.log('[ExerciseCard] onSubmitAnswer completed successfully');
       setUserAnswerInput('');
       setAnswerSubmitted(true);
       setIsRetrying(false);
     } catch (error) {
       console.error('[ExerciseCard] Error in handleSubmitAnswer:', error);
-      setAnswerSubmitted(false); // Add this line to reset on error
+      setAnswerSubmitted(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -233,54 +129,43 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
     }
   };
 
-  // If we have a valid JSON response with 2-card format, use it
+  const handleExplanationClick = () => {
+    if (onShowExplanation) {
+      onShowExplanation(question, answer || '', isCorrect);
+    }
+  };
+
+  // JSON response path
   const jsonResponse = parseAIResponse(content);
   if (jsonResponse && jsonResponse.isMath && jsonResponse.sections) {
-    // Get grading information from JSON response
-    const isCorrect = jsonResponse.isCorrect;
-    const isIncorrect = jsonResponse.isCorrect === false;
+    const jsonIsCorrect = jsonResponse.isCorrect === true;
+    const jsonIsIncorrect = jsonResponse.isCorrect === false;
     
     return (
       <div className="w-full overflow-hidden">
-        <div 
-          className={cn(
-            'p-4 rounded-card transition-all duration-200 hover:shadow-md relative break-words overflow-hidden',
-            // Add bolder, darker borders based on JSON response
-            isCorrect === true 
-              ? 'bg-green-50 border-2 border-green-600' // Dark green border for correct
-              : isCorrect === false
-              ? 'bg-red-50 border-2 border-red-600' // Dark pink/red border for incorrect
-              : 'bg-neutral-surface border border-neutral-border' // Neutral for no answer
-          )}
-        >
-          {/* Status Image - Top Right Corner */}
+        <div className={cn(
+          'p-4 rounded-card transition-all duration-200 hover:shadow-md relative break-words overflow-hidden',
+          jsonIsCorrect ? 'bg-green-50 border-2 border-green-600'
+            : jsonIsIncorrect ? 'bg-red-50 border-2 border-red-600'
+            : 'bg-neutral-surface border border-neutral-border'
+        )}>
           <div className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center">
-            {isCorrect === true ? (
-              <img 
-                src="/images/Happy Green Right Answer.png" 
-                alt={t('exercise.correct')}
-                className="w-6 h-6 object-contain"
-              />
-            ) : isCorrect === false ? (
-              <img 
-                src="/images/Sad Face wrong Answer.png" 
-                alt={t('exercise.incorrect')}
-                className="w-6 h-6 object-contain"
-              />
+            {jsonIsCorrect ? (
+              <img src="/images/Happy Green Right Answer.png" alt={t('exercise.correct')} className="w-6 h-6 object-contain" />
+            ) : jsonIsIncorrect ? (
+              <img src="/images/Sad Face wrong Answer.png" alt={t('exercise.incorrect')} className="w-6 h-6 object-contain" />
             ) : (
-              <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
-                <span className="text-gray-600 text-sm font-bold">?</span>
+              <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                <span className="text-muted-foreground text-sm font-bold">?</span>
               </div>
             )}
           </div>
 
-          <div className="flex items-start gap-3 pr-8"> {/* Add right padding to avoid overlap with status image */}
+          <div className="flex items-start gap-3 pr-8">
             <div className={cn(
               'flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center',
-              isCorrect === true
-                ? 'bg-green-100 border border-green-300 text-green-600'
-                : isCorrect === false
-                ? 'bg-blue-100 border border-blue-200 text-blue-600'
+              jsonIsCorrect ? 'bg-green-100 border border-green-300 text-green-600'
+                : jsonIsIncorrect ? 'bg-blue-100 border border-blue-200 text-blue-600'
                 : 'bg-neutral-surface border border-neutral-border text-blue-600'
             )}>
               <Calculator size={20} />
@@ -291,123 +176,40 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                 <MathText text={question || jsonResponse.exercise} />
               </div>
               
-              {/* Answer section - either show existing answer or input field */}
               <div className="mb-3">
                 {hasNoAnswer ? (
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-neutral-text">
-                      {t('exercise.answer')}:
-                    </label>
+                    <label className="text-sm font-medium text-neutral-text">{t('exercise.answer')}:</label>
                     <div className="flex items-center gap-2">
-                      <Input
-                        type="text"
-                        value={userAnswerInput}
-                        onChange={(e) => setUserAnswerInput(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        placeholder={t('exercise.pleaseProvideAnswer')}
-                        className="flex-1"
-                        disabled={isSubmitting}
-                      />
-                      <Button
-                        onClick={(e) => {
-                          console.log('[ExerciseCard] Submit button clicked!');
-                          console.log('[ExerciseCard] Event:', e);
-                          handleSubmitAnswer();
-                        }}
-                        disabled={!userAnswerInput.trim() || isSubmitting}
-                        size="sm"
-                        className="px-3"
-                      >
+                      <Input type="text" value={userAnswerInput} onChange={(e) => setUserAnswerInput(e.target.value)}
+                        onKeyPress={handleKeyPress} placeholder={t('exercise.pleaseProvideAnswer')} className="flex-1" disabled={isSubmitting} />
+                      <Button onClick={handleSubmitAnswer} disabled={!userAnswerInput.trim() || isSubmitting} size="sm" className="px-3">
                         <Send size={16} className="mr-1" />
-                        {answerSubmitted && userAnswerInput.trim() === '' 
-                          ? t('exercise.answerSubmitted') 
-                          : t('common.submit')}
+                        {answerSubmitted && userAnswerInput.trim() === '' ? t('exercise.answerSubmitted') : t('common.submit')}
                       </Button>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <Badge 
-                      variant="secondary" 
-                      className={cn(
-                        'px-3 py-1',
-                        isCorrect === true
-                          ? 'bg-green-100 border border-green-300 text-green-800'
-                          : isCorrect === false
-                          ? 'bg-white border border-gray-200 text-gray-600'
-                          : 'bg-neutral-bg text-neutral-muted'
-                      )}
-                    >
+                    <Badge variant="secondary" className={cn('px-3 py-1',
+                      jsonIsCorrect ? 'bg-green-100 border border-green-300 text-green-800'
+                        : jsonIsIncorrect ? 'bg-white border border-border text-muted-foreground'
+                        : 'bg-neutral-bg text-neutral-muted'
+                    )}>
                       <MathAnswer label={t('exercise.answer')} answer={answer} />
                     </Badge>
                   </div>
                 )}
               </div>
               
-              {/* Show Explanation Button with Popup */}
               <div className="flex items-center gap-2">
-              <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs px-2 py-0.5 h-6"
-                      onClick={handleShowExplanation}
-                    >
-                      {t('exercise.showExplanation')}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>{t('explanation.modal_title')}</DialogTitle>
-                    </DialogHeader>
-                    
-                    <div className="space-y-4">
-                      <div className="rounded-xl border bg-muted p-4 break-words overflow-hidden">
-                        <div className="font-semibold mb-2">{t('explanation.headers.exercise')}</div>
-                        <div className="break-words whitespace-pre-wrap">
-                          <MathText text={question || jsonResponse?.exercise || ''} />
-                        </div>
-                        {answer && (
-                          <div className="mt-2 text-sm text-muted-foreground">
-                            <MathAnswer label={t('exercise.answer')} answer={answer} />
-                          </div>
-                        )}
-                      </div>
-
-                      {explanationLoading ? (
-                        <div className="flex items-center justify-center py-8">
-                          <Loader2 className="w-6 h-6 animate-spin text-primary mr-2" />
-                          <span className="text-sm text-muted-foreground">
-                            {language === 'fr' ? 'Chargement de l\'explication...' : 'Loading explanation...'}
-                          </span>
-                        </div>
-                      ) : explanationText ? (
-                        <div className="rounded-xl border bg-card p-4 shadow-sm">
-                          <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
-                            {explanationText}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-center py-4 text-sm text-muted-foreground">
-                          {language === 'fr' ? 'Cliquez pour charger l\'explication' : 'Click to load explanation'}
-                        </div>
-                      )}
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button variant="outline" size="sm" className="text-xs px-2 py-0.5 h-6" onClick={handleExplanationClick}>
+                  {t('exercise.showExplanation')}
+                </Button>
                 
-                {/* Add Try Again button for incorrect answers */}
-                {isCorrect === false && !isRetrying && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="text-xs px-2 py-0.5 h-6"
-                    onClick={() => {
-                      setIsRetrying(true);
-                      setUserAnswerInput('');
-                    }}
-                  >
+                {jsonIsIncorrect && !isRetrying && (
+                  <Button variant="default" size="sm" className="text-xs px-2 py-0.5 h-6"
+                    onClick={() => { setIsRetrying(true); setUserAnswerInput(''); }}>
                     {t('exercise.tryAgain')}
                   </Button>
                 )}
@@ -419,187 +221,69 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
     );
   }
 
-  // Fallback to old format for non-JSON responses
+  // Fallback for non-JSON responses
   return (
     <div className="w-full">
-          <div 
-            className={cn(
-          'p-4 rounded-card transition-all duration-200 hover:shadow-md relative',
-          getStatusStyles(content)
-        )}
-      >
-        {/* Status Image - Top Right Corner */}
+      <div className={cn('p-4 rounded-card transition-all duration-200 hover:shadow-md relative', getStatusStyles(content))}>
         <div className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center">
           {isCorrect ? (
-            <img 
-              src="/images/Happy Green Right Answer.png" 
-              alt={t('exercise.correct')}
-              className="w-6 h-6 object-contain"
-            />
+            <img src="/images/Happy Green Right Answer.png" alt={t('exercise.correct')} className="w-6 h-6 object-contain" />
           ) : isIncorrect ? (
-            <img 
-              src="/images/Sad Face wrong Answer.png" 
-              alt={t('exercise.incorrect')}
-              className="w-6 h-6 object-contain"
-            />
+            <img src="/images/Sad Face wrong Answer.png" alt={t('exercise.incorrect')} className="w-6 h-6 object-contain" />
           ) : (
-            <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
-              <span className="text-gray-600 text-sm font-bold">?</span>
+            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+              <span className="text-muted-foreground text-sm font-bold">?</span>
             </div>
           )}
         </div>
 
-        <div className="flex items-start gap-3 pr-8"> {/* Add right padding to avoid overlap with status image */}
-              <div className={cn(
-                'flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center',
-                'bg-neutral-surface border border-neutral-border text-blue-600'
-              )}>
-                <Calculator size={20} />
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                  <div className="text-body font-semibold text-neutral-text mb-3">
+        <div className="flex items-start gap-3 pr-8">
+          <div className={cn('flex-shrink-0 w-10 h-10 rounded-button flex items-center justify-center',
+            'bg-neutral-surface border border-neutral-border text-blue-600')}>
+            <Calculator size={20} />
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <div className="text-body font-semibold text-neutral-text mb-3">
               <MathText text={question} />
             </div>
             
-            {/* Answer section - either show existing answer or input field */}
             <div className="mb-3">
               {hasNoAnswer ? (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-neutral-text">
-                    {t('exercise.answer')}:
-                  </label>
+                  <label className="text-sm font-medium text-neutral-text">{t('exercise.answer')}:</label>
                   <div className="flex items-center gap-2">
-                    <Input
-                      type="text"
-                      value={userAnswerInput}
-                      onChange={(e) => setUserAnswerInput(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder={t('exercise.pleaseProvideAnswer')}
-                      className="flex-1"
-                      disabled={isSubmitting}
-                    />
-                    <Button
-                      onClick={(e) => {
-                        console.log('[ExerciseCard] Submit button clicked!');
-                        console.log('[ExerciseCard] Event:', e);
-                        handleSubmitAnswer();
-                      }}
-                      disabled={!userAnswerInput.trim() || isSubmitting}
-                      size="sm"
-                      className="px-3"
-                    >
+                    <Input type="text" value={userAnswerInput} onChange={(e) => setUserAnswerInput(e.target.value)}
+                      onKeyPress={handleKeyPress} placeholder={t('exercise.pleaseProvideAnswer')} className="flex-1" disabled={isSubmitting} />
+                    <Button onClick={handleSubmitAnswer} disabled={!userAnswerInput.trim() || isSubmitting} size="sm" className="px-3">
                       <Send size={16} className="mr-1" />
-                      {answerSubmitted && userAnswerInput.trim() === '' 
-                        ? t('exercise.answerSubmitted') 
-                        : t('common.submit')}
+                      {answerSubmitted && userAnswerInput.trim() === '' ? t('exercise.answerSubmitted') : t('common.submit')}
                     </Button>
-                    </div>
-                    
-                    {/* Watch Video Footer - Context aware */}
-                    {aiResponse.topicId && topicInfo ? (
-                      <div className="mt-4 pt-3 border-t border-border">
-                        <DialogClose asChild>
-                          <button
-                            onClick={() => {
-                              const subjectSlug = topicInfo.category?.subject?.slug;
-                              const topicSlug = topicInfo.slug;
-                              if (subjectSlug && topicSlug) {
-                                setTimeout(() => {
-                                  window.location.href = `/learning/${subjectSlug}/${topicSlug}`;
-                                }, 200);
-                              }
-                            }}
-                            className="text-sm text-primary hover:underline flex items-center gap-1"
-                          >
-                            {t('explanation.watch_video')}
-                          </button>
-                        </DialogClose>
-                      </div>
-                    ) : aiResponse.topicId && topicInfoLoading ? (
-                      <div className="mt-4 pt-3 border-t border-border">
-                        <p className="text-xs text-muted-foreground">Loading...</p>
-                      </div>
-                    ) : null}
                   </div>
-              ) : (
-                    <Badge 
-                      variant="secondary" 
-                      className="px-3 py-1 bg-neutral-bg text-neutral-muted"
-                    >
-                  <MathAnswer label={t('exercise.answer')} answer={answer} />
-                      </Badge>
-                    )}
-                  </div>
-            
-                <div className="flex items-center gap-2">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs px-2 py-0.5 h-6"
-                    onClick={handleShowExplanation}
-                  >
-                    {t('exercise.showExplanation')}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>{t('explanation.modal_title')}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="rounded-xl border bg-muted p-4 break-words overflow-hidden">
-                      <div className="font-semibold mb-2">{t('explanation.headers.exercise')}</div>
-                      <div className="break-words whitespace-pre-wrap">
-                        <MathText text={question} />
-                      </div>
-                      {answer && (
-                        <div className="mt-2 text-sm text-muted-foreground">
-                          <MathAnswer label={t('exercise.answer')} answer={answer} />
-                        </div>
-                      )}
-                    </div>
-
-                    {explanationLoading ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="w-6 h-6 animate-spin text-primary mr-2" />
-                        <span className="text-sm text-muted-foreground">
-                          {language === 'fr' ? 'Chargement de l\'explication...' : 'Loading explanation...'}
-                        </span>
-                      </div>
-                    ) : explanationText ? (
-                      <div className="rounded-xl border bg-card p-4 shadow-sm">
-                        <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
-                          {explanationText}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-4 text-sm text-muted-foreground">
-                        {language === 'fr' ? 'Cliquez pour charger l\'explication' : 'Click to load explanation'}
-                      </div>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
-                  
-                  {isIncorrect && (
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="text-xs px-2 py-0.5 h-6"
-                  onClick={() => {
-                    setUserAnswerInput('');
-                  }}
-                    >
-                      {t('exercise.tryAgain')}
-                    </Button>
-                  )}
                 </div>
-              </div>
+              ) : (
+                <Badge variant="secondary" className="px-3 py-1 bg-neutral-bg text-neutral-muted">
+                  <MathAnswer label={t('exercise.answer')} answer={answer} />
+                </Badge>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="text-xs px-2 py-0.5 h-6" onClick={handleExplanationClick}>
+                {t('exercise.showExplanation')}
+              </Button>
+              
+              {isIncorrect && !isRetrying && (
+                <Button variant="default" size="sm" className="text-xs px-2 py-0.5 h-6"
+                  onClick={() => { setIsRetrying(true); setUserAnswerInput(''); }}>
+                  {t('exercise.tryAgain')}
+                </Button>
+              )}
             </div>
           </div>
         </div>
+      </div>
+    </div>
   );
 }, (prevProps, nextProps) => {
   return prevProps.userMessage.id === nextProps.userMessage.id &&
@@ -624,7 +308,15 @@ const LoadingSkeleton = () => (
 
 const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAnswer, onClearAll, onDismissExercise }) => {
   const { t, language } = useLanguage();
+  const teaching = useTwoCardTeaching();
   
+  const handleShowExplanation = useCallback((question: string, answer: string, isCorrect: boolean) => {
+    teaching.openFor(
+      { prompt: question, userAnswer: answer, subject: 'math' },
+      { response_language: language === 'fr' ? 'French' : 'English', grade_level: 'High School' }
+    );
+  }, [language, teaching]);
+
   const exercisePairs = useMemo(() => {
     const pairs: Array<{ userMessage: Message; aiResponse: Message }> = [];
     let pendingUser: Message | null = null;
@@ -640,47 +332,32 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
       }
     }
 
-    const uniquePairs = [];
+    const uniquePairs: typeof pairs = [];
     const seenQuestions = new Set<string>();
     
     for (const pair of pairs) {
-      const parsed = parseUserMessage(pair.userMessage.content);
-      const { question } = parsed;
-      
+      const { question } = parseUserMessage(pair.userMessage.content);
       if (!seenQuestions.has(question)) {
         seenQuestions.add(question);
         uniquePairs.push(pair);
       } else {
-        const existingIndex = uniquePairs.findIndex(existingPair => {
-          const existingParsed = parseUserMessage(existingPair.userMessage.content);
-          return existingParsed.question === question;
-        });
-        
-        if (existingIndex !== -1) {
-          uniquePairs[existingIndex] = pair;
-        }
+        const idx = uniquePairs.findIndex(ep => parseUserMessage(ep.userMessage.content).question === question);
+        if (idx !== -1) uniquePairs[idx] = pair;
       }
     }
     
     return uniquePairs;
   }, [messages]);
 
-  if (exercisePairs.length === 0 && !isLoading) {
-    return null;
-  }
+  if (exercisePairs.length === 0 && !isLoading) return null;
 
   return (
     <div className="p-6">
       <div className="max-w-6xl mx-auto space-y-4">
-        {/* Clear All button */}
         {exercisePairs.length > 0 && onClearAll && (
           <div className="flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClearAll}
-              className="text-muted-foreground hover:text-destructive hover:border-destructive"
-            >
+            <Button variant="outline" size="sm" onClick={onClearAll}
+              className="text-muted-foreground hover:text-destructive hover:border-destructive">
               <Trash2 size={14} />
               {language === 'fr' ? 'Tout effacer' : 'Clear all'}
             </Button>
@@ -689,13 +366,10 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
 
         {exercisePairs.map((pair) => (
           <div key={pair.userMessage.id} className="relative group">
-            {/* Dismiss button */}
             {onDismissExercise && (
-              <button
-                onClick={() => onDismissExercise(pair.userMessage.id)}
+              <button onClick={() => onDismissExercise(pair.userMessage.id)}
                 className="absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full bg-muted border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground hover:border-destructive"
-                title={language === 'fr' ? 'Supprimer' : 'Dismiss'}
-              >
+                title={language === 'fr' ? 'Supprimer' : 'Dismiss'}>
                 <X size={12} />
               </button>
             )}
@@ -703,12 +377,22 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
               userMessage={pair.userMessage}
               aiResponse={pair.aiResponse}
               onSubmitAnswer={onSubmitAnswer}
+              onShowExplanation={handleShowExplanation}
             />
           </div>
         ))}
         
         {isLoading && <LoadingSkeleton />}
       </div>
+
+      <ExplanationModal
+        open={teaching.open}
+        onClose={() => teaching.setOpen(false)}
+        loading={teaching.loading}
+        sections={teaching.sections}
+        error={teaching.error}
+        onTryAgain={() => teaching.setOpen(false)}
+      />
     </div>
   );
 };
