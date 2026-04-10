@@ -1,5 +1,5 @@
 import React, { memo, useMemo, useState } from 'react';
-import { Calculator, CheckCircle, XCircle, Send, Trash2, X } from 'lucide-react';
+import { Calculator, CheckCircle, XCircle, Send, Trash2, X, Loader2 } from 'lucide-react';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { containsMathContent, textToMathDisplay, answerToLatex } from '@/utils/mathFormatUtils';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,8 @@ import { useUserContext } from '@/hooks/useUserContext';
 import { validateExampleOperationType, getOperationTypeDisplay } from '@/utils/operationTypeDetector';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchExplanation as fetchExplanationFromService } from '@/services/explanationService';
+import { useAdmin } from '@/context/AdminContext';
 
 interface AIResponseProps {
   messages: Message[];
