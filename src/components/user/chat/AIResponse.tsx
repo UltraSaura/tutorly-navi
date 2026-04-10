@@ -539,41 +539,46 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                     variant="outline"
                     size="sm"
                     className="text-xs px-2 py-0.5 h-6"
+                    onClick={handleShowExplanation}
                   >
                     {t('exercise.showExplanation')}
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>{t('explanation.modal_title')}</DialogTitle>
                   </DialogHeader>
-                  <div className={cn(
-                    "p-4 rounded-lg",
-                    isCorrect 
-                      ? "bg-green-50 dark:bg-green-950/20" 
-                      : "bg-amber-50 dark:bg-amber-950/20"
-                  )}>
-                    <div className="space-y-3">
-                      <div className="flex items-center mb-2">
-                        {isCorrect 
-                          ? <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
-                          : <XCircle className="w-4 h-4 mr-2 text-amber-600" />
-                        }
-                        <h4 className="text-sm font-medium">
-                          {isCorrect ? t('exercise.greatWork') : t('exercise.learningOpportunity')}
-                        </h4>
+                  <div className="space-y-4">
+                    <div className="rounded-xl border bg-muted p-4 break-words overflow-hidden">
+                      <div className="font-semibold mb-2">{t('explanation.headers.exercise')}</div>
+                      <div className="break-words whitespace-pre-wrap">
+                        <MathText text={question} />
                       </div>
-                      
-                      <div 
-                        className="text-sm text-gray-700 dark:text-gray-300 prose-sm max-w-full"
-                        dangerouslySetInnerHTML={{ 
-                          __html: DOMPurify.sanitize(formattedExplanation, { 
-                            ALLOWED_TAGS: ['strong', 'br', 'em', 'p'],
-                            ALLOWED_ATTR: ['class']
-                          }) 
-                        }}
-                      />
+                      {answer && (
+                        <div className="mt-2 text-sm text-muted-foreground">
+                          <MathAnswer label={t('exercise.answer')} answer={answer} />
+                        </div>
+                      )}
                     </div>
+
+                    {explanationLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary mr-2" />
+                        <span className="text-sm text-muted-foreground">
+                          {language === 'fr' ? 'Chargement de l\'explication...' : 'Loading explanation...'}
+                        </span>
+                      </div>
+                    ) : explanationText ? (
+                      <div className="rounded-xl border bg-card p-4 shadow-sm">
+                        <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
+                          {explanationText}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 text-sm text-muted-foreground">
+                        {language === 'fr' ? 'Cliquez pour charger l\'explication' : 'Click to load explanation'}
+                      </div>
+                    )}
                   </div>
                 </DialogContent>
               </Dialog>
