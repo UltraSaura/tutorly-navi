@@ -346,12 +346,13 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
               
               {/* Show Explanation Button with Popup */}
               <div className="flex items-center gap-2">
-                <Dialog>
+              <Dialog>
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
                       size="sm"
                       className="text-xs px-2 py-0.5 h-6"
+                      onClick={handleShowExplanation}
                     >
                       {t('exercise.showExplanation')}
                     </Button>
