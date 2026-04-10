@@ -18,8 +18,8 @@ import { useUserContext } from '@/hooks/useUserContext';
 import { validateExampleOperationType, getOperationTypeDisplay } from '@/utils/operationTypeDetector';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchExplanation as fetchExplanationFromService } from '@/services/explanationService';
-import { useAdmin } from '@/context/AdminContext';
+import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
+import { ExplanationModal } from '@/features/explanations/ExplanationModal';
 
 interface AIResponseProps {
   messages: Message[];
