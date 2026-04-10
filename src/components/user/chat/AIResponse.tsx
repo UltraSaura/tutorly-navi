@@ -357,163 +357,43 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                       {t('exercise.showExplanation')}
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>{t('explanation.modal_title')}</DialogTitle>
                     </DialogHeader>
                     
-                    {/* 2-Card Teaching Format in Popup */}
                     <div className="space-y-4">
-                      {/* Exercise card */}
                       <div className="rounded-xl border bg-muted p-4 break-words overflow-hidden">
-                        <div className="font-semibold text-blue-800 dark:text-blue-200 mb-2">{t('explanation.headers.exercise')}</div>
-                        <div className="text-blue-700 dark:text-blue-300 break-words whitespace-pre-wrap">
-                          {jsonResponse.exercise || question}
+                        <div className="font-semibold mb-2">{t('explanation.headers.exercise')}</div>
+                        <div className="break-words whitespace-pre-wrap">
+                          <MathText text={question || jsonResponse?.exercise || ''} />
                         </div>
+                        {answer && (
+                          <div className="mt-2 text-sm text-muted-foreground">
+                            <MathAnswer label={t('exercise.answer')} answer={answer} />
+                          </div>
+                        )}
                       </div>
 
-                      {/* Guidance card */}
-                      <div className="rounded-xl border bg-card p-4 shadow-sm break-words overflow-hidden">
-                        <div className="space-y-4">
-                          <div>
-                            <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <span>{t('explanation.headers.concept')}</span>
-                            </div>
-                            <div className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-wrap">
-                              {jsonResponse.sections.concept}
-                            </div>
-                          </div>
-                          
-                          {/* Example Section - Interactive for young students */}
-                          <div>
-                            <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <span>{t('explanation.headers.example')}</span>
-                            </div>
-                            {(() => {
-                              // Check if student is under 11 years old
-                              const gradeLevel = userContext?.student_level || '';
-                              const isYoungStudent = isUnder11YearsOld(gradeLevel);
-                              const exampleExpression = extractExpressionFromText(jsonResponse.sections.example || '');
-                              
-                              // Validate that the example matches the student's operation type
-                              const validation = validateExampleOperationType(question, jsonResponse.sections.example || '');
-                              
-                              console.log('[AIResponse] Interactive Stepper Debug:', {
-                                gradeLevel,
-                                isYoungStudent,
-                                exampleText: jsonResponse.sections.example,
-                                extractedExpression: exampleExpression,
-                                hasUserContext: !!userContext,
-                                validation: validation
-                              });
-                              
-                              // If validation fails, show warning and use fallback
-                              if (!validation.isValid && validation.suggestedFix) {
-                                console.warn('[AIResponse] Validation failed:', {
-                                  studentExercise: question,
-                                  studentOperation: getOperationTypeDisplay(validation.studentOperation),
-                                  exampleOperation: getOperationTypeDisplay(validation.exampleOperation),
-                                  reason: validation.reason,
-                                  suggestedFix: validation.suggestedFix
-                                });
-                              }
-                              
-                              if (isYoungStudent && exampleExpression) {
-                                // Use fallback example if validation fails
-                                const finalExpression = !validation.isValid && validation.suggestedFix 
-                                  ? extractExpressionFromText(validation.suggestedFix) || exampleExpression
-                                  : exampleExpression;
-                                
-                                return (
-                                  <div className="mt-2">
-                                    {!validation.isValid && (
-                                      <div className="mb-2 p-2 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200">
-                                        ⚠️ Example corrected: {validation.reason || 'to match operation type'}
-                                      </div>
-                                    )}
-                                    <CompactMathStepper 
-                                      expression={finalExpression}
-                                      className="text-sm"
-                                    />
-                                  </div>
-                                );
-                              }
-                              
-                              // Fallback to regular text with validation correction
-                              return (
-                                <div className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-wrap">
-                                  {!validation.isValid && validation.suggestedFix ? (
-                                    <>
-                                      {validation.reason && (
-                                        <div className="mb-2 p-2 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200 break-words">
-                                          ⚠️ Example corrected: {validation.reason}
-                                        </div>
-                                      )}
-                                      {validation.suggestedFix}
-                                    </>
-                                  ) : (
-                                    jsonResponse.sections.example
-                                  )}
-                                </div>
-                              );
-                            })()}
-                          </div>
-                          
-                          <div>
-                            <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <span>{t('explanation.headers.method')}</span>
-                            </div>
-                            <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                              {jsonResponse.sections.method || jsonResponse.sections.strategy}
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <span>{t('explanation.headers.pitfall')}</span>
-                            </div>
-                            <div className="text-sm text-muted-foreground leading-relaxed">
-                              {jsonResponse.sections.pitfall}
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                              <span>{t('explanation.headers.check')}</span>
-                            </div>
-                            <div className="text-sm text-muted-foreground leading-relaxed">
-                              {jsonResponse.sections.check}
-                            </div>
-                          </div>
-                          
-                          {/* Watch Video Footer - Context aware */}
-                          {aiResponse.topicId && topicInfo ? (
-                            <div className="mt-4 pt-3 border-t border-border">
-                              <DialogClose asChild>
-                                <button
-                                  onClick={() => {
-                                    const subjectSlug = topicInfo.category?.subject?.slug;
-                                    const topicSlug = topicInfo.slug;
-                                    if (subjectSlug && topicSlug) {
-                                      setTimeout(() => {
-                                        window.location.href = `/learning/${subjectSlug}/${topicSlug}`;
-                                      }, 200);
-                                    }
-                                  }}
-                                  className="text-sm text-primary hover:underline flex items-center gap-1"
-                                >
-                                  {t('explanation.watch_video')}
-                                </button>
-                              </DialogClose>
-                            </div>
-                          ) : aiResponse.topicId && topicInfoLoading ? (
-                            <div className="mt-4 pt-3 border-t border-border">
-                              <p className="text-xs text-muted-foreground">Loading...</p>
-                            </div>
-                          ) : null}
+                      {explanationLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="w-6 h-6 animate-spin text-primary mr-2" />
+                          <span className="text-sm text-muted-foreground">
+                            {language === 'fr' ? 'Chargement de l\'explication...' : 'Loading explanation...'}
+                          </span>
                         </div>
-                      </div>
-                </div>
+                      ) : explanationText ? (
+                        <div className="rounded-xl border bg-card p-4 shadow-sm">
+                          <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
+                            {explanationText}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-sm text-muted-foreground">
+                          {language === 'fr' ? 'Cliquez pour charger l\'explication' : 'Click to load explanation'}
+                        </div>
+                      )}
+                    </div>
                   </DialogContent>
                 </Dialog>
                 
