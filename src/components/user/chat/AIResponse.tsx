@@ -169,6 +169,29 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const isCorrect = /^CORRECT\b/i.test(contentTrimmed) || /\bCORRECT\b/i.test(firstLine);
   const isIncorrect = /^INCORRECT\b/i.test(contentTrimmed) || /\bINCORRECT\b/i.test(firstLine);
   
+  const handleShowExplanation = async () => {
+    if (explanationText || explanationLoading) return;
+    setExplanationLoading(true);
+    try {
+      const text = await fetchExplanationFromService(
+        `card-${question}-${answer}`,
+        question,
+        answer || '',
+        isCorrect,
+        undefined,
+        language,
+        selectedModelId || '',
+        1
+      );
+      setExplanationText(text);
+    } catch (e) {
+      console.error('[ExerciseCard] Failed to fetch explanation:', e);
+      setExplanationText(language === 'fr' ? 'Impossible de charger l\'explication.' : 'Failed to load explanation.');
+    } finally {
+      setExplanationLoading(false);
+    }
+  };
+
   const formattedExplanation = formatExplanation(content);
 
   const handleSubmitAnswer = async () => {
