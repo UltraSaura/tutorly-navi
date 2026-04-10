@@ -299,6 +299,7 @@ serve(async (req) => {
             message, 
             modelConfig.model, 
             isExercise,
+            requestExplanation,
             maxTokens
           );
           break;
