@@ -112,11 +112,19 @@ const ChatInterface = () => {
         const result = await processHomeworkFromChat(messageToSend);
         if (result.localGraded) {
           console.log('[ChatInterface] Local grading succeeded, skipping AI chat call');
-          // Add user message to chat for display, but skip the slow AI call
+          // Add user message
           addMessage({
             id: Date.now().toString(),
             role: 'user',
             content: messageToSend,
+            timestamp: new Date(),
+          });
+          // Add synthetic assistant message so AIResponse renders the exercise card
+          const grade = result.isCorrect ? '10/10' : '0/10';
+          addMessage({
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: result.isCorrect ? `CORRECT\n${grade}` : `INCORRECT\n${grade}`,
             timestamp: new Date(),
           });
           setInputMessage('');

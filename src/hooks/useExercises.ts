@@ -144,10 +144,11 @@ export const useExercises = () => {
     }
   };
 
-  const processHomeworkFromChat = async (message: string): Promise<{ localGraded: boolean }> => {
+  const processHomeworkFromChat = async (message: string): Promise<{ localGraded: boolean; isCorrect: boolean }> => {
     console.log('[useExercises] Processing homework from chat message:', message);
     
     let localGraded = false;
+    let isCorrect = false;
     
     // Check if the message contains multiple exercises
     if (hasMultipleExercises(message)) {
@@ -161,44 +162,38 @@ export const useExercises = () => {
           return updated;
         });
         setProcessedContent(prev => new Set([...prev, message]));
-        console.log('[useExercises] Multi-exercise message marked as processed:', message);
         
-        // Check if any were locally graded
         localGraded = newExercises.some(ex => ex.gradingMethod === 'local');
+        isCorrect = newExercises.every(ex => ex.isCorrect === true);
         
-        // Show feedback to user
         if (newExercises.length > 1) {
           toast.info(`Found ${newExercises.length} exercises in your message`);
         }
       }
     } else {
-    // Process single exercise
-    const result = await processNewExercise(message, exercises, processedContent, language, selectedModelId);
+      const result = await processNewExercise(message, exercises, processedContent, language, selectedModelId);
       if (result) {
         const { exercise, isUpdate } = result;
         
-        // Check if locally graded
         localGraded = exercise.gradingMethod === 'local';
+        isCorrect = exercise.isCorrect === true;
         
         setExercises(prev => {
           if (isUpdate) {
-            // Update existing exercise
             const updated = prev.map(ex => ex.id === exercise.id ? exercise : ex);
-            console.log('[useExercises] Exercise updated:', exercise, 'Updated exercises:', updated);
+            console.log('[useExercises] Exercise updated:', exercise);
             return updated;
           } else {
-            // Add new exercise
             const updated = [...prev, exercise];
-            console.log('[useExercises] New exercise added by chat:', exercise, 'Updated exercises:', updated);
+            console.log('[useExercises] New exercise added by chat:', exercise);
             return updated;
           }
         });
         setProcessedContent(prev => new Set([...prev, message]));
-        console.log('[useExercises] Message marked as processed:', message);
       }
     }
     
-    return { localGraded };
+    return { localGraded, isCorrect };
   };
 
   const linkAIResponseToExercise = (userMessage: string, aiMessage: Message) => {
