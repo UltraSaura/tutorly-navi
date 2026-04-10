@@ -1,44 +1,54 @@
 
 
-## Plan: Fix Empty Screen / Reload Loop
+## Plan: Show Exercise Card After Local Grading
 
-### Root Cause
+### Problem
+When local grading succeeds, the code adds a user message to chat but skips the AI call — meaning no assistant message is created. The `AIResponse` component requires user+assistant message **pairs** to render exercise cards. No pair = nothing displayed.
 
-The console error says it all:
-```
-"Could not find a relationship between 'exercise_history' and 'exercise_explanations_cache'"
-```
-
-In `src/hooks/useExerciseHistory.ts` line 28, the Supabase query tries to join `exercise_explanations_cache` directly from `exercise_history`, but no such foreign key exists. The FK goes from `exercise_attempts` → `exercise_explanations_cache`, not from `exercise_history`. This query fails on every render, which crashes the hook and causes the UI to break and reload.
+The toast ("Incorrect. Tap 'Explanation' to understand.") fires correctly, but the exercise card never appears.
 
 ### Fix
 
-**1 file modified**: `src/hooks/useExerciseHistory.ts`
+**1 file modified**: `src/components/user/ChatInterface.tsx`
 
-Change the `.select()` query (lines 25-29) to remove the invalid join:
+After local grading succeeds, create a synthetic assistant message with a minimal grading result (matching the format `AIResponse` expects — `CORRECT` or `INCORRECT` prefix) and add it to the chat via `addMessage`. This gives `AIResponse` the pair it needs to render the exercise card.
+
+Change in `handleSendMessageWithGrading`:
 
 ```typescript
-// Before (broken):
-.select(`
-  *,
-  attempts:exercise_attempts(*),
-  explanation:exercise_explanations_cache(*)
-`)
-
-// After (fixed — join explanation through attempts):
-.select(`
-  *,
-  attempts:exercise_attempts(
-    *,
-    explanation:exercise_explanations_cache(*)
-  )
-`)
+if (result.localGraded) {
+  // Add user message
+  addMessage({
+    id: Date.now().toString(),
+    role: 'user',
+    content: messageToSend,
+    timestamp: new Date(),
+  });
+  
+  // ADD THIS: synthetic assistant message so AIResponse renders the card
+  const isCorrect = result.isCorrect;
+  const grade = isCorrect ? '10/10' : '0/10';
+  addMessage({
+    id: (Date.now() + 1).toString(),
+    role: 'assistant',
+    content: isCorrect ? `CORRECT\n${grade}` : `INCORRECT\n${grade}`,
+    timestamp: new Date(),
+  });
+  
+  setInputMessage('');
+  return;
+}
 ```
 
-This nests the explanation under each attempt (where the FK actually exists), instead of trying to join it directly from `exercise_history`.
+Also need `processHomeworkFromChat` to return `isCorrect` alongside `localGraded`.
+
+**1 file modified**: `src/hooks/useExercises.ts`
+
+Update the return type of `processHomeworkFromChat` to include `isCorrect: boolean` so ChatInterface can build the synthetic message.
 
 ### What stays the same
-- All local grading logic
-- All other hooks and components
-- The `exercise_explanations_cache` table itself
+- All local grading logic (localMathGrader, geometryGrader)
+- AIResponse rendering logic (already handles CORRECT/INCORRECT prefixes)
+- Explanation lazy-loading flow
+- Exercise.tsx component
 
