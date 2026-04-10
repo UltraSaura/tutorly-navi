@@ -1,61 +1,64 @@
 
 
-## Plan: Clean Up Hybrid Grading — Ensure No AI at Grade Time, No Answer Leaks
+## Plan: Wire Lazy Explanation Loading into AIResponse ExerciseCard
 
-### Current State
+### Problem
 
-The hybrid local-first flow **exists** but has leftover issues from the old AI-grading path:
+The `ExerciseCard` inside `AIResponse.tsx` has a "Show explanation" button that opens a dialog, but it **never calls the AI** to fetch an explanation. It just displays whatever text is already in the assistant message content (e.g. `"CORRECT\n10/10"`). The `fetchExplanation` function in `useExercises.ts` exists and works, but is never connected to this component.
 
-1. **AI fallback in `evaluateHomework()` still generates explanations eagerly** — when local grading fails and AI is used, it immediately fetches a full explanation (lines 187-250). This should be lazy like the local path.
-2. **AI fallback reveals correct answers** in the explanation text (e.g. "The correct answer is X").
-3. **`generateEnhancedMathGuidance()` reveals correct answers** — the fallback guidance function literally says "The correct answer is ${correctAnswer}".
-4. **Missing state fields** on AI-graded exercises (`gradingMethod`, `explanationLoading`, `explanationRequested`, `correctAnswer`).
+### Root Cause
 
-The local grading path (arithmetic, geometry, algebra) works correctly — it returns `explanation: undefined` and sets `gradingMethod: 'local'`. The issue is the AI fallback path doesn't follow the same pattern.
+There are two separate exercise rendering paths:
+1. `Exercise.tsx` — has `onFetchExplanation` prop, supports lazy loading (but is NOT used for chat messages)
+2. `ExerciseCard` in `AIResponse.tsx` — renders chat exercise cards, has the "Show explanation" button, but **never triggers `fetchExplanation`**
+
+The `ExerciseCard` in `AIResponse.tsx` needs to be wired up to call the explanation service when the dialog opens.
 
 ### Changes
 
-**File 1: `src/services/homeworkGrading.ts`**
+**File 1: `src/components/user/chat/AIResponse.tsx`**
 
-Refactor the AI fallback path (everything after line 72) to match the local grading pattern:
+1. Add `onFetchExplanation` prop to `ExerciseCardProps` and pass it through from the parent
+2. Add local state: `explanationText`, `explanationLoading`
+3. In the "Show explanation" `DialogTrigger` `onClick`, call `onFetchExplanation` which triggers `fetchExplanation` from `useExercises`
+4. **Alternative (simpler)**: Call `fetchExplanationFromAI` directly inside the component when the dialog opens, since the ExerciseCard already has `question`, `answer`, and `isCorrect` available
+5. Show loading spinner while fetching, then render the AI explanation text in the dialog
+6. Apply to both the JSON-response path (line 319) and the fallback path (line 627)
 
-- After getting `CORRECT`/`INCORRECT` from AI, return immediately with `explanation: undefined` (lazy)
-- Set `gradingMethod: 'ai'`, `explanationLoading: false`, `explanationRequested: false`
-- Remove all inline explanation generation (the `guidancePrompt` section, lines 187-250)
-- Remove the `generateEnhancedMathGuidance` function entirely (it leaks answers)
-- Remove inline success/failure messages that contain answers
-- Keep the AI grading call (just CORRECT/INCORRECT), but strip all explanation fetching from this function
-- For error/invalid responses, return `isCorrect: false, explanation: undefined` — don't generate guidance inline
+The simplest approach: import `fetchExplanation` from `explanationService.ts` directly into the ExerciseCard, add local state for loading/content, and call it when the dialog opens. This avoids threading props through multiple layers.
 
-**File 2: `src/services/explanationService.ts`**
+**File 2: `src/components/user/chat/AIResponse.tsx`** (same file, ExerciseCard component)
 
-No changes needed — already works correctly as the lazy explanation loader.
+Add to ExerciseCard:
+```typescript
+const [explanationText, setExplanationText] = useState<string | null>(null);
+const [explanationLoading, setExplanationLoading] = useState(false);
 
-**File 3: `src/components/user/chat/Exercise.tsx`**
+const handleShowExplanation = async () => {
+  if (explanationText) return; // already loaded
+  setExplanationLoading(true);
+  try {
+    const text = await fetchExplanationFromService(
+      `card-${question}`, question, answer, isCorrect,
+      undefined, language, selectedModelId || 'gpt-5', 1
+    );
+    setExplanationText(text);
+  } catch (e) {
+    setExplanationText('Failed to load explanation.');
+  } finally {
+    setExplanationLoading(false);
+  }
+};
+```
 
-Already correct — shows "Show explanation" button that triggers `onFetchExplanation`. The `formattedExplanation` regex on line 72 strips `correct answer:` patterns, which is good as a safety net. No changes needed.
-
-**File 4: `src/hooks/useExercises.ts`**
-
-Already correct — `fetchExplanation` method works with the lazy loading pattern. No changes needed.
-
-### Summary of what changes
-
-| File | What |
-|------|------|
-| `src/services/homeworkGrading.ts` | Remove eager explanation generation from AI fallback; make it return the same lazy structure as local grading; delete `generateEnhancedMathGuidance` |
+Replace the static explanation content in both Dialog bodies with:
+- Loading spinner when `explanationLoading` is true
+- `explanationText` when loaded
+- Trigger `handleShowExplanation` on `DialogTrigger` click
 
 ### What stays the same
-- Local grading engine (`localMathGrader.ts`, `geometryGrader.ts`) — already working
-- `explanationService.ts` — already the lazy loader
-- `Exercise.tsx` UI — already shows minimal result + "Show explanation" button
-- `ChatInterface.tsx` — already intercepts local-graded exercises
-- `useExercises.ts` — already has `fetchExplanation` method
-
-### Result
-After this change, **both** local and AI grading paths will:
-- Return only `isCorrect` + grade immediately
-- Set `explanation: undefined`
-- Never reveal the correct answer in the initial result
-- Load explanation lazily via `explanationService.ts` on button click
+- `explanationService.ts` — already works, just needs to be called
+- `useExercises.ts` — its `fetchExplanation` stays for the Exercise.tsx path
+- Local grading logic — untouched
+- Exercise.tsx component — untouched
 
