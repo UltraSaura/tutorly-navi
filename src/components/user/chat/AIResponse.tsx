@@ -33,6 +33,7 @@ interface ExerciseCardProps {
   aiResponse: Message;
   onSubmitAnswer?: (question: string, answer: string) => void;
   onDismiss?: () => void;
+  onShowExplanation?: (question: string, answer: string, isCorrect: boolean) => void;
 }
 
 // Note: parseUserMessage is now imported from @/utils/messageParser
