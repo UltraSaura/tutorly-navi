@@ -175,6 +175,17 @@ export function TwoCards({
         </div>
       </div>
 
+      {/* Student View - Interactive Math Stepper (above Concept) */}
+      {shouldShowInteractiveStepper && (
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
+          <div className="font-semibold mb-3">🧮 Interactive Practice</div>
+          <CompactMathStepper 
+            expression={exampleExpression}
+            className="text-sm"
+          />
+        </div>
+      )}
+
       {/* Student View - Regular Explanation */}
       {!isGuardian && (
         <div className="rounded-xl border bg-card p-4 shadow-sm">
@@ -196,17 +207,6 @@ export function TwoCards({
               </button>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Student View - Interactive Math Stepper */}
-      {shouldShowInteractiveStepper && (
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <div className="font-semibold mb-3">🧮 Interactive Practice</div>
-          <CompactMathStepper 
-            expression={exampleExpression}
-            className="text-sm"
-          />
         </div>
       )}
 
