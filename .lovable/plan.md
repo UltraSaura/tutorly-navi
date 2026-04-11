@@ -1,73 +1,45 @@
 
 
-## Plan: Fix Explanation Failing with DeepSeek Provider
+## Plan: Fix index.ts to Pass Through Tool Calls from DeepSeek
 
 ### Problem
 
-When the user clicks "Show explanation", `useTwoCardTeaching` calls the `ai-chat` edge function with `requestExplanation: true`. This flag enables **tool calling** (structured JSON output) — but only for the **OpenAI provider**. The DeepSeek provider ignores `requestExplanation` entirely: it doesn't receive the parameter, doesn't add tool definitions, and returns plain text. The client then fails to parse the plain text as JSON, resulting in "The AI returned an unexpected format."
+When DeepSeek returns a tool calling response (`{ tool_calls: [...], content: null }`), the `index.ts` handler treats it as a plain string. It tries `responseContent.match()` (line 334) which silently fails, then wraps it as `{ content: { tool_calls: [...], content: null } }`. The client-side `useTwoCardTeaching` looks for `data.tool_calls` at the top level, but it's nested under `data.content`, so it falls through to content parsing, finds nothing, and shows "unexpected format."
 
-### Root Cause
+### Fix
 
-- `callOpenAI()` accepts `requestExplanation` and adds tool calling when true
-- `callDeepSeek()` does NOT accept `requestExplanation` — its signature only has `(systemMessage, history, userMessage, model, isExercise, maxTokens)`
-- The `index.ts` switch statement doesn't pass `requestExplanation` to DeepSeek (or any non-OpenAI provider)
-- DeepSeek's API supports tool calling (OpenAI-compatible), so we can add the same logic
+**File: `supabase/functions/ai-chat/index.ts`** (lines ~329-355)
 
-### Changes
-
-**File 1: `supabase/functions/ai-chat/providers/deepseek.ts`**
-
-Add `requestExplanation` parameter (same as OpenAI). When true, add the same `tools` and `tool_choice` to the request body. Parse tool call response when present, otherwise return content as before.
-
-**File 2: `supabase/functions/ai-chat/index.ts`**
-
-Pass `requestExplanation` to `callDeepSeek()` in the switch statement (line ~296-303), matching how it's passed to `callOpenAI()`.
-
-**File 3 (optional): Other providers (Anthropic, Google, Mistral, xAI)**
-
-Same pattern — add `requestExplanation` support. But since DeepSeek is the active provider, we prioritize it. For other providers that don't support tool calling, we can add a JSON instruction to the system prompt as fallback.
-
-### Technical Detail
-
-DeepSeek's API is OpenAI-compatible and supports tool calling. The implementation mirrors `openai.ts`:
+Add a check after the provider call: if `responseContent` is an object with `tool_calls`, return it directly at the top level of the JSON response, bypassing the string-based JSON extraction logic.
 
 ```typescript
-// deepseek.ts - add requestExplanation param
-export async function callDeepSeek(
-  systemMessage, history, userMessage, model,
-  isExercise, requestExplanation, maxTokens  // add requestExplanation
-) {
-  // ... existing code ...
-  const requestBody = { model, messages, temperature: 0.7, max_tokens: maxTokens };
-  
-  if (requestExplanation) {
-    requestBody.tools = [/* same tool definition as openai.ts */];
-    requestBody.tool_choice = { type: "function", function: { name: "generate_math_explanation" }};
-  }
-  
-  // ... fetch ...
-  
-  // Handle tool call response
-  if (requestExplanation && data.choices?.[0]?.message?.tool_calls) {
-    return { tool_calls: data.choices[0].message.tool_calls, content: null };
-  }
-  return data.choices[0].message.content;
+// After line 329, before the JSON extraction block:
+if (responseContent && typeof responseContent === 'object' && responseContent.tool_calls) {
+  // Tool calling response — pass through directly
+  return new Response(
+    JSON.stringify({
+      tool_calls: responseContent.tool_calls,
+      content: responseContent.content || null,
+      modelId,
+      modelUsed: modelConfig.model,
+      provider: modelConfig.provider,
+      isExercise,
+      timestamp: new Date().toISOString()
+    }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
 }
 ```
 
-In `index.ts`, update the DeepSeek case:
-```typescript
-case 'DeepSeek':
-  responseContent = await callDeepSeek(
-    formattedSystemMessage, formattedHistory, message,
-    modelConfig.model, isExercise, requestExplanation, maxTokens  // add requestExplanation
-  );
-  break;
-```
+This ensures `tool_calls` appears at the top level of the response, which is exactly what `useTwoCardTeaching` expects on line 133: `if (data?.tool_calls?.[0]?.function?.arguments)`.
+
+### Redeploy
+
+After editing, redeploy the `ai-chat` edge function.
 
 ### What stays the same
-- `useTwoCardTeaching.ts` — already handles both `tool_calls` and `content` parsing
+- `deepseek.ts` — already returns correct format
+- `useTwoCardTeaching.ts` — already handles `tool_calls` correctly
 - `ExplanationModal`, `TwoCards` — untouched
-- OpenAI provider — untouched
-- Local grading logic — untouched
+- All other providers — untouched
 
