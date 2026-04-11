@@ -328,6 +328,23 @@ serve(async (req) => {
     
     console.log('📤 Returning successful response, content length:', responseContent?.length || 0);
     
+    // Handle tool calling responses (e.g. from DeepSeek/OpenAI with requestExplanation)
+    if (responseContent && typeof responseContent === 'object' && responseContent.tool_calls) {
+      console.log('🔧 Tool calling response detected, passing through directly');
+      return new Response(
+        JSON.stringify({
+          tool_calls: responseContent.tool_calls,
+          content: responseContent.content || null,
+          modelId,
+          modelUsed: modelConfig.model,
+          provider: modelConfig.provider,
+          isExercise,
+          timestamp: new Date().toISOString()
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     // Extract structured fields from AI response (handles markdown-wrapped JSON)
     let parsedFields: Record<string, any> = {};
     try {
