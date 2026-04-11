@@ -1,45 +1,18 @@
 
 
-## Plan: Fix index.ts to Pass Through Tool Calls from DeepSeek
+## Plan: Move Interactive Practice Above Concept
 
-### Problem
+### Change
 
-When DeepSeek returns a tool calling response (`{ tool_calls: [...], content: null }`), the `index.ts` handler treats it as a plain string. It tries `responseContent.match()` (line 334) which silently fails, then wraps it as `{ content: { tool_calls: [...], content: null } }`. The client-side `useTwoCardTeaching` looks for `data.tool_calls` at the top level, but it's nested under `data.content`, so it falls through to content parsing, finds nothing, and shows "unexpected format."
+**File: `src/features/explanations/TwoCards.tsx`**
 
-### Fix
+Move the "Interactive Math Stepper" block (lines 202-211) from **after** the Student View explanation card to **between** the Exercise card (line 176) and the Student View explanation card (line 178).
 
-**File: `supabase/functions/ai-chat/index.ts`** (lines ~329-355)
+Current order: Exercise → Concept/Method/Example/Pitfall/Check → Interactive Practice
 
-Add a check after the provider call: if `responseContent` is an object with `tool_calls`, return it directly at the top level of the JSON response, bypassing the string-based JSON extraction logic.
+New order: Exercise → **Interactive Practice** → Concept/Method/Example/Pitfall/Check
 
-```typescript
-// After line 329, before the JSON extraction block:
-if (responseContent && typeof responseContent === 'object' && responseContent.tool_calls) {
-  // Tool calling response — pass through directly
-  return new Response(
-    JSON.stringify({
-      tool_calls: responseContent.tool_calls,
-      content: responseContent.content || null,
-      modelId,
-      modelUsed: modelConfig.model,
-      provider: modelConfig.provider,
-      isExercise,
-      timestamp: new Date().toISOString()
-    }),
-    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
-```
+### Technical Detail
 
-This ensures `tool_calls` appears at the top level of the response, which is exactly what `useTwoCardTeaching` expects on line 133: `if (data?.tool_calls?.[0]?.function?.arguments)`.
-
-### Redeploy
-
-After editing, redeploy the `ai-chat` edge function.
-
-### What stays the same
-- `deepseek.ts` — already returns correct format
-- `useTwoCardTeaching.ts` — already handles `tool_calls` correctly
-- `ExplanationModal`, `TwoCards` — untouched
-- All other providers — untouched
+Cut lines 202-211 and paste them between the closing `</div>` of the Exercise card (line 176) and the `{!isGuardian && (` block (line 179).
 
