@@ -16,6 +16,8 @@ export default function GuardianExplanations() {
   });
   const [selectedExercise, setSelectedExercise] = useState<ExerciseHistoryWithAttempts | null>(null);
   const teaching = useTwoCardTeaching();
+  const { language } = useLanguage();
+  const langName = language === 'fr' ? 'French' : language === 'ar' ? 'Arabic' : 'English';
 
   const getChildName = (userId: string) => {
     const child = children.find((c) => c.user_id === userId);
@@ -30,7 +32,7 @@ export default function GuardianExplanations() {
     };
     
     await teaching.openFor(exerciseData, {
-      response_language: 'English',
+      response_language: langName,
       grade_level: 'High School'
     });
     

@@ -10,6 +10,7 @@ import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 interface ExerciseRowProps {
   exercise: ExerciseHistoryWithAttempts;
   allAttempts: ExerciseHistoryWithAttempts[];

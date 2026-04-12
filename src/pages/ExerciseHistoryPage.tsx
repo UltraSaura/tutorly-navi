@@ -20,10 +20,12 @@ export const ExerciseHistoryPage = () => {
   });
 
   const { sections, loading: explanationLoading, open, setOpen, openFor } = useTwoCardTeaching();
+  const { language } = useLanguage();
 
   const handleShowExplanation = async (exercise: any) => {
+    const langName = language === 'fr' ? 'French' : language === 'ar' ? 'Arabic' : 'English';
     const profile = {
-      response_language: 'English',
+      response_language: langName,
       grade_level: 'High School'
     };
     
