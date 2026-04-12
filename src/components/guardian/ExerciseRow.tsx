@@ -24,6 +24,8 @@ export function ExerciseRow({
   const [showTimeline, setShowTimeline] = useState(false);
   const [showExplanationModal, setShowExplanationModal] = useState(false);
   const teaching = useTwoCardTeaching();
+  const { language } = useLanguage();
+  const langName = language === 'fr' ? 'French' : language === 'ar' ? 'Arabic' : 'English';
   const hasMultipleAttempts = allAttempts.length > 1;
 
   // Status badge - Only "Correct" or "Incorrect"
@@ -85,7 +87,7 @@ export function ExerciseRow({
           userAnswer: exercise.user_answer,
           subject: exercise.subject_id || 'math'
         }, {
-          response_language: 'English',
+          response_language: langName,
           grade_level: 'High School'
         });
       } catch (error) {
