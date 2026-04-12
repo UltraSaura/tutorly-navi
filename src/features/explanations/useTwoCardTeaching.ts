@@ -80,7 +80,7 @@ export function useTwoCardTeaching() {
       const exercise_content = row?.prompt || row?.question || row?.exercise_content || "";
       const student_answer = row?.userAnswer || row?.student_answer || "";
       const subject = row?.subject || row?.subjectId || "math";
-      const response_language = profile?.response_language ?? "English";
+      const response_language = profile?.response_language || "English";
       const grade_level = profile?.grade_level ?? "High School";
 
       // Detect the operation type from the exercise

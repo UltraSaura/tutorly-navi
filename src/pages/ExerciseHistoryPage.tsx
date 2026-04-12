@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 export const ExerciseHistoryPage = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>('all');

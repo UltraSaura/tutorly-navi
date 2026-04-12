@@ -6,6 +6,7 @@ import ExplanationCard from '@/components/guardian/ExplanationCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, BookOpen } from 'lucide-react';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 import type { ExerciseHistoryWithAttempts } from '@/types/exercise-history';
 
 export default function GuardianExplanations() {

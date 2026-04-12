@@ -9,6 +9,7 @@ import ExerciseResultCard from '@/components/guardian/ExerciseResultCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
 import type { ExerciseHistoryWithAttempts } from '@/types/exercise-history';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 export default function GuardianResults() {
   const { guardianId } = useGuardianAuth();
