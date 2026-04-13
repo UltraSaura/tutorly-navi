@@ -113,7 +113,7 @@ serve(async (req) => {
       isGradingRequest = false, 
       isUnified = false,
       requestExplanation = false,
-      language = 'en',
+      language: rawLanguage = 'en',
       customPrompt,
       userContext,
       maxTokens = 800  // Default to 800 for backward compatibility
