@@ -80,7 +80,9 @@ export function useTwoCardTeaching() {
       const exercise_content = row?.prompt || row?.question || row?.exercise_content || "";
       const student_answer = row?.userAnswer || row?.student_answer || "";
       const subject = row?.subject || row?.subjectId || "math";
-      const response_language = profile?.response_language || "English";
+      const rawLang = profile?.response_language || "English";
+      // Normalize: accept 'fr', 'French', 'french' etc.
+      const response_language = /^fr/i.test(rawLang) ? 'French' : 'English';
       const grade_level = profile?.grade_level ?? "High School";
 
       // Detect the operation type from the exercise
@@ -115,7 +117,7 @@ export function useTwoCardTeaching() {
           modelId: selectedModelId || 'gpt-5',
           isUnified: true,
           requestExplanation: true,
-          language: response_language.toLowerCase(),
+          language: /^fr/i.test(rawLang) ? 'fr' : 'en',
           userContext: explanationContext
         }
       });

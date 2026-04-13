@@ -113,13 +113,16 @@ serve(async (req) => {
       isGradingRequest = false, 
       isUnified = false,
       requestExplanation = false,
-      language = 'en',
+      language: rawLanguage = 'en',
       customPrompt,
       userContext,
       maxTokens = 800  // Default to 800 for backward compatibility
     } = parsedBody;
     
-    console.log('📊 Request analysis:', { 
+    // Normalize language: accept 'fr', 'french', 'French' etc.
+    const language = /^fr/i.test(rawLanguage) ? 'fr' : 'en';
+    
+    console.log('📊 Request analysis:', {
       modelId, 
       messageLength: message?.length,
       historyLength: history?.length,
