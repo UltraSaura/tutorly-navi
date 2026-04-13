@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { i18n } = useTranslation();
+  
 
   // Language detection is handled by SimpleLanguageContext.
   // AuthContext no longer duplicates this to avoid drift between i18next and SimpleLanguageContext.
