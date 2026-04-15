@@ -121,6 +121,22 @@ export function TwoCards({
     checkUserRole();
   }, []);
 
+  // Check if exercise is pure arithmetic (not a word problem)
+  const isPureArithmeticProblem = (text: string): boolean => {
+    const lower = text.toLowerCase();
+    const conceptualKeywords = [
+      'heure', 'minute', 'départ', 'arrivée', 'durée', 'temps',
+      'hour', 'time', 'clock', 'am', 'pm',
+      'périmètre', 'aire', 'surface', 'triangle', 'rectangle',
+      'perimeter', 'area', 'angle', 'circle', 'cercle',
+      'km', 'mètre', 'litre', 'gramme', 'meter', 'kilogram',
+      '€', '$', 'prix', 'coût', 'monnaie', 'price', 'cost',
+    ];
+    if (conceptualKeywords.some(kw => lower.includes(kw))) return false;
+    if (/\d{1,2}:\d{2}/.test(text)) return false;
+    return /\d+\s*[+\-×÷*/]\s*\d+/.test(text);
+  };
+
   // Detect operation type from example or exercise
   const detectOp = (text: string): string => {
     if (text.includes('×') || text.includes('*')) return '×';
@@ -145,9 +161,10 @@ export function TwoCards({
     exampleExpression = fallbacks[opSymbol] || '23 + 45';
   }
   
-  // Show interactive stepper for young students
+  // Show interactive stepper only for pure arithmetic problems for young students
   const shouldShowInteractiveStepper = !isGuardian && userContext?.student_level && 
-    isUnder11YearsOld(userContext.student_level) && exampleExpression;
+    isUnder11YearsOld(userContext.student_level) && exampleExpression &&
+    isPureArithmeticProblem(s.exercise || '');
   
   // Ensure method text is never empty
   const methodText = s.method?.trim() || "Step-by-step reasoning for the example.";
