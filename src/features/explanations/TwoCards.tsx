@@ -161,9 +161,10 @@ export function TwoCards({
     exampleExpression = fallbacks[opSymbol] || '23 + 45';
   }
   
-  // Show interactive stepper for young students
+  // Show interactive stepper only for pure arithmetic problems for young students
   const shouldShowInteractiveStepper = !isGuardian && userContext?.student_level && 
-    isUnder11YearsOld(userContext.student_level) && exampleExpression;
+    isUnder11YearsOld(userContext.student_level) && exampleExpression &&
+    isPureArithmeticProblem(s.exercise || '');
   
   // Ensure method text is never empty
   const methodText = s.method?.trim() || "Step-by-step reasoning for the example.";
