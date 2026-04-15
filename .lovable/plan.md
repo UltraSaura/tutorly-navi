@@ -1,74 +1,65 @@
 
-Goal: make the app consistently use French for Fanta when France is the selected country, including chat UI, explanation modal, AI explanations, and voice.
 
-What I found
-- The app currently has 2 competing language systems:
-  1. `SimpleLanguageContext` using `src/locales/*` and localStorage key `lang`
-  2. `react-i18next` using `src/i18n/*` and its own detection/storage
-- Different screens use different systems, so the app can stay in English or become mixed.
-- Country-based detection is also split across different data sources:
-  - `users.country`
-  - `user_metadata.country`
-  - `curriculum_country_code`
-  So “France selected” does not always feed the language actually used by the app.
-- There is still a direct explanation bug: `useTwoCardTeaching` sends `"french"` as the `language` param, but the edge function only maps `"fr"` correctly, so it falls back to English.
+## Plan: Smart Animation Filtering for Non-Arithmetic Problems
 
-Implementation plan
+### Problem
+The Interactive Math Stepper always shows for young students regardless of problem type. For time calculations, word problems, geometry, etc., it extracts a random arithmetic expression from the explanation text and animates it — which is confusing and misleading.
 
-1. Unify language state
-- Make `SimpleLanguageContext` the single source of truth for app language.
-- Add shared helpers for:
-  - normalizing language codes (`en` / `fr`)
-  - mapping AI names (`fr -> French`)
-  - syncing storage + i18next together
-- Update `src/i18n/index.ts` so i18next reads the same active language as the app.
+### Solution: Add problem-type detection to gate the stepper
 
-2. Fix auto-detection for logged-in users
-- In `SimpleLanguageContext`, detect language in this order:
-  manual selection -> `users.country` -> `users.curriculum_country_code` -> browser/country detection -> English
-- Stop duplicate detection logic in `AuthContext` from changing only i18next and drifting out of sync.
+**File: `src/features/explanations/TwoCards.tsx`**
 
-3. Route all language changes through one API
-- Update header/mobile language menus and selectors to call `useLanguage().changeLanguage(...)` instead of changing i18next directly.
-- This keeps UI state, storage, and translations aligned.
+Add a function `isPureArithmeticProblem(exerciseText)` that checks whether the exercise is a simple arithmetic operation (where the stepper adds value) vs. a conceptual/word problem (where it doesn't).
 
-4. Fix AI explanation language
-- In `useTwoCardTeaching`, send `language: 'fr' | 'en'`, not `"french" | "english"`.
-- Keep `response_language: 'French' | 'English'` only for prompt variables.
-- Reuse the same language-mapping helper in:
-  - `AIResponse.tsx`
-  - `ExerciseHistoryPage.tsx`
-  - `GuardianResults.tsx`
-  - `GuardianExplanations.tsx`
-  - `ExerciseRow.tsx`
-- Add backend normalization in `supabase/functions/ai-chat/index.ts` so `"French"` / `"french"` also resolves safely to `fr`.
+The stepper should only appear when ALL of these are true:
+1. Student is under 11 (existing check)
+2. The exercise is a **pure arithmetic** expression (e.g., `234 + 567`, `45 × 12`)
+3. NOT a word problem involving time, money, geometry, measurement, etc.
 
-5. Clean up remaining hardcoded English in the affected flow
-- Replace visible hardcoded English labels in chat/history/guardian/account screens with translation keys so French actually appears once language state is fixed.
+Detection approach — check the exercise text for:
+- **Time keywords**: "heure", "minute", "départ", "arrivée", "durée", "hour", "time", "clock", "AM", "PM", ":"  followed by digits (like `14:30`)
+- **Geometry keywords**: "périmètre", "aire", "surface", "triangle", "rectangle", "cercle", "perimeter", "area", "angle"
+- **Measurement keywords**: "km", "mètre", "litre", "gramme", "meter", "kilogram"
+- **Money keywords**: "€", "$", "prix", "coût", "monnaie", "price", "cost", "change"
+- **General word problem signals**: sentences longer than ~30 chars with no bare arithmetic expression
 
-Files likely involved
-- `src/context/SimpleLanguageContext.tsx`
-- `src/i18n/index.ts`
-- `src/context/AuthContext.tsx`
-- `src/components/layout/HeaderNavigation.tsx`
-- `src/components/layout/MobileLanguageMenuItems.tsx`
-- `src/components/ui/language-selector.tsx`
-- `src/features/explanations/useTwoCardTeaching.ts`
-- `src/components/user/chat/AIResponse.tsx`
-- `src/pages/ExerciseHistoryPage.tsx`
-- `src/pages/guardian/GuardianResults.tsx`
-- `src/pages/guardian/GuardianExplanations.tsx`
-- `src/components/guardian/ExerciseRow.tsx`
-- `supabase/functions/ai-chat/index.ts`
+If any of these are detected, suppress the stepper — the text explanation from the AI is sufficient.
 
-Expected result
-- Logging in as Fanta with France selected will switch the app to French automatically.
-- Chat buttons and explanation modal labels will be French.
-- AI explanations will be generated in French.
-- Voice will read French explanation text instead of English.
+### Change summary
 
-QA after implementation
-- Log in as Fanta and verify `/chat` is French immediately.
-- Open “Show explanation” and confirm the modal title, CTA, and explanation sections are French.
-- Refresh and sign in again to confirm persistence.
-- Test one guardian/history explanation flow on mobile end to end.
+```
+// TwoCards.tsx — new helper
+function isPureArithmeticProblem(text: string): boolean {
+  const lower = text.toLowerCase();
+  const conceptualKeywords = [
+    'heure', 'minute', 'départ', 'arrivée', 'durée', 'temps',
+    'hour', 'time', 'clock', 'am', 'pm',
+    'périmètre', 'aire', 'surface', 'triangle', 'rectangle',
+    'perimeter', 'area', 'angle', 'circle',
+    'km', 'mètre', 'litre', 'gramme', 'meter',
+    '€', '$', 'prix', 'coût', 'monnaie', 'price', 'cost',
+  ];
+  if (conceptualKeywords.some(kw => lower.includes(kw))) return false;
+  if (/\d{1,2}:\d{2}/.test(text)) return false; // time format like 14:30
+  // Must contain a bare arithmetic expression
+  return /\d+\s*[+\-×÷*/]\s*\d+/.test(text);
+}
+```
+
+Then update the guard:
+```
+const shouldShowInteractiveStepper = !isGuardian 
+  && userContext?.student_level 
+  && isUnder11YearsOld(userContext.student_level) 
+  && exampleExpression
+  && isPureArithmeticProblem(s.exercise || '');  // NEW
+```
+
+### Files to edit
+- `src/features/explanations/TwoCards.tsx` — add `isPureArithmeticProblem()` and update the `shouldShowInteractiveStepper` condition
+
+### What stays the same
+- The stepper still works perfectly for `23 + 45`, `456 × 12`, etc.
+- AI explanations, voice, language — all untouched
+- Long division animation — untouched (separate component)
+
