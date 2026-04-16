@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { QuestionEditor } from './QuestionEditor';
 import { AssignmentEditor } from './AssignmentEditor';
 import { TranscriptQuizGenerator } from './TranscriptQuizGenerator';
+import { TopicQuizGenerator } from './TopicQuizGenerator';
 import { useQuizBankQuestions, useCreateQuizBankQuestion, useUpdateQuizBankQuestion, useDeleteQuizBankQuestion } from '@/hooks/useManageQuizBanks';
 import { useQuizBankAssignments, useCreateQuizBankAssignment, useUpdateQuizBankAssignment, useDeleteQuizBankAssignment } from '@/hooks/useManageQuizBanks';
 import type { Question } from '@/types/quiz-bank';
@@ -27,6 +28,7 @@ const BankManager = () => {
   const [assignmentEditorOpen, setAssignmentEditorOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<any>(null);
   const [generatorOpen, setGeneratorOpen] = useState(false);
+  const [topicGeneratorOpen, setTopicGeneratorOpen] = useState(false);
   const [formData, setFormData] = useState({
     id: '',
     title: '',
@@ -236,6 +238,10 @@ const BankManager = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Quiz Banks</h2>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setTopicGeneratorOpen(true)}>
+            <BookOpen className="w-4 h-4 mr-2" />
+            Generate from Topics
+          </Button>
           <Button variant="outline" onClick={() => setGeneratorOpen(true)}>
             <Sparkles className="w-4 h-4 mr-2" />
             Generate from Transcripts
@@ -540,6 +546,11 @@ const BankManager = () => {
       <TranscriptQuizGenerator
         open={generatorOpen}
         onOpenChange={setGeneratorOpen}
+      />
+
+      <TopicQuizGenerator
+        open={topicGeneratorOpen}
+        onOpenChange={setTopicGeneratorOpen}
       />
     </div>
   );
