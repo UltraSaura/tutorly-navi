@@ -106,8 +106,13 @@ function validateQuestions(questions: any[]): any[] {
       if (q.visual.subtype === 'pie') {
         if (!Array.isArray(q.visual.segments) || q.visual.segments.length < 2) return false;
         q.visual.segments.forEach((s: any, i: number) => { if (!s.id) s.id = `s${i + 1}`; });
-        if (q.visual.variants) q.visual.variants.forEach((v: any, i: number) => { if (!v.id) v.id = `v${i + 1}`; });
         if (!q.visual.interactionMode) q.visual.interactionMode = 'select_pie';
+        if (q.visual.interactionMode === 'select_pie') {
+          if (q.visual.variants) q.visual.variants.forEach((v: any, i: number) => { if (!v.id) v.id = `v${i + 1}`; });
+        } else if (q.visual.interactionMode === 'color_slices') {
+          if (typeof q.visual.correctColoredCount !== 'number') return false;
+          if (q.visual.correctColoredCount < 0 || q.visual.correctColoredCount > q.visual.segments.length) return false;
+        }
       }
       if (q.visual.subtype === 'angle') {
         if (typeof q.visual.targetDeg !== 'number') return false;
