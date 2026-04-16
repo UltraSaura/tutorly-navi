@@ -9,28 +9,23 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { Sparkles, ArrowLeft, ArrowRight, Loader2, Check, FileText, Pencil, Trash2, Play, RotateCcw, CheckCircle2, XCircle } from 'lucide-react';
+import { Sparkles, ArrowLeft, ArrowRight, Loader2, Check, BookOpen, Pencil, Trash2, Play, RotateCcw, CheckCircle2, XCircle } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useGenerateQuizFromTranscripts } from '@/hooks/useGenerateQuizFromTranscripts';
+import { useGenerateQuizFromTopics } from '@/hooks/useGenerateQuizFromTopics';
 import { QuestionEditor } from './QuestionEditor';
 import { QuestionCard } from '@/components/learning/QuestionCard';
 import { gradeQuiz } from '@/utils/quizEvaluation';
 import type { Question } from '@/types/quiz-bank';
 
-interface TranscriptQuizGeneratorProps {
+interface TopicQuizGeneratorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved?: () => void;
 }
 
-type Step = 'videos' | 'settings' | 'generating' | 'review' | 'preview' | 'save';
-
-const countWords = (text: string | null | undefined): number => {
-  if (!text) return 0;
-  return text.trim().split(/\s+/).filter(Boolean).length;
-};
+type Step = 'topics' | 'settings' | 'generating' | 'review' | 'preview' | 'save';
 
 const QUESTION_TYPES = [
   { value: 'single', label: 'Single Choice', description: 'One correct answer' },
@@ -47,104 +42,117 @@ const DIFFICULTIES = [
   { value: 'hard', label: 'Hard' },
 ];
 
-const STEP_ORDER: Step[] = ['videos', 'settings', 'review', 'preview', 'save'];
+const STEP_ORDER: Step[] = ['topics', 'settings', 'review', 'preview', 'save'];
 
-export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: TranscriptQuizGeneratorProps) {
+export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGeneratorProps) {
   const queryClient = useQueryClient();
-  const generateMutation = useGenerateQuizFromTranscripts();
-  
-  const [step, setStep] = useState<Step>('videos');
-  const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>([]);
+  const generateMutation = useGenerateQuizFromTopics();
+
+  const [step, setStep] = useState<Step>('topics');
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Settings
   const [questionCount, setQuestionCount] = useState(5);
   const [questionTypes, setQuestionTypes] = useState<string[]>(['single', 'multi']);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [mixMode, setMixMode] = useState(false);
-  
+
   // Generated questions
   const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([]);
   const [editingQuestionIndex, setEditingQuestionIndex] = useState<number | null>(null);
-  
+
   // Preview state
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, any>>({});
   const [previewSubmitted, setPreviewSubmitted] = useState(false);
   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
-  
+
   // Save form
   const [bankTitle, setBankTitle] = useState('');
   const [bankDescription, setBankDescription] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Fetch videos with transcripts
-  const { data: videos = [], isLoading: videosLoading } = useQuery({
-    queryKey: ['videos-with-transcripts'],
+  // Fetch subjects
+  const { data: subjects = [] } = useQuery({
+    queryKey: ['learning-subjects'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('learning_videos')
-        .select('id, title, transcript, topic_id, is_active')
-        .order('title');
-      
+        .from('learning_subjects')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('order_index');
       if (error) throw error;
       return data || [];
     },
   });
 
-  const videosWithTranscripts = useMemo(() => 
-    videos.filter(v => v.transcript && countWords(v.transcript) > 0),
-    [videos]
-  );
+  // Fetch categories for selected subject
+  const { data: categories = [] } = useQuery({
+    queryKey: ['learning-categories', selectedSubjectId],
+    queryFn: async () => {
+      if (!selectedSubjectId) return [];
+      const { data, error } = await supabase
+        .from('learning_categories')
+        .select('id, name')
+        .eq('subject_id', selectedSubjectId)
+        .eq('is_active', true)
+        .order('order_index');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedSubjectId,
+  });
 
-  const filteredVideos = useMemo(() => {
-    if (!searchQuery.trim()) return videosWithTranscripts;
-    const query = searchQuery.toLowerCase();
-    return videosWithTranscripts.filter(v => 
-      v.title.toLowerCase().includes(query)
-    );
-  }, [videosWithTranscripts, searchQuery]);
+  // Fetch topics for selected subject's categories
+  const { data: topics = [], isLoading: topicsLoading } = useQuery({
+    queryKey: ['learning-topics-for-gen', selectedSubjectId],
+    queryFn: async () => {
+      if (!selectedSubjectId || categories.length === 0) return [];
+      const categoryIds = categories.map(c => c.id);
+      const { data, error } = await supabase
+        .from('learning_topics')
+        .select('id, name, description, category_id')
+        .in('category_id', categoryIds)
+        .eq('is_active', true)
+        .order('order_index');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedSubjectId && categories.length > 0,
+  });
 
-  const selectedVideos = useMemo(() => 
-    videos.filter(v => selectedVideoIds.includes(v.id)),
-    [videos, selectedVideoIds]
-  );
+  const filteredTopics = useMemo(() => {
+    if (!searchQuery.trim()) return topics;
+    const q = searchQuery.toLowerCase();
+    return topics.filter(t => t.name.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q));
+  }, [topics, searchQuery]);
 
-  const totalWordCount = useMemo(() => 
-    selectedVideos.reduce((sum, v) => sum + countWords(v.transcript), 0),
-    [selectedVideos]
-  );
-
-  // Preview results
   const previewResults = useMemo(() => {
     if (!previewSubmitted) return null;
     return gradeQuiz(generatedQuestions, previewAnswers);
   }, [previewSubmitted, generatedQuestions, previewAnswers]);
 
-  const toggleVideo = (videoId: string) => {
-    setSelectedVideoIds(prev => 
-      prev.includes(videoId) 
-        ? prev.filter(id => id !== videoId)
-        : [...prev, videoId]
+  const toggleTopic = (topicId: string) => {
+    setSelectedTopicIds(prev =>
+      prev.includes(topicId) ? prev.filter(id => id !== topicId) : [...prev, topicId]
     );
   };
 
   const handleGenerate = async () => {
-    if (selectedVideoIds.length === 0) {
-      toast.error('Please select at least one video');
+    if (selectedTopicIds.length === 0) {
+      toast.error('Please select at least one topic');
       return;
     }
-
     setStep('generating');
-
     try {
       const result = await generateMutation.mutateAsync({
-        videoIds: selectedVideoIds,
+        topicIds: selectedTopicIds,
         questionCount,
         questionTypes: mixMode ? ['mix'] : questionTypes,
         difficulty,
         mix: mixMode,
       });
-
       setGeneratedQuestions(result.questions);
       setStep('review');
       toast.success(`Generated ${result.questions.length} questions!`);
@@ -175,66 +183,34 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
     setStep('preview');
   };
 
-  const handleRetakePreview = () => {
-    setPreviewAnswers({});
-    setPreviewSubmitted(false);
-    setCurrentPreviewIndex(0);
-  };
-
-  const handleSubmitPreview = () => {
-    setPreviewSubmitted(true);
-  };
-
-  const handleBackToReview = () => {
-    setPreviewAnswers({});
-    setPreviewSubmitted(false);
-    setCurrentPreviewIndex(0);
-    setStep('review');
-  };
-
   const handleSave = async () => {
     if (!bankTitle.trim()) {
-      toast.error('Please enter a title for the quiz bank');
+      toast.error('Please enter a title');
       return;
     }
-
     if (generatedQuestions.length === 0) {
       toast.error('No questions to save');
       return;
     }
-
     setIsSaving(true);
-
     try {
       const bankId = `bank-${Date.now()}`;
-      const sourceType = selectedVideoIds.length === 1 ? 'video_transcript' : 'multi_video_transcript';
-
-      // Create the quiz bank
-      const { error: bankError } = await supabase
-        .from('quiz_banks')
-        .insert({
-          id: bankId,
-          title: bankTitle,
-          description: bankDescription || null,
-          shuffle: true,
-          source_type: sourceType,
-          source_video_ids: selectedVideoIds,
-        });
-
+      const { error: bankError } = await supabase.from('quiz_banks').insert({
+        id: bankId,
+        title: bankTitle,
+        description: bankDescription || null,
+        shuffle: true,
+        source_type: 'topic_generated',
+      });
       if (bankError) throw bankError;
 
-      // Create the questions
       const questionsToInsert = generatedQuestions.map((q, index) => ({
         id: q.id,
         bank_id: bankId,
         payload: q,
         position: index,
       }));
-
-      const { error: questionsError } = await supabase
-        .from('quiz_bank_questions')
-        .insert(questionsToInsert);
-
+      const { error: questionsError } = await supabase.from('quiz_bank_questions').insert(questionsToInsert);
       if (questionsError) throw questionsError;
 
       toast.success('Quiz bank saved successfully!');
@@ -244,15 +220,16 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
       onOpenChange(false);
     } catch (error) {
       console.error('Save failed:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to save quiz bank');
+      toast.error(error instanceof Error ? error.message : 'Failed to save');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleReset = () => {
-    setStep('videos');
-    setSelectedVideoIds([]);
+    setStep('topics');
+    setSelectedSubjectId('');
+    setSelectedTopicIds([]);
     setSearchQuery('');
     setQuestionCount(5);
     setQuestionTypes(['single', 'multi']);
@@ -267,7 +244,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
     setBankDescription('');
   };
 
-  const canProceedFromVideos = selectedVideoIds.length > 0;
+  const canProceedFromTopics = selectedTopicIds.length > 0;
   const canProceedFromSettings = (mixMode || questionTypes.length > 0) && questionCount >= 1;
 
   const getStepIndex = (s: Step) => {
@@ -276,15 +253,12 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
   };
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      if (!newOpen) handleReset();
-      onOpenChange(newOpen);
-    }}>
+    <Dialog open={open} onOpenChange={(newOpen) => { if (!newOpen) handleReset(); onOpenChange(newOpen); }}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            Generate Quiz from Transcripts
+            <BookOpen className="w-5 h-5 text-primary" />
+            Generate Quiz from Topics
           </DialogTitle>
         </DialogHeader>
 
@@ -294,56 +268,60 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
             <div key={s} className="flex items-center">
               {i > 0 && <div className="w-6 h-0.5 bg-border mx-1" />}
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                getStepIndex(step) === i ? 'bg-primary text-primary-foreground' : 
+                getStepIndex(step) === i ? 'bg-primary text-primary-foreground' :
                 getStepIndex(step) > i ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
-              }`}>
-                {i + 1}
-              </div>
+              }`}>{i + 1}</div>
             </div>
           ))}
         </div>
 
-        {/* Step: Videos */}
-        {step === 'videos' && (
+        {/* Step: Topics */}
+        {step === 'topics' && (
           <div className="flex-1 flex flex-col min-h-0">
-            <div className="mb-4">
+            <div className="mb-4 flex gap-3">
+              <Select value={selectedSubjectId} onValueChange={(v) => { setSelectedSubjectId(v); setSelectedTopicIds([]); }}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Select subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subjects.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Input
-                placeholder="Search videos..."
+                placeholder="Search topics..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1"
               />
             </div>
 
             <ScrollArea className="flex-1 border rounded-lg">
-              {videosLoading ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  Loading videos...
-                </div>
-              ) : filteredVideos.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  {searchQuery ? 'No videos match your search' : 'No videos with transcripts found'}
-                </div>
+              {!selectedSubjectId ? (
+                <div className="p-8 text-center text-muted-foreground">Select a subject to see topics</div>
+              ) : topicsLoading ? (
+                <div className="p-8 text-center text-muted-foreground">Loading topics...</div>
+              ) : filteredTopics.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">No topics found</div>
               ) : (
                 <div className="p-2 space-y-1">
-                  {filteredVideos.map((video) => {
-                    const wordCount = countWords(video.transcript);
-                    const isSelected = selectedVideoIds.includes(video.id);
-                    
+                  {filteredTopics.map((topic) => {
+                    const isSelected = selectedTopicIds.includes(topic.id);
                     return (
                       <div
-                        key={video.id}
+                        key={topic.id}
                         className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
                           isSelected ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted'
                         }`}
-                        onClick={() => toggleVideo(video.id)}
+                        onClick={() => toggleTopic(topic.id)}
                       >
                         <Checkbox checked={isSelected} />
-                        <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{video.title}</div>
-                        </div>
-                        <div className="text-sm text-muted-foreground flex-shrink-0">
-                          {wordCount.toLocaleString()} words
+                          <div className="font-medium truncate">{topic.name}</div>
+                          {topic.description && (
+                            <div className="text-sm text-muted-foreground truncate">{topic.description}</div>
+                          )}
                         </div>
                       </div>
                     );
@@ -352,26 +330,19 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
               )}
             </ScrollArea>
 
-            {selectedVideoIds.length > 0 && (
+            {selectedTopicIds.length > 0 && (
               <div className="mt-4 p-3 bg-muted rounded-lg flex items-center justify-between">
                 <span className="text-sm">
-                  <strong>{selectedVideoIds.length}</strong> video{selectedVideoIds.length !== 1 ? 's' : ''} selected
-                  <span className="mx-2">·</span>
-                  <strong>{totalWordCount.toLocaleString()}</strong> words total
+                  <strong>{selectedTopicIds.length}</strong> topic{selectedTopicIds.length !== 1 ? 's' : ''} selected
                 </span>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedVideoIds([])}>
-                  Clear
-                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setSelectedTopicIds([])}>Clear</Button>
               </div>
             )}
 
             <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button onClick={() => setStep('settings')} disabled={!canProceedFromVideos}>
-                Next
-                <ArrowRight className="w-4 h-4 ml-2" />
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button onClick={() => setStep('settings')} disabled={!canProceedFromTopics}>
+                Next <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </div>
@@ -384,9 +355,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
               <div>
                 <Label className="mb-2 block">Number of Questions</Label>
                 <Select value={questionCount.toString()} onValueChange={(v) => setQuestionCount(parseInt(v))}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {[3, 5, 7, 10, 15, 20].map(n => (
                       <SelectItem key={n} value={n.toString()}>{n}</SelectItem>
@@ -397,15 +366,10 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
 
               <div>
                 <Label className="mb-3 block">Question Types</Label>
-                <label
-                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors mb-3 ${
-                    mixMode ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
-                  }`}
-                >
-                  <Checkbox
-                    checked={mixMode}
-                    onCheckedChange={(checked) => setMixMode(!!checked)}
-                  />
+                <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors mb-3 ${
+                  mixMode ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
+                }`}>
+                  <Checkbox checked={mixMode} onCheckedChange={(checked) => setMixMode(!!checked)} />
                   <div>
                     <div className="font-medium">🎲 Mix (Auto)</div>
                     <div className="text-sm text-muted-foreground">AI picks the best question type for each question</div>
@@ -413,20 +377,14 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                 </label>
                 <div className={`grid grid-cols-2 gap-3 ${mixMode ? 'opacity-50 pointer-events-none' : ''}`}>
                   {QUESTION_TYPES.map((type) => (
-                    <label
-                      key={type.value}
-                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        questionTypes.includes(type.value) ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
-                      }`}
-                    >
+                    <label key={type.value} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      questionTypes.includes(type.value) ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
+                    }`}>
                       <Checkbox
                         checked={questionTypes.includes(type.value)}
                         onCheckedChange={(checked) => {
-                          if (checked) {
-                            setQuestionTypes(prev => [...prev, type.value]);
-                          } else {
-                            setQuestionTypes(prev => prev.filter(t => t !== type.value));
-                          }
+                          if (checked) setQuestionTypes(prev => [...prev, type.value]);
+                          else setQuestionTypes(prev => prev.filter(t => t !== type.value));
                         }}
                       />
                       <div>
@@ -454,13 +412,11 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
             </div>
 
             <div className="flex justify-between mt-auto pt-6">
-              <Button variant="outline" onClick={() => setStep('videos')}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
+              <Button variant="outline" onClick={() => setStep('topics')}>
+                <ArrowLeft className="w-4 h-4 mr-2" /> Back
               </Button>
               <Button onClick={handleGenerate} disabled={!canProceedFromSettings}>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Generate Questions
+                <Sparkles className="w-4 h-4 mr-2" /> Generate Questions
               </Button>
             </div>
           </div>
@@ -472,8 +428,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
             <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
             <h3 className="text-lg font-medium mb-2">Generating Questions</h3>
             <p className="text-muted-foreground text-center">
-              Analyzing {selectedVideoIds.length} video transcript{selectedVideoIds.length !== 1 ? 's' : ''}...
-              <br />
+              Analyzing {selectedTopicIds.length} topic{selectedTopicIds.length !== 1 ? 's' : ''}...<br />
               This may take 10-30 seconds.
             </p>
           </div>
@@ -482,7 +437,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
         {/* Step: Review */}
         {step === 'review' && (
           <div className="flex-1 flex flex-col min-h-0">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4">
               <p className="text-muted-foreground">
                 {generatedQuestions.length} question{generatedQuestions.length !== 1 ? 's' : ''} generated. Review and edit before saving.
               </p>
@@ -495,33 +450,17 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-sm font-medium text-muted-foreground">
-                            Q{index + 1}
-                          </span>
-                          <span className="text-xs px-2 py-0.5 bg-muted rounded">
-                            {question.kind}
-                          </span>
+                          <span className="text-sm font-medium text-muted-foreground">Q{index + 1}</span>
+                          <span className="text-xs px-2 py-0.5 bg-muted rounded">{question.kind}</span>
                         </div>
                         <p className="font-medium">{question.prompt}</p>
-                        {question.hint && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Hint: {question.hint}
-                          </p>
-                        )}
+                        {question.hint && <p className="text-sm text-muted-foreground mt-1">Hint: {question.hint}</p>}
                       </div>
                       <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setEditingQuestionIndex(index)}
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => setEditingQuestionIndex(index)}>
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleQuestionDelete(index)}
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => handleQuestionDelete(index)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -533,22 +472,18 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
 
             <div className="flex justify-between mt-4">
               <Button variant="outline" onClick={() => setStep('settings')}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
+                <ArrowLeft className="w-4 h-4 mr-2" /> Back
               </Button>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setStep('save')} disabled={generatedQuestions.length === 0}>
-                  Skip to Save
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  Skip to Save <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
                 <Button onClick={handleStartPreview} disabled={generatedQuestions.length === 0}>
-                  <Play className="w-4 h-4 mr-2" />
-                  Preview Quiz
+                  <Play className="w-4 h-4 mr-2" /> Preview Quiz
                 </Button>
               </div>
             </div>
 
-            {/* Question Editor Dialog */}
             {editingQuestionIndex !== null && (
               <QuestionEditor
                 isOpen={true}
@@ -566,15 +501,10 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
           <div className="flex-1 flex flex-col min-h-0">
             {!previewSubmitted ? (
               <>
-                {/* Quiz taking mode */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">
-                      Question {currentPreviewIndex + 1} of {generatedQuestions.length}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {Object.keys(previewAnswers).length} answered
-                    </span>
+                    <span className="text-sm text-muted-foreground">Question {currentPreviewIndex + 1} of {generatedQuestions.length}</span>
+                    <span className="text-sm text-muted-foreground">{Object.keys(previewAnswers).length} answered</span>
                   </div>
                   <Progress value={((currentPreviewIndex + 1) / generatedQuestions.length) * 100} className="h-2" />
                 </div>
@@ -593,48 +523,30 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                   </div>
                 </ScrollArea>
 
-                {/* Question navigation dots */}
                 <div className="flex justify-center gap-1.5 py-3 flex-wrap">
-                  {generatedQuestions.map((q, i) => {
-                    const hasAnswer = q.id in previewAnswers;
-                    return (
-                      <button
-                        key={q.id}
-                        onClick={() => setCurrentPreviewIndex(i)}
-                        className={`w-3 h-3 rounded-full transition-all ${
-                          i === currentPreviewIndex 
-                            ? 'bg-primary scale-125' 
-                            : hasAnswer 
-                              ? 'bg-primary/50' 
-                              : 'bg-muted hover:bg-muted-foreground/30'
-                        }`}
-                        aria-label={`Go to question ${i + 1}`}
-                      />
-                    );
-                  })}
+                  {generatedQuestions.map((q, i) => (
+                    <button
+                      key={q.id}
+                      onClick={() => setCurrentPreviewIndex(i)}
+                      className={`w-3 h-3 rounded-full transition-all ${
+                        i === currentPreviewIndex ? 'bg-primary scale-125' :
+                        q.id in previewAnswers ? 'bg-primary/50' : 'bg-muted hover:bg-muted-foreground/30'
+                      }`}
+                    />
+                  ))}
                 </div>
 
                 <div className="flex justify-between mt-4">
-                  <Button variant="outline" onClick={handleBackToReview}>
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Review
+                  <Button variant="outline" onClick={() => { setPreviewAnswers({}); setPreviewSubmitted(false); setCurrentPreviewIndex(0); setStep('review'); }}>
+                    <ArrowLeft className="w-4 h-4 mr-2" /> Back to Review
                   </Button>
                   <div className="flex gap-2">
-                    <Button 
-                      variant="outline"
-                      onClick={() => setCurrentPreviewIndex(prev => Math.max(0, prev - 1))}
-                      disabled={currentPreviewIndex === 0}
-                    >
-                      Previous
-                    </Button>
+                    <Button variant="outline" onClick={() => setCurrentPreviewIndex(prev => Math.max(0, prev - 1))} disabled={currentPreviewIndex === 0}>Previous</Button>
                     {currentPreviewIndex < generatedQuestions.length - 1 ? (
-                      <Button onClick={() => setCurrentPreviewIndex(prev => prev + 1)}>
-                        Next
-                      </Button>
+                      <Button onClick={() => setCurrentPreviewIndex(prev => prev + 1)}>Next</Button>
                     ) : (
-                      <Button onClick={handleSubmitPreview}>
-                        <Check className="w-4 h-4 mr-2" />
-                        Submit Quiz
+                      <Button onClick={() => setPreviewSubmitted(true)}>
+                        <Check className="w-4 h-4 mr-2" /> Submit Quiz
                       </Button>
                     )}
                   </div>
@@ -642,19 +554,11 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
               </>
             ) : (
               <>
-                {/* Results view */}
                 <div className="text-center py-6">
                   <h3 className="text-2xl font-bold mb-2">Quiz Results</h3>
-                  <p className="text-4xl font-bold text-primary mb-2">
-                    {previewResults?.score}/{previewResults?.maxScore}
-                  </p>
-                  <p className="text-muted-foreground">
-                    {Math.round(((previewResults?.score || 0) / (previewResults?.maxScore || 1)) * 100)}% correct
-                  </p>
-                  <Progress 
-                    value={((previewResults?.score || 0) / (previewResults?.maxScore || 1)) * 100} 
-                    className="h-3 mt-4 max-w-xs mx-auto"
-                  />
+                  <p className="text-4xl font-bold text-primary mb-2">{previewResults?.score}/{previewResults?.maxScore}</p>
+                  <p className="text-muted-foreground">{Math.round(((previewResults?.score || 0) / (previewResults?.maxScore || 1)) * 100)}% correct</p>
+                  <Progress value={((previewResults?.score || 0) / (previewResults?.maxScore || 1)) * 100} className="h-3 mt-4 max-w-xs mx-auto" />
                 </div>
 
                 <ScrollArea className="flex-1 border rounded-lg">
@@ -662,24 +566,15 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                     {previewResults?.details.map((detail, index) => {
                       const question = generatedQuestions.find(q => q.id === detail.questionId);
                       return (
-                        <div 
-                          key={detail.questionId} 
-                          className={`flex items-center gap-3 p-3 rounded-lg ${
-                            detail.correct ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30'
-                          }`}
-                        >
-                          {detail.correct ? (
-                            <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                          ) : (
-                            <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
-                          )}
+                        <div key={detail.questionId} className={`flex items-center gap-3 p-3 rounded-lg ${
+                          detail.correct ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30'
+                        }`}>
+                          {detail.correct ? <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" /> : <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />}
                           <div className="flex-1 min-w-0">
                             <span className="text-sm font-medium">Q{index + 1}:</span>{' '}
                             <span className="text-sm truncate">{question?.prompt}</span>
                           </div>
-                          <span className="text-xs text-muted-foreground flex-shrink-0">
-                            {detail.correct ? `+${detail.points}` : '0'} pts
-                          </span>
+                          <span className="text-xs text-muted-foreground flex-shrink-0">{detail.correct ? `+${detail.points}` : '0'} pts</span>
                         </div>
                       );
                     })}
@@ -687,18 +582,15 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                 </ScrollArea>
 
                 <div className="flex justify-between mt-4">
-                  <Button variant="outline" onClick={handleBackToReview}>
-                    <Pencil className="w-4 h-4 mr-2" />
-                    Edit Questions
+                  <Button variant="outline" onClick={() => { setPreviewAnswers({}); setPreviewSubmitted(false); setCurrentPreviewIndex(0); setStep('review'); }}>
+                    <Pencil className="w-4 h-4 mr-2" /> Edit Questions
                   </Button>
                   <div className="flex gap-2">
-                    <Button variant="outline" onClick={handleRetakePreview}>
-                      <RotateCcw className="w-4 h-4 mr-2" />
-                      Retake Quiz
+                    <Button variant="outline" onClick={() => { setPreviewAnswers({}); setPreviewSubmitted(false); setCurrentPreviewIndex(0); }}>
+                      <RotateCcw className="w-4 h-4 mr-2" /> Retake
                     </Button>
                     <Button onClick={() => setStep('save')}>
-                      Continue to Save
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                      Continue to Save <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
                 </div>
@@ -713,30 +605,17 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
             <div className="space-y-4">
               <div>
                 <Label htmlFor="bank-title">Quiz Bank Title *</Label>
-                <Input
-                  id="bank-title"
-                  value={bankTitle}
-                  onChange={(e) => setBankTitle(e.target.value)}
-                  placeholder="e.g., Fractions Quiz - Generated"
-                />
+                <Input id="bank-title" value={bankTitle} onChange={(e) => setBankTitle(e.target.value)} placeholder="e.g., Fractions Quiz - Generated" />
               </div>
-
               <div>
                 <Label htmlFor="bank-description">Description (optional)</Label>
-                <Textarea
-                  id="bank-description"
-                  value={bankDescription}
-                  onChange={(e) => setBankDescription(e.target.value)}
-                  placeholder="Optional description for this quiz bank"
-                  rows={3}
-                />
+                <Textarea id="bank-description" value={bankDescription} onChange={(e) => setBankDescription(e.target.value)} placeholder="Optional description" rows={3} />
               </div>
-
               <div className="p-4 bg-muted rounded-lg">
                 <h4 className="font-medium mb-2">Summary</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• {generatedQuestions.length} questions</li>
-                  <li>• Generated from {selectedVideoIds.length} video{selectedVideoIds.length !== 1 ? 's' : ''}</li>
+                  <li>• Generated from {selectedTopicIds.length} topic{selectedTopicIds.length !== 1 ? 's' : ''}</li>
                   <li>• Difficulty: {difficulty}</li>
                 </ul>
               </div>
@@ -744,21 +623,10 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
 
             <div className="flex justify-between mt-auto pt-6">
               <Button variant="outline" onClick={() => setStep('preview')}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
+                <ArrowLeft className="w-4 h-4 mr-2" /> Back
               </Button>
               <Button onClick={handleSave} disabled={!bankTitle.trim() || isSaving}>
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-4 h-4 mr-2" />
-                    Save Quiz Bank
-                  </>
-                )}
+                {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : <><Check className="w-4 h-4 mr-2" /> Save Quiz Bank</>}
               </Button>
             </div>
           </div>

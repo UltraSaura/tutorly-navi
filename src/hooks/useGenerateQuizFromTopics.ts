@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Question } from '@/types/quiz-bank';
 
 interface GenerateRequest {
-  videoIds: string[];
+  topicIds: string[];
   questionCount?: number;
   questionTypes?: string[];
   difficulty?: 'easy' | 'medium' | 'hard';
@@ -12,15 +12,13 @@ interface GenerateRequest {
 
 interface GenerateResponse {
   questions: Question[];
-  aggregatedWordCount: number;
-  aggregatedTranscript: string;
-  videoTitles: string[];
+  topicNames: string[];
 }
 
-export function useGenerateQuizFromTranscripts() {
+export function useGenerateQuizFromTopics() {
   return useMutation({
     mutationFn: async (request: GenerateRequest): Promise<GenerateResponse> => {
-      const { data, error } = await supabase.functions.invoke('generate-quiz-from-transcripts', {
+      const { data, error } = await supabase.functions.invoke('generate-quiz-from-topics', {
         body: request,
       });
 
