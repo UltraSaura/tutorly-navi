@@ -26,7 +26,9 @@ function buildTypeInstructions(questionTypes: string[]): string {
       case 'ordering':
         return `- "ordering": Put items in correct order. Include "items" (shuffled array) and "correctOrder" (correct sequence).`;
       case 'visual_pie':
-        return `- "visual" with subtype "pie": A fraction/proportion question using a pie chart.
+        return `- "visual" with subtype "pie": A fraction/proportion question using a pie chart. TWO MODES:
+
+  MODE A - "select_pie" (student picks correct pie from variants):
   {
     "id": "q-X", "kind": "visual",
     "prompt": "Which pie shows 1/3 colored?",
@@ -42,7 +44,23 @@ function buildTypeInstructions(questionTypes: string[]): string {
       ]
     }
   }
-  All segments value=1. Use 2-8 segments. Exactly one variant correct.`;
+
+  MODE B - "color_slices" (student colors slices to represent a fraction):
+  {
+    "id": "q-X", "kind": "visual",
+    "prompt": "Color 2/5 of this pie",
+    "hint": "Click slices to color them",
+    "points": 1,
+    "visual": {
+      "subtype": "pie",
+      "interactionMode": "color_slices",
+      "showFractionLabel": true,
+      "correctColoredCount": 2,
+      "segments": [{"id": "s1", "value": 1}, {"id": "s2", "value": 1}, {"id": "s3", "value": 1}, {"id": "s4", "value": 1}, {"id": "s5", "value": 1}]
+    }
+  }
+
+  All segments value=1. Use 2-8 segments. Mix both modes when generating multiple pie questions. For "color_slices", correctColoredCount must match the fraction numerator and segments count = denominator.`;
       case 'visual_angle':
         return `- "visual" with subtype "angle": An angle measurement question.
   {
@@ -53,7 +71,7 @@ function buildTypeInstructions(questionTypes: string[]): string {
   }
   Use angles 10-350. toleranceDeg 2-5.`;
       case 'mix':
-        return `Choose the BEST question type for each question from: single, multi, numeric, ordering, visual (pie), visual (angle). Mix types. For fractions use pie. For geometry use angle. For sequences use ordering. For recall use single/multi.`;
+        return `Choose the BEST question type for each question from: single, multi, numeric, ordering, visual pie (select_pie or color_slices mode), visual angle. Mix types. For fractions, alternate between pie select_pie mode AND pie color_slices mode (where student colors slices). For geometry use angle. For sequences use ordering. For recall use single/multi.`;
       default:
         return '';
     }
@@ -88,8 +106,13 @@ function validateQuestions(questions: any[]): any[] {
       if (q.visual.subtype === 'pie') {
         if (!Array.isArray(q.visual.segments) || q.visual.segments.length < 2) return false;
         q.visual.segments.forEach((s: any, i: number) => { if (!s.id) s.id = `s${i + 1}`; });
-        if (q.visual.variants) q.visual.variants.forEach((v: any, i: number) => { if (!v.id) v.id = `v${i + 1}`; });
         if (!q.visual.interactionMode) q.visual.interactionMode = 'select_pie';
+        if (q.visual.interactionMode === 'select_pie') {
+          if (q.visual.variants) q.visual.variants.forEach((v: any, i: number) => { if (!v.id) v.id = `v${i + 1}`; });
+        } else if (q.visual.interactionMode === 'color_slices') {
+          if (typeof q.visual.correctColoredCount !== 'number') return false;
+          if (q.visual.correctColoredCount < 0 || q.visual.correctColoredCount > q.visual.segments.length) return false;
+        }
       }
       if (q.visual.subtype === 'angle') {
         if (typeof q.visual.targetDeg !== 'number') return false;
