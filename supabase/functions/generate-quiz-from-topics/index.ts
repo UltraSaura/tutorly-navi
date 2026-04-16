@@ -71,7 +71,7 @@ function buildTypeInstructions(questionTypes: string[]): string {
   }
   Use angles 10-350. toleranceDeg 2-5.`;
       case 'mix':
-        return `Choose the BEST question type for each question from: single, multi, numeric, ordering, visual (pie), visual (angle). Mix types. For fractions use pie. For geometry use angle. For sequences use ordering. For recall use single/multi.`;
+        return `Choose the BEST question type for each question from: single, multi, numeric, ordering, visual pie (select_pie or color_slices mode), visual angle. Mix types. For fractions, alternate between pie select_pie mode AND pie color_slices mode (where student colors slices). For geometry use angle. For sequences use ordering. For recall use single/multi.`;
       default:
         return '';
     }
