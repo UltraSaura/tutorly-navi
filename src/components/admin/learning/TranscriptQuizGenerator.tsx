@@ -37,6 +37,8 @@ const QUESTION_TYPES = [
   { value: 'multi', label: 'Multi Choice', description: 'Multiple correct answers' },
   { value: 'numeric', label: 'Numeric', description: 'Number answer' },
   { value: 'ordering', label: 'Ordering', description: 'Arrange in sequence' },
+  { value: 'visual_pie', label: 'Visual (Pie)', description: 'Pie chart fraction question' },
+  { value: 'visual_angle', label: 'Visual (Angle)', description: 'Angle measurement question' },
 ];
 
 const DIFFICULTIES = [
@@ -59,6 +61,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
   const [questionCount, setQuestionCount] = useState(5);
   const [questionTypes, setQuestionTypes] = useState<string[]>(['single', 'multi']);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [mixMode, setMixMode] = useState(false);
   
   // Generated questions
   const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([]);
@@ -137,8 +140,9 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
       const result = await generateMutation.mutateAsync({
         videoIds: selectedVideoIds,
         questionCount,
-        questionTypes,
+        questionTypes: mixMode ? ['mix'] : questionTypes,
         difficulty,
+        mix: mixMode,
       });
 
       setGeneratedQuestions(result.questions);
@@ -253,6 +257,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
     setQuestionCount(5);
     setQuestionTypes(['single', 'multi']);
     setDifficulty('medium');
+    setMixMode(false);
     setGeneratedQuestions([]);
     setEditingQuestionIndex(null);
     setPreviewAnswers({});
@@ -263,7 +268,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
   };
 
   const canProceedFromVideos = selectedVideoIds.length > 0;
-  const canProceedFromSettings = questionTypes.length > 0 && questionCount >= 1;
+  const canProceedFromSettings = (mixMode || questionTypes.length > 0) && questionCount >= 1;
 
   const getStepIndex = (s: Step) => {
     if (s === 'generating') return STEP_ORDER.indexOf('review');
@@ -392,7 +397,21 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
 
               <div>
                 <Label className="mb-3 block">Question Types</Label>
-                <div className="grid grid-cols-2 gap-3">
+                <label
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors mb-3 ${
+                    mixMode ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
+                  }`}
+                >
+                  <Checkbox
+                    checked={mixMode}
+                    onCheckedChange={(checked) => setMixMode(!!checked)}
+                  />
+                  <div>
+                    <div className="font-medium">🎲 Mix (Auto)</div>
+                    <div className="text-sm text-muted-foreground">AI picks the best question type for each question</div>
+                  </div>
+                </label>
+                <div className={`grid grid-cols-2 gap-3 ${mixMode ? 'opacity-50 pointer-events-none' : ''}`}>
                   {QUESTION_TYPES.map((type) => (
                     <label
                       key={type.value}
