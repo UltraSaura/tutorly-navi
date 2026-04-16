@@ -204,12 +204,15 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
       });
       if (bankError) throw bankError;
 
-      const questionsToInsert = generatedQuestions.map((q, index) => ({
-        id: q.id,
-        bank_id: bankId,
-        payload: q,
-        position: index,
-      }));
+      const questionsToInsert = generatedQuestions.map((q, index) => {
+        const uniqueId = `q-${bankId}-${index}-${Math.random().toString(36).slice(2, 8)}`;
+        return {
+          id: uniqueId,
+          bank_id: bankId,
+          payload: { ...q, id: uniqueId },
+          position: index,
+        };
+      });
       const { error: questionsError } = await supabase.from('quiz_bank_questions').insert(questionsToInsert);
       if (questionsError) throw questionsError;
 
