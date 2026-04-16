@@ -26,7 +26,9 @@ function buildTypeInstructions(questionTypes: string[]): string {
       case 'ordering':
         return `- "ordering": Put items in correct order. Include "items" (shuffled array) and "correctOrder" (correct sequence).`;
       case 'visual_pie':
-        return `- "visual" with subtype "pie": A fraction/proportion question using a pie chart.
+        return `- "visual" with subtype "pie": A fraction/proportion question using a pie chart. TWO MODES:
+
+  MODE A - "select_pie" (student picks correct pie from variants):
   {
     "id": "q-X", "kind": "visual",
     "prompt": "Which pie shows 1/3 colored?",
@@ -42,7 +44,23 @@ function buildTypeInstructions(questionTypes: string[]): string {
       ]
     }
   }
-  All segments value=1. Use 2-8 segments. Exactly one variant correct.`;
+
+  MODE B - "color_slices" (student colors slices to represent a fraction):
+  {
+    "id": "q-X", "kind": "visual",
+    "prompt": "Color 2/5 of this pie",
+    "hint": "Click slices to color them",
+    "points": 1,
+    "visual": {
+      "subtype": "pie",
+      "interactionMode": "color_slices",
+      "showFractionLabel": true,
+      "correctColoredCount": 2,
+      "segments": [{"id": "s1", "value": 1}, {"id": "s2", "value": 1}, {"id": "s3", "value": 1}, {"id": "s4", "value": 1}, {"id": "s5", "value": 1}]
+    }
+  }
+
+  All segments value=1. Use 2-8 segments. Mix both modes when generating multiple pie questions. For "color_slices", correctColoredCount must match the fraction numerator and segments count = denominator.`;
       case 'visual_angle':
         return `- "visual" with subtype "angle": An angle measurement question.
   {
