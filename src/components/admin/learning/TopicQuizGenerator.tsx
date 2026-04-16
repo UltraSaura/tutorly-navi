@@ -297,7 +297,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
               />
             </div>
 
-            <ScrollArea className="flex-1 border rounded-lg max-h-[50vh]">
+            <ScrollArea className="border rounded-lg h-[50vh]">
               {!selectedSubjectId ? (
                 <div className="p-8 text-center text-muted-foreground">Select a subject to see topics</div>
               ) : topicsLoading ? (
