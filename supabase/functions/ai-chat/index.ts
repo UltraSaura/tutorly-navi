@@ -113,13 +113,16 @@ serve(async (req) => {
       isGradingRequest = false, 
       isUnified = false,
       requestExplanation = false,
-      language = 'en',
+      language: rawLanguage = 'en',
       customPrompt,
       userContext,
       maxTokens = 800  // Default to 800 for backward compatibility
     } = parsedBody;
     
-    console.log('📊 Request analysis:', { 
+    // Normalize language: accept 'fr', 'french', 'French' etc.
+    const language = /^fr/i.test(rawLanguage) ? 'fr' : 'en';
+    
+    console.log('📊 Request analysis:', {
       modelId, 
       messageLength: message?.length,
       historyLength: history?.length,
@@ -299,6 +302,7 @@ serve(async (req) => {
             message, 
             modelConfig.model, 
             isExercise,
+            requestExplanation,
             maxTokens
           );
           break;
@@ -326,6 +330,23 @@ serve(async (req) => {
     }
     
     console.log('📤 Returning successful response, content length:', responseContent?.length || 0);
+    
+    // Handle tool calling responses (e.g. from DeepSeek/OpenAI with requestExplanation)
+    if (responseContent && typeof responseContent === 'object' && responseContent.tool_calls) {
+      console.log('🔧 Tool calling response detected, passing through directly');
+      return new Response(
+        JSON.stringify({
+          tool_calls: responseContent.tool_calls,
+          content: responseContent.content || null,
+          modelId,
+          modelUsed: modelConfig.model,
+          provider: modelConfig.provider,
+          isExercise,
+          timestamp: new Date().toISOString()
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     // Extract structured fields from AI response (handles markdown-wrapped JSON)
     let parsedFields: Record<string, any> = {};

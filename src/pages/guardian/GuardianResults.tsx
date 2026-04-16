@@ -9,6 +9,7 @@ import ExerciseResultCard from '@/components/guardian/ExerciseResultCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
 import type { ExerciseHistoryWithAttempts } from '@/types/exercise-history';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 export default function GuardianResults() {
   const { guardianId } = useGuardianAuth();
@@ -19,6 +20,8 @@ export default function GuardianResults() {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [selectedExercise, setSelectedExercise] = useState<ExerciseHistoryWithAttempts | null>(null);
   const teaching = useTwoCardTeaching();
+  const { language } = useLanguage();
+  const langName = language === 'fr' ? 'French' : language === 'ar' ? 'Arabic' : 'English';
 
   const { children, exerciseHistory, loading, stats } = useGuardianExerciseHistory({
     guardianId,
@@ -52,7 +55,7 @@ export default function GuardianResults() {
     };
     
     await teaching.openFor(exerciseData, {
-      response_language: 'English',
+      response_language: langName,
       grade_level: 'High School'
     });
     

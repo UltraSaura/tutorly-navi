@@ -10,6 +10,7 @@ import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 interface ExerciseRowProps {
   exercise: ExerciseHistoryWithAttempts;
   allAttempts: ExerciseHistoryWithAttempts[];
@@ -23,6 +24,8 @@ export function ExerciseRow({
   const [showTimeline, setShowTimeline] = useState(false);
   const [showExplanationModal, setShowExplanationModal] = useState(false);
   const teaching = useTwoCardTeaching();
+  const { language } = useLanguage();
+  const langName = language === 'fr' ? 'French' : language === 'ar' ? 'Arabic' : 'English';
   const hasMultipleAttempts = allAttempts.length > 1;
 
   // Status badge - Only "Correct" or "Incorrect"
@@ -84,7 +87,7 @@ export function ExerciseRow({
           userAnswer: exercise.user_answer,
           subject: exercise.subject_id || 'math'
         }, {
-          response_language: 'English',
+          response_language: langName,
           grade_level: 'High School'
         });
       } catch (error) {

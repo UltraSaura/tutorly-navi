@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 export const ExerciseHistoryPage = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
@@ -19,10 +20,12 @@ export const ExerciseHistoryPage = () => {
   });
 
   const { sections, loading: explanationLoading, open, setOpen, openFor } = useTwoCardTeaching();
+  const { language } = useLanguage();
 
   const handleShowExplanation = async (exercise: any) => {
+    const langName = language === 'fr' ? 'French' : language === 'ar' ? 'Arabic' : 'English';
     const profile = {
-      response_language: 'English',
+      response_language: langName,
       grade_level: 'High School'
     };
     
