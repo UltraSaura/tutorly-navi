@@ -42,3 +42,6 @@ verify_jwt = true
 
 [functions.generate-quiz-from-transcripts]
 verify_jwt = true
+
+[functions.generate-quiz-from-topics]
+verify_jwt = true
