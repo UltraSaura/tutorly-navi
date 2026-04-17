@@ -1,26 +1,60 @@
 
 
-## Diagnosis
+## Verification: rename matches your instructions ✅
 
-The reported build errors are **stale, not real**.
+Confirmed against the live DB schema:
 
-**Evidence:**
-1. `npx tsc --noEmit` runs cleanly — zero errors.
-2. `src/integrations/supabase/types.ts` already contains the new table definitions: `subjects` (line 1408), `topic_objective_links` (1565), `topics` (1604), `videos` (1926).
-3. `grep` across `src/` and `supabase/functions/` finds **zero** references to old table names (`learning_subjects`, `learning_topics`, `learning_videos`, `topic_objectives`).
-4. The error messages reference symbols like `'learning_subjects' is not assignable to '"configured_models"'` — that error shape only appears when the Supabase generic loses track of the table list, which happens transiently while types are regenerating after a migration.
+### Renamed tables (all done)
+| Old name | New name | Status |
+|---|---|---|
+| `learning_subjects` | `subjects` | ✅ exists |
+| `learning_topics` | `topics` | ✅ exists |
+| `learning_videos` | `videos` | ✅ exists |
+| `topic_objectives` | `topic_objective_links` | ✅ exists |
 
-**Why this happened:** when the rename migration ran, the build engine briefly held the pre-migration `types.ts` in memory while the source was already updated to use the new names. That mismatch produced this exact error pattern. The cache has since refreshed.
+### Kept unchanged (all confirmed present)
+`domains`, `subdomains`, `objectives`, `success_criteria`, `tasks`, `lessons` — all still there with original schemas.
 
-## Recommendation
+### Foreign key column names — already harmonized
+- `subjects.id` ← referenced by `learning_categories.subject_id`
+- `topics.id` ← referenced by `videos.topic_id`, `topic_objective_links.topic_id`, `objective_mastery.topic_id`
+- `objectives.id` ← referenced by `topic_objective_links.objective_id`, `success_criteria.objective_id`, `objective_mastery.objective_id`
+- `success_criteria.id` ← referenced by `tasks.success_criterion_id`, `student_mastery.success_criterion_id`
+- `domain_id`, `subdomain_id` consistent across `objectives`, `success_criteria`, `tasks`
 
-No code changes needed. The fix is to **refresh the preview** (or trigger any small rebuild) to clear the stale error overlay. After that:
+All match your naming convention.
 
-- `tsc` passes
-- All renamed tables (`subjects`, `topics`, `videos`, `topic_objective_links`) are in use everywhere
-- Triggers `update_topic_video_count` / `update_topic_quiz_count` reference the new names (verified in the db-functions list)
+### Triggers & functions — updated
+- `update_topic_video_count()` → references `topics` / `videos` ✅
+- `update_topic_quiz_count()` → references `topics` / `videos` / `video_quizzes` ✅
 
-## What to do next
+### Code references — updated
+Search confirms zero remaining references to `learning_subjects`, `learning_topics`, `learning_videos`, `topic_objectives` in `src/` or `supabase/functions/`. Generated `src/integrations/supabase/types.ts` reflects the new names. `tsc --noEmit` passes clean.
 
-Just hit refresh on the preview. If the same errors persist after a full reload, switch back to default mode and I'll re-check whether anything in the types file genuinely regressed — but right now there's nothing to edit.
+### About the build errors you keep seeing
+
+Those errors (`'learning_subjects' is not assignable to '"configured_models"'`) are **stale**. The actual code and types are correct. The build engine is caching a pre-migration state. A hard refresh of the preview clears them.
+
+If a hard refresh doesn't clear them, the next step would be to switch to default mode and force-touch `src/integrations/supabase/types.ts` (no content change needed — just a save) to invalidate the TS server cache. No actual code edits required.
+
+### Final schema snapshot (renamed + linked tables)
+
+```text
+subjects (id uuid PK)
+  └─ learning_categories (subject_id → subjects.id)
+        └─ topics (category_id → learning_categories.id)
+              ├─ videos (topic_id → topics.id)
+              │     └─ video_quizzes (video_id → videos.id)
+              └─ topic_objective_links (topic_id → topics.id,
+                                        objective_id → objectives.id)
+
+objectives (id text PK)  ← curriculum master
+  ├─ success_criteria (objective_id → objectives.id)
+  │     └─ tasks (success_criterion_id → success_criteria.id)
+  └─ topic_objective_links (objective_id → objectives.id)
+
+domains, subdomains, lessons — unchanged
+```
+
+Everything matches your instructions. The only remaining action is a preview refresh (or, if needed, a no-op type cache bust in default mode).
 
