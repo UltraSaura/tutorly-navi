@@ -20,7 +20,7 @@ const UnifiedDashboard = () => {
 
       // Get all subjects
       const { data: subjects } = await supabase
-        .from('learning_subjects')
+        .from('subjects')
         .select('id')
         .eq('is_active', true);
 
@@ -32,7 +32,7 @@ const UnifiedDashboard = () => {
       const { data: categories } = await supabase
         .from('learning_categories')
         .select(`
-          topics:learning_topics(id)
+          topics:topics(id)
         `)
         .in('subject_id', subjects.map(s => s.id))
         .eq('is_active', true);
@@ -46,7 +46,7 @@ const UnifiedDashboard = () => {
 
       // Get videos for all topics
       const { data: videos } = await supabase
-        .from('learning_videos')
+        .from('videos')
         .select('id, topic_id')
         .in('topic_id', topicIds)
         .eq('is_active', true);

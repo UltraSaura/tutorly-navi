@@ -1,6 +1,6 @@
 /**
  * CURRICULUM PIPELINE:
- * User Profile (country, level, language) → CurriculumBundle (taxonomy) → learning_topics (content) → UI
+ * User Profile (country, level, language) → CurriculumBundle (taxonomy) → topics (content) → UI
  * 
  * This module transforms database rows into hierarchical curriculum structures
  * optimized for UI consumption with localized labels.
@@ -10,8 +10,8 @@ import type { Database } from '@/integrations/supabase/types';
 import { getLocalizedLabel } from '@/lib/curriculum';
 
 // Database row types (from Supabase)
-type LearningTopicRow = Database['public']['Tables']['learning_topics']['Row'];
-type LearningSubjectRow = Database['public']['Tables']['learning_subjects']['Row'];
+type LearningTopicRow = Database['public']['Tables']['topics']['Row'];
+type LearningSubjectRow = Database['public']['Tables']['subjects']['Row'];
 type LearningCategoryRow = Database['public']['Tables']['learning_categories']['Row'];
 
 // View models for UI
@@ -44,7 +44,7 @@ export interface CurriculumDomain {
 }
 
 export interface CurriculumSubject {
-  id: string; // learning_subjects.id (UUID)
+  id: string; // subjects.id (UUID)
   subjectKey: string; // curriculum subject ID (e.g., "MATH")
   subjectLabel: string; // Localized name
   slug: string;

@@ -19,11 +19,11 @@ export function useTopicMastery(topicId: string | undefined) {
       
       // Get topic with linked objectives
       const { data: topic, error: topicError } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .select(`
           id,
           name,
-          topic_objectives (
+          topic_objective_links (
             objective_id,
             objectives (
               id,
@@ -37,7 +37,7 @@ export function useTopicMastery(topicId: string | undefined) {
       if (topicError) throw topicError;
       if (!topic) return null;
       
-      const objectiveIds = topic.topic_objectives?.map((to: any) => to.objective_id) || [];
+      const objectiveIds = topic.topic_objective_links?.map((to: any) => to.objective_id) || [];
       
       if (objectiveIds.length === 0) {
         return {
@@ -65,7 +65,7 @@ export function useTopicMastery(topicId: string | undefined) {
       );
       
       // Build progress data
-      const objectives = topic.topic_objectives.map((to: any) => {
+      const objectives = topic.topic_objective_links.map((to: any) => {
         const obj = to.objectives;
         const mastery = masteryMap.get(to.objective_id);
         
@@ -119,12 +119,12 @@ export function useStudentMasteryOverview() {
       
       // Get all topics for this curriculum
       const { data: topics } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .select(`
           id,
           curriculum_subject_id,
           category_id,
-          topic_objectives (
+          topic_objective_links (
             objective_id
           )
         `)
@@ -142,7 +142,7 @@ export function useStudentMasteryOverview() {
         .select(`
           id,
           subject_id,
-          learning_subjects (
+          subjects (
             id,
             name,
             color_scheme
@@ -153,8 +153,8 @@ export function useStudentMasteryOverview() {
       // Build category to subject map
       const categoryToSubject = new Map();
       categories?.forEach((cat: any) => {
-        if (cat.learning_subjects) {
-          categoryToSubject.set(cat.id, cat.learning_subjects);
+        if (cat.subjects) {
+          categoryToSubject.set(cat.id, cat.subjects);
         }
       });
       
@@ -178,7 +178,7 @@ export function useStudentMasteryOverview() {
         }
         
         const subjectData = subjectMap.get(subject.id)!;
-        topic.topic_objectives?.forEach((to: any) => {
+        topic.topic_objective_links?.forEach((to: any) => {
           subjectData.objectiveIds.add(to.objective_id);
         });
       });

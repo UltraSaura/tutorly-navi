@@ -86,7 +86,7 @@ serve(async (req) => {
 
     // Get topics matching curriculum
     let topicsQuery = supabase
-      .from('learning_topics')
+      .from('topics')
       .select(`
         id,
         name,
@@ -97,13 +97,13 @@ serve(async (req) => {
         curriculum_domain_id,
         curriculum_subdomain_id,
         learning_categories (
-          learning_subjects (
+          subjects (
             id,
             name,
             color_scheme
           )
         ),
-        topic_objectives (
+        topic_objective_links (
           objective_id
         )
       `)
@@ -127,7 +127,7 @@ serve(async (req) => {
 
     // Filter topics with objectives
     const topicsWithObjectives = (topics || []).filter(
-      (t: any) => t.topic_objectives && t.topic_objectives.length > 0
+      (t: any) => t.topic_objective_links && t.topic_objective_links.length > 0
     );
 
     if (topicsWithObjectives.length === 0) {
@@ -158,7 +158,7 @@ serve(async (req) => {
 
     // Calculate recommendations
     const recommendations = topicsWithObjectives.map((topic: any) => {
-      const objectiveIds = topic.topic_objectives.map((to: any) => to.objective_id);
+      const objectiveIds = topic.topic_objective_links.map((to: any) => to.objective_id);
       const totalObjectives = objectiveIds.length;
       
       const topicMastery = masteryMap.get(topic.id) || new Map();
@@ -186,7 +186,7 @@ serve(async (req) => {
         priorityScore += 0.5;
       }
 
-      const subject = topic.learning_categories?.learning_subjects;
+      const subject = topic.learning_categories?.subjects;
 
       return {
         topic_id: topic.id,

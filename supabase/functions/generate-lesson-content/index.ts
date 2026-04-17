@@ -128,7 +128,7 @@ serve(async (req) => {
 
     // Fetch topic with curriculum info
     const { data: topic, error: topicError } = await supabase
-      .from('learning_topics')
+      .from('topics')
       .select(`
         id,
         name,
@@ -139,7 +139,7 @@ serve(async (req) => {
         curriculum_domain_id,
         curriculum_subdomain_id,
         learning_categories (
-          learning_subjects (
+          subjects (
             name
           )
         )
@@ -153,7 +153,7 @@ serve(async (req) => {
 
     // Fetch linked objectives with success criteria
     const { data: topicObjectives, error: objError } = await supabase
-      .from('topic_objectives')
+      .from('topic_objective_links')
       .select(`
         objective_id,
         objectives (
@@ -196,8 +196,8 @@ serve(async (req) => {
     });
 
     // Generate AI content
-    const categories = topic.learning_categories as { learning_subjects?: { name: string } } | null;
-    const subjectName = categories?.learning_subjects?.name || 'General';
+    const categories = topic.learning_categories as { subjects?: { name: string } } | null;
+    const subjectName = categories?.subjects?.name || 'General';
     
     const prompt = `You are an expert educator creating lesson content for students.
 
@@ -340,7 +340,7 @@ Return your response as JSON:
 
     // Save to database
     const { error: updateError } = await supabase
-      .from('learning_topics')
+      .from('topics')
       .update({ lesson_content: lessonContent })
       .eq('id', topicId);
 

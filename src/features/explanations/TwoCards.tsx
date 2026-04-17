@@ -66,12 +66,12 @@ export function TwoCards({
     queryFn: async () => {
       if (!topicId) return null;
       const { data } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .select(`
           slug,
           lesson_content,
           category:learning_categories!inner(
-            subject:learning_subjects!inner(slug)
+            subject:subjects!inner(slug)
           )
         `)
         .eq('id', topicId)

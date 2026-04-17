@@ -148,7 +148,7 @@ serve(async (req) => {
 
     // Fetch topics with their metadata
     const { data: topics, error: topicsError } = await supabase
-      .from('learning_topics')
+      .from('topics')
       .select('id, name, description, keywords, curriculum_domain_id, curriculum_subdomain_id, curriculum_level_code')
       .in('id', topicIds);
 
@@ -160,7 +160,7 @@ serve(async (req) => {
 
     // Fetch linked objectives
     const { data: topicObjectives } = await supabase
-      .from('topic_objectives')
+      .from('topic_objective_links')
       .select('topic_id, objective_id')
       .in('topic_id', topicIds);
 

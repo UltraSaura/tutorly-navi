@@ -15,7 +15,7 @@ export function useTopicObjectives(topicId: string | undefined) {
       
       // Get linked objective IDs
       const { data: links, error: linksError } = await supabase
-        .from('topic_objectives')
+        .from('topic_objective_links')
         .select('objective_id, order_index')
         .eq('topic_id', topicId)
         .order('order_index');
@@ -85,7 +85,7 @@ export function useLinkObjectiveToTopic() {
       orderIndex: number;
     }) => {
       const { error } = await supabase
-        .from('topic_objectives')
+        .from('topic_objective_links')
         .insert({ topic_id: topicId, objective_id: objectiveId, order_index: orderIndex });
       
       if (error) throw error;
@@ -118,7 +118,7 @@ export function useUnlinkObjectiveFromTopic() {
       objectiveId: string;
     }) => {
       const { error } = await supabase
-        .from('topic_objectives')
+        .from('topic_objective_links')
         .delete()
         .eq('topic_id', topicId)
         .eq('objective_id', objectiveId);

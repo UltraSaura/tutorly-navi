@@ -1,7 +1,7 @@
 /**
  * Admin flow:
  * 1. Admin selects country, level, subject
- * 2. We load topics from school program (learning_topics + CurriculumBundle)
+ * 2. We load topics from school program (topics + CurriculumBundle)
  * 3. Admin chooses a topic
  * 4. Resource stores a reference to that topic
  * 5. Students see the resource under the matching Subject → Topic
@@ -31,7 +31,7 @@ export function useProgramTopicsForAdmin({
     queryKey: ['admin-program-topics', countryCode, levelCode, subjectId],
     queryFn: async (): Promise<ProgramTopicForAdmin[]> => {
       let query = supabase
-        .from('learning_topics')
+        .from('topics')
         .select('*')
         .eq('is_active', true);
 
