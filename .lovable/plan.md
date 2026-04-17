@@ -1,54 +1,26 @@
 
 
-## Plan: Rename 4 tables + update all code references
+## Diagnosis
 
-Going with **Option B** as recommended:
-- `learning_subjects` → `subjects`
-- `learning_topics` → `topics`
-- `learning_videos` → `videos`
-- `topic_objectives` → `topic_objective_links`
+The reported build errors are **stale, not real**.
 
-(`objectives` stays as-is — master curriculum objectives table.)
+**Evidence:**
+1. `npx tsc --noEmit` runs cleanly — zero errors.
+2. `src/integrations/supabase/types.ts` already contains the new table definitions: `subjects` (line 1408), `topic_objective_links` (1565), `topics` (1604), `videos` (1926).
+3. `grep` across `src/` and `supabase/functions/` finds **zero** references to old table names (`learning_subjects`, `learning_topics`, `learning_videos`, `topic_objectives`).
+4. The error messages reference symbols like `'learning_subjects' is not assignable to '"configured_models"'` — that error shape only appears when the Supabase generic loses track of the table list, which happens transiently while types are regenerating after a migration.
 
-### Step 1 — DB migration
+**Why this happened:** when the rename migration ran, the build engine briefly held the pre-migration `types.ts` in memory while the source was already updated to use the new names. That mismatch produced this exact error pattern. The cache has since refreshed.
 
-Single migration:
-```sql
-ALTER TABLE public.learning_subjects RENAME TO subjects;
-ALTER TABLE public.learning_topics   RENAME TO topics;
-ALTER TABLE public.learning_videos   RENAME TO videos;
-ALTER TABLE public.topic_objectives  RENAME TO topic_objective_links;
-```
+## Recommendation
 
-Then recreate the two trigger functions so their internal SQL references the new table names:
-- `update_topic_video_count()` — replace `learning_topics`/`learning_videos` with `topics`/`videos`
-- `update_topic_quiz_count()` — same
+No code changes needed. The fix is to **refresh the preview** (or trigger any small rebuild) to clear the stale error overlay. After that:
 
-Triggers themselves auto-follow the renamed tables. RLS policies, indexes, FKs auto-follow. Generated `src/integrations/supabase/types.ts` regenerates automatically.
+- `tsc` passes
+- All renamed tables (`subjects`, `topics`, `videos`, `topic_objective_links`) are in use everywhere
+- Triggers `update_topic_video_count` / `update_topic_quiz_count` reference the new names (verified in the db-functions list)
 
-### Step 2 — Update code references
+## What to do next
 
-Replace `.from('learning_subjects')` → `.from('subjects')`, `.from('learning_topics')` → `.from('topics')`, `.from('learning_videos')` → `.from('videos')`, `.from('topic_objectives')` → `.from('topic_objective_links')` across:
-
-**Hooks (~11):** `useLearningSubjects`, `useManageLearningContent`, `useProgramTopicsForAdmin`, `useStudentCurriculum`, `useSubjectDashboard`, `useSuggestedVideos`, `useVideoPlayer`, `useCoursePlaylist`, `useObjectiveMastery`, `useTopicObjectives`, `useUserSchoolLevel` (if applicable)
-
-**Components/pages (~10):** `TopicQuizGenerator`, `TranscriptQuizGenerator`, `LessonContentStudent`, `TopicTranscriptTab`, `UnifiedDashboard`, `AIResponse`, `TwoCards`, `MyProgramPage`, `TeacherTopicDetail`, `progressService`, `domain/curriculum.ts`
-
-**Edge functions (6):** `class-students`, `generate-lesson-content`, `generate-quiz-from-topics`, `generate-quiz-from-transcripts`, `recommendations`, `student-progress`
-
-Also rewrite embedded relation strings in nested selects:
-- `learning_categories!inner(...learning_topics!inner(...))` → `learning_categories!inner(...topics!inner(...))`
-- Any join paths that traverse the renamed tables
-
-Total: ~99 references across ~21 source files + 6 edge functions.
-
-### Step 3 — Verify after applying
-
-Smoke-test: student dashboard, subject playlist, video player, quiz generators (topic + transcript), recommendations, teacher topic detail, admin learning content management.
-
-### Notes
-
-- Old migration files keep their original SQL (historical record).
-- Memory file references to old names remain as docs — no functional impact.
-- Single migration + regenerated types means a brief moment where TS types and code are out of sync; all code edits ship in the same change.
+Just hit refresh on the preview. If the same errors persist after a full reload, switch back to default mode and I'll re-check whether anything in the types file genuinely regressed — but right now there's nothing to edit.
 
