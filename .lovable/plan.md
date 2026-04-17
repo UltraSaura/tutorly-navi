@@ -1,45 +1,54 @@
 
 
-## Fix: "Save Quiz Bank" fails with duplicate key error
+## Plan: Rename 4 tables + update all code references
 
-### Root cause
-Console shows: `duplicate key value violates unique constraint "quiz_bank_questions_pkey"`.
+Going with **Option B** as recommended:
+- `learning_subjects` → `subjects`
+- `learning_topics` → `topics`
+- `learning_videos` → `videos`
+- `topic_objectives` → `topic_objective_links`
 
-The AI generator returns questions with simple IDs like `q1`, `q2`, `q3`... Both `TopicQuizGenerator` and `TranscriptQuizGenerator` insert these IDs directly as the row primary key in `quiz_bank_questions`. Any previously saved bank already used `q1`/`q2`/etc., so the insert collides.
+(`objectives` stays as-is — master curriculum objectives table.)
 
-### Fix
-At save time, rewrite each question's `id` to a unique value before inserting. Use the same ID for both the row PK and the payload's `id` so they stay in sync.
+### Step 1 — DB migration
 
-**File 1: `src/components/admin/learning/TopicQuizGenerator.tsx`** (lines 207–213)
-
-Replace:
-```ts
-const questionsToInsert = generatedQuestions.map((q, index) => ({
-  id: q.id,
-  bank_id: bankId,
-  payload: q,
-  position: index,
-}));
-```
-With:
-```ts
-const questionsToInsert = generatedQuestions.map((q, index) => {
-  const uniqueId = `q-${bankId}-${index}-${Math.random().toString(36).slice(2, 8)}`;
-  return {
-    id: uniqueId,
-    bank_id: bankId,
-    payload: { ...q, id: uniqueId },
-    position: index,
-  };
-});
+Single migration:
+```sql
+ALTER TABLE public.learning_subjects RENAME TO subjects;
+ALTER TABLE public.learning_topics   RENAME TO topics;
+ALTER TABLE public.learning_videos   RENAME TO videos;
+ALTER TABLE public.topic_objectives  RENAME TO topic_objective_links;
 ```
 
-**File 2: `src/components/admin/learning/TranscriptQuizGenerator.tsx`** (lines 227–232)
+Then recreate the two trigger functions so their internal SQL references the new table names:
+- `update_topic_video_count()` — replace `learning_topics`/`learning_videos` with `topics`/`videos`
+- `update_topic_quiz_count()` — same
 
-Apply the exact same change (same bug, same fix).
+Triggers themselves auto-follow the renamed tables. RLS policies, indexes, FKs auto-follow. Generated `src/integrations/supabase/types.ts` regenerates automatically.
 
-### Why this works
-- `bankId` is unique per save (timestamp), so `q-${bankId}-${index}-${random}` is guaranteed unique.
-- Payload `id` is rewritten too, so any answer/grading logic keyed by `question.id` continues to match.
-- No schema changes, no edge function changes.
+### Step 2 — Update code references
+
+Replace `.from('learning_subjects')` → `.from('subjects')`, `.from('learning_topics')` → `.from('topics')`, `.from('learning_videos')` → `.from('videos')`, `.from('topic_objectives')` → `.from('topic_objective_links')` across:
+
+**Hooks (~11):** `useLearningSubjects`, `useManageLearningContent`, `useProgramTopicsForAdmin`, `useStudentCurriculum`, `useSubjectDashboard`, `useSuggestedVideos`, `useVideoPlayer`, `useCoursePlaylist`, `useObjectiveMastery`, `useTopicObjectives`, `useUserSchoolLevel` (if applicable)
+
+**Components/pages (~10):** `TopicQuizGenerator`, `TranscriptQuizGenerator`, `LessonContentStudent`, `TopicTranscriptTab`, `UnifiedDashboard`, `AIResponse`, `TwoCards`, `MyProgramPage`, `TeacherTopicDetail`, `progressService`, `domain/curriculum.ts`
+
+**Edge functions (6):** `class-students`, `generate-lesson-content`, `generate-quiz-from-topics`, `generate-quiz-from-transcripts`, `recommendations`, `student-progress`
+
+Also rewrite embedded relation strings in nested selects:
+- `learning_categories!inner(...learning_topics!inner(...))` → `learning_categories!inner(...topics!inner(...))`
+- Any join paths that traverse the renamed tables
+
+Total: ~99 references across ~21 source files + 6 edge functions.
+
+### Step 3 — Verify after applying
+
+Smoke-test: student dashboard, subject playlist, video player, quiz generators (topic + transcript), recommendations, teacher topic detail, admin learning content management.
+
+### Notes
+
+- Old migration files keep their original SQL (historical record).
+- Memory file references to old names remain as docs — no functional impact.
+- Single migration + regenerated types means a brief moment where TS types and code are out of sync; all code edits ship in the same change.
 
