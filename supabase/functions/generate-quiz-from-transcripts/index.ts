@@ -200,7 +200,7 @@ serve(async (req) => {
     }
 
     const { data: videos, error: videosError } = await supabase
-      .from('learning_videos')
+      .from('videos')
       .select('id, title, transcript')
       .in('id', videoIds)
       .not('transcript', 'is', null);

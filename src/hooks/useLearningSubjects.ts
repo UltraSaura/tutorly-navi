@@ -16,12 +16,12 @@ export function useLearningSubjects() {
       
       // Get active subjects filtered by curriculum if profile exists
       let subjectsQuery = supabase
-        .from('learning_subjects')
+        .from('subjects')
         .select(`
           *,
           learning_categories!inner (
             id,
-            learning_topics!inner (
+            topics!inner (
               id,
               curriculum_country_code,
               curriculum_level_code
@@ -33,8 +33,8 @@ export function useLearningSubjects() {
       // Add curriculum filters if profile exists
       if (profile?.countryCode && profile?.levelCode) {
         subjectsQuery = subjectsQuery
-          .eq('learning_categories.learning_topics.curriculum_country_code', profile.countryCode)
-          .eq('learning_categories.learning_topics.curriculum_level_code', profile.levelCode);
+          .eq('learning_categories.topics.curriculum_country_code', profile.countryCode)
+          .eq('learning_categories.topics.curriculum_level_code', profile.levelCode);
       }
 
       const { data: subjects, error: subjectsError } = await subjectsQuery.order('order_index');
@@ -63,7 +63,7 @@ export function useLearningSubjects() {
           
           // Get topics
           const { data: topics } = await supabase
-            .from('learning_topics')
+            .from('topics')
             .select('id')
             .in('category_id', categories.map(c => c.id))
             .eq('is_active', true);
@@ -79,7 +79,7 @@ export function useLearningSubjects() {
           
           // Get all videos for these topics
           const { data: allVideos } = await supabase
-            .from('learning_videos')
+            .from('videos')
             .select('*')
             .in('topic_id', topics.map(t => t.id))
             .eq('is_active', true);

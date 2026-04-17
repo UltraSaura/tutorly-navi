@@ -36,12 +36,12 @@ export default function MyProgramPage() {
       if (!profile) return [];
       
       const { data, error } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .select(`
           *,
           learning_categories!inner (
             name,
-            learning_subjects!inner (
+            subjects!inner (
               name,
               slug,
               color_scheme
@@ -202,7 +202,7 @@ export default function MyProgramPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {subdomainData.topics.map((topic: any) => {
-                          const subjectSlug = topic.learning_categories?.learning_subjects?.slug;
+                          const subjectSlug = topic.learning_categories?.subjects?.slug;
                           return (
                             <Card 
                               key={topic.id}

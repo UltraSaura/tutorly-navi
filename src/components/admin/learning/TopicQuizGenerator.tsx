@@ -78,7 +78,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     queryKey: ['learning-subjects'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('learning_subjects')
+        .from('subjects')
         .select('id, name')
         .eq('is_active', true)
         .order('order_index');
@@ -111,7 +111,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
       if (!selectedSubjectId || categories.length === 0) return [];
       const categoryIds = categories.map(c => c.id);
       const { data, error } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .select('id, name, description, category_id')
         .in('category_id', categoryIds)
         .eq('is_active', true)

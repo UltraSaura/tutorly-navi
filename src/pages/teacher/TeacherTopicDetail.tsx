@@ -17,11 +17,11 @@ export default function TeacherTopicDetail() {
     queryKey: ['teacher-topic', topicId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .select(`
           *,
           learning_categories (
-            learning_subjects (
+            subjects (
               name,
               color_scheme,
               slug
@@ -47,7 +47,7 @@ export default function TeacherTopicDetail() {
     return <div className="p-4">Topic not found</div>;
   }
 
-  const subject = topic.learning_categories?.learning_subjects;
+  const subject = topic.learning_categories?.subjects;
 
   return (
     <div className="space-y-6">

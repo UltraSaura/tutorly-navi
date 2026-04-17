@@ -82,7 +82,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
     queryKey: ['videos-with-transcripts'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('learning_videos')
+        .from('videos')
         .select('id, title, transcript, topic_id, is_active')
         .order('title');
       

@@ -57,7 +57,7 @@ export function useCoursePlaylist(topicSlug: string) {
 
       // Get topic
       const { data: topic, error: topicError } = await (supabase as any)
-        .from('learning_topics')
+        .from('topics')
         .select('*')
         .eq('slug', topicSlug)
         .eq('is_active', true)
@@ -67,7 +67,7 @@ export function useCoursePlaylist(topicSlug: string) {
 
       // Get videos
       const { data: allVideos, error: allVideosError } = await (supabase as any)
-        .from('learning_videos')
+        .from('videos')
         .select('*')
         .eq('topic_id', topic.id)
         .eq('is_active', true)

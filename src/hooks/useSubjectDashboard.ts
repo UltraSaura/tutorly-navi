@@ -25,7 +25,7 @@ export function useSubjectDashboard(subjectSlug: string) {
 
       // Get subject
       const { data: subject, error: subjectError } = await (supabase as any)
-        .from('learning_subjects')
+        .from('subjects')
         .select('*')
         .eq('slug', subjectSlug)
         .eq('is_active', true)
@@ -38,7 +38,7 @@ export function useSubjectDashboard(subjectSlug: string) {
         .from('learning_categories')
         .select(`
           *,
-          topics:learning_topics!inner(*)
+          topics:topics!inner(*)
         `)
         .eq('subject_id', (subject as any).id)
         .eq('is_active', true)
@@ -63,7 +63,7 @@ export function useSubjectDashboard(subjectSlug: string) {
             const topicsWithProgress = await Promise.all(
               (category.topics || []).map(async (topic: any) => {
                 const { data: videos } = await (supabase as any)
-                  .from('learning_videos')
+                  .from('videos')
                   .select('id')
                   .eq('topic_id', topic.id)
                   .eq('is_active', true);

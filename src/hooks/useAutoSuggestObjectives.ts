@@ -93,7 +93,7 @@ export function useAutoLinkObjectives() {
 
       // 2) Avoid duplicates
       const { data: existingLinks, error: existingError } = await supabase
-        .from('topic_objectives')
+        .from('topic_objective_links')
         .select('objective_id')
         .eq('topic_id', topicId);
 
@@ -110,7 +110,7 @@ export function useAutoLinkObjectives() {
         order_index: existingIds.size + idx,
       }));
 
-      const { error: insertError } = await supabase.from('topic_objectives').insert(links);
+      const { error: insertError } = await supabase.from('topic_objective_links').insert(links);
       if (insertError) throw new Error(insertError.message);
 
       return { linkedCount: toLink.length };
