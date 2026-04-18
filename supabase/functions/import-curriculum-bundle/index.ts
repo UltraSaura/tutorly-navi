@@ -5,144 +5,127 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// ============================================================================
+// Bundle shape (post-Phase-2)
+// ----------------------------------------------------------------------------
+// The transformer is expected to pre-generate UUIDs for every entity and wire
+// foreign keys explicitly. Legacy text codes (subject_id text, domain_id text,
+// etc.) may still be present for backwards compat, but the source of truth is
+// the UUID fields below.
+// ============================================================================
+
+interface BundleSubject {
+  id: string;            // UUID
+  slug: string;
+  name: string;
+  language?: string;
+  color_scheme?: string;
+  icon_name?: string;
+}
+
+interface BundleDomain {
+  id: string;            // UUID
+  subject_id: string;    // UUID FK
+  code: string;
+  label: string;
+  // legacy compat (optional)
+  domain?: string;
+}
+
+interface BundleSubdomain {
+  id: string;            // UUID
+  subject_id: string;    // UUID FK
+  domain_id: string;     // UUID FK
+  code: string;
+  label: string;
+  // legacy compat (optional)
+  domain?: string;
+  subdomain?: string;
+}
+
+interface BundleObjective {
+  id: string;            // UUID
+  subject_id: string;    // UUID FK
+  domain_id: string;     // UUID FK
+  subdomain_id: string;  // UUID FK
+  level: string;
+  text: string;
+  notes_from_prog?: string;
+  keywords?: string[];
+  // legacy compat
+  legacy_id?: string;
+  domain?: string;
+  subdomain?: string;
+}
+
+interface BundleSuccessCriterion {
+  id: string;            // UUID
+  objective_id: string;  // UUID FK
+  subject_id?: string;
+  domain_id?: string;
+  subdomain_id?: string;
+  text: string;
+  legacy_id?: string;
+}
+
+interface BundleTask {
+  id: string;            // UUID
+  success_criterion_id: string; // UUID FK
+  subject_id?: string;
+  domain_id?: string;
+  subdomain_id?: string;
+  type: string;
+  stem: string;
+  solution?: string;
+  rubric?: string;
+  difficulty?: string;
+  tags?: string[];
+  source?: string;
+  legacy_id?: string;
+}
+
+interface BundleTopicLink {
+  id?: string;
+  topic_id: string;      // UUID FK
+  objective_id: string;  // UUID FK
+  order_index?: number;
+}
+
+interface BundleLesson {
+  id: string;            // UUID
+  topic_id?: string;     // UUID FK (optional)
+  title: string;
+  objective_ids?: any;
+  success_criterion_ids?: any;
+  materials?: string;
+  misconceptions?: string;
+  teacher_talk?: string;
+  student_worksheet?: string;
+  legacy_id?: string;
+}
+
 interface BundleData {
-  domains?: Array<{ domain: string }>;
-  subdomains?: Array<{ domain: string; subdomain: string; id?: number }>;
-  objectives?: Array<{ 
-    id: string; 
-    level: string; 
-    domain?: string; 
-    subdomain: string; 
-    text: string; 
-    notes_from_prog?: string;
-    subject_id?: string;
-    domain_id?: string;
-    subdomain_id?: string;
-    skill_id?: string;
-  }>;
-  success_criteria?: Array<{ 
-    id: string; 
-    objective_id?: string; 
-    text: string;
-    subject_id?: string;
-    domain_id?: string;
-    subdomain_id?: string;
-    skill_id?: string;
-  }>;
-  tasks?: Array<{ 
-    id: string; 
-    success_criterion_id?: string; 
-    type: string; 
-    stem: string; 
-    solution?: string; 
-    rubric?: string;
-    subject_id?: string;
-    domain_id?: string;
-    subdomain_id?: string;
-    skill_id?: string;
-  }>;
-  units?: Array<{ id: string; level: string; domain: string; subdomain: string; title: string; duration_weeks?: number }>;
-  lessons?: Array<{ id: string; unit_id?: string; title: string; objective_ids?: any; success_criterion_ids?: any; materials?: string; misconceptions?: string; teacher_talk?: string; student_worksheet?: string }>;
+  subjects?: BundleSubject[];
+  domains?: BundleDomain[];
+  subdomains?: BundleSubdomain[];
+  objectives?: BundleObjective[];
+  success_criteria?: BundleSuccessCriterion[];
+  tasks?: BundleTask[];
+  topic_objective_links?: BundleTopicLink[];
+  lessons?: BundleLesson[];
 }
 
 interface ImportCounts {
+  subjects: number;
   domains: number;
   subdomains: number;
   objectives: number;
   success_criteria: number;
   tasks: number;
-  units: number;
+  topic_objective_links: number;
   lessons: number;
 }
 
-interface CurriculumLocation {
-  subject_id: string | null;
-  domain_id: string | null;
-  subdomain_id: string | null;
-  skill_id: string | null;
-}
-
-// Enhanced curriculum mapping function with keyword matching
-function mapToCurriculum(text: string): CurriculumLocation {
-  const t = text.toLowerCase();
-  
-  // Math - Numbers domain
-  if (t.includes('fraction') || t.includes('demi') || t.includes('quart') || t.includes('tiers')) {
-    return { subject_id: 'math', domain_id: 'numbers', subdomain_id: 'fractions', skill_id: null };
-  }
-  
-  if (t.includes('décimal') || t.includes('virgule') || t.includes('dixième') || t.includes('centième')) {
-    return { subject_id: 'math', domain_id: 'numbers', subdomain_id: 'decimals', skill_id: null };
-  }
-  
-  if (t.includes('entier') || t.includes('nombre') && (t.includes('compter') || t.includes('ordonner'))) {
-    return { subject_id: 'math', domain_id: 'numbers', subdomain_id: 'whole_numbers', skill_id: null };
-  }
-  
-  if (t.includes('addition') || t.includes('soustraction') || t.includes('additionner') || t.includes('soustraire')) {
-    return { subject_id: 'math', domain_id: 'numbers-operations', subdomain_id: 'addition-subtraction', skill_id: null };
-  }
-  
-  if (t.includes('multiplication') || t.includes('division') || t.includes('multiplier') || t.includes('diviser') || t.includes('table')) {
-    return { subject_id: 'math', domain_id: 'numbers-operations', subdomain_id: 'whole-numbers', skill_id: null };
-  }
-  
-  // Math - Geometry domain
-  if (t.includes('angle') || t.includes('droit') || t.includes('aigu') || t.includes('obtus')) {
-    return { subject_id: 'math', domain_id: 'geometry', subdomain_id: 'angles', skill_id: null };
-  }
-  
-  if (t.includes('forme') || t.includes('carré') || t.includes('rectangle') || t.includes('triangle') || 
-      t.includes('cercle') || t.includes('polygone') || t.includes('géométrique')) {
-    return { subject_id: 'math', domain_id: 'geometry', subdomain_id: 'shapes', skill_id: null };
-  }
-  
-  if (t.includes('symétrie') || t.includes('symétrique')) {
-    return { subject_id: 'math', domain_id: 'geometry', subdomain_id: 'shapes-properties', skill_id: null };
-  }
-  
-  // Math - Measurement domain
-  if (t.includes('mesure') || t.includes('longueur') || t.includes('masse') || t.includes('capacité') || 
-      t.includes('litre') || t.includes('gramme') || t.includes('mètre')) {
-    return { subject_id: 'math', domain_id: 'measurement', subdomain_id: 'length-mass', skill_id: null };
-  }
-  
-  if (t.includes('périmètre') || t.includes('aire') || t.includes('surface')) {
-    return { subject_id: 'math', domain_id: 'measurement', subdomain_id: 'perimeter-area', skill_id: null };
-  }
-  
-  if (t.includes('heure') || t.includes('temps') || t.includes('durée') || t.includes('minute')) {
-    return { subject_id: 'math', domain_id: 'measurement', subdomain_id: 'time', skill_id: null };
-  }
-  
-  // Math - Data domain
-  if (t.includes('tableau') || t.includes('graphique') || t.includes('diagramme') || t.includes('données')) {
-    return { subject_id: 'math', domain_id: 'data', subdomain_id: 'tables_graphs', skill_id: null };
-  }
-  
-  // History - French Revolution
-  if (t.includes('révolution') || t.includes('1789') || t.includes('louis xvi') || 
-      t.includes('bastille') || t.includes('république')) {
-    return { subject_id: 'history', domain_id: 'french_revolution', subdomain_id: 'key_events', skill_id: null };
-  }
-  
-  // History - Medieval period
-  if (t.includes('moyen âge') || t.includes('médiéval') || t.includes('chevalier') || 
-      t.includes('château') || t.includes('seigneur')) {
-    return { subject_id: 'history', domain_id: 'medieval-history', subdomain_id: 'middle-ages', skill_id: null };
-  }
-  
-  // History - Ancient history
-  if (t.includes('antiquité') || t.includes('romain') || t.includes('gaulois') || 
-      t.includes('grec') || t.includes('pharaon')) {
-    return { subject_id: 'history', domain_id: 'ancient-history', subdomain_id: 'ancient-civilizations', skill_id: null };
-  }
-  
-  // Default: no mapping
-  return { subject_id: null, domain_id: null, subdomain_id: null, skill_id: null };
-}
-
-// Chunk array into smaller batches
 function chunk<T>(array: T[], size: number): T[][] {
   const chunks: T[][] = [];
   for (let i = 0; i < array.length; i += size) {
@@ -152,229 +135,248 @@ function chunk<T>(array: T[], size: number): T[][] {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Verify JWT token
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
+    if (!authHeader) throw new Error('No authorization header');
 
-    // Create admin client with service role
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
       { auth: { persistSession: false } }
     );
 
-    // Verify user is admin
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (authError || !user) {
-      throw new Error('Unauthorized');
-    }
+    if (authError || !user) throw new Error('Unauthorized');
 
-    // Check if user has admin role
     const { data: roles, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
       .eq('role', 'admin');
+    if (roleError || !roles || roles.length === 0) throw new Error('User is not an admin');
 
-    if (roleError || !roles || roles.length === 0) {
-      throw new Error('User is not an admin');
-    }
-
-    // Parse request body
     const bundle: BundleData = await req.json();
     console.log('Received bundle with keys:', Object.keys(bundle));
 
     const counts: ImportCounts = {
+      subjects: 0,
       domains: 0,
       subdomains: 0,
       objectives: 0,
       success_criteria: 0,
       tasks: 0,
-      units: 0,
+      topic_objective_links: 0,
       lessons: 0,
     };
 
     const CHUNK_SIZE = 100;
 
-    // 1. Upsert domains
-    if (bundle.domains && bundle.domains.length > 0) {
-      console.log(`Upserting ${bundle.domains.length} domains...`);
-      const chunks = chunk(bundle.domains, CHUNK_SIZE);
-      for (const chunkData of chunks) {
-        const { error } = await supabaseAdmin
-          .from('domains')
-          .upsert(chunkData, { onConflict: 'domain' });
+    // ----------------------------------------------------------------------
+    // 1. Subjects (UUID PK)
+    // ----------------------------------------------------------------------
+    if (bundle.subjects?.length) {
+      const rows = bundle.subjects.map(s => ({
+        id: s.id,
+        slug: s.slug,
+        name: s.name,
+        language: s.language ?? 'en',
+        color_scheme: s.color_scheme ?? 'blue',
+        icon_name: s.icon_name ?? 'BookOpen',
+      }));
+      for (const c of chunk(rows, CHUNK_SIZE)) {
+        const { error } = await supabaseAdmin.from('subjects').upsert(c, { onConflict: 'id' });
         if (error) throw error;
-        counts.domains += chunkData.length;
+        counts.subjects += c.length;
       }
-      console.log(`✓ Upserted ${counts.domains} domains`);
+      console.log(`✓ subjects ${counts.subjects}`);
     }
 
-    // 2. Upsert subdomains
-    if (bundle.subdomains && bundle.subdomains.length > 0) {
-      console.log(`Upserting ${bundle.subdomains.length} subdomains...`);
-      const chunks = chunk(bundle.subdomains, CHUNK_SIZE);
-      for (const chunkData of chunks) {
-        const { error } = await supabaseAdmin
-          .from('subdomains')
-          .upsert(chunkData, { onConflict: 'id' });
+    // ----------------------------------------------------------------------
+    // 2. Domains — write UUID id + subject_id, plus legacy `domain` text col
+    // ----------------------------------------------------------------------
+    if (bundle.domains?.length) {
+      const rows = bundle.domains.map(d => ({
+        id: d.id,
+        subject_id: d.subject_id,
+        code: d.code,
+        label: d.label,
+        // legacy text column kept populated during dual-write window
+        domain: d.domain ?? d.code,
+      }));
+      for (const c of chunk(rows, CHUNK_SIZE)) {
+        const { error } = await supabaseAdmin.from('domains').upsert(c, { onConflict: 'id' });
         if (error) throw error;
-        counts.subdomains += chunkData.length;
+        counts.domains += c.length;
       }
-      console.log(`✓ Upserted ${counts.subdomains} subdomains`);
+      console.log(`✓ domains ${counts.domains}`);
     }
 
-    // 3. Upsert objectives with automatic curriculum mapping
-    if (bundle.objectives && bundle.objectives.length > 0) {
-      console.log(`Upserting ${bundle.objectives.length} objectives...`);
-      
-      // Map curriculum location for each objective
-      const mappedObjectives = bundle.objectives.map(obj => {
-        const location = mapToCurriculum(obj.text);
-        return {
-          ...obj,
-          subject_id: obj.subject_id || location.subject_id,
-          domain_id: obj.domain_id || location.domain_id,
-          subdomain_id: obj.subdomain_id || location.subdomain_id,
-          skill_id: obj.skill_id || location.skill_id,
-        };
-      });
-      
-      const chunks = chunk(mappedObjectives, CHUNK_SIZE);
-      for (const chunkData of chunks) {
-        const { error } = await supabaseAdmin
-          .from('objectives')
-          .upsert(chunkData, { onConflict: 'id' });
+    // ----------------------------------------------------------------------
+    // 3. Subdomains — write UUID id_new + domain_id_new + subject_id
+    //    plus legacy `domain`/`subdomain` text columns
+    // ----------------------------------------------------------------------
+    if (bundle.subdomains?.length) {
+      const rows = bundle.subdomains.map(s => ({
+        id_new: s.id,
+        subject_id: s.subject_id,
+        domain_id_new: s.domain_id,
+        code: s.code,
+        label: s.label,
+        domain: s.domain ?? null,
+        subdomain: s.subdomain ?? s.label,
+      }));
+      // bigint `id` is autogenerated; conflict target is the new uuid id_new
+      for (const c of chunk(rows, CHUNK_SIZE)) {
+        const { error } = await supabaseAdmin.from('subdomains').upsert(c, { onConflict: 'id_new' });
+        if (error) throw error;
+        counts.subdomains += c.length;
+      }
+      console.log(`✓ subdomains ${counts.subdomains}`);
+    }
+
+    // ----------------------------------------------------------------------
+    // 4. Objectives — write text id (PK still text) + id_new uuid + UUID FKs
+    // ----------------------------------------------------------------------
+    if (bundle.objectives?.length) {
+      const rows = bundle.objectives.map(o => ({
+        // text PK = legacy_id if provided, else stringified UUID
+        id: o.legacy_id ?? o.id,
+        id_new: o.id,
+        level: o.level,
+        text: o.text,
+        notes_from_prog: o.notes_from_prog ?? '',
+        keywords: o.keywords ?? [],
+        // UUID FKs (new authoritative columns)
+        subject_id_uuid: o.subject_id,
+        domain_id_uuid: o.domain_id,
+        subdomain_id_uuid: o.subdomain_id,
+        // legacy text cols kept for app backwards compat
+        domain: o.domain ?? null,
+        subdomain: o.subdomain ?? '',
+      }));
+      for (const c of chunk(rows, CHUNK_SIZE)) {
+        const { error } = await supabaseAdmin.from('objectives').upsert(c, { onConflict: 'id' });
         if (error) {
-          console.error('Error upserting objectives chunk:', error);
+          console.error('objectives upsert error:', error);
           throw error;
         }
-        counts.objectives += chunkData.length;
+        counts.objectives += c.length;
       }
-      console.log(`✓ Upserted ${counts.objectives} objectives with curriculum mapping`);
+      console.log(`✓ objectives ${counts.objectives}`);
     }
 
-    // 4. Upsert success criteria with automatic curriculum mapping
-    if (bundle.success_criteria && bundle.success_criteria.length > 0) {
-      console.log(`Upserting ${bundle.success_criteria.length} success criteria...`);
-      
-      // Map curriculum location for each success criterion
-      const mappedCriteria = bundle.success_criteria.map(sc => {
-        const location = mapToCurriculum(sc.text);
-        return {
-          ...sc,
-          subject_id: sc.subject_id || location.subject_id,
-          domain_id: sc.domain_id || location.domain_id,
-          subdomain_id: sc.subdomain_id || location.subdomain_id,
-          skill_id: sc.skill_id || location.skill_id,
-        };
-      });
-      
-      const chunks = chunk(mappedCriteria, CHUNK_SIZE);
-      for (const chunkData of chunks) {
-        const { error } = await supabaseAdmin
-          .from('success_criteria')
-          .upsert(chunkData, { onConflict: 'id' });
-        if (error) {
-          console.error('Error upserting success criteria chunk:', error);
-          throw error;
-        }
-        counts.success_criteria += chunkData.length;
-      }
-      console.log(`✓ Upserted ${counts.success_criteria} success criteria with curriculum mapping`);
-    }
-
-    // 5. Upsert tasks with automatic curriculum mapping
-    if (bundle.tasks && bundle.tasks.length > 0) {
-      console.log(`Upserting ${bundle.tasks.length} tasks...`);
-      
-      // Map curriculum location for each task
-      const mappedTasks = bundle.tasks.map(task => {
-        const location = mapToCurriculum(task.stem);
-        return {
-          ...task,
-          subject_id: task.subject_id || location.subject_id,
-          domain_id: task.domain_id || location.domain_id,
-          subdomain_id: task.subdomain_id || location.subdomain_id,
-          skill_id: task.skill_id || location.skill_id,
-        };
-      });
-      
-      const chunks = chunk(mappedTasks, CHUNK_SIZE);
-      for (const chunkData of chunks) {
-        const { error } = await supabaseAdmin
-          .from('tasks')
-          .upsert(chunkData, { onConflict: 'id' });
-        if (error) {
-          console.error('Error upserting tasks chunk:', error);
-          throw error;
-        }
-        counts.tasks += chunkData.length;
-      }
-      console.log(`✓ Upserted ${counts.tasks} tasks with curriculum mapping`);
-    }
-
-    // 6. Upsert units
-    if (bundle.units && bundle.units.length > 0) {
-      console.log(`Upserting ${bundle.units.length} units...`);
-      const chunks = chunk(bundle.units, CHUNK_SIZE);
-      for (const chunkData of chunks) {
-        const { error } = await supabaseAdmin
-          .from('units')
-          .upsert(chunkData, { onConflict: 'id' });
+    // ----------------------------------------------------------------------
+    // 5. Success criteria
+    // ----------------------------------------------------------------------
+    if (bundle.success_criteria?.length) {
+      const rows = bundle.success_criteria.map(sc => ({
+        id: sc.legacy_id ?? sc.id,
+        id_new: sc.id,
+        text: sc.text,
+        objective_id_uuid: sc.objective_id,
+        subject_id_uuid: sc.subject_id ?? null,
+        domain_id_uuid: sc.domain_id ?? null,
+        subdomain_id_uuid: sc.subdomain_id ?? null,
+      }));
+      for (const c of chunk(rows, CHUNK_SIZE)) {
+        const { error } = await supabaseAdmin.from('success_criteria').upsert(c, { onConflict: 'id' });
         if (error) throw error;
-        counts.units += chunkData.length;
+        counts.success_criteria += c.length;
       }
-      console.log(`✓ Upserted ${counts.units} units`);
+      console.log(`✓ success_criteria ${counts.success_criteria}`);
     }
 
-    // 7. Upsert lessons
-    if (bundle.lessons && bundle.lessons.length > 0) {
-      console.log(`Upserting ${bundle.lessons.length} lessons...`);
-      const chunks = chunk(bundle.lessons, CHUNK_SIZE);
-      for (const chunkData of chunks) {
-        const { error } = await supabaseAdmin
-          .from('lessons')
-          .upsert(chunkData, { onConflict: 'id' });
+    // ----------------------------------------------------------------------
+    // 6. Tasks
+    // ----------------------------------------------------------------------
+    if (bundle.tasks?.length) {
+      const rows = bundle.tasks.map(t => ({
+        id: t.legacy_id ?? t.id,
+        id_new: t.id,
+        type: t.type,
+        stem: t.stem,
+        solution: t.solution ?? '',
+        rubric: t.rubric ?? '',
+        difficulty: t.difficulty ?? 'core',
+        tags: t.tags ?? [],
+        source: t.source ?? 'auto',
+        success_criterion_id_uuid: t.success_criterion_id,
+        subject_id_uuid: t.subject_id ?? null,
+        domain_id_uuid: t.domain_id ?? null,
+        subdomain_id_uuid: t.subdomain_id ?? null,
+      }));
+      for (const c of chunk(rows, CHUNK_SIZE)) {
+        const { error } = await supabaseAdmin.from('tasks').upsert(c, { onConflict: 'id' });
         if (error) throw error;
-        counts.lessons += chunkData.length;
+        counts.tasks += c.length;
       }
-      console.log(`✓ Upserted ${counts.lessons} lessons`);
+      console.log(`✓ tasks ${counts.tasks}`);
+    }
+
+    // ----------------------------------------------------------------------
+    // 7. Topic ↔ Objective links
+    // ----------------------------------------------------------------------
+    if (bundle.topic_objective_links?.length) {
+      const rows = bundle.topic_objective_links.map(l => ({
+        id: l.id ?? crypto.randomUUID(),
+        topic_id: l.topic_id,
+        objective_id_uuid: l.objective_id,
+        // legacy text col can't be NULL (NOT NULL); stash the uuid as text
+        objective_id: l.objective_id,
+        order_index: l.order_index ?? 0,
+      }));
+      for (const c of chunk(rows, CHUNK_SIZE)) {
+        const { error } = await supabaseAdmin
+          .from('topic_objective_links')
+          .upsert(c, { onConflict: 'topic_id,objective_id_uuid' });
+        if (error) throw error;
+        counts.topic_objective_links += c.length;
+      }
+      console.log(`✓ topic_objective_links ${counts.topic_objective_links}`);
+    }
+
+    // ----------------------------------------------------------------------
+    // 8. Lessons
+    // ----------------------------------------------------------------------
+    if (bundle.lessons?.length) {
+      const rows = bundle.lessons.map(l => ({
+        id: l.legacy_id ?? l.id,
+        id_new: l.id,
+        title: l.title,
+        topic_id: l.topic_id ?? null,
+        objective_ids: l.objective_ids ?? [],
+        success_criterion_ids: l.success_criterion_ids ?? [],
+        materials: l.materials ?? '',
+        misconceptions: l.misconceptions ?? '',
+        teacher_talk: l.teacher_talk ?? '',
+        student_worksheet: l.student_worksheet ?? '',
+      }));
+      for (const c of chunk(rows, CHUNK_SIZE)) {
+        const { error } = await supabaseAdmin.from('lessons').upsert(c, { onConflict: 'id' });
+        if (error) throw error;
+        counts.lessons += c.length;
+      }
+      console.log(`✓ lessons ${counts.lessons}`);
     }
 
     return new Response(
       JSON.stringify({
         success: true,
         message: 'Curriculum bundle imported successfully',
-        counts
+        counts,
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
-
   } catch (error) {
     console.error('Error importing curriculum bundle:', error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: (error as Error).message || 'Unknown error occurred'
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
-      }
+      JSON.stringify({ success: false, error: (error as Error).message ?? 'Unknown error' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
     );
   }
 });
