@@ -87,27 +87,51 @@ export default function CurriculumManager() {
     setImportResult(null);
 
     try {
-      // Read file content
       const fileContent = await selectedFile.text();
       const bundleData = JSON.parse(fileContent);
+      if (replaceMode) bundleData.mode = 'replace';
 
-      // Get auth token
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
+      if (!session) throw new Error('Not authenticated');
 
-      // Call edge function
       const response = await supabase.functions.invoke('import-curriculum-bundle', {
         body: bundleData,
       });
 
-      if (response.error) throw response.error;
+      // Network/runtime error from invoke
+      if (response.error && !response.data) throw response.error;
+
+      const data: any = response.data ?? {};
+
+      if (data.success === false) {
+        const diag = data.diagnostics;
+        const detailLines = diag
+          ? [
+              diag.table ? `Table: ${diag.table}` : null,
+              diag.code ? `Code: ${diag.code}` : null,
+              diag.message ? `Message: ${diag.message}` : null,
+              diag.details ? `Details: ${diag.details}` : null,
+              diag.hint ? `Hint: ${diag.hint}` : null,
+            ].filter(Boolean).join('\n')
+          : (data.error ?? 'Unknown error');
+
+        setImportResult({
+          success: false,
+          error: detailLines,
+          diagnostics: diag,
+        });
+        toast({
+          title: 'Import failed',
+          description: diag?.message ?? data.error ?? 'See details below',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       setImportResult({
         success: true,
-        counts: response.data.counts,
-        verification: response.data.verification,
+        counts: data.counts,
+        verification: data.verification,
       });
 
       toast({
@@ -115,7 +139,6 @@ export default function CurriculumManager() {
         description: 'Curriculum data imported successfully',
       });
 
-      // Refresh data
       refetchObjectives();
       refetchStats();
     } catch (error: any) {
