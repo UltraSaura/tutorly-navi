@@ -161,7 +161,17 @@ Deno.serve(async (req) => {
     if (roleError || !roles || roles.length === 0) throw new Error('User is not an admin');
 
     const bundle: BundleData = await req.json();
-    console.log('Received bundle with keys:', Object.keys(bundle));
+    console.log('📥 Bundle keys:', Object.keys(bundle));
+    console.log('📊 Pre-import counts:', {
+      subjects: bundle.subjects?.length ?? 0,
+      domains: bundle.domains?.length ?? 0,
+      subdomains: bundle.subdomains?.length ?? 0,
+      objectives: bundle.objectives?.length ?? 0,
+      success_criteria: bundle.success_criteria?.length ?? 0,
+      tasks: bundle.tasks?.length ?? 0,
+      topic_objective_links: bundle.topic_objective_links?.length ?? 0,
+      lessons: bundle.lessons?.length ?? 0,
+    });
 
     const counts: ImportCounts = {
       subjects: 0,
@@ -364,11 +374,36 @@ Deno.serve(async (req) => {
       console.log(`✓ lessons ${counts.lessons}`);
     }
 
+    // ----------------------------------------------------------------------
+    // 9. Post-import verification: count NULLs in critical UUID FKs
+    // ----------------------------------------------------------------------
+    const verifyChecks: Array<[string, string]> = [
+      ['objectives', 'subdomain_id_uuid'],
+      ['objectives', 'domain_id_uuid'],
+      ['objectives', 'subject_id_uuid'],
+      ['success_criteria', 'objective_id_uuid'],
+      ['topic_objective_links', 'objective_id_uuid'],
+    ];
+    const verification: Record<string, number> = {};
+    for (const [tbl, col] of verifyChecks) {
+      const { count } = await supabaseAdmin
+        .from(tbl)
+        .select('*', { count: 'exact', head: true })
+        .is(col, null);
+      verification[`${tbl}.${col}_null`] = count ?? 0;
+      console.log(`  ${(count ?? 0) > 0 ? '❌' : '✓'} ${tbl}.${col} NULL = ${count ?? 0}`);
+    }
+    const allClean = Object.values(verification).every(v => v === 0);
+
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Curriculum bundle imported successfully',
+        message: allClean
+          ? '✅ Curriculum imported, all FKs resolved.'
+          : '⚠️ Imported but some FKs are NULL — see verification.',
         counts,
+        verification,
+        ready_for_phase_3: allClean,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
