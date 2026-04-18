@@ -18,8 +18,12 @@ Output a SINGLE valid JSON object — no prose, no markdown — wrapped in one `
 5. Every success_criterion MUST reference an objective_id from THIS bundle, plus mirror subject_id, domain_id, subdomain_id.
 6. Every task MUST reference a success_criterion_id from this bundle, plus mirror subject_id, domain_id, subdomain_id.
 7. Omit `topic_objective_links` and `lessons` (empty arrays) unless I explicitly give you topic UUIDs.
-8. Use `level` values like "CP", "CE1", "CE2", "CM1", "CM2", "6e", "5e", "4e", "3e", "2nde", "1ère", "Tle".
-9. Output JSON only. No commentary before or after the code block.
+8. Use `level` values with EXACT canonical casing: "CP", "CE1", "CE2", "CM1", "CM2", "6e", "5e", "4e", "3e", "2nde", "1ère", "Tle". Never lowercase ("cm1" is invalid).
+9. **CRITICAL — legacy text keys to prevent re-import collisions**:
+   - Every `domain` entry MUST include an explicit `domain` field set to a globally-unique string in the form `<subject_slug>_<LEVEL>_<CODE>` (e.g. `francais_CM1_LECTURE`, `mathematics_CP_NUMBERS`). NEVER omit it — the importer's auto-fallback creates collision-prone keys.
+   - Every `subdomain` entry MUST include an explicit `subdomain` field in the form `<subject_slug>_<LEVEL>_<DOMAIN_CODE>_<CODE>` (e.g. `francais_CM1_LECTURE_COMPREHENSION`), AND a `domain` field that exactly matches the parent domain's `domain` text.
+10. The bundle filename MUST match its content (subject + level). A file named `Mathematiques_CP.json` cannot contain French CM1 reading objectives.
+11. Output JSON only. No commentary before or after the code block.
 
 # Existing subject UUIDs (reuse — do not redeclare in `subjects`)
 | slug         | id                                     | language |
