@@ -21,6 +21,8 @@ const LearningContentManagement = () => {
         </p>
       </div>
 
+      <CurriculumBundleImporter />
+
       <Tabs defaultValue="categories" className="space-y-6">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="categories">Categories</TabsTrigger>
