@@ -441,7 +441,10 @@ Deno.serve(async (req) => {
         : '⚠️ Imported but some FKs are NULL — see verification.',
       mode,
       counts,
-      verification,
+      verification: {
+        ready_for_phase_3: allClean,
+        nullChecks: verification,
+      },
       ready_for_phase_3: allClean,
     });
   } catch (error) {
