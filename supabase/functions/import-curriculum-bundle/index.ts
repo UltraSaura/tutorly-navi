@@ -340,24 +340,27 @@ Deno.serve(async (req) => {
     }
 
     // ----------------------------------------------------------------------
-    // 6. Tasks
+    // 6. Tasks — backfill mirror FKs from parent success_criterion → objective
     // ----------------------------------------------------------------------
     if (bundle.tasks?.length) {
-      const rows = bundle.tasks.map(t => ({
-        id: t.legacy_id ?? t.id,
-        id_new: t.id,
-        type: t.type,
-        stem: t.stem,
-        solution: t.solution ?? '',
-        rubric: t.rubric ?? '',
-        difficulty: t.difficulty ?? 'core',
-        tags: t.tags ?? [],
-        source: t.source ?? 'auto',
-        success_criterion_id_uuid: t.success_criterion_id,
-        subject_id_uuid: t.subject_id ?? null,
-        domain_id_uuid: t.domain_id ?? null,
-        subdomain_id_uuid: t.subdomain_id ?? null,
-      }));
+      const rows = bundle.tasks.map(t => {
+        const parent = successCriterionFkMap.get(t.success_criterion_id);
+        return {
+          id: t.legacy_id ?? t.id,
+          id_new: t.id,
+          type: t.type,
+          stem: t.stem,
+          solution: t.solution ?? '',
+          rubric: t.rubric ?? '',
+          difficulty: t.difficulty ?? 'core',
+          tags: t.tags ?? [],
+          source: t.source ?? 'auto',
+          success_criterion_id_uuid: t.success_criterion_id,
+          subject_id_uuid: t.subject_id ?? parent?.subject_id ?? null,
+          domain_id_uuid: t.domain_id ?? parent?.domain_id ?? null,
+          subdomain_id_uuid: t.subdomain_id ?? parent?.subdomain_id ?? null,
+        };
+      });
       for (const c of chunk(rows, CHUNK_SIZE)) {
         const { error } = await supabaseAdmin.from('tasks').upsert(c, { onConflict: 'id' });
         if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('tasks', error) }, 200);
