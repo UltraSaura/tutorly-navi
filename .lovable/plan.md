@@ -1,16 +1,50 @@
 
 
-## Verified mapping: Supabase ↔ App ↔ bundle.json
+User wants a single copy-paste package for ChatGPT. I have:
+1. The 5 subject UUIDs (just fetched)
+2. The BUNDLE_FORMAT.md (already in repo)
+3. Level codes convention (lowercase from memory)
 
-I cross-checked the live DB schema, the edge function (`import-curriculum-bundle`), and how the app reads objectives/success criteria. Everything aligns. Here is the canonical bundle.json shape and the field-by-field mapping.
+Assemble it as one prompt block they can paste verbatim. No code changes — pure information delivery.
 
-### Current DB state (confirmed)
-- `subjects`: 5 rows. **Slugs already in DB**: `francais`, `geography`, `history`, `mathematics`, `physics`. Your bundle MUST use these exact slugs (or a UUID matching one of these IDs).
-- `domains`: 1 row, `subdomains`: 1, `objectives`: 1, `success_criteria`: 1, `tasks/topics/links/lessons`: 0. (Effectively empty — clean re-import is safe.)
+---
 
-### The 8 sections of bundle.json
+## Copy-paste package for ChatGPT
 
-```json
+Paste everything below into ChatGPT in one message. Replace the two `[...]` placeholders with your input data and your raw input sample.
+
+---
+
+````
+I need you to write a transformer that converts my raw curriculum data into a `bundle.json` file matching the spec below. I will upload the output via my admin web UI — no CLI involved.
+
+═══════════════════════════════════════════════════════════════
+PART 1 — EXISTING SUBJECT UUIDs (REUSE EXACTLY, DO NOT INVENT)
+═══════════════════════════════════════════════════════════════
+
+| slug          | id (uuid)                            | name        | language |
+|---------------|--------------------------------------|-------------|----------|
+| mathematics   | f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de | Mathematics | en       |
+| physics       | 06e9c3fa-5618-436c-b781-10b39fb21698 | Physics     | en       |
+| francais      | 8e5f05b5-77f9-5ccb-a064-398a25e2cdfa | Français    | fr       |
+| history       | 0b206783-4f46-47e6-aea1-4adf8c905f18 | History     | en       |
+| geography     | a578949a-cfac-4dab-9568-289b0f4a8029 | Geography   | en       |
+
+═══════════════════════════════════════════════════════════════
+PART 2 — VALID LEVEL CODES (LOWERCASE ONLY)
+═══════════════════════════════════════════════════════════════
+
+Primary (French system): cp, ce1, ce2, cm1, cm2
+Secondary (collège):     6eme, 5eme, 4eme, 3eme
+Lycée:                   2nde, 1ere, terminale
+
+Always lowercase. Never "CM1", "6ème", or "Terminale".
+
+═══════════════════════════════════════════════════════════════
+PART 3 — BUNDLE.JSON SPEC
+═══════════════════════════════════════════════════════════════
+
+Top-level shape — exactly 8 arrays:
 {
   "subjects": [...],
   "domains": [...],
@@ -18,144 +52,141 @@ I cross-checked the live DB schema, the edge function (`import-curriculum-bundle
   "objectives": [...],
   "success_criteria": [...],
   "tasks": [...],
-  "topic_objective_links": [...],
-  "lessons": [...]
+  "topic_objective_links": [],
+  "lessons": []
 }
-```
 
-Every entity needs a pre-generated UUID for `id`. Foreign keys reference those UUIDs.
+RULES:
+1. Pre-generate a UUID v4 for every entity's `id`.
+2. Wire all foreign keys by UUID, never by text codes.
+3. Reuse subject UUIDs from PART 1 — do not create new subjects.
+4. Leave `topic_objective_links` and `lessons` as empty arrays unless I give you real `topics.id` UUIDs.
 
-### Field-by-field mapping
+FIELD MAPPING:
 
-**1. subjects**
+— subjects (only include if you need to pass-through; usually skip and reuse) —
+  id          uuid   required (use one from PART 1)
+  slug        text   required (one of the 5 above)
+  name        text   required
+  language    text   optional (default "en")
 
-| bundle field | DB column | required | notes |
-|---|---|---|---|
-| `id` | `subjects.id` (uuid) | yes | UUID. Use existing ID if subject exists, else new |
-| `slug` | `subjects.slug` | yes | Must match one of: `mathematics`, `physics`, `francais`, `history`, `geography` |
-| `name` | `subjects.name` | yes | Display name |
-| `language` | `subjects.language` | no | defaults `'en'` |
-| `color_scheme` | `subjects.color_scheme` | no | defaults `'blue'` |
-| `icon_name` | `subjects.icon_name` | no | defaults `'BookOpen'` |
+— domains —
+  id          uuid   required
+  subject_id  uuid   required (FK → subjects.id from PART 1)
+  code        text   required, e.g. "NUMBERS"
+  label       text   required, human label
 
-**2. domains**
+— subdomains —
+  id          uuid   required
+  subject_id  uuid   required
+  domain_id   uuid   required (FK → domains.id)
+  code        text   required
+  label       text   required
 
-| bundle field | DB column | required |
-|---|---|---|
-| `id` | `domains.id` (uuid) | yes |
-| `subject_id` | `domains.subject_id` (uuid) | yes — FK to subjects.id |
-| `code` | `domains.code` | yes — short stable code, e.g. `"NUMBERS"` |
-| `label` | `domains.label` | yes — human label |
-| `domain` | `domains.domain` (legacy NOT NULL) | importer auto-fills with `code` if omitted |
+— objectives —
+  id              uuid   required
+  subject_id      uuid   required
+  domain_id       uuid   required
+  subdomain_id    uuid   required
+  level           text   required (lowercase, e.g. "cm1")
+  text            text   required (the objective statement)
+  notes_from_prog text   optional
+  keywords        text[] optional
 
-**3. subdomains**
+— success_criteria —
+  id              uuid   required
+  objective_id    uuid   required (FK → objectives.id)
+  subject_id      uuid   required (mirror from parent objective)
+  domain_id       uuid   required (mirror)
+  subdomain_id    uuid   required (mirror)
+  text            text   required
 
-| bundle field | DB column | required |
-|---|---|---|
-| `id` | `subdomains.id_new` (uuid) | yes |
-| `subject_id` | `subdomains.subject_id` (uuid) | yes |
-| `domain_id` | `subdomains.domain_id_new` (uuid) | yes — FK to domains.id |
-| `code` | `subdomains.code` | yes |
-| `label` | `subdomains.label` | yes |
-| `subdomain` | `subdomains.subdomain` (legacy NOT NULL) | importer auto-fills with `label` if omitted |
+— tasks —
+  id                    uuid   required
+  success_criterion_id  uuid   required (FK → success_criteria.id)
+  type                  text   required ("mcq" | "open" | "numeric")
+  stem                  text   required
+  solution              text   optional
+  rubric                text   optional
+  difficulty            text   optional ("core" default)
+  tags                  text[] optional
 
-**4. objectives**
+═══════════════════════════════════════════════════════════════
+PART 4 — MINIMAL VALID EXAMPLE (1 of each)
+═══════════════════════════════════════════════════════════════
 
-| bundle field | DB column | required |
-|---|---|---|
-| `id` | `objectives.id_new` (uuid) | yes |
-| `legacy_id` | `objectives.id` (text PK) | optional — if omitted, importer uses the UUID as text PK |
-| `subject_id` | `objectives.subject_id_uuid` | yes |
-| `domain_id` | `objectives.domain_id_uuid` | yes |
-| `subdomain_id` | `objectives.subdomain_id_uuid` | yes |
-| `level` | `objectives.level` | yes — e.g. `"CM1"` |
-| `text` | `objectives.text` | yes |
-| `notes_from_prog` | `objectives.notes_from_prog` | no |
-| `keywords` | `objectives.keywords` (text[]) | no |
-| `domain`, `subdomain` | legacy text labels | optional, helpful for display fallback |
-
-**5. success_criteria**
-
-| bundle field | DB column | required |
-|---|---|---|
-| `id` | `success_criteria.id_new` (uuid) | yes |
-| `legacy_id` | `success_criteria.id` (text PK) | optional |
-| `objective_id` | `success_criteria.objective_id_uuid` | yes — UUID of parent objective |
-| `text` | `success_criteria.text` | yes |
-| `subject_id`, `domain_id`, `subdomain_id` | mirrored UUID FKs | recommended (importer copies from objective if omitted? — no, pass them) |
-
-**6. tasks**
-
-| bundle field | DB column | required |
-|---|---|---|
-| `id` | `tasks.id_new` (uuid) | yes |
-| `legacy_id` | `tasks.id` (text PK) | optional |
-| `success_criterion_id` | `tasks.success_criterion_id_uuid` | yes |
-| `type` | `tasks.type` | yes — e.g. `"mcq"`, `"open"` |
-| `stem` | `tasks.stem` | yes |
-| `solution`, `rubric`, `difficulty`, `tags`, `source` | matching cols | optional |
-
-**7. topic_objective_links** (only if you're linking objectives to existing topics)
-
-| bundle field | DB column | required |
-|---|---|---|
-| `topic_id` | `topic_objective_links.topic_id` (uuid) | yes — must match an existing `topics.id` |
-| `objective_id` | `topic_objective_links.objective_id_uuid` | yes — UUID of objective |
-| `order_index` | `order_index` | no, defaults 0 |
-
-**8. lessons**
-
-| bundle field | DB column | required |
-|---|---|---|
-| `id` | `lessons.id_new` (uuid) | yes |
-| `legacy_id` | `lessons.id` (text PK) | optional |
-| `topic_id` | `lessons.topic_id` (uuid) | optional |
-| `title` | `lessons.title` | yes |
-| `objective_ids`, `success_criterion_ids` | jsonb arrays | no |
-| `materials`, `misconceptions`, `teacher_talk`, `student_worksheet` | text | no |
-
-### App-side alignment (already correct)
-- `useObjectives` (CurriculumManager) reads `objectives.*` + nested `success_criteria(*)` — works as long as `success_criteria.objective_id` (text PK) matches `objectives.id`. The importer guarantees this when you pass `legacy_id` consistently, OR keeps both sides UUID-as-text.
-- `useTopicObjectives` reads `topic_objective_links.objective_id` (text) — also satisfied by dual-write.
-- `src/types/curriculum.ts` already matches these field names.
-
-### Minimal sanity rules for your transformer
-1. Pre-generate UUIDs for every `subjects/domains/subdomains/objectives/success_criteria/tasks/lessons` row.
-2. Wire FKs by UUID, never by text codes.
-3. Subject slug must be one of the 5 above (or pass an existing subject `id`).
-4. `topic_id` in links/lessons must reference UUIDs that exist in the `topics` table — if you don't have those yet, omit `topic_objective_links` and `lessons.topic_id`.
-
-### Example minimal bundle.json (1 of each)
-```json
 {
-  "subjects": [
-    {"id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de", "slug": "mathematics", "name": "Mathematics", "language": "en"}
-  ],
+  "subjects": [],
   "domains": [
-    {"id": "11111111-1111-1111-1111-111111111111", "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de", "code": "NUMBERS", "label": "Numbers and operations"}
+    {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",
+      "code": "NUMBERS",
+      "label": "Numbers and operations"
+    }
   ],
   "subdomains": [
-    {"id": "22222222-2222-2222-2222-222222222222", "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de", "domain_id": "11111111-1111-1111-1111-111111111111", "code": "FRAC", "label": "Fractions"}
+    {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",
+      "domain_id": "11111111-1111-1111-1111-111111111111",
+      "code": "FRAC",
+      "label": "Fractions"
+    }
   ],
   "objectives": [
-    {"id": "33333333-3333-3333-3333-333333333333", "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de", "domain_id": "11111111-1111-1111-1111-111111111111", "subdomain_id": "22222222-2222-2222-2222-222222222222", "level": "CM1", "text": "Compare two simple fractions"}
+    {
+      "id": "33333333-3333-3333-3333-333333333333",
+      "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",
+      "domain_id": "11111111-1111-1111-1111-111111111111",
+      "subdomain_id": "22222222-2222-2222-2222-222222222222",
+      "level": "cm1",
+      "text": "Compare two simple fractions"
+    }
   ],
   "success_criteria": [
-    {"id": "44444444-4444-4444-4444-444444444444", "objective_id": "33333333-3333-3333-3333-333333333333", "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de", "domain_id": "11111111-1111-1111-1111-111111111111", "subdomain_id": "22222222-2222-2222-2222-222222222222", "text": "Identify the larger of 1/2 vs 1/3"}
+    {
+      "id": "44444444-4444-4444-4444-444444444444",
+      "objective_id": "33333333-3333-3333-3333-333333333333",
+      "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",
+      "domain_id": "11111111-1111-1111-1111-111111111111",
+      "subdomain_id": "22222222-2222-2222-2222-222222222222",
+      "text": "Identify the larger of 1/2 vs 1/3"
+    }
   ],
   "tasks": [],
   "topic_objective_links": [],
   "lessons": []
 }
-```
 
-### What I'll do next (if you approve)
-Nothing to code — this is a documentation/verification answer. After you approve, I'll:
-1. Save this mapping as a memory (`mem://technical/curriculum/bundle-mapping`) so future sessions never drift.
-2. Add a short `BUNDLE_FORMAT.md` in `curriculum-import/` with the table above so your transformer author has a single reference file.
+═══════════════════════════════════════════════════════════════
+PART 5 — MY RAW INPUT
+═══════════════════════════════════════════════════════════════
 
-Reply with one of:
-- **"Save it"** → memory + reference doc
-- **"Just memory"** → memory only
-- **"No save"** → skip persistence, mapping is in chat
+Subject I'm working on: [e.g. mathematics — use UUID f34e5bb1-...]
+Level(s): [e.g. cm1]
+
+Sample raw input (paste 3–5 representative rows):
+[PASTE YOUR RAW DATA HERE — CSV rows, markdown program excerpt, JSON, whatever you have]
+
+═══════════════════════════════════════════════════════════════
+PART 6 — DELIVERABLE
+═══════════════════════════════════════════════════════════════
+
+Produce ONE complete `bundle.json` file. Do not split into chunks. Do not add commentary inside the JSON. After the JSON, give me a short summary of:
+- # of objectives generated
+- # of success criteria generated
+- # of tasks generated (or "none")
+- Any input rows you couldn't map and why
+````
+
+---
+
+### What you do after ChatGPT replies
+1. Save its output as `bundle.json`
+2. Open `/admin/curriculum` in your app
+3. Click the import card → upload `bundle.json`
+4. Read the result toast — confirms counts and `ready_for_phase_3` status
+
+That's it. No repo changes needed. The package above is everything ChatGPT requires.
 
