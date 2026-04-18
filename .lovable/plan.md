@@ -1,44 +1,50 @@
 
 
-## Root cause
+## Real root cause (finally pinned down)
 
-The `domains` table has a legacy NOT NULL text column called `domain` that the importer auto-fills with `${subject_id_prefix}_${code}` (or similar) when the bundle omits it. That synthetic key — `8e5f05b5_LECTURE` — already exists from a previous import. The "Replace existing data" path deletes by `subject_id`, but the existing `LECTURE` row was inserted under a *different* subject_id (likely the real `francais` UUID, not `8e5f05b5-77f9-5ccb-a064-398a25e2cdfa`), so it survives the delete and then collides on insert.
+Three independent unique constraints on `domains`:
+1. `domains_pkey` on `domain` (text)
+2. `uq_domains_subject_code` on `(subject_id, code)` ← this one is biting you now
+3. (the `id` UUID PK)
 
-There's also a **second bug in the bundle itself**:
+Your first failed import left exactly **one orphan row**: `(subject_id=francais, code='LECTURE', domain='8e5f05b5_LECTURE')`. Every retry inserts `(francais, 'LECTURE', 'francais_CM1_LECTURE')` → `domain` differs (so `onConflict: 'domain'` adds a new row instead of updating) → `(subject_id, code)` collides → 23505. Same pattern will happen for every domain code in every future bundle.
 
-- `subject_id` `8e5f05b5-77f9-5ccb-a064-398a25e2cdfa` — this is **not** one of the 5 real subject UUIDs in the DB. It looks like ChatGPT hallucinated a UUID instead of using the real `francais` UUID from the prompt.
-- The file is named `Mathematiques_CP` but the content is French reading (`LECTURE`, `Compréhension`, "Lire avec fluidité") — wrong subject entirely.
-- `level` is `"cm1"` but the file claims CP.
-- `subjects: []` — should include the subject row OR the real subject UUID must be referenced.
+The earlier guesses about hallucinated UUIDs were wrong. `8e5f05b5-...` IS the real `francais` UUID.
 
-## What I'll do (no code changes — diagnostic + fix path)
+## Plan — 3 tightly scoped fixes
 
-### Step 1 — Verify the real subject UUIDs in the DB
-Run a read-only query against `subjects` to get the actual UUIDs and confirm `8e5f05b5-...` doesn't exist there.
+### Fix 1: One-shot DB cleanup (clears the current jam)
+Migration: delete the orphan row(s) where `domain` doesn't match the new `${slug}_${LEVEL}_${CODE}` convention. Specifically purge `domains` rows whose `domain` starts with the subject UUID prefix (legacy auto-generated pattern: `8e5f05b5_*`, `f34e5bb1_*`, etc.) and the matching `subdomains` orphans. This unblocks your existing `bundle_Francais_CM1_FIXED-2.json` immediately.
 
-### Step 2 — Find the conflicting row
-Query `domains` for `domain = '8e5f05b5_LECTURE'` to see which subject_id it's tied to and confirm why "Replace" didn't clear it.
+### Fix 2: Importer change `onConflict` to the right key
+In `supabase/functions/import-curriculum-bundle/index.ts`, change:
+- `domains` upsert: `onConflict: 'subject_id,code'` (not `'domain'`)
+- `subdomains` upsert: `onConflict: 'subject_id,domain,code'` (or whatever its real composite uniq is — I'll verify with `pg_indexes` before writing)
+- Also: when "Replace existing data" is checked, `DELETE FROM domains WHERE subject_id = $bundle_subject_id AND level_filter_matches` so re-imports for the same subject/level start fresh.
 
-### Step 3 — Update `curriculum-import/CHATGPT_PROMPT.md`
-Add a hard rule that fixes this class of error permanently:
+This makes re-imports truly idempotent regardless of legacy text-key drift.
 
-> **Every domain/subdomain MUST include an explicit `domain` field** set to a globally-unique string in the form `<subject_slug>_<LEVEL>_<CODE>` (e.g. `mathematics_CP_NUMBERS`). Never rely on the importer to auto-generate it. Same rule for `subdomains.subdomain` → `<subject_slug>_<LEVEL>_<DOMAIN_CODE>_<CODE>`.
+### Fix 3: Correct your Apps Script generator
+I need to see the actual `.gs` script and the `Input` / `Sources` / `Objectives` tab columns to fix the field mapping properly. The sheet preview is locked behind Drive auth — `gviz` only returns the README tab.
 
-This makes the legacy text key collision-proof across re-imports and across subjects.
+**Two options to give me access (pick one):**
+- **(A)** Open the sheet → Share → "Anyone with the link: Viewer" → re-send the URL. I'll read every tab via `gviz` CSV export and the script via the Apps Script project link.
+- **(B)** Paste the `.gs` script content directly in chat + paste the `Input` and `Objectives` tab headers (just the column names + 2-3 sample rows). Fastest.
+- **(C)** Link the **Google Sheets connector** (you picked this earlier). I'll then read the sheet via gateway. Note: this still won't expose Apps Script source — I'd need that pasted separately.
 
-Also tighten the existing rules:
-- Re-emphasize the 5 real subject UUIDs (with a "DO NOT invent UUIDs for subjects" warning).
-- Require the bundle filename to match the actual content (subject + level).
-- Require `level` to use canonical casing (`CP`, `CE1`, `CM1`, `6e`, etc.) — not `cm1`.
+Once I have the script, I'll rewrite it so its output:
+- Uses real subject UUIDs from a hardcoded `SUBJECTS` map (looked up by slug, not invented)
+- Builds `domain` / `subdomain` legacy keys as `${slug}_${LEVEL}_${CODE}` (collision-proof, matches importer's `onConflict`)
+- Normalizes `level` to canonical casing (`CP`, `CE1`, `CM1`, `6e`, `5e`, `4e`, `3e`, `2nde`, `1re`, `Tle`)
+- Emits `mode: 'replace'` automatically
+- Validates the output against the bundle schema before writing the JSON file
 
-### Step 4 — Tell you exactly how to fix THIS bundle right now
-Two options:
-- **A (fastest)**: Manually edit the file — replace the bogus subject_id with the real `francais` UUID (from Step 1), add explicit `domain` / `subdomain` legacy keys prefixed with `francais_CM1_`, and re-upload with "Replace existing data" ticked. Or just rename the file and treat it as a French CM1 reading bundle.
-- **B (cleaner)**: Re-generate from ChatGPT using the updated prompt — paste the *real* `francais` UUID into the request, and ask for "Français CM1 — Lecture/Compréhension" properly.
+### What you'll see when done
+- Migration run → orphan `(francais, LECTURE)` row gone
+- Edge function patched + redeployed → re-imports stop failing on `(subject_id, code)` collisions
+- Updated `.gs` script (I'll paste the full file in chat — you copy-paste back into Apps Script)
+- Your existing `bundle_Francais_CM1_FIXED-2.json` imports cleanly on first try
 
-### What you'll see after
-- Updated `CHATGPT_PROMPT.md` with the new uniqueness rule + UUID guardrails.
-- A short post-mortem in chat with the exact UUID to substitute and a one-paragraph "regenerate prompt" you can paste into ChatGPT.
-
-No edge-function or app code changes — the importer behavior is fine; the bundle generation rules need to be stricter.
+### Blocker
+**I need access to the Apps Script source + the Input/Objectives tab structure before I can fix Fix 3.** Pick A, B, or C above and reply.
 
