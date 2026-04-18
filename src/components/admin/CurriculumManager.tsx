@@ -302,7 +302,7 @@ export default function CurriculumManager() {
                     )}
                   </div>
                 ) : (
-                  <p>{importResult.error}</p>
+                  <pre className="whitespace-pre-wrap text-xs font-mono mt-2">{importResult.error}</pre>
                 )}
               </AlertDescription>
             </Alert>
