@@ -301,18 +301,36 @@ Deno.serve(async (req) => {
     }
 
     // ----------------------------------------------------------------------
-    // 5. Success criteria
+    // 5. Success criteria — backfill mirror FKs from parent objective
     // ----------------------------------------------------------------------
+    const objectiveFkMap = new Map<string, { subject_id: string; domain_id: string; subdomain_id: string }>();
+    bundle.objectives?.forEach(o => {
+      objectiveFkMap.set(o.id, {
+        subject_id: o.subject_id,
+        domain_id: o.domain_id,
+        subdomain_id: o.subdomain_id,
+      });
+    });
+
+    const successCriterionFkMap = new Map<string, { subject_id: string | null; domain_id: string | null; subdomain_id: string | null; objective_id: string }>();
+
     if (bundle.success_criteria?.length) {
-      const rows = bundle.success_criteria.map(sc => ({
-        id: sc.legacy_id ?? sc.id,
-        id_new: sc.id,
-        text: sc.text,
-        objective_id_uuid: sc.objective_id,
-        subject_id_uuid: sc.subject_id ?? null,
-        domain_id_uuid: sc.domain_id ?? null,
-        subdomain_id_uuid: sc.subdomain_id ?? null,
-      }));
+      const rows = bundle.success_criteria.map(sc => {
+        const parent = objectiveFkMap.get(sc.objective_id);
+        const subject_id = sc.subject_id ?? parent?.subject_id ?? null;
+        const domain_id = sc.domain_id ?? parent?.domain_id ?? null;
+        const subdomain_id = sc.subdomain_id ?? parent?.subdomain_id ?? null;
+        successCriterionFkMap.set(sc.id, { subject_id, domain_id, subdomain_id, objective_id: sc.objective_id });
+        return {
+          id: sc.legacy_id ?? sc.id,
+          id_new: sc.id,
+          text: sc.text,
+          objective_id_uuid: sc.objective_id,
+          subject_id_uuid: subject_id,
+          domain_id_uuid: domain_id,
+          subdomain_id_uuid: subdomain_id,
+        };
+      });
       for (const c of chunk(rows, CHUNK_SIZE)) {
         const { error } = await supabaseAdmin.from('success_criteria').upsert(c, { onConflict: 'id' });
         if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('success_criteria', error) }, 200);
