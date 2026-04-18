@@ -463,7 +463,15 @@ export type Database = {
           label?: string | null
           subject_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "domains_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exercise_attempts: {
         Row: {
@@ -831,6 +839,13 @@ export type Database = {
             referencedRelation: "lessons"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lesson_sessions_lesson_id_uuid_fkey"
+            columns: ["lesson_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id_new"]
+          },
         ]
       }
       lessons: {
@@ -874,6 +889,13 @@ export type Database = {
           unit_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "lessons_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lessons_unit_id_fkey"
             columns: ["unit_id"]
@@ -936,6 +958,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "objectives"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "objective_mastery_objective_id_uuid_fkey"
+            columns: ["objective_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "objectives"
+            referencedColumns: ["id_new"]
           },
           {
             foreignKeyName: "objective_mastery_student_id_fkey"
@@ -1012,6 +1041,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "domains"
             referencedColumns: ["domain"]
+          },
+          {
+            foreignKeyName: "objectives_domain_id_uuid_fkey"
+            columns: ["domain_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "objectives_subdomain_id_uuid_fkey"
+            columns: ["subdomain_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "subdomains"
+            referencedColumns: ["id_new"]
+          },
+          {
+            foreignKeyName: "objectives_subject_id_uuid_fkey"
+            columns: ["subject_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1419,6 +1469,20 @@ export type Database = {
             referencedRelation: "domains"
             referencedColumns: ["domain"]
           },
+          {
+            foreignKeyName: "subdomains_domain_id_new_fkey"
+            columns: ["domain_id_new"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subdomains_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
         ]
       }
       subject_prompt_assignments: {
@@ -1540,10 +1604,38 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "success_criteria_domain_id_uuid_fkey"
+            columns: ["domain_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "success_criteria_objective_id_fkey"
             columns: ["objective_id"]
             isOneToOne: false
             referencedRelation: "objectives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "success_criteria_objective_id_uuid_fkey"
+            columns: ["objective_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "objectives"
+            referencedColumns: ["id_new"]
+          },
+          {
+            foreignKeyName: "success_criteria_subdomain_id_uuid_fkey"
+            columns: ["subdomain_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "subdomains"
+            referencedColumns: ["id_new"]
+          },
+          {
+            foreignKeyName: "success_criteria_subject_id_uuid_fkey"
+            columns: ["subject_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "subjects"
             referencedColumns: ["id"]
           },
         ]
@@ -1611,11 +1703,39 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "tasks_domain_id_uuid_fkey"
+            columns: ["domain_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_subdomain_id_uuid_fkey"
+            columns: ["subdomain_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "subdomains"
+            referencedColumns: ["id_new"]
+          },
+          {
+            foreignKeyName: "tasks_subject_id_uuid_fkey"
+            columns: ["subject_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tasks_success_criterion_id_fkey"
             columns: ["success_criterion_id"]
             isOneToOne: false
             referencedRelation: "success_criteria"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_success_criterion_id_uuid_fkey"
+            columns: ["success_criterion_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "success_criteria"
+            referencedColumns: ["id_new"]
           },
         ]
       }
@@ -1669,6 +1789,13 @@ export type Database = {
           topic_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "topic_objective_links_objective_id_uuid_fkey"
+            columns: ["objective_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "objectives"
+            referencedColumns: ["id_new"]
+          },
           {
             foreignKeyName: "topic_objectives_objective_id_fkey"
             columns: ["objective_id"]
@@ -1764,6 +1891,27 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "learning_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topics_curriculum_domain_id_uuid_fkey"
+            columns: ["curriculum_domain_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topics_curriculum_subdomain_id_uuid_fkey"
+            columns: ["curriculum_subdomain_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "subdomains"
+            referencedColumns: ["id_new"]
+          },
+          {
+            foreignKeyName: "topics_curriculum_subject_id_uuid_fkey"
+            columns: ["curriculum_subject_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "subjects"
             referencedColumns: ["id"]
           },
         ]
@@ -2099,6 +2247,13 @@ export type Database = {
             columns: ["topic_id"]
             isOneToOne: false
             referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "videos_subject_id_uuid_fkey"
+            columns: ["subject_id_uuid"]
+            isOneToOne: false
+            referencedRelation: "subjects"
             referencedColumns: ["id"]
           },
         ]
