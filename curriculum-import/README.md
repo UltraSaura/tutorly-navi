@@ -2,6 +2,8 @@
 
 A Node.js script to import `bundle.json` data into your Supabase database.
 
+> 🤖 **Want ChatGPT to generate `bundle.json` for you?** See [`CHATGPT_PROMPT.md`](./CHATGPT_PROMPT.md) — a copy-paste starter kit with the existing subject UUIDs, hard rules, and a worked example.
+
 ## Setup
 
 1. **Create `.env` file** in the project root:
