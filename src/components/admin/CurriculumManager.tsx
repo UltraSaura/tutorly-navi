@@ -21,6 +21,7 @@ import { toast } from '@/hooks/use-toast';
 export default function CurriculumManager() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [replaceMode, setReplaceMode] = useState(false);
   const [importResult, setImportResult] = useState<{
     success: boolean;
     counts?: ImportCounts;
@@ -29,6 +30,7 @@ export default function CurriculumManager() {
       nullChecks?: Record<string, number>;
     };
     error?: string;
+    diagnostics?: { table?: string; code?: string | null; message?: string; details?: string | null; hint?: string | null };
   } | null>(null);
 
   // Filters
@@ -85,27 +87,51 @@ export default function CurriculumManager() {
     setImportResult(null);
 
     try {
-      // Read file content
       const fileContent = await selectedFile.text();
       const bundleData = JSON.parse(fileContent);
+      if (replaceMode) bundleData.mode = 'replace';
 
-      // Get auth token
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
+      if (!session) throw new Error('Not authenticated');
 
-      // Call edge function
       const response = await supabase.functions.invoke('import-curriculum-bundle', {
         body: bundleData,
       });
 
-      if (response.error) throw response.error;
+      // Network/runtime error from invoke
+      if (response.error && !response.data) throw response.error;
+
+      const data: any = response.data ?? {};
+
+      if (data.success === false) {
+        const diag = data.diagnostics;
+        const detailLines = diag
+          ? [
+              diag.table ? `Table: ${diag.table}` : null,
+              diag.code ? `Code: ${diag.code}` : null,
+              diag.message ? `Message: ${diag.message}` : null,
+              diag.details ? `Details: ${diag.details}` : null,
+              diag.hint ? `Hint: ${diag.hint}` : null,
+            ].filter(Boolean).join('\n')
+          : (data.error ?? 'Unknown error');
+
+        setImportResult({
+          success: false,
+          error: detailLines,
+          diagnostics: diag,
+        });
+        toast({
+          title: 'Import failed',
+          description: diag?.message ?? data.error ?? 'See details below',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       setImportResult({
         success: true,
-        counts: response.data.counts,
-        verification: response.data.verification,
+        counts: data.counts,
+        verification: data.verification,
       });
 
       toast({
@@ -113,7 +139,6 @@ export default function CurriculumManager() {
         description: 'Curriculum data imported successfully',
       });
 
-      // Refresh data
       refetchObjectives();
       refetchStats();
     } catch (error: any) {
@@ -215,6 +240,19 @@ export default function CurriculumManager() {
                 {selectedFile.name}
               </div>
             )}
+
+            <label className="flex items-start gap-2 text-sm cursor-pointer select-none pt-1">
+              <input
+                type="checkbox"
+                checked={replaceMode}
+                onChange={(e) => setReplaceMode(e.target.checked)}
+                disabled={isImporting}
+                className="h-4 w-4 mt-0.5 rounded border-border"
+              />
+              <span>
+                <strong>Replace</strong> existing data for the subject(s) in this bundle (deletes domains, subdomains, objectives, success criteria & tasks first — fixes leftover-row constraint clashes)
+              </span>
+            </label>
           </div>
 
           {/* Import Result */}
@@ -264,7 +302,7 @@ export default function CurriculumManager() {
                     )}
                   </div>
                 ) : (
-                  <p>{importResult.error}</p>
+                  <pre className="whitespace-pre-wrap text-xs font-mono mt-2">{importResult.error}</pre>
                 )}
               </AlertDescription>
             </Alert>
