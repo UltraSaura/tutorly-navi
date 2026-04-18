@@ -21,6 +21,7 @@ import { toast } from '@/hooks/use-toast';
 export default function CurriculumManager() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [replaceMode, setReplaceMode] = useState(false);
   const [importResult, setImportResult] = useState<{
     success: boolean;
     counts?: ImportCounts;
@@ -29,6 +30,7 @@ export default function CurriculumManager() {
       nullChecks?: Record<string, number>;
     };
     error?: string;
+    diagnostics?: { table?: string; code?: string | null; message?: string; details?: string | null; hint?: string | null };
   } | null>(null);
 
   // Filters
