@@ -5,6 +5,7 @@ import TopicManager from "./learning/TopicManager";
 import VideoManager from "./learning/VideoManager";
 import QuizManager from "./learning/QuizManager";
 import BankManager from "./learning/BankManager";
+import CurriculumBundleImporter from "./learning/CurriculumBundleImporter";
 
 const LearningContentManagement = () => {
   return (
@@ -19,6 +20,8 @@ const LearningContentManagement = () => {
           </span>
         </p>
       </div>
+
+      <CurriculumBundleImporter />
 
       <Tabs defaultValue="categories" className="space-y-6">
         <TabsList className="grid w-full grid-cols-5">
