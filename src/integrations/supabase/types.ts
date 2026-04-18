@@ -443,13 +443,25 @@ export type Database = {
       }
       domains: {
         Row: {
+          code: string | null
           domain: string
+          id: string
+          label: string | null
+          subject_id: string | null
         }
         Insert: {
+          code?: string | null
           domain: string
+          id?: string
+          label?: string | null
+          subject_id?: string | null
         }
         Update: {
+          code?: string | null
           domain?: string
+          id?: string
+          label?: string | null
+          subject_id?: string | null
         }
         Relationships: []
       }
@@ -770,6 +782,7 @@ export type Database = {
           duration_minutes: number | null
           id: string
           lesson_id: string | null
+          lesson_id_uuid: string | null
           notes: string | null
           objective_ids: Json | null
           started_at: string | null
@@ -783,6 +796,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           lesson_id?: string | null
+          lesson_id_uuid?: string | null
           notes?: string | null
           objective_ids?: Json | null
           started_at?: string | null
@@ -796,6 +810,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           lesson_id?: string | null
+          lesson_id_uuid?: string | null
           notes?: string | null
           objective_ids?: Json | null
           started_at?: string | null
@@ -821,6 +836,7 @@ export type Database = {
       lessons: {
         Row: {
           id: string
+          id_new: string
           materials: string | null
           misconceptions: string | null
           objective_ids: Json
@@ -828,10 +844,12 @@ export type Database = {
           success_criterion_ids: Json
           teacher_talk: string | null
           title: string
+          topic_id: string | null
           unit_id: string | null
         }
         Insert: {
           id: string
+          id_new?: string
           materials?: string | null
           misconceptions?: string | null
           objective_ids?: Json
@@ -839,10 +857,12 @@ export type Database = {
           success_criterion_ids?: Json
           teacher_talk?: string | null
           title: string
+          topic_id?: string | null
           unit_id?: string | null
         }
         Update: {
           id?: string
+          id_new?: string
           materials?: string | null
           misconceptions?: string | null
           objective_ids?: Json
@@ -850,6 +870,7 @@ export type Database = {
           success_criterion_ids?: Json
           teacher_talk?: string | null
           title?: string
+          topic_id?: string | null
           unit_id?: string | null
         }
         Relationships: [
@@ -871,6 +892,7 @@ export type Database = {
           last_attempt_at: string | null
           level_code: string | null
           objective_id: string
+          objective_id_uuid: string | null
           score_percent: number
           status: string
           student_id: string
@@ -885,6 +907,7 @@ export type Database = {
           last_attempt_at?: string | null
           level_code?: string | null
           objective_id: string
+          objective_id_uuid?: string | null
           score_percent?: number
           status?: string
           student_id: string
@@ -899,6 +922,7 @@ export type Database = {
           last_attempt_at?: string | null
           level_code?: string | null
           objective_id?: string
+          objective_id_uuid?: string | null
           score_percent?: number
           status?: string
           student_id?: string
@@ -933,40 +957,52 @@ export type Database = {
         Row: {
           domain: string | null
           domain_id: string | null
+          domain_id_uuid: string | null
           id: string
+          id_new: string
           keywords: string[] | null
           level: string
           notes_from_prog: string | null
           skill_id: string | null
           subdomain: string
           subdomain_id: string | null
+          subdomain_id_uuid: string | null
           subject_id: string | null
+          subject_id_uuid: string | null
           text: string
         }
         Insert: {
           domain?: string | null
           domain_id?: string | null
+          domain_id_uuid?: string | null
           id: string
+          id_new?: string
           keywords?: string[] | null
           level: string
           notes_from_prog?: string | null
           skill_id?: string | null
           subdomain: string
           subdomain_id?: string | null
+          subdomain_id_uuid?: string | null
           subject_id?: string | null
+          subject_id_uuid?: string | null
           text: string
         }
         Update: {
           domain?: string | null
           domain_id?: string | null
+          domain_id_uuid?: string | null
           id?: string
+          id_new?: string
           keywords?: string[] | null
           level?: string
           notes_from_prog?: string | null
           skill_id?: string | null
           subdomain?: string
           subdomain_id?: string | null
+          subdomain_id_uuid?: string | null
           subject_id?: string | null
+          subject_id_uuid?: string | null
           text?: string
         }
         Relationships: [
@@ -1346,19 +1382,34 @@ export type Database = {
       }
       subdomains: {
         Row: {
+          code: string | null
           domain: string | null
+          domain_id_new: string | null
           id: number
+          id_new: string
+          label: string | null
           subdomain: string
+          subject_id: string | null
         }
         Insert: {
+          code?: string | null
           domain?: string | null
+          domain_id_new?: string | null
           id?: number
+          id_new?: string
+          label?: string | null
           subdomain: string
+          subject_id?: string | null
         }
         Update: {
+          code?: string | null
           domain?: string | null
+          domain_id_new?: string | null
           id?: number
+          id_new?: string
+          label?: string | null
           subdomain?: string
+          subject_id?: string | null
         }
         Relationships: [
           {
@@ -1447,29 +1498,44 @@ export type Database = {
       success_criteria: {
         Row: {
           domain_id: string | null
+          domain_id_uuid: string | null
           id: string
+          id_new: string
           objective_id: string | null
+          objective_id_uuid: string | null
           skill_id: string | null
           subdomain_id: string | null
+          subdomain_id_uuid: string | null
           subject_id: string | null
+          subject_id_uuid: string | null
           text: string
         }
         Insert: {
           domain_id?: string | null
+          domain_id_uuid?: string | null
           id: string
+          id_new?: string
           objective_id?: string | null
+          objective_id_uuid?: string | null
           skill_id?: string | null
           subdomain_id?: string | null
+          subdomain_id_uuid?: string | null
           subject_id?: string | null
+          subject_id_uuid?: string | null
           text: string
         }
         Update: {
           domain_id?: string | null
+          domain_id_uuid?: string | null
           id?: string
+          id_new?: string
           objective_id?: string | null
+          objective_id_uuid?: string | null
           skill_id?: string | null
           subdomain_id?: string | null
+          subdomain_id_uuid?: string | null
           subject_id?: string | null
+          subject_id_uuid?: string | null
           text?: string
         }
         Relationships: [
@@ -1486,45 +1552,60 @@ export type Database = {
         Row: {
           difficulty: string | null
           domain_id: string | null
+          domain_id_uuid: string | null
           id: string
+          id_new: string
           rubric: string | null
           skill_id: string | null
           solution: string | null
           source: string | null
           stem: string
           subdomain_id: string | null
+          subdomain_id_uuid: string | null
           subject_id: string | null
+          subject_id_uuid: string | null
           success_criterion_id: string | null
+          success_criterion_id_uuid: string | null
           tags: string[] | null
           type: string
         }
         Insert: {
           difficulty?: string | null
           domain_id?: string | null
+          domain_id_uuid?: string | null
           id: string
+          id_new?: string
           rubric?: string | null
           skill_id?: string | null
           solution?: string | null
           source?: string | null
           stem: string
           subdomain_id?: string | null
+          subdomain_id_uuid?: string | null
           subject_id?: string | null
+          subject_id_uuid?: string | null
           success_criterion_id?: string | null
+          success_criterion_id_uuid?: string | null
           tags?: string[] | null
           type: string
         }
         Update: {
           difficulty?: string | null
           domain_id?: string | null
+          domain_id_uuid?: string | null
           id?: string
+          id_new?: string
           rubric?: string | null
           skill_id?: string | null
           solution?: string | null
           source?: string | null
           stem?: string
           subdomain_id?: string | null
+          subdomain_id_uuid?: string | null
           subject_id?: string | null
+          subject_id_uuid?: string | null
           success_criterion_id?: string | null
+          success_criterion_id_uuid?: string | null
           tags?: string[] | null
           type?: string
         }
@@ -1567,6 +1648,7 @@ export type Database = {
           created_at: string
           id: string
           objective_id: string
+          objective_id_uuid: string | null
           order_index: number
           topic_id: string
         }
@@ -1574,6 +1656,7 @@ export type Database = {
           created_at?: string
           id?: string
           objective_id: string
+          objective_id_uuid?: string | null
           order_index?: number
           topic_id: string
         }
@@ -1581,6 +1664,7 @@ export type Database = {
           created_at?: string
           id?: string
           objective_id?: string
+          objective_id_uuid?: string | null
           order_index?: number
           topic_id?: string
         }
@@ -1607,9 +1691,12 @@ export type Database = {
           created_at: string
           curriculum_country_code: string | null
           curriculum_domain_id: string | null
+          curriculum_domain_id_uuid: string | null
           curriculum_level_code: string | null
           curriculum_subdomain_id: string | null
+          curriculum_subdomain_id_uuid: string | null
           curriculum_subject_id: string | null
+          curriculum_subject_id_uuid: string | null
           description: string | null
           estimated_duration_minutes: number
           id: string
@@ -1628,9 +1715,12 @@ export type Database = {
           created_at?: string
           curriculum_country_code?: string | null
           curriculum_domain_id?: string | null
+          curriculum_domain_id_uuid?: string | null
           curriculum_level_code?: string | null
           curriculum_subdomain_id?: string | null
+          curriculum_subdomain_id_uuid?: string | null
           curriculum_subject_id?: string | null
+          curriculum_subject_id_uuid?: string | null
           description?: string | null
           estimated_duration_minutes?: number
           id?: string
@@ -1649,9 +1739,12 @@ export type Database = {
           created_at?: string
           curriculum_country_code?: string | null
           curriculum_domain_id?: string | null
+          curriculum_domain_id_uuid?: string | null
           curriculum_level_code?: string | null
           curriculum_subdomain_id?: string | null
+          curriculum_subdomain_id_uuid?: string | null
           curriculum_subject_id?: string | null
+          curriculum_subject_id_uuid?: string | null
           description?: string | null
           estimated_duration_minutes?: number
           id?: string
@@ -1936,6 +2029,7 @@ export type Database = {
           order_index: number
           school_levels: string[] | null
           subject_id: string | null
+          subject_id_uuid: string | null
           tags: string[] | null
           thumbnail_url: string | null
           title: string
@@ -1958,6 +2052,7 @@ export type Database = {
           order_index?: number
           school_levels?: string[] | null
           subject_id?: string | null
+          subject_id_uuid?: string | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title: string
@@ -1980,6 +2075,7 @@ export type Database = {
           order_index?: number
           school_levels?: string[] | null
           subject_id?: string | null
+          subject_id_uuid?: string | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title?: string
