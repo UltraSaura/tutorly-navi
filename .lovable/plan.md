@@ -1,49 +1,44 @@
 
 
-User is asking how to access/use the file I created. The file already exists at `curriculum-import/CHATGPT_PROMPT.md` — I can see it in the current-code excerpt. They just need to know where it is and how to use it. This is a research/explanation question, not an implementation task. No plan needed — but the system prompt forces me into plan mode, so I'll present a minimal plan that's really just guidance.
+## Root cause
 
-Actually re-reading: "his file or datil" looks like a typo for "this file in detail" or "show file in detail". They want me to walk through what's in the file and how to use it.
+The `domains` table has a legacy NOT NULL text column called `domain` that the importer auto-fills with `${subject_id_prefix}_${code}` (or similar) when the bundle omits it. That synthetic key — `8e5f05b5_LECTURE` — already exists from a previous import. The "Replace existing data" path deletes by `subject_id`, but the existing `LECTURE` row was inserted under a *different* subject_id (likely the real `francais` UUID, not `8e5f05b5-77f9-5ccb-a064-398a25e2cdfa`), so it survives the delete and then collides on insert.
 
-This is pure explanation, not implementation. I'll present a short plan that explains where the file lives, what's in it, and the exact steps to use it — no code changes needed.
+There's also a **second bug in the bundle itself**:
 
-## Plan
+- `subject_id` `8e5f05b5-77f9-5ccb-a064-398a25e2cdfa` — this is **not** one of the 5 real subject UUIDs in the DB. It looks like ChatGPT hallucinated a UUID instead of using the real `francais` UUID from the prompt.
+- The file is named `Mathematiques_CP` but the content is French reading (`LECTURE`, `Compréhension`, "Lire avec fluidité") — wrong subject entirely.
+- `level` is `"cm1"` but the file claims CP.
+- `subjects: []` — should include the subject row OR the real subject UUID must be referenced.
 
-The file already exists at `curriculum-import/CHATGPT_PROMPT.md`. Nothing to build. Here's what it contains and how to use it.
+## What I'll do (no code changes — diagnostic + fix path)
 
-### File location
-`curriculum-import/CHATGPT_PROMPT.md` — open it in the Lovable file tree (left sidebar) under the `curriculum-import/` folder.
+### Step 1 — Verify the real subject UUIDs in the DB
+Run a read-only query against `subjects` to get the actual UUIDs and confirm `8e5f05b5-...` doesn't exist there.
 
-### What's inside (4 sections)
+### Step 2 — Find the conflicting row
+Query `domains` for `domain = '8e5f05b5_LECTURE'` to see which subject_id it's tied to and confirm why "Replace" didn't clear it.
 
-- **Section A — The prompt**: A single fenced block you copy whole. It tells ChatGPT the rules (pre-generate UUIDs, reuse existing subject UUIDs, JSON-only output) and includes the 5 existing subject UUIDs from your DB.
-- **Section B — Workflow**: 4 steps (generate → save → upload → verify).
-- **Section C — Tips for big bundles**: How to iterate domain-by-domain when ChatGPT hits token limits.
-- **Section D — Troubleshooting**: Maps each error symptom to its fix.
-- **Section E — Minimal valid example**: A 1-domain / 1-objective JSON you can use to sanity-check the importer.
+### Step 3 — Update `curriculum-import/CHATGPT_PROMPT.md`
+Add a hard rule that fixes this class of error permanently:
 
-### Exact steps to use it
+> **Every domain/subdomain MUST include an explicit `domain` field** set to a globally-unique string in the form `<subject_slug>_<LEVEL>_<CODE>` (e.g. `mathematics_CP_NUMBERS`). Never rely on the importer to auto-generate it. Same rule for `subdomains.subdomain` → `<subject_slug>_<LEVEL>_<DOMAIN_CODE>_<CODE>`.
 
-1. Open `curriculum-import/CHATGPT_PROMPT.md` in Lovable.
-2. Copy everything between the outer ```` ```` fences in **Section A** (the whole prompt block).
-3. Paste into a new ChatGPT conversation (GPT-4 or GPT-5 recommended for JSON reliability).
-4. Replace the last line `[REPLACE THIS LINE WITH YOUR TOPIC...]` with your actual request, e.g.:
-   `Generate CM1 Mathematics — Numbers, Fractions, Geometry, Measurement. Language: French. Full coverage of the French Éducation Nationale CM1 program.`
-5. Send. ChatGPT returns one ```json fenced block.
-6. Copy the JSON, save as `bundle.json` on your computer.
-7. Go to `/admin/curriculum`, tick **"Replace existing data"**, choose `bundle.json`, click Import.
-8. Verify the success card shows **Phase 3 readiness: Ready** with all NULL counts at 0.
+This makes the legacy text key collision-proof across re-imports and across subjects.
 
-### Information ChatGPT needs (already baked into the prompt)
+Also tighten the existing rules:
+- Re-emphasize the 5 real subject UUIDs (with a "DO NOT invent UUIDs for subjects" warning).
+- Require the bundle filename to match the actual content (subject + level).
+- Require `level` to use canonical casing (`CP`, `CE1`, `CM1`, `6e`, etc.) — not `cm1`.
 
-You don't need to provide anything extra — the prompt already includes:
-- All 5 existing subject UUIDs (mathematics, physics, francais, history, geography)
-- Allowed `level` values (CP → Tle)
-- Allowed task `type` values (mcq, open, numeric, short)
-- Allowed `difficulty` values (core, easy, stretch)
-- Coverage targets (3–8 domains, 2–5 subdomains each, etc.)
-- The exact JSON shape with all FK wiring rules
+### Step 4 — Tell you exactly how to fix THIS bundle right now
+Two options:
+- **A (fastest)**: Manually edit the file — replace the bogus subject_id with the real `francais` UUID (from Step 1), add explicit `domain` / `subdomain` legacy keys prefixed with `francais_CM1_`, and re-upload with "Replace existing data" ticked. Or just rename the file and treat it as a French CM1 reading bundle.
+- **B (cleaner)**: Re-generate from ChatGPT using the updated prompt — paste the *real* `francais` UUID into the request, and ask for "Français CM1 — Lecture/Compréhension" properly.
 
-The only thing you supply is **what to generate** (level + subject + scope + language) on the last line.
+### What you'll see after
+- Updated `CHATGPT_PROMPT.md` with the new uniqueness rule + UUID guardrails.
+- A short post-mortem in chat with the exact UUID to substitute and a one-paragraph "regenerate prompt" you can paste into ChatGPT.
 
-No code changes needed — just open the file and follow the steps above.
+No edge-function or app code changes — the importer behavior is fine; the bundle generation rules need to be stricter.
 
