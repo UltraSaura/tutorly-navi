@@ -1814,7 +1814,7 @@ export type Database = {
       }
       topics: {
         Row: {
-          category_id: string
+          category_id: string | null
           created_at: string
           curriculum_country_code: string | null
           curriculum_domain_id: string | null
@@ -1838,7 +1838,7 @@ export type Database = {
           video_count: number
         }
         Insert: {
-          category_id: string
+          category_id?: string | null
           created_at?: string
           curriculum_country_code?: string | null
           curriculum_domain_id?: string | null
@@ -1862,7 +1862,7 @@ export type Database = {
           video_count?: number
         }
         Update: {
-          category_id?: string
+          category_id?: string | null
           created_at?: string
           curriculum_country_code?: string | null
           curriculum_domain_id?: string | null
