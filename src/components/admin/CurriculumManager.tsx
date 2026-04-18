@@ -240,6 +240,19 @@ export default function CurriculumManager() {
                 {selectedFile.name}
               </div>
             )}
+
+            <label className="flex items-start gap-2 text-sm cursor-pointer select-none pt-1">
+              <input
+                type="checkbox"
+                checked={replaceMode}
+                onChange={(e) => setReplaceMode(e.target.checked)}
+                disabled={isImporting}
+                className="h-4 w-4 mt-0.5 rounded border-border"
+              />
+              <span>
+                <strong>Replace</strong> existing data for the subject(s) in this bundle (deletes domains, subdomains, objectives, success criteria & tasks first — fixes leftover-row constraint clashes)
+              </span>
+            </label>
           </div>
 
           {/* Import Result */}
