@@ -1,192 +1,33 @@
 
 
-User wants a single copy-paste package for ChatGPT. I have:
-1. The 5 subject UUIDs (just fetched)
-2. The BUNDLE_FORMAT.md (already in repo)
-3. Level codes convention (lowercase from memory)
+## Root cause (best inference without logs)
 
-Assemble it as one prompt block they can paste verbatim. No code changes — pure information delivery.
+The toast says "Edge Function returned a non-2xx status code" — that's `supabase.functions.invoke` swallowing the real Postgres error. Combined with the table inspection:
 
----
+- `domains.id` is a **unique column** but the **primary key is `domain` (text)**. Existing demo row has `domain='Lecture'`. The edge function uses `upsert(rows, { onConflict: 'id' })` — works in most cases but the real failure is most likely on a NOT-NULL or constraint downstream that we can't see because the error is hidden.
+- Suspects: `objectives.subdomain` NOT NULL with `''` is technically allowed but flagged in some setups; existing leftover rows from earlier tests can clash on `subdomains_domain_subdomain_key` UNIQUE `(domain, subdomain)` if the bundle and existing row both produce `(NULL, 'Compréhension')` → unique violation that `onConflict:'id_new'` does NOT resolve.
 
-## Copy-paste package for ChatGPT
+## Fix in 3 small edits
 
-Paste everything below into ChatGPT in one message. Replace the two `[...]` placeholders with your input data and your raw input sample.
+### 1. Surface the real error (edge function)
+In `supabase/functions/import-curriculum-bundle/index.ts`, when an upsert fails, include the table name + Postgres error code/message/details in the response JSON, and return status 200 with `success: false` so `supabase.functions.invoke` doesn't strip the body.
 
----
+### 2. Make upserts robust against leftover demo rows
+- `subdomains` upsert: pass `domain: null, subdomain: s.label` consistently AND use `onConflict: 'id_new'` (already), but FIRST `delete()` any subdomain row whose `(domain, subdomain) = (null, label)` from prior failed runs.
+- Better: **add a `mode: "replace"` switch** in the bundle (defaults to `false`). When `true`, the function `delete()`s existing rows in `domains/subdomains/objectives/success_criteria/tasks` for the targeted `subject_id` before importing. Clean slate, no constraint clashes.
 
-````
-I need you to write a transformer that converts my raw curriculum data into a `bundle.json` file matching the spec below. I will upload the output via my admin web UI — no CLI involved.
+### 3. Show the error in the UI (CurriculumManager.tsx)
+Update the import handler to read `response.data?.error` (now populated thanks to fix #1) instead of just `response.error.message`, so the red Alert displays the real Postgres message (e.g. `duplicate key value violates unique constraint "subdomains_domain_subdomain_key"`).
 
-═══════════════════════════════════════════════════════════════
-PART 1 — EXISTING SUBJECT UUIDs (REUSE EXACTLY, DO NOT INVENT)
-═══════════════════════════════════════════════════════════════
+## Files touched
 
-| slug          | id (uuid)                            | name        | language |
-|---------------|--------------------------------------|-------------|----------|
-| mathematics   | f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de | Mathematics | en       |
-| physics       | 06e9c3fa-5618-436c-b781-10b39fb21698 | Physics     | en       |
-| francais      | 8e5f05b5-77f9-5ccb-a064-398a25e2cdfa | Français    | fr       |
-| history       | 0b206783-4f46-47e6-aea1-4adf8c905f18 | History     | en       |
-| geography     | a578949a-cfac-4dab-9568-289b0f4a8029 | Geography   | en       |
+- `supabase/functions/import-curriculum-bundle/index.ts` — wrap each upsert in try/catch, include `{ table, code, message, details, hint }` in response; add optional `mode: "replace"` that deletes prior rows scoped by subject_id
+- `src/components/admin/CurriculumManager.tsx` — read `response.data.error` for the failure path; add a small "Replace existing data for this subject" checkbox that injects `mode: "replace"` into the body
 
-═══════════════════════════════════════════════════════════════
-PART 2 — VALID LEVEL CODES (LOWERCASE ONLY)
-═══════════════════════════════════════════════════════════════
+## What you do after I implement
 
-Primary (French system): cp, ce1, ce2, cm1, cm2
-Secondary (collège):     6eme, 5eme, 4eme, 3eme
-Lycée:                   2nde, 1ere, terminale
-
-Always lowercase. Never "CM1", "6ème", or "Terminale".
-
-═══════════════════════════════════════════════════════════════
-PART 3 — BUNDLE.JSON SPEC
-═══════════════════════════════════════════════════════════════
-
-Top-level shape — exactly 8 arrays:
-{
-  "subjects": [...],
-  "domains": [...],
-  "subdomains": [...],
-  "objectives": [...],
-  "success_criteria": [...],
-  "tasks": [...],
-  "topic_objective_links": [],
-  "lessons": []
-}
-
-RULES:
-1. Pre-generate a UUID v4 for every entity's `id`.
-2. Wire all foreign keys by UUID, never by text codes.
-3. Reuse subject UUIDs from PART 1 — do not create new subjects.
-4. Leave `topic_objective_links` and `lessons` as empty arrays unless I give you real `topics.id` UUIDs.
-
-FIELD MAPPING:
-
-— subjects (only include if you need to pass-through; usually skip and reuse) —
-  id          uuid   required (use one from PART 1)
-  slug        text   required (one of the 5 above)
-  name        text   required
-  language    text   optional (default "en")
-
-— domains —
-  id          uuid   required
-  subject_id  uuid   required (FK → subjects.id from PART 1)
-  code        text   required, e.g. "NUMBERS"
-  label       text   required, human label
-
-— subdomains —
-  id          uuid   required
-  subject_id  uuid   required
-  domain_id   uuid   required (FK → domains.id)
-  code        text   required
-  label       text   required
-
-— objectives —
-  id              uuid   required
-  subject_id      uuid   required
-  domain_id       uuid   required
-  subdomain_id    uuid   required
-  level           text   required (lowercase, e.g. "cm1")
-  text            text   required (the objective statement)
-  notes_from_prog text   optional
-  keywords        text[] optional
-
-— success_criteria —
-  id              uuid   required
-  objective_id    uuid   required (FK → objectives.id)
-  subject_id      uuid   required (mirror from parent objective)
-  domain_id       uuid   required (mirror)
-  subdomain_id    uuid   required (mirror)
-  text            text   required
-
-— tasks —
-  id                    uuid   required
-  success_criterion_id  uuid   required (FK → success_criteria.id)
-  type                  text   required ("mcq" | "open" | "numeric")
-  stem                  text   required
-  solution              text   optional
-  rubric                text   optional
-  difficulty            text   optional ("core" default)
-  tags                  text[] optional
-
-═══════════════════════════════════════════════════════════════
-PART 4 — MINIMAL VALID EXAMPLE (1 of each)
-═══════════════════════════════════════════════════════════════
-
-{
-  "subjects": [],
-  "domains": [
-    {
-      "id": "11111111-1111-1111-1111-111111111111",
-      "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",
-      "code": "NUMBERS",
-      "label": "Numbers and operations"
-    }
-  ],
-  "subdomains": [
-    {
-      "id": "22222222-2222-2222-2222-222222222222",
-      "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",
-      "domain_id": "11111111-1111-1111-1111-111111111111",
-      "code": "FRAC",
-      "label": "Fractions"
-    }
-  ],
-  "objectives": [
-    {
-      "id": "33333333-3333-3333-3333-333333333333",
-      "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",
-      "domain_id": "11111111-1111-1111-1111-111111111111",
-      "subdomain_id": "22222222-2222-2222-2222-222222222222",
-      "level": "cm1",
-      "text": "Compare two simple fractions"
-    }
-  ],
-  "success_criteria": [
-    {
-      "id": "44444444-4444-4444-4444-444444444444",
-      "objective_id": "33333333-3333-3333-3333-333333333333",
-      "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",
-      "domain_id": "11111111-1111-1111-1111-111111111111",
-      "subdomain_id": "22222222-2222-2222-2222-222222222222",
-      "text": "Identify the larger of 1/2 vs 1/3"
-    }
-  ],
-  "tasks": [],
-  "topic_objective_links": [],
-  "lessons": []
-}
-
-═══════════════════════════════════════════════════════════════
-PART 5 — MY RAW INPUT
-═══════════════════════════════════════════════════════════════
-
-Subject I'm working on: [e.g. mathematics — use UUID f34e5bb1-...]
-Level(s): [e.g. cm1]
-
-Sample raw input (paste 3–5 representative rows):
-[PASTE YOUR RAW DATA HERE — CSV rows, markdown program excerpt, JSON, whatever you have]
-
-═══════════════════════════════════════════════════════════════
-PART 6 — DELIVERABLE
-═══════════════════════════════════════════════════════════════
-
-Produce ONE complete `bundle.json` file. Do not split into chunks. Do not add commentary inside the JSON. After the JSON, give me a short summary of:
-- # of objectives generated
-- # of success criteria generated
-- # of tasks generated (or "none")
-- Any input rows you couldn't map and why
-````
-
----
-
-### What you do after ChatGPT replies
-1. Save its output as `bundle.json`
-2. Open `/admin/curriculum` in your app
-3. Click the import card → upload `bundle.json`
-4. Read the result toast — confirms counts and `ready_for_phase_3` status
-
-That's it. No repo changes needed. The package above is everything ChatGPT requires.
+1. Refresh `/admin/curriculum`
+2. Tick the new "Replace existing data" checkbox
+3. Re-upload the same `bundle.json`
+4. If it still fails, the real Postgres error will be in the red Alert — paste it back to me and I'll target the exact constraint
 
