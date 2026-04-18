@@ -1,35 +1,33 @@
 
 
-## What "Not ready" means
+## Root cause (confirmed)
 
-The verification step counts NULLs in these columns after import:
-- `objectives.subdomain_id_uuid`, `domain_id_uuid`, `subject_id_uuid`
-- `success_criteria.objective_id_uuid`
-- `topic_objective_links.objective_id_uuid`
+Replace mode does `DELETE FROM objectives WHERE subject_id_uuid = $sid`. But the leftover demo row has `subject_id_uuid IS NULL` — so it's never deleted. Then verification counts ALL nulls in the table → reports 1 NULL → "Not ready".
 
-If any are > 0, `ready_for_phase_3 = false`. With your 1-row test, the likely cause is one of the mirror FK fields on `success_criteria` not being populated — either because your bundle omitted `subject_id`/`domain_id`/`subdomain_id` on the success_criterion entry, OR because leftover rows from earlier failed test runs still exist with NULL FKs.
+Same pattern for success_criteria.
 
-## Two-step diagnosis
+```
+objectives table:
+├── 83268905-... (old demo, NULL FKs) ← survives replace, fails verification
+└── a72e7b4b-... (your import, all FKs set) ← perfect
+```
 
-**Step 1 — read what the response actually said.** The toast shows counts but hides the `verification` object. I'll surface it in the UI so you see which exact column has NULLs.
+## Fix (one-file change)
 
-**Step 2 — auto-backfill mirror FKs in the edge function.** Even if the bundle omits `subject_id`/`domain_id`/`subdomain_id` on a success_criterion, the function can derive them from the parent objective during upsert. Same for tasks (derive from parent success_criterion → objective). This makes "Phase 3 ready" achievable from a minimal bundle.
+Edit `supabase/functions/import-curriculum-bundle/index.ts` — extend replace mode to also wipe NULL-FK orphan rows before the regular subject-scoped delete.
 
-## Plan
+**Before objectives upsert (in replace block, ~line 207)**: add a global `DELETE FROM objectives WHERE subject_id_uuid IS NULL AND id_new NOT IN (bundle.objective_ids)` — purge orphans regardless of subject.
 
-### File 1: `supabase/functions/import-curriculum-bundle/index.ts`
-- **Backfill mirrors before upserting `success_criteria`**: build a Map<objective_id, {subject_id, domain_id, subdomain_id}> from the bundle's objectives, then for each success_criterion fill missing FK fields from its parent.
-- **Same for `tasks`**: build a Map from success_criteria (using the just-built FK info) and fill task mirrors.
-- Keep existing replace-mode and diagnostics logic.
+Same for `success_criteria` (NULL `objective_id_uuid`), `subdomains` (NULL `subject_id`), `domains` (NULL `subject_id`), `tasks` (NULL `subject_id_uuid`).
 
-### File 2: `src/components/admin/CurriculumManager.tsx`
-- After a successful import, render the `verification` object and `ready_for_phase_3` flag in the success card so you can see exactly which column has NULLs (e.g. `success_criteria.objective_id_uuid_null: 0` ✓ or `> 0` ✗).
-- Add a small "Clean orphan rows" button that calls a new mode `mode: "purge_orphans"` to delete any pre-existing rows with NULL FKs scoped to the subjects in the bundle. (Optional — only if verification still shows NULLs after the backfill fix.)
+This is safe because:
+- Bundles always provide proper FKs now (the function backfills mirrors).
+- Any row with NULL critical FKs is stale demo data with no path to be referenced correctly.
 
-## What you'll do after I implement
+## What you do after
 
-1. Re-upload the same `bundle.json` with "Replace existing data" ticked.
-2. The success card will show the verification breakdown. If all zeros → `ready_for_phase_3: true`. If not → click "Clean orphan rows" and re-import.
+1. Re-upload `bundle.json` with "Replace existing data" ticked.
+2. Verification should show all zeros → **ready_for_phase_3: true**.
 
-No bundle.json changes needed on your side.
+No bundle changes needed.
 
