@@ -37,8 +37,8 @@ Output a SINGLE valid JSON object — no prose, no markdown — wrapped in one `
 # Output shape
 {
   "subjects": [],
-  "domains":      [{ "id": "<uuid>", "subject_id": "<existing-subject-uuid>", "code": "NUMBERS", "label": "Numbers and operations" }],
-  "subdomains":   [{ "id": "<uuid>", "subject_id": "<existing-subject-uuid>", "domain_id": "<domain-uuid>", "code": "FRAC", "label": "Fractions" }],
+  "domains":      [{ "id": "<uuid>", "subject_id": "<existing-subject-uuid>", "code": "NUMBERS", "label": "Numbers and operations", "domain": "mathematics_CM1_NUMBERS" }],
+  "subdomains":   [{ "id": "<uuid>", "subject_id": "<existing-subject-uuid>", "domain_id": "<domain-uuid>", "code": "FRAC", "label": "Fractions", "domain": "mathematics_CM1_NUMBERS", "subdomain": "mathematics_CM1_NUMBERS_FRAC" }],
   "objectives":   [{ "id": "<uuid>", "subject_id": "<existing-subject-uuid>", "domain_id": "<domain-uuid>", "subdomain_id": "<subdomain-uuid>", "level": "CM1", "text": "Compare two simple fractions", "notes_from_prog": "", "keywords": ["fractions","comparison"] }],
   "success_criteria": [{ "id": "<uuid>", "objective_id": "<objective-uuid>", "subject_id": "<existing-subject-uuid>", "domain_id": "<domain-uuid>", "subdomain_id": "<subdomain-uuid>", "text": "Identify the larger of 1/2 vs 1/3" }],
   "tasks":        [{ "id": "<uuid>", "success_criterion_id": "<sc-uuid>", "subject_id": "<existing-subject-uuid>", "domain_id": "<domain-uuid>", "subdomain_id": "<subdomain-uuid>", "type": "mcq", "stem": "Which is larger: 1/2 or 1/3?", "solution": "1/2", "rubric": "", "difficulty": "core", "tags": [] }],
