@@ -24,6 +24,10 @@ export default function CurriculumManager() {
   const [importResult, setImportResult] = useState<{
     success: boolean;
     counts?: ImportCounts;
+    verification?: {
+      ready_for_phase_3?: boolean;
+      nullChecks?: Record<string, number>;
+    };
     error?: string;
   } | null>(null);
 
@@ -101,6 +105,7 @@ export default function CurriculumManager() {
       setImportResult({
         success: true,
         counts: response.data.counts,
+        verification: response.data.verification,
       });
 
       toast({
@@ -225,13 +230,38 @@ export default function CurriculumManager() {
               </AlertTitle>
               <AlertDescription>
                 {importResult.success && importResult.counts ? (
-                  <div className="mt-2 space-y-1">
-                    {Object.entries(importResult.counts).map(([table, count]) => (
-                      <div key={table} className="flex justify-between text-sm">
-                        <span className="capitalize">{table.replace('_', ' ')}:</span>
-                        <span className="font-medium">{count}</span>
+                  <div className="mt-2 space-y-3">
+                    <div className="space-y-1">
+                      {Object.entries(importResult.counts).map(([table, count]) => (
+                        <div key={table} className="flex justify-between text-sm">
+                          <span className="capitalize">{table.replace('_', ' ')}:</span>
+                          <span className="font-medium">{count}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {importResult.verification && (
+                      <div className="pt-2 border-t space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Phase 3 readiness:</span>
+                          <Badge variant={importResult.verification.ready_for_phase_3 ? 'success' : 'destructive'}>
+                            {importResult.verification.ready_for_phase_3 ? 'Ready' : 'Not ready'}
+                          </Badge>
+                        </div>
+                        {importResult.verification.nullChecks && (
+                          <div className="space-y-1">
+                            <div className="text-xs font-medium text-muted-foreground">NULL UUID FK counts:</div>
+                            {Object.entries(importResult.verification.nullChecks).map(([key, count]) => (
+                              <div key={key} className="flex justify-between text-xs">
+                                <span className="font-mono">{key}:</span>
+                                <span className={count > 0 ? 'text-destructive font-medium' : 'text-muted-foreground'}>
+                                  {count}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    ))}
+                    )}
                   </div>
                 ) : (
                   <p>{importResult.error}</p>
