@@ -213,6 +213,21 @@ Deno.serve(async (req) => {
         r = await supabaseAdmin.from('domains').delete().eq('subject_id', sid);
         if (r.error) return jsonResponse({ success: false, error: 'Replace failed', diagnostics: diagFromPgError('domains(delete)', r.error) }, 200);
       }
+      // Purge orphan rows (NULL critical FKs) — leftover demo data that survives subject-scoped deletes
+      console.log('🧹 Purging orphan rows with NULL FKs...');
+      const orphanPurges: Array<[string, string]> = [
+        ['tasks', 'subject_id_uuid'],
+        ['success_criteria', 'objective_id_uuid'],
+        ['objectives', 'subject_id_uuid'],
+        ['subdomains', 'subject_id'],
+        ['domains', 'subject_id'],
+      ];
+      for (const [tbl, col] of orphanPurges) {
+        const r = await supabaseAdmin.from(tbl).delete().is(col, null);
+        if (r.error) {
+          console.warn(`⚠️ Orphan purge failed for ${tbl}.${col}:`, r.error.message);
+        }
+      }
       console.log('🧹 Replace mode: wipe complete');
     }
 
