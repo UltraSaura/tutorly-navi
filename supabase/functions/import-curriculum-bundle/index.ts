@@ -543,7 +543,39 @@ Deno.serve(async (req) => {
     }
 
     // ----------------------------------------------------------------------
-    // 9. Verification
+    // 8.5 Orphan cleanup — purge any rows that ended up with NULL critical
+    // FKs for the imported subjects (e.g. leftovers from earlier broken
+    // imports that didn't populate *_uuid mirror columns). Runs in BOTH
+    // replace and upsert mode so re-imports always converge to a clean state.
+    // ----------------------------------------------------------------------
+    const importedSubjectIds = new Set<string>();
+    bundle.subjects?.forEach(s => s.id && importedSubjectIds.add(s.id));
+    bundle.domains?.forEach(d => d.subject_id && importedSubjectIds.add(d.subject_id));
+    bundle.objectives?.forEach(o => o.subject_id && importedSubjectIds.add(o.subject_id));
+
+    if (importedSubjectIds.size > 0) {
+      const sids = Array.from(importedSubjectIds);
+      // Tasks first (depend on success_criteria)
+      await supabaseAdmin.from('tasks')
+        .delete()
+        .in('subject_id_uuid', sids)
+        .or('success_criterion_id_uuid.is.null,domain_id_uuid.is.null,subdomain_id_uuid.is.null');
+      // Then success_criteria (depend on objectives)
+      await supabaseAdmin.from('success_criteria')
+        .delete()
+        .in('subject_id_uuid', sids)
+        .or('objective_id_uuid.is.null,domain_id_uuid.is.null,subdomain_id_uuid.is.null');
+      // Then objectives
+      await supabaseAdmin.from('objectives')
+        .delete()
+        .in('subject_id_uuid', sids)
+        .or('domain_id_uuid.is.null,subdomain_id_uuid.is.null');
+      console.log(`🧹 Orphan cleanup complete for ${sids.length} subject(s)`);
+    }
+
+    // ----------------------------------------------------------------------
+    // 9. Verification — scoped to imported subjects only so stale orphans
+    // from unrelated subjects don't poison the readiness flag.
     // ----------------------------------------------------------------------
     const verifyChecks: Array<[string, string]> = [
       ['objectives', 'subdomain_id_uuid'],
@@ -553,11 +585,14 @@ Deno.serve(async (req) => {
       ['topic_objective_links', 'objective_id_uuid'],
     ];
     const verification: Record<string, number> = {};
+    const sidsArr = Array.from(importedSubjectIds);
     for (const [tbl, col] of verifyChecks) {
-      const { count } = await supabaseAdmin
-        .from(tbl)
-        .select('*', { count: 'exact', head: true })
-        .is(col, null);
+      let q = supabaseAdmin.from(tbl).select('*', { count: 'exact', head: true }).is(col, null);
+      // For tables with subject_id_uuid scope to imported subjects.
+      if (sidsArr.length > 0 && (tbl === 'objectives' || tbl === 'success_criteria')) {
+        q = q.in('subject_id_uuid', sidsArr);
+      }
+      const { count } = await q;
       verification[`${tbl}.${col}_null`] = count ?? 0;
     }
     const allClean = Object.values(verification).every(v => v === 0);
