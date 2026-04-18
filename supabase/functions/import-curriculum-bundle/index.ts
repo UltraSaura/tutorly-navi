@@ -261,8 +261,9 @@ Deno.serve(async (req) => {
         label: d.label,
         domain: d.domain ?? `${d.subject_id.slice(0, 8)}_${d.code}`,
       }));
+      // PK is `domain` (text), so dedupe on that. Otherwise re-imports with new UUIDs collide on the legacy text PK.
       for (const c of chunk(rows, CHUNK_SIZE)) {
-        const { error } = await supabaseAdmin.from('domains').upsert(c, { onConflict: 'id' });
+        const { error } = await supabaseAdmin.from('domains').upsert(c, { onConflict: 'domain' });
         if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('domains', error) }, 200);
         counts.domains += c.length;
       }
@@ -282,8 +283,9 @@ Deno.serve(async (req) => {
         domain: s.domain ?? null,
         subdomain: s.subdomain ?? `${s.subject_id.slice(0, 8)}_${s.code}_${s.label}`,
       }));
+      // (domain, subdomain) is UNIQUE — dedupe on that pair so legacy text collisions resolve via UPDATE not INSERT.
       for (const c of chunk(rows, CHUNK_SIZE)) {
-        const { error } = await supabaseAdmin.from('subdomains').upsert(c, { onConflict: 'id_new' });
+        const { error } = await supabaseAdmin.from('subdomains').upsert(c, { onConflict: 'domain,subdomain' });
         if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('subdomains', error) }, 200);
         counts.subdomains += c.length;
       }
