@@ -1,33 +1,37 @@
 
 
-## Root cause (confirmed)
+User wants a self-contained "starter kit" they can paste into ChatGPT so it produces a valid `bundle.json` on first try. I have everything needed already in the repo (`curriculum-import/BUNDLE_FORMAT.md`, the existing subject UUIDs, the edge function behavior). No code changes — this is a documentation task.
 
-Replace mode does `DELETE FROM objectives WHERE subject_id_uuid = $sid`. But the leftover demo row has `subject_id_uuid IS NULL` — so it's never deleted. Then verification counts ALL nulls in the table → reports 1 NULL → "Not ready".
+## Plan
 
-Same pattern for success_criteria.
+Create a single file: `curriculum-import/CHATGPT_PROMPT.md` — a copy-paste-ready prompt bundle for ChatGPT.
 
-```
-objectives table:
-├── 83268905-... (old demo, NULL FKs) ← survives replace, fails verification
-└── a72e7b4b-... (your import, all FKs set) ← perfect
-```
+### Contents
 
-## Fix (one-file change)
+**1. The prompt itself** (one block the user pastes into ChatGPT):
+- Role: "You generate curriculum import bundles for a Supabase-backed app"
+- Hard rules: pre-generate UUIDs, reuse existing subject UUIDs (list them), wire FKs by UUID, omit empty arrays, emit valid JSON only
+- Output format: a fenced `json` code block with the 8 top-level arrays
+- Per-section field requirements (condensed from BUNDLE_FORMAT.md)
+- Safety rails: no `topic_objective_links` unless topic UUIDs given, success_criteria must reference an objective in the same bundle
 
-Edit `supabase/functions/import-curriculum-bundle/index.ts` — extend replace mode to also wipe NULL-FK orphan rows before the regular subject-scoped delete.
+**2. Reference data ChatGPT needs** (paste alongside the prompt):
+- The 5 existing subject UUIDs + slugs (I'll query the live DB to get the real UUIDs so the user can paste the exact values)
+- A worked minimal example (1 domain → 1 subdomain → 1 objective → 1 SC)
+- Common levels: CP, CE1, CE2, CM1, CM2, 6e, 5e, 4e, 3e, 2nde, 1ère, Tle
 
-**Before objectives upsert (in replace block, ~line 207)**: add a global `DELETE FROM objectives WHERE subject_id_uuid IS NULL AND id_new NOT IN (bundle.objective_ids)` — purge orphans regardless of subject.
+**3. User workflow** (3 steps):
+1. Paste the prompt + your topic ("Generate CM1 Maths fractions, full coverage")
+2. Save ChatGPT's JSON output as `bundle.json`
+3. Upload at `/admin/curriculum` with "Replace existing data" ticked
 
-Same for `success_criteria` (NULL `objective_id_uuid`), `subdomains` (NULL `subject_id`), `domains` (NULL `subject_id`), `tasks` (NULL `subject_id_uuid`).
+**4. Troubleshooting cheatsheet** — the 3 errors we just debugged and what they mean.
 
-This is safe because:
-- Bundles always provide proper FKs now (the function backfills mirrors).
-- Any row with NULL critical FKs is stale demo data with no path to be referenced correctly.
+### What I'll do during implementation
 
-## What you do after
+1. Run a read-only SQL query to fetch real subject UUIDs + slugs from the live `subjects` table.
+2. Write `curriculum-import/CHATGPT_PROMPT.md` with those real values inlined.
+3. Add a one-line link to it from `curriculum-import/README.md`.
 
-1. Re-upload `bundle.json` with "Replace existing data" ticked.
-2. Verification should show all zeros → **ready_for_phase_3: true**.
-
-No bundle changes needed.
+No edge function or app code changes. Pure docs.
 
