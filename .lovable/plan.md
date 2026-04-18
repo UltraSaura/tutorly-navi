@@ -1,41 +1,100 @@
 
 
-## Status: Import works ✅ — but FK wiring is incomplete
+The user gave a precise spec — no ambiguity, no need to ask questions. Let me lay out the exact deliverable.
 
-The dup-key blocker is gone. New issue: importer reports `Not ready` because:
-- `objectives.subdomain_id_uuid_null = 1`
-- `objectives.domain_id_uuid_null = 1`
+## Plan: multi-subject bundle exporter
 
-Meaning: when the importer inserted the objective, it didn't populate `domain_id_uuid` / `subdomain_id_uuid` on the `objectives` row. The bundle DOES carry `domain_id` and `subdomain_id` (your Apps Script writes them), so this is an importer bug — it's only writing the legacy text columns and forgetting to mirror them into the `*_uuid` FK columns.
+### 1. New `Bundle_Rows` header row (13 columns, was 12)
 
-Same likely story for `success_criteria.subject_id_uuid` / `domain_id_uuid` / `subdomain_id_uuid` and `tasks.*_uuid` (they passed the NULL check this time only because the readiness flag only inspects 3 specific columns).
+```
+bundle_name | include | subject_slug | level_code | domain_code | domain_label | subdomain_code | subdomain_label | objective_text | notes_from_prog | keywords_json | success_criteria_json | tasks_json
+```
 
-## Investigation (read-only, this turn)
+`bundle_name` is column A so it's the first thing you see. Empty value = "no group" (still exportable when filter is blank).
 
-I'll inspect:
-1. `supabase/functions/import-curriculum-bundle/index.ts` — the section that inserts `objectives`, to confirm it's not mapping `domain_id` → `domain_id_uuid` / `subdomain_id` → `subdomain_id_uuid`.
-2. `supabase--read_query` on the freshly imported `objectives` row to confirm the NULL columns and verify `domain_id` / `subdomain_id` (text) DID land — proving the data IS in the bundle, just not mirrored.
-3. Same check on `success_criteria` and `tasks` for completeness.
+### 2. Filter input
 
-## Fix plan (one tightly scoped patch)
+Use **`Input!B7`** labeled `Export bundle_name (blank = all)`. `setupBundleRowsSheet()` will also write that label/cell into the `Input` sheet if missing. No prompt dialog — sheet cell is friendlier and persists.
 
-In `import-curriculum-bundle/index.ts`, when building each row payload:
+### 3. Menu (unchanged shape, same 3 items)
 
-- **objectives**: also set `domain_id_uuid = bundleRow.domain_id`, `subdomain_id_uuid = bundleRow.subdomain_id`, `subject_id_uuid = bundleRow.subject_id` (these are already UUIDs in your bundle).
-- **success_criteria**: also set `objective_id_uuid`, `subject_id_uuid`, `domain_id_uuid`, `subdomain_id_uuid` from the bundle's UUID fields.
-- **tasks**: also set `success_criterion_id_uuid`, `subject_id_uuid`, `domain_id_uuid`, `subdomain_id_uuid`.
-- **subdomains**: also set `subject_id` (uuid col) — already correct; verify.
+```
+Tutorly France
+├── Setup Bundle_Rows sheet      ← updated to new headers + Input!B7 label
+├── Validate Bundle_Rows         ← updated validations
+└── Export bundle.json           ← reads Input!B7 filter, multi-subject safe
+```
 
-After the upserts, run the existing remap step so any resolved-existing IDs propagate into these `_uuid` columns too (it currently only updates the legacy text columns).
+No new menu items. The existing one becomes filter-aware and multi-subject-safe.
 
-No DB migration. No script change. No changes to your Google Sheet workflow. Just the importer.
+### 4. Code changes in the `.gs` file
 
-## Expected result after fix
+**a. Constants**
+```js
+const BUNDLE_HEADERS = [
+  'bundle_name', 'include', 'subject_slug', 'level_code',
+  'domain_code', 'domain_label', 'subdomain_code', 'subdomain_label',
+  'objective_text', 'notes_from_prog', 'keywords_json',
+  'success_criteria_json', 'tasks_json',
+];
+```
 
-Re-upload `bundle_Francais_CM1_FIXED-3.json` (or generate a new one) → readiness flips to **Ready** → all four NULL-FK counts go to 0.
+**b. `readBundleRows_()`**
+- Read new `bundle_name` column.
+- After mapping, apply filter from `Input!B7`:
+  - Blank → keep all `include=TRUE` rows.
+  - Non-blank → keep only `include=TRUE && bundle_name === filter` rows (case-insensitive trim compare).
 
-## Out of scope (intentionally)
+**c. `validateRows_(rows)` — add 3 new checks**
+- Build a `Map<"slug|||domainCode", domainLabel>` while iterating; if a later row has same key but different label → error `Row N: domain_label mismatch for <slug>/<code> (expected "X", got "Y")`.
+- Same for subdomain: `Map<"slug|||domainCode|||subdomainCode", subdomainLabel>`.
+- Existing checks stay (subject_slug membership, level_code membership, required fields, JSON parse).
 
-- The auto-scrape pipeline (you declined; not revisiting unless asked).
-- Any Apps Script edits (your output is correct).
+**d. `buildBundleFromRows_(rows)` — fix the collision bug**
+
+Change dedup keys to include `subject_slug`:
+```js
+const domainKey = `${r.subject_slug}|||${r.domain_code}`;
+const subdomainKey = `${r.subject_slug}|||${r.domain_code}|||${r.subdomain_code}`;
+```
+
+(Currently uses `subject.id` which is *almost* correct — but spec asks for explicit `subject_slug` form. Functionally equivalent; I'll use the spec's form for traceability.)
+
+**e. `bundle.subjects[]` population**
+
+Currently `subjects` stays empty. Spec says:
+> keep `"subjects": []`
+> reuse existing subject UUIDs from the fixed mapping
+
+I'll keep `subjects: []` as-is — the importer doesn't need them when the UUIDs already exist in DB (which they do, per `SUBJECT_UUIDS`). Domains/subdomains/objectives reference `subject_id` directly. ✅
+
+**f. `exportBundleJson()` — filename logic**
+
+- If filter (`Input!B7`) non-blank → filename = `bundle_<filterName>.json`.
+- If blank but rows span 1 subject → `bundle_<Subject>_<LEVEL>.json` (current behavior preserved when single-subject).
+- If blank and rows span multiple subjects → `bundle_multi_<YYYYMMDD-HHmm>.json`.
+
+### 5. What stays identical
+
+- UUID generation, level normalization, JSON parsing, download dialog, Drive copy.
+- Importer (`import-curriculum-bundle`) — no changes needed; it already handles multi-subject bundles per the recent fixes.
+- `/admin/curriculum` upload flow.
+
+### 6. Deliverable
+
+I'll paste the **complete updated `.gs` file** in chat as one drop-in replacement. You:
+1. Open Apps Script editor → paste over the existing file → Save.
+2. Reload the spreadsheet.
+3. Run **Tutorly France → Setup Bundle_Rows sheet** once to get the new column + the `Input!B7` filter cell (this WILL clear existing data — I'll add a one-line confirmation prompt before clearing).
+4. Re-paste your data with the new `bundle_name` column.
+5. Optionally type a bundle_name in `Input!B7` to filter, or leave blank for everything.
+6. Validate → Export → upload at `/admin/curriculum`.
+
+### 7. Migration note for your existing data
+
+`setupBundleRowsSheet` is destructive today (calls `sh.clear()`). I'll change it to:
+- If sheet exists with data → ask "Reset will erase X rows. Continue?" via `ui.alert(YES_NO)`.
+- If user picks No → only insert the new `bundle_name` column at position A on the existing sheet (non-destructive upgrade path).
+
+This way your current `Bundle_Rows` data isn't nuked.
 
