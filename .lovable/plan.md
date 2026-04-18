@@ -1,120 +1,133 @@
 
 
-## Curriculum Schema Refactor — Plan
+## Curriculum Refactor — Phase 2 + Phase 3 Plan
 
-### Strategy: phased, additive migration (safest)
+Phase 1 is already applied (additive UUID columns added). Below is the rest, ready to ship.
 
-Three phases. No destructive changes until phase 3, and only after the importer is verified.
+---
+
+### Phase 2 — Backfill + constraints (non-breaking)
+
+**Backfill order (FKs need parents first):**
+
+1. `domains.subject_id` ← `subjects.id` via `subjects.slug = objectives.subject_id` text. Since current `domains` has no subject link, derive subject from `objectives` rows that reference each domain code. Fallback: bulk-update with NULL, then admin re-assigns.
+2. `subdomains.subject_id` and `subdomains.domain_id_new` ← join on `subdomains.domain` text → `domains.code`.
+3. `objectives.subject_id_uuid` ← `subjects` via slug match on `objectives.subject_id` text.
+4. `objectives.domain_id_uuid` ← `domains` via `(subject_id, code)`.
+5. `objectives.subdomain_id_uuid` ← `subdomains` via `(domain_id_new, code)` or `subdomain` text.
+6. `success_criteria.objective_id_uuid` ← `objectives.id_new` via legacy `objective_id` text → `objectives.id` text.
+7. Cascade `subject/domain/subdomain_id_uuid` on `success_criteria` from parent objective.
+8. `tasks.success_criterion_id_uuid` ← `success_criteria.id_new`. Cascade other FKs.
+9. `topics.curriculum_subject_id_uuid` ← `subjects.slug` match on text col.
+10. `topics.curriculum_domain_id_uuid` ← `domains` via (subject, code).
+11. `topics.curriculum_subdomain_id_uuid` ← `subdomains` via (domain, code).
+12. `topic_objective_links.objective_id_uuid` ← `objectives.id_new` via text match.
+13. `lessons.topic_id` ← derive from `topic_objective_links` (lessons share objectives with topics) — or leave NULL for admin assignment if ambiguous.
+14. `videos.subject_id_uuid` ← `subjects.slug`.
+15. `objective_mastery.objective_id_uuid` ← `objectives.id_new`.
+16. `lesson_sessions.lesson_id_uuid` ← `lessons.id_new`.
+
+**Constraints added in Phase 2 (non-blocking, on new columns only):**
+- Unique: `subjects(slug)`, `domains(subject_id, code)`, `subdomains(domain_id_new, code)`, `topic_objective_links(topic_id, objective_id_uuid)`.
+- FK: every `*_id_uuid` / `*_new` column → parent's `id_new` (or `id` where already uuid).
+- Indexes on every new FK column.
+
+App keeps reading legacy text columns. Importer can start writing UUIDs in parallel.
+
+---
+
+### Phase 3 — Cutover (breaking, run after importer + app updated)
+
+For each table:
+1. Drop legacy text/bigint PK constraint.
+2. Drop legacy text FK columns (`objectives.domain`, `objectives.subdomain`, `objectives.subject_id` text, `objectives.domain_id` text, etc.).
+3. Drop `subdomains.id` bigint + sequence.
+4. Drop `lessons.unit_id`.
+5. Rename `id_new` → `id`, `*_id_uuid` / `*_id_new` → final names (`subject_id`, `domain_id`, `subdomain_id`, `objective_id`, `success_criterion_id`, `lesson_id`).
+6. Promote new UUID PKs.
+7. Re-add NOT NULL where required (`domains.subject_id`, `domains.code`, `domains.label`, `subdomains.subject_id`, `subdomains.domain_id`, `objectives.subject_id`, etc.).
+8. Re-create FK constraints under final names.
+
+---
+
+### Final schema (after phase 3)
 
 ```text
-Phase 1: Add UUID PKs + UUID FK columns alongside existing text/bigint columns
-Phase 2: Backfill UUID FKs from existing text labels; switch importer + app to UUIDs
-Phase 3: Drop legacy text columns and old IDs once nothing reads them
+subjects        (id, name, slug UNIQUE, language, ...)
+domains         (id, subject_id→subjects, code, label, UNIQUE(subject_id,code))
+subdomains      (id, subject_id→subjects, domain_id→domains, code, label,
+                 UNIQUE(domain_id,code))
+objectives      (id, subject_id, domain_id, subdomain_id, level, text,
+                 notes_from_prog, keywords)
+success_criteria(id, objective_id→objectives, subject_id, domain_id,
+                 subdomain_id, text)
+tasks           (id, success_criterion_id→success_criteria, subject_id,
+                 domain_id, subdomain_id, type, stem, solution, rubric,
+                 difficulty, tags, source)
+topics          (id, category_id, curriculum_subject_id→subjects,
+                 curriculum_domain_id→domains, curriculum_subdomain_id→subdomains,
+                 curriculum_country_code, curriculum_level_code, ...)
+topic_objective_links (id, topic_id→topics, objective_id→objectives,
+                 UNIQUE(topic_id,objective_id))
+videos          (id, topic_id→topics, subject_id→subjects, ...)
+lessons         (id, topic_id→topics, title, objective_ids, success_criterion_ids,
+                 materials, teacher_talk, student_worksheet, misconceptions)
+objective_mastery (id, student_id, topic_id, objective_id→objectives, ...)
+lesson_sessions   (id, child_id, lesson_id→lessons, ...)
 ```
 
-This avoids breaking the live app at any point. Each phase is a separate migration.
+---
+
+### Code impact (between Phase 2 and Phase 3)
+
+**Importer (`import-curriculum-bundle` edge function + `curriculum-import/import.js`)**
+- Pre-generate UUIDs in JS (`crypto.randomUUID()`) for every entity before insert; wire FKs explicitly.
+- Switch upserts to `onConflict: 'id'` everywhere. Use `(subject_id, code)` for domains and `(domain_id, code)` for subdomains as natural keys.
+- Delete `mapToCurriculum()` keyword hack — transformer sets FKs.
+- During phase 2 transition: write BOTH legacy text + new UUID columns so the live app keeps working.
+
+**App code (`src/`)**
+- `src/types/curriculum.ts`: types stay `string`, but semantics shift from text codes to UUIDs.
+- Hooks touching joins: `useTopicObjectives`, `useObjectiveMastery`, lesson generation edge functions — switch joins from text codes to UUID FKs.
+- `objective_mastery` and `lesson_sessions` queries to use new UUID FK columns.
+- Edge functions to update: `import-curriculum-bundle`, `generate-lesson-content`, `generate-quiz-from-topics`, `recommendations`, `student-progress`.
 
 ---
 
-### Diagnosis of current pain points
-
-| Table | Problem |
-|---|---|
-| `domains` | No `id`. PK is `domain` text. No `subject_id`. |
-| `subdomains` | `id` is `bigint`. FK `domain` is text. No `subject_id`. |
-| `objectives` | PK is `text`. Has both `domain` (text) and `domain_id` (text, not UUID). Mixed strategy. |
-| `success_criteria` | PK text. FKs are text, not UUID. |
-| `tasks` | Same mixed pattern. |
-| `lessons` | `unit_id` text references nonexistent `units` table. Should reference `topics`. |
-| `topics` | Already UUID PK ✅. Has `curriculum_*_id` columns but they're text, not UUID FKs. |
-| `topic_objective_links` | `objective_id` is text (matches current objectives PK). Will need to switch to UUID. |
-| `videos` | `topic_id` is UUID ✅ but `subject_id` is text. |
-
----
-
-### Final target schema (after phase 3)
+### Importer pipeline after Phase 2
 
 ```text
-subjects (id uuid PK, name, slug, ...)
-  ↑
-  ├── domains (id uuid PK, subject_id uuid FK, code text, label text)
-  │     ↑
-  │     └── subdomains (id uuid PK, subject_id uuid FK, domain_id uuid FK, code, label)
-  │           ↑
-  │           └── objectives (id uuid PK, subject_id uuid FK, domain_id uuid FK,
-  │                           subdomain_id uuid FK, level, text, ...)
-  │                 ↑
-  │                 ├── success_criteria (id uuid PK, objective_id uuid FK,
-  │                 │                     subject_id, domain_id, subdomain_id [denorm])
-  │                 │     ↑
-  │                 │     └── tasks (id uuid PK, success_criterion_id uuid FK, ...)
-  │                 │
-  │                 └── topic_objective_links (id uuid PK,
-  │                                            topic_id uuid FK → topics,
-  │                                            objective_id uuid FK → objectives)
-  │
-  └── topics (id uuid PK, curriculum_subject_id uuid FK,
-              curriculum_domain_id uuid FK, curriculum_subdomain_id uuid FK, ...)
-        ↑
-        ├── videos (id uuid PK, topic_id uuid FK, subject_id uuid FK, ...)
-        └── lessons (id uuid PK, topic_id uuid FK, title, ...)
+PDF/spreadsheet
+    ↓
+extractor → flat rows
+    ↓
+transformer (assigns crypto.randomUUID() to every entity, wires FKs)
+    ↓
+{
+  subjects:[{id, slug, name, ...}],
+  domains:[{id, subject_id, code, label}],
+  subdomains:[{id, subject_id, domain_id, code, label}],
+  objectives:[{id, subject_id, domain_id, subdomain_id, level, text, ...}],
+  success_criteria:[{id, objective_id, subject_id, domain_id, subdomain_id, text}],
+  tasks:[{id, success_criterion_id, ...}],
+  topics:[{id, curriculum_subject_id, curriculum_domain_id, curriculum_subdomain_id, ...}],
+  topic_objective_links:[{id, topic_id, objective_id}],
+  lessons:[{id, topic_id, title, ...}],
+  videos:[{id, topic_id, subject_id, ...}]
+}
+    ↓
+edge function: insert in parent→child order, onConflict:'id'
 ```
 
-All PKs UUID. All FKs UUID. No text-label pseudo-relations. `topic_*` columns keep the `curriculum_` prefix per your note.
+No more keyword matching. No more text-FK lookups. No more null-tolerant hacks.
 
 ---
 
-### Migration plan (3 SQL migrations)
+### Migrations to generate (3 files)
 
-**Migration 1 — Add new UUID columns (additive, non-breaking)**
-- `domains`: add `id uuid PK default gen_random_uuid()`, `subject_id uuid`, `code text` (copy of `domain`), `label text`.
-- `subdomains`: add `id_new uuid default gen_random_uuid()`, `subject_id uuid`, `domain_id_new uuid`, `code`, `label`.
-- `objectives`: add `id_new uuid default gen_random_uuid()`, convert `subject_id`/`domain_id`/`subdomain_id` to uuid via new `_uuid` columns.
-- `success_criteria`, `tasks`: same pattern — `id_new uuid`, `*_id_uuid` columns.
-- `topics`: add `curriculum_subject_id_uuid`, `curriculum_domain_id_uuid`, `curriculum_subdomain_id_uuid` as UUID.
-- `topic_objective_links`: add `objective_id_uuid uuid`.
-- `lessons`: add `id_new uuid`, `topic_id uuid`.
-- `videos`: add `subject_id_uuid uuid`.
+1. `phase2_backfill_and_constraints.sql` — backfill all `*_uuid`/`*_new` columns + add FK + unique constraints + indexes. Non-breaking.
+2. `phase3_cutover.sql` — drop legacy columns, rename to final names, promote PKs, re-add NOT NULL + FK constraints. Breaking. Will be applied only after you confirm importer + app are switched.
+3. The Phase 1 migration is already applied — no rework needed.
 
-**Migration 2 — Backfill + add FK constraints**
-- Populate new UUID columns by joining on the legacy text labels (e.g. `UPDATE objectives SET subject_id_uuid = s.id FROM subjects s WHERE objectives.subject_id = s.slug`).
-- Add FK constraints on the new UUID columns.
-- Add unique constraints (`subjects.slug`, `domains(subject_id, code)`, etc.).
-- Recreate triggers (`update_topic_video_count`, `update_topic_quiz_count`) — already on new table names, no change needed.
-
-**Migration 3 — Cutover (run only after importer + app updated)**
-- Drop old text PKs and legacy text columns.
-- Rename `id_new` → `id`, `*_uuid` → final names.
-- Promote new UUID PKs.
-- Drop `subdomains.id` bigint column and sequence.
-- Drop `lessons.unit_id`.
-- Drop `objectives.domain`, `objectives.subdomain` text columns.
-
-Phase 3 stays unapplied until you confirm phase 2 works end-to-end.
-
----
-
-### Code impact
-
-**Importer (`curriculum-import/import.js` + edge function `import-curriculum-bundle`)**
-- JSON bundle keys stay the same.
-- Each entity needs to provide a UUID `id` (or let the DB generate it and the importer captures returned IDs to wire FKs).
-- Recommend: importer pre-generates UUIDs in JS (`crypto.randomUUID()`) so all FK wiring happens before insert. This matches your "structured JSON" pipeline cleanly.
-- Remove the `mapToCurriculum()` keyword-matching hack in the edge function — FKs will be set explicitly by the transformer.
-- Drop `onConflict: 'domain'` style upserts; switch to `onConflict: 'id'` everywhere or `onConflict: 'subject_id,code'` for natural keys.
-
-**App code**
-- `src/types/curriculum.ts`: change `Objective.id`, `SuccessCriterion.id`, `Task.id`, `Lesson.id` from `string` (text codes) to `string` (uuid) — type stays `string`, semantics change.
-- Any query joining objectives via text codes needs to join via UUID instead.
-- `topic_objective_links.objective_id` becomes UUID — affects `useTopicObjectives`, `useObjectiveMastery`, lesson generation edge functions.
-- `objective_mastery.objective_id` is currently text — needs same UUID conversion (added to migration scope).
-- `lesson_sessions.lesson_id` text — convert to UUID FK to `lessons`.
-
-**Edge functions to update**: `import-curriculum-bundle`, `generate-lesson-content`, `generate-quiz-from-topics`, `recommendations`, `student-progress`.
-
----
-
-### What I need from you before generating SQL
-
-A few decisions affect the migration shape:
+Backfill rows that fail to match (e.g. orphan subdomain text labels with no parent subject) will be reported via a `SELECT COUNT(*) WHERE *_uuid IS NULL` in the migration so we know what needs admin cleanup before Phase 3.
 
