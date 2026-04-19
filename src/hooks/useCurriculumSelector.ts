@@ -49,13 +49,13 @@ export function useCurriculumSelector(initialSelection?: Partial<CurriculumSelec
     return (selection.countryCode && selection.levelCode)
       ? getSubjects(selection.countryCode, selection.levelCode)
       : [];
-  }, [selection.countryCode, selection.levelCode]);
+  }, [selection.countryCode, selection.levelCode, bundleVersion]);
 
   const domains = useMemo(() => {
     return (selection.countryCode && selection.levelCode && selection.subjectId)
       ? getDomainsBySubject(selection.countryCode, selection.levelCode, selection.subjectId)
       : [];
-  }, [selection.countryCode, selection.levelCode, selection.subjectId]);
+  }, [selection.countryCode, selection.levelCode, selection.subjectId, bundleVersion]);
 
   const subdomains = useMemo(() => {
     return (selection.countryCode && selection.levelCode && selection.subjectId && selection.domainId)
@@ -66,7 +66,7 @@ export function useCurriculumSelector(initialSelection?: Partial<CurriculumSelec
           selection.domainId
         )
       : [];
-  }, [selection.countryCode, selection.levelCode, selection.subjectId, selection.domainId]);
+  }, [selection.countryCode, selection.levelCode, selection.subjectId, selection.domainId, bundleVersion]);
 
   // Update handlers with cascading reset logic
   const setCountry = (countryCode: string) => {
