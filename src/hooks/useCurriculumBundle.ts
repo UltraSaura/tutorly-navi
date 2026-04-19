@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import {
   getCountries,
   getLevelsByCountry,
@@ -6,6 +6,9 @@ import {
   getDomainsBySubject,
   getSubdomainsByDomain,
   getAllSubjectsInCountry,
+  subscribeBundle,
+  getBundleVersion,
+  primeCurriculumBundle,
 } from '@/lib/curriculum';
 import type {
   CurriculumCountry,
@@ -16,70 +19,67 @@ import type {
 } from '@/types/curriculum';
 
 /**
- * Hook to get all countries from the curriculum
+ * Subscribe to bundle version so any selector re-renders once the
+ * Supabase-backed curriculum tree finishes loading.
  */
-export function useCurriculumCountries(): CurriculumCountry[] {
-  return useMemo(() => getCountries(), []);
+function useBundleVersion(): number {
+  useEffect(() => { primeCurriculumBundle().catch(() => {}); }, []);
+  return useSyncExternalStore(subscribeBundle, getBundleVersion, getBundleVersion);
 }
 
-/**
- * Hook to get levels for a specific country
- */
+export function useCurriculumCountries(): CurriculumCountry[] {
+  const v = useBundleVersion();
+  return useMemo(() => getCountries(), [v]);
+}
+
 export function useCurriculumLevels(countryId: string): CurriculumLevel[] {
+  const v = useBundleVersion();
   return useMemo(() => {
     if (!countryId) return [];
     return getLevelsByCountry(countryId);
-  }, [countryId]);
+  }, [countryId, v]);
 }
 
-/**
- * Hook to get subjects for a specific country and level
- */
 export function useCurriculumSubjects(
   countryId: string,
   levelId: string
 ): CurriculumSubject[] {
+  const v = useBundleVersion();
   return useMemo(() => {
     if (!countryId || !levelId) return [];
     return getSubjects(countryId, levelId);
-  }, [countryId, levelId]);
+  }, [countryId, levelId, v]);
 }
 
-/**
- * Hook to get all unique subjects in a country (across all levels)
- */
 export function useAllCurriculumSubjects(countryId: string): CurriculumSubject[] {
+  const v = useBundleVersion();
   return useMemo(() => {
     if (!countryId) return [];
     return getAllSubjectsInCountry(countryId);
-  }, [countryId]);
+  }, [countryId, v]);
 }
 
-/**
- * Hook to get domains for a specific subject
- */
 export function useCurriculumDomains(
   countryId: string,
   levelId: string,
   subjectId: string
 ): CurriculumDomain[] {
+  const v = useBundleVersion();
   return useMemo(() => {
     if (!countryId || !levelId || !subjectId) return [];
     return getDomainsBySubject(countryId, levelId, subjectId);
-  }, [countryId, levelId, subjectId]);
+  }, [countryId, levelId, subjectId, v]);
 }
 
-/**
- * Hook to get subdomains for a specific domain
- */
 export function useCurriculumSubdomains(
   countryId: string,
   levelId: string,
   subjectId: string,
   domainId: string
 ): CurriculumSubdomain[] {
+  const v = useBundleVersion();
   return useMemo(() => {
     if (!countryId || !levelId || !subjectId || !domainId) return [];
     return getSubdomainsByDomain(countryId, levelId, subjectId, domainId);
-  }, [countryId, levelId, subjectId, domainId]);
+  }, [countryId, levelId, subjectId, domainId, v]);
 }

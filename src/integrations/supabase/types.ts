@@ -1523,6 +1523,7 @@ export type Database = {
       subjects: {
         Row: {
           color_scheme: string
+          country_code: string | null
           created_at: string
           icon_name: string
           id: string
@@ -1535,6 +1536,7 @@ export type Database = {
         }
         Insert: {
           color_scheme: string
+          country_code?: string | null
           created_at?: string
           icon_name: string
           id?: string
@@ -1547,6 +1549,7 @@ export type Database = {
         }
         Update: {
           color_scheme?: string
+          country_code?: string | null
           created_at?: string
           icon_name?: string
           id?: string
