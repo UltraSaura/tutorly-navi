@@ -1,53 +1,51 @@
 
-Goal: make 5e Mathematics appear in `/admin/curriculum`.
 
-Diagnosis:
-- Your uploaded bundle is valid for the viewer:
-  - subject_id = `f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de`
-  - `level = "5eme"`
-- The database already contains:
-  - FR school level `5EME` / label `5ème`
-  - 2 Mathematics objectives at level `5eme`
-- So the level is not missing from the DB.
+## Diagnosis
 
-Root cause:
-- `src/lib/curriculumStore.ts` filters subjects by country language:
-  - France resolves to `fr`
-  - the `Mathematics` subject row is stored with `language = 'en'`
-  - therefore Mathematics is excluded from the France curriculum tree before the viewer even renders levels/subjects
+The Curriculum Viewer at `/admin/curriculum` reads from a **static file** (`src/data/curriculumBundle.json`), NOT from Supabase.
 
-What to change:
-1. Update `src/lib/curriculumStore.ts`
-   - Remove the strict `subjectsInLanguage` gate for admin curriculum tree building.
-   - New rule:
-     - if a subject has objectives for a level, include it for that level regardless of subject language
-     - only use language as a fallback for subjects that have no objectives anywhere
-   - Keep lowercase normalization for level matching.
+Currently the bundle only contains: `ce1`, `cm1` (×2 — duplicate), `cm2`, `6e`. There's **no `5e`, `4e`, or `3e` level**.
 
-2. Keep level matching normalized
-   - Continue matching `school_levels.level_code.toLowerCase()` with `objectives.level.toLowerCase()`
-   - This already supports `5EME` ↔ `5eme`.
+When you upload a bundle via `/admin/curriculum`, the `import-curriculum-bundle` edge function writes objectives/success_criteria/tasks to Supabase tables — but it does **not** add the level to `curriculumBundle.json`. So your 5e data is in the DB but the viewer's level dropdown still doesn't list 5e.
 
-3. Verify viewer behavior after the fix
-   - `/admin/curriculum` → France → 5ème should show Mathematics
-   - Domain `Nombres et calculs` and subdomain `Fractions` should appear
-   - Existing CM1 content should still load
+This is a fundamental architecture gap: the taxonomy (countries/levels/subjects/domains/subdomains shown in the viewer) lives in a hand-edited static file, while the curriculum content (objectives/criteria/tasks) lives in Supabase. They're not synced.
 
-4. Sanity-check related selectors
-   - Confirm `useCurriculumLevels`, `useAllCurriculumSubjects`, and `CurriculumSelector` still behave correctly after the store change
-   - Ensure we do not reintroduce duplicate levels
+## Fix — make Curriculum Viewer read from Supabase
 
-Technical details:
-- Current blocking code is here:
-  - `src/lib/curriculumStore.ts`
-  - `const subjectsInLanguage = subjects.filter(s => (s.language ?? 'en') === lang);`
-- Confirmed DB facts:
-  - `subjects.id = f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de` → `Mathematics`, `language = 'en'`
-  - `school_levels` contains `FR / 5EME / 5ème`
-  - `objectives` contains Mathematics rows for `5eme`
-- This means the import worked; the viewer tree logic is what hides the subject.
+Replace the static-JSON source with live Supabase queries so any imported bundle immediately appears.
 
-Expected result after implementation:
-- 5ème remains visible in the level dropdown
-- Mathematics becomes selectable under 5ème
-- The imported 5e objectives show in the Curriculum Viewer without changing your bundle data
+### Changes
+
+1. **`src/lib/curriculum.ts`** — keep the same exported API (`getCountries`, `getLevelsByCountry`, `getSubjects`, `getDomainsBySubject`, `getSubdomainsByDomain`, etc.) but back them with Supabase data instead of the JSON import. Build the country/level/subject/domain/subdomain tree from:
+   - `countries` table → countries
+   - `school_levels` table → levels per country
+   - `subjects` table → subjects (filter by language; FR levels show FR subjects)
+   - `domains` table → domains per subject (already has `subject_id`, `code`, `label`)
+   - `subdomains` table → subdomains per domain (`domain_id_new`, `code`, `label`)
+   - Levels per subject inferred from `objectives.level` (which is what the importer writes)
+
+2. **Convert sync API → async + cached**. Use a single `useQuery(['curriculum-tree'])` hook that loads the full tree once and caches it. Update `useCurriculumBundle.ts` hooks (`useCurriculumCountries`, `useCurriculumLevels`, `useCurriculumSubjects`, `useCurriculumDomains`, `useCurriculumSubdomains`) to read from this cached tree.
+
+3. **Keep `getLocalizedLabel` and `resolveCurriculumPath`** working — `resolveCurriculumPath` needs to become async OR accept the pre-loaded tree. Easier: expose a `useResolveCurriculumPath()` hook that uses the cached tree.
+
+4. **Delete `src/data/curriculumBundle.json`** once nothing imports it. (Verify by searching for the import path.)
+
+5. **Re-import your 5e bundle** — once the viewer is DB-backed, the level appears automatically. No re-upload needed if data is already there; the level will surface from existing `objectives.level = '5eme'` rows.
+
+### Why this is the right fix
+
+- Eliminates the manual sync between JSON and DB.
+- Levels added via import (`5e`, `4e`, `3e`, future ones) appear instantly.
+- Removes the CM1 duplicate problem at the source (the JSON had it twice — DB has one row per level).
+- One source of truth.
+
+### Open question — level naming
+
+Your bundle uses `"level": "5eme"` but the existing JSON levels use `5e`/`6e` (no "me" suffix), and `school_levels` table likely has its own convention. I'll need to check `school_levels` rows for FR and standardize. If they don't match, the import wrote `5eme` while the level table has `5e` → viewer wouldn't connect them. I'll inspect during implementation and normalize (likely to `5e`).
+
+### Out of scope (not changing)
+
+- Apps Script exporter — no changes needed.
+- The `import-curriculum-bundle` edge function — keeps writing to the same DB tables.
+- The viewer UI components — they keep calling the same hooks, just async-aware now.
+

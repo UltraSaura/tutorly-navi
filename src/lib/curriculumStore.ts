@@ -122,25 +122,23 @@ async function fetchTree(): Promise<CurriculumBundle> {
   });
 
   // For each country, build levels from `school_levels` (lowercased codes for matching).
-  // A subject is included under a level if it has objectives for that level
-  // (regardless of the subject's `language` metadata — math/physics/etc are
-  // stored as 'en' but should appear under FR levels when they have FR content).
-  // For subjects with no objectives anywhere, fall back to language matching so
-  // the tree still renders something useful for the country's primary language.
+  // Within each level, list subjects whose language matches the country
+  // AND that have content for this level (per objectives) — fall back to
+  // "all language-matching subjects" when no objectives are linked yet.
   const tree: CurriculumCountry[] = countries.map(country => {
     const lang = languageForCountry(country.code);
+    const subjectsInLanguage = subjects.filter(s => (s.language ?? 'en') === lang);
 
     const levelsForCountry = schoolLevels.filter(l => l.country_code === country.code);
 
     const levels: CurriculumLevel[] = levelsForCountry.map(l => {
       const lvlIdLower = l.level_code.toLowerCase();
-      const subjectsForLevel = subjects.filter(s => {
+      const subjectsForLevel = subjectsInLanguage.filter(s => {
         const levelsForSubject = subjectLevels.get(s.id);
-        if (!levelsForSubject || levelsForSubject.size === 0) {
-          // No objectives anywhere → include only if subject language matches country.
-          return (s.language ?? 'en') === lang;
-        }
-        // Has objectives → include under levels with content, regardless of language.
+        // If a subject has no recorded objectives anywhere, list it everywhere
+        // (so an empty curriculum still renders a useful tree). Otherwise only
+        // list it under levels that actually have content.
+        if (!levelsForSubject || levelsForSubject.size === 0) return true;
         return levelsForSubject.has(lvlIdLower);
       });
 
