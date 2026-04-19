@@ -7,14 +7,11 @@ import { useUserCurriculumProfile } from '@/hooks/useUserCurriculumProfile';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, GraduationCap } from 'lucide-react';
 import { getCountries, getLevelsByCountry } from '@/lib/curriculum';
-import { useCurriculumTree } from '@/hooks/useCurriculumBundle';
 
 export function ProfileEditForm() {
   const { profile, updateProfile, isUpdating } = useUserCurriculumProfile();
   const { toast } = useToast();
-  // Hydrate the curriculum tree so the sync getters below have data.
-  const { data: tree } = useCurriculumTree();
-
+  
   const [countryCode, setCountryCode] = useState<string>(profile?.countryCode || '');
   const [levelCode, setLevelCode] = useState<string>(profile?.levelCode || '');
 
@@ -25,8 +22,6 @@ export function ProfileEditForm() {
     }
   }, [profile]);
 
-  // Re-read on every render after the tree resolves.
-  void tree;
   const countries = getCountries();
   const levels = countryCode ? getLevelsByCountry(countryCode) : [];
 

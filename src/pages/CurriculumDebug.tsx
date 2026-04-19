@@ -7,7 +7,6 @@ import {
   getSubdomainsByDomain,
   getLocalizedLabel,
 } from '@/lib/curriculum';
-import { useCurriculumTree } from '@/hooks/useCurriculumBundle';
 import type {
   CurriculumCountry,
   CurriculumLevel,
@@ -17,9 +16,6 @@ import type {
 } from '@/types/curriculum';
 
 export default function CurriculumDebug() {
-  // Hydrate the in-memory curriculum tree before reading via sync getters.
-  const { data: tree } = useCurriculumTree();
-  void tree;
   const [selectedCountry, setSelectedCountry] = useState('fr');
   const [selectedLevel, setSelectedLevel] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');

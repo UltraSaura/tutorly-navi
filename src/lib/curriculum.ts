@@ -1,16 +1,4 @@
-/**
- * Sync curriculum API backed by the DB-backed in-memory cache.
- *
- * Hydration happens via `useCurriculumTree()` (in `useCurriculumBundle`) or by
- * calling `loadCurriculumTree()` directly. Until the cache is populated, the
- * getters return empty arrays — components should rely on the React Query
- * loading flag exposed by the hooks.
- */
-import {
-  loadCurriculumTree,
-  getCachedCurriculumTree,
-  invalidateCurriculumTree,
-} from '@/lib/curriculumStore';
+import curriculumBundleData from '@/data/curriculumBundle.json';
 import type {
   CurriculumBundle,
   CurriculumCountry,
@@ -20,33 +8,39 @@ import type {
   CurriculumSubdomain,
 } from '@/types/curriculum';
 
-// Re-export hydration helpers so callers can prefetch / invalidate.
-export { loadCurriculumTree, invalidateCurriculumTree };
+let cachedBundle: CurriculumBundle | null = null;
 
-const EMPTY_BUNDLE: CurriculumBundle = {
-  version: 'empty',
-  schema: 'curriculum-db',
-  countries: [],
-};
-
-/** Read the cached bundle (empty until hydrated). */
+/**
+ * Load and cache the curriculum bundle
+ */
 export function getCurriculumBundle(): CurriculumBundle {
-  return getCachedCurriculumTree() ?? EMPTY_BUNDLE;
+  if (!cachedBundle) {
+    cachedBundle = curriculumBundleData as CurriculumBundle;
+  }
+  return cachedBundle;
 }
 
-/** All countries from the tree. */
+/**
+ * Get all countries from the curriculum
+ */
 export function getCountries(): CurriculumCountry[] {
-  return getCurriculumBundle().countries;
+  const bundle = getCurriculumBundle();
+  return bundle.countries || [];
 }
 
-/** A country by id (case-insensitive). */
+/**
+ * Get a specific country by ID
+ */
 export function getCountry(countryId: string): CurriculumCountry | undefined {
-  if (!countryId) return undefined;
-  const id = countryId.toLowerCase();
-  return getCountries().find(c => c.id.toLowerCase() === id);
+  const countries = getCountries();
+  return countries.find(c => c.id === countryId);
 }
 
-/** Levels for a given country (deduped by id, merging subjects on conflict). */
+/**
+ * Get all levels for a specific country.
+ * Defensively dedupes by level id, merging subjects from duplicate entries
+ * so multi-subject bundle imports don't surface "CM1" twice in selectors.
+ */
 export function getLevelsByCountry(countryId: string): CurriculumLevel[] {
   const country = getCountry(countryId);
   if (!country?.levels) return [];
@@ -55,101 +49,134 @@ export function getLevelsByCountry(countryId: string): CurriculumLevel[] {
   for (const lvl of country.levels) {
     const existing = merged.get(lvl.id);
     if (!existing) {
-      merged.set(lvl.id, { ...lvl, subjects: [...(lvl.subjects ?? [])] });
+      merged.set(lvl.id, { ...lvl, subjects: [...(lvl.subjects || [])] });
       continue;
     }
+    // Merge subjects, deduping by subject id (later entries win on conflict)
     const subjectMap = new Map(existing.subjects.map(s => [s.id, s]));
-    for (const s of lvl.subjects ?? []) subjectMap.set(s.id, s);
+    for (const s of lvl.subjects || []) subjectMap.set(s.id, s);
     existing.subjects = Array.from(subjectMap.values());
   }
   return Array.from(merged.values());
 }
 
-/** A specific level. */
+/**
+ * Get a specific level by country and level ID
+ */
 export function getLevel(countryId: string, levelId: string): CurriculumLevel | undefined {
-  if (!levelId) return undefined;
-  const target = levelId.toLowerCase();
-  return getLevelsByCountry(countryId).find(l => l.id.toLowerCase() === target);
+  const levels = getLevelsByCountry(countryId);
+  return levels.find(l => l.id === levelId);
 }
 
-/** Subjects for a specific country and level. */
+/**
+ * Get all subjects for a specific country and level
+ */
 export function getSubjects(countryId: string, levelId: string): CurriculumSubject[] {
-  return getLevel(countryId, levelId)?.subjects ?? [];
+  const level = getLevel(countryId, levelId);
+  return level?.subjects || [];
 }
 
+/**
+ * Get a specific subject
+ */
 export function getSubject(
   countryId: string,
   levelId: string,
-  subjectId: string,
+  subjectId: string
 ): CurriculumSubject | undefined {
-  return getSubjects(countryId, levelId).find(s => s.id === subjectId);
+  const subjects = getSubjects(countryId, levelId);
+  return subjects.find(s => s.id === subjectId);
 }
 
+/**
+ * Get all domains for a specific subject
+ */
 export function getDomainsBySubject(
   countryId: string,
   levelId: string,
-  subjectId: string,
+  subjectId: string
 ): CurriculumDomain[] {
-  return getSubject(countryId, levelId, subjectId)?.domains ?? [];
+  const subject = getSubject(countryId, levelId, subjectId);
+  return subject?.domains || [];
 }
 
+/**
+ * Get a specific domain
+ */
 export function getDomain(
   countryId: string,
   levelId: string,
   subjectId: string,
-  domainId: string,
+  domainId: string
 ): CurriculumDomain | undefined {
-  return getDomainsBySubject(countryId, levelId, subjectId).find(d => d.id === domainId);
+  const domains = getDomainsBySubject(countryId, levelId, subjectId);
+  return domains.find(d => d.id === domainId);
 }
 
+/**
+ * Get all subdomains for a specific domain
+ */
 export function getSubdomainsByDomain(
   countryId: string,
   levelId: string,
   subjectId: string,
-  domainId: string,
+  domainId: string
 ): CurriculumSubdomain[] {
-  return getDomain(countryId, levelId, subjectId, domainId)?.subdomains ?? [];
+  const domain = getDomain(countryId, levelId, subjectId, domainId);
+  return domain?.subdomains || [];
 }
 
+/**
+ * Get a specific subdomain
+ */
 export function getSubdomain(
   countryId: string,
   levelId: string,
   subjectId: string,
   domainId: string,
-  subdomainId: string,
+  subdomainId: string
 ): CurriculumSubdomain | undefined {
-  return getSubdomainsByDomain(countryId, levelId, subjectId, domainId).find(
-    sd => sd.id === subdomainId,
-  );
+  const subdomains = getSubdomainsByDomain(countryId, levelId, subjectId, domainId);
+  return subdomains.find(sd => sd.id === subdomainId);
 }
 
-/** Pick a localized label, falling back gracefully. */
+/**
+ * Get a localized label from a labels object
+ */
 export function getLocalizedLabel(
-  labels: Record<string, string> | undefined | null,
+  labels: Record<string, string>,
   locale: string = 'en',
-  fallbackLocale: string = 'en',
+  fallbackLocale: string = 'en'
 ): string {
-  if (!labels) return '';
   return labels[locale] || labels[fallbackLocale] || Object.values(labels)[0] || '';
 }
 
-/** All unique subjects in a country across every level. */
+/**
+ * Get all unique subjects across all levels in a country
+ */
 export function getAllSubjectsInCountry(countryId: string): CurriculumSubject[] {
+  const levels = getLevelsByCountry(countryId);
   const subjectMap = new Map<string, CurriculumSubject>();
-  for (const level of getLevelsByCountry(countryId)) {
-    for (const subject of level.subjects) {
-      if (!subjectMap.has(subject.id)) subjectMap.set(subject.id, subject);
-    }
-  }
+  
+  levels.forEach(level => {
+    level.subjects.forEach(subject => {
+      if (!subjectMap.has(subject.id)) {
+        subjectMap.set(subject.id, subject);
+      }
+    });
+  });
+  
   return Array.from(subjectMap.values());
 }
 
-/** Search skills (kept for API parity — DB-backed tree has no skills today). */
+/**
+ * Search for skills across the curriculum
+ */
 export function searchSkills(
   countryId: string,
   levelId: string,
   searchTerm: string,
-  locale: string = 'en',
+  locale: string = 'en'
 ): Array<{
   subject: CurriculumSubject;
   domain: CurriculumDomain;
@@ -162,77 +189,104 @@ export function searchSkills(
     subdomain: CurriculumSubdomain;
     skill: { id: string; code: string; labels: Record<string, string> };
   }> = [];
-
+  
+  const subjects = getSubjects(countryId, levelId);
   const lowerSearch = searchTerm.toLowerCase();
-  for (const subject of getSubjects(countryId, levelId)) {
-    for (const domain of subject.domains) {
-      for (const subdomain of domain.subdomains) {
-        for (const skill of subdomain.skills ?? []) {
+  
+  subjects.forEach(subject => {
+    subject.domains.forEach(domain => {
+      domain.subdomains.forEach(subdomain => {
+        subdomain.skills?.forEach(skill => {
           const label = getLocalizedLabel(skill.labels, locale).toLowerCase();
           if (label.includes(lowerSearch) || skill.code.toLowerCase().includes(lowerSearch)) {
             results.push({ subject, domain, subdomain, skill });
           }
-        }
-      }
-    }
-  }
+        });
+      });
+    });
+  });
+  
   return results;
 }
 
-/** Human-readable curriculum path or "Not mapped yet". */
+/**
+ * Resolve curriculum IDs to a human-readable path
+ * @returns Formatted string like "France / CM1 / Mathématiques / Nombres et calculs / Fractions"
+ * or "Not mapped yet" if IDs are null
+ */
 export function resolveCurriculumPath(
   countryId: string | null,
   levelId: string | null,
   subjectId: string | null,
   domainId: string | null,
   subdomainId: string | null,
-  locale: string = 'en',
+  locale: string = 'en'
 ): string {
-  if (!countryId || !levelId || !subjectId) return 'Not mapped yet';
+  // Return early if any required field is missing
+  if (!countryId || !levelId || !subjectId) {
+    return 'Not mapped yet';
+  }
 
   const parts: string[] = [];
 
+  // Get country
   const country = getCountry(countryId);
   if (country) parts.push(country.name);
 
+  // Get level
   const level = getLevel(countryId, levelId);
   if (level) parts.push(level.label);
 
+  // Get subject
   const subject = getSubject(countryId, levelId, subjectId);
-  if (subject) parts.push(getLocalizedLabel(subject.labels, locale));
-
-  if (domainId) {
-    const domain = getDomain(countryId, levelId, subjectId, domainId);
-    if (domain) parts.push(getLocalizedLabel(domain.labels, locale));
+  if (subject) {
+    const subjectLabel = getLocalizedLabel(subject.labels, locale);
+    parts.push(subjectLabel);
   }
 
+  // Get domain (optional)
+  if (domainId) {
+    const domain = getDomain(countryId, levelId, subjectId, domainId);
+    if (domain) {
+      const domainLabel = getLocalizedLabel(domain.labels, locale);
+      parts.push(domainLabel);
+    }
+  }
+
+  // Get subdomain (optional)
   if (subdomainId && domainId) {
     const subdomain = getSubdomain(countryId, levelId, subjectId, domainId, subdomainId);
-    if (subdomain) parts.push(getLocalizedLabel(subdomain.labels, locale));
+    if (subdomain) {
+      const subdomainLabel = getLocalizedLabel(subdomain.labels, locale);
+      parts.push(subdomainLabel);
+    }
   }
 
   return parts.length > 0 ? parts.join(' / ') : 'Not mapped yet';
 }
 
-/** Structured curriculum location (mirrors resolveCurriculumPath). */
+/**
+ * Get curriculum location details as an object
+ */
 export function getCurriculumLocation(
   countryId: string | null,
   levelId: string | null,
   subjectId: string | null,
   domainId: string | null,
   subdomainId: string | null,
-  locale: string = 'en',
+  locale: string = 'en'
 ) {
-  if (!countryId || !levelId || !subjectId) return null;
+  if (!countryId || !levelId || !subjectId) {
+    return null;
+  }
 
   const country = getCountry(countryId);
   const level = getLevel(countryId, levelId);
   const subject = getSubject(countryId, levelId, subjectId);
   const domain = domainId ? getDomain(countryId, levelId, subjectId, domainId) : null;
-  const subdomain =
-    domainId && subdomainId
-      ? getSubdomain(countryId, levelId, subjectId, domainId, subdomainId)
-      : null;
+  const subdomain = (domainId && subdomainId) 
+    ? getSubdomain(countryId, levelId, subjectId, domainId, subdomainId) 
+    : null;
 
   return {
     country,
@@ -246,6 +300,6 @@ export function getCurriculumLocation(
       subject: subject ? getLocalizedLabel(subject.labels, locale) : '',
       domain: domain ? getLocalizedLabel(domain.labels, locale) : '',
       subdomain: subdomain ? getLocalizedLabel(subdomain.labels, locale) : '',
-    },
+    }
   };
 }

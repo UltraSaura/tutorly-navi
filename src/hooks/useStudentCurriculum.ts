@@ -16,7 +16,6 @@ import {
   getSubjects,
   getDomainsBySubject,
   getSubdomainsByDomain,
-  loadCurriculumTree,
 } from '@/lib/curriculum';
 import { buildSubjectsFromCurriculum } from '@/domain/curriculum';
 import type { CurriculumSubject } from '@/domain/curriculum';
@@ -41,9 +40,6 @@ export function useStudentCurriculum(): UseStudentCurriculumResult {
       if (!profile?.countryCode || !profile?.levelCode) {
         return [];
       }
-
-      // Hydrate the in-memory curriculum tree before reading via sync getters.
-      await loadCurriculumTree();
 
       // Step 1: Get curriculum structure from bundle
       const curriculumSubjects = getSubjects(profile.countryCode, profile.levelCode);

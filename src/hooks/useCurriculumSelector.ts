@@ -6,7 +6,6 @@ import {
   getDomainsBySubject,
   getSubdomainsByDomain,
 } from '@/lib/curriculum';
-import { useCurriculumTree } from '@/hooks/useCurriculumBundle';
 import type {
   CurriculumCountry,
   CurriculumLevel,
@@ -32,26 +31,24 @@ export function useCurriculumSelector(initialSelection?: Partial<CurriculumSelec
     subdomainId: initialSelection?.subdomainId || '',
   });
 
-  // Hydrate the in-memory tree from Supabase before reading via sync getters.
-  const { data: tree } = useCurriculumTree();
-
-  const countries = useMemo(() => getCountries(), [tree]);
-
+  // Get available options based on current selection
+  const countries = useMemo(() => getCountries(), []);
+  
   const levels = useMemo(() => {
     return selection.countryCode ? getLevelsByCountry(selection.countryCode) : [];
-  }, [selection.countryCode, tree]);
+  }, [selection.countryCode]);
 
   const subjects = useMemo(() => {
     return (selection.countryCode && selection.levelCode)
       ? getSubjects(selection.countryCode, selection.levelCode)
       : [];
-  }, [selection.countryCode, selection.levelCode, tree]);
+  }, [selection.countryCode, selection.levelCode]);
 
   const domains = useMemo(() => {
     return (selection.countryCode && selection.levelCode && selection.subjectId)
       ? getDomainsBySubject(selection.countryCode, selection.levelCode, selection.subjectId)
       : [];
-  }, [selection.countryCode, selection.levelCode, selection.subjectId, tree]);
+  }, [selection.countryCode, selection.levelCode, selection.subjectId]);
 
   const subdomains = useMemo(() => {
     return (selection.countryCode && selection.levelCode && selection.subjectId && selection.domainId)
@@ -62,7 +59,7 @@ export function useCurriculumSelector(initialSelection?: Partial<CurriculumSelec
           selection.domainId
         )
       : [];
-  }, [selection.countryCode, selection.levelCode, selection.subjectId, selection.domainId, tree]);
+  }, [selection.countryCode, selection.levelCode, selection.subjectId, selection.domainId]);
 
   // Update handlers with cascading reset logic
   const setCountry = (countryCode: string) => {
