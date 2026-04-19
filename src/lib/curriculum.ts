@@ -380,6 +380,11 @@ export function resolveCurriculumPath(
   return parts.length > 0 ? parts.join(' / ') : 'Not mapped yet';
 }
 
+// Auto-prime on first import (browser only)
+if (typeof window !== 'undefined') {
+  primeCurriculumBundle().catch(() => {});
+}
+
 export function getCurriculumLocation(
   countryId: string | null,
   levelId: string | null,

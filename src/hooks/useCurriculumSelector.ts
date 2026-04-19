@@ -1,10 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import {
   getCountries,
   getLevelsByCountry,
   getSubjects,
   getDomainsBySubject,
   getSubdomainsByDomain,
+  subscribeBundle,
+  getBundleVersion,
+  primeCurriculumBundle,
 } from '@/lib/curriculum';
 import type {
   CurriculumCountry,
