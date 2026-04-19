@@ -37,11 +37,27 @@ export function getCountry(countryId: string): CurriculumCountry | undefined {
 }
 
 /**
- * Get all levels for a specific country
+ * Get all levels for a specific country.
+ * Defensively dedupes by level id, merging subjects from duplicate entries
+ * so multi-subject bundle imports don't surface "CM1" twice in selectors.
  */
 export function getLevelsByCountry(countryId: string): CurriculumLevel[] {
   const country = getCountry(countryId);
-  return country?.levels || [];
+  if (!country?.levels) return [];
+
+  const merged = new Map<string, CurriculumLevel>();
+  for (const lvl of country.levels) {
+    const existing = merged.get(lvl.id);
+    if (!existing) {
+      merged.set(lvl.id, { ...lvl, subjects: [...(lvl.subjects || [])] });
+      continue;
+    }
+    // Merge subjects, deduping by subject id (later entries win on conflict)
+    const subjectMap = new Map(existing.subjects.map(s => [s.id, s]));
+    for (const s of lvl.subjects || []) subjectMap.set(s.id, s);
+    existing.subjects = Array.from(subjectMap.values());
+  }
+  return Array.from(merged.values());
 }
 
 /**
