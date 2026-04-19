@@ -34,12 +34,16 @@ export function useCurriculumSelector(initialSelection?: Partial<CurriculumSelec
     subdomainId: initialSelection?.subdomainId || '',
   });
 
+  // Subscribe to bundle updates so selectors re-render once data loads from DB
+  const bundleVersion = useSyncExternalStore(subscribeBundle, getBundleVersion, getBundleVersion);
+  useEffect(() => { primeCurriculumBundle().catch(() => {}); }, []);
+
   // Get available options based on current selection
-  const countries = useMemo(() => getCountries(), []);
-  
+  const countries = useMemo(() => getCountries(), [bundleVersion]);
+
   const levels = useMemo(() => {
     return selection.countryCode ? getLevelsByCountry(selection.countryCode) : [];
-  }, [selection.countryCode]);
+  }, [selection.countryCode, bundleVersion]);
 
   const subjects = useMemo(() => {
     return (selection.countryCode && selection.levelCode)
