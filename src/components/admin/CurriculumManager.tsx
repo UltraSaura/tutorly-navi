@@ -12,13 +12,15 @@ import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3 } fr
 import { supabase } from '@/integrations/supabase/client';
 import { useObjectives, useCurriculumStats } from '@/hooks/useCurriculumData';
 import { useCurriculumCountries, useCurriculumLevels, useAllCurriculumSubjects } from '@/hooks/useCurriculumBundle';
-import { getLocalizedLabel, getDomainsBySubject, getSubdomainsByDomain } from '@/lib/curriculum';
+import { getLocalizedLabel, getDomainsBySubject, getSubdomainsByDomain, invalidateCurriculumTree } from '@/lib/curriculum';
 import { CurriculumLocation } from './curriculum/CurriculumLocation';
 import { TaskViewer } from './curriculum/TaskViewer';
 import type { ImportCounts } from '@/types/curriculum';
 import { toast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function CurriculumManager() {
+  const queryClient = useQueryClient();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [replaceMode, setReplaceMode] = useState(false);
@@ -139,6 +141,9 @@ export default function CurriculumManager() {
         description: 'Curriculum data imported successfully',
       });
 
+      // Drop the cached curriculum tree so the viewer picks up new levels/subjects.
+      invalidateCurriculumTree();
+      queryClient.invalidateQueries({ queryKey: ['curriculum-tree'] });
       refetchObjectives();
       refetchStats();
     } catch (error: any) {
