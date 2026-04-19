@@ -1,100 +1,120 @@
 
 
-The user gave a precise spec — no ambiguity, no need to ask questions. Let me lay out the exact deliverable.
+The user wants a plain-English changelist they can hand to ChatGPT to modify their `tutorly_bundle_exporter.gs` file. No code execution from me — just a clear spec.
 
-## Plan: multi-subject bundle exporter
+## Changes to apply to `tutorly_bundle_exporter.gs`
 
-### 1. New `Bundle_Rows` header row (13 columns, was 12)
+### 1. Header constant — replace existing `BUNDLE_HEADERS`
 
+Old (12 columns):
+```
+include | subject_slug | level_code | domain_code | domain_label | subdomain_code | subdomain_label | objective_text | notes_from_prog | keywords_json | success_criteria_json | tasks_json
+```
+
+New (13 columns, `bundle_name` added as **column A**):
 ```
 bundle_name | include | subject_slug | level_code | domain_code | domain_label | subdomain_code | subdomain_label | objective_text | notes_from_prog | keywords_json | success_criteria_json | tasks_json
 ```
 
-`bundle_name` is column A so it's the first thing you see. Empty value = "no group" (still exportable when filter is blank).
+### 2. `setupBundleRowsSheet()` — make non-destructive
 
-### 2. Filter input
+- If `Bundle_Rows` exists AND has data rows: show `ui.alert('Reset will erase N rows. Continue?', YES_NO)`.
+  - **Yes** → current behavior (clear + write headers).
+  - **No** → call `sh.insertColumnBefore(1)` then write `'bundle_name'` into `A1`, leave existing rows intact (they get a blank `bundle_name`).
+- Also ensure the `Input` sheet has, at row 7:
+  - `A7` = `Export bundle_name (blank = all)`
+  - `B7` = empty (user fills it).
 
-Use **`Input!B7`** labeled `Export bundle_name (blank = all)`. `setupBundleRowsSheet()` will also write that label/cell into the `Input` sheet if missing. No prompt dialog — sheet cell is friendlier and persists.
+### 3. `readBundleRows_()` — read new column + apply filter
 
-### 3. Menu (unchanged shape, same 3 items)
+- Add `bundle_name` to the row mapper (it's now column index 0; everything else shifts by +1).
+- After mapping, read filter: `const filter = String(SpreadsheetApp.getActive().getSheetByName('Input').getRange('B7').getValue() || '').trim();`
+- Filter logic:
+  - Always require `row.include === true`.
+  - If `filter` is non-empty: also require `row.bundle_name.trim().toLowerCase() === filter.toLowerCase()`.
 
-```
-Tutorly France
-├── Setup Bundle_Rows sheet      ← updated to new headers + Input!B7 label
-├── Validate Bundle_Rows         ← updated validations
-└── Export bundle.json           ← reads Input!B7 filter, multi-subject safe
-```
+### 4. `validateRows_(rows)` — add 2 new consistency checks
 
-No new menu items. The existing one becomes filter-aware and multi-subject-safe.
+Add these BEFORE the existing per-row checks return:
 
-### 4. Code changes in the `.gs` file
-
-**a. Constants**
 ```js
-const BUNDLE_HEADERS = [
-  'bundle_name', 'include', 'subject_slug', 'level_code',
-  'domain_code', 'domain_label', 'subdomain_code', 'subdomain_label',
-  'objective_text', 'notes_from_prog', 'keywords_json',
-  'success_criteria_json', 'tasks_json',
-];
+const domainLabelMap = new Map();   // key: "slug|||domainCode" → label
+const subdomainLabelMap = new Map(); // key: "slug|||domainCode|||subdomainCode" → label
+
+rows.forEach((r, i) => {
+  const dKey = `${r.subject_slug}|||${r.domain_code}`;
+  if (domainLabelMap.has(dKey) && domainLabelMap.get(dKey) !== r.domain_label) {
+    errors.push(`Row ${i + 2}: domain_label mismatch for ${r.subject_slug}/${r.domain_code} (expected "${domainLabelMap.get(dKey)}", got "${r.domain_label}")`);
+  } else {
+    domainLabelMap.set(dKey, r.domain_label);
+  }
+
+  const sKey = `${r.subject_slug}|||${r.domain_code}|||${r.subdomain_code}`;
+  if (subdomainLabelMap.has(sKey) && subdomainLabelMap.get(sKey) !== r.subdomain_label) {
+    errors.push(`Row ${i + 2}: subdomain_label mismatch for ${r.subject_slug}/${r.domain_code}/${r.subdomain_code} (expected "${subdomainLabelMap.get(sKey)}", got "${r.subdomain_label}")`);
+  } else {
+    subdomainLabelMap.set(sKey, r.subdomain_label);
+  }
+});
 ```
 
-**b. `readBundleRows_()`**
-- Read new `bundle_name` column.
-- After mapping, apply filter from `Input!B7`:
-  - Blank → keep all `include=TRUE` rows.
-  - Non-blank → keep only `include=TRUE && bundle_name === filter` rows (case-insensitive trim compare).
+Existing checks stay (subject_slug must be in `SUBJECT_UUIDS`, level_code valid, required fields present, JSON parses).
 
-**c. `validateRows_(rows)` — add 3 new checks**
-- Build a `Map<"slug|||domainCode", domainLabel>` while iterating; if a later row has same key but different label → error `Row N: domain_label mismatch for <slug>/<code> (expected "X", got "Y")`.
-- Same for subdomain: `Map<"slug|||domainCode|||subdomainCode", subdomainLabel>`.
-- Existing checks stay (subject_slug membership, level_code membership, required fields, JSON parse).
+### 5. `buildBundleFromRows_(rows)` — collision-safe dedup keys
 
-**d. `buildBundleFromRows_(rows)` — fix the collision bug**
+Find the lines that build `domainKey` / `subdomainKey` (currently they likely use `subject.id` or just `domain_code`). Replace with:
 
-Change dedup keys to include `subject_slug`:
 ```js
 const domainKey = `${r.subject_slug}|||${r.domain_code}`;
 const subdomainKey = `${r.subject_slug}|||${r.domain_code}|||${r.subdomain_code}`;
 ```
 
-(Currently uses `subject.id` which is *almost* correct — but spec asks for explicit `subject_slug` form. Functionally equivalent; I'll use the spec's form for traceability.)
+Keep the rest of the function identical. `bundle.subjects` stays `[]`.
 
-**e. `bundle.subjects[]` population**
+### 6. `exportBundleJson()` — filename logic
 
-Currently `subjects` stays empty. Spec says:
-> keep `"subjects": []`
-> reuse existing subject UUIDs from the fixed mapping
+After building the bundle, compute filename:
 
-I'll keep `subjects: []` as-is — the importer doesn't need them when the UUIDs already exist in DB (which they do, per `SUBJECT_UUIDS`). Domains/subdomains/objectives reference `subject_id` directly. ✅
+```js
+const filter = String(SpreadsheetApp.getActive().getSheetByName('Input').getRange('B7').getValue() || '').trim();
+const uniqueSubjects = [...new Set(rows.map(r => r.subject_slug))];
+let filename;
+if (filter) {
+  filename = `bundle_${filter.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`;
+} else if (uniqueSubjects.length === 1) {
+  const subj = SUBJECT_UUIDS[uniqueSubjects[0]].name.replace(/\s+/g, '');
+  const lvl = rows[0].level_code.toUpperCase();
+  filename = `bundle_${subj}_${lvl}.json`;
+} else {
+  const ts = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd-HHmm');
+  filename = `bundle_multi_${ts}.json`;
+}
+```
 
-**f. `exportBundleJson()` — filename logic**
+### 7. No menu changes
 
-- If filter (`Input!B7`) non-blank → filename = `bundle_<filterName>.json`.
-- If blank but rows span 1 subject → `bundle_<Subject>_<LEVEL>.json` (current behavior preserved when single-subject).
-- If blank and rows span multiple subjects → `bundle_multi_<YYYYMMDD-HHmm>.json`.
+`onOpen()` keeps the same 3 items — they all become filter-aware automatically because they call the updated functions.
 
-### 5. What stays identical
+---
 
-- UUID generation, level normalization, JSON parsing, download dialog, Drive copy.
-- Importer (`import-curriculum-bundle`) — no changes needed; it already handles multi-subject bundles per the recent fixes.
-- `/admin/curriculum` upload flow.
+## What ChatGPT should NOT touch
 
-### 6. Deliverable
+- `SUBJECT_UUIDS` mapping (already correct).
+- `LEVEL_NORMALIZATION` / level validation logic.
+- UUID generator.
+- Drive save + HTML download dialog.
+- The `subjects: []` in the output bundle (importer doesn't need it).
 
-I'll paste the **complete updated `.gs` file** in chat as one drop-in replacement. You:
-1. Open Apps Script editor → paste over the existing file → Save.
-2. Reload the spreadsheet.
-3. Run **Tutorly France → Setup Bundle_Rows sheet** once to get the new column + the `Input!B7` filter cell (this WILL clear existing data — I'll add a one-line confirmation prompt before clearing).
-4. Re-paste your data with the new `bundle_name` column.
-5. Optionally type a bundle_name in `Input!B7` to filter, or leave blank for everything.
-6. Validate → Export → upload at `/admin/curriculum`.
+---
 
-### 7. Migration note for your existing data
+## Quick prompt you can paste into ChatGPT
 
-`setupBundleRowsSheet` is destructive today (calls `sh.clear()`). I'll change it to:
-- If sheet exists with data → ask "Reset will erase X rows. Continue?" via `ui.alert(YES_NO)`.
-- If user picks No → only insert the new `bundle_name` column at position A on the existing sheet (non-destructive upgrade path).
-
-This way your current `Bundle_Rows` data isn't nuked.
+> Apply these 6 changes to my Google Apps Script file `tutorly_bundle_exporter.gs`. Keep everything else identical. Return the full updated file.
+>
+> 1. Add `bundle_name` as the first column in `BUNDLE_HEADERS` (13 cols total).
+> 2. In `setupBundleRowsSheet`, prompt YES/NO before clearing existing rows; on NO, just `insertColumnBefore(1)` and set `A1 = 'bundle_name'`. Also write `Input!A7 = 'Export bundle_name (blank = all)'`.
+> 3. In `readBundleRows_`, read the new `bundle_name` column. Read filter from `Input!B7`. Keep rows where `include===true` AND (filter empty OR `bundle_name` matches filter, case-insensitive).
+> 4. In `validateRows_`, add checks: error if same `(subject_slug, domain_code)` has different `domain_label`, or same `(subject_slug, domain_code, subdomain_code)` has different `subdomain_label`.
+> 5. In `buildBundleFromRows_`, change dedup keys to `${subject_slug}|||${domain_code}` for domains and `${subject_slug}|||${domain_code}|||${subdomain_code}` for subdomains.
+> 6. In `exportBundleJson`, compute filename: `bundle_<filter>.json` if filter set, else `bundle_<Subject>_<LEVEL>.json` if single subject, else `bundle_multi_<yyyyMMdd-HHmm>.json`.
 
