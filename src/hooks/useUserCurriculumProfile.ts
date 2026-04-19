@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { getCountry, getLevel } from '@/lib/curriculum';
+import { getCountry, getLevel, loadCurriculumTree } from '@/lib/curriculum';
 import type { CurriculumProfile } from '@/types/profile';
 
 export function useUserCurriculumProfile() {
@@ -12,26 +12,29 @@ export function useUserCurriculumProfile() {
     queryKey: ['userCurriculumProfile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      
+
+      // Make sure the curriculum tree is hydrated so getCountry/getLevel work.
+      await loadCurriculumTree();
+
       const { data, error } = await supabase
         .from('users')
         .select('curriculum_country_code, curriculum_level_code')
         .eq('id', user.id)
         .single();
-      
+
       if (error) throw error;
-      
+
       if (!data.curriculum_country_code || !data.curriculum_level_code) {
         return null;
       }
-      
+
       // Normalize to lowercase for consistent matching with curriculum content
       const countryCode = data.curriculum_country_code.toLowerCase();
       const levelCode = data.curriculum_level_code.toLowerCase();
-      
+
       const country = getCountry(countryCode);
       const level = getLevel(countryCode, levelCode);
-      
+
       return {
         countryCode,
         levelCode,
