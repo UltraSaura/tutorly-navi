@@ -1,5 +1,5 @@
 
 
-User wants to dedupe levels in the Curriculum Viewer at `/admin/curriculum`. They see "CM1" listed twice under a country/level dropdown.
+User wants: subjects filtered by **country** (not language). Language column stays as metadata showing the source language of the program. So a French student switching UI to English still sees the same FR program — UI labels translate, but content (objectives, criteria) stays in its original language.
 
-Let me explore to find the viewer component and understand where duplicates come from.
+Let me check the current subjects table & how filtering works.
