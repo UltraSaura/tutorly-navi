@@ -1,54 +1,38 @@
 # Curriculum Import Tool
 
-A Node.js script to import `bundle.json` data into your Supabase database.
+Tools and reference docs for importing curriculum content into the Supabase database via the `import-curriculum-bundle` edge function.
 
-> 🤖 **Want ChatGPT to generate `bundle.json` for you?** See [`CHATGPT_PROMPT.md`](./CHATGPT_PROMPT.md) — a copy-paste starter kit with the existing subject UUIDs, hard rules, and a worked example.
+## 📘 Canonical reference
 
-## Setup
+**👉 [`BUNDLE_SCHEMA.md`](./BUNDLE_SCHEMA.md)** — the single source of truth for the `bundle.json` format. Read this first.
 
-1. **Create `.env` file** in the project root:
+## Other docs
+
+- [`CHATGPT_PROMPT.md`](./CHATGPT_PROMPT.md) — copy-paste prompt for getting ChatGPT to generate a valid `bundle.json` for you.
+- [`BUNDLE_FORMAT.md`](./BUNDLE_FORMAT.md) — older field reference (kept for backwards compatibility; prefer `BUNDLE_SCHEMA.md`).
+
+## How to import
+
+1. Generate or hand-write a `bundle.json` following [`BUNDLE_SCHEMA.md`](./BUNDLE_SCHEMA.md).
+2. Go to `/admin/curriculum` in the app.
+3. Optionally tick **Replace existing data** to purge orphans for the same scope.
+4. Choose your file → **Import**.
+5. Verify the result card shows **Phase 3 readiness: Ready** with all NULL counts at `0`.
+
+## Optional: local Node.js script
+
+The `import.js` script in this folder is a starter template if you ever need to import outside the app UI.
+
+1. Create `.env`:
    ```env
    SUPABASE_URL=YOUR_SUPABASE_URL
    SUPABASE_SERVICE_KEY=YOUR_SERVICE_KEY
    ```
-
-2. **Place your `bundle.json` file** in the `curriculum-import` folder
-
-3. **Install dependencies** (already done):
+2. Drop your `bundle.json` here.
+3. Run:
    ```bash
    npm install
+   npm run import
    ```
 
-## Usage
-
-Run the import script:
-```bash
-npm run import
-```
-
-Or directly:
-```bash
-node import.js
-```
-
-## Next Steps
-
-The `import.js` file contains a template. You need to:
-
-1. Review the structure of your `bundle.json`
-2. Map the JSON data to your Supabase table schema
-3. Implement the insertion logic in the `importBundle()` function
-
-Example insertion:
-```javascript
-const { data, error } = await supabase
-  .from('your_table_name')
-  .insert(yourMappedData);
-
-if (error) {
-  console.error('Insert error:', error);
-} else {
-  console.log('✅ Data inserted successfully');
-}
-```
-
+For most workflows the in-app uploader at `/admin/curriculum` is preferred — it uses the same edge function and gives you the readiness report.
