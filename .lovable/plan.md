@@ -1,57 +1,64 @@
 
 
 ## Goal
-The user already has §6 "Per-array object definitions" in `BUNDLE_SCHEMA.md` (added last turn) — but they're asking for it in a **stricter, schema-style format**: every entity shown as a typed schema snippet (Option A) AND a real, fully-wired worked bundle (Option B), side by side, in one place that's easy to copy.
+Reformat `curriculum-import/BUNDLE_OBJECT_REFERENCE.md` Part A so each entity uses a clean **Required / Optional** bullet style (matching how the user wrote up `subjects[]` in their last message), instead of JSONC schema snippets.
 
-I'll add a new dedicated reference file that delivers exactly both formats they asked for, cross-checked against the live Supabase schema (verified via `<supabase-tables>` in context).
+## What changes
 
-## What gets created
+**Edit only Part A** of `curriculum-import/BUNDLE_OBJECT_REFERENCE.md`. Part B (real working bundle) and Part C (decision matrix) stay untouched — they're already in the right format.
 
-**New file: `curriculum-import/BUNDLE_OBJECT_REFERENCE.md`**
-
-Two parallel sections so the user can pick whichever style they prefer:
-
-### Part A — Typed schema snippets (one per array)
-
-For each of the 8 arrays, a JSON snippet using type placeholders (`"uuid"`, `"string"`, `"string|null"`, `"string[]"`) showing:
-- Every field the importer accepts
-- Required vs optional marked with `// required` / `// optional` comments
-- Allowed enum values inline (e.g. `"level": "cp|ce1|ce2|cm1|cm2|6eme|5eme|4eme|3eme"`)
-- FK target inline (e.g. `"subject_id": "uuid → subjects.id"`)
-
-Covers: `subjects`, `domains`, `subdomains`, `objectives`, `success_criteria`, `tasks`, `topic_objective_links`, `lessons`.
-
-### Part B — Real working bundle
-
-A complete, copy-pasteable `bundle.json` for **5eme Mathematics → Numbers → Fractions** containing:
-- 1 subject (reusing the existing mathematics UUID)
-- 1 domain (`NUMBERS`)
-- 1 subdomain (`FRAC`)
-- 2 objectives
-- 3 success criteria (mapped across both objectives)
-- 4 tasks (mix of `mcq`, `open`, `numeric`, `short`)
-- Empty `topic_objective_links` and `lessons` (with comment explaining why)
-
-Every UUID lowercased and distinct. Every FK resolves inside the bundle. This is the "Option B" the user explicitly asked for — a known-good bundle to reverse-engineer.
-
-### Part C — Field decision matrix
-
-A single compact table answering "is this field required?" for every field across every entity, so the user can scan in one view:
+For each of the 8 arrays, replace the JSONC block with:
 
 ```text
-Entity            Field              Required  Notes
-subjects          id                 yes       reuse from §4 if subject exists
-subjects          slug               yes       must be one of 5 known slugs
-subjects          country_code       yes       lowercase ISO ('fr')
-subjects          language           no        defaults to 'en'
-...
+### N. `entity_name[]`
+
+**Required:**
+- `field` — type — short note (FK target / enum values / format rule)
+- ...
+
+**Optional:**
+- `field` — type — default value, what it controls
+- ...
+
+**Wire-up:** one-line note about which sibling array UUIDs this entity references.
+
+**Notes:** any auto-fill / legacy column quirks (only when relevant).
 ```
+
+### Example of the new format (subjects)
+
+```text
+### 1. `subjects[]`
+
+**Required:**
+- `id` — uuid v4 — reuse known UUID if subject already exists (see §4 of BUNDLE_SCHEMA.md)
+- `slug` — string — one of: `mathematics`, `french`, `english`, `history-geography`, `sciences`
+- `name` — string — display name
+- `country_code` — string — lowercase ISO (`fr`, `en`, `us`). Drives viewer filtering.
+
+**Optional:**
+- `language` — string — defaults to `'en'`
+- `color_scheme` — string — defaults to `'blue'`
+- `icon_name` — string — lucide-react icon name, defaults to `'BookOpen'`
+
+**Wire-up:** root entity, no FKs.
+```
+
+### Arrays reformatted (all 8)
+
+1. `subjects[]`
+2. `domains[]` — note `domain` legacy column auto-fills from `code`
+3. `subdomains[]` — note `id` is stored as `id_new`; legacy `subdomain` auto-fills from `label`
+4. `objectives[]` — list valid `level` enum values
+5. `success_criteria[]` — note `subject_id`/`domain_id`/`subdomain_id` auto-derive from parent
+6. `tasks[]` — list `type`, `difficulty`, `source` enum values
+7. `topic_objective_links[]` — keep the "skip unless topic UUIDs already exist" warning
+8. `lessons[]` — note jsonb array shape for `objective_ids` / `success_criterion_ids`
 
 ## Files touched
 
-- **Create**: `curriculum-import/BUNDLE_OBJECT_REFERENCE.md` (~250 lines)
-- **Edit**: `curriculum-import/BUNDLE_SCHEMA.md` — add a one-line pointer at the top of §6 directing readers to the new file for the strict typed view
-- **Leave alone**: `SUPABASE_TABLES.md`, `BUNDLE_FORMAT.md`, `README.md`
+- **Edit**: `curriculum-import/BUNDLE_OBJECT_REFERENCE.md` — replace Part A only (~120 lines changed)
+- **Leave alone**: Part B, Part C, validation reflexes section, and all other files
 
 No code, no DB changes.
 
