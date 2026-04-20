@@ -1,35 +1,49 @@
 
 
 ## Goal
-Add a complete **Supabase table schema reference** section to `curriculum-import/BUNDLE_SCHEMA.md` so the bundle author can see exactly which DB columns each bundle field maps to, which columns are auto-filled, and which are legacy.
+The current `BUNDLE_SCHEMA.md` already documents all 8 arrays at the field level (tables of `field` → `DB column` → `required` → `notes`), but it does NOT show concrete JSON object shapes for each array except inside one combined "full worked example" at the bottom. You want a per-array **object definition** — the literal JSON shape of one element of each array, with inline annotations — so a bundle author can copy-paste each block.
 
 ## What gets added
 
-A new section **"Supabase target tables"** appended near the top of `BUNDLE_SCHEMA.md` (after the top-level shape, before the field-by-field reference). It documents the 8 tables the importer writes to.
+A new section **"6. Per-array object definitions"** inserted into `curriculum-import/BUNDLE_SCHEMA.md` between the existing field-by-field reference (§5) and the canonical level codes (current §6, renumbered to §7). Subsequent sections shift down by one number.
 
-For each table: column name, type, nullable, source (bundle field / auto-derived / DB default), and notes on legacy vs UUID columns.
+For each of the 8 arrays, the new section provides:
 
-### Tables covered
+1. **Canonical JSON object** — one element with every supported field present (required + optional), realistic values, lowercase UUIDs.
+2. **Inline `// comments`** flagging: required vs optional, auto-derived columns, FK targets, allowed enum values.
+3. **Minimal-required variant** — the smallest valid object (only required fields) so authors see the floor.
+4. **One-line "wire-up" note** — what UUIDs this object must reference from sibling arrays.
 
-1. **`subjects`** — `id`, `slug`, `name`, `language`, `country_code`, `color_scheme`, `icon_name`, `is_active`, `order_index`, timestamps
-2. **`domains`** — `id` (uuid), `subject_id` (uuid), `code`, `label`, `domain` (legacy NOT NULL — auto-filled from `code`)
-3. **`subdomains`** — dual PK quirk: `id` bigint auto + `id_new` uuid (the real FK target), `subject_id`, `domain_id_new`, `code`, `label`, legacy `domain` + `subdomain`
-4. **`objectives`** — text PK `id` + `id_new` uuid + `subject_id_uuid` / `domain_id_uuid` / `subdomain_id_uuid` (real FKs), plus legacy `subject_id`/`domain_id`/`subdomain_id` text cols, `level`, `text`, `keywords`, `notes_from_prog`
-5. **`success_criteria`** — text `id` + `id_new` uuid + `_uuid` FK columns, `objective_id` (text legacy) + `objective_id_uuid`, `text`
-6. **`tasks`** — text `id` + `id_new` uuid + `_uuid` FKs, `success_criterion_id` + `_uuid`, `type`, `stem`, `solution`, `rubric`, `difficulty`, `tags`, `source`
-7. **`topic_objective_links`** — `topic_id`, `objective_id` (legacy text NOT NULL) + `objective_id_uuid`, `order_index`
-8. **`lessons`** — text `id` + `id_new` uuid, `title`, `topic_id` (uuid), `objective_ids` jsonb, `success_criterion_ids` jsonb, plus content fields
+### Arrays covered (in dependency order)
 
-### Key callouts in the new section
+1. `subjects[]` — full + minimal, callout on reusing the 5 known UUIDs from §4
+2. `domains[]` — full + minimal, note on `domain` legacy auto-fill from `code`
+3. `subdomains[]` — full + minimal, note on `id` → `id_new` UUID quirk
+4. `objectives[]` — full + minimal, enum list for `level` (cp…3eme), `keywords` array shape
+5. `success_criteria[]` — full + minimal, FK to `objectives.id`
+6. `tasks[]` — full + minimal, enum lists for `type` (`mcq`/`open`/`numeric`/`short`), `difficulty` (`easy`/`core`/`stretch`), `source` (`manual`/`auto`)
+7. `topic_objective_links[]` — full + minimal, "skip unless topic UUIDs already exist" warning
+8. `lessons[]` — full + minimal, jsonb array shape for `objective_ids` and `success_criterion_ids`
 
-- **Dual-write pattern**: most curriculum tables have both legacy text columns (`subject_id`, `domain_id`…) and uuid columns (`subject_id_uuid`, `domain_id_uuid`…). The importer writes both. New code should read the uuid columns.
-- **`subdomains.id_new` quirk**: the bigint `id` is legacy; FKs from objectives point at `id_new`. Conflict target is `id_new`.
-- **Legacy NOT NULL columns** the importer auto-fills: `domains.domain`, `subdomains.domain`, `subdomains.subdomain`, `topic_objective_links.objective_id`.
-- **What you set vs what the importer derives**: bundle author only provides UUIDs + human-readable fields. All `*_uuid` mirror columns and legacy text mirrors are derived inside the edge function.
+### Section ordering after the edit
+
+```text
+1. Overview
+2. Top-level shape
+3. Hard rules
+4. Existing subject UUIDs
+5. Field-by-field reference          (unchanged)
+6. Per-array object definitions      ← NEW
+7. Canonical level codes (France)    (was 6)
+8. Full worked example               (was 7)
+9. Validation checklist              (was 8)
+10. How to upload                    (was 9)
+```
 
 ## Files touched
 
-- **Edit**: `curriculum-import/BUNDLE_SCHEMA.md` — add the "Supabase target tables" section (~150 lines)
+- **Edit**: `curriculum-import/BUNDLE_SCHEMA.md` — insert §6, renumber §6–§9 to §7–§10
+- **Leave alone**: `SUPABASE_TABLES.md`, `BUNDLE_FORMAT.md`, `README.md`
 
-No code, no migrations, no DB changes.
+No code, no DB changes.
 
