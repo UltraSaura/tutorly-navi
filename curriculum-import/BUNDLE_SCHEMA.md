@@ -447,7 +447,7 @@ These match `school_levels.level_code` exactly. Any other casing or spelling (`5
 
 ---
 
-## 7. Full worked example
+## 8. Full worked example
 
 One subject (reused) → one domain → one subdomain → one objective → one success criterion → one task.
 
@@ -526,7 +526,7 @@ One subject (reused) → one domain → one subdomain → one objective → one 
 
 ---
 
-## 8. Validation checklist
+## 9. Validation checklist
 
 Before uploading, confirm:
 
@@ -551,7 +551,7 @@ Before uploading, confirm:
 
 ---
 
-## 9. How to upload
+## 10. How to upload
 
 1. Go to **`/admin/curriculum`** (Curriculum Manager).
 2. Optional: tick **"Replace existing data"** to purge orphans for the bundle's scope before inserting. Recommended when re-uploading the same subject × level.
