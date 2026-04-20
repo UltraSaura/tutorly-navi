@@ -171,7 +171,265 @@ Only include if you have existing topic UUIDs to link to.
 
 ---
 
-## 6. Canonical level codes (France)
+## 6. Per-array object definitions
+
+Concrete JSON shape for **one element** of each array. Each section shows a **full** object (every supported field, with inline annotations) and a **minimal** object (only required fields). Copy-paste either as a starting point.
+
+UUIDs below are illustrative — generate fresh v4 UUIDs for your bundle (lowercase, hyphenated).
+
+---
+
+### 6.1 `subjects[]`
+
+**Wire-up:** standalone. Other arrays reference `subjects.id`. Reuse the 5 known UUIDs from §4 whenever possible — only add a `subjects` entry when introducing a new subject.
+
+Full:
+```jsonc
+{
+  "id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de", // required, uuid v4. Reuse from §4 for known slugs
+  "slug": "mathematics",                          // required. One of: mathematics | physics | francais | history | geography (or new)
+  "name": "Mathématiques",                        // required, display name
+  "language": "fr",                               // optional, metadata only ("fr" | "en")
+  "country_code": "fr",                           // recommended, lowercase ISO. Drives /admin/curriculum filtering
+  "color_scheme": "blue",                         // optional, defaults "blue"
+  "icon_name": "Calculator"                       // optional, defaults "BookOpen"
+}
+```
+
+Minimal:
+```json
+{
+  "id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",
+  "slug": "mathematics",
+  "name": "Mathématiques"
+}
+```
+
+---
+
+### 6.2 `domains[]`
+
+**Wire-up:** `subject_id` → `subjects.id` (this bundle or §4). Referenced by `subdomains.domain_id`, `objectives.domain_id`, etc.
+
+Full:
+```jsonc
+{
+  "id": "11111111-1111-4111-8111-111111111111",         // required, uuid v4
+  "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de", // required, FK → subjects.id
+  "code": "NUMBERS",                                     // required, short uppercase code
+  "label": "Nombres et calculs"                          // required, display label
+  // "domain" (legacy NOT NULL) is auto-filled from `code` by the importer — do not set
+}
+```
+
+Minimal:
+```json
+{
+  "id": "11111111-1111-4111-8111-111111111111",
+  "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",
+  "code": "NUMBERS",
+  "label": "Nombres et calculs"
+}
+```
+
+---
+
+### 6.3 `subdomains[]`
+
+**Wire-up:** `subject_id` → `subjects.id`, `domain_id` → `domains.id`. Referenced by `objectives.subdomain_id`.
+
+> ⚠️ **UUID quirk:** the bundle's `id` is written to `subdomains.id_new` (uuid). The legacy bigint `subdomains.id` is auto-assigned by the DB. All FKs from `objectives` etc. point at `id_new`.
+
+Full:
+```jsonc
+{
+  "id": "22222222-2222-4222-8222-222222222222",         // required, uuid v4 → stored as id_new
+  "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de", // required, FK → subjects.id
+  "domain_id": "11111111-1111-4111-8111-111111111111",  // required, FK → domains.id
+  "code": "FRACTIONS",                                   // required, short code
+  "label": "Fractions"                                   // required, display label
+  // legacy "domain" + "subdomain" text columns are auto-filled by the importer
+}
+```
+
+Minimal:
+```json
+{
+  "id": "22222222-2222-4222-8222-222222222222",
+  "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",
+  "domain_id": "11111111-1111-4111-8111-111111111111",
+  "code": "FRACTIONS",
+  "label": "Fractions"
+}
+```
+
+---
+
+### 6.4 `objectives[]`
+
+**Wire-up:** `subject_id`, `domain_id`, `subdomain_id` → matching arrays. Referenced by `success_criteria.objective_id` and `topic_objective_links.objective_id`.
+
+Allowed `level` values (see §7): `cp` | `ce1` | `ce2` | `cm1` | `cm2` | `6eme` | `5eme` | `4eme` | `3eme`.
+
+Full:
+```jsonc
+{
+  "id": "33333333-3333-4333-8333-333333333333",            // required, uuid v4 → stored as id_new
+  "legacy_id": "obj_cm1_fractions_001",                     // optional, text PK. Defaults to UUID-as-text
+  "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",    // required
+  "domain_id": "11111111-1111-4111-8111-111111111111",     // required
+  "subdomain_id": "22222222-2222-4222-8222-222222222222",  // required
+  "level": "cm1",                                            // required, canonical code from §7
+  "text": "Comparer deux fractions simples",                 // required, single-sentence objective
+  "notes_from_prog": "Programme officiel CM1 — fractions de référence", // optional
+  "keywords": ["fraction", "comparaison", "ordre"]          // optional, text[] for search
+}
+```
+
+Minimal:
+```json
+{
+  "id": "33333333-3333-4333-8333-333333333333",
+  "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",
+  "domain_id": "11111111-1111-4111-8111-111111111111",
+  "subdomain_id": "22222222-2222-4222-8222-222222222222",
+  "level": "cm1",
+  "text": "Comparer deux fractions simples"
+}
+```
+
+---
+
+### 6.5 `success_criteria[]`
+
+**Wire-up:** `objective_id` → `objectives.id` (must exist in this bundle). Mirrored `subject_id` / `domain_id` / `subdomain_id` recommended for query performance. Referenced by `tasks.success_criterion_id`.
+
+Full:
+```jsonc
+{
+  "id": "44444444-4444-4444-8444-444444444444",            // required, uuid v4 → id_new
+  "legacy_id": "sc_cm1_fractions_001",                      // optional, text PK
+  "objective_id": "33333333-3333-4333-8333-333333333333",  // required, FK → objectives.id
+  "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",    // recommended
+  "domain_id": "11111111-1111-4111-8111-111111111111",     // recommended
+  "subdomain_id": "22222222-2222-4222-8222-222222222222",  // recommended
+  "text": "Identifier la plus grande fraction entre 1/2 et 1/3" // required
+}
+```
+
+Minimal:
+```json
+{
+  "id": "44444444-4444-4444-8444-444444444444",
+  "objective_id": "33333333-3333-4333-8333-333333333333",
+  "text": "Identifier la plus grande fraction entre 1/2 et 1/3"
+}
+```
+
+---
+
+### 6.6 `tasks[]`
+
+**Wire-up:** `success_criterion_id` → `success_criteria.id` (must exist in this bundle). Mirrored `subject_id` / `domain_id` / `subdomain_id` recommended.
+
+Allowed enums:
+- `type`: `mcq` | `open` | `numeric` | `short`
+- `difficulty`: `easy` | `core` | `stretch`
+- `source`: `manual` | `auto`
+
+Full:
+```jsonc
+{
+  "id": "55555555-5555-4555-8555-555555555555",                    // required, uuid v4 → id_new
+  "legacy_id": "task_cm1_fractions_001",                            // optional, text PK
+  "success_criterion_id": "44444444-4444-4444-8444-444444444444",  // required, FK
+  "subject_id": "f34e5bb1-34f0-41c8-aa3a-8f8b11f2f6de",            // recommended
+  "domain_id": "11111111-1111-4111-8111-111111111111",             // recommended
+  "subdomain_id": "22222222-2222-4222-8222-222222222222",          // recommended
+  "type": "mcq",                                                     // required, see enum above
+  "stem": "Quelle fraction est la plus grande ?",                   // required, question text
+  "solution": "1/2",                                                 // optional
+  "rubric": "1 point si la bonne fraction est choisie",             // optional
+  "difficulty": "core",                                              // optional, see enum above
+  "tags": ["fraction", "comparaison"],                               // optional, text[]
+  "source": "manual"                                                 // optional, see enum above
+}
+```
+
+Minimal:
+```json
+{
+  "id": "55555555-5555-4555-8555-555555555555",
+  "success_criterion_id": "44444444-4444-4444-8444-444444444444",
+  "type": "mcq",
+  "stem": "Quelle fraction est la plus grande ?"
+}
+```
+
+---
+
+### 6.7 `topic_objective_links[]`
+
+> ⚠️ **Skip this array unless the `topic_id` UUIDs already exist in the `topics` table.** Otherwise the import will fail on FK violation.
+
+**Wire-up:** `topic_id` → existing `topics.id` (NOT in this bundle), `objective_id` → `objectives.id` (this bundle).
+
+Full:
+```jsonc
+{
+  "topic_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",      // required, must exist in topics table
+  "objective_id": "33333333-3333-4333-8333-333333333333",  // required, FK → objectives.id (uuid)
+  "order_index": 0                                           // optional, defaults 0
+}
+```
+
+Minimal:
+```json
+{
+  "topic_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "objective_id": "33333333-3333-4333-8333-333333333333"
+}
+```
+
+---
+
+### 6.8 `lessons[]`
+
+> ⚠️ Usually empty. Only include if you're authoring lesson plans alongside the curriculum.
+
+**Wire-up:** optional `topic_id` → existing `topics.id`. `objective_ids` and `success_criterion_ids` are jsonb arrays of UUID strings.
+
+Full:
+```jsonc
+{
+  "id": "66666666-6666-4666-8666-666666666666",            // required, uuid v4 → id_new
+  "legacy_id": "lesson_cm1_fractions_001",                  // optional, text PK
+  "topic_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",      // optional, must exist in topics
+  "title": "Comparer des fractions simples",                // required
+  "objective_ids": [                                         // optional, jsonb array of objective UUIDs
+    "33333333-3333-4333-8333-333333333333"
+  ],
+  "success_criterion_ids": [                                 // optional, jsonb array of SC UUIDs
+    "44444444-4444-4444-8444-444444444444"
+  ],
+  "materials": "Fractions imprimées, règle, crayon",        // optional
+  "misconceptions": "Confondre numérateur et dénominateur", // optional
+  "teacher_talk": "Aujourd'hui nous allons comparer...",    // optional
+  "student_worksheet": "Exercice 1 : entoure la plus grande fraction." // optional
+}
+```
+
+Minimal:
+```json
+{
+  "id": "66666666-6666-4666-8666-666666666666",
+  "title": "Comparer des fractions simples"
+}
+```
+
+---
+
+## 7. Canonical level codes (France)
 
 | code     | display |
 |----------|---------|
