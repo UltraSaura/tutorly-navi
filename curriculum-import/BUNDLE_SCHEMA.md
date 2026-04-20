@@ -173,6 +173,8 @@ Only include if you have existing topic UUIDs to link to.
 
 ## 6. Per-array object definitions
 
+> 💡 For a stricter typed-schema view + a complete known-good `bundle.json` you can submit as-is, see [`BUNDLE_OBJECT_REFERENCE.md`](./BUNDLE_OBJECT_REFERENCE.md).
+
 Concrete JSON shape for **one element** of each array. Each section shows a **full** object (every supported field, with inline annotations) and a **minimal** object (only required fields). Copy-paste either as a starting point.
 
 UUIDs below are illustrative — generate fresh v4 UUIDs for your bundle (lowercase, hyphenated).
