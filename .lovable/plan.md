@@ -1,48 +1,56 @@
 
 
 ## Goal
-The current `BUNDLE_SCHEMA.md` already documents all 8 arrays at the field level (tables of `field` → `DB column` → `required` → `notes`), but it does NOT show concrete JSON object shapes for each array except inside one combined "full worked example" at the bottom. You want a per-array **object definition** — the literal JSON shape of one element of each array, with inline annotations — so a bundle author can copy-paste each block.
+The user already has §6 "Per-array object definitions" in `BUNDLE_SCHEMA.md` (added last turn) — but they're asking for it in a **stricter, schema-style format**: every entity shown as a typed schema snippet (Option A) AND a real, fully-wired worked bundle (Option B), side by side, in one place that's easy to copy.
 
-## What gets added
+I'll add a new dedicated reference file that delivers exactly both formats they asked for, cross-checked against the live Supabase schema (verified via `<supabase-tables>` in context).
 
-A new section **"6. Per-array object definitions"** inserted into `curriculum-import/BUNDLE_SCHEMA.md` between the existing field-by-field reference (§5) and the canonical level codes (current §6, renumbered to §7). Subsequent sections shift down by one number.
+## What gets created
 
-For each of the 8 arrays, the new section provides:
+**New file: `curriculum-import/BUNDLE_OBJECT_REFERENCE.md`**
 
-1. **Canonical JSON object** — one element with every supported field present (required + optional), realistic values, lowercase UUIDs.
-2. **Inline `// comments`** flagging: required vs optional, auto-derived columns, FK targets, allowed enum values.
-3. **Minimal-required variant** — the smallest valid object (only required fields) so authors see the floor.
-4. **One-line "wire-up" note** — what UUIDs this object must reference from sibling arrays.
+Two parallel sections so the user can pick whichever style they prefer:
 
-### Arrays covered (in dependency order)
+### Part A — Typed schema snippets (one per array)
 
-1. `subjects[]` — full + minimal, callout on reusing the 5 known UUIDs from §4
-2. `domains[]` — full + minimal, note on `domain` legacy auto-fill from `code`
-3. `subdomains[]` — full + minimal, note on `id` → `id_new` UUID quirk
-4. `objectives[]` — full + minimal, enum list for `level` (cp…3eme), `keywords` array shape
-5. `success_criteria[]` — full + minimal, FK to `objectives.id`
-6. `tasks[]` — full + minimal, enum lists for `type` (`mcq`/`open`/`numeric`/`short`), `difficulty` (`easy`/`core`/`stretch`), `source` (`manual`/`auto`)
-7. `topic_objective_links[]` — full + minimal, "skip unless topic UUIDs already exist" warning
-8. `lessons[]` — full + minimal, jsonb array shape for `objective_ids` and `success_criterion_ids`
+For each of the 8 arrays, a JSON snippet using type placeholders (`"uuid"`, `"string"`, `"string|null"`, `"string[]"`) showing:
+- Every field the importer accepts
+- Required vs optional marked with `// required` / `// optional` comments
+- Allowed enum values inline (e.g. `"level": "cp|ce1|ce2|cm1|cm2|6eme|5eme|4eme|3eme"`)
+- FK target inline (e.g. `"subject_id": "uuid → subjects.id"`)
 
-### Section ordering after the edit
+Covers: `subjects`, `domains`, `subdomains`, `objectives`, `success_criteria`, `tasks`, `topic_objective_links`, `lessons`.
+
+### Part B — Real working bundle
+
+A complete, copy-pasteable `bundle.json` for **5eme Mathematics → Numbers → Fractions** containing:
+- 1 subject (reusing the existing mathematics UUID)
+- 1 domain (`NUMBERS`)
+- 1 subdomain (`FRAC`)
+- 2 objectives
+- 3 success criteria (mapped across both objectives)
+- 4 tasks (mix of `mcq`, `open`, `numeric`, `short`)
+- Empty `topic_objective_links` and `lessons` (with comment explaining why)
+
+Every UUID lowercased and distinct. Every FK resolves inside the bundle. This is the "Option B" the user explicitly asked for — a known-good bundle to reverse-engineer.
+
+### Part C — Field decision matrix
+
+A single compact table answering "is this field required?" for every field across every entity, so the user can scan in one view:
 
 ```text
-1. Overview
-2. Top-level shape
-3. Hard rules
-4. Existing subject UUIDs
-5. Field-by-field reference          (unchanged)
-6. Per-array object definitions      ← NEW
-7. Canonical level codes (France)    (was 6)
-8. Full worked example               (was 7)
-9. Validation checklist              (was 8)
-10. How to upload                    (was 9)
+Entity            Field              Required  Notes
+subjects          id                 yes       reuse from §4 if subject exists
+subjects          slug               yes       must be one of 5 known slugs
+subjects          country_code       yes       lowercase ISO ('fr')
+subjects          language           no        defaults to 'en'
+...
 ```
 
 ## Files touched
 
-- **Edit**: `curriculum-import/BUNDLE_SCHEMA.md` — insert §6, renumber §6–§9 to §7–§10
+- **Create**: `curriculum-import/BUNDLE_OBJECT_REFERENCE.md` (~250 lines)
+- **Edit**: `curriculum-import/BUNDLE_SCHEMA.md` — add a one-line pointer at the top of §6 directing readers to the new file for the strict typed view
 - **Leave alone**: `SUPABASE_TABLES.md`, `BUNDLE_FORMAT.md`, `README.md`
 
 No code, no DB changes.
