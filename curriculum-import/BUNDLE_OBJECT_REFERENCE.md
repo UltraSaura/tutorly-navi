@@ -12,132 +12,151 @@ If you only read one section, read **Part B**.
 
 ---
 
-## Part A — Typed schema snippets
+## Part A — Per-entity field lists
 
-Notation:
-
-- `"uuid"` → lowercase v4 UUID string (`xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`)
-- `"string"` → required non-empty string
-- `"string|null"` → optional, may be omitted or set to `null`
-- `"string[]"` → array of strings (may be `[]`)
-- `"a|b|c"` → enum, must be one of the listed values
-- `// → table.column` → foreign key target
+Each entity below lists its **Required** and **Optional** fields, plus a one-line **Wire-up** note explaining which sibling UUIDs it references. **Notes** call out auto-fill or legacy-column quirks where relevant.
 
 ### 1. `subjects[]`
 
-```jsonc
-{
-  "id":            "uuid",            // required. Reuse known UUID if subject already exists (see BUNDLE_SCHEMA.md §4)
-  "slug":          "mathematics|french|english|history-geography|sciences", // required, unique
-  "name":          "string",          // required, display name
-  "country_code":  "fr|en|us|...",    // required, lowercase ISO. DRIVES FILTERING in the viewer
-  "language":      "fr|en|...",       // optional, defaults to 'en'
-  "color_scheme":  "string",          // optional, defaults to 'blue'
-  "icon_name":     "string"           // optional, defaults to 'BookOpen' (lucide-react icon name)
-}
-```
+**Required:**
+- `id` — uuid v4 — reuse known UUID if subject already exists (see §4 of `BUNDLE_SCHEMA.md`)
+- `slug` — string — one of: `mathematics`, `french`, `english`, `history-geography`, `sciences`
+- `name` — string — display name
+- `country_code` — string — lowercase ISO (`fr`, `en`, `us`). Drives viewer filtering.
+
+**Optional:**
+- `language` — string — defaults to `'en'`
+- `color_scheme` — string — defaults to `'blue'`
+- `icon_name` — string — lucide-react icon name, defaults to `'BookOpen'`
+
+**Wire-up:** root entity, no FKs.
+
+---
 
 ### 2. `domains[]`
 
-```jsonc
-{
-  "id":         "uuid",   // required
-  "subject_id": "uuid",   // required → subjects.id
-  "code":       "string", // required, short uppercase, e.g. "NUMBERS"
-  "label":      "string"  // required, display label
-  // NOTE: legacy NOT NULL column `domain` is auto-filled from `code` by the importer
-}
-```
+**Required:**
+- `id` — uuid v4 — primary key
+- `subject_id` — uuid — FK → `subjects.id`
+- `code` — string — short uppercase code, e.g. `"NUMBERS"`
+- `label` — string — display label
+
+**Optional:** none.
+
+**Wire-up:** belongs to one `subject`.
+
+**Notes:** the legacy NOT NULL column `domain` is auto-filled from `code` by the importer — do not send it.
+
+---
 
 ### 3. `subdomains[]`
 
-```jsonc
-{
-  "id":         "uuid",   // required → stored as subdomains.id_new (real FK target)
-  "subject_id": "uuid",   // required → subjects.id
-  "domain_id":  "uuid",   // required → domains.id
-  "code":       "string", // required, short code, e.g. "FRAC"
-  "label":      "string"  // required, display label
-  // NOTE: legacy NOT NULL column `subdomain` is auto-filled from `label` by the importer
-}
-```
+**Required:**
+- `id` — uuid v4 — stored as `subdomains.id_new`; this is the real FK target used by objectives/tasks
+- `subject_id` — uuid — FK → `subjects.id`
+- `domain_id` — uuid — FK → `domains.id`
+- `code` — string — short code, e.g. `"FRAC"`
+- `label` — string — display label
+
+**Optional:** none.
+
+**Wire-up:** belongs to one `subject` and one `domain`.
+
+**Notes:** the legacy NOT NULL column `subdomain` is auto-filled from `label` by the importer.
+
+---
 
 ### 4. `objectives[]`
 
-```jsonc
-{
-  "id":              "uuid",                                                  // required → stored as objectives.id_new
-  "subject_id":      "uuid",                                                  // required → subjects.id
-  "domain_id":       "uuid",                                                  // required → domains.id
-  "subdomain_id":    "uuid",                                                  // required → subdomains.id (id_new)
-  "level":           "cp|ce1|ce2|cm1|cm2|6eme|5eme|4eme|3eme",                // required, canonical lowercase code
-  "text":            "string",                                                // required, single-sentence objective
-  "notes_from_prog": "string|null",                                           // optional, defaults to ''
-  "keywords":        "string[]"                                               // optional, defaults to []
-}
-```
+**Required:**
+- `id` — uuid v4 — stored as `objectives.id_new`
+- `subject_id` — uuid — FK → `subjects.id`
+- `domain_id` — uuid — FK → `domains.id`
+- `subdomain_id` — uuid — FK → `subdomains.id` (matches `id_new`)
+- `level` — enum string — one of: `cp`, `ce1`, `ce2`, `cm1`, `cm2`, `6eme`, `5eme`, `4eme`, `3eme` (lowercase canonical only)
+- `text` — string — single-sentence learning objective
+
+**Optional:**
+- `notes_from_prog` — string — defaults to `''`
+- `keywords` — string[] — defaults to `[]`
+
+**Wire-up:** belongs to one `subdomain` (and transitively a `domain` + `subject`).
+
+---
 
 ### 5. `success_criteria[]`
 
-```jsonc
-{
-  "id":           "uuid",   // required → stored as success_criteria.id_new
-  "objective_id": "uuid",   // required → objectives.id (id_new)
-  "text":         "string", // required, single observable criterion
-  "subject_id":   "uuid",   // optional but recommended → subjects.id (auto-derived from parent objective if omitted)
-  "domain_id":    "uuid",   // optional but recommended → domains.id  (auto-derived)
-  "subdomain_id": "uuid"    // optional but recommended → subdomains.id (auto-derived)
-}
-```
+**Required:**
+- `id` — uuid v4 — stored as `success_criteria.id_new`
+- `objective_id` — uuid — FK → `objectives.id` (matches `id_new`)
+- `text` — string — single observable criterion ("Je sais …")
+
+**Optional:**
+- `subject_id` — uuid — FK → `subjects.id` (auto-derived from parent objective if omitted)
+- `domain_id` — uuid — FK → `domains.id` (auto-derived)
+- `subdomain_id` — uuid — FK → `subdomains.id` (auto-derived)
+
+**Wire-up:** belongs to one `objective`. The 3 optional `*_id` fields are derived from the parent — only set them to override.
+
+---
 
 ### 6. `tasks[]`
 
-```jsonc
-{
-  "id":                   "uuid",                          // required → stored as tasks.id_new
-  "success_criterion_id": "uuid",                          // required → success_criteria.id (id_new)
-  "type":                 "mcq|open|numeric|short",        // required
-  "stem":                 "string",                        // required, the question
-  "solution":             "string|null",                   // optional, defaults to ''
-  "rubric":               "string|null",                   // optional, defaults to ''
-  "difficulty":           "easy|core|stretch",             // optional, defaults to 'core'
-  "tags":                 "string[]",                      // optional, defaults to []
-  "source":               "manual|auto",                   // optional, defaults to 'auto'
-  "subject_id":           "uuid",                          // optional, auto-derived from parent
-  "domain_id":            "uuid",                          // optional, auto-derived
-  "subdomain_id":         "uuid"                           // optional, auto-derived
-}
-```
+**Required:**
+- `id` — uuid v4 — stored as `tasks.id_new`
+- `success_criterion_id` — uuid — FK → `success_criteria.id` (matches `id_new`)
+- `type` — enum string — one of: `mcq`, `open`, `numeric`, `short`
+- `stem` — string — the question text
+
+**Optional:**
+- `solution` — string — defaults to `''`
+- `rubric` — string — defaults to `''`
+- `difficulty` — enum string — one of: `easy`, `core`, `stretch` (defaults to `'core'`)
+- `tags` — string[] — defaults to `[]`
+- `source` — enum string — one of: `manual`, `auto` (defaults to `'auto'`)
+- `subject_id` — uuid — auto-derived from parent
+- `domain_id` — uuid — auto-derived
+- `subdomain_id` — uuid — auto-derived
+
+**Wire-up:** belongs to one `success_criterion`. The 3 optional `*_id` fields are derived from the parent chain.
+
+---
 
 ### 7. `topic_objective_links[]`
 
-```jsonc
-{
-  "id":           "uuid",   // optional, generated if omitted
-  "topic_id":     "uuid",   // required → topics.id (must ALREADY EXIST in DB)
-  "objective_id": "uuid",   // required → objectives.id (id_new)
-  "order_index":  0          // optional, defaults to 0
-}
-```
+**Required:**
+- `topic_id` — uuid — FK → `topics.id`. **Must already exist in the `topics` table** — the importer will reject unknown UUIDs.
+- `objective_id` — uuid — FK → `objectives.id` (matches `id_new`)
 
-> ⚠️ Skip this array entirely unless the referenced `topic_id` UUIDs already exist in the `topics` table. The importer will reject unknown topic UUIDs.
+**Optional:**
+- `id` — uuid v4 — generated if omitted
+- `order_index` — integer — defaults to `0`
+
+**Wire-up:** links a pre-existing `topic` to an `objective` from this bundle.
+
+> ⚠️ Skip this array entirely unless the referenced `topic_id` UUIDs already exist in the database.
+
+---
 
 ### 8. `lessons[]`
 
-```jsonc
-{
-  "id":                    "uuid",     // required → stored as lessons.id_new
-  "title":                 "string",   // required
-  "topic_id":              "uuid|null",// optional → topics.id (must exist if set)
-  "unit_id":               "string|null", // optional, free-text unit reference
-  "objective_ids":         "uuid[]",   // optional jsonb array, defaults to []
-  "success_criterion_ids": "uuid[]",   // optional jsonb array, defaults to []
-  "materials":             "string|null",  // optional, defaults to ''
-  "misconceptions":        "string|null",  // optional, defaults to ''
-  "teacher_talk":          "string|null",  // optional, defaults to ''
-  "student_worksheet":     "string|null"   // optional, defaults to ''
-}
-```
+**Required:**
+- `id` — uuid v4 — stored as `lessons.id_new`
+- `title` — string — display title
+
+**Optional:**
+- `topic_id` — uuid — FK → `topics.id` (must exist if set)
+- `unit_id` — string — free-text unit reference
+- `objective_ids` — uuid[] — jsonb array, defaults to `[]`
+- `success_criterion_ids` — uuid[] — jsonb array, defaults to `[]`
+- `materials` — string — defaults to `''`
+- `misconceptions` — string — defaults to `''`
+- `teacher_talk` — string — defaults to `''`
+- `student_worksheet` — string — defaults to `''`
+
+**Wire-up:** optionally references a `topic` plus arrays of `objective` and `success_criterion` UUIDs from this bundle.
+
+**Notes:** `objective_ids` and `success_criterion_ids` are stored as jsonb arrays — pass them as plain JSON arrays of UUID strings.
 
 ---
 
