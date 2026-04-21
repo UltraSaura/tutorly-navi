@@ -270,3 +270,6 @@ const MathLiveInputComponent = ({
     </div>
   );
 };
+
+export const MathLiveInput = MathLiveInputComponent;
+export default MathLiveInputComponent;
