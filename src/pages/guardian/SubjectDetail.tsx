@@ -58,6 +58,7 @@ export default function SubjectDetail() {
 
   return (
     <div className="space-y-6">
+        <PageMeta title="Subject Detail" description="Per-subject breakdown of your child's progress and attempts." />
         {/* Subject Header */}
         <Card className="p-6">
           <div className="flex items-start justify-between mb-4">

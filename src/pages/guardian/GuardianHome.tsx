@@ -30,6 +30,7 @@ export default function GuardianHome() {
       </div>;
   }
   return <div className="space-y-8">
+      <PageMeta title="Guardian Home" description="Monitor your children's learning progress and recent activity at a glance." />
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Welcome to Your Guardian Portal</h1>

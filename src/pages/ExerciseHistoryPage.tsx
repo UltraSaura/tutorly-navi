@@ -86,6 +86,7 @@ export const ExerciseHistoryPage = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <PageMeta title="Exercise History" description="Review your past exercises, attempts, and AI explanations on Stuwy." />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>

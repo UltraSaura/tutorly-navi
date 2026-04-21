@@ -25,6 +25,7 @@ export default function TeacherHome() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Teacher Home" description="Your teacher dashboard — classes, students, and recent activity at a glance." />
       <div>
         <h1 className="text-3xl font-bold">Welcome Back!</h1>
         <p className="text-muted-foreground">Manage your classes and track student progress</p>

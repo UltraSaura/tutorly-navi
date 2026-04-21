@@ -23,6 +23,7 @@ const PromptManagement = () => {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Prompts" description="Edit and version AI system prompts." />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Prompt Management</h2>

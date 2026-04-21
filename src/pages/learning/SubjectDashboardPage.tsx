@@ -46,6 +46,7 @@ const SubjectDashboardPage = () => {
   };
   return (
     <div className="flex flex-col h-screen bg-background">
+      <PageMeta title="Subject" description="Explore topics, videos, and exercises for this subject on Stuwy." />
       {/* Header */}
       <div 
         className="flex items-center gap-4 px-4 py-3 border-b"

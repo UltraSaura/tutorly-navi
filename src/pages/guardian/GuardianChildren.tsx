@@ -144,6 +144,7 @@ export default function GuardianChildren() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Children" description="Add and manage your children's Stuwy profiles and learning settings." />
       <ManualChildCreationTrigger />
       
       <div className="flex justify-between items-center">

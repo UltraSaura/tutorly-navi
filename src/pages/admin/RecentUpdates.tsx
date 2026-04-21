@@ -158,6 +158,7 @@ export default function RecentUpdates() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
+      <PageMeta title="Recent Updates" description="Recent imports, content updates, and system changes." />
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">

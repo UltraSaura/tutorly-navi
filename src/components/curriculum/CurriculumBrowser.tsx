@@ -35,6 +35,7 @@ export default function CurriculumBrowser() {
   if (!selectedSubject) {
     return (
       <div className="container mx-auto p-6 space-y-6">
+        <PageMeta title="Curriculum" description="Browse the official curriculum mapped to Stuwy lessons and exercises." />
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-foreground">Curriculum</h1>
           <p className="text-muted-foreground">

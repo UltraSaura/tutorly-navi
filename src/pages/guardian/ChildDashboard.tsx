@@ -85,6 +85,7 @@ export default function ChildDashboard() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Child Dashboard" description="Detailed learning view for an individual child on Stuwy." />
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <ChildHeader

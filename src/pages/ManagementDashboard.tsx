@@ -8,6 +8,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 const ManagementDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
+      <PageMeta title="Management" description="Stuwy management dashboard." />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

@@ -203,6 +203,7 @@ export default function CurriculumManager() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
+      <PageMeta title="Curriculum" description="Import and manage curriculum bundles." />
       <div>
         <h1 className="text-3xl font-bold">Curriculum Manager</h1>
         <p className="text-muted-foreground">Import and manage curriculum data from JSON bundles</p>

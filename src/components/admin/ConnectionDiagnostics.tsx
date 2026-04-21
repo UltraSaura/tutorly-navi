@@ -62,6 +62,7 @@ const ConnectionDiagnostics = () => {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Diagnostics" description="Inspect connectivity and integration health." />
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Connection Diagnostics</h2>

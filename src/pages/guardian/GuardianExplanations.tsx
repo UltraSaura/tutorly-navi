@@ -54,6 +54,7 @@ export default function GuardianExplanations() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Explanations" description="See AI-generated explanations for the exercises your children attempted." />
       <div>
         <h1 className="text-3xl font-bold mb-2">Explanations</h1>
         <p className="text-muted-foreground">

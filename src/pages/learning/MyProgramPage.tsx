@@ -29,6 +29,7 @@ interface GroupedTopics {
 
 export default function MyProgramPage() {
   const navigate = useNavigate();
+  const pageMeta = <PageMeta title="My Program" description="Your personalized Stuwy learning program based on your level and goals." />;
   const { profile, isLoading: profileLoading, hasProfile } = useUserCurriculumProfile();
 
   const { data: topics, isLoading: topicsLoading } = useQuery({

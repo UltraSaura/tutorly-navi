@@ -32,6 +32,7 @@ export default function GuardianBilling() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Billing" description="Manage your Stuwy subscription, payment method, and billing history." />
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Billing & Subscription</h1>

@@ -23,6 +23,7 @@ export default function TeacherClasses() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Classes" description="Manage your classes and enrolled students on Stuwy." />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">My Classes</h1>

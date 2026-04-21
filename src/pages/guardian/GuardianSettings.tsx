@@ -39,6 +39,7 @@ export default function GuardianSettings() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Settings" description="Configure your guardian account preferences and notifications." />
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Guardian Settings</h1>

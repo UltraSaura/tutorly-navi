@@ -192,6 +192,7 @@ const SubjectManagement = () => {
   
   return (
     <div className="space-y-6">
+      <PageMeta title="Subjects" description="Manage subjects available across the Stuwy platform." />
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Subject Management</h1>

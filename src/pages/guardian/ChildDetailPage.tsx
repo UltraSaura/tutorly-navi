@@ -42,6 +42,7 @@ export default function ChildDetailPage() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Child Details" description="Full profile, curriculum, and activity for your child." />
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate('/guardian')}>

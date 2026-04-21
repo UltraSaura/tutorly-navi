@@ -220,6 +220,7 @@ const ChatInterface = () => {
   // Exercise-Focused Layout with Chat Input
   return (
     <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg overflow-x-hidden max-w-full">
+      <PageMeta title="Tutor Chat" description="Get instant AI-powered help with math homework, exercises, and explanations from your Stuwy tutor." />
       {/* Scrollable Content Area */}
       <div 
         className="h-full overflow-auto overflow-x-hidden"

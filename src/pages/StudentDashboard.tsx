@@ -50,6 +50,7 @@ export default function StudentDashboard() {
   
   return (
     <div className="container mx-auto p-4 space-y-6 max-w-6xl">
+      <PageMeta title="Dashboard" description="Your learning dashboard — track progress, resume lessons, and continue your math journey on Stuwy." />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
