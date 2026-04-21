@@ -22,7 +22,7 @@ export function TopicTranscriptTab({ videoId, topicId }: TopicTranscriptTabProps
     queryFn: async () => {
       if (!videoId) return null;
       const { data, error } = await supabase
-        .from('learning_videos')
+        .from('videos')
         .select('id, title, transcript')
         .eq('id', videoId)
         .single();

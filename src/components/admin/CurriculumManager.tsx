@@ -8,7 +8,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3 } from 'lucide-react';
+import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3, AlertTriangle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useObjectives, useCurriculumStats } from '@/hooks/useCurriculumData';
 import { useCurriculumCountries, useCurriculumLevels, useAllCurriculumSubjects } from '@/hooks/useCurriculumBundle';
@@ -21,10 +22,16 @@ import { toast } from '@/hooks/use-toast';
 export default function CurriculumManager() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [replaceMode, setReplaceMode] = useState(false);
   const [importResult, setImportResult] = useState<{
     success: boolean;
     counts?: ImportCounts;
+    verification?: {
+      ready_for_phase_3?: boolean;
+      nullChecks?: Record<string, number>;
+    };
     error?: string;
+    diagnostics?: { table?: string; code?: string | null; message?: string; details?: string | null; hint?: string | null };
   } | null>(null);
 
   // Filters
@@ -81,34 +88,90 @@ export default function CurriculumManager() {
     setImportResult(null);
 
     try {
-      // Read file content
       const fileContent = await selectedFile.text();
       const bundleData = JSON.parse(fileContent);
+      if (replaceMode) bundleData.mode = 'replace';
 
-      // Get auth token
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
+      if (!session) throw new Error('Not authenticated');
 
-      // Call edge function
       const response = await supabase.functions.invoke('import-curriculum-bundle', {
         body: bundleData,
       });
 
-      if (response.error) throw response.error;
+      // Network/runtime error from invoke
+      if (response.error && !response.data) throw response.error;
+
+      const data: any = response.data ?? {};
+
+      if (data.success === false) {
+        const diag = data.diagnostics;
+        const detailLines = diag
+          ? [
+              diag.table ? `Table: ${diag.table}` : null,
+              diag.code ? `Code: ${diag.code}` : null,
+              diag.message ? `Message: ${diag.message}` : null,
+              diag.details ? `Details: ${diag.details}` : null,
+              diag.hint ? `Hint: ${diag.hint}` : null,
+            ].filter(Boolean).join('\n')
+          : (data.error ?? 'Unknown error');
+
+        setImportResult({
+          success: false,
+          error: detailLines,
+          diagnostics: diag,
+        });
+        toast({
+          title: 'Import failed',
+          description: diag?.message ?? data.error ?? 'See details below',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       setImportResult({
         success: true,
-        counts: response.data.counts,
+        counts: data.counts,
+        verification: data.verification,
       });
 
-      toast({
-        title: 'Import successful',
-        description: 'Curriculum data imported successfully',
-      });
+      // Branch the toast based on health of the import
+      const nullChecks = data.verification?.nullChecks ?? data.null_fk_counts ?? {};
+      const hasNullFks = Object.values(nullChecks).some((n: any) => Number(n) > 0);
+      const ready = data.verification?.ready_for_phase_3 ?? data.ready_for_phase_3 ?? true;
+      const summary = data.counts ?? data.summary ?? {};
+      const summaryParts = Object.entries(summary)
+        .filter(([, v]) => Number(v) > 0)
+        .map(([k, v]) => `${v} ${k.replace('_', ' ')}`)
+        .join(', ');
 
-      // Refresh data
+      if (ready && !hasNullFks) {
+        toast({
+          title: '✓ Import successful',
+          description: summaryParts || 'Curriculum data imported successfully',
+        });
+      } else {
+        const issues = Object.entries(nullChecks)
+          .filter(([, n]) => Number(n) > 0)
+          .map(([k, n]) => `${n} × ${k}`)
+          .join(', ');
+        toast({
+          title: '⚠ Import completed with warnings',
+          description: (
+            <div className="space-y-2">
+              <div>{summaryParts}</div>
+              {issues && <div className="text-xs">Unresolved: {issues}</div>}
+              <Link
+                to="/admin/recent-updates?filter=issues"
+                className="inline-block text-xs underline font-medium"
+              >
+                View details →
+              </Link>
+            </div>
+          ) as any,
+        });
+      }
+
       refetchObjectives();
       refetchStats();
     } catch (error: any) {
@@ -210,6 +273,19 @@ export default function CurriculumManager() {
                 {selectedFile.name}
               </div>
             )}
+
+            <label className="flex items-start gap-2 text-sm cursor-pointer select-none pt-1">
+              <input
+                type="checkbox"
+                checked={replaceMode}
+                onChange={(e) => setReplaceMode(e.target.checked)}
+                disabled={isImporting}
+                className="h-4 w-4 mt-0.5 rounded border-border"
+              />
+              <span>
+                <strong>Replace</strong> existing data for the subject(s) in this bundle (deletes domains, subdomains, objectives, success criteria & tasks first — fixes leftover-row constraint clashes)
+              </span>
+            </label>
           </div>
 
           {/* Import Result */}
@@ -225,16 +301,41 @@ export default function CurriculumManager() {
               </AlertTitle>
               <AlertDescription>
                 {importResult.success && importResult.counts ? (
-                  <div className="mt-2 space-y-1">
-                    {Object.entries(importResult.counts).map(([table, count]) => (
-                      <div key={table} className="flex justify-between text-sm">
-                        <span className="capitalize">{table.replace('_', ' ')}:</span>
-                        <span className="font-medium">{count}</span>
+                  <div className="mt-2 space-y-3">
+                    <div className="space-y-1">
+                      {Object.entries(importResult.counts).map(([table, count]) => (
+                        <div key={table} className="flex justify-between text-sm">
+                          <span className="capitalize">{table.replace('_', ' ')}:</span>
+                          <span className="font-medium">{count}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {importResult.verification && (
+                      <div className="pt-2 border-t space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Phase 3 readiness:</span>
+                          <Badge variant={importResult.verification.ready_for_phase_3 ? 'success' : 'destructive'}>
+                            {importResult.verification.ready_for_phase_3 ? 'Ready' : 'Not ready'}
+                          </Badge>
+                        </div>
+                        {importResult.verification.nullChecks && (
+                          <div className="space-y-1">
+                            <div className="text-xs font-medium text-muted-foreground">NULL UUID FK counts:</div>
+                            {Object.entries(importResult.verification.nullChecks).map(([key, count]) => (
+                              <div key={key} className="flex justify-between text-xs">
+                                <span className="font-mono">{key}:</span>
+                                <span className={count > 0 ? 'text-destructive font-medium' : 'text-muted-foreground'}>
+                                  {count}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    ))}
+                    )}
                   </div>
                 ) : (
-                  <p>{importResult.error}</p>
+                  <pre className="whitespace-pre-wrap text-xs font-mono mt-2">{importResult.error}</pre>
                 )}
               </AlertDescription>
             </Alert>

@@ -1,0 +1,1 @@
+UPDATE public.objectives SET created_at = now() WHERE level = '6eme';

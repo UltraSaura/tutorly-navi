@@ -90,8 +90,8 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
     queryFn: async () => {
       if (!aiResponse.topicId) return null;
       const { data } = await supabase
-        .from('learning_topics')
-        .select(`slug, category:learning_categories!inner(subject:learning_subjects!inner(slug))`)
+        .from('topics')
+        .select(`slug, category:learning_categories!inner(subject:subjects!inner(slug))`)
         .eq('id', aiResponse.topicId)
         .single();
       return data;

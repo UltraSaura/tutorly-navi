@@ -7,6 +7,7 @@ interface GenerateRequest {
   questionCount?: number;
   questionTypes?: string[];
   difficulty?: 'easy' | 'medium' | 'hard';
+  mix?: boolean;
 }
 
 interface GenerateResponse {

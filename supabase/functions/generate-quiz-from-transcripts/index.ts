@@ -11,98 +11,71 @@ interface GenerateRequest {
   questionCount?: number;
   questionTypes?: string[];
   difficulty?: 'easy' | 'medium' | 'hard';
+  mix?: boolean;
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+function buildTypeInstructions(questionTypes: string[]): string {
+  return questionTypes.map(type => {
+    switch (type) {
+      case 'single':
+        return `- "single": Multiple choice with exactly ONE correct answer. Include 4 choices with "correct": true on only one.`;
+      case 'multi':
+        return `- "multi": Multiple choice with MULTIPLE correct answers (2-3 typically). Include 4 choices with "correct": true on multiple.`;
+      case 'numeric':
+        return `- "numeric": Answer is a number. Include "answer" (the correct number) and optionally "range": { "min": X, "max": Y } for acceptable range.`;
+      case 'ordering':
+        return `- "ordering": Put items in correct order. Include "items" (shuffled array of strings) and "correctOrder" (same items in correct sequence).`;
+      case 'visual_pie':
+        return `- "visual" with subtype "pie": A fraction/proportion question using a pie chart. The student selects which pie chart shows the correct fraction.
+  Structure:
+  {
+    "id": "q-X", "kind": "visual",
+    "prompt": "Which pie shows 1/3 colored?",
+    "hint": "Count the colored segments",
+    "points": 1,
+    "visual": {
+      "subtype": "pie",
+      "interactionMode": "select_pie",
+      "segments": [
+        {"id": "s1", "value": 1, "colored": true},
+        {"id": "s2", "value": 1, "colored": false},
+        {"id": "s3", "value": 1, "colored": false}
+      ],
+      "variants": [
+        {"id": "v1", "segments": [{"id": "s1", "value": 1, "colored": true}, {"id": "s2", "value": 1, "colored": false}, {"id": "s3", "value": 1, "colored": false}], "correct": true},
+        {"id": "v2", "segments": [{"id": "s1", "value": 1, "colored": true}, {"id": "s2", "value": 1, "colored": true}, {"id": "s3", "value": 1, "colored": false}], "correct": false},
+        {"id": "v3", "segments": [{"id": "s1", "value": 1, "colored": true}, {"id": "s2", "value": 1, "colored": true}, {"id": "s3", "value": 1, "colored": true}], "correct": false}
+      ]
+    }
   }
-
-  try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+  Rules for pie: all segments must have equal value (1). Use 2-8 segments total. "colored": true means that segment is shaded. Each variant must have a unique id and different coloring pattern. Exactly one variant must be correct.`;
+      case 'visual_angle':
+        return `- "visual" with subtype "angle": An angle measurement question. The student estimates or inputs the angle.
+  Structure:
+  {
+    "id": "q-X", "kind": "visual",
+    "prompt": "What is the measure of this angle?",
+    "hint": "Look at the space between the two rays",
+    "points": 1,
+    "visual": {
+      "subtype": "angle",
+      "aDeg": 0,
+      "bDeg": 45,
+      "targetDeg": 45,
+      "toleranceDeg": 2
     }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const { videoIds, questionCount = 5, questionTypes = ['single', 'multi', 'numeric', 'ordering'], difficulty = 'medium' }: GenerateRequest = await req.json();
-
-    if (!videoIds || videoIds.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "No video IDs provided" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+  }
+  Rules for angle: aDeg is the first ray angle (usually 0), bDeg is the second ray. targetDeg is the correct answer. toleranceDeg is the accepted error margin (use 2-5). Use angles between 10 and 350.`;
+      case 'mix':
+        return `Choose the BEST question type for each question from: single, multi, numeric, ordering, visual (pie), visual (angle). Mix different types across the set. For fraction/proportion topics prefer visual pie. For geometry topics prefer visual angle. For sequences prefer ordering. For factual recall prefer single/multi.`;
+      default:
+        return '';
     }
+  }).filter(Boolean).join('\n');
+}
 
-    // Fetch videos with transcripts
-    const { data: videos, error: videosError } = await supabase
-      .from('learning_videos')
-      .select('id, title, transcript')
-      .in('id', videoIds)
-      .not('transcript', 'is', null);
-
-    if (videosError) {
-      console.error("Error fetching videos:", videosError);
-      throw new Error("Failed to fetch videos");
-    }
-
-    if (!videos || videos.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "No videos with transcripts found" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Aggregate transcripts
-    const aggregatedTranscript = videos
-      .map(v => `[Video: ${v.title}]\n${v.transcript}`)
-      .join('\n\n---\n\n');
-    
-    const wordCount = aggregatedTranscript.trim().split(/\s+/).filter(Boolean).length;
-    const videoTitles = videos.map(v => v.title);
-
-    // Build AI prompt
-    const typeInstructions = questionTypes.map(type => {
-      switch (type) {
-        case 'single':
-          return `- "single": Multiple choice with exactly ONE correct answer. Include 4 choices with "correct": true on only one.`;
-        case 'multi':
-          return `- "multi": Multiple choice with MULTIPLE correct answers (2-3 typically). Include 4 choices with "correct": true on multiple.`;
-        case 'numeric':
-          return `- "numeric": Answer is a number. Include "answer" (the correct number) and optionally "range": { "min": X, "max": Y } for acceptable range.`;
-        case 'ordering':
-          return `- "ordering": Put items in correct order. Include "items" (shuffled array of strings) and "correctOrder" (same items in correct sequence).`;
-        default:
-          return '';
-      }
-    }).filter(Boolean).join('\n');
-
-    const difficultyGuide = {
-      easy: 'Simple recall questions, straightforward concepts, obvious answers.',
-      medium: 'Requires understanding and application, some inference needed.',
-      hard: 'Complex reasoning, subtle distinctions, requires deep comprehension.'
-    };
-
-    const prompt = `You are an expert educator creating quiz questions based on video transcript content.
-
-TRANSCRIPT CONTENT:
----
-${aggregatedTranscript}
----
-
-Generate exactly ${questionCount} quiz questions based on this content.
-
-QUESTION TYPES TO USE:
-${typeInstructions}
-
-DIFFICULTY: ${difficulty}
-${difficultyGuide[difficulty]}
-
-Return ONLY a valid JSON array with questions following this exact structure:
-
+function buildPromptExamples(): string {
+  return `
 For "single" or "multi" questions:
 {
   "id": "q-1",
@@ -138,7 +111,136 @@ For "ordering" questions:
   "points": 1,
   "items": ["Step B", "Step A", "Step C", "Step D"],
   "correctOrder": ["Step A", "Step B", "Step C", "Step D"]
+}`;
 }
+
+function validateQuestions(questions: any[]): any[] {
+  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'visual']);
+  const validVisualSubtypes = new Set(['pie', 'angle']);
+
+  return questions.filter((q, idx) => {
+    // Ensure id and prompt
+    if (!q.id) q.id = `q-${idx + 1}`;
+    if (!q.prompt) return false;
+    if (!validKinds.has(q.kind)) return false;
+
+    if (q.kind === 'single') {
+      if (!Array.isArray(q.choices) || q.choices.length < 2) return false;
+      const correctCount = q.choices.filter((c: any) => c.correct).length;
+      if (correctCount !== 1) return false;
+      q.choices.forEach((c: any, i: number) => { if (!c.id) c.id = `c${i + 1}`; });
+    }
+
+    if (q.kind === 'multi') {
+      if (!Array.isArray(q.choices) || q.choices.length < 2) return false;
+      const correctCount = q.choices.filter((c: any) => c.correct).length;
+      if (correctCount < 2) return false;
+      q.choices.forEach((c: any, i: number) => { if (!c.id) c.id = `c${i + 1}`; });
+    }
+
+    if (q.kind === 'numeric') {
+      if (typeof q.answer !== 'number') return false;
+    }
+
+    if (q.kind === 'ordering') {
+      if (!Array.isArray(q.items) || !Array.isArray(q.correctOrder)) return false;
+      if (q.items.length < 2) return false;
+    }
+
+    if (q.kind === 'visual') {
+      if (!q.visual || !validVisualSubtypes.has(q.visual.subtype)) return false;
+      if (q.visual.subtype === 'pie') {
+        if (!Array.isArray(q.visual.segments) || q.visual.segments.length < 2) return false;
+        q.visual.segments.forEach((s: any, i: number) => { if (!s.id) s.id = `s${i + 1}`; });
+        if (q.visual.variants) {
+          q.visual.variants.forEach((v: any, i: number) => { if (!v.id) v.id = `v${i + 1}`; });
+        }
+        if (!q.visual.interactionMode) q.visual.interactionMode = 'select_pie';
+      }
+      if (q.visual.subtype === 'angle') {
+        if (typeof q.visual.targetDeg !== 'number') return false;
+        if (typeof q.visual.toleranceDeg !== 'number') q.visual.toleranceDeg = 3;
+        if (typeof q.visual.aDeg !== 'number') q.visual.aDeg = 0;
+        if (typeof q.visual.bDeg !== 'number') q.visual.bDeg = q.visual.targetDeg;
+      }
+    }
+
+    if (!q.points) q.points = 1;
+    return true;
+  });
+}
+
+function parseJsonResponse(content: string): any[] {
+  let jsonStr = content.trim();
+  if (jsonStr.startsWith('```json')) jsonStr = jsonStr.slice(7);
+  else if (jsonStr.startsWith('```')) jsonStr = jsonStr.slice(3);
+  if (jsonStr.endsWith('```')) jsonStr = jsonStr.slice(0, -3);
+  jsonStr = jsonStr.trim();
+  return JSON.parse(jsonStr);
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { videoIds, questionCount = 5, questionTypes = ['single', 'multi', 'numeric', 'ordering'], difficulty = 'medium', mix = false }: GenerateRequest = await req.json();
+
+    if (!videoIds || videoIds.length === 0) {
+      return new Response(JSON.stringify({ error: "No video IDs provided" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const { data: videos, error: videosError } = await supabase
+      .from('videos')
+      .select('id, title, transcript')
+      .in('id', videoIds)
+      .not('transcript', 'is', null);
+
+    if (videosError) throw new Error("Failed to fetch videos");
+    if (!videos || videos.length === 0) {
+      return new Response(JSON.stringify({ error: "No videos with transcripts found" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const aggregatedTranscript = videos.map(v => `[Video: ${v.title}]\n${v.transcript}`).join('\n\n---\n\n');
+    const wordCount = aggregatedTranscript.trim().split(/\s+/).filter(Boolean).length;
+    const videoTitles = videos.map(v => v.title);
+
+    const effectiveTypes = mix ? ['mix'] : questionTypes;
+    const typeInstructions = buildTypeInstructions(effectiveTypes);
+
+    const difficultyGuide: Record<string, string> = {
+      easy: 'Simple recall questions, straightforward concepts, obvious answers.',
+      medium: 'Requires understanding and application, some inference needed.',
+      hard: 'Complex reasoning, subtle distinctions, requires deep comprehension.'
+    };
+
+    const prompt = `You are an expert educator creating quiz questions based on video transcript content.
+
+TRANSCRIPT CONTENT:
+---
+${aggregatedTranscript}
+---
+
+Generate exactly ${questionCount} quiz questions based on this content.
+
+QUESTION TYPES TO USE:
+${typeInstructions}
+
+DIFFICULTY: ${difficulty}
+${difficultyGuide[difficulty]}
+
+Return ONLY a valid JSON array with questions following this exact structure:
+${buildPromptExamples()}
 
 RULES:
 - Questions must be directly based on transcript content
@@ -150,7 +252,7 @@ RULES:
 - Vary question types across the set based on the types requested
 - Return ONLY the JSON array, no markdown, no explanation`;
 
-    console.log("Calling AI gateway with prompt length:", prompt.length);
+    console.log("Calling AI gateway, prompt length:", prompt.length);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -170,16 +272,12 @@ RULES:
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Please add funds to continue." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds to continue." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
@@ -188,45 +286,25 @@ RULES:
 
     const aiResponse = await response.json();
     const content = aiResponse.choices?.[0]?.message?.content;
+    if (!content) throw new Error("No content in AI response");
 
-    if (!content) {
-      throw new Error("No content in AI response");
-    }
-
-    // Parse the JSON response - handle potential markdown code blocks
-    let questions;
+    let rawQuestions;
     try {
-      let jsonStr = content.trim();
-      // Remove markdown code blocks if present
-      if (jsonStr.startsWith('```json')) {
-        jsonStr = jsonStr.slice(7);
-      } else if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.slice(3);
-      }
-      if (jsonStr.endsWith('```')) {
-        jsonStr = jsonStr.slice(0, -3);
-      }
-      jsonStr = jsonStr.trim();
-      
-      questions = JSON.parse(jsonStr);
-    } catch (parseError) {
+      rawQuestions = parseJsonResponse(content);
+    } catch {
       console.error("Failed to parse AI response:", content);
       throw new Error("Failed to parse generated questions");
     }
 
-    if (!Array.isArray(questions)) {
-      throw new Error("AI response is not an array of questions");
-    }
+    if (!Array.isArray(rawQuestions)) throw new Error("AI response is not an array of questions");
 
-    console.log(`Generated ${questions.length} questions from ${videos.length} videos`);
+    const questions = validateQuestions(rawQuestions);
+    if (questions.length === 0) throw new Error("No valid questions after validation");
+
+    console.log(`Generated ${questions.length} valid questions from ${videos.length} videos`);
 
     return new Response(
-      JSON.stringify({
-        questions,
-        aggregatedWordCount: wordCount,
-        aggregatedTranscript,
-        videoTitles,
-      }),
+      JSON.stringify({ questions, aggregatedWordCount: wordCount, aggregatedTranscript, videoTitles }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
