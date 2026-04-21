@@ -38,24 +38,26 @@ export function useRecentSubjects({ since, search }: Args) {
       const subjects = data ?? [];
       if (subjects.length === 0) return subjects;
 
-      // Derive distinct level(s) per subject from objectives
+      // Derive latest level per subject from objectives (ordered by id desc as insertion proxy)
       const ids = subjects.map((s: any) => s.id).filter(Boolean);
       const { data: objRows, error: objErr } = await supabase
         .from('objectives')
-        .select('subject_id_uuid, level')
-        .in('subject_id_uuid', ids);
+        .select('subject_id_uuid, level, id')
+        .in('subject_id_uuid', ids)
+        .order('id', { ascending: false });
       if (objErr) throw objErr;
 
-      const levelsBySubject = new Map<string, Set<string>>();
+      const latestLevelBySubject = new Map<string, string>();
       (objRows ?? []).forEach((o: any) => {
         if (!o.subject_id_uuid || !o.level) return;
-        if (!levelsBySubject.has(o.subject_id_uuid)) levelsBySubject.set(o.subject_id_uuid, new Set());
-        levelsBySubject.get(o.subject_id_uuid)!.add(o.level);
+        if (!latestLevelBySubject.has(o.subject_id_uuid)) {
+          latestLevelBySubject.set(o.subject_id_uuid, o.level);
+        }
       });
 
       return subjects.map((s: any) => ({
         ...s,
-        levels: Array.from(levelsBySubject.get(s.id) ?? []).sort(),
+        level: latestLevelBySubject.get(s.id) ?? null,
       }));
     },
   });
