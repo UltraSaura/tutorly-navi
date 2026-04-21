@@ -1,67 +1,22 @@
 
 
 ## Goal
-Create a Supabase migration that inserts the **EMC** (Éducation Morale et Civique) subject row so EMC bundles can resolve at import time, plus update the two doc files to list the new subject.
+Export the EMC seed migration as a standalone Markdown file you can read/share outside the `supabase/migrations/` folder.
 
-## Migration
+## What I'll create
 
-**New file:** `supabase/migrations/<timestamp>_seed_emc_subject.sql`
+**New file:** `curriculum-import/migrations/seed-emc-subject.md`
 
-```sql
--- Seed: add EMC (Éducation Morale et Civique) as a curriculum subject
--- Idempotent: safe to re-run, no-op if slug='emc' already exists.
-
-insert into public.subjects (
-  id,
-  slug,
-  name,
-  country_code,
-  language,
-  color_scheme,
-  icon_name,
-  is_active,
-  order_index
-)
-values (
-  'e3c11111-1111-4111-8111-111111111111',
-  'emc',
-  'Éducation Morale et Civique',
-  'fr',
-  'fr',
-  'amber',
-  'Scale',
-  true,
-  6
-)
-on conflict (slug) do nothing;
-```
-
-### Field rationale
-- `id` — stable hard-coded UUID v4 so bundle authors can reference it directly (same pattern as the `mathematics` UUID in `BUNDLE_SCHEMA.md` §4)
-- `slug = 'emc'` — short canonical slug, lowercase per the curriculum normalization rule
-- `country_code = 'fr'` — EMC is a French-curriculum subject; drives viewer filtering
-- `language = 'fr'` — source language tag
-- `color_scheme = 'amber'` / `icon_name = 'Scale'` — distinct from the 5 existing subjects (Scale = lucide-react icon, fits civics)
-- `order_index = 6` — appears after the 5 existing subjects
-- `on conflict (slug) do nothing` — re-runnable, won't crash if EMC already inserted manually
-
-## Doc updates
-
-1. **`curriculum-import/BUNDLE_SCHEMA.md` §4** — add a row to the "Known subject UUIDs" table:
-   ```
-   | emc | Éducation Morale et Civique | e3c11111-1111-4111-8111-111111111111 |
-   ```
-
-2. **`curriculum-import/BUNDLE_OBJECT_REFERENCE.md`** — two small edits:
-   - §1 `subjects[]` Required → `slug`: append `emc` to the allowed-slug list
-   - Part C decision matrix → `subjects.slug` row: same update
+Contents:
+- Short intro explaining what the migration does and why
+- The exact SQL from `supabase/migrations/20260421103443_ec9f6660-b175-4d8f-953b-dd23104e5bbe.sql` inside a ```sql fenced block
+- A "Field rationale" section (same bullets from the approved plan: id, slug, country_code, language, color_scheme, icon_name, order_index, idempotency)
+- A "How to apply" note: this SQL has already been applied to the live DB via migration `20260421103443_…`; the `.md` is a human-readable copy for documentation/sharing only — re-running it is safe (no-op) thanks to the `where not exists` guard
 
 ## Files touched
 
-- **Create**: `supabase/migrations/<timestamp>_seed_emc_subject.sql`
-- **Edit**: `curriculum-import/BUNDLE_SCHEMA.md` (single table row)
-- **Edit**: `curriculum-import/BUNDLE_OBJECT_REFERENCE.md` (two slug-list mentions)
-- **Leave alone**: all app code, all other migrations, `SUPABASE_TABLES.md`, `BUNDLE_FORMAT.md`, `README.md`
+- **Create**: `curriculum-import/migrations/seed-emc-subject.md`
+- **Leave alone**: the actual `.sql` migration, all docs already updated (`BUNDLE_SCHEMA.md`, `BUNDLE_OBJECT_REFERENCE.md`), all app code
 
-No app code, no schema/structural changes — pure data seed + docs.
+No DB changes, no code changes — just a new doc file mirroring the migration.
 
