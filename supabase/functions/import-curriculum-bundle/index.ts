@@ -150,17 +150,35 @@ Deno.serve(async (req) => {
     );
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !user) return jsonResponse({ success: false, error: 'Unauthorized' }, 200);
+    const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    const { data: roles, error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin');
-    if (roleError || !roles || roles.length === 0) {
-      return jsonResponse({ success: false, error: 'User is not an admin' }, 200);
+    let isAuthorized = false;
+    let callerLabel = 'unknown';
+
+    if (token === SERVICE_KEY) {
+      // Path 1: server-to-server (CI, cron, importer pipeline)
+      isAuthorized = true;
+      callerLabel = 'service-role';
+    } else {
+      // Path 2: admin user session (existing /admin/curriculum UI flow)
+      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+      if (!authError && user) {
+        const { data: roles } = await supabaseAdmin
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin');
+        if (roles && roles.length > 0) {
+          isAuthorized = true;
+          callerLabel = `admin:${user.id}`;
+        }
+      }
     }
+
+    if (!isAuthorized) {
+      return jsonResponse({ success: false, error: 'Unauthorized' }, 200);
+    }
+    console.log(`[import-curriculum-bundle] authorized as ${callerLabel}`);
 
     const bundle: BundleData = await req.json();
     const mode = bundle.mode === 'replace' ? 'replace' : 'upsert';
