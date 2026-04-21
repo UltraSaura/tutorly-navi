@@ -13,7 +13,7 @@ interface MathLiveInputProps {
   onKeyboardChange?: (visible: boolean, height?: number) => void;
 }
 
-export const MathLiveInput = ({
+const MathLiveInputComponent = ({
   value = '',
   onChange,
   onEnter,
