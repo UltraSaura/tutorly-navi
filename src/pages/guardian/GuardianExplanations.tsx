@@ -8,6 +8,7 @@ import { Loader2, BookOpen } from 'lucide-react';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import type { ExerciseHistoryWithAttempts } from '@/types/exercise-history';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function GuardianExplanations() {
   const { guardianId, loading: authLoading } = useGuardianAuth();

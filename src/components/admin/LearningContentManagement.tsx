@@ -5,6 +5,7 @@ import TopicManager from "./learning/TopicManager";
 import VideoManager from "./learning/VideoManager";
 import QuizManager from "./learning/QuizManager";
 import BankManager from "./learning/BankManager";
+import { PageMeta } from "@/components/seo/PageMeta";
 
 const LearningContentManagement = () => {
   return (

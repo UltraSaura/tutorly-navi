@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CreditCard, Download, Calendar, DollarSign, CheckCircle } from 'lucide-react';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function GuardianBilling() {
   const { billingCustomerId } = useGuardianAuth();

@@ -7,6 +7,7 @@ import { useCurriculumSubjects, useCurriculumDomains, useCurriculumSubdomains } 
 import { useUserSchoolLevel } from '@/hooks/useUserSchoolLevel';
 import { getLocalizedLabel } from '@/lib/curriculum';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Calculator,

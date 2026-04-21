@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { User, Bell, Lock, Globe, Shield } from 'lucide-react';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function GuardianSettings() {
   const { user } = useAuth();

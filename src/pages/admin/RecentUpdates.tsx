@@ -19,6 +19,7 @@ import { evaluateRow, type AdminTable } from '@/lib/admin/rowHealth';
 import { RecentSummaryStrip } from '@/components/admin/recent/RecentSummaryStrip';
 import { RecentTable, fmtTruncate, type ColumnDef } from '@/components/admin/recent/RecentTable';
 import { RowDetailDrawer } from '@/components/admin/recent/RowDetailDrawer';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const TABS: { value: AdminTable; label: string }[] = [
   { value: 'subjects', label: 'Subjects' },

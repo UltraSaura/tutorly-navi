@@ -5,6 +5,7 @@ import ModelSelection from "./ModelSelection";
 import ModelManagementNew from "./ModelManagementNew";
 import SystemPromptConfigNew from "./SystemPromptConfigNew";
 import { useState } from "react";
+import { PageMeta } from "@/components/seo/PageMeta";
 
 // This component gives you tabs for all model-related admin settings.
 const AIModelManagement = () => {

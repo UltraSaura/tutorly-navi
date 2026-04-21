@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function ChildDetailPage() {
   const { childId } = useParams();

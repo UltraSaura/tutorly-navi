@@ -17,6 +17,7 @@ import { iconOptions } from './subjects/DynamicIcon';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LearningSubjectManager from './subjects/LearningSubjectManager';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const SubjectManagement = () => {
   const { subjects, addSubject, updateSubject, deleteSubject, toggleSubjectActive } = useAdmin();

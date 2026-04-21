@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Wifi, WifiOff, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { testAIServiceConnection, getNetworkDiagnostics, ConnectionTestResult } from '@/utils/connectionTest';
 import { toast } from 'sonner';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const ConnectionDiagnostics = () => {
   const [testing, setTesting] = useState(false);

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Shield, Settings, Users, BarChart3, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const ManagementDashboard = () => {
   return (

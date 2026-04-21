@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function TeacherClasses() {
   const { data: classes = [], isLoading } = useTeacherClasses();

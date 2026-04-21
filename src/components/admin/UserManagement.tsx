@@ -9,6 +9,7 @@ import { UserTable } from './users/UserTable';
 import { UserDetails } from './users/UserDetails';
 import { AddChildDialog } from './users/AddChildDialog';
 import { UserSearch } from './users/UserSearch';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const defaultActivity = [
   { day: 'Mon', minutes: 45 },

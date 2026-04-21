@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { ChildOverviewCard } from '@/components/guardian/ChildOverviewCard';
 import { RecentActivityFeed } from '@/components/guardian/RecentActivityFeed';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageMeta } from '@/components/seo/PageMeta';
 export default function GuardianHome() {
   const {
     guardianId

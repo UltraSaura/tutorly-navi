@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, Trophy, TrendingUp } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RecommendedNextSteps } from '@/components/dashboard/RecommendedNextSteps';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function StudentDashboard() {
   const navigate = useNavigate();

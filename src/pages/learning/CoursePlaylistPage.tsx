@@ -17,6 +17,7 @@ import { TopicLearnTab } from '@/components/learning/TopicLearnTab';
 import { TopicTranscriptTab } from '@/components/learning/TopicTranscriptTab';
 import { TopicLessonTab } from '@/components/learning/TopicLessonTab';
 import type { LessonContent } from '@/types/learning';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const CoursePlaylistPage = () => {
   const { subjectSlug, topicSlug } = useParams<{ subjectSlug: string; topicSlug: string }>();

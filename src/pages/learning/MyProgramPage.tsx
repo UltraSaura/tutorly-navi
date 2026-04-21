@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, AlertCircle, Settings, ArrowRight, Loader2 } from 'lucide-react';
 import { getLocalizedLabel, getSubject, getDomain, getSubdomain } from '@/lib/curriculum';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 interface GroupedTopics {
   [subjectId: string]: {

@@ -2,6 +2,7 @@ import React from 'react';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HeaderNavigation } from '@/components/layout/HeaderNavigation';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const GeneralChatPage: React.FC = () => {
   const { language } = useLanguage();

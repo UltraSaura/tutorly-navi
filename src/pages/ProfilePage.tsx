@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import AccountDeletion from '@/components/profile/AccountDeletion';
 import { ProfileEditForm } from '@/components/profile/ProfileEditForm';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const ProfilePage = () => {
   const { user } = useAuth();

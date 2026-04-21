@@ -18,6 +18,7 @@ import { CurriculumLocation } from './curriculum/CurriculumLocation';
 import { TaskViewer } from './curriculum/TaskViewer';
 import type { ImportCounts } from '@/types/curriculum';
 import { toast } from '@/hooks/use-toast';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function CurriculumManager() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { TrendingUp, Target, BookOpen, Award, Loader2 } from 'lucide-react';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 interface ChildProgress {
   id: string;

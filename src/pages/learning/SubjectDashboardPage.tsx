@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { CurriculumLocation } from '@/components/admin/curriculum/CurriculumLocation';
 import * as Icons from 'lucide-react';
+import { PageMeta } from '@/components/seo/PageMeta';
 const SubjectDashboardPage = () => {
   const {
     subjectSlug

@@ -8,6 +8,7 @@ import { LessonContentDisplay } from '@/components/admin/learning/LessonContentD
 import { GenerateLessonButton } from '@/components/admin/learning/GenerateLessonButton';
 import { Separator } from '@/components/ui/separator';
 import type { LessonContent } from '@/types/learning';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function TeacherTopicDetail() {
   const { topicId } = useParams();

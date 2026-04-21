@@ -16,6 +16,7 @@ import { ChildRegistrationData } from '@/types/registration';
 import { ManualChildCreationTrigger } from '@/components/guardian/ManualChildCreationTrigger';
 import EditChildDialog from '@/components/guardian/EditChildDialog';
 import { useCountriesAndLevels } from '@/hooks/useCountriesAndLevels';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function GuardianChildren() {
   const navigate = useNavigate();

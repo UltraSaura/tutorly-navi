@@ -14,6 +14,7 @@ import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 type AuthStep = 'login' | 'userType' | 'studentForm' | 'parentForm' | 'resetPassword';
 

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { usePromptManagement } from '@/hooks/usePromptManagement';
 import { Loader2, Plus, Settings } from 'lucide-react';
 import SystemPromptConfigNew from './SystemPromptConfigNew';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const PromptManagement = () => {
   const { templates, loading } = usePromptManagement();

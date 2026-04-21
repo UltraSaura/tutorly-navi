@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { FileText, Image, Camera, Upload } from 'lucide-react';
 import CalculationStatus from './chat/CalculationStatus';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const ChatInterface = () => {
   const { t, language } = useLanguage();

@@ -8,6 +8,7 @@ import { BookOpen } from 'lucide-react';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
 import { toast } from 'sonner';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 // Checkmark icon for status
 const CheckmarkIcon = ({

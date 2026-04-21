@@ -18,6 +18,7 @@ import {
   Info,
   History
 } from "lucide-react";
+import { PageMeta } from "@/components/seo/PageMeta";
 
 const SupportPage = () => {
   const { t } = useLanguage();

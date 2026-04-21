@@ -10,6 +10,7 @@ import { MathRenderer } from '@/components/math/MathRenderer';
 import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export const ExerciseHistoryPage = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>('all');

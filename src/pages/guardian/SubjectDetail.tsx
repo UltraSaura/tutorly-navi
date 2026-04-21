@@ -13,6 +13,7 @@ import { FocusAreasPanel } from "@/components/guardian/FocusAreasPanel";
 import { TrendIcon } from "@/components/guardian/TrendIcon";
 import { useGuardianProgress } from "@/hooks/useGuardianProgress";
 import { Calendar, MessageCircle, Video } from "lucide-react";
+import { PageMeta } from "@/components/seo/PageMeta";
 
 export default function SubjectDetail() {
   const { childId, subjectId } = useParams<{ childId: string; subjectId: string }>();

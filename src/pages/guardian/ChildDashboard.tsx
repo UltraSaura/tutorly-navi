@@ -11,6 +11,7 @@ import { SubjectsGrid } from '@/components/guardian/SubjectsGrid';
 import { ExportReportButton } from '@/components/guardian/ExportReportButton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SubjectMasteryCard } from '@/components/user/SubjectMasteryCard';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function ChildDashboard() {
   const { childId } = useParams<{ childId: string }>();

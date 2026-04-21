@@ -4,6 +4,7 @@ import { Users, BookOpen, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function TeacherHome() {
   const { data: classes = [], isLoading } = useTeacherClasses();

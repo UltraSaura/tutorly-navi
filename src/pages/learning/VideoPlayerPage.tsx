@@ -14,6 +14,7 @@ import { useAllBanks } from '@/hooks/useQuizBank';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const VideoPlayerPage = () => {
   const { videoId } = useParams<{ videoId: string }>();
