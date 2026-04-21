@@ -850,6 +850,7 @@ export type Database = {
       }
       lessons: {
         Row: {
+          created_at: string
           id: string
           id_new: string
           materials: string | null
@@ -863,6 +864,7 @@ export type Database = {
           unit_id: string | null
         }
         Insert: {
+          created_at?: string
           id: string
           id_new?: string
           materials?: string | null
@@ -876,6 +878,7 @@ export type Database = {
           unit_id?: string | null
         }
         Update: {
+          created_at?: string
           id?: string
           id_new?: string
           materials?: string | null
@@ -984,6 +987,7 @@ export type Database = {
       }
       objectives: {
         Row: {
+          created_at: string
           domain: string | null
           domain_id: string | null
           domain_id_uuid: string | null
@@ -1001,6 +1005,7 @@ export type Database = {
           text: string
         }
         Insert: {
+          created_at?: string
           domain?: string | null
           domain_id?: string | null
           domain_id_uuid?: string | null
@@ -1018,6 +1023,7 @@ export type Database = {
           text: string
         }
         Update: {
+          created_at?: string
           domain?: string | null
           domain_id?: string | null
           domain_id_uuid?: string | null
@@ -1564,6 +1570,7 @@ export type Database = {
       }
       success_criteria: {
         Row: {
+          created_at: string
           domain_id: string | null
           domain_id_uuid: string | null
           id: string
@@ -1578,6 +1585,7 @@ export type Database = {
           text: string
         }
         Insert: {
+          created_at?: string
           domain_id?: string | null
           domain_id_uuid?: string | null
           id: string
@@ -1592,6 +1600,7 @@ export type Database = {
           text: string
         }
         Update: {
+          created_at?: string
           domain_id?: string | null
           domain_id_uuid?: string | null
           id?: string
@@ -1645,6 +1654,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          created_at: string
           difficulty: string | null
           domain_id: string | null
           domain_id_uuid: string | null
@@ -1665,6 +1675,7 @@ export type Database = {
           type: string
         }
         Insert: {
+          created_at?: string
           difficulty?: string | null
           domain_id?: string | null
           domain_id_uuid?: string | null
@@ -1685,6 +1696,7 @@ export type Database = {
           type: string
         }
         Update: {
+          created_at?: string
           difficulty?: string | null
           domain_id?: string | null
           domain_id_uuid?: string | null
