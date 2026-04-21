@@ -20,7 +20,7 @@ Each entity below lists its **Required** and **Optional** fields, plus a one-lin
 
 **Required:**
 - `id` — uuid v4 — reuse known UUID if subject already exists (see §4 of `BUNDLE_SCHEMA.md`)
-- `slug` — string — one of: `mathematics`, `french`, `english`, `history-geography`, `sciences`
+- `slug` — string — one of: `mathematics`, `french`, `english`, `history-geography`, `sciences`, `emc`
 - `name` — string — display name
 - `country_code` — string — lowercase ISO (`fr`, `en`, `us`). Drives viewer filtering.
 
@@ -305,7 +305,7 @@ A complete, valid `bundle.json` for **5ème · Mathematics · Numbers · Fractio
 | Entity | Field | Required | Notes |
 |---|---|---|---|
 | `subjects` | `id` | ✅ | Reuse from `BUNDLE_SCHEMA.md` §4 if the subject already exists |
-| `subjects` | `slug` | ✅ | One of the 5 known slugs |
+| `subjects` | `slug` | ✅ | One of the known slugs: `mathematics`, `french`, `english`, `history-geography`, `sciences`, `emc` |
 | `subjects` | `name` | ✅ | Display name |
 | `subjects` | `country_code` | ✅ | Lowercase ISO. Drives viewer filtering |
 | `subjects` | `language` | ⬜ | Defaults to `'en'` |

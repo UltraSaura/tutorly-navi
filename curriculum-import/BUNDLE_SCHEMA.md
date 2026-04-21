@@ -65,6 +65,7 @@ All 8 keys are accepted. Empty arrays are fine. Pass entities in this order conc
 | `francais`    | `8e5f05b5-77f9-5ccb-a064-398a25e2cdfa` | fr       |
 | `history`     | `0b206783-4f46-47e6-aea1-4adf8c905f18` | en       |
 | `geography`   | `a578949a-cfac-4dab-9568-289b0f4a8029` | en       |
+| `emc`         | `e3c11111-1111-4111-8111-111111111111` | fr       |
 
 Do **not** invent new subject UUIDs for these slugs. To add a new subject (e.g. `chemistry`), include it in the `subjects` array with a freshly generated UUID.
 
