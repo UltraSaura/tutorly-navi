@@ -8,7 +8,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3 } from 'lucide-react';
+import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3, AlertTriangle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useObjectives, useCurriculumStats } from '@/hooks/useCurriculumData';
 import { useCurriculumCountries, useCurriculumLevels, useAllCurriculumSubjects } from '@/hooks/useCurriculumBundle';
@@ -134,10 +135,42 @@ export default function CurriculumManager() {
         verification: data.verification,
       });
 
-      toast({
-        title: 'Import successful',
-        description: 'Curriculum data imported successfully',
-      });
+      // Branch the toast based on health of the import
+      const nullChecks = data.verification?.nullChecks ?? data.null_fk_counts ?? {};
+      const hasNullFks = Object.values(nullChecks).some((n: any) => Number(n) > 0);
+      const ready = data.verification?.ready_for_phase_3 ?? data.ready_for_phase_3 ?? true;
+      const summary = data.counts ?? data.summary ?? {};
+      const summaryParts = Object.entries(summary)
+        .filter(([, v]) => Number(v) > 0)
+        .map(([k, v]) => `${v} ${k.replace('_', ' ')}`)
+        .join(', ');
+
+      if (ready && !hasNullFks) {
+        toast({
+          title: '✓ Import successful',
+          description: summaryParts || 'Curriculum data imported successfully',
+        });
+      } else {
+        const issues = Object.entries(nullChecks)
+          .filter(([, n]) => Number(n) > 0)
+          .map(([k, n]) => `${n} × ${k}`)
+          .join(', ');
+        toast({
+          title: '⚠ Import completed with warnings',
+          description: (
+            <div className="space-y-2">
+              <div>{summaryParts}</div>
+              {issues && <div className="text-xs">Unresolved: {issues}</div>}
+              <Link
+                to="/admin/recent-updates?filter=issues"
+                className="inline-block text-xs underline font-medium"
+              >
+                View details →
+              </Link>
+            </div>
+          ) as any,
+        });
+      }
 
       refetchObjectives();
       refetchStats();
