@@ -29,7 +29,6 @@ interface GroupedTopics {
 
 export default function MyProgramPage() {
   const navigate = useNavigate();
-  const pageMeta = <PageMeta title="My Program" description="Your personalized Stuwy learning program based on your level and goals." />;
   const { profile, isLoading: profileLoading, hasProfile } = useUserCurriculumProfile();
 
   const { data: topics, isLoading: topicsLoading } = useQuery({
@@ -106,6 +105,7 @@ export default function MyProgramPage() {
   if (profileLoading || topicsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
+        <PageMeta title="My Program" description="Your personalized Stuwy learning program based on your level and goals." />
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading your program...</p>
