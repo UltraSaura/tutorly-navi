@@ -1,36 +1,51 @@
 
 
 ## Goal
-On `/admin/recent-updates`, the **Subjects** tab currently shows: Status · Name · Slug · Country · Updated. Add **Level** and **Language** columns so each subject row shows country, level, and language together.
+Show the actual **Level** for each subject row on `/admin/recent-updates` (Subjects tab) instead of "—". Also expose it in the row detail drawer.
 
-## Change
+## Why it shows "—" today
+The `subjects` table has no `level_code` column. School levels live in `school_levels` (per country), and each `objectives` row carries the `level` (e.g. `cm1`, `cp`). The bundle importer infers level from objectives — it never persists it on `subjects`. So `r.level_code` is always undefined.
 
-In `src/pages/admin/RecentUpdates.tsx`, update the `subjects` entry of the `columns` config:
+## Fix
 
-**From:**
+Derive each subject's level(s) by querying `objectives` for distinct `level` values per `subject_id_uuid`, then attach them to the subject rows in memory.
+
+### 1. Extend `useRecentSubjects` hook
+File: `src/hooks/admin/useRecentUpdates.ts`
+
+After fetching the subject rows, run a second query:
+```ts
+supabase
+  .from('objectives')
+  .select('subject_id_uuid, level')
+  .in('subject_id_uuid', subjectIds)
 ```
-Status · Name · Slug · Country · Updated
+Then group distinct levels per subject and merge as a synthetic `levels: string[]` field on each row (e.g. `["cm1"]`, or `["cm1","cm2"]` if a subject spans multiple levels). Empty array if no objectives exist yet.
+
+### 2. Render in the Subjects column config
+File: `src/pages/admin/RecentUpdates.tsx` (subjects entry)
+
+Replace the Level cell:
+```tsx
+{ key: 'levels', label: 'Level', render: r =>
+    r.levels?.length
+      ? <div className="flex gap-1 flex-wrap">
+          {r.levels.map(l => <Badge key={l} variant="outline">{l.toUpperCase()}</Badge>)}
+        </div>
+      : <Badge variant="outline">—</Badge>
+}
 ```
 
-**To:**
-```
-Status · Name · Slug · Country · Level · Language · Updated
-```
+### 3. (Optional polish) Row detail drawer
+The raw JSON viewer already shows everything; the synthetic `levels` array will appear there automatically — no change needed.
 
-- **Country** → `country_code` rendered uppercase (e.g. `FR`), `—` if null.
-- **Level** → derived from existing data. The `subjects` table has no `level_code` column directly, but levels are linked via `school_levels` (per-country). Since a subject row itself doesn't carry a level, we'll surface the level by reading `level_code` if present on the row (some imports store it there as a denormalised field) and falling back to `—`. If absent across the board, we render `—` and note it in the row detail drawer.
-- **Language** → `language` column (already in the `subjects` table, defaults to `'en'`), rendered uppercase (`EN`, `FR`).
-
-## Technical detail
-
-- `useRecentSubjects` already does `select('*')`, so `language` and `country_code` are already in the response — no hook change needed.
-- For **Level**: I'll first check if the bundle importer writes a `level_code` to subjects. If yes, render it directly. If not, the column shows `—` and we keep the door open to join `school_levels` later (out of scope for this change — would require a hook tweak).
-- Badge styling: small `<Badge variant="outline">` for country/level/language for visual consistency with the existing Objectives "level" column.
+## Notes
+- One extra small query per Subjects tab load (max 50 subjects, IN-clause query). Cached via React Query alongside the subjects query (same `queryKey` namespace).
+- No DB migration, no edge function change, no new column.
+- Multi-level subjects display all chips (rare but possible if a single subject row covers multiple grades).
+- "Issues only" filter and row health logic are unaffected.
 
 ## Files touched
-
-- **Edit**: `src/pages/admin/RecentUpdates.tsx` (only the `subjects` entry inside the `columns` object — ~6 lines)
-- **Leave alone**: hooks, table component, drawer, row health rules, all other tabs
-
-No DB change, no new query, no migration.
+- **Edit**: `src/hooks/admin/useRecentUpdates.ts` (extend `useRecentSubjects`)
+- **Edit**: `src/pages/admin/RecentUpdates.tsx` (Level cell render only)
 
