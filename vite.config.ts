@@ -22,10 +22,28 @@ export default defineConfig(({ mode }) => ({
     assetsDir: 'assets',
     rollupOptions: {
       output: {
-        manualChunks: {
-          mathlive: ['mathlive'],
-          supabase: ['@supabase/supabase-js'],
-          react: ['react', 'react-dom']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('@radix-ui/')) return 'vendor-radix';
+            if (id.includes('framer-motion')) return 'vendor-motion';
+            if (id.includes('recharts')) return 'vendor-charts';
+            if (id.includes('@supabase/supabase-js')) return 'vendor-supabase';
+            if (
+              id.includes('react-hook-form') ||
+              id.includes('@hookform/resolvers') ||
+              id.match(/[\\/]node_modules[\\/]zod[\\/]/)
+            ) return 'vendor-forms';
+            if (
+              id.includes('i18next-browser-languagedetector') ||
+              id.includes('react-i18next') ||
+              id.match(/[\\/]node_modules[\\/]i18next[\\/]/)
+            ) return 'vendor-i18n';
+            if (id.includes('mathlive')) return 'mathlive';
+            if (
+              id.match(/[\\/]node_modules[\\/]react[\\/]/) ||
+              id.match(/[\\/]node_modules[\\/]react-dom[\\/]/)
+            ) return 'react';
+          }
         }
       }
     }
