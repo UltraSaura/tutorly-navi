@@ -1,64 +1,67 @@
 
 
 ## Goal
-Reformat `curriculum-import/BUNDLE_OBJECT_REFERENCE.md` Part A so each entity uses a clean **Required / Optional** bullet style (matching how the user wrote up `subjects[]` in their last message), instead of JSONC schema snippets.
+Create a Supabase migration that inserts the **EMC** (Éducation Morale et Civique) subject row so EMC bundles can resolve at import time, plus update the two doc files to list the new subject.
 
-## What changes
+## Migration
 
-**Edit only Part A** of `curriculum-import/BUNDLE_OBJECT_REFERENCE.md`. Part B (real working bundle) and Part C (decision matrix) stay untouched — they're already in the right format.
+**New file:** `supabase/migrations/<timestamp>_seed_emc_subject.sql`
 
-For each of the 8 arrays, replace the JSONC block with:
+```sql
+-- Seed: add EMC (Éducation Morale et Civique) as a curriculum subject
+-- Idempotent: safe to re-run, no-op if slug='emc' already exists.
 
-```text
-### N. `entity_name[]`
-
-**Required:**
-- `field` — type — short note (FK target / enum values / format rule)
-- ...
-
-**Optional:**
-- `field` — type — default value, what it controls
-- ...
-
-**Wire-up:** one-line note about which sibling array UUIDs this entity references.
-
-**Notes:** any auto-fill / legacy column quirks (only when relevant).
+insert into public.subjects (
+  id,
+  slug,
+  name,
+  country_code,
+  language,
+  color_scheme,
+  icon_name,
+  is_active,
+  order_index
+)
+values (
+  'e3c11111-1111-4111-8111-111111111111',
+  'emc',
+  'Éducation Morale et Civique',
+  'fr',
+  'fr',
+  'amber',
+  'Scale',
+  true,
+  6
+)
+on conflict (slug) do nothing;
 ```
 
-### Example of the new format (subjects)
+### Field rationale
+- `id` — stable hard-coded UUID v4 so bundle authors can reference it directly (same pattern as the `mathematics` UUID in `BUNDLE_SCHEMA.md` §4)
+- `slug = 'emc'` — short canonical slug, lowercase per the curriculum normalization rule
+- `country_code = 'fr'` — EMC is a French-curriculum subject; drives viewer filtering
+- `language = 'fr'` — source language tag
+- `color_scheme = 'amber'` / `icon_name = 'Scale'` — distinct from the 5 existing subjects (Scale = lucide-react icon, fits civics)
+- `order_index = 6` — appears after the 5 existing subjects
+- `on conflict (slug) do nothing` — re-runnable, won't crash if EMC already inserted manually
 
-```text
-### 1. `subjects[]`
+## Doc updates
 
-**Required:**
-- `id` — uuid v4 — reuse known UUID if subject already exists (see §4 of BUNDLE_SCHEMA.md)
-- `slug` — string — one of: `mathematics`, `french`, `english`, `history-geography`, `sciences`
-- `name` — string — display name
-- `country_code` — string — lowercase ISO (`fr`, `en`, `us`). Drives viewer filtering.
+1. **`curriculum-import/BUNDLE_SCHEMA.md` §4** — add a row to the "Known subject UUIDs" table:
+   ```
+   | emc | Éducation Morale et Civique | e3c11111-1111-4111-8111-111111111111 |
+   ```
 
-**Optional:**
-- `language` — string — defaults to `'en'`
-- `color_scheme` — string — defaults to `'blue'`
-- `icon_name` — string — lucide-react icon name, defaults to `'BookOpen'`
-
-**Wire-up:** root entity, no FKs.
-```
-
-### Arrays reformatted (all 8)
-
-1. `subjects[]`
-2. `domains[]` — note `domain` legacy column auto-fills from `code`
-3. `subdomains[]` — note `id` is stored as `id_new`; legacy `subdomain` auto-fills from `label`
-4. `objectives[]` — list valid `level` enum values
-5. `success_criteria[]` — note `subject_id`/`domain_id`/`subdomain_id` auto-derive from parent
-6. `tasks[]` — list `type`, `difficulty`, `source` enum values
-7. `topic_objective_links[]` — keep the "skip unless topic UUIDs already exist" warning
-8. `lessons[]` — note jsonb array shape for `objective_ids` / `success_criterion_ids`
+2. **`curriculum-import/BUNDLE_OBJECT_REFERENCE.md`** — two small edits:
+   - §1 `subjects[]` Required → `slug`: append `emc` to the allowed-slug list
+   - Part C decision matrix → `subjects.slug` row: same update
 
 ## Files touched
 
-- **Edit**: `curriculum-import/BUNDLE_OBJECT_REFERENCE.md` — replace Part A only (~120 lines changed)
-- **Leave alone**: Part B, Part C, validation reflexes section, and all other files
+- **Create**: `supabase/migrations/<timestamp>_seed_emc_subject.sql`
+- **Edit**: `curriculum-import/BUNDLE_SCHEMA.md` (single table row)
+- **Edit**: `curriculum-import/BUNDLE_OBJECT_REFERENCE.md` (two slug-list mentions)
+- **Leave alone**: all app code, all other migrations, `SUPABASE_TABLES.md`, `BUNDLE_FORMAT.md`, `README.md`
 
-No code, no DB changes.
+No app code, no schema/structural changes — pure data seed + docs.
 
