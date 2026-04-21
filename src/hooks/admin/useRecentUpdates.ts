@@ -35,7 +35,28 @@ export function useRecentSubjects({ since, search }: Args) {
       if (search) q = q.or(`name.ilike.%${search}%,slug.ilike.%${search}%`);
       const { data, error } = await q;
       if (error) throw error;
-      return data ?? [];
+      const subjects = data ?? [];
+      if (subjects.length === 0) return subjects;
+
+      // Derive distinct level(s) per subject from objectives
+      const ids = subjects.map((s: any) => s.id).filter(Boolean);
+      const { data: objRows, error: objErr } = await supabase
+        .from('objectives')
+        .select('subject_id_uuid, level')
+        .in('subject_id_uuid', ids);
+      if (objErr) throw objErr;
+
+      const levelsBySubject = new Map<string, Set<string>>();
+      (objRows ?? []).forEach((o: any) => {
+        if (!o.subject_id_uuid || !o.level) return;
+        if (!levelsBySubject.has(o.subject_id_uuid)) levelsBySubject.set(o.subject_id_uuid, new Set());
+        levelsBySubject.get(o.subject_id_uuid)!.add(o.level);
+      });
+
+      return subjects.map((s: any) => ({
+        ...s,
+        levels: Array.from(levelsBySubject.get(s.id) ?? []).sort(),
+      }));
     },
   });
 }
