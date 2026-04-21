@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "copy:mathlive": "mkdir -p public/mathlive/fonts public/mathlive/sounds && cp -R node_modules/mathlive/dist/fonts/* public/mathlive/fonts/ && cp -R node_modules/mathlive/dist/sounds/* public/mathlive/sounds/",
+    "copy:mathlive": "mkdir -p public/mathlive/fonts public/mathlive/sounds && cp -R node_modules/mathlive/dist/fonts/* public/mathlive/fonts/ && cp -R node_modules/mathlive/dist/sounds/* public/mathlive/sounds/ && cp node_modules/mathlive/dist/mathlive-static.css public/mathlive/mathlive-static.css && cp node_modules/mathlive/dist/mathlive-fonts.css public/mathlive/mathlive-fonts.css",
     "postinstall": "npm run copy:mathlive",
     "test": "vitest"
   },
