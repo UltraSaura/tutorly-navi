@@ -42,9 +42,9 @@ export function useRecentSubjects({ since, search }: Args) {
       const ids = subjects.map((s: any) => s.id).filter(Boolean);
       const { data: objRows, error: objErr } = await supabase
         .from('objectives')
-        .select('subject_id_uuid, level, id')
+        .select('subject_id_uuid, level, created_at')
         .in('subject_id_uuid', ids)
-        .order('id', { ascending: false });
+        .order('created_at', { ascending: false });
       if (objErr) throw objErr;
 
       const latestLevelBySubject = new Map<string, string>();
