@@ -1,63 +1,71 @@
 
 
 ## Goal
-On the Subjects tab, show **one level per subject** (the most recently associated one) instead of stacking every level that any objective references.
+Make the Subjects tab show the level of the **most recently imported bundle** (currently shows `CM1` after a `6eme` import).
 
-## Problem
-Currently `useRecentSubjects` collects every distinct `level` from all objectives linked to a subject, producing chips like `3EME · 4EME · 5EME · CM1` on a single Mathematics row. You want a single, latest level per subject.
+## Root cause
+After investigating the DB:
 
-## Constraint discovered
-The `objectives` table has **no `updated_at` or `created_at` column** (verified via schema: only `id`, `level`, `text`, FKs, etc.). So "most recently updated level" cannot be derived from a timestamp on objectives.
+- `subjects` row for Mathématiques: `updated_at = 2026-04-21 13:32:57` ✅ (was bumped by your 6eme import)
+- `objectives.id` is **text** (e.g. `OBJ-CM1-NUM-01`), not a sequential UUID. So `ORDER BY id DESC` sorts alphabetically — `cm1` ids come last, so CM1 always wins.
+- `objectives` table has **no `created_at` / `updated_at`** column. Same for `success_criteria`, `tasks`, `lessons`.
+- `admin_audit_log` does not record bundle imports.
 
-## Proposed approach: latest by insertion order
+So today there is **literally no column** that reliably reflects "most recently imported objective". The "latest by id" trick is fundamentally broken.
 
-Use `id` as the insertion-order proxy (objectives ids are sequential within an import). Pick the level from the **most recently inserted objective** for each subject.
+## Fix (two coordinated changes)
 
-### Hook change — `src/hooks/admin/useRecentUpdates.ts`
+### 1. DB migration — add `created_at` to `objectives`
 
-In `useRecentSubjects`, replace the "collect distinct levels" logic with "pick latest level":
+```sql
+ALTER TABLE public.objectives
+  ADD COLUMN created_at timestamptz NOT NULL DEFAULT now();
+
+CREATE INDEX IF NOT EXISTS idx_objectives_subject_created
+  ON public.objectives (subject_id_uuid, created_at DESC);
+```
+
+- Existing rows get `now()` as a backfill (we can't recover true insertion times retroactively — accepted trade-off; from now on it will be accurate).
+- Also adds an index to keep the per-subject "latest" query fast.
+
+Optionally we could also add `created_at` to `success_criteria`, `tasks`, `lessons` for future "Last imported" sorting on those tabs. **Question for you below.**
+
+### 2. Hook change — `src/hooks/admin/useRecentUpdates.ts`
+
+In `useRecentSubjects`, replace the broken `order('id', { ascending: false })` with the new timestamp:
 
 ```ts
 const { data: objRows } = await supabase
   .from('objectives')
-  .select('subject_id_uuid, level, id')
+  .select('subject_id_uuid, level, created_at')
   .in('subject_id_uuid', ids)
-  .order('id', { ascending: false }); // latest first
+  .order('created_at', { ascending: false }); // real recency
 
 const latestLevelBySubject = new Map<string, string>();
 (objRows ?? []).forEach((o: any) => {
   if (!o.subject_id_uuid || !o.level) return;
   if (!latestLevelBySubject.has(o.subject_id_uuid)) {
-    latestLevelBySubject.set(o.subject_id_uuid, o.level); // first seen = latest
+    latestLevelBySubject.set(o.subject_id_uuid, o.level);
   }
 });
-
-return subjects.map((s: any) => ({
-  ...s,
-  level: latestLevelBySubject.get(s.id) ?? null,
-}));
 ```
 
-The synthetic field becomes `level: string | null` (singular) instead of `levels: string[]`.
+The UI cell stays as-is (`render: r => <Badge>{r.level?.toUpperCase() ?? '—'}</Badge>`).
 
-### UI change — `src/pages/admin/RecentUpdates.tsx`
+## Behaviour after deploy
 
-Replace the Subjects "Level" cell:
+- All currently-stored objectives get the same backfill timestamp, so for the next ~minute the "latest level" is undefined among existing rows — the Map will pick the first one returned by Postgres, same level fuzziness as today **for old data only**.
+- **As soon as you re-import the 6eme bundle**, those rows get a fresher `created_at` and the Subjects tab will correctly show `6EME`.
+- All future imports work correctly out of the gate.
 
-```tsx
-{ key: 'level', label: 'Level', render: r =>
-    <Badge variant="outline">{r.level ? r.level.toUpperCase() : '—'}</Badge>
-}
-```
-
-Single chip per subject. `—` when no objectives exist yet.
+## One-time cleanup option
+After the migration, if you want the current state to reflect "6eme just imported" without re-importing, we can run a one-off SQL bumping `created_at = now()` for the 6eme objectives only. I'll mention this in chat after the migration; no need to bake it into the plan.
 
 ## Files touched
-- **Edit**: `src/hooks/admin/useRecentUpdates.ts` — swap Set-based aggregation for "first seen latest id" map
-- **Edit**: `src/pages/admin/RecentUpdates.tsx` — render single `level` chip instead of `levels.map(...)`
+- **New migration**: adds `created_at` column + index on `objectives`
+- **Edit**: `src/hooks/admin/useRecentUpdates.ts` — order by `created_at` instead of `id`
+- **Leave alone**: `RecentUpdates.tsx` (UI already renders `r.level` correctly), edge function, all other tabs
 
-No schema change, no new query (the existing `objectives` query gains an `order` clause and an `id` column).
-
-## Caveat to confirm after deploy
-If objectives don't get inserted in level order (e.g. an older import added CM1 last for a subject that already had 3EME), the displayed level will reflect insertion order, not pedagogical recency. If that's wrong for your data, we can switch the rule to "highest grade" (e.g. lycée > collège > primary) — let me know.
+## Question before I implement
+Do you also want `created_at` added to `success_criteria`, `tasks`, and `lessons` so those tabs can sort by true recency too? (One extra migration line per table, no code change needed today but unblocks future work.) If unsure, I'll add them — they're cheap and defensive.
 
