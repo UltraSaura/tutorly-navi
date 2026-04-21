@@ -1,5 +1,5 @@
 
-import { Settings, Book, Users, Wifi, GraduationCap, BookOpen } from "lucide-react";
+import { Settings, Book, Users, Wifi, GraduationCap, BookOpen, History } from "lucide-react";
 
 export const adminNavGroups = [
   {
@@ -40,6 +40,11 @@ export const adminNavGroups = [
         path: '/admin/curriculum',
         iconName: 'BookOpen',
       },
+      {
+        title: 'Recent Updates',
+        path: '/admin/recent-updates',
+        iconName: 'History',
+      },
     ],
   }
 ];
@@ -50,5 +55,6 @@ export const iconMap = {
   Users,
   Wifi,
   GraduationCap,
-  BookOpen
+  BookOpen,
+  History,
 };
