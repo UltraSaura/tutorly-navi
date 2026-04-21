@@ -5,6 +5,7 @@ import ModelSelection from "./ModelSelection";
 import ModelManagementNew from "./ModelManagementNew";
 import SystemPromptConfigNew from "./SystemPromptConfigNew";
 import { useState } from "react";
+import { PageMeta } from "@/components/seo/PageMeta";
 
 // This component gives you tabs for all model-related admin settings.
 const AIModelManagement = () => {
@@ -13,6 +14,7 @@ const AIModelManagement = () => {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="AI Models" description="Configure AI models and providers powering Stuwy." />
       <div>
         <h1 className="text-3xl font-bold tracking-tight">AI Model Management</h1>
         <p className="text-muted-foreground mt-1">

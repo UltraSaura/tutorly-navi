@@ -13,6 +13,7 @@ import { FocusAreasPanel } from "@/components/guardian/FocusAreasPanel";
 import { TrendIcon } from "@/components/guardian/TrendIcon";
 import { useGuardianProgress } from "@/hooks/useGuardianProgress";
 import { Calendar, MessageCircle, Video } from "lucide-react";
+import { PageMeta } from "@/components/seo/PageMeta";
 
 export default function SubjectDetail() {
   const { childId, subjectId } = useParams<{ childId: string; subjectId: string }>();
@@ -57,6 +58,7 @@ export default function SubjectDetail() {
 
   return (
     <div className="space-y-6">
+        <PageMeta title="Subject Detail" description="Per-subject breakdown of your child's progress and attempts." />
         {/* Subject Header */}
         <Card className="p-6">
           <div className="flex items-start justify-between mb-4">

@@ -18,6 +18,7 @@ import {
   Info,
   History
 } from "lucide-react";
+import { PageMeta } from "@/components/seo/PageMeta";
 
 const SupportPage = () => {
   const { t } = useLanguage();
@@ -102,6 +103,7 @@ const SupportPage = () => {
 
   return (
     <div className="space-y-8">
+      <PageMeta title="Support" description="Get help with Stuwy — find answers, contact support, and learn how to use the platform." />
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Support Center</h1>

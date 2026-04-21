@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { TrendingUp, Target, BookOpen, Award, Loader2 } from 'lucide-react';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 interface ChildProgress {
   id: string;
@@ -76,6 +77,7 @@ export default function GuardianProgress() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Progress" description="Track long-term learning progress and topic mastery for each child." />
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>

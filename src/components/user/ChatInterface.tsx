@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { FileText, Image, Camera, Upload } from 'lucide-react';
 import CalculationStatus from './chat/CalculationStatus';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const ChatInterface = () => {
   const { t, language } = useLanguage();
@@ -219,6 +220,7 @@ const ChatInterface = () => {
   // Exercise-Focused Layout with Chat Input
   return (
     <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg overflow-x-hidden max-w-full">
+      <PageMeta title="Tutor Chat" description="Get instant AI-powered help with math homework, exercises, and explanations from your Stuwy tutor." />
       {/* Scrollable Content Area */}
       <div 
         className="h-full overflow-auto overflow-x-hidden"

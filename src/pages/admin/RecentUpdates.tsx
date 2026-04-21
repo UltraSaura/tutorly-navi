@@ -19,6 +19,7 @@ import { evaluateRow, type AdminTable } from '@/lib/admin/rowHealth';
 import { RecentSummaryStrip } from '@/components/admin/recent/RecentSummaryStrip';
 import { RecentTable, fmtTruncate, type ColumnDef } from '@/components/admin/recent/RecentTable';
 import { RowDetailDrawer } from '@/components/admin/recent/RowDetailDrawer';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const TABS: { value: AdminTable; label: string }[] = [
   { value: 'subjects', label: 'Subjects' },
@@ -157,6 +158,7 @@ export default function RecentUpdates() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
+      <PageMeta title="Recent Updates" description="Recent imports, content updates, and system changes." />
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">

@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { User, Bell, Lock, Globe, Shield } from 'lucide-react';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function GuardianSettings() {
   const { user } = useAuth();
@@ -38,6 +39,7 @@ export default function GuardianSettings() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Settings" description="Configure your guardian account preferences and notifications." />
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Guardian Settings</h1>

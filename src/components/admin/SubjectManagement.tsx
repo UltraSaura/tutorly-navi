@@ -17,6 +17,7 @@ import { iconOptions } from './subjects/DynamicIcon';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LearningSubjectManager from './subjects/LearningSubjectManager';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const SubjectManagement = () => {
   const { subjects, addSubject, updateSubject, deleteSubject, toggleSubjectActive } = useAdmin();
@@ -191,6 +192,7 @@ const SubjectManagement = () => {
   
   return (
     <div className="space-y-6">
+      <PageMeta title="Subjects" description="Manage subjects available across the Stuwy platform." />
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Subject Management</h1>

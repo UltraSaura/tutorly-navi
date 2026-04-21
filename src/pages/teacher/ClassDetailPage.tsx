@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, UserPlus } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function ClassDetailPage() {
   const { classId } = useParams();
@@ -39,6 +40,7 @@ export default function ClassDetailPage() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Class Details" description="View class roster, progress, and activity." />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
