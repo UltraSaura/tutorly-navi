@@ -111,7 +111,13 @@ export default function RecentUpdates() {
       { key: 'name', label: 'Name' },
       { key: 'slug', label: 'Slug', render: r => <code className="text-xs">{r.slug}</code> },
       { key: 'country_code', label: 'Country', render: r => <Badge variant="outline">{r.country_code ? String(r.country_code).toUpperCase() : '—'}</Badge> },
-      { key: 'level_code', label: 'Level', render: r => <Badge variant="outline">{r.level_code ? String(r.level_code).toUpperCase() : '—'}</Badge> },
+      { key: 'levels', label: 'Level', render: r => (
+        r.levels?.length
+          ? <div className="flex gap-1 flex-wrap">
+              {r.levels.map((l: string) => <Badge key={l} variant="outline">{l.toUpperCase()}</Badge>)}
+            </div>
+          : <Badge variant="outline">—</Badge>
+      ) },
       { key: 'language', label: 'Language', render: r => <Badge variant="outline">{r.language ? String(r.language).toUpperCase() : '—'}</Badge> },
       { key: 'updated_at', label: 'Updated', render: r => <span className="text-xs text-muted-foreground">{fmtDate(r.updated_at)}</span> },
     ],
