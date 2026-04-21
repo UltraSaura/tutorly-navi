@@ -41,7 +41,7 @@ export function RowDetailDrawer({ open, onOpenChange, table, row }: Props) {
                 {health.checks.map((c, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm">
                     {c.ok ? (
-                      <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-state-success shrink-0" />
                     ) : (
                       <XCircle className="h-4 w-4 text-destructive shrink-0" />
                     )}

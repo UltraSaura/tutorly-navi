@@ -22,7 +22,7 @@ export function RecentSummaryStrip({ counts, health, issuesOnly, onToggleIssues 
               </div>
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-success" />
+                  <CheckCircle2 className="h-5 w-5 text-state-success" />
                   <span className="text-2xl font-bold">{health.ok}</span>
                   <span className="text-sm text-muted-foreground">OK</span>
                 </div>

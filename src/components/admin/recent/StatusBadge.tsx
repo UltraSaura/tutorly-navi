@@ -5,7 +5,7 @@ import type { RowStatus, RowHealth } from '@/lib/admin/rowHealth';
 import { STATUS_LABEL } from '@/lib/admin/rowHealth';
 
 const STATUS_CLASS: Record<RowStatus, string> = {
-  ok: 'bg-success/15 text-success border-success/30 hover:bg-success/20',
+  ok: 'bg-state-success/15 text-state-success border-state-success/30 hover:bg-state-success/20',
   partial: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20',
   issue: 'bg-destructive/15 text-destructive border-destructive/30 hover:bg-destructive/20',
   unknown: 'bg-muted text-muted-foreground border-border',
