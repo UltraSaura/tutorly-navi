@@ -1,43 +1,67 @@
 
 
 ## Goal
-Eliminate the visible off-white rectangle around the fox video on the `/chat` page so the mascot appears to sit directly on the page background, with no card/frame around it.
+Reposition the speech bubble so it sits **next to the fox's head** (not floating above), and extend the bubble's tail so it reaches close to the fox's mouth area.
 
-## Root cause
-Two layers are fighting the blend:
-1. The `WelcomeFox` component wraps the video in a **white card** (`bg-white border border-orange-100 shadow-... rounded-3xl`). Even with `mix-blend-multiply`, the video's near-white pixels blend against this white card — but the card itself is a visible white rectangle sitting on the page's light-blue gradient background (`from-blue-50 to-white`). That's the off-white frame you see in the screenshot.
-2. `mix-blend-multiply` only "erases" white pixels against whatever is **directly behind** the video. Because the card is white, the video blends into the card — but the card stays opaque on top of the page gradient, so a visible white block remains.
+## Current problem
+- Bubble is anchored at `top-2 right-2 sm:top-4 sm:right-4` → floats in the upper-right corner, visually disconnected from the fox.
+- Bubble tail is a tiny 16px CSS triangle on the bubble's left edge → too short to "touch" the fox's mouth.
+- Fox is shifted left (`-translate-x-4 sm:-translate-x-6`), making the gap between bubble and fox even wider.
 
-## Fix — make the card transparent so the video blends with the page itself
+## Fix — `src/components/user/chat/WelcomeFox.tsx`
 
-### Change — `src/components/user/chat/WelcomeFox.tsx`
+### 1. Move the bubble down to head height
+Change bubble anchor from `top-2 right-2 sm:top-4 sm:right-4` to roughly the vertical middle-upper region where the fox's head sits in the video frame. Use `top-[35%] right-1 sm:right-2` so it aligns horizontally with the fox's head instead of floating in the corner.
 
-Strip the visible card chrome from the outer `motion.div`:
-- Remove `bg-white`
-- Remove `border border-orange-100`
-- Remove `shadow-[0_8px_40px_0_rgba(251,146,60,0.12)]`
-- Remove the warm radial-glow background overlay (the `aria-hidden` div with the radial gradient)
-- Keep `rounded-3xl` and padding for layout consistency, OR drop them too if you want a fully edge-to-edge mascot. Recommend keeping padding so the bubble doesn't touch the screen edges.
-- Keep the top-right ✦ sparkle, the video, and the speech bubble exactly as they are.
+### 2. Make the bubble visually closer to the fox
+Slightly reduce the bubble's right offset and allow the tail to extend further left.
 
-### Why this works
-- With the card transparent, `mix-blend-multiply` on the video now blends the video's white pixels against the **page's blue→white gradient** directly. White video pixels become the page background → the rectangle vanishes.
-- The fox's gray/green/orange tones remain visible (multiply darkens them only marginally against a near-white page).
-- The speech bubble keeps its own white background + shadow, so it still reads as a distinct floating bubble (no blend mode on it).
+### 3. Extend the tail toward the fox's mouth
+Replace the tiny CSS-triangle tail (16px wide) with a longer, slimmer SVG tail that visually bridges from the bubble's left edge toward the fox's mouth area (~40–60px long), curving slightly downward like a classic cartoon speech-bubble pointer.
 
-### Mobile (390px) check
-- Card padding (`px-4 pt-6 pb-8`) preserved → bubble stays inside viewport, ✦ sparkle stays in the corner area.
-- Video keeps `-translate-x-4` shift and `max-w-[420px]` sizing → no layout reflow.
+Approach: render an inline SVG positioned at `left: -50px` on the bubble, sized ~`60px × 40px`, drawing a tapered tail (filled white with a subtle border) that points down-left toward where the fox's mouth appears in the video frame.
 
-### Edge case: bubble shadow
-The speech bubble currently uses `filter: drop-shadow(...)` on its parent and an inner `shadow-[...]`. Both are scoped to the bubble (not the video), so they remain unaffected.
+Example tail SVG (conceptual):
+```tsx
+<svg
+  aria-hidden
+  width="60"
+  height="40"
+  viewBox="0 0 60 40"
+  className="absolute -left-[52px] top-1/2 -translate-y-1/2"
+  style={{ filter: "drop-shadow(-1px 1px 1px rgba(0,0,0,0.04))" }}
+>
+  <path
+    d="M60 8 Q 30 14, 8 32 Q 28 22, 60 26 Z"
+    fill="white"
+    stroke="#f3f4f6"
+    strokeWidth="1"
+  />
+</svg>
+```
+This produces a curved, tapering tail that visually flows from the bubble's left edge toward the fox's head/mouth area, much longer than the current 16px triangle.
+
+### 4. Remove the old CSS-triangle tail
+Delete the existing `<div>` with `borderTop/borderBottom/borderRight` styles — replaced by the SVG above.
+
+### 5. Mobile (390px) sanity check
+- Bubble keeps `min-w-[160px] max-w-[200px]` → fits within viewport at top-right.
+- New `top-[35%]` positions bubble next to the fox's head area regardless of video aspect ratio.
+- SVG tail (`-left-[52px]`) extends into the fox's space without pushing the bubble off-screen.
+- Outer container padding (`px-4`) stays — bubble doesn't touch the right edge.
+
+## Keep untouched
+- Bubble background, border, shadow, sparkle bars, ⭐ star, text content & animations.
+- Video element (size, blend mode, leftward shift).
+- Outer card transparency and ✦ corner sparkle.
+- Bilingual logic, name resolution, exports.
 
 ## Files touched
-- **Edit**: `src/components/user/chat/WelcomeFox.tsx` (remove card bg/border/shadow + remove radial-glow overlay div).
+- **Edit**: `src/components/user/chat/WelcomeFox.tsx` (bubble position class + replace triangle tail with SVG tail; ~10 lines changed).
 
 ## Out of scope
-- Replacing `Baby_Fox.mp4` with a true alpha-channel video (WebM/VP9 with alpha) — would be the cleanest long-term fix but requires a new asset.
-- Changing the `/chat` page background gradient.
-- Restyling the speech bubble.
-- Adjusting the `GeneralChatPage` (different route, not affected).
+- Pixel-perfect alignment to the exact mouth pixel (video frame position is fixed; we aim near the head/mouth area).
+- Animating the tail (e.g. wiggle, sync to fox blink).
+- Replacing the video with an alpha-channel asset.
+- Changing bubble copy or sparkle decorations.
 
