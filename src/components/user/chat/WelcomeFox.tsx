@@ -68,28 +68,39 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
         </motion.div>
 
         {/* ── Fox video with overlaid speech bubble ── */}
-        <div
-          className="relative w-full flex justify-center bg-transparent"
-          style={{ backgroundColor: "#F5F7FB" }}
-        >
-          <video
-            src="/Baby_Fox.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            aria-label="Baby fox mascot animation"
-            className="w-full max-w-[420px] h-auto mx-auto -translate-x-4 sm:-translate-x-6 block object-contain bg-transparent border-none outline-none pointer-events-none select-none"
-          />
+        <div className="flex justify-center w-full">
+          {/* TIGHT crop wrapper — sized to the visible fox, blends into page bg */}
+          <div
+            className="relative inline-block w-[280px] sm:w-[340px] aspect-square overflow-hidden"
+            style={{ backgroundColor: "rgb(241,247,255)" }}
+          >
+            {/*
+              NOTE: /Baby_Fox.mp4 has a baked-in opaque background (no alpha channel).
+              We blend by sizing the wrapper to the visible fox region and matching
+              the page background. To get true transparency, replace this <video> with:
+                1. <video> sourcing a transparent WebM (VP9 alpha) — preferred
+                2. <Lottie animationData={...} /> from lottie-react
+                3. <Rive src="..." /> from @rive-app/react-canvas
+              The surrounding wrapper layout requires no changes for any of those.
+            */}
+            <video
+              src="/Baby_Fox.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              aria-label="Baby fox mascot animation"
+              className="absolute inset-0 w-full h-full object-cover block bg-transparent border-0 outline-none ring-0 shadow-none pointer-events-none select-none"
+            />
 
-          {/* ── Speech Bubble (overlaid top-right, tail pointing left to fox) ── */}
+          {/* ── Speech Bubble (anchored above the fox, centered) ── */}
           <motion.div
             initial={{ opacity: 0, scale: 0.88, x: -10 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="
-              absolute top-0 left-[calc(50%-16px)] sm:left-[calc(50%-24px)] -translate-x-1/2 -translate-y-2 z-20
+              absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20
               bg-white rounded-3xl
               border border-gray-100
               shadow-[0_6px_32px_0_rgba(0,0,0,0.10)]
