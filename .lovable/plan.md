@@ -1,40 +1,35 @@
 
 
 ## Goal
-Replace the SVG-drawn fox in `WelcomeFox` with the uploaded **fox illustration** (the cartoon fox in teal hoodie with raised waving paw). The PNG lives in `public/`, is referenced as `/fox-mascot.png`, and is animated (waving + gentle bob) via `framer-motion`. The speech bubble greeting stays.
+Replace `src/components/user/chat/WelcomeFox.tsx` with the uploaded `WelcomeFox-2.tsx` design (transparent fox PNG with float + sway, white speech bubble with sparkle/star), while keeping the app working.
 
-## Steps
+## Adaptations (to keep things working)
 
-1. **Add the image to `public/`**
-   - Copy `user-uploads://ChatGPT_Image_Apr_22_2026_09_16_41_PM-2.png` → `public/fox-mascot.png`
-   - Referenced in JSX as `<img src="/fox-mascot.png" />` (Vite serves `public/` at site root).
+The uploaded file is named-export only with a `userName` prop, English-only, and lives at a different path. `ChatInterface.tsx` does `import WelcomeFox from './chat/WelcomeFox'` (default import, no props). To avoid touching anything else:
 
-2. **Rewrite `src/components/user/chat/WelcomeFox.tsx`**
-   - Remove the entire inline `FoxWithHoodie` SVG component and its blink `useState` / `useEffect` (no longer needed — the image already shows the waving paw and eyes).
-   - Replace with a single `<motion.img src="/fox-mascot.png" alt="Friendly fox mascot waving" />`:
-     - Sized `w-40 sm:w-48` (auto height, preserves aspect ratio).
-     - Entrance: `initial={{ opacity: 0, scale: 0.9 }}` → `animate={{ opacity: 1, scale: 1 }}`, `duration: 0.6`.
-     - Idle bob loop: `animate={{ y: [0, -8, 0] }}`, `transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}`.
-     - Subtle wave tilt loop: `rotate: [0, -3, 0, 3, 0]`, `duration: 2.4`, `repeat: Infinity` (combined with the y bob in a single `animate` object so both loop together).
-     - `select-none pointer-events-none draggable={false}` to prevent drag/select.
-   - **Keep everything else exactly as-is**:
-     - Outer wrapper card (`bg-white border-orange-100`, soft glow blob, rounded-3xl, shadow).
-     - Speech bubble (white, tail pointing left, purple sparkle lines top-right, yellow star bottom-right with pulse animations).
-     - Bilingual greeting via `useLanguage()` (`Hi to` / `Salut`, name in purple, `Submit your question for help!` / `Soumets ta question pour obtenir de l'aide !`).
-     - Name resolution via `useUserProfile` + `useAuth` with the existing fallback chain.
-     - Default export + named export both preserved.
-     - Responsive `flex-col sm:flex-row` layout.
+1. **Keep both exports** — add `export default WelcomeFox` alongside the named export.
+2. **Auto-resolve the name** when `userName` is not passed, using the existing fallback chain via `useUserProfile` + `useAuth`:
+   `profile.firstName` → first token of `user_metadata.full_name` → email prefix → `Student` (EN) / `Élève` (FR).
+3. **Bilingual text** via `useLanguage()`:
+   - EN: `Hi` / `{firstName}` / `Submit your question for help!`
+   - FR: `Salut` / `{firstName}` / `Soumets ta question pour obtenir de l'aide !`
+4. **Image source** stays `/fox-mascot.png` (already in `public/`). Add `pointer-events-none select-none` to the `<img>` (uploaded version only has `draggable={false}`).
+5. **File path** stays at `src/components/user/chat/WelcomeFox.tsx` (the uploaded header comment suggests `src/components/tutor/`, but we keep the existing path so no other imports break).
 
-3. **Cleanup**
-   - Drop unused imports (`useState`, `useEffect` if no longer referenced after removing the blink logic).
-   - No changes to `ChatInterface.tsx`, no new dependencies, no DB / edge / route changes.
+Everything else from the uploaded design is preserved verbatim:
+- Outer card: `bg-white border-orange-100`, rounded-3xl, warm radial glow background.
+- Float loop (`y: [0, -10, 0]`, 3.6s) wrapping a sway loop (`rotate: [0, 3, -2, 3, 0]`, 1.8s with 1.4s repeatDelay, origin center 80%).
+- Purple `✦` sparkle near fox (top-right, opacity/scale/rotate pulse).
+- Speech bubble: white, rounded-3xl, left-pointing tail (desktop only), purple sparkle bars top-right, yellow `⭐` bottom-right, staggered text entrance (0.45 / 0.62 / 0.80 delays).
+- Responsive `flex-col sm:flex-row` layout.
 
 ## Files touched
-- **Add**: `public/fox-mascot.png` (copied from upload)
-- **Edit (rewrite)**: `src/components/user/chat/WelcomeFox.tsx`
+- **Edit (full rewrite)**: `src/components/user/chat/WelcomeFox.tsx`
+
+No changes to `ChatInterface.tsx`, `public/fox-mascot.png`, dependencies, routes, DB, or edge functions.
 
 ## Out of scope
-- Putting the image in `src/assets/` (you explicitly asked for `public/`).
-- Animating individual parts of the fox (paw separately, eyes blinking) — not possible with a flat PNG; we animate the whole image as a unit (bob + subtle tilt). If per-part animation is needed later, we'd need a transparent PNG of just the paw layered over a body PNG, or go back to SVG.
-- Optimizing the PNG (compression / WebP conversion) — can be a follow-up if file size matters.
+- Moving the file to `src/components/tutor/`.
+- Changing the import in `ChatInterface.tsx`.
+- Re-exporting the PNG with transparency (assumed already transparent from the previous upload).
 
