@@ -1,8 +1,4 @@
 // src/components/user/chat/WelcomeFox.tsx
-//
-// SETUP (one-time):
-//   - Export your fox image as a PNG with a TRANSPARENT background
-//   - Upload it to your Lovable project under: public/fox-mascot.png
 
 import { motion } from "framer-motion";
 import { useUserProfile } from "@/hooks/useUserProfile";
@@ -59,8 +55,8 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
           relative overflow-hidden rounded-3xl
           bg-white border border-orange-100
           shadow-[0_8px_40px_0_rgba(251,146,60,0.12)]
-          px-6 py-8 sm:px-12 sm:py-10
-          flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12
+          px-4 pt-6 pb-8 sm:px-8
+          flex flex-col items-center gap-0
         "
       >
         {/* Warm background glow */}
@@ -74,75 +70,60 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
           }}
         />
 
-        {/* ── Fox image ── */}
-        <div className="relative flex-shrink-0">
-          {/* Float up/down */}
-          <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
-          >
-            {/* Subtle body sway to mimic waving */}
-            <motion.div
-              animate={{ rotate: [0, 3, -2, 3, 0] }}
-              transition={{
-                duration: 1.8,
-                repeat: Infinity,
-                ease: "easeInOut",
-                repeatDelay: 1.4,
-              }}
-              style={{ transformOrigin: "center 80%" }}
-            >
-              <video
-                src="/Baby_Fox.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="auto"
-                aria-label="Baby fox mascot animation"
-                className="w-40 h-auto sm:w-52 drop-shadow-xl pointer-events-none select-none"
-              />
-            </motion.div>
-          </motion.div>
+        {/* Top-right purple sparkle (card-level decoration) */}
+        <motion.div
+          className="absolute top-4 right-5 text-purple-400 text-xl select-none z-10"
+          animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8], rotate: [0, 20, 0] }}
+          transition={{ duration: 2.2, repeat: Infinity }}
+          aria-hidden
+        >
+          ✦
+        </motion.div>
 
-          {/* Purple sparkle near fox */}
-          <motion.div
-            className="absolute -top-2 -right-1 text-purple-400 text-lg select-none"
-            animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8], rotate: [0, 20, 0] }}
-            transition={{ duration: 2.2, repeat: Infinity }}
-            aria-hidden
-          >
-            ✦
-          </motion.div>
+        {/* ── Fox video (static frame, large, fills card) ── */}
+        <div className="relative w-full flex justify-center">
+          <video
+            src="/Baby_Fox.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            aria-label="Baby fox mascot animation"
+            className="w-full max-w-[420px] h-auto mx-auto drop-shadow-xl pointer-events-none select-none"
+          />
         </div>
 
-        {/* ── Speech Bubble ── */}
-        <div className="relative flex-shrink-0">
-          {/* Bubble pointer (desktop only) */}
-          <div
-            aria-hidden
-            className="hidden sm:block absolute left-[-20px] top-[44px] w-0 h-0"
-            style={{
-              borderTop: "12px solid transparent",
-              borderBottom: "12px solid transparent",
-              borderRight: "22px solid white",
-              filter: "drop-shadow(-3px 0 2px rgba(0,0,0,0.05))",
-            }}
-          />
-
+        {/* ── Speech Bubble (under fox, tail pointing up to mouth) ── */}
+        <div className="relative flex-shrink-0 mt-[-12px]">
           <motion.div
-            initial={{ opacity: 0, scale: 0.88, x: 10 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
+            initial={{ opacity: 0, scale: 0.88, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="
               relative bg-white rounded-3xl
               border border-gray-100
               shadow-[0_6px_32px_0_rgba(0,0,0,0.10)]
               px-8 py-7
-              min-w-[220px] max-w-[260px]
+              min-w-[240px] max-w-[320px]
               flex flex-col items-center gap-1 text-center
             "
+            style={{
+              filter: "drop-shadow(0 -2px 1px rgba(0,0,0,0.04))",
+            }}
           >
+            {/* Upward-pointing bubble tail (centered on top edge) */}
+            <div
+              aria-hidden
+              className="absolute left-1/2 -translate-x-1/2 w-0 h-0"
+              style={{
+                top: "-16px",
+                borderLeft: "14px solid transparent",
+                borderRight: "14px solid transparent",
+                borderBottom: "18px solid white",
+              }}
+            />
+
             {/* Purple sparkle lines — top right of bubble */}
             <motion.div
               className="absolute top-5 right-6 flex gap-1 items-end"
