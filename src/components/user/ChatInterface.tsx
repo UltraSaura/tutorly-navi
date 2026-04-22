@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Message } from '@/types/chat';
 import AIResponse from './chat/AIResponse';
 import MessageInput from './chat/MessageInput';
 import CameraCapture from './chat/CameraCapture';
+import WelcomeFox from './chat/WelcomeFox';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
 import { useAdmin } from '@/context/AdminContext';
@@ -230,6 +232,21 @@ const ChatInterface = () => {
             : `${isMobile ? 128 : 80}px`  // Normal bottom padding
         }}
       >
+        {/* AI Response - Display the latest AI explanation/response */}
+        {/* Welcome animation - shown when no user messages exist yet */}
+        <AnimatePresence mode="wait">
+          {filteredMessages.filter(m => m.role === 'user').length === 0 &&
+            !isLoading &&
+            !calculationState.isProcessing && (
+              <motion.div
+                key="welcome-fox"
+                exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.25 } }}
+              >
+                <WelcomeFox />
+              </motion.div>
+            )}
+        </AnimatePresence>
+
         {/* AI Response - Display the latest AI explanation/response */}
         <ErrorBoundary
           fallback={
