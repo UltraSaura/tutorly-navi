@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Message } from '@/types/chat';
 import AIResponse from './chat/AIResponse';
 import MessageInput from './chat/MessageInput';
 import CameraCapture from './chat/CameraCapture';
+import WelcomeFox from './chat/WelcomeFox';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
 import { useAdmin } from '@/context/AdminContext';
