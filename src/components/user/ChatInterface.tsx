@@ -233,6 +233,21 @@ const ChatInterface = () => {
         }}
       >
         {/* AI Response - Display the latest AI explanation/response */}
+        {/* Welcome animation - shown when no user messages exist yet */}
+        <AnimatePresence mode="wait">
+          {filteredMessages.filter(m => m.role === 'user').length === 0 &&
+            !isLoading &&
+            !calculationState.isProcessing && (
+              <motion.div
+                key="welcome-fox"
+                exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.25 } }}
+              >
+                <WelcomeFox />
+              </motion.div>
+            )}
+        </AnimatePresence>
+
+        {/* AI Response - Display the latest AI explanation/response */}
         <ErrorBoundary
           fallback={
             <div className="p-4 m-4 bg-card border rounded-lg text-center">
