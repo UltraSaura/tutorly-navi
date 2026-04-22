@@ -1,50 +1,43 @@
 
 
 ## Goal
-Make the fox video blend seamlessly into the welcome card by removing the visible white/colored rectangle behind the video so its background matches the surrounding card.
+Eliminate the visible off-white rectangle around the fox video on the `/chat` page so the mascot appears to sit directly on the page background, with no card/frame around it.
 
 ## Root cause
-The `Baby_Fox.mp4` video file has a solid (likely white or off-white) background baked into the frames. Since CSS can't make pixels inside a video transparent, the video will always show its own background unless we either:
-1. Match the card background to the video's background, OR
-2. Use a CSS blend mode to drop the video's light background, OR
-3. Replace the video with a transparent-background version (WebM with alpha or HEVC with alpha) — requires a new asset.
+Two layers are fighting the blend:
+1. The `WelcomeFox` component wraps the video in a **white card** (`bg-white border border-orange-100 shadow-... rounded-3xl`). Even with `mix-blend-multiply`, the video's near-white pixels blend against this white card — but the card itself is a visible white rectangle sitting on the page's light-blue gradient background (`from-blue-50 to-white`). That's the off-white frame you see in the screenshot.
+2. `mix-blend-multiply` only "erases" white pixels against whatever is **directly behind** the video. Because the card is white, the video blends into the card — but the card stays opaque on top of the page gradient, so a visible white block remains.
 
-Option 2 is the best fit here: it requires no new asset and works with the existing MP4.
+## Fix — make the card transparent so the video blends with the page itself
 
-## Change — `src/components/user/chat/WelcomeFox.tsx`
+### Change — `src/components/user/chat/WelcomeFox.tsx`
 
-Apply `mix-blend-mode: multiply` to the `<video>` element. On a white/near-white card background, this makes the video's white pixels disappear (multiply with white = unchanged background) while preserving the fox's colors.
+Strip the visible card chrome from the outer `motion.div`:
+- Remove `bg-white`
+- Remove `border border-orange-100`
+- Remove `shadow-[0_8px_40px_0_rgba(251,146,60,0.12)]`
+- Remove the warm radial-glow background overlay (the `aria-hidden` div with the radial gradient)
+- Keep `rounded-3xl` and padding for layout consistency, OR drop them too if you want a fully edge-to-edge mascot. Recommend keeping padding so the bubble doesn't touch the screen edges.
+- Keep the top-right ✦ sparkle, the video, and the speech bubble exactly as they are.
 
-### Edit
-Add `mix-blend-multiply` to the video's className:
+### Why this works
+- With the card transparent, `mix-blend-multiply` on the video now blends the video's white pixels against the **page's blue→white gradient** directly. White video pixels become the page background → the rectangle vanishes.
+- The fox's gray/green/orange tones remain visible (multiply darkens them only marginally against a near-white page).
+- The speech bubble keeps its own white background + shadow, so it still reads as a distinct floating bubble (no blend mode on it).
 
-```tsx
-<video
-  src="/Baby_Fox.mp4"
-  autoPlay
-  loop
-  muted
-  playsInline
-  preload="auto"
-  aria-label="Baby fox mascot animation"
-  className="w-full max-w-[420px] h-auto mx-auto -translate-x-4 sm:-translate-x-6 drop-shadow-xl pointer-events-none select-none mix-blend-multiply"
-/>
-```
+### Mobile (390px) check
+- Card padding (`px-4 pt-6 pb-8`) preserved → bubble stays inside viewport, ✦ sparkle stays in the corner area.
+- Video keeps `-translate-x-4` shift and `max-w-[420px]` sizing → no layout reflow.
 
-### Why this works here
-- The card background is white (`bg-white`) with a very subtle warm radial glow overlay.
-- `mix-blend-multiply` makes white pixels in the video transparent against the white card, so the fox appears to sit directly on the card's surface with no visible video rectangle.
-- The fox's orange/brown/black tones are preserved (they're darker than white, so multiply darkens them only marginally — visually unchanged).
-- Side effect: the `drop-shadow-xl` will no longer apply to the video's rectangular bounding box (since whites are blended out), which is exactly what we want — the shadow effectively disappears with the rectangle.
-
-### Fallback considerations (out of scope, mentioned for awareness)
-- If the video's background turns out to be off-white/gray rather than pure white, multiply may leave a faint tint. In that case the next step would be `mix-blend-darken` or sourcing a transparent-background version of `Baby_Fox.mp4` (WebM/VP9 with alpha).
+### Edge case: bubble shadow
+The speech bubble currently uses `filter: drop-shadow(...)` on its parent and an inner `shadow-[...]`. Both are scoped to the bubble (not the video), so they remain unaffected.
 
 ## Files touched
-- **Edit**: `src/components/user/chat/WelcomeFox.tsx` (one className addition).
+- **Edit**: `src/components/user/chat/WelcomeFox.tsx` (remove card bg/border/shadow + remove radial-glow overlay div).
 
 ## Out of scope
-- Re-encoding `Baby_Fox.mp4` with a true alpha channel (would require a transparent-background source file).
-- Changing the card background color to match the video.
-- Adjusting the video's drop shadow strategy (currently fine to lose).
+- Replacing `Baby_Fox.mp4` with a true alpha-channel video (WebM/VP9 with alpha) — would be the cleanest long-term fix but requires a new asset.
+- Changing the `/chat` page background gradient.
+- Restyling the speech bubble.
+- Adjusting the `GeneralChatPage` (different route, not affected).
 
