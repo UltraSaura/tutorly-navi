@@ -85,8 +85,8 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
             initial={{ opacity: 0, scale: 0.88, x: -10 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="
-              absolute top-2 right-2 sm:top-4 sm:right-4 z-20
+          className="
+              absolute top-[32%] right-1 sm:right-2 z-20
               bg-white rounded-3xl
               border border-gray-100
               shadow-[0_6px_32px_0_rgba(0,0,0,0.10)]
@@ -98,19 +98,22 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
               filter: "drop-shadow(-2px 0 1px rgba(0,0,0,0.04))",
             }}
           >
-            {/* Left-pointing bubble tail (centered on left edge, aimed at fox) */}
-            <div
+            {/* Long curved bubble tail pointing down-left toward fox's mouth */}
+            <svg
               aria-hidden
-              className="absolute w-0 h-0"
-              style={{
-                left: "-14px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                borderTop: "12px solid transparent",
-                borderBottom: "12px solid transparent",
-                borderRight: "16px solid white",
-              }}
-            />
+              width="64"
+              height="44"
+              viewBox="0 0 64 44"
+              className="absolute -left-[56px] top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ filter: "drop-shadow(-1px 1px 1px rgba(0,0,0,0.04))" }}
+            >
+              <path
+                d="M64 10 Q 34 14, 8 36 Q 30 24, 64 26 Z"
+                fill="white"
+                stroke="#f3f4f6"
+                strokeWidth="1"
+              />
+            </svg>
 
             {/* Purple sparkle lines — top right of bubble */}
             <motion.div
