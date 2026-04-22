@@ -1,59 +1,81 @@
 
 
 ## Goal
-Replace the static `<img src="/fox-mascot.png" />` in `WelcomeFox.tsx` with an autoplaying, silent, looping `<video>` element pointing to `/Baby_Fox.mp4`. Keep the speech bubble, text animations, sparkles, star, and bilingual greeting exactly as they are now.
+Make the fox video the centerpiece of the welcome card — large, static (no bobbing/swaying), filling the chat window — with the greeting message styled as a true cartoon **speech bubble emerging from the fox's mouth**, rather than a separate panel sitting next to him.
 
-## Changes to `src/components/user/chat/WelcomeFox.tsx`
+## Visual target (from your screenshot)
+```text
+┌──────────────────────────────────────────┐
+│                                       ✦  │
+│                                          │
+│         ┌────────────────────┐           │
+│         │                    │           │
+│         │   [BIG FOX VIDEO]  │           │  ← video fills card width,
+│         │   (static frame,   │           │     no float / no sway
+│         │    just plays)     │           │
+│         │                    │           │
+│         └────────────────────┘           │
+│                                          │
+│            ╭──────────────╮              │
+│            │   Salut      │ ⭐           │  ← bubble UNDER the fox,
+│            │  harouna     │              │     tail pointing UP toward
+│            │ Soumets ta…  │              │     the fox's mouth
+│            ╰────△─────────╯              │
+└──────────────────────────────────────────┘
+```
 
-1. **Swap the `<img>` for a `<video>`** inside the existing float + sway `motion.div` wrappers, so the video itself inherits the gentle bob and sway motion (the speech-bubble pointer is positioned next to where the fox's mouth roughly sits — no layout change needed).
+## Changes — `src/components/user/chat/WelcomeFox.tsx` (single file rewrite)
 
-   Replace:
-   ```tsx
-   <img
-     src="/fox-mascot.png"
-     alt="Fox mascot waving"
-     className="w-40 h-auto sm:w-52 drop-shadow-xl pointer-events-none select-none"
-     draggable={false}
-   />
-   ```
-   With:
-   ```tsx
-   <video
-     src="/Baby_Fox.mp4"
-     autoPlay
-     loop
-     muted
-     playsInline
-     preload="auto"
-     aria-label="Baby fox mascot animation"
-     className="w-40 h-auto sm:w-52 drop-shadow-xl pointer-events-none select-none"
-   />
-   ```
+### 1. Layout: switch from side-by-side to vertical stack
+- Replace the current `flex-col sm:flex-row … gap-12` row with a **vertical column** at all breakpoints: `flex flex-col items-center gap-0`.
+- Outer card keeps the white bg, rounded-3xl, orange-tinted shadow, warm radial glow.
+- Card padding tightened on top/bottom so the fox can dominate: `px-4 pt-6 pb-8 sm:px-8`.
 
-2. **Why each attribute**
-   - `autoPlay` + `muted` + `playsInline` → required combo for browsers (especially iOS Safari) to autoplay without user gesture.
-   - `loop` → continuous animation.
-   - No `controls` attribute → no play/pause/volume UI.
-   - `preload="auto"` → starts loading immediately so the loop is smooth.
-   - `pointer-events-none select-none` → matches the previous `<img>` behavior; prevents right-click menu interfering and keeps the card non-interactive.
-   - Same `w-40 sm:w-52 drop-shadow-xl` sizing → preserves layout so the speech bubble pointer still aligns to roughly where the fox's mouth is.
+### 2. Fox video: big, static, fills the chat window
+- Remove the **outer float** (`y: [0, -10, 0]`) and **inner sway** (`rotate: [0, 3, …]`) `motion.div` wrappers entirely. The video will not bob or rotate — only the in-video animation plays.
+- Keep the entrance fade/scale on the parent card; remove per-element looping motion on the fox.
+- Resize the video to fill the available card width:
+  - `w-full max-w-[420px] h-auto mx-auto`
+  - Drop the fixed `w-40 sm:w-52` cap.
+  - Keep `drop-shadow-xl pointer-events-none select-none` and all `<video>` attributes (`autoPlay loop muted playsInline preload="auto"`).
+- Keep the purple `✦` sparkle, but reposition it to the **top-right corner of the card** (not stuck to the fox), e.g. `absolute top-4 right-5`.
 
-3. **Keep untouched**
-   - Outer card (`bg-white border-orange-100`, rounded-3xl, warm radial glow).
-   - Float loop (`y: [0, -10, 0]`, 3.6s) wrapping sway loop (`rotate: [0, 3, -2, 3, 0]`, 1.8s, 1.4s repeatDelay, origin center 80%).
-   - Purple ✦ sparkle near fox.
-   - Speech bubble: white, rounded-3xl, left-pointing tail (desktop only, `top-[44px]` — sits next to the fox's mouth area at the current sizing), purple sparkle bars top-right, yellow ⭐ bottom-right, staggered text entrance.
-   - Bilingual greeting via `useLanguage()`, name resolution via `useUserProfile` + `useAuth`.
-   - Default + named exports.
+### 3. Speech bubble: emerges from the fox's mouth
+- Move the bubble **below** the video (vertical stack), centered: `mt-[-12px]` to slightly overlap the video bottom, giving a "rising from below the chin" feel that matches your screenshot.
+- Bubble styling stays: white, `rounded-3xl`, soft shadow, gray-100 border, centered text, sparkle bars, ⭐ star, staggered entrance for `Salut` / `{firstName}` / subtitle.
+- **Replace the side pointer** (currently a left-pointing triangle on desktop only) with an **upward-pointing tail** centered on the bubble's top edge, aimed at the fox's mouth area:
+  ```text
+       △        ← tail (CSS triangle), centered, pointing up
+  ╭─────────╮
+  │  bubble │
+  ╰─────────╯
+  ```
+  Implementation: a `::before`-style absolutely-positioned div with:
+  ```
+  borderLeft: 14px solid transparent
+  borderRight: 14px solid transparent
+  borderBottom: 18px solid white
+  top: -16px; left: 50%; transform: translateX(-50%)
+  ```
+  Plus a matching slightly larger gray triangle 1px behind it for the border line, OR use a `drop-shadow` filter on the wrapper to keep things simple (matches the existing technique for the old left-pointer).
+- Show the tail at **all breakpoints** (remove the `hidden sm:block` restriction) — your screenshot shows it on mobile.
+- Bubble width: `min-w-[240px] max-w-[320px]` so the layout reads well on the 390px-wide mobile viewport you're currently in.
 
-## Files touched
-- **Edit**: `src/components/user/chat/WelcomeFox.tsx` — swap one element, ~10 lines changed.
+### 4. Keep untouched
+- All name-resolution logic (`useUserProfile` → `useAuth` → email fallback, `Élève`/`Student` defaults).
+- Bilingual greeting/subtitle via `useLanguage()`.
+- Sparkle bars (top-right of bubble) and ⭐ star (bottom-right) — both keep their pulse animations since they're decorative bubble accents, not the fox.
+- Default + named exports (`ChatInterface.tsx` keeps working with no edit).
+- File path `src/components/user/chat/WelcomeFox.tsx`.
 
-No new files, no dependencies, no changes to `ChatInterface.tsx`, routes, DB, or edge functions. `public/Baby_Fox.mp4` already exists.
+### 5. Files touched
+- **Edit**: `src/components/user/chat/WelcomeFox.tsx` (one file, ~40 lines changed inside the existing structure).
+
+No changes to `ChatInterface.tsx`, `public/Baby_Fox.mp4`, dependencies, routes, or the DB.
 
 ## Out of scope
-- Adjusting the speech-bubble pointer position to pixel-perfectly hit the mouth in the video (current `top-[44px]` already lands in the upper-body area; can fine-tune in a follow-up once you see it live with the actual video frame).
-- Adding a poster image (first-frame fallback). Can add `poster="/fox-mascot.png"` later if you want a fallback while the video loads.
-- Removing `public/fox-mascot.png` (kept in case you want to revert or use as poster).
-- Conditional reduced-motion handling (e.g. pausing video for `prefers-reduced-motion`). Easy to add if needed.
+- Removing the card border/shadow entirely to make the video bleed edge-to-edge of the chat scroll area (current scope keeps the white rounded card; can do a borderless variant in a follow-up).
+- Replacing the in-video animation (still the same `Baby_Fox.mp4` looping silently).
+- Animating the bubble tail itself (e.g. a "pop" appearance synced to a fox blink) — easy follow-up.
+- Reduced-motion handling for the video.
 
