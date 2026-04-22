@@ -27,16 +27,6 @@ const desktopNavigation = [
     icon: MessageSquare 
   },
   { 
-    title: "My Program", 
-    url: "/my-program", 
-    icon: BookOpen 
-  },
-  { 
-    title: "Dashboard", 
-    url: "/dashboard", 
-    icon: Trophy 
-  },
-  { 
     title: "nav.learning", 
     url: "/learning", 
     icon: GraduationCap 
@@ -45,11 +35,6 @@ const desktopNavigation = [
     title: "nav.history", 
     url: "/exercise-history", 
     icon: History 
-  },
-  { 
-    title: "nav.support", 
-    url: "/support", 
-    icon: HeadphonesIcon 
   },
 ];
 
