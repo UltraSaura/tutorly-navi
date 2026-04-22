@@ -53,23 +53,10 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         className="
           relative overflow-hidden rounded-3xl
-          bg-white border border-orange-100
-          shadow-[0_8px_40px_0_rgba(251,146,60,0.12)]
           px-4 pt-6 pb-8 sm:px-8
           flex flex-col items-center gap-0
         "
       >
-        {/* Warm background glow */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse at 20% 80%, rgba(251,191,36,0.08) 0%, transparent 60%), " +
-              "radial-gradient(ellipse at 80% 10%, rgba(249,115,22,0.06) 0%, transparent 55%)",
-          }}
-        />
-
         {/* Top-right purple sparkle (card-level decoration) */}
         <motion.div
           className="absolute top-4 right-5 text-purple-400 text-xl select-none z-10"
