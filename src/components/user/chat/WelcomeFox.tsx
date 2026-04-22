@@ -90,7 +90,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
             playsInline
             preload="auto"
             aria-label="Baby fox mascot animation"
-            className="w-full max-w-[420px] h-auto mx-auto drop-shadow-xl pointer-events-none select-none"
+            className="w-full max-w-[420px] h-auto mx-auto -translate-x-4 sm:-translate-x-6 drop-shadow-xl pointer-events-none select-none"
           />
 
           {/* ── Speech Bubble (overlaid top-right, tail pointing left to fox) ── */}
