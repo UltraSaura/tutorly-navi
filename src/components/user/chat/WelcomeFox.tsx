@@ -192,6 +192,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
               {subtitle}
             </motion.p>
           </motion.div>
+          </div>
         </div>
       </motion.div>
     </div>
