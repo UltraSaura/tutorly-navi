@@ -195,6 +195,24 @@ export function HeaderNavigation() {
                 <span>{t('nav.profile')}</span>
               </NavLink>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <NavLink to="/my-program" className="flex items-center">
+                <BookOpen className="mr-2 h-4 w-4" />
+                <span>My Program</span>
+              </NavLink>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <NavLink to="/dashboard" className="flex items-center">
+                <Trophy className="mr-2 h-4 w-4" />
+                <span>Dashboard</span>
+              </NavLink>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <NavLink to="/support" className="flex items-center">
+                <HeadphonesIcon className="mr-2 h-4 w-4" />
+                <span>{t('nav.support')}</span>
+              </NavLink>
+            </DropdownMenuItem>
             {isAdmin && (
               <DropdownMenuItem asChild>
                 <NavLink to="/admin" className="flex items-center">
