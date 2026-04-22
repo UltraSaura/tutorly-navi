@@ -53,7 +53,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         className="
           relative overflow-hidden rounded-3xl
-          px-4 pt-6 pb-8 sm:px-8
+          px-4 pt-16 sm:pt-20 pb-8 sm:px-8
           flex flex-col items-center gap-0
         "
       >
@@ -86,7 +86,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
             animate={{ opacity: 1, scale: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="
-              absolute top-[18%] right-2 sm:right-4 z-20
+              absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20
               bg-white rounded-3xl
               border border-gray-100
               shadow-[0_6px_32px_0_rgba(0,0,0,0.10)]
@@ -98,17 +98,17 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
               filter: "drop-shadow(-2px 0 1px rgba(0,0,0,0.04))",
             }}
           >
-            {/* Long curved bubble tail pointing down-left toward fox's mouth */}
+            {/* Tail pointing straight down toward the fox's head */}
             <svg
               aria-hidden
-              width="72"
-              height="60"
-              viewBox="0 0 72 60"
-              className="absolute -left-[40px] -bottom-[28px] pointer-events-none"
-              style={{ filter: "drop-shadow(-1px 1px 1px rgba(0,0,0,0.04))" }}
+              width="40"
+              height="32"
+              viewBox="0 0 40 32"
+              className="absolute left-1/2 -translate-x-1/2 -bottom-[24px] pointer-events-none"
+              style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.04))" }}
             >
               <path
-                d="M72 4 Q 40 10, 8 52 Q 32 32, 72 22 Z"
+                d="M8 0 Q 14 18, 20 30 Q 22 18, 32 0 Z"
                 fill="white"
                 stroke="#f3f4f6"
                 strokeWidth="1"
