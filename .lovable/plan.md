@@ -1,81 +1,69 @@
 
 
 ## Goal
-Make the fox video the centerpiece of the welcome card — large, static (no bobbing/swaying), filling the chat window — with the greeting message styled as a true cartoon **speech bubble emerging from the fox's mouth**, rather than a separate panel sitting next to him.
+Remove the speech bubble currently sitting below the fox video and replace it with a **cartoon dialogue bubble floating next to the fox's head** (top-right area), with its tail pointing toward the fox's mouth. Keep the same greeting content (`Salut` / `{firstName}` / subtitle) and bilingual logic.
 
-## Visual target (from your screenshot)
+## Visual target
 ```text
 ┌──────────────────────────────────────────┐
-│                                       ✦  │
+│                          ╭────────────╮  │
+│                          │  Salut     │  │
+│                          │  harouna   │  │
+│      [BIG FOX VIDEO]     │ Soumets ta │  │
+│      (static, looping)   ╰──◁─────────╯  │
 │                                          │
-│         ┌────────────────────┐           │
-│         │                    │           │
-│         │   [BIG FOX VIDEO]  │           │  ← video fills card width,
-│         │   (static frame,   │           │     no float / no sway
-│         │    just plays)     │           │
-│         │                    │           │
-│         └────────────────────┘           │
 │                                          │
-│            ╭──────────────╮              │
-│            │   Salut      │ ⭐           │  ← bubble UNDER the fox,
-│            │  harouna     │              │     tail pointing UP toward
-│            │ Soumets ta…  │              │     the fox's mouth
-│            ╰────△─────────╯              │
 └──────────────────────────────────────────┘
 ```
+Bubble is anchored top-right, overlapping the upper portion of the video next to the fox's head; tail points left toward the fox.
 
 ## Changes — `src/components/user/chat/WelcomeFox.tsx` (single file rewrite)
 
-### 1. Layout: switch from side-by-side to vertical stack
-- Replace the current `flex-col sm:flex-row … gap-12` row with a **vertical column** at all breakpoints: `flex flex-col items-center gap-0`.
-- Outer card keeps the white bg, rounded-3xl, orange-tinted shadow, warm radial glow.
-- Card padding tightened on top/bottom so the fox can dominate: `px-4 pt-6 pb-8 sm:px-8`.
+### 1. Layout: video-only stack, bubble overlaid
+- Remove the vertical stack pairing video → bubble.
+- Wrap the video in a `relative` container so the bubble can be absolutely positioned over it.
+- Card padding stays roughly the same; remove the `mt-[-12px]` overlap trick (no longer needed).
 
-### 2. Fox video: big, static, fills the chat window
-- Remove the **outer float** (`y: [0, -10, 0]`) and **inner sway** (`rotate: [0, 3, …]`) `motion.div` wrappers entirely. The video will not bob or rotate — only the in-video animation plays.
-- Keep the entrance fade/scale on the parent card; remove per-element looping motion on the fox.
-- Resize the video to fill the available card width:
-  - `w-full max-w-[420px] h-auto mx-auto`
-  - Drop the fixed `w-40 sm:w-52` cap.
-  - Keep `drop-shadow-xl pointer-events-none select-none` and all `<video>` attributes (`autoPlay loop muted playsInline preload="auto"`).
-- Keep the purple `✦` sparkle, but reposition it to the **top-right corner of the card** (not stuck to the fox), e.g. `absolute top-4 right-5`.
+### 2. Fox video — unchanged behavior
+- Keep `<video src="/Baby_Fox.mp4" autoPlay loop muted playsInline preload="auto">`.
+- Keep `w-full max-w-[420px] h-auto mx-auto drop-shadow-xl pointer-events-none select-none`.
+- Keep the static frame (no float / no sway).
 
-### 3. Speech bubble: emerges from the fox's mouth
-- Move the bubble **below** the video (vertical stack), centered: `mt-[-12px]` to slightly overlap the video bottom, giving a "rising from below the chin" feel that matches your screenshot.
-- Bubble styling stays: white, `rounded-3xl`, soft shadow, gray-100 border, centered text, sparkle bars, ⭐ star, staggered entrance for `Salut` / `{firstName}` / subtitle.
-- **Replace the side pointer** (currently a left-pointing triangle on desktop only) with an **upward-pointing tail** centered on the bubble's top edge, aimed at the fox's mouth area:
-  ```text
-       △        ← tail (CSS triangle), centered, pointing up
-  ╭─────────╮
-  │  bubble │
-  ╰─────────╯
+### 3. Speech bubble — repositioned next to the head
+- Position: `absolute top-2 right-2 sm:top-4 sm:right-4` (overlapping top-right of the video area, near the fox's head).
+- Tail direction: **left-pointing** (since bubble is to the right of the fox), centered vertically on the bubble's left edge:
   ```
-  Implementation: a `::before`-style absolutely-positioned div with:
+  borderTop: 12px solid transparent
+  borderBottom: 12px solid transparent
+  borderRight: 16px solid white
+  left: -14px; top: 50%; transform: translateY(-50%)
   ```
-  borderLeft: 14px solid transparent
-  borderRight: 14px solid transparent
-  borderBottom: 18px solid white
-  top: -16px; left: 50%; transform: translateX(-50%)
-  ```
-  Plus a matching slightly larger gray triangle 1px behind it for the border line, OR use a `drop-shadow` filter on the wrapper to keep things simple (matches the existing technique for the old left-pointer).
-- Show the tail at **all breakpoints** (remove the `hidden sm:block` restriction) — your screenshot shows it on mobile.
-- Bubble width: `min-w-[240px] max-w-[320px]` so the layout reads well on the 390px-wide mobile viewport you're currently in.
+- Bubble width tightened for the overlay context: `min-w-[160px] max-w-[200px]`, `px-5 py-4`.
+- Slightly smaller text so it fits gracefully next to the head:
+  - Greeting: `text-lg` (was `text-2xl`)
+  - First name: `text-2xl sm:text-3xl` (was `text-4xl`)
+  - Subtitle: `text-xs` (was `text-sm`)
+- Keep purple sparkle bars + yellow ⭐ accents, scaled down slightly.
+- Keep staggered entrance animations (`Salut` 0.45s, `{firstName}` 0.62s, subtitle 0.80s).
 
-### 4. Keep untouched
-- All name-resolution logic (`useUserProfile` → `useAuth` → email fallback, `Élève`/`Student` defaults).
+### 4. Mobile (390px viewport) consideration
+- At `w-full max-w-[420px]` the video already fills the mobile width. The bubble overlay (`max-w-[200px]`) sits comfortably in the top-right corner without covering the fox's face (the fox is centered in the frame, head occupies center-left of the upper portion at typical mascot framing).
+- If the bubble feels cramped on the smallest screens, the `min-w-[160px]` keeps it readable; text wraps naturally.
+
+### 5. Keep untouched
+- Outer card: white bg, `rounded-3xl`, orange-tinted shadow, warm radial glow, top-right ✦ sparkle.
+- Name resolution (`useUserProfile` → `useAuth` → email fallback, `Élève`/`Student` defaults).
 - Bilingual greeting/subtitle via `useLanguage()`.
-- Sparkle bars (top-right of bubble) and ⭐ star (bottom-right) — both keep their pulse animations since they're decorative bubble accents, not the fox.
-- Default + named exports (`ChatInterface.tsx` keeps working with no edit).
-- File path `src/components/user/chat/WelcomeFox.tsx`.
+- Default + named exports — no change to `ChatInterface.tsx`.
 
-### 5. Files touched
-- **Edit**: `src/components/user/chat/WelcomeFox.tsx` (one file, ~40 lines changed inside the existing structure).
+### 6. Files touched
+- **Edit**: `src/components/user/chat/WelcomeFox.tsx` (one file, ~30 lines changed).
 
-No changes to `ChatInterface.tsx`, `public/Baby_Fox.mp4`, dependencies, routes, or the DB.
+No changes to `ChatInterface.tsx`, `public/Baby_Fox.mp4`, dependencies, routes, DB, or edge functions.
 
 ## Out of scope
-- Removing the card border/shadow entirely to make the video bleed edge-to-edge of the chat scroll area (current scope keeps the white rounded card; can do a borderless variant in a follow-up).
-- Replacing the in-video animation (still the same `Baby_Fox.mp4` looping silently).
-- Animating the bubble tail itself (e.g. a "pop" appearance synced to a fox blink) — easy follow-up.
-- Reduced-motion handling for the video.
+- Pixel-perfect alignment of the tail to the exact mouth pixel in the video (the fox's head position is fixed by the video frame; we aim the tail at the head area generally).
+- Animating the bubble entrance synced to a fox blink/wave moment in the video.
+- A "tap to dismiss" interaction on the bubble.
+- Reduced-motion handling.
 
