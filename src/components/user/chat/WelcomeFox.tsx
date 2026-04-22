@@ -80,7 +80,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
           ✦
         </motion.div>
 
-        {/* ── Fox video (static frame, large, fills card) ── */}
+        {/* ── Fox video with overlaid speech bubble ── */}
         <div className="relative w-full flex justify-center">
           <video
             src="/Baby_Fox.mp4"
@@ -92,50 +92,51 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
             aria-label="Baby fox mascot animation"
             className="w-full max-w-[420px] h-auto mx-auto drop-shadow-xl pointer-events-none select-none"
           />
-        </div>
 
-        {/* ── Speech Bubble (under fox, tail pointing up to mouth) ── */}
-        <div className="relative flex-shrink-0 mt-[-12px]">
+          {/* ── Speech Bubble (overlaid top-right, tail pointing left to fox) ── */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.88, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
+            initial={{ opacity: 0, scale: 0.88, x: -10 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="
-              relative bg-white rounded-3xl
+              absolute top-2 right-2 sm:top-4 sm:right-4 z-20
+              bg-white rounded-3xl
               border border-gray-100
               shadow-[0_6px_32px_0_rgba(0,0,0,0.10)]
-              px-8 py-7
-              min-w-[240px] max-w-[320px]
+              px-5 py-4
+              min-w-[160px] max-w-[200px]
               flex flex-col items-center gap-1 text-center
             "
             style={{
-              filter: "drop-shadow(0 -2px 1px rgba(0,0,0,0.04))",
+              filter: "drop-shadow(-2px 0 1px rgba(0,0,0,0.04))",
             }}
           >
-            {/* Upward-pointing bubble tail (centered on top edge) */}
+            {/* Left-pointing bubble tail (centered on left edge, aimed at fox) */}
             <div
               aria-hidden
-              className="absolute left-1/2 -translate-x-1/2 w-0 h-0"
+              className="absolute w-0 h-0"
               style={{
-                top: "-16px",
-                borderLeft: "14px solid transparent",
-                borderRight: "14px solid transparent",
-                borderBottom: "18px solid white",
+                left: "-14px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                borderTop: "12px solid transparent",
+                borderBottom: "12px solid transparent",
+                borderRight: "16px solid white",
               }}
             />
 
             {/* Purple sparkle lines — top right of bubble */}
             <motion.div
-              className="absolute top-5 right-6 flex gap-1 items-end"
+              className="absolute top-2 right-3 flex gap-[2px] items-end"
               animate={{ opacity: [0.4, 1, 0.4] }}
               transition={{ duration: 2.4, repeat: Infinity }}
               aria-hidden
             >
-              {[14, 20, 14].map((h, i) => (
+              {[8, 12, 8].map((h, i) => (
                 <span
                   key={i}
                   style={{
-                    width: 3,
+                    width: 2,
                     height: h,
                     background: "#A78BFA",
                     borderRadius: 2,
@@ -149,7 +150,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
 
             {/* Yellow star — bottom right of bubble */}
             <motion.span
-              className="absolute bottom-5 right-6 text-2xl select-none"
+              className="absolute -bottom-2 -right-2 text-lg select-none"
               animate={{ scale: [0.9, 1.15, 0.9], rotate: [0, 12, 0] }}
               transition={{ duration: 2.8, repeat: Infinity }}
               aria-hidden
@@ -162,7 +163,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.45, duration: 0.38 }}
-              className="text-[#1e1b6b] font-bold text-2xl"
+              className="text-[#1e1b6b] font-bold text-lg leading-none"
             >
               {greeting}
             </motion.p>
@@ -172,7 +173,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.62, duration: 0.38 }}
-              className="text-purple-500 font-extrabold text-4xl leading-tight"
+              className="text-purple-500 font-extrabold text-2xl sm:text-3xl leading-tight break-words max-w-full"
             >
               {firstName}
             </motion.p>
@@ -182,7 +183,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.80, duration: 0.38 }}
-              className="text-[#1e1b6b] font-semibold text-sm leading-snug mt-1"
+              className="text-[#1e1b6b] font-semibold text-xs leading-snug mt-1"
             >
               {subtitle}
             </motion.p>
