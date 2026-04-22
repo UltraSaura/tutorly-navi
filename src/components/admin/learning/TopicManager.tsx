@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, AlertCircle, Tags } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertCircle, Tags, Sparkles } from 'lucide-react';
+import { GenerateTopicsFromObjectivesDialog } from './GenerateTopicsFromObjectivesDialog';
 import { useLearningCategories, useLearningTopics, useCreateTopic, useUpdateTopic, useDeleteTopic } from '@/hooks/useManageLearningContent';
 import type { Topic } from '@/types/learning';
 import { CurriculumSelector } from '@/components/admin/curriculum/CurriculumSelector';
@@ -45,6 +46,7 @@ const TopicManager = () => {
   const autoLinkObjectives = useAutoLinkObjectives();
   
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
   const [formData, setFormData] = useState({
     category_id: '',
@@ -178,6 +180,11 @@ const TopicManager = () => {
           <h2 className="text-2xl font-bold">Learning Topics</h2>
           <p className="text-muted-foreground">Manage topics within categories and curriculum</p>
         </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setGenerateDialogOpen(true)}>
+            <Sparkles className="w-4 h-4 mr-2" />
+            Generate from Objectives
+          </Button>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);
           if (!open) resetForm();
@@ -363,7 +370,13 @@ const TopicManager = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+
+      <GenerateTopicsFromObjectivesDialog
+        open={generateDialogOpen}
+        onOpenChange={setGenerateDialogOpen}
+      />
 
       {/* Curriculum Filter View */}
       <Card className="p-4 mb-4">
