@@ -92,11 +92,15 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
               }}
               style={{ transformOrigin: "center 80%" }}
             >
-              <img
-                src="/fox-mascot.png"
-                alt="Fox mascot waving"
+              <video
+                src="/Baby_Fox.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="auto"
+                aria-label="Baby fox mascot animation"
                 className="w-40 h-auto sm:w-52 drop-shadow-xl pointer-events-none select-none"
-                draggable={false}
               />
             </motion.div>
           </motion.div>
