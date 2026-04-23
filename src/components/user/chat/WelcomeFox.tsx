@@ -46,7 +46,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
     : "Submit your question for help!";
 
   return (
-    <div className="w-full h-[calc(100vh-4rem-9rem)] max-h-[calc(100vh-4rem-9rem)] flex items-center justify-center overflow-hidden">
+    <div className="w-full mb-6">
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -150,7 +150,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
           preload="auto"
           aria-label="Baby fox mascot animation"
           className="w-full max-w-xl sm:max-w-3xl object-contain pointer-events-none select-none mix-blend-multiply -mt-2"
-          style={{ maxHeight: "calc(100vh - 4rem - 9rem - 160px)" }}
+          style={{ maxHeight: "87vh" }}
         />
       </motion.div>
     </div>

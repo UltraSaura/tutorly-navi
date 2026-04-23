@@ -1,33 +1,31 @@
 
 
 ## Goal
-Make the entire welcome composition (bubble + fox) fit within the visible chat area without page scrolling on any device.
+Make the fox mascot another 30% bigger and reposition the speech bubble **above** the fox's head (instead of below).
 
-## Root cause
-The fox video uses `maxHeight: 87vh` and the wrapper has `mb-6`, while the chat scroll container is only `100vh - 4rem` (header) minus another ~80–128px reserved for the fixed input. On a 390×726 viewport that leaves roughly ~500px usable, but the bubble (~140px) + 87vh fox (~630px) overflows and forces scrolling.
-
-## Change
+## Changes
 **File**: `src/components/user/chat/WelcomeFox.tsx`
 
-1. **Constrain the outer wrapper to the available area** so it never overflows the chat scroll region:
-   - Replace `<div className="w-full mb-6">` with  
-     `<div className="w-full h-[calc(100vh-4rem-9rem)] max-h-[calc(100vh-4rem-9rem)] flex items-center justify-center overflow-hidden">`
-   - The `9rem` accounts for header (already subtracted via `4rem`) + fixed input bar + mobile bottom tabs (≈128px) with a small safety margin.
+### 1. Enlarge the video by 30%
+- `max-w-md` (28rem) → `max-w-xl` (36rem) — mobile width +29%
+- `sm:max-w-xl` (36rem) → `sm:max-w-3xl` (48rem) — desktop width +33%
+- `maxHeight: "67vh"` → `maxHeight: "87vh"` — vertical cap +30%
 
-2. **Cap the fox video to the remaining space** instead of viewport height:
-   - Change `style={{ maxHeight: "87vh" }}` →  
-     `style={{ maxHeight: "calc(100vh - 4rem - 9rem - 160px)" }}`  
-     (subtracts bubble height ~140px + gap so bubble + fox together fit).
-   - Keep `w-full max-w-xl sm:max-w-3xl object-contain` so width still scales but height is the binding constraint on short viewports.
+### 2. Move the speech bubble above the fox
+- Reorder JSX inside the flex column: render the **bubble first**, then the **video**.
+- Flip the pointer triangle so it points **down** (toward the fox's head):
+  - Swap the SVG path from `M16 0 L32 20 L0 20 Z` (up-arrow) to `M0 0 L32 0 L16 20 Z` (down-arrow).
+  - Move it from `-top-[18px]` to `-bottom-[18px]`.
+- Adjust the negative-margin spacer: change video's `-mt-4` (which pulled bubble up under fox) to a small `-mt-2` on the **video** so the bubble's pointer tucks neatly into the top of the fox's head.
+- Tweak entrance animation y-offset on the bubble from `y: -10` to `y: 10` so it now slides down into place from above (small polish, optional but matches the new direction).
 
-3. **Remove `mb-6`** on the outer wrapper (no longer needed; centering handles spacing).
-
-## Result
-- Mobile (390×726): bubble + fox fit inside the visible chat area, no scroll.
-- Desktop: fox can still grow up to `max-w-3xl` width, capped vertically by available space.
-- No changes to bubble styling, animations, bilingual logic, exports, or any other file.
+## Preserved
+- All bilingual text, name resolution, auth/profile hooks.
+- Bubble styling (size, shadow, sparkles, ⭐, rounded corners).
+- `mix-blend-multiply`, `object-contain`, autoplay attrs, video src `/Baby_Fox.mp4`.
+- Named + default exports and `WelcomeFoxProps` interface.
 
 ## Out of scope
-- Touching `MainLayout`, `ChatInterface`, or input bar sizing.
-- Resizing the speech bubble.
+- Resizing the bubble itself.
+- Background, layout, or other consumers of `WelcomeFox`.
 
