@@ -53,22 +53,9 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         className="flex flex-col items-center gap-0 px-4"
       >
-        {/* ── Fox video on top ── */}
-        <video
-          src="/Baby_Fox.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          aria-label="Baby fox mascot animation"
-          className="w-full max-w-md sm:max-w-xl object-contain pointer-events-none select-none mix-blend-multiply"
-          style={{ maxHeight: "67vh" }}
-        />
-
-        {/* ── Speech Bubble (below fox, with upward pointer) ── */}
+        {/* ── Speech Bubble (above fox, with downward pointer) ── */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.88, y: -10 }}
+          initial={{ opacity: 0, scale: 0.88, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="
@@ -78,19 +65,18 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
             px-10 py-6
             w-72 sm:w-80
             flex flex-col items-center text-center
-            -mt-4
           "
         >
-          {/* Upward-pointing triangle pointer */}
+          {/* Downward-pointing triangle pointer */}
           <svg
             aria-hidden
             width="32"
             height="20"
             viewBox="0 0 32 20"
-            className="absolute -top-[18px] left-1/2 -translate-x-1/2 pointer-events-none"
+            className="absolute -bottom-[18px] left-1/2 -translate-x-1/2 pointer-events-none"
           >
             <path
-              d="M16 0 L32 20 L0 20 Z"
+              d="M0 0 L32 0 L16 20 Z"
               fill="white"
               stroke="#f3f4f6"
               strokeWidth="1"
@@ -153,6 +139,19 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
             {subtitle}
           </motion.p>
         </motion.div>
+
+        {/* ── Fox video below bubble ── */}
+        <video
+          src="/Baby_Fox.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          aria-label="Baby fox mascot animation"
+          className="w-full max-w-xl sm:max-w-3xl object-contain pointer-events-none select-none mix-blend-multiply -mt-2"
+          style={{ maxHeight: "87vh" }}
+        />
       </motion.div>
     </div>
   );
