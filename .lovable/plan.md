@@ -1,52 +1,47 @@
 
 
 ## Goal
-Adopt the new uploaded designs:
-1. `MainLayout` background → plain white (matches the fox video bg).
-2. `WelcomeFox` → new layout (fox on top, speech bubble below with upward pointer).
-
-…while preserving existing project integrations (bilingual FR/EN, profile-based name resolution, correct video filename, correct auth import).
+Fix three visual issues on `/chat` welcome screen:
+1. Remove the grid pattern background showing behind the chat (the "scrolling animation background").
+2. Make the fox bigger (match the reference screenshot scale).
+3. Move the speech bubble **above** the fox's head (not below).
 
 ## Changes
 
-### 1. `src/components/layout/MainLayout.tsx`
-Single class swap:
-- `bg-gradient-to-b from-blue-50 to-white dark:from-gray-950 dark:to-gray-900`
-  → `bg-white dark:bg-gray-950`
+### 1. `src/components/layout/MainLayout.tsx` — remove grid overlay
+Delete the grid-pattern overlay div entirely (line 15). It tiles `/grid-pattern.svg` across the page and is what reads as a "scrolling background" behind the chat.
 
-Everything else (header, grid overlay, mobile tabs) untouched.
+Result: clean solid white background, matching the reference image.
 
-### 2. `src/components/user/chat/WelcomeFox.tsx`
-Replace with the uploaded layout, but adapted:
+### 2. `src/components/user/chat/WelcomeFox.tsx` — restructure layout
 
-**Adopt from upload:**
-- New structure: video on top, speech bubble below with upward-pointing triangle pointer.
-- Bubble styling: `bg-white rounded-3xl border border-gray-100 shadow-[0_6px_32px_0_rgba(0,0,0,0.10)] px-10 py-6 w-72 sm:w-80`.
-- Purple sparkle bars (top-right of bubble), yellow ⭐ (bottom-right), animated entrance.
-- Video sizing: `w-full max-w-xs sm:max-w-sm object-contain` with `maxHeight: 45vh`.
-- Outer flex container centering the whole composition.
+**Reorder**: bubble FIRST (on top), fox SECOND (below).
 
-**Keep from current (do NOT regress):**
-- `import { useAuth } from "@/context/AuthContext"` (NOT `@/hooks/useAuth` — that path doesn't exist in this project).
-- `useUserProfile` for first-name resolution (priority: profile.firstName → user_metadata.full_name → email prefix).
-- `useLanguage` for bilingual greeting:
-  - EN: "Hi" / "Submit your question for help!"
-  - FR: "Salut" / "Soumets ta question pour obtenir de l'aide !"
-- Video src: `/Baby_Fox.mp4` (the file that actually exists in `/public`). Do NOT change to `/fox-animation.mp4`.
-- `WelcomeFoxProps { userName?: string | null }` and named + default exports (consumers may rely on them).
-- `mix-blend-multiply` on the video so any residual white edge blends cleanly into the now-white page.
+**Bubble positioning**:
+- Switch the triangle pointer from upward-pointing to **downward-pointing** (so it points down at the fox's head).
+- Replace `-mt-4` with positive margin so the bubble sits above with the pointer touching near the fox's head.
+- Change pointer SVG path: `M0 0 L32 0 L16 20 Z` (downward triangle), positioned at `-bottom-[18px]` instead of `-top-[18px]`.
 
-**Drop from current:**
-- The overlapping speech bubble + curved SVG tail (replaced by below-video bubble + triangle pointer from upload).
-- The card-level top-right ✦ sparkle (not present in new design).
-- `pt-16 sm:pt-20` padding hacks.
+**Fox sizing** — make it bigger to match reference:
+- Change `max-w-xs sm:max-w-sm` → `max-w-sm sm:max-w-md` (wider).
+- Change `maxHeight: "45vh"` → `maxHeight: "60vh"` (taller).
+- This roughly doubles the visual presence of the fox to match the screenshot proportions.
+
+**Animation entrance**: bubble's `y` initial flips from `-10` to `+10` so it drops down into place naturally above the fox.
+
+Final structure (top → bottom):
+```
+[ Speech Bubble ]
+       ▼  (downward pointer)
+[   Fox Video   ]
+```
 
 ## Files touched
-- **Edit**: `src/components/layout/MainLayout.tsx` (1 className swap).
-- **Replace**: `src/components/user/chat/WelcomeFox.tsx` (full rewrite using new layout + preserved integrations).
+- **Edit**: `src/components/layout/MainLayout.tsx` (delete 1 div with grid overlay).
+- **Edit**: `src/components/user/chat/WelcomeFox.tsx` (reorder bubble/fox, flip pointer direction, enlarge fox).
 
 ## Out of scope
-- Renaming the video file or generating a new animation.
-- Touching `ChatInterface.tsx` or any other consumer of `WelcomeFox`.
-- Changing translations infrastructure.
+- Changing the fox video file itself.
+- Touching `ChatInterface.tsx`, header, or bottom tabs.
+- Changing translations, name resolution, or auth integrations.
 
