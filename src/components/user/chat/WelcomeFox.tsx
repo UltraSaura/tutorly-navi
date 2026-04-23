@@ -46,7 +46,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
     : "Submit your question for help!";
 
   return (
-    <div className="w-full mb-6">
+    <div className="w-full">
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -65,7 +65,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
             px-10 py-6
             w-72 sm:w-80
             flex flex-col items-center text-center
-            mt-[57px]
+            mt-2
           "
         >
           {/* Downward-pointing triangle pointer */}

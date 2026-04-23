@@ -220,31 +220,36 @@ const ChatInterface = () => {
   };
 
   // Exercise-Focused Layout with Chat Input
+  const showWelcomeState =
+    filteredMessages.filter((m) => m.role === 'user').length === 0 &&
+    !isLoading &&
+    !calculationState.isProcessing;
+
   return (
     <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg overflow-x-hidden max-w-full">
       <PageMeta title="Tutor Chat" description="Get instant AI-powered help with math homework, exercises, and explanations from your Stuwy tutor." />
       {/* Scrollable Content Area */}
       <div 
-        className="h-full overflow-auto overflow-x-hidden"
+        className={`h-full overflow-x-hidden ${showWelcomeState ? 'overflow-hidden flex flex-col items-center justify-start' : 'overflow-auto'}`}
         style={{
-          paddingBottom: keyboardVisible && keyboardHeight > 0
-            ? `${keyboardHeight + 80}px`  // Keyboard height + input height
-            : `${isMobile ? 128 : 80}px`  // Normal bottom padding
+          paddingBottom: showWelcomeState
+            ? 0
+            : keyboardVisible && keyboardHeight > 0
+              ? `${keyboardHeight + 80}px`  // Keyboard height + input height
+              : `${isMobile ? 128 : 80}px`  // Normal bottom padding
         }}
       >
         {/* AI Response - Display the latest AI explanation/response */}
         {/* Welcome animation - shown when no user messages exist yet */}
         <AnimatePresence mode="wait">
-          {filteredMessages.filter(m => m.role === 'user').length === 0 &&
-            !isLoading &&
-            !calculationState.isProcessing && (
-              <motion.div
-                key="welcome-fox"
-                exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.25 } }}
-              >
-                <WelcomeFox />
-              </motion.div>
-            )}
+          {showWelcomeState && (
+            <motion.div
+              key="welcome-fox"
+              exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.25 } }}
+            >
+              <WelcomeFox />
+            </motion.div>
+          )}
         </AnimatePresence>
 
         {/* AI Response - Display the latest AI explanation/response */}
