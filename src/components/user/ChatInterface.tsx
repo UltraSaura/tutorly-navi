@@ -219,23 +219,15 @@ const ChatInterface = () => {
     setShowCamera(false);
   };
 
-  // Welcome state: no user messages, not loading, not processing
-  const showWelcomeState =
-    filteredMessages.filter(m => m.role === 'user').length === 0 &&
-    !isLoading &&
-    !calculationState.isProcessing;
-
   // Exercise-Focused Layout with Chat Input
   return (
-    <div className="relative h-full min-h-0 bg-neutral-bg overflow-x-hidden max-w-full">
+    <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg overflow-x-hidden max-w-full">
       <PageMeta title="Tutor Chat" description="Get instant AI-powered help with math homework, exercises, and explanations from your Stuwy tutor." />
       {/* Scrollable Content Area */}
       <div 
-        className={`h-full overflow-x-hidden ${showWelcomeState ? 'overflow-hidden flex items-center justify-center' : 'overflow-auto'}`}
+        className="h-full overflow-auto overflow-x-hidden"
         style={{
-          paddingBottom: showWelcomeState
-            ? '0px'
-            : keyboardVisible && keyboardHeight > 0
+          paddingBottom: keyboardVisible && keyboardHeight > 0
             ? `${keyboardHeight + 80}px`  // Keyboard height + input height
             : `${isMobile ? 128 : 80}px`  // Normal bottom padding
         }}
