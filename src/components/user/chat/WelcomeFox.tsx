@@ -32,7 +32,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
   const isFr = language === "fr";
 
   // Name resolution preserved for future use / prop signature compatibility
-  void userName
+  const _firstName = userName
     ? userName.trim().split(" ")[0]
     : resolveFirstName(
         profile?.firstName,
@@ -40,6 +40,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
         user?.email ?? undefined,
         isFr ? "Élève" : "Student"
       );
+  void _firstName;
 
   return (
     <div className="w-full h-full">
