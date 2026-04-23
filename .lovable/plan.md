@@ -1,42 +1,52 @@
 
 
 ## Goal
-Remove the visible rectangular border/frame around the fox animation video on the `/chat` page so the mascot appears fully borderless against the page background.
+Adopt the new uploaded designs:
+1. `MainLayout` background → plain white (matches the fox video bg).
+2. `WelcomeFox` → new layout (fox on top, speech bubble below with upward pointer).
 
-## Root cause
-The `<video>` element in `src/components/user/chat/WelcomeFox.tsx` currently has:
-- `drop-shadow-xl` → renders a soft dark rectangular shadow around the video's bounding box, which reads as a "border" since the video frame is rectangular.
-- `mix-blend-multiply` → blends near-white pixels into the page, but any subtle off-white/cream tint at the video's edges still shows as a faint rectangle against the page gradient.
+…while preserving existing project integrations (bilingual FR/EN, profile-based name resolution, correct video filename, correct auth import).
 
-The outer container is already transparent (no `bg-white`/`border` left), so the only remaining visible frame comes from the video element itself.
+## Changes
 
-## Fix — `src/components/user/chat/WelcomeFox.tsx`
+### 1. `src/components/layout/MainLayout.tsx`
+Single class swap:
+- `bg-gradient-to-b from-blue-50 to-white dark:from-gray-950 dark:to-gray-900`
+  → `bg-white dark:bg-gray-950`
 
-### Change on the `<video>` className
-- **Remove** `drop-shadow-xl` → eliminates the rectangular shadow halo around the video bounding box.
-- **Keep** `mix-blend-multiply` → continues to blend white pixels into the page background.
-- **Keep** all other classes: sizing (`w-full max-w-[420px] h-auto`), centering (`mx-auto`), leftward shift (`-translate-x-4 sm:-translate-x-6`), and `pointer-events-none select-none`.
+Everything else (header, grid overlay, mobile tabs) untouched.
 
-That's the only change required.
+### 2. `src/components/user/chat/WelcomeFox.tsx`
+Replace with the uploaded layout, but adapted:
 
-### Why this works
-The "border" the user sees is the soft drop shadow projecting a rectangle around the video's rectangular frame. Without it, only the fox shape (after multiply-blend) remains visible — no rectangle.
+**Adopt from upload:**
+- New structure: video on top, speech bubble below with upward-pointing triangle pointer.
+- Bubble styling: `bg-white rounded-3xl border border-gray-100 shadow-[0_6px_32px_0_rgba(0,0,0,0.10)] px-10 py-6 w-72 sm:w-80`.
+- Purple sparkle bars (top-right of bubble), yellow ⭐ (bottom-right), animated entrance.
+- Video sizing: `w-full max-w-xs sm:max-w-sm object-contain` with `maxHeight: 45vh`.
+- Outer flex container centering the whole composition.
 
-### Mobile (768x726) sanity check
-- No layout impact: only a visual filter is removed.
-- Bubble, sparkle, and text positioning unchanged.
+**Keep from current (do NOT regress):**
+- `import { useAuth } from "@/context/AuthContext"` (NOT `@/hooks/useAuth` — that path doesn't exist in this project).
+- `useUserProfile` for first-name resolution (priority: profile.firstName → user_metadata.full_name → email prefix).
+- `useLanguage` for bilingual greeting:
+  - EN: "Hi" / "Submit your question for help!"
+  - FR: "Salut" / "Soumets ta question pour obtenir de l'aide !"
+- Video src: `/Baby_Fox.mp4` (the file that actually exists in `/public`). Do NOT change to `/fox-animation.mp4`.
+- `WelcomeFoxProps { userName?: string | null }` and named + default exports (consumers may rely on them).
+- `mix-blend-multiply` on the video so any residual white edge blends cleanly into the now-white page.
 
-## Keep untouched
-- Outer container transparency, padding, top-right ✦ sparkle.
-- Speech bubble (position, tail SVG, sparkle bars, ⭐, text, animations).
-- Bilingual greeting, name resolution, exports.
-- Video sizing, blend mode, leftward shift.
+**Drop from current:**
+- The overlapping speech bubble + curved SVG tail (replaced by below-video bubble + triangle pointer from upload).
+- The card-level top-right ✦ sparkle (not present in new design).
+- `pt-16 sm:pt-20` padding hacks.
 
 ## Files touched
-- **Edit**: `src/components/user/chat/WelcomeFox.tsx` (remove `drop-shadow-xl` from the `<video>` className — 1 token).
+- **Edit**: `src/components/layout/MainLayout.tsx` (1 className swap).
+- **Replace**: `src/components/user/chat/WelcomeFox.tsx` (full rewrite using new layout + preserved integrations).
 
 ## Out of scope
-- Replacing `Baby_Fox.mp4` with a true alpha-channel asset (would be the only way to fully eliminate any residual edge tint from the video file itself).
-- Changing the page background or bubble styling.
-- Resizing or repositioning the fox.
+- Renaming the video file or generating a new animation.
+- Touching `ChatInterface.tsx` or any other consumer of `WelcomeFox`.
+- Changing translations infrastructure.
 
