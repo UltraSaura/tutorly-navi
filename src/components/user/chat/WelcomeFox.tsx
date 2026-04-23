@@ -151,7 +151,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
           preload="auto"
           aria-label="Baby fox mascot animation"
           className="w-full max-w-xl sm:max-w-3xl object-contain pointer-events-none select-none mix-blend-multiply -mt-2"
-          style={{ maxHeight: "87vh" }}
+          style={{ maxHeight: "min(420px, calc(100vh - 360px))" }}
         />
       </motion.div>
     </div>
