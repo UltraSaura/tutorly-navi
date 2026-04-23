@@ -139,6 +139,19 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
             {subtitle}
           </motion.p>
         </motion.div>
+
+        {/* ── Fox video below bubble ── */}
+        <video
+          src="/Baby_Fox.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          aria-label="Baby fox mascot animation"
+          className="w-full max-w-xl sm:max-w-3xl object-contain pointer-events-none select-none mix-blend-multiply -mt-2"
+          style={{ maxHeight: "87vh" }}
+        />
       </motion.div>
     </div>
   );
