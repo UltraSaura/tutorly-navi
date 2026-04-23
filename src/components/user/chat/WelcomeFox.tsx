@@ -65,6 +65,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
             px-10 py-6
             w-72 sm:w-80
             flex flex-col items-center text-center
+            mt-[57px]
           "
         >
           {/* Downward-pointing triangle pointer */}
