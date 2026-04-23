@@ -62,8 +62,8 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
           playsInline
           preload="auto"
           aria-label="Baby fox mascot animation"
-          className="w-full max-w-xs sm:max-w-sm object-contain pointer-events-none select-none mix-blend-multiply"
-          style={{ maxHeight: "45vh" }}
+          className="w-full max-w-md sm:max-w-xl object-contain pointer-events-none select-none mix-blend-multiply"
+          style={{ maxHeight: "67vh" }}
         />
 
         {/* ── Speech Bubble (below fox, with upward pointer) ── */}
