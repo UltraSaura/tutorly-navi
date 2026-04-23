@@ -1,43 +1,40 @@
 
 
 ## Goal
-Fit the entire welcome screen into the 390×726 viewport with **no scrolling**. The fox stays at its current size and position. The speech bubble must be fully visible (currently its top is clipped above the viewport).
+Make the entire fox visible (head to feet) on the 390×726 mobile viewport, with the bubble above, no scrolling, and nothing clipped behind the input composer.
 
 ## Root cause
-- `WelcomeFox` wrapper has `mb-6` and the bubble has `mt-[57px]`, pushing total height past the viewport.
-- `ChatInterface` scroll area uses `overflow-auto` even in the welcome state, so the overflow becomes a visible scrollbar instead of being constrained.
-- `MainLayout` adds `py-6` + mobile `pb-20` on `/chat`, eating ~100px of vertical space.
+In the welcome state the layout is:
+- top header (~64px) + bubble (~150px) + fox (`maxHeight: 87vh` ≈ 631px) + input bar (~80px) + bottom tabs (~64px)
 
-The bubble isn't actually "too high" — the whole composition is too tall, so the page scrolls and the user sees the bubble clipped at the top of the scroll area. Fix the container, not the bubble offset.
+That sums to far more than 726px. With `justify-start`, the fox is anchored from the top and its lower half (feet/legs) gets pushed under the fixed input bar — exactly what the screenshot shows.
 
-## Changes
+The fox's `87vh` cap was sized for a full-viewport context, not for the chat screen which also has a bubble above and a composer + tabs below.
 
-### 1. `src/components/layout/MainLayout.tsx` — reclaim vertical space on `/chat`
-- Import `useLocation`.
-- Detect `isChatRoute = location.pathname.startsWith('/chat')`.
-- On `/chat` only: render `<main>` with `px-[5px]` (no `py-6`, no `pb-20`). All other routes unchanged.
+## Fix
 
-### 2. `src/components/user/ChatInterface.tsx` — lock welcome state to viewport, no scroll
-- Compute `showWelcomeState` (no user messages, not loading, not processing) — same condition already used to render `WelcomeFox`.
-- When `showWelcomeState` is true:
-  - Scroll container: `overflow-auto` → `overflow-hidden`
-  - Add `flex flex-col items-center justify-start` so the fox sits naturally with the bubble above it
-  - Drop the keyboard-aware `paddingBottom` (welcome state has no input focus)
-- When chat has messages: keep existing scroll behavior untouched.
+### File: `src/components/user/chat/WelcomeFox.tsx`
+Change only the fox video's `maxHeight` so it's bounded by the *available* space, not the full viewport:
 
-### 3. `src/components/user/chat/WelcomeFox.tsx` — tighten spacing, keep fox identical
-- Remove the wrapper's `mb-6` (reclaims 24px).
-- Reduce the bubble offset: `mt-[57px]` → `mt-2` so the bubble sits just above the fox's head and the whole composition fits the viewport.
-- **Fox video unchanged**: same `max-w-xl sm:max-w-3xl`, same `maxHeight: "87vh"`, same `object-contain`, same `-mt-2`, same `mix-blend-multiply`. Size and position preserved exactly.
+- `style={{ maxHeight: "87vh" }}` → `style={{ maxHeight: "min(420px, calc(100vh - 360px))" }}`
+
+Reasoning:
+- 360px reserves room for: header (64) + bubble (~160) + input bar (~72) + bottom tabs (~64).
+- `object-contain` keeps the fox proportional, so reducing the height cap shrinks the *frame*, not the fox's aspect ratio — and the fox stays as wide as `max-w-xl sm:max-w-3xl` allows. Visually the fox stays large but no longer overflows.
+- On taller viewports (tablets/desktop), the 420px floor keeps it from getting tiny; on the 390×726 phone, it caps at ~366px so feet are visible.
+
+Everything else in `WelcomeFox.tsx` is unchanged: bubble offset (`mt-2`), `-mt-2` on the video, width classes, `object-contain`, `mix-blend-multiply`, animations, exports.
+
+### Files NOT touched
+- `ChatInterface.tsx` — welcome state already uses `overflow-hidden` and `justify-start`; that's correct.
+- `MainLayout.tsx` — already strips padding on `/chat`.
 
 ## Result
-- Bubble fully visible above the fox's head (matches reference image).
-- Fox renders at exactly the same size and position as today.
-- Zero scrolling on the welcome screen.
-- Fixed composer and bottom tabs unaffected.
+- Bubble fully visible at the top (matches reference).
+- Full fox visible — head, body, and feet — sitting just above the input bar.
+- No scrolling.
+- Fox aspect ratio preserved; appears the same proportionally, just framed to fit the available space.
 
 ## Files touched
-- `src/components/layout/MainLayout.tsx`
-- `src/components/user/ChatInterface.tsx`
-- `src/components/user/chat/WelcomeFox.tsx`
+- `src/components/user/chat/WelcomeFox.tsx` (one-line change)
 
