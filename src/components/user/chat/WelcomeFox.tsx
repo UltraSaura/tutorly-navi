@@ -46,7 +46,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
     : "Submit your question for help!";
 
   return (
-    <div className="w-full mb-6">
+    <div className="w-full">
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -140,18 +140,22 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
           </motion.p>
         </motion.div>
 
-        {/* ── Fox video below bubble ── */}
-        <video
-          src="/Baby_Fox.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          aria-label="Baby fox mascot animation"
-          className="w-full max-w-xl sm:max-w-3xl object-contain pointer-events-none select-none mix-blend-multiply -mt-2"
-          style={{ maxHeight: "87vh" }}
-        />
+        {/* ── Fox video below bubble (cropped frame, fox stays whole) ── */}
+        <div
+          className="w-full max-w-xl sm:max-w-3xl overflow-hidden flex items-start justify-center -mt-2"
+          style={{ maxHeight: "min(480px, 60vh)" }}
+        >
+          <video
+            src="/Baby_Fox.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            aria-label="Baby fox mascot animation"
+            className="w-full h-full object-contain object-top pointer-events-none select-none mix-blend-multiply"
+          />
+        </div>
       </motion.div>
     </div>
   );
