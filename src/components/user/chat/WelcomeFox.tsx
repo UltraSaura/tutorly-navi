@@ -53,7 +53,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         className="
           relative overflow-hidden rounded-3xl
-          px-4 pt-16 sm:pt-20 pb-8 sm:px-8
+          px-4 pt-6 pb-8 sm:px-8
           flex flex-col items-center gap-0
         "
       >
@@ -68,39 +68,25 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
         </motion.div>
 
         {/* ── Fox video with overlaid speech bubble ── */}
-        <div className="flex justify-center w-full">
-          {/* TIGHT crop wrapper — sized to the visible fox, blends into page bg */}
-          <div
-            className="relative inline-block w-[280px] sm:w-[340px] aspect-square overflow-hidden"
-            style={{ backgroundColor: "rgb(241,247,255)" }}
-          >
-            {/*
-              NOTE: /Baby_Fox.mp4 has a baked-in opaque background (no alpha channel).
-              We blend by sizing the wrapper to the visible fox region and matching
-              the page background. To get true transparency, replace this <video> with:
-                1. <video> sourcing a transparent WebM (VP9 alpha) — preferred
-                2. <Lottie animationData={...} /> from lottie-react
-                3. <Rive src="..." /> from @rive-app/react-canvas
-              The surrounding wrapper layout requires no changes for any of those.
-            */}
-            <video
-              src="/Baby_Fox.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="auto"
-              aria-label="Baby fox mascot animation"
-              className="absolute inset-0 w-full h-full object-cover block bg-transparent border-0 outline-none ring-0 shadow-none pointer-events-none select-none"
-            />
+        <div className="relative w-full flex justify-center">
+          <video
+            src="/Baby_Fox.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            aria-label="Baby fox mascot animation"
+            className="w-full max-w-[420px] h-auto mx-auto -translate-x-4 sm:-translate-x-6 pointer-events-none select-none mix-blend-multiply"
+          />
 
-          {/* ── Speech Bubble (anchored above the fox, centered) ── */}
+          {/* ── Speech Bubble (overlaid top-right, tail pointing left to fox) ── */}
           <motion.div
             initial={{ opacity: 0, scale: 0.88, x: -10 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="
-              absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20
+              absolute top-[18%] right-2 sm:right-4 z-20
               bg-white rounded-3xl
               border border-gray-100
               shadow-[0_6px_32px_0_rgba(0,0,0,0.10)]
@@ -112,17 +98,17 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
               filter: "drop-shadow(-2px 0 1px rgba(0,0,0,0.04))",
             }}
           >
-            {/* Tail pointing straight down toward the fox's head */}
+            {/* Long curved bubble tail pointing down-left toward fox's mouth */}
             <svg
               aria-hidden
-              width="40"
-              height="32"
-              viewBox="0 0 40 32"
-              className="absolute left-1/2 -translate-x-1/2 -bottom-[24px] pointer-events-none"
-              style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.04))" }}
+              width="72"
+              height="60"
+              viewBox="0 0 72 60"
+              className="absolute -left-[40px] -bottom-[28px] pointer-events-none"
+              style={{ filter: "drop-shadow(-1px 1px 1px rgba(0,0,0,0.04))" }}
             >
               <path
-                d="M8 0 Q 14 18, 20 30 Q 22 18, 32 0 Z"
+                d="M72 4 Q 40 10, 8 52 Q 32 32, 72 22 Z"
                 fill="white"
                 stroke="#f3f4f6"
                 strokeWidth="1"
@@ -192,7 +178,6 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
               {subtitle}
             </motion.p>
           </motion.div>
-          </div>
         </div>
       </motion.div>
     </div>
