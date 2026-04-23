@@ -12,8 +12,6 @@ const MainLayout = () => {
   
   return (
     <div className="flex min-h-screen w-full bg-white dark:bg-gray-950">
-      <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] dark:[mask-image:linear-gradient(180deg,rgba(255,255,255,0.1),rgba(255,255,255,0))] pointer-events-none"></div>
-      
       <div className="flex flex-col flex-1 relative">
         {/* Header with Navigation */}
         <header className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 h-16">
