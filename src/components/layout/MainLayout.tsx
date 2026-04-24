@@ -13,7 +13,7 @@ const MainLayout = () => {
   const isChatRoute = location.pathname.startsWith('/chat');
 
   const mainClasses = isChatRoute
-    ? 'flex-1 px-[5px]'
+    ? 'flex-1 px-0'
     : `flex-1 px-[5px] py-6 ${isMobile ? 'pb-20' : ''}`;
 
   return (

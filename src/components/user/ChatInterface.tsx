@@ -226,11 +226,19 @@ const ChatInterface = () => {
     !calculationState.isProcessing;
 
   return (
-    <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg overflow-x-hidden max-w-full">
+    <div
+      className={`relative h-[calc(100vh-4rem)] overflow-x-hidden max-w-full ${
+        showWelcomeState ? 'bg-white' : 'bg-neutral-bg'
+      }`}
+    >
       <PageMeta title="Tutor Chat" description="Get instant AI-powered help with math homework, exercises, and explanations from your Stuwy tutor." />
       {/* Scrollable Content Area */}
       <div 
-        className={`h-full overflow-x-hidden ${showWelcomeState ? 'overflow-hidden flex flex-col items-center justify-start' : 'overflow-auto'}`}
+        className={`h-full overflow-x-hidden ${
+          showWelcomeState
+            ? 'overflow-hidden flex flex-col items-center justify-start bg-white'
+            : 'overflow-auto'
+        }`}
         style={{
           paddingBottom: showWelcomeState
             ? 0

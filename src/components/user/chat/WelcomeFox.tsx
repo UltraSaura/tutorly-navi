@@ -60,14 +60,14 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
   const messages = BUBBLE_MESSAGES[language] ?? BUBBLE_MESSAGES.en;
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full bg-white">
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         className="flex items-center justify-center h-full px-4"
       >
-        <div className="relative inline-block">
+        <div className="relative inline-block translate-y-[1cm] sm:translate-y-0">
           {/* ── Fox video ── */}
           <video
             src="/Baby_Fox.mp4"
@@ -85,7 +85,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
           {showBubble && (
             <div
               className="absolute top-2 right-2 sm:top-4 sm:right-6 z-10"
-              style={{ transform: "translateY(2cm)" }}
+              style={{ transform: "translateY(1cm)" }}
             >
               <TutorWelcomeBubble
                 firstName={firstName}
