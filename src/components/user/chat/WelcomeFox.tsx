@@ -1,6 +1,7 @@
 // src/components/user/chat/WelcomeFox.tsx
 
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/SimpleLanguageContext";
@@ -34,6 +35,16 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
   const { profile } = useUserProfile();
   const { user } = useAuth();
   const { language } = useLanguage();
+  const [showBubble, setShowBubble] = useState(false);
+
+  useEffect(() => {
+    setShowBubble(false);
+    const timeoutId = window.setTimeout(() => {
+      setShowBubble(true);
+    }, 1000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [language, userName]);
 
   const isFr = language === "fr";
 
@@ -71,13 +82,18 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
           />
 
           {/* ── Speech bubble (above-right of fox) ── */}
-          <div className="absolute top-2 right-2 sm:top-4 sm:right-6 z-10">
-            <TutorWelcomeBubble
-              firstName={firstName}
-              greeting={messages.hi}
-              helper={messages.helper}
-            />
-          </div>
+          {showBubble && (
+            <div
+              className="absolute top-2 right-2 sm:top-4 sm:right-6 z-10"
+              style={{ transform: "translateY(2cm)" }}
+            >
+              <TutorWelcomeBubble
+                firstName={firstName}
+                greeting={messages.hi}
+                helper={messages.helper}
+              />
+            </div>
+          )}
         </div>
       </motion.div>
     </div>
