@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, HeadphonesIcon, Globe, LogOut, Settings } from "lucide-react";
+import { User, HeadphonesIcon, Globe, LogOut, Settings, BookOpen, Trophy } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
@@ -79,6 +79,30 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
           <NavLink to="/profile" className="flex items-center">
             <User className="mr-3 h-5 w-5" />
             <span>{t('nav.profile')}</span>
+          </NavLink>
+        </Button>
+
+        <Button
+          variant="ghost"
+          asChild
+          className="w-full justify-start h-12"
+          onClick={onClose}
+        >
+          <NavLink to="/my-program" className="flex items-center">
+            <BookOpen className="mr-3 h-5 w-5" />
+            <span>My Program</span>
+          </NavLink>
+        </Button>
+
+        <Button
+          variant="ghost"
+          asChild
+          className="w-full justify-start h-12"
+          onClick={onClose}
+        >
+          <NavLink to="/dashboard" className="flex items-center">
+            <Trophy className="mr-3 h-5 w-5" />
+            <span>Dashboard</span>
           </NavLink>
         </Button>
 

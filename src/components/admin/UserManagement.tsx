@@ -9,6 +9,7 @@ import { UserTable } from './users/UserTable';
 import { UserDetails } from './users/UserDetails';
 import { AddChildDialog } from './users/AddChildDialog';
 import { UserSearch } from './users/UserSearch';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const defaultActivity = [
   { day: 'Mon', minutes: 45 },
@@ -299,6 +300,7 @@ const UserManagement = () => {
   
   return (
     <div className="space-y-6">
+      <PageMeta title="Users" description="Administer user accounts, roles, and permissions." />
       <div>
         <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
         <p className="text-muted-foreground mt-1">

@@ -8,6 +8,7 @@ import { Loader2, BookOpen } from 'lucide-react';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import type { ExerciseHistoryWithAttempts } from '@/types/exercise-history';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function GuardianExplanations() {
   const { guardianId, loading: authLoading } = useGuardianAuth();
@@ -53,6 +54,7 @@ export default function GuardianExplanations() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Explanations" description="See AI-generated explanations for the exercises your children attempted." />
       <div>
         <h1 className="text-3xl font-bold mb-2">Explanations</h1>
         <p className="text-muted-foreground">

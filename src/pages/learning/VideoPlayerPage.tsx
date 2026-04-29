@@ -14,6 +14,7 @@ import { useAllBanks } from '@/hooks/useQuizBank';
 import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const VideoPlayerPage = () => {
   const { videoId } = useParams<{ videoId: string }>();
@@ -144,6 +145,7 @@ const VideoPlayerPage = () => {
 
   return (
     <div className="fixed inset-0 bg-background z-50 flex flex-col">
+      <PageMeta title="Video Lesson" description="Watch a Stuwy video lesson with interactive quizzes and transcripts." />
       <div className="relative bg-black flex-shrink-0">
         <Button
           variant="ghost"

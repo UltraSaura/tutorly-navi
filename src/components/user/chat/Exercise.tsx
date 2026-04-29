@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { ThumbsUp, AlertCircle, CircleCheck, CircleX, ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import DOMPurify from 'dompurify';
@@ -199,14 +199,16 @@ const Exercise = ({
               )}
               <div className="flex gap-2">
                 {isMathMode ? (
-                  <MathLiveInput
-                    value={answerInput}
-                    onChange={setAnswerInput}
-                    onEnter={handleSubmitAnswer}
-                    placeholder="Enter your mathematical answer..."
-                    className="flex-1"
-                    disabled={isSubmitting}
-                  />
+                  <Suspense fallback={<div className="flex-1 min-h-[40px] rounded-md border border-input bg-background animate-pulse" />}>
+                    <MathLiveInput
+                      value={answerInput}
+                      onChange={setAnswerInput}
+                      onEnter={handleSubmitAnswer}
+                      placeholder="Enter your mathematical answer..."
+                      className="flex-1"
+                      disabled={isSubmitting}
+                    />
+                  </Suspense>
                 ) : (
                   <Input
                     value={answerInput}

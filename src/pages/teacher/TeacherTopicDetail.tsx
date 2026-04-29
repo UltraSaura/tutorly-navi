@@ -8,6 +8,7 @@ import { LessonContentDisplay } from '@/components/admin/learning/LessonContentD
 import { GenerateLessonButton } from '@/components/admin/learning/GenerateLessonButton';
 import { Separator } from '@/components/ui/separator';
 import type { LessonContent } from '@/types/learning';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function TeacherTopicDetail() {
   const { topicId } = useParams();
@@ -51,6 +52,7 @@ export default function TeacherTopicDetail() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Topic Details" description="Class-level performance breakdown for a specific learning topic." />
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Message } from '@/types/chat';
 import AIResponse from './chat/AIResponse';
 import MessageInput from './chat/MessageInput';
 import CameraCapture from './chat/CameraCapture';
+import WelcomeFox from './chat/WelcomeFox';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
 import { useAdmin } from '@/context/AdminContext';
@@ -15,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { FileText, Image, Camera, Upload } from 'lucide-react';
 import CalculationStatus from './chat/CalculationStatus';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const ChatInterface = () => {
   const { t, language } = useLanguage();
@@ -217,17 +220,46 @@ const ChatInterface = () => {
   };
 
   // Exercise-Focused Layout with Chat Input
+  const showWelcomeState =
+    filteredMessages.filter((m) => m.role === 'user').length === 0 &&
+    !isLoading &&
+    !calculationState.isProcessing;
+
   return (
-    <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg overflow-x-hidden max-w-full">
+    <div
+      className={`relative h-[calc(100vh-4rem)] overflow-x-hidden max-w-full ${
+        showWelcomeState ? 'bg-white' : 'bg-neutral-bg'
+      }`}
+    >
+      <PageMeta title="Tutor Chat" description="Get instant AI-powered help with math homework, exercises, and explanations from your Stuwy tutor." />
       {/* Scrollable Content Area */}
       <div 
-        className="h-full overflow-auto overflow-x-hidden"
+        className={`h-full overflow-x-hidden ${
+          showWelcomeState
+            ? 'overflow-hidden flex flex-col items-center justify-start bg-white'
+            : 'overflow-auto'
+        }`}
         style={{
-          paddingBottom: keyboardVisible && keyboardHeight > 0
-            ? `${keyboardHeight + 80}px`  // Keyboard height + input height
-            : `${isMobile ? 128 : 80}px`  // Normal bottom padding
+          paddingBottom: showWelcomeState
+            ? 0
+            : keyboardVisible && keyboardHeight > 0
+              ? `${keyboardHeight + 80}px`  // Keyboard height + input height
+              : `${isMobile ? 128 : 80}px`  // Normal bottom padding
         }}
       >
+        {/* AI Response - Display the latest AI explanation/response */}
+        {/* Welcome animation - shown when no user messages exist yet */}
+        <AnimatePresence mode="wait">
+          {showWelcomeState && (
+            <motion.div
+              key="welcome-fox"
+              exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.25 } }}
+            >
+              <WelcomeFox />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* AI Response - Display the latest AI explanation/response */}
         <ErrorBoundary
           fallback={

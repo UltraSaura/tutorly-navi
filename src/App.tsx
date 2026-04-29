@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { AnimatePresence } from "framer-motion";
+import { HelmetProvider } from "react-helmet-async";
 import { AdminProvider } from "./context/AdminContext";
 import { AuthProvider } from "./context/AuthContext";
 import { OverlayProvider } from "./context/OverlayContext";
@@ -128,6 +129,7 @@ const queryClient = new QueryClient({
 // Simple App Component (no language detection for now)
 const App = () => {
   return <QueryClientProvider client={queryClient}>
+      <HelmetProvider>
       <ErrorBoundary>
         <TooltipProvider>
           <Toaster />
@@ -254,6 +256,7 @@ const App = () => {
         </OverlayProvider>
       </TooltipProvider>
     </ErrorBoundary>
+    </HelmetProvider>
   </QueryClientProvider>;
 };
 export default App;

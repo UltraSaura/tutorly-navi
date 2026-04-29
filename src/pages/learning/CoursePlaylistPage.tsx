@@ -17,6 +17,7 @@ import { TopicLearnTab } from '@/components/learning/TopicLearnTab';
 import { TopicTranscriptTab } from '@/components/learning/TopicTranscriptTab';
 import { TopicLessonTab } from '@/components/learning/TopicLessonTab';
 import type { LessonContent } from '@/types/learning';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const CoursePlaylistPage = () => {
   const { subjectSlug, topicSlug } = useParams<{ subjectSlug: string; topicSlug: string }>();
@@ -88,6 +89,7 @@ const CoursePlaylistPage = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
+      <PageMeta title="Course" description="Follow the lesson playlist with videos, quizzes, and AI guidance." />
       {/* Header - Sticky */}
       <div className="flex items-center gap-4 px-4 py-3 bg-card border-b sticky top-0 z-20">
         <Button variant="ghost" size="icon" onClick={() => navigate(`/learning/${subjectSlug}`)}>
