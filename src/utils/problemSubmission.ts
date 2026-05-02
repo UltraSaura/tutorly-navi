@@ -229,7 +229,7 @@ function parseNumberedRows(block: string, sectionContext?: string): ProblemRow[]
         requiresJustification: rowKind === 'construction',
       };
     })
-    .filter((row): row is ProblemRow => !!row)
+    .filter((row): row is ProblemRow => Boolean(row) as boolean)
     .forEach(row => {
       if (!rowsByLabel.has(row.label)) rowsByLabel.set(row.label, row);
     });
