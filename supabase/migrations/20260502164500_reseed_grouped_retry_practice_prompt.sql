@@ -34,7 +34,7 @@ INSERT INTO public.prompt_templates (
   priority,
   tags
 ) VALUES (
-  'Grouped Retry Practice Explanation',
+  'Problem Explanation',
   'Creates TwoCard-style teaching explanations for one selected row in grouped homework problems.',
   $prompt$You are creating an "Explication" for ONE selected row in a grouped homework problem.
 Return ONLY valid JSON. Do not use markdown fences. Do not include prose outside JSON.

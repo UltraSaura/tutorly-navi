@@ -17,7 +17,7 @@ const promptTemplateErrorMessage = (error: unknown, action: 'add' | 'update' | '
   const combined = `${message} ${details}`.toLowerCase();
 
   if (supabaseError?.code === '23514' || combined.includes('prompt_templates_usage_type_check')) {
-    return 'Database migration missing: grouped_retry_practice is not allowed yet. Apply the latest Supabase migrations, then try again.';
+    return 'Database migration missing: grouped problem prompt types are not allowed yet. Apply the latest Supabase migrations, then try again.';
   }
 
   if (supabaseError?.code === '23505') {
@@ -61,7 +61,7 @@ export const usePromptManagement = () => {
         ...template,
         created_at: new Date(template.created_at),
         updated_at: new Date(template.updated_at),
-        usage_type: template.usage_type as 'chat' | 'grading' | 'explanation' | 'math_enhanced' | 'grouped_retry_practice',
+        usage_type: template.usage_type as PromptTemplate['usage_type'],
         tags: template.tags || [],
         is_active: template.is_active || false,
         auto_activate: template.auto_activate || false,
@@ -223,7 +223,7 @@ export const usePromptManagement = () => {
       );
 
       // Group by usage type and activate highest priority
-      const usageTypes = ['chat', 'grading', 'explanation', 'math_enhanced', 'grouped_retry_practice'];
+      const usageTypes: PromptTemplate['usage_type'][] = ['chat', 'grading', 'explanation', 'math_enhanced', 'grouped_problem_extraction', 'grouped_problem_grading', 'grouped_retry_practice'];
       
       for (const usageType of usageTypes) {
         const typeTemplates = subjectTemplates.filter(t => t.usage_type === usageType);

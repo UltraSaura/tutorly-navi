@@ -286,8 +286,15 @@ JSON shape:
       );
     }
     
-    // Enhance system message for math problems if needed
-    if (!requestMode && !isGradingRequest && modelConfig.provider === 'OpenAI') {
+    // Enhance plain OpenAI chat only. Custom prompts and explanation requests
+    // must keep their exact system instructions.
+    if (
+      !customPrompt &&
+      !requestExplanation &&
+      !requestMode &&
+      !isGradingRequest &&
+      modelConfig.provider === 'OpenAI'
+    ) {
       systemMessage = enhanceSystemMessageForMath(systemMessage, message);
     }
     

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { FileText } from 'lucide-react';
 import { PromptTemplate } from '@/types/admin';
+import { getPromptTemplateDisplayName } from './promptUsageLabels';
 
 interface PromptTemplateDetailsProps {
   selectedTemplate: PromptTemplate | null;
@@ -41,7 +42,7 @@ export const PromptTemplateDetails = ({ selectedTemplate }: PromptTemplateDetail
       <CardContent>
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-medium">{selectedTemplate.name}</h3>
+            <h3 className="text-lg font-medium">{getPromptTemplateDisplayName(selectedTemplate)}</h3>
             <p className="text-sm text-muted-foreground">{selectedTemplate.description}</p>
           </div>
           

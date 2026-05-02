@@ -74,6 +74,26 @@ On considère :
 }
 
 describe('problemSubmissionService grouped grading errors', () => {
+  it('uses one grouped grading prompt for grouped choice and multipart rows', () => {
+    const prompt = __problemSubmissionServiceTest.groupedProblemGradingPrompt;
+
+    expect(prompt).toContain('grouped_choice_problem');
+    expect(prompt).toContain('grouped_problem');
+    expect(prompt).toContain('calculation/text rows');
+    expect(prompt).toContain('symbolic geometry rows');
+    expect(prompt).toContain('Do not evaluate, mention, correct, reveal, or explain unsubmitted/unselected rows');
+    expect(prompt).not.toContain('grouped multi-part homework problem');
+  });
+
+  it('keeps grouped problem extraction as a separate prompt stage', () => {
+    const prompt = __problemSubmissionServiceTest.groupedProblemExtractionPrompt;
+
+    expect(prompt).toContain('extracting a complete homework problem');
+    expect(prompt).toContain('Preserve the original grouped structure');
+    expect(prompt).toContain('grouped_choice_problem|grouped_problem');
+    expect(prompt).toContain('rowKind');
+  });
+
   it('returns an editable error-state problem while preserving answers', () => {
     const result = __problemSubmissionServiceTest.groupedGradingError(baseProblem, 'Timed out');
 
@@ -708,9 +728,9 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
     expect(prompt).toContain('parentHelpHint');
   });
 
-  it('loads active grouped retry-practice prompt from Supabase templates', async () => {
+  it('loads active problem explanation prompt from Supabase templates', async () => {
     const calls: Array<[string, unknown]> = [];
-    const customPrompt = 'Custom grouped retry practice prompt from Supabase';
+    const customPrompt = 'Custom problem explanation prompt from Supabase';
     const client = {
       from(table: string) {
         calls.push(['from', table]);
@@ -745,6 +765,76 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
     expect(calls).toContainEqual(['eq:is_active', true]);
     expect(calls).toContainEqual(['order:priority', { ascending: false }]);
     expect(calls).toContainEqual(['limit', 1]);
+  });
+
+  it('loads active grouped extraction prompt from Supabase templates', async () => {
+    const calls: Array<[string, unknown]> = [];
+    const customPrompt = 'Custom grouped extraction prompt from Supabase';
+    const client = {
+      from(table: string) {
+        calls.push(['from', table]);
+        return {
+          select(columns: string) {
+            calls.push(['select', columns]);
+            return this;
+          },
+          eq(column: string, value: unknown) {
+            calls.push([`eq:${column}`, value]);
+            return this;
+          },
+          order(column: string, options: unknown) {
+            calls.push([`order:${column}`, options]);
+            return this;
+          },
+          limit(count: number) {
+            calls.push(['limit', count]);
+            return this;
+          },
+          async maybeSingle() {
+            return { data: { prompt_content: customPrompt }, error: null };
+          },
+        };
+      },
+    };
+
+    await expect(__problemSubmissionServiceTest.loadGroupedProblemExtractionPrompt(client as any))
+      .resolves.toBe(customPrompt);
+    expect(calls).toContainEqual(['eq:usage_type', __problemSubmissionServiceTest.groupedProblemExtractionUsageType]);
+  });
+
+  it('loads active unified grouped grading prompt from Supabase templates', async () => {
+    const calls: Array<[string, unknown]> = [];
+    const customPrompt = 'Custom grouped grading prompt from Supabase';
+    const client = {
+      from(table: string) {
+        calls.push(['from', table]);
+        return {
+          select(columns: string) {
+            calls.push(['select', columns]);
+            return this;
+          },
+          eq(column: string, value: unknown) {
+            calls.push([`eq:${column}`, value]);
+            return this;
+          },
+          order(column: string, options: unknown) {
+            calls.push([`order:${column}`, options]);
+            return this;
+          },
+          limit(count: number) {
+            calls.push(['limit', count]);
+            return this;
+          },
+          async maybeSingle() {
+            return { data: { prompt_content: customPrompt }, error: null };
+          },
+        };
+      },
+    };
+
+    await expect(__problemSubmissionServiceTest.loadGroupedProblemGradingPrompt(client as any))
+      .resolves.toBe(customPrompt);
+    expect(calls).toContainEqual(['eq:usage_type', __problemSubmissionServiceTest.groupedProblemGradingUsageType]);
   });
 
   it('falls back to default grouped retry-practice prompt when no active template exists', async () => {

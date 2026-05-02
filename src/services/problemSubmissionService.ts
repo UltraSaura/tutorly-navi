@@ -9,65 +9,29 @@ import {
 
 const GROUPED_GRADING_TIMEOUT_MS = 20000;
 const GROUPED_RETRY_PRACTICE_TIMEOUT_MS = 20000;
+const GROUPED_PROBLEM_EXTRACTION_USAGE_TYPE = 'grouped_problem_extraction';
+const GROUPED_PROBLEM_GRADING_USAGE_TYPE = 'grouped_problem_grading';
 const GROUPED_RETRY_PRACTICE_USAGE_TYPE = 'grouped_retry_practice';
 
-const GROUPED_GRADING_PROMPT = `You are grading a grouped homework problem.
+export const DEFAULT_GROUPED_PROBLEM_GRADING_PROMPT = `You are grading a grouped homework problem.
 Return ONLY valid JSON. Do not use markdown fences. Do not include prose outside JSON.
-Use ONLY originalProblemContext to decide whether a selected assertion is mathematically true.
-Use studentAnswerEvidence ONLY to judge whether the student's justification is present and sufficient.
-Never replace or reinterpret original problem values using numbers from the student's justification/OCR.
-If studentAnswerEvidence contains different numbers from originalProblemContext, treat that as a justification issue only; do not use those numbers to decide the assertion truth.
-Only grade rows selected by the student.
-Do not evaluate, mention, correct, reveal, or explain unselected rows.
-Return evaluations only for selected row IDs.
-The student is selecting assertions they believe are correct. A selected row means "I think this assertion is correct".
-Unselected rows are intentionally not answered and must remain private/neutral.
-Check both the selected assertion and the justification when justification is required.
-The justification may be typed text OR extracted text from uploaded justification attachments.
-Use each selected row's studentAnswerEvidence.extractedAttachmentText as student work evidence.
-Do not say "no justification was provided" when a selected row has readable extracted attachment text.
+Use originalProblemContext as the source of truth for the exercise statement, values, diagrams described by OCR, shared context, row prompts, and correct mathematical interpretation.
+Use studentAnswerEvidence only as the student's submitted work.
+Never replace or reinterpret original problem values using numbers from the student's answer, justification, or OCR. If studentAnswerEvidence contains different numbers from originalProblemContext, treat that as student work evidence only.
+Only grade rows present in studentAnswerEvidence. Do not evaluate, mention, correct, reveal, or explain unsubmitted/unselected rows. Return evaluations only for submitted row IDs.
+Keep feedback row-specific and do not split the parent grouped problem into independent exercises.
 
-For selected assertions:
+For grouped_choice_problem rows:
+- The student is selecting assertions they believe are correct. A selected row means "I think this assertion is correct".
+- Check both the selected assertion and the justification when justification is required.
+- The justification may be typed text OR extracted text from uploaded justification attachments.
+- Use each selected row's studentAnswerEvidence.extractedAttachmentText as student work evidence.
+- Do not say "no justification was provided" when a selected row has readable extracted attachment text.
 - if the assertion is mathematically correct and justification is sufficient => status "correct"
 - if the assertion is mathematically correct but justification is missing or weak => status "partial"
 - if the assertion is mathematically false => status "incorrect"
-Never return status for unselected rows.
 
-Return exactly this JSON shape:
-{
-  "status": "evaluated",
-  "overallFeedback": "summary of selected rows only",
-  "missingAnswers": [],
-  "recommendedNextAction": "string",
-  "sections": [
-    {
-      "id": "section id from input",
-      "rows": [
-        {
-          "id": "row id from input",
-          "label": "row label from input",
-          "evaluation": {
-            "selectedAnswer": "Sélectionnée",
-            "correctAnswer": "Sélectionner cette affirmation",
-            "isCorrect": true,
-            "justificationProvided": true,
-            "justificationSufficient": true,
-            "status": "correct",
-            "feedback": "specific feedback",
-            "explanation": "short explanation",
-            "score": 1
-          }
-        }
-      ]
-    }
-  ]
-}`;
-
-const GROUPED_MULTIPART_GRADING_PROMPT = `You are grading a grouped multi-part homework problem.
-Return ONLY valid JSON. Do not use markdown fences. Do not include prose outside JSON.
-Use originalProblemContext as the source of truth for the exercise statement, values, diagrams described by OCR, shared context, and row prompts.
-Use studentAnswerEvidence only as the student's submitted work.
-Only grade rows present in studentAnswerEvidence.
+For grouped_problem rows:
 For calculation/text rows, grade the typedAnswer against the row prompt and shared context.
 Do not require typed explanations, uploaded proof, or justification for calculation/text rows unless requiresJustification is explicitly true.
 For calculation/text rows with no proof required, never return partial/incomplete solely because justification is absent.
@@ -107,7 +71,7 @@ Return exactly this JSON shape:
   ]
 }`;
 
-const PROBLEM_EXTRACTION_PROMPT = `You are extracting a complete homework problem for a tutoring app.
+export const DEFAULT_GROUPED_PROBLEM_EXTRACTION_PROMPT = `You are extracting a complete homework problem for a tutoring app.
 Return ONLY valid JSON. Do not use markdown fences. Do not include prose outside JSON.
 Preserve the original grouped structure. Do not split assertions or numbered sub-questions into separate exercises.
 Detect grouped answer choices like Vrai/Faux, QCM, yes/no, and repeated row choices.
@@ -188,30 +152,66 @@ Return exactly this JSON shape:
   "parentHelpHint": "optional short guardian guidance, not for display in the student app"
 }`;
 
-async function loadGroupedRetryPracticePrompt(
+async function loadActivePromptTemplate(
+  usageType: string,
+  fallbackPrompt: string,
+  logLabel: string,
   client: Pick<typeof supabase, 'from'> = supabase
 ): Promise<string> {
   try {
     const { data, error } = await client
       .from('prompt_templates')
       .select('prompt_content')
-      .eq('usage_type', GROUPED_RETRY_PRACTICE_USAGE_TYPE)
+      .eq('usage_type', usageType)
       .eq('is_active', true)
       .order('priority', { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (error) {
-      console.warn('[problemSubmissionService] Failed to load grouped retry practice prompt:', error);
-      return DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT;
+      console.warn(`[problemSubmissionService] Failed to load ${logLabel} prompt:`, error);
+      return fallbackPrompt;
     }
 
     const prompt = typeof data?.prompt_content === 'string' ? data.prompt_content.trim() : '';
-    return prompt || DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT;
+    return prompt || fallbackPrompt;
   } catch (error) {
-    console.warn('[problemSubmissionService] Unexpected grouped retry practice prompt load failure:', error);
-    return DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT;
+    console.warn(`[problemSubmissionService] Unexpected ${logLabel} prompt load failure:`, error);
+    return fallbackPrompt;
   }
+}
+
+async function loadGroupedProblemExtractionPrompt(
+  client: Pick<typeof supabase, 'from'> = supabase
+): Promise<string> {
+  return loadActivePromptTemplate(
+    GROUPED_PROBLEM_EXTRACTION_USAGE_TYPE,
+    DEFAULT_GROUPED_PROBLEM_EXTRACTION_PROMPT,
+    'grouped problem extraction',
+    client
+  );
+}
+
+async function loadGroupedProblemGradingPrompt(
+  client: Pick<typeof supabase, 'from'> = supabase
+): Promise<string> {
+  return loadActivePromptTemplate(
+    GROUPED_PROBLEM_GRADING_USAGE_TYPE,
+    DEFAULT_GROUPED_PROBLEM_GRADING_PROMPT,
+    'grouped problem grading',
+    client
+  );
+}
+
+async function loadGroupedRetryPracticePrompt(
+  client: Pick<typeof supabase, 'from'> = supabase
+): Promise<string> {
+  return loadActivePromptTemplate(
+    GROUPED_RETRY_PRACTICE_USAGE_TYPE,
+    DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT,
+    'grouped retry practice',
+    client
+  );
 }
 
 function extractJsonObject(content: unknown): any | null {
@@ -1407,13 +1407,15 @@ export async function extractProblemSubmission(input: {
   });
 
   try {
+    const customPrompt = await loadGroupedProblemExtractionPrompt();
+
     const { data, error } = await supabase.functions.invoke('ai-chat', {
       body: {
         message: `Extract this grouped homework problem. Return only the required JSON.\n\n${input.rawText}`,
         modelId: input.selectedModelId,
         isUnified: true,
         language: input.language,
-        customPrompt: PROBLEM_EXTRACTION_PROMPT,
+        customPrompt,
         problemContext: fallback,
         maxTokens: 2500,
       },
@@ -1451,9 +1453,7 @@ export async function gradeGroupedProblem(input: {
   }
 
   const gradingContext = buildGroupedGradingContext(answeredProblem, aiRowIds);
-  const gradingPrompt = answeredProblem.type === 'grouped_problem'
-    ? GROUPED_MULTIPART_GRADING_PROMPT
-    : GROUPED_GRADING_PROMPT;
+  const gradingPrompt = await loadGroupedProblemGradingPrompt();
 
   try {
     const { data, error } = await withTimeout(
@@ -1555,11 +1555,17 @@ export const __problemSubmissionServiceTest = {
   expectedGeometryValueForRow,
   extractJsonObject,
   defaultGroupedRetryPracticePrompt: DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT,
+  groupedProblemExtractionPrompt: DEFAULT_GROUPED_PROBLEM_EXTRACTION_PROMPT,
+  groupedProblemExtractionUsageType: GROUPED_PROBLEM_EXTRACTION_USAGE_TYPE,
+  groupedProblemGradingPrompt: DEFAULT_GROUPED_PROBLEM_GRADING_PROMPT,
+  groupedProblemGradingUsageType: GROUPED_PROBLEM_GRADING_USAGE_TYPE,
   groupedRetryPracticePrompt: DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT,
   groupedRetryPracticeUsageType: GROUPED_RETRY_PRACTICE_USAGE_TYPE,
   groupedGradingError,
   hasValidGroupedEvaluation,
   hasValidGroupedRetryPractice,
+  loadGroupedProblemExtractionPrompt,
+  loadGroupedProblemGradingPrompt,
   loadGroupedRetryPracticePrompt,
   mergeExtractedProblem,
   normalizeNoEvidenceNeededMultipartEvaluations,

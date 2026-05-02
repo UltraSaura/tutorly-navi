@@ -1,42 +1,8 @@
--- Add grouped retry-practice prompts to centralized prompt management.
+-- Rename the admin-visible grouped explanation prompt without changing the
+-- internal usage_type used by application code.
 DO $$
 DECLARE
-  constraint_name text;
-BEGIN
-  SELECT con.conname
-    INTO constraint_name
-  FROM pg_constraint con
-  JOIN pg_class rel ON rel.oid = con.conrelid
-  JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
-  WHERE nsp.nspname = 'public'
-    AND rel.relname = 'prompt_templates'
-    AND con.contype = 'c'
-    AND pg_get_constraintdef(con.oid) LIKE '%usage_type%'
-  LIMIT 1;
-
-  IF constraint_name IS NOT NULL THEN
-    EXECUTE format('ALTER TABLE public.prompt_templates DROP CONSTRAINT %I', constraint_name);
-  END IF;
-END $$;
-
-ALTER TABLE public.prompt_templates
-  ADD CONSTRAINT prompt_templates_usage_type_check
-  CHECK (usage_type IN ('chat', 'grading', 'explanation', 'math_enhanced', 'grouped_retry_practice'));
-
-INSERT INTO public.prompt_templates (
-  name,
-  description,
-  prompt_content,
-  subject,
-  usage_type,
-  is_active,
-  auto_activate,
-  priority,
-  tags
-) VALUES (
-  'Problem Explanation',
-  'Creates TwoCard-style teaching explanations for one selected row in grouped homework problems.',
-  $prompt$You are creating an "Explication" for ONE selected row in a grouped homework problem.
+  default_prompt text := $prompt$You are creating an "Explication" for ONE selected row in a grouped homework problem.
 Return ONLY valid JSON. Do not use markdown fences. Do not include prose outside JSON.
 
 Teaching goal:
@@ -77,21 +43,72 @@ Return exactly this JSON shape:
   "retryPrompt": "short prompt encouraging the student to retry the original exercise without revealing its answer",
   "commonMistake": "likely misconception or trap and how to avoid it",
   "parentHelpHint": "optional short guardian guidance, not for display in the student app"
-}$prompt$,
-  'Math',
-  'grouped_retry_practice',
-  true,
-  true,
-  100,
-  ARRAY['grouped-problem', 'twocard', 'retry-practice']
-)
-ON CONFLICT (name) DO UPDATE SET
-  description = EXCLUDED.description,
-  prompt_content = EXCLUDED.prompt_content,
-  subject = EXCLUDED.subject,
-  usage_type = EXCLUDED.usage_type,
-  is_active = EXCLUDED.is_active,
-  auto_activate = EXCLUDED.auto_activate,
-  priority = EXCLUDED.priority,
-  tags = EXCLUDED.tags,
-  updated_at = NOW();
+}$prompt$;
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM public.prompt_templates
+    WHERE name = 'Grouped Retry Practice Explanation'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM public.prompt_templates
+    WHERE name = 'Problem Explanation'
+  ) THEN
+    UPDATE public.prompt_templates
+    SET
+      name = 'Problem Explanation',
+      description = 'Creates TwoCard-style teaching explanations for one selected row in grouped homework problems.',
+      subject = 'Math',
+      usage_type = 'grouped_retry_practice',
+      is_active = true,
+      auto_activate = true,
+      priority = 100,
+      tags = ARRAY['grouped-problem', 'twocard', 'retry-practice'],
+      updated_at = NOW()
+    WHERE name = 'Grouped Retry Practice Explanation';
+  END IF;
+
+  DELETE FROM public.prompt_templates
+  WHERE name = 'Grouped Retry Practice Explanation'
+    AND EXISTS (
+      SELECT 1 FROM public.prompt_templates
+      WHERE name = 'Problem Explanation'
+    );
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.prompt_templates
+    WHERE name = 'Problem Explanation'
+  ) THEN
+    INSERT INTO public.prompt_templates (
+      name,
+      description,
+      prompt_content,
+      subject,
+      usage_type,
+      is_active,
+      auto_activate,
+      priority,
+      tags
+    ) VALUES (
+      'Problem Explanation',
+      'Creates TwoCard-style teaching explanations for one selected row in grouped homework problems.',
+      default_prompt,
+      'Math',
+      'grouped_retry_practice',
+      true,
+      true,
+      100,
+      ARRAY['grouped-problem', 'twocard', 'retry-practice']
+    );
+  ELSE
+    UPDATE public.prompt_templates
+    SET
+      description = 'Creates TwoCard-style teaching explanations for one selected row in grouped homework problems.',
+      subject = 'Math',
+      usage_type = 'grouped_retry_practice',
+      is_active = true,
+      auto_activate = true,
+      priority = 100,
+      tags = ARRAY['grouped-problem', 'twocard', 'retry-practice'],
+      updated_at = NOW()
+    WHERE name = 'Problem Explanation';
+  END IF;
+END $$;
