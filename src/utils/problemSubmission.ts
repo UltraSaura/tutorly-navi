@@ -213,7 +213,7 @@ function parseNumberedRows(block: string, sectionContext?: string): ProblemRow[]
   const rowsByLabel = new Map<string, ProblemRow>();
 
   [...cleanedBlock.matchAll(rowPattern)]
-    .map(match => {
+    .map((match): ProblemRow | null => {
       const label = match[1];
       const prompt = normalizeDisplayLine(match[2]);
       if (!prompt) return null;
@@ -229,7 +229,7 @@ function parseNumberedRows(block: string, sectionContext?: string): ProblemRow[]
         requiresJustification: rowKind === 'construction',
       };
     })
-    .filter((row): row is ProblemRow => !!row)
+    .filter((row): row is ProblemRow => row !== null)
     .forEach(row => {
       if (!rowsByLabel.has(row.label)) rowsByLabel.set(row.label, row);
     });
