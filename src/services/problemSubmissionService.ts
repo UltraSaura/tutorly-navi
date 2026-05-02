@@ -766,7 +766,7 @@ function buildDeterministicGeometryEvaluationPayload(
       ? 'Correction locale appliquée pour les calculs de géométrie reconnus.'
       : 'Local grading applied for recognized geometry calculations.',
     missingAnswers: [],
-    sections,
+    sections: sections as unknown as ProblemSubmission['sections'],
   };
 }
 
