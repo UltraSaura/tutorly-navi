@@ -116,6 +116,8 @@ serve(async (req) => {
       language: rawLanguage = 'en',
       customPrompt,
       userContext,
+      requestMode,
+      problemContext,
       maxTokens = 800  // Default to 800 for backward compatibility
     } = parsedBody;
     
@@ -128,6 +130,7 @@ serve(async (req) => {
       historyLength: history?.length,
       isGradingRequest,
       isUnified,
+      requestMode,
       language,
       hasCustomPrompt: !!customPrompt,
       hasUserContext: !!userContext
@@ -224,18 +227,67 @@ serve(async (req) => {
       response_language: language === 'fr' ? 'French' : 'English'
     };
 
-    let systemMessage = await generateSystemMessage(
-      isExercise, 
-      isGradingRequest, 
-      language, 
-      customPrompt,
-      variables,  // Pass the variables object instead of userContext
-      usageType,
-      isUnified
-    );
+    let systemMessage;
+    let effectiveMessage = message;
+
+    if (requestMode === 'problemExtraction') {
+      systemMessage = {
+        role: 'system',
+        content: `You are extracting a complete homework problem for a tutoring app.
+Return ONLY valid JSON. Preserve the original grouped structure. Do not split assertions into separate exercises.
+Detect grouped answer choices like Vrai/Faux, QCM, yes/no, and repeated row choices. Preserve labels A, B, C, D and shared contexts.
+For true/false assertions, keep the student-facing prompts as assertions; do not rewrite them as tasks like "calculate the average".
+JSON shape:
+{
+  "responseType": "grouped_choice_problem",
+  "problemId": "string",
+  "title": "string",
+  "problemStatement": "string",
+  "instructions": "string",
+  "answerType": "true_false|multiple_choice|yes_no",
+  "requiresJustification": true,
+  "options": ["Vrai","Faux"],
+  "keepGrouped": true,
+  "sections": [{"id":"section-1","title":"string","context":"string","rows":[{"id":"row-A","label":"A","prompt":"original assertion text","answerType":"true_false","options":["Vrai","Faux"],"requiresJustification":true}]}]
+}`
+      };
+      effectiveMessage = `Extract this complete homework problem as structured JSON. Preserve the original format and grouping.\n\n${message}`;
+    } else if (requestMode === 'groupedProblemGrading') {
+      systemMessage = {
+        role: 'system',
+        content: `You are grading a grouped homework problem.
+Return ONLY valid JSON. Use the original problem context and evaluate each row/assertion inside the same parent problem.
+Check both the selected answer and the justification when justification is required.
+Do not treat rows as unrelated exercises.
+For true/false with required justification:
+- correct selection plus sufficient justification => status "correct"
+- correct selection but missing or weak justification => status "partial"
+- wrong selection => status "incorrect"
+- missing selection => status "incomplete"
+JSON shape:
+{
+  "status": "evaluated",
+  "overallFeedback": "string",
+  "missingAnswers": ["A"],
+  "recommendedNextAction": "string",
+  "sections": [{"id":"section-1","rows":[{"id":"row-A","label":"A","evaluation":{"selectedAnswer":"Vrai","correctAnswer":"Faux","isCorrect":false,"justificationProvided":true,"justificationSufficient":false,"status":"incorrect","feedback":"string","explanation":"string","score":0}}]}]
+}`
+      };
+      effectiveMessage = `Grade this grouped problem using the original context and student answers:\n\n${JSON.stringify(problemContext || message)}`;
+    } else {
+      systemMessage = await generateSystemMessage(
+        isExercise, 
+        isGradingRequest, 
+        language, 
+        customPrompt,
+        variables,  // Pass the variables object instead of userContext
+        usageType,
+        isUnified
+      );
+    }
     
     // Enhance system message for math problems if needed
-    if (!isGradingRequest && modelConfig.provider === 'OpenAI') {
+    if (!requestMode && !isGradingRequest && modelConfig.provider === 'OpenAI') {
       systemMessage = enhanceSystemMessageForMath(systemMessage, message);
     }
     
@@ -258,7 +310,7 @@ serve(async (req) => {
           responseContent = await callOpenAI(
             formattedSystemMessage, 
             formattedHistory, 
-            message, 
+            effectiveMessage, 
             modelConfig.model, 
             isExercise,
             requestExplanation,
@@ -269,7 +321,7 @@ serve(async (req) => {
           responseContent = await callAnthropic(
             formattedSystemMessage, 
             formattedHistory, 
-            message, 
+            effectiveMessage, 
             modelConfig.model, 
             isExercise,
             maxTokens
@@ -279,7 +331,7 @@ serve(async (req) => {
           responseContent = await callMistral(
             formattedSystemMessage, 
             formattedHistory, 
-            message, 
+            effectiveMessage, 
             modelConfig.model, 
             isExercise,
             maxTokens
@@ -289,7 +341,7 @@ serve(async (req) => {
           responseContent = await callGoogle(
             formattedSystemMessage, 
             formattedHistory, 
-            message, 
+            effectiveMessage, 
             modelConfig.model, 
             isExercise,
             maxTokens
@@ -299,7 +351,7 @@ serve(async (req) => {
           responseContent = await callDeepSeek(
             formattedSystemMessage, 
             formattedHistory, 
-            message, 
+            effectiveMessage, 
             modelConfig.model, 
             isExercise,
             requestExplanation,
@@ -310,7 +362,7 @@ serve(async (req) => {
           responseContent = await callXAI(
             formattedSystemMessage, 
             formattedHistory, 
-            message, 
+            effectiveMessage, 
             modelConfig.model, 
             isExercise,
             maxTokens
@@ -357,6 +409,8 @@ serve(async (req) => {
       if (parsed.isCorrect !== undefined) parsedFields.isCorrect = parsed.isCorrect;
       if (parsed.isMath !== undefined) parsedFields.isMath = parsed.isMath;
       if (parsed.sections) parsedFields.sections = parsed.sections;
+      if (requestMode === 'problemExtraction') parsedFields.problemSubmission = parsed;
+      if (requestMode === 'groupedProblemGrading') parsedFields.problemEvaluation = parsed;
       console.log('✅ Extracted structured fields from AI response:', Object.keys(parsedFields));
     } catch (e) {
       console.log('ℹ️ AI response is not JSON, using raw content');

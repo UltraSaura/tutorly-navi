@@ -6,6 +6,10 @@ import { handleFileUpload, handlePhotoUpload } from '@/utils/chatFileHandlers';
 import { sendUnifiedMessage, generateUnifiedFallback } from '@/services/unifiedChatService';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useUserContext } from './useUserContext';
+import { classifyProblemSubmission } from '@/utils/problemClassifier';
+import { extractProblemSubmission, gradeGroupedProblem } from '@/services/problemSubmissionService';
+import { GroupedAnswerPayload, ProblemSubmission } from '@/types/chat';
+import { applyGroupedAnswers } from '@/utils/problemSubmission';
 
 export interface CalculationState {
   isProcessing: boolean;
@@ -82,6 +86,19 @@ export const useChat = () => {
     setMessages(prev => [...prev, message]);
   };
 
+  const updateProblemSubmission = (
+    problemId: string,
+    updater: (problem: ProblemSubmission) => ProblemSubmission
+  ) => {
+    setMessages(prev => prev.map(message => {
+      if (message.problemSubmission?.id !== problemId) return message;
+      return {
+        ...message,
+        problemSubmission: updater(message.problemSubmission),
+      };
+    }));
+  };
+
   // Clear all messages, reset to welcome
   const clearMessages = () => {
     setMessages([{
@@ -118,6 +135,32 @@ export const useChat = () => {
     
     const messageToSend = effectiveMessage; // Use passed-in value if provided
     console.log('[DEBUG] Message to send:', messageToSend);
+
+    const classification = classifyProblemSubmission(messageToSend);
+    if (classification.type !== 'simple_exercise') {
+      setInputMessage('');
+      setIsLoading(true);
+      try {
+        const problemSubmission = await extractProblemSubmission({
+          rawText: messageToSend,
+          selectedModelId,
+          language,
+        });
+
+        const newMessage: Message = {
+          id: Date.now().toString(),
+          role: 'user',
+          content: messageToSend,
+          timestamp: new Date(),
+          problemSubmission,
+        };
+
+        setMessages(prev => [...prev, newMessage]);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
     
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -221,6 +264,26 @@ export const useChat = () => {
       setIsLoading(false);
     }
   };
+
+  const submitGroupedProblemAnswers = async (problemId: string, payload: GroupedAnswerPayload) => {
+    const problem = messages.find(message => message.problemSubmission?.id === problemId)?.problemSubmission;
+    if (!problem) {
+      throw new Error('Problem submission not found');
+    }
+
+    const answeredProblem = applyGroupedAnswers(problem, payload);
+
+    updateProblemSubmission(problemId, () => answeredProblem);
+
+    const evaluated = await gradeGroupedProblem({
+      problem: answeredProblem,
+      payload,
+      selectedModelId,
+      language,
+    });
+
+    updateProblemSubmission(problemId, () => evaluated);
+  };
   
   // Handle document upload with exercise processor and subject ID
   const handleDocumentUpload = (
@@ -236,7 +299,8 @@ export const useChat = () => {
       selectedModelId, // selectedModelId is now required parameter
       undefined, // No longer need processHomeworkFromChat as primary processor
       addExercises, // Pass the exercise processor directly
-      subjectId // Pass the subject ID
+      subjectId, // Pass the subject ID
+      language
     );
   };
   
@@ -272,6 +336,7 @@ export const useChat = () => {
     clearMessages,
     removeMessage,
     handleSendMessage,
+    submitGroupedProblemAnswers,
     handleFileUpload: handleDocumentUpload,
     handlePhotoUpload: handleImageUpload,
     // Add calculation state back to return

@@ -5,7 +5,7 @@ import { containsMathContent, textToMathDisplay, answerToLatex } from '@/utils/m
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Message } from '@/types/chat';
+import { GroupedAnswerPayload, GroupedRetryPractice, Message, ProblemSubmission } from '@/types/chat';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { parseUserMessage } from '@/utils/messageParser';
@@ -14,11 +14,18 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
+import { getExerciseChoices } from '@/utils/responseOptions';
+import GroupedChoiceProblemCard from './GroupedChoiceProblemCard';
+import ProblemCard from './ProblemCard';
+import GroupedProblemExplanationModal from './GroupedProblemExplanationModal';
+import { generateGroupedRetryPractice } from '@/services/problemSubmissionService';
+import { useAdmin } from '@/context/AdminContext';
 
 interface AIResponseProps {
   messages: Message[];
   isLoading: boolean;
   onSubmitAnswer?: (question: string, answer: string) => void;
+  onSubmitGroupedAnswers?: (problemId: string, payload: GroupedAnswerPayload) => Promise<void>;
   onClearAll?: () => void;
   onDismissExercise?: (messageId: string) => void;
 }
@@ -77,6 +84,7 @@ const parseAIResponse = (content: string) => {
 const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmitAnswer, onShowExplanation }) => {
   const parsed = parseUserMessage(userMessage.content);
   const { question, answer, hasAnswer } = parsed;
+  const choiceOptions = getExerciseChoices(userMessage);
   const content = aiResponse.content;
   const [userAnswerInput, setUserAnswerInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,6 +124,21 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
       setIsRetrying(false);
     } catch (error) {
       console.error('[ExerciseCard] Error in handleSubmitAnswer:', error);
+      setAnswerSubmitted(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleChoiceAnswer = async (choice: string) => {
+    if (!onSubmitAnswer) return;
+    setIsSubmitting(true);
+    try {
+      await onSubmitAnswer(question, choice);
+      setAnswerSubmitted(true);
+      setIsRetrying(false);
+    } catch (error) {
+      console.error('[ExerciseCard] Error in handleChoiceAnswer:', error);
       setAnswerSubmitted(false);
     } finally {
       setIsSubmitting(false);
@@ -180,14 +203,32 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                 {hasNoAnswer ? (
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-neutral-text">{t('exercise.answer')}:</label>
-                    <div className="flex items-center gap-2">
-                      <Input type="text" value={userAnswerInput} onChange={(e) => setUserAnswerInput(e.target.value)}
-                        onKeyPress={handleKeyPress} placeholder={t('exercise.pleaseProvideAnswer')} className="flex-1" disabled={isSubmitting} />
-                      <Button onClick={handleSubmitAnswer} disabled={!userAnswerInput.trim() || isSubmitting} size="sm" className="px-3">
-                        <Send size={16} className="mr-1" />
-                        {answerSubmitted && userAnswerInput.trim() === '' ? t('exercise.answerSubmitted') : t('common.submit')}
-                      </Button>
-                    </div>
+                    {choiceOptions.length > 0 ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        {choiceOptions.map(choice => (
+                          <Button
+                            key={choice}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-4"
+                            disabled={isSubmitting}
+                            onClick={() => handleChoiceAnswer(choice)}
+                          >
+                            {choice}
+                          </Button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Input type="text" value={userAnswerInput} onChange={(e) => setUserAnswerInput(e.target.value)}
+                          onKeyPress={handleKeyPress} placeholder={t('exercise.pleaseProvideAnswer')} className="flex-1" disabled={isSubmitting} />
+                        <Button onClick={handleSubmitAnswer} disabled={!userAnswerInput.trim() || isSubmitting} size="sm" className="px-3">
+                          <Send size={16} className="mr-1" />
+                          {answerSubmitted && userAnswerInput.trim() === '' ? t('exercise.answerSubmitted') : t('common.submit')}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
@@ -252,14 +293,32 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
               {hasNoAnswer ? (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-neutral-text">{t('exercise.answer')}:</label>
-                  <div className="flex items-center gap-2">
-                    <Input type="text" value={userAnswerInput} onChange={(e) => setUserAnswerInput(e.target.value)}
-                      onKeyPress={handleKeyPress} placeholder={t('exercise.pleaseProvideAnswer')} className="flex-1" disabled={isSubmitting} />
-                    <Button onClick={handleSubmitAnswer} disabled={!userAnswerInput.trim() || isSubmitting} size="sm" className="px-3">
-                      <Send size={16} className="mr-1" />
-                      {answerSubmitted && userAnswerInput.trim() === '' ? t('exercise.answerSubmitted') : t('common.submit')}
-                    </Button>
-                  </div>
+                  {choiceOptions.length > 0 ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {choiceOptions.map(choice => (
+                        <Button
+                          key={choice}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-4"
+                          disabled={isSubmitting}
+                          onClick={() => handleChoiceAnswer(choice)}
+                        >
+                          {choice}
+                        </Button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Input type="text" value={userAnswerInput} onChange={(e) => setUserAnswerInput(e.target.value)}
+                        onKeyPress={handleKeyPress} placeholder={t('exercise.pleaseProvideAnswer')} className="flex-1" disabled={isSubmitting} />
+                      <Button onClick={handleSubmitAnswer} disabled={!userAnswerInput.trim() || isSubmitting} size="sm" className="px-3">
+                        <Send size={16} className="mr-1" />
+                        {answerSubmitted && userAnswerInput.trim() === '' ? t('exercise.answerSubmitted') : t('common.submit')}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <Badge variant="secondary" className="px-3 py-1 bg-neutral-bg text-neutral-muted">
@@ -306,23 +365,67 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAnswer, onClearAll, onDismissExercise }) => {
+const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAnswer, onSubmitGroupedAnswers, onClearAll, onDismissExercise }) => {
   const { t, language } = useLanguage();
   const teaching = useTwoCardTeaching();
+  const { selectedModelId } = useAdmin();
+  const { userContext } = useUserContext();
+  const [groupedExplanationProblem, setGroupedExplanationProblem] = useState<ProblemSubmission | null>(null);
+  const [groupedExplanationRowId, setGroupedExplanationRowId] = useState<string | undefined>(undefined);
+  const [groupedRetryPractice, setGroupedRetryPractice] = useState<GroupedRetryPractice | null>(null);
+  const [groupedRetryPracticeLoading, setGroupedRetryPracticeLoading] = useState(false);
+  const [groupedRetryPracticeError, setGroupedRetryPracticeError] = useState<string | null>(null);
   
   const handleShowExplanation = useCallback((question: string, answer: string, isCorrect: boolean) => {
     teaching.openFor(
       { prompt: question, userAnswer: answer, subject: 'math' },
-      { response_language: language === 'fr' ? 'French' : 'English', grade_level: 'High School' }
+      {
+        response_language: language === 'fr' ? 'French' : 'English',
+        grade_level: userContext?.student_level || 'High School',
+      }
     );
-  }, [language, teaching]);
+  }, [language, teaching, userContext?.student_level]);
+
+  const handleShowGroupedExplanation = useCallback(async (problem: ProblemSubmission, rowId?: string) => {
+    setGroupedExplanationProblem(problem);
+    setGroupedExplanationRowId(rowId);
+    setGroupedRetryPractice(null);
+    setGroupedRetryPracticeError(null);
+    setGroupedRetryPracticeLoading(true);
+
+    try {
+      const practice = await generateGroupedRetryPractice({
+        problem,
+        rowId,
+        selectedModelId: selectedModelId || 'gpt-5',
+        language,
+        schoolLevel: userContext?.student_level,
+        country: userContext?.country,
+        curriculum: userContext?.country ? `${userContext.country} curriculum` : undefined,
+        learningStyle: userContext?.learning_style,
+      });
+      setGroupedRetryPractice(practice);
+    } catch (error) {
+      setGroupedRetryPracticeError(
+        error instanceof Error
+          ? error.message
+          : (language === 'fr'
+            ? 'Impossible de générer l’explication.'
+            : 'Could not generate the explanation.')
+      );
+    } finally {
+      setGroupedRetryPracticeLoading(false);
+    }
+  }, [language, selectedModelId, userContext?.country, userContext?.learning_style, userContext?.student_level]);
 
   const exercisePairs = useMemo(() => {
     const pairs: Array<{ userMessage: Message; aiResponse: Message }> = [];
     let pendingUser: Message | null = null;
     
     for (const msg of messages) {
-      if (msg.role === 'user' && msg.type !== 'image' && msg.type !== 'file') {
+      if (msg.problemSubmission) {
+        pendingUser = null;
+      } else if (msg.role === 'user' && msg.type !== 'image' && msg.type !== 'file') {
         pendingUser = msg;
       } else if (msg.role === 'assistant' && msg.id !== '1' && pendingUser) {
         pairs.push({ userMessage: pendingUser, aiResponse: msg });
@@ -349,12 +452,17 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
     return uniquePairs;
   }, [messages]);
 
-  if (exercisePairs.length === 0 && !isLoading) return null;
+  const problemMessages = useMemo(
+    () => messages.filter(message => message.problemSubmission),
+    [messages]
+  );
+
+  if (exercisePairs.length === 0 && problemMessages.length === 0 && !isLoading) return null;
 
   return (
     <div className="p-6">
       <div className="max-w-6xl mx-auto space-y-4">
-        {exercisePairs.length > 0 && onClearAll && (
+        {(exercisePairs.length > 0 || problemMessages.length > 0) && onClearAll && (
           <div className="flex justify-end">
             <Button variant="outline" size="sm" onClick={onClearAll}
               className="text-muted-foreground hover:text-destructive hover:border-destructive">
@@ -363,6 +471,30 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
             </Button>
           </div>
         )}
+
+        {problemMessages.map((message) => {
+          const problem = message.problemSubmission!;
+          return (
+            <div key={message.id} className="relative group">
+              {onDismissExercise && (
+                <button onClick={() => onDismissExercise(message.id)}
+                  className="absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full bg-muted border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground hover:border-destructive"
+                  title={language === 'fr' ? 'Supprimer' : 'Dismiss'}>
+                  <X size={12} />
+                </button>
+              )}
+              {problem.type === 'grouped_choice_problem' || problem.type === 'grouped_problem' ? (
+                <GroupedChoiceProblemCard
+                  problem={problem}
+                  onSubmitAnswers={onSubmitGroupedAnswers}
+                  onShowExplanation={handleShowGroupedExplanation}
+                />
+              ) : (
+                <ProblemCard problem={problem} />
+              )}
+            </div>
+          );
+        })}
 
         {exercisePairs.map((pair) => (
           <div key={pair.userMessage.id} className="relative group">
@@ -392,6 +524,22 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
         sections={teaching.sections}
         error={teaching.error}
         onTryAgain={() => teaching.setOpen(false)}
+      />
+
+      <GroupedProblemExplanationModal
+        problem={groupedExplanationProblem}
+        practice={groupedRetryPractice}
+        loading={groupedRetryPracticeLoading}
+        error={groupedRetryPracticeError}
+        rowId={groupedExplanationRowId}
+        onRetry={groupedExplanationProblem ? () => void handleShowGroupedExplanation(groupedExplanationProblem, groupedExplanationRowId) : undefined}
+        onClose={() => {
+          setGroupedExplanationProblem(null);
+          setGroupedExplanationRowId(undefined);
+          setGroupedRetryPractice(null);
+          setGroupedRetryPracticeError(null);
+          setGroupedRetryPracticeLoading(false);
+        }}
       />
     </div>
   );

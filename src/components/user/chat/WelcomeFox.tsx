@@ -67,7 +67,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         className="flex items-center justify-center h-full px-4"
       >
-        <div className="relative inline-block translate-y-[1cm] sm:translate-y-0">
+        <div className="relative inline-block">
           {/* ── Fox video ── */}
           <video
             src="/Baby_Fox.mp4"
@@ -77,16 +77,13 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
             playsInline
             preload="auto"
             aria-label="Baby fox mascot animation"
-            className="w-full max-w-xl sm:max-w-3xl object-contain pointer-events-none select-none mix-blend-multiply"
+            className="w-full max-w-xl sm:max-w-3xl translate-y-[2cm] object-contain pointer-events-none select-none mix-blend-multiply"
             style={{ maxHeight: "100%" }}
           />
 
           {/* ── Speech bubble (above-right of fox) ── */}
           {showBubble && (
-            <div
-              className="absolute top-2 right-2 sm:top-4 sm:right-6 z-10"
-              style={{ transform: "translateY(1cm)" }}
-            >
+            <div className="absolute top-2 right-2 z-10 translate-y-[1.5cm] sm:top-4 sm:right-6">
               <TutorWelcomeBubble
                 firstName={firstName}
                 greeting={messages.hi}

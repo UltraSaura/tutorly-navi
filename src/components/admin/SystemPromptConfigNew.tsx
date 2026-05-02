@@ -11,6 +11,35 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { NewTemplateDialog } from './prompts/NewTemplateDialog';
 import { EditTemplateDialog } from './prompts/EditTemplateDialog';
 import { ViewTemplateDialog } from './prompts/ViewTemplateDialog';
+import { DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT } from '@/services/problemSubmissionService';
+
+type PromptUsageType = NewPromptTemplate['usage_type'];
+
+const GROUPED_RETRY_PRACTICE_USAGE_TYPE: PromptUsageType = 'grouped_retry_practice';
+
+const createBlankTemplate = (usageType: PromptUsageType): NewPromptTemplate => ({
+  name: '',
+  subject: '',
+  description: '',
+  prompt_content: '',
+  tags: [],
+  is_active: false,
+  usage_type: usageType,
+  auto_activate: false,
+  priority: 0
+});
+
+const createDefaultGroupedRetryPracticeTemplate = (): NewPromptTemplate => ({
+  name: 'Grouped Retry Practice Explanation',
+  subject: 'Math',
+  description: 'Creates TwoCard-style teaching explanations for one selected row in grouped homework problems.',
+  prompt_content: DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT,
+  tags: ['grouped-problem', 'twocard', 'retry-practice'],
+  is_active: true,
+  usage_type: GROUPED_RETRY_PRACTICE_USAGE_TYPE,
+  auto_activate: true,
+  priority: 100
+});
 
 const SystemPromptConfigNew = () => {
   const {
@@ -30,17 +59,7 @@ const SystemPromptConfigNew = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<PromptTemplate | null>(null);
   
   // New template form state
-  const [newTemplate, setNewTemplate] = useState<NewPromptTemplate>({
-    name: '',
-    subject: '',
-    description: '',
-    prompt_content: '',
-    tags: [],
-    is_active: false,
-    usage_type: 'chat',
-    auto_activate: false,
-    priority: 0
-  });
+  const [newTemplate, setNewTemplate] = useState<NewPromptTemplate>(createBlankTemplate('chat'));
   const [newTag, setNewTag] = useState('');
 
   if (loading) {
@@ -67,9 +86,11 @@ const SystemPromptConfigNew = () => {
   const usageTypes = [
     { value: 'chat', label: 'Chat Assistant', description: 'General assistant with cross-subject support, including math specialist' },
     { value: 'grading', label: 'Exercise Grader', description: 'Prompts for grading student answers' },
-    { value: 'explanation', label: 'Explanation System', description: 'Prompts for generating step-by-step explanations' }
+    { value: 'explanation', label: 'Explanation System', description: 'Prompts for generating step-by-step explanations' },
+    { value: 'grouped_retry_practice', label: 'Grouped Retry Practice', description: 'Prompts for grouped problem TwoCard-style retry explanations' }
   ];
 
+  const selectedPromptUsageType = selectedUsageType as PromptUsageType;
   const filteredTemplates = templates.filter(t => t.usage_type === selectedUsageType);
   const activeTemplate = getActiveTemplate(selectedUsageType);
 
@@ -84,9 +105,11 @@ const SystemPromptConfigNew = () => {
   };
 
   const handleAddTemplate = async () => {
-    await addTemplate(newTemplate);
-    setShowNewDialog(false);
-    resetNewTemplate();
+    const added = await addTemplate(newTemplate);
+    if (added) {
+      setShowNewDialog(false);
+      resetNewTemplate();
+    }
   };
 
   const handleEditTemplate = async (updates: Partial<PromptTemplate>) => {
@@ -105,19 +128,17 @@ const SystemPromptConfigNew = () => {
     setShowEditDialog(true);
   };
 
-  const resetNewTemplate = () => {
-    setNewTemplate({
-      name: '',
-      subject: '',
-      description: '',
-      prompt_content: '',
-      tags: [],
-      is_active: false,
-      usage_type: selectedUsageType as 'chat' | 'grading' | 'explanation',
-      auto_activate: false,
-      priority: 0
-    });
+  const prepareNewTemplate = (usageType: PromptUsageType = selectedPromptUsageType) => {
+    setNewTemplate(
+      usageType === GROUPED_RETRY_PRACTICE_USAGE_TYPE
+        ? createDefaultGroupedRetryPracticeTemplate()
+        : createBlankTemplate(usageType)
+    );
     setNewTag('');
+  };
+
+  const resetNewTemplate = () => {
+    prepareNewTemplate();
   };
 
   const addTag = () => {
@@ -147,7 +168,7 @@ const SystemPromptConfigNew = () => {
           </p>
         </div>
         <Button onClick={() => {
-          resetNewTemplate();
+          prepareNewTemplate();
           setShowNewDialog(true);
         }}>
           <Plus className="h-4 w-4 mr-2" />
@@ -156,7 +177,7 @@ const SystemPromptConfigNew = () => {
       </div>
 
       <Tabs value={selectedUsageType} onValueChange={setSelectedUsageType}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           {usageTypes.map((type) => (
             <TabsTrigger key={type.value} value={type.value} className="text-xs">
               {type.label}
@@ -254,13 +275,22 @@ const SystemPromptConfigNew = () => {
               {filteredTemplates.length === 0 && (
                 <Card>
                   <CardContent className="p-6 text-center">
-                    <p className="text-muted-foreground">
-                      No templates found for {type.label.toLowerCase()}
-                    </p>
+                    {type.value === GROUPED_RETRY_PRACTICE_USAGE_TYPE ? (
+                      <div className="mx-auto max-w-xl space-y-2">
+                        <p className="font-medium">No Supabase prompt is installed for grouped retry practice.</p>
+                        <p className="text-sm text-muted-foreground">
+                          Apply the latest Supabase migration, or create the default editable template here so newly generated grouped explanations can use it.
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        No templates found for {type.label.toLowerCase()}
+                      </p>
+                    )}
                     <Button 
                       className="mt-4"
                       onClick={() => {
-                        resetNewTemplate();
+                        prepareNewTemplate(type.value as PromptUsageType);
                         setShowNewDialog(true);
                       }}
                     >

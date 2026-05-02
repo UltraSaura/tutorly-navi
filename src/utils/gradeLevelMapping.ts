@@ -10,6 +10,11 @@ export interface GradeLevelInfo {
   system: string; // 'US' | 'UK' | 'French' | 'Generic'
 }
 
+function stripCountryPrefix(level: string): string {
+  const parts = level.split(':');
+  return (parts.length === 2 ? parts[1] : level).toLowerCase().trim();
+}
+
 /**
  * Maps grade level strings to age information
  * Supports multiple international systems
@@ -19,11 +24,24 @@ export function getGradeLevelInfo(level: string): GradeLevelInfo {
     return { ageRange: [6, 18], isUnder11: true, system: 'Generic' };
   }
 
-  const normalizedLevel = level.toLowerCase().trim();
+  const normalizedLevel = stripCountryPrefix(level);
 
   // US Grade System (Kindergarten, Grade 1-12)
-  if (normalizedLevel.includes('kindergarten') || normalizedLevel.includes('k')) {
+  if (normalizedLevel === 'k' || normalizedLevel.includes('kindergarten')) {
     return { ageRange: [5, 6], isUnder11: true, system: 'US' };
+  }
+
+  const storedUsGradeMatch = normalizedLevel.match(/^(?:grade[_\s-]?)?(\d{1,2})$/);
+  if (storedUsGradeMatch) {
+    const grade = parseInt(storedUsGradeMatch[1]);
+    if (grade >= 1 && grade <= 12) {
+      const age = grade + 5; // Grade 1 = age 6, Grade 5 = age 10, etc.
+      return {
+        ageRange: [age, age + 1],
+        isUnder11: age < 11,
+        system: 'US'
+      };
+    }
   }
   
   const usGradeMatch = normalizedLevel.match(/grade\s*(\d+)|grade\s*(\d+)/);
@@ -40,6 +58,23 @@ export function getGradeLevelInfo(level: string): GradeLevelInfo {
   }
 
   // UK Year System (Year 1-13)
+  if (normalizedLevel === 'yr' || normalizedLevel === 'reception') {
+    return { ageRange: [4, 5], isUnder11: true, system: 'UK' };
+  }
+
+  const storedUkYearMatch = normalizedLevel.match(/^y(\d{1,2})$/);
+  if (storedUkYearMatch) {
+    const year = parseInt(storedUkYearMatch[1]);
+    if (year >= 1 && year <= 13) {
+      const age = year + 4; // Year 1 = age 5, Year 6 = age 10, etc.
+      return {
+        ageRange: [age, age + 1],
+        isUnder11: age < 11,
+        system: 'UK'
+      };
+    }
+  }
+
   const ukYearMatch = normalizedLevel.match(/year\s*(\d+)/);
   if (ukYearMatch) {
     const year = parseInt(ukYearMatch[1]);

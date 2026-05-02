@@ -1,13 +1,25 @@
 
 import { detectMultipleExercises } from './multiExerciseDetector.ts';
 import { extractSmartMathExercises } from './smartMathExtraction.ts';
+import { ExtractedExercise, extractTrueFalseExercises } from './trueFalseExtraction.ts';
 
-export function extractExercisesFromText(text: string): Array<{ question: string, answer: string }> {
+export function extractExercisesFromText(text: string): ExtractedExercise[] {
   console.log('\n🚀 === EXERCISE EXTRACTION COORDINATOR ===');
   console.log('Input text length:', text.length);
   console.log('Raw text preview (first 300 chars):', text.substring(0, 300));
   
-  let allExercises = [] as Array<{ question: string, answer: string }>;
+  let allExercises = [] as ExtractedExercise[];
+  
+  // PHASE 0: TRUE/FALSE AFFIRMATION WORKSHEETS
+  console.log('\n✅ === PHASE 0: TRUE/FALSE AFFIRMATION DETECTION ===');
+  const trueFalseExercises = extractTrueFalseExercises(text);
+  if (trueFalseExercises.length > 0) {
+    console.log(`✅ True/false extraction found ${trueFalseExercises.length} affirmations`);
+    trueFalseExercises.forEach((ex, idx) => {
+      console.log(`True/False Exercise ${idx + 1}: ${ex.question} -> Answer: "${ex.answer || 'NEEDS STUDENT INPUT'}"`);
+    });
+    return trueFalseExercises;
+  }
   
   // PHASE 1: ENHANCED MULTI-EXERCISE DETECTION (PRIMARY METHOD)
   console.log('\n🎯 === PHASE 1: ENHANCED MULTI-EXERCISE DETECTION ===');
