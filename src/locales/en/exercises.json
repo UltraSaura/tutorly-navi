@@ -34,6 +34,7 @@
     "modal_title": "Explanation",
     "error": "Error loading explanation. Please try again.",
     "watch_video": "🎬 Watch the video →",
+    "image_alt": "Exercise explanation",
     "fallback": {
       "exercise": "This is your exercise. Try to restate it in your own words.",
       "concept": "We'll focus on the exact math idea you need here.",
@@ -41,16 +42,38 @@
       "method": "1) Understand the goal  2) Apply the rules  3) Check your result.", 
       "pitfall": "Avoid applying an operation to only one part.",
       "check": "Explain why each step is valid.",
-      "practice": "Practice a few similar problems and explain your steps aloud."
+      "practice": "Practice a few similar problems and explain your steps aloud.",
+      "no_exercise": "No exercise provided",
+      "no_solution": "No solution provided",
+      "answer_not_available": "Answer not available"
     },
     "headers": {
       "exercise": "📘 Exercise",
+      "interactive_practice": "🧮 Interactive Practice",
       "concept": "💡 Concept", 
       "example": "🔍 Example (different numbers)",
       "method": "☑️ Method",
       "pitfall": "⚠️ Pitfall",
       "check": "🎯 Check yourself",
-      "practice": "📈 Practice Tip"
+      "practice": "📈 Practice Tip",
+      "parent_help_hint": "👨‍👩‍👧 Parent Help Hint",
+      "current_exercise_solution": "Current Exercise - Solution",
+      "correct_answer": "Correct Answer"
+    },
+    "labels": {
+      "exercise": "Exercise"
+    },
+    "debug": {
+      "log_sections": "Log sections",
+      "help": "Help",
+      "help_message": "If empty, check console for raw AI output and template info."
+    },
+    "empty": {
+      "no_data": "No explanation data available",
+      "sections": "Sections"
+    },
+    "xp": {
+      "great_effort": "Great effort! Keep learning!"
     }
   },
   "badges": {
