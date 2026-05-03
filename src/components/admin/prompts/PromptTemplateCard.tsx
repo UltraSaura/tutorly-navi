@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trash2 } from 'lucide-react';
 import { PromptTemplate } from '@/types/admin';
+import { getPromptTemplateDisplayName } from './promptUsageLabels';
 
 interface PromptTemplateCardProps {
   template: PromptTemplate;
@@ -31,7 +32,7 @@ export const PromptTemplateCard = ({
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="flex items-center gap-2">
-              {template.name}
+              {getPromptTemplateDisplayName(template)}
               {template.is_active && (
                 <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 text-xs">
                   Active

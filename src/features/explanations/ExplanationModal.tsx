@@ -52,7 +52,7 @@ export function ExplanationModal({
   const handleTryAgain = () => {
     if (onTryAgain) {
       onTryAgain();
-      showXpToast(5, "Great effort! Keep learning!");
+      showXpToast(5, t('explanation.xp.great_effort'));
     }
     onClose();
   };
@@ -88,7 +88,7 @@ export function ExplanationModal({
                 <div className="mb-6">
                   <img 
                     src={imageUrl} 
-                    alt="Exercise explanation" 
+                    alt={t('explanation.image_alt')}
                     className="max-h-[60vh] w-auto mx-auto rounded-xl shadow-lg"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
@@ -108,8 +108,8 @@ export function ExplanationModal({
             <>
               {console.log('[ExplanationModal] No sections available, showing fallback')}
               <div className="text-center text-muted-foreground">
-                <p>No explanation data available</p>
-                <p className="text-xs mt-2">Sections: {sections ? 'Present' : 'Null'}</p>
+                <p>{t('explanation.empty.no_data')}</p>
+                <p className="text-xs mt-2">{t('explanation.empty.sections')}: {sections ? t('common.present') : t('common.none')}</p>
               </div>
             </>
           )}
@@ -122,14 +122,14 @@ export function ExplanationModal({
                 onClick={() => console.log("[Explain] sections", sections)}
                 className="hover:text-foreground transition-colors"
               >
-                Log sections
+                {t('explanation.debug.log_sections')}
               </button>
               <span className="mx-2">•</span>
               <button 
-                onClick={() => alert("If empty, check console for raw AI output and template info.")}
+                onClick={() => alert(t('explanation.debug.help_message'))}
                 className="hover:text-foreground transition-colors"
               >
-                Help
+                {t('explanation.debug.help')}
               </button>
             </div>
           )}
@@ -138,7 +138,7 @@ export function ExplanationModal({
             className="w-full"
             size="lg"
           >
-            Try again → +5 XP
+            {t('exercises.try_again', { xp: 5 })}
           </Button>
         </div>
       </div>

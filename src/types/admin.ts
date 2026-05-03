@@ -74,7 +74,7 @@ export interface PromptTemplate {
   is_active: boolean;  // Changed from 'isActive' to match database
   created_at: Date;
   updated_at: Date;
-  usage_type: 'chat' | 'grading' | 'explanation' | 'math_enhanced';
+  usage_type: 'chat' | 'grading' | 'explanation' | 'math_enhanced' | 'grouped_problem_extraction' | 'grouped_problem_grading' | 'grouped_retry_practice';
   auto_activate: boolean;
   priority: number;
 }

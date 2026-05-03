@@ -6,6 +6,7 @@ import { usePromptManagement } from '@/hooks/usePromptManagement';
 import { Loader2, Plus, Settings } from 'lucide-react';
 import SystemPromptConfigNew from './SystemPromptConfigNew';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { getPromptUsageLabel, PROMPT_USAGE_TYPES } from './prompts/promptUsageLabels';
 
 const PromptManagement = () => {
   const { templates, loading } = usePromptManagement();
@@ -45,8 +46,8 @@ const PromptManagement = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              {['chat', 'grading'].map((type) => {
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
+              {PROMPT_USAGE_TYPES.map((type) => {
                 const typeTemplates = templates.filter(t => t.usage_type === type);
                 const activeCount = typeTemplates.filter(t => t.is_active).length;
                 
@@ -54,7 +55,7 @@ const PromptManagement = () => {
                   <div key={type} className="text-center">
                     <div className="text-2xl font-bold">{activeCount}</div>
                     <div className="text-sm text-muted-foreground capitalize">
-                      {type.replace('_', ' ')} Active
+                      {getPromptUsageLabel(type)} Active
                     </div>
                     <Badge variant={activeCount > 0 ? 'default' : 'secondary'} className="mt-1">
                       {typeTemplates.length} Total

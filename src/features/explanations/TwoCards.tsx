@@ -167,13 +167,18 @@ export function TwoCards({
     isPureArithmeticProblem(s.exercise || '');
   
   // Ensure method text is never empty
-  const methodText = s.method?.trim() || "Step-by-step reasoning for the example.";
+  const methodText = s.method?.trim() || t('explanation.fallback.method');
+  const hasCurrentExerciseSolution = Boolean(
+    s.currentExercise &&
+    s.currentExercise !== 'No solution provided' &&
+    s.currentExercise !== t('explanation.fallback.no_solution')
+  );
 
   return (
     <div className="space-y-3">
       {/* Problem card */}
       <div className="rounded-xl border bg-muted p-4">
-        <div className="font-semibold">📘 Exercise</div>
+        <div className="font-semibold">{t('explanation.headers.exercise')}</div>
         <div
           className={[
             "explain-text prose prose-neutral max-w-none",
@@ -188,14 +193,14 @@ export function TwoCards({
             wordSpacing: "normal",
           }}
         >
-          {s.exercise ? resolveText(s.exercise) : "No exercise provided"}
+          {s.exercise ? resolveText(s.exercise) : t('explanation.fallback.no_exercise')}
         </div>
       </div>
 
       {/* Student View - Interactive Math Stepper (above Concept) */}
       {shouldShowInteractiveStepper && (
         <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <div className="font-semibold mb-3">🧮 Interactive Practice</div>
+          <div className="font-semibold mb-3">{t('explanation.headers.interactive_practice')}</div>
           <CompactMathStepper 
             expression={exampleExpression}
             className="text-sm"
@@ -206,11 +211,11 @@ export function TwoCards({
       {/* Student View - Regular Explanation */}
       {!isGuardian && (
         <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <Section title="💡 Concept" text={s.concept} />
-          <Section title="☑️ Method" text={methodText} />
-          <Section title="🔍 Example" text={s.example} />
-          <Section title="⚠️ Pitfall" text={s.pitfall} />
-          <Section title="🎯 Check yourself" text={s.check} />
+          <Section title={t('explanation.headers.concept')} text={s.concept} />
+          <Section title={t('explanation.headers.method')} text={methodText} />
+          <Section title={t('explanation.headers.example')} text={s.example} />
+          <Section title={t('explanation.headers.pitfall')} text={s.pitfall} />
+          <Section title={t('explanation.headers.check')} text={s.check} />
           
           {/* Watch Video link - only show if we have routing info */}
           {canShowLessonLink && (
@@ -232,9 +237,9 @@ export function TwoCards({
         <>
           {/* Top Card: Concept & Parent Guidance */}
           <div className="rounded-xl border bg-card p-4 shadow-sm space-y-4">
-            <Section title="💡 Concept" text={s.concept} />
-            <Section title="👨‍👩‍👧 Parent Help Hint" text={s.parentHelpHint} />
-            <Section title="⚠️ Pitfall" text={s.pitfall} />
+            <Section title={t('explanation.headers.concept')} text={s.concept} />
+            <Section title={t('explanation.headers.parent_help_hint')} text={s.parentHelpHint} />
+            <Section title={t('explanation.headers.pitfall')} text={s.pitfall} />
           </div>
           
           {/* Bottom Card: Current Exercise Solution */}
@@ -242,25 +247,25 @@ export function TwoCards({
             <div className="flex items-center gap-2 mb-4">
               <span className="text-2xl">📝</span>
               <h3 className="font-bold text-lg text-blue-800 dark:text-blue-200">
-                Current Exercise - Solution
+                {t('explanation.headers.current_exercise_solution')}
               </h3>
             </div>
             
-            {s.currentExercise && s.currentExercise !== 'No solution provided' ? (
+            {hasCurrentExerciseSolution ? (
               <div className="prose prose-neutral max-w-none leading-relaxed break-words whitespace-pre-wrap text-base text-blue-900 dark:text-blue-100">
                 {resolveText(s.currentExercise)}
               </div>
             ) : (
               <div className="space-y-3">
                 <div className="text-sm text-blue-900 dark:text-blue-100">
-                  <strong>Exercise:</strong> {resolveText(s.exercise)}
+                  <strong>{t('explanation.labels.exercise')}:</strong> {resolveText(s.exercise || t('explanation.fallback.no_exercise'))}
                 </div>
                 <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/20 p-3">
                   <div className="font-semibold text-green-800 dark:text-green-200">
-                    ✓ Correct Answer
+                    ✓ {t('explanation.headers.correct_answer')}
                   </div>
                   <div className="text-lg font-mono text-green-900 dark:text-green-100 mt-1">
-                    {resolveText(s.correctAnswer || 'Answer not available')}
+                    {resolveText(s.correctAnswer || t('explanation.fallback.answer_not_available'))}
                   </div>
                 </div>
               </div>

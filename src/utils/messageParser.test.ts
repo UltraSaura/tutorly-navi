@@ -43,4 +43,22 @@ describe("parseUserMessage", () => {
     expect(parsed.answer).toBe("");
     expect(parsed.hasAnswer).toBe(false);
   });
+
+  it("does not parse true/false assertions as simple answers", () => {
+    const parsed = parseUserMessage("Affirmation A : La moyenne des prix est 11,40 €.");
+    expect(parsed.question).toBe("Affirmation A : La moyenne des prix est 11,40 €.");
+    expect(parsed.answer).toBe("");
+    expect(parsed.hasAnswer).toBe(false);
+  });
+
+  it("does not parse grouped true/false text because it contains fractions or est", () => {
+    const parsed = parseUserMessage(`
+Pour chaque affirmation, dire si elle est vraie ou fausse.
+Affirmation A : La moyenne des prix est 11,40 €.
+Affirmation D : La probabilité est 7/15.
+`);
+
+    expect(parsed.answer).toBe("");
+    expect(parsed.hasAnswer).toBe(false);
+  });
 });

@@ -34,6 +34,7 @@
     "modal_title": "Afficher l'explication",
     "error": "Erreur lors du chargement de l'explication. Veuillez réessayer.",
     "watch_video": "🎬 Voir la vidéo →",
+    "image_alt": "Explication de l'exercice",
     "fallback": { 
       "exercise": "Voici votre exercice. Reformulez-le avec vos propres mots.",
       "concept": "Concentrons-nous sur l'idée mathématique essentielle.",
@@ -41,16 +42,38 @@
       "method": "1) Comprendre l'objectif  2) Appliquer les règles  3) Vérifier le résultat.",
       "pitfall": "N'appliquez jamais une opération à une seule partie.", 
       "check": "Expliquez pourquoi chaque étape est valide.",
-      "practice": "Entraînez-vous avec quelques exercices similaires en expliquant vos étapes."
+      "practice": "Entraînez-vous avec quelques exercices similaires en expliquant vos étapes.",
+      "no_exercise": "Aucun exercice fourni",
+      "no_solution": "Aucune solution fournie",
+      "answer_not_available": "Réponse non disponible"
     },
     "headers": {
       "exercise": "📘 Exercice",
+      "interactive_practice": "🧮 Entraînement interactif",
       "concept": "💡 Concept",
       "example": "🔍 Exemple (autres nombres)", 
       "method": "☑️ Méthode",
       "pitfall": "⚠️ Piège",
       "check": "🎯 Auto-vérification",
-      "practice": "📈 Astuce de pratique"
+      "practice": "📈 Astuce de pratique",
+      "parent_help_hint": "👨‍👩‍👧 Conseil pour les parents",
+      "current_exercise_solution": "Solution de l’exercice",
+      "correct_answer": "Bonne réponse"
+    },
+    "labels": {
+      "exercise": "Exercice"
+    },
+    "debug": {
+      "log_sections": "Journal des sections",
+      "help": "Aide",
+      "help_message": "Si c'est vide, vérifiez la console pour la sortie brute de l'IA et les informations du modèle."
+    },
+    "empty": {
+      "no_data": "Aucune donnée d'explication disponible",
+      "sections": "Sections"
+    },
+    "xp": {
+      "great_effort": "Bel effort ! Continue à apprendre !"
     }
   },
   "badges": {

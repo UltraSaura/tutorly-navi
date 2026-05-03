@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Trash2 } from 'lucide-react';
 import { PromptTemplate } from '@/types/admin';
+import { getPromptTemplateDisplayName, getPromptUsageLabel, PROMPT_USAGE_TYPES, PromptUsageType } from './promptUsageLabels';
 
 interface EditTemplateDialogProps {
   open: boolean;
@@ -72,7 +73,7 @@ export const EditTemplateDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Template: {template.name}</DialogTitle>
+          <DialogTitle>Edit Template: {getPromptTemplateDisplayName(template)}</DialogTitle>
           <DialogDescription>
             Modify the prompt template settings and content.
           </DialogDescription>
@@ -132,7 +133,7 @@ export const EditTemplateDialog = ({
             </Label>
             <Select 
               value={editedTemplate.usage_type || ''} 
-              onValueChange={(value: 'chat' | 'grading' | 'explanation' | 'math_enhanced') => 
+              onValueChange={(value: PromptUsageType) =>
                 setEditedTemplate({ ...editedTemplate, usage_type: value })
               }
             >
@@ -140,10 +141,9 @@ export const EditTemplateDialog = ({
                 <SelectValue placeholder="Select template type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="chat">Chat</SelectItem>
-                <SelectItem value="grading">Grading</SelectItem>
-                <SelectItem value="explanation">Explanation</SelectItem>
-                <SelectItem value="math_enhanced">Math Enhanced</SelectItem>
+                {PROMPT_USAGE_TYPES.map((usageType) => (
+                  <SelectItem key={usageType} value={usageType}>{getPromptUsageLabel(usageType)}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
