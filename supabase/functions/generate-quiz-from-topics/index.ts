@@ -24,9 +24,9 @@ function buildTypeInstructions(questionTypes: string[]): string {
       case 'numeric':
         return `- "numeric": Answer is a number. Include "answer" (the correct number) and optionally "range": { "min": X, "max": Y }.`;
       case 'ordering':
-        return `- "ordering": Put items in correct order. Include "items" (shuffled array) and "correctOrder" (correct sequence).`;
+        return `- "ordering": Put items in correct order. Include "items" (shuffled array) and "correctOrder" (correct sequence). Frame these as step-building, process-ordering, or action-ordering when appropriate.`;
       case 'visual_pie':
-        return `- "visual" with subtype "pie": A fraction/proportion question using a pie chart. TWO MODES:
+        return `- "visual" with subtype "pie": A fraction/proportion question using a pie chart. The prompt must clearly refer to the pie/chart the student sees. TWO MODES:
 
   MODE A - "select_pie" (student picks correct pie from variants):
   {
@@ -62,7 +62,7 @@ function buildTypeInstructions(questionTypes: string[]): string {
 
   All segments value=1. Use 2-8 segments. Mix both modes when generating multiple pie questions. For "color_slices", correctColoredCount must match the fraction numerator and segments count = denominator.`;
       case 'visual_angle':
-        return `- "visual" with subtype "angle": An angle measurement question.
+        return `- "visual" with subtype "angle": An angle measurement question. The prompt must clearly refer to the angle/rays the student sees.
   {
     "id": "q-X", "kind": "visual",
     "prompt": "What is the measure of this angle?",
@@ -71,11 +71,29 @@ function buildTypeInstructions(questionTypes: string[]): string {
   }
   Use angles 10-350. toleranceDeg 2-5.`;
       case 'mix':
-        return `Choose the BEST question type for each question from: single, multi, numeric, ordering, visual pie (select_pie or color_slices mode), visual angle. Mix types. For fractions, alternate between pie select_pie mode AND pie color_slices mode (where student colors slices). For geometry use angle. For sequences use ordering. For recall use single/multi.`;
+        return `Choose the BEST question type for each question from the supported kinds only: single, multi, numeric, ordering, visual pie (select_pie or color_slices mode), visual angle.
+Create a balanced variety when the topic allows it:
+- Include at least one standard conceptual question using single or multi when possible.
+- Include at least one visual question when the topic naturally supports pie charts, fractions, proportions, geometry, or angle measurement.
+- Include at least one ordering/action-style question when the topic has steps, processes, procedures, comparisons, or sequences.
+- Include at least one numeric or application question when calculation or applying a rule is appropriate.
+For fractions, alternate between pie select_pie mode AND pie color_slices mode when generating multiple pie questions. For geometry use visual angle. For sequences use ordering. For recall and verbal reasoning use single/multi.`;
       default:
         return '';
     }
   }).filter(Boolean).join('\n');
+}
+
+function buildLearningFriendlyGuidance(): string {
+  return `LEARNING-FRIENDLY PRACTICE GUIDANCE:
+- Keep every question focused on the same academic objectives from the topic context.
+- Use a healthy variety of representations across the quiz when the requested types allow it: see it, say/reason it, do/order it, calculate/apply it.
+- Hints must be child-friendly and useful: give one small next step, cue, or thing to look for. Do not reveal the answer.
+- For visual questions, the prompt and hint must clearly refer to the visual element the student sees, such as the pie, slices, angle, or rays.
+- For ordering questions, use step-building, process-ordering, or action-ordering language when appropriate.
+- For single and multi questions, include some verbal-reasoning answer choices when appropriate, such as short explanations, comparison statements, or "which sentence is true" choices.
+- Do not use technical labels such as visual learner, auditory learner, kinesthetic learner, learning modality, or cognitive preference.
+- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, visual.`;
 }
 
 function validateQuestions(questions: any[]): any[] {
@@ -212,6 +230,8 @@ Generate exactly ${questionCount} quiz questions based on these topics and learn
 QUESTION TYPES TO USE:
 ${typeInstructions}
 
+${buildLearningFriendlyGuidance()}
+
 DIFFICULTY: ${difficulty}
 ${difficultyGuide[difficulty]}
 
@@ -230,6 +250,9 @@ RULES:
 - Questions must test the curriculum topics and objectives provided
 - Each question ID unique (q-1, q-2, etc.)
 - 4 choices for single/multi; multi has 2-3 correct
+- Hints must be short, encouraging, and actionable without giving away the answer
+- Visual prompts must mention the visual object the student should inspect
+- Use only supported output kinds: single, multi, numeric, ordering, visual
 - Return ONLY the JSON array`;
 
     console.log("Calling AI gateway for topic-based generation, prompt length:", prompt.length);

@@ -1,52 +1,52 @@
 import React from "react";
 import type { Step } from "./types";
-import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/context/SimpleLanguageContext";
+import { useResolveText } from "@/hooks/useResolveText";
+import { toChildFriendlyExplanationText } from "./childFriendlyText";
 
-const SECTION_CONFIG = {
-  concept: { emoji: "💡", title: "Concept" },
-  example: { emoji: "🔍", title: "Example" },
-  method: { emoji: "☑️", title: "Method" },
-  pitfall: { emoji: "⚠️", title: "Pitfall" },
-  check: { emoji: "🎯", title: "Check yourself" }
+const ICON_LABELS: Record<Step["icon"], string> = {
+  lightbulb: "💡",
+  magnifier: "🔍",
+  divide: "➗",
+  checklist: "☑️",
+  warning: "⚠️",
+  target: "🎯",
+};
+
+const KIND_FALLBACK_TITLE_KEYS: Record<Step["kind"], string> = {
+  concept: "exercises.explanation.headers.concept",
+  example: "exercises.explanation.headers.example",
+  method: "exercises.explanation.headers.method",
+  strategy: "exercises.explanation.headers.method",
+  pitfall: "exercises.explanation.headers.pitfall",
+  check: "exercises.explanation.headers.check",
 } as const;
 
 export default function ExplanationCards({ steps }: { steps: Step[] }) {
+  const { t } = useLanguage();
+  const resolveText = useResolveText();
+
   if (!steps?.length) return null;
 
-  const { t } = useTranslation();
-
-  // Group steps by kind
-  const groupedSteps = steps.reduce((acc, step) => {
-    if (!acc[step.kind]) {
-      acc[step.kind] = [];
-    }
-    acc[step.kind].push(step);
-    return acc;
-  }, {} as Record<Step["kind"], Step[]>);
-
-  // Define order of sections
-  const sectionOrder: Step["kind"][] = ["concept", "example", "method", "pitfall", "check"];
-
   return (
-    <div className="space-y-6">
-      {sectionOrder.map((kind) => {
-        const sectionSteps = groupedSteps[kind];
-        if (!sectionSteps?.length) return null;
+    <div className="space-y-4">
+      {steps.map((step, index) => {
+        const title = toChildFriendlyExplanationText(
+          step.title?.trim() || t(KIND_FALLBACK_TITLE_KEYS[step.kind])
+        );
+        const body = toChildFriendlyExplanationText(resolveText(step.body || ""));
+        const icon = ICON_LABELS[step.icon] || ICON_LABELS.lightbulb;
 
-        const config = SECTION_CONFIG[kind];
-        
+        if (!body) return null;
+
         return (
-          <div key={kind} className="space-y-3">
+          <div key={`${step.kind}-${index}`} className="rounded-xl border bg-card p-4 shadow-sm">
             <h5 className="flex items-center gap-2 font-bold text-foreground">
-              <span>{config.emoji}</span>
-              {config.title}
+              <span aria-hidden="true">{icon}</span>
+              {title}
             </h5>
-            <div className="space-y-2">
-              {sectionSteps.map((step, index) => (
-                <div key={index} className="text-sm text-muted-foreground leading-relaxed">
-                  {step.body}
-                </div>
-              ))}
+            <div className="mt-2 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
+              {body}
             </div>
           </div>
         );

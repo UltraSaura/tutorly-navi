@@ -1,19 +1,66 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { X, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { X, ChevronRight, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import type { QuizBank } from '@/types/quiz-bank';
+import type { Choice, Question, QuizBank } from '@/types/quiz-bank';
 import { QuestionCard } from './QuestionCard';
 import { gradeQuiz, shuffle } from '@/utils/quizEvaluation';
 import { evaluateQuestion } from '@/utils/quizEvaluation';
 import { useSubmitBankAttempt } from '@/hooks/useQuizBank';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
+import { ExplanationModal } from '@/features/explanations/ExplanationModal';
+import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
+import { useUserContext } from '@/hooks/useUserContext';
+import { normalizeLearningStyle } from '@/types/learning-style';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 
 interface QuizOverlayProps {
   bank: QuizBank;
   userId: string;
   onClose: () => void;
+}
+
+function getQuestionChoices(question: Question): Choice[] {
+  return 'choices' in question && Array.isArray(question.choices) ? question.choices : [];
+}
+
+function formatQuizQuestionForExplanation(question: Question): string {
+  const choices = getQuestionChoices(question);
+  const choiceText = choices.length
+    ? `\n\nChoices:\n${choices.map(choice => `${choice.id}. ${choice.label}`).join('\n')}`
+    : '';
+
+  return `${question.prompt}${choiceText}`;
+}
+
+function formatQuizAnswerForExplanation(question: Question, answer: any): string {
+  if (answer === undefined || answer === null || answer === '') {
+    return 'Not answered';
+  }
+
+  const choiceLabels = new Map(getQuestionChoices(question).map(choice => [choice.id, choice.label]));
+  const formatChoiceValue = (value: string) => choiceLabels.get(value) ?? value;
+
+  if (Array.isArray(answer)) {
+    return answer.length ? answer.map(value => formatChoiceValue(String(value))).join(', ') : 'Not answered';
+  }
+
+  if (typeof answer === 'object') {
+    if ('numerator' in answer || 'denominator' in answer) {
+      const numerator = answer.numerator || '?';
+      const denominator = answer.denominator || '?';
+      return `${numerator} / ${denominator}`;
+    }
+
+    const values = Object.values(answer)
+      .filter(value => value !== undefined && value !== null && value !== '')
+      .map(value => String(value));
+
+    return values.length ? values.join(', ') : 'Not answered';
+  }
+
+  return formatChoiceValue(String(answer));
 }
 
 export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
@@ -25,6 +72,9 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
   const [questionResult, setQuestionResult] = useState<boolean | null>(null);
   const submitAttempt = useSubmitBankAttempt();
   const { user } = useAuth();
+  const { userContext } = useUserContext();
+  const { language } = useLanguage();
+  const teaching = useTwoCardTeaching();
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -53,6 +103,26 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
     setQuestionResult(correct);
     setQuestionSubmitted(true);
   };
+
+  const handleShowExplanation = useCallback(async () => {
+    if (!currentQuestion) return;
+
+    const learningStyle = normalizeLearningStyle(userContext?.learning_style);
+    const responseLanguage = /^fr/i.test(language) ? 'French' : 'English';
+
+    await teaching.openFor(
+      {
+        prompt: formatQuizQuestionForExplanation(currentQuestion),
+        userAnswer: formatQuizAnswerForExplanation(currentQuestion, answers[currentQuestion.id]),
+        subject: 'math',
+      },
+      {
+        response_language: responseLanguage,
+        grade_level: userContext?.student_level,
+        learning_style: learningStyle,
+      }
+    );
+  }, [answers, currentQuestion, language, teaching, userContext?.learning_style, userContext?.student_level]);
 
   const handleNext = async () => {
     if (currentIndex < questions.length - 1) {
@@ -194,12 +264,27 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
             {/* Feedback after submit */}
             {questionSubmitted && (
               <div className={cn(
-                "mt-3 px-4 py-2 rounded-xl text-sm font-medium",
+                "mt-3 rounded-xl px-4 py-3 text-sm font-medium",
                 questionResult
                   ? "bg-green-50 dark:bg-green-950/20 text-green-600"
                   : "bg-red-50 dark:bg-red-950/20 text-red-600"
               )}>
-                {questionResult ? "✅ Correct !" : "❌ Incorrect"}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span>{questionResult ? "✅ Correct !" : "❌ Incorrect"}</span>
+                  {questionResult === false && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleShowExplanation}
+                      disabled={teaching.loading}
+                      className="self-start gap-2 bg-white text-red-700 hover:bg-red-50 dark:bg-card dark:text-red-300 dark:hover:bg-red-950/30"
+                    >
+                      <HelpCircle className="h-4 w-4" />
+                      {teaching.loading ? "Préparation..." : "Afficher l'explication"}
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -229,6 +314,15 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
           )}
         </div>
       </Card>
+
+      <ExplanationModal
+        open={teaching.open}
+        onClose={() => teaching.setOpen(false)}
+        loading={teaching.loading}
+        sections={teaching.sections}
+        error={teaching.error}
+        exerciseQuestion={currentQuestion?.prompt}
+      />
     </div>
   );
 }

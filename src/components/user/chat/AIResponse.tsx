@@ -382,9 +382,10 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
       {
         response_language: language === 'fr' ? 'French' : 'English',
         grade_level: userContext?.student_level || 'High School',
+        learning_style: userContext?.learning_style,
       }
     );
-  }, [language, teaching, userContext?.student_level]);
+  }, [language, teaching, userContext?.learning_style, userContext?.student_level]);
 
   const handleShowGroupedExplanation = useCallback(async (problem: ProblemSubmission, rowId?: string) => {
     setGroupedExplanationProblem(problem);

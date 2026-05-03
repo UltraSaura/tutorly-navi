@@ -4,7 +4,7 @@ export type Step = {
   title: string; 
   body: string; 
   icon: StepIcon; 
-  kind: "concept"|"example"|"method"|"pitfall"|"check" 
+  kind: "concept"|"example"|"method"|"strategy"|"pitfall"|"check"
 };
 
 export type StepsPayload = { 

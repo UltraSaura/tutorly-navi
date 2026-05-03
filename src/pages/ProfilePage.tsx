@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import AccountDeletion from '@/components/profile/AccountDeletion';
 import { ProfileEditForm } from '@/components/profile/ProfileEditForm';
+import { LearningPreferenceSelector } from '@/components/profile/LearningPreferenceSelector';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 const ProfilePage = () => {
@@ -151,6 +152,8 @@ const ProfilePage = () => {
 
           {/* School Program Settings */}
           <ProfileEditForm />
+
+          <LearningPreferenceSelector />
 
           {/* Account Deletion */}
           <AccountDeletion />

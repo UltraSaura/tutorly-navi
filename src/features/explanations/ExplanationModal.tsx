@@ -52,7 +52,7 @@ export function ExplanationModal({
   const handleTryAgain = () => {
     if (onTryAgain) {
       onTryAgain();
-      showXpToast(5, t('explanation.xp.great_effort'));
+      showXpToast(5, t('exercises.explanation.xp.great_effort'));
     }
     onClose();
   };
@@ -88,7 +88,7 @@ export function ExplanationModal({
                 <div className="mb-6">
                   <img 
                     src={imageUrl} 
-                    alt={t('explanation.image_alt')}
+                    alt={t('exercises.explanation.image_alt')}
                     className="max-h-[60vh] w-auto mx-auto rounded-xl shadow-lg"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
@@ -108,8 +108,8 @@ export function ExplanationModal({
             <>
               {console.log('[ExplanationModal] No sections available, showing fallback')}
               <div className="text-center text-muted-foreground">
-                <p>{t('explanation.empty.no_data')}</p>
-                <p className="text-xs mt-2">{t('explanation.empty.sections')}: {sections ? t('common.present') : t('common.none')}</p>
+                <p>{t('exercises.explanation.empty.no_data')}</p>
+                <p className="text-xs mt-2">{t('exercises.explanation.empty.sections')}: {sections ? t('common.present') : t('common.none')}</p>
               </div>
             </>
           )}
@@ -122,14 +122,14 @@ export function ExplanationModal({
                 onClick={() => console.log("[Explain] sections", sections)}
                 className="hover:text-foreground transition-colors"
               >
-                {t('explanation.debug.log_sections')}
+                {t('exercises.explanation.debug.log_sections')}
               </button>
               <span className="mx-2">•</span>
               <button 
-                onClick={() => alert(t('explanation.debug.help_message'))}
+                onClick={() => alert(t('exercises.explanation.debug.help_message'))}
                 className="hover:text-foreground transition-colors"
               >
-                {t('explanation.debug.help')}
+                {t('exercises.explanation.debug.help')}
               </button>
             </div>
           )}

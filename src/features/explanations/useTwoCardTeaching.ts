@@ -2,6 +2,7 @@ import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/context/AdminContext";
 import { toast } from "@/hooks/use-toast";
+import { normalizeLearningStyle, type LearningStyle } from "@/types/learning-style";
 
 /**
  * Detect the operation type from a math exercise
@@ -69,7 +70,7 @@ export function useTwoCardTeaching() {
     }, 100);
   };
 
-  async function openFor(row: any, profile: { response_language?: string; grade_level?: string }) {
+  async function openFor(row: any, profile: { response_language?: string; grade_level?: string; learning_style?: string | LearningStyle | null }) {
     console.log('[TwoCardTeaching] Opening explanation for:', { row, profile });
     setOpen(true);
     setError(null);
@@ -84,6 +85,7 @@ export function useTwoCardTeaching() {
       // Normalize: accept 'fr', 'French', 'french' etc.
       const response_language = /^fr/i.test(rawLang) ? 'French' : 'English';
       const grade_level = profile?.grade_level ?? "High School";
+      const learning_style = normalizeLearningStyle(profile?.learning_style);
 
       // Detect the operation type from the exercise
       const operationInfo = detectOperationType(exercise_content);
@@ -100,7 +102,7 @@ export function useTwoCardTeaching() {
         first_name: 'Student',
         grade_level: grade_level,
         country: 'your country',
-        learning_style: 'balanced',
+        learning_style,
         subject: subject,
         user_type: 'student',
         response_language: response_language

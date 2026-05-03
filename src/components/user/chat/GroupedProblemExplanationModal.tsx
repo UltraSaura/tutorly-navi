@@ -9,6 +9,7 @@ import { useUserContext } from '@/hooks/useUserContext';
 import { extractExpressionFromText } from '@/utils/mathStepper/parser';
 import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
 import { GeometryDiagram } from './GeometryDiagram';
+import { toChildFriendlyExplanationText } from '@/features/explanations/childFriendlyText';
 
 interface GroupedProblemExplanationModalProps {
   problem: ProblemSubmission | null;
@@ -107,6 +108,17 @@ const GroupedProblemExplanationModal = ({
                 )}
                 <p className="text-sm text-blue-950 whitespace-pre-wrap">{practice.similarProblem}</p>
               </section>
+
+              {practice.learningStyleSupport && (
+                <section className="rounded-lg border border-indigo-200 bg-indigo-50 p-4">
+                  <h4 className="text-sm font-semibold text-indigo-950 mb-2">
+                    {toChildFriendlyExplanationText(practice.learningStyleSupport.title)}
+                  </h4>
+                  <p className="text-sm text-indigo-950 whitespace-pre-wrap">
+                    {toChildFriendlyExplanationText(practice.learningStyleSupport.content)}
+                  </p>
+                </section>
+              )}
 
               {shouldShowInteractiveStepper && (
                 <section className="rounded-lg border bg-card p-4 shadow-sm">

@@ -122,6 +122,11 @@ Required teaching sequence:
 - concept: explain the underlying idea in student-friendly language. Do not state the original answer.
 - similarProblem: create ONE structurally similar worked example using changed numbers or a different concrete context. It must practice the same concept but must not copy the original wording or values.
 - diagram: if problemContext.wantsDiagram is true or the selected row is geometry, include a simple structured diagram spec for the similar example. The labels and dimensions must match the similarProblem. For non-geometry rows, omit diagram or set it to null. Do not draw SVG or return markdown images.
+- learningStyleSupport: optional student-facing support that reinforces the same concept using problemContext.profile.learningStyle. It must not change the academic goal. Do not say "Because you are a visual learner" or label the child.
+  - If learningStyle is visual: use title "See it" or similar, and include a diagram, table, number line, visual grouping instruction, labels, or spatial explanation when useful.
+  - If learningStyle is auditory: use title "Say it" or similar, and include a memory phrase, spoken reasoning cue, or sentence the child can repeat.
+  - If learningStyle is kinesthetic: use title "Try it" or similar, and include hands-on steps such as draw, move, tap, group, count, sort, build, or act it out.
+  - If learningStyle is mixed: use title "Learn it your way" or similar, and include one visual hint, one verbal cue, and one action idea.
 - method: solve the similarProblem only, step by step. Explain why each step is done, not just the calculation.
 - commonMistake: name the likely misconception or trap and how to avoid it.
 - retryPrompt: invite the student to return to their original exercise and apply the same method without revealing the original final answer.
@@ -145,6 +150,11 @@ Return exactly this JSON shape:
     "labels": ["A", "B", "C", "D"],
     "dimensions": { "bottom": "6 cm", "left": "3 cm" },
     "caption": "optional short caption"
+  },
+  "learningStyleSupport": {
+    "style": "visual|auditory|kinesthetic|mixed",
+    "title": "short child-friendly title such as See it, Say it, Try it, or Learn it your way",
+    "content": "student-facing support using the learning style while reinforcing the same concept"
   },
   "method": "step-by-step reasoning for the similar problem only, including why each step is done",
   "retryPrompt": "short prompt encouraging the student to retry the original exercise without revealing its answer",
@@ -318,10 +328,28 @@ function parseGroupedRetryPractice(payload: any): GroupedRetryPractice | null {
     concept: parsed.concept.trim(),
     similarProblem: parsed.similarProblem.trim(),
     diagram: parseRetryPracticeDiagram(parsed.diagram),
+    learningStyleSupport: parseLearningStyleSupport(parsed.learningStyleSupport),
     method: parsed.method.trim(),
     retryPrompt: parsed.retryPrompt.trim(),
     commonMistake: typeof parsed.commonMistake === 'string' ? parsed.commonMistake.trim() : undefined,
     parentHelpHint: typeof parsed.parentHelpHint === 'string' ? parsed.parentHelpHint.trim() : undefined,
+  };
+}
+
+function parseLearningStyleSupport(support: any): GroupedRetryPractice['learningStyleSupport'] | undefined {
+  if (!support || typeof support !== 'object') return undefined;
+  const allowedStyles = ['visual', 'auditory', 'kinesthetic', 'mixed'] as const;
+  const style = typeof support.style === 'string' && allowedStyles.includes(support.style as any)
+    ? support.style as NonNullable<GroupedRetryPractice['learningStyleSupport']>['style']
+    : 'mixed';
+  const title = typeof support.title === 'string' ? support.title.trim() : '';
+  const content = typeof support.content === 'string' ? support.content.trim() : '';
+  if (!title || !content) return undefined;
+
+  return {
+    style,
+    title,
+    content,
   };
 }
 
