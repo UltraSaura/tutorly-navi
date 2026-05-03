@@ -53,38 +53,39 @@ export async function callDeepSeek(
               type: "string",
               description: "The original exercise statement"
             },
-            sections: {
+            steps: {
+              type: "array",
+              description: "Ordered TwoCard explanation steps. Render exactly in this order.",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  body: { type: "string" },
+                  icon: {
+                    type: "string",
+                    enum: ["lightbulb", "magnifier", "divide", "checklist", "warning", "target"]
+                  },
+                  kind: {
+                    type: "string",
+                    enum: ["concept", "example", "strategy", "pitfall", "check"]
+                  }
+                },
+                required: ["title", "body", "icon", "kind"]
+              }
+            },
+            meta: {
               type: "object",
               properties: {
-                concept: { 
-                  type: "string",
-                  description: "Core mathematical concept explanation"
-                },
-                example: { 
-                  type: "string",
-                  description: "Example with DIFFERENT numbers (different magnitude, at least 5 units away), NEVER revealing final answer (use ___)"
-                },
-                strategy: { 
-                  type: "string",
-                  description: "Step-by-step approach WITHOUT revealing the actual answer"
-                },
-                pitfall: { 
-                  type: "string",
-                  description: "Common mistakes students make"
-                },
-                check: { 
-                  type: "string",
-                  description: "How to verify the answer WITHOUT revealing it"
-                },
-                practice: { 
-                  type: "string",
-                  description: "Suggestion for improving at this topic"
-                }
-              },
-              required: ["concept", "example", "strategy", "pitfall", "check", "practice"]
+                mode: { type: "string", enum: ["concept", "solution"] },
+                revealAnswer: { type: "boolean" }
+              }
+            },
+            sections: {
+              type: "object",
+              description: "Legacy fallback only. Prefer steps for new explanations."
             }
           },
-          required: ["isMath", "exercise", "sections"]
+          required: ["isMath", "exercise", "steps"]
         }
       }
     }];

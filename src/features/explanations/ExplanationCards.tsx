@@ -3,6 +3,8 @@ import type { Step } from "./types";
 import { useLanguage } from "@/context/SimpleLanguageContext";
 import { useResolveText } from "@/hooks/useResolveText";
 import { toChildFriendlyExplanationText } from "./childFriendlyText";
+import { RuntimeMiniPracticeInline } from "./RuntimeMiniPracticeInline";
+import type { RuntimeMiniPracticeContext } from "./runtimeMiniPractice";
 
 const ICON_LABELS: Record<Step["icon"], string> = {
   lightbulb: "💡",
@@ -22,7 +24,13 @@ const KIND_FALLBACK_TITLE_KEYS: Record<Step["kind"], string> = {
   check: "exercises.explanation.headers.check",
 } as const;
 
-export default function ExplanationCards({ steps }: { steps: Step[] }) {
+export default function ExplanationCards({
+  steps,
+  miniPracticeContext,
+}: {
+  steps: Step[];
+  miniPracticeContext?: RuntimeMiniPracticeContext;
+}) {
   const { t } = useLanguage();
   const resolveText = useResolveText();
 
@@ -46,7 +54,14 @@ export default function ExplanationCards({ steps }: { steps: Step[] }) {
               {title}
             </h5>
             <div className="mt-2 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
-              {body}
+              {step.kind === "check" ? (
+                <RuntimeMiniPracticeInline
+                  context={miniPracticeContext}
+                  fallbackBody={body}
+                />
+              ) : (
+                body
+              )}
             </div>
           </div>
         );

@@ -50,7 +50,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
   };
 
   return (
-    <div className="flex flex-col space-y-4 py-4">
+    <div className="flex min-h-full flex-col gap-4 py-4">
       {/* User Profile Section */}
       <div className="flex items-center space-x-3 p-4 bg-accent/20 rounded-lg">
         <Avatar className="h-12 w-12">
@@ -147,15 +147,17 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
       <Separator />
 
       {/* Sign Out - at the bottom of all options */}
-      <Button
-        variant="ghost"
-        onClick={handleSignOut}
-        disabled={isSigningOut}
-        className="w-full justify-start h-12 text-destructive hover:text-destructive hover:bg-destructive/10"
-      >
-        <LogOut className="mr-3 h-5 w-5" />
-        <span>{isSigningOut ? 'Signing out...' : 'Sign Out'}</span>
-      </Button>
+      <div className="mt-auto">
+        <Button
+          variant="ghost"
+          onClick={handleSignOut}
+          disabled={isSigningOut}
+          className="w-full justify-start h-12 text-destructive hover:text-destructive hover:bg-destructive/10"
+        >
+          <LogOut className="mr-3 h-5 w-5" />
+          <span>{isSigningOut ? t('common.signingOut') : t('auth.logout')}</span>
+        </Button>
+      </div>
     </div>
   );
 }

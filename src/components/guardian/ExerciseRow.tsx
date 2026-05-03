@@ -11,6 +11,13 @@ import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+
+const ADAPTIVE_EXPLANATION_CACHE_VERSION = 3;
+
+function explanationHashForCache(exerciseContent: string) {
+  return `${exerciseContent.toLowerCase().replace(/\s+/g, '')}:adaptive-v${ADAPTIVE_EXPLANATION_CACHE_VERSION}`;
+}
+
 interface ExerciseRowProps {
   exercise: ExerciseHistoryWithAttempts;
   allAttempts: ExerciseHistoryWithAttempts[];
@@ -48,7 +55,7 @@ export function ExerciseRow({
     const { data: cachedExplanation, error: cacheError } = await supabase
       .from('exercise_explanations_cache')
       .select('*')
-      .eq('exercise_content', exercise.exercise_content)
+      .eq('exercise_hash', explanationHashForCache(exercise.exercise_content))
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();

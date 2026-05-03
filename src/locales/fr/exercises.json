@@ -63,6 +63,14 @@
     "labels": {
       "exercise": "Exercice"
     },
+    "mini_practice": {
+      "intro": "Voyons si tu as compris.",
+      "loading": "Préparation d’un petit exercice...",
+      "check": "Valider",
+      "hint": "Indice",
+      "try_again": "Réessayer",
+      "try_another": "Un autre exercice"
+    },
     "debug": {
       "log_sections": "Journal des sections",
       "help": "Aide",

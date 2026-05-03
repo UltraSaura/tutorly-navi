@@ -875,6 +875,17 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
       .resolves.toBe(__problemSubmissionServiceTest.defaultGroupedRetryPracticePrompt);
   });
 
+  it('keeps grouped retry-practice prompt ordered around adaptive support and self-check', () => {
+    const prompt = __problemSubmissionServiceTest.defaultGroupedRetryPracticePrompt;
+
+    expect(prompt).toContain('concept: quick idea');
+    expect(prompt).toContain('learningStyleSupport');
+    expect(prompt).toContain('must include one guided example');
+    expect(prompt).toContain('retryPrompt: Auto-vérification / self-check / try again');
+    expect(prompt).toContain('method: give reusable step by step guidance');
+    expect(prompt).toContain('commonMistake: name one likely misconception');
+  });
+
   it('parses valid grouped retry-practice JSON', () => {
     const result = __problemSubmissionServiceTest.parseGroupedRetryPractice({
       concept: 'Calculer une moyenne',

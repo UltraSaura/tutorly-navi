@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { toChildFriendlyExplanationText } from './childFriendlyText';
+import ExplanationCards from './ExplanationCards';
 
 function Section({ title, text }: { title: string; text: string }) {
   const resolveText = useResolveText();
@@ -59,7 +60,7 @@ export function TwoCards({
   const resolveText = useResolveText();
   const [isGuardian, setIsGuardian] = useState(false); // NEW
   const { userContext } = useUserContext(); // NEW: Get user context for grade level
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   // Fetch topic routing info if we have topicId but not slugs
   const { data: topicData, isLoading: topicDataLoading } = useQuery({
@@ -147,8 +148,40 @@ export function TwoCards({
     return '+';
   };
   
+  const orderedSteps = Array.isArray(s.steps) && s.steps.length > 0 ? s.steps : null;
+  const stepTextForExpression = orderedSteps
+    ? orderedSteps.map(step => `${step.title}\n${step.body}`).join('\n\n')
+    : s.example;
+  const miniPracticeContext = React.useMemo(() => {
+    if (!orderedSteps || !s.exercise?.trim()) return undefined;
+
+    const explanationContext = orderedSteps
+      .filter(step => step.kind !== "check")
+      .map(step => `${step.title}\n${step.body}`)
+      .join("\n\n");
+
+    return {
+      exercise: s.exercise,
+      explanationContext,
+      gradeLevel: userContext?.student_level,
+      language,
+      learningStyle: userContext?.learning_style,
+      subject: subjectSlug || "Math",
+      country: userContext?.country,
+      enabled: true,
+    };
+  }, [
+    orderedSteps,
+    s.exercise,
+    userContext?.student_level,
+    userContext?.learning_style,
+    userContext?.country,
+    language,
+    subjectSlug,
+  ]);
+
   // NEW: Extract math expression from example for InteractiveMathStepper
-  let exampleExpression = s.example ? extractExpressionFromText(s.example) : null;
+  let exampleExpression = stepTextForExpression ? extractExpressionFromText(stepTextForExpression) : null;
   
   // Fallback: If no expression extracted, synthesize one matching the operation type
   if (!exampleExpression) {
@@ -214,11 +247,17 @@ export function TwoCards({
       {/* Student View - Regular Explanation */}
       {!isGuardian && (
         <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <Section title={t('exercises.explanation.headers.concept')} text={s.concept} />
-          <Section title={t('exercises.explanation.headers.method')} text={methodText} />
-          <Section title={t('exercises.explanation.headers.example')} text={s.example} />
-          <Section title={t('exercises.explanation.headers.pitfall')} text={s.pitfall} />
-          <Section title={t('exercises.explanation.headers.check')} text={s.check} />
+          {orderedSteps ? (
+            <ExplanationCards steps={orderedSteps} miniPracticeContext={miniPracticeContext} />
+          ) : (
+            <>
+              <Section title={t('exercises.explanation.headers.concept')} text={s.concept} />
+              <Section title={t('exercises.explanation.headers.method')} text={methodText} />
+              <Section title={t('exercises.explanation.headers.example')} text={s.example} />
+              <Section title={t('exercises.explanation.headers.pitfall')} text={s.pitfall} />
+              <Section title={t('exercises.explanation.headers.check')} text={s.check} />
+            </>
+          )}
           
           {/* Watch Video link - only show if we have routing info */}
           {canShowLessonLink && (

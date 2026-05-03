@@ -94,19 +94,9 @@ const GroupedProblemExplanationModal = ({
                 <h4 className="text-sm font-semibold text-foreground mb-2">
                   {language === 'fr' ? 'Idée à travailler' : 'Concept to practice'}
                 </h4>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{practice.concept}</p>
-              </section>
-
-              <section className="rounded-lg border border-blue-100 bg-blue-50 p-4">
-                <h4 className="text-sm font-semibold text-blue-950 mb-2">
-                  {language === 'fr' ? 'Exemple similaire' : 'Similar problem'}
-                </h4>
-                {practice.diagram && (
-                  <div className="mb-3">
-                    <GeometryDiagram diagram={practice.diagram} />
-                  </div>
-                )}
-                <p className="text-sm text-blue-950 whitespace-pre-wrap">{practice.similarProblem}</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {toChildFriendlyExplanationText(practice.concept)}
+                </p>
               </section>
 
               {practice.learningStyleSupport && (
@@ -114,26 +104,65 @@ const GroupedProblemExplanationModal = ({
                   <h4 className="text-sm font-semibold text-indigo-950 mb-2">
                     {toChildFriendlyExplanationText(practice.learningStyleSupport.title)}
                   </h4>
+                  {practice.diagram && (
+                    <div className="mb-3">
+                      <GeometryDiagram diagram={practice.diagram} />
+                    </div>
+                  )}
                   <p className="text-sm text-indigo-950 whitespace-pre-wrap">
                     {toChildFriendlyExplanationText(practice.learningStyleSupport.content)}
                   </p>
+                  {shouldShowInteractiveStepper && (
+                    <div className="mt-4 rounded-lg border border-indigo-100 bg-white/70 p-3">
+                      <h5 className="text-sm font-semibold text-indigo-950 mb-3">
+                        {language === 'fr' ? 'Pratique interactive' : 'Interactive practice'}
+                      </h5>
+                      <CompactMathStepper expression={practiceExpression} className="text-sm" />
+                    </div>
+                  )}
                 </section>
               )}
 
-              {shouldShowInteractiveStepper && (
-                <section className="rounded-lg border bg-card p-4 shadow-sm">
-                  <h4 className="text-sm font-semibold text-foreground mb-3">
-                    {language === 'fr' ? 'Pratique interactive' : 'Interactive practice'}
+              {!practice.learningStyleSupport && (
+                <section className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+                  <h4 className="text-sm font-semibold text-blue-950 mb-2">
+                    {language === 'fr' ? 'Exemple similaire' : 'Similar problem'}
                   </h4>
-                  <CompactMathStepper expression={practiceExpression} className="text-sm" />
+                  {practice.diagram && (
+                    <div className="mb-3">
+                      <GeometryDiagram diagram={practice.diagram} />
+                    </div>
+                  )}
+                  <p className="text-sm text-blue-950 whitespace-pre-wrap">
+                    {toChildFriendlyExplanationText(practice.similarProblem)}
+                  </p>
+                  {shouldShowInteractiveStepper && (
+                    <div className="mt-4 rounded-lg border border-blue-100 bg-white/70 p-3">
+                      <h5 className="text-sm font-semibold text-blue-950 mb-3">
+                        {language === 'fr' ? 'Pratique interactive' : 'Interactive practice'}
+                      </h5>
+                      <CompactMathStepper expression={practiceExpression} className="text-sm" />
+                    </div>
+                  )}
                 </section>
               )}
+
+              <section className="rounded-lg border border-green-200 bg-green-50 p-4">
+                <h4 className="text-sm font-semibold text-green-950 mb-2">
+                  {language === 'fr' ? 'Auto-vérification' : 'Self-check'}
+                </h4>
+                <p className="text-sm text-green-950 whitespace-pre-wrap">
+                  {toChildFriendlyExplanationText(practice.retryPrompt)}
+                </p>
+              </section>
 
               <section className="rounded-lg border bg-card p-4">
                 <h4 className="text-sm font-semibold text-foreground mb-2">
                   {language === 'fr' ? 'Méthode' : 'Method'}
                 </h4>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{practice.method}</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {toChildFriendlyExplanationText(practice.method)}
+                </p>
               </section>
 
               {practice.commonMistake && (
@@ -141,16 +170,22 @@ const GroupedProblemExplanationModal = ({
                   <h4 className="text-sm font-semibold text-amber-950 mb-2">
                     {language === 'fr' ? 'Attention' : 'Watch out'}
                   </h4>
-                  <p className="text-sm text-amber-950 whitespace-pre-wrap">{practice.commonMistake}</p>
+                  <p className="text-sm text-amber-950 whitespace-pre-wrap">
+                    {toChildFriendlyExplanationText(practice.commonMistake)}
+                  </p>
                 </section>
               )}
 
-              <section className="rounded-lg border border-green-200 bg-green-50 p-4">
-                <h4 className="text-sm font-semibold text-green-950 mb-2">
-                  {language === 'fr' ? 'À toi de réessayer' : 'Now try again'}
-                </h4>
-                <p className="text-sm text-green-950 whitespace-pre-wrap">{practice.retryPrompt}</p>
-              </section>
+              {practice.parentHelpHint && (
+                <section className="rounded-lg border bg-muted/40 p-4">
+                  <h4 className="text-sm font-semibold text-foreground mb-2">
+                    {language === 'fr' ? 'Conseil pour les parents' : 'Parent help hint'}
+                  </h4>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {toChildFriendlyExplanationText(practice.parentHelpHint)}
+                  </p>
+                </section>
+              )}
             </>
           )}
 
