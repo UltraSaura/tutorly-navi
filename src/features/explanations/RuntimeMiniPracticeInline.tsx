@@ -10,6 +10,7 @@ import {
   type RuntimeMiniPractice,
   type RuntimeMiniPracticeContext,
 } from "./runtimeMiniPractice";
+import { trackLearningInteraction } from "@/services/learningAnalytics";
 
 interface RuntimeMiniPracticeInlineProps {
   context?: RuntimeMiniPracticeContext;
@@ -29,6 +30,8 @@ export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMini
   const [orderedIds, setOrderedIds] = React.useState<string[]>([]);
   const [showHint, setShowHint] = React.useState(false);
   const [answerState, setAnswerState] = React.useState<AnswerState>("idle");
+  const attemptNumberRef = React.useRef(0);
+  const hintUsedRef = React.useRef(false);
 
   const resetInteraction = React.useCallback(() => {
     setSelectedChoice("");
@@ -36,6 +39,7 @@ export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMini
     setOrderedIds([]);
     setShowHint(false);
     setAnswerState("idle");
+    hintUsedRef.current = false;
   }, []);
 
   const loadPractice = React.useCallback(async () => {
@@ -47,6 +51,7 @@ export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMini
 
     setLoading(true);
     setFailed(false);
+    attemptNumberRef.current = 0;
     resetInteraction();
 
     const generated = await generateRuntimeMiniPractice({
@@ -57,6 +62,21 @@ export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMini
     setPractice(generated);
     setFailed(!generated);
     setLoading(false);
+
+    if (generated) {
+      trackLearningInteraction({
+        eventType: "runtime_mini_practice_generated",
+        learningStyleUsed: generated.learningStyleUsed,
+        supportType: generated.learningStyleUsed,
+        practiceStyle: generated.learningStyleUsed,
+        subject: context.subject,
+        concept: generated.concept,
+        metadata: {
+          questionType: generated.questionType,
+          hasVisualText: Boolean(generated.visualText),
+        },
+      });
+    }
   }, [context, resetInteraction, selectedModelId]);
 
   React.useEffect(() => {
@@ -75,11 +95,73 @@ export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMini
     const hasAnswer = Array.isArray(answer) ? answer.length > 0 : answer.trim().length > 0;
     if (!hasAnswer) return;
 
-    setAnswerState(isMiniPracticeAnswerCorrect(practice, answer) ? "correct" : "incorrect");
+    const wasCorrect = isMiniPracticeAnswerCorrect(practice, answer);
+    const attemptNumber = attemptNumberRef.current + 1;
+    attemptNumberRef.current = attemptNumber;
+    setAnswerState(wasCorrect ? "correct" : "incorrect");
+
+    trackLearningInteraction({
+      eventType: "runtime_mini_practice_answered",
+      learningStyleUsed: practice.learningStyleUsed,
+      supportType: practice.learningStyleUsed,
+      practiceStyle: practice.learningStyleUsed,
+      subject: context?.subject,
+      concept: practice.concept,
+      questionId: practice.id,
+      questionKind: practice.questionType,
+      wasCorrect,
+      attemptNumber,
+      hintUsed: hintUsedRef.current,
+      metadata: {
+        hasVisualText: Boolean(practice.visualText),
+      },
+    });
   };
 
   const handleTryAgain = () => {
+    trackLearningInteraction({
+      eventType: "runtime_mini_practice_try_again_clicked",
+      learningStyleUsed: practice?.learningStyleUsed || context?.learningStyle,
+      supportType: practice?.learningStyleUsed || context?.learningStyle,
+      practiceStyle: practice?.learningStyleUsed || context?.learningStyle,
+      subject: context?.subject,
+      concept: practice?.concept,
+      questionId: practice?.id,
+      questionKind: practice?.questionType,
+    });
     resetInteraction();
+  };
+
+  const handleHintClick = () => {
+    const nextShowHint = !showHint;
+    setShowHint(nextShowHint);
+    if (nextShowHint) {
+      hintUsedRef.current = true;
+      trackLearningInteraction({
+        eventType: "runtime_mini_practice_hint_clicked",
+        learningStyleUsed: practice?.learningStyleUsed || context?.learningStyle,
+        supportType: practice?.learningStyleUsed || context?.learningStyle,
+        practiceStyle: practice?.learningStyleUsed || context?.learningStyle,
+        subject: context?.subject,
+        concept: practice?.concept,
+        questionId: practice?.id,
+        questionKind: practice?.questionType,
+      });
+    }
+  };
+
+  const handleTryAnother = () => {
+    trackLearningInteraction({
+      eventType: "runtime_mini_practice_try_another_clicked",
+      learningStyleUsed: practice?.learningStyleUsed || context?.learningStyle,
+      supportType: practice?.learningStyleUsed || context?.learningStyle,
+      practiceStyle: practice?.learningStyleUsed || context?.learningStyle,
+      subject: context?.subject,
+      concept: practice?.concept,
+      questionId: practice?.id,
+      questionKind: practice?.questionType,
+    });
+    loadPractice();
   };
 
   const handleOrderPick = (id: string) => {
@@ -209,7 +291,7 @@ export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMini
         <Button size="sm" onClick={handleCheck} disabled={!canCheck}>
           {t("exercises.explanation.mini_practice.check")}
         </Button>
-        <Button size="sm" variant="outline" onClick={() => setShowHint(value => !value)}>
+        <Button size="sm" variant="outline" onClick={handleHintClick}>
           <HelpCircle className="h-4 w-4" />
           {t("exercises.explanation.mini_practice.hint")}
         </Button>
@@ -218,7 +300,7 @@ export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMini
             {t("exercises.explanation.mini_practice.try_again")}
           </Button>
         )}
-        <Button size="sm" variant="ghost" onClick={loadPractice}>
+        <Button size="sm" variant="ghost" onClick={handleTryAnother}>
           <RefreshCcw className="h-4 w-4" />
           {t("exercises.explanation.mini_practice.try_another")}
         </Button>

@@ -12,6 +12,7 @@ import {
   normalizeLearningStyle,
   type LearningStyle,
 } from '@/types/learning-style';
+import { trackLearningInteraction } from '@/services/learningAnalytics';
 
 type LearningPreferenceOption = {
   value: LearningStyle;
@@ -53,7 +54,7 @@ export function LearningPreferenceSelector() {
   }, [savedStyle]);
 
   const updatePreference = useMutation({
-    mutationFn: async (style: LearningStyle) => {
+    mutationFn: async ({ style, oldStyle }: { style: LearningStyle; oldStyle: LearningStyle }) => {
       if (!user?.id) throw new Error('Not authenticated');
 
       const { error } = await supabase
@@ -62,12 +63,24 @@ export function LearningPreferenceSelector() {
         .eq('id', user.id);
 
       if (error) throw error;
-      return style;
+      return { style, oldStyle };
     },
-    onSuccess: (style) => {
+    onSuccess: ({ style, oldStyle }) => {
       setSelectedStyle(style);
       queryClient.invalidateQueries({ queryKey: ['learning-preference', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-context', user?.id] });
+      if (oldStyle !== style) {
+        trackLearningInteraction({
+          studentId: user?.id,
+          eventType: 'learning_preference_changed',
+          learningStyleUsed: style,
+          supportType: style,
+          metadata: {
+            oldLearningStyle: oldStyle,
+            newLearningStyle: style,
+          },
+        });
+      }
       toast({
         title: 'Learning preference saved',
         description: `${LEARNING_STYLE_COPY[style].label} is now selected.`,
@@ -83,8 +96,9 @@ export function LearningPreferenceSelector() {
   });
 
   const handleSelect = (style: LearningStyle) => {
+    const oldStyle = normalizeLearningStyle(savedStyle ?? selectedStyle);
     setSelectedStyle(style);
-    updatePreference.mutate(style);
+    updatePreference.mutate({ style, oldStyle });
   };
 
   return (

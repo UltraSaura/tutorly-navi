@@ -10,6 +10,7 @@ import { extractExpressionFromText } from '@/utils/mathStepper/parser';
 import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
 import { GeometryDiagram } from './GeometryDiagram';
 import { toChildFriendlyExplanationText } from '@/features/explanations/childFriendlyText';
+import { trackLearningInteraction } from '@/services/learningAnalytics';
 
 interface GroupedProblemExplanationModalProps {
   problem: ProblemSubmission | null;
@@ -52,9 +53,10 @@ const GroupedProblemExplanationModal = ({
 }: GroupedProblemExplanationModalProps) => {
   const { language } = useLanguage();
   const { userContext } = useUserContext();
-  if (!problem) return null;
+  const trackedOpenKeyRef = React.useRef<string | null>(null);
+  const trackedSupportKeyRef = React.useRef<string | null>(null);
 
-  const fallbackRows = selectedEvaluatedRows(problem, rowId);
+  const fallbackRows = problem ? selectedEvaluatedRows(problem, rowId) : [];
   const practiceExpression = practice?.similarProblem
     ? extractExpressionFromText(practice.similarProblem)
     : null;
@@ -65,6 +67,46 @@ const GroupedProblemExplanationModal = ({
     isUnder11YearsOld(userContext.student_level) &&
     isPureArithmeticProblem(practice.similarProblem)
   );
+
+  React.useEffect(() => {
+    if (!problem || !practice) return;
+    const key = `${problem.submissionId || problem.id}:${rowId || 'selected'}`;
+    if (trackedOpenKeyRef.current === key) return;
+    trackedOpenKeyRef.current = key;
+
+    trackLearningInteraction({
+      eventType: 'grouped_retry_opened',
+      learningStyleUsed: userContext?.learning_style,
+      supportType: practice.learningStyleSupport?.style || userContext?.learning_style,
+      subject: 'Math',
+      concept: practice.concept,
+      metadata: {
+        problemType: problem.type,
+        hasLearningStyleSupport: Boolean(practice.learningStyleSupport),
+      },
+    });
+  }, [practice, problem, rowId, userContext?.learning_style]);
+
+  React.useEffect(() => {
+    if (!problem || !practice?.learningStyleSupport) return;
+    const key = `${problem.submissionId || problem.id}:${rowId || 'selected'}:${practice.learningStyleSupport.title}`;
+    if (trackedSupportKeyRef.current === key) return;
+    trackedSupportKeyRef.current = key;
+
+    trackLearningInteraction({
+      eventType: 'grouped_learning_style_support_viewed',
+      learningStyleUsed: practice.learningStyleSupport.style,
+      supportType: practice.learningStyleSupport.style,
+      subject: 'Math',
+      concept: practice.concept,
+      metadata: {
+        supportTitle: practice.learningStyleSupport.title,
+        problemType: problem.type,
+      },
+    });
+  }, [practice?.learningStyleSupport, practice?.concept, problem, rowId]);
+
+  if (!problem) return null;
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">

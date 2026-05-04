@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { toChildFriendlyExplanationText } from './childFriendlyText';
 import ExplanationCards from './ExplanationCards';
+import { trackLearningInteraction } from '@/services/learningAnalytics';
 
 function Section({ title, text }: { title: string; text: string }) {
   const resolveText = useResolveText();
@@ -61,6 +62,9 @@ export function TwoCards({
   const [isGuardian, setIsGuardian] = useState(false); // NEW
   const { userContext } = useUserContext(); // NEW: Get user context for grade level
   const { t, language } = useLanguage();
+  const trackedExplanationKeyRef = React.useRef<string | null>(null);
+  const trackedSupportKeyRef = React.useRef<string | null>(null);
+  const trackedCheckKeyRef = React.useRef<string | null>(null);
   
   // Fetch topic routing info if we have topicId but not slugs
   const { data: topicData, isLoading: topicDataLoading } = useQuery({
@@ -179,6 +183,69 @@ export function TwoCards({
     language,
     subjectSlug,
   ]);
+
+  React.useEffect(() => {
+    if (!s.exercise?.trim()) return;
+    const key = `${s.exercise}:${orderedSteps?.length || 'legacy'}`;
+    if (trackedExplanationKeyRef.current === key) return;
+    trackedExplanationKeyRef.current = key;
+
+    trackLearningInteraction({
+      eventType: 'explanation_opened',
+      learningStyleUsed: userContext?.learning_style,
+      supportType: userContext?.learning_style,
+      subject: subjectSlug || 'Math',
+      topicId,
+      metadata: {
+        hasSteps: Boolean(orderedSteps),
+        adaptiveExplanationVersion: (s as any).adaptiveExplanationVersion,
+      },
+    });
+  }, [orderedSteps, s, subjectSlug, topicId, userContext?.learning_style]);
+
+  React.useEffect(() => {
+    if (!orderedSteps?.length || !s.exercise?.trim()) return;
+    const checkIndex = orderedSteps.findIndex(step => step.kind === 'check');
+    const supportStep = orderedSteps.find((step, index) =>
+      step.kind === 'strategy' && (checkIndex === -1 || index < checkIndex)
+    );
+    if (!supportStep) return;
+
+    const key = `${s.exercise}:${supportStep.title}:${supportStep.kind}`;
+    if (trackedSupportKeyRef.current === key) return;
+    trackedSupportKeyRef.current = key;
+
+    trackLearningInteraction({
+      eventType: 'explanation_style_support_viewed',
+      learningStyleUsed: userContext?.learning_style,
+      supportType: userContext?.learning_style,
+      subject: subjectSlug || 'Math',
+      topicId,
+      concept: orderedSteps.find(step => step.kind === 'concept')?.title,
+      metadata: {
+        supportTitle: supportStep.title,
+      },
+    });
+  }, [orderedSteps, s.exercise, subjectSlug, topicId, userContext?.learning_style]);
+
+  React.useEffect(() => {
+    if (!orderedSteps?.some(step => step.kind === 'check') || !s.exercise?.trim()) return;
+    const key = `${s.exercise}:check`;
+    if (trackedCheckKeyRef.current === key) return;
+    trackedCheckKeyRef.current = key;
+
+    trackLearningInteraction({
+      eventType: 'explanation_check_started',
+      learningStyleUsed: userContext?.learning_style,
+      supportType: userContext?.learning_style,
+      practiceStyle: userContext?.learning_style,
+      subject: subjectSlug || 'Math',
+      topicId,
+      metadata: {
+        runtimeMiniPracticeEnabled: true,
+      },
+    });
+  }, [orderedSteps, s.exercise, subjectSlug, topicId, userContext?.learning_style]);
 
   // NEW: Extract math expression from example for InteractiveMathStepper
   let exampleExpression = stepTextForExpression ? extractExpressionFromText(stepTextForExpression) : null;

@@ -14,6 +14,7 @@ import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { useUserContext } from '@/hooks/useUserContext';
 import { normalizeLearningStyle } from '@/types/learning-style';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { trackLearningInteraction } from '@/services/learningAnalytics';
 
 interface QuizOverlayProps {
   bank: QuizBank;
@@ -63,6 +64,22 @@ function formatQuizAnswerForExplanation(question: Question, answer: any): string
   return formatChoiceValue(String(answer));
 }
 
+function getVisualSubtype(question: Question): string | undefined {
+  return question.kind === 'visual' ? (question.visual as any)?.subtype : undefined;
+}
+
+function getQuizTopicId(bank: QuizBank): string | undefined {
+  return (bank as any).topicId || (bank as any).topic_id;
+}
+
+function getQuizObjectiveId(question: Question, bank: QuizBank): string | undefined {
+  return (question as any).objectiveId || (question as any).objective_id || (bank as any).objectiveId || (bank as any).objective_id;
+}
+
+function getQuestionDifficulty(question: Question): string | undefined {
+  return (question as any).difficulty;
+}
+
 export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -75,6 +92,16 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
   const { userContext } = useUserContext();
   const { language } = useLanguage();
   const teaching = useTwoCardTeaching();
+  const quizStartedRef = React.useRef(false);
+  const viewedQuestionsRef = React.useRef<Set<string>>(new Set());
+  const questionViewStartedAtRef = React.useRef<number>(Date.now());
+  const questionAttemptCountsRef = React.useRef<Record<string, number>>({});
+  const remediationUsedRef = React.useRef(false);
+  const remediationQuestionRef = React.useRef<{
+    questionId: string;
+    questionKind: string;
+    learningStyleUsed: string;
+  } | null>(null);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -93,6 +120,42 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
 
   const currentQuestion = questions[currentIndex];
 
+  useEffect(() => {
+    if (quizStartedRef.current) return;
+    quizStartedRef.current = true;
+    trackLearningInteraction({
+      studentId: userId,
+      eventType: 'quiz_started',
+      learningStyleUsed: userContext?.learning_style,
+      quizId: bank.quizBankId,
+      topicId: getQuizTopicId(bank),
+      metadata: {
+        questionCount: questions.length,
+        bankTitle: bank.title,
+      },
+    });
+  }, [bank, questions.length, userContext?.learning_style, userId]);
+
+  useEffect(() => {
+    if (!currentQuestion) return;
+    questionViewStartedAtRef.current = Date.now();
+    if (viewedQuestionsRef.current.has(currentQuestion.id)) return;
+    viewedQuestionsRef.current.add(currentQuestion.id);
+
+    trackLearningInteraction({
+      studentId: userId,
+      eventType: 'quiz_question_viewed',
+      learningStyleUsed: userContext?.learning_style,
+      quizId: bank.quizBankId,
+      questionId: currentQuestion.id,
+      questionKind: currentQuestion.kind,
+      visualSubtype: getVisualSubtype(currentQuestion),
+      difficulty: getQuestionDifficulty(currentQuestion),
+      topicId: getQuizTopicId(bank),
+      objectiveId: getQuizObjectiveId(currentQuestion, bank),
+    });
+  }, [bank, currentQuestion, userContext?.learning_style, userId]);
+
   const onAnswer = (qid: string, value: any) => {
     setAnswers(a => ({ ...a, [qid]: value }));
   };
@@ -100,6 +163,72 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
   const handleQuestionSubmit = () => {
     if (!currentQuestion) return;
     const correct = evaluateQuestion(currentQuestion, answers[currentQuestion.id]);
+    const attemptNumber = (questionAttemptCountsRef.current[currentQuestion.id] || 0) + 1;
+    questionAttemptCountsRef.current[currentQuestion.id] = attemptNumber;
+    const timeToAnswerMs = Date.now() - questionViewStartedAtRef.current;
+
+    trackLearningInteraction({
+      studentId: userId,
+      eventType: 'quiz_answer_submitted',
+      learningStyleUsed: userContext?.learning_style,
+      quizId: bank.quizBankId,
+      questionId: currentQuestion.id,
+      questionKind: currentQuestion.kind,
+      visualSubtype: getVisualSubtype(currentQuestion),
+      difficulty: getQuestionDifficulty(currentQuestion),
+      topicId: getQuizTopicId(bank),
+      objectiveId: getQuizObjectiveId(currentQuestion, bank),
+      wasCorrect: correct,
+      attemptNumber,
+      timeToAnswerMs,
+      hintUsed: false,
+    });
+
+    if (!correct) {
+      trackLearningInteraction({
+        studentId: userId,
+        eventType: 'quiz_wrong_answer',
+        learningStyleUsed: userContext?.learning_style,
+        quizId: bank.quizBankId,
+        questionId: currentQuestion.id,
+        questionKind: currentQuestion.kind,
+        visualSubtype: getVisualSubtype(currentQuestion),
+        difficulty: getQuestionDifficulty(currentQuestion),
+        topicId: getQuizTopicId(bank),
+        objectiveId: getQuizObjectiveId(currentQuestion, bank),
+        wasCorrect: false,
+        attemptNumber,
+        timeToAnswerMs,
+        hintUsed: false,
+      });
+    }
+
+    if (remediationUsedRef.current && remediationQuestionRef.current?.questionId !== currentQuestion.id) {
+      trackLearningInteraction({
+        studentId: userId,
+        eventType: 'quiz_answer_after_remediation',
+        learningStyleUsed: userContext?.learning_style,
+        supportType: remediationQuestionRef.current?.learningStyleUsed,
+        quizId: bank.quizBankId,
+        questionId: currentQuestion.id,
+        questionKind: currentQuestion.kind,
+        visualSubtype: getVisualSubtype(currentQuestion),
+        difficulty: getQuestionDifficulty(currentQuestion),
+        topicId: getQuizTopicId(bank),
+        objectiveId: getQuizObjectiveId(currentQuestion, bank),
+        wasCorrect: correct,
+        attemptNumber,
+        timeToAnswerMs,
+        metadata: {
+          originalQuestionKind: remediationQuestionRef.current?.questionKind,
+          remediationStyle: remediationQuestionRef.current?.learningStyleUsed,
+          wasNextAnswerCorrect: correct,
+        },
+      });
+      remediationUsedRef.current = false;
+      remediationQuestionRef.current = null;
+    }
+
     setQuestionResult(correct);
     setQuestionSubmitted(true);
   };
@@ -109,6 +238,22 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
 
     const learningStyle = normalizeLearningStyle(userContext?.learning_style);
     const responseLanguage = /^fr/i.test(language) ? 'French' : 'English';
+    trackLearningInteraction({
+      studentId: userId,
+      eventType: 'quiz_remediation_clicked',
+      learningStyleUsed: learningStyle,
+      supportType: learningStyle,
+      quizId: bank.quizBankId,
+      questionId: currentQuestion.id,
+      questionKind: currentQuestion.kind,
+      visualSubtype: getVisualSubtype(currentQuestion),
+      difficulty: getQuestionDifficulty(currentQuestion),
+      topicId: getQuizTopicId(bank),
+      objectiveId: getQuizObjectiveId(currentQuestion, bank),
+      metadata: {
+        originalQuestionKind: currentQuestion.kind,
+      },
+    });
 
     await teaching.openFor(
       {
@@ -122,7 +267,30 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
         learning_style: learningStyle,
       }
     );
-  }, [answers, currentQuestion, language, teaching, userContext?.learning_style, userContext?.student_level]);
+    remediationUsedRef.current = true;
+    remediationQuestionRef.current = {
+      questionId: currentQuestion.id,
+      questionKind: currentQuestion.kind,
+      learningStyleUsed: learningStyle,
+    };
+    trackLearningInteraction({
+      studentId: userId,
+      eventType: 'quiz_remediation_opened',
+      learningStyleUsed: learningStyle,
+      supportType: learningStyle,
+      quizId: bank.quizBankId,
+      questionId: currentQuestion.id,
+      questionKind: currentQuestion.kind,
+      visualSubtype: getVisualSubtype(currentQuestion),
+      difficulty: getQuestionDifficulty(currentQuestion),
+      topicId: getQuizTopicId(bank),
+      objectiveId: getQuizObjectiveId(currentQuestion, bank),
+      metadata: {
+        originalQuestionKind: currentQuestion.kind,
+        remediationStyle: learningStyle,
+      },
+    });
+  }, [answers, bank, currentQuestion, language, teaching, userContext?.learning_style, userContext?.student_level, userId]);
 
   const handleNext = async () => {
     if (currentIndex < questions.length - 1) {
@@ -146,6 +314,20 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
         }
       }
       setSubmitted(true);
+      trackLearningInteraction({
+        studentId: userId,
+        eventType: 'quiz_completed',
+        learningStyleUsed: userContext?.learning_style,
+        quizId: bank.quizBankId,
+        topicId: getQuizTopicId(bank),
+        wasCorrect: g.score === g.maxScore,
+        metadata: {
+          score: g.score,
+          total: g.maxScore,
+          percent: g.maxScore ? Math.round((100 * g.score) / g.maxScore) : 0,
+          tookSeconds: Math.round((Date.now() - startTs) / 1000),
+        },
+      });
     }
   };
 
