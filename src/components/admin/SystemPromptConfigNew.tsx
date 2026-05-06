@@ -11,19 +11,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { NewTemplateDialog } from './prompts/NewTemplateDialog';
 import { EditTemplateDialog } from './prompts/EditTemplateDialog';
 import { ViewTemplateDialog } from './prompts/ViewTemplateDialog';
-import {
-  DEFAULT_GROUPED_PROBLEM_EXTRACTION_PROMPT,
-  DEFAULT_GROUPED_PROBLEM_GRADING_PROMPT,
-  DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT,
-} from '@/services/problemSubmissionService';
-import {
-  getPromptTemplateDisplayName,
-  getPromptUsageLabel,
-  PromptUsageType,
-} from './prompts/promptUsageLabels';
+import { DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT } from '@/services/problemSubmissionService';
 
-const GROUPED_PROBLEM_EXTRACTION_USAGE_TYPE: PromptUsageType = 'grouped_problem_extraction';
-const GROUPED_PROBLEM_GRADING_USAGE_TYPE: PromptUsageType = 'grouped_problem_grading';
+type PromptUsageType = NewPromptTemplate['usage_type'];
+
 const GROUPED_RETRY_PRACTICE_USAGE_TYPE: PromptUsageType = 'grouped_retry_practice';
 
 const createBlankTemplate = (usageType: PromptUsageType): NewPromptTemplate => ({
@@ -39,37 +30,13 @@ const createBlankTemplate = (usageType: PromptUsageType): NewPromptTemplate => (
 });
 
 const createDefaultGroupedRetryPracticeTemplate = (): NewPromptTemplate => ({
-  name: 'Problem Explanation',
+  name: 'Grouped Retry Practice Explanation',
   subject: 'Math',
   description: 'Creates TwoCard-style teaching explanations for one selected row in grouped homework problems.',
   prompt_content: DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT,
   tags: ['grouped-problem', 'twocard', 'retry-practice'],
   is_active: true,
   usage_type: GROUPED_RETRY_PRACTICE_USAGE_TYPE,
-  auto_activate: true,
-  priority: 100
-});
-
-const createDefaultGroupedProblemExtractionTemplate = (): NewPromptTemplate => ({
-  name: 'Problem Extraction',
-  subject: 'Math',
-  description: 'Extracts uploaded or typed grouped math problems into structured rows before the student answers.',
-  prompt_content: DEFAULT_GROUPED_PROBLEM_EXTRACTION_PROMPT,
-  tags: ['grouped-problem', 'extraction', 'structure'],
-  is_active: true,
-  usage_type: GROUPED_PROBLEM_EXTRACTION_USAGE_TYPE,
-  auto_activate: true,
-  priority: 100
-});
-
-const createDefaultGroupedProblemGradingTemplate = (): NewPromptTemplate => ({
-  name: 'Problem Grading',
-  subject: 'Math',
-  description: 'Grades grouped choice and grouped multipart math problem rows after the student submits answers.',
-  prompt_content: DEFAULT_GROUPED_PROBLEM_GRADING_PROMPT,
-  tags: ['grouped-problem', 'grading', 'multipart'],
-  is_active: true,
-  usage_type: GROUPED_PROBLEM_GRADING_USAGE_TYPE,
   auto_activate: true,
   priority: 100
 });
@@ -116,13 +83,11 @@ const SystemPromptConfigNew = () => {
     );
   }
 
-  const usageTypes: Array<{ value: PromptUsageType; label: string; description: string }> = [
+  const usageTypes = [
     { value: 'chat', label: 'Chat Assistant', description: 'General assistant with cross-subject support, including math specialist' },
     { value: 'grading', label: 'Exercise Grader', description: 'Prompts for grading student answers' },
     { value: 'explanation', label: 'Explanation System', description: 'Prompts for generating step-by-step explanations' },
-    { value: 'grouped_problem_extraction', label: getPromptUsageLabel('grouped_problem_extraction'), description: 'Prompts for extracting grouped problems into editable structured rows' },
-    { value: 'grouped_problem_grading', label: getPromptUsageLabel('grouped_problem_grading'), description: 'Prompts for grading grouped choice and multipart problem answers' },
-    { value: 'grouped_retry_practice', label: getPromptUsageLabel('grouped_retry_practice'), description: 'Prompts for grouped problem TwoCard-style retry explanations' }
+    { value: 'grouped_retry_practice', label: 'Grouped Retry Practice', description: 'Prompts for grouped problem TwoCard-style retry explanations' }
   ];
 
   const selectedPromptUsageType = selectedUsageType as PromptUsageType;
@@ -164,12 +129,11 @@ const SystemPromptConfigNew = () => {
   };
 
   const prepareNewTemplate = (usageType: PromptUsageType = selectedPromptUsageType) => {
-    const defaultTemplateByUsageType: Partial<Record<PromptUsageType, () => NewPromptTemplate>> = {
-      [GROUPED_PROBLEM_EXTRACTION_USAGE_TYPE]: createDefaultGroupedProblemExtractionTemplate,
-      [GROUPED_PROBLEM_GRADING_USAGE_TYPE]: createDefaultGroupedProblemGradingTemplate,
-      [GROUPED_RETRY_PRACTICE_USAGE_TYPE]: createDefaultGroupedRetryPracticeTemplate,
-    };
-    setNewTemplate(defaultTemplateByUsageType[usageType]?.() || createBlankTemplate(usageType));
+    setNewTemplate(
+      usageType === GROUPED_RETRY_PRACTICE_USAGE_TYPE
+        ? createDefaultGroupedRetryPracticeTemplate()
+        : createBlankTemplate(usageType)
+    );
     setNewTag('');
   };
 
@@ -213,7 +177,7 @@ const SystemPromptConfigNew = () => {
       </div>
 
       <Tabs value={selectedUsageType} onValueChange={setSelectedUsageType}>
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-4">
           {usageTypes.map((type) => (
             <TabsTrigger key={type.value} value={type.value} className="text-xs">
               {type.label}
@@ -229,7 +193,7 @@ const SystemPromptConfigNew = () => {
                 {type.description}
                 {activeTemplate && (
                   <span className="ml-2 font-medium">
-                    Active: {getPromptTemplateDisplayName(activeTemplate)}
+                    Active: {activeTemplate.name}
                   </span>
                 )}
               </AlertDescription>
@@ -242,7 +206,7 @@ const SystemPromptConfigNew = () => {
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <CardTitle className="text-lg">{getPromptTemplateDisplayName(template)}</CardTitle>
+                          <CardTitle className="text-lg">{template.name}</CardTitle>
                           {template.is_active && (
                             <Badge variant="default">Active</Badge>
                           )}
@@ -311,11 +275,11 @@ const SystemPromptConfigNew = () => {
               {filteredTemplates.length === 0 && (
                 <Card>
                   <CardContent className="p-6 text-center">
-                    {[GROUPED_PROBLEM_EXTRACTION_USAGE_TYPE, GROUPED_PROBLEM_GRADING_USAGE_TYPE, GROUPED_RETRY_PRACTICE_USAGE_TYPE].includes(type.value as PromptUsageType) ? (
+                    {type.value === GROUPED_RETRY_PRACTICE_USAGE_TYPE ? (
                       <div className="mx-auto max-w-xl space-y-2">
-                        <p className="font-medium">No Supabase prompt is installed for {type.label.toLowerCase()}.</p>
+                        <p className="font-medium">No Supabase prompt is installed for grouped retry practice.</p>
                         <p className="text-sm text-muted-foreground">
-                          Apply the latest Supabase migration, or create the default editable template here so newly generated grouped problem requests can use it.
+                          Apply the latest Supabase migration, or create the default editable template here so newly generated grouped explanations can use it.
                         </p>
                       </div>
                     ) : (

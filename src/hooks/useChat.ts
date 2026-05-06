@@ -3,13 +3,14 @@ import { useState, useMemo } from 'react';
 import { Message } from '@/types/chat';
 import { useAdmin } from '@/context/AdminContext';
 import { handleFileUpload, handlePhotoUpload } from '@/utils/chatFileHandlers';
-import { sendUnifiedMessage, generateUnifiedFallback } from '@/services/unifiedChatService';
+import { sendUnifiedMessage, generateUnifiedFallback, type UnifiedChatResponse } from '@/services/unifiedChatService';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useUserContext } from './useUserContext';
 import { classifyProblemSubmission } from '@/utils/problemClassifier';
 import { extractProblemSubmission, gradeGroupedProblem } from '@/services/problemSubmissionService';
-import { GroupedAnswerPayload, ProblemSubmission } from '@/types/chat';
+import { Exercise, GroupedAnswerPayload, ProblemSubmission } from '@/types/chat';
 import { applyGroupedAnswers } from '@/utils/problemSubmission';
+import { buildGradedWorkFromGroupedProblem, saveGradedWorksToHistory } from '@/services/gradedWorkHistory';
 
 export interface CalculationState {
   isProcessing: boolean;
@@ -33,7 +34,7 @@ export const useChat = () => {
   
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [lastResponse, setLastResponse] = useState<any>(null);
+  const [lastResponse, setLastResponse] = useState<UnifiedChatResponse | null>(null);
 
   // Add calculation state
   const [calculationState, setCalculationState] = useState<CalculationState>({
@@ -283,12 +284,17 @@ export const useChat = () => {
     });
 
     updateProblemSubmission(problemId, () => evaluated);
+
+    const gradedWorks = buildGradedWorkFromGroupedProblem(evaluated);
+    if (gradedWorks.length > 0) {
+      await saveGradedWorksToHistory(gradedWorks);
+    }
   };
   
   // Handle document upload with exercise processor and subject ID
   const handleDocumentUpload = (
     file: File, 
-    addExercises?: (exercises: any[]) => Promise<void>,
+    addExercises?: (exercises: Exercise[]) => Promise<void>,
     subjectId?: string
   ) => {
     handleFileUpload(
@@ -307,7 +313,7 @@ export const useChat = () => {
   // Handle image upload with exercise processor and subject ID
   const handleImageUpload = (
     file: File, 
-    addExercises?: (exercises: any[]) => Promise<void>,
+    addExercises?: (exercises: Exercise[]) => Promise<void>,
     subjectId?: string
   ) => {
     handlePhotoUpload(

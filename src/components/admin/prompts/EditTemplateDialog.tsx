@@ -9,7 +9,6 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Trash2 } from 'lucide-react';
 import { PromptTemplate } from '@/types/admin';
-import { getPromptTemplateDisplayName, getPromptUsageLabel, PROMPT_USAGE_TYPES, PromptUsageType } from './promptUsageLabels';
 
 interface EditTemplateDialogProps {
   open: boolean;
@@ -73,7 +72,7 @@ export const EditTemplateDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Template: {getPromptTemplateDisplayName(template)}</DialogTitle>
+          <DialogTitle>Edit Template: {template.name}</DialogTitle>
           <DialogDescription>
             Modify the prompt template settings and content.
           </DialogDescription>
@@ -133,7 +132,7 @@ export const EditTemplateDialog = ({
             </Label>
             <Select 
               value={editedTemplate.usage_type || ''} 
-              onValueChange={(value: PromptUsageType) =>
+              onValueChange={(value: 'chat' | 'grading' | 'explanation' | 'math_enhanced' | 'grouped_retry_practice') => 
                 setEditedTemplate({ ...editedTemplate, usage_type: value })
               }
             >
@@ -141,9 +140,11 @@ export const EditTemplateDialog = ({
                 <SelectValue placeholder="Select template type" />
               </SelectTrigger>
               <SelectContent>
-                {PROMPT_USAGE_TYPES.map((usageType) => (
-                  <SelectItem key={usageType} value={usageType}>{getPromptUsageLabel(usageType)}</SelectItem>
-                ))}
+                <SelectItem value="chat">Chat</SelectItem>
+                <SelectItem value="grading">Grading</SelectItem>
+                <SelectItem value="explanation">Explanation</SelectItem>
+                <SelectItem value="math_enhanced">Math Enhanced</SelectItem>
+                <SelectItem value="grouped_retry_practice">Grouped Retry Practice</SelectItem>
               </SelectContent>
             </Select>
           </div>

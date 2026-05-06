@@ -1,43 +1,70 @@
 import { Card } from '@/components/ui/card';
-import { CheckCircle, Clock, XCircle } from 'lucide-react';
+import { BookOpenCheck, CheckCircle, ListChecks, Trophy } from 'lucide-react';
 
-export function KPICards() {
-  // Mock data for now - in Phase 4, this would come from real attendance tracking
-  const attendance = {
-    present: 18,
-    late: 2,
-    absent: 1,
-  };
+interface KPICardsProps {
+  exercisesCompleted: number;
+  correctExercises: number;
+  totalAttempts: number;
+  successRate: number;
+  quizzesCompleted?: number;
+  bestQuizScore?: number | null;
+}
 
-  const total = attendance.present + attendance.late + attendance.absent;
-  const attendanceRate = Math.round((attendance.present / total) * 100);
-
+export function KPICards({
+  exercisesCompleted,
+  correctExercises,
+  totalAttempts,
+  successRate,
+  quizzesCompleted = 0,
+  bestQuizScore = null,
+}: KPICardsProps) {
   const kpis = [
     {
-      label: 'Attendance',
-      value: `${attendanceRate}%`,
+      label: 'Exercises',
+      value: exercisesCompleted,
+      icon: BookOpenCheck,
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-500/10',
+    },
+    {
+      label: 'Correct',
+      value: correctExercises,
       icon: CheckCircle,
       color: 'text-green-600 dark:text-green-400',
       bgColor: 'bg-green-500/10',
     },
     {
-      label: 'Late',
-      value: attendance.late,
-      icon: Clock,
+      label: 'Attempts',
+      value: totalAttempts,
+      icon: ListChecks,
       color: 'text-amber-600 dark:text-amber-400',
       bgColor: 'bg-amber-500/10',
     },
     {
-      label: 'Absent',
-      value: attendance.absent,
-      icon: XCircle,
-      color: 'text-red-600 dark:text-red-400',
-      bgColor: 'bg-red-500/10',
+      label: 'Success',
+      value: `${Math.round(successRate)}%`,
+      icon: Trophy,
+      color: 'text-purple-600 dark:text-purple-400',
+      bgColor: 'bg-purple-500/10',
+    },
+    {
+      label: 'Quizzes',
+      value: quizzesCompleted,
+      icon: ListChecks,
+      color: 'text-cyan-600 dark:text-cyan-400',
+      bgColor: 'bg-cyan-500/10',
+    },
+    {
+      label: 'Best Quiz',
+      value: bestQuizScore === null ? 'N/A' : `${Math.round(bestQuizScore)}%`,
+      icon: Trophy,
+      color: 'text-rose-600 dark:text-rose-400',
+      bgColor: 'bg-rose-500/10',
     },
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-2 md:gap-4">
+    <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4">
       {kpis.map((kpi) => (
         <Card key={kpi.label} className="p-2 md:p-4">
           <div className="flex items-center gap-2 md:gap-3">
