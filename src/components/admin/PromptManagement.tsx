@@ -45,8 +45,8 @@ const PromptManagement = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              {['chat', 'grading'].map((type) => {
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              {['chat', 'grading', 'explanation', 'grouped_retry_practice'].map((type) => {
                 const typeTemplates = templates.filter(t => t.usage_type === type);
                 const activeCount = typeTemplates.filter(t => t.is_active).length;
                 

@@ -18,6 +18,8 @@ import { FileText, Image, Camera, Upload } from 'lucide-react';
 import CalculationStatus from './chat/CalculationStatus';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { classifyProblemSubmission } from '@/utils/problemClassifier';
+import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
 
 const ChatInterface = () => {
   const { t, language } = useLanguage();
@@ -35,6 +37,7 @@ const ChatInterface = () => {
     clearMessages,
     removeMessage,
     handleSendMessage,
+    submitGroupedProblemAnswers,
     handleFileUpload,
     handlePhotoUpload,
     filteredMessages,
@@ -106,6 +109,12 @@ const ChatInterface = () => {
     
     console.log('[ChatInterface] Sending message and processing for grading:', messageToSend);
     
+    const classification = classifyProblemSubmission(messageToSend);
+    if (classification.type !== 'simple_exercise') {
+      await handleSendMessage(overrideMessage);
+      return;
+    }
+
     // Check if this looks like a math exercise submission (contains = with digits)
     const looksLikeMathExercise = /\d.*=.*\d/.test(messageToSend.trim());
     
@@ -226,11 +235,19 @@ const ChatInterface = () => {
     !calculationState.isProcessing;
 
   return (
-    <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg overflow-x-hidden max-w-full">
+    <div
+      className={`relative h-[calc(100vh-4rem)] overflow-x-hidden max-w-full ${
+        showWelcomeState ? 'bg-white' : 'bg-neutral-bg'
+      }`}
+    >
       <PageMeta title="Tutor Chat" description="Get instant AI-powered help with math homework, exercises, and explanations from your Stuwy tutor." />
       {/* Scrollable Content Area */}
       <div 
-        className={`h-full overflow-x-hidden ${showWelcomeState ? 'overflow-hidden flex flex-col items-center justify-start' : 'overflow-auto'}`}
+        className={`h-full overflow-x-hidden ${
+          showWelcomeState
+            ? 'overflow-hidden flex flex-col items-center justify-start bg-white'
+            : 'overflow-auto'
+        }`}
         style={{
           paddingBottom: showWelcomeState
             ? 0
@@ -264,6 +281,7 @@ const ChatInterface = () => {
             messages={filteredMessages}
             isLoading={isLoading}
             onSubmitAnswer={handleAnswerSubmit}
+            onSubmitGroupedAnswers={submitGroupedProblemAnswers}
             onClearAll={() => { clearMessages(); clearExercises(); }}
             onDismissExercise={(messageId) => removeMessage(messageId)}
           />
@@ -275,6 +293,7 @@ const ChatInterface = () => {
           status={calculationState.currentStep}
           message={calculationState.message}
         />
+        <QuizOverlayController />
       </div>
 
       {/* Fixed Chat Input - Only show on /chat route when no overlays are active */}

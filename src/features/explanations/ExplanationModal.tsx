@@ -1,11 +1,15 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showXpToast } from '@/components/game/XpToast';
 import { TwoCards } from './TwoCards';
 import { useTwoCardTeaching, TeachingSections } from './useTwoCardTeaching';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useAuth } from '@/context/AuthContext';
+import { SmartLearningResourcesCard } from '@/components/learning/SmartLearningResourcesCard';
+import { useSmartLearningResources } from '@/hooks/useSmartLearningResources';
 
 interface ExplanationModalProps {
   open: boolean;
@@ -34,7 +38,26 @@ export function ExplanationModal({
   subjectSlug,
   topicSlug
 }: ExplanationModalProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const learningInput = React.useMemo(() => {
+    if (!open || loading || error || !sections) return null;
+    return {
+      source: 'explanation' as const,
+      text: [exerciseQuestion, sections.exercise, sections.concept, sections.method].filter(Boolean).join('\n'),
+      title: sections.concept,
+      subject: 'math',
+      responseLanguage: language,
+      sourceId: topicId,
+    };
+  }, [open, loading, error, sections, exerciseQuestion, language, topicId]);
+  const {
+    data: learningResources,
+    isLoading: learningResourcesLoading,
+    error: learningResourcesError,
+  } = useSmartLearningResources(learningInput, user?.id, 4);
   
   // Debug logging
   console.log('[ExplanationModal] Props received:', {
@@ -55,6 +78,21 @@ export function ExplanationModal({
       showXpToast(5, "Great effort! Keep learning!");
     }
     onClose();
+  };
+
+  const handleVideoClick = (videoId: string) => {
+    navigate(`/learning/video/${videoId}`);
+  };
+
+  const handleQuizClick = (quizId: string) => {
+    if (subjectSlug && topicSlug) {
+      navigate(`/learning/${subjectSlug}/${topicSlug}?quiz=${quizId}`);
+      onClose();
+      return;
+    }
+    const params = new URLSearchParams(searchParams);
+    params.set('quiz', quizId);
+    navigate({ search: params.toString() }, { replace: true });
   };
 
   return (
@@ -103,6 +141,20 @@ export function ExplanationModal({
                 topicSlug={topicSlug}
                 onClose={onClose} 
               />
+              {(learningResourcesLoading || (learningResources?.skillMatches.length || 0) > 0) && (
+                <div className="mt-4">
+                  <SmartLearningResourcesCard
+                    source="explanation"
+                    skillMatches={learningResources?.skillMatches || []}
+                    recommendations={learningResources?.recommendations || []}
+                    loading={learningResourcesLoading}
+                    error={learningResourcesError ? 'failed' : undefined}
+                    onVideoClick={handleVideoClick}
+                    onQuizClick={handleQuizClick}
+                    onPracticeClick={onTryAgain}
+                  />
+                </div>
+              )}
             </>
           ) : (
             <>

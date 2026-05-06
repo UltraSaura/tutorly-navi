@@ -5,6 +5,9 @@ import { extractHomeworkFromMessage } from '@/utils/homework';
 import { evaluateHomework } from '@/services/homeworkGrading';
 import { processUploadedDocument, gradeDocumentExercises } from '@/utils/documentProcessor';
 import { sendUnifiedMessage } from '@/services/unifiedChatService';
+import { classifyProblemSubmission } from '@/utils/problemClassifier';
+import { createProblemAttachment } from '@/utils/problemSubmission';
+import { extractProblemSubmission } from '@/services/problemSubmissionService';
 
 /**
  * Handles document file uploads in the chat
@@ -17,7 +20,8 @@ export const handleFileUpload = async (
   selectedModelId: string,
   processHomeworkFromChat?: (content: string) => Promise<void>,
   addExercises?: (exercises: any[]) => Promise<void>,
-  subjectId?: string
+  subjectId?: string,
+  language: string = 'en'
 ) => {
   // Create a temporary URL for the file
   const fileUrl = URL.createObjectURL(file);
@@ -38,6 +42,31 @@ export const handleFileUpload = async (
   try {
     // Process the document to extract exercises with subject ID
     const processingResult = await processUploadedDocument(file, fileUrl, subjectId);
+
+    if (processingResult?.rawText?.trim()) {
+      const classification = classifyProblemSubmission(processingResult.rawText, { hasAttachments: true });
+      if (classification.type !== 'simple_exercise') {
+        const attachment = createProblemAttachment(file, fileUrl, processingResult.rawText, 'extracted');
+        const problemSubmission = await extractProblemSubmission({
+          rawText: processingResult.rawText,
+          attachments: [attachment],
+          selectedModelId,
+          language,
+        });
+
+        setMessages(prev => prev.map(msg =>
+          msg.id === newMessage.id
+            ? {
+                ...msg,
+                content: processingResult.rawText,
+                problemSubmission,
+              }
+            : msg
+        ));
+        toast.success(`Processed grouped problem from "${file.name}"`);
+        return;
+      }
+    }
     
     if (processingResult && processingResult.exercises.length > 0) {
       // Grade the extracted exercises
@@ -153,6 +182,35 @@ export const handlePhotoUpload = async (
       exerciseCount: processingResult?.exercises.length || 0,
       rawTextLength: processingResult?.rawText?.length || 0
     });
+
+    if (processingResult?.rawText?.trim()) {
+      const classification = classifyProblemSubmission(processingResult.rawText, { hasAttachments: true });
+      if (classification.type !== 'simple_exercise') {
+        console.log('[Photo Upload] Grouped/complex problem detected, creating one problem submission');
+        const attachment = createProblemAttachment(file, imageUrl, processingResult.rawText, 'extracted');
+        const problemSubmission = await extractProblemSubmission({
+          rawText: processingResult.rawText,
+          attachments: [attachment],
+          selectedModelId,
+          language: language || 'en',
+        });
+
+        setMessages(prev => prev
+          .filter(msg => msg.id !== processingMessage.id)
+          .map(msg =>
+            msg.id === newMessage.id
+              ? {
+                  ...msg,
+                  content: processingResult.rawText,
+                  problemSubmission,
+                }
+              : msg
+          )
+        );
+        toast.success('Grouped problem extracted from your photo');
+        return;
+      }
+    }
     
     // PRIORITY: Use extracted exercises directly if available
     if (processingResult && processingResult.exercises && processingResult.exercises.length > 0) {
@@ -191,6 +249,10 @@ export const handlePhotoUpload = async (
       // Process all exercises in parallel through the AI pipeline
       const aiResults = await Promise.all(
         gradedExercises.map(async (exercise, index) => {
+          if (exercise.responseType === 'true_false' && !exercise.userAnswer?.trim()) {
+            return { exercise, index, aiContent: null };
+          }
+
           const inputText = exercise.userAnswer?.trim()
             ? `${exercise.question} = ${exercise.userAnswer}`
             : exercise.question;
@@ -215,6 +277,8 @@ export const handlePhotoUpload = async (
             : exercise.question,
           timestamp: new Date(baseTimestamp + index * 2),
           type: 'text',
+          responseType: exercise.responseType,
+          choices: exercise.choices,
         };
         
         // Use AI structured response if available, otherwise fall back to plain text

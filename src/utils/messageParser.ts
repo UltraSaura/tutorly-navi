@@ -1,3 +1,5 @@
+import { classifyProblemSubmission } from './problemClassifier';
+
 /**
  * Message parsing utility for detecting questions and answers
  * This helps determine if a user message contains an answer before sending to AI
@@ -16,6 +18,16 @@ export interface ParsedMessage {
  */
 export const parseUserMessage = (message: string): ParsedMessage => {
   const trimmed = message.trim();
+
+  const classification = classifyProblemSubmission(trimmed);
+  if (classification.type !== 'simple_exercise') {
+    return {
+      question: trimmed,
+      answer: '',
+      hasAnswer: false,
+      confidence: 'high'
+    };
+  }
   
   // Pattern 1: Explicit "response" keyword (case insensitive)
   // Examples: "2+2 response 4", "What is 5+3? response 8"

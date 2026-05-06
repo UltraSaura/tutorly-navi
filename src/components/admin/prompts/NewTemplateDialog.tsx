@@ -160,7 +160,7 @@ export const NewTemplateDialog = ({
             </label>
             <Select 
               value={newTemplate.usage_type} 
-              onValueChange={(value: 'chat' | 'grading' | 'explanation' | 'math_enhanced') => onNewTemplateChange({ ...newTemplate, usage_type: value })}
+              onValueChange={(value: 'chat' | 'grading' | 'explanation' | 'math_enhanced' | 'grouped_retry_practice') => onNewTemplateChange({ ...newTemplate, usage_type: value })}
             >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select template type" />
@@ -170,6 +170,7 @@ export const NewTemplateDialog = ({
                 <SelectItem value="grading">Grading</SelectItem>
                 <SelectItem value="explanation">Explanation</SelectItem>
                 <SelectItem value="math_enhanced">Math Enhanced</SelectItem>
+                <SelectItem value="grouped_retry_practice">Grouped Retry Practice</SelectItem>
               </SelectContent>
             </Select>
           </div>

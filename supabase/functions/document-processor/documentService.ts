@@ -1,6 +1,10 @@
 import { extractTextFromFile } from "./extractors.ts";
 import { extractExercisesFromText } from "./exerciseExtractors.ts";
-import { extractWithMistralVision } from "./extractors/mistral.ts";
+import {
+  extractJustificationWithMistralVision,
+  extractWithMistralVision,
+  type JustificationVisionResult,
+} from "./extractors/mistral.ts";
 
 // Minimal text preprocessing that preserves exercise structure
 function minimalPreprocessing(text: string): string {
@@ -45,14 +49,108 @@ async function enhancedExtraction(fileData: string, fileType: string): Promise<s
   }
 }
 
+function parseLocaleNumber(value: string): number {
+  return Number(value.replace(/\s/g, '').replace(',', '.'));
+}
+
+function extractNumbers(text: string): number[] {
+  return Array.from(text.matchAll(/-?\d+(?:[,.]\d+)?/g))
+    .map(match => parseLocaleNumber(match[0]))
+    .filter(Number.isFinite);
+}
+
+function nearlyEqual(a: number, b: number, tolerance = 0.01): boolean {
+  return Math.abs(a - b) <= tolerance;
+}
+
+function addArithmeticWarnings(result: JustificationVisionResult): JustificationVisionResult {
+  const warnings = new Set(result.warnings || []);
+  const text = result.normalizedText || result.rawText || '';
+
+  for (const match of text.matchAll(/((?:-?\d+(?:[,.]\d+)?\s*\+\s*)+-?\d+(?:[,.]\d+)?)\s*(?:=|:)\s*(-?\d+(?:[,.]\d+)?)/g)) {
+    const addends = extractNumbers(match[1]);
+    const expected = parseLocaleNumber(match[2]);
+    const actual = addends.reduce((sum, value) => sum + value, 0);
+    if (addends.length >= 2 && Number.isFinite(expected) && !nearlyEqual(actual, expected)) {
+      warnings.add(`Arithmetic appears inconsistent: ${match[1].trim()} equals ${actual}, not ${match[2]}.`);
+    }
+  }
+
+  if (/\?/.test(text)) {
+    warnings.add('Some digits are uncertain and need review.');
+  }
+
+  return {
+    ...result,
+    warnings: Array.from(warnings),
+  };
+}
+
+async function processJustificationDocument(
+  fileData: string,
+  fileType: string,
+  context: { rowPrompt?: string; problemContext?: string } = {}
+): Promise<{ success: boolean; exercises: any[]; rawText: string; normalizedText?: string; confidence?: number; warnings?: string[]; error?: string }> {
+  try {
+    console.log('=== PROCESSING JUSTIFICATION IMAGE ===');
+    const visionResult = fileType.startsWith('image/')
+      ? await extractJustificationWithMistralVision(fileData, fileType, context)
+      : null;
+
+    if (visionResult?.rawText?.trim()) {
+      const checked = addArithmeticWarnings(visionResult);
+      return {
+        success: true,
+        exercises: [],
+        rawText: checked.normalizedText || checked.rawText,
+        normalizedText: checked.normalizedText,
+        confidence: checked.confidence,
+        warnings: checked.warnings,
+      };
+    }
+
+    const rawText = await enhancedExtraction(fileData, fileType);
+    const checked = addArithmeticWarnings({
+      rawText,
+      normalizedText: rawText,
+      confidence: 0.5,
+      warnings: ['Generic OCR fallback was used for this handwritten justification.'],
+    });
+
+    return {
+      success: true,
+      exercises: [],
+      rawText: checked.normalizedText || checked.rawText,
+      normalizedText: checked.normalizedText,
+      confidence: checked.confidence,
+      warnings: checked.warnings,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      exercises: [],
+      rawText: '',
+      error: (error as Error).message || 'Justification OCR failed',
+    };
+  }
+}
+
 export async function processDocument(
   fileData: string, 
   fileType: string, 
   fileName: string,
-  subjectId?: string
+  subjectId?: string,
+  options: { mode?: string; rowPrompt?: string; problemContext?: string } = {}
 ): Promise<{ success: boolean, exercises: any[], rawText: string, error?: string }> {
   try {
     console.log(`=== PROCESSING DOCUMENT: ${fileName} (${fileType}) ===`);
+
+    if (options.mode === 'justification') {
+      return await processJustificationDocument(fileData, fileType, {
+        rowPrompt: options.rowPrompt,
+        problemContext: options.problemContext,
+      });
+    }
     
     // PHASE 0: Try Mistral Vision (LLM-based) for images — much better for handwriting
     const isImage = fileType.startsWith('image/');
@@ -65,7 +163,9 @@ export async function processDocument(
       if (visionExercises && visionExercises.length > 0) {
         console.log(`✅ Mistral Vision extracted ${visionExercises.length} exercises directly`);
         exercises = visionExercises;
-        extractedText = visionExercises.map(ex => `${ex.question} = ${ex.answer}`).join('\n');
+        extractedText = visionExercises
+          .map((ex, index) => `${index + 1}) ${ex.question}${ex.answer ? ` = ${ex.answer}` : ''}`)
+          .join('\n');
       } else {
         console.log('⚠️ Mistral Vision returned no exercises, falling back to OCR pipeline');
       }
