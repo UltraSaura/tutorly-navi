@@ -25,6 +25,7 @@ interface TopicLearnTabProps {
   completedVideoIds: string[];
   allBanks?: BankInfo[];
   lessonContent?: any;
+  videoAutoPlay?: boolean;
 }
 
 export function TopicLearnTab({
@@ -36,6 +37,7 @@ export function TopicLearnTab({
   completedVideoIds,
   allBanks,
   lessonContent,
+  videoAutoPlay = true,
 }: TopicLearnTabProps) {
   const quizSectionRef = useRef<HTMLDivElement>(null);
 
@@ -84,6 +86,7 @@ export function TopicLearnTab({
       <VideoPlayerBox 
         videoId={playingVideoId}
         onVideoEnd={handleVideoEnd}
+        autoPlay={videoAutoPlay}
       />
 
 

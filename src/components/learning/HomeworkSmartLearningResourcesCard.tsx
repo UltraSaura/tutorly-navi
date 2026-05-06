@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { SmartLearningResourcesCard } from "@/components/learning/SmartLearningResourcesCard";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/SimpleLanguageContext";
 import { useUserContext } from "@/hooks/useUserContext";
 import { useHomeworkLearningResources } from "@/hooks/useHomeworkLearningResources";
+import { resolveVideoLearningRoute } from "@/services/learningNavigation";
 import type { SafeHomeworkLearningRow } from "@/services/homeworkLearningResources";
 
 type HomeworkSmartLearningResourcesCardProps = {
@@ -48,6 +49,11 @@ export function HomeworkSmartLearningResourcesCard({
     error,
   } = useHomeworkLearningResources(input);
 
+  const handleVideoClick = useCallback(async (videoId: string) => {
+    const route = await resolveVideoLearningRoute(videoId);
+    navigate(route);
+  }, [navigate]);
+
   if (!input || (!isLoading && (data?.skillMatches.length || 0) === 0)) return null;
 
   return (
@@ -57,7 +63,7 @@ export function HomeworkSmartLearningResourcesCard({
       recommendations={data?.recommendations || []}
       loading={isLoading}
       error={error ? "failed" : undefined}
-      onVideoClick={(videoId) => navigate(`/learning/video/${videoId}`)}
+      onVideoClick={handleVideoClick}
       onQuizClick={(quizId) => {
         const params = new URLSearchParams(searchParams);
         params.set("quiz", quizId);

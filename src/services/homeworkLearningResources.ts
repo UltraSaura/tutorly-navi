@@ -53,10 +53,10 @@ const rowToLearningText = (row: SafeHomeworkLearningRow) =>
     .filter(Boolean)
     .join("\n");
 
-export function buildSafeHomeworkLearningRows(problem: ProblemSubmission): SafeHomeworkLearningRow[] {
+export function buildSafeHomeworkLearningRows(problem: ProblemSubmission, rowId?: string): SafeHomeworkLearningRow[] {
   return problem.sections.flatMap((section) =>
     section.rows
-      .filter((row) => row.evaluation || row.prompt?.trim())
+      .filter((row) => (!rowId || row.id === rowId) && (row.evaluation || row.prompt?.trim()))
       .map((row) => ({
         label: clean(row.label),
         prompt: clean(row.prompt),
@@ -168,12 +168,11 @@ export async function getHomeworkLearningResources({
       }))
     );
 
-    const combinedText = safeRows.map(rowToLearningText).join("\n\n");
     const fallbackMatches = await extractLearningContext({
       source: "homework",
       sourceId,
       title,
-      text: combinedText,
+      text: safeRows.map(rowToLearningText).join("\n\n"),
       subject,
       gradeLevel,
       country,

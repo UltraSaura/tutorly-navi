@@ -1,15 +1,13 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showXpToast } from '@/components/game/XpToast';
 import { TwoCards } from './TwoCards';
 import { useTwoCardTeaching, TeachingSections } from './useTwoCardTeaching';
 import { useLanguage } from '@/context/SimpleLanguageContext';
-import { useAuth } from '@/context/AuthContext';
-import { SmartLearningResourcesCard } from '@/components/learning/SmartLearningResourcesCard';
-import { useSmartLearningResources } from '@/hooks/useSmartLearningResources';
+import { HomeworkSmartLearningResourcesCard } from '@/components/learning/HomeworkSmartLearningResourcesCard';
+import type { SafeHomeworkLearningRow } from '@/services/homeworkLearningResources';
 
 interface ExplanationModalProps {
   open: boolean;
@@ -23,6 +21,9 @@ interface ExplanationModalProps {
   topicId?: string;
   subjectSlug?: string;
   topicSlug?: string;
+  homeworkLearningRows?: SafeHomeworkLearningRow[];
+  homeworkSourceId?: string;
+  homeworkTitle?: string;
 }
 
 export function ExplanationModal({ 
@@ -36,28 +37,12 @@ export function ExplanationModal({
   imageUrl,
   topicId,
   subjectSlug,
-  topicSlug
+  topicSlug,
+  homeworkLearningRows = [],
+  homeworkSourceId,
+  homeworkTitle
 }: ExplanationModalProps) {
-  const { t, language } = useLanguage();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const learningInput = React.useMemo(() => {
-    if (!open || loading || error || !sections) return null;
-    return {
-      source: 'explanation' as const,
-      text: [exerciseQuestion, sections.exercise, sections.concept, sections.method].filter(Boolean).join('\n'),
-      title: sections.concept,
-      subject: 'math',
-      responseLanguage: language,
-      sourceId: topicId,
-    };
-  }, [open, loading, error, sections, exerciseQuestion, language, topicId]);
-  const {
-    data: learningResources,
-    isLoading: learningResourcesLoading,
-    error: learningResourcesError,
-  } = useSmartLearningResources(learningInput, user?.id, 4);
+  const { t } = useLanguage();
   
   // Debug logging
   console.log('[ExplanationModal] Props received:', {
@@ -75,24 +60,9 @@ export function ExplanationModal({
   const handleTryAgain = () => {
     if (onTryAgain) {
       onTryAgain();
-      showXpToast(5, "Great effort! Keep learning!");
+      showXpToast(5, t('exercises.explanation.xp.great_effort'));
     }
     onClose();
-  };
-
-  const handleVideoClick = (videoId: string) => {
-    navigate(`/learning/video/${videoId}`);
-  };
-
-  const handleQuizClick = (quizId: string) => {
-    if (subjectSlug && topicSlug) {
-      navigate(`/learning/${subjectSlug}/${topicSlug}?quiz=${quizId}`);
-      onClose();
-      return;
-    }
-    const params = new URLSearchParams(searchParams);
-    params.set('quiz', quizId);
-    navigate({ search: params.toString() }, { replace: true });
   };
 
   return (
@@ -126,7 +96,7 @@ export function ExplanationModal({
                 <div className="mb-6">
                   <img 
                     src={imageUrl} 
-                    alt="Exercise explanation" 
+                    alt={t('exercises.explanation.image_alt')}
                     className="max-h-[60vh] w-auto mx-auto rounded-xl shadow-lg"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
@@ -141,16 +111,12 @@ export function ExplanationModal({
                 topicSlug={topicSlug}
                 onClose={onClose} 
               />
-              {(learningResourcesLoading || (learningResources?.skillMatches.length || 0) > 0) && (
+              {homeworkLearningRows.length > 0 && (
                 <div className="mt-4">
-                  <SmartLearningResourcesCard
-                    source="explanation"
-                    skillMatches={learningResources?.skillMatches || []}
-                    recommendations={learningResources?.recommendations || []}
-                    loading={learningResourcesLoading}
-                    error={learningResourcesError ? 'failed' : undefined}
-                    onVideoClick={handleVideoClick}
-                    onQuizClick={handleQuizClick}
+                  <HomeworkSmartLearningResourcesCard
+                    rows={homeworkLearningRows}
+                    sourceId={homeworkSourceId}
+                    title={homeworkTitle || exerciseQuestion || sections.exercise}
                     onPracticeClick={onTryAgain}
                   />
                 </div>
@@ -160,8 +126,8 @@ export function ExplanationModal({
             <>
               {console.log('[ExplanationModal] No sections available, showing fallback')}
               <div className="text-center text-muted-foreground">
-                <p>No explanation data available</p>
-                <p className="text-xs mt-2">Sections: {sections ? 'Present' : 'Null'}</p>
+                <p>{t('exercises.explanation.empty.no_data')}</p>
+                <p className="text-xs mt-2">{t('exercises.explanation.empty.sections')}: {sections ? t('common.present') : t('common.none')}</p>
               </div>
             </>
           )}
@@ -174,14 +140,14 @@ export function ExplanationModal({
                 onClick={() => console.log("[Explain] sections", sections)}
                 className="hover:text-foreground transition-colors"
               >
-                Log sections
+                {t('exercises.explanation.debug.log_sections')}
               </button>
               <span className="mx-2">•</span>
               <button 
-                onClick={() => alert("If empty, check console for raw AI output and template info.")}
+                onClick={() => alert(t('exercises.explanation.debug.help_message'))}
                 className="hover:text-foreground transition-colors"
               >
-                Help
+                {t('exercises.explanation.debug.help')}
               </button>
             </div>
           )}
@@ -190,7 +156,7 @@ export function ExplanationModal({
             className="w-full"
             size="lg"
           >
-            Try again → +5 XP
+            {t('exercises.try_again', { xp: 5 })}
           </Button>
         </div>
       </div>

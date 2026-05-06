@@ -1,33 +1,38 @@
+## Problem
+Creating a prompt template with type "Grouped Retry Practice" fails because the database CHECK constraint `prompt_templates_usage_type_check` on `public.prompt_templates.usage_type` only permits the legacy values:
 
+```
+('chat', 'grading', 'explanation', 'math_enhanced')
+```
 
-## Goal
-The speech bubble isn't rendering because `TutorWelcomeBubble.tsx` was never created and `WelcomeFox.tsx` still just `void`s `_firstName` with no bubble overlay. Create the bubble component and wire it in.
+The application code (`src/types/admin.ts`, `src/hooks/usePromptManagement.ts`, the create/edit dialogs) already lists `grouped_retry_practice` as a valid type, but the matching DB migration was never applied — so every insert/update with `usage_type = 'grouped_retry_practice'` is rejected by Postgres (error code 23514). The toast message in the screenshot is the friendly version of that exact error.
 
-## Changes
+## Fix
+Apply a single Supabase migration that updates the CHECK constraint to include the new value.
 
-### 1. Create `src/components/user/chat/TutorWelcomeBubble.tsx` (new)
-Self-contained component, props `{ firstName: string; greeting: string; helper: string }`.
-- White rounded rectangle: `bg-white rounded-2xl border border-slate-200 shadow-[0_8px_24px_rgba(15,23,42,0.08)] px-4 py-3 max-w-[200px]`.
-- Three text lines:
-  - Greeting — `text-sm text-slate-500`
-  - First name — `text-2xl font-bold text-slate-900 leading-tight`
-  - Helper — `text-xs text-slate-500 mt-1`
-- Tail: rotated 10×10 white square (`bg-white border-l border-b border-slate-200`) absolutely positioned `bottom-[-5px] left-6 rotate-45` so only the outer down-left edges show — points toward the fox.
-- Framer Motion: container fades + scales in (0.35s). Children stagger via `variants` with `staggerChildren: 0.18, delayChildren: 0.2` (greeting → name → helper, each fade + 6px rise).
+```sql
+ALTER TABLE public.prompt_templates
+  DROP CONSTRAINT IF EXISTS prompt_templates_usage_type_check;
 
-### 2. Update `src/components/user/chat/WelcomeFox.tsx`
-- Import `TutorWelcomeBubble`.
-- Build localized strings inline:
-  - `en`: `{ hi: "Hi", helper: "Submit your question for help" }`
-  - `fr`: `{ hi: "Salut", helper: "Soumets ta question pour obtenir de l'aide !" }`
-- Remove `void _firstName` and rename to `firstName`.
-- Restructure render: outer wrapper stays `flex items-center justify-center h-full px-4`. Wrap the `<video>` in a `relative inline-block` container. Add `<TutorWelcomeBubble />` as an absolutely-positioned sibling inside that container at `top-2 right-2 sm:top-4 sm:right-6 z-10` so it sits above-right of the fox.
-- Fox video classes, size, `object-contain`, `mix-blend-multiply`, `maxHeight: "100%"` — all preserved exactly.
+ALTER TABLE public.prompt_templates
+  ADD CONSTRAINT prompt_templates_usage_type_check
+  CHECK (usage_type IN (
+    'chat',
+    'grading',
+    'explanation',
+    'math_enhanced',
+    'grouped_retry_practice'
+  ));
+```
 
-### 3. Visibility lifecycle
-No new state. `WelcomeFox` is already conditionally rendered by `ChatInterface`'s `showWelcomeState` guard, so the bubble auto-hides when the user sends their first question.
+Also extend the same allowed list on `public.subject_prompt_assignments.usage_type` if a matching CHECK constraint exists there, so subject assignments can reference the new type too.
 
 ## Files touched
-- `src/components/user/chat/TutorWelcomeBubble.tsx` (new)
-- `src/components/user/chat/WelcomeFox.tsx` (modify)
+- One new migration file under `supabase/migrations/` containing the ALTER TABLE statements above.
 
+## No code changes needed
+- TypeScript types, hooks, and admin UI already support `grouped_retry_practice`. Once the constraint is updated, creating the template will succeed and the existing "Grouped Retry Practice Explanation" form (visible in the screenshot) will save without error.
+
+## Verification after apply
+1. Reopen Admin → System Prompts → Add Template, choose Type = "Grouped Retry Practice", click Create — should succeed with no toast error.
+2. The new template appears in the list and can be activated.

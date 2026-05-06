@@ -74,6 +74,26 @@ On considère :
 }
 
 describe('problemSubmissionService grouped grading errors', () => {
+  it('uses one grouped grading prompt for grouped choice and multipart rows', () => {
+    const prompt = __problemSubmissionServiceTest.groupedProblemGradingPrompt;
+
+    expect(prompt).toContain('grouped_choice_problem');
+    expect(prompt).toContain('grouped_problem');
+    expect(prompt).toContain('calculation/text rows');
+    expect(prompt).toContain('symbolic geometry rows');
+    expect(prompt).toContain('Do not evaluate, mention, correct, reveal, or explain unsubmitted/unselected rows');
+    expect(prompt).not.toContain('grouped multi-part homework problem');
+  });
+
+  it('keeps grouped problem extraction as a separate prompt stage', () => {
+    const prompt = __problemSubmissionServiceTest.groupedProblemExtractionPrompt;
+
+    expect(prompt).toContain('extracting a complete homework problem');
+    expect(prompt).toContain('Preserve the original grouped structure');
+    expect(prompt).toContain('grouped_choice_problem|grouped_problem');
+    expect(prompt).toContain('rowKind');
+  });
+
   it('returns an editable error-state problem while preserving answers', () => {
     const result = __problemSubmissionServiceTest.groupedGradingError(baseProblem, 'Timed out');
 
@@ -708,9 +728,9 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
     expect(prompt).toContain('parentHelpHint');
   });
 
-  it('loads active grouped retry-practice prompt from Supabase templates', async () => {
+  it('loads active problem explanation prompt from Supabase templates', async () => {
     const calls: Array<[string, unknown]> = [];
-    const customPrompt = 'Custom grouped retry practice prompt from Supabase';
+    const customPrompt = 'Custom problem explanation prompt from Supabase';
     const client = {
       from(table: string) {
         calls.push(['from', table]);
@@ -745,6 +765,76 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
     expect(calls).toContainEqual(['eq:is_active', true]);
     expect(calls).toContainEqual(['order:priority', { ascending: false }]);
     expect(calls).toContainEqual(['limit', 1]);
+  });
+
+  it('loads active grouped extraction prompt from Supabase templates', async () => {
+    const calls: Array<[string, unknown]> = [];
+    const customPrompt = 'Custom grouped extraction prompt from Supabase';
+    const client = {
+      from(table: string) {
+        calls.push(['from', table]);
+        return {
+          select(columns: string) {
+            calls.push(['select', columns]);
+            return this;
+          },
+          eq(column: string, value: unknown) {
+            calls.push([`eq:${column}`, value]);
+            return this;
+          },
+          order(column: string, options: unknown) {
+            calls.push([`order:${column}`, options]);
+            return this;
+          },
+          limit(count: number) {
+            calls.push(['limit', count]);
+            return this;
+          },
+          async maybeSingle() {
+            return { data: { prompt_content: customPrompt }, error: null };
+          },
+        };
+      },
+    };
+
+    await expect(__problemSubmissionServiceTest.loadGroupedProblemExtractionPrompt(client as any))
+      .resolves.toBe(customPrompt);
+    expect(calls).toContainEqual(['eq:usage_type', __problemSubmissionServiceTest.groupedProblemExtractionUsageType]);
+  });
+
+  it('loads active unified grouped grading prompt from Supabase templates', async () => {
+    const calls: Array<[string, unknown]> = [];
+    const customPrompt = 'Custom grouped grading prompt from Supabase';
+    const client = {
+      from(table: string) {
+        calls.push(['from', table]);
+        return {
+          select(columns: string) {
+            calls.push(['select', columns]);
+            return this;
+          },
+          eq(column: string, value: unknown) {
+            calls.push([`eq:${column}`, value]);
+            return this;
+          },
+          order(column: string, options: unknown) {
+            calls.push([`order:${column}`, options]);
+            return this;
+          },
+          limit(count: number) {
+            calls.push(['limit', count]);
+            return this;
+          },
+          async maybeSingle() {
+            return { data: { prompt_content: customPrompt }, error: null };
+          },
+        };
+      },
+    };
+
+    await expect(__problemSubmissionServiceTest.loadGroupedProblemGradingPrompt(client as any))
+      .resolves.toBe(customPrompt);
+    expect(calls).toContainEqual(['eq:usage_type', __problemSubmissionServiceTest.groupedProblemGradingUsageType]);
   });
 
   it('falls back to default grouped retry-practice prompt when no active template exists', async () => {
@@ -785,6 +875,17 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
       .resolves.toBe(__problemSubmissionServiceTest.defaultGroupedRetryPracticePrompt);
   });
 
+  it('keeps grouped retry-practice prompt ordered around adaptive support and self-check', () => {
+    const prompt = __problemSubmissionServiceTest.defaultGroupedRetryPracticePrompt;
+
+    expect(prompt).toContain('concept: quick idea');
+    expect(prompt).toContain('learningStyleSupport');
+    expect(prompt).toContain('must include one guided example');
+    expect(prompt).toContain('retryPrompt: Auto-vérification / self-check / try again');
+    expect(prompt).toContain('method: give reusable step by step guidance');
+    expect(prompt).toContain('commonMistake: name one likely misconception');
+  });
+
   it('parses valid grouped retry-practice JSON', () => {
     const result = __problemSubmissionServiceTest.parseGroupedRetryPractice({
       concept: 'Calculer une moyenne',
@@ -818,6 +919,40 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
     expect(result?.diagram?.type).toBe('square');
     expect(result?.diagram?.labels).toEqual(['J', 'K', 'L', 'M']);
     expect(result?.diagram?.dimensions?.bottom).toBe('5 cm');
+  });
+
+  it('parses optional learning-style support for grouped retry practice', () => {
+    const result = __problemSubmissionServiceTest.parseGroupedRetryPractice({
+      concept: 'Multiplier avec des groupes',
+      similarProblem: '3 × 4 = ?',
+      learningStyleSupport: {
+        style: 'visual',
+        title: 'See it',
+        content: 'Draw 3 rows of 4 dots.\n● ● ● ●\n● ● ● ●\n● ● ● ●',
+      },
+      method: 'On compte 3 groupes de 4.',
+      retryPrompt: 'Reviens à ton exercice avec la même idée.',
+    });
+
+    expect(result?.learningStyleSupport?.style).toBe('visual');
+    expect(result?.learningStyleSupport?.title).toBe('See it');
+    expect(result?.learningStyleSupport?.content).toContain('● ● ● ●');
+  });
+
+  it('keeps grouped retry practice valid when learning-style support is missing or incomplete', () => {
+    const result = __problemSubmissionServiceTest.parseGroupedRetryPractice({
+      concept: 'Périmètre',
+      similarProblem: 'Un rectangle mesure 8 cm par 3 cm.',
+      learningStyleSupport: {
+        style: 'auditory',
+        title: 'Say it',
+      },
+      method: 'On additionne les quatre côtés.',
+      retryPrompt: 'Essaie avec ton exercice.',
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.learningStyleSupport).toBeUndefined();
   });
 
   it('ignores invalid retry-practice diagram data without rejecting the practice', () => {

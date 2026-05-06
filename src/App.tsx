@@ -47,6 +47,7 @@ import PromptManagement from "./components/admin/PromptManagement";
 import ConnectionDiagnostics from "./components/admin/ConnectionDiagnostics";
 import LearningContentManagement from "./components/admin/LearningContentManagement";
 import CurriculumManager from "./components/admin/CurriculumManager";
+import AdminSettings from "./components/admin/AdminSettings";
 const RecentUpdates = lazy(() => import("./pages/admin/RecentUpdates"));
 
 // Auth Pages  
@@ -205,6 +206,7 @@ const App = () => {
                           <Route path="learning" element={<LearningContentManagement />} />
                           <Route path="curriculum" element={<CurriculumManager />} />
                           <Route path="recent-updates" element={<RecentUpdates />} />
+                          <Route path="settings" element={<AdminSettings />} />
                         </Route>
                         
           {/* Guardian Portal Routes */}

@@ -24,9 +24,9 @@ function buildTypeInstructions(questionTypes: string[]): string {
       case 'numeric':
         return `- "numeric": Answer is a number. Include "answer" (the correct number) and optionally "range": { "min": X, "max": Y } for acceptable range.`;
       case 'ordering':
-        return `- "ordering": Put items in correct order. Include "items" (shuffled array of strings) and "correctOrder" (same items in correct sequence).`;
+        return `- "ordering": Put items in correct order. Include "items" (shuffled array of strings) and "correctOrder" (same items in correct sequence). Frame these as step-building, process-ordering, or action-ordering when appropriate.`;
       case 'visual_pie':
-        return `- "visual" with subtype "pie": A fraction/proportion question using a pie chart. The student selects which pie chart shows the correct fraction.
+        return `- "visual" with subtype "pie": A fraction/proportion question using a pie chart. The prompt must clearly refer to the pie/chart the student sees. The student selects which pie chart shows the correct fraction.
   Structure:
   {
     "id": "q-X", "kind": "visual",
@@ -50,7 +50,7 @@ function buildTypeInstructions(questionTypes: string[]): string {
   }
   Rules for pie: all segments must have equal value (1). Use 2-8 segments total. "colored": true means that segment is shaded. Each variant must have a unique id and different coloring pattern. Exactly one variant must be correct.`;
       case 'visual_angle':
-        return `- "visual" with subtype "angle": An angle measurement question. The student estimates or inputs the angle.
+        return `- "visual" with subtype "angle": An angle measurement question. The prompt must clearly refer to the angle/rays the student sees. The student estimates or inputs the angle.
   Structure:
   {
     "id": "q-X", "kind": "visual",
@@ -67,11 +67,29 @@ function buildTypeInstructions(questionTypes: string[]): string {
   }
   Rules for angle: aDeg is the first ray angle (usually 0), bDeg is the second ray. targetDeg is the correct answer. toleranceDeg is the accepted error margin (use 2-5). Use angles between 10 and 350.`;
       case 'mix':
-        return `Choose the BEST question type for each question from: single, multi, numeric, ordering, visual (pie), visual (angle). Mix different types across the set. For fraction/proportion topics prefer visual pie. For geometry topics prefer visual angle. For sequences prefer ordering. For factual recall prefer single/multi.`;
+        return `Choose the BEST question type for each question from the supported kinds only: single, multi, numeric, ordering, visual (pie), visual (angle).
+Create a balanced variety when the transcript content allows it:
+- Include at least one standard conceptual question using single or multi when possible.
+- Include at least one visual question when the transcript naturally supports pie charts, fractions, proportions, geometry, or angle measurement.
+- Include at least one ordering/action-style question when the transcript includes steps, processes, procedures, comparisons, or sequences.
+- Include at least one numeric or application question when calculation or applying a rule is appropriate.
+For fraction/proportion topics prefer visual pie. For geometry topics prefer visual angle. For sequences prefer ordering. For recall and verbal reasoning use single/multi.`;
       default:
         return '';
     }
   }).filter(Boolean).join('\n');
+}
+
+function buildLearningFriendlyGuidance(): string {
+  return `LEARNING-FRIENDLY PRACTICE GUIDANCE:
+- Keep every question directly based on the transcript content and focused on the same academic objective.
+- Use a healthy variety of representations across the quiz when the requested types allow it: see it, say/reason it, do/order it, calculate/apply it.
+- Hints must be child-friendly and useful: give one small next step, cue, or thing to look for. Do not reveal the answer.
+- For visual questions, the prompt and hint must clearly refer to the visual element the student sees, such as the pie, slices, angle, or rays.
+- For ordering questions, use step-building, process-ordering, or action-ordering language when appropriate.
+- For single and multi questions, include some verbal-reasoning answer choices when appropriate, such as short explanations, comparison statements, or "which sentence is true" choices.
+- Do not use technical labels such as visual learner, auditory learner, kinesthetic learner, learning modality, or cognitive preference.
+- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, visual.`;
 }
 
 function buildPromptExamples(): string {
@@ -236,6 +254,8 @@ Generate exactly ${questionCount} quiz questions based on this content.
 QUESTION TYPES TO USE:
 ${typeInstructions}
 
+${buildLearningFriendlyGuidance()}
+
 DIFFICULTY: ${difficulty}
 ${difficultyGuide[difficulty]}
 
@@ -250,6 +270,9 @@ RULES:
 - For multi questions, mark 2-3 choices as correct
 - Make questions clear, educational, and age-appropriate
 - Vary question types across the set based on the types requested
+- Hints must be short, encouraging, and actionable without giving away the answer
+- Visual prompts must mention the visual object the student should inspect
+- Use only supported output kinds: single, multi, numeric, ordering, visual
 - Return ONLY the JSON array, no markdown, no explanation`;
 
     console.log("Calling AI gateway, prompt length:", prompt.length);

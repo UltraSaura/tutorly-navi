@@ -103,6 +103,11 @@ export interface GroupedRetryPractice {
     dimensions?: Record<string, string>;
     caption?: string;
   };
+  learningStyleSupport?: {
+    style: 'visual' | 'auditory' | 'kinesthetic' | 'mixed';
+    title: string;
+    content: string;
+  };
   method: string;
   retryPrompt: string;
   commonMistake?: string;

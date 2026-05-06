@@ -10,9 +10,10 @@ import { loadYouTubeAPI, extractYouTubeVideoId, isYouTubeUrl } from '@/utils/you
 interface VideoPlayerBoxProps {
   videoId: string | null;
   onVideoEnd?: () => void;
+  autoPlay?: boolean;
 }
 
-export const VideoPlayerBox = memo(({ videoId, onVideoEnd }: VideoPlayerBoxProps) => {
+export const VideoPlayerBox = memo(({ videoId, onVideoEnd, autoPlay = true }: VideoPlayerBoxProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -73,7 +74,7 @@ export const VideoPlayerBox = memo(({ videoId, onVideoEnd }: VideoPlayerBoxProps
           const player = new (window as any).YT.Player(`youtube-player-${videoId}`, {
             videoId: ytVideoId,
             playerVars: {
-              autoplay: 1,
+              autoplay: autoPlay ? 1 : 0,
               controls: 1,
               modestbranding: 1,
               start: Math.floor(savedPosition),
@@ -128,7 +129,7 @@ export const VideoPlayerBox = memo(({ videoId, onVideoEnd }: VideoPlayerBoxProps
         }
       };
     }
-  }, [video?.video_url, videoId]);
+  }, [autoPlay, video?.video_url, videoId]);
 
 
   if (!videoId || !video) {
@@ -157,7 +158,7 @@ export const VideoPlayerBox = memo(({ videoId, onVideoEnd }: VideoPlayerBoxProps
             }}
             src={video.video_url}
             controls
-            autoPlay
+            autoPlay={autoPlay}
             className="absolute top-0 left-0 w-full h-full"
             onTimeUpdate={(e) => {
               const currentTime = e.currentTarget.currentTime;

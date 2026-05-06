@@ -8,12 +8,12 @@ export function getSmartLearningResourcesCopy(language: string, source?: string)
     detectedTopic: homework ? (fr ? "Sujets trouvés" : "Topics found") : (fr ? "Tu travailles sur :" : "You are learning:"),
     loading: fr ? "Recherche de vidéos et quiz utiles..." : "Finding helpful videos and quizzes...",
     empty: fr
-      ? "Aucune ressource trouvée pour le moment. Essaie plutôt un petit exercice."
-      : "No matching resources yet. Try a quick practice question instead.",
+      ? "Aucune vidéo ni aucun quiz correspondant pour le moment. Essaie plutôt un petit exercice."
+      : "No matching videos or quizzes yet. Try a quick practice question instead.",
     video: fr ? "Regarder" : "Watch",
     quiz: fr ? "Essayer" : "Try",
     practice: fr ? "S'entraîner" : "Practice",
-    matchReason: fr ? "Recommandé car cela correspond à :" : "Recommended because it matches:",
+    matchReason: fr ? "Correspond à :" : "Matches:",
   };
 }
 

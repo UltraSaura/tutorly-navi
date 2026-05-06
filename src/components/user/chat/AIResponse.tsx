@@ -20,8 +20,7 @@ import ProblemCard from './ProblemCard';
 import GroupedProblemExplanationModal from './GroupedProblemExplanationModal';
 import { generateGroupedRetryPractice } from '@/services/problemSubmissionService';
 import { useAdmin } from '@/context/AdminContext';
-import { HomeworkSmartLearningResourcesCard } from '@/components/learning/HomeworkSmartLearningResourcesCard';
-import { buildSafeHomeworkLearningRows } from '@/services/homeworkLearningResources';
+import { buildSafeHomeworkLearningRows, type SafeHomeworkLearningRow } from '@/services/homeworkLearningResources';
 
 interface AIResponseProps {
   messages: Message[];
@@ -36,7 +35,14 @@ interface ExerciseCardProps {
   aiResponse: Message;
   onSubmitAnswer?: (question: string, answer: string) => void;
   onDismiss?: () => void;
-  onShowExplanation?: (question: string, answer: string, isCorrect: boolean) => void;
+  onShowExplanation?: (
+    question: string,
+    answer: string,
+    isCorrect: boolean,
+    homeworkLearningRows: SafeHomeworkLearningRow[],
+    sourceId: string,
+    title?: string,
+  ) => void;
 }
 
 // Inline helper to render text that may contain math
@@ -156,7 +162,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
 
   const handleExplanationClick = () => {
     if (onShowExplanation) {
-      onShowExplanation(question, answer || '', isCorrect);
+      onShowExplanation(question, answer || '', isCorrect, homeworkLearningRows, aiResponse.id, question);
     }
   };
 
@@ -178,7 +184,7 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
     const jsonIsIncorrect = jsonResponse.isCorrect === false;
     
     return (
-      <div className="w-full overflow-hidden space-y-3">
+      <div className="w-full overflow-hidden">
         <div className={cn(
           'p-4 rounded-card transition-all duration-200 hover:shadow-md relative break-words overflow-hidden',
           jsonIsCorrect ? 'bg-green-50 border-2 border-green-600'
@@ -271,19 +277,13 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
             </div>
           </div>
         </div>
-        <HomeworkSmartLearningResourcesCard
-          rows={homeworkLearningRows}
-          sourceId={aiResponse.id}
-          title={question || jsonResponse.exercise}
-          onPracticeClick={handleExplanationClick}
-        />
       </div>
     );
   }
 
   // Fallback for non-JSON responses
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full">
       <div className={cn('p-4 rounded-card transition-all duration-200 hover:shadow-md relative', getStatusStyles(content))}>
         <div className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center">
           {isCorrect ? (
@@ -361,12 +361,6 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
           </div>
         </div>
       </div>
-      <HomeworkSmartLearningResourcesCard
-        rows={homeworkLearningRows}
-        sourceId={aiResponse.id}
-        title={question}
-        onPracticeClick={handleExplanationClick}
-      />
     </div>
   );
 }, (prevProps, nextProps) => {
@@ -400,20 +394,36 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
   const [groupedRetryPractice, setGroupedRetryPractice] = useState<GroupedRetryPractice | null>(null);
   const [groupedRetryPracticeLoading, setGroupedRetryPracticeLoading] = useState(false);
   const [groupedRetryPracticeError, setGroupedRetryPracticeError] = useState<string | null>(null);
+  const [simpleExplanationLearningRows, setSimpleExplanationLearningRows] = useState<SafeHomeworkLearningRow[]>([]);
+  const [simpleExplanationSourceId, setSimpleExplanationSourceId] = useState<string | undefined>(undefined);
+  const [simpleExplanationTitle, setSimpleExplanationTitle] = useState<string | undefined>(undefined);
+  const [groupedExplanationLearningRows, setGroupedExplanationLearningRows] = useState<SafeHomeworkLearningRow[]>([]);
   
-  const handleShowExplanation = useCallback((question: string, answer: string, isCorrect: boolean) => {
+  const handleShowExplanation = useCallback((
+    question: string,
+    answer: string,
+    isCorrect: boolean,
+    homeworkLearningRows: SafeHomeworkLearningRow[] = [],
+    sourceId?: string,
+    title?: string,
+  ) => {
+    setSimpleExplanationLearningRows(homeworkLearningRows);
+    setSimpleExplanationSourceId(sourceId);
+    setSimpleExplanationTitle(title || question);
     teaching.openFor(
       { prompt: question, userAnswer: answer, subject: 'math' },
       {
         response_language: language === 'fr' ? 'French' : 'English',
         grade_level: userContext?.student_level || 'High School',
+        learning_style: userContext?.learning_style,
       }
     );
-  }, [language, teaching, userContext?.student_level]);
+  }, [language, teaching, userContext?.learning_style, userContext?.student_level]);
 
   const handleShowGroupedExplanation = useCallback(async (problem: ProblemSubmission, rowId?: string) => {
     setGroupedExplanationProblem(problem);
     setGroupedExplanationRowId(rowId);
+    setGroupedExplanationLearningRows(buildSafeHomeworkLearningRows(problem, rowId));
     setGroupedRetryPractice(null);
     setGroupedRetryPracticeError(null);
     setGroupedRetryPracticeLoading(true);
@@ -499,10 +509,6 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
 
         {problemMessages.map((message) => {
           const problem = message.problemSubmission!;
-          const homeworkRows = buildSafeHomeworkLearningRows(problem);
-          const retryableRow = problem.sections
-            .flatMap(section => section.rows)
-            .find(row => row.evaluation && row.evaluation.status !== 'correct');
           return (
             <div key={message.id} className="relative group">
               {onDismissExercise && (
@@ -513,32 +519,13 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
                 </button>
               )}
               {problem.type === 'grouped_choice_problem' || problem.type === 'grouped_problem' ? (
-                <div className="space-y-3">
-                  <GroupedChoiceProblemCard
-                    problem={problem}
-                    onSubmitAnswers={onSubmitGroupedAnswers}
-                    onShowExplanation={handleShowGroupedExplanation}
-                  />
-                  {problem.status === 'evaluated' && (
-                    <HomeworkSmartLearningResourcesCard
-                      rows={homeworkRows}
-                      sourceId={problem.submissionId || problem.id}
-                      title={problem.title}
-                      onPracticeClick={retryableRow ? () => void handleShowGroupedExplanation(problem, retryableRow.id) : undefined}
-                    />
-                  )}
-                </div>
+                <GroupedChoiceProblemCard
+                  problem={problem}
+                  onSubmitAnswers={onSubmitGroupedAnswers}
+                  onShowExplanation={handleShowGroupedExplanation}
+                />
               ) : (
-                <div className="space-y-3">
-                  <ProblemCard problem={problem} />
-                  {problem.status === 'evaluated' && (
-                    <HomeworkSmartLearningResourcesCard
-                      rows={homeworkRows}
-                      sourceId={problem.submissionId || problem.id}
-                      title={problem.title}
-                    />
-                  )}
-                </div>
+                <ProblemCard problem={problem} />
               )}
             </div>
           );
@@ -567,11 +554,19 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
 
       <ExplanationModal
         open={teaching.open}
-        onClose={() => teaching.setOpen(false)}
+        onClose={() => {
+          teaching.setOpen(false);
+          setSimpleExplanationLearningRows([]);
+          setSimpleExplanationSourceId(undefined);
+          setSimpleExplanationTitle(undefined);
+        }}
         loading={teaching.loading}
         sections={teaching.sections}
         error={teaching.error}
         onTryAgain={() => teaching.setOpen(false)}
+        homeworkLearningRows={simpleExplanationLearningRows}
+        homeworkSourceId={simpleExplanationSourceId}
+        homeworkTitle={simpleExplanationTitle}
       />
 
       <GroupedProblemExplanationModal
@@ -580,10 +575,12 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
         loading={groupedRetryPracticeLoading}
         error={groupedRetryPracticeError}
         rowId={groupedExplanationRowId}
+        homeworkLearningRows={groupedExplanationLearningRows}
         onRetry={groupedExplanationProblem ? () => void handleShowGroupedExplanation(groupedExplanationProblem, groupedExplanationRowId) : undefined}
         onClose={() => {
           setGroupedExplanationProblem(null);
           setGroupedExplanationRowId(undefined);
+          setGroupedExplanationLearningRows([]);
           setGroupedRetryPractice(null);
           setGroupedRetryPracticeError(null);
           setGroupedRetryPracticeLoading(false);

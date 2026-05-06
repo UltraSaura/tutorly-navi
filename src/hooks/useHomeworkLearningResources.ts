@@ -6,7 +6,7 @@ import {
 
 export function useHomeworkLearningResources(input: HomeworkLearningResourcesInput | null) {
   return useQuery({
-    queryKey: ["homework-learning-resources", input],
+    queryKey: ["homework-learning-resources", "row-scoped-v2", input],
     queryFn: () =>
       input
         ? getHomeworkLearningResources(input)

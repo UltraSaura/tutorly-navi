@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { BookOpen, CircleHelp, Play, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,12 +26,6 @@ type SmartLearningResourcesCardProps = {
   onPracticeClick?: () => void;
 };
 
-const iconFor = (type: LearningResourceRecommendation["type"]) => {
-  if (type === "video") return "▶";
-  if (type === "quiz") return "📝";
-  return "✏";
-};
-
 const normalize = (value?: string) =>
   (value || "").toLowerCase().replace(/\s+/g, " ").trim();
 
@@ -51,6 +46,12 @@ const recommendationMatchesSkill = (
   return skillMatch.keywords.some((keyword) => normalize(keyword).length >= 3 && resourceText.includes(normalize(keyword)));
 };
 
+const ResourceIcon = ({ type }: { type: LearningResourceRecommendation["type"] }) => {
+  if (type === "video") return <Play className="h-4 w-4" />;
+  if (type === "quiz") return <CircleHelp className="h-4 w-4" />;
+  return <RotateCcw className="h-4 w-4" />;
+};
+
 export function SmartLearningResourcesCard({
   source,
   skillMatches,
@@ -63,18 +64,14 @@ export function SmartLearningResourcesCard({
 }: SmartLearningResourcesCardProps) {
   const { language } = useLanguage();
   const copy = getSmartLearningResourcesCopy(language, source);
-  const topicMatches = useMemo(
-    () => skillMatches.slice(0, 3),
-    [skillMatches]
-  );
-  const [selectedSkillTag, setSelectedSkillTag] = useState<string>("");
+  const topicMatches = useMemo(() => skillMatches.slice(0, 3), [skillMatches]);
+  const [selectedSkillTag, setSelectedSkillTag] = useState("");
   const primarySkillMatch = topicMatches.find((match) => match.skillTag === selectedSkillTag) || topicMatches[0];
-  const topic = primarySkillMatch?.studentFriendlyLabel || primarySkillMatch?.topic || "";
   const visibleRecommendations = useMemo(() => {
     const selectedRecommendations = recommendations.filter((recommendation) =>
       recommendationMatchesSkill(recommendation, primarySkillMatch)
     );
-    return getVisibleLearningResources(selectedRecommendations.length > 0 ? selectedRecommendations : recommendations);
+    return getVisibleLearningResources(primarySkillMatch ? selectedRecommendations : recommendations);
   }, [primarySkillMatch, recommendations]);
   const trackedImpressionKeyRef = useRef<string | null>(null);
 
@@ -158,47 +155,50 @@ export function SmartLearningResourcesCard({
   return (
     <Card className="rounded-lg border bg-card p-4 shadow-sm">
       <div className="space-y-3">
-        <div>
-          <h4 className="text-sm font-semibold text-foreground">{copy.title}</h4>
-          {topicMatches.length > 0 && (
-            <div className="mt-2 space-y-2">
-              <p className="text-xs font-medium uppercase text-muted-foreground">{copy.detectedTopic}</p>
-              <div className="flex flex-wrap gap-2">
-                {topicMatches.map((match) => {
-                  const selected = match.skillTag === primarySkillMatch?.skillTag;
-                  return (
-                    <button
-                      key={match.skillTag}
-                      type="button"
-                      onClick={() => setSelectedSkillTag(match.skillTag)}
-                      className={[
-                        "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                        selected
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border bg-background text-muted-foreground hover:bg-muted",
-                      ].join(" ")}
-                    >
-                      {match.studentFriendlyLabel || match.topic}
-                    </button>
-                  );
-                })}
+        <div className="flex items-start gap-2">
+          <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <div className="min-w-0 flex-1">
+            <h4 className="text-sm font-semibold text-foreground">{copy.title}</h4>
+            {topicMatches.length > 0 && (
+              <div className="mt-2 space-y-2">
+                <p className="text-xs font-medium uppercase text-muted-foreground">{copy.detectedTopic}</p>
+                <div className="flex flex-wrap gap-2">
+                  {topicMatches.map((match) => {
+                    const selected = match.skillTag === primarySkillMatch?.skillTag;
+                    return (
+                      <button
+                        key={match.skillTag}
+                        type="button"
+                        onClick={() => setSelectedSkillTag(match.skillTag)}
+                        className={[
+                          "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                          selected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-background text-muted-foreground hover:bg-muted",
+                        ].join(" ")}
+                      >
+                        {match.studentFriendlyLabel || match.topic}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {loading ? (
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">{copy.loading}</p>
-            <Skeleton className="h-12 rounded-md" />
-            <Skeleton className="h-12 rounded-md" />
+            <Skeleton className="h-11 rounded-md" />
+            <Skeleton className="h-11 rounded-md" />
           </div>
         ) : visibleRecommendations.length === 0 ? (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">{copy.empty}</p>
             {onPracticeClick && (
               <Button type="button" variant="outline" size="sm" onClick={handlePracticeClick}>
-                <span aria-hidden="true">✏</span>
+                <RotateCcw className="h-4 w-4" />
                 {copy.practice}
               </Button>
             )}
@@ -227,21 +227,23 @@ export function SmartLearningResourcesCard({
                         trackClick(recommendation);
                         onPracticeClick?.();
                       };
-              const reason = recommendation.matchReasons[0] || topic;
+              const reason = recommendation.matchReasons[0];
 
               return (
                 <button
                   key={`${recommendation.type}-${recommendation.id}`}
                   type="button"
                   onClick={click}
-                  className="flex w-full items-start gap-3 rounded-md border bg-background p-3 text-left transition-colors hover:bg-muted/50"
+                  className="flex w-full items-start gap-3 rounded-md border bg-background p-2.5 text-left transition-colors hover:bg-muted/50"
                 >
-                  <span className="mt-0.5 text-base" aria-hidden="true">{iconFor(recommendation.type)}</span>
+                  <span className="mt-0.5 text-primary" aria-hidden="true">
+                    <ResourceIcon type={recommendation.type} />
+                  </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-xs font-medium uppercase text-muted-foreground">{section}</span>
                     <span className="block truncate text-sm font-medium text-foreground">{recommendation.title}</span>
                     {reason && (
-                      <span className="block text-xs text-muted-foreground">
+                      <span className="block truncate text-xs text-muted-foreground">
                         {copy.matchReason} {reason}
                       </span>
                     )}

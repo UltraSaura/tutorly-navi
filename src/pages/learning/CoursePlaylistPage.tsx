@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useCoursePlaylist } from '@/hooks/useCoursePlaylist';
@@ -16,35 +16,27 @@ import { TopicTabsLayout } from '@/components/learning/TopicTabsLayout';
 import { TopicLearnTab } from '@/components/learning/TopicLearnTab';
 import { TopicTranscriptTab } from '@/components/learning/TopicTranscriptTab';
 import { TopicLessonTab } from '@/components/learning/TopicLessonTab';
-import { SmartLearningResourcesCard } from '@/components/learning/SmartLearningResourcesCard';
-import { useSmartLearningResources } from '@/hooks/useSmartLearningResources';
 import type { LessonContent } from '@/types/learning';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 const CoursePlaylistPage = () => {
   const { subjectSlug, topicSlug } = useParams<{ subjectSlug: string; topicSlug: string }>();
   const navigate = useNavigate();
-  const { t, language } = useLanguage();
+  const [searchParams] = useSearchParams();
+  const { t } = useLanguage();
   const { user } = useAuth();
   const { data, isLoading } = useCoursePlaylist(topicSlug || '');
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
-  const smartLearningInput = data?.topic ? {
-    source: 'course' as const,
-    sourceId: data.topic.id,
-    title: data.topic.name,
-    description: data.topic.description || undefined,
-    subject: data.topic.curriculum_subject_id || undefined,
-    gradeLevel: data.topic.curriculum_level_code || undefined,
-    country: data.topic.curriculum_country_code || undefined,
-    responseLanguage: language,
-  } : null;
-  const { data: smartLearning, isLoading: smartLearningLoading } = useSmartLearningResources(
-    smartLearningInput,
-    user?.id,
-    4
-  );
+  const requestedVideoId = searchParams.get('video');
+  const shouldAutoPlayRequestedVideo = searchParams.get('autoplay') !== '0';
 
-  // Video only plays when user clicks a video title
+  // Video normally plays when a user clicks a title; Smart Learning links can preselect one.
+  useEffect(() => {
+    if (!requestedVideoId || !data?.videos?.length) return;
+    if (data.videos.some(video => video.id === requestedVideoId)) {
+      setPlayingVideoId(requestedVideoId);
+    }
+  }, [data?.videos, requestedVideoId]);
 
   // Fetch completed video IDs for the current user
   const { data: completedVideoIds = [] } = useQuery({
@@ -133,34 +125,17 @@ const CoursePlaylistPage = () => {
         <div className="pb-24">
           <TopicTabsLayout
             learnContent={
-              <div className="space-y-3">
-                {(smartLearningLoading || (smartLearning?.skillMatches.length || 0) > 0) && (
-                  <div className="px-3 pt-3">
-                    <SmartLearningResourcesCard
-                      source="course"
-                      skillMatches={smartLearning?.skillMatches || []}
-                      recommendations={smartLearning?.recommendations || []}
-                      loading={smartLearningLoading}
-                      onVideoClick={(videoId) => navigate(`/learning/video/${videoId}`)}
-                      onQuizClick={(quizId) => {
-                        const params = new URLSearchParams(window.location.search);
-                        params.set('quiz', quizId);
-                        navigate({ search: params.toString() }, { replace: true });
-                      }}
-                    />
-                  </div>
-                )}
-                <TopicLearnTab
-                  topicId={topic.id}
-                  videos={videos}
-                  playingVideoId={playingVideoId}
-                  onVideoSelect={setPlayingVideoId}
-                  onVideoEnd={handleVideoEnd}
-                  completedVideoIds={completedVideoIds}
-                  allBanks={allBanks?.banks}
-                  lessonContent={lessonContent}
-                />
-              </div>
+              <TopicLearnTab
+                topicId={topic.id}
+                videos={videos}
+                playingVideoId={playingVideoId}
+                onVideoSelect={setPlayingVideoId}
+                onVideoEnd={handleVideoEnd}
+                completedVideoIds={completedVideoIds}
+                allBanks={allBanks?.banks}
+                lessonContent={lessonContent}
+                videoAutoPlay={requestedVideoId === playingVideoId ? shouldAutoPlayRequestedVideo : true}
+              />
             }
             transcriptContent={
               <TopicTranscriptTab
