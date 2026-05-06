@@ -19,6 +19,9 @@ interface RuntimeMiniPracticeInlineProps {
 
 type AnswerState = "idle" | "correct" | "incorrect";
 
+const shouldSpanFullWidthChoice = (label: string) =>
+  label.trim().length > 18 || /\s/.test(label.trim());
+
 export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMiniPracticeInlineProps) {
   const { t } = useLanguage();
   const { selectedModelId } = useAdmin();
@@ -208,9 +211,10 @@ export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMini
       <p className="whitespace-pre-wrap break-words">{practice.prompt}</p>
 
       {practice.questionType === "multiple_choice" && (
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
           {practice.choices?.map(choice => {
             const selected = selectedChoice === choice.id;
+            const fullWidth = shouldSpanFullWidthChoice(choice.label);
             return (
               <button
                 key={choice.id}
@@ -224,6 +228,7 @@ export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMini
                   selected
                     ? "border-primary bg-primary/10 text-foreground"
                     : "bg-background hover:bg-muted/70",
+                  fullWidth ? "min-[420px]:col-span-2" : "",
                 ].join(" ")}
               >
                 <span className="font-semibold">{choice.id}.</span> {choice.label}

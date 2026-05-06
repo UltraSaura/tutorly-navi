@@ -8,8 +8,16 @@ import {
   listFeatureFlags,
   updateFeatureFlagEnabled,
 } from "@/services/featureFlags";
-import { getAdaptiveTeachingReadiness } from "@/services/adaptiveTeaching";
+import { getStudentLearningAnalyticsSummary } from "@/services/adaptiveTeaching";
 import { useLanguage } from "@/context/SimpleLanguageContext";
+import type { LearningStyle } from "@/types/learning-style";
+
+const supportStyleLabels: Record<LearningStyle, { en: string; fr: string }> = {
+  visual: { en: "picture-based support", fr: "les supports visuels" },
+  auditory: { en: "word-and-sound support", fr: "les supports avec les mots et le son" },
+  kinesthetic: { en: "hands-on practice", fr: "les exercices pratiques" },
+  mixed: { en: "mixed support", fr: "les supports variés" },
+};
 
 export default function AdminSettings() {
   const queryClient = useQueryClient();
@@ -19,9 +27,9 @@ export default function AdminSettings() {
     queryKey: ["app-feature-flags"],
     queryFn: listFeatureFlags,
   });
-  const { data: readiness } = useQuery({
-    queryKey: ["adaptive-teaching-readiness"],
-    queryFn: getAdaptiveTeachingReadiness,
+  const { data: analyticsSummary } = useQuery({
+    queryKey: ["adaptive-teaching-summary"],
+    queryFn: () => getStudentLearningAnalyticsSummary(),
   });
 
   const updateFlag = useMutation({
@@ -29,7 +37,7 @@ export default function AdminSettings() {
       updateFeatureFlagEnabled(key, enabled),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["app-feature-flags"] });
-      queryClient.invalidateQueries({ queryKey: ["adaptive-teaching-readiness"] });
+      queryClient.invalidateQueries({ queryKey: ["adaptive-teaching-summary"] });
       toast.success("Feature flag updated");
     },
     onError: (error: any) => {
@@ -42,7 +50,10 @@ export default function AdminSettings() {
 
   const adaptiveFlag = flags.find(flag => flag.key === ADAPTIVE_TEACHING_RECOMMENDATIONS_FLAG);
   const enabled = Boolean(adaptiveFlag?.enabled);
-  const hasEnoughData = Boolean(readiness?.hasEnoughData);
+  const isReady = analyticsSummary?.readinessStatus === "ready";
+  const strongestSupport = analyticsSummary?.mostHelpfulSupportStyle
+    ? supportStyleLabels[analyticsSummary.mostHelpfulSupportStyle][isFrench ? "fr" : "en"]
+    : null;
   const title = isFrench
     ? "Recommandations pédagogiques adaptatives"
     : "Adaptive teaching recommendations";
@@ -53,13 +64,25 @@ export default function AdminSettings() {
     ? (isFrench
         ? "Désactivé. Les données d’apprentissage sont toujours collectées."
         : "Off. Analytics are still being collected.")
-    : hasEnoughData
+    : isReady
       ? (isFrench
           ? "Activé. Les recommandations peuvent être utilisées lorsque la confiance est suffisante."
           : "On. Recommendations can be used when confidence is high.")
       : (isFrench
           ? "Activé. Collecte de données supplémentaires avant d’utiliser les recommandations."
           : "On. Collecting more data before recommendations can be used.");
+  const metrics = analyticsSummary
+    ? (isFrench
+        ? `Données collectées : ${analyticsSummary.totalRelevantEvents} événements, ${analyticsSummary.answeredPracticeOrQuizEvents} réponses à des exercices/quiz.`
+        : `Data collected: ${analyticsSummary.totalRelevantEvents} events, ${analyticsSummary.answeredPracticeOrQuizEvents} answered practice/quiz events.`)
+    : null;
+  const evidence = strongestSupport
+    ? (isFrench
+        ? `Signal précoce : ${strongestSupport} semblent utiles.`
+        : `Early signal: ${strongestSupport} seems helpful.`)
+    : (isFrench
+        ? "Pas encore assez de preuves pour une recommandation."
+        : "Not enough evidence for a recommendation yet.");
 
   return (
     <div className="space-y-6">
@@ -87,11 +110,14 @@ export default function AdminSettings() {
               <p className="text-sm text-muted-foreground">
                 {status}
               </p>
-              {enabled && readiness && (
+              {metrics && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {readiness.relevantEvents} learning events · {readiness.answeredAfterSupport} answered after support
+                  {metrics}
                 </p>
               )}
+              <p className="mt-1 text-xs text-muted-foreground">
+                {evidence}
+              </p>
             </div>
             <Switch
               checked={enabled}

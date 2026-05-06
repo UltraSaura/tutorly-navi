@@ -1,5 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeLearningStyle, type LearningStyle } from "@/types/learning-style";
+import type {
+  CurriculumSkillMatch,
+  LearningContextSource,
+  LearningResourceRecommendation,
+} from "@/types/smart-learning";
 
 export type LearningInteractionEventType =
   | "explanation_opened"
@@ -21,6 +26,12 @@ export type LearningInteractionEventType =
   | "quiz_answer_after_remediation"
   | "grouped_retry_opened"
   | "grouped_learning_style_support_viewed"
+  | "learning_resources_shown"
+  | "learning_resource_clicked"
+  | "recommended_video_clicked"
+  | "recommended_quiz_clicked"
+  | "recommended_practice_clicked"
+  | "resource_recommendation_empty"
   | "learning_preference_changed";
 
 export type LearningSupportType = LearningStyle;
@@ -164,6 +175,52 @@ export async function trackLearningInteractionEvent(
 
 export function trackLearningInteraction(input: LearningInteractionEventInput): void {
   void trackLearningInteractionEvent(input);
+}
+
+export type LearningResourceAnalyticsEvent =
+  | "learning_resources_shown"
+  | "learning_resource_clicked"
+  | "recommended_video_clicked"
+  | "recommended_quiz_clicked"
+  | "recommended_practice_clicked"
+  | "resource_recommendation_empty";
+
+export type LearningResourceAnalyticsInput = {
+  eventName: LearningResourceAnalyticsEvent;
+  source: LearningContextSource;
+  skillMatch?: CurriculumSkillMatch;
+  recommendation?: LearningResourceRecommendation;
+  recommendationCount?: number;
+};
+
+export function buildLearningResourceAnalyticsMetadata({
+  source,
+  skillMatch,
+  recommendation,
+  recommendationCount,
+}: Omit<LearningResourceAnalyticsInput, "eventName">): Record<string, unknown> {
+  return {
+    source,
+    topicId: skillMatch?.topicId,
+    objectiveId: skillMatch?.objectiveId,
+    resourceType: recommendation?.type,
+    resourceId: recommendation?.id,
+    matchScore: recommendation?.matchScore,
+    recommendationCount,
+  };
+}
+
+export function trackLearningResourceEvent(input: LearningResourceAnalyticsInput): void {
+  trackLearningInteraction({
+    eventType: input.eventName,
+    subject: input.skillMatch?.subject,
+    concept: input.skillMatch?.studentFriendlyLabel || input.skillMatch?.topic,
+    skillTag: input.skillMatch?.skillTag,
+    topicId: input.skillMatch?.topicId,
+    objectiveId: input.skillMatch?.objectiveId,
+    quizId: input.recommendation?.type === "quiz" ? input.recommendation.id : undefined,
+    metadata: buildLearningResourceAnalyticsMetadata(input),
+  });
 }
 
 // Future adaptive scoring can aggregate by student_id + concept/skill_tag and compare:

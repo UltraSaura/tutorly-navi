@@ -6,6 +6,8 @@ import { showXpToast } from '@/components/game/XpToast';
 import { TwoCards } from './TwoCards';
 import { useTwoCardTeaching, TeachingSections } from './useTwoCardTeaching';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { HomeworkSmartLearningResourcesCard } from '@/components/learning/HomeworkSmartLearningResourcesCard';
+import type { SafeHomeworkLearningRow } from '@/services/homeworkLearningResources';
 
 interface ExplanationModalProps {
   open: boolean;
@@ -19,6 +21,9 @@ interface ExplanationModalProps {
   topicId?: string;
   subjectSlug?: string;
   topicSlug?: string;
+  homeworkLearningRows?: SafeHomeworkLearningRow[];
+  homeworkSourceId?: string;
+  homeworkTitle?: string;
 }
 
 export function ExplanationModal({ 
@@ -32,7 +37,10 @@ export function ExplanationModal({
   imageUrl,
   topicId,
   subjectSlug,
-  topicSlug
+  topicSlug,
+  homeworkLearningRows = [],
+  homeworkSourceId,
+  homeworkTitle
 }: ExplanationModalProps) {
   const { t } = useLanguage();
   
@@ -103,6 +111,16 @@ export function ExplanationModal({
                 topicSlug={topicSlug}
                 onClose={onClose} 
               />
+              {homeworkLearningRows.length > 0 && (
+                <div className="mt-4">
+                  <HomeworkSmartLearningResourcesCard
+                    rows={homeworkLearningRows}
+                    sourceId={homeworkSourceId}
+                    title={homeworkTitle || exerciseQuestion || sections.exercise}
+                    onPracticeClick={onTryAgain}
+                  />
+                </div>
+              )}
             </>
           ) : (
             <>

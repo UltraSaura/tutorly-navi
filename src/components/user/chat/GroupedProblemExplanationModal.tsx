@@ -11,6 +11,8 @@ import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
 import { GeometryDiagram } from './GeometryDiagram';
 import { toChildFriendlyExplanationText } from '@/features/explanations/childFriendlyText';
 import { trackLearningInteraction } from '@/services/learningAnalytics';
+import { HomeworkSmartLearningResourcesCard } from '@/components/learning/HomeworkSmartLearningResourcesCard';
+import type { SafeHomeworkLearningRow } from '@/services/homeworkLearningResources';
 
 interface GroupedProblemExplanationModalProps {
   problem: ProblemSubmission | null;
@@ -20,6 +22,7 @@ interface GroupedProblemExplanationModalProps {
   rowId?: string;
   onClose: () => void;
   onRetry?: () => void;
+  homeworkLearningRows?: SafeHomeworkLearningRow[];
 }
 
 const selectedEvaluatedRows = (problem: ProblemSubmission, rowId?: string) =>
@@ -50,6 +53,7 @@ const GroupedProblemExplanationModal = ({
   rowId,
   onClose,
   onRetry,
+  homeworkLearningRows = [],
 }: GroupedProblemExplanationModalProps) => {
   const { language } = useLanguage();
   const { userContext } = useUserContext();
@@ -228,6 +232,15 @@ const GroupedProblemExplanationModal = ({
                   </p>
                 </section>
               )}
+
+              {homeworkLearningRows.length > 0 && (
+                <HomeworkSmartLearningResourcesCard
+                  rows={homeworkLearningRows}
+                  sourceId={problem.submissionId || problem.id}
+                  title={problem.title}
+                  onPracticeClick={onRetry}
+                />
+              )}
             </>
           )}
 
@@ -275,6 +288,15 @@ const GroupedProblemExplanationModal = ({
                     </div>
                   ))}
                 </section>
+              )}
+
+              {homeworkLearningRows.length > 0 && (
+                <HomeworkSmartLearningResourcesCard
+                  rows={homeworkLearningRows}
+                  sourceId={problem.submissionId || problem.id}
+                  title={problem.title}
+                  onPracticeClick={onRetry}
+                />
               )}
             </>
           )}

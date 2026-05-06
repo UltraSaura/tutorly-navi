@@ -12,6 +12,7 @@ import { ExportReportButton } from '@/components/guardian/ExportReportButton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SubjectMasteryCard } from '@/components/user/SubjectMasteryCard';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { LearningInsightsCard } from '@/components/learning/LearningInsightsCard';
 
 export default function ChildDashboard() {
   const { childId } = useParams<{ childId: string }>();
@@ -113,6 +114,8 @@ export default function ChildDashboard() {
       )}
 
       <KPICards />
+
+      <LearningInsightsCard studentId={child.user_id} />
 
       {progressData?.[0]?.subjects && progressData[0].subjects.length > 0 && (
         <div className="space-y-2">

@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, AlertTriangle, ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { LearningInsightsCard } from '@/components/learning/LearningInsightsCard';
 
 export default function TeacherStudentDetail() {
   const { studentId } = useParams();
@@ -80,6 +81,8 @@ export default function TeacherStudentDetail() {
           </p>
         </CardContent>
       </Card>
+
+      <LearningInsightsCard studentId={studentId} />
 
       {/* Areas Needing Attention */}
       {weaknesses.length > 0 && (

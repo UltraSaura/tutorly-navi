@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useCoursePlaylist } from '@/hooks/useCoursePlaylist';
@@ -22,12 +22,21 @@ import { PageMeta } from '@/components/seo/PageMeta';
 const CoursePlaylistPage = () => {
   const { subjectSlug, topicSlug } = useParams<{ subjectSlug: string; topicSlug: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useLanguage();
   const { user } = useAuth();
   const { data, isLoading } = useCoursePlaylist(topicSlug || '');
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const requestedVideoId = searchParams.get('video');
+  const shouldAutoPlayRequestedVideo = searchParams.get('autoplay') !== '0';
 
-  // Video only plays when user clicks a video title
+  // Video normally plays when a user clicks a title; Smart Learning links can preselect one.
+  useEffect(() => {
+    if (!requestedVideoId || !data?.videos?.length) return;
+    if (data.videos.some(video => video.id === requestedVideoId)) {
+      setPlayingVideoId(requestedVideoId);
+    }
+  }, [data?.videos, requestedVideoId]);
 
   // Fetch completed video IDs for the current user
   const { data: completedVideoIds = [] } = useQuery({
@@ -125,6 +134,7 @@ const CoursePlaylistPage = () => {
                 completedVideoIds={completedVideoIds}
                 allBanks={allBanks?.banks}
                 lessonContent={lessonContent}
+                videoAutoPlay={requestedVideoId === playingVideoId ? shouldAutoPlayRequestedVideo : true}
               />
             }
             transcriptContent={
