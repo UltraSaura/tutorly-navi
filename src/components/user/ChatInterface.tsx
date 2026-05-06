@@ -153,7 +153,7 @@ const ChatInterface = () => {
     
     // Also process and grade the exercise so UI updates with correct/incorrect
     try {
-      await processHomeworkFromChat(messageToSend);
+      await processHomeworkFromChat(messageToSend, { persist: false });
       console.log('[ChatInterface] Exercise processed and graded successfully');
     } catch (error) {
       console.error('[ChatInterface] Error processing homework:', error);

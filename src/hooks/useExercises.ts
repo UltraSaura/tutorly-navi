@@ -10,6 +10,7 @@ import { hasMultipleExercises } from '@/utils/homework/multiExerciseParser';
 import { evaluateHomework } from '@/services/homeworkGrading';
 import { fetchExplanation as fetchExplanationFromAI } from '@/services/explanationService';
 import { useAdmin } from '@/context/AdminContext';
+import { buildGradedWorkFromExercise, saveGradedWorksToHistory } from '@/services/gradedWorkHistory';
 
 export const useExercises = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -144,11 +145,15 @@ export const useExercises = () => {
     }
   };
 
-  const processHomeworkFromChat = async (message: string): Promise<{ localGraded: boolean; isCorrect: boolean }> => {
+  const processHomeworkFromChat = async (
+    message: string,
+    options: { persist?: boolean } = {}
+  ): Promise<{ localGraded: boolean; isCorrect: boolean }> => {
     console.log('[useExercises] Processing homework from chat message:', message);
     
     let localGraded = false;
     let isCorrect = false;
+    const shouldPersist = options.persist !== false;
     
     // Check if the message contains multiple exercises
     if (hasMultipleExercises(message)) {
@@ -165,6 +170,13 @@ export const useExercises = () => {
         
         localGraded = newExercises.some(ex => ex.gradingMethod === 'local');
         isCorrect = newExercises.every(ex => ex.isCorrect === true);
+
+        if (shouldPersist) {
+          const gradedWorks = newExercises
+            .map(buildGradedWorkFromExercise)
+            .filter(Boolean);
+          await saveGradedWorksToHistory(gradedWorks);
+        }
         
         if (newExercises.length > 1) {
           toast.info(`Found ${newExercises.length} exercises in your message`);
@@ -190,6 +202,11 @@ export const useExercises = () => {
           }
         });
         setProcessedContent(prev => new Set([...prev, message]));
+
+        if (shouldPersist) {
+          const gradedWork = buildGradedWorkFromExercise(exercise);
+          if (gradedWork) await saveGradedWorksToHistory([gradedWork]);
+        }
       }
     }
     
