@@ -24,6 +24,7 @@ export async function fetchExplanation(
     language?: string;
     first_name?: string;
     country?: string;
+    learning_style?: string;
   },
   teachingMode: "concept" | "solution" = "concept",
   activeTemplate?: PromptTemplate | null
@@ -44,28 +45,43 @@ export async function fetchExplanation(
 Guidelines:
 - NEVER use the numbers or data from the student's exercise.
 - NEVER compute or state the final result of the student's exercise.
-- Instead:
-  1. Explain the core concept (e.g. Greatest Common Divisor (GCD) or PGCD).
-  2. Show ONE worked example using DIFFERENT numbers but the SAME operation type (e.g. if student has division, show division; if addition, show addition).
-  3. Explain the general method (step-by-step, in text).
-  4. Optionally warn about a common mistake.
-  5. End with a self-check card that tells the student what to verify.
+- Always start with the universal concept explanation. The learning style changes the support method and practice format, not the academic goal.
+- Do not say "Because you are a visual learner" or label the child.
+- Use this child-friendly flow:
+  1. Quick idea / core concept.
+  2. Learn it your way: learning-style support AND one guided example using DIFFERENT numbers but the SAME operation/concept.
+  3. Auto-vérification / self-check: the student's own check, not the final answer.
+  4. Method / how to solve it: reusable steps.
+  5. Common mistake / watch out.
 
 Output must ALWAYS be valid JSON like:
 {"steps":[{"title":"","body":"","icon":"","kind":""}],"meta":{"mode":"concept","revealAnswer":false}}
 
 Rules for steps:
-- 3–5 steps maximum.
+- Use exactly these 5 steps in this order:
+  1. Quick idea / Core concept: kind "concept", icon "lightbulb".
+  2. Learn it your way: kind "strategy"; icon "magnifier" for visual, "lightbulb" or "checklist" for auditory, "checklist" for kinesthetic or mixed. This step MUST include learning-style support AND one guided example with different numbers but the same operation/concept.
+  3. Auto-vérification / Self-check: kind "check", icon "target". This is fallback self-check text now and will later become runtime mini-practice.
+  4. Method / How to solve it: kind "strategy", icon "checklist".
+  5. Common mistake / Watch out: kind "pitfall", icon "warning".
 - Each step:
   • "title": 2–5 words (short label)
   • "body": 1–3 simple sentences, clear and precise
   • "icon": one of ["lightbulb","magnifier","divide","checklist","warning","target"]
   • "kind": one of ["concept","example","strategy","pitfall","check"]
-- Example MUST use different numbers but the SAME operation type as the student's exercise.
+- In the "Learn it your way" step:
+  - If {{learning_style}} is visual: use a title like "See it" or "Learn it your way". Use diagrams, arrays, number lines, tables, visual grouping, labels, shape descriptions, or spatial language. Use words like look, draw, mark, group, compare, line up, circle, point to.
+  - If {{learning_style}} is auditory: use a title like "Say it" or "Learn it your way". Use spoken reasoning, repeatable phrases, verbal cues, or a memory sentence. Include one sentence the child can say out loud.
+  - If {{learning_style}} is kinesthetic: use a title like "Try it" or "Learn it your way". Give hands-on actions: draw, move, tap, sort, count, fold, point, build, or act it out.
+  - If {{learning_style}} is mixed: title it "Learn it your way" or "Try it three ways". Include one visual hint, one verbal cue, and one action idea.
+  - Include ONE guided example inside this same step. The example MUST use different numbers but the SAME operation/concept as the student's exercise.
 - If student exercise is division (÷ or /), show a division example.
 - If student exercise is multiplication (× or *), show a multiplication example.
 - If student exercise is addition (+), show an addition example.
 - If student exercise is subtraction (-), show a subtraction example.
+- The self-check step should tell the student what to verify or try next without revealing the original answer.
+- The method step should give reusable steps, not another full worked example.
+- The common mistake step should warn about one likely trap.
 - Do NOT output the student's numbers anywhere.
 - No extra text, no markdown, no code fences.
 
@@ -73,7 +89,8 @@ Exercise (for context, DO NOT solve): {{exercise}}
 Student answer: {{studentAnswer}}
 Subject: {{subject}}
 Language: {{language}}
-Grade level: {{gradeLevel}}`;
+Grade level: {{gradeLevel}}
+Learning style: {{learning_style}}`;
 
     const promptTemplate = activeTemplate?.prompt_content || fallbackTemplate;
 
@@ -91,6 +108,7 @@ Grade level: {{gradeLevel}}`;
       grade_level: userContext?.gradeLevel ?? "High School",
       first_name: userContext?.first_name || 'Student',
       country: userContext?.country || 'your country',
+      learning_style: userContext?.learning_style || 'mixed',
       // Legacy variables for backward compatibility
       student_level: userContext?.gradeLevel ?? "High School",
       // New template variable mappings

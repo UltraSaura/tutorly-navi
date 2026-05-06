@@ -9,6 +9,10 @@ import { useUserContext } from '@/hooks/useUserContext';
 import { extractExpressionFromText } from '@/utils/mathStepper/parser';
 import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
 import { GeometryDiagram } from './GeometryDiagram';
+import { toChildFriendlyExplanationText } from '@/features/explanations/childFriendlyText';
+import { trackLearningInteraction } from '@/services/learningAnalytics';
+import { HomeworkSmartLearningResourcesCard } from '@/components/learning/HomeworkSmartLearningResourcesCard';
+import type { SafeHomeworkLearningRow } from '@/services/homeworkLearningResources';
 
 interface GroupedProblemExplanationModalProps {
   problem: ProblemSubmission | null;
@@ -18,6 +22,7 @@ interface GroupedProblemExplanationModalProps {
   rowId?: string;
   onClose: () => void;
   onRetry?: () => void;
+  homeworkLearningRows?: SafeHomeworkLearningRow[];
 }
 
 const selectedEvaluatedRows = (problem: ProblemSubmission, rowId?: string) =>
@@ -48,12 +53,14 @@ const GroupedProblemExplanationModal = ({
   rowId,
   onClose,
   onRetry,
+  homeworkLearningRows = [],
 }: GroupedProblemExplanationModalProps) => {
   const { language } = useLanguage();
   const { userContext } = useUserContext();
-  if (!problem) return null;
+  const trackedOpenKeyRef = React.useRef<string | null>(null);
+  const trackedSupportKeyRef = React.useRef<string | null>(null);
 
-  const fallbackRows = selectedEvaluatedRows(problem, rowId);
+  const fallbackRows = problem ? selectedEvaluatedRows(problem, rowId) : [];
   const practiceExpression = practice?.similarProblem
     ? extractExpressionFromText(practice.similarProblem)
     : null;
@@ -64,6 +71,46 @@ const GroupedProblemExplanationModal = ({
     isUnder11YearsOld(userContext.student_level) &&
     isPureArithmeticProblem(practice.similarProblem)
   );
+
+  React.useEffect(() => {
+    if (!problem || !practice) return;
+    const key = `${problem.submissionId || problem.id}:${rowId || 'selected'}`;
+    if (trackedOpenKeyRef.current === key) return;
+    trackedOpenKeyRef.current = key;
+
+    trackLearningInteraction({
+      eventType: 'grouped_retry_opened',
+      learningStyleUsed: userContext?.learning_style,
+      supportType: practice.learningStyleSupport?.style || userContext?.learning_style,
+      subject: 'Math',
+      concept: practice.concept,
+      metadata: {
+        problemType: problem.type,
+        hasLearningStyleSupport: Boolean(practice.learningStyleSupport),
+      },
+    });
+  }, [practice, problem, rowId, userContext?.learning_style]);
+
+  React.useEffect(() => {
+    if (!problem || !practice?.learningStyleSupport) return;
+    const key = `${problem.submissionId || problem.id}:${rowId || 'selected'}:${practice.learningStyleSupport.title}`;
+    if (trackedSupportKeyRef.current === key) return;
+    trackedSupportKeyRef.current = key;
+
+    trackLearningInteraction({
+      eventType: 'grouped_learning_style_support_viewed',
+      learningStyleUsed: practice.learningStyleSupport.style,
+      supportType: practice.learningStyleSupport.style,
+      subject: 'Math',
+      concept: practice.concept,
+      metadata: {
+        supportTitle: practice.learningStyleSupport.title,
+        problemType: problem.type,
+      },
+    });
+  }, [practice?.learningStyleSupport, practice?.concept, problem, rowId]);
+
+  if (!problem) return null;
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
@@ -93,35 +140,75 @@ const GroupedProblemExplanationModal = ({
                 <h4 className="text-sm font-semibold text-foreground mb-2">
                   {language === 'fr' ? 'Idée à travailler' : 'Concept to practice'}
                 </h4>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{practice.concept}</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {toChildFriendlyExplanationText(practice.concept)}
+                </p>
               </section>
 
-              <section className="rounded-lg border border-blue-100 bg-blue-50 p-4">
-                <h4 className="text-sm font-semibold text-blue-950 mb-2">
-                  {language === 'fr' ? 'Exemple similaire' : 'Similar problem'}
-                </h4>
-                {practice.diagram && (
-                  <div className="mb-3">
-                    <GeometryDiagram diagram={practice.diagram} />
-                  </div>
-                )}
-                <p className="text-sm text-blue-950 whitespace-pre-wrap">{practice.similarProblem}</p>
-              </section>
-
-              {shouldShowInteractiveStepper && (
-                <section className="rounded-lg border bg-card p-4 shadow-sm">
-                  <h4 className="text-sm font-semibold text-foreground mb-3">
-                    {language === 'fr' ? 'Pratique interactive' : 'Interactive practice'}
+              {practice.learningStyleSupport && (
+                <section className="rounded-lg border border-indigo-200 bg-indigo-50 p-4">
+                  <h4 className="text-sm font-semibold text-indigo-950 mb-2">
+                    {toChildFriendlyExplanationText(practice.learningStyleSupport.title)}
                   </h4>
-                  <CompactMathStepper expression={practiceExpression} className="text-sm" />
+                  {practice.diagram && (
+                    <div className="mb-3">
+                      <GeometryDiagram diagram={practice.diagram} />
+                    </div>
+                  )}
+                  <p className="text-sm text-indigo-950 whitespace-pre-wrap">
+                    {toChildFriendlyExplanationText(practice.learningStyleSupport.content)}
+                  </p>
+                  {shouldShowInteractiveStepper && (
+                    <div className="mt-4 rounded-lg border border-indigo-100 bg-white/70 p-3">
+                      <h5 className="text-sm font-semibold text-indigo-950 mb-3">
+                        {language === 'fr' ? 'Pratique interactive' : 'Interactive practice'}
+                      </h5>
+                      <CompactMathStepper expression={practiceExpression} className="text-sm" />
+                    </div>
+                  )}
                 </section>
               )}
+
+              {!practice.learningStyleSupport && (
+                <section className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+                  <h4 className="text-sm font-semibold text-blue-950 mb-2">
+                    {language === 'fr' ? 'Exemple similaire' : 'Similar problem'}
+                  </h4>
+                  {practice.diagram && (
+                    <div className="mb-3">
+                      <GeometryDiagram diagram={practice.diagram} />
+                    </div>
+                  )}
+                  <p className="text-sm text-blue-950 whitespace-pre-wrap">
+                    {toChildFriendlyExplanationText(practice.similarProblem)}
+                  </p>
+                  {shouldShowInteractiveStepper && (
+                    <div className="mt-4 rounded-lg border border-blue-100 bg-white/70 p-3">
+                      <h5 className="text-sm font-semibold text-blue-950 mb-3">
+                        {language === 'fr' ? 'Pratique interactive' : 'Interactive practice'}
+                      </h5>
+                      <CompactMathStepper expression={practiceExpression} className="text-sm" />
+                    </div>
+                  )}
+                </section>
+              )}
+
+              <section className="rounded-lg border border-green-200 bg-green-50 p-4">
+                <h4 className="text-sm font-semibold text-green-950 mb-2">
+                  {language === 'fr' ? 'Auto-vérification' : 'Self-check'}
+                </h4>
+                <p className="text-sm text-green-950 whitespace-pre-wrap">
+                  {toChildFriendlyExplanationText(practice.retryPrompt)}
+                </p>
+              </section>
 
               <section className="rounded-lg border bg-card p-4">
                 <h4 className="text-sm font-semibold text-foreground mb-2">
                   {language === 'fr' ? 'Méthode' : 'Method'}
                 </h4>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{practice.method}</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {toChildFriendlyExplanationText(practice.method)}
+                </p>
               </section>
 
               {practice.commonMistake && (
@@ -129,16 +216,31 @@ const GroupedProblemExplanationModal = ({
                   <h4 className="text-sm font-semibold text-amber-950 mb-2">
                     {language === 'fr' ? 'Attention' : 'Watch out'}
                   </h4>
-                  <p className="text-sm text-amber-950 whitespace-pre-wrap">{practice.commonMistake}</p>
+                  <p className="text-sm text-amber-950 whitespace-pre-wrap">
+                    {toChildFriendlyExplanationText(practice.commonMistake)}
+                  </p>
                 </section>
               )}
 
-              <section className="rounded-lg border border-green-200 bg-green-50 p-4">
-                <h4 className="text-sm font-semibold text-green-950 mb-2">
-                  {language === 'fr' ? 'À toi de réessayer' : 'Now try again'}
-                </h4>
-                <p className="text-sm text-green-950 whitespace-pre-wrap">{practice.retryPrompt}</p>
-              </section>
+              {practice.parentHelpHint && (
+                <section className="rounded-lg border bg-muted/40 p-4">
+                  <h4 className="text-sm font-semibold text-foreground mb-2">
+                    {language === 'fr' ? 'Conseil pour les parents' : 'Parent help hint'}
+                  </h4>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {toChildFriendlyExplanationText(practice.parentHelpHint)}
+                  </p>
+                </section>
+              )}
+
+              {homeworkLearningRows.length > 0 && (
+                <HomeworkSmartLearningResourcesCard
+                  rows={homeworkLearningRows}
+                  sourceId={problem.submissionId || problem.id}
+                  title={problem.title}
+                  onPracticeClick={onRetry}
+                />
+              )}
             </>
           )}
 
@@ -186,6 +288,15 @@ const GroupedProblemExplanationModal = ({
                     </div>
                   ))}
                 </section>
+              )}
+
+              {homeworkLearningRows.length > 0 && (
+                <HomeworkSmartLearningResourcesCard
+                  rows={homeworkLearningRows}
+                  sourceId={problem.submissionId || problem.id}
+                  title={problem.title}
+                  onPracticeClick={onRetry}
+                />
               )}
             </>
           )}

@@ -1,19 +1,83 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { X, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { X, ChevronRight, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import type { QuizBank } from '@/types/quiz-bank';
+import type { Choice, Question, QuizBank } from '@/types/quiz-bank';
 import { QuestionCard } from './QuestionCard';
 import { gradeQuiz, shuffle } from '@/utils/quizEvaluation';
 import { evaluateQuestion } from '@/utils/quizEvaluation';
 import { useSubmitBankAttempt } from '@/hooks/useQuizBank';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
+import { ExplanationModal } from '@/features/explanations/ExplanationModal';
+import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
+import { useUserContext } from '@/hooks/useUserContext';
+import { normalizeLearningStyle } from '@/types/learning-style';
+import { useLanguage } from '@/context/SimpleLanguageContext';
+import { trackLearningInteraction } from '@/services/learningAnalytics';
 
 interface QuizOverlayProps {
   bank: QuizBank;
   userId: string;
   onClose: () => void;
+}
+
+function getQuestionChoices(question: Question): Choice[] {
+  return 'choices' in question && Array.isArray(question.choices) ? question.choices : [];
+}
+
+function formatQuizQuestionForExplanation(question: Question): string {
+  const choices = getQuestionChoices(question);
+  const choiceText = choices.length
+    ? `\n\nChoices:\n${choices.map(choice => `${choice.id}. ${choice.label}`).join('\n')}`
+    : '';
+
+  return `${question.prompt}${choiceText}`;
+}
+
+function formatQuizAnswerForExplanation(question: Question, answer: any): string {
+  if (answer === undefined || answer === null || answer === '') {
+    return 'Not answered';
+  }
+
+  const choiceLabels = new Map(getQuestionChoices(question).map(choice => [choice.id, choice.label]));
+  const formatChoiceValue = (value: string) => choiceLabels.get(value) ?? value;
+
+  if (Array.isArray(answer)) {
+    return answer.length ? answer.map(value => formatChoiceValue(String(value))).join(', ') : 'Not answered';
+  }
+
+  if (typeof answer === 'object') {
+    if ('numerator' in answer || 'denominator' in answer) {
+      const numerator = answer.numerator || '?';
+      const denominator = answer.denominator || '?';
+      return `${numerator} / ${denominator}`;
+    }
+
+    const values = Object.values(answer)
+      .filter(value => value !== undefined && value !== null && value !== '')
+      .map(value => String(value));
+
+    return values.length ? values.join(', ') : 'Not answered';
+  }
+
+  return formatChoiceValue(String(answer));
+}
+
+function getVisualSubtype(question: Question): string | undefined {
+  return question.kind === 'visual' ? (question.visual as any)?.subtype : undefined;
+}
+
+function getQuizTopicId(bank: QuizBank): string | undefined {
+  return (bank as any).topicId || (bank as any).topic_id;
+}
+
+function getQuizObjectiveId(question: Question, bank: QuizBank): string | undefined {
+  return (question as any).objectiveId || (question as any).objective_id || (bank as any).objectiveId || (bank as any).objective_id;
+}
+
+function getQuestionDifficulty(question: Question): string | undefined {
+  return (question as any).difficulty;
 }
 
 export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
@@ -25,6 +89,19 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
   const [questionResult, setQuestionResult] = useState<boolean | null>(null);
   const submitAttempt = useSubmitBankAttempt();
   const { user } = useAuth();
+  const { userContext } = useUserContext();
+  const { language } = useLanguage();
+  const teaching = useTwoCardTeaching();
+  const quizStartedRef = React.useRef(false);
+  const viewedQuestionsRef = React.useRef<Set<string>>(new Set());
+  const questionViewStartedAtRef = React.useRef<number>(Date.now());
+  const questionAttemptCountsRef = React.useRef<Record<string, number>>({});
+  const remediationUsedRef = React.useRef(false);
+  const remediationQuestionRef = React.useRef<{
+    questionId: string;
+    questionKind: string;
+    learningStyleUsed: string;
+  } | null>(null);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -43,6 +120,42 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
 
   const currentQuestion = questions[currentIndex];
 
+  useEffect(() => {
+    if (quizStartedRef.current) return;
+    quizStartedRef.current = true;
+    trackLearningInteraction({
+      studentId: userId,
+      eventType: 'quiz_started',
+      learningStyleUsed: userContext?.learning_style,
+      quizId: bank.quizBankId,
+      topicId: getQuizTopicId(bank),
+      metadata: {
+        questionCount: questions.length,
+        bankTitle: bank.title,
+      },
+    });
+  }, [bank, questions.length, userContext?.learning_style, userId]);
+
+  useEffect(() => {
+    if (!currentQuestion) return;
+    questionViewStartedAtRef.current = Date.now();
+    if (viewedQuestionsRef.current.has(currentQuestion.id)) return;
+    viewedQuestionsRef.current.add(currentQuestion.id);
+
+    trackLearningInteraction({
+      studentId: userId,
+      eventType: 'quiz_question_viewed',
+      learningStyleUsed: userContext?.learning_style,
+      quizId: bank.quizBankId,
+      questionId: currentQuestion.id,
+      questionKind: currentQuestion.kind,
+      visualSubtype: getVisualSubtype(currentQuestion),
+      difficulty: getQuestionDifficulty(currentQuestion),
+      topicId: getQuizTopicId(bank),
+      objectiveId: getQuizObjectiveId(currentQuestion, bank),
+    });
+  }, [bank, currentQuestion, userContext?.learning_style, userId]);
+
   const onAnswer = (qid: string, value: any) => {
     setAnswers(a => ({ ...a, [qid]: value }));
   };
@@ -50,9 +163,134 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
   const handleQuestionSubmit = () => {
     if (!currentQuestion) return;
     const correct = evaluateQuestion(currentQuestion, answers[currentQuestion.id]);
+    const attemptNumber = (questionAttemptCountsRef.current[currentQuestion.id] || 0) + 1;
+    questionAttemptCountsRef.current[currentQuestion.id] = attemptNumber;
+    const timeToAnswerMs = Date.now() - questionViewStartedAtRef.current;
+
+    trackLearningInteraction({
+      studentId: userId,
+      eventType: 'quiz_answer_submitted',
+      learningStyleUsed: userContext?.learning_style,
+      quizId: bank.quizBankId,
+      questionId: currentQuestion.id,
+      questionKind: currentQuestion.kind,
+      visualSubtype: getVisualSubtype(currentQuestion),
+      difficulty: getQuestionDifficulty(currentQuestion),
+      topicId: getQuizTopicId(bank),
+      objectiveId: getQuizObjectiveId(currentQuestion, bank),
+      wasCorrect: correct,
+      attemptNumber,
+      timeToAnswerMs,
+      hintUsed: false,
+    });
+
+    if (!correct) {
+      trackLearningInteraction({
+        studentId: userId,
+        eventType: 'quiz_wrong_answer',
+        learningStyleUsed: userContext?.learning_style,
+        quizId: bank.quizBankId,
+        questionId: currentQuestion.id,
+        questionKind: currentQuestion.kind,
+        visualSubtype: getVisualSubtype(currentQuestion),
+        difficulty: getQuestionDifficulty(currentQuestion),
+        topicId: getQuizTopicId(bank),
+        objectiveId: getQuizObjectiveId(currentQuestion, bank),
+        wasCorrect: false,
+        attemptNumber,
+        timeToAnswerMs,
+        hintUsed: false,
+      });
+    }
+
+    if (remediationUsedRef.current && remediationQuestionRef.current?.questionId !== currentQuestion.id) {
+      trackLearningInteraction({
+        studentId: userId,
+        eventType: 'quiz_answer_after_remediation',
+        learningStyleUsed: userContext?.learning_style,
+        supportType: remediationQuestionRef.current?.learningStyleUsed,
+        quizId: bank.quizBankId,
+        questionId: currentQuestion.id,
+        questionKind: currentQuestion.kind,
+        visualSubtype: getVisualSubtype(currentQuestion),
+        difficulty: getQuestionDifficulty(currentQuestion),
+        topicId: getQuizTopicId(bank),
+        objectiveId: getQuizObjectiveId(currentQuestion, bank),
+        wasCorrect: correct,
+        attemptNumber,
+        timeToAnswerMs,
+        metadata: {
+          originalQuestionKind: remediationQuestionRef.current?.questionKind,
+          remediationStyle: remediationQuestionRef.current?.learningStyleUsed,
+          wasNextAnswerCorrect: correct,
+        },
+      });
+      remediationUsedRef.current = false;
+      remediationQuestionRef.current = null;
+    }
+
     setQuestionResult(correct);
     setQuestionSubmitted(true);
   };
+
+  const handleShowExplanation = useCallback(async () => {
+    if (!currentQuestion) return;
+
+    const learningStyle = normalizeLearningStyle(userContext?.learning_style);
+    const responseLanguage = /^fr/i.test(language) ? 'French' : 'English';
+    trackLearningInteraction({
+      studentId: userId,
+      eventType: 'quiz_remediation_clicked',
+      learningStyleUsed: learningStyle,
+      supportType: learningStyle,
+      quizId: bank.quizBankId,
+      questionId: currentQuestion.id,
+      questionKind: currentQuestion.kind,
+      visualSubtype: getVisualSubtype(currentQuestion),
+      difficulty: getQuestionDifficulty(currentQuestion),
+      topicId: getQuizTopicId(bank),
+      objectiveId: getQuizObjectiveId(currentQuestion, bank),
+      metadata: {
+        originalQuestionKind: currentQuestion.kind,
+      },
+    });
+
+    await teaching.openFor(
+      {
+        prompt: formatQuizQuestionForExplanation(currentQuestion),
+        userAnswer: formatQuizAnswerForExplanation(currentQuestion, answers[currentQuestion.id]),
+        subject: 'math',
+      },
+      {
+        response_language: responseLanguage,
+        grade_level: userContext?.student_level,
+        learning_style: learningStyle,
+      }
+    );
+    remediationUsedRef.current = true;
+    remediationQuestionRef.current = {
+      questionId: currentQuestion.id,
+      questionKind: currentQuestion.kind,
+      learningStyleUsed: learningStyle,
+    };
+    trackLearningInteraction({
+      studentId: userId,
+      eventType: 'quiz_remediation_opened',
+      learningStyleUsed: learningStyle,
+      supportType: learningStyle,
+      quizId: bank.quizBankId,
+      questionId: currentQuestion.id,
+      questionKind: currentQuestion.kind,
+      visualSubtype: getVisualSubtype(currentQuestion),
+      difficulty: getQuestionDifficulty(currentQuestion),
+      topicId: getQuizTopicId(bank),
+      objectiveId: getQuizObjectiveId(currentQuestion, bank),
+      metadata: {
+        originalQuestionKind: currentQuestion.kind,
+        remediationStyle: learningStyle,
+      },
+    });
+  }, [answers, bank, currentQuestion, language, teaching, userContext?.learning_style, userContext?.student_level, userId]);
 
   const handleNext = async () => {
     if (currentIndex < questions.length - 1) {
@@ -76,6 +314,20 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
         }
       }
       setSubmitted(true);
+      trackLearningInteraction({
+        studentId: userId,
+        eventType: 'quiz_completed',
+        learningStyleUsed: userContext?.learning_style,
+        quizId: bank.quizBankId,
+        topicId: getQuizTopicId(bank),
+        wasCorrect: g.score === g.maxScore,
+        metadata: {
+          score: g.score,
+          total: g.maxScore,
+          percent: g.maxScore ? Math.round((100 * g.score) / g.maxScore) : 0,
+          tookSeconds: Math.round((Date.now() - startTs) / 1000),
+        },
+      });
     }
   };
 
@@ -194,12 +446,27 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
             {/* Feedback after submit */}
             {questionSubmitted && (
               <div className={cn(
-                "mt-3 px-4 py-2 rounded-xl text-sm font-medium",
+                "mt-3 rounded-xl px-4 py-3 text-sm font-medium",
                 questionResult
                   ? "bg-green-50 dark:bg-green-950/20 text-green-600"
                   : "bg-red-50 dark:bg-red-950/20 text-red-600"
               )}>
-                {questionResult ? "✅ Correct !" : "❌ Incorrect"}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span>{questionResult ? "✅ Correct !" : "❌ Incorrect"}</span>
+                  {questionResult === false && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleShowExplanation}
+                      disabled={teaching.loading}
+                      className="self-start gap-2 bg-white text-red-700 hover:bg-red-50 dark:bg-card dark:text-red-300 dark:hover:bg-red-950/30"
+                    >
+                      <HelpCircle className="h-4 w-4" />
+                      {teaching.loading ? "Préparation..." : "Afficher l'explication"}
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -229,6 +496,15 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
           )}
         </div>
       </Card>
+
+      <ExplanationModal
+        open={teaching.open}
+        onClose={() => teaching.setOpen(false)}
+        loading={teaching.loading}
+        sections={teaching.sections}
+        error={teaching.error}
+        exerciseQuestion={currentQuestion?.prompt}
+      />
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { resolveVideoLearningRoute } from '@/services/learningNavigation';
 
 const VideoPlayerPage = () => {
   const { videoId } = useParams<{ videoId: string }>();
@@ -39,6 +40,21 @@ const VideoPlayerPage = () => {
   } = useVideoPlayer(videoId || '');
 
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (!videoId) return;
+
+    let cancelled = false;
+    resolveVideoLearningRoute(videoId).then((route) => {
+      if (!cancelled && !route.startsWith('/learning/video/')) {
+        navigate(route, { replace: true });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate, videoId]);
 
   // Fetch completed video IDs for the topic
   const { data: completedVideoIds = [] } = useQuery({

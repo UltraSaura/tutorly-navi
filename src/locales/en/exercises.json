@@ -63,6 +63,14 @@
     "labels": {
       "exercise": "Exercise"
     },
+    "mini_practice": {
+      "intro": "Let’s check if you got it.",
+      "loading": "Preparing a quick practice...",
+      "check": "Check",
+      "hint": "Hint",
+      "try_again": "Try again",
+      "try_another": "Try another"
+    },
     "debug": {
       "log_sections": "Log sections",
       "help": "Help",

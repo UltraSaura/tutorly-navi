@@ -118,6 +118,7 @@ serve(async (req) => {
       userContext,
       requestMode,
       problemContext,
+      usageType: requestedUsageType,
       maxTokens = 800  // Default to 800 for backward compatibility
     } = parsedBody;
     
@@ -211,8 +212,10 @@ serve(async (req) => {
     console.log('🔑 API key found for provider:', modelConfig.provider);
     
     // Generate system message - use unified template if requested
-    let usageType = 'chat';
-    if (isUnified) {
+    let usageType = requestedUsageType || 'chat';
+    if (requestedUsageType) {
+      usageType = requestedUsageType;
+    } else if (isUnified) {
       // For unified approach, we look for templates tagged with 'unified'
       usageType = 'chat';
     } else if (isGradingRequest) {
@@ -415,6 +418,8 @@ JSON shape:
       const parsed = JSON.parse(jsonStr);
       if (parsed.isCorrect !== undefined) parsedFields.isCorrect = parsed.isCorrect;
       if (parsed.isMath !== undefined) parsedFields.isMath = parsed.isMath;
+      if (parsed.steps) parsedFields.steps = parsed.steps;
+      if (parsed.meta) parsedFields.meta = parsed.meta;
       if (parsed.sections) parsedFields.sections = parsed.sections;
       if (requestMode === 'problemExtraction') parsedFields.problemSubmission = parsed;
       if (requestMode === 'groupedProblemGrading') parsedFields.problemEvaluation = parsed;

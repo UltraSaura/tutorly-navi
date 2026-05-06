@@ -875,6 +875,17 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
       .resolves.toBe(__problemSubmissionServiceTest.defaultGroupedRetryPracticePrompt);
   });
 
+  it('keeps grouped retry-practice prompt ordered around adaptive support and self-check', () => {
+    const prompt = __problemSubmissionServiceTest.defaultGroupedRetryPracticePrompt;
+
+    expect(prompt).toContain('concept: quick idea');
+    expect(prompt).toContain('learningStyleSupport');
+    expect(prompt).toContain('must include one guided example');
+    expect(prompt).toContain('retryPrompt: Auto-vérification / self-check / try again');
+    expect(prompt).toContain('method: give reusable step by step guidance');
+    expect(prompt).toContain('commonMistake: name one likely misconception');
+  });
+
   it('parses valid grouped retry-practice JSON', () => {
     const result = __problemSubmissionServiceTest.parseGroupedRetryPractice({
       concept: 'Calculer une moyenne',
@@ -908,6 +919,40 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
     expect(result?.diagram?.type).toBe('square');
     expect(result?.diagram?.labels).toEqual(['J', 'K', 'L', 'M']);
     expect(result?.diagram?.dimensions?.bottom).toBe('5 cm');
+  });
+
+  it('parses optional learning-style support for grouped retry practice', () => {
+    const result = __problemSubmissionServiceTest.parseGroupedRetryPractice({
+      concept: 'Multiplier avec des groupes',
+      similarProblem: '3 × 4 = ?',
+      learningStyleSupport: {
+        style: 'visual',
+        title: 'See it',
+        content: 'Draw 3 rows of 4 dots.\n● ● ● ●\n● ● ● ●\n● ● ● ●',
+      },
+      method: 'On compte 3 groupes de 4.',
+      retryPrompt: 'Reviens à ton exercice avec la même idée.',
+    });
+
+    expect(result?.learningStyleSupport?.style).toBe('visual');
+    expect(result?.learningStyleSupport?.title).toBe('See it');
+    expect(result?.learningStyleSupport?.content).toContain('● ● ● ●');
+  });
+
+  it('keeps grouped retry practice valid when learning-style support is missing or incomplete', () => {
+    const result = __problemSubmissionServiceTest.parseGroupedRetryPractice({
+      concept: 'Périmètre',
+      similarProblem: 'Un rectangle mesure 8 cm par 3 cm.',
+      learningStyleSupport: {
+        style: 'auditory',
+        title: 'Say it',
+      },
+      method: 'On additionne les quatre côtés.',
+      retryPrompt: 'Essaie avec ton exercice.',
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.learningStyleSupport).toBeUndefined();
   });
 
   it('ignores invalid retry-practice diagram data without rejecting the practice', () => {

@@ -19,6 +19,7 @@ import CalculationStatus from './chat/CalculationStatus';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { classifyProblemSubmission } from '@/utils/problemClassifier';
+import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
 
 const ChatInterface = () => {
   const { t, language } = useLanguage();
@@ -292,6 +293,7 @@ const ChatInterface = () => {
           status={calculationState.currentStep}
           message={calculationState.message}
         />
+        <QuizOverlayController />
       </div>
 
       {/* Fixed Chat Input - Only show on /chat route when no overlays are active */}
