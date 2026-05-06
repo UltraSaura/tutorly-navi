@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function TeacherClasses() {
   const { data: classes = [], isLoading } = useTeacherClasses();
@@ -22,6 +23,7 @@ export default function TeacherClasses() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Classes" description="Manage your classes and enrolled students on Stuwy." />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">My Classes</h1>

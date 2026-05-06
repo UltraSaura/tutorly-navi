@@ -113,18 +113,18 @@ async function getStudentCurriculumProgress(supabase: any, studentId: string) {
   }
 
   const { data: topics } = await supabase
-    .from('learning_topics')
+    .from('topics')
     .select(`
       id,
       curriculum_subject_id,
       learning_categories (
-        learning_subjects (
+        subjects (
           id,
           name,
           color_scheme
         )
       ),
-      topic_objectives (
+      topic_objective_links (
         objective_id
       )
     `)
@@ -146,7 +146,7 @@ async function getStudentCurriculumProgress(supabase: any, studentId: string) {
   const subjectObjectivesMap = new Map();
 
   topics.forEach((topic: any) => {
-    const subject = topic.learning_categories?.learning_subjects;
+    const subject = topic.learning_categories?.subjects;
     if (!subject) return;
 
     if (!subjectObjectivesMap.has(subject.id)) {
@@ -159,7 +159,7 @@ async function getStudentCurriculumProgress(supabase: any, studentId: string) {
     }
 
     const subjectData = subjectObjectivesMap.get(subject.id);
-    topic.topic_objectives?.forEach((to: any) => {
+    topic.topic_objective_links?.forEach((to: any) => {
       subjectData.objective_ids.add(to.objective_id);
     });
   });

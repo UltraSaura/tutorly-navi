@@ -35,7 +35,7 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
     queryKey: ['topic-lesson-content', topicId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .select('lesson_content')
         .eq('id', topicId)
         .single();

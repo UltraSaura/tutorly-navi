@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, HeadphonesIcon, Globe, LogOut, Settings } from "lucide-react";
+import { User, HeadphonesIcon, Globe, LogOut, Settings, BookOpen, Trophy } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
@@ -50,7 +50,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
   };
 
   return (
-    <div className="flex flex-col space-y-4 py-4">
+    <div className="flex min-h-full flex-col gap-4 py-4">
       {/* User Profile Section */}
       <div className="flex items-center space-x-3 p-4 bg-accent/20 rounded-lg">
         <Avatar className="h-12 w-12">
@@ -79,6 +79,30 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
           <NavLink to="/profile" className="flex items-center">
             <User className="mr-3 h-5 w-5" />
             <span>{t('nav.profile')}</span>
+          </NavLink>
+        </Button>
+
+        <Button
+          variant="ghost"
+          asChild
+          className="w-full justify-start h-12"
+          onClick={onClose}
+        >
+          <NavLink to="/my-program" className="flex items-center">
+            <BookOpen className="mr-3 h-5 w-5" />
+            <span>My Program</span>
+          </NavLink>
+        </Button>
+
+        <Button
+          variant="ghost"
+          asChild
+          className="w-full justify-start h-12"
+          onClick={onClose}
+        >
+          <NavLink to="/dashboard" className="flex items-center">
+            <Trophy className="mr-3 h-5 w-5" />
+            <span>Dashboard</span>
           </NavLink>
         </Button>
 
@@ -123,15 +147,17 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
       <Separator />
 
       {/* Sign Out - at the bottom of all options */}
-      <Button
-        variant="ghost"
-        onClick={handleSignOut}
-        disabled={isSigningOut}
-        className="w-full justify-start h-12 text-destructive hover:text-destructive hover:bg-destructive/10"
-      >
-        <LogOut className="mr-3 h-5 w-5" />
-        <span>{isSigningOut ? 'Signing out...' : 'Sign Out'}</span>
-      </Button>
+      <div className="mt-auto">
+        <Button
+          variant="ghost"
+          onClick={handleSignOut}
+          disabled={isSigningOut}
+          className="w-full justify-start h-12 text-destructive hover:text-destructive hover:bg-destructive/10"
+        >
+          <LogOut className="mr-3 h-5 w-5" />
+          <span>{isSigningOut ? t('common.signingOut') : t('auth.logout')}</span>
+        </Button>
+      </div>
     </div>
   );
 }

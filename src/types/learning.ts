@@ -65,7 +65,7 @@ export interface Topic {
   curriculum_domain_id?: string | null;
   curriculum_subdomain_id?: string | null;
   // Linked objectives (when joined)
-  topic_objectives?: import('@/types/curriculum').TopicObjectiveWithDetails[];
+  topic_objective_links?: import('@/types/curriculum').TopicObjectiveWithDetails[];
   // Generated lesson content
   lesson_content?: LessonContent | null;
 }

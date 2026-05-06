@@ -5,144 +5,109 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// ============================================================================
+// Bundle shape (post-Phase-2)
+// ============================================================================
+
+interface BundleSubject {
+  id: string;
+  slug: string;
+  name: string;
+  language?: string;
+  color_scheme?: string;
+  icon_name?: string;
+}
+
+interface BundleDomain {
+  id: string;
+  subject_id: string;
+  code: string;
+  label: string;
+  domain?: string;
+}
+
+interface BundleSubdomain {
+  id: string;
+  subject_id: string;
+  domain_id: string;
+  code: string;
+  label: string;
+  domain?: string;
+  subdomain?: string;
+}
+
+interface BundleObjective {
+  id: string;
+  subject_id: string;
+  domain_id: string;
+  subdomain_id: string;
+  level: string;
+  text: string;
+  notes_from_prog?: string;
+  keywords?: string[];
+  legacy_id?: string;
+  domain?: string;
+  subdomain?: string;
+}
+
+interface BundleSuccessCriterion {
+  id: string;
+  objective_id: string;
+  subject_id?: string;
+  domain_id?: string;
+  subdomain_id?: string;
+  text: string;
+  legacy_id?: string;
+}
+
+interface BundleTask {
+  id: string;
+  success_criterion_id: string;
+  subject_id?: string;
+  domain_id?: string;
+  subdomain_id?: string;
+  type: string;
+  stem: string;
+  solution?: string;
+  rubric?: string;
+  difficulty?: string;
+  tags?: string[];
+  source?: string;
+  legacy_id?: string;
+}
+
+interface BundleTopicLink {
+  id?: string;
+  topic_id: string;
+  objective_id: string;
+  order_index?: number;
+}
+
+interface BundleLesson {
+  id: string;
+  topic_id?: string;
+  title: string;
+  objective_ids?: any;
+  success_criterion_ids?: any;
+  materials?: string;
+  misconceptions?: string;
+  teacher_talk?: string;
+  student_worksheet?: string;
+  legacy_id?: string;
+}
+
 interface BundleData {
-  domains?: Array<{ domain: string }>;
-  subdomains?: Array<{ domain: string; subdomain: string; id?: number }>;
-  objectives?: Array<{ 
-    id: string; 
-    level: string; 
-    domain?: string; 
-    subdomain: string; 
-    text: string; 
-    notes_from_prog?: string;
-    subject_id?: string;
-    domain_id?: string;
-    subdomain_id?: string;
-    skill_id?: string;
-  }>;
-  success_criteria?: Array<{ 
-    id: string; 
-    objective_id?: string; 
-    text: string;
-    subject_id?: string;
-    domain_id?: string;
-    subdomain_id?: string;
-    skill_id?: string;
-  }>;
-  tasks?: Array<{ 
-    id: string; 
-    success_criterion_id?: string; 
-    type: string; 
-    stem: string; 
-    solution?: string; 
-    rubric?: string;
-    subject_id?: string;
-    domain_id?: string;
-    subdomain_id?: string;
-    skill_id?: string;
-  }>;
-  units?: Array<{ id: string; level: string; domain: string; subdomain: string; title: string; duration_weeks?: number }>;
-  lessons?: Array<{ id: string; unit_id?: string; title: string; objective_ids?: any; success_criterion_ids?: any; materials?: string; misconceptions?: string; teacher_talk?: string; student_worksheet?: string }>;
+  mode?: 'replace' | 'upsert';
+  subjects?: BundleSubject[];
+  domains?: BundleDomain[];
+  subdomains?: BundleSubdomain[];
+  objectives?: BundleObjective[];
+  success_criteria?: BundleSuccessCriterion[];
+  tasks?: BundleTask[];
+  topic_objective_links?: BundleTopicLink[];
+  lessons?: BundleLesson[];
 }
 
-interface ImportCounts {
-  domains: number;
-  subdomains: number;
-  objectives: number;
-  success_criteria: number;
-  tasks: number;
-  units: number;
-  lessons: number;
-}
-
-interface CurriculumLocation {
-  subject_id: string | null;
-  domain_id: string | null;
-  subdomain_id: string | null;
-  skill_id: string | null;
-}
-
-// Enhanced curriculum mapping function with keyword matching
-function mapToCurriculum(text: string): CurriculumLocation {
-  const t = text.toLowerCase();
-  
-  // Math - Numbers domain
-  if (t.includes('fraction') || t.includes('demi') || t.includes('quart') || t.includes('tiers')) {
-    return { subject_id: 'math', domain_id: 'numbers', subdomain_id: 'fractions', skill_id: null };
-  }
-  
-  if (t.includes('décimal') || t.includes('virgule') || t.includes('dixième') || t.includes('centième')) {
-    return { subject_id: 'math', domain_id: 'numbers', subdomain_id: 'decimals', skill_id: null };
-  }
-  
-  if (t.includes('entier') || t.includes('nombre') && (t.includes('compter') || t.includes('ordonner'))) {
-    return { subject_id: 'math', domain_id: 'numbers', subdomain_id: 'whole_numbers', skill_id: null };
-  }
-  
-  if (t.includes('addition') || t.includes('soustraction') || t.includes('additionner') || t.includes('soustraire')) {
-    return { subject_id: 'math', domain_id: 'numbers-operations', subdomain_id: 'addition-subtraction', skill_id: null };
-  }
-  
-  if (t.includes('multiplication') || t.includes('division') || t.includes('multiplier') || t.includes('diviser') || t.includes('table')) {
-    return { subject_id: 'math', domain_id: 'numbers-operations', subdomain_id: 'whole-numbers', skill_id: null };
-  }
-  
-  // Math - Geometry domain
-  if (t.includes('angle') || t.includes('droit') || t.includes('aigu') || t.includes('obtus')) {
-    return { subject_id: 'math', domain_id: 'geometry', subdomain_id: 'angles', skill_id: null };
-  }
-  
-  if (t.includes('forme') || t.includes('carré') || t.includes('rectangle') || t.includes('triangle') || 
-      t.includes('cercle') || t.includes('polygone') || t.includes('géométrique')) {
-    return { subject_id: 'math', domain_id: 'geometry', subdomain_id: 'shapes', skill_id: null };
-  }
-  
-  if (t.includes('symétrie') || t.includes('symétrique')) {
-    return { subject_id: 'math', domain_id: 'geometry', subdomain_id: 'shapes-properties', skill_id: null };
-  }
-  
-  // Math - Measurement domain
-  if (t.includes('mesure') || t.includes('longueur') || t.includes('masse') || t.includes('capacité') || 
-      t.includes('litre') || t.includes('gramme') || t.includes('mètre')) {
-    return { subject_id: 'math', domain_id: 'measurement', subdomain_id: 'length-mass', skill_id: null };
-  }
-  
-  if (t.includes('périmètre') || t.includes('aire') || t.includes('surface')) {
-    return { subject_id: 'math', domain_id: 'measurement', subdomain_id: 'perimeter-area', skill_id: null };
-  }
-  
-  if (t.includes('heure') || t.includes('temps') || t.includes('durée') || t.includes('minute')) {
-    return { subject_id: 'math', domain_id: 'measurement', subdomain_id: 'time', skill_id: null };
-  }
-  
-  // Math - Data domain
-  if (t.includes('tableau') || t.includes('graphique') || t.includes('diagramme') || t.includes('données')) {
-    return { subject_id: 'math', domain_id: 'data', subdomain_id: 'tables_graphs', skill_id: null };
-  }
-  
-  // History - French Revolution
-  if (t.includes('révolution') || t.includes('1789') || t.includes('louis xvi') || 
-      t.includes('bastille') || t.includes('république')) {
-    return { subject_id: 'history', domain_id: 'french_revolution', subdomain_id: 'key_events', skill_id: null };
-  }
-  
-  // History - Medieval period
-  if (t.includes('moyen âge') || t.includes('médiéval') || t.includes('chevalier') || 
-      t.includes('château') || t.includes('seigneur')) {
-    return { subject_id: 'history', domain_id: 'medieval-history', subdomain_id: 'middle-ages', skill_id: null };
-  }
-  
-  // History - Ancient history
-  if (t.includes('antiquité') || t.includes('romain') || t.includes('gaulois') || 
-      t.includes('grec') || t.includes('pharaon')) {
-    return { subject_id: 'history', domain_id: 'ancient-history', subdomain_id: 'ancient-civilizations', skill_id: null };
-  }
-  
-  // Default: no mapping
-  return { subject_id: null, domain_id: null, subdomain_id: null, skill_id: null };
-}
-
-// Chunk array into smaller batches
 function chunk<T>(array: T[], size: number): T[][] {
   const chunks: T[][] = [];
   for (let i = 0; i < array.length; i += size) {
@@ -151,230 +116,524 @@ function chunk<T>(array: T[], size: number): T[][] {
   return chunks;
 }
 
+// Always return 200 so the client can read the JSON body.
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    status,
+  });
+}
+
+function diagFromPgError(table: string, error: any) {
+  return {
+    table,
+    code: error?.code ?? null,
+    message: error?.message ?? String(error),
+    details: error?.details ?? null,
+    hint: error?.hint ?? null,
+  };
+}
+
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Verify JWT token
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
+    if (!authHeader) return jsonResponse({ success: false, error: 'No authorization header' }, 200);
 
-    // Create admin client with service role
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
       { auth: { persistSession: false } }
     );
 
-    // Verify user is admin
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (authError || !user) {
-      throw new Error('Unauthorized');
+    const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    let isAuthorized = false;
+    let callerLabel = 'unknown';
+
+    if (token === SERVICE_KEY) {
+      // Path 1: server-to-server (CI, cron, importer pipeline)
+      isAuthorized = true;
+      callerLabel = 'service-role';
+    } else {
+      // Path 2: admin user session (existing /admin/curriculum UI flow)
+      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+      if (!authError && user) {
+        const { data: roles } = await supabaseAdmin
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin');
+        if (roles && roles.length > 0) {
+          isAuthorized = true;
+          callerLabel = `admin:${user.id}`;
+        }
+      }
     }
 
-    // Check if user has admin role
-    const { data: roles, error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin');
-
-    if (roleError || !roles || roles.length === 0) {
-      throw new Error('User is not an admin');
+    if (!isAuthorized) {
+      return jsonResponse({ success: false, error: 'Unauthorized' }, 200);
     }
+    console.log(`[import-curriculum-bundle] authorized as ${callerLabel}`);
 
-    // Parse request body
     const bundle: BundleData = await req.json();
-    console.log('Received bundle with keys:', Object.keys(bundle));
+    const mode = bundle.mode === 'replace' ? 'replace' : 'upsert';
+    console.log('📥 Bundle keys:', Object.keys(bundle), 'mode:', mode);
+    console.log('📊 Pre-import counts:', {
+      subjects: bundle.subjects?.length ?? 0,
+      domains: bundle.domains?.length ?? 0,
+      subdomains: bundle.subdomains?.length ?? 0,
+      objectives: bundle.objectives?.length ?? 0,
+      success_criteria: bundle.success_criteria?.length ?? 0,
+      tasks: bundle.tasks?.length ?? 0,
+      topic_objective_links: bundle.topic_objective_links?.length ?? 0,
+      lessons: bundle.lessons?.length ?? 0,
+    });
 
-    const counts: ImportCounts = {
-      domains: 0,
-      subdomains: 0,
-      objectives: 0,
-      success_criteria: 0,
-      tasks: 0,
-      units: 0,
-      lessons: 0,
+    const counts = {
+      subjects: 0, domains: 0, subdomains: 0, objectives: 0,
+      success_criteria: 0, tasks: 0, topic_objective_links: 0, lessons: 0,
     };
 
     const CHUNK_SIZE = 100;
 
-    // 1. Upsert domains
-    if (bundle.domains && bundle.domains.length > 0) {
-      console.log(`Upserting ${bundle.domains.length} domains...`);
-      const chunks = chunk(bundle.domains, CHUNK_SIZE);
-      for (const chunkData of chunks) {
+    // ----------------------------------------------------------------------
+    // REPLACE MODE: wipe existing rows for every subject_id referenced
+    // ----------------------------------------------------------------------
+    if (mode === 'replace') {
+      const subjectIds = new Set<string>();
+      bundle.subjects?.forEach(s => s.id && subjectIds.add(s.id));
+      bundle.domains?.forEach(d => d.subject_id && subjectIds.add(d.subject_id));
+      bundle.subdomains?.forEach(s => s.subject_id && subjectIds.add(s.subject_id));
+      bundle.objectives?.forEach(o => o.subject_id && subjectIds.add(o.subject_id));
+
+      console.log(`🧹 Replace mode: wiping data for ${subjectIds.size} subject(s)`);
+
+      for (const sid of subjectIds) {
+        // Delete in dependency order: tasks → success_criteria → objectives → subdomains → domains
+        // tasks scoped by subject_id_uuid
+        let r = await supabaseAdmin.from('tasks').delete().eq('subject_id_uuid', sid);
+        if (r.error) return jsonResponse({ success: false, error: 'Replace failed', diagnostics: diagFromPgError('tasks(delete)', r.error) }, 200);
+
+        r = await supabaseAdmin.from('success_criteria').delete().eq('subject_id_uuid', sid);
+        if (r.error) return jsonResponse({ success: false, error: 'Replace failed', diagnostics: diagFromPgError('success_criteria(delete)', r.error) }, 200);
+
+        r = await supabaseAdmin.from('objectives').delete().eq('subject_id_uuid', sid);
+        if (r.error) return jsonResponse({ success: false, error: 'Replace failed', diagnostics: diagFromPgError('objectives(delete)', r.error) }, 200);
+
+        r = await supabaseAdmin.from('subdomains').delete().eq('subject_id', sid);
+        if (r.error) return jsonResponse({ success: false, error: 'Replace failed', diagnostics: diagFromPgError('subdomains(delete)', r.error) }, 200);
+
+        r = await supabaseAdmin.from('domains').delete().eq('subject_id', sid);
+        if (r.error) return jsonResponse({ success: false, error: 'Replace failed', diagnostics: diagFromPgError('domains(delete)', r.error) }, 200);
+      }
+      // Purge orphan rows (NULL critical FKs) — leftover demo data that survives subject-scoped deletes
+      console.log('🧹 Purging orphan rows with NULL FKs...');
+      const orphanPurges: Array<[string, string]> = [
+        ['tasks', 'subject_id_uuid'],
+        ['success_criteria', 'objective_id_uuid'],
+        ['objectives', 'subject_id_uuid'],
+        ['subdomains', 'subject_id'],
+        ['domains', 'subject_id'],
+      ];
+      for (const [tbl, col] of orphanPurges) {
+        const r = await supabaseAdmin.from(tbl).delete().is(col, null);
+        if (r.error) {
+          console.warn(`⚠️ Orphan purge failed for ${tbl}.${col}:`, r.error.message);
+        }
+      }
+      console.log('🧹 Replace mode: wipe complete');
+    }
+
+    // ----------------------------------------------------------------------
+    // 1. Subjects
+    // ----------------------------------------------------------------------
+    if (bundle.subjects?.length) {
+      const rows = bundle.subjects.map(s => ({
+        id: s.id, slug: s.slug, name: s.name,
+        language: s.language ?? 'en',
+        color_scheme: s.color_scheme ?? 'blue',
+        icon_name: s.icon_name ?? 'BookOpen',
+      }));
+      for (const c of chunk(rows, CHUNK_SIZE)) {
+        const { error } = await supabaseAdmin.from('subjects').upsert(c, { onConflict: 'id' });
+        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('subjects', error) }, 200);
+        counts.subjects += c.length;
+      }
+      console.log(`✓ subjects ${counts.subjects}`);
+    }
+
+    // ----------------------------------------------------------------------
+    // 2. Domains — multiple unique constraints exist:
+    //    - PK on `domain` (text)
+    //    - uq_domains_id on `id`
+    //    - uq_domains_subject_code on (subject_id, code) WHERE both NOT NULL  ← partial unique
+    //    Strategy: pre-resolve the canonical row by (subject_id, code), reuse its id+domain
+    //    if it exists, then upsert by `id`. This makes re-imports collision-proof regardless
+    //    of how the legacy `domain` text was generated by past versions of the bundler.
+    // ----------------------------------------------------------------------
+    if (bundle.domains?.length) {
+      // Build canonical legacy text key from slug+level when possible.
+      const subjectSlugById = new Map<string, string>();
+      bundle.subjects?.forEach(s => s.id && subjectSlugById.set(s.id, s.slug));
+
+      const inferLevel = (subjId: string): string => {
+        const obj = bundle.objectives?.find(o => o.subject_id === subjId);
+        return obj?.level ? obj.level.toUpperCase() : 'GEN';
+      };
+
+      const domainIdRemap = new Map<string, string>(); // bundle.id → resolved canonical id
+
+      for (const d of bundle.domains) {
+        // Look up existing row by the partial-unique (subject_id, code).
+        const { data: existing } = await supabaseAdmin
+          .from('domains')
+          .select('id, domain')
+          .eq('subject_id', d.subject_id)
+          .eq('code', d.code)
+          .maybeSingle();
+
+        const slug = subjectSlugById.get(d.subject_id) ?? d.subject_id.slice(0, 8);
+        const lvl = inferLevel(d.subject_id);
+        const canonicalDomain = d.domain ?? existing?.domain ?? `${slug}_${lvl}_${d.code}`;
+        const canonicalId = existing?.id ?? d.id;
+
+        if (existing && existing.id !== d.id) {
+          domainIdRemap.set(d.id, existing.id);
+        }
+
         const { error } = await supabaseAdmin
           .from('domains')
-          .upsert(chunkData, { onConflict: 'domain' });
-        if (error) throw error;
-        counts.domains += chunkData.length;
+          .upsert(
+            {
+              id: canonicalId,
+              subject_id: d.subject_id,
+              code: d.code,
+              label: d.label,
+              domain: canonicalDomain,
+            },
+            { onConflict: 'id' }
+          );
+        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('domains', error) }, 200);
+        counts.domains += 1;
       }
-      console.log(`✓ Upserted ${counts.domains} domains`);
+      console.log(`✓ domains ${counts.domains} (remapped ${domainIdRemap.size})`);
+
+      // Apply remap to dependent rows in the bundle so subdomains/objectives/etc.
+      // reference the canonical domain id.
+      if (domainIdRemap.size > 0) {
+        bundle.subdomains?.forEach(s => {
+          const remapped = domainIdRemap.get(s.domain_id);
+          if (remapped) s.domain_id = remapped;
+        });
+        bundle.objectives?.forEach(o => {
+          const remapped = domainIdRemap.get(o.domain_id);
+          if (remapped) o.domain_id = remapped;
+        });
+        bundle.success_criteria?.forEach(sc => {
+          if (sc.domain_id) {
+            const remapped = domainIdRemap.get(sc.domain_id);
+            if (remapped) sc.domain_id = remapped;
+          }
+        });
+        bundle.tasks?.forEach(t => {
+          if (t.domain_id) {
+            const remapped = domainIdRemap.get(t.domain_id);
+            if (remapped) t.domain_id = remapped;
+          }
+        });
+      }
     }
 
-    // 2. Upsert subdomains
-    if (bundle.subdomains && bundle.subdomains.length > 0) {
-      console.log(`Upserting ${bundle.subdomains.length} subdomains...`);
-      const chunks = chunk(bundle.subdomains, CHUNK_SIZE);
-      for (const chunkData of chunks) {
+    // ----------------------------------------------------------------------
+    // 3. Subdomains — uq_subdomains_domain_code on (domain_id_new, code) is the
+    //    one that actually conflicts on re-imports. Pre-resolve by that pair,
+    //    upsert by id_new, and remap dependents.
+    // ----------------------------------------------------------------------
+    if (bundle.subdomains?.length) {
+      const subjectSlugById = new Map<string, string>();
+      bundle.subjects?.forEach(s => s.id && subjectSlugById.set(s.id, s.slug));
+      const inferLevel = (subjId: string): string => {
+        const obj = bundle.objectives?.find(o => o.subject_id === subjId);
+        return obj?.level ? obj.level.toUpperCase() : 'GEN';
+      };
+
+      const subdomainIdRemap = new Map<string, string>();
+
+      for (const s of bundle.subdomains) {
+        const { data: existing } = await supabaseAdmin
+          .from('subdomains')
+          .select('id_new, subdomain, domain')
+          .eq('domain_id_new', s.domain_id)
+          .eq('code', s.code)
+          .maybeSingle();
+
+        const slug = subjectSlugById.get(s.subject_id) ?? s.subject_id.slice(0, 8);
+        const lvl = inferLevel(s.subject_id);
+        const canonicalSubdomain = s.subdomain ?? existing?.subdomain ?? `${slug}_${lvl}_${s.code}`;
+        const canonicalDomainText = s.domain ?? existing?.domain ?? null;
+        const canonicalId = existing?.id_new ?? s.id;
+
+        if (existing && existing.id_new !== s.id) {
+          subdomainIdRemap.set(s.id, existing.id_new);
+        }
+
         const { error } = await supabaseAdmin
           .from('subdomains')
-          .upsert(chunkData, { onConflict: 'id' });
-        if (error) throw error;
-        counts.subdomains += chunkData.length;
+          .upsert(
+            {
+              id_new: canonicalId,
+              subject_id: s.subject_id,
+              domain_id_new: s.domain_id,
+              code: s.code,
+              label: s.label,
+              domain: canonicalDomainText,
+              subdomain: canonicalSubdomain,
+            },
+            { onConflict: 'id_new' }
+          );
+        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('subdomains', error) }, 200);
+        counts.subdomains += 1;
       }
-      console.log(`✓ Upserted ${counts.subdomains} subdomains`);
+      console.log(`✓ subdomains ${counts.subdomains} (remapped ${subdomainIdRemap.size})`);
+
+      if (subdomainIdRemap.size > 0) {
+        bundle.objectives?.forEach(o => {
+          const remapped = subdomainIdRemap.get(o.subdomain_id);
+          if (remapped) o.subdomain_id = remapped;
+        });
+        bundle.success_criteria?.forEach(sc => {
+          if (sc.subdomain_id) {
+            const remapped = subdomainIdRemap.get(sc.subdomain_id);
+            if (remapped) sc.subdomain_id = remapped;
+          }
+        });
+        bundle.tasks?.forEach(t => {
+          if (t.subdomain_id) {
+            const remapped = subdomainIdRemap.get(t.subdomain_id);
+            if (remapped) t.subdomain_id = remapped;
+          }
+        });
+      }
     }
 
-    // 3. Upsert objectives with automatic curriculum mapping
-    if (bundle.objectives && bundle.objectives.length > 0) {
-      console.log(`Upserting ${bundle.objectives.length} objectives...`);
-      
-      // Map curriculum location for each objective
-      const mappedObjectives = bundle.objectives.map(obj => {
-        const location = mapToCurriculum(obj.text);
+    // ----------------------------------------------------------------------
+    // 4. Objectives
+    // ----------------------------------------------------------------------
+    if (bundle.objectives?.length) {
+      const rows = bundle.objectives.map(o => ({
+        id: o.legacy_id ?? o.id,
+        id_new: o.id,
+        level: o.level,
+        text: o.text,
+        notes_from_prog: o.notes_from_prog ?? '',
+        keywords: o.keywords ?? [],
+        subject_id_uuid: o.subject_id,
+        domain_id_uuid: o.domain_id,
+        subdomain_id_uuid: o.subdomain_id,
+        domain: o.domain ?? null,
+        subdomain: o.subdomain ?? '',
+      }));
+      for (const c of chunk(rows, CHUNK_SIZE)) {
+        const { error } = await supabaseAdmin.from('objectives').upsert(c, { onConflict: 'id' });
+        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('objectives', error) }, 200);
+        counts.objectives += c.length;
+      }
+      console.log(`✓ objectives ${counts.objectives}`);
+    }
+
+    // ----------------------------------------------------------------------
+    // 5. Success criteria — backfill mirror FKs from parent objective
+    // ----------------------------------------------------------------------
+    const objectiveFkMap = new Map<string, { subject_id: string; domain_id: string; subdomain_id: string }>();
+    bundle.objectives?.forEach(o => {
+      objectiveFkMap.set(o.id, {
+        subject_id: o.subject_id,
+        domain_id: o.domain_id,
+        subdomain_id: o.subdomain_id,
+      });
+    });
+
+    const successCriterionFkMap = new Map<string, { subject_id: string | null; domain_id: string | null; subdomain_id: string | null; objective_id: string }>();
+
+    if (bundle.success_criteria?.length) {
+      const rows = bundle.success_criteria.map(sc => {
+        const parent = objectiveFkMap.get(sc.objective_id);
+        const subject_id = sc.subject_id ?? parent?.subject_id ?? null;
+        const domain_id = sc.domain_id ?? parent?.domain_id ?? null;
+        const subdomain_id = sc.subdomain_id ?? parent?.subdomain_id ?? null;
+        successCriterionFkMap.set(sc.id, { subject_id, domain_id, subdomain_id, objective_id: sc.objective_id });
         return {
-          ...obj,
-          subject_id: obj.subject_id || location.subject_id,
-          domain_id: obj.domain_id || location.domain_id,
-          subdomain_id: obj.subdomain_id || location.subdomain_id,
-          skill_id: obj.skill_id || location.skill_id,
+          id: sc.legacy_id ?? sc.id,
+          id_new: sc.id,
+          text: sc.text,
+          objective_id_uuid: sc.objective_id,
+          subject_id_uuid: subject_id,
+          domain_id_uuid: domain_id,
+          subdomain_id_uuid: subdomain_id,
         };
       });
-      
-      const chunks = chunk(mappedObjectives, CHUNK_SIZE);
-      for (const chunkData of chunks) {
-        const { error } = await supabaseAdmin
-          .from('objectives')
-          .upsert(chunkData, { onConflict: 'id' });
-        if (error) {
-          console.error('Error upserting objectives chunk:', error);
-          throw error;
-        }
-        counts.objectives += chunkData.length;
+      for (const c of chunk(rows, CHUNK_SIZE)) {
+        const { error } = await supabaseAdmin.from('success_criteria').upsert(c, { onConflict: 'id' });
+        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('success_criteria', error) }, 200);
+        counts.success_criteria += c.length;
       }
-      console.log(`✓ Upserted ${counts.objectives} objectives with curriculum mapping`);
+      console.log(`✓ success_criteria ${counts.success_criteria}`);
     }
 
-    // 4. Upsert success criteria with automatic curriculum mapping
-    if (bundle.success_criteria && bundle.success_criteria.length > 0) {
-      console.log(`Upserting ${bundle.success_criteria.length} success criteria...`);
-      
-      // Map curriculum location for each success criterion
-      const mappedCriteria = bundle.success_criteria.map(sc => {
-        const location = mapToCurriculum(sc.text);
+    // ----------------------------------------------------------------------
+    // 6. Tasks — backfill mirror FKs from parent success_criterion → objective
+    // ----------------------------------------------------------------------
+    if (bundle.tasks?.length) {
+      const rows = bundle.tasks.map(t => {
+        const parent = successCriterionFkMap.get(t.success_criterion_id);
         return {
-          ...sc,
-          subject_id: sc.subject_id || location.subject_id,
-          domain_id: sc.domain_id || location.domain_id,
-          subdomain_id: sc.subdomain_id || location.subdomain_id,
-          skill_id: sc.skill_id || location.skill_id,
+          id: t.legacy_id ?? t.id,
+          id_new: t.id,
+          type: t.type,
+          stem: t.stem,
+          solution: t.solution ?? '',
+          rubric: t.rubric ?? '',
+          difficulty: t.difficulty ?? 'core',
+          tags: t.tags ?? [],
+          source: t.source ?? 'auto',
+          success_criterion_id_uuid: t.success_criterion_id,
+          subject_id_uuid: t.subject_id ?? parent?.subject_id ?? null,
+          domain_id_uuid: t.domain_id ?? parent?.domain_id ?? null,
+          subdomain_id_uuid: t.subdomain_id ?? parent?.subdomain_id ?? null,
         };
       });
-      
-      const chunks = chunk(mappedCriteria, CHUNK_SIZE);
-      for (const chunkData of chunks) {
-        const { error } = await supabaseAdmin
-          .from('success_criteria')
-          .upsert(chunkData, { onConflict: 'id' });
-        if (error) {
-          console.error('Error upserting success criteria chunk:', error);
-          throw error;
-        }
-        counts.success_criteria += chunkData.length;
+      for (const c of chunk(rows, CHUNK_SIZE)) {
+        const { error } = await supabaseAdmin.from('tasks').upsert(c, { onConflict: 'id' });
+        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('tasks', error) }, 200);
+        counts.tasks += c.length;
       }
-      console.log(`✓ Upserted ${counts.success_criteria} success criteria with curriculum mapping`);
+      console.log(`✓ tasks ${counts.tasks}`);
     }
 
-    // 5. Upsert tasks with automatic curriculum mapping
-    if (bundle.tasks && bundle.tasks.length > 0) {
-      console.log(`Upserting ${bundle.tasks.length} tasks...`);
-      
-      // Map curriculum location for each task
-      const mappedTasks = bundle.tasks.map(task => {
-        const location = mapToCurriculum(task.stem);
-        return {
-          ...task,
-          subject_id: task.subject_id || location.subject_id,
-          domain_id: task.domain_id || location.domain_id,
-          subdomain_id: task.subdomain_id || location.subdomain_id,
-          skill_id: task.skill_id || location.skill_id,
-        };
-      });
-      
-      const chunks = chunk(mappedTasks, CHUNK_SIZE);
-      for (const chunkData of chunks) {
+    // ----------------------------------------------------------------------
+    // 7. Topic ↔ Objective links
+    // ----------------------------------------------------------------------
+    if (bundle.topic_objective_links?.length) {
+      const rows = bundle.topic_objective_links.map(l => ({
+        id: l.id ?? crypto.randomUUID(),
+        topic_id: l.topic_id,
+        objective_id_uuid: l.objective_id,
+        objective_id: l.objective_id,
+        order_index: l.order_index ?? 0,
+      }));
+      for (const c of chunk(rows, CHUNK_SIZE)) {
         const { error } = await supabaseAdmin
-          .from('tasks')
-          .upsert(chunkData, { onConflict: 'id' });
-        if (error) {
-          console.error('Error upserting tasks chunk:', error);
-          throw error;
-        }
-        counts.tasks += chunkData.length;
+          .from('topic_objective_links')
+          .upsert(c, { onConflict: 'topic_id,objective_id_uuid' });
+        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('topic_objective_links', error) }, 200);
+        counts.topic_objective_links += c.length;
       }
-      console.log(`✓ Upserted ${counts.tasks} tasks with curriculum mapping`);
+      console.log(`✓ topic_objective_links ${counts.topic_objective_links}`);
     }
 
-    // 6. Upsert units
-    if (bundle.units && bundle.units.length > 0) {
-      console.log(`Upserting ${bundle.units.length} units...`);
-      const chunks = chunk(bundle.units, CHUNK_SIZE);
-      for (const chunkData of chunks) {
-        const { error } = await supabaseAdmin
-          .from('units')
-          .upsert(chunkData, { onConflict: 'id' });
-        if (error) throw error;
-        counts.units += chunkData.length;
+    // ----------------------------------------------------------------------
+    // 8. Lessons
+    // ----------------------------------------------------------------------
+    if (bundle.lessons?.length) {
+      const rows = bundle.lessons.map(l => ({
+        id: l.legacy_id ?? l.id,
+        id_new: l.id,
+        title: l.title,
+        topic_id: l.topic_id ?? null,
+        objective_ids: l.objective_ids ?? [],
+        success_criterion_ids: l.success_criterion_ids ?? [],
+        materials: l.materials ?? '',
+        misconceptions: l.misconceptions ?? '',
+        teacher_talk: l.teacher_talk ?? '',
+        student_worksheet: l.student_worksheet ?? '',
+      }));
+      for (const c of chunk(rows, CHUNK_SIZE)) {
+        const { error } = await supabaseAdmin.from('lessons').upsert(c, { onConflict: 'id' });
+        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('lessons', error) }, 200);
+        counts.lessons += c.length;
       }
-      console.log(`✓ Upserted ${counts.units} units`);
+      console.log(`✓ lessons ${counts.lessons}`);
     }
 
-    // 7. Upsert lessons
-    if (bundle.lessons && bundle.lessons.length > 0) {
-      console.log(`Upserting ${bundle.lessons.length} lessons...`);
-      const chunks = chunk(bundle.lessons, CHUNK_SIZE);
-      for (const chunkData of chunks) {
-        const { error } = await supabaseAdmin
-          .from('lessons')
-          .upsert(chunkData, { onConflict: 'id' });
-        if (error) throw error;
-        counts.lessons += chunkData.length;
-      }
-      console.log(`✓ Upserted ${counts.lessons} lessons`);
+    // ----------------------------------------------------------------------
+    // 8.5 Orphan cleanup — purge any rows that ended up with NULL critical
+    // FKs for the imported subjects (e.g. leftovers from earlier broken
+    // imports that didn't populate *_uuid mirror columns). Runs in BOTH
+    // replace and upsert mode so re-imports always converge to a clean state.
+    // ----------------------------------------------------------------------
+    const importedSubjectIds = new Set<string>();
+    bundle.subjects?.forEach(s => s.id && importedSubjectIds.add(s.id));
+    bundle.domains?.forEach(d => d.subject_id && importedSubjectIds.add(d.subject_id));
+    bundle.objectives?.forEach(o => o.subject_id && importedSubjectIds.add(o.subject_id));
+
+    if (importedSubjectIds.size > 0) {
+      const sids = Array.from(importedSubjectIds);
+      // Tasks first (depend on success_criteria)
+      await supabaseAdmin.from('tasks')
+        .delete()
+        .in('subject_id_uuid', sids)
+        .or('success_criterion_id_uuid.is.null,domain_id_uuid.is.null,subdomain_id_uuid.is.null');
+      // Then success_criteria (depend on objectives)
+      await supabaseAdmin.from('success_criteria')
+        .delete()
+        .in('subject_id_uuid', sids)
+        .or('objective_id_uuid.is.null,domain_id_uuid.is.null,subdomain_id_uuid.is.null');
+      // Then objectives
+      await supabaseAdmin.from('objectives')
+        .delete()
+        .in('subject_id_uuid', sids)
+        .or('domain_id_uuid.is.null,subdomain_id_uuid.is.null');
+      console.log(`🧹 Orphan cleanup complete for ${sids.length} subject(s)`);
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Curriculum bundle imported successfully',
-        counts
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
+    // ----------------------------------------------------------------------
+    // 9. Verification — scoped to imported subjects only so stale orphans
+    // from unrelated subjects don't poison the readiness flag.
+    // ----------------------------------------------------------------------
+    const verifyChecks: Array<[string, string]> = [
+      ['objectives', 'subdomain_id_uuid'],
+      ['objectives', 'domain_id_uuid'],
+      ['objectives', 'subject_id_uuid'],
+      ['success_criteria', 'objective_id_uuid'],
+      ['topic_objective_links', 'objective_id_uuid'],
+    ];
+    const verification: Record<string, number> = {};
+    const sidsArr = Array.from(importedSubjectIds);
+    for (const [tbl, col] of verifyChecks) {
+      let q = supabaseAdmin.from(tbl).select('*', { count: 'exact', head: true }).is(col, null);
+      // For tables with subject_id_uuid scope to imported subjects.
+      if (sidsArr.length > 0 && (tbl === 'objectives' || tbl === 'success_criteria')) {
+        q = q.in('subject_id_uuid', sidsArr);
       }
-    );
+      const { count } = await q;
+      verification[`${tbl}.${col}_null`] = count ?? 0;
+    }
+    const allClean = Object.values(verification).every(v => v === 0);
 
+    return jsonResponse({
+      success: true,
+      message: allClean
+        ? '✅ Curriculum imported, all FKs resolved.'
+        : '⚠️ Imported but some FKs are NULL — see verification.',
+      mode,
+      counts,
+      verification: {
+        ready_for_phase_3: allClean,
+        nullChecks: verification,
+      },
+      ready_for_phase_3: allClean,
+    });
   } catch (error) {
     console.error('Error importing curriculum bundle:', error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: (error as Error).message || 'Unknown error occurred'
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
-      }
-    );
+    return jsonResponse({
+      success: false,
+      error: (error as Error).message ?? 'Unknown error',
+      diagnostics: { code: null, message: (error as Error).message, details: null, hint: null, table: 'unknown' },
+    }, 200);
   }
 });

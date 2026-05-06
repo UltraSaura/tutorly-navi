@@ -1,4 +1,5 @@
 import { useParams } from 'react-router-dom';
+import { useMemo } from 'react';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { useGuardianExerciseHistory } from '@/hooks/useGuardianExerciseHistory';
 import { useGuardianProgress } from '@/hooks/useGuardianProgress';
@@ -11,6 +12,14 @@ import { SubjectsGrid } from '@/components/guardian/SubjectsGrid';
 import { ExportReportButton } from '@/components/guardian/ExportReportButton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SubjectMasteryCard } from '@/components/user/SubjectMasteryCard';
+import { PageMeta } from '@/components/seo/PageMeta';
+import { LearningInsightsCard } from '@/components/learning/LearningInsightsCard';
+
+interface ChildDetailsUser {
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+}
 
 export default function ChildDashboard() {
   const { childId } = useParams<{ childId: string }>();
@@ -41,12 +50,14 @@ export default function ChildDashboard() {
 
       if (error) throw error;
 
+      const user = data.users as ChildDetailsUser | null;
+
       return {
         id: data.id,
         user_id: data.user_id,
-        firstName: (data.users as any).first_name || '',
-        lastName: (data.users as any).last_name || '',
-        email: (data.users as any).email || '',
+        firstName: user?.first_name || '',
+        lastName: user?.last_name || '',
+        email: user?.email || '',
         grade: data.grade || '',
         status: data.status,
       };
@@ -60,10 +71,51 @@ export default function ChildDashboard() {
     childId,
   });
 
+  const { data: quizAttempts = [], isLoading: quizLoading } = useQuery({
+    queryKey: ['guardian-child-quiz-attempts', guardianId, child?.user_id],
+    queryFn: async () => {
+      if (!child?.user_id) return [];
+
+      const { data, error } = await supabase
+        .from('quiz_bank_attempts')
+        .select('*')
+        .eq('user_id', child.user_id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!guardianId && !!child?.user_id,
+  });
+
+  const kpiStats = useMemo(() => {
+    const totalExercises = exerciseHistory.length;
+    const correctExercises = exerciseHistory.filter(exercise => exercise.is_correct === true).length;
+    const totalAttempts = exerciseHistory.reduce(
+      (sum, exercise) => sum + (exercise.attempts_count || 0),
+      0
+    );
+    const successRate = totalExercises > 0 ? (correctExercises / totalExercises) * 100 : 0;
+    const bestQuizScore = quizAttempts.length > 0
+      ? Math.max(...quizAttempts.map(attempt =>
+          attempt.max_score > 0 ? (attempt.score / attempt.max_score) * 100 : 0
+        ))
+      : null;
+
+    return {
+      totalExercises,
+      correctExercises,
+      totalAttempts,
+      successRate,
+      quizzesCompleted: quizAttempts.length,
+      bestQuizScore,
+    };
+  }, [exerciseHistory, quizAttempts]);
+
   // Fetch progress data for subjects
   const { data: progressData } = useGuardianProgress(guardianId, childId);
 
-  if (authLoading || childLoading || historyLoading) {
+  if (authLoading || childLoading || historyLoading || quizLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -84,6 +136,7 @@ export default function ChildDashboard() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Child Dashboard" description="Detailed learning view for an individual child on Stuwy." />
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <ChildHeader
@@ -110,7 +163,16 @@ export default function ChildDashboard() {
         />
       )}
 
-      <KPICards />
+      <KPICards
+        exercisesCompleted={kpiStats.totalExercises}
+        correctExercises={kpiStats.correctExercises}
+        totalAttempts={kpiStats.totalAttempts}
+        successRate={kpiStats.successRate}
+        quizzesCompleted={kpiStats.quizzesCompleted}
+        bestQuizScore={kpiStats.bestQuizScore}
+      />
+
+      <LearningInsightsCard studentId={child.user_id} />
 
       {progressData?.[0]?.subjects && progressData[0].subjects.length > 0 && (
         <div className="space-y-2">

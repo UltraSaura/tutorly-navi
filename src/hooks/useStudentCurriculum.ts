@@ -3,7 +3,7 @@
  * 
  * 1. User profile → curriculum_country_code + curriculum_level_code
  * 2. CurriculumBundle (JSON) → get subjects/domains/subdomains for that country/level
- * 3. Supabase query → fetch learning_topics that match curriculum filters
+ * 3. Supabase query → fetch topics that match curriculum filters
  * 4. buildSubjectsFromCurriculum → transform into nested structure
  * 5. Return to UI → subjects with their domains/subdomains/topics
  */
@@ -76,7 +76,7 @@ export function useStudentCurriculum(): UseStudentCurriculumResult {
 
       // Step 2: Fetch learning subjects with categories from database
       const { data: learningSubjects, error: subjectsError } = await supabase
-        .from('learning_subjects')
+        .from('subjects')
         .select(
           `
           *,
@@ -101,7 +101,7 @@ export function useStudentCurriculum(): UseStudentCurriculumResult {
 
       // Step 3: Fetch topics filtered by curriculum
       const { data: learningTopics, error: topicsError } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .select('*')
         .eq('curriculum_country_code', profile.countryCode)
         .eq('curriculum_level_code', profile.levelCode)

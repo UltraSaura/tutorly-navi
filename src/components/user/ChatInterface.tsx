@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Message } from '@/types/chat';
 import AIResponse from './chat/AIResponse';
 import MessageInput from './chat/MessageInput';
 import CameraCapture from './chat/CameraCapture';
+import WelcomeFox from './chat/WelcomeFox';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
 import { useAdmin } from '@/context/AdminContext';
@@ -15,6 +17,9 @@ import { Button } from '@/components/ui/button';
 import { FileText, Image, Camera, Upload } from 'lucide-react';
 import CalculationStatus from './chat/CalculationStatus';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { PageMeta } from '@/components/seo/PageMeta';
+import { classifyProblemSubmission } from '@/utils/problemClassifier';
+import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
 
 const ChatInterface = () => {
   const { t, language } = useLanguage();
@@ -32,6 +37,7 @@ const ChatInterface = () => {
     clearMessages,
     removeMessage,
     handleSendMessage,
+    submitGroupedProblemAnswers,
     handleFileUpload,
     handlePhotoUpload,
     filteredMessages,
@@ -103,12 +109,51 @@ const ChatInterface = () => {
     
     console.log('[ChatInterface] Sending message and processing for grading:', messageToSend);
     
-    // Send through chat system
+    const classification = classifyProblemSubmission(messageToSend);
+    if (classification.type !== 'simple_exercise') {
+      await handleSendMessage(overrideMessage);
+      return;
+    }
+
+    // Check if this looks like a math exercise submission (contains = with digits)
+    const looksLikeMathExercise = /\d.*=.*\d/.test(messageToSend.trim());
+    
+    if (looksLikeMathExercise) {
+      console.log('[ChatInterface] Detected math exercise pattern, trying local grading first');
+      try {
+        const result = await processHomeworkFromChat(messageToSend);
+        if (result.localGraded) {
+          console.log('[ChatInterface] Local grading succeeded, skipping AI chat call');
+          // Add user message
+          addMessage({
+            id: Date.now().toString(),
+            role: 'user',
+            content: messageToSend,
+            timestamp: new Date(),
+          });
+          // Add synthetic assistant message so AIResponse renders the exercise card
+          const grade = result.isCorrect ? '10/10' : '0/10';
+          addMessage({
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: result.isCorrect ? `CORRECT\n${grade}` : `INCORRECT\n${grade}`,
+            timestamp: new Date(),
+          });
+          setInputMessage('');
+          return;
+        }
+        console.log('[ChatInterface] Local grading did not succeed, falling through to AI');
+      } catch (error) {
+        console.error('[ChatInterface] Error in local grading attempt:', error);
+      }
+    }
+    
+    // Send through chat system (AI call)
     await handleSendMessage(overrideMessage);
     
     // Also process and grade the exercise so UI updates with correct/incorrect
     try {
-      await processHomeworkFromChat(messageToSend);
+      await processHomeworkFromChat(messageToSend, { persist: false });
       console.log('[ChatInterface] Exercise processed and graded successfully');
     } catch (error) {
       console.error('[ChatInterface] Error processing homework:', error);
@@ -184,17 +229,46 @@ const ChatInterface = () => {
   };
 
   // Exercise-Focused Layout with Chat Input
+  const showWelcomeState =
+    filteredMessages.filter((m) => m.role === 'user').length === 0 &&
+    !isLoading &&
+    !calculationState.isProcessing;
+
   return (
-    <div className="relative h-[calc(100vh-4rem)] bg-neutral-bg overflow-x-hidden max-w-full">
+    <div
+      className={`relative h-[calc(100vh-4rem)] overflow-x-hidden max-w-full ${
+        showWelcomeState ? 'bg-white' : 'bg-neutral-bg'
+      }`}
+    >
+      <PageMeta title="Tutor Chat" description="Get instant AI-powered help with math homework, exercises, and explanations from your Stuwy tutor." />
       {/* Scrollable Content Area */}
       <div 
-        className="h-full overflow-auto overflow-x-hidden"
+        className={`h-full overflow-x-hidden ${
+          showWelcomeState
+            ? 'overflow-hidden flex flex-col items-center justify-start bg-white'
+            : 'overflow-auto'
+        }`}
         style={{
-          paddingBottom: keyboardVisible && keyboardHeight > 0
-            ? `${keyboardHeight + 80}px`  // Keyboard height + input height
-            : `${isMobile ? 128 : 80}px`  // Normal bottom padding
+          paddingBottom: showWelcomeState
+            ? 0
+            : keyboardVisible && keyboardHeight > 0
+              ? `${keyboardHeight + 80}px`  // Keyboard height + input height
+              : `${isMobile ? 128 : 80}px`  // Normal bottom padding
         }}
       >
+        {/* AI Response - Display the latest AI explanation/response */}
+        {/* Welcome animation - shown when no user messages exist yet */}
+        <AnimatePresence mode="wait">
+          {showWelcomeState && (
+            <motion.div
+              key="welcome-fox"
+              exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.25 } }}
+            >
+              <WelcomeFox />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* AI Response - Display the latest AI explanation/response */}
         <ErrorBoundary
           fallback={
@@ -207,6 +281,7 @@ const ChatInterface = () => {
             messages={filteredMessages}
             isLoading={isLoading}
             onSubmitAnswer={handleAnswerSubmit}
+            onSubmitGroupedAnswers={submitGroupedProblemAnswers}
             onClearAll={() => { clearMessages(); clearExercises(); }}
             onDismissExercise={(messageId) => removeMessage(messageId)}
           />
@@ -218,6 +293,7 @@ const ChatInterface = () => {
           status={calculationState.currentStep}
           message={calculationState.message}
         />
+        <QuizOverlayController />
       </div>
 
       {/* Fixed Chat Input - Only show on /chat route when no overlays are active */}

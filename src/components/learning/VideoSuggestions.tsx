@@ -5,6 +5,7 @@ import { Play, Clock, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { resolveVideoLearningRoute } from '@/services/learningNavigation';
 
 interface VideoSuggestionsProps {
   homeworkContent: string;
@@ -38,8 +39,8 @@ export function VideoSuggestions({ homeworkContent, subjectSlug }: VideoSuggesti
     return null;
   }
 
-  const handleVideoClick = (videoId: string) => {
-    navigate(`/learning/video/${videoId}`);
+  const handleVideoClick = async (videoId: string) => {
+    navigate(await resolveVideoLearningRoute(videoId));
   };
 
   return (

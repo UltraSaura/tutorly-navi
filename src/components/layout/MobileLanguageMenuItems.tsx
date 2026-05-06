@@ -1,11 +1,11 @@
-import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/context/SimpleLanguageContext";
 
 const MobileLanguageMenuItems = () => {
-  const { i18n, t } = useTranslation();
+  const { language, changeLanguage, t } = useLanguage();
 
   const languages = [
-    { code: 'en', name: t('language.english'), flag: '🇺🇸' },
-    { code: 'fr', name: t('language.french'), flag: '🇫🇷' }
+    { code: 'en', name: t('language.english') || 'English', flag: '🇺🇸' },
+    { code: 'fr', name: t('language.french') || 'Français', flag: '🇫🇷' }
   ];
 
   const manuallySet = localStorage.getItem('languageManuallySet') === 'true';
@@ -14,26 +14,23 @@ const MobileLanguageMenuItems = () => {
     <div className="space-y-2">
       {!manuallySet && (
         <div className="text-xs text-muted-foreground mb-2 border-b pb-2">
-          {t('language.autoDetected')}
+          {t('language.autoDetected') || 'Auto-detected'}
         </div>
       )}
       {languages.map((lang) => (
         <button
           key={lang.code}
-          onClick={() => {
-            i18n.changeLanguage(lang.code);
-            localStorage.setItem('languageManuallySet', 'true');
-          }}
+          onClick={() => changeLanguage(lang.code)}
           className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors ${
-            i18n.resolvedLanguage === lang.code 
+            language === lang.code 
               ? 'bg-accent text-accent-foreground' 
               : 'hover:bg-accent/50'
           }`}
         >
           <span className="text-lg">{lang.flag}</span>
           <span className="flex-1">{lang.name}</span>
-          {i18n.resolvedLanguage === lang.code && !manuallySet && (
-            <span className="text-xs text-muted-foreground">{t('language.auto')}</span>
+          {language === lang.code && !manuallySet && (
+            <span className="text-xs text-muted-foreground">{t('language.auto') || 'auto'}</span>
           )}
         </button>
       ))}

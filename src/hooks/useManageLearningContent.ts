@@ -9,7 +9,7 @@ export const useLearningSubjects = () => {
     queryKey: ['admin-learning-subjects'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('learning_subjects')
+        .from('subjects')
         .select('*')
         .order('order_index', { ascending: true });
       
@@ -25,7 +25,7 @@ export const useCreateSubject = () => {
   return useMutation({
     mutationFn: async (subject: Omit<Subject, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
-        .from('learning_subjects')
+        .from('subjects')
         .insert(subject)
         .select()
         .single();
@@ -49,7 +49,7 @@ export const useUpdateSubject = () => {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Subject> & { id: string }) => {
       const { data, error } = await supabase
-        .from('learning_subjects')
+        .from('subjects')
         .update(updates)
         .eq('id', id)
         .select()
@@ -74,7 +74,7 @@ export const useDeleteSubject = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('learning_subjects')
+        .from('subjects')
         .delete()
         .eq('id', id);
       
@@ -188,7 +188,7 @@ export const useLearningTopics = (categoryId?: string) => {
     queryKey: ['admin-learning-topics', categoryId],
     queryFn: async () => {
       let query = supabase
-        .from('learning_topics')
+        .from('topics')
         .select('*')
         .order('order_index', { ascending: true });
       
@@ -209,7 +209,7 @@ export const useCreateTopic = () => {
   return useMutation({
     mutationFn: async (topic: Omit<Topic, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .insert(topic as any)
         .select()
         .single();
@@ -233,7 +233,7 @@ export const useUpdateTopic = () => {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Topic> & { id: string }) => {
       const { data, error } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .update(updates as any)
         .eq('id', id)
         .select()
@@ -258,7 +258,7 @@ export const useDeleteTopic = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .delete()
         .eq('id', id);
       
@@ -280,7 +280,7 @@ export const useLearningVideos = (topicId?: string) => {
     queryKey: ['admin-learning-videos', topicId],
     queryFn: async () => {
       let query = supabase
-        .from('learning_videos')
+        .from('videos')
         .select('*')
         .order('order_index', { ascending: true });
       
@@ -301,7 +301,7 @@ export const useCreateVideo = () => {
   return useMutation({
     mutationFn: async (video: Omit<Video, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
-        .from('learning_videos')
+        .from('videos')
         .insert(video)
         .select()
         .single();
@@ -325,7 +325,7 @@ export const useUpdateVideo = () => {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Video> & { id: string }) => {
       const { data, error } = await supabase
-        .from('learning_videos')
+        .from('videos')
         .update(updates)
         .eq('id', id)
         .select()
@@ -350,7 +350,7 @@ export const useDeleteVideo = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('learning_videos')
+        .from('videos')
         .delete()
         .eq('id', id);
       
@@ -487,7 +487,7 @@ export const useCreateVideoVariants = () => {
       }));
       
       const { data, error } = await (supabase as any)
-        .from('learning_videos')
+        .from('videos')
         .insert(videosToInsert)
         .select();
       
@@ -511,7 +511,7 @@ export const useUpdateVideoVariants = () => {
     mutationFn: async (group: VideoVariantGroup) => {
       // Delete existing variants in the group
       const { error: deleteError } = await (supabase as any)
-        .from('learning_videos')
+        .from('videos')
         .delete()
         .eq('variant_group_id', group.variant_group_id);
       
@@ -539,7 +539,7 @@ export const useUpdateVideoVariants = () => {
       }));
       
       const { data, error } = await (supabase as any)
-        .from('learning_videos')
+        .from('videos')
         .insert(videosToInsert)
         .select();
       
@@ -562,7 +562,7 @@ export const useDeleteVideoVariantGroup = () => {
   return useMutation({
     mutationFn: async (variant_group_id: string) => {
       const { error } = await (supabase as any)
-        .from('learning_videos')
+        .from('videos')
         .delete()
         .eq('variant_group_id', variant_group_id);
       

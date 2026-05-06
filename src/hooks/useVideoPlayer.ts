@@ -18,7 +18,7 @@ export function useVideoPlayer(videoId: string) {
       const { data: { user } } = await supabase.auth.getUser();
 
       const { data: video, error: videoError } = await (supabase as any)
-        .from('learning_videos')
+        .from('videos')
         .select('*')
         .eq('id', videoId)
         .single();

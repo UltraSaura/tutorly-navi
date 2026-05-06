@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { AnimatePresence } from "framer-motion";
+import { HelmetProvider } from "react-helmet-async";
 import { AdminProvider } from "./context/AdminContext";
 import { AuthProvider } from "./context/AuthContext";
 import { OverlayProvider } from "./context/OverlayContext";
@@ -46,6 +47,8 @@ import PromptManagement from "./components/admin/PromptManagement";
 import ConnectionDiagnostics from "./components/admin/ConnectionDiagnostics";
 import LearningContentManagement from "./components/admin/LearningContentManagement";
 import CurriculumManager from "./components/admin/CurriculumManager";
+import AdminSettings from "./components/admin/AdminSettings";
+const RecentUpdates = lazy(() => import("./pages/admin/RecentUpdates"));
 
 // Auth Pages  
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -127,6 +130,7 @@ const queryClient = new QueryClient({
 // Simple App Component (no language detection for now)
 const App = () => {
   return <QueryClientProvider client={queryClient}>
+      <HelmetProvider>
       <ErrorBoundary>
         <TooltipProvider>
           <Toaster />
@@ -201,6 +205,8 @@ const App = () => {
                           <Route path="prompts" element={<PromptManagement />} />
                           <Route path="learning" element={<LearningContentManagement />} />
                           <Route path="curriculum" element={<CurriculumManager />} />
+                          <Route path="recent-updates" element={<RecentUpdates />} />
+                          <Route path="settings" element={<AdminSettings />} />
                         </Route>
                         
           {/* Guardian Portal Routes */}
@@ -252,6 +258,7 @@ const App = () => {
         </OverlayProvider>
       </TooltipProvider>
     </ErrorBoundary>
+    </HelmetProvider>
   </QueryClientProvider>;
 };
 export default App;

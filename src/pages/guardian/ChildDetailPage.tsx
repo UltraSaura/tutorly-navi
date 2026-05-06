@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function ChildDetailPage() {
   const { childId } = useParams();
@@ -41,6 +42,7 @@ export default function ChildDetailPage() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Child Details" description="Full profile, curriculum, and activity for your child." />
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate('/guardian')}>

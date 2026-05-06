@@ -37,18 +37,18 @@ export async function getStudentCurriculumProgress(
 
   // Step 2: Get all topics for this curriculum
   let topicsQuery = supabase
-    .from('learning_topics')
+    .from('topics')
     .select(`
       id,
       curriculum_subject_id,
       learning_categories (
-        learning_subjects (
+        subjects (
           id,
           name,
           color_scheme
         )
       ),
-      topic_objectives (
+      topic_objective_links (
         objective_id
       )
     `)
@@ -82,7 +82,7 @@ export async function getStudentCurriculumProgress(
   }>();
 
   topics.forEach((topic: any) => {
-    const subject = topic.learning_categories?.learning_subjects;
+    const subject = topic.learning_categories?.subjects;
     if (!subject) return;
 
     if (!subjectObjectivesMap.has(subject.id)) {
@@ -95,7 +95,7 @@ export async function getStudentCurriculumProgress(
     }
 
     const subjectData = subjectObjectivesMap.get(subject.id)!;
-    topic.topic_objectives?.forEach((to: any) => {
+    topic.topic_objective_links?.forEach((to: any) => {
       subjectData.objective_ids.add(to.objective_id);
     });
   });
@@ -178,17 +178,17 @@ export async function getWeakestSubdomains(
 
   // Get topics grouped by subdomain
   const { data: topics } = await supabase
-    .from('learning_topics')
+    .from('topics')
     .select(`
       curriculum_subdomain_id,
       curriculum_subject_id,
       learning_categories (
-        learning_subjects (
+        subjects (
           id,
           name
         )
       ),
-      topic_objectives (
+      topic_objective_links (
         objective_id
       )
     `)
@@ -209,7 +209,7 @@ export async function getWeakestSubdomains(
 
   topics.forEach((topic: any) => {
     const subdomainId = topic.curriculum_subdomain_id;
-    const subject = topic.learning_categories?.learning_subjects;
+    const subject = topic.learning_categories?.subjects;
     
     if (!subdomainId || !subject) return;
 
@@ -222,7 +222,7 @@ export async function getWeakestSubdomains(
       });
     }
 
-    topic.topic_objectives?.forEach((to: any) => {
+    topic.topic_objective_links?.forEach((to: any) => {
       subdomainMap.get(subdomainId)!.objective_ids.add(to.objective_id);
     });
   });

@@ -6,6 +6,8 @@ import { showXpToast } from '@/components/game/XpToast';
 import { TwoCards } from './TwoCards';
 import { useTwoCardTeaching, TeachingSections } from './useTwoCardTeaching';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { HomeworkSmartLearningResourcesCard } from '@/components/learning/HomeworkSmartLearningResourcesCard';
+import type { SafeHomeworkLearningRow } from '@/services/homeworkLearningResources';
 
 interface ExplanationModalProps {
   open: boolean;
@@ -19,6 +21,9 @@ interface ExplanationModalProps {
   topicId?: string;
   subjectSlug?: string;
   topicSlug?: string;
+  homeworkLearningRows?: SafeHomeworkLearningRow[];
+  homeworkSourceId?: string;
+  homeworkTitle?: string;
 }
 
 export function ExplanationModal({ 
@@ -32,7 +37,10 @@ export function ExplanationModal({
   imageUrl,
   topicId,
   subjectSlug,
-  topicSlug
+  topicSlug,
+  homeworkLearningRows = [],
+  homeworkSourceId,
+  homeworkTitle
 }: ExplanationModalProps) {
   const { t } = useLanguage();
   
@@ -52,7 +60,7 @@ export function ExplanationModal({
   const handleTryAgain = () => {
     if (onTryAgain) {
       onTryAgain();
-      showXpToast(5, "Great effort! Keep learning!");
+      showXpToast(5, t('exercises.explanation.xp.great_effort'));
     }
     onClose();
   };
@@ -88,7 +96,7 @@ export function ExplanationModal({
                 <div className="mb-6">
                   <img 
                     src={imageUrl} 
-                    alt="Exercise explanation" 
+                    alt={t('exercises.explanation.image_alt')}
                     className="max-h-[60vh] w-auto mx-auto rounded-xl shadow-lg"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
@@ -103,13 +111,23 @@ export function ExplanationModal({
                 topicSlug={topicSlug}
                 onClose={onClose} 
               />
+              {homeworkLearningRows.length > 0 && (
+                <div className="mt-4">
+                  <HomeworkSmartLearningResourcesCard
+                    rows={homeworkLearningRows}
+                    sourceId={homeworkSourceId}
+                    title={homeworkTitle || exerciseQuestion || sections.exercise}
+                    onPracticeClick={onTryAgain}
+                  />
+                </div>
+              )}
             </>
           ) : (
             <>
               {console.log('[ExplanationModal] No sections available, showing fallback')}
               <div className="text-center text-muted-foreground">
-                <p>No explanation data available</p>
-                <p className="text-xs mt-2">Sections: {sections ? 'Present' : 'Null'}</p>
+                <p>{t('exercises.explanation.empty.no_data')}</p>
+                <p className="text-xs mt-2">{t('exercises.explanation.empty.sections')}: {sections ? t('common.present') : t('common.none')}</p>
               </div>
             </>
           )}
@@ -122,14 +140,14 @@ export function ExplanationModal({
                 onClick={() => console.log("[Explain] sections", sections)}
                 className="hover:text-foreground transition-colors"
               >
-                Log sections
+                {t('exercises.explanation.debug.log_sections')}
               </button>
               <span className="mx-2">•</span>
               <button 
-                onClick={() => alert("If empty, check console for raw AI output and template info.")}
+                onClick={() => alert(t('exercises.explanation.debug.help_message'))}
                 className="hover:text-foreground transition-colors"
               >
-                Help
+                {t('exercises.explanation.debug.help')}
               </button>
             </div>
           )}
@@ -138,7 +156,7 @@ export function ExplanationModal({
             className="w-full"
             size="lg"
           >
-            Try again → +5 XP
+            {t('exercises.try_again', { xp: 5 })}
           </Button>
         </div>
       </div>

@@ -10,6 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import AccountDeletion from '@/components/profile/AccountDeletion';
 import { ProfileEditForm } from '@/components/profile/ProfileEditForm';
+import { LearningPreferenceSelector } from '@/components/profile/LearningPreferenceSelector';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const ProfilePage = () => {
   const { user } = useAuth();
@@ -46,6 +48,7 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-950 dark:to-gray-900">
+      <PageMeta title="Profile" description="Manage your Stuwy profile, preferences, and account details." />
       <div className="stuwy-container py-8">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Header */}
@@ -149,6 +152,8 @@ const ProfilePage = () => {
 
           {/* School Program Settings */}
           <ProfileEditForm />
+
+          <LearningPreferenceSelector />
 
           {/* Account Deletion */}
           <AccountDeletion />

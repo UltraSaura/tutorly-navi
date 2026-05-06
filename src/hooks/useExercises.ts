@@ -8,7 +8,9 @@ import { useLanguage } from '@/context/LanguageContext';
 import { processNewExercise, linkMessageToExercise, processMultipleExercises } from '@/utils/exerciseProcessor';
 import { hasMultipleExercises } from '@/utils/homework/multiExerciseParser';
 import { evaluateHomework } from '@/services/homeworkGrading';
+import { fetchExplanation as fetchExplanationFromAI } from '@/services/explanationService';
 import { useAdmin } from '@/context/AdminContext';
+import { buildGradedWorkFromExercise, saveGradedWorksToHistory } from '@/services/gradedWorkHistory';
 
 export const useExercises = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -143,8 +145,15 @@ export const useExercises = () => {
     }
   };
 
-  const processHomeworkFromChat = async (message: string) => {
+  const processHomeworkFromChat = async (
+    message: string,
+    options: { persist?: boolean } = {}
+  ): Promise<{ localGraded: boolean; isCorrect: boolean }> => {
     console.log('[useExercises] Processing homework from chat message:', message);
+    
+    let localGraded = false;
+    let isCorrect = false;
+    const shouldPersist = options.persist !== false;
     
     // Check if the message contains multiple exercises
     if (hasMultipleExercises(message)) {
@@ -158,35 +167,50 @@ export const useExercises = () => {
           return updated;
         });
         setProcessedContent(prev => new Set([...prev, message]));
-        console.log('[useExercises] Multi-exercise message marked as processed:', message);
         
-        // Show feedback to user
+        localGraded = newExercises.some(ex => ex.gradingMethod === 'local');
+        isCorrect = newExercises.every(ex => ex.isCorrect === true);
+
+        if (shouldPersist) {
+          const gradedWorks = newExercises
+            .map(buildGradedWorkFromExercise)
+            .filter(Boolean);
+          await saveGradedWorksToHistory(gradedWorks);
+        }
+        
         if (newExercises.length > 1) {
           toast.info(`Found ${newExercises.length} exercises in your message`);
         }
       }
     } else {
-    // Process single exercise
-    const result = await processNewExercise(message, exercises, processedContent, language, selectedModelId);
+      const result = await processNewExercise(message, exercises, processedContent, language, selectedModelId);
       if (result) {
         const { exercise, isUpdate } = result;
+        
+        localGraded = exercise.gradingMethod === 'local';
+        isCorrect = exercise.isCorrect === true;
+        
         setExercises(prev => {
           if (isUpdate) {
-            // Update existing exercise
             const updated = prev.map(ex => ex.id === exercise.id ? exercise : ex);
-            console.log('[useExercises] Exercise updated:', exercise, 'Updated exercises:', updated);
+            console.log('[useExercises] Exercise updated:', exercise);
             return updated;
           } else {
-            // Add new exercise
             const updated = [...prev, exercise];
-            console.log('[useExercises] New exercise added by chat:', exercise, 'Updated exercises:', updated);
+            console.log('[useExercises] New exercise added by chat:', exercise);
             return updated;
           }
         });
         setProcessedContent(prev => new Set([...prev, message]));
-        console.log('[useExercises] Message marked as processed:', message);
+
+        if (shouldPersist) {
+          const gradedWork = buildGradedWorkFromExercise(exercise);
+          if (gradedWork) await saveGradedWorksToHistory([gradedWork]);
+        }
       }
     }
+    
+    return { localGraded, isCorrect };
   };
 
   const linkAIResponseToExercise = (userMessage: string, aiMessage: Message) => {
@@ -232,6 +256,43 @@ export const useExercises = () => {
     toast.success("All exercises have been cleared.");
   };
 
+  const fetchExplanation = async (exerciseId: string) => {
+    const exercise = exercises.find(ex => ex.id === exerciseId);
+    if (!exercise || exercise.explanation) return; // Already loaded
+
+    // Set loading state
+    setExercises(prev =>
+      prev.map(ex => ex.id === exerciseId ? { ...ex, explanationLoading: true } : ex)
+    );
+
+    try {
+      const explanation = await fetchExplanationFromAI(
+        exerciseId,
+        exercise.question,
+        exercise.userAnswer,
+        !!exercise.isCorrect,
+        exercise.correctAnswer,
+        language,
+        selectedModelId,
+        exercise.attemptCount
+      );
+
+      setExercises(prev =>
+        prev.map(ex =>
+          ex.id === exerciseId
+            ? { ...ex, explanation, explanationLoading: false, explanationRequested: true }
+            : ex
+        )
+      );
+    } catch (error) {
+      console.error('[useExercises] Error fetching explanation:', error);
+      setExercises(prev =>
+        prev.map(ex => ex.id === exerciseId ? { ...ex, explanationLoading: false } : ex)
+      );
+      toast.error('Failed to load explanation');
+    }
+  };
+
   useEffect(() => {
     console.log('[useExercises] Current overall grade state after grade update:', grade);
   }, [grade]);
@@ -245,6 +306,7 @@ export const useExercises = () => {
     linkAIResponseToExercise,
     addExercises,
     submitAnswer,
-    clearExercises
+    clearExercises,
+    fetchExplanation
   };
 };

@@ -1,11 +1,11 @@
-import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/context/SimpleLanguageContext";
 
 function LanguageSwitcher() {
-  const { i18n } = useTranslation();
+  const { language, changeLanguage } = useLanguage();
   return (
     <select
-      value={i18n.resolvedLanguage}
-      onChange={(e) => i18n.changeLanguage(e.target.value)}
+      value={language}
+      onChange={(e) => changeLanguage(e.target.value)}
       className="border rounded-md px-2 py-1"
       aria-label="Select language"
     >
@@ -15,4 +15,4 @@ function LanguageSwitcher() {
   );
 }
 
-export default LanguageSwitcher; 
+export default LanguageSwitcher;

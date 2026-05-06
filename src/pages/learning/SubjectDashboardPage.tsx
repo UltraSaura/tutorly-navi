@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { CurriculumLocation } from '@/components/admin/curriculum/CurriculumLocation';
 import * as Icons from 'lucide-react';
+import { PageMeta } from '@/components/seo/PageMeta';
 const SubjectDashboardPage = () => {
   const {
     subjectSlug
@@ -45,6 +46,7 @@ const SubjectDashboardPage = () => {
   };
   return (
     <div className="flex flex-col h-screen bg-background">
+      <PageMeta title="Subject" description="Explore topics, videos, and exercises for this subject on Stuwy." />
       {/* Header */}
       <div 
         className="flex items-center gap-4 px-4 py-3 border-b"

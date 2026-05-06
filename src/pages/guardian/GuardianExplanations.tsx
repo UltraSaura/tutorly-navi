@@ -6,7 +6,9 @@ import ExplanationCard from '@/components/guardian/ExplanationCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, BookOpen } from 'lucide-react';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 import type { ExerciseHistoryWithAttempts } from '@/types/exercise-history';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function GuardianExplanations() {
   const { guardianId, loading: authLoading } = useGuardianAuth();
@@ -15,6 +17,8 @@ export default function GuardianExplanations() {
   });
   const [selectedExercise, setSelectedExercise] = useState<ExerciseHistoryWithAttempts | null>(null);
   const teaching = useTwoCardTeaching();
+  const { language } = useLanguage();
+  const langName = language === 'fr' ? 'French' : language === 'ar' ? 'Arabic' : 'English';
 
   const getChildName = (userId: string) => {
     const child = children.find((c) => c.user_id === userId);
@@ -29,7 +33,7 @@ export default function GuardianExplanations() {
     };
     
     await teaching.openFor(exerciseData, {
-      response_language: 'English',
+      response_language: langName,
       grade_level: 'High School'
     });
     
@@ -50,6 +54,7 @@ export default function GuardianExplanations() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Explanations" description="See AI-generated explanations for the exercises your children attempted." />
       <div>
         <h1 className="text-3xl font-bold mb-2">Explanations</h1>
         <p className="text-muted-foreground">

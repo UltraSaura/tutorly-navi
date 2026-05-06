@@ -4,6 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { PromptTemplate } from '@/types/admin';
 import { formatDistanceToNow } from 'date-fns';
+import { getPromptTemplateDisplayName, getPromptUsageLabel } from './promptUsageLabels';
 
 interface ViewTemplateDialogProps {
   open: boolean;
@@ -22,7 +23,7 @@ export const ViewTemplateDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>{template.name}</DialogTitle>
+          <DialogTitle>{getPromptTemplateDisplayName(template)}</DialogTitle>
           <DialogDescription>
             {template.description}
           </DialogDescription>
@@ -38,7 +39,7 @@ export const ViewTemplateDialog = ({
               </div>
               <div>
                 <h4 className="text-sm font-medium mb-2">Usage Type</h4>
-                <Badge variant="secondary">{template.usage_type}</Badge>
+                <Badge variant="secondary">{getPromptUsageLabel(template.usage_type)}</Badge>
               </div>
               <div>
                 <h4 className="text-sm font-medium mb-2">Priority</h4>

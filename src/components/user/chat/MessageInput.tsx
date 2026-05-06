@@ -1,5 +1,5 @@
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, lazy, Suspense } from 'react';
 import { Send, Calculator, Type } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,8 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { useAdmin } from '@/context/AdminContext';
 import CameraCapture from './CameraCapture';
 import AttachmentMenu from './AttachmentMenu';
-import ImageCropDialog from './ImageCropDialog';
 import { MathLiveInput } from '@/components/math';
+
+const ImageCropDialog = lazy(() => import('./ImageCropDialog'));
 
 interface MessageInputProps {
   inputMessage: string;
@@ -228,18 +229,20 @@ const MessageInput = ({
           {/* Input Field */}
           <div className="flex-1">
             {isMathMode ? (
-              <MathLiveInput
-                value={inputMessage}
-                onChange={(value) => {
-                  console.log('[DEBUG] MathLiveInput onChange called with:', value);
-                  setInputMessage(value);
-                }}
-                onEnter={handleMathEnter}
-                onKeyboardChange={onKeyboardChange} // Add this
-                placeholder={t('chat.mathInputPlaceholder', 'Type mathematical expressions...')}
-                className="border-0 shadow-none focus-visible:ring-0 bg-transparent"
-                disabled={isLoading}
-              />
+              <Suspense fallback={<div className="min-h-[40px] rounded-md border border-input bg-background animate-pulse" />}>
+                <MathLiveInput
+                  value={inputMessage}
+                  onChange={(value) => {
+                    console.log('[DEBUG] MathLiveInput onChange called with:', value);
+                    setInputMessage(value);
+                  }}
+                  onEnter={handleMathEnter}
+                  onKeyboardChange={onKeyboardChange}
+                  placeholder={t('chat.mathInputPlaceholder', 'Type mathematical expressions...')}
+                  className="border-0 shadow-none focus-visible:ring-0 bg-transparent"
+                  disabled={isLoading}
+                />
+              </Suspense>
             ) : (
               <Textarea 
                 placeholder={t('chat.inputPlaceholder')}
@@ -285,14 +288,16 @@ const MessageInput = ({
       />
 
       {/* Image Crop Dialog */}
-      <ImageCropDialog
-        isOpen={isCropOpen}
-        imageUrl={cropImageUrl}
-        originalFile={cropFile}
-        onCropConfirm={handleCropConfirm}
-        onSendFull={handleSendFull}
-        onCancel={closeCropDialog}
-      />
+      <Suspense fallback={null}>
+        <ImageCropDialog
+          isOpen={isCropOpen}
+          imageUrl={cropImageUrl}
+          originalFile={cropFile}
+          onCropConfirm={handleCropConfirm}
+          onSendFull={handleSendFull}
+          onCancel={closeCropDialog}
+        />
+      </Suspense>
     </div>
   );
 };

@@ -1,45 +1,38 @@
+## Problem
+Creating a prompt template with type "Grouped Retry Practice" fails because the database CHECK constraint `prompt_templates_usage_type_check` on `public.prompt_templates.usage_type` only permits the legacy values:
 
-
-## Plan: Localize Division Explanation Text to User's Language
-
-### Problem
-The division explanation strings in `CompactMathStepper.tsx` are hardcoded in French (e.g. "On commence par prendre...", "La division est terminée !"). They should use the user's selected language.
-
-### Fix
-
-**1 file modified**: `src/components/math/CompactMathStepper.tsx`
-
-1. **Import** `useLanguage` from `@/context/SimpleLanguageContext` (or whichever context the app uses)
-2. **Read** the current language inside the component: `const { language } = useLanguage();`
-3. **Create a translation map** for the ~8 explanation templates, keyed by language (`en`/`fr`):
-
-```typescript
-const divTexts = language === 'fr' ? {
-  startFirst: (partial, divisor) => `On commence par prendre ${partial}...`,
-  startNext: (partial, divisor) => `On obtient ${partial} comme nouveau dividende partiel...`,
-  writeQuotient: (divisor, qDigit, product, partial) => `${divisor} × ${qDigit} = ${product}...`,
-  writeProduct: (product, partial, rem) => `On écrit ${product} sous ${partial}...`,
-  writeRemainder: (partial, product, rem, hasMore) => `${partial} − ${product} = ${rem}...`,
-  bringDown: (nextDigit, rem, newPartial) => `On descend le ${nextDigit}...`,
-  completeWithRem: (div, dsr, q, r) => `La division est terminée ! ...reste ${r}.`,
-  completeExact: (div, dsr, q) => `La division est terminée ! ...exactement.`,
-} : {
-  startFirst: (partial, divisor) => `Start with ${partial}. How many times does ${divisor} go into ${partial}?`,
-  startNext: (partial, divisor) => `The new partial dividend is ${partial}. How many times does ${divisor} go into ${partial}?`,
-  writeQuotient: (divisor, qDigit, product, partial) => `${divisor} × ${qDigit} = ${product}, so write ${qDigit} in the quotient.`,
-  writeProduct: (product, partial, rem) => `Write ${product} below ${partial} and subtract: ${partial} − ${product} = ${rem}.`,
-  writeRemainder: (partial, product, rem, hasMore) => `${partial} − ${product} = ${rem}. ${hasMore ? 'Bring down the next digit.' : 'No more digits to bring down.'}`,
-  bringDown: (nextDigit, rem, newPartial) => `Bring down ${nextDigit} next to ${rem}, giving ${newPartial}.`,
-  completeWithRem: (div, dsr, q, r) => `Division complete! ${div} ÷ ${dsr} = ${q} remainder ${r}.`,
-  completeExact: (div, dsr, q) => `Division complete! ${div} ÷ ${dsr} = ${q} exactly.`,
-};
+```
+('chat', 'grading', 'explanation', 'math_enhanced')
 ```
 
-4. **Replace** all hardcoded French strings in the `divisionData` useMemo (lines 264-350) with calls to `divTexts.*(...)`
-5. **Add `language`** to the `divisionData` useMemo dependency array so phases regenerate on language change
+The application code (`src/types/admin.ts`, `src/hooks/usePromptManagement.ts`, the create/edit dialogs) already lists `grouped_retry_practice` as a valid type, but the matching DB migration was never applied — so every insert/update with `usage_type = 'grouped_retry_practice'` is rejected by Postgres (error code 23514). The toast message in the screenshot is the friendly version of that exact error.
 
-### Files affected
-| File | Change |
-|------|--------|
-| `src/components/math/CompactMathStepper.tsx` | Import `useLanguage`, add translation map, replace ~8 hardcoded French strings |
+## Fix
+Apply a single Supabase migration that updates the CHECK constraint to include the new value.
 
+```sql
+ALTER TABLE public.prompt_templates
+  DROP CONSTRAINT IF EXISTS prompt_templates_usage_type_check;
+
+ALTER TABLE public.prompt_templates
+  ADD CONSTRAINT prompt_templates_usage_type_check
+  CHECK (usage_type IN (
+    'chat',
+    'grading',
+    'explanation',
+    'math_enhanced',
+    'grouped_retry_practice'
+  ));
+```
+
+Also extend the same allowed list on `public.subject_prompt_assignments.usage_type` if a matching CHECK constraint exists there, so subject assignments can reference the new type too.
+
+## Files touched
+- One new migration file under `supabase/migrations/` containing the ALTER TABLE statements above.
+
+## No code changes needed
+- TypeScript types, hooks, and admin UI already support `grouped_retry_practice`. Once the constraint is updated, creating the template will succeed and the existing "Grouped Retry Practice Explanation" form (visible in the screenshot) will save without error.
+
+## Verification after apply
+1. Reopen Admin → System Prompts → Add Template, choose Type = "Grouped Retry Practice", click Create — should succeed with no toast error.
+2. The new template appears in the list and can be activated.

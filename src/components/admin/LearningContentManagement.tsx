@@ -5,10 +5,12 @@ import TopicManager from "./learning/TopicManager";
 import VideoManager from "./learning/VideoManager";
 import QuizManager from "./learning/QuizManager";
 import BankManager from "./learning/BankManager";
+import { PageMeta } from "@/components/seo/PageMeta";
 
 const LearningContentManagement = () => {
   return (
     <div className="space-y-6">
+      <PageMeta title="Learning Content" description="Manage videos, topics, and quiz content." />
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Learning Content Management</h1>
         <p className="text-muted-foreground mt-2">

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CreditCard, Download, Calendar, DollarSign, CheckCircle } from 'lucide-react';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function GuardianBilling() {
   const { billingCustomerId } = useGuardianAuth();
@@ -31,6 +32,7 @@ export default function GuardianBilling() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Billing" description="Manage your Stuwy subscription, payment method, and billing history." />
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Billing & Subscription</h1>

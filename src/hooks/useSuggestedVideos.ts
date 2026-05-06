@@ -30,7 +30,7 @@ export function useSuggestedVideos(homeworkContent: string | null, limit: number
       
       // Get all active videos
       const { data: allVideos, error } = await supabase
-        .from('learning_videos')
+        .from('videos')
         .select('*')
         .eq('is_active', true);
       
