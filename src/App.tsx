@@ -35,6 +35,10 @@ const SubjectDashboardPage = lazy(() => import("./pages/learning/SubjectDashboar
 const CoursePlaylistPage = lazy(() => import("./pages/learning/CoursePlaylistPage"));
 const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
 const MyProgramPage = lazy(() => import("./pages/learning/MyProgramPage"));
+const PracticePage = lazy(() => import("./pages/practice/PracticePage"));
+const ExamSessionPage = lazy(() => import("./pages/practice/ExamSessionPage"));
+const PracticeSubjectPage = lazy(() => import("./pages/practice/PracticeSubjectPage"));
+const PracticeAnnalsPage = lazy(() => import("./pages/practice/PracticeAnnalsPage"));
 const CurriculumBrowser = lazy(() => import("./components/curriculum/CurriculumBrowser"));
 const CurriculumDebug = lazy(() => import("./pages/CurriculumDebug"));
 const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
@@ -49,6 +53,7 @@ import LearningContentManagement from "./components/admin/LearningContentManagem
 import CurriculumManager from "./components/admin/CurriculumManager";
 import AdminSettings from "./components/admin/AdminSettings";
 const RecentUpdates = lazy(() => import("./pages/admin/RecentUpdates"));
+const ExamAnnales = lazy(() => import("./pages/admin/ExamAnnales"));
 
 // Auth Pages  
 const AuthPage = lazy(() => import("./pages/AuthPage"));
@@ -178,6 +183,12 @@ const App = () => {
                           <Route path=":subjectSlug/:topicSlug" element={<CoursePlaylistPage />} />
                         </Route>
                         <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
+                        <Route path="/practice" element={<MainLayout />}>
+                          <Route index element={<PracticePage />} />
+                          <Route path="session/:paperId" element={<ExamSessionPage />} />
+                          <Route path=":subject/annales" element={<PracticeAnnalsPage />} />
+                          <Route path=":subject" element={<PracticeSubjectPage />} />
+                        </Route>
                 <Route path="/my-program" element={<MainLayout />}>
                   <Route index element={<MyProgramPage />} />
                 </Route>
@@ -205,6 +216,7 @@ const App = () => {
                           <Route path="prompts" element={<PromptManagement />} />
                           <Route path="learning" element={<LearningContentManagement />} />
                           <Route path="curriculum" element={<CurriculumManager />} />
+                          <Route path="exams" element={<ExamAnnales />} />
                           <Route path="recent-updates" element={<RecentUpdates />} />
                           <Route path="settings" element={<AdminSettings />} />
                         </Route>
