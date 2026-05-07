@@ -6,6 +6,7 @@ import { useLanguage } from "@/context/SimpleLanguageContext";
 import { useAdmin } from "@/context/AdminContext";
 import {
   generateRuntimeMiniPractice,
+  isVerticalOperationVisualText,
   isMiniPracticeAnswerCorrect,
   type RuntimeMiniPractice,
   type RuntimeMiniPracticeContext,
@@ -21,6 +22,30 @@ type AnswerState = "idle" | "correct" | "incorrect";
 
 const shouldSpanFullWidthChoice = (label: string) =>
   label.trim().length > 18 || /\s/.test(label.trim());
+
+function MiniPracticeOperationVisual({ visualText }: { visualText: string }) {
+  return (
+    <div className="rounded-xl border bg-muted/50 px-4 py-4">
+      <div className="flex justify-center">
+        <pre className="min-w-[7rem] whitespace-pre font-mono text-xl leading-8 tabular-nums text-foreground">
+          {visualText}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+function MiniPracticeVisual({ visualText }: { visualText: string }) {
+  if (isVerticalOperationVisualText(visualText)) {
+    return <MiniPracticeOperationVisual visualText={visualText} />;
+  }
+
+  return (
+    <pre className="overflow-x-auto rounded-xl border bg-muted/50 p-3 font-mono text-sm leading-6 text-foreground whitespace-pre-wrap">
+      {visualText}
+    </pre>
+  );
+}
 
 export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMiniPracticeInlineProps) {
   const { t } = useLanguage();
@@ -197,21 +222,21 @@ export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMini
       : selectedChoice.trim().length > 0;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 pb-4">
       <p className="font-medium text-foreground">
         {t("exercises.explanation.mini_practice.intro")}
       </p>
 
       {practice.visualText && (
-        <pre className="overflow-x-auto rounded-lg border bg-muted/60 p-3 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-          {practice.visualText}
-        </pre>
+        <MiniPracticeVisual visualText={practice.visualText} />
       )}
 
-      <p className="whitespace-pre-wrap break-words">{practice.prompt}</p>
+      <p className="text-base leading-relaxed text-muted-foreground whitespace-pre-wrap break-words">
+        {practice.prompt}
+      </p>
 
       {practice.questionType === "multiple_choice" && (
-        <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {practice.choices?.map(choice => {
             const selected = selectedChoice === choice.id;
             const fullWidth = shouldSpanFullWidthChoice(choice.label);
@@ -224,11 +249,11 @@ export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMini
                   setAnswerState("idle");
                 }}
                 className={[
-                  "w-full rounded-lg border p-3 text-left text-sm transition-colors",
+                  "w-full rounded-xl border p-4 text-left text-base font-medium transition-colors",
                   selected
                     ? "border-primary bg-primary/10 text-foreground"
                     : "bg-background hover:bg-muted/70",
-                  fullWidth ? "min-[420px]:col-span-2" : "",
+                  fullWidth ? "sm:col-span-2" : "",
                 ].join(" ")}
               >
                 <span className="font-semibold">{choice.id}.</span> {choice.label}
@@ -292,7 +317,7 @@ export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMini
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 pt-1 pb-2">
         <Button size="sm" onClick={handleCheck} disabled={!canCheck}>
           {t("exercises.explanation.mini_practice.check")}
         </Button>

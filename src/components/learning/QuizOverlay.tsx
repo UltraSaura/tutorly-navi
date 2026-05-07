@@ -48,6 +48,9 @@ function formatQuizAnswerForExplanation(question: Question, answer: any): string
   }
 
   if (typeof answer === 'object') {
+    if (question.kind === 'operation-posee') {
+      return answer.correct ? 'Correct operation-posee submission' : 'Incorrect operation-posee submission';
+    }
     if ('numerator' in answer || 'denominator' in answer) {
       const numerator = answer.numerator || '?';
       const denominator = answer.denominator || '?';
@@ -232,6 +235,16 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
     setQuestionResult(correct);
     setQuestionSubmitted(true);
   };
+
+  useEffect(() => {
+    if (!currentQuestion || questionSubmitted) return;
+    if (currentQuestion.kind !== 'operation-posee') return;
+
+    const currentAnswer = answers[currentQuestion.id];
+    if (currentAnswer?.correct === true) {
+      handleQuestionSubmit();
+    }
+  }, [answers, currentQuestion, questionSubmitted]);
 
   const handleShowExplanation = useCallback(async () => {
     if (!currentQuestion) return;

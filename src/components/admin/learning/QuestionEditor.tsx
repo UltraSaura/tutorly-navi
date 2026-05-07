@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X, Plus, GripVertical } from 'lucide-react';
-import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ } from '@/types/quiz-bank';
+import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ, OperationPoseeQ } from '@/types/quiz-bank';
 
 interface QuestionEditorProps {
   question?: Question & { dbId?: string; position?: number };
@@ -96,6 +96,18 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       ? (question as VisualQ).visual
       : createDefaultVisual()
   );
+  const [operation, setOperation] = useState<'addition' | 'subtraction'>(
+    question && question.kind === 'operation-posee' ? (question as OperationPoseeQ).operation : 'subtraction'
+  );
+  const [topNumber, setTopNumber] = useState<number>(
+    question && question.kind === 'operation-posee' ? (question as OperationPoseeQ).topNumber : 325
+  );
+  const [bottomNumber, setBottomNumber] = useState<number>(
+    question && question.kind === 'operation-posee' ? (question as OperationPoseeQ).bottomNumber : 148
+  );
+  const [poseeLocale, setPoseeLocale] = useState<'fr' | 'en'>(
+    question && question.kind === 'operation-posee' ? ((question as OperationPoseeQ).locale || 'fr') : 'fr'
+  );
 
   useEffect(() => {
     if (question) {
@@ -122,6 +134,12 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       }
       else if (question.kind === 'visual') {
         setVisual((question as VisualQ).visual);
+      } else if (question.kind === 'operation-posee') {
+        const poseeQ = question as OperationPoseeQ;
+        setOperation(poseeQ.operation);
+        setTopNumber(poseeQ.topNumber);
+        setBottomNumber(poseeQ.bottomNumber);
+        setPoseeLocale(poseeQ.locale || 'fr');
       }
     } else {
       // Reset for new question
@@ -140,6 +158,10 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setOrderingItems(['', '']);
       setCorrectOrder([]);
       setVisual(createDefaultVisual());
+      setOperation('subtraction');
+      setTopNumber(325);
+      setBottomNumber(148);
+      setPoseeLocale('fr');
     }
   }, [question, isOpen]);
 
@@ -282,6 +304,22 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         points,
         visual,
       } as VisualQ;
+    } else if (kind === 'operation-posee') {
+      if (!Number.isFinite(topNumber) || !Number.isFinite(bottomNumber)) {
+        alert('Please enter valid numbers for top and bottom values');
+        return;
+      }
+      questionData = {
+        id,
+        kind: 'operation-posee',
+        prompt,
+        hint: hint || undefined,
+        points,
+        operation,
+        topNumber: Math.trunc(topNumber),
+        bottomNumber: Math.trunc(bottomNumber),
+        locale: poseeLocale,
+      } as OperationPoseeQ;
     } else {
       alert('Unsupported question type');
       return;
@@ -311,6 +349,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <SelectItem value="numeric">Numeric Answer</SelectItem>
                 <SelectItem value="ordering">Ordering</SelectItem>
                 <SelectItem value="visual">Visual</SelectItem>
+                <SelectItem value="operation-posee">Pose et calcule</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -641,6 +680,55 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             <div className="space-y-2">
               <Label className="text-sm">Visual configuration</Label>
               <VisualQuestionBuilder value={visual} onChange={setVisual} />
+            </div>
+          )}
+
+          {kind === 'operation-posee' && (
+            <div className="space-y-3">
+              <div>
+                <Label>Operation</Label>
+                <Select value={operation} onValueChange={(value: 'addition' | 'subtraction') => setOperation(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="addition">Addition (+)</SelectItem>
+                    <SelectItem value="subtraction">Subtraction (-)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="posee-top-number">Top number</Label>
+                  <Input
+                    id="posee-top-number"
+                    type="number"
+                    value={topNumber}
+                    onChange={(e) => setTopNumber(parseInt(e.target.value, 10) || 0)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="posee-bottom-number">Bottom number</Label>
+                  <Input
+                    id="posee-bottom-number"
+                    type="number"
+                    value={bottomNumber}
+                    onChange={(e) => setBottomNumber(parseInt(e.target.value, 10) || 0)}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>Locale</Label>
+                <Select value={poseeLocale} onValueChange={(value: 'fr' | 'en') => setPoseeLocale(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fr">French</SelectItem>
+                    <SelectItem value="en">English</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
 

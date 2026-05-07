@@ -17,8 +17,15 @@ export type MultiQ = BaseQ & { kind: "multi"; choices: Choice[] };
 export type NumericQ = BaseQ & { kind: "numeric"; answer: number; range?: { min: number; max: number }; answerFormat?: "number" | "fraction"; fractionAnswer?: { numerator: number; denominator: number }; dragOptions?: number[] };
 export type OrderingQ = BaseQ & { kind: "ordering"; items: string[]; correctOrder: string[] };
 export type VisualQ = BaseQ & { kind: "visual"; visual: VisualUnion };
+export type OperationPoseeQ = BaseQ & {
+  kind: "operation-posee";
+  operation: "addition" | "subtraction";
+  topNumber: number;
+  bottomNumber: number;
+  locale?: "fr" | "en";
+};
 
-export type Question = SingleQ | MultiQ | NumericQ | OrderingQ | VisualQ;
+export type Question = SingleQ | MultiQ | NumericQ | OrderingQ | VisualQ | OperationPoseeQ;
 
 export type QuizBank = {
   quizBankId: string;

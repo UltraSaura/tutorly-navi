@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import type { VisualAngle, VisualUnion, VisualPie } from "@/lib/quiz/visual-types";
 import { normalizeAngle } from "@/lib/quiz/visual-geometry";
 import { Button } from "@/components/ui/button";
+import { ManipulativeMathRenderer } from "@/components/manipulative-maths/ManipulativeMathRenderer";
 
 interface QuestionCardProps {
   question: Question;
@@ -268,6 +269,26 @@ export function QuestionCard({
 
       {question.kind === "visual" && (
         <div className="mt-4">{renderVisualQuestion(question.visual, value, setVal)}</div>
+      )}
+
+      {question.kind === "operation-posee" && (
+        <div className="mt-4">
+          <ManipulativeMathRenderer
+            mode="quiz"
+            exercise={{
+              id: question.id,
+              type: "operation-posee",
+              operation: question.operation,
+              topNumber: question.topNumber,
+              bottomNumber: question.bottomNumber,
+              prompt: question.prompt,
+              locale: question.locale,
+            }}
+            onComplete={(result) => {
+              setVal(result);
+            }}
+          />
+        </div>
       )}
 
       {question.hint && tries > 0 && (
