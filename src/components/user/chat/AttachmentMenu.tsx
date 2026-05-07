@@ -20,7 +20,7 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
 
   const handleItemClick = (originalOnClick: () => void) => {
     originalOnClick();
-    setOpen(false);
+    setTimeout(() => setOpen(false), 300);
   };
 
   const menuItems = [

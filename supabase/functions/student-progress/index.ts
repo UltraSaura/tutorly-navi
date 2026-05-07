@@ -101,18 +101,18 @@ async function getStudentCurriculumProgress(supabase: any, studentId: string, op
   }
 
   let topicsQuery = supabase
-    .from('learning_topics')
+    .from('topics')
     .select(`
       id,
       curriculum_subject_id,
       learning_categories (
-        learning_subjects (
+        subjects (
           id,
           name,
           color_scheme
         )
       ),
-      topic_objectives (
+      topic_objective_links (
         objective_id
       )
     `)
@@ -140,7 +140,7 @@ async function getStudentCurriculumProgress(supabase: any, studentId: string, op
   const subjectObjectivesMap = new Map();
 
   topics.forEach((topic: any) => {
-    const subject = topic.learning_categories?.learning_subjects;
+    const subject = topic.learning_categories?.subjects;
     if (!subject) return;
 
     if (!subjectObjectivesMap.has(subject.id)) {
@@ -153,7 +153,7 @@ async function getStudentCurriculumProgress(supabase: any, studentId: string, op
     }
 
     const subjectData = subjectObjectivesMap.get(subject.id);
-    topic.topic_objectives?.forEach((to: any) => {
+    topic.topic_objective_links?.forEach((to: any) => {
       subjectData.objective_ids.add(to.objective_id);
     });
   });
@@ -176,15 +176,15 @@ async function getStudentCurriculumProgress(supabase: any, studentId: string, op
   );
 
   const subjects = Array.from(subjectObjectivesMap.values()).map((subjectData: any) => {
-    const objectiveIds = Array.from(subjectData.objective_ids);
+    const objectiveIds = Array.from(subjectData.objective_ids) as string[];
     const totalObjectives = objectiveIds.length;
     
     const masteredCount = objectiveIds.filter(
-      (id: string) => masteryMap.get(id) === 'mastered'
+      (id) => masteryMap.get(id) === 'mastered'
     ).length;
     
     const inProgressCount = objectiveIds.filter(
-      (id: string) => masteryMap.get(id) === 'in_progress'
+      (id) => masteryMap.get(id) === 'in_progress'
     ).length;
 
     return {

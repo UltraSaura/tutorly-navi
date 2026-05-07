@@ -51,7 +51,7 @@ export function MobileBottomTabs() {
   if (!isMobile) return null;
   
   const currentPath = location.pathname;
-  const isActive = (url: string | null) => url && currentPath === url;
+  const isActive = (url: string | null) => url ? (currentPath === url || currentPath.startsWith(url + '/')) : false;
 
   const handleTabClick = (item: typeof bottomTabItems[0]) => {
     if (item.title === "nav.account") {
@@ -108,11 +108,13 @@ export function MobileBottomTabs() {
 
       {/* Account Sheet */}
       <Sheet open={isAccountOpen} onOpenChange={setIsAccountOpen}>
-        <SheetContent side="bottom" className="h-[80vh] z-[70]">
-          <SheetHeader>
+        <SheetContent side="bottom" className="flex h-[80vh] flex-col overflow-hidden z-[70]">
+          <SheetHeader className="shrink-0">
             <SheetTitle>{t('nav.account')}</SheetTitle>
           </SheetHeader>
-          <AccountTabContent onClose={() => setIsAccountOpen(false)} />
+          <div className="min-h-0 flex-1 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+            <AccountTabContent onClose={() => setIsAccountOpen(false)} />
+          </div>
         </SheetContent>
       </Sheet>
 

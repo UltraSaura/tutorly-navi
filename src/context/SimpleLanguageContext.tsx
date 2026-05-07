@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { getLanguageFromCountry } from '@/utils/countryLanguageMapping';
 import { useAuth } from '@/context/AuthContext';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
@@ -86,11 +86,16 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     
     return initialLang;
   });
-  
+
+  const languageRef = useRef(language);
+  useEffect(() => { languageRef.current = language; }, [language]);
+
   const [translations, setTranslations] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
+  /** After first successful translation load; avoids unmounting the whole app when language changes. */
+  const [initialAppReady, setInitialAppReady] = useState(false);
   
-  console.log('[Translation] SimpleLanguageProvider render, language:', language, 'isLoading:', isLoading);
+  
   
   const { user } = useAuth();
   const { detection, getLanguageFromDetection, detectCountry } = useCountryDetection();
@@ -104,7 +109,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         console.log('[Translation] Using cached translations for:', language);
         setTranslations(translationCache.get(language));
         setIsLoading(false);
-        
+        setInitialAppReady(true);
+
         // Sync with i18next even when using cache
         try {
           const i18n = await import('i18next').then(m => m.default);
@@ -175,6 +181,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         }
       } finally {
         setIsLoading(false);
+        setInitialAppReady(true);
       }
     };
 
@@ -304,17 +311,9 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   };
 
   const t = (key: string, params?: Record<string, string | number>): string => {
-    // Debug logging for ALL translation function calls
-    console.log('[Translation] t() function called:', {
-      key,
-      isLoading,
-      language,
-      hasTranslations: !!translations,
-      translationsKeys: translations ? Object.keys(translations) : [],
-      timestamp: new Date().toISOString()
-    });
     
-    if (isLoading) return key;
+    // First load only: no strings yet. On language change keep showing previous bundle until swap.
+    if (isLoading && Object.keys(translations).length === 0) return key;
     
     // First try to find the key directly (for flattened keys like 'exercises.exercise.answer')
     let value = translations[key];
@@ -339,14 +338,6 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     let result = value || key;
     
     // Debug logging for result
-    if (key.includes('exercise.answer') || key.includes('explanation.modal_title')) {
-      console.log('[Translation] Result:', {
-        key,
-        result,
-        wasTranslated: result !== key,
-        timestamp: new Date().toISOString()
-      });
-    }
     
     // Handle interpolation if params provided
     if (params && typeof result === 'string') {
@@ -406,13 +397,13 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
       }
       
       // Fallback to automatic country detection (only if no profile language and current is English)
-      if (!detectedLanguage && detection.country && language === 'en') {
+      if (!detectedLanguage && detection.country && languageRef.current === 'en') {
         detectedLanguage = getLanguageFromDetection();
         console.log('[Auto-detect] Using automatic detection:', detection.country, '->', detectedLanguage);
       }
       
-      if (detectedLanguage && detectedLanguage !== language) {
-        console.log('[Auto-detect] Changing language from', language, 'to', detectedLanguage);
+      if (detectedLanguage && detectedLanguage !== languageRef.current) {
+        console.log('[Auto-detect] Changing language from', languageRef.current, 'to', detectedLanguage);
         setLanguage(detectedLanguage);
         localStorage.setItem('lang', detectedLanguage);
         
@@ -432,9 +423,9 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
     };
     
     detectLanguageFromUser();
-  }, [user?.id, detection.country, detection.method, language, getLanguageFromDetection]);
+  }, [user?.id, detection.country]);
 
-  if (isLoading) {
+  if (!initialAppReady) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-muted-foreground">Loading translations...</div>
@@ -459,11 +450,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
 
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
-  console.log('[Translation] useLanguage hook called, context available:', !!context);
   
   if (!context) {
-    console.log('[Translation] No context available, using fallback');
-    // Fallback if context is not available
     return {
       language: defaultLang,
       isLoading: false,
@@ -471,13 +459,9 @@ export const useLanguage = () => {
       setLanguageFromCountry: () => {},
       detectLanguageNow: async () => {},
       resetLanguageDetection: async () => {},
-      t: (key: string, params?: Record<string, string | number>) => {
-        console.log('[Translation] Fallback t() function called with key:', key);
-        return key;
-      }
+      t: (key: string) => key
     };
   }
   
-  console.log('[Translation] Context available, language:', context.language);
   return context;
 };

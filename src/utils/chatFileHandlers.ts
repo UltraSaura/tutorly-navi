@@ -4,6 +4,10 @@ import { toast } from 'sonner';
 import { extractHomeworkFromMessage } from '@/utils/homework';
 import { evaluateHomework } from '@/services/homeworkGrading';
 import { processUploadedDocument, gradeDocumentExercises } from '@/utils/documentProcessor';
+import { sendUnifiedMessage } from '@/services/unifiedChatService';
+import { classifyProblemSubmission } from '@/utils/problemClassifier';
+import { createProblemAttachment } from '@/utils/problemSubmission';
+import { extractProblemSubmission } from '@/services/problemSubmissionService';
 
 /**
  * Handles document file uploads in the chat
@@ -16,7 +20,8 @@ export const handleFileUpload = async (
   selectedModelId: string,
   processHomeworkFromChat?: (content: string) => Promise<void>,
   addExercises?: (exercises: any[]) => Promise<void>,
-  subjectId?: string
+  subjectId?: string,
+  language: string = 'en'
 ) => {
   // Create a temporary URL for the file
   const fileUrl = URL.createObjectURL(file);
@@ -37,6 +42,31 @@ export const handleFileUpload = async (
   try {
     // Process the document to extract exercises with subject ID
     const processingResult = await processUploadedDocument(file, fileUrl, subjectId);
+
+    if (processingResult?.rawText?.trim()) {
+      const classification = classifyProblemSubmission(processingResult.rawText, { hasAttachments: true });
+      if (classification.type !== 'simple_exercise') {
+        const attachment = createProblemAttachment(file, fileUrl, processingResult.rawText, 'extracted');
+        const problemSubmission = await extractProblemSubmission({
+          rawText: processingResult.rawText,
+          attachments: [attachment],
+          selectedModelId,
+          language,
+        });
+
+        setMessages(prev => prev.map(msg =>
+          msg.id === newMessage.id
+            ? {
+                ...msg,
+                content: processingResult.rawText,
+                problemSubmission,
+              }
+            : msg
+        ));
+        toast.success(`Processed grouped problem from "${file.name}"`);
+        return;
+      }
+    }
     
     if (processingResult && processingResult.exercises.length > 0) {
       // Grade the extracted exercises
@@ -107,7 +137,8 @@ export const handlePhotoUpload = async (
   processHomeworkFromChat?: (content: string) => Promise<void>,
   addExercises?: (exercises: any[]) => Promise<void>,
   subjectId?: string,
-  handleSendMessage?: (text: string) => Promise<void>
+  handleSendMessage?: (text: string) => Promise<void>,
+  language?: string
 ) => {
   console.log('[Photo Upload] Starting photo upload process', { 
     fileName: file.name, 
@@ -151,34 +182,40 @@ export const handlePhotoUpload = async (
       exerciseCount: processingResult?.exercises.length || 0,
       rawTextLength: processingResult?.rawText?.length || 0
     });
+
+    if (processingResult?.rawText?.trim()) {
+      const classification = classifyProblemSubmission(processingResult.rawText, { hasAttachments: true });
+      if (classification.type !== 'simple_exercise') {
+        console.log('[Photo Upload] Grouped/complex problem detected, creating one problem submission');
+        const attachment = createProblemAttachment(file, imageUrl, processingResult.rawText, 'extracted');
+        const problemSubmission = await extractProblemSubmission({
+          rawText: processingResult.rawText,
+          attachments: [attachment],
+          selectedModelId,
+          language: language || 'en',
+        });
+
+        setMessages(prev => prev
+          .filter(msg => msg.id !== processingMessage.id)
+          .map(msg =>
+            msg.id === newMessage.id
+              ? {
+                  ...msg,
+                  content: processingResult.rawText,
+                  problemSubmission,
+                }
+              : msg
+          )
+        );
+        toast.success('Grouped problem extracted from your photo');
+        return;
+      }
+    }
     
-    // Check if we have extracted text and handleSendMessage callback
-    if (processingResult && processingResult.rawText && processingResult.rawText.trim().length > 0) {
-      console.log('[Photo Upload] Text extracted successfully, length:', processingResult.rawText.length);
+    // PRIORITY: Use extracted exercises directly if available
+    if (processingResult && processingResult.exercises && processingResult.exercises.length > 0) {
+      console.log('[Photo Upload] ✅ OCR exercises found:', processingResult.exercises.length);
       
-      if (handleSendMessage) {
-        // Send the extracted text through the normal chat flow
-        console.log('[Photo Upload] Sending extracted text to chat flow...');
-        
-        // Update processing message
-        setMessages(prev => prev.map(msg => 
-          msg.id === processingMessage.id 
-            ? { ...msg, content: `✅ Text extracted! Processing through AI...` }
-            : msg
-        ));
-        
-        // Remove the processing message before sending to chat
-        setMessages(prev => prev.filter(msg => msg.id !== processingMessage.id));
-        
-        // Send the extracted text as if user typed it
-        await handleSendMessage(processingResult.rawText);
-        
-        console.log('[Photo Upload] ✅ Text sent to chat flow successfully');
-      } else {
-        // Fallback to old behavior: create exercises directly
-        console.log('[Photo Upload] No handleSendMessage callback, falling back to direct exercise processing');
-        
-        if (processingResult.exercises.length > 0) {
       // Update processing message
       setMessages(prev => prev.map(msg => 
         msg.id === processingMessage.id 
@@ -197,25 +234,94 @@ export const handlePhotoUpload = async (
       const exerciseCount = gradedExercises.length;
       const correctCount = gradedExercises.filter(ex => ex.isCorrect === true).length;
       
-      // Update the processing message with final results
+      // Route each exercise through sendUnifiedMessage for rich AI responses
+      const syntheticMessages: Message[] = [];
+      const baseTimestamp = Date.now();
+      const lang = language || 'en';
+      
+      // Update status
       setMessages(prev => prev.map(msg => 
         msg.id === processingMessage.id 
-              ? { ...msg, content: `✅ Successfully processed your photo!\n\n📊 Found ${exerciseCount} exercises (${correctCount} correct). View in Graded Homework section.` }
+          ? { ...msg, content: `✅ Found ${exerciseCount} exercises! Generating explanations...` }
           : msg
       ));
       
-          toast.success(`✅ Graded ${exerciseCount} exercises from your photo!`);
-        } else {
-          // No exercises found
-          setMessages(prev => prev.map(msg => 
-            msg.id === processingMessage.id 
-              ? { ...msg, content: `⚠️ Could not extract exercises from photo. Please try typing them directly.` }
-              : msg
-          ));
+      // Process all exercises in parallel through the AI pipeline
+      const aiResults = await Promise.all(
+        gradedExercises.map(async (exercise, index) => {
+          if (exercise.responseType === 'true_false' && !exercise.userAnswer?.trim()) {
+            return { exercise, index, aiContent: null };
+          }
+
+          const inputText = exercise.userAnswer?.trim()
+            ? `${exercise.question} = ${exercise.userAnswer}`
+            : exercise.question;
           
-          toast.warning('No exercises found in photo.');
+          try {
+            const { data } = await sendUnifiedMessage(inputText, [], selectedModelId, lang);
+            return { exercise, index, aiContent: data?.content || null };
+          } catch (err) {
+            console.warn(`[Photo Upload] AI call failed for exercise ${index}:`, err);
+            return { exercise, index, aiContent: null };
+          }
+        })
+      );
+      
+      // Build message pairs from AI results
+      aiResults.forEach(({ exercise, index, aiContent }) => {
+        const userMsg: Message = {
+          id: `${baseTimestamp}-ocr-user-${index}`,
+          role: 'user',
+          content: exercise.userAnswer?.trim()
+            ? `${exercise.question}\nAnswer: ${exercise.userAnswer}`
+            : exercise.question,
+          timestamp: new Date(baseTimestamp + index * 2),
+          type: 'text',
+          responseType: exercise.responseType,
+          choices: exercise.choices,
+        };
+        
+        // Use AI structured response if available, otherwise fall back to plain text
+        let assistantContent = '';
+        if (aiContent) {
+          assistantContent = aiContent;
+        } else if (exercise.userAnswer && exercise.userAnswer.trim()) {
+          if (exercise.isCorrect === true) {
+            assistantContent = `CORRECT ✅\n\nYour answer: ${exercise.userAnswer}${exercise.explanation ? '\n\n' + exercise.explanation : ''}`;
+          } else if (exercise.isCorrect === false) {
+            assistantContent = `INCORRECT ❌\n\nYour answer: ${exercise.userAnswer}${exercise.explanation ? '\n\n' + exercise.explanation : ''}`;
+          } else {
+            assistantContent = `Answer submitted: ${exercise.userAnswer}`;
+          }
+        } else {
+          assistantContent = `UNANSWERED\n\nThis exercise has not been answered yet. Please provide your answer.`;
         }
-      }
+        
+        const assistantMsg: Message = {
+          id: `${baseTimestamp}-ocr-assistant-${index}`,
+          role: 'assistant',
+          content: assistantContent,
+          timestamp: new Date(baseTimestamp + index * 2 + 1),
+        };
+        
+        syntheticMessages.push(userMsg, assistantMsg);
+      });
+      
+      // Replace processing message with all exercise pairs
+      setMessages(prev => {
+        const filtered = prev.filter(msg => msg.id !== processingMessage.id);
+        return [...filtered, ...syntheticMessages];
+      });
+      
+      toast.success(`✅ Extracted ${exerciseCount} exercises from your photo!${correctCount > 0 ? ` ${correctCount} correct.` : ''}`);
+    } else if (processingResult && processingResult.rawText && processingResult.rawText.trim().length > 0 && handleSendMessage) {
+      // Fallback: send raw text through chat if no structured exercises
+      console.log('[Photo Upload] No structured exercises, sending raw text to chat...');
+      
+      setMessages(prev => prev.filter(msg => msg.id !== processingMessage.id));
+      await handleSendMessage(processingResult.rawText);
+      
+      console.log('[Photo Upload] ✅ Text sent to chat flow successfully');
     } else {
       console.warn('[Photo Upload] No text extracted from photo');
       

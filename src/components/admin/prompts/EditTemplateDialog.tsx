@@ -132,7 +132,7 @@ export const EditTemplateDialog = ({
             </Label>
             <Select 
               value={editedTemplate.usage_type || ''} 
-              onValueChange={(value: 'chat' | 'grading' | 'explanation' | 'math_enhanced') => 
+              onValueChange={(value: 'chat' | 'grading' | 'explanation' | 'math_enhanced' | 'grouped_retry_practice') => 
                 setEditedTemplate({ ...editedTemplate, usage_type: value })
               }
             >
@@ -144,6 +144,7 @@ export const EditTemplateDialog = ({
                 <SelectItem value="grading">Grading</SelectItem>
                 <SelectItem value="explanation">Explanation</SelectItem>
                 <SelectItem value="math_enhanced">Math Enhanced</SelectItem>
+                <SelectItem value="grouped_retry_practice">Grouped Retry Practice</SelectItem>
               </SelectContent>
             </Select>
           </div>

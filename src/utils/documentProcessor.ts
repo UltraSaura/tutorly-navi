@@ -4,6 +4,11 @@ import { Exercise } from "@/types/chat";
 import { evaluateHomework } from "@/services/homeworkGrading";
 import { hasMultipleExercises, parseMultipleExercises } from "@/utils/homework/multiExerciseParser";
 import { extractHomeworkFromMessage } from "@/utils/homework";
+import {
+  buildJustificationDocumentRequest,
+  normalizeJustificationOcrPayload,
+  type JustificationOcrResult,
+} from "@/utils/justificationOcr";
 
 const convertBlobToBase64 = async (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -139,6 +144,8 @@ export const processUploadedDocument = async (
               }],
               lastAttemptDate: new Date(),
               needsRetry: false,
+              responseType: (ex as any).responseType,
+              choices: (ex as any).choices,
             })),
             rawText: data.rawText
           };
@@ -190,6 +197,8 @@ export const processUploadedDocument = async (
         }],
         lastAttemptDate: new Date(),
         needsRetry: false,
+        responseType: ex.responseType,
+        choices: ex.choices,
       };
     });
     
@@ -203,6 +212,50 @@ export const processUploadedDocument = async (
     console.error('=== FRONTEND PROCESSING ERROR ===', error);
     toast.error('Failed to process document. Please try a different format or upload as text.');
     return null;
+  }
+};
+
+export const processJustificationAttachment = async (
+  file: File,
+  subjectId?: string,
+  context?: {
+    rowPrompt?: string;
+    problemContext?: string;
+  }
+): Promise<JustificationOcrResult> => {
+  try {
+    const base64Data = await convertBlobToBase64(file);
+    const { data, error } = await supabase.functions.invoke('document-processor', {
+      body: buildJustificationDocumentRequest({
+        fileData: base64Data,
+        fileType: file.type,
+        fileName: file.name,
+        subjectId,
+        rowPrompt: context?.rowPrompt,
+        problemContext: context?.problemContext,
+      }),
+    });
+
+    if (error) {
+      return { rawText: '', error: error.message || 'OCR processing failed' };
+    }
+
+    if (!data?.success) {
+      return { rawText: '', error: data?.error || 'OCR processing failed' };
+    }
+
+    const ocrResult = normalizeJustificationOcrPayload(data);
+    const rawText = ocrResult.rawText.trim();
+    if (!rawText) {
+      return { rawText: '', error: 'No readable text was found in this attachment' };
+    }
+
+    return ocrResult;
+  } catch (error) {
+    return {
+      rawText: '',
+      error: error instanceof Error ? error.message : 'OCR processing failed',
+    };
   }
 };
 
@@ -244,19 +297,21 @@ export const gradeDocumentExercises = async (exercises: Exercise[], selectedMode
     
     console.log(`Grading ${exercises.length} exercises from document`);
     
-    // Grade each exercise
-    const gradingPromises = exercises.map(exercise => evaluateHomework(exercise, 1, 'en', selectedModelId));
-    const gradedExercises = await Promise.all(gradingPromises);
+    // Separate exercises with answers from those without
+    const withAnswers = exercises.filter(ex => ex.userAnswer && ex.userAnswer.trim() !== '');
+    const withoutAnswers = exercises.filter(ex => !ex.userAnswer || ex.userAnswer.trim() === '');
     
-    // Check if any exercises were graded (have isCorrect property)
-    const anyGraded = gradedExercises.some(ex => ex.isCorrect !== undefined);
+    console.log(`Exercises with answers: ${withAnswers.length}, without answers: ${withoutAnswers.length}`);
     
-    if (!anyGraded) {
-      console.warn('No exercises were successfully graded');
-      toast.warning('Could not grade exercises. Please check your API key configuration.');
+    // Only grade exercises that have student answers
+    let gradedWithAnswers: Exercise[] = [];
+    if (withAnswers.length > 0) {
+      const gradingPromises = withAnswers.map(exercise => evaluateHomework(exercise, 1, 'en', selectedModelId));
+      gradedWithAnswers = await Promise.all(gradingPromises);
     }
     
-    return gradedExercises;
+    // Return graded + ungraded (no false warning for empty answers)
+    return [...gradedWithAnswers, ...withoutAnswers];
   } catch (error) {
     console.error('Error grading exercises:', error);
     toast.error('Error grading exercises');

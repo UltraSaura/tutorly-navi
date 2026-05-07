@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { useTopicObjectives, useTasksForSuccessCriteria } from '@/hooks/useTopic
 import { useTopicMastery } from '@/hooks/useObjectiveMastery';
 import { NextStepsRecommendations } from './NextStepsRecommendations';
 import { LessonContentStudent } from './LessonContentStudent';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { cn } from '@/lib/utils';
 
 interface TopicLearningContentProps {
@@ -16,6 +18,7 @@ interface TopicLearningContentProps {
 }
 
 export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
+  const { t } = useTranslation();
   const [lessonOpen, setLessonOpen] = useState(true);
   const { data: objectives = [], isLoading } = useTopicObjectives(topicId);
   const { data: masteryProgress, isLoading: masteryLoading } = useTopicMastery(topicId);
@@ -32,7 +35,7 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
   const exitTasks = tasks.filter(t => t.type === 'exit');
   
   if (isLoading) {
-    return <div className="p-4 text-center text-muted-foreground">Loading learning content...</div>;
+    return <div className="p-4 text-center text-muted-foreground">{t('topic.loadingContent')}</div>;
   }
   
   return (
@@ -43,7 +46,7 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
           <CollapsibleTrigger className="w-full flex items-center justify-between p-4 bg-muted/50 hover:bg-muted transition-colors">
             <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
               <BookOpen className="w-5 h-5" />
-              Full Lesson
+              {t('topic.fullLesson')}
             </h3>
             <ChevronDown
               className={cn(
@@ -55,7 +58,15 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
 
           <CollapsibleContent>
             <div className="p-4">
-              <LessonContentStudent topicId={topicId} />
+              <ErrorBoundary
+                fallback={
+                  <div className="p-4 text-center text-muted-foreground">
+                    Unable to load lesson content. Please try refreshing.
+                  </div>
+                }
+              >
+                <LessonContentStudent topicId={topicId} />
+              </ErrorBoundary>
             </div>
           </CollapsibleContent>
         </div>
@@ -72,7 +83,7 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Target className="w-5 h-5" />
-                Your Progress in This Topic
+                {t('topic.yourProgress')}
               </span>
               <span className="text-2xl font-bold">
                 {masteryProgress.mastery_percentage}%
@@ -84,7 +95,10 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
             <div>
               <div className="flex justify-between text-sm mb-2">
                 <span className="text-muted-foreground">
-                  {masteryProgress.mastered_objectives} of {masteryProgress.total_objectives} objectives mastered
+                  {t('topic.objectivesMastered', { 
+                    mastered: masteryProgress.mastered_objectives, 
+                    total: masteryProgress.total_objectives 
+                  })}
                 </span>
               </div>
               <Progress value={masteryProgress.mastery_percentage} className="h-2" />
@@ -113,9 +127,9 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
                         }
                         className="text-xs"
                       >
-                        {obj.status === 'mastered' ? 'Mastered' : 
+                        {obj.status === 'mastered' ? t('topic.statusMastered') : 
                          obj.status === 'in_progress' ? `${obj.score_percent}%` : 
-                         'Not started'}
+                         t('roadmap.notStarted')}
                       </Badge>
                     </div>
                   </div>
@@ -126,58 +140,6 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
         </Card>
       )}
       
-      {/* (A) What You Will Learn */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="w-5 h-5" />
-            What You Will Learn
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-3">
-            {objectives.map((objective) => (
-              <li key={objective.id} className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                <div>
-                  <Badge variant="outline" className="mb-1">{objective.id}</Badge>
-                  <p className="text-sm">{objective.text}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-      
-      {/* (B) Success Criteria */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ClipboardList className="w-5 h-5" />
-            Success Criteria
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {objectives.map((objective) => (
-            objective.success_criteria && objective.success_criteria.length > 0 && (
-              <div key={objective.id} className="mb-4 last:mb-0">
-                <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                  <Badge variant="secondary">{objective.id}</Badge>
-                  {objective.text}
-                </h4>
-                <ul className="space-y-2 ml-6">
-                  {objective.success_criteria.map((criterion) => (
-                    <li key={criterion.id} className="flex items-start gap-2 text-sm">
-                      <span className="text-primary mt-0.5">✓</span>
-                      <span>{criterion.text}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )
-          ))}
-        </CardContent>
-      </Card>
       
       {/* (C) Practice Tasks */}
       {practiceTasks.length > 0 && (
@@ -185,7 +147,7 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <GraduationCap className="w-5 h-5" />
-              Practice ({practiceTasks.length} tasks)
+              {t('topic.practiceTasks', { count: practiceTasks.length })}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -194,12 +156,12 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
                 <Card key={task.id} className="border-l-4 border-l-blue-500">
                   <CardContent className="pt-4">
                     <div className="flex items-start justify-between mb-2">
-                      <Badge variant="outline">Practice {index + 1}</Badge>
+                      <Badge variant="outline">{t('topic.practiceNumber', { number: index + 1 })}</Badge>
                       <Badge variant="secondary">{task.id}</Badge>
                     </div>
                     <p className="text-sm mb-3">{task.stem}</p>
                     <Button size="sm" variant="outline">
-                      Start Practice
+                      {t('topic.startPractice')}
                     </Button>
                   </CardContent>
                 </Card>
@@ -215,24 +177,24 @@ export function TopicLearningContent({ topicId }: TopicLearningContentProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="w-5 h-5" />
-              Exit Ticket ({exitTasks.length} questions)
+              {t('topic.exitTicket', { count: exitTasks.length })}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Complete these questions to demonstrate your mastery of this topic
+              {t('topic.exitTicketDescription')}
             </p>
             <div className="space-y-3">
               {exitTasks.slice(0, 3).map((task, index) => (
                 <Card key={task.id} className="border-l-4 border-l-green-500">
                   <CardContent className="pt-4">
                     <div className="flex items-start justify-between mb-2">
-                      <Badge variant="outline">Question {index + 1}</Badge>
+                      <Badge variant="outline">{t('topic.questionNumber', { number: index + 1 })}</Badge>
                       <Badge variant="secondary">{task.id}</Badge>
                     </div>
                     <p className="text-sm mb-3">{task.stem}</p>
                     <Button size="sm" variant="outline">
-                      Answer Question
+                      {t('topic.answerQuestion')}
                     </Button>
                   </CardContent>
                 </Card>

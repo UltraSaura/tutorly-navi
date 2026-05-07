@@ -10,6 +10,8 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, AlertTriangle, ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageMeta } from '@/components/seo/PageMeta';
+import { LearningInsightsCard } from '@/components/learning/LearningInsightsCard';
 
 export default function TeacherStudentDetail() {
   const { studentId } = useParams();
@@ -51,6 +53,7 @@ export default function TeacherStudentDetail() {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Student Details" description="Detailed view of an individual student's progress and exercises." />
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
@@ -78,6 +81,8 @@ export default function TeacherStudentDetail() {
           </p>
         </CardContent>
       </Card>
+
+      <LearningInsightsCard studentId={studentId} />
 
       {/* Areas Needing Attention */}
       {weaknesses.length > 0 && (

@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { ThumbsUp, AlertCircle, CircleCheck, CircleX, ArrowRight } from 'lucide-react';
+import React, { useState, Suspense } from 'react';
+import { ThumbsUp, AlertCircle, CircleCheck, CircleX, ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import DOMPurify from 'dompurify';
 import { cn } from '@/lib/utils';
@@ -35,24 +35,31 @@ interface ExerciseProps {
     lastAttemptDate: Date;
     needsRetry: boolean;
     subjectId?: string;
+    gradingMethod?: 'local' | 'ai';
+    explanationLoading?: boolean;
+    explanationRequested?: boolean;
   };
   toggleExerciseExpansion: (id: string) => void;
   onSubmitAnswer?: (exerciseId: string, answer: string) => void;
+  onFetchExplanation?: (exerciseId: string) => void;
 }
 
 /**
  * Exercise component displays a homework exercise with its question, 
- * user's answer, and UI indicators for correct/incorrect status
+ * user's answer, and UI indicators for correct/incorrect status.
+ * Explanation is lazy-loaded only when the user clicks "Show explanation".
  */
 const Exercise = ({
   exercise,
   toggleExerciseExpansion,
-  onSubmitAnswer
+  onSubmitAnswer,
+  onFetchExplanation
 }: ExerciseProps) => {
   const { t } = useLanguage();
   const [answerInput, setAnswerInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMathMode, setIsMathMode] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   
   // Process math content for display
   const processedQuestion = processMathContentForDisplay(exercise.question);
@@ -62,20 +69,17 @@ const Exercise = ({
   const formattedExplanation = exercise.explanation ? exercise.explanation
     .replace(/\*\*Problem:\*\*/g, `<strong class="text-stuwy-600 dark:text-stuwy-400">${t('exercise.problem')}:</strong>`)
     .replace(/\*\*Guidance:\*\*/g, `<strong class="text-stuwy-600 dark:text-stuwy-400">${t('exercise.guidance')}:</strong>`)
-    // NEW: Remove any correct answer mentions
     .replace(/correct\s+answer[:\s]*[^\n]+/gi, '')
     .replace(/\bcorrectAnswer\b[:\s]*[^\n]+/gi, '')
-    .replace(/^Guidance:\s*Problem:\s*/gm, '') // Remove "Guidance: Problem: " lines
-    .replace(/^exercise\.guidance:\s*exercise\.problem:\s*.*$/gm, '') // Remove entire "exercise.guidance: exercise.problem: ..." lines
-    .replace(/^\s*$/gm, '') // Remove empty lines
+    .replace(/^Guidance:\s*Problem:\s*/gm, '')
+    .replace(/^exercise\.guidance:\s*exercise\.problem:\s*.*$/gm, '')
+    .replace(/^\s*$/gm, '')
     .split('\n')
-    .filter(line => line.trim() !== '') // Filter out empty lines
+    .filter(line => line.trim() !== '')
     .join('<br />') : '';
 
   const hasRelatedMessages = exercise.relatedMessages && exercise.relatedMessages.length > 0;
   const hasAnswer = exercise.userAnswer && exercise.userAnswer.trim() !== '';
-  
-  // Auto-detect if this is a math exercise based on processed content
   const isMathExercise = processedQuestion.isMath;
 
   const handleSubmitAnswer = async () => {
@@ -93,6 +97,7 @@ const Exercise = ({
     try {
       await onSubmitAnswer(exercise.id, answerInput.trim());
       setAnswerInput('');
+      setIsRetrying(false);
       toast.success(t('exercise.answerSubmitted'));
     } catch (error) {
       console.error('Error submitting answer:', error);
@@ -102,14 +107,11 @@ const Exercise = ({
     }
   };
 
-  // Debug rendering
-  console.log('Exercise rendering:', { 
-    id: exercise.id,
-    question: exercise.question,
-    processedQuestion: processedQuestion,
-    isCorrect: exercise.isCorrect, 
-    hasAnswer: hasAnswer 
-  });
+  const handleShowExplanation = () => {
+    if (!exercise.explanation && onFetchExplanation) {
+      onFetchExplanation(exercise.id);
+    }
+  };
 
   return (
     <motion.div 
@@ -169,7 +171,7 @@ const Exercise = ({
           </div>
         </div>
         
-        {hasAnswer ? (
+        {hasAnswer && !isRetrying ? (
           <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 py-[10px]">
             <p className="text-sm text-gray-700 dark:text-gray-300">
               {processedUserAnswer?.isMath ? (
@@ -182,22 +184,31 @@ const Exercise = ({
               )}
             </p>
           </div>
-        ) : (
+        ) : (!hasAnswer || isRetrying) ? (
           <div className="mt-3 space-y-3">
             <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50">
-              <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                {t('exercise.pleaseProvideAnswer')}
-              </p>
+              {isRetrying && (
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-3 font-medium">
+                  {t('exercise.tryAgain')} - {t('exercise.pleaseProvideAnswer')}
+                </p>
+              )}
+              {!isRetrying && (
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                  {t('exercise.pleaseProvideAnswer')}
+                </p>
+              )}
               <div className="flex gap-2">
                 {isMathMode ? (
-                  <MathLiveInput
-                    value={answerInput}
-                    onChange={setAnswerInput}
-                    onEnter={handleSubmitAnswer}
-                    placeholder="Enter your mathematical answer..."
-                    className="flex-1"
-                    disabled={isSubmitting}
-                  />
+                  <Suspense fallback={<div className="flex-1 min-h-[40px] rounded-md border border-input bg-background animate-pulse" />}>
+                    <MathLiveInput
+                      value={answerInput}
+                      onChange={setAnswerInput}
+                      onEnter={handleSubmitAnswer}
+                      placeholder="Enter your mathematical answer..."
+                      className="flex-1"
+                      disabled={isSubmitting}
+                    />
+                  </Suspense>
                 ) : (
                   <Input
                     value={answerInput}
@@ -221,6 +232,20 @@ const Exercise = ({
                   />
                 )}
                 
+                {isRetrying && (
+                  <Button
+                    onClick={() => {
+                      setIsRetrying(false);
+                      setAnswerInput('');
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0"
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                )}
+                
                 <Button
                   onClick={handleSubmitAnswer}
                   disabled={isSubmitting || !answerInput.trim()}
@@ -239,9 +264,24 @@ const Exercise = ({
               </div>
             </div>
           </div>
+        ) : null}
+        
+        {hasAnswer && exercise.isCorrect === false && !isRetrying && (
+          <div className="mt-4 flex justify-start">
+            <Button 
+              onClick={() => setIsRetrying(true)}
+              variant="outline"
+              size="sm"
+              className="text-amber-600 border-amber-300 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950/20"
+            >
+              <AlertCircle className="w-4 h-4 mr-2" />
+              {t('exercise.tryAgain')}
+            </Button>
+          </div>
         )}
         
-        {hasAnswer && (
+        {/* Show Explanation button — lazy loads explanation on click */}
+        {hasAnswer && exercise.isCorrect !== undefined && (
           <div className="mt-4 flex justify-end items-center">
             <Dialog>
               <DialogTrigger asChild>
@@ -249,6 +289,7 @@ const Exercise = ({
                   variant="ghost" 
                   size="sm" 
                   className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  onClick={handleShowExplanation}
                 >
                   {t('exercise.showExplanation')}
                 </Button>
@@ -284,50 +325,70 @@ const Exercise = ({
                     </div>
                   </div>
                   
-                  <div className={cn(
-                    "p-4 rounded-lg",
-                    exercise.isCorrect 
-                      ? "bg-green-50 dark:bg-green-950/20" 
-                      : "bg-amber-50 dark:bg-amber-950/20"
-                  )}>
-                    <div className="space-y-3">
-                      <div className="flex items-center mb-2">
-                        {exercise.isCorrect 
-                          ? <ThumbsUp className="w-4 h-4 mr-2 text-green-600" />
-                          : <AlertCircle className="w-4 h-4 mr-2 text-amber-600" />
-                        }
-                        <h4 className="text-sm font-medium">
-                          {exercise.isCorrect 
-                            ? exercise.attemptCount > 1 
-                              ? `${t('exercise.greatWork')} (${t('exercise.attempt')} ${exercise.attemptCount})` 
-                              : t('exercise.greatWork') 
-                            : `${t('exercise.learningOpportunity')}${exercise.attemptCount > 1 ? ` (${t('exercise.attempt')} ${exercise.attemptCount})` : ""}`}
-                        </h4>
-                      </div>
-                      
-                      {hasRelatedMessages ? (
-                        <div className="space-y-3">
-                          {exercise.relatedMessages?.map((message, index) => (
-                            <div key={index} className="p-3 rounded-lg bg-white dark:bg-gray-800 text-sm">
-                              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                                {message.content}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div 
-                          className="text-sm text-gray-700 dark:text-gray-300 prose-sm max-w-full"
-                          dangerouslySetInnerHTML={{ 
-                            __html: DOMPurify.sanitize(formattedExplanation, { 
-                              ALLOWED_TAGS: ['strong', 'br', 'em', 'p'],
-                              ALLOWED_ATTR: ['class']
-                            }) 
-                          }}
-                        />
-                      )}
+                  {/* Loading state */}
+                  {exercise.explanationLoading && (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary mr-2" />
+                      <span className="text-sm text-muted-foreground">
+                        {t('common.loading') || 'Loading explanation...'}
+                      </span>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Loaded explanation */}
+                  {!exercise.explanationLoading && exercise.explanation && (
+                    <div className={cn(
+                      "p-4 rounded-lg",
+                      exercise.isCorrect 
+                        ? "bg-green-50 dark:bg-green-950/20" 
+                        : "bg-amber-50 dark:bg-amber-950/20"
+                    )}>
+                      <div className="space-y-3">
+                        <div className="flex items-center mb-2">
+                          {exercise.isCorrect 
+                            ? <ThumbsUp className="w-4 h-4 mr-2 text-green-600" />
+                            : <AlertCircle className="w-4 h-4 mr-2 text-amber-600" />
+                          }
+                          <h4 className="text-sm font-medium">
+                            {exercise.isCorrect 
+                              ? exercise.attemptCount > 1 
+                                ? `${t('exercise.greatWork')} (${t('exercise.attempt')} ${exercise.attemptCount})` 
+                                : t('exercise.greatWork') 
+                              : `${t('exercise.learningOpportunity')}${exercise.attemptCount > 1 ? ` (${t('exercise.attempt')} ${exercise.attemptCount})` : ""}`}
+                          </h4>
+                        </div>
+                        
+                        {hasRelatedMessages ? (
+                          <div className="space-y-3">
+                            {exercise.relatedMessages?.map((message, index) => (
+                              <div key={index} className="p-3 rounded-lg bg-white dark:bg-gray-800 text-sm">
+                                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                  {message.content}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div 
+                            className="text-sm text-gray-700 dark:text-gray-300 prose-sm max-w-full"
+                            dangerouslySetInnerHTML={{ 
+                              __html: DOMPurify.sanitize(formattedExplanation, { 
+                                ALLOWED_TAGS: ['strong', 'br', 'em', 'p'],
+                                ALLOWED_ATTR: ['class']
+                              }) 
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No explanation yet and not loading */}
+                  {!exercise.explanationLoading && !exercise.explanation && (
+                    <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                      {t('common.loading') || 'Loading explanation...'}
+                    </div>
+                  )}
                 </div>
               </DialogContent>
             </Dialog>

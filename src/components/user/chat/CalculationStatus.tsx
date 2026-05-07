@@ -1,11 +1,12 @@
 import React from 'react';
 import { Loader2, Calculator, Brain, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import type { CalculationState } from '@/hooks/useChat';
 
 interface CalculationStatusProps {
-  isProcessing: boolean;
-  status: 'detecting' | 'analyzing' | 'solving' | 'grading' | 'complete';
-  message?: string;
+  isProcessing: CalculationState['isProcessing'];
+  status: CalculationState['currentStep'];
+  message?: CalculationState['message'];
 }
 
 const CalculationStatus: React.FC<CalculationStatusProps> = ({ 

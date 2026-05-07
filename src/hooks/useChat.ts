@@ -3,11 +3,16 @@ import { useState, useMemo } from 'react';
 import { Message } from '@/types/chat';
 import { useAdmin } from '@/context/AdminContext';
 import { handleFileUpload, handlePhotoUpload } from '@/utils/chatFileHandlers';
-import { sendUnifiedMessage, generateUnifiedFallback } from '@/services/unifiedChatService';
+import { sendUnifiedMessage, generateUnifiedFallback, type UnifiedChatResponse } from '@/services/unifiedChatService';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useUserContext } from './useUserContext';
+import { classifyProblemSubmission } from '@/utils/problemClassifier';
+import { extractProblemSubmission, gradeGroupedProblem } from '@/services/problemSubmissionService';
+import { Exercise, GroupedAnswerPayload, ProblemSubmission } from '@/types/chat';
+import { applyGroupedAnswers } from '@/utils/problemSubmission';
+import { buildGradedWorkFromGroupedProblem, saveGradedWorksToHistory } from '@/services/gradedWorkHistory';
 
-interface CalculationState {
+export interface CalculationState {
   isProcessing: boolean;
   currentStep: 'detecting' | 'analyzing' | 'solving' | 'grading' | 'complete';
   message?: string;
@@ -18,18 +23,18 @@ export const useChat = () => {
   const { language, t } = useLanguage();
   const { userContext } = useUserContext();
   
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: t('chat.welcomeMessage'),
-      timestamp: new Date(Date.now() - 60000),
-    },
-  ]);
+  const welcomeMessage: Message = {
+    id: '1',
+    role: 'assistant',
+    content: t('chat.welcomeMessage'),
+    timestamp: new Date(Date.now() - 60000),
+  };
+  
+  const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
   
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [lastResponse, setLastResponse] = useState<any>(null);
+  const [lastResponse, setLastResponse] = useState<UnifiedChatResponse | null>(null);
 
   // Add calculation state
   const [calculationState, setCalculationState] = useState<CalculationState>({
@@ -81,6 +86,42 @@ export const useChat = () => {
   const addMessage = (message: Message) => {
     setMessages(prev => [...prev, message]);
   };
+
+  const updateProblemSubmission = (
+    problemId: string,
+    updater: (problem: ProblemSubmission) => ProblemSubmission
+  ) => {
+    setMessages(prev => prev.map(message => {
+      if (message.problemSubmission?.id !== problemId) return message;
+      return {
+        ...message,
+        problemSubmission: updater(message.problemSubmission),
+      };
+    }));
+  };
+
+  // Clear all messages, reset to welcome
+  const clearMessages = () => {
+    setMessages([{
+      id: '1',
+      role: 'assistant',
+      content: t('chat.welcomeMessage'),
+      timestamp: new Date(Date.now() - 60000),
+    }]);
+  };
+
+  // Remove a specific message and its paired response
+  const removeMessage = (id: string) => {
+    setMessages(prev => {
+      const idx = prev.findIndex(m => m.id === id);
+      if (idx === -1) return prev;
+      // If it's a user message, also remove the next assistant message
+      if (prev[idx].role === 'user' && idx + 1 < prev.length && prev[idx + 1].role === 'assistant') {
+        return prev.filter((_, i) => i !== idx && i !== idx + 1);
+      }
+      return prev.filter((_, i) => i !== idx);
+    });
+  };
   
   const handleSendMessage = async (overrideMessage?: string) => {
     console.log('[DEBUG] handleSendMessage called');
@@ -95,6 +136,32 @@ export const useChat = () => {
     
     const messageToSend = effectiveMessage; // Use passed-in value if provided
     console.log('[DEBUG] Message to send:', messageToSend);
+
+    const classification = classifyProblemSubmission(messageToSend);
+    if (classification.type !== 'simple_exercise') {
+      setInputMessage('');
+      setIsLoading(true);
+      try {
+        const problemSubmission = await extractProblemSubmission({
+          rawText: messageToSend,
+          selectedModelId,
+          language,
+        });
+
+        const newMessage: Message = {
+          id: Date.now().toString(),
+          role: 'user',
+          content: messageToSend,
+          timestamp: new Date(),
+          problemSubmission,
+        };
+
+        setMessages(prev => [...prev, newMessage]);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
     
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -198,11 +265,36 @@ export const useChat = () => {
       setIsLoading(false);
     }
   };
+
+  const submitGroupedProblemAnswers = async (problemId: string, payload: GroupedAnswerPayload) => {
+    const problem = messages.find(message => message.problemSubmission?.id === problemId)?.problemSubmission;
+    if (!problem) {
+      throw new Error('Problem submission not found');
+    }
+
+    const answeredProblem = applyGroupedAnswers(problem, payload);
+
+    updateProblemSubmission(problemId, () => answeredProblem);
+
+    const evaluated = await gradeGroupedProblem({
+      problem: answeredProblem,
+      payload,
+      selectedModelId,
+      language,
+    });
+
+    updateProblemSubmission(problemId, () => evaluated);
+
+    const gradedWorks = buildGradedWorkFromGroupedProblem(evaluated);
+    if (gradedWorks.length > 0) {
+      await saveGradedWorksToHistory(gradedWorks);
+    }
+  };
   
   // Handle document upload with exercise processor and subject ID
   const handleDocumentUpload = (
     file: File, 
-    addExercises?: (exercises: any[]) => Promise<void>,
+    addExercises?: (exercises: Exercise[]) => Promise<void>,
     subjectId?: string
   ) => {
     handleFileUpload(
@@ -213,14 +305,15 @@ export const useChat = () => {
       selectedModelId, // selectedModelId is now required parameter
       undefined, // No longer need processHomeworkFromChat as primary processor
       addExercises, // Pass the exercise processor directly
-      subjectId // Pass the subject ID
+      subjectId, // Pass the subject ID
+      language
     );
   };
   
   // Handle image upload with exercise processor and subject ID
   const handleImageUpload = (
     file: File, 
-    addExercises?: (exercises: any[]) => Promise<void>,
+    addExercises?: (exercises: Exercise[]) => Promise<void>,
     subjectId?: string
   ) => {
     handlePhotoUpload(
@@ -228,11 +321,12 @@ export const useChat = () => {
       messages, 
       setMessages, 
       setIsLoading, 
-      selectedModelId, // selectedModelId is now required parameter
-      undefined, // No longer need processHomeworkFromChat as primary processor
-      addExercises, // Pass the exercise processor directly
-      subjectId, // Pass the subject ID
-      handleSendMessage // Pass handleSendMessage to route through chat flow
+      selectedModelId,
+      undefined,
+      addExercises,
+      subjectId,
+      handleSendMessage,
+      language
     );
   };
   
@@ -245,7 +339,10 @@ export const useChat = () => {
     activeModel,
     lastResponse,
     addMessage,
+    clearMessages,
+    removeMessage,
     handleSendMessage,
+    submitGroupedProblemAnswers,
     handleFileUpload: handleDocumentUpload,
     handlePhotoUpload: handleImageUpload,
     // Add calculation state back to return

@@ -1,5 +1,6 @@
 import { Message } from '@/types/chat';
 import { supabase } from "@/integrations/supabase/client";
+import { saveGradedWorkToHistory } from './gradedWorkHistory';
 
 /**
  * Extract answer from user input (e.g., "2+2=4" -> "4")
@@ -66,7 +67,7 @@ function extractCorrectAnswerFromSolution(solutionText: string): string | null {
  */
 async function saveExplanationToCache(
   exerciseContent: string,
-  sections: any,
+  sections: Record<string, unknown>,
   subjectId: string | null
 ): Promise<void> {
   try {
@@ -83,7 +84,8 @@ async function saveExplanationToCache(
     }
 
     // Extract correct answer from currentExercise section
-    const correctAnswer = extractCorrectAnswerFromSolution(sections.currentExercise);
+    const currentExercise = typeof sections.currentExercise === 'string' ? sections.currentExercise : '';
+    const correctAnswer = extractCorrectAnswerFromSolution(currentExercise);
 
     // Save to cache
     const { error: insertError } = await supabase
@@ -108,87 +110,6 @@ async function saveExplanationToCache(
   }
 }
 
-/**
- * Save exercise to history for guardian tracking
- */
-async function saveExerciseToHistory(
-  exerciseContent: string,
-  userAnswer: string | null,
-  isCorrect: boolean | null,
-  subjectId: string | null
-): Promise<void> {
-  try {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) {
-      console.log('[ExerciseAutoSave] No authenticated user, skipping save');
-      return;
-    }
-
-    // Check if this exercise already exists
-    const { data: existing } = await supabase
-      .from('exercise_history')
-      .select('id, attempts_count')
-      .eq('user_id', user.user.id)
-      .eq('exercise_content', exerciseContent)
-      .maybeSingle();
-
-    let exerciseHistoryId: string;
-
-    if (existing) {
-      // Update existing exercise
-      const { data: updated } = await supabase
-        .from('exercise_history')
-        .update({
-          user_answer: userAnswer,
-          is_correct: isCorrect,
-          attempts_count: existing.attempts_count + 1,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existing.id)
-        .select('id')
-        .single();
-      
-      exerciseHistoryId = updated!.id;
-      console.log('[ExerciseAutoSave] Updated existing exercise, attempt:', existing.attempts_count + 1);
-    } else {
-      // Create new exercise
-      const { data: created } = await supabase
-        .from('exercise_history')
-        .insert({
-          user_id: user.user.id,
-          exercise_content: exerciseContent,
-          user_answer: userAnswer,
-          is_correct: isCorrect,
-          subject_id: subjectId,
-          attempts_count: 1
-        })
-        .select('id')
-        .single();
-      
-      exerciseHistoryId = created!.id;
-      console.log('[ExerciseAutoSave] Created new exercise');
-    }
-
-    // Create attempt record if answer was provided
-    if (userAnswer) {
-      const attemptNumber = existing ? existing.attempts_count + 1 : 1;
-      await supabase
-        .from('exercise_attempts')
-        .insert({
-          exercise_history_id: exerciseHistoryId,
-          user_answer: userAnswer,
-          is_correct: isCorrect,
-          attempt_number: attemptNumber
-        });
-      console.log('[ExerciseAutoSave] ✅ Exercise saved to guardian-visible history');
-    } else {
-      console.log('[ExerciseAutoSave] ✅ Question saved (no answer yet)');
-    }
-  } catch (err) {
-    console.error('[ExerciseAutoSave] Error auto-saving exercise:', err);
-  }
-}
-
 export interface UnifiedChatResponse {
   content: string;
   isMath: boolean;
@@ -208,8 +129,8 @@ export async function sendUnifiedMessage(
   selectedModelId: string,
   language: string = 'en',
   customPrompt?: string,
-  userContext?: any
-): Promise<{ data: UnifiedChatResponse | null; error: any }> {
+  userContext?: Record<string, unknown>
+): Promise<{ data: UnifiedChatResponse | null; error: unknown }> {
   try {
     console.log('[UnifiedChatService] Sending message to AI:', { inputMessage, selectedModelId });
 
@@ -271,12 +192,12 @@ export async function sendUnifiedMessage(
       return { data: null, error: 'No content received from AI service' };
     }
 
-    // Simple parsing - AI is smart enough to structure its own response
+    // Use server-parsed structured fields instead of unreliable regex
     const response: UnifiedChatResponse = {
       content: data.content,
-      isMath: !data.content.includes('NOT_MATH'),
-      isCorrect: /\bCORRECT\b/i.test(data.content) ? true : (/\bINCORRECT\b/i.test(data.content) ? false : undefined),
-      needsRetry: /\bINCORRECT\b/i.test(data.content),
+      isMath: data.isMath ?? !data.content.includes('NOT_MATH'),
+      isCorrect: data.isCorrect ?? undefined,
+      needsRetry: data.isCorrect === false,
       hasAnswer: /=\s*[^=]*$/.test(inputMessage),
       confidence: data.content.includes('NOT_MATH') ? 95 : 85
     };
@@ -289,18 +210,18 @@ export async function sendUnifiedMessage(
     });
 
     // Auto-save math exercises to history for guardian tracking
-    if (response.isMath) {
+    if (response.isMath && response.hasAnswer) {
       const question = extractQuestion(inputMessage);
       const answer = extractAnswer(inputMessage);
       const subject = detectSubject(question);
       
       // Save asynchronously without blocking response
-      saveExerciseToHistory(
-        question,
-        answer,
-        response.isCorrect ?? null,
-        subject
-      ).catch(err => console.error('[UnifiedChatService] Failed to auto-save exercise:', err));
+      saveGradedWorkToHistory({
+        exerciseContent: question,
+        userAnswer: answer,
+        isCorrect: response.isCorrect ?? null,
+        subjectId: subject,
+      }).catch(err => console.error('[UnifiedChatService] Failed to auto-save exercise:', err));
 
       // Auto-save explanation from AI response (no additional AI call needed!)
       if (response.isCorrect === false) {

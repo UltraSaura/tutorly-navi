@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { Subject, Category, Topic, Video, Quiz } from '@/types/learning';
+import type { Subject, Category, Topic, Video, Quiz, VideoVariantGroup } from '@/types/learning';
 
 // Subjects
 export const useLearningSubjects = () => {
@@ -9,7 +9,7 @@ export const useLearningSubjects = () => {
     queryKey: ['admin-learning-subjects'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('learning_subjects')
+        .from('subjects')
         .select('*')
         .order('order_index', { ascending: true });
       
@@ -25,7 +25,7 @@ export const useCreateSubject = () => {
   return useMutation({
     mutationFn: async (subject: Omit<Subject, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
-        .from('learning_subjects')
+        .from('subjects')
         .insert(subject)
         .select()
         .single();
@@ -49,7 +49,7 @@ export const useUpdateSubject = () => {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Subject> & { id: string }) => {
       const { data, error } = await supabase
-        .from('learning_subjects')
+        .from('subjects')
         .update(updates)
         .eq('id', id)
         .select()
@@ -74,7 +74,7 @@ export const useDeleteSubject = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('learning_subjects')
+        .from('subjects')
         .delete()
         .eq('id', id);
       
@@ -188,7 +188,7 @@ export const useLearningTopics = (categoryId?: string) => {
     queryKey: ['admin-learning-topics', categoryId],
     queryFn: async () => {
       let query = supabase
-        .from('learning_topics')
+        .from('topics')
         .select('*')
         .order('order_index', { ascending: true });
       
@@ -209,7 +209,7 @@ export const useCreateTopic = () => {
   return useMutation({
     mutationFn: async (topic: Omit<Topic, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .insert(topic as any)
         .select()
         .single();
@@ -233,7 +233,7 @@ export const useUpdateTopic = () => {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Topic> & { id: string }) => {
       const { data, error } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .update(updates as any)
         .eq('id', id)
         .select()
@@ -258,7 +258,7 @@ export const useDeleteTopic = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .delete()
         .eq('id', id);
       
@@ -280,7 +280,7 @@ export const useLearningVideos = (topicId?: string) => {
     queryKey: ['admin-learning-videos', topicId],
     queryFn: async () => {
       let query = supabase
-        .from('learning_videos')
+        .from('videos')
         .select('*')
         .order('order_index', { ascending: true });
       
@@ -301,7 +301,7 @@ export const useCreateVideo = () => {
   return useMutation({
     mutationFn: async (video: Omit<Video, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
-        .from('learning_videos')
+        .from('videos')
         .insert(video)
         .select()
         .single();
@@ -325,7 +325,7 @@ export const useUpdateVideo = () => {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Video> & { id: string }) => {
       const { data, error } = await supabase
-        .from('learning_videos')
+        .from('videos')
         .update(updates)
         .eq('id', id)
         .select()
@@ -350,7 +350,7 @@ export const useDeleteVideo = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('learning_videos')
+        .from('videos')
         .delete()
         .eq('id', id);
       
@@ -454,6 +454,126 @@ export const useDeleteQuiz = () => {
     },
     onError: (error: Error) => {
       toast.error(`Failed to delete quiz: ${error.message}`);
+    },
+  });
+};
+
+// Video Variants
+export const useCreateVideoVariants = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (group: Omit<VideoVariantGroup, 'variant_group_id'>) => {
+      const variant_group_id = crypto.randomUUID();
+      
+      const videosToInsert = group.variants.map((variant) => ({
+        topic_id: group.topic_id,
+        subject_id: group.subject_id,
+        title: variant.title,
+        video_url: variant.video_url,
+        thumbnail_url: variant.thumbnail_url,
+        description: variant.description,
+        transcript: variant.transcript,
+        duration_minutes: group.duration_minutes,
+        xp_reward: group.xp_reward,
+        order_index: group.order_index,
+        is_active: group.is_active,
+        min_age: group.min_age,
+        max_age: group.max_age,
+        school_levels: group.school_levels,
+        tags: variant.tags,
+        language: variant.language,
+        variant_group_id,
+      }));
+      
+      const { data, error } = await (supabase as any)
+        .from('videos')
+        .insert(videosToInsert)
+        .select();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-learning-videos'] });
+      toast.success('Multi-language video created successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to create variants: ${error.message}`);
+    },
+  });
+};
+
+export const useUpdateVideoVariants = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (group: VideoVariantGroup) => {
+      // Delete existing variants in the group
+      const { error: deleteError } = await (supabase as any)
+        .from('videos')
+        .delete()
+        .eq('variant_group_id', group.variant_group_id);
+      
+      if (deleteError) throw deleteError;
+      
+      // Insert updated variants
+      const videosToInsert = group.variants.map((variant) => ({
+        topic_id: group.topic_id,
+        subject_id: group.subject_id,
+        title: variant.title,
+        video_url: variant.video_url,
+        thumbnail_url: variant.thumbnail_url,
+        description: variant.description,
+        transcript: variant.transcript,
+        duration_minutes: group.duration_minutes,
+        xp_reward: group.xp_reward,
+        order_index: group.order_index,
+        is_active: group.is_active,
+        min_age: group.min_age,
+        max_age: group.max_age,
+        school_levels: group.school_levels,
+        tags: variant.tags,
+        language: variant.language,
+        variant_group_id: group.variant_group_id,
+      }));
+      
+      const { data, error } = await (supabase as any)
+        .from('videos')
+        .insert(videosToInsert)
+        .select();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-learning-videos'] });
+      toast.success('Multi-language video updated successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update variants: ${error.message}`);
+    },
+  });
+};
+
+export const useDeleteVideoVariantGroup = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (variant_group_id: string) => {
+      const { error } = await (supabase as any)
+        .from('videos')
+        .delete()
+        .eq('variant_group_id', variant_group_id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-learning-videos'] });
+      toast.success('Video group deleted successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete video group: ${error.message}`);
     },
   });
 };

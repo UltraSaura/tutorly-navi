@@ -25,7 +25,7 @@ export function GuardianBottomNav() {
   const { t } = useTranslation();
   
   const currentPath = location.pathname;
-  const isActive = (url: string) => currentPath === url;
+  const isActive = (url: string) => currentPath === url || currentPath.startsWith(url + '/');
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-card/95 backdrop-blur-md border-t border-border" 

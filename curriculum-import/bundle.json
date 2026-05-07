@@ -1,0 +1,1738 @@
+{
+  "domains": [
+    {
+      "domain": "Nombres et calculs"
+    },
+    {
+      "domain": "Autres"
+    },
+    {
+      "domain": "Algèbre"
+    },
+    {
+      "domain": "Grandeurs et mesures"
+    },
+    {
+      "domain": "Organisation et gestion de données"
+    },
+    {
+      "domain": "Probabilités"
+    }
+  ],
+  "subdomains": [
+    {
+      "domain": "Nombres et calculs",
+      "subdomain": "Fractions"
+    },
+    {
+      "domain": "Nombres et calculs",
+      "subdomain": "Nombres décimaux"
+    },
+    {
+      "domain": "Autres",
+      "subdomain": "Autres"
+    },
+    {
+      "domain": "Nombres et calculs",
+      "subdomain": "Quatre opérations"
+    },
+    {
+      "domain": "Nombres et calculs",
+      "subdomain": "Résolution de problèmes"
+    },
+    {
+      "domain": "Algèbre",
+      "subdomain": "Algèbre"
+    },
+    {
+      "domain": "Grandeurs et mesures",
+      "subdomain": "Longueurs"
+    },
+    {
+      "domain": "Grandeurs et mesures",
+      "subdomain": "Masses"
+    },
+    {
+      "domain": "Grandeurs et mesures",
+      "subdomain": "Contenances"
+    },
+    {
+      "domain": "Grandeurs et mesures",
+      "subdomain": "Aires"
+    },
+    {
+      "domain": "Grandeurs et mesures",
+      "subdomain": "Angles"
+    },
+    {
+      "domain": "Organisation et gestion de données",
+      "subdomain": "Données"
+    },
+    {
+      "domain": "Probabilités",
+      "subdomain": "Probabilités"
+    }
+  ],
+  "objectives": [
+    {
+      "id": "obj_523ade8b",
+      "level": "CM1",
+      "domain": "Nombres et calculs",
+      "subdomain": "Fractions",
+      "text": "Objectifs liés à Fractions pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_91c718c2",
+      "level": "CM1",
+      "domain": "Nombres et calculs",
+      "subdomain": "Nombres décimaux",
+      "text": "Objectifs liés à Nombres décimaux pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_c941c855",
+      "level": "CM1",
+      "domain": "Autres",
+      "subdomain": "Autres",
+      "text": "Objectifs liés à Autres pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_456223a8",
+      "level": "CM1",
+      "domain": "Autres",
+      "subdomain": "Autres",
+      "text": "Objectifs liés à Autres pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_7f9316ce",
+      "level": "CM1",
+      "domain": "Autres",
+      "subdomain": "Autres",
+      "text": "Objectifs liés à Autres pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_f0708b03",
+      "level": "CM1",
+      "domain": "Nombres et calculs",
+      "subdomain": "Quatre opérations",
+      "text": "Objectifs liés à Quatre opérations pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_c65a12d9",
+      "level": "CM1",
+      "domain": "Nombres et calculs",
+      "subdomain": "Résolution de problèmes",
+      "text": "Objectifs liés à Résolution de problèmes pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_8033bdf1",
+      "level": "CM1",
+      "domain": "Algèbre",
+      "subdomain": "Algèbre",
+      "text": "Objectifs liés à Algèbre pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_ca993cdc",
+      "level": "CM1",
+      "domain": "Grandeurs et mesures",
+      "subdomain": "Longueurs",
+      "text": "Objectifs liés à Longueurs pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_d94345ef",
+      "level": "CM1",
+      "domain": "Grandeurs et mesures",
+      "subdomain": "Masses",
+      "text": "Objectifs liés à Masses pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_7a401b1a",
+      "level": "CM1",
+      "domain": "Grandeurs et mesures",
+      "subdomain": "Contenances",
+      "text": "Objectifs liés à Contenances pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_4c57d319",
+      "level": "CM1",
+      "domain": "Grandeurs et mesures",
+      "subdomain": "Aires",
+      "text": "Objectifs liés à Aires pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_e02e7f41",
+      "level": "CM1",
+      "domain": "Grandeurs et mesures",
+      "subdomain": "Angles",
+      "text": "Objectifs liés à Angles pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_63963640",
+      "level": "CM1",
+      "domain": "Autres",
+      "subdomain": "Autres",
+      "text": "Objectifs liés à Autres pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_d6f5e661",
+      "level": "CM1",
+      "domain": "Autres",
+      "subdomain": "Autres",
+      "text": "Objectifs liés à Autres pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_a695f4bf",
+      "level": "CM1",
+      "domain": "Autres",
+      "subdomain": "Autres",
+      "text": "Objectifs liés à Autres pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_29f69f90",
+      "level": "CM1",
+      "domain": "Organisation et gestion de données",
+      "subdomain": "Données",
+      "text": "Objectifs liés à Données pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_58e24613",
+      "level": "CM1",
+      "domain": "Probabilités",
+      "subdomain": "Probabilités",
+      "text": "Objectifs liés à Probabilités pour CM1",
+      "notes_from_prog": ""
+    },
+    {
+      "id": "obj_e075246a",
+      "level": "CM1",
+      "domain": "Autres",
+      "subdomain": "Autres",
+      "text": "Objectifs liés à Autres pour CM1",
+      "notes_from_prog": ""
+    }
+  ],
+  "success_criteria": [
+    {
+      "id": "sc_f28542d9",
+      "objective_id": "obj_523ade8b",
+      "text": "Savoir interp réter,\nreprésenter, écrire et lire des\nfractions. L’élève sait que sept quarts s’écrit mathématiquement 7\n4 . Il sait dire que 7\n4\nd’une unité correspond à sept fois un quart de cette unité. L’élève sait que\n 7\n4 u = 1\n4 u + 1\n4 u + 1\n4 u + 1\n4 u + 1\n4 u + 1\n4 u + 1\n4 u = 7 × 1\n4 u.\nLa verbalisation contr ibue à donner du sens au prod uit. Des manipulations,\ndes représentations et des constructions peuvent également contribuer à\nrenforcer la compréhension d e ce produit."
+    },
+    {
+      "id": "sc_3ca72680",
+      "objective_id": "obj_523ade8b",
+      "text": "Savoir écri re une fraction\nsupérieure à 1 comme la\nsomme d’un entier et d’une\nfraction inférieure à 1."
+    },
+    {
+      "id": "sc_aaa1fed0",
+      "objective_id": "obj_523ade8b",
+      "text": "Savoir écrire la somme d’un\nentier et d’une fraction\ninférieure à 1 comme une\nunique fraction."
+    },
+    {
+      "id": "sc_8b51449b",
+      "objective_id": "obj_523ade8b",
+      "text": "Savoir encadrer une fraction\npar deux nombres entiers\nconsécutifs. L’élève sait dire si une fraction est inférieure ou supérieure à 1.\nL’élève sait que 7\n4 d’une unité est égal à 1 unité plus 3\n4 d’une unité :\n7 × 1\n4 u = 7\n4 u = 4\n4 u + 3\n4 u = 1 u + 3\n4 u.\n4 L’élève comprend que sept quarts de pizza , c’est quatre quarts de pizza plus\ntrois quarts de pizza, c’est -à-dire une pizza plus trois quarts de pizza.\nUne unité de longueur étant donnée, l’élève sait construire une bande de\npapier de longueur 7\n4 d’unité.\nL’élève sait construire un segment de longueu r 5 u + 1\n4 u.\nL’élève sait associer les désignations suivantes d’une même fraction : « neuf\nquarts » ; 9\n4 ; 9 × 1\n4 ; 2 + 1\n4 .\nEn prenant appui sur la relation 3\n3 = 1, l’élève sait écrire 2 + 2\n3 sous la forme 8\n3 .\nRéciproquement, il s ait décomposer 8\n3 sous la forme 3\n3 + 3\n3 + 2\n3 = 2 + 2\n3\nL’élève sait déduire de l’égalité 21\n8 = 2 + 5\n8 que 21\n8 est compris entre 2 et 3.\nL’élève sait encadrer la fraction 16\n3 entre deux nombres entiers consécutifs\nen s’appuyant su r sa connaissance de la relation 3\n3 = 1 et de la table de la\nmultiplication par 3 : 15\n3 < 16\n3 < 18\n3 donc 5 < 16\n3 < 6."
+    },
+    {
+      "id": "sc_8930cc1b",
+      "objective_id": "obj_523ade8b",
+      "text": "Savoir placer une fraction ou\nla somme d’un nombre\nentier et d’une fraction\ninférieure à un sur une demi -\ndroite graduée."
+    },
+    {
+      "id": "sc_7f036574",
+      "objective_id": "obj_523ade8b",
+      "text": "Savoir repérer un point\nd’une demi -droite graduée\npar une fraction ou par la\nsomme d’un nombre entier\net d’une fraction. L’élève sait que , sur une demi -droite graduée avec une unité de longueur, un\npoint peut être repéré par le nombre, appelé l’abscisse de ce point, qui est\nla mesure de la distance entre ce point et l’origine de la demi -droite\ngraduée.\nL’élève sait placer des points ayant pour abscisse un nombre comme 3\n4 , 7\n2 ,\n2 + 1\n4 , 5 + 7\n10 et 37\n10 sur une demi -droite graduée avec des g raduations\npermettant de positionner précisément ces points.\nL’élève sait que 2 + 2\n3 , 3 - 1\n3 et 8\n3 sont différentes écritures de l’abscisse du\npoint A, positionné sur la d emi-droite graduée ci -dessous."
+    },
+    {
+      "id": "sc_e1434c76",
+      "objective_id": "obj_523ade8b",
+      "text": "Comparer des fractions. L’élève sait ex pliquer pourquoi 6\n8 est égal à 3\n4 , en s’appuyant\nsur des manipulations, sur des grandeurs (longueurs ou\naires) ou sur une verbalisation du type :\n► « Si je fais des parts deux fois plus petites et si je prends deux fois plus de\nparts, alors je prends la m ême chose. » ;\n► « Un huiti ème c ’est la moiti é d’un quart, donc un quart, c ’est deux\nhuiti èmes et donc trois quarts est égal à six huitièmes. ».\nL’élève sait répondre à la question suivante : « Parmi les fractions 2\n3 , 5\n4 , 9\n6 , 15\n10\net 6\n4 , quelles sont les fractions égales à 3\n2 ? ».\nL’élève sait déterminer le numérateur manquant dans l’égalité ?\n8 = 7\n2 et il sait\njustifier sa réponse.\nL’élève sait comparer deux fractions ayant le même numérateur et justifier\nsa réponse : par exe mple, « Comparer 5\n12 et 5\n8 ».\n5 L’élève sait comparer deux fractions de même dénominateur ou de\ndénominateurs différents, mais dont l’un est un multiple connu de l’autre\n(résultat des tables de multiplication) et justifier sa réponse : par exemple,\n« Comparer 7\n4 et 19\n12 »."
+    },
+    {
+      "id": "sc_024eb553",
+      "objective_id": "obj_523ade8b",
+      "text": "Additionner et soustraire des\nfractions. L’élève sait additionner et soustraire des fr actions ayant le même\ndénominateur.\nL’élève sait additionner et soustraire des fractions ayant des dénominateurs\ndifférents, dans le cas où l’un des dénominateurs est un multiple connu de\nl’autre (résultat des tables de multiplication), par exemple : 3\n2 + 7\n4 ; 5\n6 - 1\n12 ; 11\n4 - 7\n20.\nLes changements de dénominateurs sont systématiquement accompagnés\npar une justification orale des égalités de fractions et , si nécessaire , par d es\nmanipulations ou de s représentations correspondant aux fractions en jeu.\nL’élève sait résoudre des problèmes additifs dans lesquels les données\nnumériques sont des fractions simples ."
+    },
+    {
+      "id": "sc_638b2c48",
+      "objective_id": "obj_523ade8b",
+      "text": "Déterminer une fra ction\nd’une quantité ou d’une\ngrandeur. L’élève sait déterminer une fraction d’une quantité ou d’une grandeur dans\nle cas d’une fraction unitaire, c’est -à-dire dont le numérateur est égal à 1. Par\nexemple :\n► 1\n3 de douze œufs ;\n► 1\n10 de 500 g de farine ;\n► 1\n5 de 60 kg de sable ;\n► 1\n4 de 10 m.\nL’élève sait répondre à ces questions à l’oral ou à l’écrit, sans utiliser\nd’égalité mathématique. Il sait justifier sa réponse oralement en produisant\nune phrase comme : « Pour trouver un tiers de douze œufs, je p artage en\ntrois parts égales, comme douze c’est trois fois quatre, cela fait quatre\nœufs. », « Un quart c ’est la moiti é de la moiti é, la moiti é de dix m ètres, c ’est\ncinq m ètres et la moiti é de cinq m ètres, c ’est deux m ètres et demi. ».\nSi besoin, il peut p rendre appui sur un schéma pour associer la situation au\ncalcul d’une division :\nLes nombres décimaux"
+    },
+    {
+      "id": "sc_a8b98d2d",
+      "objective_id": "obj_91c718c2",
+      "text": "Interpréter, représenter,\nécrire et lire des fractions\ndécimales."
+    },
+    {
+      "id": "sc_51988853",
+      "objective_id": "obj_91c718c2",
+      "text": "Conna itre et uti liser les\nrelations entre unités\nsimples, dixièmes et\ncentièmes."
+    },
+    {
+      "id": "sc_0fbf96a7",
+      "objective_id": "obj_91c718c2",
+      "text": "Placer une fraction décimale\nsur une demi -droite graduée\net repérer un point d’une L’élève sait que 1 = 10\n10 = 100\n100 et 1\n10 = 10\n100.\nL’élève sait représenter la fraction 143\n100 par une grandeur (longueur ou aire), en\nutilisant du matériel tangible ou une représentation sur papier, telle que la\nsuivante :\n6 demi -droite graduée par une\nfraction décimale."
+    },
+    {
+      "id": "sc_04460610",
+      "objective_id": "obj_91c718c2",
+      "text": "Écrire une fraction décimale\nsupérieure à 1 comme la\nsomme d’ un nombre entier\net d’une fraction décimale\ninférieure à 1."
+    },
+    {
+      "id": "sc_ab0123b8",
+      "objective_id": "obj_91c718c2",
+      "text": "Écrire une fraction décimale\nsupérieure à 1 comme la\nsomme d’un nombre entier\net de fractions décimales\nayant un numérateur\ninférieur à 10. L’élève sait passer d’une écriture à une autre pour les trois écri tures\nsuivantes du même nombre : 417\n100 ; 4 + 17\n100 ; 4 + 1\n10 + 7\n100.\nL’élève sait placer une fraction décimale sur une demi -droite graduée et\nrepérer un point d’une demi -droite graduée par une fraction décimale."
+    },
+    {
+      "id": "sc_cafc1c6e",
+      "objective_id": "obj_91c718c2",
+      "text": "Comparer, encadrer,\nintercale r des fractions\ndécimales en utilisant les\nsymboles =, < et >."
+    },
+    {
+      "id": "sc_d41a6b34",
+      "objective_id": "obj_91c718c2",
+      "text": "Ordonner des fractions\ndécimales dans l’ordre\ncroissant ou décroissant. L’élève sait encadrer une fraction décimale par deux entiers consécutifs.\nL’élève sait comparer deux fractions décimales, par exemple 67\n10 et 607\n100.\nL’élève sait ranger par ordre croissant les quatre nombres suivants : 2 ; 14\n10 ;\n120\n100 ; 9\n10.\nL’élève sait intercaler une fraction décimale entre deux fractions décimales\ndonnées. Par exemple, il sait compléter une expression comme : 14\n10 < … < 15\n10."
+    },
+    {
+      "id": "sc_b2acd9ba",
+      "objective_id": "obj_91c718c2",
+      "text": "Passer d’une écriture sous\nforme d’une fraction\ndécimale ou d’une somme\nde fractions décimales à une\nécriture à virgule et\nréciproquement."
+    },
+    {
+      "id": "sc_b872d5bc",
+      "objective_id": "obj_91c718c2",
+      "text": "Interpréter, représenter,\nécrire et lire des nombres\ndécimaux (écritur e à virgule)."
+    },
+    {
+      "id": "sc_b71468ef",
+      "objective_id": "obj_91c718c2",
+      "text": "Placer un nombre décimal en\nécriture à virgule sur une\ndemi -droite graduée et\nrepérer un point d’une demi -\ndroite graduée par un\nnombre décimal."
+    },
+    {
+      "id": "sc_bd9d3ece",
+      "objective_id": "obj_91c718c2",
+      "text": "Savoir donner la partie\nentière et l’arrondi à l’entier\nd’un nombre décimal. L’élève sait que , dans l’écriture à virgule d’un nombre, la virgule sert à\nrepérer le chiffre des unités. Il sait que le chiffre qui suit la virgule est le\nchiffre des dixièmes et le suivant le chiffre des centièmes.\nL’élève sait que 4 + 1\n10 + 7\n100 peut s’écrire sous la forme 4,17 et que ce nombre\nse lit « quatre et dix -sept centièmes », ou « quatre unités et dix -sept\ncentièmes » ou encore « quatre unit és, un dixi ème et sept centi èmes ».\nL’élève sait représenter le nombre 1,37 par une grandeur (longueur ou aire),\nen utili sant du matériel tangible ou une représentation sur papier , telle que\nla suivante :\nL’élève sait passer d’une écriture à une autre pour les quatre écritures\nsuivantes du même nombre : 4,17 ; 417\n100 ; 4 + 17\n100 ; 4 + 1\n10 + 7\n100.\nL’élève sait q ue 2,6 = 2,60 et est capable de le justifier.\nÀ l’écrit et à l’oral, l’élève sait produire des suites de nombres de 0,1 en 0,1\net de 0,01 en 0,01 à partir d’un nombre donné.\nL’élève sait placer le nombre 2,8 sur une demi -droite graduée en dixième.\nL’élève sait qu’il faut écrire 339,16 dans le rectangle sur les zooms de la\ndemi -droite graduée ci -dessous.\n7 L’élève sait donner la partie entière de 135,78.\nL’élève sait que l’arrondi à l’entier de 5,78 est 6 et que l’arrondi à l’entier de\n3,5 est 4 ."
+    },
+    {
+      "id": "sc_8042a4fe",
+      "objective_id": "obj_91c718c2",
+      "text": "Comparer, encadrer,\nintercaler, ordonner par\nordre croissant ou\ndécroissant des nombres\ndécimaux donnés par leur\nécriture à virgule en utilisant\nles symboles =, < et >. L’élève sait comparer deux nombres décimaux, par exemple 4,52 et 4,7.\nL’élève sait encadrer 17,48 par deux entiers consécutifs.\nL’élève sait trouver un nombre décimal compris entre 1,9 et 2.\nL’élève sait ranger par ordre croissant ou décroissant jusqu’à trois nombres\ndécimaux, par exemple : 2,12 ; 209\n100 et 2,6.\nL’élève sait compléter l’inégalité s uivante par un nombre qui convient :\n2,9 < … < 3.\nLe calcul mental\nMémoriser des faits numériques"
+    },
+    {
+      "id": "sc_212b4773",
+      "objective_id": "obj_c941c855",
+      "text": "Conna itre des faits\nnumériques usuels relatifs\naux nombres entiers. L’élève renforce sa ma itrise des faits n umériques appris au cycle 2\nconcernant les nombres entiers.\nL’élève conna it les tables d’addition et de multiplication. Il sait compléter\ndes « égalit és à trou » du type : 4 + … = 12 ; 5 + 3 = … ; 10 = 7 + … ; 7 × … = 42 ;\n9 × 6 = … ; 70 = 7 × …\nL’élève sa it donner oralement et par écrit :\n► les doubles des nombres de 1 à 20 ;\n► les doubles des nombres 20, 25, 30, 35, 40, 45, 50, 60 et 75 ;\n► les doubles des nombres 100, 150, 200, 250, 300, 400, 500 et 600 ;\n► les moitiés des nombres pairs de 2 à 40 ;\n► les moitiés d es dizaines entières 40, 50, 60, 70, 80, 90, 100, 120 et 150 ;\n► les moitiés des centaines entières 200, 300, 400, 500, 600, 800, 1000 et\n1200.\nL’élève conna it les multiples de 25 suivants : 1 × 25 = 25, 2 × 25 = 50,\n3 × 25 = 75 et 4 × 25 = 100.\nL’élève conn ait les décompositions multiplicatives de 60 : 1 × 60, 2 × 30,\n3 × 20, 4 × 15, 5 × 12 et 6 × 10.\nL’élève sait ainsi compléter des « égalit és à trou » du type : 2 × __ = 12 ;\n2 × 16 = … ; 2 × … = 70 ; 2 × 25 = … ; 1000 = 2 × … ; 2 × 150 = … ; 3 × 25 = … ;\n60 = 4 × …"
+    },
+    {
+      "id": "sc_32bf1349",
+      "objective_id": "obj_c941c855",
+      "text": "Conna itre quelques relations\nentre des fractions usuelles. L’élève conna it des relations entre 1\n4 , 1\n2 et 1. Il sait ainsi co mpléter sans\neffectuer de calculs des « égalit és à trou » du type : 1\n2 + 1\n2 =… ; 1\n4 + 1\n4 = … ;\n1 - 1\n2 = … ; 1\n2 – 1\n4 = … ; 1\n2 = …\n4 ; …\n4 = 1.\nL’élève conna it les relations entre 1\n100 , 1\n10 et 1. Il sait ainsi compléter des\n« égalit és à trou » du type : 1\n10 = …\n100 ; 1 = …\n10 ; 1 = …\n100."
+    },
+    {
+      "id": "sc_b67e73ed",
+      "objective_id": "obj_c941c855",
+      "text": "Conna itre l’écriture\ndécimale de f ractions\nusuelles. L’élève sait passer d’une écriture fractionnaire à une écriture décimale et\nd’une écriture décimale à une écriture fractionnaire pour les nombres\nsuivants : 1\n10 = 0,1 ; 1\n100 = 0,01.\n8 Utiliser ses connaissances en numération pour c alculer mentalement"
+    },
+    {
+      "id": "sc_77bcfe29",
+      "objective_id": "obj_456223a8",
+      "text": "Ajouter ou soustraire un\nnombre entier inférieur à 10 ,\nd’unités, de dizaines, de\ncentaines, de dixièmes ou de\ncentièmes à un nombre\ndécimal, lorsqu’il n’y a pas de\nretenue. À partir d’opér ations données à l’écrit, l’élève sait identifier le chiffre sur\nlequel agir lorsqu’il doit effectuer une addition ou une soustraction, quelle\nque soit la façon dont les nombres sont désignés. Il sait, par exemple,\ntrouver le résultat des opérations suivan tes :\n► 4,45 + 0,3 ;\n► 0,45 + 3\n100 ;\n► 1 462 + 300."
+    },
+    {
+      "id": "sc_936c519a",
+      "objective_id": "obj_456223a8",
+      "text": "Multiplier un nombre entier\npar 10, 100 ou 1 000. L’élève sait que, lors d’une multiplication par 1 000, une unit é devient un\nmillier, une dizaine devient une dizaine de milliers et une centaine devient\nune centaine de milliers. Ainsi, chaque chiffre du nombre initial prend une\nvaleur 1 000 fois plus grande : le chiffre des unit és devient le chiffre des\nmilliers, le chiffre des dizaines devient le chiffre des dizaines de milliers et le\nchiffre des centaines devient le chiffre des centaines de milliers."
+    },
+    {
+      "id": "sc_c61074b9",
+      "objective_id": "obj_456223a8",
+      "text": "Multiplier un nombre\ndécimal par 10. L’élève sait que, lors de la multiplication d’un nombre décimal par 10, un\ndixième devient une unité, un centième devient un dixième et un millième\ndevient un centième. Ain si, chaque chiffre du nombre initial prend une\nvaleur 10 fois plus grande : le chiffre des milli èmes devient le chiffre des\ncentièmes, le chiffre des centièmes devient le chiffre des dixièmes et le\nchiffre des dixièmes devient le chiffre des unités.\nUn out il de type « glisse -nombres » peut être utilis é pour accompagner les\nmultiplications par 10 d ’un nombre d écimal en compl ément de la\nverbalisation de la proc édure en termes d ’unités de num ération.\nExemple : multiplication de 72,41 par 10 :\n10 × 72,41 = 7 24,1."
+    },
+    {
+      "id": "sc_b73546a3",
+      "objective_id": "obj_456223a8",
+      "text": "Diviser un nombre décimal\npar 10. L’élève sait que, lors d’une division par 10, une unité devient un dixième, une\ndizaine devient une unité et une centaine devient une dizaine. Ainsi, chaque\nchiffre du nombre initial prend une valeur 10 fois plus pe tite : le chiffre des\nunités devient le chiffre des dixièmes, le chiffre des dizaines devient le\nchiffre des unités et le chiffre des centaines devient le chiffre des dizaines .\nUn outil de type « glisse -nombres » peut être utilis é pour accompagner les\ndivisions par 10, en complément de la verbalisation de la procédure en\ntermes d’unités de numération.\n9 Apprendre des procédures de calcul mental"
+    },
+    {
+      "id": "sc_6662f8e7",
+      "objective_id": "obj_7f9316ce",
+      "text": "Ajouter ou soustraire 8, 9,\n18, 19, 28, 29, 38 ou 39 , à\nun nombre . L’élève sait, par exemple, que pour ajouter 38 à un nombre, il peut lui ajouter\n40, puis retrancher 2."
+    },
+    {
+      "id": "sc_a5ca10bc",
+      "objective_id": "obj_7f9316ce",
+      "text": "Multiplier un nombre entier\ninférieur à 10 par un\nnombre entier de dizaines\nou de centaines. L’élève sait que, pour multiplier un nombre par un nombr e entier de\ncentaines comme 400, il peut décomposer le deuxième facteur sous la forme\n4 × 100, puis appliquer la procédure de multiplication par 100.\nPar exemple : 9 × 400 = 9 × (4 × 100) = (9 x 4) × 100 = 36 × 100 = 3 600."
+    },
+    {
+      "id": "sc_7341af26",
+      "objective_id": "obj_7f9316ce",
+      "text": "Multiplier un nombre entier\npar 4 ou par 8. L’élève sait que multiplier par 4 revient à multiplier par 2 et encore par 2,\nc’est -à-dire à trouver le double du double du nombre initial.\nL’élève sait que multiplier par 8 = 2 × 2 × 2 revient à multiplier par 2, puis\nencore par 2 et une troi sième fois par 2.\nLors d’une séance de calcul mental, si l’élève doit calculer 8 × 27, il peut\nécrire : « 54 », puis « 108 », puis « 216 », qu’il entoure pour indiquer qu ’il s’agit\ndu résultat cherch é. Les écrits interm édiaires « 54 » et « 108 » lui permet tent\nde soulager sa m émoire de travail."
+    },
+    {
+      "id": "sc_97a77d33",
+      "objective_id": "obj_7f9316ce",
+      "text": "Multiplier un nombre entier\npar 5. L’élève sait que multiplier par 5 revient à multiplier par 10 puis à calculer la\nmoitié du résultat obtenu . Il utilise cette procédure pour multiplier par 5 un\nnombre inférieur à 200."
+    },
+    {
+      "id": "sc_d9468c07",
+      "objective_id": "obj_7f9316ce",
+      "text": "Utiliser la distributivité de la\nmultiplication par rapport\nà l’addition dans des cas\nsimples. L’élève sait verbaliser « 21 fois 35, c ’est 20 fois 35 plus 1 fois 35. ».\n21 × 35 = (20 + 1) × 35 = (20 × 35) + (1 × 35) = 700 + 35 = 735\nL’élève utilise aussi la décomposition dans l’autre sens :\n« 35 fois 21, c ’est 35 fois 20 plus 35 fois 1. ».\nLes quatre opérations"
+    },
+    {
+      "id": "sc_691a3944",
+      "objective_id": "obj_f0708b03",
+      "text": "Estimer le résultat d’une\nopération. L’élève sait estimer le résultat d’une opération dans des cas simples. Par\nexemple, il sait dire que :\n► la somme 212 m + 298 m + 496 m est proche de 200 m + 300 m + 500 m,\nc’est -à-dire 1 000 m ;\n► la différence 1 494 – 203 est proche de 1 500 – 200, c ’est-à-dire 1 300 ;\n► le produit 52 × 37 L est proche de 50 × 40 L, c’est -à-dire 2 000 L ;\n► le quotient 597 kg ÷ 2 est proche de 600 kg ÷ 2, c’est -à-dire 300 kg.\nL’élève conna it et utilise le symbole ≈. Il écrit 1 494 – 203 ≈ 1 300 pour\nexprimer que 1 300 est une estimation de la différence entre 1 494 et 203."
+    },
+    {
+      "id": "sc_cc4aa0b9",
+      "objective_id": "obj_f0708b03",
+      "text": "Savoir effectuer un calcul\ncontenant des parenthèses. L’élève comprend que les parenthèses renseignent sur les opérations à\neffectuer en premi er. Dans des cas simples, l’élève sait effectuer un calcul en\nrespectant l’ordre des opérations indiqué par les parenthèses, par exemple :\n3 × (10 – 6)."
+    },
+    {
+      "id": "sc_33060605",
+      "objective_id": "obj_f0708b03",
+      "text": "Poser en colonnes et\neffectuer des additions et\ndes soustractions de\nnombres décimaux. L’élève compren d et utilise les mots usuels rencontrés dans le cadre des\nopérations (terme, somme, différence)\nL’élève sait effectuer des additions et des soustractions posées mettant en\njeu des nombres décimaux. Par exemple, l’élève sait poser en colonnes, puis\neffectue r des calculs du type : 56,75 + 234 + 0,8 ou encore 34,5 – 2,58.\n10 • Poser et effectuer des\nmultiplications de deux\nnombres entiers. L’élève comprend et utilise les mots usuels rencontrés dans le cadre des\nopérations (facteur, produit, multiple, diviseur « 9 est un diviseur de 36. »)\nL’élève sait calculer des produits en posant la multiplication. Par exemple, il\nsait calculer le produit 876 × 208."
+    },
+    {
+      "id": "sc_89ae71a4",
+      "objective_id": "obj_f0708b03",
+      "text": "Poser et effectuer des\nmultiplications d’un\nnombre décimal par un\nnombre entier inférieur à\n10. Dans le cadre de la résolution d’un problème, l’élève sait déterminer, en\nposant l’opération si nécessaire , le produit d’un nombre décimal par un\nentier inférieur à 10. Par exemple, il sait calculer les produits 7 × 46,55 € et\n8 × 17,3 km."
+    },
+    {
+      "id": "sc_c01a9047",
+      "objective_id": "obj_f0708b03",
+      "text": "Poser et effectuer des\ndivision s euclidiennes avec\nun diviseur à un chiffre. L’élève comprend et utilise les mots usuels rencontrés dans le cadre des\nopérations (dividende, diviseur « Dans la division de 743 par 9, le nombre 743\nest le dividende et le nombre 9 est le diviseur. »), quoti ent, reste.\nL’élève sait effectuer, en la posant, la division euclidienne d’un nombre entier\ndont l’écriture contient jusqu’à cinq chiffres par un nombre à un chiffre.\nLorsque l’opération est effectuée, il sait désigner le dividende, le diviseur, le\nquotie nt et le reste.\nL’élève fait le lien entre la division euclidienne 9 456 par 7, o ù il trouve un\nquotient égal à 1 350 et un reste égal à 6, avec l’égalité 9 456 = 1 350 × 7 + 6.\nDans le cas de problèmes concrets, il sait interpréter l’égalité précédente en\ninsérant les unités dans le calcul, comme 2 458 œufs = 409 × 6 œufs + 4 œufs.\nLa résolution de problèmes"
+    },
+    {
+      "id": "sc_bbb30d37",
+      "objective_id": "obj_c65a12d9",
+      "text": "Résoudre des problèmes\nadditifs en une étape de s\ntypes « parties -tout » et\n« comparaison ». Dans la continuité de ce qui a été mené au cycle 2, l’élève résout des\nprobl èmes additifs en une étape en s ’appuyant, si n écessaire, sur des\nschémas en barre ou des schémas avec un déplacement sur un axe pour les\nproblèmes de transformation.\nL’élève sait résoudre de tels problèmes mettant en jeu des nombres\ndécimaux.\nL’élève sait résoudre de tels problèmes mettant en jeu des fractions, lorsque\nles opérations à effectuer font partie des attendus du CM1. Par exemple , il\nsait résoudre les problèmes suivants :\n► Anaël a construit une bande de papier mesurant 37\n10 cm et Léna a construit\nune bande papier mesurant 4 + 3\n10 cm. Quelle est la bande la plus longue ?\nQuel est l ’écart de longueur entre les deux bandes de papier ?\n► Ethan a acheté des pommes et des poires. Il a acheté 3,4 kg de pommes. Il\na acheté 6 kg de fruits en tout. Quelle masse de poires a -t-il achet ée ?\n► Alix mesure 1,61 m. Elle mesure 13 cm de plus que Bruno. Quelle est la taille\nde Bruno ?"
+    },
+    {
+      "id": "sc_8cdcd1cd",
+      "objective_id": "obj_c65a12d9",
+      "text": "Résoudre des problèmes\nadditifs en deux ou trois\nétapes. L’élèv e continue de résoudre des problèmes additifs en plusieurs étapes ,\ncomme ceux rencontrés au cycle 2, mais le champ num érique sur lequel ils\nportent est plus étendu (grands entiers et nombres d écimaux), par exemple,\nle probl ème suivant :\n► Agathe a parcouru 1 7 km en 1 h 30 min Elle a parcouru 8,4 km pendant la\npremi ère demi -heure, puis 3,8 km pendant la deuxième demi -heure.\nQuelle distance a parcouru e Agathe pendant la dernière demi -heure ?\nL’élève résout des problèmes de comparaison de quantités ou de grandeu rs\nqui se traitent en deux étapes. Il s’agit de problèmes impliquant la valeur des\ndeux quantités ou grandeurs réunies ainsi que leur écart et nécessitant donc\n11 une étape supplémentaire, par exemple : « Léo a 25,60 €. Lucie a 7,55 € de\nplus que L éo. Combien d’euros les deux enfants ont -ils en tout ? ». L’élève\npeut s ’appuyer sur un schéma en barres comme le suivant pour s’aider lors de\nla modélisation du problème :"
+    },
+    {
+      "id": "sc_f63e0b46",
+      "objective_id": "obj_c65a12d9",
+      "text": "Résoudre des problèmes\nmultiplicatifs de type\n« parties -tout » en une\nétape. L’élève contin ue de résoudre des problèmes multiplicatifs similaires à ceux\nrencontrés au cycle 2, mais dont le champ numérique est plus étendu.\nPour résoudre le problème « La ma itresse de CM1 a acheté six dictionnaires\npour la classe. Chaque dictionnaire coute 17,85 €. Quel montant a -t-elle d û\npayer pour les six dictionnaires ? », l’élève peut réaliser le schéma suivant :\nPour les problèmes consistant à rechercher la valeur d’une part ou le nombre\nde parts dans le cadre d’un partage équitable, l’élève sait s’appuyer sur un\nschéma pour faciliter la modélisation mathématique du problème ainsi que\nsur sa connaissance des tables de multi plication."
+    },
+    {
+      "id": "sc_7d8845ce",
+      "objective_id": "obj_c65a12d9",
+      "text": "Résoudre des problèmes de\ncomparaison multiplicative. L’élève comprend le sens des locutions « fois plus » et « fois moins » et les\ndistingue des locutions « de plus » et « de moins » qui apparaissent dans les\nproblèmes de comparaison additive.\nL’élève sait résoudre des problèmes de comparaison multiplicative se traitant\nen une étape.\nL’élève sait résoudre des problèmes de comp araison multiplicative\nnécessitant deux étapes comme : « Axel achète une trottinette et un casque.\nLa trottinette coute quatre fois plus cher que le casque. Le casque coute\n32 €. Combien doit payer Axel ? »\nL’élève peut s’appuyer sur un schéma en barre com me le suivant pour s’aider\nlors de la modélisation du problème :"
+    },
+    {
+      "id": "sc_c05d2dda",
+      "objective_id": "obj_c65a12d9",
+      "text": "Résoudre des problèmes\nmixtes en deux ou trois\nétapes. L’élève sait résoudre des problèmes engageant des additions, des\nsoustractions, des multiplications et des divisions comme, par exemp le, le\nsuivant : Izmir ach ète trois pains aux raisins pesant chacun 210 grammes et\ndeux bouteilles d ’eau pesant 1,6 kilogramme chacune. Quelle est la masse\ntotale des achats d ’Izmir ?"
+    },
+    {
+      "id": "sc_09075337",
+      "objective_id": "obj_c65a12d9",
+      "text": "Résoudre des problèmes de\ndénombrement. L’élève sait résoudre des prob lèmes consistant à déterminer le nombre\nd’éléments d’un ensemble et qui ne se résolvent pas immédiatement par\nl’une des quatre opérations. Pour y parvenir, il présente les éléments à\ndénombrer selon une organisation permettant à la fois de les compter tous ,\nune et une seule fois, sans oubli ni redondance.\nAinsi l’élève sait avoir recours à un tableau, à un arbre ou à une liste organisée\npour résoudre des problèmes de dénombrement comme les suivants :\n12 ► Félicien veut habiller son ours en peluche avec un teeshi rt et un pantalon.\nIl dispose de six teeshirts différents et de trois pantalons différents. De\ncombien de façons différentes Félicien peut -il habiller son ours ?\n► Coumba lance deux dés classiques dont les faces sont numérotées de 1 à\n6. Elle ajoute les deux nombres. Donne la liste de tous les résultats qu’elle\npeut obtenir.\n► Karnish veut fabriquer un jeu de dominos. Dans son jeu, chaque domino\ndoit être composé de deux nombres de points compris entre 0 et 4 et il ne\npeut pas y avoir deux dominos identiques. Q uel est le nombre maximum\nde dominos que peut contenir ce jeu ?\nAttention ! Le domino est le même que le domino ."
+    },
+    {
+      "id": "sc_81027c72",
+      "objective_id": "obj_c65a12d9",
+      "text": "Résoudre des problèmes\nd’optimisation. L’élève sait résoudre des problèmes consistant à trouver une solution\noptimale parmi plusieurs sol utions respectant plusieurs contraintes , comme\nles problèmes suivants.\n► Ilyes veut réaliser des bracelets. Pour un bracelet, il lui faut un fil de\nlongueur 12 cm, cinq perles blanches, six perles vertes et trois perles\nrouges.\nIl dispose de :\no 10 fils de lon gueur 12 cm ;\no 48 perles blanches ;\no 47 perles vertes ;\no 25 perles rouges.\nQuel est le nombre maximal de bracelets qu’ il peut réaliser ?\nAlgèbre"
+    },
+    {
+      "id": "sc_bde170ef",
+      "objective_id": "obj_8033bdf1",
+      "text": "Trouver le nombre\nmanquant dans une égalité\nà trou. Dans des cas simples, en utilisant ses connaissances en calcul et les propriétés\ndes opérations, l’élève sait trouver mentalement le nombre manquant dans\nune égalité comme les suivantes : 347 = 20 + … ; 5 760 – … = 5 360 ;\n4 000 – … = 3 999 ; 2 × 137 × 5 = 137 × … ; 24 × 5 = … × 10 ; 144 + 7 = 142 + … ;\n142 – 14 = … – 17.\nÀ l’écrit, l ’élève sait trouver le nombre manquant dans une égalité à trou\ncomme 748 + … = 1200 ; 24 × 5 = 20 × 5 + … × 5 ; 28 – 18 = …  5."
+    },
+    {
+      "id": "sc_ef1c9d5e",
+      "objective_id": "obj_8033bdf1",
+      "text": "Déterminer la valeur d’un\nnombre inconnu en\nutilisant un s ymbole ou une\nlettre pour le représenter. L’élève comprend que des nombres inconnus peuvent être représentés par\ndes symboles ou par des lettres.\nL’élève sait résoudre des problèmes où des nombres sont représentés par des\nsymboles ou des lettres comme :\n► On dispose de crayons tous\nidentiques. On a le résultat suivant :\nQuelle est la masse d’un crayon ?\n► Maxime a mis trois paires de ciseaux identiques sur un plateau de sa\nbalance et a obtenu l’équilibre en ajoutant différents poids comme\nindiqué sur le schém a ci-dessous.\nQuelle est la masse d’une paire de ciseaux ?\n► Rose a choisi un nombre noté N et a effectué le calcul suivant 3 × (2 + N).\nElle a trouvé 27. Quel est le nombre N qu’elle a choisi ?\n13 • Résoudre des problèmes\nalgébriques L’élève sait résoudre des p roblèmes où des nombres sont représentés par des\nsymboles\nL’élève sait s’appuyer sur des schémas pour représenter des relations entre\ndes nombres connus et une ou plusieurs inconnues. L’élève sait, par exemple,\nrésoudre un problème comme le suivant en s’ap puyant sur un schéma en\nbarres :\n► Mia a choisi un nombre. En ajoutant 7 au triple du nombre choisi par Mia,\non trouve 100. Quel est le nombre choisi par Mia ?"
+    },
+    {
+      "id": "sc_15b6284c",
+      "objective_id": "obj_8033bdf1",
+      "text": "Exécuter un programme de\ncalcul. L’élève sait déterminer le résultat obtenu quand on applique à un nombre\ndonné, comme par exemple 5, un programme de calcul comme le suivant :\n► Choisir un nombre entier.\n► Ajouter 2 au nombre choisi.\n► Multiplier le résultat trouvé à l’étape précédente par 4.\n► Écrire le nombre obtenu.\nLes programmes comprennent au plus de ux étapes de calcul.\nLes programmes de calcul utilisés peuvent être codés avec un logiciel de\nprogrammation par bloc comme Scratch ou sur une feuille d’un tableur en\nfaisant appara itre les différentes étapes, de manière à vérifier les résultats\nobtenus."
+    },
+    {
+      "id": "sc_819bc8ae",
+      "objective_id": "obj_8033bdf1",
+      "text": "Identifier et formuler une\nrègle de calcul pour\npoursuivre une suite de\nnombres. À partir des premiers termes d’une suite de nombres, l’élève sait identifier et\nformuler une règle expliquant comment la suite est construite, et la\npoursuivre en donnant les t rois termes suivants, comme pour les suites :\n► 3 ; 7 ; 11 ; 15, etc.\n► 4 ; 12 ; 36 ; 108, etc.\n► 80 ; 85 ; 83 ; 88 ; 86 ; 91 ; 89 ; 94 ; 92, etc.\n► 1 ; 2 ; 6 ; 7 ; 11 ; 12 ; 16, etc.\nPour certaines suites plusieurs « règles » de calcul peuvent être trouv ées, par\nexemple, pour la suite 1 ; 2 ; 6 ; 7 ; 11 ; 12 ; 16…, les élèves peuvent proposer\ncomme r ègles de calcul :\n► l’ajout de 5 pour trouver le nombre situé deux rangs plus loin :\n► l’ajout alternatif de 1 et de 4 pour trouver le nombre au rang suivant :"
+    },
+    {
+      "id": "sc_dce84bbf",
+      "objective_id": "obj_8033bdf1",
+      "text": "Identi fier des régularités et\npoursuivre une suite de\nmotifs évolutive. L’élève sait, par exemple, déterminer le nombre d’éléments des motifs que\nl’on trouvera aux trois étapes suivantes pour les suites dont les premiers\nmotifs sont :\n14\nL’élève sait dire com ment le nombre d’éléments pour une étape peut se\ndéduire du nombre d’éléments pour l’étape précédente, par exemple :\n► « À chaque étape, le nombre de c œurs est égal au nombre de c œurs de\nl’étape pr écédente plus trois. »\n► « À chaque étape, le nombre de ronds est égal au nombre de ronds de\nl’étape pr écédente plus le num éro de l’étape. »\nGrandeurs et mesures\nLes longueurs"
+    },
+    {
+      "id": "sc_e182c7b6",
+      "objective_id": "obj_ca993cdc",
+      "text": "Connaitre et utiliser les\nunités de longueur du\nmillimètre au kilomètre et\nles symboles asso ciés."
+    },
+    {
+      "id": "sc_6de39ec7",
+      "objective_id": "obj_ca993cdc",
+      "text": "Connaitre les relations\nentre les unités de\nlongueur."
+    },
+    {
+      "id": "sc_7768fb76",
+      "objective_id": "obj_ca993cdc",
+      "text": "Choisir une unité adaptée\npour exprimer une\nlongueur."
+    },
+    {
+      "id": "sc_3bc75088",
+      "objective_id": "obj_ca993cdc",
+      "text": "Comparer des longueurs. L’élève connait les significations des préfixes kilo, hecto, déca, déci, centi et\nmilli, ainsi que les relations entre le mètre, ses multiples et ses sous -multiples,\nen faisant le lien avec les unités de numération du syst ème d écimal.\nL’élève connait les relations décimales entre deux unités successives, par\nexemple : 1 dm = 10 cm et 1 cm = 1\n10 dm = 0,1 dm.\nL’élève sait donner différentes écritures d’une même longueur, par exemple :\n► 3 cm + 4 mm = 34 mm = 3,4 cm ;\n► 6 cm = 60 mm = 0,06 m ;\n► 215 cm = 200 cm + 15 cm = 2 m + 15 cm = 2 m + 1 dm + 5 cm = 2,15 m ;\n► 1 600 m = 1,6 km ;\n► 1\n2 km = 0,5 km = 500 m ;\n► 3\n4 m = 3 × 1\n4 m = 3 × 25 cm = 75 cm.\nL’élève sait convertir en mètre une longueur donnée dans une autre unité,\nmultiple ou sous -multiple du mètre, par exemple, 12,3 hm ou 41 cm.\nRéciproquement, l’élève sait convertir dans une unité donnée une longueur\nexprimée en mètre.\nL’élève sait ranger dans l’ordre croissant quatre longueurs dont les mesures\nsont données dans des unités différentes, par exemple 33 m ; 56,8 cm ;\n0,2 km et 2,7 dam.\nL’élève sait calculer la somme ou la différence de deux longueurs qui ne sont\npas données dans la même unité, par exemple 8,2 m + 0,43 dam."
+    },
+    {
+      "id": "sc_cad22c82",
+      "objective_id": "obj_ca993cdc",
+      "text": "Disposer de quelques\nlongueurs de référence."
+    },
+    {
+      "id": "sc_e6f68196",
+      "objective_id": "obj_ca993cdc",
+      "text": "Estimer la longueur d’un\nobjet ou d’une distance. L’élève connait quelques longueurs d’objets familiers et quelques distances\nqu’il utilise comme référ ences pour estimer d’autres longueurs ou distances.\nPar exemple, l’élève peut savoir que la distance entre Paris et Lyon est\nd’environ 400 km à vol d ’oiseau ou que la distance du nord au sud de\nl’Hexagone est de l ’ordre de 1 000 km et peut s ’appuyer sur ce s\nconnaissances pour estimer la distance entre deux autres villes\nmétropolitaines.\n15 • Savoir ce qu’est le\npérimètre d’une figure\nplane."
+    },
+    {
+      "id": "sc_b3d6d5bd",
+      "objective_id": "obj_ca993cdc",
+      "text": "Déterminer le périmètre\nd’un polygone en utilisant\nune règle graduée."
+    },
+    {
+      "id": "sc_5c6d2667",
+      "objective_id": "obj_ca993cdc",
+      "text": "Résoudre des problèmes\nmettant en jeu les\nlongueurs des côtés d’un\npolygone et son périmètre. L’élève sait que le périmètre d’une figure plane est la longueur de son contour\net que, pour un polygone, c’est la somme des longueurs de ses côtés.\nL’élève sait reporter au compas les longueurs des côtés d’un poly gone sur une\ndroite afin d’obtenir un segment dont la longueur est égale au périmètre du\npolygone. Il sait utiliser cette procédure pour comparer des périmètres.\nL’élève sait calculer le périmètre de polygones dont les longueurs des côtés\nsont à déterminer au préalable par mesurage avec un instrument adapté ou\nsont fournies sur une figure ou dans un énoncé.\nDans le cas du carré et du rectangle, aucune formule n’est enseignée, mais\nl’élève sait qu’il n’est pas nécessaire de mesurer la longueur de chacun des\ncôtés pour déterminer le périmètre de la figure.\nL’élève sait résoudre des problèmes mobilisant des périmètres, comme, par\nexemple, construire un rectangle ABCD dont le côté [AB] a pour longueur\n8 cm et dont le périmètre est 27 cm.\nLes masses"
+    },
+    {
+      "id": "sc_f8b86bc6",
+      "objective_id": "obj_d94345ef",
+      "text": "Connaitre et utiliser les\nunités de masse du\nmilligramme au kilogramme\net la tonne, et les symboles\nassociés."
+    },
+    {
+      "id": "sc_b7fef8ec",
+      "objective_id": "obj_d94345ef",
+      "text": "Connaitre les relations\nentre les unités de masse."
+    },
+    {
+      "id": "sc_932a0413",
+      "objective_id": "obj_d94345ef",
+      "text": "Choisir une unité adaptée\npour exprimer une masse."
+    },
+    {
+      "id": "sc_8dbce264",
+      "objective_id": "obj_d94345ef",
+      "text": "Compar er des masses. L’élève connait les significations des préfixes kilo, hecto, déca, déci, centi et\nmilli et les relations entre le gramme, ses multiples et ses sous -multiples, en\nfaisant le lien avec les unités de numération du syst ème d écimal.\nL’élève conna it les relations décimales entre deux unités successives, par\nexemple : 1 kg = 10 hg et 1 hg = 1\n10 kg = 0,1 kg.\nL’élève connait les relations entre la tonne et le kilogramme.\nL’élève sait donner différentes écritures d’une même masse, par exemple :\n► 3 g + 5 cg = 305 cg = 3,05 g ;\n► 6,2 t = 6 200 kg ;\n► 2 100 mg = 2 000 mg + 100 mg = 2 g + 1 dg = 2,1 g ;\n► 1\n2 t = 0,5 t = 500 kg ;\n► 1\n4 kg = 0,25 kg = 250 g.\nL’élève sait convertir en gramme une masse donnée dans une autre unité,\nmultiple ou sous -multiple du g ramme, par exemple, 12,3 dag ou 41 dg.\nRéciproquement, l’élève sait convertir dans une unité donnée une masse\nexprimée en gramme.\nL’élève sait ranger dans l’ordre croissant trois masses dont les mesures sont\ndonnées dans des unités différentes, par exemple 0,33 t et 565 kg.\nL’élève sait calculer la somme ou la différence de deux masses qui ne sont pas\ndonnées dans la même unité, par exemple, 8,2 kg + 840 g."
+    },
+    {
+      "id": "sc_eb385c52",
+      "objective_id": "obj_d94345ef",
+      "text": "Disposer de quelques\nmasses de référence."
+    },
+    {
+      "id": "sc_427f7ab1",
+      "objective_id": "obj_d94345ef",
+      "text": "Estimer la masse d’un\nobjet. L’élève connait la masse de q uelques objets familiers qu’il utilise comme\nréférences pour estimer d’autres masses.\nLes contenances"
+    },
+    {
+      "id": "sc_9472d460",
+      "objective_id": "obj_7a401b1a",
+      "text": "Connaitre et utiliser les\nunités de contenance du L’élève sait identifier l’objet ayant la plus grande (ou la plus petite)\ncontenance parmi deux ou trois récipients, par des transvasements.\n16 millilitre à l’hectolitre et les\nsymboles associés."
+    },
+    {
+      "id": "sc_73ee73ea",
+      "objective_id": "obj_7a401b1a",
+      "text": "Connaitre les relations\nentre les unités de\ncontenance."
+    },
+    {
+      "id": "sc_aa5040c6",
+      "objective_id": "obj_7a401b1a",
+      "text": "Choisir une unité adaptée\npour exprimer une\ncontenance."
+    },
+    {
+      "id": "sc_198be519",
+      "objective_id": "obj_7a401b1a",
+      "text": "Comparer des\ncontenances. L’élève sait utiliser un verre gradué pour mesurer un volume de liquide ou\npréparer un liquide de volume donné.\nL’élève sait estimer la contenance d’un récipient de la vie courante : verre,\nbouteille, arrosoir.\nL’élève connait les signi fications des préfixes hecto, déca, déci, centi, milli et\nles relations entre le litre, ses multiples et ses sous -multiples, en faisant le lien\navec les unités de numération du syst ème d écimal.\nL’élève connait les relations décimales entre deux unités succ essives, par\nexemple : 1 cL = 10 mL et 1 mL = 1\n10 cL = 0,1 cL.\nL’élève sait convertir en litre une contenance donnée dans une autre unité ,\npar exemple, 23 dL, et, r éciproquement, il sait convertir, dans une unit é\ndonn ée, une contenance exprim ée en litre , par exemple, exprimer 6,4 L en\ncentilitre.\nL’élève sait ranger par ordre croissant jusqu’à quatre contenances\n(contenances éventuellement données dans des unités différentes allant du\nmillilitre à l’hectolitre).\nL’élève sait calculer la somme ou la diffé rence de deux contenances qui ne\nsont pas données dans la même unité en exprimant le résultat avec une seule\nunité, comme par exemple 1 L – 25 cL.\nLes aires"
+    },
+    {
+      "id": "sc_bcd8392b",
+      "objective_id": "obj_4c57d319",
+      "text": "Comparer les aires de\ndifférentes figures planes. L’élève sait comparer des aires sans avoir recours à la mesure, de façon\nperceptive lorsqu’elles sont clairement distinctes, par superposition ou par\ndécoupage et recollement de surfaces lorsque cela est nécessaire."
+    },
+    {
+      "id": "sc_d13c88ab",
+      "objective_id": "obj_4c57d319",
+      "text": "Déterminer des aires. L’élève sait dét erminer l’aire d’une surface à partir d’un pavage simple dans\nune unité fournie (carreau d’un quadrillage). L’élève sait déterminer l’aire\nd’une surface composée de carreaux entiers et de demi -carreaux.\nL’élève sait encadrer l’aire d’une surface quelconque en s’appuyant sur un\nquadrillage. Par exemple, il sait dire que l’aire de la figure ci -dessous est\ncomprise entre 18 carreaux et 36 carreaux en comptant les carreaux\ncomplets à l’intérieur de la surface et les carreaux complets permettant de\nrecouvrir tou te la surface.\nL’élève sait différencier le périmètre et l’aire d’une figure. Il sait, par exemple,\nque deux figures peuvent avoir la même aire, mais des périmètres différents."
+    },
+    {
+      "id": "sc_91217c15",
+      "objective_id": "obj_4c57d319",
+      "text": "Connaitre et utiliser les\ncentimètres carrés pour\nexprimer des aires. L’élèv e sait que le centimètre carré est une unité d’aire conventionnelle et\nque 1 cm² est l’aire d’un carré de 1 cm de c ôté.\nEn utilisant un quadrillage avec des carreaux d’un centimètre carré, l’élève\nsait déterminer l’aire d’une surface composée de carreaux e ntiers et de demi -\ncarreaux.\n17 Les angles"
+    },
+    {
+      "id": "sc_75c9387c",
+      "objective_id": "obj_e02e7f41",
+      "text": "Utiliser le lexique spécifique\nassocié aux angles."
+    },
+    {
+      "id": "sc_1c5f0924",
+      "objective_id": "obj_e02e7f41",
+      "text": "Comprendre et utiliser les\nnotations des angles. L’élève connait et utilise le lexique associé aux angles : sommet d e l’angle,\ncôtés de l’angle, angle droit, angle aigu, angle obtus.\nL’élève sait désigner un angle par une lettre minuscule, par exemple « l’angle\n𝑎̂ », ou par trois lettres majuscules, par exemple « l’angle 𝐴𝐵𝐶̂ », lorsque l’angle\nest défini par trois points, le point 𝐵 étant le sommet de l’angle et les demi -\ndroites [𝐵𝐴) et [𝐵𝐶) étant les côtés de l’angle, ou encore par une lettre\nmajuscul e correspondant au sommet de l’angle, « l’angle 𝐴̂ », lorsqu’il n’y a\npas d’ ambigüité ."
+    },
+    {
+      "id": "sc_c838883a",
+      "objective_id": "obj_e02e7f41",
+      "text": "Comparer des angles. Quand il n’y a aucun doute, l’élève sait dire qu’un angle donné n’est pas droit,\nest aigu ou est obtus, sans utiliser de matériel.\nQuand il n’y a aucun doute, l’élève sait dire qu’un angle donné est plus grand\nqu’un autre, sans utiliser de matériel.\nL’élève sait utiliser une équerre pour dire si un angle est aigu, droit ou obtus.\nL’élève sait comparer des angles en utilisant ou en fabriquant un gab arit\ncorrespondant à un angle donné.\nL’élève sait que la longueur des côtés n’intervient pas dans la comparaison\ndes angles, et en particulier qu’on ne modifie pas un angle en prolongeant ses\ncôtés.\nLe repérage dans le temps et les durées\nObjectifs d’app rentissage Exemples de réussite"
+    },
+    {
+      "id": "sc_ad3470ef",
+      "objective_id": "obj_e02e7f41",
+      "text": "Lire l’heure sur une horloge\nà aiguilles."
+    },
+    {
+      "id": "sc_6afbea6f",
+      "objective_id": "obj_e02e7f41",
+      "text": "Positionner les aiguilles\nd’une horloge\ncorrespondant à une heure\ndonnée en heure et\nminute. L’élève identifie les aiguilles d’une horloge : « petite aiguille » et « grande\naiguille ».\nL’élève lit l’heure sur un cadran à aiguilles ou sur un affichage digital (heure et\nminute).\nL’élève sait placer les aiguilles pour qu’une horloge indique une heure donnée\ncomme 9 h 25 min."
+    },
+    {
+      "id": "sc_cc240926",
+      "objective_id": "obj_e02e7f41",
+      "text": "Comparer et mesurer des\ndurées écoulées entre deux\ninstants a ffichés sur une\nhorloge (instants et durées\nsont exprimés en heure et\nminute). L’élève connait les unités de mesure de durée usuelles et leurs relations : jour,\nheure et minute.\nL’élève sait qu’une demi -heure est égale à 30 minutes, qu’un quart d’heure est\négal à 15 minutes et que trois -quarts d’heure est égal à 45 minutes.\nL’élève sait, par exemple, déterminer la durée qui s’écoule entre 8 h 52 min et\n11 h 37 min."
+    },
+    {
+      "id": "sc_02e936f6",
+      "objective_id": "obj_e02e7f41",
+      "text": "Résoudre des problèmes à\nune ou deux étapes\nimpliquant des durées. L’élève sait résoudre de s problèmes en une ou deux étapes, en exploitant des\nressources variées (horaires de transport, horaires de marées, programmes de\ncinéma ou de télévision, etc.).\nL’élève sait utiliser un axe chronologiquement orienté pour positionner des\ninstants ou représ enter une durée, exprimés en heure et minute. L’élève\neffectue les calculs mentalement, en introduisant si besoin des étapes et des\ninstants intermédiaires ; aucune connaissance d’un algorithme posé en base\nsoixante n’est attendue.\n18 ► Ismaël est sorti de chez lui à 7 h 47 min. Il est arriv é sur son lieu de travail\n8 h 16 min. Combien de temps Ismaël a -t-il mis pour se rendre à son travail ?\n► Lucie a mis 1 h 17 min pour parcourir la premi ère étape d ’une course\ncycliste. Elle a franchi la ligne d ’arriv ée à 12 h 10 min. À quelle heure est -elle\npartie ?\n► Le train est parti à 7 h 43. Il a mis 1 heure et 34 minutes pour arriver à la\npremi ère gare et il est arriv é à la deuxi ème gare 52 minutes plus tard.\nÀ quelle heure le train est -il arrivé dans la deuxième gare ?\nEspace et géométrie\nLa géométrie plane"
+    },
+    {
+      "id": "sc_6fb766b2",
+      "objective_id": "obj_63963640",
+      "text": "Utiliser le vocabulaire\ngéométrique approprié\ndans le contexte\nd’apprentissage des\nnotions correspondantes ."
+    },
+    {
+      "id": "sc_cc4df100",
+      "objective_id": "obj_63963640",
+      "text": "Utiliser les outils\ngéométriques usuels : règle,\nrègle gr aduée, équerre et\ncompas."
+    },
+    {
+      "id": "sc_da9dcf3f",
+      "objective_id": "obj_63963640",
+      "text": "Conna itre les codes usuels\nutilisés en géométrie. Dans le cadre des activités géométriques menées et de la résolution de\nproblèmes, l’élève utilise à bon escient le vocabulaire géométrique usuel :\n► point, droite, segment, demi -droite, milieu d ’un segment ;\n► droites sécantes ;\n► angle droit, angle aigu, angle obtus .\nL’élève conna it et utilise les codes apposés sur une figure pour indiquer des\nangles droits ou des longueurs égales."
+    },
+    {
+      "id": "sc_070c0ce3",
+      "objective_id": "obj_63963640",
+      "text": "Décrire et reconna itre un\ncercle et un disque comme\nun ensemble de points\ncaractérisés par leur\ndistance à un point donné. Dans le cadre des activités géométriques menées et de la résolution de\nproblèmes, l’élève utilise à bon escient le vocabulaire usuel relatif au cercle\net au disque : disque, cercle, centre , rayon, diamètre, corde et arc de cercle.\nL’élève sait que le cercle de centre A passant par le point B est l’ensemble\ndes points situés à la même distance de A que B.\nL’élève sait que le disque de centre A et de rayon 4 cm est l’ensemble des\npoints situé s à 4 cm au plus, du point A."
+    },
+    {
+      "id": "sc_90e63f97",
+      "objective_id": "obj_63963640",
+      "text": "Reconna itre et utiliser la\nnotion de perpendicularité. L’élève sait que deux droites qui se coupent en formant un angle droit\ns’appellent des droites perpendiculaires. Il sait que deux droites\nperpendiculaires se coupent en f ormant quatre angles droits.\nL’élève sait dire que deux droites ne sont pas perpendiculaires, sans utiliser\nd’équerre, lorsqu’il n’y a aucun doute.\nL’élève sait dire si deux droites sont perpendiculaires ou non en utilisant une\néquerre afin de vérifier si elles se coupent en formant un angle droit.\nL’élève sait utiliser une équerre pour tracer la droite perpendiculaire à une\ndroite donnée passant par un point donné\n19 • Reconna itre et utiliser la\nnotion de parallélisme. Dans le cadre des activités géométriques menées et de la résolution de\nproblèmes, l’élève utilise à bon escient le vocabulaire « droites sécantes » et\n« droites parallèles ».\nL’élève sait que deux droites sont parallèles si elles ne se coupent pas. Il sait\nque deux droites sont soit parallèles, s oit sécantes.\nL’élève sait dire que deux droites ne sont pas parallèles quand elles sont\nclairement sécantes, même si leur point d’intersection ne se situe pas sur la\nfeuille où elles sont tracées.\nL’élève sait que, si deux droites sont perpendiculaires à une même droite ,\nalors ces deux droites sont parallèles.\nL’élève sait utiliser une équerre pour tracer la droite parallèle à une droite\ndonnée passant par un point donné."
+    },
+    {
+      "id": "sc_104147fd",
+      "objective_id": "obj_63963640",
+      "text": "Reconna itre et nommer les\nfigures suivantes en faisant\nréférence à leur définition :\ntriangle, triangle rectangle,\ntriangle isocèle, triangle\néquilatéral, quadrilatère,\ncarré, rectangle et losange."
+    },
+    {
+      "id": "sc_a2904347",
+      "objective_id": "obj_63963640",
+      "text": "Conna itre les propriétés de\nparallélisme des côtés\nopposés, des égalités de\nlongueur s et d’angles pour\nles figures usuelles : triangle\nrectang le, triangle isocèle,\ntriangle équilatéral, carré,\nrectangle et losange. Dans le cadre des activités géométriques et de la résolution de problèmes,\nl’élève utilise à bon escient le vocabulaire géométrique usuel :\n► polygone, triangle, quadrilatère ;\n► triangle rectangle, triangle isocèle, triangle équilatéral ;\n► carré, rectangle, losange ;\n► côté, sommet, angle d’un polygone ;\n► diagonale (pour un quadrilatère) ;\n► longueur du rectangle, largeur du rectangle ;\nUn triangle rectangle, un triangle isocèle, un triangle éq uilatéral, un carré, un\nrectangle ou un losange lui étant donné, l’élève sait le nommer et justifier sa\nréponse en s’appuyant simultanément :\n► sur les propriétés de la figure qu’il prélève en utilisant ses outils (équerre,\ncompas et règle graduée) ou grâce au codage de la figure ;\n► sur les définitions des figures usuelles.\nPar exemple, l’élève sait dire « cette figure est un rectangle , car c’est un\nquadrilatère qui a quatre angles droits ».\nL’élève sait dire qu’une figure qui lui est donnée n’est pas d’une ce rtaine\nnature en s’appuyant sur les propriétés des figures planes. Par exemple, il sait\ndire « ce n’est pas un carré , car ses côtés n’ont pas tous la même longueur ;\nor un carré a quatre côtés de même longueur ».\nL’élève sait dire si chacun des angles d’un polygone est ou non un angle droit,\nen utilisant l’équerre si la réponse n’est pas évidente ou si la figure n’est pas\ncodée.\nL’élève sait dire si différents côtés d’un polygone sont de même longueur en\nutilisant un compas ou une règle graduée si la répons e n’est pas évidente ou\nsi la figure n’est pas codée."
+    },
+    {
+      "id": "sc_b240fec7",
+      "objective_id": "obj_63963640",
+      "text": "Reproduire ou construire\nun carré, un rectangle, un\ntriangle, un triangle\nrectangle ou un cercle ou\ndes assemblages de ces\nfigures sur tout support\n(papier quadrillé, pointé ou\nuni), avec une règle\ngraduée, une équerre ou un\ncompas. L’élève sait reproduire sur papier quadrillé des figures usuelles, à main levée\nou avec la règle, en utilisant le quadrillage.\nL’élève sait, par exemple, construire sur papier uni les figures suivantes :\n► un rectangle ABCD te l que le segment [AB] a pour longueur 7 cm et le\nsegment [BC] a pour longueur 3 cm ;\n► un carré KLMN dont les côtés ont pour longueur 8 cm et le cercle ayant\npour diamètre le segment [LM] ;\n► un triangle RST, rectangle en R, tel que RS = 10 cm et RT = 6 cm.\nL’élève indique sur les figures produites, à main levée ou avec la règle, les\ncodes pour les angles droits et des codes signalant les égalités de longueur s.\n20 • Construire une figure\ngéométrique composée de\nsegments, de droites, de\npolygones usuels et de\ncercle s. L’élève sait construire une figure à partir d’un programme de construction.\nCes instructions peuvent porter, par exemple, sur la construction de\nsegments ou de droites, de droites parallèles ou perpendiculaires à une\ndroite donnée et passant par un poin t donné, de cercles de centre donné et\npassant par un point donné ou ayant un rayon donné, de polygones usuels.\nPar exemple, l’élève sait construire la figure correspondant au programme de\nconstruction suivant : « Trace un rectangle ABCD tel que AB = 5 cm et BC = 3\ncm. Trace le cercle de centre A qui passe par le milieu du côté [AB]. ».\nL’élève sait construire une figure à partir d’un programme de construction en\nutilisant un logiciel de géométrie dynamique."
+    },
+    {
+      "id": "sc_b29a29a6",
+      "objective_id": "obj_63963640",
+      "text": "Reconna itre si une figure\npossède un ou plusieur s\naxes de symétrie."
+    },
+    {
+      "id": "sc_72d6954f",
+      "objective_id": "obj_63963640",
+      "text": "Compléter une figure pour\nla rendre symétrique par\nrapport à une droite\ndonnée, horizontale ou\nverticale. L’élève reconna it des figures ayant un ou plusieurs axes de symétrie. Il sait\nqu’il peut vérifier son affirmation par pliage.\nL’élève complète une figure sur une feuille quadrillée ou pointée pour la\nrendre symétrique par rapport à une droite verticale ou horizontale."
+    },
+    {
+      "id": "sc_e035636f",
+      "objective_id": "obj_63963640",
+      "text": "Construire, sur papier\nquadrillé, la figure\nsymétrique d’une figure\ndonnée par rapport à une\ndroite horizontale ou\nverticale. L’élève sait construire, sur papier quadrillé, le symétrique d’un point ou d’un\nsegment par rapport à une droite donnée, verticale ou horizontale, dans le\ncas où celle -ci ne coupe pas le segment.\nL’élève sait construire, sur papier quadrillé, la figure symétrique d ’un triangle\npar rapport à une droite donnée, verticale ou horizontale, dans le cas où\ncelle -ci ne coupe pas le triangle.\nL’élève vérifie qu’il a bien construit le symétrique attendu en pliant la feuille\nselon la droite.\nLes solides"
+    },
+    {
+      "id": "sc_436d46d6",
+      "objective_id": "obj_d6f5e661",
+      "text": "Nommer un cube, une\nboule, un pavé, un cône,\nune pyramide, un cylindre\net un prisme droit."
+    },
+    {
+      "id": "sc_1b53e866",
+      "objective_id": "obj_d6f5e661",
+      "text": "Décrire un cube, un pavé,\nune pyramide et un prisme\ndroit en faisant référence à\ndes propriétés et en\nutilisant le voca bulaire\napproprié."
+    },
+    {
+      "id": "sc_dab77ad3",
+      "objective_id": "obj_d6f5e661",
+      "text": "Conna itre le nombre et la\nnature des faces d’un cube\nou d’un pavé."
+    },
+    {
+      "id": "sc_5c903968",
+      "objective_id": "obj_d6f5e661",
+      "text": "Conna itre la nature des\nfaces d’une pyramide."
+    },
+    {
+      "id": "sc_5cf82ec7",
+      "objective_id": "obj_d6f5e661",
+      "text": "Conna itre la nature des\nfaces d’un prisme droit. Un ensemble de solides étant donné, l’élève sait dire lesquels sont des\npyramides, des boules, des cubes, des cylindres, des pavés, de s cônes ou des\nprismes droits.\nUn pavé, un cube, un prisme droit ou une pyramide lui étant donné, l’élève\nsait le nommer et justifier sa nature en indiquant le nombre et la nature de\nses faces (car rés, rectangles, triangles, autres polygones caractérisés par leur\nnombre de côtés) et le nombre de ses sommets et de ses arêtes.\nL’élève sait que les faces d’une pyramide sont des triangles ayant un sommet\ncommun (le sommet de la pyramide), à l’exception d’une face, appelée la\nbase de la pyramide, qui est un polygone ayant trois côtés ou plus.\nL’élève sait que les faces d’un prisme droit sont de deux types : d’une part les\n« bases du prisme droit » qui sont deux polygones superposables et d’autre\npart les « faces latérales du prisme droit » qui sont des rectangles.\nL’élève sait décrire un cube ou un pavé en utilisant les termes « face »,\n« carré », « rectangle », « sommet » et « arête ». Il sait décrire une pyramide en\nutilisant les termes « face », « base », « face latérale », « triangle », « sommet\nde la pyramide », « sommet » et « arête ». Il sait décrire un prisme droit en\nutilisant les termes « face », « base », « face latérale », « rectangle »,\n« sommet » et « arête ».\n21 À travers des activités telles qu e des recherches d’intrus, des jeux de Kim ou\ndes jeux du portrait, l’élève reconna it, décrit avec le vocabulaire approprié,\ncompare et nomme les solides.\nL’élève sait associer un polyèdre manipulé à différentes représentations :\nphotographies, représentat ions en perspective, etc."
+    },
+    {
+      "id": "sc_153c5f96",
+      "objective_id": "obj_d6f5e661",
+      "text": "Construire un cube, un\npavé, une pyramide ou un\nprisme droit. À partir d’un modèle en trois dimensions, d’une représentation plane ou\nd’une description, l’élève assemble les faces d’un cube, d’un pavé, d’une\npyramide ou d’un pr isme droit pour le construire en trois dimensions."
+    },
+    {
+      "id": "sc_d9536b11",
+      "objective_id": "obj_d6f5e661",
+      "text": "Reconna itre un patron d’un\ncube."
+    },
+    {
+      "id": "sc_9cbd610a",
+      "objective_id": "obj_d6f5e661",
+      "text": "Construire un patron d’un\ncube. L’élève sait dire si un assemblage de polygones donné est ou non un patron\nde cube. Il sait justifier sa réponse lorsqu’elle est négative.\nL’élève sait construire sur papier quadrillé un patron d’un cube d’une\nlongueur d’arête donnée.\nUn patron de cube lui étant fourni, l’élève sait identifier, en le manipulant\néventuellement, les paires de carrés qui représentent des faces opposées,\npar exem ple en coloriant les carrés sur le patron pour qu’ensuite les faces\nopposées du cube aient la même couleur.\nUne amorce d’un patron d’un cube lui étant fournie (avec du matériel\nmanipulable puis sur papier quadrillé), l’élève sait la compléter pour obtenir\nun patron de cube.\nLe repérage dans l’espace"
+    },
+    {
+      "id": "sc_aa6029e5",
+      "objective_id": "obj_a695f4bf",
+      "text": "Conna itre et utiliser le\nvocabulaire lié aux\ndéplacements. L’élève comprend et utilise le vocabulaire suivant :\n► avancer, reculer ;\n► tourner d’un quart de tour à gauche, pivoter d’un quart de tour à droite,\nfaire demi -tour."
+    },
+    {
+      "id": "sc_71754b22",
+      "objective_id": "obj_a695f4bf",
+      "text": "Comprendre, utiliser et\nproduire une suite\nd’instructions qui décrivent\nun déplacement en\nutilisant un vocabulaire\nspatial précis. L’élève sait représenter sur un quadrillage un déplacement cor respondant à\ndes instructions énoncées en langage naturel ou de manière codée.\nL’élève sait représenter sur le plan d’une ville un déplacement correspondant\nà des instructions énoncées en langage naturel comme : « Depuis la mairie, se\ndiriger au Nord et em prunter la rue Charles de Gaulle. Après avoir traversé la\nplace Victor Hugo, prendre la deuxième rue à droite. ».\nUn point de départ et un point d’arrivée étant fixés, l’élève sait décrire un\ndéplacement, sur un quadrillage ou sur un plan, sur papier ou su r écran, en\nproduisant des instructions en langage naturel ou de manière codée.\nSi un robot est disponible, l’élève sait programmer un déplacement que le\nrobot doit effectuer."
+    },
+    {
+      "id": "sc_ebd80441",
+      "objective_id": "obj_a695f4bf",
+      "text": "Résoudre des problèmes\nportant sur des\nassemblages de cubes. L’élève sait rés oudre des problèmes de dénombrement,\ncomme le suivant :\n« Combien de petits cubes y a -t-il dans le solide ci -\ncontre ? »\n22 Organisation et gestion de données et probabilités\nOrganisation et gestion de données"
+    },
+    {
+      "id": "sc_574bc24d",
+      "objective_id": "obj_29f69f90",
+      "text": "Recueillir des données et\nproduire un tableau, un\ndiagramme en barres ou un\nensemble de points dans\nun repère pour les\nprésenter."
+    },
+    {
+      "id": "sc_28b368bf",
+      "objective_id": "obj_29f69f90",
+      "text": "Lire et interpréter les\ndonnées d’un tableau à\nsimple ou double entrée,\nd’un diagramme en barres\nou d’une courbe. L’élève mène une enquête relative à la répartition d’un caractère dans une\npopulation (moyen de transport utilisé, sport pratiqué, etc.) ou effectue des\nrelevés expérimentaux pour étudier l’évolution d’une grandeur au cours du\ntemps (température, longueur, masse, etc. ).\nL’élève compile dans un tableau les données issues d’une enquête qu’il a menée\nou d’un document qui lui a été fourni. Pour représenter ces données, il produit\nun diagramme en barres ou, dans un repère, un ensemble de points\néventuellement reliés par une courbe . Pour graduer les axes des représentations\ngraphiques, l’élève dispose d’une échelle adaptée aux données.\nL’élève sait compléter un tableau à partir de données prélevées sur une\nreprésentation graphique.\nL’élève sait répondre à des questions comme les suivantes en utilisant le\ngraphique ci -dessous :\n► Quelle a été la hauteur des précipitations à Paris en juillet 2023 ?\n► En 2023, quels sont les mois pendant lesquels la hauteur des précipitations\na été inférieure à 10 mm à Marseille ?\n► En 2023, pendant qu el mois a -t-il plu le plus à Marseille ?\n► En 2023, pendant quel mois a -t-il plu le moins à Dzaoudzi ?\n► En 2023, quels sont les mois où il a plus plu à Dzaoudzi qu’à Paris ?\nL’élève sait utiliser une légende pour lire et interpréter un document avec\ndeux co urbes représentées dans le même repère."
+    },
+    {
+      "id": "sc_4db366ac",
+      "objective_id": "obj_29f69f90",
+      "text": "Résoudre des problèmes en\nune ou plusieurs étapes en\nutilisant les données d’un\ntableau à simple ou double\nentrée, d’un diagramme en\nbarres ou d’une courbe. L’élève sait résoudre des problèmes en une ou plusieurs étapes dont les\ndonnées sont disponibles dans un tableau ou sur une représentation\ngraphique (diagramme en barres, points dans un repère ou courbe). Par\nexemple, il sait résoudre des problèmes comme les suivants :\n► À l’école des Badamiers , il y a trois\nclasses de CM1. Les élèves sont\nrépartis comme indiqué sur le\ngraphique ci -contre.\nQuel est le nombre de garçons en\nCM1 à l’école des Badamiers ?\n23 ► Une enquête sur le principal moyen de transport utilisé par les élèves de\ncours moyen pour venir à l’école a été r éalisée à l’école du Centre. Voici\nles résultats :\nMoyen de transport Filles Garçons\nÀ pied 78 42\nÀ vélo 42 63\nEn voiture 28 32\nEn bus 85 77\nAlphonse dit que plus de la moitié des filles de cours moyen viennent à\nl’école à pied ou à vélo. A -t-il raison ?\nElsa dit que plus de la moitié des élèves de cours moyen viennent à l’école\nà pied ou à vélo. A -t-elle raison ?\nL’élève sait résoudre des problèmes en une étape dont les données sont à\nrecueillir à la fois dans un énoncé et sur une représentation gra phique,\ncomme le problème suivant :\n► Il y a 11 filles dans la classe CM1C. En utilisant le graphique ci -dessous,\ntrouve le nombre de garçons qu’il y a dans la classe CM1C.\nLes probabilités"
+    },
+    {
+      "id": "sc_8e5374ef",
+      "objective_id": "obj_58e24613",
+      "text": "Identifier des e xpériences\naléatoires."
+    },
+    {
+      "id": "sc_0bf29668",
+      "objective_id": "obj_58e24613",
+      "text": "Identifier toutes les issues\npossibles lors d’une\nexpérience aléatoire\nsimple. L’élève sait identifier toutes les issues possibles lors d’une expérience\naléatoire simple, comme le lancer d’un dé, le lancer d’une pièce ou le tirage\nd’une carte dans un jeu, sans en oublier et sans présenter la même issue\nplusieurs fois. Il sait ainsi dire combien il y a d’issues possibles."
+    },
+    {
+      "id": "sc_a363309a",
+      "objective_id": "obj_58e24613",
+      "text": "Comprendre et utiliser le\nvocabulaire approprié :\n« impossible », « possible »,\n« certain », « probable »,\n« peu p robable », « une\nchance sur deux »."
+    },
+    {
+      "id": "sc_73f2f5e2",
+      "objective_id": "obj_58e24613",
+      "text": "Comparer des issues\nd’expériences aléatoires ou\ndes évènement s selon leur\nprobabilité de réalisation. L’élève comprend que la réalisation de certains évènement s est plus ou moins\nprobable :\n► il comprend que certains évène ment s sont « impossibles », par exemple,\nlors du lancer d’un dé classique : « Je vais obtenir 7 » ;\n► il comprend que certains évènement s sont « certains », par exemple « En\nlançant ce d é, je vais obtenir un nombre inf érieur à 7. » ;\n► il comprend que certains évènement s sont probables sans être certains,\net, dans des cas non ambigus, il sait comparer leurs probabilités\nrespectives, par exemple, si la semaine à venir est une semaine pendant\nlaquelle il y a école, il sait que l’ évènement « Je verrai la ma itresse mardi. »\nest un évènement plus probable que « Je verrai la ma itresse dimanche. » ;\n► il comprend qu’il y a une différence entre des évènement s « probables » et\ndes évènement s « certains », par exemple « Je vais voir le ma itre mardi\nprochain. » est un évènem ent « probable » s’il y a école ce jour -là, mais qui\n24 n’est cependant pas « certain », car un imprévu comme une grippe\npourrait empêcher l’élève ou le ma itre de venir à l’école.\nL’élève sait classer des cartes décrivant différents évènement s en plusieurs\nfamilles : évènement s impossibles, évènement s certains, évènement s\npossibles , mais pas certains. Quand il n’y a pas d’ ambigüité , l’élève sait ranger\ntrois ou quatre de ces cartes par ordre de probabilité croissante.\nL’élève sait positionner la probabilité d’ un évènement , dans des cas simples,\nsur un segment comme le suivant.\nL’élève sait colorier, soit en vert, soit en rouge, chacune des billes d’un sac de\nfaçon à ce que la probabilité d’obtenir une bille verte en prenant au hasard,\nsans regarder, une bille dans ce sac corresponde à la croix sur le segment."
+    },
+    {
+      "id": "sc_5f66e35c",
+      "objective_id": "obj_58e24613",
+      "text": "Comprendre que ce n’est\npas parce qu’il y a deux\nissues possibles que\nchacune a une chance sur\ndeux de se réaliser."
+    },
+    {
+      "id": "sc_668ce9be",
+      "objective_id": "obj_58e24613",
+      "text": "Reconna itre des situations\nd’équiprobabilité. L’élève comprend que certains évènement s ont exactement la même\nprobabilité de se réaliser, par exemple en lançant un dé non truqué, il y a la\nmême probabilité, ou autant de chances, d’obtenir un « 6 » que d’obtenir un\n« 4 ».\nQuand il n’y a que deux issues possibles, l’élève fait la diff érence entre deux\névènement s qui ont la même probabilité de se réaliser et deux évènement s\nqui n’ont pas la même probabilité de se réaliser. Par exemple, il comprend\nqu’en lançant une pièce non truquée, il y a autant de chances d’obtenir\n« pile » que « face ». Il comprend aussi que demain, dans la commune où il\nhabite, soit « il pleuvra », soit « il ne pleuvra pas », mais que cela ne signifie pas\nque ces deux évènement s ont la même probabilité de se\nréaliser.\nL’élève sait dire que deux résultats sont possib les quand on\nfait tourner la roue représentée ci -contre : « Le résultat est la\ncouleur noire. » et « Le résultat est la couleur blanche. ».\nIl comprend qu’il y a plus de chances d’obtenir la couleur\nnoire que la couleur blanche, autrement dit, que\nl’évènem ent « J’obtiens la couleur noire » est plus probable que l’ évènement\n« J’obtiens la couleur blanche ». L’élève sait dire qu’il y a plus d’une chance sur\ndeux d’obtenir la couleur noire.\nDans le cas où deux issues sont possibles et ont la même chance de se\nréaliser, l’élève sait exprimer leur probabilité avec les expressions « autant de\nchance que » ou « une chance sur deux ».\n25 La proportionnalité"
+    },
+    {
+      "id": "sc_f3e1496f",
+      "objective_id": "obj_e075246a",
+      "text": "Identifier une situation de\nproportionnalité. Dans une situat ion faisant intervenir deux grandeurs, l’élève sait dire et\njustifier si celles -ci sont proportionnelles ou non. Il sait, par exemple,\nexpliquer que l’âge et la taille d’une personne ne sont pas proportionnels : « À\nquarante ans, on n’est pas deux fois plu s grand qu’à vingt ans. ». Il sait\négalement dire : « Ces manuels sont tous identiques, donc ils ont tous la\nmême masse. La masse d’une pile de manuels est donc proportionnelle au\nnombre de manuels : s’il y a trois fois plus de manuels dans la pile, alors elle\nest trois fois plus lourde. »."
+    },
+    {
+      "id": "sc_0e5c5a8b",
+      "objective_id": "obj_e075246a",
+      "text": "Savoir résoudre un\nproblème de\nproportionnalité. L’élève sait résoudre un problème faisant intervenir deux grandeurs\nproportionnelles, en utilisant une seule fois la propriété de la linéarité pour la\nmultiplication. Il sait par exemple résoudre les problèmes suivants.\n► Cinq manuels de mathématiques identiques pèsent 2 kg. Quelle est la\nmasse de quinze de ces manuels ?\n► Au marché, les cerises sont vendues « au poids ». J’ai achet é 400 g de\ncerises pour 7 euros. Quel est le prix de 200 g de cerises ?\n► Dix allumettes mises bout à bout ont pour longueur 50 cm. Combien\nd’allumettes faudrait -il mettre bout à bout pour obtenir 1 km ?\nL’élève sait justifier oralement ou par écrit sa procédure de résolution d’un\nproblème de proporti onnalité : par exemple, « Les cerises sont vendues « au\npoids » donc le prix payé est proportionnel à la masse achetée. Si j’achète\ndeux fois moins de cerises alors cela va couter deux fois moins cher. ».\nInitiation à la pensée informatique\nAu cycle 2, d ans la continuité du cycle 1, l’élève a déjà développé des raisonnements qui relèvent de la\npensée informatique. Dès le CP, l’élève a appris à réaliser un déplacement dans l’espace à partir d’un codage\nou à coder de tels déplacements, notamment pour progra mmer un robot se déplaçant sur un quadrillage ou\nun personnage se déplaçant dans un quadrillage sur un écran de tablette ou d’ordinateur. L’apprentissage des\nalgorithmes des opérations posées tout au long du cycle 2, contribue également à l’initiation à la pensée\ninformatique. À partir du CE1, l’élève a aussi appris à poursuivre des suites évolutives comme « 1, 2, 4, 7, 11, 16 ,\netc. » ou « 1, 2, 4, 8, 16 , etc. ».\nCes premiers apprentissages qui contribuent au développement de la pensée informatique se poursuivent a u\ncours moyen : algorithmes des opérations posées, programmes de constructions géométriques, programmes\nde calcul, suites évolutives. Ces éléments , abord és dans les autres domaines de ce programme, sont résumés\ndans les paragraphes ci -après.\nAu CM1 , l’élève continue d’utiliser et de produire des codages de déplacements en élargissant les\nenvironnements dans lesquels ces déplacements ont lieu (quartier, vil le, etc.). La programmation de robot est\négalement toujours envisagée lorsqu e l’école en est équipée.\nDans le cadre de l’initiation à la pensée algébrique, l’élève continue de travailler sur des suites évolutives qui\ns’appuient sur des algorithmes plus en plus complexes comme « 80 ; 85 ; 83 ; 88 ; 86 ; 91 ; 89 ; 94 ; 92, etc. » ou\n« 1 ; 2 ; 6 ; 7 ; 11 ; 12 ; 16 ; etc. » et il peut utiliser des logiciels de programmation par blocs ou un tableur pour\ndéterminer des termes éloignés. Il exécute également des pr ogrammes de calcul comme le suivant :\n- Choisir un nombre entier ;\n- ajouter 2 au nombre choisi ;\n- multiplier le résultat trouvé à l’étape précédente par 4 ;\n- écrire le nombre obtenu.\n26 Ces programmes peuvent aussi être codés avec un logiciel de programmation par bloc comme Scratch ou sur\nune feuille d’un tableur en faisant apparaitre les différentes étapes, de manière à vérifier les résultats obtenus.\nLa réalisation de figures géométriques s’appuyant sur des programmes de construction, comme « Trace un\nrectangle A BCD tel que AB = 5 cm et BC = 3 cm. Trace le cercle de centre A qui passe par le milieu du côté\n[AB]. » contribue également au développement de la pensée informatique ."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task_515436e0",
+      "success_criterion_id": "sc_f28542d9",
+      "type": "open",
+      "stem": "Savoir interp réter,\nreprésenter, écrire et lire des\nfractions. L’élève sait que sept quarts s’écrit mathématiquement 7\n4 . Il sait dire que 7\n4\nd’une unité correspond à sept fois un quart de cette unité. L’élève sait que\n 7\n4 u = 1\n4 u + 1\n4 u + 1\n4 u + 1\n4 u + 1\n4 u + 1\n4 u + 1",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_ee84b9f3",
+      "success_criterion_id": "sc_3ca72680",
+      "type": "open",
+      "stem": "Savoir écri re une fraction\nsupérieure à 1 comme la\nsomme d’un entier et d’une\nfraction inférieure à 1.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_cd52c121",
+      "success_criterion_id": "sc_aaa1fed0",
+      "type": "open",
+      "stem": "Savoir écrire la somme d’un\nentier et d’une fraction\ninférieure à 1 comme une\nunique fraction.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_69da0f28",
+      "success_criterion_id": "sc_8b51449b",
+      "type": "open",
+      "stem": "Savoir encadrer une fraction\npar deux nombres entiers\nconsécutifs. L’élève sait dire si une fraction est inférieure ou supérieure à 1.\nL’élève sait que 7\n4 d’une unité est égal à 1 unité plus 3\n4 d’une unité :\n7 × 1\n4 u = 7\n4 u = 4\n4 u + 3\n4 u = 1 u + 3\n4 u.\n4 L’élève comprend qu",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_1b9836af",
+      "success_criterion_id": "sc_8930cc1b",
+      "type": "open",
+      "stem": "Savoir placer une fraction ou\nla somme d’un nombre\nentier et d’une fraction\ninférieure à un sur une demi -\ndroite graduée.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_ae9b55db",
+      "success_criterion_id": "sc_7f036574",
+      "type": "open",
+      "stem": "Savoir repérer un point\nd’une demi -droite graduée\npar une fraction ou par la\nsomme d’un nombre entier\net d’une fraction. L’élève sait que , sur une demi -droite graduée avec une unité de longueur, un\npoint peut être repéré par le nombre, appelé l’abscisse de ce point, qui est\nla",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_fc8ff9bb",
+      "success_criterion_id": "sc_e1434c76",
+      "type": "open",
+      "stem": "Comparer des fractions. L’élève sait ex pliquer pourquoi 6\n8 est égal à 3\n4 , en s’appuyant\nsur des manipulations, sur des grandeurs (longueurs ou\naires) ou sur une verbalisation du type :\n► « Si je fais des parts deux fois plus petites et si je prends deux fois plus de\nparts, al",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_c865bb40",
+      "success_criterion_id": "sc_024eb553",
+      "type": "open",
+      "stem": "Additionner et soustraire des\nfractions. L’élève sait additionner et soustraire des fr actions ayant le même\ndénominateur.\nL’élève sait additionner et soustraire des fractions ayant des dénominateurs\ndifférents, dans le cas où l’un des dénominateurs est un multiple connu de\nl’aut",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_00658ee5",
+      "success_criterion_id": "sc_638b2c48",
+      "type": "open",
+      "stem": "Déterminer une fra ction\nd’une quantité ou d’une\ngrandeur. L’élève sait déterminer une fraction d’une quantité ou d’une grandeur dans\nle cas d’une fraction unitaire, c’est -à-dire dont le numérateur est égal à 1. Par\nexemple :\n► 1\n3 de douze œufs ;\n► 1\n10 de 500 g de farine ;\n► 1",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_a0f3e6ad",
+      "success_criterion_id": "sc_a8b98d2d",
+      "type": "open",
+      "stem": "Interpréter, représenter,\nécrire et lire des fractions\ndécimales.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_9ce6e709",
+      "success_criterion_id": "sc_51988853",
+      "type": "open",
+      "stem": "Conna itre et uti liser les\nrelations entre unités\nsimples, dixièmes et\ncentièmes.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_68d1d4ac",
+      "success_criterion_id": "sc_0fbf96a7",
+      "type": "open",
+      "stem": "Placer une fraction décimale\nsur une demi -droite graduée\net repérer un point d’une L’élève sait que 1 = 10\n10 = 100\n100 et 1\n10 = 10\n100.\nL’élève sait représenter la fraction 143\n100 par une grandeur (longueur ou aire), en\nutilisant du matériel tangible ou une représentation sur",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_c81d4ea5",
+      "success_criterion_id": "sc_04460610",
+      "type": "open",
+      "stem": "Écrire une fraction décimale\nsupérieure à 1 comme la\nsomme d’ un nombre entier\net d’une fraction décimale\ninférieure à 1.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_dcb0e5f4",
+      "success_criterion_id": "sc_ab0123b8",
+      "type": "open",
+      "stem": "Écrire une fraction décimale\nsupérieure à 1 comme la\nsomme d’un nombre entier\net de fractions décimales\nayant un numérateur\ninférieur à 10. L’élève sait passer d’une écriture à une autre pour les trois écri tures\nsuivantes du même nombre : 417\n100 ; 4 + 17\n100 ; 4 + 1\n10 + 7\n100.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_ca976a7c",
+      "success_criterion_id": "sc_cafc1c6e",
+      "type": "open",
+      "stem": "Comparer, encadrer,\nintercale r des fractions\ndécimales en utilisant les\nsymboles =, < et >.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_565aee99",
+      "success_criterion_id": "sc_d41a6b34",
+      "type": "open",
+      "stem": "Ordonner des fractions\ndécimales dans l’ordre\ncroissant ou décroissant. L’élève sait encadrer une fraction décimale par deux entiers consécutifs.\nL’élève sait comparer deux fractions décimales, par exemple 67\n10 et 607\n100.\nL’élève sait ranger par ordre croissant les quatre nombr",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_e6ccbc3b",
+      "success_criterion_id": "sc_b2acd9ba",
+      "type": "open",
+      "stem": "Passer d’une écriture sous\nforme d’une fraction\ndécimale ou d’une somme\nde fractions décimales à une\nécriture à virgule et\nréciproquement.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_49476c96",
+      "success_criterion_id": "sc_b872d5bc",
+      "type": "open",
+      "stem": "Interpréter, représenter,\nécrire et lire des nombres\ndécimaux (écritur e à virgule).",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_2f37b80e",
+      "success_criterion_id": "sc_b71468ef",
+      "type": "open",
+      "stem": "Placer un nombre décimal en\nécriture à virgule sur une\ndemi -droite graduée et\nrepérer un point d’une demi -\ndroite graduée par un\nnombre décimal.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_b380cfff",
+      "success_criterion_id": "sc_bd9d3ece",
+      "type": "open",
+      "stem": "Savoir donner la partie\nentière et l’arrondi à l’entier\nd’un nombre décimal. L’élève sait que , dans l’écriture à virgule d’un nombre, la virgule sert à\nrepérer le chiffre des unités. Il sait que le chiffre qui suit la virgule est le\nchiffre des dixièmes et le suivant le chiffre ",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_3d77cc0d",
+      "success_criterion_id": "sc_8042a4fe",
+      "type": "open",
+      "stem": "Comparer, encadrer,\nintercaler, ordonner par\nordre croissant ou\ndécroissant des nombres\ndécimaux donnés par leur\nécriture à virgule en utilisant\nles symboles =, < et >. L’élève sait comparer deux nombres décimaux, par exemple 4,52 et 4,7.\nL’élève sait encadrer 17,48 par deux enti",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_915de9a3",
+      "success_criterion_id": "sc_212b4773",
+      "type": "open",
+      "stem": "Conna itre des faits\nnumériques usuels relatifs\naux nombres entiers. L’élève renforce sa ma itrise des faits n umériques appris au cycle 2\nconcernant les nombres entiers.\nL’élève conna it les tables d’addition et de multiplication. Il sait compléter\ndes « égalit és à trou » du ty",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_3f680ea3",
+      "success_criterion_id": "sc_32bf1349",
+      "type": "open",
+      "stem": "Conna itre quelques relations\nentre des fractions usuelles. L’élève conna it des relations entre 1\n4 , 1\n2 et 1. Il sait ainsi co mpléter sans\neffectuer de calculs des « égalit és à trou » du type : 1\n2 + 1\n2 =… ; 1\n4 + 1\n4 = … ;\n1 - 1\n2 = … ; 1\n2 – 1\n4 = … ; 1\n2 = …\n4 ; …\n4 = 1.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_a89bb2ab",
+      "success_criterion_id": "sc_b67e73ed",
+      "type": "open",
+      "stem": "Conna itre l’écriture\ndécimale de f ractions\nusuelles. L’élève sait passer d’une écriture fractionnaire à une écriture décimale et\nd’une écriture décimale à une écriture fractionnaire pour les nombres\nsuivants : 1\n10 = 0,1 ; 1\n100 = 0,01.\n8 Utiliser ses connaissances en numératio",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_aede036d",
+      "success_criterion_id": "sc_77bcfe29",
+      "type": "open",
+      "stem": "Ajouter ou soustraire un\nnombre entier inférieur à 10 ,\nd’unités, de dizaines, de\ncentaines, de dixièmes ou de\ncentièmes à un nombre\ndécimal, lorsqu’il n’y a pas de\nretenue. À partir d’opér ations données à l’écrit, l’élève sait identifier le chiffre sur\nlequel agir lorsqu’il doi",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_18924b64",
+      "success_criterion_id": "sc_936c519a",
+      "type": "open",
+      "stem": "Multiplier un nombre entier\npar 10, 100 ou 1 000. L’élève sait que, lors d’une multiplication par 1 000, une unit é devient un\nmillier, une dizaine devient une dizaine de milliers et une centaine devient\nune centaine de milliers. Ainsi, chaque chiffre du nombre initial prend une\n",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_a069341c",
+      "success_criterion_id": "sc_c61074b9",
+      "type": "open",
+      "stem": "Multiplier un nombre\ndécimal par 10. L’élève sait que, lors de la multiplication d’un nombre décimal par 10, un\ndixième devient une unité, un centième devient un dixième et un millième\ndevient un centième. Ain si, chaque chiffre du nombre initial prend une\nvaleur 10 fois plus gra",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_09433004",
+      "success_criterion_id": "sc_b73546a3",
+      "type": "open",
+      "stem": "Diviser un nombre décimal\npar 10. L’élève sait que, lors d’une division par 10, une unité devient un dixième, une\ndizaine devient une unité et une centaine devient une dizaine. Ainsi, chaque\nchiffre du nombre initial prend une valeur 10 fois plus pe tite : le chiffre des\nunités d",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_7c40b59e",
+      "success_criterion_id": "sc_6662f8e7",
+      "type": "open",
+      "stem": "Ajouter ou soustraire 8, 9,\n18, 19, 28, 29, 38 ou 39 , à\nun nombre . L’élève sait, par exemple, que pour ajouter 38 à un nombre, il peut lui ajouter\n40, puis retrancher 2.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_585ce193",
+      "success_criterion_id": "sc_a5ca10bc",
+      "type": "open",
+      "stem": "Multiplier un nombre entier\ninférieur à 10 par un\nnombre entier de dizaines\nou de centaines. L’élève sait que, pour multiplier un nombre par un nombr e entier de\ncentaines comme 400, il peut décomposer le deuxième facteur sous la forme\n4 × 100, puis appliquer la procédure de mult",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_6949b450",
+      "success_criterion_id": "sc_7341af26",
+      "type": "open",
+      "stem": "Multiplier un nombre entier\npar 4 ou par 8. L’élève sait que multiplier par 4 revient à multiplier par 2 et encore par 2,\nc’est -à-dire à trouver le double du double du nombre initial.\nL’élève sait que multiplier par 8 = 2 × 2 × 2 revient à multiplier par 2, puis\nencore par 2 et ",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_ee7cb04f",
+      "success_criterion_id": "sc_97a77d33",
+      "type": "open",
+      "stem": "Multiplier un nombre entier\npar 5. L’élève sait que multiplier par 5 revient à multiplier par 10 puis à calculer la\nmoitié du résultat obtenu . Il utilise cette procédure pour multiplier par 5 un\nnombre inférieur à 200.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_925f19fa",
+      "success_criterion_id": "sc_d9468c07",
+      "type": "open",
+      "stem": "Utiliser la distributivité de la\nmultiplication par rapport\nà l’addition dans des cas\nsimples. L’élève sait verbaliser « 21 fois 35, c ’est 20 fois 35 plus 1 fois 35. ».\n21 × 35 = (20 + 1) × 35 = (20 × 35) + (1 × 35) = 700 + 35 = 735\nL’élève utilise aussi la décomposition dans l’",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_8bcb06e7",
+      "success_criterion_id": "sc_691a3944",
+      "type": "open",
+      "stem": "Estimer le résultat d’une\nopération. L’élève sait estimer le résultat d’une opération dans des cas simples. Par\nexemple, il sait dire que :\n► la somme 212 m + 298 m + 496 m est proche de 200 m + 300 m + 500 m,\nc’est -à-dire 1 000 m ;\n► la différence 1 494 – 203 est proche de 1 50",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_b69b6c41",
+      "success_criterion_id": "sc_cc4aa0b9",
+      "type": "open",
+      "stem": "Savoir effectuer un calcul\ncontenant des parenthèses. L’élève comprend que les parenthèses renseignent sur les opérations à\neffectuer en premi er. Dans des cas simples, l’élève sait effectuer un calcul en\nrespectant l’ordre des opérations indiqué par les parenthèses, par exemple ",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_f326246e",
+      "success_criterion_id": "sc_33060605",
+      "type": "open",
+      "stem": "Poser en colonnes et\neffectuer des additions et\ndes soustractions de\nnombres décimaux. L’élève compren d et utilise les mots usuels rencontrés dans le cadre des\nopérations (terme, somme, différence)\nL’élève sait effectuer des additions et des soustractions posées mettant en\njeu d",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_229cf5f4",
+      "success_criterion_id": "sc_89ae71a4",
+      "type": "open",
+      "stem": "Poser et effectuer des\nmultiplications d’un\nnombre décimal par un\nnombre entier inférieur à\n10. Dans le cadre de la résolution d’un problème, l’élève sait déterminer, en\nposant l’opération si nécessaire , le produit d’un nombre décimal par un\nentier inférieur à 10. Par exemple, i",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_fccac84e",
+      "success_criterion_id": "sc_c01a9047",
+      "type": "open",
+      "stem": "Poser et effectuer des\ndivision s euclidiennes avec\nun diviseur à un chiffre. L’élève comprend et utilise les mots usuels rencontrés dans le cadre des\nopérations (dividende, diviseur « Dans la division de 743 par 9, le nombre 743\nest le dividende et le nombre 9 est le diviseur. »",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_d39acf10",
+      "success_criterion_id": "sc_bbb30d37",
+      "type": "open",
+      "stem": "Résoudre des problèmes\nadditifs en une étape de s\ntypes « parties -tout » et\n« comparaison ». Dans la continuité de ce qui a été mené au cycle 2, l’élève résout des\nprobl èmes additifs en une étape en s ’appuyant, si n écessaire, sur des\nschémas en barre ou des schémas avec un dé",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_344a9f52",
+      "success_criterion_id": "sc_8cdcd1cd",
+      "type": "open",
+      "stem": "Résoudre des problèmes\nadditifs en deux ou trois\nétapes. L’élèv e continue de résoudre des problèmes additifs en plusieurs étapes ,\ncomme ceux rencontrés au cycle 2, mais le champ num érique sur lequel ils\nportent est plus étendu (grands entiers et nombres d écimaux), par exemple",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_8a1df2f9",
+      "success_criterion_id": "sc_f63e0b46",
+      "type": "open",
+      "stem": "Résoudre des problèmes\nmultiplicatifs de type\n« parties -tout » en une\nétape. L’élève contin ue de résoudre des problèmes multiplicatifs similaires à ceux\nrencontrés au cycle 2, mais dont le champ numérique est plus étendu.\nPour résoudre le problème « La ma itresse de CM1 a achet",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_362f6311",
+      "success_criterion_id": "sc_7d8845ce",
+      "type": "open",
+      "stem": "Résoudre des problèmes de\ncomparaison multiplicative. L’élève comprend le sens des locutions « fois plus » et « fois moins » et les\ndistingue des locutions « de plus » et « de moins » qui apparaissent dans les\nproblèmes de comparaison additive.\nL’élève sait résoudre des problèmes",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_1d2f9797",
+      "success_criterion_id": "sc_c05d2dda",
+      "type": "open",
+      "stem": "Résoudre des problèmes\nmixtes en deux ou trois\nétapes. L’élève sait résoudre des problèmes engageant des additions, des\nsoustractions, des multiplications et des divisions comme, par exemp le, le\nsuivant : Izmir ach ète trois pains aux raisins pesant chacun 210 grammes et\ndeux bo",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_bc6ca214",
+      "success_criterion_id": "sc_09075337",
+      "type": "open",
+      "stem": "Résoudre des problèmes de\ndénombrement. L’élève sait résoudre des prob lèmes consistant à déterminer le nombre\nd’éléments d’un ensemble et qui ne se résolvent pas immédiatement par\nl’une des quatre opérations. Pour y parvenir, il présente les éléments à\ndénombrer selon une organi",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_33fdb59d",
+      "success_criterion_id": "sc_81027c72",
+      "type": "open",
+      "stem": "Résoudre des problèmes\nd’optimisation. L’élève sait résoudre des problèmes consistant à trouver une solution\noptimale parmi plusieurs sol utions respectant plusieurs contraintes , comme\nles problèmes suivants.\n► Ilyes veut réaliser des bracelets. Pour un bracelet, il lui faut un ",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_2339c1cd",
+      "success_criterion_id": "sc_bde170ef",
+      "type": "open",
+      "stem": "Trouver le nombre\nmanquant dans une égalité\nà trou. Dans des cas simples, en utilisant ses connaissances en calcul et les propriétés\ndes opérations, l’élève sait trouver mentalement le nombre manquant dans\nune égalité comme les suivantes : 347 = 20 + … ; 5 760 – … = 5 360 ;\n4 000",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_4b8b70c6",
+      "success_criterion_id": "sc_ef1c9d5e",
+      "type": "open",
+      "stem": "Déterminer la valeur d’un\nnombre inconnu en\nutilisant un s ymbole ou une\nlettre pour le représenter. L’élève comprend que des nombres inconnus peuvent être représentés par\ndes symboles ou par des lettres.\nL’élève sait résoudre des problèmes où des nombres sont représentés par des",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_bcab74c3",
+      "success_criterion_id": "sc_15b6284c",
+      "type": "open",
+      "stem": "Exécuter un programme de\ncalcul. L’élève sait déterminer le résultat obtenu quand on applique à un nombre\ndonné, comme par exemple 5, un programme de calcul comme le suivant :\n► Choisir un nombre entier.\n► Ajouter 2 au nombre choisi.\n► Multiplier le résultat trouvé à l’étape préc",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_42618a01",
+      "success_criterion_id": "sc_819bc8ae",
+      "type": "open",
+      "stem": "Identifier et formuler une\nrègle de calcul pour\npoursuivre une suite de\nnombres. À partir des premiers termes d’une suite de nombres, l’élève sait identifier et\nformuler une règle expliquant comment la suite est construite, et la\npoursuivre en donnant les t rois termes suivants, ",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_9c9ca0d9",
+      "success_criterion_id": "sc_dce84bbf",
+      "type": "open",
+      "stem": "Identi fier des régularités et\npoursuivre une suite de\nmotifs évolutive. L’élève sait, par exemple, déterminer le nombre d’éléments des motifs que\nl’on trouvera aux trois étapes suivantes pour les suites dont les premiers\nmotifs sont :\n14\nL’élève sait dire com ment le nombre d’él",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_d553afca",
+      "success_criterion_id": "sc_e182c7b6",
+      "type": "open",
+      "stem": "Connaitre et utiliser les\nunités de longueur du\nmillimètre au kilomètre et\nles symboles asso ciés.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_5bbce1b2",
+      "success_criterion_id": "sc_6de39ec7",
+      "type": "open",
+      "stem": "Connaitre les relations\nentre les unités de\nlongueur.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_b5c1a095",
+      "success_criterion_id": "sc_7768fb76",
+      "type": "open",
+      "stem": "Choisir une unité adaptée\npour exprimer une\nlongueur.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_7c2a0b36",
+      "success_criterion_id": "sc_3bc75088",
+      "type": "open",
+      "stem": "Comparer des longueurs. L’élève connait les significations des préfixes kilo, hecto, déca, déci, centi et\nmilli, ainsi que les relations entre le mètre, ses multiples et ses sous -multiples,\nen faisant le lien avec les unités de numération du syst ème d écimal.\nL’élève connait le",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_b2d6c748",
+      "success_criterion_id": "sc_cad22c82",
+      "type": "open",
+      "stem": "Disposer de quelques\nlongueurs de référence.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_83adc6cb",
+      "success_criterion_id": "sc_e6f68196",
+      "type": "open",
+      "stem": "Estimer la longueur d’un\nobjet ou d’une distance. L’élève connait quelques longueurs d’objets familiers et quelques distances\nqu’il utilise comme référ ences pour estimer d’autres longueurs ou distances.\nPar exemple, l’élève peut savoir que la distance entre Paris et Lyon est\nd’e",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_468d6fbf",
+      "success_criterion_id": "sc_b3d6d5bd",
+      "type": "open",
+      "stem": "Déterminer le périmètre\nd’un polygone en utilisant\nune règle graduée.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_c74a6102",
+      "success_criterion_id": "sc_5c6d2667",
+      "type": "open",
+      "stem": "Résoudre des problèmes\nmettant en jeu les\nlongueurs des côtés d’un\npolygone et son périmètre. L’élève sait que le périmètre d’une figure plane est la longueur de son contour\net que, pour un polygone, c’est la somme des longueurs de ses côtés.\nL’élève sait reporter au compas les l",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_35d6ca79",
+      "success_criterion_id": "sc_f8b86bc6",
+      "type": "open",
+      "stem": "Connaitre et utiliser les\nunités de masse du\nmilligramme au kilogramme\net la tonne, et les symboles\nassociés.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_0c56f235",
+      "success_criterion_id": "sc_b7fef8ec",
+      "type": "open",
+      "stem": "Connaitre les relations\nentre les unités de masse.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_986fdada",
+      "success_criterion_id": "sc_932a0413",
+      "type": "open",
+      "stem": "Choisir une unité adaptée\npour exprimer une masse.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_a8ad9469",
+      "success_criterion_id": "sc_8dbce264",
+      "type": "open",
+      "stem": "Compar er des masses. L’élève connait les significations des préfixes kilo, hecto, déca, déci, centi et\nmilli et les relations entre le gramme, ses multiples et ses sous -multiples, en\nfaisant le lien avec les unités de numération du syst ème d écimal.\nL’élève conna it les relati",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_a80f1bbf",
+      "success_criterion_id": "sc_eb385c52",
+      "type": "open",
+      "stem": "Disposer de quelques\nmasses de référence.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_e8ae2b54",
+      "success_criterion_id": "sc_427f7ab1",
+      "type": "open",
+      "stem": "Estimer la masse d’un\nobjet. L’élève connait la masse de q uelques objets familiers qu’il utilise comme\nréférences pour estimer d’autres masses.\nLes contenances",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_683de5ce",
+      "success_criterion_id": "sc_9472d460",
+      "type": "open",
+      "stem": "Connaitre et utiliser les\nunités de contenance du L’élève sait identifier l’objet ayant la plus grande (ou la plus petite)\ncontenance parmi deux ou trois récipients, par des transvasements.\n16 millilitre à l’hectolitre et les\nsymboles associés.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_ef3823ac",
+      "success_criterion_id": "sc_73ee73ea",
+      "type": "open",
+      "stem": "Connaitre les relations\nentre les unités de\ncontenance.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_dc2cf38e",
+      "success_criterion_id": "sc_aa5040c6",
+      "type": "open",
+      "stem": "Choisir une unité adaptée\npour exprimer une\ncontenance.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_cb563b69",
+      "success_criterion_id": "sc_198be519",
+      "type": "open",
+      "stem": "Comparer des\ncontenances. L’élève sait utiliser un verre gradué pour mesurer un volume de liquide ou\npréparer un liquide de volume donné.\nL’élève sait estimer la contenance d’un récipient de la vie courante : verre,\nbouteille, arrosoir.\nL’élève connait les signi fications des pré",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_7676a199",
+      "success_criterion_id": "sc_bcd8392b",
+      "type": "open",
+      "stem": "Comparer les aires de\ndifférentes figures planes. L’élève sait comparer des aires sans avoir recours à la mesure, de façon\nperceptive lorsqu’elles sont clairement distinctes, par superposition ou par\ndécoupage et recollement de surfaces lorsque cela est nécessaire.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_9baca696",
+      "success_criterion_id": "sc_d13c88ab",
+      "type": "open",
+      "stem": "Déterminer des aires. L’élève sait dét erminer l’aire d’une surface à partir d’un pavage simple dans\nune unité fournie (carreau d’un quadrillage). L’élève sait déterminer l’aire\nd’une surface composée de carreaux entiers et de demi -carreaux.\nL’élève sait encadrer l’aire d’une su",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_08f15765",
+      "success_criterion_id": "sc_91217c15",
+      "type": "open",
+      "stem": "Connaitre et utiliser les\ncentimètres carrés pour\nexprimer des aires. L’élèv e sait que le centimètre carré est une unité d’aire conventionnelle et\nque 1 cm² est l’aire d’un carré de 1 cm de c ôté.\nEn utilisant un quadrillage avec des carreaux d’un centimètre carré, l’élève\nsait ",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_66eab40e",
+      "success_criterion_id": "sc_75c9387c",
+      "type": "open",
+      "stem": "Utiliser le lexique spécifique\nassocié aux angles.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_c041845f",
+      "success_criterion_id": "sc_1c5f0924",
+      "type": "open",
+      "stem": "Comprendre et utiliser les\nnotations des angles. L’élève connait et utilise le lexique associé aux angles : sommet d e l’angle,\ncôtés de l’angle, angle droit, angle aigu, angle obtus.\nL’élève sait désigner un angle par une lettre minuscule, par exemple « l’angle\n𝑎̂ », ou par troi",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_4648cde9",
+      "success_criterion_id": "sc_c838883a",
+      "type": "open",
+      "stem": "Comparer des angles. Quand il n’y a aucun doute, l’élève sait dire qu’un angle donné n’est pas droit,\nest aigu ou est obtus, sans utiliser de matériel.\nQuand il n’y a aucun doute, l’élève sait dire qu’un angle donné est plus grand\nqu’un autre, sans utiliser de matériel.\nL’élève s",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_ad0443eb",
+      "success_criterion_id": "sc_ad3470ef",
+      "type": "open",
+      "stem": "Lire l’heure sur une horloge\nà aiguilles.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_284d6a6d",
+      "success_criterion_id": "sc_6afbea6f",
+      "type": "open",
+      "stem": "Positionner les aiguilles\nd’une horloge\ncorrespondant à une heure\ndonnée en heure et\nminute. L’élève identifie les aiguilles d’une horloge : « petite aiguille » et « grande\naiguille ».\nL’élève lit l’heure sur un cadran à aiguilles ou sur un affichage digital (heure et\nminute).\nL’",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_1b58cf5b",
+      "success_criterion_id": "sc_cc240926",
+      "type": "open",
+      "stem": "Comparer et mesurer des\ndurées écoulées entre deux\ninstants a ffichés sur une\nhorloge (instants et durées\nsont exprimés en heure et\nminute). L’élève connait les unités de mesure de durée usuelles et leurs relations : jour,\nheure et minute.\nL’élève sait qu’une demi -heure est égal",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_5318bbc3",
+      "success_criterion_id": "sc_02e936f6",
+      "type": "open",
+      "stem": "Résoudre des problèmes à\nune ou deux étapes\nimpliquant des durées. L’élève sait résoudre de s problèmes en une ou deux étapes, en exploitant des\nressources variées (horaires de transport, horaires de marées, programmes de\ncinéma ou de télévision, etc.).\nL’élève sait utiliser un a",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_a81a4dbd",
+      "success_criterion_id": "sc_6fb766b2",
+      "type": "open",
+      "stem": "Utiliser le vocabulaire\ngéométrique approprié\ndans le contexte\nd’apprentissage des\nnotions correspondantes .",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_7e142e47",
+      "success_criterion_id": "sc_cc4df100",
+      "type": "open",
+      "stem": "Utiliser les outils\ngéométriques usuels : règle,\nrègle gr aduée, équerre et\ncompas.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_3b73248f",
+      "success_criterion_id": "sc_da9dcf3f",
+      "type": "open",
+      "stem": "Conna itre les codes usuels\nutilisés en géométrie. Dans le cadre des activités géométriques menées et de la résolution de\nproblèmes, l’élève utilise à bon escient le vocabulaire géométrique usuel :\n► point, droite, segment, demi -droite, milieu d ’un segment ;\n► droites sécantes ",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_8d5dded7",
+      "success_criterion_id": "sc_070c0ce3",
+      "type": "open",
+      "stem": "Décrire et reconna itre un\ncercle et un disque comme\nun ensemble de points\ncaractérisés par leur\ndistance à un point donné. Dans le cadre des activités géométriques menées et de la résolution de\nproblèmes, l’élève utilise à bon escient le vocabulaire usuel relatif au cercle\net au",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_442a1d06",
+      "success_criterion_id": "sc_90e63f97",
+      "type": "open",
+      "stem": "Reconna itre et utiliser la\nnotion de perpendicularité. L’élève sait que deux droites qui se coupent en formant un angle droit\ns’appellent des droites perpendiculaires. Il sait que deux droites\nperpendiculaires se coupent en f ormant quatre angles droits.\nL’élève sait dire que de",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_f79bd04f",
+      "success_criterion_id": "sc_104147fd",
+      "type": "open",
+      "stem": "Reconna itre et nommer les\nfigures suivantes en faisant\nréférence à leur définition :\ntriangle, triangle rectangle,\ntriangle isocèle, triangle\néquilatéral, quadrilatère,\ncarré, rectangle et losange.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_1a0fffda",
+      "success_criterion_id": "sc_a2904347",
+      "type": "open",
+      "stem": "Conna itre les propriétés de\nparallélisme des côtés\nopposés, des égalités de\nlongueur s et d’angles pour\nles figures usuelles : triangle\nrectang le, triangle isocèle,\ntriangle équilatéral, carré,\nrectangle et losange. Dans le cadre des activités géométriques et de la résolution d",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_f76bd85e",
+      "success_criterion_id": "sc_b240fec7",
+      "type": "open",
+      "stem": "Reproduire ou construire\nun carré, un rectangle, un\ntriangle, un triangle\nrectangle ou un cercle ou\ndes assemblages de ces\nfigures sur tout support\n(papier quadrillé, pointé ou\nuni), avec une règle\ngraduée, une équerre ou un\ncompas. L’élève sait reproduire sur papier quadrillé de",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_a4e2656e",
+      "success_criterion_id": "sc_b29a29a6",
+      "type": "open",
+      "stem": "Reconna itre si une figure\npossède un ou plusieur s\naxes de symétrie.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_f8fd43c2",
+      "success_criterion_id": "sc_72d6954f",
+      "type": "open",
+      "stem": "Compléter une figure pour\nla rendre symétrique par\nrapport à une droite\ndonnée, horizontale ou\nverticale. L’élève reconna it des figures ayant un ou plusieurs axes de symétrie. Il sait\nqu’il peut vérifier son affirmation par pliage.\nL’élève complète une figure sur une feuille qua",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_35e15051",
+      "success_criterion_id": "sc_e035636f",
+      "type": "open",
+      "stem": "Construire, sur papier\nquadrillé, la figure\nsymétrique d’une figure\ndonnée par rapport à une\ndroite horizontale ou\nverticale. L’élève sait construire, sur papier quadrillé, le symétrique d’un point ou d’un\nsegment par rapport à une droite donnée, verticale ou horizontale, dans le",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_5da837cd",
+      "success_criterion_id": "sc_436d46d6",
+      "type": "open",
+      "stem": "Nommer un cube, une\nboule, un pavé, un cône,\nune pyramide, un cylindre\net un prisme droit.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_c6c04963",
+      "success_criterion_id": "sc_1b53e866",
+      "type": "open",
+      "stem": "Décrire un cube, un pavé,\nune pyramide et un prisme\ndroit en faisant référence à\ndes propriétés et en\nutilisant le voca bulaire\napproprié.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_3c44b6b0",
+      "success_criterion_id": "sc_dab77ad3",
+      "type": "open",
+      "stem": "Conna itre le nombre et la\nnature des faces d’un cube\nou d’un pavé.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_db81a2de",
+      "success_criterion_id": "sc_5c903968",
+      "type": "open",
+      "stem": "Conna itre la nature des\nfaces d’une pyramide.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_e3810ec1",
+      "success_criterion_id": "sc_5cf82ec7",
+      "type": "open",
+      "stem": "Conna itre la nature des\nfaces d’un prisme droit. Un ensemble de solides étant donné, l’élève sait dire lesquels sont des\npyramides, des boules, des cubes, des cylindres, des pavés, de s cônes ou des\nprismes droits.\nUn pavé, un cube, un prisme droit ou une pyramide lui étant donn",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_78aa4704",
+      "success_criterion_id": "sc_153c5f96",
+      "type": "open",
+      "stem": "Construire un cube, un\npavé, une pyramide ou un\nprisme droit. À partir d’un modèle en trois dimensions, d’une représentation plane ou\nd’une description, l’élève assemble les faces d’un cube, d’un pavé, d’une\npyramide ou d’un pr isme droit pour le construire en trois dimensions.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_3237422d",
+      "success_criterion_id": "sc_d9536b11",
+      "type": "open",
+      "stem": "Reconna itre un patron d’un\ncube.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_b5444978",
+      "success_criterion_id": "sc_9cbd610a",
+      "type": "open",
+      "stem": "Construire un patron d’un\ncube. L’élève sait dire si un assemblage de polygones donné est ou non un patron\nde cube. Il sait justifier sa réponse lorsqu’elle est négative.\nL’élève sait construire sur papier quadrillé un patron d’un cube d’une\nlongueur d’arête donnée.\nUn patron de ",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_43a79b54",
+      "success_criterion_id": "sc_aa6029e5",
+      "type": "open",
+      "stem": "Conna itre et utiliser le\nvocabulaire lié aux\ndéplacements. L’élève comprend et utilise le vocabulaire suivant :\n► avancer, reculer ;\n► tourner d’un quart de tour à gauche, pivoter d’un quart de tour à droite,\nfaire demi -tour.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_805fc62d",
+      "success_criterion_id": "sc_71754b22",
+      "type": "open",
+      "stem": "Comprendre, utiliser et\nproduire une suite\nd’instructions qui décrivent\nun déplacement en\nutilisant un vocabulaire\nspatial précis. L’élève sait représenter sur un quadrillage un déplacement cor respondant à\ndes instructions énoncées en langage naturel ou de manière codée.\nL’élève",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_c2878212",
+      "success_criterion_id": "sc_ebd80441",
+      "type": "open",
+      "stem": "Résoudre des problèmes\nportant sur des\nassemblages de cubes. L’élève sait rés oudre des problèmes de dénombrement,\ncomme le suivant :\n« Combien de petits cubes y a -t-il dans le solide ci -\ncontre ? »\n22 Organisation et gestion de données et probabilités\nOrganisation et gestion d",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_c4ab29fe",
+      "success_criterion_id": "sc_574bc24d",
+      "type": "open",
+      "stem": "Recueillir des données et\nproduire un tableau, un\ndiagramme en barres ou un\nensemble de points dans\nun repère pour les\nprésenter.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_96b9daf2",
+      "success_criterion_id": "sc_28b368bf",
+      "type": "open",
+      "stem": "Lire et interpréter les\ndonnées d’un tableau à\nsimple ou double entrée,\nd’un diagramme en barres\nou d’une courbe. L’élève mène une enquête relative à la répartition d’un caractère dans une\npopulation (moyen de transport utilisé, sport pratiqué, etc.) ou effectue des\nrelevés expér",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_0813a212",
+      "success_criterion_id": "sc_4db366ac",
+      "type": "open",
+      "stem": "Résoudre des problèmes en\nune ou plusieurs étapes en\nutilisant les données d’un\ntableau à simple ou double\nentrée, d’un diagramme en\nbarres ou d’une courbe. L’élève sait résoudre des problèmes en une ou plusieurs étapes dont les\ndonnées sont disponibles dans un tableau ou sur une",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_a5ae0c60",
+      "success_criterion_id": "sc_8e5374ef",
+      "type": "open",
+      "stem": "Identifier des e xpériences\naléatoires.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_bc16788d",
+      "success_criterion_id": "sc_0bf29668",
+      "type": "open",
+      "stem": "Identifier toutes les issues\npossibles lors d’une\nexpérience aléatoire\nsimple. L’élève sait identifier toutes les issues possibles lors d’une expérience\naléatoire simple, comme le lancer d’un dé, le lancer d’une pièce ou le tirage\nd’une carte dans un jeu, sans en oublier et sans ",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_f8ef4061",
+      "success_criterion_id": "sc_a363309a",
+      "type": "open",
+      "stem": "Comprendre et utiliser le\nvocabulaire approprié :\n« impossible », « possible »,\n« certain », « probable »,\n« peu p robable », « une\nchance sur deux ».",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_2d9d1f8f",
+      "success_criterion_id": "sc_73f2f5e2",
+      "type": "open",
+      "stem": "Comparer des issues\nd’expériences aléatoires ou\ndes évènement s selon leur\nprobabilité de réalisation. L’élève comprend que la réalisation de certains évènement s est plus ou moins\nprobable :\n► il comprend que certains évène ment s sont « impossibles », par exemple,\nlors du lance",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_6c11c1c3",
+      "success_criterion_id": "sc_5f66e35c",
+      "type": "open",
+      "stem": "Comprendre que ce n’est\npas parce qu’il y a deux\nissues possibles que\nchacune a une chance sur\ndeux de se réaliser.",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_1ee03d5f",
+      "success_criterion_id": "sc_668ce9be",
+      "type": "open",
+      "stem": "Reconna itre des situations\nd’équiprobabilité. L’élève comprend que certains évènement s ont exactement la même\nprobabilité de se réaliser, par exemple en lançant un dé non truqué, il y a la\nmême probabilité, ou autant de chances, d’obtenir un « 6 » que d’obtenir un\n« 4 ».\nQuand ",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_a15fdb83",
+      "success_criterion_id": "sc_f3e1496f",
+      "type": "open",
+      "stem": "Identifier une situation de\nproportionnalité. Dans une situat ion faisant intervenir deux grandeurs, l’élève sait dire et\njustifier si celles -ci sont proportionnelles ou non. Il sait, par exemple,\nexpliquer que l’âge et la taille d’une personne ne sont pas proportionnels : « À\nq",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    },
+    {
+      "id": "task_defec837",
+      "success_criterion_id": "sc_0e5c5a8b",
+      "type": "open",
+      "stem": "Savoir résoudre un\nproblème de\nproportionnalité. L’élève sait résoudre un problème faisant intervenir deux grandeurs\nproportionnelles, en utilisant une seule fois la propriété de la linéarité pour la\nmultiplication. Il sait par exemple résoudre les problèmes suivants.\n► Cinq manu",
+      "solution": "",
+      "rubric": "Correct if student performance matches the described success criteria."
+    }
+  ],
+  "units": [
+    {
+      "id": "unit_e3691fec",
+      "level": "CM1",
+      "domain": "Nombres et calculs",
+      "subdomain": "Fractions",
+      "title": "Fractions - Unité 1",
+      "duration_weeks": 1
+    },
+    {
+      "id": "unit_8bb0664e",
+      "level": "CM1",
+      "domain": "Nombres et calculs",
+      "subdomain": "Nombres décimaux",
+      "title": "Nombres décimaux - Unité 1",
+      "duration_weeks": 1
+    },
+    {
+      "id": "unit_8ba8bc2c",
+      "level": "CM1",
+      "domain": "Organisation et gestion de données",
+      "subdomain": "Données",
+      "title": "Données - Unité 1",
+      "duration_weeks": 1
+    }
+  ],
+  "lessons": [
+    {
+      "id": "lesson_2b7bceb4",
+      "unit_id": "unit_e3691fec",
+      "title": "Fractions A",
+      "objective_ids": "[\"obj_523ade8b\"]",
+      "success_criterion_ids": "[\"sc_f28542d9\", \"sc_3ca72680\", \"sc_aaa1fed0\", \"sc_8b51449b\", \"sc_8930cc1b\", \"sc_7f036574\", \"sc_e1434c76\", \"sc_024eb553\", \"sc_638b2c48\"]",
+      "materials": "",
+      "teacher_talk": "",
+      "student_worksheet": "",
+      "misconceptions": ""
+    },
+    {
+      "id": "lesson_34343a16",
+      "unit_id": "unit_8bb0664e",
+      "title": "Décimaux A",
+      "objective_ids": "[\"obj_91c718c2\"]",
+      "success_criterion_ids": "[\"sc_a8b98d2d\", \"sc_51988853\", \"sc_0fbf96a7\", \"sc_04460610\", \"sc_ab0123b8\", \"sc_cafc1c6e\", \"sc_d41a6b34\", \"sc_b2acd9ba\", \"sc_b872d5bc\", \"sc_b71468ef\", \"sc_bd9d3ece\", \"sc_8042a4fe\"]",
+      "materials": "",
+      "teacher_talk": "",
+      "student_worksheet": "",
+      "misconceptions": ""
+    },
+    {
+      "id": "lesson_fb26a09a",
+      "unit_id": "unit_8ba8bc2c",
+      "title": "Données A",
+      "objective_ids": "[\"obj_29f69f90\"]",
+      "success_criterion_ids": "[\"sc_574bc24d\", \"sc_28b368bf\", \"sc_4db366ac\"]",
+      "materials": "",
+      "teacher_talk": "",
+      "student_worksheet": "",
+      "misconceptions": ""
+    }
+  ]
+}

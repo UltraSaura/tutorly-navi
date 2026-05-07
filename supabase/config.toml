@@ -9,6 +9,9 @@ verify_jwt = true
 verify_jwt = true
 [functions.create-child-account]
 verify_jwt = true
+
+[functions.create-student-account]
+verify_jwt = false
 [functions.export-guardian-report]
 verify_jwt = true
 [functions.quiz-bank-visible]
@@ -18,7 +21,7 @@ verify_jwt = false
 [functions.quiz-bank-attempt]
 verify_jwt = true
 [functions.import-curriculum-bundle]
-verify_jwt = true
+verify_jwt = false
 [functions.recommendations]
 verify_jwt = true
 
@@ -31,5 +34,17 @@ verify_jwt = true
 [functions.class-students]
 verify_jwt = true
 
+[functions.subject-icon-upload]
+verify_jwt = true
+
 [functions.generate-lesson-content]
+verify_jwt = true
+
+[functions.suggest-topic-objectives]
+verify_jwt = true
+
+[functions.generate-quiz-from-transcripts]
+verify_jwt = true
+
+[functions.generate-quiz-from-topics]
 verify_jwt = true

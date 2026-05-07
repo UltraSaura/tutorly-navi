@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Wifi, WifiOff, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { testAIServiceConnection, getNetworkDiagnostics, ConnectionTestResult } from '@/utils/connectionTest';
 import { toast } from 'sonner';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const ConnectionDiagnostics = () => {
   const [testing, setTesting] = useState(false);
@@ -61,6 +62,7 @@ const ConnectionDiagnostics = () => {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Diagnostics" description="Inspect connectivity and integration health." />
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Connection Diagnostics</h2>

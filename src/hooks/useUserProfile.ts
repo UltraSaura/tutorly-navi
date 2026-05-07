@@ -21,7 +21,7 @@ export const useUserProfile = () => {
       const userProfile: UserProfile = {
         firstName: user.user_metadata?.first_name || '',
         lastName: user.user_metadata?.last_name || '',
-        email: user.email || '',
+        email: (user.user_metadata?.actual_email as string | undefined) || user.email || '',
         phoneNumber: user.user_metadata?.phone_number || '',
         country: user.user_metadata?.country || '',
         userType: user.user_metadata?.user_type || 'student',

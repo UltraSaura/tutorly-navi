@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { ChildOverviewCard } from '@/components/guardian/ChildOverviewCard';
 import { RecentActivityFeed } from '@/components/guardian/RecentActivityFeed';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageMeta } from '@/components/seo/PageMeta';
 export default function GuardianHome() {
   const {
     guardianId
@@ -29,6 +30,7 @@ export default function GuardianHome() {
       </div>;
   }
   return <div className="space-y-8">
+      <PageMeta title="Guardian Home" description="Monitor your children's learning progress and recent activity at a glance." />
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Welcome to Your Guardian Portal</h1>
@@ -38,7 +40,54 @@ export default function GuardianHome() {
       </div>
 
       {/* Summary Cards */}
-      
+      {aggregatedStats.totalChildren > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="rounded-lg bg-blue-500/10 p-3">
+                <Users className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Active Children</p>
+                <p className="text-2xl font-bold">{aggregatedStats.activeChildren}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="rounded-lg bg-green-500/10 p-3">
+                <BookOpen className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Exercises This Week</p>
+                <p className="text-2xl font-bold">{aggregatedStats.exercisesThisWeek}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="rounded-lg bg-cyan-500/10 p-3">
+                <TrendingUp className="h-5 w-5 text-cyan-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Quizzes This Week</p>
+                <p className="text-2xl font-bold">{aggregatedStats.quizAttemptsThisWeek}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="rounded-lg bg-amber-500/10 p-3">
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Need Attention</p>
+                <p className="text-2xl font-bold">{aggregatedStats.needsAttentionCount}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Getting Started */}
       {aggregatedStats.totalChildren === 0 ? <Card className="border-primary/50">

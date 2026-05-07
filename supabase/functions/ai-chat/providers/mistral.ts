@@ -5,13 +5,16 @@ export async function callMistral(
   history: any[], 
   userMessage: string, 
   model: string, 
-  isExercise: boolean = false
+  isExercise: boolean = false,
+  maxTokens: number = 800
 ): Promise<string> {
   const mistralApiKey = Deno.env.get('MISTRAL_API_KEY');
   
   if (!mistralApiKey) {
     throw new Error('Mistral AI API key not configured');
   }
+  
+  console.log(`[Mistral] Calling with model: ${model}, maxTokens: ${maxTokens}`);
   
   const messages = [
     systemMessage,
@@ -34,7 +37,7 @@ export async function callMistral(
       model: model,
       messages: messages,
       temperature: 0.7,
-      max_tokens: 800,
+      max_tokens: maxTokens,
     })
   });
   

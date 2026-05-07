@@ -3,6 +3,43 @@ import { supabase } from '@/integrations/supabase/client';
 import { PromptTemplate, NewPromptTemplate, SubjectPromptAssignment } from '@/types/admin';
 import { toast } from 'sonner';
 
+type SupabasePromptError = {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
+};
+
+const promptTemplateErrorMessage = (error: unknown, action: 'add' | 'update' | 'activate' | 'delete' | 'load' | 'assign') => {
+  const supabaseError = error as SupabasePromptError;
+  const message = supabaseError?.message || '';
+  const details = supabaseError?.details || '';
+  const combined = `${message} ${details}`.toLowerCase();
+
+  if (supabaseError?.code === '23514' || combined.includes('prompt_templates_usage_type_check')) {
+    return 'Database migration missing: grouped_retry_practice is not allowed yet. Apply the latest Supabase migrations, then try again.';
+  }
+
+  if (supabaseError?.code === '23505') {
+    return 'A prompt template with this name already exists. Edit the existing template or use a different name.';
+  }
+
+  if (supabaseError?.code === '42501' || combined.includes('row-level security') || combined.includes('permission denied')) {
+    return 'You do not have permission to manage prompt templates. Sign in as an admin and try again.';
+  }
+
+  const fallbackByAction = {
+    add: 'Failed to add template',
+    update: 'Failed to update template',
+    activate: 'Failed to update active prompt',
+    delete: 'Failed to delete template',
+    load: 'Failed to load prompt templates',
+    assign: 'Failed to assign template',
+  };
+
+  return message ? `${fallbackByAction[action]}: ${message}` : fallbackByAction[action];
+};
+
 export const usePromptManagement = () => {
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [assignments, setAssignments] = useState<SubjectPromptAssignment[]>([]);
@@ -24,7 +61,7 @@ export const usePromptManagement = () => {
         ...template,
         created_at: new Date(template.created_at),
         updated_at: new Date(template.updated_at),
-        usage_type: template.usage_type as 'chat' | 'grading' | 'explanation' | 'math_enhanced',
+        usage_type: template.usage_type as 'chat' | 'grading' | 'explanation' | 'math_enhanced' | 'grouped_retry_practice',
         tags: template.tags || [],
         is_active: template.is_active || false,
         auto_activate: template.auto_activate || false,
@@ -36,7 +73,7 @@ export const usePromptManagement = () => {
       setTemplates(formattedTemplates);
     } catch (error) {
       console.error('Error fetching templates:', error);
-      toast.error('Failed to load prompt templates');
+      toast.error(promptTemplateErrorMessage(error, 'load'));
     } finally {
       setLoading(false);
     }
@@ -111,7 +148,7 @@ export const usePromptManagement = () => {
       toast.success('Active prompt updated');
     } catch (error) {
       console.error('Error setting active template:', error);
-      toast.error('Failed to update active prompt');
+      toast.error(promptTemplateErrorMessage(error, 'activate'));
     }
   };
 
@@ -126,9 +163,11 @@ export const usePromptManagement = () => {
 
       await fetchTemplates();
       toast.success('Template added successfully');
+      return true;
     } catch (error) {
       console.error('Error adding template:', error);
-      toast.error('Failed to add template');
+      toast.error(promptTemplateErrorMessage(error, 'add'));
+      return false;
     }
   };
 
@@ -153,7 +192,7 @@ export const usePromptManagement = () => {
       toast.success('Template updated successfully');
     } catch (error) {
       console.error('Error updating template:', error);
-      toast.error('Failed to update template');
+      toast.error(promptTemplateErrorMessage(error, 'update'));
     }
   };
 
@@ -171,7 +210,7 @@ export const usePromptManagement = () => {
       toast.success('Template deleted successfully');
     } catch (error) {
       console.error('Error deleting template:', error);
-      toast.error('Failed to delete template');
+      toast.error(promptTemplateErrorMessage(error, 'delete'));
     }
   };
 
@@ -184,7 +223,7 @@ export const usePromptManagement = () => {
       );
 
       // Group by usage type and activate highest priority
-      const usageTypes = ['chat', 'grading', 'explanation', 'math_enhanced'];
+      const usageTypes = ['chat', 'grading', 'explanation', 'math_enhanced', 'grouped_retry_practice'];
       
       for (const usageType of usageTypes) {
         const typeTemplates = subjectTemplates.filter(t => t.usage_type === usageType);
@@ -216,7 +255,7 @@ export const usePromptManagement = () => {
       toast.success('Template assigned to subject');
     } catch (error) {
       console.error('Error assigning template:', error);
-      toast.error('Failed to assign template');
+      toast.error(promptTemplateErrorMessage(error, 'assign'));
     }
   };
 

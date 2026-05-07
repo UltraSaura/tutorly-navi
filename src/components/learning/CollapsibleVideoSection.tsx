@@ -131,6 +131,7 @@ export const CollapsibleVideoSection = ({
                       ))}
                     </div>
                   )}
+
                 </div>
               );
             })}

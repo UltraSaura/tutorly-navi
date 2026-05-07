@@ -2,12 +2,14 @@ import React from 'react';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HeaderNavigation } from '@/components/layout/HeaderNavigation';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const GeneralChatPage: React.FC = () => {
   const { language } = useLanguage();
 
   return (
     <div className="flex min-h-screen w-full bg-gradient-to-b from-blue-50 to-white dark:from-gray-950 dark:to-gray-900">
+      <PageMeta title="Ask Stuwy" description="Chat with Stuwy's AI tutor about any math topic, anytime." />
       <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] dark:[mask-image:linear-gradient(180deg,rgba(255,255,255,0.1),rgba(255,255,255,0))] pointer-events-none"></div>
       
       <div className="flex flex-col flex-1 relative">

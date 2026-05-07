@@ -63,7 +63,11 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body: CreateChildRequest = await req.json();
-    const { username, password, firstName, lastName, email, country, phoneNumber, schoolLevel, relation } = body;
+    const { username, password, firstName, lastName, email, country: rawCountry, phoneNumber, schoolLevel: rawSchoolLevel, relation } = body;
+
+    // Normalize curriculum codes to lowercase for consistent matching with content data
+    const country = rawCountry?.toLowerCase() || undefined;
+    const schoolLevel = rawSchoolLevel?.toLowerCase() || undefined;
 
     // Validate required fields
     if (!username || !password || !firstName || !schoolLevel || !relation) {
@@ -74,31 +78,103 @@ Deno.serve(async (req) => {
     const authEmail = `${username}@child.local`;
 
     // Create auth user with username
+    const userMetadata = {
+      first_name: firstName,
+      last_name: lastName || '',
+      user_type: 'student',
+      username: username,
+      country: country || null,
+      phone_number: phoneNumber || null,
+      actual_email: email || null,
+    };
+
+    let childUserId: string;
+
     const { data: authData, error: authCreateError } = await supabaseAdmin.auth.admin.createUser({
       email: authEmail,
       password,
-      email_confirm: true,  // Auto-confirm since using placeholder email
-      user_metadata: {
-        first_name: firstName,
-        last_name: lastName || '',
-        user_type: 'student',
-        username: username,
-        country: country || null,
-        phone_number: phoneNumber || null,
-        actual_email: email || null,  // Store real email separately if provided
-      },
+      email_confirm: true,
+      user_metadata: userMetadata,
     });
 
-    if (authCreateError || !authData.user) {
-      console.error('Auth creation error:', authCreateError);
-      throw new Error(`Failed to create auth account: ${authCreateError?.message}`);
-    }
+    if (authCreateError) {
+      // Handle case where auth user already exists (e.g. child was deleted and re-created)
+      const isEmailExists = authCreateError.message?.toLowerCase().includes('already been registered') ||
+        authCreateError.message?.toLowerCase().includes('email_exists') ||
+        (authCreateError as any).code === 'email_exists';
 
-    const childUserId = authData.user.id;
+      if (!isEmailExists) {
+        console.error('Auth creation error:', authCreateError);
+        throw new Error(`Failed to create auth account: ${authCreateError.message}`);
+      }
+
+      console.log('Auth user already exists for', authEmail, '— attempting to reuse');
+
+      // Look up existing user by email
+      const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+      if (listError) throw new Error(`Failed to list users: ${listError.message}`);
+
+      const existingUser = listData.users.find((u: any) => u.email === authEmail);
+      if (!existingUser) {
+        throw new Error('User reportedly exists but could not be found');
+      }
+
+      // Check if this user is already an active child linked to ANOTHER guardian
+      const { data: activeLinks } = await supabaseAdmin
+        .from('guardian_child_links')
+        .select('guardian_id, child_id')
+        .eq('child_id', (await supabaseAdmin.from('children').select('id').eq('user_id', existingUser.id).maybeSingle()).data?.id || '00000000-0000-0000-0000-000000000000');
+
+      if (activeLinks && activeLinks.length > 0) {
+        // Check if any link belongs to a different guardian
+        const { data: currentGuardian } = await supabaseAdmin
+          .from('guardians')
+          .select('id')
+          .eq('user_id', user!.id)
+          .single();
+
+        const otherGuardianLink = activeLinks.find((l: any) => l.guardian_id !== currentGuardian?.id);
+        if (otherGuardianLink) {
+          throw new Error('This username is already linked to another guardian');
+        }
+      }
+
+      // Update the existing auth user's metadata and password
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+        password,
+        user_metadata: userMetadata,
+      });
+
+      if (updateError) {
+        console.error('Auth update error:', updateError);
+        throw new Error(`Failed to update existing auth account: ${updateError.message}`);
+      }
+
+      childUserId = existingUser.id;
+    } else if (!authData.user) {
+      throw new Error('Failed to create auth account: no user returned');
+    } else {
+      childUserId = authData.user.id;
+    }
 
     // The users table will be populated by the trigger (handle_new_user)
     // Wait a moment for the trigger to complete
     await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Update users row with curriculum fields (trigger doesn't set these)
+    const { error: userUpdateError } = await supabaseAdmin
+      .from('users')
+      .update({
+        curriculum_country_code: country || null,
+        curriculum_level_code: schoolLevel || null,
+        country: country || null,
+        level: schoolLevel || null,
+      })
+      .eq('id', childUserId);
+
+    if (userUpdateError) {
+      console.error('User curriculum update error:', userUpdateError);
+    }
 
     // Check if child profile already exists (idempotent creation)
     const { data: existingChild } = await supabaseAdmin
@@ -109,7 +185,16 @@ Deno.serve(async (req) => {
 
     let childData;
     if (existingChild) {
-      // Child already exists, reuse it
+      // Child already exists, update curriculum fields
+      await supabaseAdmin
+        .from('children')
+        .update({
+          curriculum_country_code: country || null,
+          curriculum_level_code: schoolLevel || null,
+          grade: schoolLevel,
+          curriculum: country || null,
+        })
+        .eq('id', existingChild.id);
       childData = existingChild;
     } else {
       // Create child profile with optional email
@@ -119,15 +204,16 @@ Deno.serve(async (req) => {
           user_id: childUserId,
           grade: schoolLevel,
           curriculum: country || null,
+          curriculum_country_code: country || null,
+          curriculum_level_code: schoolLevel || null,
           status: 'active',
-          contact_email: email || null,  // Use actual email if provided
+          contact_email: email || null,
         })
         .select()
         .single();
 
       if (childError || !newChildData) {
         console.error('Child creation error:', childError);
-        // Cleanup: delete auth user if child creation fails
         await supabaseAdmin.auth.admin.deleteUser(childUserId);
         throw new Error(`Failed to create child profile: ${childError?.message}`);
       }
@@ -177,7 +263,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
+        error: (error as Error).message,
       }),
       {
         status: 400,

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Sparkles } from 'lucide-react';
@@ -19,6 +20,7 @@ export function NextStepsRecommendations({
   currentTopicId,
   currentSubdomainId,
 }: NextStepsRecommendationsProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: recommendations = [], isLoading } = useTopicNextSteps(
     currentTopicId,
@@ -51,7 +53,7 @@ export function NextStepsRecommendations({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-purple-500" />
-          What to do after this topic
+          {t('topic.whatToDoAfter')}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -68,11 +70,14 @@ export function NextStepsRecommendations({
                     <h4 className="font-medium mb-1">{topic.topic_name}</h4>
                     {topic.subdomain_id && (
                       <Badge variant="outline" className="mb-2 text-xs">
-                        Same area
+                        {t('topic.sameArea')}
                       </Badge>
                     )}
                     <p className="text-sm text-muted-foreground">
-                      You have mastered {topic.mastered_objectives} of {topic.total_objectives} objectives
+                      {t('topic.masteredObjectives', { 
+                        mastered: topic.mastered_objectives, 
+                        total: topic.total_objectives 
+                      })}
                     </p>
                   </div>
                   <ArrowRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />

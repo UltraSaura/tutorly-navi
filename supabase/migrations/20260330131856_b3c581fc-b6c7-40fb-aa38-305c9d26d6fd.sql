@@ -1,0 +1,4 @@
+UPDATE public.users SET curriculum_country_code = lower(curriculum_country_code) WHERE curriculum_country_code IS NOT NULL AND curriculum_country_code != lower(curriculum_country_code);
+UPDATE public.users SET curriculum_level_code = lower(curriculum_level_code) WHERE curriculum_level_code IS NOT NULL AND curriculum_level_code != lower(curriculum_level_code);
+UPDATE public.children SET curriculum_country_code = lower(curriculum_country_code) WHERE curriculum_country_code IS NOT NULL AND curriculum_country_code != lower(curriculum_country_code);
+UPDATE public.children SET curriculum_level_code = lower(curriculum_level_code) WHERE curriculum_level_code IS NOT NULL AND curriculum_level_code != lower(curriculum_level_code);

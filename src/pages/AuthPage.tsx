@@ -14,6 +14,7 @@ import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 type AuthStep = 'login' | 'userType' | 'studentForm' | 'parentForm' | 'resetPassword';
 
@@ -126,28 +127,43 @@ const AuthPage: React.FC = () => {
   const handleStudentRegistration = async (data: StudentRegistrationData) => {
     setLoading(true);
     try {
-      const { error } = await signUp(data.email, data.password, {
-        user_type: 'student',
-        first_name: data.firstName,
-        last_name: data.lastName,
-        country: data.country,
-        phone_number: data.phoneNumber,
-        level: data.schoolLevel,
+      const { data: result, error: fnError } = await supabase.functions.invoke('create-student-account', {
+        body: {
+          username: data.username,
+          password: data.password,
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          country: data.country,
+          phoneNumber: data.phoneNumber,
+          schoolLevel: data.schoolLevel,
+        },
       });
 
-      if (error) {
+      const payload = result as { success?: boolean; error?: string } | null;
+      if (fnError && !payload?.error) {
         toast({
           title: t('auth.registrationError'),
-          description: error.message,
+          description: fnError.message,
           variant: 'destructive',
         });
-      } else {
-        toast({
-          title: t('auth.registrationSuccess'),
-          description: t('auth.checkEmail'),
-        });
-        setStep('login');
+        return;
       }
+
+      if (!payload?.success) {
+        toast({
+          title: t('auth.registrationError'),
+          description: payload?.error || fnError?.message || t('auth.genericError'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: t('auth.registrationSuccess'),
+        description: t('auth.registrationSuccessStudent'),
+      });
+      setStep('login');
     } catch (error) {
       toast({
         title: t('auth.registrationError'),
@@ -229,6 +245,7 @@ const AuthPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex items-center justify-center p-4">
+        <PageMeta title="Sign In" description="Sign in or create an account to access your Stuwy student, guardian, or teacher dashboard." />
         <div className="w-full max-w-4xl">
         {step === 'login' && (
           <div className="space-y-6">

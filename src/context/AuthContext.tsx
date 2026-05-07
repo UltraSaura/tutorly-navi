@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
 
 interface AuthContextType {
   user: User | null;
@@ -30,35 +29,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { i18n } = useTranslation();
+  
 
-  // Move the language detection logic to useCallback to avoid hook order issues
-  const detectLanguageFromUser = useCallback((user: User) => {
-    if (user?.user_metadata?.country && i18n?.changeLanguage) {
-      const country = user.user_metadata.country;
-      
-      // Map countries to languages
-      const countryLanguageMap: Record<string, string> = {
-        'FR': 'fr', 'CA': 'fr', 'BE': 'fr', 'CH': 'fr', 'LU': 'fr',
-        'MC': 'fr', 'SN': 'fr', 'CI': 'fr', 'ML': 'fr', 'BF': 'fr',
-        // ... add more French-speaking countries
-      };
-
-      const detectedLanguage = countryLanguageMap[country] || 'en';
-      
-      // Only change language if it's different and user hasn't manually set it
-      if (detectedLanguage !== i18n.resolvedLanguage && 
-          localStorage.getItem('languageManuallySet') !== 'true') {
-        
-        console.log(`Auto-detecting language ${detectedLanguage} from country ${country}`);
-        try {
-          i18n.changeLanguage(detectedLanguage);
-        } catch (error) {
-          console.warn('Failed to change language:', error);
-        }
-      }
-    }
-  }, [i18n]);
+  // Language detection is handled by SimpleLanguageContext.
+  // AuthContext no longer duplicates this to avoid drift between i18next and SimpleLanguageContext.
+  const detectLanguageFromUser = useCallback((_user: User) => {
+    // no-op – SimpleLanguageContext reads users.country directly
+  }, []);
 
   useEffect(() => {
     // Set up auth state listener
@@ -104,16 +81,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       return { error };
     } else {
-      // Username login: try with constructed child email (username@child.local)
-      const { error } = await supabase.auth.signInWithPassword({
-        email: `${emailOrUsername}@child.local`,
+      const normalized = emailOrUsername.trim().toLowerCase();
+      const tryStudent = await supabase.auth.signInWithPassword({
+        email: `${normalized}@student.local`,
         password,
       });
-      
-      if (error) {
-        return { error: new Error('Invalid username or password') };
+      if (!tryStudent.error) {
+        return { error: null };
       }
-      return { error: null };
+      const tryChild = await supabase.auth.signInWithPassword({
+        email: `${normalized}@child.local`,
+        password,
+      });
+      if (!tryChild.error) {
+        return { error: null };
+      }
+      return { error: new Error('Invalid username or password') };
     }
   };
 

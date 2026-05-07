@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { usePromptManagement } from '@/hooks/usePromptManagement';
 import { Loader2, Plus, Settings } from 'lucide-react';
 import SystemPromptConfigNew from './SystemPromptConfigNew';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 const PromptManagement = () => {
   const { templates, loading } = usePromptManagement();
@@ -22,6 +23,7 @@ const PromptManagement = () => {
 
   return (
     <div className="space-y-6">
+      <PageMeta title="Prompts" description="Edit and version AI system prompts." />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Prompt Management</h2>
@@ -43,8 +45,8 @@ const PromptManagement = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              {['chat', 'grading'].map((type) => {
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              {['chat', 'grading', 'explanation', 'grouped_retry_practice'].map((type) => {
                 const typeTemplates = templates.filter(t => t.usage_type === type);
                 const activeCount = typeTemplates.filter(t => t.is_active).length;
                 

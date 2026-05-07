@@ -174,3 +174,19 @@ export function filterContentByUserLevel<T extends {
     return isContentSuitableForUser(item, userLevel, userAge);
   });
 }
+
+/**
+ * Filters content by age/level only (no language filtering).
+ * Use this when language selection happens separately (e.g. variant selection).
+ */
+export function filterContentByAgeAndLevel<T extends { 
+  min_age?: number | null; 
+  max_age?: number | null; 
+  school_levels?: string[] | null;
+}>(
+  content: T[],
+  userLevel: string | null,
+  userAge?: number | null
+): T[] {
+  return content.filter(item => isContentSuitableForUser(item, userLevel, userAge));
+}

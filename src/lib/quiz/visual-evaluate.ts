@@ -24,6 +24,13 @@ export function evaluateVisual(visual: VisualUnion, answer: unknown): boolean {
   switch (visual.subtype) {
     case "pie": {
       const v = visual as VisualPie;
+      if (v.interactionMode === "color_slices") {
+        const selectedArray = Array.isArray(answer) ? (answer as string[]) : [];
+        if (v.correctColoredCount != null) {
+          return selectedArray.length === v.correctColoredCount;
+        }
+        return false;
+      }
       // Multiple pie charts - student selects correct pie(s)
       const selectedArray = Array.isArray(answer) ? (answer as string[]) : [];
       const selected = new Set<string>(selectedArray);

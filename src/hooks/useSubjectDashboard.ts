@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserCurriculumProfile } from './useUserCurriculumProfile';
+import { useAdminAuth } from './useAdminAuth';
 import type { Subject, Category, Topic } from '@/types/learning';
 
 interface SubjectDashboardData {
@@ -15,15 +16,16 @@ interface SubjectDashboardData {
 
 export function useSubjectDashboard(subjectSlug: string) {
   const { profile } = useUserCurriculumProfile();
+  const { isAdmin } = useAdminAuth();
   
   return useQuery({
-    queryKey: ['subject-dashboard', subjectSlug],
+    queryKey: ['subject-dashboard', subjectSlug, isAdmin],
     queryFn: async (): Promise<SubjectDashboardData> => {
       const { data: { user } } = await supabase.auth.getUser();
 
       // Get subject
       const { data: subject, error: subjectError } = await (supabase as any)
-        .from('learning_subjects')
+        .from('subjects')
         .select('*')
         .eq('slug', subjectSlug)
         .eq('is_active', true)
@@ -36,14 +38,14 @@ export function useSubjectDashboard(subjectSlug: string) {
         .from('learning_categories')
         .select(`
           *,
-          topics:learning_topics!inner(*)
+          topics:topics!inner(*)
         `)
         .eq('subject_id', (subject as any).id)
         .eq('is_active', true)
         .eq('topics.is_active', true);
 
-      // Add curriculum filters if profile exists
-      if (profile?.countryCode && profile?.levelCode) {
+      // Add curriculum filters if profile exists (skip for admin to see all content)
+      if (!isAdmin && profile?.countryCode && profile?.levelCode) {
         topicsQuery = topicsQuery
           .eq('topics.curriculum_country_code', profile.countryCode)
           .eq('topics.curriculum_level_code', profile.levelCode);
@@ -61,7 +63,7 @@ export function useSubjectDashboard(subjectSlug: string) {
             const topicsWithProgress = await Promise.all(
               (category.topics || []).map(async (topic: any) => {
                 const { data: videos } = await (supabase as any)
-                  .from('learning_videos')
+                  .from('videos')
                   .select('id')
                   .eq('topic_id', topic.id)
                   .eq('is_active', true);

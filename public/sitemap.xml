@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Stuwy public sitemap.
+  Only the landing page and the auth entry point are publicly crawlable today.
+  All other routes (/chat, /learning/*, /guardian/*, /teacher/*, /admin/*, /management)
+  are behind authentication and intentionally excluded.
+  Add new public marketing/blog/pricing pages here as they ship.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://stuwy.com/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://stuwy.com/auth</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>

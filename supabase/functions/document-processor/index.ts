@@ -22,7 +22,7 @@ serve(async (req) => {
   }
 
   try {
-    const { fileData, fileType, fileName, subjectId } = await req.json();
+    const { fileData, fileType, fileName, subjectId, mode, rowPrompt, problemContext } = await req.json();
     
     if (!fileData) {
       throw new Error("File data is required");
@@ -31,7 +31,11 @@ serve(async (req) => {
     console.log(`Processing document: ${fileName} (${fileType})`);
     
     // Process the document using the documentService
-    const result = await processDocument(fileData, fileType, fileName, subjectId);
+    const result = await processDocument(fileData, fileType, fileName, subjectId, {
+      mode,
+      rowPrompt,
+      problemContext,
+    });
     
     // Return the processed result
     return new Response(JSON.stringify(result), {

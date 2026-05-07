@@ -65,6 +65,7 @@ export const ManualChildCreationTrigger: React.FC = () => {
           firstName: child.firstName,
           lastName: '',
           email: child.email || null,
+          country: child.country || null,
           schoolLevel: child.schoolLevel,
           relation: 'parent'
         };

@@ -14,6 +14,11 @@ interface ChildOverview {
   lastActiveDate?: string;
 }
 
+interface LinkedChildUser {
+  first_name?: string | null;
+  last_name?: string | null;
+}
+
 interface ActivityItem {
   id: string;
   childName: string;
@@ -83,6 +88,30 @@ export function useGuardianHomeData(guardianId?: string) {
     enabled: !!guardianId && !!childrenData,
   });
 
+  const { data: quizData, isLoading: quizLoading } = useQuery({
+    queryKey: ['guardian-quiz-attempts-home', guardianId, childrenData],
+    staleTime: 30000,
+    queryFn: async () => {
+      if (!guardianId || !childrenData) return [];
+
+      const childUserIds = childrenData
+        .map(link => link.children?.user_id)
+        .filter(Boolean);
+
+      if (childUserIds.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from('quiz_bank_attempts')
+        .select('*')
+        .in('user_id', childUserIds)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!guardianId && !!childrenData,
+  });
+
   // Real-time subscription for new exercise history
   useEffect(() => {
     if (!guardianId || !childrenData || childrenData.length === 0) return;
@@ -93,22 +122,35 @@ export function useGuardianHomeData(guardianId?: string) {
 
     if (childUserIds.length === 0) return;
     
-    const channel = supabase
-      .channel('guardian-exercise-updates')
-      .on(
+    const channel = supabase.channel('guardian-exercise-updates');
+    childUserIds.forEach(userId => {
+      channel.on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'exercise_history',
-          filter: `user_id=in.(${childUserIds.join(',')})`
+          filter: `user_id=eq.${userId}`
         },
         () => {
-          // Invalidate queries to refetch data
           queryClient.invalidateQueries({ queryKey: ['guardian-exercises-home', guardianId] });
         }
-      )
-      .subscribe();
+      );
+      channel.on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'quiz_bank_attempts',
+          filter: `user_id=eq.${userId}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['guardian-quiz-attempts-home', guardianId] });
+        }
+      );
+    });
+
+    channel.subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -149,8 +191,9 @@ export function useGuardianHomeData(guardianId?: string) {
       const lastActiveDate = childExercises[0]?.created_at;
       const latestSubject = childExercises[0]?.subject_id || undefined;
 
-      const firstName = (child.users as any).first_name || '';
-      const lastName = (child.users as any).last_name || '';
+      const user = child.users as LinkedChildUser | null;
+      const firstName = user?.first_name || '';
+      const lastName = user?.last_name || '';
       const name = `${firstName} ${lastName}`.trim() || 'Unnamed Child';
 
       return {
@@ -175,7 +218,7 @@ export function useGuardianHomeData(guardianId?: string) {
         link => link.children?.user_id === exercise.user_id
       );
       const child = childLink?.children;
-      const user = child?.users as any;
+      const user = child?.users as LinkedChildUser | null | undefined;
       
       const firstName = user?.first_name || '';
       const lastName = user?.last_name || '';
@@ -206,6 +249,9 @@ export function useGuardianHomeData(guardianId?: string) {
     const exercisesThisWeek = exerciseData?.filter(
       ex => new Date(ex.created_at) >= sevenDaysAgo
     ).length || 0;
+    const quizAttemptsThisWeek = quizData?.filter(
+      attempt => new Date(attempt.created_at) >= sevenDaysAgo
+    ).length || 0;
 
     const avgProgress = childrenOverview.length > 0
       ? childrenOverview.reduce((acc, child) => acc + child.successRate, 0) / childrenOverview.length
@@ -219,15 +265,16 @@ export function useGuardianHomeData(guardianId?: string) {
       totalChildren,
       activeChildren,
       exercisesThisWeek,
+      quizAttemptsThisWeek,
       avgProgress,
       needsAttentionCount,
     };
-  }, [childrenData, exerciseData, childrenOverview]);
+  }, [childrenData, exerciseData, quizData, childrenOverview]);
 
   return {
     childrenOverview,
     recentActivity,
     aggregatedStats,
-    isLoading: childrenLoading || exerciseLoading,
+    isLoading: childrenLoading || exerciseLoading || quizLoading,
   };
 }

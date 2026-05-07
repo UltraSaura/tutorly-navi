@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, AlertCircle, Settings, ArrowRight, Loader2 } from 'lucide-react';
 import { getLocalizedLabel, getSubject, getDomain, getSubdomain } from '@/lib/curriculum';
+import { PageMeta } from '@/components/seo/PageMeta';
 
 interface GroupedTopics {
   [subjectId: string]: {
@@ -36,12 +37,12 @@ export default function MyProgramPage() {
       if (!profile) return [];
       
       const { data, error } = await supabase
-        .from('learning_topics')
+        .from('topics')
         .select(`
           *,
           learning_categories!inner (
             name,
-            learning_subjects!inner (
+            subjects!inner (
               name,
               slug,
               color_scheme
@@ -104,6 +105,7 @@ export default function MyProgramPage() {
   if (profileLoading || topicsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
+        <PageMeta title="My Program" description="Your personalized Stuwy learning program based on your level and goals." />
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading your program...</p>
@@ -202,7 +204,7 @@ export default function MyProgramPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {subdomainData.topics.map((topic: any) => {
-                          const subjectSlug = topic.learning_categories?.learning_subjects?.slug;
+                          const subjectSlug = topic.learning_categories?.subjects?.slug;
                           return (
                             <Card 
                               key={topic.id}

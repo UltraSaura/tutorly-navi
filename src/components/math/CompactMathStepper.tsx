@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLanguage } from '@/context/SimpleLanguageContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ import {
   Calculator,
   AlertCircle
 } from 'lucide-react';
+import { MathExplanationReader } from './MathExplanationReader';
 
 interface CompactMathStepperProps {
   expression: string;
@@ -31,12 +33,15 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   className
 }) => {
   console.log('[CompactMathStepper] Rendering with expression:', expression);
+  const { language } = useLanguage();
   
   const [currentStep, setCurrentStep] = useState(0);
   const [steps, setSteps] = useState<AnimatorStep[]>([]);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [autoRead, setAutoRead] = useState(false);
+  
 
   useEffect(() => {
     const generateStepperSteps = async () => {
@@ -128,6 +133,14 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   const isSimpleDivision = useMemo(() => /^(\s*\d+\s*[\/÷]\s*\d+\s*)$/.test(expression), [expression]);
   const isSimpleMultiplication = useMemo(() => /^(\s*\d+\s*[×*]\s*\d+\s*)$/.test(expression), [expression]);
 
+  // Helper: localized place names
+  const placeName = (colFromRight: number) => {
+    const fr = ['unités', 'dizaines', 'centaines', 'milliers', 'dizaines de milliers'];
+    const en = ['ones', 'tens', 'hundreds', 'thousands', 'ten-thousands'];
+    const names = language === 'fr' ? fr : en;
+    return names[colFromRight] || (language === 'fr' ? `colonne ${colFromRight + 1}` : `column ${colFromRight + 1}`);
+  };
+
   // Two-phase column animation data (only used if isSimpleAddition)
   const additionData = useMemo(() => {
     if (!isSimpleAddition) return null;
@@ -169,8 +182,46 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     const finalCarry = carry;
     const totalColumnPhases = maxLen * 2;
     const maxStep = totalColumnPhases + (finalCarry > 0 ? 1 : 0);
-    return { numA, numB, aDigits, bDigits, stepsRTL, fullResult, resLen, offset, finalCarry, totalColumnPhases, maxStep };
-  }, [isSimpleAddition, expression]);
+
+    // Build explanations array
+    const explanations: string[] = [];
+    for (let k = 0; k < stepsRTL.length; k++) {
+      const info = stepsRTL[k];
+      const colFromRight = k;
+      const pn = placeName(colFromRight);
+      const carryText = info.carryIn > 0
+        ? (language === 'fr' ? ` + ${info.carryIn} (retenue)` : ` + ${info.carryIn} (carry)`)
+        : '';
+      // Even phase: carry check / sum
+      if (language === 'fr') {
+        explanations.push(`On regarde la colonne des ${pn} : ${info.ad} + ${info.bd}${carryText} = ${info.raw}.${info.carryOut > 0 ? ` Comme ${info.raw} ≥ 10, on retient ${info.carryOut}.` : ''}`);
+      } else {
+        explanations.push(`Look at the ${pn} column: ${info.ad} + ${info.bd}${carryText} = ${info.raw}.${info.carryOut > 0 ? ` Since ${info.raw} ≥ 10, carry ${info.carryOut}.` : ''}`);
+      }
+      // Odd phase: write digit
+      if (language === 'fr') {
+        explanations.push(`On écrit ${info.digit} dans la colonne des ${pn} du résultat.`);
+      } else {
+        explanations.push(`Write ${info.digit} in the ${pn} column of the result.`);
+      }
+    }
+    // Final carry phase
+    if (finalCarry > 0) {
+      if (language === 'fr') {
+        explanations.push(`On écrit la retenue finale ${finalCarry} pour obtenir le résultat : ${fullResult}.`);
+      } else {
+        explanations.push(`Write the final carry ${finalCarry} to get the answer: ${fullResult}.`);
+      }
+    }
+    // Completion explanation (used when step >= maxStep)
+    if (language === 'fr') {
+      explanations.push(`L'addition est terminée ! ${numA} + ${numB} = ${fullResult}.`);
+    } else {
+      explanations.push(`Addition complete! ${numA} + ${numB} = ${fullResult}.`);
+    }
+
+    return { numA, numB, aDigits, bDigits, stepsRTL, fullResult, resLen, offset, finalCarry, totalColumnPhases, maxStep, explanations };
+  }, [isSimpleAddition, expression, language]);
 
   const subtractionData = useMemo(() => {
     if (!isSimpleSubtraction) return null;
@@ -181,7 +232,6 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     const padTo = (s: string, len: number) => s.padStart(len, '0').split('').map(Number);
     let A = padTo(numA, maxLen);
     let B = padTo(numB, maxLen);
-    // Ensure we subtract smaller from larger; track sign
     let neg = false;
     const aStr = A.join('');
     const bStr = B.join('');
@@ -196,7 +246,6 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       const diff = t - bd;
       stepsRTL.push({ index: i, top: t, bottom: bd, borrowed, diff });
     }
-    // Build final result string (without sign yet)
     const resultArr: number[] = new Array(maxLen).fill(0);
     stepsRTL.forEach((s, idx) => {
       const pos = maxLen - 1 - idx;
@@ -206,52 +255,203 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     if (neg && finalStr !== '0') finalStr = '-' + finalStr;
     const resLen = finalStr.length;
     const offset = resLen - maxLen;
-    const totalColumnPhases = maxLen * 2; // even=borrow/show, odd=reveal digit
-    const maxStep = totalColumnPhases; // no extra carry step like addition
-    return { numA, numB, aDigits: A, bDigits: B, stepsRTL, finalStr, resLen, offset, totalColumnPhases, maxStep };
-  }, [isSimpleSubtraction, expression]);
+    const totalColumnPhases = maxLen * 2;
+    const maxStep = totalColumnPhases;
+
+    // Build explanations array
+    const explanations: string[] = [];
+    for (let k = 0; k < stepsRTL.length; k++) {
+      const info = stepsRTL[k];
+      const colFromRight = k;
+      const pn = placeName(colFromRight);
+      const origTop = A[info.index];
+      // Even phase: borrow check
+      if (info.borrowed) {
+        if (language === 'fr') {
+          explanations.push(`On regarde la colonne des ${pn} : ${origTop} − ${info.bottom}. Comme ${origTop} < ${info.bottom}, on emprunte 1 à la colonne suivante.`);
+        } else {
+          explanations.push(`Look at the ${pn} column: ${origTop} − ${info.bottom}. Since ${origTop} < ${info.bottom}, borrow 1 from the next column.`);
+        }
+      } else {
+        if (language === 'fr') {
+          explanations.push(`On regarde la colonne des ${pn} : ${info.top} − ${info.bottom}.`);
+        } else {
+          explanations.push(`Look at the ${pn} column: ${info.top} − ${info.bottom}.`);
+        }
+      }
+      // Odd phase: write digit
+      if (language === 'fr') {
+        explanations.push(`${info.top} − ${info.bottom} = ${info.diff}. On écrit ${info.diff} dans la colonne des ${pn}.`);
+      } else {
+        explanations.push(`${info.top} − ${info.bottom} = ${info.diff}. Write ${info.diff} in the ${pn} column.`);
+      }
+    }
+    // Completion
+    if (language === 'fr') {
+      explanations.push(`La soustraction est terminée ! ${numA} − ${numB} = ${finalStr}.`);
+    } else {
+      explanations.push(`Subtraction complete! ${numA} − ${numB} = ${finalStr}.`);
+    }
+
+    return { numA, numB, aDigits: A, bDigits: B, stepsRTL, finalStr, resLen, offset, totalColumnPhases, maxStep, explanations };
+  }, [isSimpleSubtraction, expression, language]);
 
   const divisionData = useMemo(() => {
     if (!isSimpleDivision) return null;
     const parts = expression.split(/[÷\/]/);
     const dividendStr = (parts[0] || '0').replace(/[^0-9]/g, '');
     const divisorStr = (parts[1] || '1').replace(/[^0-9]/g, '');
-    const dv = Number(dividendStr || '0');
-    const dr = Number(divisorStr || '1');
-    if (!Number.isFinite(dv) || !Number.isFinite(dr) || dr === 0) {
-      return { error: 'Invalid division' } as any;
+    const dividend = parseInt(dividendStr, 10);
+    const divisor = parseInt(divisorStr, 10);
+    if (!Number.isFinite(dividend) || !Number.isFinite(divisor) || divisor === 0) {
+      return { error: 'Division par zéro impossible' } as any;
     }
-    const aStr = Math.abs(dv).toString();
-    const bStr = Math.abs(dr).toString();
-    const [ai, ad = ''] = aStr.split('.');
-    const [bi, bd = ''] = bStr.split('.');
-    // scale to ensure 2 decimals in quotient
-    const A = (ai + (ad || '') + '0'.repeat(Math.max(0, 2 - (ad || '').length))).replace(/^0+/, '') || '0';
-    const B = (bi + (bd || '')).replace(/^0+/, '') || '0';
-    const sign = (dv < 0 ? -1 : 1) * (dr < 0 ? -1 : 1);
 
-    // per-digit long division steps
-    let remainder = 0;
-    let quotient = '';
-    const steps: { cur: number; digit: number; newRem: number }[] = [];
-    const bNum = Number(B);
-    for (let idx = 0; idx < A.length; idx++) {
-      const cur = remainder * 10 + (A.charCodeAt(idx) - 48);
-      const qd = Math.floor(cur / bNum);
-      const newRem = cur - qd * bNum;
-      quotient += String(qd);
-      remainder = newRem;
-      steps.push({ cur, digit: qd, newRem });
+    const dDigits = dividendStr.split('');
+    const phases: Array<{
+      type: 'inspect' | 'writeQuotient' | 'writeProduct' | 'writeRemainder' | 'bringDown' | 'complete';
+      partialDividend: number;
+      quotientDigit?: number;
+      product?: number;
+      remainder?: number;
+      bringDownDigit?: string;
+      quotientSoFar: string;
+      workRows: Array<{ value: string; indent: number; type: 'subtract' | 'remainder' | 'partial' }>;
+      explanationShort: string;
+      explanationTeacher: string;
+    }> = [];
+
+    let partial = 0;
+    let quotientSoFar = '';
+    const workRows: Array<{ value: string; indent: number; type: 'subtract' | 'remainder' | 'partial' }> = [];
+    let digitIndex = 0;
+
+    // Build initial partial dividend (may need multiple digits if divisor > first digit)
+    while (digitIndex < dDigits.length && partial < divisor) {
+      partial = partial * 10 + parseInt(dDigits[digitIndex], 10);
+      digitIndex++;
     }
-    // format quotient to 2dp
-    let qStr = quotient.replace(/^0+/, '') || '0';
-    if (qStr.length <= 2) qStr = '0'.repeat(3 - qStr.length) + qStr;
-    const withDot = qStr.slice(0, qStr.length - 2) + '.' + qStr.slice(qStr.length - 2);
-    const finalQuotient = (sign < 0 ? '-' : '') + withDot;
-    const resLen = withDot.length;
-    const totalPhases = withDot.replace(/[^0-9]/g, '').length; // Count only digit characters for phases
-    return { dividendStr, divisorStr, A, B, steps, finalQuotient, resLen, totalPhases };
-  }, [isSimpleDivision, expression]);
+
+    // Process each division cycle
+    let firstCycle = true;
+    while (true) {
+      const currentIndent = digitIndex - String(partial).length;
+
+      // Phase: inspect
+      const inspectRows = [...workRows];
+      phases.push({
+        type: 'inspect',
+        partialDividend: partial,
+        quotientSoFar,
+        workRows: [...inspectRows],
+        explanationShort: `${partial} ÷ ${divisor} = ?`,
+        explanationTeacher: firstCycle
+          ? (language === 'fr'
+            ? `On commence par prendre ${partial} (${partial < 10 ? 'le premier chiffre' : 'les premiers chiffres'} du dividende). Combien de fois ${divisor} entre dans ${partial} ?`
+            : `Start with ${partial} (${partial < 10 ? 'the first digit' : 'the first digits'} of the dividend). How many times does ${divisor} go into ${partial}?`)
+          : (language === 'fr'
+            ? `On obtient ${partial} comme nouveau dividende partiel. Combien de fois ${divisor} entre dans ${partial} ?`
+            : `The new partial dividend is ${partial}. How many times does ${divisor} go into ${partial}?`)
+      });
+
+      const qDigit = Math.floor(partial / divisor);
+      quotientSoFar += String(qDigit);
+
+      // Phase: writeQuotient
+      phases.push({
+        type: 'writeQuotient',
+        partialDividend: partial,
+        quotientDigit: qDigit,
+        quotientSoFar,
+        workRows: [...inspectRows],
+        explanationShort: `${partial} ÷ ${divisor} = ${qDigit}`,
+        explanationTeacher: language === 'fr'
+          ? `${divisor} × ${qDigit} = ${qDigit * divisor}${qDigit * divisor <= partial ? ` ≤ ${partial}` : ''}, donc on écrit ${qDigit} au quotient.`
+          : `${divisor} × ${qDigit} = ${qDigit * divisor}${qDigit * divisor <= partial ? ` ≤ ${partial}` : ''}, so write ${qDigit} in the quotient.`
+      });
+
+      const product = qDigit * divisor;
+      workRows.push({ value: `-${product}`, indent: currentIndent, type: 'subtract' });
+
+      // Phase: writeProduct
+      phases.push({
+        type: 'writeProduct',
+        partialDividend: partial,
+        quotientDigit: qDigit,
+        product,
+        quotientSoFar,
+        workRows: [...workRows],
+        explanationShort: `${divisor} × ${qDigit} = ${product}`,
+        explanationTeacher: language === 'fr'
+          ? `On écrit ${product} sous ${partial} et on soustrait : ${partial} − ${product} = ${partial - product}.`
+          : `Write ${product} below ${partial} and subtract: ${partial} − ${product} = ${partial - product}.`
+      });
+
+      const rem = partial - product;
+      workRows.push({ value: String(rem), indent: currentIndent + String(partial).length - String(rem).length, type: 'remainder' });
+
+      // Phase: writeRemainder
+      phases.push({
+        type: 'writeRemainder',
+        partialDividend: partial,
+        quotientDigit: qDigit,
+        product,
+        remainder: rem,
+        quotientSoFar,
+        workRows: [...workRows],
+        explanationShort: `${partial} − ${product} = ${rem}`,
+        explanationTeacher: language === 'fr'
+          ? `${partial} − ${product} = ${rem}. ${digitIndex < dDigits.length ? 'On descend le chiffre suivant.' : 'Il ne reste plus de chiffre à descendre.'}`
+          : `${partial} − ${product} = ${rem}. ${digitIndex < dDigits.length ? 'Bring down the next digit.' : 'No more digits to bring down.'}`
+      });
+
+      if (digitIndex >= dDigits.length) break;
+
+      // Phase: bringDown
+      const nextDigit = dDigits[digitIndex];
+      const newPartial = rem * 10 + parseInt(nextDigit, 10);
+      workRows.push({ value: String(newPartial), indent: currentIndent + String(partial).length - String(newPartial).length + 1, type: 'partial' });
+
+      phases.push({
+        type: 'bringDown',
+        partialDividend: partial,
+        remainder: rem,
+        bringDownDigit: nextDigit,
+        quotientSoFar,
+        workRows: [...workRows],
+        explanationShort: `On descend ${nextDigit} → ${newPartial}`,
+        explanationTeacher: language === 'fr'
+          ? `On descend le ${nextDigit} du dividende à côté du reste ${rem}, ce qui donne ${newPartial}.`
+          : `Bring down ${nextDigit} from the dividend next to the remainder ${rem}, giving ${newPartial}.`
+      });
+
+      partial = newPartial;
+      digitIndex++;
+      firstCycle = false;
+    }
+
+    // Final complete phase
+    const finalRemainder = partial - Math.floor(partial / divisor) * divisor;
+    phases.push({
+      type: 'complete',
+      partialDividend: partial,
+      quotientSoFar,
+      remainder: finalRemainder,
+      workRows: [...workRows],
+      explanationShort: finalRemainder > 0
+        ? `${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} reste ${finalRemainder}`
+        : `${dividendStr} ÷ ${divisorStr} = ${quotientSoFar}`,
+      explanationTeacher: finalRemainder > 0
+        ? (language === 'fr'
+          ? `La division est terminée ! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} avec un reste de ${finalRemainder}.`
+          : `Division complete! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} remainder ${finalRemainder}.`)
+        : (language === 'fr'
+          ? `La division est terminée ! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} exactement.`
+          : `Division complete! ${dividendStr} ÷ ${divisorStr} = ${quotientSoFar} exactly.`)
+    });
+
+    return { dividendStr, divisorStr, dividend, divisor, phases, quotientSoFar, finalRemainder, totalPhases: phases.length };
+  }, [isSimpleDivision, expression, language]);
 
   const multiplicationData = useMemo(() => {
     if (!isSimpleMultiplication) return null;
@@ -323,7 +523,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
             multiplicandPosition: A.length - 1 - i,
             partialResult: String(p), // Show complete result
             carries: [], // No carries for the last digit
-            explanation: `${ai} × ${bj} + ${carry} = ${p} (write ${p})`,
+            explanation: language === 'fr'
+              ? `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. On écrit ${p} pour compléter la ligne.`
+              : `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. Write ${p} to complete the row.`,
             isPartialProductComplete: true,
             partialProduct: row
           });
@@ -354,7 +556,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               value: newCarry,
               used: false
             }] : [], // Show carry immediately when generated
-            explanation: `${ai} × ${bj} + ${carry} = ${p} (write ${digit}${newCarry > 0 ? `, carry ${newCarry}` : ''})`,
+             explanation: language === 'fr'
+              ? `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. On écrit ${digit}${newCarry > 0 ? ` et on retient ${newCarry}` : ''}.`
+              : `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. Write ${digit}${newCarry > 0 ? `, carry ${newCarry}` : ''}.`,
             isPartialProductComplete: false,
             partialProduct: row
           });
@@ -442,7 +646,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         carries: relevantCarries,
         columnPosition: position, // NEW: track which column we're adding
         contributingDigits, // NEW: track which partial product digits contribute
-        explanation: `Adding column ${position + 1}: ${digit}`,
+         explanation: language === 'fr'
+          ? `On additionne la colonne des ${placeName(position)} : ${digit}.`
+          : `Adding the ${placeName(position)} column: ${digit}.`,
         isPartialProductComplete: false,
         partialProduct: sumFinal.substring(0, sumFinal.length - digitIndex) // Show progress
       });
@@ -457,7 +663,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       multiplicandPosition: -1,
       partialResult: '',
       carries: [],
-      explanation: `Multiplication complete: ${A} × ${B} = ${sumFinal}`,
+       explanation: language === 'fr'
+        ? `La multiplication est terminée ! ${A} × ${B} = ${sumFinal}.`
+        : `Multiplication complete! ${A} × ${B} = ${sumFinal}.`,
       isPartialProductComplete: true,
       partialProduct: sumFinal
     });
@@ -497,7 +705,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       multiplicationSteps,
       maxStep: totalPhases - 1
     };
-  }, [isSimpleMultiplication, expression]);
+  }, [isSimpleMultiplication, expression, language]);
 
   // Auto-play effect - supports both animator steps and two-phase addition mode
   useEffect(() => {
@@ -553,6 +761,32 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   }
 
   const currentStepData = steps[currentStep];
+  const currentExplanationText = (() => {
+    if (additionData) {
+      return additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)] || '';
+    }
+
+    if (subtractionData) {
+      return subtractionData.explanations[Math.min(currentStep, subtractionData.explanations.length - 1)] || '';
+    }
+
+    if (divisionData && !divisionData.error) {
+      const phase = divisionData.phases[Math.min(currentStep, divisionData.phases.length - 1)];
+      return phase?.explanationTeacher || '';
+    }
+
+    if (multiplicationData) {
+      if (currentStep === 0) {
+        return language === 'fr'
+          ? `On va multiplier ${multiplicationData.A} × ${multiplicationData.B} étape par étape.`
+          : `We will multiply ${multiplicationData.A} × ${multiplicationData.B} step by step.`;
+      }
+
+      return multiplicationData.multiplicationSteps[currentStep - 1]?.explanation || '';
+    }
+
+    return currentStepData?.explanation || '';
+  })();
 
   return (
     <div className={cn("p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md", className)}>
@@ -715,7 +949,18 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                         ))}
                       </motion.div>
                     )}
-                  </AnimatePresence>
+                   </AnimatePresence>
+
+                  {/* Explanation panel */}
+                  <motion.div
+                    key={`add-exp-${currentStep}`}
+                    className="mt-2 text-sm text-muted-foreground leading-relaxed px-2 flex items-start justify-center gap-1"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    <span>{additionData.explanations[Math.min(currentStep, additionData.explanations.length - 1)]}</span>
+                  </motion.div>
                 </div>
               );
             })()
@@ -853,58 +1098,154 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                       </motion.div>
                     ))}
                   </div>
+
+                  {/* Explanation panel */}
+                  <motion.div
+                    key={`sub-exp-${currentStep}`}
+                    className="mt-2 text-sm text-muted-foreground leading-relaxed px-2 flex items-start justify-center gap-1"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    <span>{subtractionData.explanations[Math.min(currentStep, subtractionData.explanations.length - 1)]}</span>
+                  </motion.div>
                 </div>
               );
             })()
           ) : divisionData ? (
-            // Simple long division digit-by-digit reveal
+            // French-style long division with animated phases
             (() => {
-              const { dividendStr, divisorStr, A, B, steps: dSteps, finalQuotient, resLen, totalPhases } = divisionData;
-              const revealed = (() => {
-                const qStr = finalQuotient;
-                const arr = qStr.split('');
-                // For division, we want to reveal quotient digits progressively
-                // Each step reveals one more digit of the quotient
-                const upto = Math.min(currentStep + 1, arr.filter(ch => ch !== '.').length);
-                
-                // Build revealed string without weird spacing
-                let revealedStr = '';
-                let digitCount = 0;
-                
-                for (let i = 0; i < arr.length; i++) {
-                  if (arr[i] === '.') {
-                    // Show decimal point if we've revealed at least one digit before it
-                    if (digitCount > 0) {
-                      revealedStr += '.';
-                    } else {
-                      revealedStr += '?';
-                    }
-                  } else {
-                    if (digitCount < upto) {
-                      revealedStr += arr[i];
-                      digitCount++;
-                    } else {
-                      revealedStr += '?'; // Show ? for unrevealed digits
-                    }
-                  }
-                }
-                
-                return revealedStr;
-              })();
+              if (divisionData.error) {
+                return <div className="text-center text-red-600 dark:text-red-400">{divisionData.error}</div>;
+              }
+              const { dividendStr, divisorStr, phases, quotientSoFar: finalQuotient, finalRemainder } = divisionData;
+              const phase = phases[Math.min(currentStep, phases.length - 1)];
+              const dividendDigits = dividendStr.split('');
+              const maxWorkWidth = dividendStr.length + 2; // extra space for indentation
+
+              // Determine which quotient digits to show
+              const qDigitsToShow = phase.quotientSoFar || '';
+
+              // Determine which work rows to show
+              const visibleWorkRows = phase.workRows || [];
 
               return (
-                <div className="relative font-mono">
-                  {/* Proper division format: dividend ÷ divisor = quotient */}
-                  <div className="text-sm text-slate-600 mb-1">
-                    {dividendStr} ÷ {divisorStr} = ?
+                <div className="relative font-mono text-base">
+                  {/* French division layout: dividend | divisor */}
+                  <div className="flex items-start justify-center gap-0">
+                    {/* Left side: dividend + working */}
+                    <div className="flex flex-col items-end min-w-0">
+                      {/* Dividend row */}
+                      <div className="flex items-center">
+                        {dividendDigits.map((d, i) => (
+                          <motion.div
+                            key={`dd-${i}`}
+                            className={cn(
+                              "w-7 h-8 flex items-center justify-center text-lg font-bold",
+                              phase.type === 'inspect' && i < String(phase.partialDividend).length + (dividendStr.length - String(phase.partialDividend).length - (qDigitsToShow.length - (phase.quotientDigit !== undefined ? 0 : 0)))
+                                ? "text-foreground"
+                                : "text-foreground"
+                            )}
+                          >
+                            {d}
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      {/* Working rows (products, remainders, brought-down partials) */}
+                      <AnimatePresence>
+                        {visibleWorkRows.map((row, idx) => (
+                          <motion.div
+                            key={`work-${idx}`}
+                            className="flex items-center"
+                            initial={{ opacity: 0, y: -8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                          >
+                            {/* Indent + value */}
+                            {Array.from({ length: maxWorkWidth }).map((_, ci) => {
+                              const valueStr = row.value;
+                              const startCol = row.indent;
+                              const charIdx = ci - startCol;
+                              const ch = charIdx >= 0 && charIdx < valueStr.length ? valueStr[charIdx] : '';
+                              const isSubtract = row.type === 'subtract';
+                              const isRemainder = row.type === 'remainder';
+                              const isPartial = row.type === 'partial';
+                              const isLastWorkRow = idx === visibleWorkRows.length - 1;
+                              return (
+                                <div
+                                  key={ci}
+                                  className={cn(
+                                    "w-7 h-7 flex items-center justify-center text-sm",
+                                    isSubtract && "text-red-600 dark:text-red-400",
+                                    isRemainder && isLastWorkRow && "text-blue-600 dark:text-blue-400 font-bold",
+                                    isRemainder && !isLastWorkRow && "text-muted-foreground",
+                                    isPartial && isLastWorkRow && "text-blue-600 dark:text-blue-400 font-bold",
+                                    isPartial && !isLastWorkRow && "text-muted-foreground"
+                                  )}
+                                >
+                                  {ch}
+                                </div>
+                              );
+                            })}
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Vertical bar + divisor/quotient on the right */}
+                    <div className="flex flex-col items-start">
+                      {/* Divisor row */}
+                      <div className="flex items-center h-8">
+                        <div className="w-[2px] h-8 bg-foreground mr-1" />
+                        <span className="text-lg font-bold text-foreground px-1">{divisorStr}</span>
+                      </div>
+                      {/* Horizontal line under divisor */}
+                      <div className="flex items-center">
+                        <div className="w-[2px] bg-transparent mr-1" />
+                        <div className="h-[2px] bg-foreground" style={{ width: `${Math.max(divisorStr.length, finalQuotient.length) * 1.75 + 0.5}rem` }} />
+                      </div>
+                      {/* Quotient appearing progressively */}
+                      <div className="flex items-center">
+                        <div className="w-[2px] bg-transparent mr-1" />
+                        <div className="flex">
+                          {qDigitsToShow.split('').map((qd, qi) => (
+                            <motion.div
+                              key={`q-${qi}`}
+                              className="w-7 h-7 flex items-center justify-center text-lg font-bold text-green-700 dark:text-green-300"
+                              initial={{ scale: 0.5, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                            >
+                              {qd}
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Final remainder display */}
+                      {phase.type === 'complete' && finalRemainder > 0 && (
+                        <motion.div
+                          className="flex items-center mt-1"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                        >
+                          <div className="w-[2px] bg-transparent mr-1" />
+                          <span className="text-xs text-muted-foreground">r. {finalRemainder}</span>
+                        </motion.div>
+                      )}
+                    </div>
                   </div>
-                  {/* Quotient row reveal */}
-                  <div className="text-center text-lg md:text-xl font-bold text-green-700 dark:text-green-300">
-                    {revealed}
-                  </div>
-                  <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 text-center">
-                    Long division: reveal one quotient digit per step
-                  </div>
+
+                  {/* Explanation panel */}
+                  <motion.div
+                    key={`exp-${currentStep}`}
+                    className="mt-2 text-sm text-muted-foreground leading-relaxed px-2 flex items-start justify-center gap-1"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    <span>{phase.explanationTeacher}</span>
+                  </motion.div>
                 </div>
               );
             })()
@@ -980,8 +1321,16 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                     </div>
                     
                     {/* Initial explanation */}
-                    <div className="mt-3 text-sm text-gray-600 dark:text-gray-400 text-center">
-                      Ready to multiply {A} × {B} step by step
+                    <div className="mt-3">
+                      <motion.div
+                        key="mul-exp-init"
+                        className="text-sm text-center text-muted-foreground leading-relaxed px-2"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.25 }}
+                      >
+                        {language === 'fr' ? `On va multiplier ${A} × ${B} étape par étape.` : `We will multiply ${A} × ${B} step by step.`}
+                      </motion.div>
                     </div>
                   </div>
                 );
@@ -1404,11 +1753,17 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
                   
                   {/* Current step explanation */}
-                  {currentStepData && (
-                    <div className="mt-3 text-sm text-gray-600 dark:text-gray-400 text-center">
-                      {currentStepData.explanation}
-                    </div>
-                  )}
+                  <motion.div
+                    key={`mul-exp-${currentStep}`}
+                    className="mt-2 text-sm text-muted-foreground leading-relaxed px-2 flex items-start justify-center gap-1"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    <span>{currentStep === 0
+                      ? (language === 'fr' ? `On va multiplier ${A} × ${B} étape par étape.` : `We will multiply ${A} × ${B} step by step.`)
+                      : currentStepData?.explanation || ''}</span>
+                  </motion.div>
                 </div>
               );
             })()
@@ -1474,14 +1829,27 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 })}
 
                 {/* Explanation */}
-                <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 text-center">
-                  {currentStepData.explanation}
+                <div className="mt-2 text-sm text-muted-foreground flex items-start justify-center gap-1">
+                  <span>{currentStepData.explanation}</span>
                 </div>
               </div>
             );
           })() )}
         </div>
       </div>
+
+      {currentExplanationText && (
+        <div className="mb-3 flex items-center justify-center gap-2 rounded-lg border border-blue-200/80 bg-white/80 px-3 py-2 text-sm text-blue-900 dark:border-blue-700 dark:bg-gray-800/80 dark:text-blue-100">
+          <span className="font-medium">{language === 'fr' ? 'Écouter' : 'Audio'}</span>
+          <MathExplanationReader
+            text={currentExplanationText}
+            language={language}
+            autoRead={autoRead}
+            onAutoReadChange={setAutoRead}
+            className="ml-0"
+          />
+        </div>
+      )}
 
       {/* Controls */}
       <div className="flex items-center justify-center gap-2">

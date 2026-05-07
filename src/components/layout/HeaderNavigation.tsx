@@ -27,16 +27,6 @@ const desktopNavigation = [
     icon: MessageSquare 
   },
   { 
-    title: "My Program", 
-    url: "/my-program", 
-    icon: BookOpen 
-  },
-  { 
-    title: "Dashboard", 
-    url: "/dashboard", 
-    icon: Trophy 
-  },
-  { 
     title: "nav.learning", 
     url: "/learning", 
     icon: GraduationCap 
@@ -45,11 +35,6 @@ const desktopNavigation = [
     title: "nav.history", 
     url: "/exercise-history", 
     icon: History 
-  },
-  { 
-    title: "nav.support", 
-    url: "/support", 
-    icon: HeadphonesIcon 
   },
 ];
 
@@ -193,6 +178,24 @@ export function HeaderNavigation() {
               <NavLink to="/profile" className="flex items-center">
                 <User className="mr-2 h-4 w-4" />
                 <span>{t('nav.profile')}</span>
+              </NavLink>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <NavLink to="/my-program" className="flex items-center">
+                <BookOpen className="mr-2 h-4 w-4" />
+                <span>My Program</span>
+              </NavLink>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <NavLink to="/dashboard" className="flex items-center">
+                <Trophy className="mr-2 h-4 w-4" />
+                <span>Dashboard</span>
+              </NavLink>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <NavLink to="/support" className="flex items-center">
+                <HeadphonesIcon className="mr-2 h-4 w-4" />
+                <span>{t('nav.support')}</span>
               </NavLink>
             </DropdownMenuItem>
             {isAdmin && (
