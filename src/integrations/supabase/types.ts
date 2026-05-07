@@ -1564,6 +1564,7 @@ export type Database = {
           country_code: string | null
           created_at: string
           icon_name: string
+          icon_image_url: string | null
           id: string
           is_active: boolean
           language: string | null
@@ -1577,6 +1578,7 @@ export type Database = {
           country_code?: string | null
           created_at?: string
           icon_name: string
+          icon_image_url?: string | null
           id?: string
           is_active?: boolean
           language?: string | null
@@ -1590,6 +1592,7 @@ export type Database = {
           country_code?: string | null
           created_at?: string
           icon_name?: string
+          icon_image_url?: string | null
           id?: string
           is_active?: boolean
           language?: string | null

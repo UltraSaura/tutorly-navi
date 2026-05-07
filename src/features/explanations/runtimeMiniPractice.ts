@@ -36,6 +36,23 @@ export interface RuntimeMiniPracticeContext {
   enabled?: boolean;
 }
 
+export function isVerticalOperationVisualText(visualText?: string | null): boolean {
+  if (!visualText) return false;
+
+  const lines = visualText
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean);
+
+  if (lines.length < 2 || lines.length > 5) return false;
+
+  const hasOperationLine = lines.some(line => /^[-+−×*/÷]\s*\d+/.test(line));
+  const hasSeparator = lines.some(line => /^[-−_—–]{2,}$/.test(line));
+  const numericLineCount = lines.filter(line => /^\d+$/.test(line)).length;
+
+  return hasOperationLine && (hasSeparator || numericLineCount >= 2);
+}
+
 const MINI_PRACTICE_PROMPT = `You create ONE short runtime mini-practice question for a student.
 
 Return ONLY valid JSON. No markdown fences. No prose outside JSON.

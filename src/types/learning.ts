@@ -3,6 +3,7 @@ export interface Subject {
   name: string;
   slug: string;
   icon_name: string;
+  icon_image_url: string | null;
   color_scheme: string;
   order_index: number;
   is_active: boolean;

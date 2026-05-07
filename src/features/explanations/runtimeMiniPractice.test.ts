@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  isVerticalOperationVisualText,
   isMiniPracticeAnswerCorrect,
   validateRuntimeMiniPractice,
 } from "./runtimeMiniPractice";
@@ -63,5 +64,12 @@ describe("runtimeMiniPractice", () => {
     expect(practice).not.toBeNull();
     expect(isMiniPracticeAnswerCorrect(practice!, ["A", "B"])).toBe(true);
     expect(isMiniPracticeAnswerCorrect(practice!, ["B", "A"])).toBe(false);
+  });
+
+  it("detects vertical operation visual text", () => {
+    expect(isVerticalOperationVisualText("77\n+  6\n----")).toBe(true);
+    expect(isVerticalOperationVisualText("325\n− 148\n-----")).toBe(true);
+    expect(isVerticalOperationVisualText("● ● ●\n● ● ●")).toBe(false);
+    expect(isVerticalOperationVisualText("Use a number line from 0 to 10.")).toBe(false);
   });
 });

@@ -28,6 +28,9 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
   if (q.kind === "visual") {
     return evaluateVisual(q.visual, answer);
   }
+  if (q.kind === "operation-posee") {
+    return Boolean(answer?.correct);
+  }
   return false;
 }
 

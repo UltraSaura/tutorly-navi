@@ -10,23 +10,13 @@ import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
 import { toast } from 'sonner';
 import { PageMeta } from '@/components/seo/PageMeta';
 
-// Checkmark icon for status
-const CheckmarkIcon = ({
-  className
-}: {
-  className?: string;
-}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-  </svg>;
+const getSubjectTileBackground = (colorScheme?: string | null) => {
+  if (!colorScheme || colorScheme.startsWith('bg-')) {
+    return '#dbeafe';
+  }
 
-// Right arrow icon for navigation
-const ArrowRightIcon = ({
-  className
-}: {
-  className?: string;
-}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-  </svg>;
+  return colorScheme;
+};
 
 const LearningPage = () => {
   const navigate = useNavigate();
@@ -86,7 +76,6 @@ const LearningPage = () => {
     );
   }
 
-  const readyCount = subjects?.filter(s => s.videos_ready > 0).length || 0;
   return <div className="min-h-screen bg-gray-50 dark:bg-background pb-20 mx-[5px]">
       <PageMeta title="Learning Library" description="Browse subjects, topics, and video lessons in your Stuwy learning library." />
       {/* Header */}
@@ -101,7 +90,7 @@ const LearningPage = () => {
       </header>
 
       {/* Subject List */}
-      <main className="py-4">
+      <main className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 lg:grid-cols-4">
         {subjects?.map(({
         subject,
         videos_ready
@@ -119,30 +108,34 @@ const LearningPage = () => {
             }
           }} 
           className={`
-            flex items-center justify-between 
-            p-4 my-2 mx-0 h-24
-            text-white 
-            rounded-xl shadow-md cursor-pointer
-            transition-transform transform 
+            aspect-square rounded-2xl border border-white/70 px-4 py-4
+            shadow-sm cursor-pointer
+            transition-transform transform
             hover:scale-[1.01] active:scale-[0.99]
             ${!isReady ? 'opacity-60 cursor-not-allowed' : ''}
           `}
-          style={{ backgroundColor: subject.color_scheme }}
+          style={{ backgroundColor: getSubjectTileBackground(subject.color_scheme) }}
         >
-              {/* Left: Icon + Name */}
-              <div className="flex items-center flex-grow">
-                <DynamicIcon name={subject.icon_name as any} className="w-10 h-10" />
-                <span className="ml-4 text-xl font-semibold">{subject.name}</span>
+              <div className="flex h-full flex-col items-center justify-center gap-2 pb-3">
+                <div className="flex min-h-0 items-center justify-center">
+                  {subject.icon_image_url ? (
+                    <img
+                      src={subject.icon_image_url}
+                      alt=""
+                      className="max-h-28 max-w-full object-contain sm:max-h-32"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <DynamicIcon name={subject.icon_name} className="h-[5.5rem] w-[5.5rem] text-slate-800 sm:h-[6.6rem] sm:w-[6.6rem]" />
+                  )}
+                </div>
+
+                <div className="w-full rounded-xl bg-white/80 px-3 py-2 text-center shadow-sm backdrop-blur-sm">
+                  <span className="line-clamp-2 text-sm font-semibold leading-tight text-slate-900 sm:text-base">
+                    {subject.name}
+                  </span>
+                </div>
               </div>
-              
-              {/* Center: Status Indicator */}
-              <div className="flex items-center text-sm font-medium pr-2">
-                <CheckmarkIcon className="w-4 h-4 mr-1" />
-                {videos_ready} {t('learning.ready') || 'ready'}
-              </div>
-              
-              {/* Right: Arrow */}
-              <ArrowRightIcon className="w-6 h-6 text-white ml-2" />
             </div>;
       })}
       </main>
