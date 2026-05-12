@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client'; // NEW
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
 import { useUserContext } from '@/hooks/useUserContext';
+import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { extractExpressionFromText } from '@/utils/mathStepper/parser';
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
@@ -64,6 +65,7 @@ export function TwoCards({
   const resolveText = useResolveText();
   const [isGuardian, setIsGuardian] = useState(false);
   const { userContext, isContextReady } = useUserContext();
+  const { activeLevel, isLoading: activeLevelLoading } = useActiveSchoolLevel();
   const { t, language } = useLanguage();
   const trackedExplanationKeyRef = React.useRef<string | null>(null);
   const trackedSupportKeyRef = React.useRef<string | null>(null);
@@ -75,24 +77,18 @@ export function TwoCards({
                             location.includes('/exam') || 
                             location.includes('/annales');
 
-  // TIMING FIX: Derive mode only once user context is loaded.
-  // React Query sets isContextReady=true after the first fetch completes.
-  // Without this guard, getLearningMode(undefined) always returns 'student'
-  // on the initial render (before the async query resolves), so KidExplanation
-  // was never mounted even for CM1/CM2 users.
+  // TIMING FIX: Derive mode only once level is resolved.
+  // Uses activeLevel (preview OR real profile) so admin preview CM1 triggers kid mode.
   const learningMode = React.useMemo<'kid' | 'student'>(() => {
     if (isAcademicContext) return 'student';
-    if (!isContextReady) return 'student'; // not loaded yet — will re-run once ready
-    return getLearningMode(userContext?.student_level);
-  }, [isAcademicContext, isContextReady, userContext?.student_level]);
+    if (!isContextReady || activeLevelLoading) return 'student'; // not loaded yet
+    return getLearningMode(activeLevel);
+  }, [isAcademicContext, isContextReady, activeLevelLoading, activeLevel]);
 
-  console.log("DEBUG USER LEVEL:", userContext?.student_level);
-  console.log("DEBUG EXPLANATION MODE:", {
-    level: userContext?.student_level,
-    isContextReady,
-    learningMode,
-    isKid: learningMode === "kid",
-    isAcademicContext
+  console.log("DEBUG KID MODE:", {
+    userLevel: userContext?.student_level,
+    activeLevel,
+    mode: learningMode
   });
 
   // Fetch topic routing info if we have topicId but not slugs
@@ -317,8 +313,8 @@ export function TwoCards({
   }
   
   // Show interactive stepper only for pure arithmetic problems for young students
-  const shouldShowInteractiveStepper = !isGuardian && userContext?.student_level && 
-    isUnder11YearsOld(userContext.student_level) && exampleExpression &&
+  const shouldShowInteractiveStepper = !isGuardian && activeLevel &&
+    isUnder11YearsOld(activeLevel) && exampleExpression &&
     isPureArithmeticProblem(s.exercise || '');
   
   // Ensure method text is never empty

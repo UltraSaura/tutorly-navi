@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { useUserContext } from '@/hooks/useUserContext';
+import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { extractExpressionFromText } from '@/utils/mathStepper/parser';
 import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
 import { GeometryDiagram } from './GeometryDiagram';
@@ -57,6 +58,7 @@ const GroupedProblemExplanationModal = ({
 }: GroupedProblemExplanationModalProps) => {
   const { language } = useLanguage();
   const { userContext } = useUserContext();
+  const { activeLevel } = useActiveSchoolLevel();
   const trackedOpenKeyRef = React.useRef<string | null>(null);
   const trackedSupportKeyRef = React.useRef<string | null>(null);
 
@@ -67,8 +69,8 @@ const GroupedProblemExplanationModal = ({
   const shouldShowInteractiveStepper = !!(
     practice?.similarProblem &&
     practiceExpression &&
-    userContext?.student_level &&
-    isUnder11YearsOld(userContext.student_level) &&
+    activeLevel &&
+    isUnder11YearsOld(activeLevel) &&
     isPureArithmeticProblem(practice.similarProblem)
   );
 
@@ -136,7 +138,7 @@ const GroupedProblemExplanationModal = ({
 
           {!loading && practice && (
             <>
-              {userContext?.student_level && isUnder11YearsOld(userContext.student_level) ? (
+              {activeLevel && isUnder11YearsOld(activeLevel) ? (
                 <div className="space-y-6 py-2">
                   {/* Kid-friendly view for Grouped Problem Explanation */}
                   <section className="relative overflow-hidden rounded-2xl border-2 border-orange-100 bg-gradient-to-br from-orange-50/50 to-white p-5 shadow-sm">
