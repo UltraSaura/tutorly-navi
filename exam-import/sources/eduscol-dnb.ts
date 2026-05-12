@@ -1,4 +1,5 @@
 import type { CollectedPaper, ExamSeries, ExamVariant } from "../parsers/pdf-to-exam.ts";
+import { cleanText, decodeHtmlEntities } from "../utils/cleanText.ts";
 
 const EDUSCOL_DNB_URL =
   "https://eduscol.education.gouv.fr/5202/preparer-le-diplome-national-du-brevet-dnb-avec-les-sujets-des-annales";
@@ -49,10 +50,11 @@ function mapRow(row: EduscolRow, fetched_at: string): CollectedPaper[] {
   const session_year = extractYear(row.session ?? "");
   if (session_year === null) return [];
 
-  const discipline = row.discipline?.trim() || "inconnue";
+  const discipline = cleanText(row.discipline) || "inconnue";
   const series = normalizeSeries(row["série"] ?? "");
-  const location = normalizeLocation(stripHtml(row.description ?? ""));
+  const description = cleanText(row.description);
   const links = row.links ?? [];
+  const location = normalizeLocation(description);
 
   return links
     .filter((link) => link.url !== undefined && /\.pdf(?:[?#].*)?$/i.test(link.url))
@@ -67,7 +69,9 @@ function mapRow(row: EduscolRow, fetched_at: string): CollectedPaper[] {
       location,
       variant: normalizeVariant(link.label ?? "", link.url ?? ""),
       pdf_url: link.url ?? "",
-      title: [row.session, discipline, row["série"], stripHtml(row.description ?? ""), link.label].filter(Boolean).join(" - "),
+      title: [cleanText(row.session), discipline, cleanText(row["série"]), description, cleanText(link.label)]
+        .filter(Boolean)
+        .join(" - "),
     }));
 }
 
@@ -124,18 +128,8 @@ function normalizeDiscipline(value: string): string {
   return normalized.replace(/[^a-z0-9]+/g, "_");
 }
 
-function stripHtml(value: string): string {
-  return decodeHtml(value.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
-}
-
 function decodeHtml(value: string): string {
-  return value
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&nbsp;|&#160;/g, " ");
+  return decodeHtmlEntities(value);
 }
 
 function normalize(value: string): string {

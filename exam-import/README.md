@@ -23,6 +23,14 @@ npm run build:dnb-annales -- --source all --discipline mathematiques --out exam-
 
 Options utiles: `--source eduscol | amiens | all`, `--year 2021`, `--discipline mathematiques`, `--out exam-import/bundles/dnb-maths.json`, `--program-entries path/to/existing-program-entries.json`.
 
+Générer un bundle avec captures visuelles d'exercices:
+
+```bash
+npm run build:dnb-annales -- --source amiens --year 2021 --discipline mathematiques --with-assets --out exam-import/bundles/dnb-amiens-2021-maths.json
+```
+
+Avec `--with-assets`, Poppler (`pdftoppm`) génère au minimum une capture PNG de page par exercice dans `exam-import/assets/<paper-id>/<exercise-id>/`. Ces captures complètent le parsing texte sans le remplacer et sont référencées dans `parsed_content.documents[]`.
+
 Importer dans Supabase:
 
 Les annales sont importées dans des tables dédiées:
@@ -30,9 +38,13 @@ Les annales sont importées dans des tables dédiées:
 - `exam_sources`
 - `exam_papers`
 - `exam_exercises`
+- `exam_assets` (optionnel, pour les captures et documents visuels)
 - `exam_exercise_program_links`
+- `exam_attempts` / `exam_exercise_answers` (préparation des réponses étudiant)
 
 Elles ne touchent pas aux tables de programmes scolaires et ne créent aucune tâche pédagogique.
+
+Les images locales référencées par `documents[].local_path` sont uploadées par `npm run import:dnb-annales` dans le bucket Supabase Storage `exam-assets`. Le script remplace ensuite les documents par `storage_path` et `public_url` avant l'appel à la fonction d'import. L'UI étudiant consomme ces URLs depuis `parsed_content.documents[]`, avec fallback compatible pour les exercices sans assets.
 
 La migration des tables `exam_*` s'applique avec le workflow Supabase du repo. Si l'historique distant est aligné avec les migrations locales:
 
@@ -156,9 +168,36 @@ Commande utilisée:
 
 ```bash
 npm run build:dnb-annales -- --source amiens --year 2021 --discipline mathematiques --out exam-import/bundles/dnb-amiens-2021-maths.json
+npm run build:dnb-annales -- --source amiens --year 2021 --discipline mathematiques --with-assets --out exam-import/bundles/dnb-amiens-2021-maths.json
 npm run import:dnb-annales -- --bundle exam-import/bundles/dnb-amiens-2021-maths.json --mode upsert
 npm run smoke:dnb-annales
 ```
+
+### Parsing multi-parties validé sur DNB Amiens 2021
+
+- **Cas couvert** : saut de page `\f` + Partie B + questions 3–5
+- **Nettoyage métadonnées Amiens** : titre importé validé `Sujet de Juin 2021` sans fragment HTML/DOM (`page 65'});">`), avec `discipline=mathematiques`, `session_year=2021`, `location=metropole`, `source_name=ac-amiens-maths`.
+- **Commande d'import utilisée** :
+  ```bash
+  npm run import:dnb-annales -- --bundle exam-import/bundles/dnb-amiens-2021-maths.json --mode upsert
+  ```
+- **Commandes de test utilisées** :
+  ```bash
+  npm run test -- exam-import/utils/cleanText.test.ts exam-import/parsers/pdf-to-exam.test.ts --run
+  npm run build
+  ```
+- **Vérification locale** : lancement du navigateur sur `http://127.0.0.1:8080/practice/session/:paperId` après import pour validation visuelle mobile 360px.
+
+### MVP exercices étudiants complets
+
+- **Court terme validé** : chaque exercice Amiens 2021 possède une capture visuelle de page PDF, les questions structurées restent présentes, et l'UI étudiant affiche des champs de réponse locaux sous chaque question.
+- **Exercice 1 validé** : le tableau des températures est détecté comme document structuré `type="table"` et affiché en tableau HTML responsive. La capture PDF complète reste disponible comme fallback dans “Voir la capture originale”.
+- **Commande de rebuild avec assets** :
+  ```bash
+  npm run build:dnb-annales -- --source amiens --year 2021 --discipline mathematiques --with-assets --out exam-import/bundles/dnb-amiens-2021-maths.json
+  ```
+- **Limites assumées** : les captures sont actuellement des pages complètes ou pages d'exercice, pas encore des crops précis de tableaux/figures. La sauvegarde des réponses est préparée par les migrations, mais l'UI reste local-only.
+
 
 ## Rattacher aux programmes scolaires
 

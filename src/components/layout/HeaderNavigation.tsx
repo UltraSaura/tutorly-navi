@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AdminPreviewSelector } from "@/components/admin/AdminPreviewControls";
 
 import {
   DropdownMenu,
@@ -159,6 +160,8 @@ export function HeaderNavigation() {
 
       {/* User Account Dropdown - Desktop Only */}
       {!isMobile && (
+        <div className="flex items-center gap-3">
+        <AdminPreviewSelector />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -228,6 +231,7 @@ export function HeaderNavigation() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       )}
     </div>
   );

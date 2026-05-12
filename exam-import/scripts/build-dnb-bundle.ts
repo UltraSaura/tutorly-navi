@@ -22,6 +22,8 @@ interface CliOptions {
   discipline?: string;
   out: string;
   programEntries?: string;
+  withAssets: boolean;
+  assetsRoot: string;
 }
 
 interface ExamBundle {
@@ -39,7 +41,10 @@ async function main(): Promise<void> {
   for (const paper of collected) {
     try {
       const bytes = await downloadPdf(paper.pdf_url);
-      const parsed = await parsePdfToExam(paper, bytes);
+      const parsed = await parsePdfToExam(paper, bytes, {
+        withAssets: options.withAssets,
+        assetsRoot: options.assetsRoot,
+      });
       bundle.papers.push(parsed.paper);
       bundle.exercises.push(...parsed.exercises);
     } catch (error) {
@@ -123,6 +128,8 @@ function parseArgs(args: string[]): CliOptions {
   const options: CliOptions = {
     source: "all",
     out: "exam-import/bundles/dnb-maths.json",
+    withAssets: false,
+    assetsRoot: "exam-import/assets",
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -143,6 +150,11 @@ function parseArgs(args: string[]): CliOptions {
       index += 1;
     } else if (arg === "--program-entries" && value !== undefined) {
       options.programEntries = value;
+      index += 1;
+    } else if (arg === "--with-assets") {
+      options.withAssets = true;
+    } else if (arg === "--assets-root" && value !== undefined) {
+      options.assetsRoot = value;
       index += 1;
     } else if (arg === "--help") {
       printHelp();
@@ -176,6 +188,8 @@ Options:
   --discipline mathematiques
   --out exam-import/bundles/dnb-maths.json
   --program-entries path/to/existing-program-entries.json
+  --with-assets
+  --assets-root exam-import/assets
 `);
 }
 

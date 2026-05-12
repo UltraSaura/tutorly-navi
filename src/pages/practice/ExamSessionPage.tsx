@@ -1,34 +1,15 @@
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Lightbulb, ListRestart, NotebookPen, Focus, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, ListRestart, NotebookPen, Focus, X, Sparkles } from 'lucide-react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageMeta } from '@/components/seo/PageMeta';
-import { useExamExercises, useExamPaperDetail } from '@/hooks/useExamImport';
+import { useExamExercises, useExamPaperDetail, useTrainingItems } from '@/hooks/useExamImport';
+import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { SessionProgress } from '@/components/practice/SessionProgress';
-import { HintBox } from '@/components/practice/HintBox';
-import { CorrectionReveal } from '@/components/practice/CorrectionReveal';
-import { getParsedContent, type ParsedExerciseContent, ParsedExerciseViewer } from '@/components/practice/ParsedExerciseViewer';
-
-function buildHint(statement: string, opts: { prefix: string; fallback: string }): string {
-  const sentence = statement.split(/[.!?]/).find((part) => part.trim().length > 20)?.trim();
-  return sentence ? `${opts.prefix} ${sentence}.` : opts.fallback;
-}
-
-function structuredHint(parsed: ParsedExerciseContent | null, prefix: string, fallback: string): string | null {
-  if (!parsed) return null;
-  const ctx = (parsed.context ?? '').trim();
-  const qs = parsed.questions ?? [];
-  const firstStem = qs.find((q) => q.text.trim().length > 0)?.text.trim();
-  if (firstStem) {
-    const intro = ctx.length > 320 ? `${ctx.slice(0, 320)}…` : ctx;
-    return `${intro ? `${intro}\n\n` : ''}${prefix} ${firstStem.slice(0, 400)}${firstStem.length > 400 ? '…' : ''}`;
-  }
-  if (ctx.length > 50) return `${prefix} ${ctx.slice(0, 400)}${ctx.length > 400 ? '…' : ''}`;
-  return null;
-}
+import { getParsedContent, ParsedExerciseViewer } from '@/components/practice/ParsedExerciseViewer';
 
 export default function ExamSessionPage() {
   const navigate = useNavigate();
@@ -39,10 +20,12 @@ export default function ExamSessionPage() {
   const { paperId } = useParams<{ paperId: string }>();
 
   const paperQuery = useExamPaperDetail(paperId ?? null);
-  const exercisesQuery = useExamExercises(paperId ?? null);
+  const activeSchoolLevel = useActiveSchoolLevel();
+  const activeLevel = activeSchoolLevel.normalizedLevel ?? '__no_active_level__';
+  const isLevelAllowed = !paperQuery.data || paperQuery.data.level === activeLevel;
+  const exercisesQuery = useExamExercises(isLevelAllowed ? (paperId ?? null) : null);
+  const trainingItemsQuery = useTrainingItems({ paper_id: paperId, level: activeLevel, status: 'published', limit: 1 });
   const [index, setIndex] = useState(0);
-  const [showHint, setShowHint] = useState(false);
-  const [showCorrection, setShowCorrection] = useState(false);
 
   const isFocus = urlSearchParams.get('focus') === '1';
 
@@ -56,29 +39,17 @@ export default function ExamSessionPage() {
     | 'low'
     | null;
 
-  const hint = useMemo(() => {
-    if (parsed && confidence !== 'low') {
-      const fromStructure = structuredHint(parsed, t('practice.session.hint.prefix'), t('practice.session.hint.fallback'));
-      if (fromStructure) return fromStructure;
-    }
-    return buildHint(currentExercise?.raw_text || '', {
-      prefix: t('practice.session.hint.prefix'),
-      fallback: t('practice.session.hint.fallback'),
-    });
-  }, [parsed, confidence, currentExercise?.raw_text, t]);
+  const hasTrainingItems = (trainingItemsQuery.data ?? []).length > 0;
+  const trainHref = `/practice/session?subject=${encodeURIComponent(subjectReturn ?? paperQuery.data?.discipline ?? 'mathematiques')}&level=${encodeURIComponent(activeLevel)}&mode=mixed&sourcePaperId=${encodeURIComponent(paperId ?? '')}`;
 
   const handlePrev = () => {
     if (index === 0) return;
     setIndex((prev) => prev - 1);
-    setShowHint(false);
-    setShowCorrection(false);
   };
 
   const handleNext = () => {
     if (index >= total - 1) return;
     setIndex((prev) => prev + 1);
-    setShowHint(false);
-    setShowCorrection(false);
   };
 
   const enterFocus = () => {
@@ -121,31 +92,67 @@ export default function ExamSessionPage() {
             {!isFocus ? (
               <Button variant="outline" size="sm" onClick={enterFocus}>
                 <Focus className="mr-1 h-4 w-4" />
-                {t('practice.session.focus')}
+                <span className="hidden sm:inline">{t('practice.session.focus')}</span>
               </Button>
             ) : null}
             <Button variant="outline" size="sm" onClick={() => navigate('/practice')}>
               <ListRestart className="mr-1 h-4 w-4" />
-              {t('practice.session.hub')}
+              <span className="hidden sm:inline">{t('practice.session.hub')}</span>
             </Button>
           </div>
         </div>
 
+        {!isLevelAllowed ? (
+          <Card className="border-dashed">
+            <CardContent className="space-y-3 p-6 text-center">
+              <p className="font-medium">{t('practice.empty.exams.title')}</p>
+              <p className="text-sm text-muted-foreground">{t('practice.empty.exams.description')}</p>
+              <Button variant="outline" onClick={() => navigate('/practice')}>
+                {t('practice.session.returnToPractice')}
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
         <Card className="border-border/70">
           <CardContent className="space-y-4 p-4">
             {paperQuery.isLoading ? (
               <Skeleton className="h-6 w-1/2" />
             ) : (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <NotebookPen className="h-4 w-4" />
-                <span className="line-clamp-1">{paperQuery.data?.title || t('practice.session.titleFallback')}</span>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+                  <NotebookPen className="h-4 w-4 shrink-0" />
+                  <span className="line-clamp-1">{paperQuery.data?.title || t('practice.session.titleFallback')}</span>
+                </div>
+                {paperQuery.data?.pdf_url ? (
+                  <Button variant="outline" size="sm" className="shrink-0" asChild>
+                    <a href={paperQuery.data.pdf_url} target="_blank" rel="noreferrer">
+                      <ExternalLink className="mr-1 h-4 w-4" />
+                      PDF
+                    </a>
+                  </Button>
+                ) : null}
               </div>
             )}
             <SessionProgress current={Math.min(index + 1, Math.max(total, 1))} total={Math.max(total, 1)} />
+            <div className="rounded-md border border-border/60 bg-muted/20 p-3 text-sm leading-6">
+              <p className="font-medium">{t('practice.session.officialReadOnly.title')}</p>
+              <p className="mt-1 text-muted-foreground">
+                {hasTrainingItems
+                  ? t('practice.session.officialReadOnly.descriptionWithItems')
+                  : t('practice.session.officialReadOnly.descriptionNoItems')}
+              </p>
+              {hasTrainingItems ? (
+                <Button className="mt-3" size="sm" onClick={() => navigate(trainHref)}>
+                  <Sparkles className="mr-1 h-4 w-4" />
+                  {t('practice.session.officialReadOnly.cta')}
+                </Button>
+              ) : null}
+            </div>
           </CardContent>
         </Card>
+        )}
 
-        {exercisesQuery.isLoading ? (
+        {!isLevelAllowed ? null : exercisesQuery.isLoading ? (
           <Card>
             <CardContent className="space-y-3 p-4">
               <Skeleton className="h-5 w-1/2" />
@@ -173,6 +180,7 @@ export default function ExamSessionPage() {
                 }
                 parsed={parsed}
                 variant="student"
+                interactive={false}
               />
             ) : (
               <Card className="border-dashed">
@@ -190,18 +198,6 @@ export default function ExamSessionPage() {
                 </CardContent>
               </Card>
             )}
-            <div className="grid grid-cols-2 gap-2 md:hidden">
-              <Button variant="outline" onClick={() => setShowHint((prev) => !prev)}>
-                <Lightbulb className="mr-1 h-4 w-4" />
-                {showHint ? t('practice.session.hideHint') : t('practice.session.showHint')}
-              </Button>
-              <Button variant="outline" onClick={() => setShowCorrection((prev) => !prev)}>
-                {showCorrection ? t('practice.session.hideCorrection') : t('practice.session.showCorrection')}
-              </Button>
-            </div>
-            <HintBox hint={hint} open={showHint} />
-            <CorrectionReveal correction={currentExercise.correction} open={showCorrection} />
-
             <div className="hidden items-center justify-between gap-2 pt-1 md:flex">
               <Button variant="outline" onClick={handlePrev} disabled={index === 0}>
                 <ChevronLeft className="mr-1 h-4 w-4" />
@@ -223,13 +219,12 @@ export default function ExamSessionPage() {
                 <Button variant="outline" size="sm" onClick={handlePrev} disabled={index === 0} className="shrink-0">
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setShowHint((prev) => !prev)} className="flex-1">
-                  <Lightbulb className="mr-1 h-4 w-4" />
-                  {showHint ? t('practice.session.hintShortHide') : t('practice.session.hintShort')}
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setShowCorrection((prev) => !prev)} className="flex-1">
-                  {showCorrection ? t('practice.session.correctionShortHide') : t('practice.session.correctionShort')}
-                </Button>
+                {hasTrainingItems ? (
+                  <Button variant="outline" size="sm" onClick={() => navigate(trainHref)} className="flex-1">
+                    <Sparkles className="mr-1 h-4 w-4" />
+                    {t('practice.session.officialReadOnly.ctaShort')}
+                  </Button>
+                ) : null}
                 <Button size="sm" onClick={handleNext} disabled={index >= total - 1} className="shrink-0">
                   <ChevronRight className="h-4 w-4" />
                 </Button>

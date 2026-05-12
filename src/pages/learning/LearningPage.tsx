@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useLearningSubjects } from '@/hooks/useLearningSubjects';
 import { useUserCurriculumProfile } from '@/hooks/useUserCurriculumProfile';
+import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ const LearningPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { profile } = useUserCurriculumProfile();
+  const activeSchoolLevel = useActiveSchoolLevel();
   const { data: subjects, isLoading } = useLearningSubjects();
 
   if (isLoading) {
@@ -37,7 +39,7 @@ const LearningPage = () => {
   }
 
   // Check if user has curriculum profile
-  if (!profile?.countryCode || !profile?.levelCode) {
+  if ((!profile?.countryCode || !profile?.levelCode) && !activeSchoolLevel.isPreviewing) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center p-6">
         <Card className="max-w-md">

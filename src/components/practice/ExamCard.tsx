@@ -9,9 +9,11 @@ interface ExamCardProps {
   subject: string;
   exerciseCount: number;
   onStart: () => void;
+  onConsult?: () => void;
+  trainingItemCount?: number;
 }
 
-export function ExamCard({ title, year, subject, exerciseCount, onStart }: ExamCardProps) {
+export function ExamCard({ title, year, subject, exerciseCount, onStart, onConsult, trainingItemCount = 0 }: ExamCardProps) {
   const { t } = useTranslation();
 
   return (
@@ -35,9 +37,19 @@ export function ExamCard({ title, year, subject, exerciseCount, onStart }: ExamC
           </div>
         </div>
 
+        <p className="text-xs text-muted-foreground">
+          {trainingItemCount > 0
+            ? t('practice.exam.trainingItemCount', { count: trainingItemCount })
+            : t('practice.exam.trainingItemsPending')}
+        </p>
         <Button className="w-full" size="sm" onClick={onStart}>
-          {t('practice.exam.start')}
+          {trainingItemCount > 0 ? t('practice.exam.train') : t('practice.exam.consult')}
         </Button>
+        {onConsult && trainingItemCount > 0 ? (
+          <Button className="w-full" size="sm" variant="outline" onClick={onConsult}>
+            {t('practice.exam.consult')}
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   );

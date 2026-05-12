@@ -5,6 +5,7 @@ import SubjectSelector from './SubjectSelector';
 import { useTranslation } from "react-i18next";
 import { MobileBottomTabs } from "./MobileBottomTabs";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AdminPreviewBanner } from "@/components/admin/AdminPreviewControls";
 
 const MainLayout = () => {
   const { t } = useTranslation();
@@ -31,6 +32,7 @@ const MainLayout = () => {
             <HeaderNavigation />
           </header>
         ) : null}
+        {!isFocusSession ? <AdminPreviewBanner /> : null}
         
         {/* Main Content */}
         <main className={mainClasses}>

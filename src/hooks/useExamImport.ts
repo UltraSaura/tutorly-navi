@@ -5,7 +5,10 @@ import {
   fetchExamPaperDetail,
   fetchExamPapers,
   fetchExerciseProgramLinks,
+  fetchTrainingItems,
+  fetchTrainingItemSubjectCounts,
   type ExamPaperFilters,
+  type TrainingItemFilters,
 } from '@/services/examImportService';
 
 export function useExamPapers(filters: ExamPaperFilters) {
@@ -43,5 +46,19 @@ export function useExamFilterOptions() {
   return useQuery({
     queryKey: ['exam-import', 'filter-options'],
     queryFn: fetchExamFilterOptions,
+  });
+}
+
+export function useTrainingItems(filters: TrainingItemFilters) {
+  return useQuery({
+    queryKey: ['exam-import', 'training-items', filters],
+    queryFn: () => fetchTrainingItems(filters),
+  });
+}
+
+export function useTrainingItemSubjectCounts(level?: string) {
+  return useQuery({
+    queryKey: ['exam-import', 'training-item-subject-counts', level],
+    queryFn: () => fetchTrainingItemSubjectCounts(level),
   });
 }

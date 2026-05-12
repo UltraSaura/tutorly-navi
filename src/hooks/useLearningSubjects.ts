@@ -1,16 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Subject, SubjectProgress } from '@/types/learning';
-import { useUserSchoolLevel } from './useUserSchoolLevel';
+import { useActiveSchoolLevel } from './useActiveSchoolLevel';
 import { useUserCurriculumProfile } from './useUserCurriculumProfile';
 import { filterContentByUserLevel } from '@/utils/schoolLevelFilter';
 
 export function useLearningSubjects() {
-  const { data: userLevelData } = useUserSchoolLevel();
+  const activeSchoolLevel = useActiveSchoolLevel();
   const { profile } = useUserCurriculumProfile();
+  const effectiveCountryCode = profile?.countryCode ?? (activeSchoolLevel.isPreviewing ? 'fr' : undefined);
+  const effectiveLevelCode = activeSchoolLevel.normalizedLevel ?? profile?.levelCode;
   
   return useQuery({
-    queryKey: ['learning-subjects', userLevelData?.level, profile?.countryCode, profile?.levelCode],
+    queryKey: ['learning-subjects', activeSchoolLevel.activeLevel, effectiveCountryCode, effectiveLevelCode],
     queryFn: async (): Promise<SubjectProgress[]> => {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -31,10 +33,10 @@ export function useLearningSubjects() {
         .eq('is_active', true);
 
       // Add curriculum filters if profile exists
-      if (profile?.countryCode && profile?.levelCode) {
+      if (effectiveCountryCode && effectiveLevelCode) {
         subjectsQuery = subjectsQuery
-          .eq('learning_categories.topics.curriculum_country_code', profile.countryCode)
-          .eq('learning_categories.topics.curriculum_level_code', profile.levelCode);
+          .eq('learning_categories.topics.curriculum_country_code', effectiveCountryCode)
+          .eq('learning_categories.topics.curriculum_level_code', effectiveLevelCode);
       }
 
       const { data: subjects, error: subjectsError } = await subjectsQuery.order('order_index');
@@ -96,8 +98,8 @@ export function useLearningSubjects() {
           // Filter videos by user's age/level
           const suitableVideos = filterContentByUserLevel(
             allVideos as any,
-            userLevelData?.level || null,
-            userLevelData?.age || null
+            activeSchoolLevel.activeLevel,
+            activeSchoolLevel.age
           );
           
           const videos_ready = suitableVideos.length;

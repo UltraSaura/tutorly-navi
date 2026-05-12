@@ -6,9 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ExamCard } from '@/components/practice/ExamCard';
-import { useExamPapers } from '@/hooks/useExamImport';
+import { useExamPapers, useTrainingItems } from '@/hooks/useExamImport';
 import { useLearningSubjects } from '@/hooks/useLearningSubjects';
+import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { resolveExamDisciplinesForSubjectSlug } from '@/utils/examSubjectMapping';
+
+const NO_ACTIVE_LEVEL = '__no_active_level__';
 
 /** Titre lisible hors sélecteur injecté depuis la page catalogue (ex. Amiens). */
 function cleanExamTitle(raw: string | null | undefined): string {
@@ -26,13 +29,16 @@ export default function PracticeAnnalsPage() {
   const { t } = useTranslation();
   const subjectSlug = subject ?? '';
   const subjectsQuery = useLearningSubjects();
+  const activeSchoolLevel = useActiveSchoolLevel();
+  const activeLevel = activeSchoolLevel.normalizedLevel ?? NO_ACTIVE_LEVEL;
 
   const examDisciplines = useMemo(
     () => (subjectSlug ? resolveExamDisciplinesForSubjectSlug(subjectSlug) : []),
     [subjectSlug],
   );
 
-  const papersQuery = useExamPapers({ exam: 'dnb', discipline: examDisciplines });
+  const papersQuery = useExamPapers({ exam: 'dnb', discipline: examDisciplines, level: activeLevel });
+  const trainingItemsQuery = useTrainingItems({ subject_slug: examDisciplines[0], level: activeLevel, status: 'published', limit: 500 });
 
   const subjectLabel = useMemo(() => {
     const row = (subjectsQuery.data ?? []).find((s) => s.subject.slug === subjectSlug);
@@ -44,6 +50,14 @@ export default function PracticeAnnalsPage() {
   );
 
   const discLabel = examDisciplines[0]?.replace(/_/g, ' ') ?? '';
+  const trainingItemsByPaper = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const item of trainingItemsQuery.data ?? []) {
+      if (!item.paper_id) continue;
+      map.set(item.paper_id, (map.get(item.paper_id) ?? 0) + 1);
+    }
+    return map;
+  }, [trainingItemsQuery.data]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -92,9 +106,13 @@ export default function PracticeAnnalsPage() {
                 year={paper.session_year}
                 subject={subjectLabel}
                 exerciseCount={paper.exercise_count}
+                trainingItemCount={trainingItemsByPaper.get(paper.id) ?? 0}
                 onStart={() =>
-                  navigate(`/practice/session/${paper.id}?subject=${encodeURIComponent(subjectSlug)}`)
+                  (trainingItemsByPaper.get(paper.id) ?? 0) > 0
+                    ? navigate(`/practice/session?subject=${encodeURIComponent(examDisciplines[0] ?? subjectSlug)}&level=${encodeURIComponent(activeLevel)}&mode=mixed&sourcePaperId=${encodeURIComponent(paper.id)}`)
+                    : navigate(`/practice/session/${paper.id}?subject=${encodeURIComponent(subjectSlug)}`)
                 }
+                onConsult={() => navigate(`/practice/session/${paper.id}?subject=${encodeURIComponent(subjectSlug)}`)}
               />
             ))}
           </div>

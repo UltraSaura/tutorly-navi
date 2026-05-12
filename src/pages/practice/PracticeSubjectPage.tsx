@@ -5,35 +5,42 @@ import { Brain, FileText, Zap } from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useExamPapers } from '@/hooks/useExamImport';
+import { useExamPapers, useTrainingItems } from '@/hooks/useExamImport';
 import { useLearningSubjects } from '@/hooks/useLearningSubjects';
-import { resolveExamDisciplinesForSubjectSlug } from '@/utils/examSubjectMapping';
+import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
+import { resolveExamDisciplinesForSubjectSlug, getSubjectNameForSlug } from '@/utils/examSubjectMapping';
+
+const NO_ACTIVE_LEVEL = '__no_active_level__';
 
 export default function PracticeSubjectPage() {
   const navigate = useNavigate();
   const { subject } = useParams<{ subject: string }>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const subjectSlug = subject ?? '';
   const subjectsQuery = useLearningSubjects();
+  const activeSchoolLevel = useActiveSchoolLevel();
+  const activeLevel = activeSchoolLevel.normalizedLevel ?? NO_ACTIVE_LEVEL;
 
   const examDisciplines = useMemo(
     () => (subjectSlug ? resolveExamDisciplinesForSubjectSlug(subjectSlug) : []),
     [subjectSlug],
   );
 
-  const papersQuery = useExamPapers({ exam: 'dnb', discipline: examDisciplines });
+  const papersQuery = useExamPapers({ exam: 'dnb', discipline: examDisciplines, level: activeLevel });
+  const trainingItemsQuery = useTrainingItems({ subject_slug: examDisciplines[0], level: activeLevel, status: 'published', limit: 50 });
 
   const subjectLabel = useMemo(() => {
     const row = (subjectsQuery.data ?? []).find((s) => s.subject.slug === subjectSlug);
-    return row?.subject.name ?? subjectSlug;
-  }, [subjectsQuery.data, subjectSlug]);
+    return row?.subject.name ?? getSubjectNameForSlug(subjectSlug, i18n.language);
+  }, [subjectsQuery.data, subjectSlug, i18n.language]);
 
   const counts = useMemo(() => {
     const papers = papersQuery.data ?? [];
     const examPapers = papers.length;
     const exercises = papers.reduce((sum, p) => sum + (p.exercise_count ?? 0), 0);
-    return { examPapers, exercises };
-  }, [papersQuery.data]);
+    const trainingItems = trainingItemsQuery.data?.length ?? 0;
+    return { examPapers, exercises, trainingItems };
+  }, [papersQuery.data, trainingItemsQuery.data]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -64,9 +71,17 @@ export default function PracticeSubjectPage() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-0">
-              <Button className="w-full" variant="secondary" disabled>
-                {t('tools.comingSoon')}
+            <CardContent className="space-y-3 pt-0">
+              <div className="text-xs text-muted-foreground">
+                {t('practice.subject.quick.itemCount', { count: counts.trainingItems })}
+              </div>
+              <Button
+                className="w-full"
+                variant="secondary"
+                onClick={() => navigate(`/practice/session?subject=${encodeURIComponent(examDisciplines[0] ?? subjectSlug)}&level=${encodeURIComponent(activeLevel)}&mode=mixed`)}
+                disabled={counts.trainingItems === 0}
+              >
+                {t('practice.subject.quick.cta')}
               </Button>
             </CardContent>
           </Card>

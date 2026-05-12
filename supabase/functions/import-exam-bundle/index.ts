@@ -24,6 +24,8 @@ interface BundlePaper {
   source_url: string;
   fetched_at: string;
   exam: string;
+  level?: string | null;
+  school_cycle?: string | null;
   session_year: number;
   discipline: string;
   series: ExamSeries;
@@ -67,11 +69,24 @@ interface BundleProgramLink {
   rationale: string;
 }
 
+interface BundleExamAsset {
+  exercise_id: string;
+  paper_id: string;
+  type: string;
+  label: string;
+  storage_path: string;
+  public_url?: string | null;
+  alt?: string | null;
+  page_number?: number | null;
+  sort_order?: number;
+}
+
 interface ExamBundle {
   mode?: ImportMode;
   sources?: BundleSource[];
   papers?: BundlePaper[];
   exercises?: BundleExercise[];
+  exam_assets?: BundleExamAsset[];
   exercise_program_links?: BundleProgramLink[];
 }
 
@@ -133,6 +148,14 @@ function normalizeText(value: string | undefined | null): string {
   return value ?? '';
 }
 
+function levelForExam(exam: string | undefined | null): string | null {
+  if (exam === 'dnb') return '3eme';
+  if (exam === 'bac') return 'terminale';
+  if (exam === 'bac_francais') return '1ere';
+  if (exam === 'cap') return 'cap';
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -176,9 +199,10 @@ Deno.serve(async (req) => {
     const sources = bundle.sources ?? [];
     const papers = bundle.papers ?? [];
     const exercises = bundle.exercises ?? [];
+    const assets = bundle.exam_assets ?? [];
     const links = bundle.exercise_program_links ?? [];
     const diagnostics: Diagnostic[] = [];
-    const counts = { sources: 0, papers: 0, exercises: 0, exercise_program_links: 0 };
+    const counts = { sources: 0, papers: 0, exercises: 0, exam_assets: 0, exercise_program_links: 0 };
     const CHUNK_SIZE = 100;
 
     const sourceIdByUrl = new Map<string, string>();
@@ -244,6 +268,7 @@ Deno.serve(async (req) => {
       source_url: paper.source_url,
       fetched_at: paper.fetched_at,
       exam: paper.exam,
+      level: paper.level ?? levelForExam(paper.exam),
       session_year: paper.session_year,
       discipline: paper.discipline,
       series: paper.series,
@@ -294,6 +319,42 @@ Deno.serve(async (req) => {
       counts.exercises += rows.length;
     }
 
+    const assetRows = assets.flatMap((asset, index) => {
+      const exercise_id = exerciseIdByImportId.get(asset.exercise_id);
+      const paper_id = paperIdByImportId.get(asset.paper_id);
+      if (!exercise_id || !paper_id) {
+        diagnostics.push({
+          table: 'exam_assets',
+          code: 'MISSING_PARENT',
+          message: `Skipping asset for missing parent ${asset.paper_id}/${asset.exercise_id}`,
+          details: null,
+          hint: null,
+        });
+        return [];
+      }
+      return [{
+        id: deterministicUuid(`exam_asset:${asset.storage_path}`),
+        exercise_id,
+        paper_id,
+        type: asset.type,
+        label: asset.label,
+        storage_path: asset.storage_path,
+        public_url: asset.public_url ?? null,
+        alt: asset.alt ?? null,
+        page_number: asset.page_number ?? null,
+        sort_order: asset.sort_order ?? index,
+        updated_at: new Date().toISOString(),
+      }];
+    });
+
+    for (const rows of chunk(assetRows, CHUNK_SIZE)) {
+      const { error } = await supabaseAdmin
+        .from('exam_assets')
+        .upsert(rows, { onConflict: 'storage_path' });
+      if (error) return jsonResponse({ success: false, error: error.message, diagnostics: [diagFromPgError('exam_assets', error)] }, 200);
+      counts.exam_assets += rows.length;
+    }
+
     const linkRows = links.flatMap((link) => {
       const exercise_id = exerciseIdByImportId.get(link.exercise_id);
       if (!exercise_id) {
@@ -334,6 +395,7 @@ Deno.serve(async (req) => {
         sources: sourceRows.length,
         papers: paperRows.length,
         exercises: exerciseRows.length,
+        exam_assets: assetRows.length,
         exercise_program_links: linkRows.length,
       },
     });
@@ -374,10 +436,10 @@ async function verifyImport(
     sourceIds: string[];
     paperIds: string[];
     exerciseIds: string[];
-    expected: { sources: number; papers: number; exercises: number; exercise_program_links: number };
+    expected: { sources: number; papers: number; exercises: number; exam_assets: number; exercise_program_links: number };
   },
 ) {
-  const [sources, papers, exercises, links] = await Promise.all([
+  const [sources, papers, exercises, assets, links] = await Promise.all([
     ids.sourceIds.length
       ? supabaseAdmin.from('exam_sources').select('*', { count: 'exact', head: true }).in('id', ids.sourceIds)
       : Promise.resolve({ count: 0, error: null }),
@@ -387,19 +449,23 @@ async function verifyImport(
     ids.exerciseIds.length
       ? supabaseAdmin.from('exam_exercises').select('*', { count: 'exact', head: true }).in('id', ids.exerciseIds)
       : Promise.resolve({ count: 0, error: null }),
+    ids.expected.exam_assets > 0 && ids.exerciseIds.length
+      ? supabaseAdmin.from('exam_assets').select('*', { count: 'exact', head: true }).in('exercise_id', ids.exerciseIds)
+      : Promise.resolve({ count: 0, error: null }),
     ids.exerciseIds.length
       ? supabaseAdmin.from('exam_exercise_program_links').select('*', { count: 'exact', head: true }).in('exercise_id', ids.exerciseIds)
       : Promise.resolve({ count: 0, error: null }),
   ]);
 
-  const fk_errors = [sources, papers, exercises, links]
+  const fk_errors = [sources, papers, exercises, assets, links]
     .filter((result) => result.error)
-    .map((result, index) => diagFromPgError(['exam_sources', 'exam_papers', 'exam_exercises', 'exam_exercise_program_links'][index], result.error));
+    .map((result, index) => diagFromPgError(['exam_sources', 'exam_papers', 'exam_exercises', 'exam_assets', 'exam_exercise_program_links'][index], result.error));
 
   const actual = {
     sources: sources.count ?? 0,
     papers: papers.count ?? 0,
     exercises: exercises.count ?? 0,
+    exam_assets: assets.count ?? 0,
     exercise_program_links: links.count ?? 0,
   };
   const count_mismatches = Object.entries(ids.expected)

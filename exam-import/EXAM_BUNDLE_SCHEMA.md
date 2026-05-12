@@ -7,6 +7,7 @@ Ce format est distinct du `curriculum-import/bundle.json`. Il décrit des annale
   "sources": [],
   "papers": [],
   "exercises": [],
+  "exam_assets": [],
   "exercise_program_links": []
 }
 ```
@@ -23,6 +24,8 @@ Ce format est distinct du `curriculum-import/bundle.json`. Il décrit des annale
 - `id`: identifiant déterministe du sujet.
 - `source_name`, `source_url`, `fetched_at`: traçabilité source.
 - `exam`: `"dnb"`.
+- `level`: niveau scolaire cible, par exemple `"3eme"` pour le DNB.
+- `school_cycle`: cycle scolaire optionnel si le modèle le transporte, par exemple `"cycle_4"` pour le DNB.
 - `session_year`: année de session.
 - `discipline`: discipline normalisée, par exemple `"mathematiques"`.
 - `series`: `"generale"`, `"professionnelle"` ou `null`.
@@ -45,8 +48,25 @@ Chaque exercice recopie la traçabilité complète vers le PDF source:
 - `exercise_number`, `title`.
 - `raw_text`.
 - `parsing_status`: statut du découpage pour ce PDF.
+- `parsed_content`: structure pédagogique optionnelle:
+  - `context`.
+  - `documents[]`: documents texte/table/image. Les tableaux structurés utilisent `type: "table"`, `caption`, `table.headers` et `table.rows`. Pour les images générées avec `--with-assets`, les champs possibles sont `local_path`, `storage_path`, `public_url`, `alt`, `page_number`, `sort_order`, `fallback`.
+  - `questions[]`: questions structurées avec `id`, `label`, `text`, `points`, `answer_type`, `expected_answer`, `student_answer`, et éventuellement `options`.
 
 Si le découpage échoue, un exercice unique conserve tout `raw_text` avec `parsing_status: "failed"`.
+
+## `exam_assets[]`
+
+Entrées optionnelles ajoutées par le script d'import après upload des fichiers locaux dans Supabase Storage `exam-assets`.
+
+- `exercise_id`, `paper_id`: IDs d'import du bundle.
+- `type`: `"image"`, `"table"`, `"graph"` ou `"text"`.
+- `label`.
+- `storage_path`: chemin dans le bucket.
+- `public_url`: URL publique si disponible.
+- `alt`: texte alternatif.
+- `page_number`: page PDF source.
+- `sort_order`: ordre d'affichage.
 
 ## `exercise_program_links[]`
 

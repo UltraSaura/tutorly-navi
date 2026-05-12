@@ -4,15 +4,19 @@ import { useAdmin } from "@/context/AdminContext";
 import { toast } from "@/hooks/use-toast";
 import { normalizeLearningStyle, type LearningStyle } from "@/types/learning-style";
 import type { Step } from "./types";
+import { getLearningMode } from "@/domain/learningMode";
 
 const ADAPTIVE_EXPLANATION_CACHE_VERSION = 3;
 
 const ADAPTIVE_TWOCARD_PROMPT = `You are a patient math tutor. Your job is to TEACH the underlying mathematical concept, NOT to solve the student's exercise.
 
+Learning Mode: {{learning_mode}} (If 'kid', use simpler language, more encouragement, and focus on visual/concrete examples).
+
 Guidelines:
 - NEVER use the numbers or data from the student's exercise.
 - NEVER compute or state the final result of the student's exercise.
 - Always start with the universal concept explanation. The learning style changes the support method and practice format, not the academic goal.
+- If {{learning_mode}} is 'kid', use very simple words, shorter sentences, and a playful tone. Avoid technical jargon.
 - Do not say "Because you are a visual learner" or label the child.
 - Use this child-friendly flow:
   1. Quick idea / core concept.
@@ -247,6 +251,14 @@ export function useTwoCardTeaching() {
       const response_language = /^fr/i.test(rawLang) ? 'French' : 'English';
       const grade_level = profile?.grade_level ?? "High School";
       const learning_style = normalizeLearningStyle(profile?.learning_style);
+      
+      // NEW: Determine learning mode
+      const location = typeof window !== 'undefined' ? window.location.pathname : '';
+      const isAcademicContext = location.includes('/practice') || 
+                                location.includes('/exam') || 
+                                location.includes('/annales');
+      
+      const learningMode = isAcademicContext ? 'student' : getLearningMode(grade_level);
 
       // Detect the operation type from the exercise
       const operationInfo = detectOperationType(exercise_content);
@@ -268,6 +280,7 @@ export function useTwoCardTeaching() {
         grade_level: grade_level,
         country: 'your country',
         learning_style,
+        learning_mode: learningMode,
         subject: promptSubject,
         user_type: 'student',
         response_language: response_language

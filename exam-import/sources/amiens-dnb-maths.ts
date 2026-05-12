@@ -1,4 +1,5 @@
 import type { CollectedPaper } from "../parsers/pdf-to-exam.ts";
+import { cleanText, decodeHtmlEntities } from "../utils/cleanText.ts";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
@@ -34,7 +35,7 @@ export async function collectAmiensDnbMaths(options: AmiensCollectOptions = {}):
         location: "metropole",
         variant: "standard",
         pdf_url: new URL(link.href, AMIENS_DNB_MATHS_URL).toString(),
-        title: link.label || `DNB mathematiques metropole ${year}`,
+        title: cleanText(link.label) || `DNB mathematiques metropole ${year}`,
       });
     }
   }
@@ -76,7 +77,7 @@ function extractPdfLinks(html: string): Array<{ href: string; label: string }> {
   for (const match of html.matchAll(pattern)) {
     links.push({
       href: decodeHtml(match[1] ?? ""),
-      label: stripHtml(match[2] ?? ""),
+      label: cleanText(match[2] ?? ""),
     });
   }
 
@@ -97,16 +98,6 @@ function dedupeByPdfUrl(papers: CollectedPaper[]): CollectedPaper[] {
   });
 }
 
-function stripHtml(value: string): string {
-  return decodeHtml(value.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
-}
-
 function decodeHtml(value: string): string {
-  return value
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&nbsp;|&#160;/g, " ");
+  return decodeHtmlEntities(value);
 }

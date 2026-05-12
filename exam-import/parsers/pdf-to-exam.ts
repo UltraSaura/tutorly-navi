@@ -1,9 +1,12 @@
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { levelForExam, schoolCycleForExam } from "../../src/domain/exams.ts";
+import { cleanText } from "../utils/cleanText.ts";
+import { detectStructuredTables } from "./table-detector.ts";
 
 const execFileAsync = promisify(execFile);
 
@@ -19,26 +22,59 @@ export type ExamVariant =
   | "braille_abrege";
 export type ParsingStatus = "parsed" | "partial" | "failed";
 export type ParsingConfidence = "high" | "medium" | "low";
+export type AnswerType = "short_text" | "numeric" | "math" | "multiple_choice" | "free_text";
+
+export interface ParsedExerciseQuestionSub {
+  id: string;
+  label: string;
+  text: string;
+}
+
+export interface ParsedExerciseQuestion {
+  id: string;
+  label: string;
+  text: string;
+  points: number | null;
+  answer_type: AnswerType;
+  expected_answer: string | null;
+  student_answer: string | null;
+  options?: string[];
+  subquestions: ParsedExerciseQuestionSub[];
+}
+
+export interface ParsedExercisePart {
+  label: string;
+  context: string;
+  questions: ParsedExerciseQuestion[];
+}
 
 export interface ParsedExerciseContent {
   title: string | null;
   context: string;
+  parts?: ParsedExercisePart[];
   documents: Array<{
+    id?: string;
     label: string;
-    content: string;
+    caption?: string;
+    content?: string;
     type: "text" | "table" | "image" | "graph";
+    table?: {
+      headers: string[];
+      rows: string[][];
+    };
+    source?: {
+      page?: number;
+    };
+    local_path?: string;
+    storage_path?: string;
+    public_url?: string | null;
+    alt?: string;
+    page_number?: number | null;
+    sort_order?: number;
+    fallback?: boolean;
+    render_mode?: 'image_first' | 'table_first' | 'image_only' | 'table_only';
   }>;
-  questions: Array<{
-    id: string;
-    label: string;
-    text: string;
-    points: number | null;
-    subquestions: Array<{
-      id: string;
-      label: string;
-      text: string;
-    }>;
-  }>;
+  questions: ParsedExerciseQuestion[];
   raw_excerpt: string;
   confidence: ParsingConfidence;
 }
@@ -88,6 +124,8 @@ export interface ExamExercise {
 
 export interface ExamPaper extends CollectedPaper {
   id: string;
+  level: string | null;
+  school_cycle?: string | null;
   pdf_hash: string;
   raw_text: string;
   exercises: string[];
@@ -97,6 +135,11 @@ export interface ExamPaper extends CollectedPaper {
 export interface ParsedExamPaper {
   paper: ExamPaper;
   exercises: ExamExercise[];
+}
+
+export interface ParsePdfOptions {
+  withAssets?: boolean;
+  assetsRoot?: string;
 }
 
 export function sha256(buffer: Uint8Array): string {
@@ -133,6 +176,7 @@ export async function extractPdfText(pdfBytes: Uint8Array): Promise<string> {
 export async function parsePdfToExam(
   metadata: CollectedPaper,
   pdfBytes: Uint8Array,
+  options: ParsePdfOptions = {},
 ): Promise<ParsedExamPaper> {
   const pdf_hash = sha256(pdfBytes);
   const raw_text = await extractPdfText(pdfBytes);
@@ -142,7 +186,8 @@ export async function parsePdfToExam(
 
   const exercises = chunks.items.map((item, index) => {
     const exercise_number = item.number ?? index + 1;
-    const parsed = parseExercisePedagogical(item.raw_text, item.title, exercise_number);
+    const title = cleanText(item.title) || null;
+    const parsed = parseExercisePedagogical(item.raw_text, title, exercise_number);
     const effectiveStatus: ParsingStatus =
       parsed.confidence === "low" ? "partial" : parsing_status;
     return {
@@ -160,7 +205,7 @@ export async function parsePdfToExam(
       pdf_url: metadata.pdf_url,
       pdf_hash,
       exercise_number,
-      title: item.title,
+      title,
       raw_text: item.raw_text,
       parsing_status: effectiveStatus,
       parsed_content: parsed,
@@ -168,10 +213,21 @@ export async function parsePdfToExam(
     } satisfies ExamExercise;
   });
 
+  if (options.withAssets === true) {
+    await attachPageImageAssets(pdfBytes, paper_id, exercises, options.assetsRoot ?? "exam-import/assets");
+    
+    // Import dynamically to avoid circular dependencies if any, or just import at top.
+    const { applyCropsToExercises } = await import("../scripts/pdf-crop-assets.ts");
+    const paperInfo = { ...metadata, id: paper_id } as ExamPaper;
+    await applyCropsToExercises(paperInfo, exercises, pdfBytes, options.assetsRoot ?? "exam-import/assets");
+  }
+
   return {
     paper: {
       ...metadata,
       id: paper_id,
+      level: levelForExam(metadata.exam),
+      school_cycle: schoolCycleForExam(metadata.exam),
       pdf_hash,
       raw_text,
       exercises: exercises.map((exercise) => exercise.id),
@@ -181,13 +237,25 @@ export async function parsePdfToExam(
   };
 }
 
-function parseExercisePedagogical(rawText: string, title: string | null, exerciseNumber: number): ParsedExerciseContent {
+/**
+ * Supprime uniquement une ou plusieurs lignes de pied de copie à la FIN du texte
+ * (référence « Page X sur Y »), sans couper après un pied de page intermédiaire.
+ */
+function stripTrailingExamPageFooters(text: string): string {
+  let t = text.trim();
+  const footerLine = /\n[^\n]{0,400}\bPage\s+\d+\s+sur\s+\d+\b[^\n]*$/i;
+  for (let i = 0; i < 8; i += 1) {
+    const next = t.replace(footerLine, "").trim();
+    if (next === t) break;
+    t = next;
+  }
+  return t;
+}
+
+export function parseExercisePedagogical(rawText: string, title: string | null, exerciseNumber: number): ParsedExerciseContent {
   const cleaned = normalizeText(rawText);
-
-  const withoutFooter = cleaned.replace(/\n?\b\d{2,}[A-Z]{2,}\w*\s+Page\s+\d+\s+sur\s+\d+\b[\s\S]*$/i, "").trim();
-  const content = withoutFooter || cleaned;
-
-  const questionStart = /^\s*(\d{1,2})\s*[\).\u2013\-:]\s+/m;
+  const stripped = stripTrailingExamPageFooters(cleaned);
+  const content = stripped.length >= 60 ? stripped : cleaned;
 
   const text = content.split("\n").join("\n").trim();
 
@@ -195,23 +263,123 @@ function parseExercisePedagogical(rawText: string, title: string | null, exercis
 
   const headerPoints = parseExerciseHeaderPoints(title);
 
-  const firstLead = body.match(questionStart);
-  let firstQuestionIndex = firstLead?.index ?? -1;
+  const partieMarkers = findPartieMarkers(body);
+  const useParts = partieMarkers.length >= 2;
+
+  if (useParts) {
+    return parseExerciseWithPartieSections(body, partieMarkers, title, exerciseNumber, headerPoints);
+  }
+
+  const { context, questions } = extractContextAndQuestions(body);
+  const documents = extractLikelyStructuredDocuments(body);
+
+  let confidence = computeQuestionConfidence(context, questions);
+  const questionsDup = [...questions];
+  applyExerciseTotalPoints(questionsDup, headerPoints);
+
+  const raw_excerpt = body.length > 800 ? `${body.slice(0, 800).trim()}…` : body;
+
+  return {
+    title: title ?? `Exercice ${exerciseNumber}`,
+    context,
+    documents,
+    questions: questionsDup,
+    raw_excerpt,
+    confidence,
+  };
+}
+
+function findPartieMarkers(body: string): Array<{ idx: number; headerLen: number; letter: string }> {
+  const matches = [...body.matchAll(/(?:^|\n)\s*((?:PARTIE|Partie)\s+([AB]))\b\s*:?\s*/gi)];
+  const markers: Array<{ idx: number; headerLen: number; letter: string }> = [];
+  for (const m of matches) {
+    const letter = String(m[2] ?? "").toUpperCase();
+    if (letter !== "A" && letter !== "B") continue;
+    markers.push({
+      idx: m.index ?? 0,
+      headerLen: m[0]?.length ?? 0,
+      letter,
+    });
+  }
+  return markers.sort((a, b) => a.idx - b.idx);
+}
+
+function parseExerciseWithPartieSections(
+  body: string,
+  markers: Array<{ idx: number; headerLen: number; letter: string }>,
+  title: string | null,
+  exerciseNumber: number,
+  headerPoints: number | null,
+): ParsedExerciseContent {
+  const ordered = [...markers].sort((a, b) => a.idx - b.idx);
+  const prelude = ordered.length > 0 ? body.slice(0, ordered[0]!.idx).trim() : body.trim();
+
+  const partsBuilt: ParsedExercisePart[] = [];
+  const merged: ParsedExerciseQuestion[] = [];
+
+  for (let i = 0; i < ordered.length; i++) {
+    const m = ordered[i]!;
+    const sliceStart = m.idx + m.headerLen;
+    const sliceEnd = ordered[i + 1]?.idx ?? body.length;
+    const segmentRaw = body.slice(sliceStart, sliceEnd).trim();
+    const segment = normalizePartieContinuation(segmentRaw);
+    const { context, questions } = extractContextAndQuestions(segment);
+
+    partsBuilt.push({
+      label: `Partie ${m.letter}`,
+      context,
+      questions,
+    });
+    merged.push(...questions);
+  }
+
+  applyExerciseTotalPoints(merged, headerPoints);
+
+  const documents = extractLikelyStructuredDocuments(body);
+  const confidence = computeQuestionConfidence(prelude, merged);
+
+  const raw_excerpt = body.length > 800 ? `${body.slice(0, 800).trim()}…` : body;
+
+  return {
+    title: title ?? `Exercice ${exerciseNumber}`,
+    context: prelude,
+    parts: partsBuilt,
+    documents,
+    questions: merged,
+    raw_excerpt,
+    confidence,
+  };
+}
+
+/** Harmonise suite de partie après coupure de page (sauts déjà normalisés en \\n dans normalizeText). */
+function normalizePartieContinuation(segment: string): string {
+  return segment.replace(/^\u000c+/g, "").trim();
+}
+
+function extractContextAndQuestions(segmentBody: string): {
+  context: string;
+  questions: ParsedExerciseQuestion[];
+} {
+  const questionStart = /^\s*(\d{1,2})\s*[\).\u2013\-:]\s+/m;
+  let firstQuestionIndex = segmentBody.search(questionStart);
   if (firstQuestionIndex < 0) {
-    const alt = /\n\s*(\d{1,2})\s*[\).\u2013\-:]/m.exec(body);
+    const alt = /\n\s*(\d{1,2})\s*[\).\u2013\-:]/m.exec(segmentBody);
     firstQuestionIndex = alt?.index ?? -1;
   }
 
-  const context = firstQuestionIndex >= 0 ? body.slice(0, firstQuestionIndex).trim() : body.trim();
-  const questionsBlock = firstQuestionIndex >= 0 ? body.slice(firstQuestionIndex).trim() : "";
+  const context =
+    firstQuestionIndex >= 0 ? segmentBody.slice(0, firstQuestionIndex).trim() : segmentBody.trim();
+  const questionsBlock = firstQuestionIndex >= 0 ? segmentBody.slice(firstQuestionIndex).trim() : "";
 
   let questions = parseQuestions(questionsBlock);
   if (questions.length === 0 && questionsBlock.length >= 120) {
     questions = parseQuestionsFallback(questionsBlock);
   }
 
-  const documents = extractLikelyStructuredDocuments(body);
+  return { context, questions };
+}
 
+function computeQuestionConfidence(globalContext: string, questions: ParsedExerciseQuestion[]): ParsingConfidence {
   const substantialQs = questions.filter(
     (q) =>
       q.text.trim().length >= minQuestionStemLength(q) ||
@@ -221,23 +389,11 @@ function parseExercisePedagogical(rawText: string, title: string | null, exercis
   let confidence: ParsingConfidence =
     substantialQs.length >= 2 ? "high" : substantialQs.length === 1 ? "medium" : "low";
   if (questions.length > 0 && substantialQs.length === 0) confidence = "low";
-  if (questions.length === 0 && context.length >= 120) confidence = "low";
-
-  applyExerciseTotalPoints(questions, headerPoints);
-
-  const raw_excerpt = body.length > 800 ? `${body.slice(0, 800).trim()}…` : body;
-
-  return {
-    title: title ?? `Exercice ${exerciseNumber}`,
-    context,
-    documents,
-    questions,
-    raw_excerpt,
-    confidence,
-  };
+  if (questions.length === 0 && globalContext.length >= 120) confidence = "low";
+  return confidence;
 }
 
-function minQuestionStemLength(question: ParsedExerciseContent["questions"][number]): number {
+function minQuestionStemLength(question: ParsedExerciseQuestion): number {
   return (question.subquestions ?? []).length > 0 ? 8 : 18;
 }
 
@@ -247,7 +403,7 @@ function parseExerciseHeaderPoints(headerLine: string | null): number | null {
   return m ? Number.parseInt(m[1] ?? "", 10) : null;
 }
 
-function applyExerciseTotalPoints(questions: ParsedExerciseContent["questions"], total: number | null): void {
+function applyExerciseTotalPoints(questions: ParsedExerciseQuestion[], total: number | null): void {
   if (total === null || !Number.isFinite(total) || questions.length === 0) return;
   const hasIndividual = questions.some((q) => typeof q.points === "number");
   if (hasIndividual) return;
@@ -257,7 +413,132 @@ function applyExerciseTotalPoints(questions: ParsedExerciseContent["questions"],
   }
 }
 
+async function attachPageImageAssets(
+  pdfBytes: Uint8Array,
+  paperId: string,
+  exercises: ExamExercise[],
+  assetsRoot: string,
+): Promise<void> {
+  const pageImages = await renderPdfPages(pdfBytes, collectExercisePages(exercises));
+  if (pageImages.size === 0) {
+    await cleanupRenderedPages(pageImages);
+    return;
+  }
+
+  const safePaperId = safePathSegment(paperId);
+
+  for (const [exerciseIndex, exercise] of exercises.entries()) {
+    const pages = extractExercisePageNumbers(exercise.raw_text);
+    const effectivePages = pages.length > 0 ? pages : [exerciseIndex + 1];
+    const docs = exercise.parsed_content?.documents ?? [];
+    const safeExerciseId = safePathSegment(exercise.id);
+    const exerciseDir = join(assetsRoot, safePaperId, safeExerciseId);
+    const hasStructuredTable = docs.some((doc) => doc.type === "table" && doc.table !== undefined);
+    await mkdir(exerciseDir, { recursive: true });
+
+    for (const pageNumber of effectivePages) {
+      const renderedPath = pageImages.get(pageNumber);
+      if (renderedPath === undefined) continue;
+      const fileName = `page-${pageNumber}.png`;
+      const destination = join(exerciseDir, fileName);
+      await copyFile(renderedPath, destination);
+      const local_path = [assetsRoot, safePaperId, safeExerciseId, fileName].join("/");
+      docs.push({
+        type: "image",
+        label: effectivePages.length > 1 ? `Page ${pageNumber} de l'exercice` : "Capture de l'exercice",
+        local_path,
+        alt: inferExerciseImageAlt(exercise),
+        page_number: pageNumber,
+        sort_order: docs.length,
+        fallback: hasStructuredTable,
+      });
+    }
+
+    if (exercise.parsed_content) {
+      exercise.parsed_content.documents = docs;
+    }
+  }
+
+  await cleanupRenderedPages(pageImages);
+}
+
+function collectExercisePages(exercises: ExamExercise[]): number[] {
+  const pages = new Set<number>();
+  exercises.forEach((exercise, index) => {
+    const fromText = extractExercisePageNumbers(exercise.raw_text);
+    if (fromText.length > 0) fromText.forEach((page) => pages.add(page));
+    else pages.add(index + 1);
+  });
+  return [...pages].sort((a, b) => a - b);
+}
+
+function extractExercisePageNumbers(rawText: string): number[] {
+  const matches = [...rawText.matchAll(/\bPage\s+(\d{1,3})\s+sur\s+\d{1,3}\b/gi)];
+  const pages = matches
+    .map((match) => Number.parseInt(match[1] ?? "", 10))
+    .filter((page) => Number.isFinite(page) && page > 0);
+  return [...new Set(pages)];
+}
+
+async function renderPdfPages(pdfBytes: Uint8Array, pageNumbers: number[]): Promise<Map<number, string>> {
+  const rendered = new Map<number, string>();
+  if (pageNumbers.length === 0) return rendered;
+
+  const dir = await mkdtemp(join(tmpdir(), "exam-assets-"));
+  const pdfPath = join(dir, "input.pdf");
+  await writeFile(pdfPath, pdfBytes);
+
+  try {
+    for (const pageNumber of pageNumbers) {
+      const prefix = join(dir, `page-${pageNumber}`);
+      try {
+        await execFileAsync("pdftoppm", ["-png", "-r", "144", "-f", String(pageNumber), "-l", String(pageNumber), pdfPath, prefix], {
+          timeout: 30_000,
+        });
+        const renderedPath = join(dir, `page-${pageNumber}-${pageNumber}.png`);
+        rendered.set(pageNumber, renderedPath);
+      } catch {
+        // Poppler is optional for text parsing. Asset generation is best-effort.
+      }
+    }
+    return rendered;
+  } catch {
+    return rendered;
+  }
+}
+
+async function cleanupRenderedPages(pageImages: Map<number, string>): Promise<void> {
+  const firstPath = pageImages.values().next().value;
+  if (typeof firstPath === "string") {
+    await rm(dirname(firstPath), { force: true, recursive: true });
+  }
+}
+
+function inferExerciseImageAlt(exercise: ExamExercise): string {
+  const title = exercise.title ?? `Exercice ${exercise.exercise_number ?? ""}`.trim();
+  const text = exercise.raw_text.toLowerCase();
+  if (text.includes("température") || text.includes("temperature")) {
+    return `Tableau ou figure associé à ${title}, dont les températures moyennes mensuelles.`;
+  }
+  if (text.includes("figure") || text.includes("schéma") || text.includes("schema")) {
+    return `Figure ou schéma associé à ${title}.`;
+  }
+  if (text.includes("tableau") || text.includes("questions") || text.includes("réponse")) {
+    return `Tableau associé à ${title}.`;
+  }
+  return `Capture PDF complète de ${title}.`;
+}
+
+function safePathSegment(value: string): string {
+  return value.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
 function extractLikelyStructuredDocuments(body: string): ParsedExerciseContent["documents"] {
+  const structuredTables = detectStructuredTables(body);
+  if (structuredTables.length > 0) {
+    return structuredTables;
+  }
+
   const fromTables = extractPipeTables(body);
   if (fromTables.length > 0) return fromTables;
   return extractQcmTableSlices(body).slice(0, 3);
@@ -300,13 +581,13 @@ function extractQcmTableSlices(body: string): ParsedExerciseContent["documents"]
   return [{ label: "Tableau — QCM", content: slice, type: "table" as const }];
 }
 
-function parseQuestionsFallback(block: string): ParsedExerciseContent["questions"] {
+function parseQuestionsFallback(block: string): ParsedExerciseQuestion[] {
   const parts = block
     .split(/\n(?=\s*\d{1,2}\s*[\).\u2013\-:]\s+)/g)
     .map((p) => p.trim())
     .filter(Boolean);
 
-  const items: ParsedExerciseContent["questions"] = [];
+  const items: ParsedExerciseQuestion[] = [];
 
   for (const raw of parts) {
     const lead = raw.match(/^(\d{1,2})\s*[\).\u2013\-:]\s+/);
@@ -319,13 +600,7 @@ function parseQuestionsFallback(block: string): ParsedExerciseContent["questions
     const stem = qText.slice(0, stemEnd).trim();
     const displayStem = stem.length > 0 ? stem : subParsed.length > 0 ? "" : qText;
 
-    items.push({
-      id: qNumber,
-      label: `${qNumber}.`,
-      text: displayStem,
-      points: pts,
-      subquestions: subParsed.map(({ id, label, text }) => ({ id: `${qNumber}${id}`, label, text })),
-    });
+    items.push(buildQuestion(qNumber, displayStem, pts, subParsed));
   }
 
   return items;
@@ -358,14 +633,14 @@ function parseSubquestions(
   return subquestions;
 }
 
-function parseQuestions(block: string): ParsedExerciseContent["questions"] {
+function parseQuestions(block: string): ParsedExerciseQuestion[] {
   if (!block) return [];
 
   const normalized = block.replace(/\r/g, "\n");
   const questionMatches = [...normalized.matchAll(/^\s*(\d{1,2})\s*[\).\u2013\-:]\s+/gm)];
   if (questionMatches.length === 0) return [];
 
-  const items: ParsedExerciseContent["questions"] = [];
+  const items: ParsedExerciseQuestion[] = [];
 
   for (let i = 0; i < questionMatches.length; i += 1) {
     const match = questionMatches[i];
@@ -382,16 +657,48 @@ function parseQuestions(block: string): ParsedExerciseContent["questions"] {
     const stem = qText.slice(0, stemEnd).trim();
     const displayStem = stem.length > 0 ? stem : subParsed.length > 0 ? "" : qText;
 
-    items.push({
-      id: qNumber,
-      label: `${qNumber}.`,
-      text: displayStem,
-      points: pts,
-      subquestions: subParsed.map(({ id, label, text }) => ({ id: `${qNumber}${id}`, label, text })),
-    });
+    items.push(buildQuestion(qNumber, displayStem, pts, subParsed));
   }
 
   return items;
+}
+
+function buildQuestion(
+  qNumber: string,
+  text: string,
+  points: number | null,
+  subParsed: Array<{ id: string; label: string; text: string; leadIndex: number }>,
+): ParsedExerciseQuestion {
+  return {
+    id: qNumber,
+    label: `${qNumber}.`,
+    text,
+    points,
+    answer_type: inferAnswerType(text),
+    expected_answer: null,
+    student_answer: null,
+    options: inferMultipleChoiceOptions(text),
+    subquestions: subParsed.map(({ id, label, text }) => ({ id: `${qNumber}${id}`, label, text })),
+  };
+}
+
+function inferAnswerType(text: string): AnswerType {
+  const normalized = text.toLowerCase();
+  if (inferMultipleChoiceOptions(text).length > 0) return "multiple_choice";
+  if (/\b(calculer|déterminer|arrondi|pourcentage|probabilité|volume|aire|longueur|hauteur|combien)\b/i.test(normalized)) {
+    return "math";
+  }
+  if (/\bjustifier|expliquer|montrer|vérifier|affirmer|vrai|fausse?\b/i.test(normalized)) return "free_text";
+  if (/\bquelle formule|quel nombre|quelle est|quel est\b/i.test(normalized)) return "short_text";
+  return text.length > 180 ? "free_text" : "short_text";
+}
+
+function inferMultipleChoiceOptions(text: string): string[] {
+  const compact = text.replace(/\s+/g, " ").trim();
+  const explicit = [...compact.matchAll(/\b(?:Réponse\s*)?([ABC])\s*[:.)-]\s*([^ABC]{1,90})(?=\s+(?:Réponse\s*)?[ABC]\s*[:.)-]|$)/gi)]
+    .map((match) => cleanText(match[2] ?? ""))
+    .filter((option) => option.length > 0);
+  return explicit.length >= 2 ? explicit.slice(0, 6) : [];
 }
 
 function buildPaperId(metadata: CollectedPaper, pdfHash: string): string {
@@ -407,13 +714,18 @@ function buildPaperId(metadata: CollectedPaper, pdfHash: string): string {
   ].join(":");
 }
 
-function splitExercises(rawText: string): { status: ParsingStatus; items: Array<{ number: number | null; title: string | null; raw_text: string }> } {
+export function splitExercises(rawText: string): { status: ParsingStatus; items: Array<{ number: number | null; title: string | null; raw_text: string }> } {
   const text = rawText.trim();
   if (text.length === 0) {
     return { status: "failed", items: [{ number: null, title: null, raw_text: "" }] };
   }
 
-  const matches = [...text.matchAll(/\b(?:Exercice|EXERCICE)\s+(\d{1,2})\b[^\n\r]*/g)];
+  /** Seules les lignes « Exercice N (…) points » : évite faux positifs (« Exercice 3 avec… »). La TOC « Exercice N     20 points » est exclue (pas de parenthèses) et traitée comme doublon filtrée. */
+  const matches = [
+    ...text.matchAll(
+      /\b(?:Exercice|EXERCICE)\s+(\d{1,2})\b[^\n\r]*?\(\s*\d{1,3}\s*points?\s*\)/gi,
+    ),
+  ];
   if (matches.length === 0) {
     return { status: "failed", items: [{ number: null, title: null, raw_text: text }] };
   }
@@ -424,7 +736,7 @@ function splitExercises(rawText: string): { status: ParsingStatus; items: Array<
     const raw_text = text.slice(start, end).trim();
     return {
       number: Number.parseInt(match[1] ?? String(index + 1), 10),
-      title: match[0]?.trim() ?? null,
+      title: cleanText(match[0]) || null,
       raw_text,
     };
   });
@@ -516,7 +828,12 @@ function unescapePdfString(value: string): string {
 }
 
 function normalizeText(text: string): string {
-  return text.replace(/\r/g, "\n").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  return text
+    .replace(/\r/g, "\n")
+    .replace(/\f/g, "\n\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function slugify(value: string): string {

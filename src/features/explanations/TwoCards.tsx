@@ -14,6 +14,9 @@ import { toChildFriendlyExplanationText } from './childFriendlyText';
 import ExplanationCards from './ExplanationCards';
 import { trackLearningInteraction } from '@/services/learningAnalytics';
 
+import { ExplanationRenderer } from "./ExplanationRenderer";
+import { getLearningMode } from "@/domain/learningMode";
+
 function Section({ title, text }: { title: string; text: string }) {
   const resolveText = useResolveText();
   if (!text) return null;
@@ -59,13 +62,39 @@ export function TwoCards({
 }) {
   console.log('[TwoCards] Component rendered with sections:', s);
   const resolveText = useResolveText();
-  const [isGuardian, setIsGuardian] = useState(false); // NEW
-  const { userContext } = useUserContext(); // NEW: Get user context for grade level
+  const [isGuardian, setIsGuardian] = useState(false);
+  const { userContext, isContextReady } = useUserContext();
   const { t, language } = useLanguage();
   const trackedExplanationKeyRef = React.useRef<string | null>(null);
   const trackedSupportKeyRef = React.useRef<string | null>(null);
   const trackedCheckKeyRef = React.useRef<string | null>(null);
   
+  // NEW: Determine learning mode with "clean-academic" rule for practice/exam
+  const location = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isAcademicContext = location.includes('/practice') || 
+                            location.includes('/exam') || 
+                            location.includes('/annales');
+
+  // TIMING FIX: Derive mode only once user context is loaded.
+  // React Query sets isContextReady=true after the first fetch completes.
+  // Without this guard, getLearningMode(undefined) always returns 'student'
+  // on the initial render (before the async query resolves), so KidExplanation
+  // was never mounted even for CM1/CM2 users.
+  const learningMode = React.useMemo<'kid' | 'student'>(() => {
+    if (isAcademicContext) return 'student';
+    if (!isContextReady) return 'student'; // not loaded yet — will re-run once ready
+    return getLearningMode(userContext?.student_level);
+  }, [isAcademicContext, isContextReady, userContext?.student_level]);
+
+  console.log("DEBUG USER LEVEL:", userContext?.student_level);
+  console.log("DEBUG EXPLANATION MODE:", {
+    level: userContext?.student_level,
+    isContextReady,
+    learningMode,
+    isKid: learningMode === "kid",
+    isAcademicContext
+  });
+
   // Fetch topic routing info if we have topicId but not slugs
   const { data: topicData, isLoading: topicDataLoading } = useQuery({
     queryKey: ['topic-for-lesson-link', topicId],
@@ -152,7 +181,32 @@ export function TwoCards({
     return '+';
   };
   
-  const orderedSteps = Array.isArray(s.steps) && s.steps.length > 0 ? s.steps : null;
+  const rawSteps = Array.isArray(s.steps) && s.steps.length > 0 ? s.steps : null;
+  
+  // NEW: Fallback synthesis if steps are missing (e.g. legacy cache)
+  const orderedSteps = React.useMemo(() => {
+    if (rawSteps) return rawSteps;
+    
+    // If no steps but we have legacy fields, synthesize them for the renderer
+    if (s.concept || s.example || s.method) {
+      console.log("[TwoCards] Synthesizing steps from legacy sections");
+      return [
+        { title: t('exercises.explanation.headers.concept'), body: s.concept, kind: 'concept', icon: 'lightbulb' },
+        { title: t('exercises.explanation.headers.example'), body: s.example, kind: 'example', icon: 'magnifier' },
+        { title: t('exercises.explanation.headers.method'), body: s.method, kind: 'method', icon: 'checklist' },
+        { title: t('exercises.explanation.headers.pitfall'), body: s.pitfall, kind: 'pitfall', icon: 'warning' },
+        { title: t('exercises.explanation.headers.check'), body: s.check, kind: 'check', icon: 'target' },
+      ].filter(step => !!step.body) as any[];
+    }
+    return null;
+  }, [rawSteps, s, t]);
+
+  console.log("DEBUG STEPS:", {
+    hasRawSteps: !!rawSteps,
+    hasOrderedSteps: !!orderedSteps,
+    stepCount: orderedSteps?.length
+  });
+
   const stepTextForExpression = orderedSteps
     ? orderedSteps.map(step => `${step.title}\n${step.body}`).join('\n\n')
     : s.example;
@@ -315,7 +369,11 @@ export function TwoCards({
       {!isGuardian && (
         <div className="rounded-xl border bg-card p-4 shadow-sm">
           {orderedSteps ? (
-            <ExplanationCards steps={orderedSteps} miniPracticeContext={miniPracticeContext} />
+            <ExplanationRenderer 
+              mode={learningMode} 
+              steps={orderedSteps} 
+              miniPracticeContext={miniPracticeContext} 
+            />
           ) : (
             <>
               <Section title={t('exercises.explanation.headers.concept')} text={s.concept} />

@@ -9,6 +9,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { AdminProvider } from "./context/AdminContext";
 import { AuthProvider } from "./context/AuthContext";
 import { OverlayProvider } from "./context/OverlayContext";
+import { AdminPreviewProvider } from "./contexts/AdminPreviewContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { SimpleLanguageProvider } from "./context/SimpleLanguageContext";
 
@@ -37,6 +38,7 @@ const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
 const MyProgramPage = lazy(() => import("./pages/learning/MyProgramPage"));
 const PracticePage = lazy(() => import("./pages/practice/PracticePage"));
 const ExamSessionPage = lazy(() => import("./pages/practice/ExamSessionPage"));
+const TrainingSessionPage = lazy(() => import("./pages/practice/TrainingSessionPage"));
 const PracticeSubjectPage = lazy(() => import("./pages/practice/PracticeSubjectPage"));
 const PracticeAnnalsPage = lazy(() => import("./pages/practice/PracticeAnnalsPage"));
 const CurriculumBrowser = lazy(() => import("./components/curriculum/CurriculumBrowser"));
@@ -142,9 +144,10 @@ const App = () => {
           <Sonner />
           <OverlayProvider>
             <AuthProvider>
-              <SimpleLanguageProvider>
-                <AdminProvider>
-                  <BrowserRouter>
+              <AdminPreviewProvider>
+                <SimpleLanguageProvider>
+                  <AdminProvider>
+                    <BrowserRouter>
                     <AnimatePresence mode="wait">
                       <Suspense fallback={<LoadingFallback />}>
                       <Routes>
@@ -185,6 +188,7 @@ const App = () => {
                         <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
                         <Route path="/practice" element={<MainLayout />}>
                           <Route index element={<PracticePage />} />
+                          <Route path="session" element={<TrainingSessionPage />} />
                           <Route path="session/:paperId" element={<ExamSessionPage />} />
                           <Route path=":subject/annales" element={<PracticeAnnalsPage />} />
                           <Route path=":subject" element={<PracticeSubjectPage />} />
@@ -263,10 +267,11 @@ const App = () => {
                       </Routes>
                     </Suspense>
                   </AnimatePresence>
-                </BrowserRouter>
-              </AdminProvider>
-            </SimpleLanguageProvider>
-          </AuthProvider>
+                    </BrowserRouter>
+                  </AdminProvider>
+                </SimpleLanguageProvider>
+              </AdminPreviewProvider>
+            </AuthProvider>
         </OverlayProvider>
       </TooltipProvider>
     </ErrorBoundary>

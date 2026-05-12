@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getGradeLevelInfo } from '@/utils/gradeLevelMapping';
 
+import { dedupeSchoolLevels } from '@/domain/schoolLevels';
+
 export interface SchoolLevelWithAge {
   id: string;
   country_code: string;
@@ -38,9 +40,11 @@ export function useSchoolLevelsByCountry() {
 
       if (levelsError) throw levelsError;
 
+      const dedupedLevels = dedupeSchoolLevels(schoolLevels || []);
+
       // Group levels by country and add age information
       const countriesWithLevels: CountryWithLevels[] = (countries || []).map(country => {
-        const levels = (schoolLevels || [])
+        const levels = dedupedLevels
           .filter(level => level.country_code === country.code)
           .map(level => {
             // Get age info from level name
