@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client'; // NEW
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
 import { useUserContext } from '@/hooks/useUserContext';
+import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { extractExpressionFromText } from '@/utils/mathStepper/parser';
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
@@ -13,6 +14,9 @@ import { useLanguage } from '@/context/SimpleLanguageContext';
 import { toChildFriendlyExplanationText } from './childFriendlyText';
 import ExplanationCards from './ExplanationCards';
 import { trackLearningInteraction } from '@/services/learningAnalytics';
+
+import { ExplanationRenderer } from "./ExplanationRenderer";
+import { getLearningMode } from "@/domain/learningMode";
 
 function Section({ title, text }: { title: string; text: string }) {
   const resolveText = useResolveText();
@@ -59,13 +63,34 @@ export function TwoCards({
 }) {
   console.log('[TwoCards] Component rendered with sections:', s);
   const resolveText = useResolveText();
-  const [isGuardian, setIsGuardian] = useState(false); // NEW
-  const { userContext } = useUserContext(); // NEW: Get user context for grade level
+  const [isGuardian, setIsGuardian] = useState(false);
+  const { userContext, isContextReady } = useUserContext();
+  const { activeLevel, isLoading: activeLevelLoading } = useActiveSchoolLevel();
   const { t, language } = useLanguage();
   const trackedExplanationKeyRef = React.useRef<string | null>(null);
   const trackedSupportKeyRef = React.useRef<string | null>(null);
   const trackedCheckKeyRef = React.useRef<string | null>(null);
   
+  // NEW: Determine learning mode with "clean-academic" rule for practice/exam
+  const location = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isAcademicContext = location.includes('/practice') || 
+                            location.includes('/exam') || 
+                            location.includes('/annales');
+
+  // TIMING FIX: Derive mode only once level is resolved.
+  // Uses activeLevel (preview OR real profile) so admin preview CM1 triggers kid mode.
+  const learningMode = React.useMemo<'kid' | 'student'>(() => {
+    if (isAcademicContext) return 'student';
+    if (!isContextReady || activeLevelLoading) return 'student'; // not loaded yet
+    return getLearningMode(activeLevel);
+  }, [isAcademicContext, isContextReady, activeLevelLoading, activeLevel]);
+
+  console.log("DEBUG KID MODE:", {
+    userLevel: userContext?.student_level,
+    activeLevel,
+    mode: learningMode
+  });
+
   // Fetch topic routing info if we have topicId but not slugs
   const { data: topicData, isLoading: topicDataLoading } = useQuery({
     queryKey: ['topic-for-lesson-link', topicId],
@@ -152,7 +177,32 @@ export function TwoCards({
     return '+';
   };
   
-  const orderedSteps = Array.isArray(s.steps) && s.steps.length > 0 ? s.steps : null;
+  const rawSteps = Array.isArray(s.steps) && s.steps.length > 0 ? s.steps : null;
+  
+  // NEW: Fallback synthesis if steps are missing (e.g. legacy cache)
+  const orderedSteps = React.useMemo(() => {
+    if (rawSteps) return rawSteps;
+    
+    // If no steps but we have legacy fields, synthesize them for the renderer
+    if (s.concept || s.example || s.method) {
+      console.log("[TwoCards] Synthesizing steps from legacy sections");
+      return [
+        { title: t('exercises.explanation.headers.concept'), body: s.concept, kind: 'concept', icon: 'lightbulb' },
+        { title: t('exercises.explanation.headers.example'), body: s.example, kind: 'example', icon: 'magnifier' },
+        { title: t('exercises.explanation.headers.method'), body: s.method, kind: 'method', icon: 'checklist' },
+        { title: t('exercises.explanation.headers.pitfall'), body: s.pitfall, kind: 'pitfall', icon: 'warning' },
+        { title: t('exercises.explanation.headers.check'), body: s.check, kind: 'check', icon: 'target' },
+      ].filter(step => !!step.body) as any[];
+    }
+    return null;
+  }, [rawSteps, s, t]);
+
+  console.log("DEBUG STEPS:", {
+    hasRawSteps: !!rawSteps,
+    hasOrderedSteps: !!orderedSteps,
+    stepCount: orderedSteps?.length
+  });
+
   const stepTextForExpression = orderedSteps
     ? orderedSteps.map(step => `${step.title}\n${step.body}`).join('\n\n')
     : s.example;
@@ -263,8 +313,8 @@ export function TwoCards({
   }
   
   // Show interactive stepper only for pure arithmetic problems for young students
-  const shouldShowInteractiveStepper = !isGuardian && userContext?.student_level && 
-    isUnder11YearsOld(userContext.student_level) && exampleExpression &&
+  const shouldShowInteractiveStepper = !isGuardian && activeLevel &&
+    isUnder11YearsOld(activeLevel) && exampleExpression &&
     isPureArithmeticProblem(s.exercise || '');
   
   // Ensure method text is never empty
@@ -315,7 +365,11 @@ export function TwoCards({
       {!isGuardian && (
         <div className="rounded-xl border bg-card p-4 shadow-sm">
           {orderedSteps ? (
-            <ExplanationCards steps={orderedSteps} miniPracticeContext={miniPracticeContext} />
+            <ExplanationRenderer 
+              mode={learningMode} 
+              steps={orderedSteps} 
+              miniPracticeContext={miniPracticeContext} 
+            />
           ) : (
             <>
               <Section title={t('exercises.explanation.headers.concept')} text={s.concept} />

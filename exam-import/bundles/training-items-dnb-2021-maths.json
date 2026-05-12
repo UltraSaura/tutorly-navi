@@ -1,0 +1,1848 @@
+{
+  "training_items": [
+    {
+      "id": "4ef4e8fa-1212-5f1d-82bd-898f5f0c3597",
+      "source_exercise_id": "2d15bf27-950f-51e9-8566-68f23483e4d8",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "curriculum_objective_ids": null,
+      "context": "Le tableau donne les températures moyennes mensuelles à Tours en 2019.",
+      "documents": [
+        {
+          "id": "table-temperatures",
+          "type": "table",
+          "label": "Tableau des températures",
+          "caption": "Températures moyennes mensuelles à Tours en 2019",
+          "table": {
+            "headers": [
+              "Mois",
+              "J",
+              "F",
+              "M",
+              "A",
+              "M",
+              "J",
+              "J",
+              "A",
+              "S",
+              "O",
+              "N",
+              "D"
+            ],
+            "rows": [
+              [
+                "Température en °C",
+                "4,4",
+                "7,8",
+                "9,6",
+                "11,2",
+                "13,4",
+                "19,4",
+                "22,6",
+                "20,5",
+                "17,9",
+                "14,4",
+                "8,2",
+                "7,8"
+              ]
+            ]
+          },
+          "source": {},
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex01/table-temperatures.png",
+          "alt": "Feuille de calcul présentant les températures mensuelles à Tours en 2019.",
+          "render_mode": "image_first"
+        },
+        {
+          "type": "image",
+          "label": "Capture de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex01/page-2.png",
+          "alt": "Tableau ou figure associé à Exercice 1 (20 points), dont les températures moyennes mensuelles.",
+          "page_number": 2,
+          "sort_order": 1,
+          "fallback": true
+        }
+      ],
+      "hints": null,
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 1",
+      "status": "published",
+      "key": "temperature-novembre",
+      "item_type": "short_answer",
+      "prompt": "Quelle a été la température moyenne à Tours en novembre 2019 ?",
+      "skill_tags": [
+        "lecture_tableau",
+        "statistiques"
+      ],
+      "choices": null,
+      "expected_answer": {
+        "value": "8,2 °C",
+        "accepted": [
+          "8,2",
+          "8,2 °C",
+          "8.2",
+          "8.2 °C"
+        ]
+      },
+      "solution": "En novembre, le tableau indique 8,2 °C.",
+      "difficulty": "easy",
+      "metadata": {
+        "source_question_id": "temperature-novembre",
+        "confidence": "high",
+        "reviewed_from_source": true,
+        "can_generate_similar": true,
+        "source_pattern_summary": "Lire et exploiter un tableau de températures mensuelles: lecture directe, étendue, moyenne, tableur, pourcentage d'évolution.",
+        "transformation_notes": "Item explicitly normalized and validated from DNB Amiens 2021 Exercice 1.",
+        "guidance": {
+          "source_pattern_summary": "Lecture directe dans un tableau de données.",
+          "guidance_scope": "per_question"
+        }
+      },
+      "questions": [
+        {
+          "id": "q1",
+          "label": "1.",
+          "prompt": "Quelle a été la température moyenne à Tours en novembre 2019 ?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": {
+            "value": "8,2 °C",
+            "accepted": [
+              "8,2",
+              "8,2 °C",
+              "8.2",
+              "8.2 °C"
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère la colonne du mois de novembre."
+              },
+              {
+                "level": 2,
+                "text": "Lis la valeur sur la ligne des températures."
+              },
+              {
+                "level": 3,
+                "text": "N'oublie pas l'unité indiquée dans le tableau."
+              }
+            ],
+            "correct_feedback": "Bonne lecture du tableau.",
+            "almost_feedback": "Tu es proche : vérifie que tu lis bien la colonne de novembre.",
+            "incorrect_feedback": "Reviens à la ligne des températures et à la colonne N."
+          }
+        }
+      ]
+    },
+    {
+      "id": "c5a2be48-a020-518f-9f99-4a02db6cf45a",
+      "source_exercise_id": "2d15bf27-950f-51e9-8566-68f23483e4d8",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "curriculum_objective_ids": null,
+      "context": "Le tableau donne les températures moyennes mensuelles à Tours en 2019.",
+      "documents": [
+        {
+          "id": "table-temperatures",
+          "type": "table",
+          "label": "Tableau des températures",
+          "caption": "Températures moyennes mensuelles à Tours en 2019",
+          "table": {
+            "headers": [
+              "Mois",
+              "J",
+              "F",
+              "M",
+              "A",
+              "M",
+              "J",
+              "J",
+              "A",
+              "S",
+              "O",
+              "N",
+              "D"
+            ],
+            "rows": [
+              [
+                "Température en °C",
+                "4,4",
+                "7,8",
+                "9,6",
+                "11,2",
+                "13,4",
+                "19,4",
+                "22,6",
+                "20,5",
+                "17,9",
+                "14,4",
+                "8,2",
+                "7,8"
+              ]
+            ]
+          },
+          "source": {},
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex01/table-temperatures.png",
+          "alt": "Feuille de calcul présentant les températures mensuelles à Tours en 2019.",
+          "render_mode": "image_first"
+        },
+        {
+          "type": "image",
+          "label": "Capture de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex01/page-2.png",
+          "alt": "Tableau ou figure associé à Exercice 1 (20 points), dont les températures moyennes mensuelles.",
+          "page_number": 2,
+          "sort_order": 1,
+          "fallback": true
+        }
+      ],
+      "hints": null,
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 1",
+      "status": "published",
+      "key": "etendue",
+      "item_type": "numeric",
+      "prompt": "Détermine l’étendue de cette série.",
+      "skill_tags": [
+        "statistiques",
+        "etendue"
+      ],
+      "choices": null,
+      "expected_answer": {
+        "value": 18.2,
+        "unit": "°C",
+        "accepted": [
+          "18,2",
+          "18.2",
+          "18,2 °C",
+          "18.2 °C"
+        ]
+      },
+      "solution": "Max 22,6 ; min 4,4 ; étendue = 22,6 - 4,4 = 18,2.",
+      "difficulty": "medium",
+      "metadata": {
+        "source_question_id": "etendue",
+        "confidence": "high",
+        "reviewed_from_source": true,
+        "can_generate_similar": true,
+        "source_pattern_summary": "Lire et exploiter un tableau de températures mensuelles: lecture directe, étendue, moyenne, tableur, pourcentage d'évolution.",
+        "transformation_notes": "Item explicitly normalized and validated from DNB Amiens 2021 Exercice 1.",
+        "guidance": {
+          "source_pattern_summary": "Identifier le maximum et le minimum puis calculer l'écart.",
+          "guidance_scope": "per_question"
+        }
+      },
+      "questions": [
+        {
+          "id": "q1",
+          "label": "1.",
+          "prompt": "Détermine l’étendue de cette série.",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": {
+            "value": 18.2,
+            "unit": "°C",
+            "accepted": [
+              "18,2",
+              "18.2",
+              "18,2 °C",
+              "18.2 °C"
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Cherche la température la plus élevée."
+              },
+              {
+                "level": 2,
+                "text": "Cherche la température la plus basse."
+              },
+              {
+                "level": 3,
+                "text": "Calcule maximum - minimum."
+              }
+            ],
+            "correct_feedback": "Oui, tu as bien identifié la méthode de l'étendue.",
+            "almost_feedback": "Tu es proche : vérifie les deux valeurs utilisées.",
+            "incorrect_feedback": "Reviens au tableau et cherche la plus grande puis la plus petite valeur."
+          }
+        }
+      ]
+    },
+    {
+      "id": "239d0cba-5108-5d6b-8ad3-fcbe1b1fb605",
+      "source_exercise_id": "2d15bf27-950f-51e9-8566-68f23483e4d8",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "curriculum_objective_ids": null,
+      "context": "Le tableau donne les températures moyennes mensuelles à Tours en 2019.",
+      "documents": [
+        {
+          "id": "table-temperatures",
+          "type": "table",
+          "label": "Tableau des températures",
+          "caption": "Températures moyennes mensuelles à Tours en 2019",
+          "table": {
+            "headers": [
+              "Mois",
+              "J",
+              "F",
+              "M",
+              "A",
+              "M",
+              "J",
+              "J",
+              "A",
+              "S",
+              "O",
+              "N",
+              "D"
+            ],
+            "rows": [
+              [
+                "Température en °C",
+                "4,4",
+                "7,8",
+                "9,6",
+                "11,2",
+                "13,4",
+                "19,4",
+                "22,6",
+                "20,5",
+                "17,9",
+                "14,4",
+                "8,2",
+                "7,8"
+              ]
+            ]
+          },
+          "source": {},
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex01/table-temperatures.png",
+          "alt": "Feuille de calcul présentant les températures mensuelles à Tours en 2019.",
+          "render_mode": "image_first"
+        },
+        {
+          "type": "image",
+          "label": "Capture de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex01/page-2.png",
+          "alt": "Tableau ou figure associé à Exercice 1 (20 points), dont les températures moyennes mensuelles.",
+          "page_number": 2,
+          "sort_order": 1,
+          "fallback": true
+        }
+      ],
+      "hints": null,
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 1",
+      "status": "published",
+      "key": "formule-moyenne",
+      "item_type": "short_answer",
+      "prompt": "Quelle formule faut-il saisir en N2 pour calculer la moyenne annuelle ?",
+      "skill_tags": [
+        "tableur",
+        "moyenne"
+      ],
+      "choices": null,
+      "expected_answer": {
+        "value": "=MOYENNE(B2:M2)",
+        "accepted": [
+          "=MOYENNE(B2:M2)",
+          "MOYENNE(B2:M2)",
+          "=AVERAGE(B2:M2)"
+        ]
+      },
+      "solution": "La moyenne des douze mois se calcule avec =MOYENNE(B2:M2).",
+      "difficulty": "medium",
+      "metadata": {
+        "source_question_id": "formule-moyenne",
+        "confidence": "high",
+        "reviewed_from_source": true,
+        "can_generate_similar": true,
+        "source_pattern_summary": "Lire et exploiter un tableau de températures mensuelles: lecture directe, étendue, moyenne, tableur, pourcentage d'évolution.",
+        "transformation_notes": "Item explicitly normalized and validated from DNB Amiens 2021 Exercice 1.",
+        "guidance": {
+          "source_pattern_summary": "Utiliser une formule de tableur sur la plage mensuelle.",
+          "guidance_scope": "per_question"
+        }
+      },
+      "questions": [
+        {
+          "id": "q1",
+          "label": "1.",
+          "prompt": "Quelle formule faut-il saisir en N2 pour calculer la moyenne annuelle ?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": {
+            "value": "=MOYENNE(B2:M2)",
+            "accepted": [
+              "=MOYENNE(B2:M2)",
+              "MOYENNE(B2:M2)",
+              "=AVERAGE(B2:M2)"
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Une moyenne de tableur utilise une fonction dédiée."
+              },
+              {
+                "level": 2,
+                "text": "La plage doit couvrir les douze mois."
+              },
+              {
+                "level": 3,
+                "text": "Écris la fonction avec la plage allant de B2 à M2."
+              }
+            ],
+            "correct_feedback": "Oui, la plage des douze mois est bien utilisée.",
+            "almost_feedback": "Tu es proche : vérifie la fonction ou la plage de cellules.",
+            "incorrect_feedback": "Repère les cellules des douze températures avant d'écrire la formule."
+          }
+        }
+      ]
+    },
+    {
+      "id": "211ae337-c012-51a4-8368-8c5ce0a4d409",
+      "source_exercise_id": "2d15bf27-950f-51e9-8566-68f23483e4d8",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "curriculum_objective_ids": null,
+      "context": "Le tableau donne les températures moyennes mensuelles à Tours en 2019.",
+      "documents": [
+        {
+          "id": "table-temperatures",
+          "type": "table",
+          "label": "Tableau des températures",
+          "caption": "Températures moyennes mensuelles à Tours en 2019",
+          "table": {
+            "headers": [
+              "Mois",
+              "J",
+              "F",
+              "M",
+              "A",
+              "M",
+              "J",
+              "J",
+              "A",
+              "S",
+              "O",
+              "N",
+              "D"
+            ],
+            "rows": [
+              [
+                "Température en °C",
+                "4,4",
+                "7,8",
+                "9,6",
+                "11,2",
+                "13,4",
+                "19,4",
+                "22,6",
+                "20,5",
+                "17,9",
+                "14,4",
+                "8,2",
+                "7,8"
+              ]
+            ]
+          },
+          "source": {},
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex01/table-temperatures.png",
+          "alt": "Feuille de calcul présentant les températures mensuelles à Tours en 2019.",
+          "render_mode": "image_first"
+        },
+        {
+          "type": "image",
+          "label": "Capture de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex01/page-2.png",
+          "alt": "Tableau ou figure associé à Exercice 1 (20 points), dont les températures moyennes mensuelles.",
+          "page_number": 2,
+          "sort_order": 1,
+          "fallback": true
+        }
+      ],
+      "hints": null,
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 1",
+      "status": "published",
+      "key": "verifier-moyenne",
+      "item_type": "free_response",
+      "prompt": "Vérifie que la température moyenne annuelle est 13,1 °C.",
+      "skill_tags": [
+        "moyenne",
+        "calcul"
+      ],
+      "choices": null,
+      "expected_answer": {
+        "value": "Somme des températures divisée par 12, arrondie à 13,1 °C."
+      },
+      "solution": "On additionne les 12 températures puis on divise par 12. On obtient environ 13,1 °C.",
+      "difficulty": "medium",
+      "metadata": {
+        "source_question_id": "verifier-moyenne",
+        "confidence": "high",
+        "reviewed_from_source": true,
+        "can_generate_similar": true,
+        "source_pattern_summary": "Lire et exploiter un tableau de températures mensuelles: lecture directe, étendue, moyenne, tableur, pourcentage d'évolution.",
+        "transformation_notes": "Item explicitly normalized and validated from DNB Amiens 2021 Exercice 1.",
+        "guidance": {
+          "source_pattern_summary": "Reconstituer la moyenne à partir de la somme des valeurs.",
+          "guidance_scope": "per_question"
+        }
+      },
+      "questions": [
+        {
+          "id": "q1",
+          "label": "1.",
+          "prompt": "Vérifie que la température moyenne annuelle est 13,1 °C.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": {
+            "value": "Somme des températures divisée par 12, arrondie à 13,1 °C."
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Une moyenne se calcule avec la somme des valeurs."
+              },
+              {
+                "level": 2,
+                "text": "Il y a douze températures mensuelles."
+              },
+              {
+                "level": 3,
+                "text": "Explique la division par 12 et l'arrondi au dixième."
+              }
+            ],
+            "correct_feedback": "Bonne méthode : tu justifies la moyenne avec le calcul attendu.",
+            "almost_feedback": "Tu es proche : précise la somme, la division par 12 ou l'arrondi.",
+            "incorrect_feedback": "Reprends la définition d'une moyenne avant de conclure."
+          }
+        }
+      ]
+    },
+    {
+      "id": "05ee8373-6892-54cd-a5e3-077fdffb920b",
+      "source_exercise_id": "2d15bf27-950f-51e9-8566-68f23483e4d8",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "curriculum_objective_ids": null,
+      "context": "Le tableau donne les températures moyennes mensuelles à Tours en 2019.",
+      "documents": [
+        {
+          "id": "table-temperatures",
+          "type": "table",
+          "label": "Tableau des températures",
+          "caption": "Températures moyennes mensuelles à Tours en 2019",
+          "table": {
+            "headers": [
+              "Mois",
+              "J",
+              "F",
+              "M",
+              "A",
+              "M",
+              "J",
+              "J",
+              "A",
+              "S",
+              "O",
+              "N",
+              "D"
+            ],
+            "rows": [
+              [
+                "Température en °C",
+                "4,4",
+                "7,8",
+                "9,6",
+                "11,2",
+                "13,4",
+                "19,4",
+                "22,6",
+                "20,5",
+                "17,9",
+                "14,4",
+                "8,2",
+                "7,8"
+              ]
+            ]
+          },
+          "source": {},
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex01/table-temperatures.png",
+          "alt": "Feuille de calcul présentant les températures mensuelles à Tours en 2019.",
+          "render_mode": "image_first"
+        },
+        {
+          "type": "image",
+          "label": "Capture de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex01/page-2.png",
+          "alt": "Tableau ou figure associé à Exercice 1 (20 points), dont les températures moyennes mensuelles.",
+          "page_number": 2,
+          "sort_order": 1,
+          "fallback": true
+        }
+      ],
+      "hints": null,
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 1",
+      "status": "published",
+      "key": "pourcentage-augmentation",
+      "item_type": "multiple_choice",
+      "prompt": "Le pourcentage d’augmentation entre 2009 et 2019, arrondi à l’unité, est-il de 7 %, 10 % ou 13 % ?",
+      "skill_tags": [
+        "pourcentage",
+        "evolution"
+      ],
+      "choices": [
+        "7 %",
+        "10 %",
+        "13 %"
+      ],
+      "expected_answer": {
+        "value": "10 %"
+      },
+      "solution": "((13,1 - 11,9) / 11,9) × 100 ≈ 10,1 %, donc 10 % arrondi à l’unité.",
+      "difficulty": "medium",
+      "metadata": {
+        "source_question_id": "pourcentage-augmentation",
+        "confidence": "high",
+        "reviewed_from_source": true,
+        "can_generate_similar": true,
+        "source_pattern_summary": "Lire et exploiter un tableau de températures mensuelles: lecture directe, étendue, moyenne, tableur, pourcentage d'évolution.",
+        "transformation_notes": "Item explicitly normalized and validated from DNB Amiens 2021 Exercice 1.",
+        "guidance": {
+          "source_pattern_summary": "Comparer une évolution relative aux propositions données.",
+          "guidance_scope": "per_question"
+        }
+      },
+      "questions": [
+        {
+          "id": "q1",
+          "label": "1.",
+          "prompt": "Le pourcentage d’augmentation entre 2009 et 2019, arrondi à l’unité, est-il de 7 %, 10 % ou 13 % ?",
+          "answer_type": "multiple_choice",
+          "choices": [
+            "7 %",
+            "10 %",
+            "13 %"
+          ],
+          "expected_answer": {
+            "value": "10 %"
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie la valeur de départ et la valeur d'arrivée."
+              },
+              {
+                "level": 2,
+                "text": "Calcule l'écart puis compare-le à la valeur de départ."
+              },
+              {
+                "level": 3,
+                "text": "Convertis le résultat en pourcentage puis choisis la proposition la plus proche."
+              }
+            ],
+            "correct_feedback": "Bonne réponse : tu as bien raisonné sur l'évolution relative.",
+            "almost_feedback": "Tu es proche : vérifie l'arrondi à l'unité.",
+            "incorrect_feedback": "Reprends la formule d'un pourcentage d'évolution."
+          }
+        }
+      ]
+    },
+    {
+      "id": "b3a06592-b7c8-528c-9f6e-d143be2b7197",
+      "source_exercise_id": "74365b61-0e29-55ae-9dbd-3bfa32258c99",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Combien aurait-il fallu de visiteurs en plus en 2019 pour atteindre 2 millions de visiteurs ?",
+      "context": "Le Futuroscope est un parc de loisirs situé dans la Vienne. L'année 2019 a enregistré 1,9 million de visiteurs.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Capture de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex02/page-3.png",
+          "alt": "Figure ou schéma associé à Exercice 2 (20 points).",
+          "page_number": 3,
+          "sort_order": 0,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Combien aurait-il fallu de visiteurs en plus en 2019 pour atteindre 2 millions de visiteurs ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 2",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Combien aurait-il fallu de visiteurs en plus en 2019 pour atteindre 2 millions de visiteurs ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "46c65ae0-0834-56c6-9ac9-70657c091900",
+      "source_exercise_id": "74365b61-0e29-55ae-9dbd-3bfa32258c99",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "L'affirmation « Il y a eu environ 5 200 visiteurs par jour en 2019 » est-elle vraie ? Justifier la réponse.",
+      "context": "Le Futuroscope est un parc de loisirs situé dans la Vienne. L'année 2019 a enregistré 1,9 million de visiteurs.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Capture de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex02/page-3.png",
+          "alt": "Figure ou schéma associé à Exercice 2 (20 points).",
+          "page_number": 3,
+          "sort_order": 0,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "L'affirmation « Il y a eu environ 5 200 visiteurs par jour en 2019 » est-elle vraie ? Justifier la réponse.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 2",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "L'affirmation « Il y a eu environ 5 200 visiteurs par jour en 2019 » est-elle vraie ? Justifier la réponse.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "d959d460-87c5-5bd5-9851-2fecb03973f0",
+      "source_exercise_id": "74365b61-0e29-55ae-9dbd-3bfa32258c99",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Un professeur organise une sortie pédagogique au Futuroscope pour ses élèves de troisième. Il veut répartir les 126 garçons et les 90 filles par groupes. Il souhaite que chaque groupe comporte le même nombre de filles et le même nombre de garçons.",
+      "context": "Le Futuroscope est un parc de loisirs situé dans la Vienne. L'année 2019 a enregistré 1,9 million de visiteurs.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Capture de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex02/page-3.png",
+          "alt": "Figure ou schéma associé à Exercice 2 (20 points).",
+          "page_number": 3,
+          "sort_order": 0,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Un professeur organise une sortie pédagogique au Futuroscope pour ses élèves de troisième. Il veut répartir les 126 garçons et les 90 filles par groupes. Il souhaite que chaque groupe comporte le même nombre de filles et le même nombre de garçons.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 2",
+      "metadata": {
+        "source_question_id": "3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Un professeur organise une sortie pédagogique au Futuroscope pour ses élèves de troisième. Il veut répartir les 126 garçons et les 90 filles par groupes. Il souhaite que chaque ...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "6c7fc9a0-e40a-54ec-9adc-c895eb2324f0",
+      "source_exercise_id": "74365b61-0e29-55ae-9dbd-3bfa32258c99",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "geometrie",
+        "calcul"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Deux élèves de 3ème, Marie et Adrien, se souviennent avoir vu en mathématiques que les hauteurs inaccessibles pouvaient être déterminées avec l’ombre. Ils souhaitent calculer la hauteur de la Gyrotour du Futuroscope. Marie se place comme indiquée sur la figure ci-dessous, de telle sorte que son ombre coïncide avec celle de la tour. Après avoir effectué plusieurs mesures, Adrien effectue le schéma ci- dessous (le schéma n’est pas à l’échelle), sur lequel les points A, E et B ainsi que les points A, D et C sont alignés. Calculer la hauteur BC de la Gyrotour. ? 1,60 m 2m 54,25 m",
+      "context": "Le Futuroscope est un parc de loisirs situé dans la Vienne. L'année 2019 a enregistré 1,9 million de visiteurs.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Capture de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex02/page-3.png",
+          "alt": "Figure ou schéma associé à Exercice 2 (20 points).",
+          "page_number": 3,
+          "sort_order": 0,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "4",
+          "label": "4.",
+          "prompt": "Deux élèves de 3ème, Marie et Adrien, se souviennent avoir vu en mathématiques que les hauteurs inaccessibles pouvaient être déterminées avec l’ombre. Ils souhaitent calculer la hauteur de la Gyrotour du Futuroscope. Marie se place comme indiquée sur la figure ci-dessous, de telle sorte que son ombre coïncide avec celle de la tour. Après avoir effectué plusieurs mesures, Adrien effectue le schéma ci- dessous (le schéma n’est pas à l’échelle), sur lequel les points A, E et B ainsi que les points A, D et C sont alignés. Calculer la hauteur BC de la Gyrotour. ? 1,60 m 2m 54,25 m",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 2",
+      "metadata": {
+        "source_question_id": "4",
+        "source_question_label": "4.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Deux élèves de 3ème, Marie et Adrien, se souviennent avoir vu en mathématiques que les hauteurs inaccessibles pouvaient être déterminées avec l’ombre. Ils souhaitent calculer la...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "fc8eddba-5dbf-569c-80f6-3535e8067d12",
+      "source_exercise_id": "075c5077-6105-500d-98b2-b3b56669b5c9",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "probabilites"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "À quel événement Obtenir un jeton de correspond une Obtenir un jeton qui Obtenir un jeton couleur rouge ou 7 n'est pas vert. vert. probabilité de ? jaune. 16",
+      "context": "Cet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée. Pour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte. Recopier sur la copie le numéro de la question et la réponse.",
+      "documents": [
+        {
+          "label": "Tableau — QCM",
+          "content": "Cet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée.\n\nPour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte.\nRecopier sur la copie le numéro de la question et la réponse.\n\nPARTIE A :\nUne urne contient 7 jetons verts, 4 jetons rouges, 3 jetons bleus et 2 jetons jaunes. Les jetons\nsont indiscernables au toucher. On pioche un jeton au hasard dans cette urne.\n\n           Questions                  Réponse A              Réponse B            Réponse C\n\n    1. À quel événement            Obtenir un jeton de\n       correspond une                                    Obtenir un jeton qui   Obtenir un jeton\n                                    couleur rouge ou\n                        7                                  n'est pas vert.           vert.\n       probabilité de        ?           jaune.\n                        16\n\n    2. Quelle est la probabilité\n                                           13                     3                    3\n       de ne pas tirer un jeton\n                                           16                    16                    4\n       bleu ?\n\n21GENMATMEAG1                                                                              Page 4 sur 8\n\nPARTIE B :\nOn considère la figure suivante, composée de vingt motifs numérotés de 1 à 20, dans laquelle :\n      ̂ = 36°\n       𝐴𝑂𝐵\n      le motif 11 est l’image du motif 1 par l’homothétie de centre O et de rapport 2.\n\n                                        A          B\n                                             36°\n\n             Questions                 Réponse A              Réponse B             Réponse C\n\n   3. Quelle est l’image du motif\n       20 par la symétrie d’axe la          Le motif 17.      Le motif 15.          Le motif 12.\n       droite (d) ?\n\n   4. Par quelle rotation le motif   Une rotation de         Une rotation de      Une rotation de\n       3 est-il l’image du motif       centre O, et        centre O, et d’angle centre O, et d’angle\n       1?                              d’angle 36°.               72°.                   90°.\n\n   5. L’aire du motif 11 est-elle      au double de         à 4 fois l’aire du   à la moitié de l’aire\n       égale :                       l’aire du motif 1 ?         motif 1.            du motif 1.",
+          "type": "table"
+        },
+        {
+          "type": "image",
+          "label": "Page 4 de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex03/page-4.png",
+          "alt": "Figure ou schéma associé à Exercice 3 (20 points).",
+          "page_number": 4,
+          "sort_order": 1,
+          "fallback": false
+        },
+        {
+          "type": "image",
+          "label": "Page 5 de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex03/page-5.png",
+          "alt": "Figure ou schéma associé à Exercice 3 (20 points).",
+          "page_number": 5,
+          "sort_order": 2,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "À quel événement Obtenir un jeton de correspond une Obtenir un jeton qui Obtenir un jeton couleur rouge ou 7 n'est pas vert. vert. probabilité de ? jaune. 16",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 3",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "À quel événement Obtenir un jeton de correspond une Obtenir un jeton qui Obtenir un jeton couleur rouge ou 7 n'est pas vert. vert. probabilité de ? jaune. 16",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "b56d41a8-7ec2-5ea4-8e72-ad75a42be72d",
+      "source_exercise_id": "075c5077-6105-500d-98b2-b3b56669b5c9",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "probabilites"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Quelle est la probabilité 13 3 3 de ne pas tirer un jeton 16 16 4 bleu ? 21GENMATMEAG1 Page 4 sur 8",
+      "context": "Cet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée. Pour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte. Recopier sur la copie le numéro de la question et la réponse.",
+      "documents": [
+        {
+          "label": "Tableau — QCM",
+          "content": "Cet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée.\n\nPour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte.\nRecopier sur la copie le numéro de la question et la réponse.\n\nPARTIE A :\nUne urne contient 7 jetons verts, 4 jetons rouges, 3 jetons bleus et 2 jetons jaunes. Les jetons\nsont indiscernables au toucher. On pioche un jeton au hasard dans cette urne.\n\n           Questions                  Réponse A              Réponse B            Réponse C\n\n    1. À quel événement            Obtenir un jeton de\n       correspond une                                    Obtenir un jeton qui   Obtenir un jeton\n                                    couleur rouge ou\n                        7                                  n'est pas vert.           vert.\n       probabilité de        ?           jaune.\n                        16\n\n    2. Quelle est la probabilité\n                                           13                     3                    3\n       de ne pas tirer un jeton\n                                           16                    16                    4\n       bleu ?\n\n21GENMATMEAG1                                                                              Page 4 sur 8\n\nPARTIE B :\nOn considère la figure suivante, composée de vingt motifs numérotés de 1 à 20, dans laquelle :\n      ̂ = 36°\n       𝐴𝑂𝐵\n      le motif 11 est l’image du motif 1 par l’homothétie de centre O et de rapport 2.\n\n                                        A          B\n                                             36°\n\n             Questions                 Réponse A              Réponse B             Réponse C\n\n   3. Quelle est l’image du motif\n       20 par la symétrie d’axe la          Le motif 17.      Le motif 15.          Le motif 12.\n       droite (d) ?\n\n   4. Par quelle rotation le motif   Une rotation de         Une rotation de      Une rotation de\n       3 est-il l’image du motif       centre O, et        centre O, et d’angle centre O, et d’angle\n       1?                              d’angle 36°.               72°.                   90°.\n\n   5. L’aire du motif 11 est-elle      au double de         à 4 fois l’aire du   à la moitié de l’aire\n       égale :                       l’aire du motif 1 ?         motif 1.            du motif 1.",
+          "type": "table"
+        },
+        {
+          "type": "image",
+          "label": "Page 4 de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex03/page-4.png",
+          "alt": "Figure ou schéma associé à Exercice 3 (20 points).",
+          "page_number": 4,
+          "sort_order": 1,
+          "fallback": false
+        },
+        {
+          "type": "image",
+          "label": "Page 5 de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex03/page-5.png",
+          "alt": "Figure ou schéma associé à Exercice 3 (20 points).",
+          "page_number": 5,
+          "sort_order": 2,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Quelle est la probabilité 13 3 3 de ne pas tirer un jeton 16 16 4 bleu ? 21GENMATMEAG1 Page 4 sur 8",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 3",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quelle est la probabilité 13 3 3 de ne pas tirer un jeton 16 16 4 bleu ? 21GENMATMEAG1 Page 4 sur 8",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "22dac722-cb3f-521e-ac63-bc911a3c01eb",
+      "source_exercise_id": "075c5077-6105-500d-98b2-b3b56669b5c9",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "geometrie"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Quelle est l’image du motif 20 par la symétrie d’axe la Le motif 17. Le motif 15. Le motif 12. droite (d) ?",
+      "context": "Cet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée. Pour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte. Recopier sur la copie le numéro de la question et la réponse.",
+      "documents": [
+        {
+          "label": "Tableau — QCM",
+          "content": "Cet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée.\n\nPour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte.\nRecopier sur la copie le numéro de la question et la réponse.\n\nPARTIE A :\nUne urne contient 7 jetons verts, 4 jetons rouges, 3 jetons bleus et 2 jetons jaunes. Les jetons\nsont indiscernables au toucher. On pioche un jeton au hasard dans cette urne.\n\n           Questions                  Réponse A              Réponse B            Réponse C\n\n    1. À quel événement            Obtenir un jeton de\n       correspond une                                    Obtenir un jeton qui   Obtenir un jeton\n                                    couleur rouge ou\n                        7                                  n'est pas vert.           vert.\n       probabilité de        ?           jaune.\n                        16\n\n    2. Quelle est la probabilité\n                                           13                     3                    3\n       de ne pas tirer un jeton\n                                           16                    16                    4\n       bleu ?\n\n21GENMATMEAG1                                                                              Page 4 sur 8\n\nPARTIE B :\nOn considère la figure suivante, composée de vingt motifs numérotés de 1 à 20, dans laquelle :\n      ̂ = 36°\n       𝐴𝑂𝐵\n      le motif 11 est l’image du motif 1 par l’homothétie de centre O et de rapport 2.\n\n                                        A          B\n                                             36°\n\n             Questions                 Réponse A              Réponse B             Réponse C\n\n   3. Quelle est l’image du motif\n       20 par la symétrie d’axe la          Le motif 17.      Le motif 15.          Le motif 12.\n       droite (d) ?\n\n   4. Par quelle rotation le motif   Une rotation de         Une rotation de      Une rotation de\n       3 est-il l’image du motif       centre O, et        centre O, et d’angle centre O, et d’angle\n       1?                              d’angle 36°.               72°.                   90°.\n\n   5. L’aire du motif 11 est-elle      au double de         à 4 fois l’aire du   à la moitié de l’aire\n       égale :                       l’aire du motif 1 ?         motif 1.            du motif 1.",
+          "type": "table"
+        },
+        {
+          "type": "image",
+          "label": "Page 4 de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex03/page-4.png",
+          "alt": "Figure ou schéma associé à Exercice 3 (20 points).",
+          "page_number": 4,
+          "sort_order": 1,
+          "fallback": false
+        },
+        {
+          "type": "image",
+          "label": "Page 5 de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex03/page-5.png",
+          "alt": "Figure ou schéma associé à Exercice 3 (20 points).",
+          "page_number": 5,
+          "sort_order": 2,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Quelle est l’image du motif 20 par la symétrie d’axe la Le motif 17. Le motif 15. Le motif 12. droite (d) ?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 3",
+      "metadata": {
+        "source_question_id": "3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quelle est l’image du motif 20 par la symétrie d’axe la Le motif 17. Le motif 15. Le motif 12. droite (d) ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "4342f358-f530-5fd7-aa9c-e98ff0571ddd",
+      "source_exercise_id": "075c5077-6105-500d-98b2-b3b56669b5c9",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "geometrie"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Par quelle rotation le motif Une rotation de Une rotation de Une rotation de 3 est-il l’image du motif centre O, et centre O, et d’angle centre O, et d’angle 1? d’angle 36°. 72°. 90°.",
+      "context": "Cet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée. Pour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte. Recopier sur la copie le numéro de la question et la réponse.",
+      "documents": [
+        {
+          "label": "Tableau — QCM",
+          "content": "Cet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée.\n\nPour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte.\nRecopier sur la copie le numéro de la question et la réponse.\n\nPARTIE A :\nUne urne contient 7 jetons verts, 4 jetons rouges, 3 jetons bleus et 2 jetons jaunes. Les jetons\nsont indiscernables au toucher. On pioche un jeton au hasard dans cette urne.\n\n           Questions                  Réponse A              Réponse B            Réponse C\n\n    1. À quel événement            Obtenir un jeton de\n       correspond une                                    Obtenir un jeton qui   Obtenir un jeton\n                                    couleur rouge ou\n                        7                                  n'est pas vert.           vert.\n       probabilité de        ?           jaune.\n                        16\n\n    2. Quelle est la probabilité\n                                           13                     3                    3\n       de ne pas tirer un jeton\n                                           16                    16                    4\n       bleu ?\n\n21GENMATMEAG1                                                                              Page 4 sur 8\n\nPARTIE B :\nOn considère la figure suivante, composée de vingt motifs numérotés de 1 à 20, dans laquelle :\n      ̂ = 36°\n       𝐴𝑂𝐵\n      le motif 11 est l’image du motif 1 par l’homothétie de centre O et de rapport 2.\n\n                                        A          B\n                                             36°\n\n             Questions                 Réponse A              Réponse B             Réponse C\n\n   3. Quelle est l’image du motif\n       20 par la symétrie d’axe la          Le motif 17.      Le motif 15.          Le motif 12.\n       droite (d) ?\n\n   4. Par quelle rotation le motif   Une rotation de         Une rotation de      Une rotation de\n       3 est-il l’image du motif       centre O, et        centre O, et d’angle centre O, et d’angle\n       1?                              d’angle 36°.               72°.                   90°.\n\n   5. L’aire du motif 11 est-elle      au double de         à 4 fois l’aire du   à la moitié de l’aire\n       égale :                       l’aire du motif 1 ?         motif 1.            du motif 1.",
+          "type": "table"
+        },
+        {
+          "type": "image",
+          "label": "Page 4 de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex03/page-4.png",
+          "alt": "Figure ou schéma associé à Exercice 3 (20 points).",
+          "page_number": 4,
+          "sort_order": 1,
+          "fallback": false
+        },
+        {
+          "type": "image",
+          "label": "Page 5 de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex03/page-5.png",
+          "alt": "Figure ou schéma associé à Exercice 3 (20 points).",
+          "page_number": 5,
+          "sort_order": 2,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "4",
+          "label": "4.",
+          "prompt": "Par quelle rotation le motif Une rotation de Une rotation de Une rotation de 3 est-il l’image du motif centre O, et centre O, et d’angle centre O, et d’angle 1? d’angle 36°. 72°. 90°.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 3",
+      "metadata": {
+        "source_question_id": "4",
+        "source_question_label": "4.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Par quelle rotation le motif Une rotation de Une rotation de Une rotation de 3 est-il l’image du motif centre O, et centre O, et d’angle centre O, et d’angle 1? d’angle 36°. 72°...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "b01cfe42-14f4-59e0-9602-b081a1383d57",
+      "source_exercise_id": "075c5077-6105-500d-98b2-b3b56669b5c9",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "L’aire du motif 11 est-elle au double de à 4 fois l’aire du à la moitié de l’aire égale : l’aire du motif 1 ? motif 1. du motif 1.",
+      "context": "Cet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée. Pour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte. Recopier sur la copie le numéro de la question et la réponse.",
+      "documents": [
+        {
+          "label": "Tableau — QCM",
+          "content": "Cet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée.\n\nPour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte.\nRecopier sur la copie le numéro de la question et la réponse.\n\nPARTIE A :\nUne urne contient 7 jetons verts, 4 jetons rouges, 3 jetons bleus et 2 jetons jaunes. Les jetons\nsont indiscernables au toucher. On pioche un jeton au hasard dans cette urne.\n\n           Questions                  Réponse A              Réponse B            Réponse C\n\n    1. À quel événement            Obtenir un jeton de\n       correspond une                                    Obtenir un jeton qui   Obtenir un jeton\n                                    couleur rouge ou\n                        7                                  n'est pas vert.           vert.\n       probabilité de        ?           jaune.\n                        16\n\n    2. Quelle est la probabilité\n                                           13                     3                    3\n       de ne pas tirer un jeton\n                                           16                    16                    4\n       bleu ?\n\n21GENMATMEAG1                                                                              Page 4 sur 8\n\nPARTIE B :\nOn considère la figure suivante, composée de vingt motifs numérotés de 1 à 20, dans laquelle :\n      ̂ = 36°\n       𝐴𝑂𝐵\n      le motif 11 est l’image du motif 1 par l’homothétie de centre O et de rapport 2.\n\n                                        A          B\n                                             36°\n\n             Questions                 Réponse A              Réponse B             Réponse C\n\n   3. Quelle est l’image du motif\n       20 par la symétrie d’axe la          Le motif 17.      Le motif 15.          Le motif 12.\n       droite (d) ?\n\n   4. Par quelle rotation le motif   Une rotation de         Une rotation de      Une rotation de\n       3 est-il l’image du motif       centre O, et        centre O, et d’angle centre O, et d’angle\n       1?                              d’angle 36°.               72°.                   90°.\n\n   5. L’aire du motif 11 est-elle      au double de         à 4 fois l’aire du   à la moitié de l’aire\n       égale :                       l’aire du motif 1 ?         motif 1.            du motif 1.",
+          "type": "table"
+        },
+        {
+          "type": "image",
+          "label": "Page 4 de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex03/page-4.png",
+          "alt": "Figure ou schéma associé à Exercice 3 (20 points).",
+          "page_number": 4,
+          "sort_order": 1,
+          "fallback": false
+        },
+        {
+          "type": "image",
+          "label": "Page 5 de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex03/page-5.png",
+          "alt": "Figure ou schéma associé à Exercice 3 (20 points).",
+          "page_number": 5,
+          "sort_order": 2,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "5",
+          "label": "5.",
+          "prompt": "L’aire du motif 11 est-elle au double de à 4 fois l’aire du à la moitié de l’aire égale : l’aire du motif 1 ? motif 1. du motif 1.",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 3",
+      "metadata": {
+        "source_question_id": "5",
+        "source_question_label": "5.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "L’aire du motif 11 est-elle au double de à 4 fois l’aire du à la moitié de l’aire égale : l’aire du motif 1 ? motif 1. du motif 1.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "d5a125fc-ba97-5fdd-918b-1d1b7d5a3edf",
+      "source_exercise_id": "4e7decaf-3a31-5036-8e5d-94738e31ddef",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "calcul"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Vérifier que si on choisit 4 comme nombre de départ, on obtient 18",
+      "context": "Voici un programme de calcul : Choisir un nombre. Prendre le carré du nombre de départ. Ajouter le triple du nombre de départ. Soustraire 10 au résultat.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Capture de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex04/page-6.png",
+          "alt": "Capture PDF complète de Exercice 4 (20 points).",
+          "page_number": 6,
+          "sort_order": 0,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Vérifier que si on choisit 4 comme nombre de départ, on obtient 18",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 4",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Vérifier que si on choisit 4 comme nombre de départ, on obtient 18",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "1c553b7a-92fc-5025-bceb-2ab918022d38",
+      "source_exercise_id": "4e7decaf-3a31-5036-8e5d-94738e31ddef",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Appliquer ce programme de calcul au nombre – 3",
+      "context": "Voici un programme de calcul : Choisir un nombre. Prendre le carré du nombre de départ. Ajouter le triple du nombre de départ. Soustraire 10 au résultat.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Capture de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex04/page-6.png",
+          "alt": "Capture PDF complète de Exercice 4 (20 points).",
+          "page_number": 6,
+          "sort_order": 0,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Appliquer ce programme de calcul au nombre – 3",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 4",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Appliquer ce programme de calcul au nombre – 3",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "afe8b6b0-4e0f-5d8e-a4b9-34ea8df93886",
+      "source_exercise_id": "4e7decaf-3a31-5036-8e5d-94738e31ddef",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Vous trouverez ci-dessous un script, écrit avec scratch. Compléter sur l'ANNEXE page 8 les lignes 5 et 6 pour que ce script corresponde au programme de calcul.",
+      "context": "Voici un programme de calcul : Choisir un nombre. Prendre le carré du nombre de départ. Ajouter le triple du nombre de départ. Soustraire 10 au résultat.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Capture de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex04/page-6.png",
+          "alt": "Capture PDF complète de Exercice 4 (20 points).",
+          "page_number": 6,
+          "sort_order": 0,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Vous trouverez ci-dessous un script, écrit avec scratch. Compléter sur l'ANNEXE page 8 les lignes 5 et 6 pour que ce script corresponde au programme de calcul.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 4",
+      "metadata": {
+        "source_question_id": "3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Vous trouverez ci-dessous un script, écrit avec scratch. Compléter sur l'ANNEXE page 8 les lignes 5 et 6 pour que ce script corresponde au programme de calcul.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "f609512a-ac9b-5b2d-847a-4dfd6452eeb6",
+      "source_exercise_id": "4e7decaf-3a31-5036-8e5d-94738e31ddef",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "calcul"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "On veut déterminer le nombre à choisir au départ pour obtenir zéro comme résultat.",
+      "context": "Voici un programme de calcul : Choisir un nombre. Prendre le carré du nombre de départ. Ajouter le triple du nombre de départ. Soustraire 10 au résultat.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Capture de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex04/page-6.png",
+          "alt": "Capture PDF complète de Exercice 4 (20 points).",
+          "page_number": 6,
+          "sort_order": 0,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "4",
+          "label": "4.",
+          "prompt": "On veut déterminer le nombre à choisir au départ pour obtenir zéro comme résultat.",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 4",
+      "metadata": {
+        "source_question_id": "4",
+        "source_question_label": "4.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "On veut déterminer le nombre à choisir au départ pour obtenir zéro comme résultat.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "36af505b-643a-522c-a7ac-e9c1bac43c5f",
+      "source_exercise_id": "e1106674-a248-50d9-9958-9d8d2e198e0c",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "De combien de tonnes la production annuelle de déchets par Français en 2017 a-t-elle diminué par rapport à l’année 2007 ?",
+      "context": "La production annuelle de déchets par Français était de 5,2 tonnes par habitant en 2007. Entre 2007 et 2017, elle a diminué de 6,5 %.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Page 7 de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex05/page-7.png",
+          "alt": "Figure ou schéma associé à Exercice 5 (20 points).",
+          "page_number": 7,
+          "sort_order": 0,
+          "fallback": false
+        },
+        {
+          "type": "image",
+          "label": "Page 8 de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex05/page-8.png",
+          "alt": "Figure ou schéma associé à Exercice 5 (20 points).",
+          "page_number": 8,
+          "sort_order": 1,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "De combien de tonnes la production annuelle de déchets par Français en 2017 a-t-elle diminué par rapport à l’année 2007 ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 5",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "De combien de tonnes la production annuelle de déchets par Français en 2017 a-t-elle diminué par rapport à l’année 2007 ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "a3895b34-ec49-5a79-bc1f-3823849aab14",
+      "source_exercise_id": "e1106674-a248-50d9-9958-9d8d2e198e0c",
+      "paper_id": "aa59de7b-6c3a-5151-bf7b-fe038a03be6d",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "geometrie",
+        "calcul"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Pour continuer à diminuer leur production de déchets, de nombreuses familles utilisent désormais un composteur. Une de ces familles a choisi le modèle ci-dessous, composé d’un pavé droit et d’un prisme droit (la figure du composteur n’est pas à l’échelle). Le descriptif indique qu'il a une contenance d’environ 0,5 m3. On souhaite vérifier cette information. 39 cm Trapèze ABCD Petit côté : 39 cm 1,1 m 53 cm cm Hauteur 67 cm 70 cm Grand côté : 67 cm",
+      "context": "La production annuelle de déchets par Français était de 5,2 tonnes par habitant en 2007. Entre 2007 et 2017, elle a diminué de 6,5 %.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Page 7 de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex05/page-7.png",
+          "alt": "Figure ou schéma associé à Exercice 5 (20 points).",
+          "page_number": 7,
+          "sort_order": 0,
+          "fallback": false
+        },
+        {
+          "type": "image",
+          "label": "Page 8 de l'exercice",
+          "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex05/page-8.png",
+          "alt": "Figure ou schéma associé à Exercice 5 (20 points).",
+          "page_number": 8,
+          "sort_order": 1,
+          "fallback": false
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Pour continuer à diminuer leur production de déchets, de nombreuses familles utilisent désormais un composteur. Une de ces familles a choisi le modèle ci-dessous, composé d’un pavé droit et d’un prisme droit (la figure du composteur n’est pas à l’échelle). Le descriptif indique qu'il a une contenance d’environ 0,5 m3. On souhaite vérifier cette information. 39 cm Trapèze ABCD Petit côté : 39 cm 1,1 m 53 cm cm Hauteur 67 cm 70 cm Grand côté : 67 cm",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2021,
+      "source_label": "Sujet de Juin 2021 - Exercice 5",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Pour continuer à diminuer leur production de déchets, de nombreuses familles utilisent désormais un composteur. Une de ces familles a choisi le modèle ci-dessous, composé d’un p...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    }
+  ]
+}

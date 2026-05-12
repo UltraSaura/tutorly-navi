@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserCurriculumProfile } from './useUserCurriculumProfile';
 import { useAdminAuth } from './useAdminAuth';
+import { useActiveSchoolLevel } from './useActiveSchoolLevel';
 import type { Subject, Category, Topic } from '@/types/learning';
 
 interface SubjectDashboardData {
@@ -17,9 +18,12 @@ interface SubjectDashboardData {
 export function useSubjectDashboard(subjectSlug: string) {
   const { profile } = useUserCurriculumProfile();
   const { isAdmin } = useAdminAuth();
+  const activeSchoolLevel = useActiveSchoolLevel();
+  const effectiveCountryCode = profile?.countryCode ?? (activeSchoolLevel.isPreviewing ? 'fr' : undefined);
+  const effectiveLevelCode = activeSchoolLevel.normalizedLevel ?? profile?.levelCode;
   
   return useQuery({
-    queryKey: ['subject-dashboard', subjectSlug, isAdmin],
+    queryKey: ['subject-dashboard', subjectSlug, isAdmin, effectiveCountryCode, effectiveLevelCode, activeSchoolLevel.isPreviewing],
     queryFn: async (): Promise<SubjectDashboardData> => {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -45,10 +49,10 @@ export function useSubjectDashboard(subjectSlug: string) {
         .eq('topics.is_active', true);
 
       // Add curriculum filters if profile exists (skip for admin to see all content)
-      if (!isAdmin && profile?.countryCode && profile?.levelCode) {
+      if ((activeSchoolLevel.isPreviewing || !isAdmin) && effectiveCountryCode && effectiveLevelCode) {
         topicsQuery = topicsQuery
-          .eq('topics.curriculum_country_code', profile.countryCode)
-          .eq('topics.curriculum_level_code', profile.levelCode);
+          .eq('topics.curriculum_country_code', effectiveCountryCode)
+          .eq('topics.curriculum_level_code', effectiveLevelCode);
       }
 
       const { data: categories, error: categoriesError } = await topicsQuery.order('order_index');

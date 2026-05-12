@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { QuizBank } from '@/types/quiz-bank';
 import { ensureQuizBank } from '@/types/quiz-bank';
+import { useActiveSchoolLevel } from './useActiveSchoolLevel';
 
 export function useQuizBank(bankId?: string) {
   return useQuery({
@@ -93,6 +94,7 @@ export function useBankAttemptStatus(bankId?: string, userId?: string) {
 
 export function useSubmitBankAttempt() {
   const queryClient = useQueryClient();
+  const activeSchoolLevel = useActiveSchoolLevel();
   
   return useMutation({
     mutationFn: async (payload: {
@@ -102,6 +104,10 @@ export function useSubmitBankAttempt() {
       maxScore: number;
       tookSeconds?: number;
     }) => {
+      if (activeSchoolLevel.isPreviewing) {
+        return { success: true, preview: true };
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
@@ -121,4 +127,3 @@ export function useSubmitBankAttempt() {
     },
   });
 }
-

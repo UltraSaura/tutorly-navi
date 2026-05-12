@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Topic, Video } from '@/types/learning';
-import { useUserSchoolLevel } from './useUserSchoolLevel';
+import { useActiveSchoolLevel } from './useActiveSchoolLevel';
 import { filterContentByUserLevel, filterContentByAgeAndLevel } from '@/utils/schoolLevelFilter';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useAdminAuth } from './useAdminAuth';
@@ -46,12 +46,12 @@ interface CoursePlaylistData {
 }
 
 export function useCoursePlaylist(topicSlug: string) {
-  const { data: userLevelData } = useUserSchoolLevel();
+  const activeSchoolLevel = useActiveSchoolLevel();
   const { language: userLanguage } = useLanguage();
   const { isAdmin } = useAdminAuth();
   
   return useQuery({
-    queryKey: ['course-playlist', topicSlug, userLevelData?.level, userLanguage, isAdmin],
+    queryKey: ['course-playlist', topicSlug, activeSchoolLevel.activeLevel, userLanguage, isAdmin, activeSchoolLevel.isPreviewing],
     queryFn: async (): Promise<CoursePlaylistData> => {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -76,12 +76,12 @@ export function useCoursePlaylist(topicSlug: string) {
       if (allVideosError) throw allVideosError;
       
       // Admin sees all videos; students get filtered by age/level only (no language filter yet)
-      let suitableVideos = isAdmin 
+      let suitableVideos = isAdmin && !activeSchoolLevel.isPreviewing
         ? (allVideos as any[])
         : filterContentByAgeAndLevel(
             allVideos as any,
-            userLevelData?.level || null,
-            userLevelData?.age || null
+            activeSchoolLevel.activeLevel,
+            activeSchoolLevel.age
           );
       
       // Group videos by variant_group_id and select best language match per group
@@ -97,12 +97,12 @@ export function useCoursePlaylist(topicSlug: string) {
         .order('order_index') : { data: [] };
       
       // Admin sees all quizzes; students get filtered by age/level and language
-      const suitableQuizzes = isAdmin
+      const suitableQuizzes = isAdmin && !activeSchoolLevel.isPreviewing
         ? (allQuizzes as any[])
         : filterContentByUserLevel(
             allQuizzes as any,
-            userLevelData?.level || null,
-            userLevelData?.age || null,
+            activeSchoolLevel.activeLevel,
+            activeSchoolLevel.age,
             userLanguage
           );
 

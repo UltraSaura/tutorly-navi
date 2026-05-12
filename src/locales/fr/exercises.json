@@ -82,6 +82,14 @@
     },
     "xp": {
       "great_effort": "Bel effort ! Continue à apprendre !"
+    },
+    "kid": {
+      "you_got_this": "Tu vas y arriver, champion !",
+      "next_step": "Étape suivante →",
+      "got_it": "✅ J'ai compris !",
+      "replay": "🔁 Rejouer",
+      "intro_title": "Comprends l'idée, pas juste la réponse !",
+      "intro_sub": "Suis les étapes à ton rythme."
     }
   },
   "badges": {
