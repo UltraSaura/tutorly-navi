@@ -14,7 +14,7 @@ export interface UserContextData {
 export const useUserContext = () => {
   const { user } = useAuth();
 
-  const { data: userContext } = useQuery({
+  const { data: userContext, isLoading, isFetched } = useQuery({
     queryKey: ['user-context', user?.id],
     queryFn: async (): Promise<UserContextData | null> => {
       if (!user?.id) return null;
@@ -45,5 +45,8 @@ export const useUserContext = () => {
     enabled: !!user?.id,
   });
 
-  return { userContext };
+  // isContextReady: true once we have a definitive answer (loaded or no user)
+  const isContextReady = !user?.id || isFetched;
+
+  return { userContext, isLoading, isContextReady };
 };

@@ -201,6 +201,7 @@ export function buildLearningResourceAnalyticsMetadata({
 }: Omit<LearningResourceAnalyticsInput, "eventName">): Record<string, unknown> {
   return {
     source,
+    skillTag: skillMatch?.skillTag,
     topicId: skillMatch?.topicId,
     objectiveId: skillMatch?.objectiveId,
     resourceType: recommendation?.type,

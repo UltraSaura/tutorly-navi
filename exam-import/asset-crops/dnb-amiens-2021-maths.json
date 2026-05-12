@@ -1,0 +1,13 @@
+{
+  "exercise_1": [
+    {
+      "id": "table-temperatures",
+      "type": "table",
+      "label": "Tableau des températures",
+      "page": 2,
+      "bbox_percent": [0.02, 0.12, 0.98, 0.40],
+      "render_mode": "image_first",
+      "alt": "Feuille de calcul présentant les températures mensuelles à Tours en 2019."
+    }
+  ]
+}

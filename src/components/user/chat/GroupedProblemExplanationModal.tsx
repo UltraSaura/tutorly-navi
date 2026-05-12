@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
 import { useUserContext } from '@/hooks/useUserContext';
+import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { extractExpressionFromText } from '@/utils/mathStepper/parser';
 import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
 import { GeometryDiagram } from './GeometryDiagram';
@@ -57,6 +58,7 @@ const GroupedProblemExplanationModal = ({
 }: GroupedProblemExplanationModalProps) => {
   const { language } = useLanguage();
   const { userContext } = useUserContext();
+  const { activeLevel } = useActiveSchoolLevel();
   const trackedOpenKeyRef = React.useRef<string | null>(null);
   const trackedSupportKeyRef = React.useRef<string | null>(null);
 
@@ -67,8 +69,8 @@ const GroupedProblemExplanationModal = ({
   const shouldShowInteractiveStepper = !!(
     practice?.similarProblem &&
     practiceExpression &&
-    userContext?.student_level &&
-    isUnder11YearsOld(userContext.student_level) &&
+    activeLevel &&
+    isUnder11YearsOld(activeLevel) &&
     isPureArithmeticProblem(practice.similarProblem)
   );
 
@@ -136,101 +138,185 @@ const GroupedProblemExplanationModal = ({
 
           {!loading && practice && (
             <>
-              <section className="rounded-lg border bg-muted/40 p-4">
-                <h4 className="text-sm font-semibold text-foreground mb-2">
-                  {language === 'fr' ? 'Idée à travailler' : 'Concept to practice'}
-                </h4>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {toChildFriendlyExplanationText(practice.concept)}
-                </p>
-              </section>
-
-              {practice.learningStyleSupport && (
-                <section className="rounded-lg border border-indigo-200 bg-indigo-50 p-4">
-                  <h4 className="text-sm font-semibold text-indigo-950 mb-2">
-                    {toChildFriendlyExplanationText(practice.learningStyleSupport.title)}
-                  </h4>
-                  {practice.diagram && (
-                    <div className="mb-3">
-                      <GeometryDiagram diagram={practice.diagram} />
+              {activeLevel && isUnder11YearsOld(activeLevel) ? (
+                <div className="space-y-6 py-2">
+                  {/* Kid-friendly view for Grouped Problem Explanation */}
+                  <section className="relative overflow-hidden rounded-2xl border-2 border-orange-100 bg-gradient-to-br from-orange-50/50 to-white p-5 shadow-sm">
+                    <div className="absolute left-0 top-0 h-full w-1.5 bg-orange-400" />
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100 text-2xl shadow-inner">🌟</div>
+                      <div className="flex-1 space-y-2">
+                        <h5 className="text-lg font-bold text-orange-900">{language === 'fr' ? 'Idée rapide' : 'Quick idea'}</h5>
+                        <p className="text-base text-gray-700 font-medium whitespace-pre-wrap">{toChildFriendlyExplanationText(practice.concept)}</p>
+                      </div>
                     </div>
+                  </section>
+
+                  {practice.learningStyleSupport ? (
+                    <section className="relative overflow-hidden rounded-2xl border-2 border-blue-100 bg-gradient-to-br from-blue-50/50 to-white p-5 shadow-sm">
+                      <div className="absolute left-0 top-0 h-full w-1.5 bg-blue-400" />
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-2xl shadow-inner">💡</div>
+                        <div className="flex-1 space-y-2">
+                          <h5 className="text-lg font-bold text-blue-900">{toChildFriendlyExplanationText(practice.learningStyleSupport.title)}</h5>
+                          {practice.diagram && <div className="mb-3"><GeometryDiagram diagram={practice.diagram} /></div>}
+                          <p className="text-base text-gray-700 font-medium whitespace-pre-wrap">{toChildFriendlyExplanationText(practice.learningStyleSupport.content)}</p>
+                        </div>
+                      </div>
+                    </section>
+                  ) : (
+                    <section className="relative overflow-hidden rounded-2xl border-2 border-blue-100 bg-gradient-to-br from-blue-50/50 to-white p-5 shadow-sm">
+                      <div className="absolute left-0 top-0 h-full w-1.5 bg-blue-400" />
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-2xl shadow-inner">📝</div>
+                        <div className="flex-1 space-y-2">
+                          <h5 className="text-lg font-bold text-blue-900">{language === 'fr' ? 'Exemple' : 'Example'}</h5>
+                          {practice.diagram && <div className="mb-3"><GeometryDiagram diagram={practice.diagram} /></div>}
+                          <p className="text-base text-gray-700 font-medium whitespace-pre-wrap">{toChildFriendlyExplanationText(practice.similarProblem)}</p>
+                        </div>
+                      </div>
+                    </section>
                   )}
-                  <p className="text-sm text-indigo-950 whitespace-pre-wrap">
-                    {toChildFriendlyExplanationText(practice.learningStyleSupport.content)}
-                  </p>
-                  {shouldShowInteractiveStepper && (
-                    <div className="mt-4 rounded-lg border border-indigo-100 bg-white/70 p-3">
-                      <h5 className="text-sm font-semibold text-indigo-950 mb-3">
-                        {language === 'fr' ? 'Pratique interactive' : 'Interactive practice'}
-                      </h5>
-                      <CompactMathStepper expression={practiceExpression} className="text-sm" />
+
+                  <section className="relative overflow-hidden rounded-2xl border-2 border-green-100 bg-gradient-to-br from-green-50/50 to-white p-5 shadow-sm">
+                    <div className="absolute left-0 top-0 h-full w-1.5 bg-green-400" />
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-2xl shadow-inner">✅</div>
+                      <div className="flex-1 space-y-2">
+                        <h5 className="text-lg font-bold text-green-900">{language === 'fr' ? 'Auto-vérification' : 'Self-check'}</h5>
+                        <p className="text-base text-gray-700 font-medium whitespace-pre-wrap">{toChildFriendlyExplanationText(practice.retryPrompt)}</p>
+                      </div>
                     </div>
-                  )}
-                </section>
-              )}
+                  </section>
 
-              {!practice.learningStyleSupport && (
-                <section className="rounded-lg border border-blue-100 bg-blue-50 p-4">
-                  <h4 className="text-sm font-semibold text-blue-950 mb-2">
-                    {language === 'fr' ? 'Exemple similaire' : 'Similar problem'}
-                  </h4>
-                  {practice.diagram && (
-                    <div className="mb-3">
-                      <GeometryDiagram diagram={practice.diagram} />
+                  <section className="relative overflow-hidden rounded-2xl border-2 border-orange-100 bg-gradient-to-br from-orange-50/50 to-white p-5 shadow-sm">
+                    <div className="absolute left-0 top-0 h-full w-1.5 bg-orange-400" />
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100 text-2xl shadow-inner">🚀</div>
+                      <div className="flex-1 space-y-2">
+                        <h5 className="text-lg font-bold text-orange-900">{language === 'fr' ? 'Méthode' : 'Method'}</h5>
+                        <p className="text-base text-gray-700 font-medium whitespace-pre-wrap">{toChildFriendlyExplanationText(practice.method)}</p>
+                      </div>
                     </div>
+                  </section>
+
+                  {practice.commonMistake && (
+                    <section className="relative overflow-hidden rounded-2xl border-2 border-red-100 bg-gradient-to-br from-red-50/50 to-white p-5 shadow-sm">
+                      <div className="absolute left-0 top-0 h-full w-1.5 bg-red-400" />
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-2xl shadow-inner">⚠️</div>
+                        <div className="flex-1 space-y-2">
+                          <h5 className="text-lg font-bold text-red-900">{language === 'fr' ? 'Attention' : 'Watch out'}</h5>
+                          <p className="text-base text-gray-700 font-medium whitespace-pre-wrap">{toChildFriendlyExplanationText(practice.commonMistake)}</p>
+                        </div>
+                      </div>
+                    </section>
                   )}
-                  <p className="text-sm text-blue-950 whitespace-pre-wrap">
-                    {toChildFriendlyExplanationText(practice.similarProblem)}
-                  </p>
-                  {shouldShowInteractiveStepper && (
-                    <div className="mt-4 rounded-lg border border-blue-100 bg-white/70 p-3">
-                      <h5 className="text-sm font-semibold text-blue-950 mb-3">
-                        {language === 'fr' ? 'Pratique interactive' : 'Interactive practice'}
-                      </h5>
-                      <CompactMathStepper expression={practiceExpression} className="text-sm" />
-                    </div>
+                  
+                  <div className="flex items-center justify-center gap-3 p-4 bg-blue-50 rounded-2xl border border-blue-100 text-blue-700 font-semibold italic text-sm">
+                    <span>🎨</span>
+                    {language === 'fr' ? "Tu vas y arriver, champion !" : "You got this!"}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <section className="rounded-lg border bg-muted/40 p-4">
+                    <h4 className="text-sm font-semibold text-foreground mb-2">
+                      {language === 'fr' ? 'Idée à travailler' : 'Concept to practice'}
+                    </h4>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {practice.concept}
+                    </p>
+                  </section>
+
+                  {practice.learningStyleSupport && (
+                    <section className="rounded-lg border border-indigo-200 bg-indigo-50 p-4">
+                      <h4 className="text-sm font-semibold text-indigo-950 mb-2">
+                        {practice.learningStyleSupport.title}
+                      </h4>
+                      {practice.diagram && (
+                        <div className="mb-3">
+                          <GeometryDiagram diagram={practice.diagram} />
+                        </div>
+                      )}
+                      <p className="text-sm text-indigo-950 whitespace-pre-wrap">
+                        {practice.learningStyleSupport.content}
+                      </p>
+                      {shouldShowInteractiveStepper && (
+                        <div className="mt-4 rounded-lg border border-indigo-100 bg-white/70 p-3">
+                          <h5 className="text-sm font-semibold text-indigo-950 mb-3">
+                            {language === 'fr' ? 'Pratique interactive' : 'Interactive practice'}
+                          </h5>
+                          <CompactMathStepper expression={practiceExpression} className="text-sm" />
+                        </div>
+                      )}
+                    </section>
                   )}
-                </section>
-              )}
 
-              <section className="rounded-lg border border-green-200 bg-green-50 p-4">
-                <h4 className="text-sm font-semibold text-green-950 mb-2">
-                  {language === 'fr' ? 'Auto-vérification' : 'Self-check'}
-                </h4>
-                <p className="text-sm text-green-950 whitespace-pre-wrap">
-                  {toChildFriendlyExplanationText(practice.retryPrompt)}
-                </p>
-              </section>
+                  {!practice.learningStyleSupport && (
+                    <section className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+                      <h4 className="text-sm font-semibold text-blue-950 mb-2">
+                        {language === 'fr' ? 'Exemple similaire' : 'Similar problem'}
+                      </h4>
+                      {practice.diagram && (
+                        <div className="mb-3">
+                          <GeometryDiagram diagram={practice.diagram} />
+                        </div>
+                      )}
+                      <p className="text-sm text-blue-950 whitespace-pre-wrap">
+                        {practice.similarProblem}
+                      </p>
+                      {shouldShowInteractiveStepper && (
+                        <div className="mt-4 rounded-lg border border-blue-100 bg-white/70 p-3">
+                          <h5 className="text-sm font-semibold text-blue-950 mb-3">
+                            {language === 'fr' ? 'Pratique interactive' : 'Interactive practice'}
+                          </h5>
+                          <CompactMathStepper expression={practiceExpression} className="text-sm" />
+                        </div>
+                      )}
+                    </section>
+                  )}
 
-              <section className="rounded-lg border bg-card p-4">
-                <h4 className="text-sm font-semibold text-foreground mb-2">
-                  {language === 'fr' ? 'Méthode' : 'Method'}
-                </h4>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {toChildFriendlyExplanationText(practice.method)}
-                </p>
-              </section>
+                  <section className="rounded-lg border border-green-200 bg-green-50 p-4">
+                    <h4 className="text-sm font-semibold text-green-950 mb-2">
+                      {language === 'fr' ? 'Auto-vérification' : 'Self-check'}
+                    </h4>
+                    <p className="text-sm text-green-950 whitespace-pre-wrap">
+                      {practice.retryPrompt}
+                    </p>
+                  </section>
 
-              {practice.commonMistake && (
-                <section className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                  <h4 className="text-sm font-semibold text-amber-950 mb-2">
-                    {language === 'fr' ? 'Attention' : 'Watch out'}
-                  </h4>
-                  <p className="text-sm text-amber-950 whitespace-pre-wrap">
-                    {toChildFriendlyExplanationText(practice.commonMistake)}
-                  </p>
-                </section>
-              )}
+                  <section className="rounded-lg border bg-card p-4">
+                    <h4 className="text-sm font-semibold text-foreground mb-2">
+                      {language === 'fr' ? 'Méthode' : 'Method'}
+                    </h4>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {practice.method}
+                    </p>
+                  </section>
 
-              {practice.parentHelpHint && (
-                <section className="rounded-lg border bg-muted/40 p-4">
-                  <h4 className="text-sm font-semibold text-foreground mb-2">
-                    {language === 'fr' ? 'Conseil pour les parents' : 'Parent help hint'}
-                  </h4>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                    {toChildFriendlyExplanationText(practice.parentHelpHint)}
-                  </p>
-                </section>
+                  {practice.commonMistake && (
+                    <section className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                      <h4 className="text-sm font-semibold text-amber-950 mb-2">
+                        {language === 'fr' ? 'Attention' : 'Watch out'}
+                      </h4>
+                      <p className="text-sm text-amber-950 whitespace-pre-wrap">
+                        {practice.commonMistake}
+                      </p>
+                    </section>
+                  )}
+
+                  {practice.parentHelpHint && (
+                    <section className="rounded-lg border bg-muted/40 p-4">
+                      <h4 className="text-sm font-semibold text-foreground mb-2">
+                        {language === 'fr' ? 'Conseil pour les parents' : 'Parent help hint'}
+                      </h4>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                        {practice.parentHelpHint}
+                      </p>
+                    </section>
+                  )}
+                </>
               )}
 
               {homeworkLearningRows.length > 0 && (

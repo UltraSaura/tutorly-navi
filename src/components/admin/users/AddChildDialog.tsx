@@ -10,6 +10,7 @@ import { User } from '@/types/admin';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { getSchoolLevelOptions } from '@/domain/schoolLevels';
 
 const addChildSchema = z.object({
   username: z.string()
@@ -200,18 +201,11 @@ export const AddChildDialog = ({
                 <SelectValue placeholder="Select school level" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="CP">CP</SelectItem>
-                <SelectItem value="CE1">CE1</SelectItem>
-                <SelectItem value="CE2">CE2</SelectItem>
-                <SelectItem value="CM1">CM1</SelectItem>
-                <SelectItem value="CM2">CM2</SelectItem>
-                <SelectItem value="6EME">6EME</SelectItem>
-                <SelectItem value="5EME">5EME</SelectItem>
-                <SelectItem value="4EME">4EME</SelectItem>
-                <SelectItem value="3EME">3EME</SelectItem>
-                <SelectItem value="2NDE">2NDE</SelectItem>
-                <SelectItem value="1ERE">1ERE</SelectItem>
-                <SelectItem value="TERMINALE">TERMINALE</SelectItem>
+                {getSchoolLevelOptions('fr').map((level) => (
+                  <SelectItem key={level.value} value={level.value}>
+                    {level.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

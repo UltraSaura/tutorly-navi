@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import MobileLanguageMenuItems from "./MobileLanguageMenuItems";
+import { AdminPreviewSelector } from "@/components/admin/AdminPreviewControls";
 
 interface AccountTabContentProps {
   onClose: () => void;
@@ -134,6 +135,15 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
       </div>
 
       <Separator />
+
+      {isAdmin ? (
+        <>
+          <div className="space-y-2 px-1">
+            <AdminPreviewSelector compact />
+          </div>
+          <Separator />
+        </>
+      ) : null}
 
       {/* Language Section */}
       <div className="space-y-2">

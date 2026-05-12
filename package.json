@@ -9,6 +9,13 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "debug:dnb-visibility": "node scripts/debug-dnb.js",
+    "debug:training-item-docs": "node --experimental-strip-types exam-import/scripts/debug-training-item-docs.ts",
+    "build:dnb-annales": "node --experimental-strip-types exam-import/scripts/build-dnb-bundle.ts",
+    "import:dnb-annales": "node --experimental-strip-types exam-import/scripts/import-dnb-bundle.ts",
+    "generate:training-items": "node --experimental-strip-types exam-import/scripts/generate-training-items.ts",
+    "import:training-items": "node --experimental-strip-types exam-import/scripts/import-training-items.ts",
+    "smoke:dnb-annales": "node --experimental-strip-types exam-import/scripts/smoke-dnb-annales.ts",
     "copy:mathlive": "mkdir -p public/mathlive/fonts public/mathlive/sounds && cp -R node_modules/mathlive/dist/fonts/* public/mathlive/fonts/ && cp -R node_modules/mathlive/dist/sounds/* public/mathlive/sounds/ && cp node_modules/mathlive/dist/mathlive-static.css public/mathlive/mathlive-static.css && cp node_modules/mathlive/dist/mathlive-fonts.css public/mathlive/mathlive-fonts.css",
     "postinstall": "npm run copy:mathlive",
     "test": "vitest"

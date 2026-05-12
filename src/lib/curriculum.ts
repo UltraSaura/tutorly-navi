@@ -29,6 +29,7 @@ import type {
   CurriculumDomain,
   CurriculumSubdomain,
 } from '@/types/curriculum';
+import { dedupeSchoolLevels } from '@/domain/schoolLevels';
 
 // ----- module-scope cache -----
 let cachedBundle: CurriculumBundle = staticBundle as CurriculumBundle;
@@ -104,7 +105,7 @@ async function fetchBundleFromDb(): Promise<CurriculumBundle> {
 
   // school_levels lookup by (country lowercase, level lowercase)
   const schoolLevelMap = new Map<string, { label: string; sort: number }>();
-  (levels || []).forEach(l => {
+  dedupeSchoolLevels(levels || []).forEach(l => {
     const cc = norm(l.country_code);
     const lc = norm(l.level_code);
     schoolLevelMap.set(`${cc}::${lc}`, { label: l.level_name, sort: l.sort_order ?? 0 });

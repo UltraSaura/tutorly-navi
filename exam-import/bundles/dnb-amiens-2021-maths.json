@@ -1,0 +1,645 @@
+{
+  "sources": [
+    {
+      "id": "ac-amiens-maths:https://maths.ac-amiens.fr/065-annales-de-sujets-dnb.html",
+      "source_name": "ac-amiens-maths",
+      "source_url": "https://maths.ac-amiens.fr/065-annales-de-sujets-dnb.html",
+      "fetched_at": "2026-05-11T00:46:00.831Z"
+    }
+  ],
+  "papers": [
+    {
+      "source_name": "ac-amiens-maths",
+      "source_url": "https://maths.ac-amiens.fr/065-annales-de-sujets-dnb.html",
+      "fetched_at": "2026-05-11T00:46:00.831Z",
+      "exam": "dnb",
+      "session_year": 2021,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole",
+      "variant": "standard",
+      "pdf_url": "https://maths.ac-amiens.fr/IMG/pdf/sujet_juin_2021.pdf",
+      "title": "Sujet de Juin 2021",
+      "id": "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3",
+      "level": "3eme",
+      "school_cycle": "cycle_4",
+      "pdf_hash": "19509a91ccd3b8bcfdf64f5fb5b46aab0d194c477f9c84e5808746bda5764168",
+      "raw_text": "D IPL ÔME NAT IO NAL DU BR EVET\n                                      SESSION 2021\n\n                                MATHEMATIQUES\n\n                                      Série générale\n\n        Durée de l’épreuve : 2 h 00                                    100 points\n\n                Dès que le sujet vous est remis, assurez-vous qu’il est complet.\n           Il comporte 8 pages numérotées de la page 1 sur 8 à la page 8 sur 8\n                   L’ANNEXE page 8 SERA À RENDRE AVEC LA COPIE.\n\n                 L’usage de calculatrice avec mode examen actif est autorisé.\n\n          L’utilisation de calculatrice sans mémoire « type collège » est autorisée.\n\n                             Exercice 1                 20 points\n                             Exercice 2                 20 points\n                             Exercice 3                 20 points\n                             Exercice 4                 20 points\n                             Exercice 5                 20 points\n\n21GENMATMEAG1                                                                          Page 1 sur 8\n\n                         Indications portant sur l’ensemble du sujet.\nToutes les réponses doivent être justifiées, sauf si une indication contraire est donnée.\nPour chaque question, si le travail n’est pas terminé, laisser tout de même une trace de la\nrecherche ; elle sera prise en compte dans la notation.\n\nExercice 1 (20 points)\n\nCette feuille de calcul présente les températures moyennes mensuelles à Tours en 2019.\n\n1) D’après le tableau ci-dessus, quelle a été la température moyenne à Tours en novembre\n  2019 ?\n2) Déterminer l’étendue de cette série.\n3) Quelle formule doit-on saisir en cellule N2 pour calculer la température moyenne annuelle ?\n4) Vérifier que la température moyenne annuelle est 13,1 °C.\n5) La température moyenne annuelle à Tours en 2009 était de 11,9 °C.\n\n  Le pourcentage d’augmentation entre 2009 et 2019, arrondi à l’unité, est-il de : 7 % ; 10 % ou\n  13 % ? Justifier la réponse.\n\n21GENMATMEAG1                                                                         Page 2 sur 8\n\nExercice 2 (20 points)\n\nLe Futuroscope est un parc de loisirs situé dans la Vienne. L'année 2019 a enregistré 1,9 million\nde visiteurs.\n\n1) Combien aurait-il fallu de visiteurs en plus en 2019 pour atteindre 2 millions de visiteurs ?\n2) L'affirmation « Il y a eu environ 5 200 visiteurs par jour en 2019 » est-elle vraie ? Justifier la\n   réponse.\n\n3) Un professeur organise une sortie pédagogique au Futuroscope pour ses élèves de troisième.\nIl veut répartir les 126 garçons et les 90 filles par groupes. Il souhaite que chaque groupe\ncomporte le même nombre de filles et le même nombre de garçons.\n\n      a) Décomposer en produit de facteurs premiers les nombres 126 et 90\n      b) Trouver tous les entiers qui divisent à la fois les nombres 126 et 90\n      c) En déduire le plus grand nombre de groupes que le professeur pourra\n          constituer. Combien de filles et de garçons y aura-t-il alors dans chaque groupe ?\n\n4) Deux élèves de 3ème, Marie et Adrien, se souviennent avoir vu en mathématiques que les\nhauteurs inaccessibles pouvaient être déterminées avec l’ombre. Ils souhaitent calculer la\nhauteur de la Gyrotour du Futuroscope.\n\nMarie se place comme indiquée sur la figure ci-dessous, de telle sorte que son ombre coïncide\navec celle de la tour. Après avoir effectué plusieurs mesures, Adrien effectue le schéma ci-\ndessous (le schéma n’est pas à l’échelle), sur lequel les points A, E et B ainsi que les points A, D\net C sont alignés.\n\nCalculer la hauteur BC de la Gyrotour.\n\n                                                                               ?\n\n                                  1,60 m\n\n                 2m                                54,25 m\n\n21GENMATMEAG1                                                                             Page 3 sur 8\n\nExercice 3 (20 points)\n\nCet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée.\n\nPour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte.\nRecopier sur la copie le numéro de la question et la réponse.\n\nPARTIE A :\nUne urne contient 7 jetons verts, 4 jetons rouges, 3 jetons bleus et 2 jetons jaunes. Les jetons\nsont indiscernables au toucher. On pioche un jeton au hasard dans cette urne.\n\n           Questions                  Réponse A              Réponse B            Réponse C\n\n    1. À quel événement            Obtenir un jeton de\n       correspond une                                    Obtenir un jeton qui   Obtenir un jeton\n                                    couleur rouge ou\n                        7                                  n'est pas vert.           vert.\n       probabilité de        ?           jaune.\n                        16\n\n    2. Quelle est la probabilité\n                                           13                     3                    3\n       de ne pas tirer un jeton\n                                           16                    16                    4\n       bleu ?\n\n21GENMATMEAG1                                                                              Page 4 sur 8\n\nPARTIE B :\nOn considère la figure suivante, composée de vingt motifs numérotés de 1 à 20, dans laquelle :\n      ̂ = 36°\n       𝐴𝑂𝐵\n      le motif 11 est l’image du motif 1 par l’homothétie de centre O et de rapport 2.\n\n                                        A          B\n                                             36°\n\n             Questions                 Réponse A              Réponse B             Réponse C\n\n   3. Quelle est l’image du motif\n       20 par la symétrie d’axe la          Le motif 17.      Le motif 15.          Le motif 12.\n       droite (d) ?\n\n   4. Par quelle rotation le motif   Une rotation de         Une rotation de      Une rotation de\n       3 est-il l’image du motif       centre O, et        centre O, et d’angle centre O, et d’angle\n       1?                              d’angle 36°.               72°.                   90°.\n\n   5. L’aire du motif 11 est-elle      au double de         à 4 fois l’aire du   à la moitié de l’aire\n       égale :                       l’aire du motif 1 ?         motif 1.            du motif 1.\n\n21GENMATMEAG1                                                                               Page 5 sur 8\n\nExercice 4 (20 points)\n\nVoici un programme de calcul :      Choisir un nombre.\n\n                                    Prendre le carré du nombre de départ.\n\n                                    Ajouter le triple du nombre de départ.\n\n                                    Soustraire 10 au résultat.\n\n1) Vérifier que si on choisit 4 comme nombre de départ, on obtient 18\n2) Appliquer ce programme de calcul au nombre – 3\n3) Vous trouverez ci-dessous un script, écrit avec scratch.\n\nCompléter sur l'ANNEXE page 8 les lignes 5 et 6 pour que ce script corresponde au\nprogramme de calcul.\n\n4) On veut déterminer le nombre à choisir au départ pour obtenir zéro comme résultat.\n  a) On appelle x le nombre de départ. Exprimer en fonction de x le résultat final.\n\n  b) Vérifier que ce résultat peut aussi s’écrire sous la forme (x + 5)(x – 2).\n  c) Quel(s) nombre(s) doit-on choisir au départ pour obtenir le nombre 0 à l’arrivée ?\n\n21GENMATMEAG1                                                                         Page 6 sur 8\n\nExercice 5 (20 points)\n\nLa production annuelle de déchets par Français était de 5,2 tonnes par habitant en 2007.\nEntre 2007 et 2017, elle a diminué de 6,5 %.\n\n1) De combien de tonnes la production annuelle de déchets par Français en 2017 a-t-elle diminué\npar rapport à l’année 2007 ?\n\n2) Pour continuer à diminuer leur production de déchets, de nombreuses familles utilisent\ndésormais un composteur.\n\nUne de ces familles a choisi le modèle ci-dessous, composé d’un pavé droit et d’un prisme droit\n(la figure du composteur n’est pas à l’échelle). Le descriptif indique qu'il a une contenance\nd’environ 0,5 m3. On souhaite vérifier cette information.\n\n    39 cm\n                                                                              Trapèze ABCD\n                                                                              Petit côté : 39 cm\n\n                                        1,1 m             53 cm\n                                        cm\n                                                                                                      Hauteur\n\n                                67 cm\n\n            70 cm                                                   Grand côté : 67 cm\n\n  a) Dans le trapèze ABCD, calculer la longueur CH.\n\n  b) Montrer que la longueur DH est égale à 45 cm.\n\n  c) Vérifier que l'aire du trapèze ABCD est de 2 385 cm².\n\n  d) Calculer le volume du composteur.\n\n     L'affirmation « il a une contenance d’environ 0,5 m3 » est-elle vraie ? Justifier.\n\n                                                (𝑃𝑒𝑡𝑖𝑡 𝑐ô𝑡é + 𝐺𝑟𝑎𝑛𝑑 𝑐ô𝑡é) × 𝐻𝑎𝑢𝑡𝑒𝑢𝑟\n                       𝐴𝑖𝑟𝑒 𝑑𝑢 𝑡𝑟𝑎𝑝è𝑧𝑒 =\nRappels :                                                        2\n                        𝑉𝑜𝑙𝑢𝑚𝑒 𝑑𝑢 𝑝𝑟𝑖𝑠𝑚𝑒 𝑑𝑟𝑜𝑖𝑡 = 𝐴𝑖𝑟𝑒 𝑑𝑒 𝑙𝑎 𝑏𝑎𝑠𝑒 × ℎ𝑎𝑢𝑡𝑒𝑢𝑟\n                                         ANNEXE 1\n                       𝑉𝑜𝑙𝑢𝑚𝑒 𝑑𝑢 𝑝𝑎𝑣é 𝑑𝑟𝑜𝑖𝑡 = 𝐿𝑜𝑛𝑔𝑢𝑒𝑢𝑟 × 𝑙𝑎𝑟𝑔𝑒𝑢𝑟 × ℎ𝑎𝑢𝑡𝑒𝑢𝑟\n\n21GENMATMEAG1                                                                                 Page 7 sur 8\n\n                ANNEXE à rendre avec la copie\n\n21GENMATMEAG1                                   Page 8 sur 8",
+      "exercises": [
+        "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3:ex01",
+        "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3:ex02",
+        "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3:ex03",
+        "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3:ex04",
+        "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3:ex05"
+      ],
+      "parsing_status": "parsed"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3:ex01",
+      "paper_id": "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3",
+      "source_name": "ac-amiens-maths",
+      "source_url": "https://maths.ac-amiens.fr/065-annales-de-sujets-dnb.html",
+      "fetched_at": "2026-05-11T00:46:00.831Z",
+      "exam": "dnb",
+      "session_year": 2021,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole",
+      "variant": "standard",
+      "pdf_url": "https://maths.ac-amiens.fr/IMG/pdf/sujet_juin_2021.pdf",
+      "pdf_hash": "19509a91ccd3b8bcfdf64f5fb5b46aab0d194c477f9c84e5808746bda5764168",
+      "exercise_number": 1,
+      "title": "Exercice 1 (20 points)",
+      "raw_text": "Exercice 1 (20 points)\n\nCette feuille de calcul présente les températures moyennes mensuelles à Tours en 2019.\n\n1) D’après le tableau ci-dessus, quelle a été la température moyenne à Tours en novembre\n  2019 ?\n2) Déterminer l’étendue de cette série.\n3) Quelle formule doit-on saisir en cellule N2 pour calculer la température moyenne annuelle ?\n4) Vérifier que la température moyenne annuelle est 13,1 °C.\n5) La température moyenne annuelle à Tours en 2009 était de 11,9 °C.\n\n  Le pourcentage d’augmentation entre 2009 et 2019, arrondi à l’unité, est-il de : 7 % ; 10 % ou\n  13 % ? Justifier la réponse.\n\n21GENMATMEAG1                                                                         Page 2 sur 8",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 1 (20 points)",
+        "context": "Cette feuille de calcul présente les températures moyennes mensuelles à Tours en 2019.",
+        "documents": [
+          {
+            "id": "table-temperatures",
+            "type": "table",
+            "label": "Tableau des températures",
+            "caption": "Températures moyennes mensuelles à Tours en 2019",
+            "table": {
+              "headers": [
+                "Mois",
+                "J",
+                "F",
+                "M",
+                "A",
+                "M",
+                "J",
+                "J",
+                "A",
+                "S",
+                "O",
+                "N",
+                "D"
+              ],
+              "rows": [
+                [
+                  "Température en °C",
+                  "4,4",
+                  "7,8",
+                  "9,6",
+                  "11,2",
+                  "13,4",
+                  "19,4",
+                  "22,6",
+                  "20,5",
+                  "17,9",
+                  "14,4",
+                  "8,2",
+                  "7,8"
+                ]
+              ]
+            },
+            "source": {},
+            "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex01/table-temperatures.png",
+            "alt": "Feuille de calcul présentant les températures mensuelles à Tours en 2019.",
+            "render_mode": "image_first"
+          },
+          {
+            "type": "image",
+            "label": "Capture de l'exercice",
+            "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex01/page-2.png",
+            "alt": "Tableau ou figure associé à Exercice 1 (20 points), dont les températures moyennes mensuelles.",
+            "page_number": 2,
+            "sort_order": 1,
+            "fallback": true
+          }
+        ],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "D’après le tableau ci-dessus, quelle a été la température moyenne à Tours en novembre\n  2019 ?",
+            "points": 4,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Déterminer l’étendue de cette série.",
+            "points": 4,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "Quelle formule doit-on saisir en cellule N2 pour calculer la température moyenne annuelle ?",
+            "points": 4,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "4",
+            "label": "4.",
+            "text": "Vérifier que la température moyenne annuelle est 13,1 °C.",
+            "points": 4,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "5",
+            "label": "5.",
+            "text": "La température moyenne annuelle à Tours en 2009 était de 11,9 °C.\n\n  Le pourcentage d’augmentation entre 2009 et 2019, arrondi à l’unité, est-il de : 7 % ; 10 % ou\n  13 % ? Justifier la réponse.",
+            "points": 4,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Cette feuille de calcul présente les températures moyennes mensuelles à Tours en 2019.\n\n1) D’après le tableau ci-dessus, quelle a été la température moyenne à Tours en novembre\n  2019 ?\n2) Déterminer l’étendue de cette série.\n3) Quelle formule doit-on saisir en cellule N2 pour calculer la température moyenne annuelle ?\n4) Vérifier que la température moyenne annuelle est 13,1 °C.\n5) La température moyenne annuelle à Tours en 2009 était de 11,9 °C.\n\n  Le pourcentage d’augmentation entre 2009 et 2019, arrondi à l’unité, est-il de : 7 % ; 10 % ou\n  13 % ? Justifier la réponse.",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    },
+    {
+      "id": "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3:ex02",
+      "paper_id": "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3",
+      "source_name": "ac-amiens-maths",
+      "source_url": "https://maths.ac-amiens.fr/065-annales-de-sujets-dnb.html",
+      "fetched_at": "2026-05-11T00:46:00.831Z",
+      "exam": "dnb",
+      "session_year": 2021,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole",
+      "variant": "standard",
+      "pdf_url": "https://maths.ac-amiens.fr/IMG/pdf/sujet_juin_2021.pdf",
+      "pdf_hash": "19509a91ccd3b8bcfdf64f5fb5b46aab0d194c477f9c84e5808746bda5764168",
+      "exercise_number": 2,
+      "title": "Exercice 2 (20 points)",
+      "raw_text": "Exercice 2 (20 points)\n\nLe Futuroscope est un parc de loisirs situé dans la Vienne. L'année 2019 a enregistré 1,9 million\nde visiteurs.\n\n1) Combien aurait-il fallu de visiteurs en plus en 2019 pour atteindre 2 millions de visiteurs ?\n2) L'affirmation « Il y a eu environ 5 200 visiteurs par jour en 2019 » est-elle vraie ? Justifier la\n   réponse.\n\n3) Un professeur organise une sortie pédagogique au Futuroscope pour ses élèves de troisième.\nIl veut répartir les 126 garçons et les 90 filles par groupes. Il souhaite que chaque groupe\ncomporte le même nombre de filles et le même nombre de garçons.\n\n      a) Décomposer en produit de facteurs premiers les nombres 126 et 90\n      b) Trouver tous les entiers qui divisent à la fois les nombres 126 et 90\n      c) En déduire le plus grand nombre de groupes que le professeur pourra\n          constituer. Combien de filles et de garçons y aura-t-il alors dans chaque groupe ?\n\n4) Deux élèves de 3ème, Marie et Adrien, se souviennent avoir vu en mathématiques que les\nhauteurs inaccessibles pouvaient être déterminées avec l’ombre. Ils souhaitent calculer la\nhauteur de la Gyrotour du Futuroscope.\n\nMarie se place comme indiquée sur la figure ci-dessous, de telle sorte que son ombre coïncide\navec celle de la tour. Après avoir effectué plusieurs mesures, Adrien effectue le schéma ci-\ndessous (le schéma n’est pas à l’échelle), sur lequel les points A, E et B ainsi que les points A, D\net C sont alignés.\n\nCalculer la hauteur BC de la Gyrotour.\n\n                                                                               ?\n\n                                  1,60 m\n\n                 2m                                54,25 m\n\n21GENMATMEAG1                                                                             Page 3 sur 8",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 2 (20 points)",
+        "context": "Le Futuroscope est un parc de loisirs situé dans la Vienne. L'année 2019 a enregistré 1,9 million\nde visiteurs.",
+        "documents": [
+          {
+            "type": "image",
+            "label": "Capture de l'exercice",
+            "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex02/page-3.png",
+            "alt": "Figure ou schéma associé à Exercice 2 (20 points).",
+            "page_number": 3,
+            "sort_order": 0,
+            "fallback": false
+          }
+        ],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "Combien aurait-il fallu de visiteurs en plus en 2019 pour atteindre 2 millions de visiteurs ?",
+            "points": 5,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "L'affirmation « Il y a eu environ 5 200 visiteurs par jour en 2019 » est-elle vraie ? Justifier la\n   réponse.",
+            "points": 5,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "Un professeur organise une sortie pédagogique au Futuroscope pour ses élèves de troisième.\nIl veut répartir les 126 garçons et les 90 filles par groupes. Il souhaite que chaque groupe\ncomporte le même nombre de filles et le même nombre de garçons.",
+            "points": 5,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": [
+              {
+                "id": "3a",
+                "label": "a.",
+                "text": "Décomposer en produit de facteurs premiers les nombres 126 et 90"
+              },
+              {
+                "id": "3b",
+                "label": "b.",
+                "text": "Trouver tous les entiers qui divisent à la fois les nombres 126 et 90"
+              },
+              {
+                "id": "3c",
+                "label": "c.",
+                "text": "En déduire le plus grand nombre de groupes que le professeur pourra\n          constituer. Combien de filles et de garçons y aura-t-il alors dans chaque groupe ?"
+              }
+            ]
+          },
+          {
+            "id": "4",
+            "label": "4.",
+            "text": "Deux élèves de 3ème, Marie et Adrien, se souviennent avoir vu en mathématiques que les\nhauteurs inaccessibles pouvaient être déterminées avec l’ombre. Ils souhaitent calculer la\nhauteur de la Gyrotour du Futuroscope.\n\nMarie se place comme indiquée sur la figure ci-dessous, de telle sorte que son ombre coïncide\navec celle de la tour. Après avoir effectué plusieurs mesures, Adrien effectue le schéma ci-\ndessous (le schéma n’est pas à l’échelle), sur lequel les points A, E et B ainsi que les points A, D\net C sont alignés.\n\nCalculer la hauteur BC de la Gyrotour.\n\n                                                                               ?\n\n                                  1,60 m\n\n                 2m                                54,25 m",
+            "points": 5,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Le Futuroscope est un parc de loisirs situé dans la Vienne. L'année 2019 a enregistré 1,9 million\nde visiteurs.\n\n1) Combien aurait-il fallu de visiteurs en plus en 2019 pour atteindre 2 millions de visiteurs ?\n2) L'affirmation « Il y a eu environ 5 200 visiteurs par jour en 2019 » est-elle vraie ? Justifier la\n   réponse.\n\n3) Un professeur organise une sortie pédagogique au Futuroscope pour ses élèves de troisième.\nIl veut répartir les 126 garçons et les 90 filles par groupes. Il souhaite que chaque groupe\ncomporte le même nombre de filles et le même nombre de garçons.\n\n      a) Décomposer en produit de facteurs premiers les nombres 126 et 90\n      b) Trouver tous les entiers qui divisent à la fois les nombres 126 et 90\n      c) En déduire le plus grand nombre de groupes que le professeur…",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    },
+    {
+      "id": "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3:ex03",
+      "paper_id": "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3",
+      "source_name": "ac-amiens-maths",
+      "source_url": "https://maths.ac-amiens.fr/065-annales-de-sujets-dnb.html",
+      "fetched_at": "2026-05-11T00:46:00.831Z",
+      "exam": "dnb",
+      "session_year": 2021,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole",
+      "variant": "standard",
+      "pdf_url": "https://maths.ac-amiens.fr/IMG/pdf/sujet_juin_2021.pdf",
+      "pdf_hash": "19509a91ccd3b8bcfdf64f5fb5b46aab0d194c477f9c84e5808746bda5764168",
+      "exercise_number": 3,
+      "title": "Exercice 3 (20 points)",
+      "raw_text": "Exercice 3 (20 points)\n\nCet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée.\n\nPour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte.\nRecopier sur la copie le numéro de la question et la réponse.\n\nPARTIE A :\nUne urne contient 7 jetons verts, 4 jetons rouges, 3 jetons bleus et 2 jetons jaunes. Les jetons\nsont indiscernables au toucher. On pioche un jeton au hasard dans cette urne.\n\n           Questions                  Réponse A              Réponse B            Réponse C\n\n    1. À quel événement            Obtenir un jeton de\n       correspond une                                    Obtenir un jeton qui   Obtenir un jeton\n                                    couleur rouge ou\n                        7                                  n'est pas vert.           vert.\n       probabilité de        ?           jaune.\n                        16\n\n    2. Quelle est la probabilité\n                                           13                     3                    3\n       de ne pas tirer un jeton\n                                           16                    16                    4\n       bleu ?\n\n21GENMATMEAG1                                                                              Page 4 sur 8\n\nPARTIE B :\nOn considère la figure suivante, composée de vingt motifs numérotés de 1 à 20, dans laquelle :\n      ̂ = 36°\n       𝐴𝑂𝐵\n      le motif 11 est l’image du motif 1 par l’homothétie de centre O et de rapport 2.\n\n                                        A          B\n                                             36°\n\n             Questions                 Réponse A              Réponse B             Réponse C\n\n   3. Quelle est l’image du motif\n       20 par la symétrie d’axe la          Le motif 17.      Le motif 15.          Le motif 12.\n       droite (d) ?\n\n   4. Par quelle rotation le motif   Une rotation de         Une rotation de      Une rotation de\n       3 est-il l’image du motif       centre O, et        centre O, et d’angle centre O, et d’angle\n       1?                              d’angle 36°.               72°.                   90°.\n\n   5. L’aire du motif 11 est-elle      au double de         à 4 fois l’aire du   à la moitié de l’aire\n       égale :                       l’aire du motif 1 ?         motif 1.            du motif 1.\n\n21GENMATMEAG1                                                                               Page 5 sur 8",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 3 (20 points)",
+        "context": "Cet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée.\n\nPour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte.\nRecopier sur la copie le numéro de la question et la réponse.",
+        "parts": [
+          {
+            "label": "Partie A",
+            "context": "Une urne contient 7 jetons verts, 4 jetons rouges, 3 jetons bleus et 2 jetons jaunes. Les jetons\nsont indiscernables au toucher. On pioche un jeton au hasard dans cette urne.\n\n           Questions                  Réponse A              Réponse B            Réponse C",
+            "questions": [
+              {
+                "id": "1",
+                "label": "1.",
+                "text": "À quel événement            Obtenir un jeton de\n       correspond une                                    Obtenir un jeton qui   Obtenir un jeton\n                                    couleur rouge ou\n                        7                                  n'est pas vert.           vert.\n       probabilité de        ?           jaune.\n                        16",
+                "points": 4,
+                "answer_type": "free_text",
+                "expected_answer": null,
+                "student_answer": null,
+                "options": [],
+                "subquestions": []
+              },
+              {
+                "id": "2",
+                "label": "2.",
+                "text": "Quelle est la probabilité\n                                           13                     3                    3\n       de ne pas tirer un jeton\n                                           16                    16                    4\n       bleu ?\n\n21GENMATMEAG1                                                                              Page 4 sur 8",
+                "points": 4,
+                "answer_type": "short_text",
+                "expected_answer": null,
+                "student_answer": null,
+                "options": [],
+                "subquestions": []
+              }
+            ]
+          },
+          {
+            "label": "Partie B",
+            "context": "On considère la figure suivante, composée de vingt motifs numérotés de 1 à 20, dans laquelle :\n      ̂ = 36°\n       𝐴𝑂𝐵\n      le motif 11 est l’image du motif 1 par l’homothétie de centre O et de rapport 2.\n\n                                        A          B\n                                             36°\n\n             Questions                 Réponse A              Réponse B             Réponse C",
+            "questions": [
+              {
+                "id": "3",
+                "label": "3.",
+                "text": "Quelle est l’image du motif\n       20 par la symétrie d’axe la          Le motif 17.      Le motif 15.          Le motif 12.\n       droite (d) ?",
+                "points": 4,
+                "answer_type": "short_text",
+                "expected_answer": null,
+                "student_answer": null,
+                "options": [],
+                "subquestions": []
+              },
+              {
+                "id": "4",
+                "label": "4.",
+                "text": "Par quelle rotation le motif   Une rotation de         Une rotation de      Une rotation de\n       3 est-il l’image du motif       centre O, et        centre O, et d’angle centre O, et d’angle\n       1?                              d’angle 36°.               72°.                   90°.",
+                "points": 4,
+                "answer_type": "free_text",
+                "expected_answer": null,
+                "student_answer": null,
+                "options": [],
+                "subquestions": []
+              },
+              {
+                "id": "5",
+                "label": "5.",
+                "text": "L’aire du motif 11 est-elle      au double de         à 4 fois l’aire du   à la moitié de l’aire\n       égale :                       l’aire du motif 1 ?         motif 1.            du motif 1.",
+                "points": 4,
+                "answer_type": "math",
+                "expected_answer": null,
+                "student_answer": null,
+                "options": [],
+                "subquestions": []
+              }
+            ]
+          }
+        ],
+        "documents": [
+          {
+            "label": "Tableau — QCM",
+            "content": "Cet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée.\n\nPour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte.\nRecopier sur la copie le numéro de la question et la réponse.\n\nPARTIE A :\nUne urne contient 7 jetons verts, 4 jetons rouges, 3 jetons bleus et 2 jetons jaunes. Les jetons\nsont indiscernables au toucher. On pioche un jeton au hasard dans cette urne.\n\n           Questions                  Réponse A              Réponse B            Réponse C\n\n    1. À quel événement            Obtenir un jeton de\n       correspond une                                    Obtenir un jeton qui   Obtenir un jeton\n                                    couleur rouge ou\n                        7                                  n'est pas vert.           vert.\n       probabilité de        ?           jaune.\n                        16\n\n    2. Quelle est la probabilité\n                                           13                     3                    3\n       de ne pas tirer un jeton\n                                           16                    16                    4\n       bleu ?\n\n21GENMATMEAG1                                                                              Page 4 sur 8\n\nPARTIE B :\nOn considère la figure suivante, composée de vingt motifs numérotés de 1 à 20, dans laquelle :\n      ̂ = 36°\n       𝐴𝑂𝐵\n      le motif 11 est l’image du motif 1 par l’homothétie de centre O et de rapport 2.\n\n                                        A          B\n                                             36°\n\n             Questions                 Réponse A              Réponse B             Réponse C\n\n   3. Quelle est l’image du motif\n       20 par la symétrie d’axe la          Le motif 17.      Le motif 15.          Le motif 12.\n       droite (d) ?\n\n   4. Par quelle rotation le motif   Une rotation de         Une rotation de      Une rotation de\n       3 est-il l’image du motif       centre O, et        centre O, et d’angle centre O, et d’angle\n       1?                              d’angle 36°.               72°.                   90°.\n\n   5. L’aire du motif 11 est-elle      au double de         à 4 fois l’aire du   à la moitié de l’aire\n       égale :                       l’aire du motif 1 ?         motif 1.            du motif 1.",
+            "type": "table"
+          },
+          {
+            "type": "image",
+            "label": "Page 4 de l'exercice",
+            "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex03/page-4.png",
+            "alt": "Figure ou schéma associé à Exercice 3 (20 points).",
+            "page_number": 4,
+            "sort_order": 1,
+            "fallback": false
+          },
+          {
+            "type": "image",
+            "label": "Page 5 de l'exercice",
+            "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex03/page-5.png",
+            "alt": "Figure ou schéma associé à Exercice 3 (20 points).",
+            "page_number": 5,
+            "sort_order": 2,
+            "fallback": false
+          }
+        ],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "À quel événement            Obtenir un jeton de\n       correspond une                                    Obtenir un jeton qui   Obtenir un jeton\n                                    couleur rouge ou\n                        7                                  n'est pas vert.           vert.\n       probabilité de        ?           jaune.\n                        16",
+            "points": 4,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Quelle est la probabilité\n                                           13                     3                    3\n       de ne pas tirer un jeton\n                                           16                    16                    4\n       bleu ?\n\n21GENMATMEAG1                                                                              Page 4 sur 8",
+            "points": 4,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "Quelle est l’image du motif\n       20 par la symétrie d’axe la          Le motif 17.      Le motif 15.          Le motif 12.\n       droite (d) ?",
+            "points": 4,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "4",
+            "label": "4.",
+            "text": "Par quelle rotation le motif   Une rotation de         Une rotation de      Une rotation de\n       3 est-il l’image du motif       centre O, et        centre O, et d’angle centre O, et d’angle\n       1?                              d’angle 36°.               72°.                   90°.",
+            "points": 4,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "5",
+            "label": "5.",
+            "text": "L’aire du motif 11 est-elle      au double de         à 4 fois l’aire du   à la moitié de l’aire\n       égale :                       l’aire du motif 1 ?         motif 1.            du motif 1.",
+            "points": 4,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Cet exercice est un questionnaire à choix multiples (QCM). Aucune justification n'est demandée.\n\nPour chaque question, trois réponses (A, B et C) sont proposées. Une seule réponse est exacte.\nRecopier sur la copie le numéro de la question et la réponse.\n\nPARTIE A :\nUne urne contient 7 jetons verts, 4 jetons rouges, 3 jetons bleus et 2 jetons jaunes. Les jetons\nsont indiscernables au toucher. On pioche un jeton au hasard dans cette urne.\n\n           Questions                  Réponse A              Réponse B            Réponse C\n\n    1. À quel événement            Obtenir un jeton de\n       correspond une                                    Obtenir un jeton qui   Obtenir un jeton\n                                    couleur rouge ou\n                        7                                  n…",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    },
+    {
+      "id": "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3:ex04",
+      "paper_id": "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3",
+      "source_name": "ac-amiens-maths",
+      "source_url": "https://maths.ac-amiens.fr/065-annales-de-sujets-dnb.html",
+      "fetched_at": "2026-05-11T00:46:00.831Z",
+      "exam": "dnb",
+      "session_year": 2021,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole",
+      "variant": "standard",
+      "pdf_url": "https://maths.ac-amiens.fr/IMG/pdf/sujet_juin_2021.pdf",
+      "pdf_hash": "19509a91ccd3b8bcfdf64f5fb5b46aab0d194c477f9c84e5808746bda5764168",
+      "exercise_number": 4,
+      "title": "Exercice 4 (20 points)",
+      "raw_text": "Exercice 4 (20 points)\n\nVoici un programme de calcul :      Choisir un nombre.\n\n                                    Prendre le carré du nombre de départ.\n\n                                    Ajouter le triple du nombre de départ.\n\n                                    Soustraire 10 au résultat.\n\n1) Vérifier que si on choisit 4 comme nombre de départ, on obtient 18\n2) Appliquer ce programme de calcul au nombre – 3\n3) Vous trouverez ci-dessous un script, écrit avec scratch.\n\nCompléter sur l'ANNEXE page 8 les lignes 5 et 6 pour que ce script corresponde au\nprogramme de calcul.\n\n4) On veut déterminer le nombre à choisir au départ pour obtenir zéro comme résultat.\n  a) On appelle x le nombre de départ. Exprimer en fonction de x le résultat final.\n\n  b) Vérifier que ce résultat peut aussi s’écrire sous la forme (x + 5)(x – 2).\n  c) Quel(s) nombre(s) doit-on choisir au départ pour obtenir le nombre 0 à l’arrivée ?\n\n21GENMATMEAG1                                                                         Page 6 sur 8",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 4 (20 points)",
+        "context": "Voici un programme de calcul :      Choisir un nombre.\n\n                                    Prendre le carré du nombre de départ.\n\n                                    Ajouter le triple du nombre de départ.\n\n                                    Soustraire 10 au résultat.",
+        "documents": [
+          {
+            "type": "image",
+            "label": "Capture de l'exercice",
+            "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex04/page-6.png",
+            "alt": "Capture PDF complète de Exercice 4 (20 points).",
+            "page_number": 6,
+            "sort_order": 0,
+            "fallback": false
+          }
+        ],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "Vérifier que si on choisit 4 comme nombre de départ, on obtient 18",
+            "points": 5,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Appliquer ce programme de calcul au nombre – 3",
+            "points": 5,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "Vous trouverez ci-dessous un script, écrit avec scratch.\n\nCompléter sur l'ANNEXE page 8 les lignes 5 et 6 pour que ce script corresponde au\nprogramme de calcul.",
+            "points": 5,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "4",
+            "label": "4.",
+            "text": "On veut déterminer le nombre à choisir au départ pour obtenir zéro comme résultat.",
+            "points": 5,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": [
+              {
+                "id": "4a",
+                "label": "a.",
+                "text": "On appelle x le nombre de départ. Exprimer en fonction de x le résultat final."
+              },
+              {
+                "id": "4b",
+                "label": "b.",
+                "text": "Vérifier que ce résultat peut aussi s’écrire sous la forme (x + 5)(x – 2)."
+              },
+              {
+                "id": "4c",
+                "label": "c.",
+                "text": "Quel(s) nombre(s) doit-on choisir au départ pour obtenir le nombre 0 à l’arrivée ?"
+              }
+            ]
+          }
+        ],
+        "raw_excerpt": "Voici un programme de calcul :      Choisir un nombre.\n\n                                    Prendre le carré du nombre de départ.\n\n                                    Ajouter le triple du nombre de départ.\n\n                                    Soustraire 10 au résultat.\n\n1) Vérifier que si on choisit 4 comme nombre de départ, on obtient 18\n2) Appliquer ce programme de calcul au nombre – 3\n3) Vous trouverez ci-dessous un script, écrit avec scratch.\n\nCompléter sur l'ANNEXE page 8 les lignes 5 et 6 pour que ce script corresponde au\nprogramme de calcul.\n\n4) On veut déterminer le nombre à choisir au départ pour obtenir zéro comme résultat.\n  a) On appelle x le nombre de départ. Exprimer en fonction de x le résultat final.\n\n  b) Vérifier que ce résultat peut aussi s’écrire sous la forme (x + 5)(x…",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    },
+    {
+      "id": "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3:ex05",
+      "paper_id": "dnb:ac-amiens-maths:2021:mathematiques:generale:metropole:standard:19509a91ccd3",
+      "source_name": "ac-amiens-maths",
+      "source_url": "https://maths.ac-amiens.fr/065-annales-de-sujets-dnb.html",
+      "fetched_at": "2026-05-11T00:46:00.831Z",
+      "exam": "dnb",
+      "session_year": 2021,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole",
+      "variant": "standard",
+      "pdf_url": "https://maths.ac-amiens.fr/IMG/pdf/sujet_juin_2021.pdf",
+      "pdf_hash": "19509a91ccd3b8bcfdf64f5fb5b46aab0d194c477f9c84e5808746bda5764168",
+      "exercise_number": 5,
+      "title": "Exercice 5 (20 points)",
+      "raw_text": "Exercice 5 (20 points)\n\nLa production annuelle de déchets par Français était de 5,2 tonnes par habitant en 2007.\nEntre 2007 et 2017, elle a diminué de 6,5 %.\n\n1) De combien de tonnes la production annuelle de déchets par Français en 2017 a-t-elle diminué\npar rapport à l’année 2007 ?\n\n2) Pour continuer à diminuer leur production de déchets, de nombreuses familles utilisent\ndésormais un composteur.\n\nUne de ces familles a choisi le modèle ci-dessous, composé d’un pavé droit et d’un prisme droit\n(la figure du composteur n’est pas à l’échelle). Le descriptif indique qu'il a une contenance\nd’environ 0,5 m3. On souhaite vérifier cette information.\n\n    39 cm\n                                                                              Trapèze ABCD\n                                                                              Petit côté : 39 cm\n\n                                        1,1 m             53 cm\n                                        cm\n                                                                                                      Hauteur\n\n                                67 cm\n\n            70 cm                                                   Grand côté : 67 cm\n\n  a) Dans le trapèze ABCD, calculer la longueur CH.\n\n  b) Montrer que la longueur DH est égale à 45 cm.\n\n  c) Vérifier que l'aire du trapèze ABCD est de 2 385 cm².\n\n  d) Calculer le volume du composteur.\n\n     L'affirmation « il a une contenance d’environ 0,5 m3 » est-elle vraie ? Justifier.\n\n                                                (𝑃𝑒𝑡𝑖𝑡 𝑐ô𝑡é + 𝐺𝑟𝑎𝑛𝑑 𝑐ô𝑡é) × 𝐻𝑎𝑢𝑡𝑒𝑢𝑟\n                       𝐴𝑖𝑟𝑒 𝑑𝑢 𝑡𝑟𝑎𝑝è𝑧𝑒 =\nRappels :                                                        2\n                        𝑉𝑜𝑙𝑢𝑚𝑒 𝑑𝑢 𝑝𝑟𝑖𝑠𝑚𝑒 𝑑𝑟𝑜𝑖𝑡 = 𝐴𝑖𝑟𝑒 𝑑𝑒 𝑙𝑎 𝑏𝑎𝑠𝑒 × ℎ𝑎𝑢𝑡𝑒𝑢𝑟\n                                         ANNEXE 1\n                       𝑉𝑜𝑙𝑢𝑚𝑒 𝑑𝑢 𝑝𝑎𝑣é 𝑑𝑟𝑜𝑖𝑡 = 𝐿𝑜𝑛𝑔𝑢𝑒𝑢𝑟 × 𝑙𝑎𝑟𝑔𝑒𝑢𝑟 × ℎ𝑎𝑢𝑡𝑒𝑢𝑟\n\n21GENMATMEAG1                                                                                 Page 7 sur 8\n\n                ANNEXE à rendre avec la copie\n\n21GENMATMEAG1                                   Page 8 sur 8",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 5 (20 points)",
+        "context": "La production annuelle de déchets par Français était de 5,2 tonnes par habitant en 2007.\nEntre 2007 et 2017, elle a diminué de 6,5 %.",
+        "documents": [
+          {
+            "type": "image",
+            "label": "Page 7 de l'exercice",
+            "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex05/page-7.png",
+            "alt": "Figure ou schéma associé à Exercice 5 (20 points).",
+            "page_number": 7,
+            "sort_order": 0,
+            "fallback": false
+          },
+          {
+            "type": "image",
+            "label": "Page 8 de l'exercice",
+            "local_path": "exam-import/assets/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3/dnb-ac-amiens-maths-2021-mathematiques-generale-metropole-standard-19509a91ccd3-ex05/page-8.png",
+            "alt": "Figure ou schéma associé à Exercice 5 (20 points).",
+            "page_number": 8,
+            "sort_order": 1,
+            "fallback": false
+          }
+        ],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "De combien de tonnes la production annuelle de déchets par Français en 2017 a-t-elle diminué\npar rapport à l’année 2007 ?",
+            "points": 10,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Pour continuer à diminuer leur production de déchets, de nombreuses familles utilisent\ndésormais un composteur.\n\nUne de ces familles a choisi le modèle ci-dessous, composé d’un pavé droit et d’un prisme droit\n(la figure du composteur n’est pas à l’échelle). Le descriptif indique qu'il a une contenance\nd’environ 0,5 m3. On souhaite vérifier cette information.\n\n    39 cm\n                                                                              Trapèze ABCD\n                                                                              Petit côté : 39 cm\n\n                                        1,1 m             53 cm\n                                        cm\n                                                                                                      Hauteur\n\n                                67 cm\n\n            70 cm                                                   Grand côté : 67 cm",
+            "points": 10,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": [
+              {
+                "id": "2a",
+                "label": "a.",
+                "text": "Dans le trapèze ABCD, calculer la longueur CH."
+              },
+              {
+                "id": "2b",
+                "label": "b.",
+                "text": "Montrer que la longueur DH est égale à 45 cm."
+              },
+              {
+                "id": "2c",
+                "label": "c.",
+                "text": "Vérifier que l'aire du trapèze ABCD est de 2 385 cm²."
+              },
+              {
+                "id": "2d",
+                "label": "d.",
+                "text": "Calculer le volume du composteur.\n\n     L'affirmation « il a une contenance d’environ 0,5 m3 » est-elle vraie ? Justifier.\n\n                                                (𝑃𝑒𝑡𝑖𝑡 𝑐ô𝑡é + 𝐺𝑟𝑎𝑛𝑑 𝑐ô𝑡é) × 𝐻𝑎𝑢𝑡𝑒𝑢𝑟\n                       𝐴𝑖𝑟𝑒 𝑑𝑢 𝑡𝑟𝑎𝑝è𝑧𝑒 =\nRappels :                                                        2\n                        𝑉𝑜𝑙𝑢𝑚𝑒 𝑑𝑢 𝑝𝑟𝑖𝑠𝑚𝑒 𝑑𝑟𝑜𝑖𝑡 = 𝐴𝑖𝑟𝑒 𝑑𝑒 𝑙𝑎 𝑏𝑎𝑠𝑒 × ℎ𝑎𝑢𝑡𝑒𝑢𝑟\n                                         ANNEXE 1\n                       𝑉𝑜𝑙𝑢𝑚𝑒 𝑑𝑢 𝑝𝑎𝑣é 𝑑𝑟𝑜𝑖𝑡 = 𝐿𝑜𝑛𝑔𝑢𝑒𝑢𝑟 × 𝑙𝑎𝑟𝑔𝑒𝑢𝑟 × ℎ𝑎𝑢𝑡𝑒𝑢𝑟\n\n21GENMATMEAG1                                                                                 Page 7 sur 8\n\n                ANNEXE à rendre avec la copie"
+              }
+            ]
+          }
+        ],
+        "raw_excerpt": "La production annuelle de déchets par Français était de 5,2 tonnes par habitant en 2007.\nEntre 2007 et 2017, elle a diminué de 6,5 %.\n\n1) De combien de tonnes la production annuelle de déchets par Français en 2017 a-t-elle diminué\npar rapport à l’année 2007 ?\n\n2) Pour continuer à diminuer leur production de déchets, de nombreuses familles utilisent\ndésormais un composteur.\n\nUne de ces familles a choisi le modèle ci-dessous, composé d’un pavé droit et d’un prisme droit\n(la figure du composteur n’est pas à l’échelle). Le descriptif indique qu'il a une contenance\nd’environ 0,5 m3. On souhaite vérifier cette information.\n\n    39 cm\n                                                                              Trapèze ABCD…",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    }
+  ],
+  "exercise_program_links": []
+}

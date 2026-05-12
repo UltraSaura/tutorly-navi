@@ -3,9 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Video, Quiz } from '@/types/learning';
 import { toast } from 'sonner';
+import { useActiveSchoolLevel } from './useActiveSchoolLevel';
 
 export function useVideoPlayer(videoId: string) {
   const queryClient = useQueryClient();
+  const activeSchoolLevel = useActiveSchoolLevel();
   const currentTimeRef = useRef(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const lastSavedPercentageRef = useRef(0);
@@ -62,6 +64,8 @@ export function useVideoPlayer(videoId: string) {
   // Update progress mutation
   const updateProgressMutation = useMutation({
     mutationFn: async ({ progressPercentage, progressType }: { progressPercentage: number; progressType: string }) => {
+      if (activeSchoolLevel.isPreviewing) return { progressType, preview: true };
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -114,6 +118,10 @@ export function useVideoPlayer(videoId: string) {
       if (!quiz) throw new Error('Quiz not found');
 
       const isCorrect = answerIndex === quiz.correct_answer_index;
+
+      if (activeSchoolLevel.isPreviewing) {
+        return { isCorrect, explanation: quiz.explanation, xpReward: 0, preview: true };
+      }
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user && isCorrect) {

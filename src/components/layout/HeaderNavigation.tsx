@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare, GraduationCap, HeadphonesIcon, History, User, Globe, LogOut, ChevronDown, Settings, BookOpen, Trophy } from "lucide-react";
+import { MessageSquare, GraduationCap, HeadphonesIcon, History, User, Globe, LogOut, ChevronDown, Settings, BookOpen, Trophy, Target } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AdminPreviewSelector } from "@/components/admin/AdminPreviewControls";
 
 import {
   DropdownMenu,
@@ -30,6 +31,11 @@ const desktopNavigation = [
     title: "nav.learning", 
     url: "/learning", 
     icon: GraduationCap 
+  },
+  {
+    title: "nav.practice",
+    url: "/practice",
+    icon: Target
   },
   { 
     title: "nav.history", 
@@ -154,6 +160,8 @@ export function HeaderNavigation() {
 
       {/* User Account Dropdown - Desktop Only */}
       {!isMobile && (
+        <div className="flex items-center gap-3">
+        <AdminPreviewSelector />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -223,6 +231,7 @@ export function HeaderNavigation() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       )}
     </div>
   );
