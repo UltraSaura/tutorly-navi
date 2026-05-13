@@ -177,6 +177,33 @@ export type Database = {
           },
         ]
       }
+      app_feature_flags: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          key: string
+          metadata: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          key: string
+          metadata?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          key?: string
+          metadata?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       children: {
         Row: {
           contact_email: string | null
@@ -469,6 +496,339 @@ export type Database = {
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_exercise_program_links: {
+        Row: {
+          confidence: number
+          created_at: string
+          exercise_id: string
+          exercise_import_id: string
+          id: string
+          program_entry_id: string
+          program_entry_type: string
+          rationale: string
+          updated_at: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          exercise_id: string
+          exercise_import_id: string
+          id: string
+          program_entry_id: string
+          program_entry_type: string
+          rationale?: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          exercise_id?: string
+          exercise_import_id?: string
+          id?: string
+          program_entry_id?: string
+          program_entry_type?: string
+          rationale?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_exercise_program_links_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exam_exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_exercises: {
+        Row: {
+          created_at: string
+          discipline: string
+          exam: string
+          exercise_number: number | null
+          fetched_at: string
+          id: string
+          import_id: string
+          location: string
+          paper_id: string
+          parsed_content: Json | null
+          parsing_confidence: string | null
+          parsing_status: string
+          pdf_hash: string
+          pdf_url: string
+          raw_text: string
+          series: string | null
+          session_year: number
+          source_name: string
+          source_url: string
+          title: string | null
+          updated_at: string
+          variant: string
+        }
+        Insert: {
+          created_at?: string
+          discipline: string
+          exam: string
+          exercise_number?: number | null
+          fetched_at: string
+          id: string
+          import_id: string
+          location: string
+          paper_id: string
+          parsed_content?: Json | null
+          parsing_confidence?: string | null
+          parsing_status: string
+          pdf_hash: string
+          pdf_url: string
+          raw_text?: string
+          series?: string | null
+          session_year: number
+          source_name: string
+          source_url: string
+          title?: string | null
+          updated_at?: string
+          variant: string
+        }
+        Update: {
+          created_at?: string
+          discipline?: string
+          exam?: string
+          exercise_number?: number | null
+          fetched_at?: string
+          id?: string
+          import_id?: string
+          location?: string
+          paper_id?: string
+          parsed_content?: Json | null
+          parsing_confidence?: string | null
+          parsing_status?: string
+          pdf_hash?: string
+          pdf_url?: string
+          raw_text?: string
+          series?: string | null
+          session_year?: number
+          source_name?: string
+          source_url?: string
+          title?: string | null
+          updated_at?: string
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_exercises_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "exam_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_papers: {
+        Row: {
+          created_at: string
+          discipline: string
+          exam: string
+          exercise_ids: Json
+          fetched_at: string
+          id: string
+          import_id: string
+          level: string | null
+          location: string
+          parsing_status: string
+          pdf_hash: string
+          pdf_url: string
+          raw_text: string
+          series: string | null
+          session_year: number
+          source_id: string | null
+          source_name: string
+          source_url: string
+          title: string | null
+          updated_at: string
+          variant: string
+        }
+        Insert: {
+          created_at?: string
+          discipline: string
+          exam: string
+          exercise_ids?: Json
+          fetched_at: string
+          id: string
+          import_id: string
+          level?: string | null
+          location: string
+          parsing_status: string
+          pdf_hash: string
+          pdf_url: string
+          raw_text?: string
+          series?: string | null
+          session_year: number
+          source_id?: string | null
+          source_name: string
+          source_url: string
+          title?: string | null
+          updated_at?: string
+          variant: string
+        }
+        Update: {
+          created_at?: string
+          discipline?: string
+          exam?: string
+          exercise_ids?: Json
+          fetched_at?: string
+          id?: string
+          import_id?: string
+          level?: string | null
+          location?: string
+          parsing_status?: string
+          pdf_hash?: string
+          pdf_url?: string
+          raw_text?: string
+          series?: string | null
+          session_year?: number
+          source_id?: string | null
+          source_name?: string
+          source_url?: string
+          title?: string | null
+          updated_at?: string
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_papers_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_sources: {
+        Row: {
+          created_at: string
+          fetched_at: string
+          id: string
+          source_name: string
+          source_url: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fetched_at: string
+          id: string
+          source_name: string
+          source_url: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          source_name?: string
+          source_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      exam_training_items: {
+        Row: {
+          choices: Json | null
+          context: string | null
+          created_at: string
+          curriculum_objective_ids: string[] | null
+          difficulty: string
+          documents: Json
+          exam: string
+          exam_style: string | null
+          expected_answer: Json | null
+          hints: Json | null
+          id: string
+          item_type: string
+          level: string
+          metadata: Json
+          paper_id: string | null
+          prompt: string
+          questions: Json
+          skill_tags: string[]
+          solution: string | null
+          source_exercise_id: string | null
+          source_label: string | null
+          source_year: number | null
+          status: string
+          subject_slug: string
+          updated_at: string
+        }
+        Insert: {
+          choices?: Json | null
+          context?: string | null
+          created_at?: string
+          curriculum_objective_ids?: string[] | null
+          difficulty?: string
+          documents?: Json
+          exam: string
+          exam_style?: string | null
+          expected_answer?: Json | null
+          hints?: Json | null
+          id: string
+          item_type: string
+          level: string
+          metadata?: Json
+          paper_id?: string | null
+          prompt: string
+          questions?: Json
+          skill_tags?: string[]
+          solution?: string | null
+          source_exercise_id?: string | null
+          source_label?: string | null
+          source_year?: number | null
+          status?: string
+          subject_slug: string
+          updated_at?: string
+        }
+        Update: {
+          choices?: Json | null
+          context?: string | null
+          created_at?: string
+          curriculum_objective_ids?: string[] | null
+          difficulty?: string
+          documents?: Json
+          exam?: string
+          exam_style?: string | null
+          expected_answer?: Json | null
+          hints?: Json | null
+          id?: string
+          item_type?: string
+          level?: string
+          metadata?: Json
+          paper_id?: string | null
+          prompt?: string
+          questions?: Json
+          skill_tags?: string[]
+          solution?: string | null
+          source_exercise_id?: string | null
+          source_label?: string | null
+          source_year?: number | null
+          status?: string
+          subject_slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_training_items_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "exam_papers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_training_items_source_exercise_id_fkey"
+            columns: ["source_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exam_exercises"
             referencedColumns: ["id"]
           },
         ]
@@ -777,38 +1137,6 @@ export type Database = {
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      learning_interaction_events: {
-        Row: {
-          created_at: string
-          event_name: string
-          id: string
-          metadata: Json
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          event_name: string
-          id?: string
-          metadata?: Json
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          event_name?: string
-          id?: string
-          metadata?: Json
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "learning_interaction_events_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1563,8 +1891,8 @@ export type Database = {
           color_scheme: string
           country_code: string | null
           created_at: string
-          icon_name: string
           icon_image_url: string | null
+          icon_name: string
           id: string
           is_active: boolean
           language: string | null
@@ -1577,8 +1905,8 @@ export type Database = {
           color_scheme: string
           country_code?: string | null
           created_at?: string
-          icon_name: string
           icon_image_url?: string | null
+          icon_name: string
           id?: string
           is_active?: boolean
           language?: string | null
@@ -1591,8 +1919,8 @@ export type Database = {
           color_scheme?: string
           country_code?: string | null
           created_at?: string
-          icon_name?: string
           icon_image_url?: string | null
+          icon_name?: string
           id?: string
           is_active?: boolean
           language?: string | null
@@ -1962,6 +2290,50 @@ export type Database = {
             columns: ["curriculum_subject_id_uuid"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_item_answers: {
+        Row: {
+          answer_text: string
+          guidance_feedback: string | null
+          hint_level: number
+          id: string
+          is_correct: boolean | null
+          item_id: string
+          question_id: string
+          submitted_at: string
+          user_id: string
+        }
+        Insert: {
+          answer_text?: string
+          guidance_feedback?: string | null
+          hint_level?: number
+          id?: string
+          is_correct?: boolean | null
+          item_id: string
+          question_id: string
+          submitted_at?: string
+          user_id?: string
+        }
+        Update: {
+          answer_text?: string
+          guidance_feedback?: string | null
+          hint_level?: number
+          id?: string
+          is_correct?: boolean | null
+          item_id?: string
+          question_id?: string
+          submitted_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_item_answers_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "exam_training_items"
             referencedColumns: ["id"]
           },
         ]

@@ -320,6 +320,7 @@ export async function validateTrainingAnswer(input: {
   return (data ?? {}) as { is_correct: boolean | null; feedback: string | null };
 }
 
+
 export function trainingAnswerTypeFromItemType(itemType: TrainingItemType): TrainingAnswerType {
   if (itemType === 'numeric' || itemType === 'calculation') return 'numeric';
   if (itemType === 'multiple_choice') return 'multiple_choice';

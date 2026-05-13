@@ -119,6 +119,7 @@ function TrainingDocuments({ documents }: { documents: TrainingDocument[] }) {
   // Current UI keeps the legacy rendering (fallback vs visible docs).
   void useMemo(() => normalizeTrainingDocuments(documents), [documents]);
 
+
   const visibleDocuments = documents.filter((document) => !document.fallback);
   const fallbackDocuments = documents.filter((document) => document.fallback);
   if (visibleDocuments.length === 0 && fallbackDocuments.length === 0) return null;
