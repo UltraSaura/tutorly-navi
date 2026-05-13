@@ -113,6 +113,7 @@ export interface ExamTrainingItem {
   subject_slug: string;
   level: string;
   skill_tags: string[];
+  skill?: string | null;
   curriculum_objective_ids: string[] | null;
   item_type: TrainingItemType;
   prompt: string;
@@ -139,6 +140,7 @@ export interface TrainingItemAnswerInput {
   answer_text: string;
   hint_level: number;
   guidance_feedback: string | null;
+  feedback?: string | null;
   is_correct: boolean | null;
 }
 
@@ -218,7 +220,36 @@ export async function fetchExamExercises(paperId: string): Promise<ExamExercise[
 export async function fetchTrainingItems(filters: TrainingItemFilters = {}): Promise<ExamTrainingItem[]> {
   let query = examSupabase
     .from('exam_training_items')
-    .select('*')
+    .select(
+      [
+        'id',
+        'source_exercise_id',
+        'paper_id',
+        'exam',
+        'subject_slug',
+        'level',
+        'skill_tags',
+        'skill',
+        'curriculum_objective_ids',
+        'item_type',
+        'prompt',
+        'context',
+        'documents',
+        'choices',
+        // Never expose `expected_answer` to the frontend.
+        'solution',
+        'hints',
+        'questions',
+        'difficulty',
+        'exam_style',
+        'source_year',
+        'source_label',
+        'metadata',
+        'status',
+        'created_at',
+        'updated_at',
+      ].join(', ')
+    )
     .order('source_year', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
@@ -269,11 +300,24 @@ export async function saveTrainingItemAnswer(input: TrainingItemAnswerInput): Pr
     answer_text: input.answer_text,
     hint_level: input.hint_level,
     guidance_feedback: input.guidance_feedback,
+    feedback: input.feedback ?? input.guidance_feedback,
     is_correct: input.is_correct,
     submitted_at: new Date().toISOString(),
   });
 
   if (error) throw error;
+}
+
+export async function validateTrainingAnswer(input: {
+  item_id: string;
+  question_id: string;
+  user_answer: string;
+}): Promise<{ is_correct: boolean | null; feedback: string | null }> {
+  const { data, error } = await (examSupabase as any).functions.invoke('validate-training-answer', {
+    body: input,
+  });
+  if (error) throw error;
+  return (data ?? {}) as { is_correct: boolean | null; feedback: string | null };
 }
 
 export function trainingAnswerTypeFromItemType(itemType: TrainingItemType): TrainingAnswerType {

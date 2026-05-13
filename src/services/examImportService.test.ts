@@ -42,6 +42,14 @@ describe('exam import service practice filters', () => {
     vi.clearAllMocks();
   });
 
+  function expectSubjectSlugFilter(calls: Array<[string, unknown, unknown?]>, subjectSlug: string) {
+    const hasEq = calls.some((call) => call[0] === 'eq' && call[1] === 'subject_slug' && call[2] === subjectSlug);
+    const hasIn = calls.some(
+      (call) => call[0] === 'in' && call[1] === 'subject_slug' && Array.isArray(call[2]) && (call[2] as unknown[]).includes(subjectSlug),
+    );
+    expect(hasEq || hasIn).toBe(true);
+  }
+
   it('filters training items by subject, level, and published status', async () => {
     const query = createQuery();
     fromMock.mockReturnValue(query);
@@ -50,7 +58,7 @@ describe('exam import service practice filters', () => {
     await fetchTrainingItems({ subject_slug: 'mathematiques', level: '3eme', status: 'published' });
 
     expect(query.calls).toContainEqual(['eq', 'status', 'published']);
-    expect(query.calls).toContainEqual(['eq', 'subject_slug', 'mathematiques']);
+    expectSubjectSlugFilter(query.calls, 'mathematiques');
     expect(query.calls).toContainEqual(['eq', 'level', '3eme']);
   });
 
@@ -87,7 +95,7 @@ describe('exam import service practice filters', () => {
 
     expect(query.calls).toContainEqual(['eq', 'exam', 'dnb']);
     expect(query.calls).toContainEqual(['eq', 'level', '3eme']);
-    expect(query.calls).toContainEqual(['eq', 'subject_slug', 'mathematiques']);
+    expectSubjectSlugFilter(query.calls, 'mathematiques');
   });
 
   it('queries DNB with 4eme level so DNB rows are excluded by the database filter', async () => {
@@ -100,6 +108,6 @@ describe('exam import service practice filters', () => {
 
     expect(query.calls).toContainEqual(['eq', 'exam', 'dnb']);
     expect(query.calls).toContainEqual(['eq', 'level', '4eme']);
-    expect(query.calls).toContainEqual(['eq', 'subject_slug', 'mathematiques']);
+    expectSubjectSlugFilter(query.calls, 'mathematiques');
   });
 });

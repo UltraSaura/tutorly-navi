@@ -16,6 +16,7 @@ import { useTrainingItems } from '@/hooks/useExamImport';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import {
   saveTrainingItemAnswer,
+  validateTrainingAnswer,
   trainingAnswerTypeFromItemType,
   type ExamTrainingItem,
   type TrainingDocument,
@@ -31,6 +32,7 @@ import {
   type GuidanceStateMap,
   type TrainingQuestion,
 } from '@/lib/trainingGuidance';
+import { normalizeTrainingDocuments } from '@/lib/normalizeTrainingDocuments';
 
 function normalizeChoices(value: unknown[] | null): string[] {
   if (!Array.isArray(value)) return [];
@@ -113,6 +115,10 @@ function DocumentImage({ document }: { document: TrainingDocument }) {
 }
 
 function TrainingDocuments({ documents }: { documents: TrainingDocument[] }) {
+  // Normalized shape is forward-compatible with a future DB standardization.
+  // Current UI keeps the legacy rendering (fallback vs visible docs).
+  void useMemo(() => normalizeTrainingDocuments(documents), [documents]);
+
   const visibleDocuments = documents.filter((document) => !document.fallback);
   const fallbackDocuments = documents.filter((document) => document.fallback);
   if (visibleDocuments.length === 0 && fallbackDocuments.length === 0) return null;
@@ -364,18 +370,44 @@ export default function TrainingSessionPage() {
   async function handleCheck(item: ExamTrainingItem, question: TrainingQuestion) {
     const key = questionStateKey(item.id, question.id);
     const state = questionStates[key] ?? initialQuestionState();
-    const result = evaluateTrainingAnswer({
-      answer: state.answer,
-      expectedAnswer: question.expected_answer,
-      guidance: question.guidance,
-      fallbackCorrect: t('practice.guidance.correct'),
-      fallbackAlmost: t('practice.guidance.almost'),
-      fallbackIncorrect: t('practice.guidance.tryFirst'),
-    });
+    const shouldPersist = shouldPersistTrainingAnswer(activeSchoolLevel.isPreviewing);
+    let result: { isCorrect: boolean | null; feedback: string };
+
+    if (shouldPersist) {
+      try {
+        const server = await validateTrainingAnswer({
+          item_id: item.id,
+          question_id: question.id,
+          user_answer: state.answer,
+        });
+        result = {
+          isCorrect: server.is_correct ?? null,
+          feedback: server.feedback ?? t('practice.guidance.almost'),
+        };
+      } catch {
+        result = evaluateTrainingAnswer({
+          answer: state.answer,
+          expectedAnswer: null,
+          guidance: question.guidance,
+          fallbackCorrect: t('practice.guidance.correct'),
+          fallbackAlmost: t('practice.guidance.almost'),
+          fallbackIncorrect: t('practice.guidance.tryFirst'),
+        });
+      }
+    } else {
+      result = evaluateTrainingAnswer({
+        answer: state.answer,
+        expectedAnswer: null,
+        guidance: question.guidance,
+        fallbackCorrect: t('practice.guidance.correct'),
+        fallbackAlmost: t('practice.guidance.almost'),
+        fallbackIncorrect: t('practice.guidance.tryFirst'),
+      });
+    }
 
     setQuestionStates((current) => applyCheckFeedback(current, key, result));
 
-    if (!shouldPersistTrainingAnswer(activeSchoolLevel.isPreviewing)) return;
+    if (!shouldPersist) return;
 
     try {
       await saveTrainingItemAnswer({
@@ -384,6 +416,7 @@ export default function TrainingSessionPage() {
         answer_text: state.answer,
         hint_level: state.hint_level,
         guidance_feedback: result.feedback,
+        feedback: result.feedback,
         is_correct: result.isCorrect,
       });
     } catch {
