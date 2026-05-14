@@ -189,7 +189,7 @@ const App = () => {
                         <Route path="/practice" element={<MainLayout />}>
                           <Route index element={<PracticePage />} />
                           <Route path="session" element={<TrainingSessionPage />} />
-                          <Route path="session/:paperId" element={<ExamSessionPage />} />
+                          <Route path="exam/:paperId" element={<ExamSessionPage />} />
                           <Route path=":subject/annales" element={<PracticeAnnalsPage />} />
                           <Route path=":subject" element={<PracticeSubjectPage />} />
                         </Route>

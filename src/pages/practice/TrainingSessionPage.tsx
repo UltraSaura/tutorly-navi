@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2, Lightbulb, RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -32,7 +32,7 @@ import {
   type GuidanceStateMap,
   type TrainingQuestion,
 } from '@/lib/trainingGuidance';
-import { normalizeTrainingDocuments } from '@/lib/normalizeTrainingDocuments';
+import { cn } from '@/lib/utils';
 
 function normalizeChoices(value: unknown[] | null): string[] {
   if (!Array.isArray(value)) return [];
@@ -115,11 +115,6 @@ function DocumentImage({ document }: { document: TrainingDocument }) {
 }
 
 function TrainingDocuments({ documents }: { documents: TrainingDocument[] }) {
-  // Normalized shape is forward-compatible with a future DB standardization.
-  // Current UI keeps the legacy rendering (fallback vs visible docs).
-  void useMemo(() => normalizeTrainingDocuments(documents), [documents]);
-
-
   const visibleDocuments = documents.filter((document) => !document.fallback);
   const fallbackDocuments = documents.filter((document) => document.fallback);
   if (visibleDocuments.length === 0 && fallbackDocuments.length === 0) return null;
@@ -299,7 +294,17 @@ export function TrainingQuestionBlock({
       ) : null}
 
       {state.feedback ? (
-        <div className="rounded-md border border-border/60 bg-background p-3 text-sm leading-6" role="status">
+        <div
+          className={cn(
+            "rounded-md border p-3 text-sm leading-6",
+            state.is_correct === true
+              ? "border-green-200 bg-green-50 text-green-900 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-100"
+              : state.is_correct === false
+              ? "border-red-200 bg-red-50 text-red-900 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-100"
+              : "border-border/60 bg-background",
+          )}
+          role="status"
+        >
           {state.feedback}
         </div>
       ) : null}
@@ -327,12 +332,17 @@ export default function TrainingSessionPage() {
   });
   const [index, setIndex] = useState(0);
   const [questionStates, setQuestionStates] = useState<GuidanceStateMap>({});
+  const autoAdvanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const items = itemsQuery.data ?? [];
   const item = items[index] ?? null;
   const questions = useMemo(() => (item ? questionsForItem(item) : []), [item]);
 
   function goTo(nextIndex: number) {
+    if (autoAdvanceRef.current) {
+      clearTimeout(autoAdvanceRef.current);
+      autoAdvanceRef.current = null;
+    }
     setIndex(Math.max(0, Math.min(nextIndex, Math.max(items.length - 1, 0))));
   }
 
@@ -408,6 +418,10 @@ export default function TrainingSessionPage() {
 
     setQuestionStates((current) => applyCheckFeedback(current, key, result));
 
+    if (result.isCorrect === true && index < items.length - 1) {
+      autoAdvanceRef.current = setTimeout(() => goTo(index + 1), 1500);
+    }
+
     if (!shouldPersist) return;
 
     try {
@@ -434,7 +448,11 @@ export default function TrainingSessionPage() {
             <ArrowLeft className="mr-1 h-4 w-4" />
             Retour
           </Button>
-          {item ? <Badge variant="secondary">{item.source_label ?? item.exam_style ?? 'Entraînement'}</Badge> : null}
+          {item ? (
+            <Badge variant="secondary">
+              {[item.exam?.toUpperCase(), item.source_year].filter(Boolean).join(' · ') || 'Entraînement'}
+            </Badge>
+          ) : null}
         </div>
 
         {itemsQuery.isLoading ? (
@@ -469,13 +487,12 @@ export default function TrainingSessionPage() {
           <>
             <SessionProgress current={index + 1} total={items.length} />
             <Card className="border-border/80">
-              <CardHeader className="space-y-3">
+              <CardHeader className="pb-2">
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">{item.item_type.replaceAll('_', ' ')}</Badge>
+                  <Badge variant="outline">{item.item_type.replace(/_/g, ' ')}</Badge>
                   <Badge variant="outline">{item.difficulty}</Badge>
                   {item.source_year ? <Badge variant="outline">{item.source_year}</Badge> : null}
                 </div>
-                <CardTitle className="text-lg leading-7">{item.prompt}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
                 {activeSchoolLevel.isPreviewing ? (
@@ -484,7 +501,18 @@ export default function TrainingSessionPage() {
                   </div>
                 ) : null}
                 {item.context ? <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{item.context}</p> : null}
-                <TrainingDocuments documents={item.documents ?? []} />
+                {(item.documents ?? []).length > 0 ? (
+                  <details className="group rounded-md border border-border/60">
+                    <summary className="flex cursor-pointer select-none items-center justify-between px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+                      Voir le document d'appui
+                      <span className="ml-2 text-xs opacity-60 group-open:hidden">▼</span>
+                      <span className="ml-2 text-xs opacity-60 hidden group-open:inline">▲</span>
+                    </summary>
+                    <div className="border-t border-border/60 p-3">
+                      <TrainingDocuments documents={item.documents ?? []} />
+                    </div>
+                  </details>
+                ) : null}
 
                 <div className="space-y-3">
                   {questions.map((question) => (

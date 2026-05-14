@@ -10,7 +10,7 @@ import { detectStructuredTables } from "./table-detector.ts";
 
 const execFileAsync = promisify(execFile);
 
-export type SourceName = "eduscol" | "ac-amiens-maths";
+export type SourceName = "eduscol" | "ac-amiens-maths" | "apmep";
 export type ExamName = "dnb";
 export type ExamSeries = "generale" | "professionnelle" | null;
 export type ExamVariant =
@@ -97,6 +97,7 @@ export interface CollectedPaper {
   location: string;
   variant: ExamVariant;
   pdf_url: string;
+  latex_zip_url?: string;
   title: string;
 }
 

@@ -110,9 +110,9 @@ export default function PracticeAnnalsPage() {
                 onStart={() =>
                   (trainingItemsByPaper.get(paper.id) ?? 0) > 0
                     ? navigate(`/practice/session?subject=${encodeURIComponent(examDisciplines[0] ?? subjectSlug)}&level=${encodeURIComponent(activeLevel)}&mode=mixed&sourcePaperId=${encodeURIComponent(paper.id)}`)
-                    : navigate(`/practice/session/${paper.id}?subject=${encodeURIComponent(subjectSlug)}`)
+                    : navigate(`/practice/exam/${paper.id}?subject=${encodeURIComponent(subjectSlug)}`)
                 }
-                onConsult={() => navigate(`/practice/session/${paper.id}?subject=${encodeURIComponent(subjectSlug)}`)}
+                onConsult={() => navigate(`/practice/exam/${paper.id}?subject=${encodeURIComponent(subjectSlug)}`)}
               />
             ))}
           </div>

@@ -56,7 +56,11 @@ async function importViaFunction(supabaseUrl: string, serviceKey: string, body: 
 
 async function importDirect(supabaseUrl: string, serviceKey: string, body: Record<string, unknown>): Promise<unknown> {
   const supabaseAdmin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
-  const items = Array.isArray(body.training_items) ? body.training_items : [];
+  const rawItems = Array.isArray(body.training_items) ? body.training_items : [];
+  const items = deduplicateById(rawItems);
+  if (items.length < rawItems.length) {
+    console.warn(`Deduplicated ${rawItems.length - items.length} training items with colliding IDs.`);
+  }
   const mode = body.mode === "replace" ? "replace" : "upsert";
 
   if (mode === "replace" && items.length > 0) {
@@ -113,6 +117,16 @@ function parseArgs(args: string[]): CliOptions {
   }
 
   return options;
+}
+
+function deduplicateById(items: unknown[]): unknown[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (!isRecord(item) || typeof item.id !== "string") return true;
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
 }
 
 function chunk<T>(array: T[], size: number): T[][] {
