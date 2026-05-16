@@ -131,11 +131,11 @@ function generateItemsForExercise(exercise: BundleExercise, paper: BundlePaper |
   const sourceExerciseUuid = deterministicUuid(`exam_exercise:${exercise.id}`);
   const paperUuid = paper ? deterministicUuid(`exam_paper:${paper.pdf_hash || paper.id}`) : null;
   const level = resolveTrainingItemLevel(exercise, paper);
-  return questions.map((question) => {
+  return questions.map((question, qIndex) => {
     const qcmChoices = question.choices ?? detectQcmChoices(question.text);
     const itemType = qcmChoices ? "multiple_choice" : inferItemType(question.text, question.answer_type);
     return {
-      id: deterministicUuid(`training_item:${exercise.id}:${question.id}`),
+      id: deterministicUuid(`training_item:${exercise.id}:${qIndex}:${question.id}`),
       source_exercise_id: sourceExerciseUuid,
       paper_id: paperUuid,
       exam: exercise.exam,
