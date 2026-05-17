@@ -85,25 +85,34 @@ export const useAiModelManagementSecure = () => {
     }
   };
 
-  // Add new API key (admin only) - Now uses encrypted Vault storage
+  // Add new API key (admin only)
   const addApiKey = async (providerId: string, name: string, keyValue: string) => {
     try {
-      const { error } = await supabase.functions.invoke('manage-api-keys', {
-        body: {
-          action: 'add',
-          providerId,
-          name,
-          keyValue
-        }
+      const { data, error } = await supabase.functions.invoke('manage-api-keys', {
+        body: { action: 'add', providerId, name, keyValue }
       });
 
-      if (error) throw error;
-      
-      toast.success('API key added successfully and encrypted');
-      await fetchApiKeys(); // Refresh the list
-    } catch (error) {
+      if (error) {
+        // Try to read the function's JSON error body
+        let serverMsg = error.message;
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx?.json) serverMsg = ctx.json.error ?? serverMsg;
+          else if (ctx?.body) {
+            const parsed = JSON.parse(await ctx.body.text?.() ?? ctx.body);
+            serverMsg = parsed.error ?? serverMsg;
+          }
+        } catch (_) { /* ignore */ }
+        throw new Error(serverMsg);
+      }
+
+      if (data?.error) throw new Error(data.error);
+
+      toast.success('API key added successfully');
+      await fetchApiKeys();
+    } catch (error: any) {
       console.error('Error adding API key:', error);
-      toast.error('Failed to add API key');
+      toast.error(`Failed to add API key: ${error.message ?? 'unknown error'}`);
     }
   };
 
