@@ -540,7 +540,7 @@ function summarizePattern(text: string): string {
 
 function sourceLabel(exercise: BundleExercise, paper: BundlePaper | undefined): string {
   const title = paper?.title ?? "Sujet officiel";
-  const exerciseLabel = exercise.exercise_number !== null ? `Exercice ${exercise.exercise_number}` : "Exercice";
+  const exerciseLabel = exercise.title ?? (exercise.exercise_number !== null ? `Exercice ${exercise.exercise_number}` : "Exercice");
   return `${title} - ${exerciseLabel}`;
 }
 

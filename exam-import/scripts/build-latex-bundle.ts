@@ -16,6 +16,7 @@ interface CliOptions {
   pdfPath?: string;
   withAssets: boolean;
   assetsRoot: string;
+  displayTitle?: string;
 }
 
 interface ExamBundle {
@@ -49,7 +50,7 @@ async function main(): Promise<void> {
     location: options.location,
     variant: "standard",
     pdf_url: "",
-    title: `DNB Brevet ${capitalize(options.location)} ${options.year}`,
+    title: options.displayTitle ?? `DNB Brevet ${capitalize(options.location)} ${options.year}`,
   };
 
   const parsed = parseLatexToExam(texContent, metadata);
@@ -115,6 +116,7 @@ function parseArgs(args: string[]): CliOptions {
   let pdfPath: string | undefined;
   let withAssets = false;
   let assetsRoot = "exam-import/assets";
+  let displayTitle: string | undefined;
 
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
@@ -149,6 +151,9 @@ function parseArgs(args: string[]): CliOptions {
     } else if (arg === "--pdf" && val) {
       pdfPath = val;
       i += 1;
+    } else if (arg === "--display-title" && val) {
+      displayTitle = val;
+      i += 1;
     } else if (arg === "--with-assets") {
       withAssets = true;
     } else if (arg === "--assets-root" && val) {
@@ -166,7 +171,7 @@ function parseArgs(args: string[]): CliOptions {
   if (!year || Number.isNaN(year)) throw new Error("--year is required");
   if (withAssets && !pdfPath) throw new Error("--pdf is required when using --with-assets");
 
-  return { latexPath, isDir, year, location, series, out, programEntries, pdfPath, withAssets, assetsRoot };
+  return { latexPath, isDir, year, location, series, out, programEntries, pdfPath, withAssets, assetsRoot, displayTitle };
 }
 
 function printHelp(): void {
