@@ -55,7 +55,8 @@ export function getSchoolLevelOptions(locale: string = 'fr') {
 
 export function dedupeSchoolLevels<T extends Record<string, any>>(levels: T[]): T[] {
   const map = new Map<string, T>();
-  for (const item of levels) {
+  for (const rawItem of levels) {
+    const item = rawItem as any;
     const rawCode = item.code ?? item.level ?? item.level_code;
     const normalized = normalizeSchoolLevel(rawCode);
     if (!normalized) continue;
@@ -63,7 +64,7 @@ export function dedupeSchoolLevels<T extends Record<string, any>>(levels: T[]): 
     if (!map.has(normalized)) {
       const canon = SCHOOL_LEVELS.find((l) => l.code === normalized);
       
-      const copy = { ...item };
+      const copy: any = { ...item };
       if ('code' in copy) copy.code = normalized;
       if ('level' in copy) copy.level = normalized;
       if ('level_code' in copy) copy.level_code = normalized;
