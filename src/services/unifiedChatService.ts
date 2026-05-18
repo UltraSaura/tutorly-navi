@@ -94,11 +94,11 @@ async function saveExplanationToCache(
         exercise_content: exerciseContent,
         exercise_hash: exerciseContent.toLowerCase().replace(/\s+/g, ''),
         subject_id: subjectId,
-        explanation_data: sections,
+        explanation_data: sections as any,
         correct_answer: correctAnswer,
         quality_score: 0,
         usage_count: 1
-      });
+      } as any);
 
     if (insertError) {
       console.error('[SaveExplanation] Error saving to cache:', insertError);

@@ -437,7 +437,7 @@ export default function TrainingSessionPage() {
             <Card className="border-border/80">
               <CardHeader className="space-y-3">
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">{item.item_type.replaceAll('_', ' ')}</Badge>
+                  <Badge variant="outline">{item.item_type.replace(/_/g, ' ')}</Badge>
                   <Badge variant="outline">{item.difficulty}</Badge>
                   {item.source_year ? <Badge variant="outline">{item.source_year}</Badge> : null}
                 </div>

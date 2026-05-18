@@ -123,8 +123,8 @@ const LearningSubjectManager = () => {
       }));
 
     return [...learningRows, ...unsyncedChatRows].sort((a, b) => {
-      const aOrder = a.learningSubject?.order_index ?? a.chatSubject?.order ?? 0;
-      const bOrder = b.learningSubject?.order_index ?? b.chatSubject?.order ?? 0;
+      const aOrder = (a as ManagedSubjectRow).learningSubject?.order_index ?? (a as ManagedSubjectRow).chatSubject?.order ?? 0;
+      const bOrder = (b as ManagedSubjectRow).learningSubject?.order_index ?? (b as ManagedSubjectRow).chatSubject?.order ?? 0;
       return aOrder - bOrder;
     });
   }, [chatSubjects, learningSubjects]);
