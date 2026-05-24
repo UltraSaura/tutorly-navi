@@ -392,7 +392,7 @@ export default function TrainingSessionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-36 md:pb-24">
       <PageMeta title="Session d'entraînement" description="Exercices interactifs issus des annales normalisées." />
       <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-4 sm:px-6 sm:py-6">
         <div className="flex items-center justify-between gap-3">
@@ -468,7 +468,36 @@ export default function TrainingSessionPage() {
               </CardContent>
             </Card>
 
-            <div className="flex items-center justify-between gap-3">
+            {/* Mobile fixed footer — always visible above bottom nav bar */}
+            <div
+              className="fixed left-0 right-0 z-50 border-t border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden"
+              style={{ bottom: 'calc(max(env(safe-area-inset-bottom), 0px) + 4rem)' }}
+            >
+              <div className="mx-auto flex w-full max-w-3xl items-center gap-2 px-4 py-3 sm:px-6">
+                <Button variant="outline" size="sm" onClick={() => goTo(index - 1)} disabled={index === 0} className="shrink-0">
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setQuestionStates((current) => {
+                    const next = { ...current };
+                    for (const question of questions) next[questionStateKey(item.id, question.id)] = initialQuestionState();
+                    return next;
+                  })}
+                >
+                  <RotateCcw className="mr-1 h-4 w-4" />
+                  Effacer
+                </Button>
+                <Button size="sm" onClick={() => goTo(index + 1)} disabled={index >= items.length - 1} className="shrink-0">
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Inline navigation — always visible at bottom of content */}
+            <div className="flex items-center justify-between gap-2 pt-1">
               <Button variant="outline" onClick={() => goTo(index - 1)} disabled={index === 0}>
                 <ArrowLeft className="mr-1 h-4 w-4" />
                 Précédent

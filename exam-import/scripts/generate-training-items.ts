@@ -131,11 +131,11 @@ function generateItemsForExercise(exercise: BundleExercise, paper: BundlePaper |
   const sourceExerciseUuid = deterministicUuid(`exam_exercise:${exercise.id}`);
   const paperUuid = paper ? deterministicUuid(`exam_paper:${paper.pdf_hash || paper.id}`) : null;
   const level = resolveTrainingItemLevel(exercise, paper);
-  return questions.map((question) => {
+  return questions.map((question, qIndex) => {
     const qcmChoices = question.choices ?? detectQcmChoices(question.text);
     const itemType = qcmChoices ? "multiple_choice" : inferItemType(question.text, question.answer_type);
     return {
-      id: deterministicUuid(`training_item:${exercise.id}:${question.id}`),
+      id: deterministicUuid(`training_item:${exercise.id}:${qIndex}:${question.id}`),
       source_exercise_id: sourceExerciseUuid,
       paper_id: paperUuid,
       exam: exercise.exam,
@@ -540,7 +540,7 @@ function summarizePattern(text: string): string {
 
 function sourceLabel(exercise: BundleExercise, paper: BundlePaper | undefined): string {
   const title = paper?.title ?? "Sujet officiel";
-  const exerciseLabel = exercise.exercise_number !== null ? `Exercice ${exercise.exercise_number}` : "Exercice";
+  const exerciseLabel = exercise.title ?? (exercise.exercise_number !== null ? `Exercice ${exercise.exercise_number}` : "Exercice");
   return `${title} - ${exerciseLabel}`;
 }
 

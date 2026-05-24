@@ -1,0 +1,2526 @@
+{
+  "training_items": [
+    {
+      "id": "b87ecdcd-e889-519b-8281-f26b080062e2",
+      "source_exercise_id": "b97f3082-ffc9-5c80-b394-9e3c0ea3c805",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Le biathlète français Martin Fourcade a remporté le sixième gros globe de cristal de sa carrière en 2017 à Pyeongchang en Corée du Sud. Donner approximativement la latitude et la longitude de ce lieu repéré sur la carte ci-dessous.",
+      "context": "Le gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski. Ce trophée pèse 9 kg et mesure 46 cm de hauteur.",
+      "documents": [
+        {
+          "id": "ex1-globe",
+          "type": "image",
+          "label": "Gros globe de cristal",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex01/ex1-globe.webp",
+          "alt": "Photo du gros globe de cristal, trophée de la coupe du monde de ski.",
+          "source": {
+            "page": 1
+          }
+        },
+        {
+          "id": "ex1-mappemonde",
+          "type": "image",
+          "label": "Carte du monde avec Pyeongchang",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex01/ex1-mappemonde.webp",
+          "alt": "Carte du monde avec le repère de Pyeongchang en Corée du Sud.",
+          "source": {
+            "page": 1
+          }
+        },
+        {
+          "id": "ex1-cylindre",
+          "type": "image",
+          "label": "Schéma du trophée (boule + cylindre)",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex01/ex1-cylindre.webp",
+          "alt": "Schéma du trophée composé d'une boule de cristal (23 cm) surmontant un cylindre (23 cm).",
+          "source": {
+            "page": 1
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Le biathlète français Martin Fourcade a remporté le sixième gros globe de cristal de sa carrière en 2017 à Pyeongchang en Corée du Sud. Donner approximativement la latitude et la longitude de ce lieu repéré sur la carte ci-dessous.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 1 (11 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Le biathlète français Martin Fourcade a remporté le sixième gros globe de cristal de sa carrière en 2017 à Pyeongchang en Corée du Sud. Donner approximativement la latitude et l...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "725375a2-42bc-5e4f-bc8c-7ce705de1647",
+      "source_exercise_id": "b97f3082-ffc9-5c80-b394-9e3c0ea3c805",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "On considère que ce globe est composé d'un cylindre en cristal de diamètre 6cm, surmonté d'une boule de cristal. Voir schéma ci -contre. Montrer qu'une valeur approchée du volume de la boule de ce trophée est de 6371~cm^3.",
+      "context": "Le gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski. Ce trophée pèse 9 kg et mesure 46 cm de hauteur.",
+      "documents": [
+        {
+          "id": "ex1-globe",
+          "type": "image",
+          "label": "Gros globe de cristal",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex01/ex1-globe.webp",
+          "alt": "Photo du gros globe de cristal, trophée de la coupe du monde de ski.",
+          "source": {
+            "page": 1
+          }
+        },
+        {
+          "id": "ex1-mappemonde",
+          "type": "image",
+          "label": "Carte du monde avec Pyeongchang",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex01/ex1-mappemonde.webp",
+          "alt": "Carte du monde avec le repère de Pyeongchang en Corée du Sud.",
+          "source": {
+            "page": 1
+          }
+        },
+        {
+          "id": "ex1-cylindre",
+          "type": "image",
+          "label": "Schéma du trophée (boule + cylindre)",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex01/ex1-cylindre.webp",
+          "alt": "Schéma du trophée composé d'une boule de cristal (23 cm) surmontant un cylindre (23 cm).",
+          "source": {
+            "page": 1
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "On considère que ce globe est composé d'un cylindre en cristal de diamètre 6cm, surmonté d'une boule de cristal. Voir schéma ci -contre. Montrer qu'une valeur approchée du volume de la boule de ce trophée est de 6371~cm^3.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 1 (11 points)",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "On considère que ce globe est composé d'un cylindre en cristal de diamètre 6cm, surmonté d'une boule de cristal. Voir schéma ci -contre. Montrer qu'une valeur approchée du volum...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "4803f26c-c751-5fc9-8c45-a7c973499e4d",
+      "source_exercise_id": "b97f3082-ffc9-5c80-b394-9e3c0ea3c805",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Marie affirme que le volume de la boule de cristal représente environ 90 \\ A-t-elle raison ? Rappels : volume d'une boule de rayon R : V = (4)/(3)π R^3 volume d'un cylindre de rayon r et de hauteur h : V =π r^2h.",
+      "context": "Le gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski. Ce trophée pèse 9 kg et mesure 46 cm de hauteur.",
+      "documents": [
+        {
+          "id": "ex1-globe",
+          "type": "image",
+          "label": "Gros globe de cristal",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex01/ex1-globe.webp",
+          "alt": "Photo du gros globe de cristal, trophée de la coupe du monde de ski.",
+          "source": {
+            "page": 1
+          }
+        },
+        {
+          "id": "ex1-mappemonde",
+          "type": "image",
+          "label": "Carte du monde avec Pyeongchang",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex01/ex1-mappemonde.webp",
+          "alt": "Carte du monde avec le repère de Pyeongchang en Corée du Sud.",
+          "source": {
+            "page": 1
+          }
+        },
+        {
+          "id": "ex1-cylindre",
+          "type": "image",
+          "label": "Schéma du trophée (boule + cylindre)",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex01/ex1-cylindre.webp",
+          "alt": "Schéma du trophée composé d'une boule de cristal (23 cm) surmontant un cylindre (23 cm).",
+          "source": {
+            "page": 1
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Marie affirme que le volume de la boule de cristal représente environ 90 \\ A-t-elle raison ? Rappels : volume d'une boule de rayon R : V = (4)/(3)π R^3 volume d'un cylindre de rayon r et de hauteur h : V =π r^2h.",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 1 (11 points)",
+      "metadata": {
+        "source_question_id": "3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Marie affirme que le volume de la boule de cristal représente environ 90 \\ A-t-elle raison ? Rappels : volume d'une boule de rayon R : V = (4)/(3)π R^3 volume d'un cylindre de r...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "b1fd8a87-908a-5523-9e13-23b8aa95fd8c",
+      "source_exercise_id": "00334694-2b4c-556e-a08b-507d2abd9e0c",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "statistiques"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Laquelle de ces deux villes a eu la plus forte concentration moyenne en PM10 entre le 16 et le 25 janvier ?",
+      "context": "Parmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées. Les PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm. En janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines. Voici des données concernant la période du 16 au 25 janvier 2017 : | Données statistiques sur les concentrations journalières en PM10 du 16 au 25 janvier 2017 à Lyon. Moyenne: 72,5 /m^3 Médiane: 83,5 /m^3 Concentration minimale: 22 /m^3 Concentration maximale: 107 /m^3 Source: http://www.air-rhonealpesfr | Relevés des concentrations journalières en PM10 du 16 au 25 janvier 2017 à Grenoble. Date | ~~Concentration~~ | PM10 en /m^3 16 janvier | 32 17 janvier | 39 18 janvier | 52 19 janvier | 57 20 janvier | 78 21 janvier | 63 22 janvier | 60 23 janvier | 82 24 janvier | 82 25 janvier | 89",
+      "documents": [
+        {
+          "id": "ex2-grenoble-table",
+          "type": "table",
+          "label": "Relevés PM10 à Grenoble (16–25 janv. 2017)",
+          "caption": "Tableau 1",
+          "table": {
+            "headers": [
+              "Date",
+              "Concentration PM10 en μg/m^3"
+            ],
+            "rows": [
+              [
+                "16 janvier",
+                "32"
+              ],
+              [
+                "17 janvier",
+                "39"
+              ],
+              [
+                "18 janvier",
+                "52"
+              ],
+              [
+                "19 janvier",
+                "57"
+              ],
+              [
+                "20 janvier",
+                "78"
+              ],
+              [
+                "21 janvier",
+                "63"
+              ],
+              [
+                "22 janvier",
+                "60"
+              ],
+              [
+                "23 janvier",
+                "82"
+              ],
+              [
+                "24 janvier",
+                "82"
+              ],
+              [
+                "25 janvier",
+                "89"
+              ]
+            ]
+          },
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex02/ex2-grenoble-table.webp",
+          "alt": "Tableau des concentrations journalières en PM10 à Grenoble du 16 au 25 janvier 2017.",
+          "render_mode": "image_first"
+        },
+        {
+          "id": "ex2-lyon-stats",
+          "type": "image",
+          "label": "Données statistiques PM10 à Lyon (16–25 janv. 2017)",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex02/ex2-lyon-stats.webp",
+          "alt": "Tableau des statistiques de concentration journalière en PM10 du 16 au 25 janvier 2017 à Lyon : moyenne 72,5, médiane 83,5, min 22, max 107 μg/m³.",
+          "source": {
+            "page": 2
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Laquelle de ces deux villes a eu la plus forte concentration moyenne en PM10 entre le 16 et le 25 janvier ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 2 (14 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Laquelle de ces deux villes a eu la plus forte concentration moyenne en PM10 entre le 16 et le 25 janvier ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "7fe5c016-618b-590a-8d56-fa54045db778",
+      "source_exercise_id": "00334694-2b4c-556e-a08b-507d2abd9e0c",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "statistiques",
+        "calcul"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Calculer l'étendue des séries des relevés en PM10 à Lyon et à Grenoble. Laquelle de ces deux villes a eu l'étendue la plus importante ? Interpréter ce dernier résultat.",
+      "context": "Parmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées. Les PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm. En janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines. Voici des données concernant la période du 16 au 25 janvier 2017 : | Données statistiques sur les concentrations journalières en PM10 du 16 au 25 janvier 2017 à Lyon. Moyenne: 72,5 /m^3 Médiane: 83,5 /m^3 Concentration minimale: 22 /m^3 Concentration maximale: 107 /m^3 Source: http://www.air-rhonealpesfr | Relevés des concentrations journalières en PM10 du 16 au 25 janvier 2017 à Grenoble. Date | ~~Concentration~~ | PM10 en /m^3 16 janvier | 32 17 janvier | 39 18 janvier | 52 19 janvier | 57 20 janvier | 78 21 janvier | 63 22 janvier | 60 23 janvier | 82 24 janvier | 82 25 janvier | 89",
+      "documents": [
+        {
+          "id": "ex2-grenoble-table",
+          "type": "table",
+          "label": "Relevés PM10 à Grenoble (16–25 janv. 2017)",
+          "caption": "Tableau 1",
+          "table": {
+            "headers": [
+              "Date",
+              "Concentration PM10 en μg/m^3"
+            ],
+            "rows": [
+              [
+                "16 janvier",
+                "32"
+              ],
+              [
+                "17 janvier",
+                "39"
+              ],
+              [
+                "18 janvier",
+                "52"
+              ],
+              [
+                "19 janvier",
+                "57"
+              ],
+              [
+                "20 janvier",
+                "78"
+              ],
+              [
+                "21 janvier",
+                "63"
+              ],
+              [
+                "22 janvier",
+                "60"
+              ],
+              [
+                "23 janvier",
+                "82"
+              ],
+              [
+                "24 janvier",
+                "82"
+              ],
+              [
+                "25 janvier",
+                "89"
+              ]
+            ]
+          },
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex02/ex2-grenoble-table.webp",
+          "alt": "Tableau des concentrations journalières en PM10 à Grenoble du 16 au 25 janvier 2017.",
+          "render_mode": "image_first"
+        },
+        {
+          "id": "ex2-lyon-stats",
+          "type": "image",
+          "label": "Données statistiques PM10 à Lyon (16–25 janv. 2017)",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex02/ex2-lyon-stats.webp",
+          "alt": "Tableau des statistiques de concentration journalière en PM10 du 16 au 25 janvier 2017 à Lyon : moyenne 72,5, médiane 83,5, min 22, max 107 μg/m³.",
+          "source": {
+            "page": 2
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Calculer l'étendue des séries des relevés en PM10 à Lyon et à Grenoble. Laquelle de ces deux villes a eu l'étendue la plus importante ? Interpréter ce dernier résultat.",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère d'abord les valeurs utiles."
+              },
+              {
+                "level": 2,
+                "text": "Compare les valeurs extrêmes."
+              },
+              {
+                "level": 3,
+                "text": "Écris le calcul avant de conclure."
+              }
+            ],
+            "correct_feedback": "Bonne méthode.",
+            "almost_feedback": "Tu es proche : vérifie les valeurs utilisées.",
+            "incorrect_feedback": "Reviens aux données de l'énoncé et repère les valeurs utiles."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 2 (14 points)",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Calculer l'étendue des séries des relevés en PM10 à Lyon et à Grenoble. Laquelle de ces deux villes a eu l'étendue la plus importante ? Interpréter ce dernier résultat.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "39be9eec-60d4-5154-882a-1fecbdccac03",
+      "source_exercise_id": "00334694-2b4c-556e-a08b-507d2abd9e0c",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "L'affirmation suivante est-elle exacte ? Justifier votre réponse. « Du 16 au 25 janvier, le seuil d'alerte de 80 /m^3 par jour a été dépassé au moins 5 fois à Lyon ».",
+      "context": "Parmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées. Les PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm. En janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines. Voici des données concernant la période du 16 au 25 janvier 2017 : | Données statistiques sur les concentrations journalières en PM10 du 16 au 25 janvier 2017 à Lyon. Moyenne: 72,5 /m^3 Médiane: 83,5 /m^3 Concentration minimale: 22 /m^3 Concentration maximale: 107 /m^3 Source: http://www.air-rhonealpesfr | Relevés des concentrations journalières en PM10 du 16 au 25 janvier 2017 à Grenoble. Date | ~~Concentration~~ | PM10 en /m^3 16 janvier | 32 17 janvier | 39 18 janvier | 52 19 janvier | 57 20 janvier | 78 21 janvier | 63 22 janvier | 60 23 janvier | 82 24 janvier | 82 25 janvier | 89",
+      "documents": [
+        {
+          "id": "ex2-grenoble-table",
+          "type": "table",
+          "label": "Relevés PM10 à Grenoble (16–25 janv. 2017)",
+          "caption": "Tableau 1",
+          "table": {
+            "headers": [
+              "Date",
+              "Concentration PM10 en μg/m^3"
+            ],
+            "rows": [
+              [
+                "16 janvier",
+                "32"
+              ],
+              [
+                "17 janvier",
+                "39"
+              ],
+              [
+                "18 janvier",
+                "52"
+              ],
+              [
+                "19 janvier",
+                "57"
+              ],
+              [
+                "20 janvier",
+                "78"
+              ],
+              [
+                "21 janvier",
+                "63"
+              ],
+              [
+                "22 janvier",
+                "60"
+              ],
+              [
+                "23 janvier",
+                "82"
+              ],
+              [
+                "24 janvier",
+                "82"
+              ],
+              [
+                "25 janvier",
+                "89"
+              ]
+            ]
+          },
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex02/ex2-grenoble-table.webp",
+          "alt": "Tableau des concentrations journalières en PM10 à Grenoble du 16 au 25 janvier 2017.",
+          "render_mode": "image_first"
+        },
+        {
+          "id": "ex2-lyon-stats",
+          "type": "image",
+          "label": "Données statistiques PM10 à Lyon (16–25 janv. 2017)",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex02/ex2-lyon-stats.webp",
+          "alt": "Tableau des statistiques de concentration journalière en PM10 du 16 au 25 janvier 2017 à Lyon : moyenne 72,5, médiane 83,5, min 22, max 107 μg/m³.",
+          "source": {
+            "page": 2
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "L'affirmation suivante est-elle exacte ? Justifier votre réponse. « Du 16 au 25 janvier, le seuil d'alerte de 80 /m^3 par jour a été dépassé au moins 5 fois à Lyon ».",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 2 (14 points)",
+      "metadata": {
+        "source_question_id": "3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "L'affirmation suivante est-elle exacte ? Justifier votre réponse. « Du 16 au 25 janvier, le seuil d'alerte de 80 /m^3 par jour a été dépassé au moins 5 fois à Lyon ».",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "dea60490-f610-53c2-885d-ddc486022626",
+      "source_exercise_id": "93c6c194-2755-5773-8789-d50929e0f683",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "probabilites"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Quelle est la probabilité qu'il écoute du rap ?",
+      "context": "Dans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.",
+      "documents": [],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Quelle est la probabilité qu'il écoute du rap ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 3 (12 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quelle est la probabilité qu'il écoute du rap ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "c44cefdd-24a2-597f-89a4-0dbe8796509c",
+      "source_exercise_id": "93c6c194-2755-5773-8789-d50929e0f683",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "probabilites"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "La probabilité qu'il écoute du rock est égale à (7)/(15). Combien Théo a-t-il de morceaux de rock dans son lecteur audio ?",
+      "context": "Dans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.",
+      "documents": [],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "La probabilité qu'il écoute du rock est égale à (7)/(15). Combien Théo a-t-il de morceaux de rock dans son lecteur audio ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 3 (12 points)",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "La probabilité qu'il écoute du rock est égale à (7)/(15). Combien Théo a-t-il de morceaux de rock dans son lecteur audio ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "4eb458a3-3d3b-5792-8c16-db24ad39dda7",
+      "source_exercise_id": "93c6c194-2755-5773-8789-d50929e0f683",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Alice possède 40 \\ Si Théo et Alice appuient tous les deux sur la touche « lecture aléatoire » de leur lecteur audio, lequel a le plus de chances d'écouter un morceau de rock ?",
+      "context": "Dans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.",
+      "documents": [],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Alice possède 40 \\ Si Théo et Alice appuient tous les deux sur la touche « lecture aléatoire » de leur lecteur audio, lequel a le plus de chances d'écouter un morceau de rock ?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 3 (12 points)",
+      "metadata": {
+        "source_question_id": "3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Alice possède 40 \\ Si Théo et Alice appuient tous les deux sur la touche « lecture aléatoire » de leur lecteur audio, lequel a le plus de chances d'écouter un morceau de rock ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "570d01b2-50aa-5967-9527-3c825357dd16",
+      "source_exercise_id": "725e9482-78dc-57c8-becb-7961eb081f97",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Montrer que la longueur BD est égale à 4~cm.",
+      "context": "La figure ci-dessous n'est pas représentée en vraie grandeur. Les points C, B et E sont alignés. Le triangle ABC est rectangle en A. Le triangle BDC est rectangle en B.",
+      "documents": [
+        {
+          "id": "ex4-geometrie",
+          "type": "image",
+          "label": "Figure géométrique – triangles ABCDEF",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex04/ex4-geometrie.webp",
+          "alt": "Figure géométrique avec les triangles ABC rectangle en A, BDC rectangle en B, et BFE. Points C, B et E alignés. Mesures : CB=7,5 cm, BE=6,8 cm, BF=6 cm, FE=3,2 cm, BD=8,5 cm, angle ACB=61°.",
+          "source": {
+            "page": 3
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Montrer que la longueur BD est égale à 4~cm.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 4 (14 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Montrer que la longueur BD est égale à 4~cm.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "89f45013-15e3-5de8-94d7-79a0640e2c19",
+      "source_exercise_id": "725e9482-78dc-57c8-becb-7961eb081f97",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Montrer que les triangles CBD et BFE sont semblables.",
+      "context": "La figure ci-dessous n'est pas représentée en vraie grandeur. Les points C, B et E sont alignés. Le triangle ABC est rectangle en A. Le triangle BDC est rectangle en B.",
+      "documents": [
+        {
+          "id": "ex4-geometrie",
+          "type": "image",
+          "label": "Figure géométrique – triangles ABCDEF",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex04/ex4-geometrie.webp",
+          "alt": "Figure géométrique avec les triangles ABC rectangle en A, BDC rectangle en B, et BFE. Points C, B et E alignés. Mesures : CB=7,5 cm, BE=6,8 cm, BF=6 cm, FE=3,2 cm, BD=8,5 cm, angle ACB=61°.",
+          "source": {
+            "page": 3
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Montrer que les triangles CBD et BFE sont semblables.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 4 (14 points)",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Montrer que les triangles CBD et BFE sont semblables.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "ff8ce73e-058f-54ed-96bf-97f337995ec8",
+      "source_exercise_id": "725e9482-78dc-57c8-becb-7961eb081f97",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Sophie affirme que l'angle est un angle droit. A-t-elle raison?",
+      "context": "La figure ci-dessous n'est pas représentée en vraie grandeur. Les points C, B et E sont alignés. Le triangle ABC est rectangle en A. Le triangle BDC est rectangle en B.",
+      "documents": [
+        {
+          "id": "ex4-geometrie",
+          "type": "image",
+          "label": "Figure géométrique – triangles ABCDEF",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex04/ex4-geometrie.webp",
+          "alt": "Figure géométrique avec les triangles ABC rectangle en A, BDC rectangle en B, et BFE. Points C, B et E alignés. Mesures : CB=7,5 cm, BE=6,8 cm, BF=6 cm, FE=3,2 cm, BD=8,5 cm, angle ACB=61°.",
+          "source": {
+            "page": 3
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Sophie affirme que l'angle est un angle droit. A-t-elle raison?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 4 (14 points)",
+      "metadata": {
+        "source_question_id": "3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Sophie affirme que l'angle est un angle droit. A-t-elle raison?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "65eb5561-3703-5641-ab24-837590e5171b",
+      "source_exercise_id": "725e9482-78dc-57c8-becb-7961eb081f97",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Max affirme que l'angle est un angle droit. A-t-il raison ?",
+      "context": "La figure ci-dessous n'est pas représentée en vraie grandeur. Les points C, B et E sont alignés. Le triangle ABC est rectangle en A. Le triangle BDC est rectangle en B.",
+      "documents": [
+        {
+          "id": "ex4-geometrie",
+          "type": "image",
+          "label": "Figure géométrique – triangles ABCDEF",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex04/ex4-geometrie.webp",
+          "alt": "Figure géométrique avec les triangles ABC rectangle en A, BDC rectangle en B, et BFE. Points C, B et E alignés. Mesures : CB=7,5 cm, BE=6,8 cm, BF=6 cm, FE=3,2 cm, BD=8,5 cm, angle ACB=61°.",
+          "source": {
+            "page": 3
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "4",
+          "label": "4.",
+          "prompt": "Max affirme que l'angle est un angle droit. A-t-il raison ?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 4 (14 points)",
+      "metadata": {
+        "source_question_id": "4",
+        "source_question_label": "4.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Max affirme que l'angle est un angle droit. A-t-il raison ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "64c48f55-84ed-5089-809d-a95b0302d180",
+      "source_exercise_id": "05848944-c13d-5925-9593-03e496b4cce1",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "calcul"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Vérifier que si on choisit le nombre - 1, ce programme donne 8 comme résultat final.",
+      "context": "Voici un programme de calcul ~~Choisir un nombre ~~Multiplier ce nombre par 4 ~~Ajouter 8 ~~Multiplier le résultat par 2",
+      "documents": [
+        {
+          "id": "ex5-programme",
+          "type": "image",
+          "label": "Programme de calcul",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex05/ex5-programme.webp",
+          "alt": "Programme de calcul : Choisir un nombre → Multiplier par 4 → Ajouter 8 → Multiplier le résultat par 2.",
+          "source": {
+            "page": 3
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Vérifier que si on choisit le nombre - 1, ce programme donne 8 comme résultat final.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 5 (16 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Vérifier que si on choisit le nombre - 1, ce programme donne 8 comme résultat final.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "ae69916f-5391-51a8-9408-afae71bfd36c",
+      "source_exercise_id": "05848944-c13d-5925-9593-03e496b4cce1",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Le programme donne 30 comme résultat final, quel est le nombre choisi au départ ? Dans la suite de l'exercice, on nomme x le nombre choisi au départ.",
+      "context": "Voici un programme de calcul ~~Choisir un nombre ~~Multiplier ce nombre par 4 ~~Ajouter 8 ~~Multiplier le résultat par 2",
+      "documents": [
+        {
+          "id": "ex5-programme",
+          "type": "image",
+          "label": "Programme de calcul",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex05/ex5-programme.webp",
+          "alt": "Programme de calcul : Choisir un nombre → Multiplier par 4 → Ajouter 8 → Multiplier le résultat par 2.",
+          "source": {
+            "page": 3
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Le programme donne 30 comme résultat final, quel est le nombre choisi au départ ? Dans la suite de l'exercice, on nomme x le nombre choisi au départ.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 5 (16 points)",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Le programme donne 30 comme résultat final, quel est le nombre choisi au départ ? Dans la suite de l'exercice, on nomme x le nombre choisi au départ.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "74b4d2df-cfb3-5a4f-903e-58f630bf91ec",
+      "source_exercise_id": "05848944-c13d-5925-9593-03e496b4cce1",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "L'expression A = 2(4x + 8) donne le résultat du programme de calcul précédent pour un nombre x donné. On pose B = (4 + x)^2 - x^2. Prouver que les expressions A et B sont égales pour toutes les valeurs de x.",
+      "context": "Voici un programme de calcul ~~Choisir un nombre ~~Multiplier ce nombre par 4 ~~Ajouter 8 ~~Multiplier le résultat par 2",
+      "documents": [
+        {
+          "id": "ex5-programme",
+          "type": "image",
+          "label": "Programme de calcul",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex05/ex5-programme.webp",
+          "alt": "Programme de calcul : Choisir un nombre → Multiplier par 4 → Ajouter 8 → Multiplier le résultat par 2.",
+          "source": {
+            "page": 3
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "L'expression A = 2(4x + 8) donne le résultat du programme de calcul précédent pour un nombre x donné. On pose B = (4 + x)^2 - x^2. Prouver que les expressions A et B sont égales pour toutes les valeurs de x.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 5 (16 points)",
+      "metadata": {
+        "source_question_id": "3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "L'expression A = 2(4x + 8) donne le résultat du programme de calcul précédent pour un nombre x donné. On pose B = (4 + x)^2 - x^2. Prouver que les expressions A et B sont égales...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "92889155-da06-5002-a1d8-88c42cdb9da3",
+      "source_exercise_id": "05848944-c13d-5925-9593-03e496b4cce1",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Pour chacune des affirmations suivantes, indiquer si elle est vraie ou fausse. On rappelle que les réponses doivent être justifiées. ~~ Affirmation 1 : Ce programme donne un résultat positif pour toutes les valeurs de x. ~~ Affirmation 2 : Si le nombre x choisi est un nombre entier, le résultat obtenu est un multiple de 8.",
+      "context": "Voici un programme de calcul ~~Choisir un nombre ~~Multiplier ce nombre par 4 ~~Ajouter 8 ~~Multiplier le résultat par 2",
+      "documents": [
+        {
+          "id": "ex5-programme",
+          "type": "image",
+          "label": "Programme de calcul",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex05/ex5-programme.webp",
+          "alt": "Programme de calcul : Choisir un nombre → Multiplier par 4 → Ajouter 8 → Multiplier le résultat par 2.",
+          "source": {
+            "page": 3
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "4",
+          "label": "4.",
+          "prompt": "Pour chacune des affirmations suivantes, indiquer si elle est vraie ou fausse. On rappelle que les réponses doivent être justifiées. ~~ Affirmation 1 : Ce programme donne un résultat positif pour toutes les valeurs de x. ~~ Affirmation 2 : Si le nombre x choisi est un nombre entier, le résultat obtenu est un multiple de 8.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 5 (16 points)",
+      "metadata": {
+        "source_question_id": "4",
+        "source_question_label": "4.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Pour chacune des affirmations suivantes, indiquer si elle est vraie ou fausse. On rappelle que les réponses doivent être justifiées. ~~ Affirmation 1 : Ce programme donne un rés...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "1d156121-51c8-503a-82e3-f99434043ddd",
+      "source_exercise_id": "4ca5252a-0c89-5727-bad6-9c1a20146bf0",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "On prend comme échelle 1~cm pour 50 pixels.",
+      "context": "Les longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. On donne le programme suivant : [Programme Scratch] [Programme Scratch] [Programme Scratch]",
+      "documents": [
+        {
+          "id": "ex6-scratch",
+          "type": "image",
+          "label": "Programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex06/ex6-scratch.webp",
+          "alt": "Programme Scratch : script principal avec carré et triangle, blocs définissant Carré (répéter 4 fois : avancer Longueur, tourner 90°) et Triangle (répéter 3 fois : avancer Longueur, tourner 120°).",
+          "source": {
+            "page": 4
+          }
+        },
+        {
+          "id": "ex6-figure",
+          "type": "image",
+          "label": "Figure obtenue par le programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex06/ex6-figure.webp",
+          "alt": "Figure composée d'un grand carré avec un triangle à l'intérieur et un petit carré avec un triangle, possédant un axe de symétrie vertical.",
+          "source": {
+            "page": 4
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "On prend comme échelle 1~cm pour 50 pixels.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 6 (16 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "On prend comme échelle 1~cm pour 50 pixels.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "fe6cf411-d398-5e6a-b90a-71b1ac3ad346",
+      "source_exercise_id": "4ca5252a-0c89-5727-bad6-9c1a20146bf0",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "geometrie"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "document_question",
+      "prompt": "Représenter sur votre copie la figure obtenue si le programme est exécuté jusqu'à la ligne 7 comprise.",
+      "context": "Les longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. On donne le programme suivant : [Programme Scratch] [Programme Scratch] [Programme Scratch]",
+      "documents": [
+        {
+          "id": "ex6-scratch",
+          "type": "image",
+          "label": "Programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex06/ex6-scratch.webp",
+          "alt": "Programme Scratch : script principal avec carré et triangle, blocs définissant Carré (répéter 4 fois : avancer Longueur, tourner 90°) et Triangle (répéter 3 fois : avancer Longueur, tourner 120°).",
+          "source": {
+            "page": 4
+          }
+        },
+        {
+          "id": "ex6-figure",
+          "type": "image",
+          "label": "Figure obtenue par le programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex06/ex6-figure.webp",
+          "alt": "Figure composée d'un grand carré avec un triangle à l'intérieur et un petit carré avec un triangle, possédant un axe de symétrie vertical.",
+          "source": {
+            "page": 4
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Représenter sur votre copie la figure obtenue si le programme est exécuté jusqu'à la ligne 7 comprise.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 6 (16 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Représenter sur votre copie la figure obtenue si le programme est exécuté jusqu'à la ligne 7 comprise.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "0225bbf3-2d33-5a88-b310-d72877b68aa7",
+      "source_exercise_id": "4ca5252a-0c89-5727-bad6-9c1a20146bf0",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "geometrie"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "document_question",
+      "prompt": "Quelles sont les coordonnées du stylo après l'exécution de la ligne 8 ? • On exécute le programme complet et on obtient la figure ci-dessous qui possède un axe de symétrie vertical. Recopier et compléter la ligne 9 du programme pour obtenir cette figure. •",
+      "context": "Les longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. On donne le programme suivant : [Programme Scratch] [Programme Scratch] [Programme Scratch]",
+      "documents": [
+        {
+          "id": "ex6-scratch",
+          "type": "image",
+          "label": "Programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex06/ex6-scratch.webp",
+          "alt": "Programme Scratch : script principal avec carré et triangle, blocs définissant Carré (répéter 4 fois : avancer Longueur, tourner 90°) et Triangle (répéter 3 fois : avancer Longueur, tourner 120°).",
+          "source": {
+            "page": 4
+          }
+        },
+        {
+          "id": "ex6-figure",
+          "type": "image",
+          "label": "Figure obtenue par le programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex06/ex6-figure.webp",
+          "alt": "Figure composée d'un grand carré avec un triangle à l'intérieur et un petit carré avec un triangle, possédant un axe de symétrie vertical.",
+          "source": {
+            "page": 4
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Quelles sont les coordonnées du stylo après l'exécution de la ligne 8 ? • On exécute le programme complet et on obtient la figure ci-dessous qui possède un axe de symétrie vertical. Recopier et compléter la ligne 9 du programme pour obtenir cette figure. •",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 6 (16 points)",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quelles sont les coordonnées du stylo après l'exécution de la ligne 8 ? • On exécute le programme complet et on obtient la figure ci-dessous qui possède un axe de symétrie verti...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "c8527ce6-28db-57df-9364-e1f6d3b61250",
+      "source_exercise_id": "4ca5252a-0c89-5727-bad6-9c1a20146bf0",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "geometrie"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Parmi les transformations suivantes, translation, homothétie, rotation, symétrie axiale, quelle est la transformation géométrique qui permet d'obtenir le petit carré à partir du grand carré ? Préciser le rapport de réduction.",
+      "context": "Les longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. On donne le programme suivant : [Programme Scratch] [Programme Scratch] [Programme Scratch]",
+      "documents": [
+        {
+          "id": "ex6-scratch",
+          "type": "image",
+          "label": "Programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex06/ex6-scratch.webp",
+          "alt": "Programme Scratch : script principal avec carré et triangle, blocs définissant Carré (répéter 4 fois : avancer Longueur, tourner 90°) et Triangle (répéter 3 fois : avancer Longueur, tourner 120°).",
+          "source": {
+            "page": 4
+          }
+        },
+        {
+          "id": "ex6-figure",
+          "type": "image",
+          "label": "Figure obtenue par le programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex06/ex6-figure.webp",
+          "alt": "Figure composée d'un grand carré avec un triangle à l'intérieur et un petit carré avec un triangle, possédant un axe de symétrie vertical.",
+          "source": {
+            "page": 4
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Parmi les transformations suivantes, translation, homothétie, rotation, symétrie axiale, quelle est la transformation géométrique qui permet d'obtenir le petit carré à partir du grand carré ? Préciser le rapport de réduction.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 6 (16 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Parmi les transformations suivantes, translation, homothétie, rotation, symétrie axiale, quelle est la transformation géométrique qui permet d'obtenir le petit carré à partir du...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "009bce2c-63b5-527d-89b8-0e9066d28e8d",
+      "source_exercise_id": "4ca5252a-0c89-5727-bad6-9c1a20146bf0",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Quel est le rapport des aires entre les deux carrés dessinés ?",
+      "context": "Les longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. On donne le programme suivant : [Programme Scratch] [Programme Scratch] [Programme Scratch]",
+      "documents": [
+        {
+          "id": "ex6-scratch",
+          "type": "image",
+          "label": "Programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex06/ex6-scratch.webp",
+          "alt": "Programme Scratch : script principal avec carré et triangle, blocs définissant Carré (répéter 4 fois : avancer Longueur, tourner 90°) et Triangle (répéter 3 fois : avancer Longueur, tourner 120°).",
+          "source": {
+            "page": 4
+          }
+        },
+        {
+          "id": "ex6-figure",
+          "type": "image",
+          "label": "Figure obtenue par le programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex06/ex6-figure.webp",
+          "alt": "Figure composée d'un grand carré avec un triangle à l'intérieur et un petit carré avec un triangle, possédant un axe de symétrie vertical.",
+          "source": {
+            "page": 4
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Quel est le rapport des aires entre les deux carrés dessinés ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 6 (16 points)",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quel est le rapport des aires entre les deux carrés dessinés ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "8a8226a1-f320-543c-aae6-0143760cbc3c",
+      "source_exercise_id": "df389fe1-1c20-5935-b8d3-65b5a378e176",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "geometrie"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Le temps et la vitesse de rotation du « hand-spinner » sont-ils proportionnels? Justifier.",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On donne au « hand-spinner » une vitesse de rotation initiale au temps t = 0, puis, au cours du temps, sa vitesse de rotation diminue jusqu'à l'arrêt complet du « hand-spinner ». Sa vitesse de rotation est alors égale à 0. Grâce à un appareil de mesure, on a relevé la vitesse de rotation exprimée en nombre de tours par seconde. Sur le graphique ci-dessous, on a représenté cette vitesse en fonction du temps exprimé en seconde : Inspiré de: https://www.sciencesetavenir.frlfondamental/combien-de-temps-peut-tourner-votre-hand-spinner-112808",
+      "documents": [
+        {
+          "id": "ex7-handspinner",
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-handspinner.webp",
+          "alt": "Photo d'un hand-spinner, toupie plate qui tourne sur elle-même.",
+          "source": {
+            "page": 5
+          }
+        },
+        {
+          "id": "ex7-graphique",
+          "type": "image",
+          "label": "Graphique vitesse de rotation du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-graphique.webp",
+          "alt": "Graphique représentant la vitesse de rotation du hand-spinner (en tours/seconde) en fonction du temps (en secondes). La vitesse initiale est de 20 tours/s et diminue linéairement jusqu'à 0 à environ 94 secondes.",
+          "source": {
+            "page": 5
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Le temps et la vitesse de rotation du « hand-spinner » sont-ils proportionnels? Justifier.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Le temps et la vitesse de rotation du « hand-spinner » sont-ils proportionnels? Justifier.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "90dd463e-3796-56db-95ea-fc6ed8893494",
+      "source_exercise_id": "df389fe1-1c20-5935-b8d3-65b5a378e176",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "document_question",
+      "prompt": "Par lecture graphique, répondre aux questions suivantes:",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On donne au « hand-spinner » une vitesse de rotation initiale au temps t = 0, puis, au cours du temps, sa vitesse de rotation diminue jusqu'à l'arrêt complet du « hand-spinner ». Sa vitesse de rotation est alors égale à 0. Grâce à un appareil de mesure, on a relevé la vitesse de rotation exprimée en nombre de tours par seconde. Sur le graphique ci-dessous, on a représenté cette vitesse en fonction du temps exprimé en seconde : Inspiré de: https://www.sciencesetavenir.frlfondamental/combien-de-temps-peut-tourner-votre-hand-spinner-112808",
+      "documents": [
+        {
+          "id": "ex7-handspinner",
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-handspinner.webp",
+          "alt": "Photo d'un hand-spinner, toupie plate qui tourne sur elle-même.",
+          "source": {
+            "page": 5
+          }
+        },
+        {
+          "id": "ex7-graphique",
+          "type": "image",
+          "label": "Graphique vitesse de rotation du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-graphique.webp",
+          "alt": "Graphique représentant la vitesse de rotation du hand-spinner (en tours/seconde) en fonction du temps (en secondes). La vitesse initiale est de 20 tours/s et diminue linéairement jusqu'à 0 à environ 94 secondes.",
+          "source": {
+            "page": 5
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Par lecture graphique, répondre aux questions suivantes:",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Par lecture graphique, répondre aux questions suivantes:",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "d444904c-0896-5c70-a0d7-52dd081b19bc",
+      "source_exercise_id": "df389fe1-1c20-5935-b8d3-65b5a378e176",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "geometrie"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Quelle est la vitesse de rotation initiale du « hand-spinner » (en nombre de tours par seconde) ?",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On donne au « hand-spinner » une vitesse de rotation initiale au temps t = 0, puis, au cours du temps, sa vitesse de rotation diminue jusqu'à l'arrêt complet du « hand-spinner ». Sa vitesse de rotation est alors égale à 0. Grâce à un appareil de mesure, on a relevé la vitesse de rotation exprimée en nombre de tours par seconde. Sur le graphique ci-dessous, on a représenté cette vitesse en fonction du temps exprimé en seconde : Inspiré de: https://www.sciencesetavenir.frlfondamental/combien-de-temps-peut-tourner-votre-hand-spinner-112808",
+      "documents": [
+        {
+          "id": "ex7-handspinner",
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-handspinner.webp",
+          "alt": "Photo d'un hand-spinner, toupie plate qui tourne sur elle-même.",
+          "source": {
+            "page": 5
+          }
+        },
+        {
+          "id": "ex7-graphique",
+          "type": "image",
+          "label": "Graphique vitesse de rotation du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-graphique.webp",
+          "alt": "Graphique représentant la vitesse de rotation du hand-spinner (en tours/seconde) en fonction du temps (en secondes). La vitesse initiale est de 20 tours/s et diminue linéairement jusqu'à 0 à environ 94 secondes.",
+          "source": {
+            "page": 5
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Quelle est la vitesse de rotation initiale du « hand-spinner » (en nombre de tours par seconde) ?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quelle est la vitesse de rotation initiale du « hand-spinner » (en nombre de tours par seconde) ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "9e0db086-f9d0-5720-8daa-dcb511a8e5fa",
+      "source_exercise_id": "df389fe1-1c20-5935-b8d3-65b5a378e176",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "geometrie"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Quelle est la vitesse de rotation du « hand-spinner » (en nombre de tours par seconde) au bout d'une minute et vingt secondes ?",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On donne au « hand-spinner » une vitesse de rotation initiale au temps t = 0, puis, au cours du temps, sa vitesse de rotation diminue jusqu'à l'arrêt complet du « hand-spinner ». Sa vitesse de rotation est alors égale à 0. Grâce à un appareil de mesure, on a relevé la vitesse de rotation exprimée en nombre de tours par seconde. Sur le graphique ci-dessous, on a représenté cette vitesse en fonction du temps exprimé en seconde : Inspiré de: https://www.sciencesetavenir.frlfondamental/combien-de-temps-peut-tourner-votre-hand-spinner-112808",
+      "documents": [
+        {
+          "id": "ex7-handspinner",
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-handspinner.webp",
+          "alt": "Photo d'un hand-spinner, toupie plate qui tourne sur elle-même.",
+          "source": {
+            "page": 5
+          }
+        },
+        {
+          "id": "ex7-graphique",
+          "type": "image",
+          "label": "Graphique vitesse de rotation du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-graphique.webp",
+          "alt": "Graphique représentant la vitesse de rotation du hand-spinner (en tours/seconde) en fonction du temps (en secondes). La vitesse initiale est de 20 tours/s et diminue linéairement jusqu'à 0 à environ 94 secondes.",
+          "source": {
+            "page": 5
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Quelle est la vitesse de rotation du « hand-spinner » (en nombre de tours par seconde) au bout d'une minute et vingt secondes ?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quelle est la vitesse de rotation du « hand-spinner » (en nombre de tours par seconde) au bout d'une minute et vingt secondes ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "e81919e8-0af7-59d2-b3af-f1e428e2cf05",
+      "source_exercise_id": "df389fe1-1c20-5935-b8d3-65b5a378e176",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "geometrie",
+        "calcul"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Au bout de combien de temps, le « hand-spinner » va-t-il s'arrêter ? • Pour calculer la vitesse de rotation du « hand-spinner » en fonction du temps t, notée V(t), on utilise la fonction suivante : V(t) = - 0,214 × t + V_ . ~~ t est le temps (exprimé en s) qui s'est écoulé depuis le début de rotation du « hand-spinner » ; ~~ V_ est la vitesse de rotation à laquelle on a lancé le « hand-spinner » au départ.",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On donne au « hand-spinner » une vitesse de rotation initiale au temps t = 0, puis, au cours du temps, sa vitesse de rotation diminue jusqu'à l'arrêt complet du « hand-spinner ». Sa vitesse de rotation est alors égale à 0. Grâce à un appareil de mesure, on a relevé la vitesse de rotation exprimée en nombre de tours par seconde. Sur le graphique ci-dessous, on a représenté cette vitesse en fonction du temps exprimé en seconde : Inspiré de: https://www.sciencesetavenir.frlfondamental/combien-de-temps-peut-tourner-votre-hand-spinner-112808",
+      "documents": [
+        {
+          "id": "ex7-handspinner",
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-handspinner.webp",
+          "alt": "Photo d'un hand-spinner, toupie plate qui tourne sur elle-même.",
+          "source": {
+            "page": 5
+          }
+        },
+        {
+          "id": "ex7-graphique",
+          "type": "image",
+          "label": "Graphique vitesse de rotation du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-graphique.webp",
+          "alt": "Graphique représentant la vitesse de rotation du hand-spinner (en tours/seconde) en fonction du temps (en secondes). La vitesse initiale est de 20 tours/s et diminue linéairement jusqu'à 0 à environ 94 secondes.",
+          "source": {
+            "page": 5
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Au bout de combien de temps, le « hand-spinner » va-t-il s'arrêter ? • Pour calculer la vitesse de rotation du « hand-spinner » en fonction du temps t, notée V(t), on utilise la fonction suivante : V(t) = - 0,214 × t + V_ . ~~ t est le temps (exprimé en s) qui s'est écoulé depuis le début de rotation du « hand-spinner » ; ~~ V_ est la vitesse de rotation à laquelle on a lancé le « hand-spinner » au départ.",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Au bout de combien de temps, le « hand-spinner » va-t-il s'arrêter ? • Pour calculer la vitesse de rotation du « hand-spinner » en fonction du temps t, notée V(t), on utilise la...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "ad57d820-d521-5119-9f1b-b127c5407c86",
+      "source_exercise_id": "df389fe1-1c20-5935-b8d3-65b5a378e176",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "tableur",
+        "geometrie",
+        "calcul"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "On lance le « hand-spinner » à une vitesse initiale de 20 tours par seconde. Sa vitesse de rotation est donc donnée par la formule : V(t) = - 0,214 × t + 20. Calculer sa vitesse de rotation au bout de 30~s.",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On donne au « hand-spinner » une vitesse de rotation initiale au temps t = 0, puis, au cours du temps, sa vitesse de rotation diminue jusqu'à l'arrêt complet du « hand-spinner ». Sa vitesse de rotation est alors égale à 0. Grâce à un appareil de mesure, on a relevé la vitesse de rotation exprimée en nombre de tours par seconde. Sur le graphique ci-dessous, on a représenté cette vitesse en fonction du temps exprimé en seconde : Inspiré de: https://www.sciencesetavenir.frlfondamental/combien-de-temps-peut-tourner-votre-hand-spinner-112808",
+      "documents": [
+        {
+          "id": "ex7-handspinner",
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-handspinner.webp",
+          "alt": "Photo d'un hand-spinner, toupie plate qui tourne sur elle-même.",
+          "source": {
+            "page": 5
+          }
+        },
+        {
+          "id": "ex7-graphique",
+          "type": "image",
+          "label": "Graphique vitesse de rotation du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-graphique.webp",
+          "alt": "Graphique représentant la vitesse de rotation du hand-spinner (en tours/seconde) en fonction du temps (en secondes). La vitesse initiale est de 20 tours/s et diminue linéairement jusqu'à 0 à environ 94 secondes.",
+          "source": {
+            "page": 5
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "On lance le « hand-spinner » à une vitesse initiale de 20 tours par seconde. Sa vitesse de rotation est donc donnée par la formule : V(t) = - 0,214 × t + 20. Calculer sa vitesse de rotation au bout de 30~s.",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "On lance le « hand-spinner » à une vitesse initiale de 20 tours par seconde. Sa vitesse de rotation est donc donnée par la formule : V(t) = - 0,214 × t + 20. Calculer sa vitesse...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "112c58fe-5e7f-5019-b9af-531096161251",
+      "source_exercise_id": "df389fe1-1c20-5935-b8d3-65b5a378e176",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Au bout de combien de temps le hand-spinner va-t-il s'arrêter ? Justifier par un calcul.",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On donne au « hand-spinner » une vitesse de rotation initiale au temps t = 0, puis, au cours du temps, sa vitesse de rotation diminue jusqu'à l'arrêt complet du « hand-spinner ». Sa vitesse de rotation est alors égale à 0. Grâce à un appareil de mesure, on a relevé la vitesse de rotation exprimée en nombre de tours par seconde. Sur le graphique ci-dessous, on a représenté cette vitesse en fonction du temps exprimé en seconde : Inspiré de: https://www.sciencesetavenir.frlfondamental/combien-de-temps-peut-tourner-votre-hand-spinner-112808",
+      "documents": [
+        {
+          "id": "ex7-handspinner",
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-handspinner.webp",
+          "alt": "Photo d'un hand-spinner, toupie plate qui tourne sur elle-même.",
+          "source": {
+            "page": 5
+          }
+        },
+        {
+          "id": "ex7-graphique",
+          "type": "image",
+          "label": "Graphique vitesse de rotation du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-graphique.webp",
+          "alt": "Graphique représentant la vitesse de rotation du hand-spinner (en tours/seconde) en fonction du temps (en secondes). La vitesse initiale est de 20 tours/s et diminue linéairement jusqu'à 0 à environ 94 secondes.",
+          "source": {
+            "page": 5
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Au bout de combien de temps le hand-spinner va-t-il s'arrêter ? Justifier par un calcul.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Au bout de combien de temps le hand-spinner va-t-il s'arrêter ? Justifier par un calcul.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "25b3ae69-a4fd-58d3-8b11-5ba70de9f881",
+      "source_exercise_id": "df389fe1-1c20-5935-b8d3-65b5a378e176",
+      "paper_id": "dd80e705-608b-513e-bac2-db4fa09fe34e",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Est-il vrai que, d'une manière générale, si l'on fait tourner le hand-spinner deux fois plus vite au départ, il tournera deux fois plus longtemps ? Justifier.",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On donne au « hand-spinner » une vitesse de rotation initiale au temps t = 0, puis, au cours du temps, sa vitesse de rotation diminue jusqu'à l'arrêt complet du « hand-spinner ». Sa vitesse de rotation est alors égale à 0. Grâce à un appareil de mesure, on a relevé la vitesse de rotation exprimée en nombre de tours par seconde. Sur le graphique ci-dessous, on a représenté cette vitesse en fonction du temps exprimé en seconde : Inspiré de: https://www.sciencesetavenir.frlfondamental/combien-de-temps-peut-tourner-votre-hand-spinner-112808",
+      "documents": [
+        {
+          "id": "ex7-handspinner",
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-handspinner.webp",
+          "alt": "Photo d'un hand-spinner, toupie plate qui tourne sur elle-même.",
+          "source": {
+            "page": 5
+          }
+        },
+        {
+          "id": "ex7-graphique",
+          "type": "image",
+          "label": "Graphique vitesse de rotation du hand-spinner",
+          "local_path": "exam-import/assets/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595/dnb-apmep-2018-mathematiques-generale-metropole-reunion-standard-70e8beb86595-ex07/ex7-graphique.webp",
+          "alt": "Graphique représentant la vitesse de rotation du hand-spinner (en tours/seconde) en fonction du temps (en secondes). La vitesse initiale est de 20 tours/s et diminue linéairement jusqu'à 0 à environ 94 secondes.",
+          "source": {
+            "page": 5
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Est-il vrai que, d'une manière générale, si l'on fait tourner le hand-spinner deux fois plus vite au départ, il tournera deux fois plus longtemps ? Justifier.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Est-il vrai que, d'une manière générale, si l'on fait tourner le hand-spinner deux fois plus vite au départ, il tournera deux fois plus longtemps ? Justifier.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    }
+  ]
+}

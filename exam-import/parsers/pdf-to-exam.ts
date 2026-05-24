@@ -10,9 +10,22 @@ import { detectStructuredTables } from "./table-detector.ts";
 
 const execFileAsync = promisify(execFile);
 
-export type SourceName = "eduscol" | "ac-amiens-maths";
-export type ExamName = "dnb";
-export type ExamSeries = "generale" | "professionnelle" | null;
+export type SourceName = "eduscol" | "ac-amiens-maths" | "apmep";
+export type ExamName = "dnb" | "bac";
+export type ExamSeries =
+  | "generale"
+  | "professionnelle"
+  // BAC series
+  | "bac_general"
+  | "bac_technologique"
+  | "bac_stmg"
+  | "bac_sti2d"
+  | "bac_std2a"
+  | "bac_st2s"
+  | "bac_stl"
+  | "bac_sthr"
+  | "bac_s2tmd"
+  | null;
 export type ExamVariant =
   | "standard"
   | "arial16"
