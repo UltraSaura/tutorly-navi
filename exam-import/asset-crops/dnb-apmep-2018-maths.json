@@ -1,5 +1,5 @@
 {
-  "_comment": "Coords: [x_pct, y_pct, x_max_pct, y_max_pct] measured at 144dpi (1224x1584px for A4)",
+  "_comment": "Coords: [x_pct, y_pct, x_max_pct, y_max_pct] as fractions of page size; rendered at 300dpi (2550x3300px for A4)",
   "exercise_1": [
     {
       "id": "ex1-globe",
@@ -79,7 +79,7 @@
       "type": "image",
       "label": "Figure obtenue par le programme Scratch",
       "page": 4,
-      "bbox_percent": [0.27, 0.63, 0.65, 0.87],
+      "bbox_percent": [0.10, 0.60, 0.90, 0.92],
       "alt": "Figure composée d'un grand carré avec un triangle à l'intérieur et un petit carré avec un triangle, possédant un axe de symétrie vertical."
     }
   ],

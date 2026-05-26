@@ -1,0 +1,576 @@
+{
+  "sources": [
+    {
+      "id": "apmep:https://www.apmep.fr/Brevet-2018",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-14T12:56:19.307Z"
+    }
+  ],
+  "papers": [
+    {
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-14T12:56:19.307Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "title": "DNB Brevet Metropole-reunion 2018",
+      "id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595",
+      "level": "3eme",
+      "school_cycle": "cycle_4",
+      "pdf_hash": "70e8beb86595ffba5389ba443b8982d8cdb823e5d08ed0dff8384951f7fcba0a",
+      "raw_text": ". M. E. P.\n\n~Brevet des collèges Métropole La Réunion 28 juin 2018~\n\nDurée : 2 heures\n\nIndications portant sur l'ensemble du sujet :\n\nToutes les réponses doivent être justifiées, sauf si une indication contraire est\ndonnée.\nPour chaque question, si le travail n'est pas terminé, laisser tout de même une\ntrace de la recherche ; elle sera prise en compte dans la notation.\n\nExercice 1 11 points\n\nLe gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski.\n\nCe trophée pèse 9 kg et mesure 46 cm de hauteur.\n\n1. Le biathlète français Martin Fourcade a remporté le sixième gros globe de cristal de\nsa carrière en 2017 à Pyeongchang en Corée du Sud.\n\nDonner approximativement la latitude et la longitude de ce lieu repéré sur la carte\nci-dessous.\n\n2. On considère que ce globe est composé d'un cylindre en cristal de\ndiamètre 6cm, surmonté d'une boule de cristal. Voir schéma ci -contre.\nMontrer qu'une valeur approchée du volume de la boule de ce trophée\nest de 6371~cm^3.\n\n3. Marie affirme que le volume de la boule de cristal représente environ\n90 \\\n\nA-t-elle raison ?\n\nRappels :\n\nvolume d'une boule de rayon R : V = (4)/(3)π R^3\n\nvolume d'un cylindre de rayon r et de hauteur h : V =π r^2h.\n\nExercice 2 14 points\n\nParmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées.\n\nLes PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm.\n\nEn janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines. Voici des données concernant la période du 16 au 25 janvier 2017 :\n\n|\nDonnées statistiques sur les concentrations journalières en PM10 du\n16 au 25 janvier 2017 à Lyon.\nMoyenne: 72,5 /m^3\nMédiane: 83,5 /m^3\nConcentration minimale: 22 /m^3\nConcentration maximale: 107 /m^3\nSource: http://www.air-rhonealpesfr\n|\nRelevés des concentrations journalières en PM10 du 16 au 25 janvier 2017 à\nGrenoble.\nDate | ~~Concentration~~\n| PM10 en /m^3\n16 janvier | 32\n17 janvier | 39\n18 janvier | 52\n19 janvier | 57\n20 janvier | 78\n21 janvier | 63\n22 janvier | 60\n23 janvier | 82\n24 janvier | 82\n25 janvier | 89\n\n1. Laquelle de ces deux villes a eu la plus forte concentration moyenne en PM10 entre le 16 et le 25 janvier ?\n\n2. Calculer l'étendue des séries des relevés en PM10 à Lyon et à Grenoble. Laquelle de ces deux villes a eu l'étendue la plus importante ?\n\nInterpréter ce dernier résultat.\n\n3. L'affirmation suivante est-elle exacte ? Justifier votre réponse.\n\n« Du 16 au 25 janvier, le seuil d'alerte de 80 /m^3 par jour a été dépassé au moins 5 fois à Lyon ».\n\nExercice 3 12 points\n\nDans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.\n\n1. Quelle est la probabilité qu'il écoute du rap ?\n\n2. La probabilité qu'il écoute du rock est égale à (7)/(15).\n\nCombien Théo a-t-il de morceaux de rock dans son lecteur audio ?\n\n3. Alice possède 40 \\\n\nSi Théo et Alice appuient tous les deux sur la touche « lecture aléatoire » de leur lecteur audio, lequel a le plus de chances d'écouter un morceau de rock ?\n\nExercice 4 14 points\n\nLa figure ci-dessous n'est pas représentée en vraie\ngrandeur.\n\nLes points C, B et E sont alignés.\n\nLe triangle ABC est rectangle en A.\n\nLe triangle BDC est rectangle en B.\n\n1. Montrer que la longueur BD est égale à 4~cm.\n\n2. Montrer que les triangles CBD et BFE sont semblables.\n\n3. Sophie affirme que l'angle est un angle droit. A-t-elle raison?\n\n4. Max affirme que l'angle est un angle droit. A-t-il raison ?\n\nExercice 5 16 points\n\nVoici un programme de calcul\n\n~~Choisir un nombre\n~~Multiplier ce nombre par 4\n~~Ajouter 8\n~~Multiplier le résultat par 2\n1. Vérifier que si on choisit le nombre - 1, ce programme donne 8 comme résultat final.\n\n2. Le programme donne 30 comme résultat final, quel est le nombre choisi au départ ?\n\nDans la suite de l'exercice, on nomme x le nombre choisi au départ.\n\n3. L'expression A = 2(4x + 8) donne le résultat du programme de calcul précédent pour un nombre x donné.\n\nOn pose B = (4 + x)^2 - x^2.\n\nProuver que les expressions A et B sont égales pour toutes les valeurs de x.\n\n4. Pour chacune des affirmations suivantes, indiquer si elle est vraie ou fausse. On rappelle que les réponses doivent être justifiées.\n\n~~ Affirmation 1 : Ce programme donne un résultat positif pour toutes les valeurs de x.\n\n~~ Affirmation 2 : Si le nombre x choisi est un nombre entier, le résultat obtenu est un multiple de 8.\n\nExercice 6 16 points\n\nLes longueurs sont en pixels.\n\nL'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite.\n\nOn donne le programme suivant :\n\n[Programme Scratch]\n\n[Programme Scratch]\n\n[Programme Scratch]\n\n1. On prend comme échelle 1~cm pour 50 pixels.\n\n1. Représenter sur votre copie la figure obtenue si le programme est exécuté jusqu'à la ligne 7 comprise.\n\n2. Quelles sont les coordonnées du stylo après l'exécution de la ligne 8 ?\n\n• On exécute le programme complet et on obtient la figure ci-dessous qui possède un axe de symétrie vertical.\n\nRecopier et compléter la ligne 9 du programme pour obtenir cette figure.\n\n•\n\n1. Parmi les transformations suivantes, translation, homothétie, rotation, symétrie axiale, quelle est la transformation géométrique qui permet d'obtenir le petit carré à partir du grand carré ? Préciser le rapport de réduction.\n\n2. Quel est le rapport des aires entre les deux carrés dessinés ?\n\nExercice 7 17 points\n\nLe « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même.\n\nOn donne au « hand-spinner » une vitesse de rotation initiale au temps t = 0, puis, au cours du temps, sa vitesse de rotation diminue jusqu'à l'arrêt complet du « hand-spinner ».\n\nSa vitesse de rotation est alors égale à 0.\n\nGrâce à un appareil de mesure, on a relevé la vitesse de rotation exprimée en\nnombre de tours par seconde.\n\nSur le graphique ci-dessous, on a représenté cette vitesse en fonction du temps exprimé en seconde :\n\nInspiré de: https://www.sciencesetavenir.frlfondamental/combien-de-temps-peut-tourner-votre-hand-spinner-112808\n\n1. Le temps et la vitesse de rotation du « hand-spinner » sont-ils proportionnels? Justifier.\n\n2. Par lecture graphique, répondre aux questions suivantes:\n\n1. Quelle est la vitesse de rotation initiale du « hand-spinner » (en nombre de tours par seconde) ?\n\n2. Quelle est la vitesse de rotation du « hand-spinner » (en nombre de tours par seconde) au bout d'une minute et vingt secondes ?\n\n3. Au bout de combien de temps, le « hand-spinner » va-t-il s'arrêter ?\n\n• Pour calculer la vitesse de rotation du « hand-spinner » en fonction du temps t, notée V(t), on utilise la fonction suivante :\n\nV(t) = - 0,214 × t + V_ .\n\n~~ t est le temps (exprimé en s) qui s'est écoulé depuis le début de rotation du « hand-spinner » ;\n\n~~ V_ est la vitesse de rotation à laquelle on a lancé le « hand-spinner » au départ.\n\n1. On lance le « hand-spinner » à une vitesse initiale de 20 tours par seconde. Sa vitesse de rotation est donc donnée par la formule :\n\nV(t) = - 0,214 × t + 20.\n\nCalculer sa vitesse de rotation au bout de 30~s.\n\n2. Au bout de combien de temps le hand-spinner va-t-il s'arrêter ? Justifier par un calcul.\n\n3. Est-il vrai que, d'une manière générale, si l'on fait tourner le hand-spinner deux fois plus vite au départ, il tournera deux fois plus longtemps ? Justifier.",
+      "exercises": [
+        "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595:ex01",
+        "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595:ex02",
+        "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595:ex03",
+        "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595:ex04",
+        "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595:ex05",
+        "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595:ex06",
+        "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595:ex07"
+      ],
+      "parsing_status": "parsed"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595:ex01",
+      "paper_id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-14T12:56:19.307Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "pdf_hash": "70e8beb86595ffba5389ba443b8982d8cdb823e5d08ed0dff8384951f7fcba0a",
+      "exercise_number": 1,
+      "title": "Exercice 1 (11 points)",
+      "raw_text": "Le gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski.\n\nCe trophée pèse 9 kg et mesure 46 cm de hauteur.\n\n1. Le biathlète français Martin Fourcade a remporté le sixième gros globe de cristal de\nsa carrière en 2017 à Pyeongchang en Corée du Sud.\n\nDonner approximativement la latitude et la longitude de ce lieu repéré sur la carte\nci-dessous.\n\n2. On considère que ce globe est composé d'un cylindre en cristal de\ndiamètre 6cm, surmonté d'une boule de cristal. Voir schéma ci -contre.\nMontrer qu'une valeur approchée du volume de la boule de ce trophée\nest de 6371~cm^3.\n\n3. Marie affirme que le volume de la boule de cristal représente environ\n90 \\\n\nA-t-elle raison ?\n\nRappels :\n\nvolume d'une boule de rayon R : V = (4)/(3)π R^3\n\nvolume d'un cylindre de rayon r et de hauteur h : V =π r^2h.",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 1 (11 points)",
+        "context": "Le gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski.\n\nCe trophée pèse 9 kg et mesure 46 cm de hauteur.",
+        "documents": [],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "Le biathlète français Martin Fourcade a remporté le sixième gros globe de cristal de\nsa carrière en 2017 à Pyeongchang en Corée du Sud.\n\nDonner approximativement la latitude et la longitude de ce lieu repéré sur la carte\nci-dessous.",
+            "points": 3.7,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "On considère que ce globe est composé d'un cylindre en cristal de\ndiamètre 6cm, surmonté d'une boule de cristal. Voir schéma ci -contre.\nMontrer qu'une valeur approchée du volume de la boule de ce trophée\nest de 6371~cm^3.",
+            "points": 3.7,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "Marie affirme que le volume de la boule de cristal représente environ\n90 \\\n\nA-t-elle raison ?\n\nRappels :\n\nvolume d'une boule de rayon R : V = (4)/(3)π R^3\n\nvolume d'un cylindre de rayon r et de hauteur h : V =π r^2h.",
+            "points": 3.7,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Le gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski.\n\nCe trophée pèse 9 kg et mesure 46 cm de hauteur.\n\n1. Le biathlète français Martin Fourcade a remporté le sixième gros globe de cristal de\nsa carrière en 2017 à Pyeongchang en Corée du Sud.\n\nDonner approximativement la latitude et la longitude de ce lieu repéré sur la carte\nci-dessous.\n\n2. On considère que ce globe est composé d'un cylindre en cristal de\ndiamètre 6cm, surmonté d'une boule de cristal. Voir schéma ci -contre.\nMontrer qu'une valeur approchée du volume de la boule de ce trophée\nest de 6371~cm^3.\n\n3. Marie affirme que le volume de la boule de cristal représente environ\n90 \\\n\nA-t-elle raison ?\n\nRappels :\n\nvolume d'une boule de rayon R : V = (4)/(3)π R^3\n\nvolume d'un cylindre de rayon r et…",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    },
+    {
+      "id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595:ex02",
+      "paper_id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-14T12:56:19.307Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "pdf_hash": "70e8beb86595ffba5389ba443b8982d8cdb823e5d08ed0dff8384951f7fcba0a",
+      "exercise_number": 2,
+      "title": "Exercice 2 (14 points)",
+      "raw_text": "Parmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées.\n\nLes PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm.\n\nEn janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines. Voici des données concernant la période du 16 au 25 janvier 2017 :\n\n|\nDonnées statistiques sur les concentrations journalières en PM10 du\n16 au 25 janvier 2017 à Lyon.\nMoyenne: 72,5 /m^3\nMédiane: 83,5 /m^3\nConcentration minimale: 22 /m^3\nConcentration maximale: 107 /m^3\nSource: http://www.air-rhonealpesfr\n|\nRelevés des concentrations journalières en PM10 du 16 au 25 janvier 2017 à\nGrenoble.\nDate | ~~Concentration~~\n| PM10 en /m^3\n16 janvier | 32\n17 janvier | 39\n18 janvier | 52\n19 janvier | 57\n20 janvier | 78\n21 janvier | 63\n22 janvier | 60\n23 janvier | 82\n24 janvier | 82\n25 janvier | 89\n\n1. Laquelle de ces deux villes a eu la plus forte concentration moyenne en PM10 entre le 16 et le 25 janvier ?\n\n2. Calculer l'étendue des séries des relevés en PM10 à Lyon et à Grenoble. Laquelle de ces deux villes a eu l'étendue la plus importante ?\n\nInterpréter ce dernier résultat.\n\n3. L'affirmation suivante est-elle exacte ? Justifier votre réponse.\n\n« Du 16 au 25 janvier, le seuil d'alerte de 80 /m^3 par jour a été dépassé au moins 5 fois à Lyon ».",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 2 (14 points)",
+        "context": "Parmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées.\n\nLes PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm.\n\nEn janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines. Voici des données concernant la période du 16 au 25 janvier 2017 :\n\n|\nDonnées statistiques sur les concentrations journalières en PM10 du\n16 au 25 janvier 2017 à Lyon.\nMoyenne: 72,5 /m^3\nMédiane: 83,5 /m^3\nConcentration minimale: 22 /m^3\nConcentration maximale: 107 /m^3\nSource: http://www.air-rhonealpesfr\n|\nRelevés des concentrations journalières en PM10 du 16 au 25 janvier 2017 à\nGrenoble.\nDate | ~~Concentration~~\n| PM10 en /m^3\n16 janvier | 32\n17 janvier | 39\n18 janvier | 52\n19 janvier | 57\n20 janvier | 78\n21 janvier | 63\n22 janvier | 60\n23 janvier | 82\n24 janvier | 82\n25 janvier | 89",
+        "documents": [],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "Laquelle de ces deux villes a eu la plus forte concentration moyenne en PM10 entre le 16 et le 25 janvier ?",
+            "points": 4.7,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Calculer l'étendue des séries des relevés en PM10 à Lyon et à Grenoble. Laquelle de ces deux villes a eu l'étendue la plus importante ?\n\nInterpréter ce dernier résultat.",
+            "points": 4.7,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "L'affirmation suivante est-elle exacte ? Justifier votre réponse.\n\n« Du 16 au 25 janvier, le seuil d'alerte de 80 /m^3 par jour a été dépassé au moins 5 fois à Lyon ».",
+            "points": 4.7,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Parmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées.\n\nLes PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm.\n\nEn janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines. Voici des données concernant la période du 16 au 25 janvier 2017 :\n\n|\nDonnées statistiques sur les concentrations journalières en PM10 du\n16 au 25 janvier 2017 à Lyon.\nMoyenne: 72,5 /m^3\nMédiane: 83,5 /m^3\nConcentration minimale: 22 /m^3\nConcentration maximale: 107 /m^3\nSource: http://www.air-rhonealpesfr\n|\nRelevés des concentrations journalières en PM10 du 16 au 25 janvier 2017 à\nGrenoble.\nDate | ~~Concentration~~\n| PM10 en /m^3\n16 janvier | 32\n17 janvier | 39\n18 janvier | 52\n19 janvier | 57\n20 janvier | 78\n21 janvier…",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    },
+    {
+      "id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595:ex03",
+      "paper_id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-14T12:56:19.307Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "pdf_hash": "70e8beb86595ffba5389ba443b8982d8cdb823e5d08ed0dff8384951f7fcba0a",
+      "exercise_number": 3,
+      "title": "Exercice 3 (12 points)",
+      "raw_text": "Dans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.\n\n1. Quelle est la probabilité qu'il écoute du rap ?\n\n2. La probabilité qu'il écoute du rock est égale à (7)/(15).\n\nCombien Théo a-t-il de morceaux de rock dans son lecteur audio ?\n\n3. Alice possède 40 \\\n\nSi Théo et Alice appuient tous les deux sur la touche « lecture aléatoire » de leur lecteur audio, lequel a le plus de chances d'écouter un morceau de rock ?",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 3 (12 points)",
+        "context": "Dans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.",
+        "documents": [],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "Quelle est la probabilité qu'il écoute du rap ?",
+            "points": 4,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "La probabilité qu'il écoute du rock est égale à (7)/(15).\n\nCombien Théo a-t-il de morceaux de rock dans son lecteur audio ?",
+            "points": 4,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "Alice possède 40 \\\n\nSi Théo et Alice appuient tous les deux sur la touche « lecture aléatoire » de leur lecteur audio, lequel a le plus de chances d'écouter un morceau de rock ?",
+            "points": 4,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Dans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.\n\n1. Quelle est la probabilité qu'il écoute du rap ?\n\n2. La probabilité qu'il écoute du rock est égale à (7)/(15).\n\nCombien Théo a-t-il de morceaux de rock dans son lecteur audio ?\n\n3. Alice possède 40 \\\n\nSi Théo et Alice appuient tous les deux sur la touche « lecture aléatoire » de leur lecteur audio, lequel a le plus de chances d'écouter un morceau de rock ?",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    },
+    {
+      "id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595:ex04",
+      "paper_id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-14T12:56:19.307Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "pdf_hash": "70e8beb86595ffba5389ba443b8982d8cdb823e5d08ed0dff8384951f7fcba0a",
+      "exercise_number": 4,
+      "title": "Exercice 4 (14 points)",
+      "raw_text": "La figure ci-dessous n'est pas représentée en vraie\ngrandeur.\n\nLes points C, B et E sont alignés.\n\nLe triangle ABC est rectangle en A.\n\nLe triangle BDC est rectangle en B.\n\n1. Montrer que la longueur BD est égale à 4~cm.\n\n2. Montrer que les triangles CBD et BFE sont semblables.\n\n3. Sophie affirme que l'angle est un angle droit. A-t-elle raison?\n\n4. Max affirme que l'angle est un angle droit. A-t-il raison ?",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 4 (14 points)",
+        "context": "La figure ci-dessous n'est pas représentée en vraie\ngrandeur.\n\nLes points C, B et E sont alignés.\n\nLe triangle ABC est rectangle en A.\n\nLe triangle BDC est rectangle en B.",
+        "documents": [],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "Montrer que la longueur BD est égale à 4~cm.",
+            "points": 3.5,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Montrer que les triangles CBD et BFE sont semblables.",
+            "points": 3.5,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "Sophie affirme que l'angle est un angle droit. A-t-elle raison?",
+            "points": 3.5,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "4",
+            "label": "4.",
+            "text": "Max affirme que l'angle est un angle droit. A-t-il raison ?",
+            "points": 3.5,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "La figure ci-dessous n'est pas représentée en vraie\ngrandeur.\n\nLes points C, B et E sont alignés.\n\nLe triangle ABC est rectangle en A.\n\nLe triangle BDC est rectangle en B.\n\n1. Montrer que la longueur BD est égale à 4~cm.\n\n2. Montrer que les triangles CBD et BFE sont semblables.\n\n3. Sophie affirme que l'angle est un angle droit. A-t-elle raison?\n\n4. Max affirme que l'angle est un angle droit. A-t-il raison ?",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    },
+    {
+      "id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595:ex05",
+      "paper_id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-14T12:56:19.307Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "pdf_hash": "70e8beb86595ffba5389ba443b8982d8cdb823e5d08ed0dff8384951f7fcba0a",
+      "exercise_number": 5,
+      "title": "Exercice 5 (16 points)",
+      "raw_text": "Voici un programme de calcul\n\n~~Choisir un nombre\n~~Multiplier ce nombre par 4\n~~Ajouter 8\n~~Multiplier le résultat par 2\n1. Vérifier que si on choisit le nombre - 1, ce programme donne 8 comme résultat final.\n\n2. Le programme donne 30 comme résultat final, quel est le nombre choisi au départ ?\n\nDans la suite de l'exercice, on nomme x le nombre choisi au départ.\n\n3. L'expression A = 2(4x + 8) donne le résultat du programme de calcul précédent pour un nombre x donné.\n\nOn pose B = (4 + x)^2 - x^2.\n\nProuver que les expressions A et B sont égales pour toutes les valeurs de x.\n\n4. Pour chacune des affirmations suivantes, indiquer si elle est vraie ou fausse. On rappelle que les réponses doivent être justifiées.\n\n~~ Affirmation 1 : Ce programme donne un résultat positif pour toutes les valeurs de x.\n\n~~ Affirmation 2 : Si le nombre x choisi est un nombre entier, le résultat obtenu est un multiple de 8.",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 5 (16 points)",
+        "context": "Voici un programme de calcul\n\n~~Choisir un nombre\n~~Multiplier ce nombre par 4\n~~Ajouter 8\n~~Multiplier le résultat par 2",
+        "documents": [],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "Vérifier que si on choisit le nombre - 1, ce programme donne 8 comme résultat final.",
+            "points": 4,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Le programme donne 30 comme résultat final, quel est le nombre choisi au départ ?\n\nDans la suite de l'exercice, on nomme x le nombre choisi au départ.",
+            "points": 4,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "L'expression A = 2(4x + 8) donne le résultat du programme de calcul précédent pour un nombre x donné.\n\nOn pose B = (4 + x)^2 - x^2.\n\nProuver que les expressions A et B sont égales pour toutes les valeurs de x.",
+            "points": 4,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "4",
+            "label": "4.",
+            "text": "Pour chacune des affirmations suivantes, indiquer si elle est vraie ou fausse. On rappelle que les réponses doivent être justifiées.\n\n~~ Affirmation 1 : Ce programme donne un résultat positif pour toutes les valeurs de x.\n\n~~ Affirmation 2 : Si le nombre x choisi est un nombre entier, le résultat obtenu est un multiple de 8.",
+            "points": 4,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Voici un programme de calcul\n\n~~Choisir un nombre\n~~Multiplier ce nombre par 4\n~~Ajouter 8\n~~Multiplier le résultat par 2\n1. Vérifier que si on choisit le nombre - 1, ce programme donne 8 comme résultat final.\n\n2. Le programme donne 30 comme résultat final, quel est le nombre choisi au départ ?\n\nDans la suite de l'exercice, on nomme x le nombre choisi au départ.\n\n3. L'expression A = 2(4x + 8) donne le résultat du programme de calcul précédent pour un nombre x donné.\n\nOn pose B = (4 + x)^2 - x^2.\n\nProuver que les expressions A et B sont égales pour toutes les valeurs de x.\n\n4. Pour chacune des affirmations suivantes, indiquer si elle est vraie ou fausse. On rappelle que les réponses doivent être justifiées.\n\n~~ Affirmation 1 : Ce programme donne un résultat positif pour toutes les valeurs d…",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    },
+    {
+      "id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595:ex06",
+      "paper_id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-14T12:56:19.307Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "pdf_hash": "70e8beb86595ffba5389ba443b8982d8cdb823e5d08ed0dff8384951f7fcba0a",
+      "exercise_number": 6,
+      "title": "Exercice 6 (16 points)",
+      "raw_text": "Les longueurs sont en pixels.\n\nL'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite.\n\nOn donne le programme suivant :\n\n[Programme Scratch]\n\n[Programme Scratch]\n\n[Programme Scratch]\n\n1. On prend comme échelle 1~cm pour 50 pixels.\n\n1. Représenter sur votre copie la figure obtenue si le programme est exécuté jusqu'à la ligne 7 comprise.\n\n2. Quelles sont les coordonnées du stylo après l'exécution de la ligne 8 ?\n\n• On exécute le programme complet et on obtient la figure ci-dessous qui possède un axe de symétrie vertical.\n\nRecopier et compléter la ligne 9 du programme pour obtenir cette figure.\n\n•\n\n1. Parmi les transformations suivantes, translation, homothétie, rotation, symétrie axiale, quelle est la transformation géométrique qui permet d'obtenir le petit carré à partir du grand carré ? Préciser le rapport de réduction.\n\n2. Quel est le rapport des aires entre les deux carrés dessinés ?",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 6 (16 points)",
+        "context": "Les longueurs sont en pixels.\n\nL'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite.\n\nOn donne le programme suivant :\n\n[Programme Scratch]\n\n[Programme Scratch]\n\n[Programme Scratch]",
+        "documents": [],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "On prend comme échelle 1~cm pour 50 pixels.",
+            "points": 3.2,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "Représenter sur votre copie la figure obtenue si le programme est exécuté jusqu'à la ligne 7 comprise.",
+            "points": 3.2,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Quelles sont les coordonnées du stylo après l'exécution de la ligne 8 ?\n\n• On exécute le programme complet et on obtient la figure ci-dessous qui possède un axe de symétrie vertical.\n\nRecopier et compléter la ligne 9 du programme pour obtenir cette figure.\n\n•",
+            "points": 3.2,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "Parmi les transformations suivantes, translation, homothétie, rotation, symétrie axiale, quelle est la transformation géométrique qui permet d'obtenir le petit carré à partir du grand carré ? Préciser le rapport de réduction.",
+            "points": 3.2,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Quel est le rapport des aires entre les deux carrés dessinés ?",
+            "points": 3.2,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Les longueurs sont en pixels.\n\nL'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite.\n\nOn donne le programme suivant :\n\n[Programme Scratch]\n\n[Programme Scratch]\n\n[Programme Scratch]\n\n1. On prend comme échelle 1~cm pour 50 pixels.\n\n1. Représenter sur votre copie la figure obtenue si le programme est exécuté jusqu'à la ligne 7 comprise.\n\n2. Quelles sont les coordonnées du stylo après l'exécution de la ligne 8 ?\n\n• On exécute le programme complet et on obtient la figure ci-dessous qui possède un axe de symétrie vertical.\n\nRecopier et compléter la ligne 9 du programme pour obtenir cette figure.\n\n•\n\n1. Parmi les transformations suivantes, translation, homothétie, rotation, symétrie axiale, quelle est la transformation géométrique qui permet d'obtenir le petit carré à parti…",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    },
+    {
+      "id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595:ex07",
+      "paper_id": "dnb:apmep:2018:mathematiques:generale:metropole-reunion:standard:70e8beb86595",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-14T12:56:19.307Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "pdf_hash": "70e8beb86595ffba5389ba443b8982d8cdb823e5d08ed0dff8384951f7fcba0a",
+      "exercise_number": 7,
+      "title": "Exercice 7 (17 points)",
+      "raw_text": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même.\n\nOn donne au « hand-spinner » une vitesse de rotation initiale au temps t = 0, puis, au cours du temps, sa vitesse de rotation diminue jusqu'à l'arrêt complet du « hand-spinner ».\n\nSa vitesse de rotation est alors égale à 0.\n\nGrâce à un appareil de mesure, on a relevé la vitesse de rotation exprimée en\nnombre de tours par seconde.\n\nSur le graphique ci-dessous, on a représenté cette vitesse en fonction du temps exprimé en seconde :\n\nInspiré de: https://www.sciencesetavenir.frlfondamental/combien-de-temps-peut-tourner-votre-hand-spinner-112808\n\n1. Le temps et la vitesse de rotation du « hand-spinner » sont-ils proportionnels? Justifier.\n\n2. Par lecture graphique, répondre aux questions suivantes:\n\n1. Quelle est la vitesse de rotation initiale du « hand-spinner » (en nombre de tours par seconde) ?\n\n2. Quelle est la vitesse de rotation du « hand-spinner » (en nombre de tours par seconde) au bout d'une minute et vingt secondes ?\n\n3. Au bout de combien de temps, le « hand-spinner » va-t-il s'arrêter ?\n\n• Pour calculer la vitesse de rotation du « hand-spinner » en fonction du temps t, notée V(t), on utilise la fonction suivante :\n\nV(t) = - 0,214 × t + V_ .\n\n~~ t est le temps (exprimé en s) qui s'est écoulé depuis le début de rotation du « hand-spinner » ;\n\n~~ V_ est la vitesse de rotation à laquelle on a lancé le « hand-spinner » au départ.\n\n1. On lance le « hand-spinner » à une vitesse initiale de 20 tours par seconde. Sa vitesse de rotation est donc donnée par la formule :\n\nV(t) = - 0,214 × t + 20.\n\nCalculer sa vitesse de rotation au bout de 30~s.\n\n2. Au bout de combien de temps le hand-spinner va-t-il s'arrêter ? Justifier par un calcul.\n\n3. Est-il vrai que, d'une manière générale, si l'on fait tourner le hand-spinner deux fois plus vite au départ, il tournera deux fois plus longtemps ? Justifier.",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 7 (17 points)",
+        "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même.\n\nOn donne au « hand-spinner » une vitesse de rotation initiale au temps t = 0, puis, au cours du temps, sa vitesse de rotation diminue jusqu'à l'arrêt complet du « hand-spinner ».\n\nSa vitesse de rotation est alors égale à 0.\n\nGrâce à un appareil de mesure, on a relevé la vitesse de rotation exprimée en\nnombre de tours par seconde.\n\nSur le graphique ci-dessous, on a représenté cette vitesse en fonction du temps exprimé en seconde :\n\nInspiré de: https://www.sciencesetavenir.frlfondamental/combien-de-temps-peut-tourner-votre-hand-spinner-112808",
+        "documents": [],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "Le temps et la vitesse de rotation du « hand-spinner » sont-ils proportionnels? Justifier.",
+            "points": 2.1,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Par lecture graphique, répondre aux questions suivantes:",
+            "points": 2.1,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "Quelle est la vitesse de rotation initiale du « hand-spinner » (en nombre de tours par seconde) ?",
+            "points": 2.1,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Quelle est la vitesse de rotation du « hand-spinner » (en nombre de tours par seconde) au bout d'une minute et vingt secondes ?",
+            "points": 2.1,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "Au bout de combien de temps, le « hand-spinner » va-t-il s'arrêter ?\n\n• Pour calculer la vitesse de rotation du « hand-spinner » en fonction du temps t, notée V(t), on utilise la fonction suivante :\n\nV(t) = - 0,214 × t + V_ .\n\n~~ t est le temps (exprimé en s) qui s'est écoulé depuis le début de rotation du « hand-spinner » ;\n\n~~ V_ est la vitesse de rotation à laquelle on a lancé le « hand-spinner » au départ.",
+            "points": 2.1,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "On lance le « hand-spinner » à une vitesse initiale de 20 tours par seconde. Sa vitesse de rotation est donc donnée par la formule :\n\nV(t) = - 0,214 × t + 20.\n\nCalculer sa vitesse de rotation au bout de 30~s.",
+            "points": 2.1,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Au bout de combien de temps le hand-spinner va-t-il s'arrêter ? Justifier par un calcul.",
+            "points": 2.1,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "Est-il vrai que, d'une manière générale, si l'on fait tourner le hand-spinner deux fois plus vite au départ, il tournera deux fois plus longtemps ? Justifier.",
+            "points": 2.1,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même.\n\nOn donne au « hand-spinner » une vitesse de rotation initiale au temps t = 0, puis, au cours du temps, sa vitesse de rotation diminue jusqu'à l'arrêt complet du « hand-spinner ».\n\nSa vitesse de rotation est alors égale à 0.\n\nGrâce à un appareil de mesure, on a relevé la vitesse de rotation exprimée en\nnombre de tours par seconde.\n\nSur le graphique ci-dessous, on a représenté cette vitesse en fonction du temps exprimé en seconde :\n\nInspiré de: https://www.sciencesetavenir.frlfondamental/combien-de-temps-peut-tourner-votre-hand-spinner-112808\n\n1. Le temps et la vitesse de rotation du « hand-spinner » sont-ils proportionnels? Justifier.\n\n2. Par lecture graphique, répondre aux questions suivantes:\n\n1. Quelle est la vi…",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    }
+  ],
+  "exercise_program_links": []
+}

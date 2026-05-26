@@ -59,8 +59,13 @@ async function importDirect(supabaseUrl: string, serviceKey: string, body: Recor
   const items = Array.isArray(body.training_items) ? body.training_items : [];
   const mode = body.mode === "replace" ? "replace" : "upsert";
 
-  if (mode === "replace" && items.length > 0) {
-    const ids = items.map((item) => (isRecord(item) ? item.id : null)).filter((id): id is string => typeof id === "string");
+  const uniqueItems = deduplicateById(items);
+  if (uniqueItems.length < items.length) {
+    console.warn(`Deduplicated ${items.length - uniqueItems.length} training items with colliding IDs.`);
+  }
+
+  if (mode === "replace" && uniqueItems.length > 0) {
+    const ids = uniqueItems.map((item) => (isRecord(item) ? item.id : null)).filter((id): id is string => typeof id === "string");
     for (const batch of chunk(ids, 100)) {
       const { error } = await supabaseAdmin.from("exam_training_items").delete().in("id", batch);
       if (error) return { success: false, error: error.message, counts: { training_items: 0 }, diagnostics: [] };
@@ -68,7 +73,7 @@ async function importDirect(supabaseUrl: string, serviceKey: string, body: Recor
   }
 
   let count = 0;
-  for (const batch of chunk(items, 100)) {
+  for (const batch of chunk(uniqueItems, 100)) {
     const { error } = await supabaseAdmin.from("exam_training_items").upsert(batch, { onConflict: "id" });
     if (error) return { success: false, error: error.message, counts: { training_items: count }, diagnostics: [] };
     count += batch.length;
@@ -113,6 +118,16 @@ function parseArgs(args: string[]): CliOptions {
   }
 
   return options;
+}
+
+function deduplicateById(items: unknown[]): unknown[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (!isRecord(item) || typeof item.id !== "string") return true;
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
 }
 
 function chunk<T>(array: T[], size: number): T[][] {
@@ -186,9 +201,10 @@ async function uploadLocalTrainingAssets(bundle: Record<string, unknown>, supaba
       ].join("/");
 
       const bytes = await readFile(document.local_path);
+      const contentType = mimeTypeFromPath(document.local_path);
       const { error } = await supabaseAdmin.storage
         .from(EXAM_ASSETS_BUCKET)
-        .upload(storage_path, bytes, { contentType: "image/png", upsert: true });
+        .upload(storage_path, bytes, { contentType, upsert: true });
       if (error) throw new Error(`Unable to upload training asset ${document.local_path}: ${error.message}`);
 
       const publicUrl = supabaseAdmin.storage.from(EXAM_ASSETS_BUCKET).getPublicUrl(storage_path).data.publicUrl;
@@ -200,6 +216,17 @@ async function uploadLocalTrainingAssets(bundle: Record<string, unknown>, supaba
   return bundle;
 }
 
+function mimeTypeFromPath(filePath: string): string {
+  const ext = filePath.split(".").pop()?.toLowerCase();
+  switch (ext) {
+    case "webp": return "image/webp";
+    case "jpg":
+    case "jpeg": return "image/jpeg";
+    case "png":
+    default: return "image/png";
+  }
+}
+
 async function ensureAssetsBucket(supabaseAdmin: ReturnType<typeof createClient>, bucketName: string): Promise<void> {
   const { data: buckets, error: listError } = await supabaseAdmin.storage.listBuckets();
   if (listError) throw new Error(`Unable to list storage buckets: ${listError.message}`);
@@ -207,7 +234,7 @@ async function ensureAssetsBucket(supabaseAdmin: ReturnType<typeof createClient>
   const { error } = await supabaseAdmin.storage.createBucket(bucketName, {
     public: true,
     fileSizeLimit: "10MB",
-    allowedMimeTypes: ["image/png", "image/jpeg", "image/webp"],
+    allowedMimeTypes: ["image/webp", "image/png", "image/jpeg"],
   });
   if (error) throw new Error(`Unable to create ${bucketName} bucket: ${error.message}`);
 }
