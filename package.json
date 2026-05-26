@@ -19,6 +19,8 @@
     "import:corrections": "node --experimental-strip-types exam-import/scripts/import-corrections.ts",
     "reset:exam-data": "node --experimental-strip-types exam-import/scripts/reset-exam-data.ts",
     "smoke:dnb-annales": "node --experimental-strip-types exam-import/scripts/smoke-dnb-annales.ts",
+    "recrop:assets": "node --experimental-strip-types exam-import/scripts/recrop-assets.ts",
+    "generate:assets": "node --experimental-strip-types exam-import/scripts/generate-assets.ts",
     "copy:mathlive": "mkdir -p public/mathlive/fonts public/mathlive/sounds && cp -R node_modules/mathlive/dist/fonts/* public/mathlive/fonts/ && cp -R node_modules/mathlive/dist/sounds/* public/mathlive/sounds/ && cp node_modules/mathlive/dist/mathlive-static.css public/mathlive/mathlive-static.css && cp node_modules/mathlive/dist/mathlive-fonts.css public/mathlive/mathlive-fonts.css",
     "postinstall": "npm run copy:mathlive",
     "test": "vitest"
@@ -59,6 +61,7 @@
     "@radix-ui/react-toggle": "^1.1.0",
     "@radix-ui/react-toggle-group": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.4",
+    "@resvg/resvg-js": "^2.6.2",
     "@supabase/supabase-js": "^2.49.1",
     "@tanstack/react-query": "^5.56.2",
     "@types/dompurify": "^3.2.0",

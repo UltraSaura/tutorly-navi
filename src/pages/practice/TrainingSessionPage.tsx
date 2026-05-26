@@ -1,14 +1,14 @@
-import { useRef, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2, Lightbulb, RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PageMeta } from '@/components/seo/PageMeta';
-import { SessionProgress } from '@/components/practice/SessionProgress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -32,7 +32,6 @@ import {
   type GuidanceStateMap,
   type TrainingQuestion,
 } from '@/lib/trainingGuidance';
-import { cn } from '@/lib/utils';
 
 function normalizeChoices(value: unknown[] | null): string[] {
   if (!Array.isArray(value)) return [];
@@ -49,7 +48,7 @@ function DocumentTable({ document }: { document: TrainingDocument }) {
   if (!document.table) return null;
 
   return (
-    <div className="mt-2 max-w-full overflow-x-auto rounded-md border border-border/60 bg-background">
+    <div className="max-w-full overflow-x-auto rounded-md border border-border/60 bg-background">
       <table className="w-full min-w-[34rem] border-collapse text-left text-xs sm:text-sm">
         {document.caption ? (
           <caption className="caption-top px-3 py-2 text-left text-sm font-medium text-foreground">
@@ -90,7 +89,7 @@ function DocumentImage({ document }: { document: TrainingDocument }) {
     <>
       <button
         type="button"
-        className="mt-2 block w-full overflow-hidden rounded-md border border-border/60 bg-background text-left"
+        className="block w-full overflow-hidden rounded-md border border-border/60 bg-background text-left"
         onClick={() => setOpen(true)}
       >
         <img src={src} alt={document.alt ?? document.label ?? 'Document'} className="h-auto w-full object-contain" loading="lazy" />
@@ -114,54 +113,55 @@ function DocumentImage({ document }: { document: TrainingDocument }) {
   );
 }
 
-function TrainingDocuments({ documents }: { documents: TrainingDocument[] }) {
-  const visibleDocuments = documents.filter((document) => !document.fallback);
-  const fallbackDocuments = documents.filter((document) => document.fallback);
+function ExerciseDocuments({ documents }: { documents: TrainingDocument[] }) {
+  const visibleDocuments = documents.filter((doc) => !doc.fallback);
+  const fallbackDocuments = documents.filter((doc) => doc.fallback);
   if (visibleDocuments.length === 0 && fallbackDocuments.length === 0) return null;
 
   return (
-    <section className="space-y-2">
+    <div className="space-y-4">
       {visibleDocuments.map((document, index) => {
         const isImageFirst = document.render_mode === 'image_first' && (document.public_url || document.local_path);
-
         return (
-          <div key={document.id ?? `${document.label}-${index}`} className="rounded-md border border-border/60 bg-muted/20 p-3">
-            <p className="text-sm font-medium">{document.label ?? 'Document'}</p>
+          <div key={document.id ?? `${document.label}-${index}`}>
+            {document.label ? (
+              <p className="mb-1 text-sm font-medium text-muted-foreground">{document.label}</p>
+            ) : null}
             {isImageFirst ? (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <DocumentImage document={document} />
-                {document.table && (
-                  <details className="mt-2 rounded-md border border-dashed border-border/70 p-2">
-                    <summary className="cursor-pointer text-sm font-medium">Voir en tableau accessible</summary>
+                {document.table ? (
+                  <details className="rounded-md border border-dashed border-border/70 p-2">
+                    <summary className="cursor-pointer text-sm">Voir en tableau accessible</summary>
                     <div className="mt-2">
                       <DocumentTable document={document} />
                     </div>
                   </details>
-                )}
+                ) : null}
               </div>
             ) : (
               <>
                 {document.type === 'table' ? <DocumentTable document={document} /> : null}
                 {document.type === 'image' ? <DocumentImage document={document} /> : null}
+                {document.content ? (
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{document.content}</p>
+                ) : null}
               </>
             )}
-            {document.content && !isImageFirst ? (
-              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">{document.content}</p>
-            ) : null}
           </div>
         );
       })}
       {fallbackDocuments.length > 0 ? (
-        <details className="rounded-md border border-dashed border-border/70 bg-muted/10 p-3">
-          <summary className="cursor-pointer text-sm font-medium">Voir la source visuelle</summary>
-          <div className="mt-3 space-y-3">
-            {fallbackDocuments.map((document, index) => (
-              <DocumentImage key={document.id ?? `${document.label}-fallback-${index}`} document={document} />
+        <details className="rounded-md border border-dashed border-border/70 p-2">
+          <summary className="cursor-pointer text-sm">Source visuelle</summary>
+          <div className="mt-2 space-y-2">
+            {fallbackDocuments.map((doc, i) => (
+              <DocumentImage key={doc.id ?? `fallback-${i}`} document={doc} />
             ))}
           </div>
         </details>
       ) : null}
-    </section>
+    </div>
   );
 }
 
@@ -194,8 +194,8 @@ function AnswerControl({
       <Textarea
         value={value}
         onChange={(event) => onChange(event.currentTarget.value)}
-        placeholder="Ta réponse"
-        className="min-h-32"
+        placeholder="Votre réponse"
+        className="min-h-28"
       />
     );
   }
@@ -205,7 +205,7 @@ function AnswerControl({
       value={value}
       onChange={(event) => onChange(event.currentTarget.value)}
       inputMode={question.answer_type === 'numeric' || question.answer_type === 'math' ? 'decimal' : 'text'}
-      placeholder="Ta réponse"
+      placeholder="Votre réponse"
     />
   );
 }
@@ -224,7 +224,7 @@ function questionsForItem(item: ExamTrainingItem): TrainingQuestion[] {
         hints: [],
         correct_feedback: 'Bonne réponse.',
         almost_feedback: 'Tu es proche.',
-        incorrect_feedback: 'Essaie d’abord de répondre à cette question.',
+        incorrect_feedback: "Essaie d'abord de répondre à cette question.",
       },
     },
   ];
@@ -255,37 +255,36 @@ export function TrainingQuestionBlock({
   const hasNextHint = state.hint_level < hints.length;
 
   return (
-    <section className="space-y-3 rounded-md border border-border/60 bg-muted/10 p-3" data-item-id={itemId} data-question-id={question.id}>
-      <div className="space-y-1">
-        <p className="text-sm font-semibold leading-6">
-          {question.label ? <span className="mr-2 text-muted-foreground">{question.label}</span> : null}
-          <span>{question.prompt}</span>
-        </p>
-      </div>
+    <div className="space-y-3" data-item-id={itemId} data-question-id={question.id}>
+      <p className="text-sm font-semibold leading-6">
+        {question.label ? <span className="mr-2 text-muted-foreground">{question.label}</span> : null}
+        <span>{question.prompt}</span>
+      </p>
 
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Réponse</p>
         <AnswerControl question={question} value={state.answer} onChange={onAnswerChange} />
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={onCheck}>
+        <Button type="button" size="sm" onClick={onCheck}>
           <CheckCircle2 className="mr-1 h-4 w-4" />
           {t('practice.guidance.checkAnswer')}
         </Button>
-        <Button type="button" variant="outline" onClick={onHint} disabled={!hasNextHint}>
+        <Button type="button" size="sm" variant="outline" onClick={onHint} disabled={!hasNextHint}>
           <Lightbulb className="mr-1 h-4 w-4" />
           {state.hint_level > 0 ? t('practice.guidance.nextHint') : t('practice.guidance.hint')}
         </Button>
-        <span className="self-center text-xs text-muted-foreground">
-          {state.hint_level} / {hints.length}
-        </span>
+        {hints.length > 0 ? (
+          <span className="self-center text-xs text-muted-foreground">
+            {state.hint_level} / {hints.length}
+          </span>
+        ) : null}
       </div>
 
       {visibleHints.length > 0 ? (
         <div className="space-y-2">
           {visibleHints.map((hint) => (
-            <div key={hint.level} className="rounded-md border border-border/60 bg-background p-3 text-sm leading-6">
+            <div key={hint.level} className="rounded-md border border-border/60 bg-muted/20 p-3 text-sm leading-6">
               <span className="mr-2 font-semibold">{t('practice.guidance.hint')} {hint.level}</span>
               {hint.text}
             </div>
@@ -294,21 +293,11 @@ export function TrainingQuestionBlock({
       ) : null}
 
       {state.feedback ? (
-        <div
-          className={cn(
-            "rounded-md border p-3 text-sm leading-6",
-            state.is_correct === true
-              ? "border-green-200 bg-green-50 text-green-900 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-100"
-              : state.is_correct === false
-              ? "border-red-200 bg-red-50 text-red-900 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-100"
-              : "border-border/60 bg-background",
-          )}
-          role="status"
-        >
+        <div className="rounded-md border border-border/60 bg-background p-3 text-sm leading-6" role="status">
           {state.feedback}
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }
 
@@ -330,20 +319,36 @@ export default function TrainingSessionPage() {
     status: 'published',
     limit: Number.isFinite(limit) ? limit : 10,
   });
-  const [index, setIndex] = useState(0);
+  const [exerciseIndex, setExerciseIndex] = useState(0);
   const [questionStates, setQuestionStates] = useState<GuidanceStateMap>({});
-  const autoAdvanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const items = itemsQuery.data ?? [];
-  const item = items[index] ?? null;
-  const questions = useMemo(() => (item ? questionsForItem(item) : []), [item]);
 
-  function goTo(nextIndex: number) {
-    if (autoAdvanceRef.current) {
-      clearTimeout(autoAdvanceRef.current);
-      autoAdvanceRef.current = null;
+  // Group items by source_label to build exercise groups
+  const exerciseGroups = useMemo(() => {
+    const groups: Map<string, ExamTrainingItem[]> = new Map();
+    for (const item of items) {
+      const key = item.source_label ?? item.id;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(item);
     }
-    setIndex(Math.max(0, Math.min(nextIndex, Math.max(items.length - 1, 0))));
+    return Array.from(groups.values());
+  }, [items]);
+
+  const exerciseGroup = exerciseGroups[exerciseIndex] ?? [];
+  const firstItem = exerciseGroup[0] ?? null;
+  const exerciseLabel = firstItem?.source_label ?? null;
+  const exerciseContext = firstItem?.context ?? null;
+  const exerciseDocuments = firstItem?.documents ?? [];
+
+  // Flatten questions from all items in the current exercise group
+  const exerciseQuestions = useMemo(
+    () => exerciseGroup.flatMap((item) => questionsForItem(item).map((question) => ({ item, question }))),
+    [exerciseGroup],
+  );
+
+  function goToExercise(nextIndex: number) {
+    setExerciseIndex(Math.max(0, Math.min(nextIndex, Math.max(exerciseGroups.length - 1, 0))));
   }
 
   function stateForQuestion(itemId: string, questionId: string): GuidanceQuestionState {
@@ -354,9 +359,18 @@ export default function TrainingSessionPage() {
     setQuestionStates((current) => updateQuestionAnswer(current, questionStateKey(itemId, questionId), value));
   }
 
+  function clearExercise() {
+    setQuestionStates((current) => {
+      const next = { ...current };
+      for (const { item, question } of exerciseQuestions) {
+        next[questionStateKey(item.id, question.id)] = initialQuestionState();
+      }
+      return next;
+    });
+  }
+
   async function handleHint(item: ExamTrainingItem, question: TrainingQuestion) {
-    const itemId = item.id;
-    const key = questionStateKey(itemId, question.id);
+    const key = questionStateKey(item.id, question.id);
     const maxHintLevel = question.guidance?.hints?.length ?? 0;
     const currentState = questionStates[key] ?? initialQuestionState();
     const nextHintLevel = Math.min(currentState.hint_level + 1, Math.max(maxHintLevel, 0));
@@ -418,10 +432,6 @@ export default function TrainingSessionPage() {
 
     setQuestionStates((current) => applyCheckFeedback(current, key, result));
 
-    if (result.isCorrect === true && index < items.length - 1) {
-      autoAdvanceRef.current = setTimeout(() => goTo(index + 1), 1500);
-    }
-
     if (!shouldPersist) return;
 
     try {
@@ -440,26 +450,26 @@ export default function TrainingSessionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-32">
       <PageMeta title="Session d'entraînement" description="Exercices interactifs issus des annales normalisées." />
       <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-4 sm:px-6 sm:py-6">
+        {/* Top bar */}
         <div className="flex items-center justify-between gap-3">
           <Button variant="outline" size="sm" onClick={() => navigate(subject ? `/practice/${encodeURIComponent(subject)}` : '/practice')}>
             <ArrowLeft className="mr-1 h-4 w-4" />
             Retour
           </Button>
-          {item ? (
-            <Badge variant="secondary">
-              {[item.exam?.toUpperCase(), item.source_year].filter(Boolean).join(' · ') || 'Entraînement'}
-            </Badge>
+          {firstItem ? (
+            <Badge variant="secondary">{firstItem.exam_style ?? 'Entraînement'}</Badge>
           ) : null}
         </div>
 
+        {/* Loading */}
         {itemsQuery.isLoading ? (
           <Card>
             <CardContent className="space-y-4 p-4">
               <Skeleton className="h-5 w-2/3" />
-              <Skeleton className="h-28 w-full" />
+              <Skeleton className="h-48 w-full" />
               <Skeleton className="h-10 w-full" />
             </CardContent>
           </Card>
@@ -474,7 +484,7 @@ export default function TrainingSessionPage() {
               </p>
             </CardContent>
           </Card>
-        ) : !item ? (
+        ) : exerciseGroups.length === 0 ? (
           <Card className="border-dashed">
             <CardHeader>
               <CardTitle className="text-base">Aucun exercice publié</CardTitle>
@@ -485,75 +495,86 @@ export default function TrainingSessionPage() {
           </Card>
         ) : (
           <>
-            <SessionProgress current={index + 1} total={items.length} />
+            {/* Preview warning */}
+            {activeSchoolLevel.isPreviewing ? (
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                Les réponses ne sont pas enregistrées en mode aperçu.
+              </div>
+            ) : null}
+
+            {/* Exercise card */}
             <Card className="border-border/80">
-              <CardHeader className="pb-2">
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">{item.item_type.replace(/_/g, ' ')}</Badge>
-                  <Badge variant="outline">{item.difficulty}</Badge>
-                  {item.source_year ? <Badge variant="outline">{item.source_year}</Badge> : null}
-                </div>
+              {/* Exercise header */}
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">{exerciseLabel ?? 'Exercice'}</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-5">
-                {activeSchoolLevel.isPreviewing ? (
-                  <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
-                    Les réponses ne sont pas enregistrées en mode aperçu.
-                  </div>
-                ) : null}
-                {item.context ? <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{item.context}</p> : null}
-                {(item.documents ?? []).length > 0 ? (
-                  <details className="group rounded-md border border-border/60">
-                    <summary className="flex cursor-pointer select-none items-center justify-between px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">
-                      Voir le document d'appui
-                      <span className="ml-2 text-xs opacity-60 group-open:hidden">▼</span>
-                      <span className="ml-2 text-xs opacity-60 hidden group-open:inline">▲</span>
-                    </summary>
-                    <div className="border-t border-border/60 p-3">
-                      <TrainingDocuments documents={item.documents ?? []} />
-                    </div>
-                  </details>
+
+              <CardContent className="space-y-5 pt-0">
+                {/* Context paragraph */}
+                {exerciseContext ? (
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{exerciseContext}</p>
                 ) : null}
 
-                <div className="space-y-3">
-                  {questions.map((question) => (
-                    <TrainingQuestionBlock
-                      key={question.id}
-                      itemId={item.id}
-                      question={question}
-                      state={stateForQuestion(item.id, question.id)}
-                      onAnswerChange={(value) => handleAnswerChange(item.id, question.id, value)}
-                      onHint={() => void handleHint(item, question)}
-                      onCheck={() => void handleCheck(item, question)}
-                    />
+                {/* Documents — full width, no card wrapper */}
+                <ExerciseDocuments documents={exerciseDocuments} />
+
+                <Separator />
+
+                {/* Questions */}
+                <div className="space-y-6">
+                  {exerciseQuestions.map(({ item, question }, idx) => (
+                    <div key={`${item.id}-${question.id}`}>
+                      {idx > 0 ? <Separator className="mb-6 border-dashed" /> : null}
+                      <TrainingQuestionBlock
+                        itemId={item.id}
+                        question={question}
+                        state={stateForQuestion(item.id, question.id)}
+                        onAnswerChange={(value) => handleAnswerChange(item.id, question.id, value)}
+                        onHint={() => void handleHint(item, question)}
+                        onCheck={() => void handleCheck(item, question)}
+                      />
+                    </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
-
-            <div className="flex items-center justify-between gap-3">
-              <Button variant="outline" onClick={() => goTo(index - 1)} disabled={index === 0}>
-                <ArrowLeft className="mr-1 h-4 w-4" />
-                Précédent
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setQuestionStates((current) => {
-                  const next = { ...current };
-                  for (const question of questions) next[questionStateKey(item.id, question.id)] = initialQuestionState();
-                  return next;
-                })}
-              >
-                <RotateCcw className="mr-1 h-4 w-4" />
-                Effacer
-              </Button>
-              <Button onClick={() => goTo(index + 1)} disabled={index >= items.length - 1}>
-                Suivant
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Button>
-            </div>
           </>
         )}
       </div>
+
+      {/* Fixed bottom navigation */}
+      {exerciseGroups.length > 0 ? (
+        <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-border/60 bg-background/95 backdrop-blur-sm">
+          <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+            <Button
+              variant="outline"
+              onClick={() => goToExercise(exerciseIndex - 1)}
+              disabled={exerciseIndex === 0}
+            >
+              <ArrowLeft className="mr-1 h-4 w-4" />
+              Précédent
+            </Button>
+
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-muted-foreground">
+                {exerciseIndex + 1} / {exerciseGroups.length}
+              </span>
+              <Button variant="ghost" size="sm" onClick={clearExercise} title="Effacer les réponses">
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => goToExercise(exerciseIndex + 1)}
+              disabled={exerciseIndex >= exerciseGroups.length - 1}
+            >
+              Suivant
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
