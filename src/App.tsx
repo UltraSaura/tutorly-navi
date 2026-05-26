@@ -29,6 +29,7 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
 const TokensPreview = lazy(() => import("./pages/TokensPreview"));
 const GamePreview = lazy(() => import("./pages/GamePreview"));
+const DnbSvgPreview = lazy(() => import("./pages/DnbSvgPreview"));
 const ExerciseHistoryPage = lazy(() => import("./pages/ExerciseHistoryPage"));
 const GeneralChatPage = lazy(() => import("./pages/GeneralChatPage"));
 const LearningPage = lazy(() => import("./pages/learning/LearningPage"));
@@ -176,6 +177,9 @@ const App = () => {
                         </Route>
                         <Route path="/game" element={<MainLayout />}>
                           <Route index element={<GamePreview />} />
+                        </Route>
+                        <Route path="/dnb-preview" element={<MainLayout />}>
+                          <Route index element={<DnbSvgPreview />} />
                         </Route>
                         <Route path="/exercise-history" element={<MainLayout />}>
                           <Route index element={<ExerciseHistoryPage />} />

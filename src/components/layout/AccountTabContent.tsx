@@ -3,7 +3,7 @@ import { User, HeadphonesIcon, Globe, LogOut, Settings, BookOpen, Trophy } from 
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { hardLogout } from "@/lib/logout";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -26,29 +26,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
 
   const userInitials = user?.email?.charAt(0).toUpperCase() || 'U';
 
-  const handleSignOut = async () => {
-    if (isSigningOut) return;
-    
-    setIsSigningOut(true);
-    try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Signed out successfully",
-        description: "You have been logged out of your account.",
-      });
-      onClose();
-      navigate('/auth');
-    } catch (error) {
-      console.error('Sign out error:', error);
-      toast({
-        title: "Error signing out",
-        description: "There was a problem signing out. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
+  const handleSignOut = () => { hardLogout(); };
 
   return (
     <div className="flex min-h-full flex-col gap-4 py-4">

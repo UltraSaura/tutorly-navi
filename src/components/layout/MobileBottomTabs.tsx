@@ -53,8 +53,6 @@ export function MobileBottomTabs() {
     setHasActiveOverlay(isAccountOpen);
   }, [isAccountOpen, setHasActiveOverlay]);
   
-  if (!isMobile) return null;
-  
   const currentPath = location.pathname;
   const isActive = (url: string | null) => url ? (currentPath === url || currentPath.startsWith(url + '/')) : false;
 
@@ -66,7 +64,7 @@ export function MobileBottomTabs() {
 
   return (
     <>
-      <div className="fixed left-0 right-0 z-50 bg-white dark:bg-card shadow-2xl rounded-t-xl border-t border-border/40" 
+      <div className="fixed left-0 right-0 z-50 md:hidden bg-white dark:bg-card shadow-2xl rounded-t-xl border-t border-border/40"
            style={{ bottom: 'max(env(safe-area-inset-bottom), 0px)' }}>
         <div className="grid grid-cols-5 items-center h-16 px-2">
           {bottomTabItems.map((item) => {
