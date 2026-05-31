@@ -54,13 +54,8 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const authHeader = req.headers.get("Authorization") ?? "";
 
-    const supabase = createClient(supabaseUrl, serviceKey, {
-      global: {
-        headers: authHeader ? { Authorization: authHeader } : {},
-      },
-    });
+    const supabase = createClient(supabaseUrl, serviceKey);
 
     const payload = (await req.json()) as Payload;
     const itemId = payload.item_id?.trim();
@@ -76,7 +71,7 @@ Deno.serve(async (req) => {
 
     const { data: item, error: itemError } = await supabase
       .from("exam_training_items")
-      .select("paper_id, questions")
+      .select("paper_id, source_exercise_id, item_type, questions")
       .eq("id", itemId)
       .maybeSingle();
 
@@ -84,20 +79,94 @@ Deno.serve(async (req) => {
 
     // Preferred source: backend/admin-only corrections.
     if (item?.paper_id) {
-      const { data: corr, error: corrError } = await supabase
-        .from("exam_question_corrections")
-        .select("correct_answer")
-        .eq("exam_paper_id", item.paper_id)
-        .eq("question_id", questionId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Training item question IDs use a "parent-child" format like "2-2a" or "4-4b",
+      // while corrections may be stored with just the child part ("2a", "4b").
+      // Build a list of candidates to try: exact first, then with the leading "{N}-" stripped.
+      const qidCandidates: string[] = [questionId];
+      const stripped = questionId.replace(/^\d+-/, "");
+      if (stripped !== questionId) qidCandidates.push(stripped);
 
-      if (corrError) throw corrError;
+      let corr: { correct_answer: string; explanation_steps: unknown } | null = null;
+
+      for (const qid of qidCandidates) {
+        // Build the corrections query — filter by exercise when available to avoid
+        // collisions when the same question_id (e.g. "1") exists in multiple exercises.
+        let corrQuery = supabase
+          .from("exam_question_corrections")
+          .select("correct_answer, explanation_steps")
+          .eq("exam_paper_id", item.paper_id)
+          .eq("question_id", qid);
+
+        if ((item as Record<string, unknown>).source_exercise_id) {
+          corrQuery = corrQuery.eq("exercise_id", (item as Record<string, unknown>).source_exercise_id as string);
+        }
+
+        const { data: found, error: corrError } = await corrQuery
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (corrError) throw corrError;
+        if (found?.correct_answer) {
+          corr = found as { correct_answer: string; explanation_steps: unknown };
+          break;
+        }
+      }
 
       if (corr?.correct_answer) {
-        const isCorrect = normalizeText(userAnswer) === normalizeText(String(corr.correct_answer));
-        return new Response(JSON.stringify({ is_correct: isCorrect, feedback: null }), {
+        const corrAnswer = normalizeText(String(corr.correct_answer));
+
+        // MCQ: correct_answer may be a letter (A/B/C/D) or a 0-based numeric index (0, 1, 2…)
+        // while userAnswer is the actual choice text (e.g. "E_2 = (x + 2) × (x - 1)").
+        // Translate letter/index back to the choice value using the question's choices array
+        // so the comparison is apples-to-apples.
+        let isCorrect: boolean;
+        const isMcqLetter = /^[A-D]$/i.test(corrAnswer);
+        // Numeric index (e.g. "1") only applies to multiple_choice items — for numeric/free
+        // items the answer happens to be a number and should be compared as-is.
+        const isMcqIndex = /^\d+$/.test(corrAnswer) &&
+          (item as Record<string, unknown>).item_type === "multiple_choice";
+
+        if (isMcqLetter || isMcqIndex) {
+          const questions = Array.isArray(item.questions) ? (item.questions as unknown[]) : [];
+          // Try matching on the original questionId and also the stripped version.
+          const qMatch = questions.find(
+            (q) =>
+              typeof q === "object" &&
+              q !== null &&
+              (qidCandidates as string[]).includes((q as Record<string, unknown>).id as string),
+          ) as Record<string, unknown> | undefined;
+          const choices: string[] = Array.isArray(qMatch?.choices)
+            ? (qMatch.choices as unknown[]).map(String)
+            : [];
+          const letterIndex = isMcqLetter
+            ? corrAnswer.toUpperCase().charCodeAt(0) - 65 // A→0, B→1, C→2
+            : Number(corrAnswer); // numeric index 0, 1, 2…
+          const correctChoiceValue = choices[letterIndex];
+          isCorrect =
+            correctChoiceValue !== undefined
+              ? normalizeText(userAnswer) === normalizeText(correctChoiceValue)
+              : false;
+        } else {
+          isCorrect = normalizeText(userAnswer) === normalizeText(corrAnswer);
+        }
+
+        // Build human-readable feedback from explanation_steps
+        const steps: string[] = Array.isArray(corr.explanation_steps)
+          ? (corr.explanation_steps as unknown[]).map(String).filter((s) => s.trim().length > 0)
+          : [];
+        const explanationText = steps.length > 0 ? steps.join("\n") : null;
+
+        let feedback: string;
+        if (isCorrect) {
+          feedback = explanationText
+            ? `Bonne réponse !\n\n${explanationText}`
+            : "Bonne réponse !";
+        } else {
+          feedback = "Ce n'est pas encore la bonne réponse. Regarde à nouveau l'énoncé, vérifie chaque étape, puis essaie une autre réponse.";
+        }
+
+        return new Response(JSON.stringify({ is_correct: isCorrect, feedback }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -119,4 +188,3 @@ Deno.serve(async (req) => {
     });
   }
 });
-
