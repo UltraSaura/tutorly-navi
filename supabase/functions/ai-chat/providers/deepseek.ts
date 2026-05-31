@@ -1,4 +1,6 @@
 
+import { resolveProviderKey } from "../../_shared/resolveProviderKey.ts";
+
 // DeepSeek AI provider implementation
 export async function callDeepSeek(
   systemMessage: any, 
@@ -9,13 +11,9 @@ export async function callDeepSeek(
   requestExplanation: boolean = false,
   maxTokens: number = 800
 ): Promise<any> {
-  const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
-  
-  if (!deepseekApiKey) {
-    throw new Error('DeepSeek API key not configured');
-  }
-  
-  console.log(`[DeepSeek] Calling with model: ${model}, maxTokens: ${maxTokens}, requestExplanation: ${requestExplanation}`);
+  const { value: deepseekApiKey, source } = await resolveProviderKey('DeepSeek');
+
+  console.log(`[DeepSeek] Calling with model: ${model}, maxTokens: ${maxTokens}, requestExplanation: ${requestExplanation}, key source: ${source}`);
   
   const messages = [
     systemMessage,

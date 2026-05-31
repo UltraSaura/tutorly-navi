@@ -500,6 +500,66 @@ export type Database = {
           },
         ]
       }
+      exam_assets: {
+        Row: {
+          alt: string | null
+          created_at: string
+          exercise_id: string
+          id: string
+          label: string
+          page_number: number | null
+          paper_id: string
+          public_url: string | null
+          sort_order: number
+          storage_path: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          alt?: string | null
+          created_at?: string
+          exercise_id: string
+          id: string
+          label: string
+          page_number?: number | null
+          paper_id: string
+          public_url?: string | null
+          sort_order?: number
+          storage_path: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          alt?: string | null
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          label?: string
+          page_number?: number | null
+          paper_id?: string
+          public_url?: string | null
+          sort_order?: number
+          storage_path?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_assets_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exam_exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_assets_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "exam_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exam_exercise_program_links: {
         Row: {
           confidence: number
@@ -707,6 +767,54 @@ export type Database = {
           },
         ]
       }
+      exam_question_corrections: {
+        Row: {
+          correct_answer: string | null
+          created_at: string
+          exam_paper_id: string | null
+          exercise_id: string | null
+          explanation_steps: Json
+          id: string
+          question_id: string
+          source: string
+        }
+        Insert: {
+          correct_answer?: string | null
+          created_at?: string
+          exam_paper_id?: string | null
+          exercise_id?: string | null
+          explanation_steps?: Json
+          id?: string
+          question_id: string
+          source?: string
+        }
+        Update: {
+          correct_answer?: string | null
+          created_at?: string
+          exam_paper_id?: string | null
+          exercise_id?: string | null
+          explanation_steps?: Json
+          id?: string
+          question_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_question_corrections_exam_paper_id_fkey"
+            columns: ["exam_paper_id"]
+            isOneToOne: false
+            referencedRelation: "exam_papers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_question_corrections_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exam_exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exam_sources: {
         Row: {
           created_at: string
@@ -753,6 +861,7 @@ export type Database = {
           paper_id: string | null
           prompt: string
           questions: Json
+          skill: string | null
           skill_tags: string[]
           solution: string | null
           source_exercise_id: string | null
@@ -780,6 +889,7 @@ export type Database = {
           paper_id?: string | null
           prompt: string
           questions?: Json
+          skill?: string | null
           skill_tags?: string[]
           solution?: string | null
           source_exercise_id?: string | null
@@ -807,6 +917,7 @@ export type Database = {
           paper_id?: string | null
           prompt?: string
           questions?: Json
+          skill?: string | null
           skill_tags?: string[]
           solution?: string | null
           source_exercise_id?: string | null
@@ -2297,6 +2408,7 @@ export type Database = {
       training_item_answers: {
         Row: {
           answer_text: string
+          feedback: string | null
           guidance_feedback: string | null
           hint_level: number
           id: string
@@ -2308,6 +2420,7 @@ export type Database = {
         }
         Insert: {
           answer_text?: string
+          feedback?: string | null
           guidance_feedback?: string | null
           hint_level?: number
           id?: string
@@ -2319,6 +2432,7 @@ export type Database = {
         }
         Update: {
           answer_text?: string
+          feedback?: string | null
           guidance_feedback?: string | null
           hint_level?: number
           id?: string
