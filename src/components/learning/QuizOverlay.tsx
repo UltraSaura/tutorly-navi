@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { X, ChevronRight, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -20,6 +21,35 @@ interface QuizOverlayProps {
   bank: QuizBank;
   userId: string;
   onClose: () => void;
+}
+
+function XpPill({ onDone }: { onDone: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 0, scale: 0.7 }}
+      animate={{ opacity: [0, 1, 1, 0], y: -60, scale: 1 }}
+      transition={{ duration: 1.1, ease: "easeOut" }}
+      onAnimationComplete={onDone}
+      style={{
+        position: "fixed",
+        bottom: "120px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 9999,
+        pointerEvents: "none",
+        background: "linear-gradient(135deg, #22C55E, #16A34A)",
+        color: "#fff",
+        fontWeight: 700,
+        fontSize: "15px",
+        padding: "6px 18px",
+        borderRadius: "999px",
+        boxShadow: "0 4px 24px rgba(34,197,94,0.35)",
+        whiteSpace: "nowrap",
+      }}
+    >
+      ✦ Bonne réponse !
+    </motion.div>
+  );
 }
 
 function getQuestionChoices(question: Question): Choice[] {
@@ -90,6 +120,7 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [questionSubmitted, setQuestionSubmitted] = useState(false);
   const [questionResult, setQuestionResult] = useState<boolean | null>(null);
+  const [showXpPill, setShowXpPill] = useState(false);
   const submitAttempt = useSubmitBankAttempt();
   const { user } = useAuth();
   const { userContext } = useUserContext();
@@ -233,6 +264,7 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
     }
 
     setQuestionResult(correct);
+    if (correct) setShowXpPill(true);
     setQuestionSubmitted(true);
   };
 
@@ -359,55 +391,83 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
 
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">{bank.title}</h2>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="w-5 h-5" />
-            </Button>
-          </div>
-
-          <div>
-            <p className="text-lg">Score: {g.score} / {g.maxScore} ({pct}%)</p>
-            <div className="w-full h-3 bg-neutral-200 rounded-full mt-2">
-              <div
-                className="h-3 bg-primary rounded-full transition-all"
-                style={{ width: `${pct}%` }}
-              />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 24 }}
+          className="w-full max-w-2xl"
+        >
+          <Card className="max-h-[90vh] overflow-y-auto p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <motion.h2
+                className="text-xl font-semibold"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                {bank.title}
+              </motion.h2>
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <X className="w-5 h-5" />
+              </Button>
             </div>
-          </div>
 
-          <div className="space-y-3">
-            {g.details.map((d) => {
-              const q = questions.find(q => q.id === d.questionId);
-              return (
-                <div
-                  key={d.questionId}
-                  className={cn(
-                    "rounded-2xl border p-3",
-                    d.correct
-                      ? "border-green-500 bg-green-50 dark:bg-green-950/20"
-                      : "border-red-500 bg-red-50 dark:bg-red-950/20"
-                  )}
-                >
-                  <p className="font-medium">{q?.prompt ?? "Question"}</p>
-                  <p className={d.correct ? "text-green-600" : "text-red-600"}>
-                    {d.correct ? "Correct" : "Incorrect"}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <p className="text-lg">Score: {g.score} / {g.maxScore} ({pct}%)</p>
+              <div className="w-full h-3 bg-neutral-200 rounded-full mt-2 overflow-hidden">
+                <motion.div
+                  className="h-3 bg-primary rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{ type: "spring", stiffness: 60, damping: 18, delay: 0.3 }}
+                />
+              </div>
+            </motion.div>
 
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={handleRetest} className="flex-1">
-              Retest
-            </Button>
-            <Button onClick={onClose} className="flex-1">
-              Close
-            </Button>
-          </div>
-        </Card>
+            <div className="space-y-3">
+              {g.details.map((d, i) => {
+                const q = questions.find(q => q.id === d.questionId);
+                return (
+                  <motion.div
+                    key={d.questionId}
+                    initial={{ opacity: 0, x: -16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + i * 0.07, type: "spring", stiffness: 200, damping: 22 }}
+                    className={cn(
+                      "rounded-2xl border p-3",
+                      d.correct
+                        ? "border-green-500 bg-green-50 dark:bg-green-950/20"
+                        : "border-red-500 bg-red-50 dark:bg-red-950/20"
+                    )}
+                  >
+                    <p className="font-medium">{q?.prompt ?? "Question"}</p>
+                    <p className={d.correct ? "text-green-600" : "text-red-600"}>
+                      {d.correct ? "✓ Correct" : "✗ Incorrect"}
+                    </p>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            <motion.div
+              className="flex gap-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 + g.details.length * 0.07 }}
+            >
+              <Button variant="outline" onClick={handleRetest} className="flex-1">
+                Retest
+              </Button>
+              <Button onClick={onClose} className="flex-1">
+                Fermer
+              </Button>
+            </motion.div>
+          </Card>
+        </motion.div>
       </div>
     );
   }
@@ -429,10 +489,11 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
             <p className="text-sm text-muted-foreground">
               Question {currentIndex + 1} / {questions.length}
             </p>
-            <div className="w-full h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full">
-              <div
-                className="h-2 bg-primary rounded-full transition-all"
-                style={{ width: `${((currentIndex + (questionSubmitted ? 1 : 0)) / questions.length) * 100}%` }}
+            <div className="w-full h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+              <motion.div
+                className="h-2 bg-primary rounded-full"
+                animate={{ width: `${((currentIndex + (questionSubmitted ? 1 : 0)) / questions.length) * 100}%` }}
+                transition={{ type: "spring", stiffness: 80, damping: 20 }}
               />
             </div>
           </div>
@@ -446,15 +507,26 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
           <div
             className={cn(
               "rounded-2xl transition-all",
-              questionSubmitted && questionResult === true && "ring-2 ring-green-500",
-              questionSubmitted && questionResult === false && "ring-2 ring-red-500"
+              questionSubmitted && questionResult === true &&
+                "ring-2 ring-green-400 shadow-[0_0_24px_4px_rgba(34,197,94,0.35)]",
+              questionSubmitted && questionResult === false &&
+                "ring-2 ring-red-400 shadow-[0_0_16px_4px_rgba(239,68,68,0.2)]",
             )}
           >
-            <QuestionCard
-              key={currentQuestion.id}
-              question={currentQuestion}
-              onChange={val => onAnswer(currentQuestion.id, val)}
-            />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentQuestion.id}
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <QuestionCard
+                  question={currentQuestion}
+                  onChange={val => onAnswer(currentQuestion.id, val)}
+                />
+              </motion.div>
+            </AnimatePresence>
 
             {/* Feedback after submit */}
             {questionSubmitted && (
@@ -518,6 +590,10 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
         error={teaching.error}
         exerciseQuestion={currentQuestion?.prompt}
       />
+
+      {showXpPill && (
+        <XpPill onDone={() => setShowXpPill(false)} />
+      )}
     </div>
   );
 }

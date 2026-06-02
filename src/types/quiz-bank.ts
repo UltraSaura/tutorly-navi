@@ -25,7 +25,54 @@ export type OperationPoseeQ = BaseQ & {
   locale?: "fr" | "en";
 };
 
-export type Question = SingleQ | MultiQ | NumericQ | OrderingQ | VisualQ | OperationPoseeQ;
+export interface SliderQuestion {
+  id: string;
+  kind: "slider";
+  prompt: string;
+  min: number;
+  max: number;
+  step: number;
+  answer: number;
+  tolerance: number;
+  unit?: string;
+  trackLabel?: string;
+  hint?: string;
+  locale?: string;
+  points?: number;
+  tags?: string[];
+}
+
+export interface MatchQuestion {
+  id: string;
+  kind: "match";
+  prompt: string;
+  pairs: Array<{
+    leftId: string;
+    left: string;
+    rightId: string;
+    right: string;
+  }>;
+  hint?: string;
+  locale?: string;
+  points?: number;
+  tags?: string[];
+}
+
+export interface FillExprQuestion {
+  id: string;
+  kind: "fill-expr";
+  prompt: string;
+  template: string;
+  blanks: string[];
+  chips: string[];
+  answers: Record<string, string>;
+  hint?: string;
+  locale?: string;
+  points?: number;
+  tags?: string[];
+}
+
+export type Question = SingleQ | MultiQ | NumericQ | OrderingQ | VisualQ | OperationPoseeQ | SliderQuestion | MatchQuestion | FillExprQuestion;
 
 export type QuizBank = {
   quizBankId: string;

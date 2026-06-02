@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type { Question } from "@/types/quiz-bank";
 import { evaluateQuestion } from "@/utils/quizEvaluation";
 import { cn } from "@/lib/utils";
@@ -6,6 +7,9 @@ import type { VisualAngle, VisualUnion, VisualPie } from "@/lib/quiz/visual-type
 import { normalizeAngle } from "@/lib/quiz/visual-geometry";
 import { Button } from "@/components/ui/button";
 import { ManipulativeMathRenderer } from "@/components/manipulative-maths/ManipulativeMathRenderer";
+import { SliderQuestionView } from "./SliderQuestion";
+import { MatchQuestionView } from "./MatchQuestion";
+import { FillExprQuestionView } from "./FillExprQuestion";
 
 interface QuestionCardProps {
   question: Question;
@@ -14,6 +18,14 @@ interface QuestionCardProps {
   onSkip?: () => void;
   allowRetry?: boolean;
 }
+
+const choiceVariants = {
+  idle:     { x: 0, backgroundColor: "transparent", borderColor: "hsl(var(--border))", scale: 1 },
+  selected: { backgroundColor: "hsl(var(--primary) / 0.1)", borderColor: "hsl(var(--primary))", scale: 1 },
+  correct:  { backgroundColor: "#dcfce7", borderColor: "#16a34a", scale: [1, 1.05, 1], transition: { duration: 0.35 } },
+  wrong:    { x: [0, -10, 10, -7, 7, -4, 4, 0], backgroundColor: "#fee2e2", borderColor: "#ef4444", transition: { duration: 0.45 } },
+  faded:    { opacity: 0.4, scale: 1 },
+};
 
 export function QuestionCard({
   question,
@@ -33,12 +45,17 @@ export function QuestionCard({
     if (question.kind === "numeric" && (question as any).answerFormat === "fraction") {
       return { numerator: "", denominator: "" };
     }
+    if (question.kind === "slider") return "";
+    if (question.kind === "match") return [];
+    if (question.kind === "fill-expr") return {};
     return "";
   }, [question]);
 
   const [value, setValue] = useState<any>(initialValue);
   const [selectedChip, setSelectedChip] = useState<number | null>(null);
   const [tries, setTries] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   const setVal = (v: any) => {
     setValue(v);
@@ -52,7 +69,11 @@ export function QuestionCard({
       setTries(t => t + 1);
       return;
     }
-    onFinish(ok, tries);
+    setSubmitted(true);
+    setIsCorrect(ok);
+    if (!ok) {
+      onFinish(ok, tries);
+    }
   };
 
   const swap = (arr: string[], i: number, j: number) => {
@@ -61,35 +82,78 @@ export function QuestionCard({
     return x;
   };
 
+  const getSingleVariant = (choiceId: string, isCorrect_: boolean) => {
+    if (!submitted) return value === choiceId ? "selected" : "idle";
+    const choice = (question as any).choices?.find((c: any) => c.id === choiceId);
+    if (choice?.correct === true) return "correct";
+    if (value === choiceId) return "wrong";
+    return "faded";
+  };
+
+  const getMultiVariant = (choiceId: string) => {
+    if (!submitted) return Array.isArray(value) && value.includes(choiceId) ? "selected" : "idle";
+    const choice = (question as any).choices?.find((c: any) => c.id === choiceId);
+    if (choice?.correct === true) return "correct";
+    if (Array.isArray(value) && value.includes(choiceId)) return "wrong";
+    return "faded";
+  };
+
   return (
-    <div className="max-w-md w-full rounded-2xl bg-white dark:bg-card shadow-xl p-3 sm:p-4">
+    <motion.div
+      className="max-w-md w-full rounded-2xl bg-white dark:bg-card shadow-xl p-3 sm:p-4"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 260, damping: 24 }}
+    >
       <h3 className="text-lg font-semibold mb-3">{question.prompt}</h3>
-      
+
       {question.kind === "single" && (
         <div className="space-y-2">
-          {question.choices.map(c => (
-            <button
+          {question.choices.map((c, i) => (
+            <motion.button
               key={c.id}
               onClick={() => setVal(c.id)}
-              className={cn(
-                "w-full text-left px-3 py-2 rounded-xl border transition-all",
-                value === c.id
-                  ? "border-primary bg-primary/10"
-                  : "border-neutral-300 hover:border-primary/50"
-              )}
+              className="w-full text-left px-3 py-2 rounded-xl border"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.07, type: "spring", stiffness: 220, damping: 20 }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                backgroundColor: value === c.id ? "hsl(var(--primary) / 0.1)" : "transparent",
+                borderColor: value === c.id ? "hsl(var(--primary))" : "rgb(212 212 212)",
+              }}
             >
               {c.label}
-            </button>
+            </motion.button>
           ))}
+          <AnimatePresence>
+            {submitted && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.15 }}
+                className={cn(
+                  "mt-3 flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium",
+                  isCorrect
+                    ? "bg-green-50 text-green-800 border border-green-200"
+                    : "bg-red-50 text-red-800 border border-red-200"
+                )}
+              >
+                <span className="text-base">{isCorrect ? "✓" : "✗"}</span>
+                {isCorrect ? "Bonne réponse !" : (question.hint && tries > 0 ? `Indice : ${question.hint}` : "Pas tout à fait…")}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
       {question.kind === "multi" && (
         <div className="space-y-2">
-          {question.choices.map(c => {
+          {question.choices.map((c, i) => {
             const checked = Array.isArray(value) && value.includes(c.id);
             return (
-              <button
+              <motion.button
                 key={c.id}
                 onClick={() => {
                   const next = checked
@@ -97,17 +161,39 @@ export function QuestionCard({
                     : [...value, c.id];
                   setVal(next);
                 }}
-                className={cn(
-                  "w-full text-left px-3 py-2 rounded-xl border transition-all",
-                  checked
-                    ? "border-primary bg-primary/10"
-                    : "border-neutral-300 hover:border-primary/50"
-                )}
+                className="w-full text-left px-3 py-2 rounded-xl border"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.07, type: "spring", stiffness: 220, damping: 20 }}
+                whileTap={{ scale: 0.97 }}
+                style={{
+                  backgroundColor: checked ? "hsl(var(--primary) / 0.1)" : "transparent",
+                  borderColor: checked ? "hsl(var(--primary))" : "rgb(212 212 212)",
+                }}
               >
                 {c.label}
-              </button>
+              </motion.button>
             );
           })}
+          <AnimatePresence>
+            {submitted && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.15 }}
+                className={cn(
+                  "mt-3 flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium",
+                  isCorrect
+                    ? "bg-green-50 text-green-800 border border-green-200"
+                    : "bg-red-50 text-red-800 border border-red-200"
+                )}
+              >
+                <span className="text-base">{isCorrect ? "✓" : "✗"}</span>
+                {isCorrect ? "Bonne réponse !" : (question.hint && tries > 0 ? `Indice : ${question.hint}` : "Pas tout à fait…")}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
@@ -139,7 +225,6 @@ export function QuestionCard({
         };
 
         if (chips.length === 0) {
-          // Fallback: plain inputs if no drag options
           return (
             <div className="flex flex-col items-center gap-0">
               <input
@@ -167,7 +252,6 @@ export function QuestionCard({
 
         return (
           <div className="flex flex-col items-center gap-4">
-            {/* Drop zones */}
             <div className="flex flex-col items-center gap-0">
               <div
                 className={cn(
@@ -196,16 +280,19 @@ export function QuestionCard({
               </div>
             </div>
 
-            {/* Number chips */}
             <div className="flex flex-wrap gap-2 justify-center">
               {chips.map((num, i) => {
                 const isUsed = String(num) === String(numVal) || String(num) === String(denVal);
                 const isSelected = selectedChip === num;
                 return (
-                  <div
+                  <motion.div
                     key={`${num}-${i}`}
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 20 }}
+                    whileTap={{ scale: 0.9 }}
                     draggable
-                    onDragStart={e => e.dataTransfer.setData("text/plain", String(num))}
+                    onDragStart={e => (e as unknown as DragEvent & { dataTransfer: DataTransfer }).dataTransfer.setData("text/plain", String(num))}
                     onClick={() => handleTapChip(num)}
                     className={cn(
                       "w-12 h-12 rounded-xl flex items-center justify-center text-lg font-semibold cursor-grab active:cursor-grabbing select-none transition-all",
@@ -217,7 +304,7 @@ export function QuestionCard({
                     )}
                   >
                     {num}
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -242,26 +329,19 @@ export function QuestionCard({
         <ul className="space-y-2">
           {(value.length ? value : (question as any).items).map(
             (it: string, i: number, arr: string[]) => (
-              <li
+              <motion.li
                 key={it}
+                layout
+                layoutId={it}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className="px-3 py-2 rounded-2xl border border-neutral-300 flex justify-between items-center"
               >
                 <span>{it}</span>
                 <div className="flex gap-1">
-                  <button
-                    onClick={() => i > 0 && setVal(swap(arr, i, i - 1))}
-                  >
-                    ↑
-                  </button>
-                  <button
-                    onClick={() =>
-                      i < arr.length - 1 && setVal(swap(arr, i, i + 1))
-                    }
-                  >
-                    ↓
-                  </button>
+                  <button onClick={() => i > 0 && setVal(swap(arr, i, i - 1))}>↑</button>
+                  <button onClick={() => i < arr.length - 1 && setVal(swap(arr, i, i + 1))}>↓</button>
                 </div>
-              </li>
+              </motion.li>
             )
           )}
         </ul>
@@ -269,6 +349,36 @@ export function QuestionCard({
 
       {question.kind === "visual" && (
         <div className="mt-4">{renderVisualQuestion(question.visual, value, setVal)}</div>
+      )}
+
+      {question.kind === "slider" && (
+        <div className="mt-4">
+          <SliderQuestionView
+            question={question}
+            value={value}
+            onChange={setVal}
+          />
+        </div>
+      )}
+
+      {question.kind === "match" && (
+        <div className="mt-4">
+          <MatchQuestionView
+            question={question}
+            value={value}
+            onChange={setVal}
+          />
+        </div>
+      )}
+
+      {question.kind === "fill-expr" && (
+        <div className="mt-4">
+          <FillExprQuestionView
+            question={question}
+            value={value}
+            onChange={setVal}
+          />
+        </div>
       )}
 
       {question.kind === "operation-posee" && (
@@ -291,10 +401,6 @@ export function QuestionCard({
         </div>
       )}
 
-      {question.hint && tries > 0 && (
-        <p className="text-sm mt-3 opacity-80">Indice: {question.hint}</p>
-      )}
-
       {onFinish && (
         <div className="flex gap-2 justify-end mt-4">
           {onSkip && (
@@ -305,15 +411,16 @@ export function QuestionCard({
               Passer
             </button>
           )}
-          <button
+          <motion.button
             className="px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black"
             onClick={submitIfTimeline}
+            whileTap={{ scale: 0.96 }}
           >
             Valider
-          </button>
+          </motion.button>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -426,16 +533,20 @@ function AngleStudentView({
         Sélectionne toutes les cartes qui correspondent à la consigne.
       </p>
       <div className="grid grid-cols-2 gap-3">
-        {options.map((option) => {
+        {options.map((option, index) => {
           const isActive = selected.includes(option.id);
           const rayA = polarToCartesian(option.aDeg, option.radius);
           const rayB = polarToCartesian(option.bDeg, option.radius);
           const arcPath = describeArc(0, 0, option.radius * 0.7, option.aDeg, option.bDeg);
           const measurement = Math.round(angleBetween(option.aDeg, option.bDeg));
           return (
-            <button
+            <motion.button
               key={option.id}
               type="button"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.08, type: "spring", stiffness: 250 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => {
                 const next = isActive
                   ? selected.filter((id) => id !== option.id)
@@ -465,7 +576,7 @@ function AngleStudentView({
                 <line x1={0} y1={0} x2={rayA.x} y2={rayA.y} stroke="#1f2937" strokeWidth={2.2} strokeLinecap="round" />
                 <line x1={0} y1={0} x2={rayB.x} y2={rayB.y} stroke="#1f2937" strokeWidth={2.2} strokeLinecap="round" />
               </svg>
-            </button>
+            </motion.button>
           );
         })}
       </div>
@@ -537,7 +648,6 @@ function PieStudentView({
 }) {
   const selected: string[] = Array.isArray(value) ? value : [];
 
-  // ── Color Slices mode ──
   if (visual.interactionMode === "color_slices") {
     const sliceCount = visual.segments.length;
     return (
@@ -559,9 +669,13 @@ function PieStudentView({
               const d = `M50,50 L${x1},${y1} A45,45 0 ${largeArc} 1 ${x2},${y2} Z`;
               const isColored = selected.includes(seg.id);
               return (
-                <path
+                <motion.path
                   key={seg.id}
                   d={d}
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.05, type: "spring" }}
+                  style={{ transformOrigin: "50px 50px" }}
                   fill={isColored ? "#3b82f6" : "#e5e7eb"}
                   stroke="#fff"
                   strokeWidth={1.5}
@@ -584,13 +698,12 @@ function PieStudentView({
     );
   }
 
-  // ── Select Pie mode (default) ──
   const allPies = [
     { id: "base", label: "Pie 1", segments: visual.segments },
-    ...(visual.variants ?? []).map((v, index) => ({ 
-      id: v.id, 
-      label: `Pie ${index + 2}`, 
-      segments: v.segments 
+    ...(visual.variants ?? []).map((v, index) => ({
+      id: v.id,
+      label: `Pie ${index + 2}`,
+      segments: v.segments
     })),
   ];
 
@@ -635,7 +748,7 @@ function PieStudentView({
                 height={120}
                 className="mx-auto bg-white rounded-lg shadow-inner"
               >
-                {pie.segments.map((seg) => {
+                {pie.segments.map((seg, i) => {
                   const angle = ((Number(seg.value) || 0) / total) * Math.PI * 2;
                   const end = start + angle;
                   const x1 = 50 + 45 * Math.cos(start);
@@ -646,9 +759,13 @@ function PieStudentView({
                   const d = `M50,50 L${x1},${y1} A45,45 0 ${largeArc} 1 ${x2},${y2} Z`;
                   start = end;
                   return (
-                    <path
+                    <motion.path
                       key={seg.id}
                       d={d}
+                      initial={{ opacity: 0, scale: 0.85 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.05, type: "spring" }}
+                      style={{ transformOrigin: "50px 50px" }}
                       fill={seg.colored ? "#3b82f6" : "#e5e7eb"}
                       stroke="#fff"
                       strokeWidth={1}
@@ -676,4 +793,3 @@ function PieStudentView({
     </div>
   );
 }
-

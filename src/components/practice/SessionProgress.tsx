@@ -1,4 +1,4 @@
-import { Progress } from '@/components/ui/progress';
+import { motion } from "framer-motion";
 
 interface SessionProgressProps {
   current: number;
@@ -16,7 +16,14 @@ export function SessionProgress({ current, total }: SessionProgressProps) {
         </span>
         <span className="hidden sm:inline">{percentage}%</span>
       </div>
-      <Progress value={percentage} className="h-1.5 opacity-80" />
+      <div className="h-1.5 w-full bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden opacity-80">
+        <motion.div
+          className="h-full rounded-full bg-primary"
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ type: "spring", stiffness: 80, damping: 20 }}
+        />
+      </div>
     </div>
   );
 }

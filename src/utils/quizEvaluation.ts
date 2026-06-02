@@ -31,6 +31,19 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
   if (q.kind === "operation-posee") {
     return Boolean(answer?.correct);
   }
+  if (q.kind === "slider") {
+    return Math.abs(Number(answer) - q.answer) <= q.tolerance;
+  }
+  if (q.kind === "match") {
+    if (!Array.isArray(answer) || answer.length !== q.pairs.length) return false;
+    return q.pairs.every(p => answer.includes(`${p.leftId}:${p.rightId}`));
+  }
+  if (q.kind === "fill-expr") {
+    if (!answer || typeof answer !== "object") return false;
+    return Object.keys(q.answers).every(
+      key => String(answer[key] ?? "").trim() === q.answers[key].trim()
+    );
+  }
   return false;
 }
 
