@@ -14,9 +14,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useGenerateQuizFromTopics } from '@/hooks/useGenerateQuizFromTopics';
 import { QuestionEditor } from './QuestionEditor';
-import { QuizOverlay } from '@/components/learning/QuizOverlay';
-import { useAuth } from '@/context/AuthContext';
-import type { Question, QuizBank } from '@/types/quiz-bank';
+import { QuizPreviewDialog } from './QuizPreviewDialog';
+import type { Question } from '@/types/quiz-bank';
 
 interface TopicQuizGeneratorProps {
   open: boolean;
@@ -49,7 +48,6 @@ const STEP_ORDER: Step[] = ['topics', 'settings', 'review', 'preview', 'save'];
 export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGeneratorProps) {
   const queryClient = useQueryClient();
   const generateMutation = useGenerateQuizFromTopics();
-  const { user } = useAuth();
 
   const [step, setStep] = useState<Step>('topics');
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
@@ -70,14 +68,6 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   const [bankTitle, setBankTitle] = useState('');
   const [bankDescription, setBankDescription] = useState('');
 
-  // Preview bank — build a temporary QuizBank from generated questions for QuizOverlay
-  const previewBank = useMemo<QuizBank>(() => ({
-    quizBankId: '__preview__',
-    title: bankTitle || 'Preview',
-    description: 'Admin preview — not saved',
-    shuffle: false,
-    questions: generatedQuestions,
-  }), [generatedQuestions, bankTitle]);
   const [isSaving, setIsSaving] = useState(false);
 
   // Fetch subjects
@@ -276,14 +266,13 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
   return (
     <>
-    {/* Full-screen animated preview — rendered outside the Dialog so it takes the whole screen */}
-    {step === 'preview' && user && generatedQuestions.length > 0 && (
-      <QuizOverlay
-        bank={previewBank}
-        userId={user.id}
-        onClose={() => setStep('save')}
-      />
-    )}
+    {/* Read-only preview dialog — shows correct answers without requiring submission */}
+    <QuizPreviewDialog
+      questions={generatedQuestions}
+      open={step === 'preview'}
+      onClose={() => setStep('review')}
+      onProceedToSave={() => setStep('save')}
+    />
     <Dialog open={open && step !== 'preview'} onOpenChange={(newOpen) => { if (!newOpen) handleReset(); onOpenChange(newOpen); }}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
