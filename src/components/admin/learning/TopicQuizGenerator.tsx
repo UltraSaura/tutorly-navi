@@ -422,23 +422,26 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
               <div>
                 <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 block">Question Types</Label>
 
-                {/* Mix toggle — compact pill */}
-                <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors mb-2 ${
+                {/* Mix toggle */}
+                <label className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border cursor-pointer transition-colors mb-2 ${
                   mixMode ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
                 }`}>
                   <Checkbox checked={mixMode} onCheckedChange={(checked) => setMixMode(!!checked)} />
-                  <span className="text-sm font-medium">🎲 Mix (Auto) — AI picks the best type per question</span>
+                  <div>
+                    <div className="text-xs font-medium">🎲 Mix (Auto)</div>
+                    <div className="text-[11px] text-muted-foreground">AI picks the best type for each question</div>
+                  </div>
                 </label>
 
-                {/* Type grid — 3 columns, compact rows */}
-                <div className={`grid grid-cols-3 gap-1.5 ${mixMode ? 'opacity-40 pointer-events-none' : ''}`}>
+                {/* Type cards — 2 columns with description */}
+                <div className={`grid grid-cols-2 gap-1.5 ${mixMode ? 'opacity-40 pointer-events-none' : ''}`}>
                   {QUESTION_TYPES.map((type) => {
                     const selected = questionTypes.includes(type.value);
                     return (
                       <label
                         key={type.value}
-                        className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md border cursor-pointer transition-colors text-xs ${
-                          selected ? 'border-primary bg-primary/5 font-medium' : 'border-border hover:bg-muted'
+                        className={`flex items-start gap-2 px-2.5 py-2 rounded-lg border cursor-pointer transition-colors ${
+                          selected ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
                         }`}
                       >
                         <Checkbox
@@ -447,9 +450,12 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                             if (checked) setQuestionTypes(prev => [...prev, type.value]);
                             else setQuestionTypes(prev => prev.filter(t => t !== type.value));
                           }}
-                          className="h-3 w-3"
+                          className="h-3.5 w-3.5 mt-0.5 shrink-0"
                         />
-                        <span className="leading-tight">{type.label}</span>
+                        <div className="min-w-0">
+                          <div className="text-xs font-medium leading-tight">{type.label}</div>
+                          <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">{type.description}</div>
+                        </div>
                       </label>
                     );
                   })}
