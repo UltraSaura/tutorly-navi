@@ -15,7 +15,10 @@ import { toast } from 'sonner';
 import { useGenerateQuizFromTopics } from '@/hooks/useGenerateQuizFromTopics';
 import { QuestionEditor } from './QuestionEditor';
 import { QuizPreviewDialog } from './QuizPreviewDialog';
-import type { Question } from '@/types/quiz-bank';
+import { QuizOverlay } from '@/components/learning/QuizOverlay';
+import { useAuth } from '@/context/AuthContext';
+import type { Question, QuizBank } from '@/types/quiz-bank';
+import { ensureQuizBank } from '@/types/quiz-bank';
 
 interface TopicQuizGeneratorProps {
   open: boolean;
@@ -23,7 +26,7 @@ interface TopicQuizGeneratorProps {
   onSaved?: () => void;
 }
 
-type Step = 'topics' | 'settings' | 'generating' | 'review' | 'preview' | 'save';
+type Step = 'topics' | 'settings' | 'generating' | 'review' | 'preview' | 'try' | 'save';
 
 const QUESTION_TYPES = [
   { value: 'single',       label: 'Single Choice',          description: 'One correct answer from 4 options' },
@@ -48,6 +51,7 @@ const STEP_ORDER: Step[] = ['topics', 'settings', 'review', 'preview', 'save'];
 export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGeneratorProps) {
   const queryClient = useQueryClient();
   const generateMutation = useGenerateQuizFromTopics();
+  const { user } = useAuth();
 
   const [step, setStep] = useState<Step>('topics');
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
@@ -67,6 +71,14 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   // Save form
   const [bankTitle, setBankTitle] = useState('');
   const [bankDescription, setBankDescription] = useState('');
+
+  // Ephemeral QuizBank used for the interactive "Try it" preview
+  const tryBank = useMemo<QuizBank>(() => ensureQuizBank({
+    quizBankId: '__preview__',
+    title: bankTitle || 'Preview',
+    shuffle: false,
+    questions: generatedQuestions,
+  }), [generatedQuestions, bankTitle]);
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -266,14 +278,24 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
   return (
     <>
-    {/* Read-only preview dialog — shows correct answers without requiring submission */}
+    {/* Read-only preview — answers revealed, no interaction needed */}
     <QuizPreviewDialog
       questions={generatedQuestions}
       open={step === 'preview'}
       onClose={() => setStep('review')}
       onProceedToSave={() => setStep('save')}
     />
-    <Dialog open={open && step !== 'preview'} onOpenChange={(newOpen) => { if (!newOpen) handleReset(); onOpenChange(newOpen); }}>
+
+    {/* Interactive try-it — full QuizOverlay to test sliders, match, fill-expr etc. */}
+    {step === 'try' && user && generatedQuestions.length > 0 && (
+      <QuizOverlay
+        bank={tryBank}
+        userId={user.id}
+        onClose={() => setStep('review')}
+      />
+    )}
+
+    <Dialog open={open && step !== 'preview' && step !== 'try'} onOpenChange={(newOpen) => { if (!newOpen) handleReset(); onOpenChange(newOpen); }}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -519,8 +541,20 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                 <Button variant="outline" onClick={() => setStep('save')} disabled={generatedQuestions.length === 0}>
                   Skip to Save <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
-                <Button onClick={handleStartPreview} disabled={generatedQuestions.length === 0}>
-                  <Play className="w-4 h-4 mr-2" /> Preview Quiz
+                <Button
+                  variant="outline"
+                  onClick={handleStartPreview}
+                  disabled={generatedQuestions.length === 0}
+                  title="See correct answers without interacting"
+                >
+                  <Check className="w-4 h-4 mr-2" /> Verify answers
+                </Button>
+                <Button
+                  onClick={() => setStep('try')}
+                  disabled={generatedQuestions.length === 0}
+                  title="Try the exercises interactively — test sliders, match, fill-expr etc."
+                >
+                  <Play className="w-4 h-4 mr-2" /> Try it
                 </Button>
               </div>
             </div>
