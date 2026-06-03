@@ -358,9 +358,10 @@ Deno.serve(async (req) => {
       const dom = g.domain_id_uuid ? (domainMap.get(g.domain_id_uuid) as any) : null;
       const subj = g.subject_id_uuid ? (subjectMap.get(g.subject_id_uuid) as any) : null;
 
+      // Prefer human-readable label, fall back to subdomain code, then raw id
       const label =
-        sub?.subdomain ??
         sub?.label ??
+        sub?.subdomain ??
         sub?.code ??
         `Subdomain ${g.subdomain_id_uuid.slice(0, 8)}`;
       const subCode =

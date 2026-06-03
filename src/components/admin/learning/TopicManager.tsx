@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -45,6 +45,25 @@ const TopicManager = () => {
   const deleteTopic = useDeleteTopic();
   const autoLinkObjectives = useAutoLinkObjectives();
   
+  const [renamingTopicId, setRenamingTopicId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
+  const startRename = (topic: Topic) => {
+    setRenamingTopicId(topic.id);
+    setRenameValue(topic.name);
+    setTimeout(() => renameInputRef.current?.select(), 50);
+  };
+
+  const commitRename = async (topic: Topic) => {
+    const trimmed = renameValue.trim();
+    if (trimmed && trimmed !== topic.name) {
+      await updateTopic.mutateAsync({ id: topic.id, name: trimmed });
+      toast.success(`Renamed to "${trimmed}"`);
+    }
+    setRenamingTopicId(null);
+  };
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
@@ -450,7 +469,30 @@ const TopicManager = () => {
             ) : (
               topics.map((topic) => (
             <TableRow key={topic.id}>
-              <TableCell className="font-medium">{topic.name}</TableCell>
+              <TableCell className="font-medium">
+                {renamingTopicId === topic.id ? (
+                  <Input
+                    ref={renameInputRef}
+                    value={renameValue}
+                    onChange={e => setRenameValue(e.target.value)}
+                    onBlur={() => commitRename(topic)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') commitRename(topic);
+                      if (e.key === 'Escape') setRenamingTopicId(null);
+                    }}
+                    className="h-7 text-sm px-2 w-48"
+                    autoFocus
+                  />
+                ) : (
+                  <span
+                    className="cursor-pointer hover:underline hover:text-primary"
+                    title="Click to rename"
+                    onClick={() => startRename(topic)}
+                  >
+                    {topic.name}
+                  </span>
+                )}
+              </TableCell>
               <TableCell>{categories.find(c => c.id === topic.category_id)?.name}</TableCell>
               <TableCell>
                 <CurriculumLocation
