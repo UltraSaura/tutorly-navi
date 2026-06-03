@@ -381,73 +381,88 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
         {/* Step: Settings */}
         {step === 'settings' && (
-          <div className="flex-1 flex flex-col">
-            <div className="space-y-6">
-              <div>
-                <Label className="mb-2 block">Number of Questions</Label>
-                <Select value={questionCount.toString()} onValueChange={(v) => setQuestionCount(parseInt(v))}>
-                  <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {[3, 5, 7, 10, 15, 20].map(n => (
-                      <SelectItem key={n} value={n.toString()}>{n}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
 
-              <div>
-                <Label className="mb-3 block">Question Types</Label>
-                <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors mb-3 ${
-                  mixMode ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
-                }`}>
-                  <Checkbox checked={mixMode} onCheckedChange={(checked) => setMixMode(!!checked)} />
-                  <div>
-                    <div className="font-medium">🎲 Mix (Auto)</div>
-                    <div className="text-sm text-muted-foreground">AI picks the best question type for each question</div>
+              {/* Row: count + difficulty side by side */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">Questions</Label>
+                  <Select value={questionCount.toString()} onValueChange={(v) => setQuestionCount(parseInt(v))}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {[3, 5, 7, 10, 15, 20].map(n => (
+                        <SelectItem key={n} value={n.toString()}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">Difficulty</Label>
+                  <div className="flex gap-1 h-8">
+                    {DIFFICULTIES.map((d) => (
+                      <button
+                        key={d.value}
+                        type="button"
+                        onClick={() => setDifficulty(d.value as typeof difficulty)}
+                        className={`flex-1 rounded-md text-xs font-medium border transition-colors ${
+                          difficulty === d.value
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'border-border hover:bg-muted'
+                        }`}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
                   </div>
-                </label>
-                <div className={`grid grid-cols-2 gap-3 ${mixMode ? 'opacity-50 pointer-events-none' : ''}`}>
-                  {QUESTION_TYPES.map((type) => (
-                    <label key={type.value} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      questionTypes.includes(type.value) ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
-                    }`}>
-                      <Checkbox
-                        checked={questionTypes.includes(type.value)}
-                        onCheckedChange={(checked) => {
-                          if (checked) setQuestionTypes(prev => [...prev, type.value]);
-                          else setQuestionTypes(prev => prev.filter(t => t !== type.value));
-                        }}
-                      />
-                      <div>
-                        <div className="font-medium">{type.label}</div>
-                        <div className="text-sm text-muted-foreground">{type.description}</div>
-                      </div>
-                    </label>
-                  ))}
                 </div>
               </div>
 
+              {/* Question types */}
               <div>
-                <Label className="mb-3 block">Difficulty</Label>
-                <RadioGroup value={difficulty} onValueChange={(v) => setDifficulty(v as typeof difficulty)}>
-                  <div className="flex gap-4">
-                    {DIFFICULTIES.map((d) => (
-                      <label key={d.value} className="flex items-center gap-2 cursor-pointer">
-                        <RadioGroupItem value={d.value} />
-                        <span>{d.label}</span>
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 block">Question Types</Label>
+
+                {/* Mix toggle — compact pill */}
+                <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors mb-2 ${
+                  mixMode ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
+                }`}>
+                  <Checkbox checked={mixMode} onCheckedChange={(checked) => setMixMode(!!checked)} />
+                  <span className="text-sm font-medium">🎲 Mix (Auto) — AI picks the best type per question</span>
+                </label>
+
+                {/* Type grid — 3 columns, compact rows */}
+                <div className={`grid grid-cols-3 gap-1.5 ${mixMode ? 'opacity-40 pointer-events-none' : ''}`}>
+                  {QUESTION_TYPES.map((type) => {
+                    const selected = questionTypes.includes(type.value);
+                    return (
+                      <label
+                        key={type.value}
+                        className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md border cursor-pointer transition-colors text-xs ${
+                          selected ? 'border-primary bg-primary/5 font-medium' : 'border-border hover:bg-muted'
+                        }`}
+                      >
+                        <Checkbox
+                          checked={selected}
+                          onCheckedChange={(checked) => {
+                            if (checked) setQuestionTypes(prev => [...prev, type.value]);
+                            else setQuestionTypes(prev => prev.filter(t => t !== type.value));
+                          }}
+                          className="h-3 w-3"
+                        />
+                        <span className="leading-tight">{type.label}</span>
                       </label>
-                    ))}
-                  </div>
-                </RadioGroup>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-between mt-auto pt-6">
-              <Button variant="outline" onClick={() => setStep('topics')}>
-                <ArrowLeft className="w-4 h-4 mr-2" /> Back
+            <div className="flex justify-between pt-3 border-t mt-3">
+              <Button variant="outline" size="sm" onClick={() => setStep('topics')}>
+                <ArrowLeft className="w-4 h-4 mr-1" /> Back
               </Button>
-              <Button onClick={handleGenerate} disabled={!canProceedFromSettings}>
-                <Sparkles className="w-4 h-4 mr-2" /> Generate Questions
+              <Button size="sm" onClick={handleGenerate} disabled={!canProceedFromSettings}>
+                <Sparkles className="w-4 h-4 mr-1" /> Generate Questions
               </Button>
             </div>
           </div>
