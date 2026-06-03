@@ -450,15 +450,16 @@ Deno.serve(async (req) => {
       curriculum_level_code: string;
       curriculum_subdomain_id: string;
     }[] = [];
-    for (let i = 0; i < toUpsert.length; i += CHUNK) {
-      const slice = toUpsert.slice(i, i + CHUNK);
+    // Only insert rows that are genuinely new (not already in existingMap)
+    const toInsert = toUpsert.filter((row) => {
+      const key = `${row.curriculum_level_code}|${row.curriculum_subdomain_id}`;
+      return !existingMap.has(key);
+    });
+    for (let i = 0; i < toInsert.length; i += CHUNK) {
+      const slice = toInsert.slice(i, i + CHUNK);
       const { data, error } = await admin
         .from("topics")
-        .upsert(slice, {
-          onConflict:
-            "curriculum_level_code,curriculum_subdomain_id,category_id",
-          ignoreDuplicates: false,
-        })
+        .insert(slice)
         .select("id, curriculum_level_code, curriculum_subdomain_id");
       if (error) throw error;
       if (data) upsertedTopics.push(...(data as any));
@@ -502,20 +503,20 @@ Deno.serve(async (req) => {
     let links_added = 0;
     for (let i = 0; i < linkRows.length; i += CHUNK) {
       const slice = linkRows.slice(i, i + CHUNK);
-      const { error, count } = await admin
+      const { data: inserted, error } = await admin
         .from("topic_objective_links")
-        .upsert(slice, {
-          onConflict: "topic_id,objective_id_uuid",
-          ignoreDuplicates: true,
-          count: "exact",
-        });
+        .insert(slice)
+        .select("id");
       if (error) {
+        // If insert fails (e.g. duplicate), try ignoring duplicates via upsert
         const { error: e2 } = await admin
           .from("topic_objective_links")
           .upsert(slice, { ignoreDuplicates: true });
         if (e2) throw e2;
+        links_added += slice.length; // approximate
+      } else {
+        links_added += inserted?.length ?? 0;
       }
-      links_added += count ?? slice.length;
     }
 
     return new Response(
