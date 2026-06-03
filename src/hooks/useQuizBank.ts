@@ -40,27 +40,29 @@ export function useVisibleBanks(topicId: string, completedVideoIds: string[], us
   });
 }
 
-export function useAllBanks(topicId: string, videoId: string, completedVideoIds: string[], userId: string) {
+export function useAllBanks(topicId: string, videoId: string, completedVideoIds: string[], userId: string, context: 'practice' | 'lesson' | 'both' = 'both') {
   return useQuery({
-    queryKey: ['quiz-banks-all', topicId, videoId, completedVideoIds.join(',')],
+    queryKey: ['quiz-banks-all', topicId, videoId, completedVideoIds.join(','), context],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('quiz-bank-all', {
-        body: { topicId, videoId, completedVideoIds, userId },
+        body: { topicId, videoId, completedVideoIds, userId, context },
         method: 'POST'
       });
 
       if (error) throw error;
-      return data as { 
-        banks: { 
-          id: string; 
-          bankId: string; 
-          isUnlocked: boolean; 
+      return data as {
+        banks: {
+          id: string;
+          bankId: string;
+          isUnlocked: boolean;
           progressMessage: string;
           completedCount: number;
           requiredCount: number;
           videoIds: string[];
           topicId: string | null;
-        }[] 
+          triggerVideoId: string | null;
+          displayContext: 'practice' | 'lesson' | 'both';
+        }[]
       };
     },
     enabled: !!userId && (!!topicId || !!videoId),

@@ -51,7 +51,7 @@ interface TopicCardProps {
 
 function TopicCard({ topic, userId, index, onPractice }: TopicCardProps) {
   const { t } = useTranslation();
-  const banksQuery = useAllBanks(topic.id, '', [], userId);
+  const banksQuery = useAllBanks(topic.id, '', [], userId, 'practice');
   const banks = banksQuery.data?.banks ?? [];
   const firstBank = banks.find(b => b.isUnlocked) ?? banks[0] ?? null;
 

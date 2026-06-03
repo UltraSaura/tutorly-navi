@@ -223,7 +223,11 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
           bank_id: bankId,
           topic_id: topicId,
           is_active: true,
+          display_context: 'practice',
           trigger_after_n_videos: 0,
+          trigger_video_id: null,
+          video_ids: null,
+          min_completed_in_set: null,
         }));
         const { error: assignError } = await supabase
           .from('quiz_bank_assignments')
