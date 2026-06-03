@@ -10,6 +10,8 @@ export type BaseQ = {
   hint?: string;
   points?: number;
   tags?: string[];
+  /** Optional read-only visual shown above the question (e.g. a cake/pie diagram for fraction questions) */
+  context_visual?: VisualUnion;
 };
 
 export type SingleQ = BaseQ & { kind: "single"; choices: Choice[] };

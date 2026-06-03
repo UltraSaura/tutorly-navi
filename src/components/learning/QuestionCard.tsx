@@ -27,6 +27,70 @@ const choiceVariants = {
   faded:    { opacity: 0.4, scale: 1 },
 };
 
+// ── Read-only context visual shown above a question ──────────────────────────
+function ContextVisual({ visual }: { visual: any }) {
+  if (!visual) return null;
+
+  if (visual.subtype === "pie") {
+    const segments: any[] = visual.segments ?? [];
+    const colored: number =
+      typeof visual.correctColoredCount === "number"
+        ? visual.correctColoredCount
+        : segments.filter((s: any) => s.colored).length;
+    const total = segments.length;
+    if (total === 0) return null;
+
+    const size = 140;
+    const cx = size / 2, cy = size / 2, r = size / 2 - 4;
+    const sliceAngle = (2 * Math.PI) / total;
+    const start = -Math.PI / 2;
+
+    return (
+      <div className="flex flex-col items-center gap-1">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}
+          className="drop-shadow-sm">
+          <circle cx={cx} cy={cy} r={r} fill="#f3f4f6" />
+          {Array.from({ length: total }, (_, i) => {
+            const a1 = start + i * sliceAngle, a2 = a1 + sliceAngle;
+            const large = sliceAngle > Math.PI ? 1 : 0;
+            const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+            const x2 = cx + r * Math.cos(a2), y2 = cy + r * Math.sin(a2);
+            const isColored = i < colored;
+            return (
+              <path key={i}
+                d={`M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`}
+                fill={isColored ? "#3b82f6" : "#e5e7eb"}
+                stroke="#fff" strokeWidth={2} />
+            );
+          })}
+        </svg>
+        <p className="text-xs text-muted-foreground">
+          {colored}/{total} parts
+        </p>
+      </div>
+    );
+  }
+
+  if (visual.subtype === "angle") {
+    const size = 130;
+    const cx = size / 2, cy = size / 2, r = size / 2 - 8;
+    const aDeg = visual.aDeg ?? 0, bDeg = visual.bDeg ?? 60;
+    const toRad = (d: number) => (d * Math.PI) / 180;
+    const ax = cx + r * Math.cos(toRad(aDeg)), ay = cy - r * Math.sin(toRad(aDeg));
+    const bx = cx + r * Math.cos(toRad(bDeg)), by = cy - r * Math.sin(toRad(bDeg));
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}
+        className="drop-shadow-sm bg-white rounded-xl">
+        <circle cx={cx} cy={cy} r={r} fill="#f8fafc" stroke="#e2e8f0" />
+        <line x1={cx} y1={cy} x2={ax} y2={ay} stroke="#1f2937" strokeWidth={2.5} strokeLinecap="round" />
+        <line x1={cx} y1={cy} x2={bx} y2={by} stroke="#1f2937" strokeWidth={2.5} strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  return null;
+}
+
 export function QuestionCard({
   question,
   onChange,
@@ -105,6 +169,12 @@ export function QuestionCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 260, damping: 24 }}
     >
+      {/* Read-only context visual (e.g. cake/pie diagram shown above the question) */}
+      {(question as any).context_visual && (
+        <div className="mb-3 flex justify-center">
+          <ContextVisual visual={(question as any).context_visual} />
+        </div>
+      )}
       <h3 className="text-lg font-semibold mb-3">{question.prompt}</h3>
 
       {question.kind === "single" && (

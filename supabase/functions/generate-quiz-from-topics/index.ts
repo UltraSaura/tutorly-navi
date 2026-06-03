@@ -18,9 +18,16 @@ function buildTypeInstructions(questionTypes: string[]): string {
   return questionTypes.map(type => {
     switch (type) {
       case 'single':
-        return `- "single": Multiple choice with exactly ONE correct answer. Include 4 choices with "correct": true on only one.`;
+        return `- "single": Multiple choice with exactly ONE correct answer. Include 4 choices with "correct": true on only one.
+  OPTIONAL context_visual: If the question naturally refers to a visual (a cake, a shape, a diagram), add a "context_visual" field with a read-only pie or angle visual shown above the question. This way "Quelle fraction représente la partie colorée de ce gâteau?" is valid because the student actually sees the cake.
+  context_visual for a pie (e.g. "gâteau coupé en 4 parts, 3 colorées"):
+  "context_visual": { "subtype": "pie", "correctColoredCount": 3, "segments": [{"id":"s1","value":1},{"id":"s2","value":1},{"id":"s3","value":1},{"id":"s4","value":1}] }
+  context_visual for an angle (e.g. "angle de 45°"):
+  "context_visual": { "subtype": "angle", "aDeg": 0, "bDeg": 45, "targetDeg": 45, "toleranceDeg": 2 }
+  If NO visual is needed, omit context_visual entirely and keep the prompt self-contained.`;
       case 'multi':
-        return `- "multi": Multiple choice with MULTIPLE correct answers (2-3 typically). Include 4 choices with "correct": true on multiple.`;
+        return `- "multi": Multiple choice with MULTIPLE correct answers (2-3 typically). Include 4 choices with "correct": true on multiple.
+  Same context_visual support as "single" — add one if the question references a visual element.`;
       case 'numeric':
         return `- "numeric": Answer is a number. Include "answer" (the correct number) and optionally "range": { "min": X, "max": Y }.`;
       case 'ordering':
@@ -146,7 +153,8 @@ Create a rich Brilliant-style variety when the topic allows it:
 - fill-expr: complete an equation, fill missing numbers in a formula or calculation
 - visual pie: fractions, proportions — use color_slices AND select_pie modes alternately
 - visual angle: geometry, angle measurement
-Prioritise slider, match, and fill-expr when the topic involves numbers, equivalences, or formulas — these create the most engaging interactive experience.`;
+Prioritise slider, match, and fill-expr when the topic involves numbers, equivalences, or formulas — these create the most engaging interactive experience.
+For single/multi questions that reference a cake, shape, or diagram, always include a "context_visual" (pie or angle) so the student can see it.`;
       default:
         return '';
     }
@@ -163,7 +171,8 @@ function buildLearningFriendlyGuidance(): string {
 - For single and multi questions, include some verbal-reasoning answer choices when appropriate, such as short explanations, comparison statements, or "which sentence is true" choices.
 - Do not use technical labels such as visual learner, auditory learner, kinesthetic learner, learning modality, or cognitive preference.
 - Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, visual, slider, match, fill-expr.
-- For slider: always include min, max, step, answer, tolerance. For match: always include 3-5 pairs and an answers object. For fill-expr: always include template, blanks, chips, answers.`;
+- For slider: always include min, max, step, answer, tolerance. For match: always include 3-5 pairs and an answers object. For fill-expr: always include template, blanks, chips, answers.
+- If a "single" or "multi" prompt references a visual ("ce gâteau", "cette figure", "la partie colorée", etc.), you MUST include a matching "context_visual" field so the student can actually see it. Never reference a visual without providing it.`;
 }
 
 function validateQuestions(questions: any[]): any[] {
@@ -174,6 +183,25 @@ function validateQuestions(questions: any[]): any[] {
     if (!q.id) q.id = `q-${idx + 1}`;
     if (!q.prompt) return false;
     if (!validKinds.has(q.kind)) return false;
+
+    // Validate context_visual if present
+    if (q.context_visual) {
+      const cv = q.context_visual;
+      if (cv.subtype === 'pie') {
+        if (!Array.isArray(cv.segments) || cv.segments.length < 2) {
+          delete q.context_visual; // remove invalid visual rather than rejecting whole question
+        } else {
+          cv.segments.forEach((s: any, i: number) => { if (!s.id) s.id = `s${i + 1}`; });
+          if (typeof cv.correctColoredCount !== 'number') {
+            cv.correctColoredCount = cv.segments.filter((s: any) => s.colored).length;
+          }
+        }
+      } else if (cv.subtype === 'angle') {
+        if (typeof cv.targetDeg !== 'number') delete q.context_visual;
+      } else {
+        delete q.context_visual; // unknown subtype — remove
+      }
+    }
 
     if (q.kind === 'single') {
       if (!Array.isArray(q.choices) || q.choices.length < 2) return false;
