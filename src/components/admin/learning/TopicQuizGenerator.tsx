@@ -8,16 +8,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Progress } from '@/components/ui/progress';
-import { Sparkles, ArrowLeft, ArrowRight, Loader2, Check, BookOpen, Pencil, Trash2, Play, RotateCcw, CheckCircle2, XCircle } from 'lucide-react';
+import { Sparkles, ArrowLeft, ArrowRight, Loader2, Check, BookOpen, Pencil, Trash2, Play } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useGenerateQuizFromTopics } from '@/hooks/useGenerateQuizFromTopics';
 import { QuestionEditor } from './QuestionEditor';
-import { QuestionCard } from '@/components/learning/QuestionCard';
-import { gradeQuiz } from '@/utils/quizEvaluation';
-import type { Question } from '@/types/quiz-bank';
+import { QuizOverlay } from '@/components/learning/QuizOverlay';
+import { useAuth } from '@/context/AuthContext';
+import type { Question, QuizBank } from '@/types/quiz-bank';
 
 interface TopicQuizGeneratorProps {
   open: boolean;
@@ -47,6 +46,7 @@ const STEP_ORDER: Step[] = ['topics', 'settings', 'review', 'preview', 'save'];
 export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGeneratorProps) {
   const queryClient = useQueryClient();
   const generateMutation = useGenerateQuizFromTopics();
+  const { user } = useAuth();
 
   const [step, setStep] = useState<Step>('topics');
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
@@ -63,14 +63,18 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([]);
   const [editingQuestionIndex, setEditingQuestionIndex] = useState<number | null>(null);
 
-  // Preview state
-  const [previewAnswers, setPreviewAnswers] = useState<Record<string, any>>({});
-  const [previewSubmitted, setPreviewSubmitted] = useState(false);
-  const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0);
-
   // Save form
   const [bankTitle, setBankTitle] = useState('');
   const [bankDescription, setBankDescription] = useState('');
+
+  // Preview bank — build a temporary QuizBank from generated questions for QuizOverlay
+  const previewBank = useMemo<QuizBank>(() => ({
+    quizBankId: '__preview__',
+    title: bankTitle || 'Preview',
+    description: 'Admin preview — not saved',
+    shuffle: false,
+    questions: generatedQuestions,
+  }), [generatedQuestions, bankTitle]);
   const [isSaving, setIsSaving] = useState(false);
 
   // Fetch subjects
@@ -128,10 +132,6 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     return topics.filter(t => t.name.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q));
   }, [topics, searchQuery]);
 
-  const previewResults = useMemo(() => {
-    if (!previewSubmitted) return null;
-    return gradeQuiz(generatedQuestions, previewAnswers);
-  }, [previewSubmitted, generatedQuestions, previewAnswers]);
 
   const toggleTopic = (topicId: string) => {
     setSelectedTopicIds(prev =>
@@ -177,9 +177,6 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   };
 
   const handleStartPreview = () => {
-    setPreviewAnswers({});
-    setPreviewSubmitted(false);
-    setCurrentPreviewIndex(0);
     setStep('preview');
   };
 
@@ -262,9 +259,6 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     setMixMode(false);
     setGeneratedQuestions([]);
     setEditingQuestionIndex(null);
-    setPreviewAnswers({});
-    setPreviewSubmitted(false);
-    setCurrentPreviewIndex(0);
     setBankTitle('');
     setBankDescription('');
   };
@@ -278,7 +272,16 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   };
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => { if (!newOpen) handleReset(); onOpenChange(newOpen); }}>
+    <>
+    {/* Full-screen animated preview — rendered outside the Dialog so it takes the whole screen */}
+    {step === 'preview' && user && generatedQuestions.length > 0 && (
+      <QuizOverlay
+        bank={previewBank}
+        userId={user.id}
+        onClose={() => setStep('save')}
+      />
+    )}
+    <Dialog open={open && step !== 'preview'} onOpenChange={(newOpen) => { if (!newOpen) handleReset(); onOpenChange(newOpen); }}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -521,108 +524,8 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
           </div>
         )}
 
-        {/* Step: Preview */}
-        {step === 'preview' && (
-          <div className="flex-1 flex flex-col min-h-0">
-            {!previewSubmitted ? (
-              <>
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Question {currentPreviewIndex + 1} of {generatedQuestions.length}</span>
-                    <span className="text-sm text-muted-foreground">{Object.keys(previewAnswers).length} answered</span>
-                  </div>
-                  <Progress value={((currentPreviewIndex + 1) / generatedQuestions.length) * 100} className="h-2" />
-                </div>
-
-                <ScrollArea className="flex-1">
-                  <div className="flex justify-center py-4">
-                    <QuestionCard
-                      question={generatedQuestions[currentPreviewIndex]}
-                      onChange={(value) => {
-                        setPreviewAnswers(prev => ({
-                          ...prev,
-                          [generatedQuestions[currentPreviewIndex].id]: value
-                        }));
-                      }}
-                    />
-                  </div>
-                </ScrollArea>
-
-                <div className="flex justify-center gap-1.5 py-3 flex-wrap">
-                  {generatedQuestions.map((q, i) => (
-                    <button
-                      key={q.id}
-                      onClick={() => setCurrentPreviewIndex(i)}
-                      className={`w-3 h-3 rounded-full transition-all ${
-                        i === currentPreviewIndex ? 'bg-primary scale-125' :
-                        q.id in previewAnswers ? 'bg-primary/50' : 'bg-muted hover:bg-muted-foreground/30'
-                      }`}
-                    />
-                  ))}
-                </div>
-
-                <div className="flex justify-between mt-4">
-                  <Button variant="outline" onClick={() => { setPreviewAnswers({}); setPreviewSubmitted(false); setCurrentPreviewIndex(0); setStep('review'); }}>
-                    <ArrowLeft className="w-4 h-4 mr-2" /> Back to Review
-                  </Button>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setCurrentPreviewIndex(prev => Math.max(0, prev - 1))} disabled={currentPreviewIndex === 0}>Previous</Button>
-                    {currentPreviewIndex < generatedQuestions.length - 1 ? (
-                      <Button onClick={() => setCurrentPreviewIndex(prev => prev + 1)}>Next</Button>
-                    ) : (
-                      <Button onClick={() => setPreviewSubmitted(true)}>
-                        <Check className="w-4 h-4 mr-2" /> Submit Quiz
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="text-center py-6">
-                  <h3 className="text-2xl font-bold mb-2">Quiz Results</h3>
-                  <p className="text-4xl font-bold text-primary mb-2">{previewResults?.score}/{previewResults?.maxScore}</p>
-                  <p className="text-muted-foreground">{Math.round(((previewResults?.score || 0) / (previewResults?.maxScore || 1)) * 100)}% correct</p>
-                  <Progress value={((previewResults?.score || 0) / (previewResults?.maxScore || 1)) * 100} className="h-3 mt-4 max-w-xs mx-auto" />
-                </div>
-
-                <ScrollArea className="flex-1 border rounded-lg">
-                  <div className="p-4 space-y-2">
-                    {previewResults?.details.map((detail, index) => {
-                      const question = generatedQuestions.find(q => q.id === detail.questionId);
-                      return (
-                        <div key={detail.questionId} className={`flex items-center gap-3 p-3 rounded-lg ${
-                          detail.correct ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30'
-                        }`}>
-                          {detail.correct ? <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" /> : <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />}
-                          <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium">Q{index + 1}:</span>{' '}
-                            <span className="text-sm truncate">{question?.prompt}</span>
-                          </div>
-                          <span className="text-xs text-muted-foreground flex-shrink-0">{detail.correct ? `+${detail.points}` : '0'} pts</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-
-                <div className="flex justify-between mt-4">
-                  <Button variant="outline" onClick={() => { setPreviewAnswers({}); setPreviewSubmitted(false); setCurrentPreviewIndex(0); setStep('review'); }}>
-                    <Pencil className="w-4 h-4 mr-2" /> Edit Questions
-                  </Button>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => { setPreviewAnswers({}); setPreviewSubmitted(false); setCurrentPreviewIndex(0); }}>
-                      <RotateCcw className="w-4 h-4 mr-2" /> Retake
-                    </Button>
-                    <Button onClick={() => setStep('save')}>
-                      Continue to Save <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        )}
+        {/* Step: Preview — render the full animated QuizOverlay */}
+        {step === 'preview' && null}
 
         {/* Step: Save */}
         {step === 'save' && (
@@ -658,5 +561,6 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
         )}
       </DialogContent>
     </Dialog>
+    </>
   );
 }
