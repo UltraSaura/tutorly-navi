@@ -70,14 +70,67 @@ function buildTypeInstructions(questionTypes: string[]): string {
     "visual": { "subtype": "angle", "aDeg": 0, "bDeg": 45, "targetDeg": 45, "toleranceDeg": 2 }
   }
   Use angles 10-350. toleranceDeg 2-5.`;
+      case 'slider':
+        return `- "slider": Student drags a slider to the correct numeric value. Perfect for estimating quantities, reading scales, setting temperatures, choosing a value on a number line, etc.
+  Required fields: min (number), max (number), step (number), answer (correct value), tolerance (acceptable ± error, use 0 for exact).
+  Optional: unit (string like "°C", "km", "%"), trackLabel (short description shown under the value).
+  Example:
+  {
+    "id": "q-X", "kind": "slider",
+    "prompt": "The temperature today is between 20°C and 30°C. Drag the slider to 24°C.",
+    "hint": "Find 24 between the two extremes",
+    "points": 1,
+    "min": 20, "max": 30, "step": 1, "answer": 24, "tolerance": 1, "unit": "°C",
+    "trackLabel": "Temperature"
+  }`;
+
+      case 'match':
+        return `- "match": Student connects left-column items to their right-column matches by tapping pairs. Great for vocabulary, definitions, equivalences, cause/effect.
+  Required: pairs array where each pair has leftId, left (text), rightId, right (text). Use 3-5 pairs.
+  The answers object maps leftId → rightId for correct pairs.
+  Example:
+  {
+    "id": "q-X", "kind": "match",
+    "prompt": "Match each fraction to its decimal equivalent.",
+    "hint": "Divide the numerator by the denominator",
+    "points": 2,
+    "pairs": [
+      {"leftId": "l1", "left": "1/2",  "rightId": "r1", "right": "0.5"},
+      {"leftId": "l2", "left": "1/4",  "rightId": "r2", "right": "0.25"},
+      {"leftId": "l3", "left": "3/4",  "rightId": "r3", "right": "0.75"},
+      {"leftId": "l4", "left": "1/10", "rightId": "r4", "right": "0.1"}
+    ],
+    "answers": {"l1":"r1","l2":"r2","l3":"r3","l4":"r4"}
+  }`;
+
+      case 'fill_expr':
+      case 'fill-expr':
+        return `- "fill-expr": Student drags number chips into blanks in a mathematical expression. Perfect for completing equations, filling missing numbers, step-by-step calculation.
+  Template uses __ (two underscores) for each blank. blanks is an array of blank IDs (must match count of __ in template). chips is the list of available number options (include distractors). answers maps blankId → correct chip value.
+  Example:
+  {
+    "id": "q-X", "kind": "fill-expr",
+    "prompt": "Complete the multiplication: 3 × 4 = __ and 6 × 2 = __",
+    "hint": "Multiply each pair",
+    "points": 2,
+    "template": "3 × 4 = __ et 6 × 2 = __",
+    "blanks": ["b1", "b2"],
+    "chips": ["10", "12", "14", "8"],
+    "answers": {"b1": "12", "b2": "12"}
+  }`;
+
       case 'mix':
-        return `Choose the BEST question type for each question from the supported kinds only: single, multi, numeric, ordering, visual pie (select_pie or color_slices mode), visual angle.
-Create a balanced variety when the topic allows it:
-- Include at least one standard conceptual question using single or multi when possible.
-- Include at least one visual question when the topic naturally supports pie charts, fractions, proportions, geometry, or angle measurement.
-- Include at least one ordering/action-style question when the topic has steps, processes, procedures, comparisons, or sequences.
-- Include at least one numeric or application question when calculation or applying a rule is appropriate.
-For fractions, alternate between pie select_pie mode AND pie color_slices mode when generating multiple pie questions. For geometry use visual angle. For sequences use ordering. For recall and verbal reasoning use single/multi.`;
+        return `Choose the BEST question type for each question from ALL supported kinds: single, multi, numeric, ordering, slider, match, fill-expr, visual pie (select_pie or color_slices mode), visual angle.
+Create a rich Brilliant-style variety when the topic allows it:
+- single/multi: conceptual recall, verbal reasoning, "which is true" style
+- numeric: calculation, apply a rule, find a missing number
+- ordering: steps, procedures, sequences, chronological order
+- slider: estimate a quantity, read a scale, place a value on a number line
+- match: vocabulary ↔ definition, fraction ↔ decimal, term ↔ example
+- fill-expr: complete an equation, fill missing numbers in a formula or calculation
+- visual pie: fractions, proportions — use color_slices AND select_pie modes alternately
+- visual angle: geometry, angle measurement
+Prioritise slider, match, and fill-expr when the topic involves numbers, equivalences, or formulas — these create the most engaging interactive experience.`;
       default:
         return '';
     }
@@ -93,11 +146,12 @@ function buildLearningFriendlyGuidance(): string {
 - For ordering questions, use step-building, process-ordering, or action-ordering language when appropriate.
 - For single and multi questions, include some verbal-reasoning answer choices when appropriate, such as short explanations, comparison statements, or "which sentence is true" choices.
 - Do not use technical labels such as visual learner, auditory learner, kinesthetic learner, learning modality, or cognitive preference.
-- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, visual.`;
+- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, visual, slider, match, fill-expr.
+- For slider: always include min, max, step, answer, tolerance. For match: always include 3-5 pairs and an answers object. For fill-expr: always include template, blanks, chips, answers.`;
 }
 
 function validateQuestions(questions: any[]): any[] {
-  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'visual']);
+  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'visual', 'slider', 'match', 'fill-expr']);
   const validVisualSubtypes = new Set(['pie', 'angle']);
 
   return questions.filter((q, idx) => {
@@ -138,6 +192,36 @@ function validateQuestions(questions: any[]): any[] {
         if (typeof q.visual.aDeg !== 'number') q.visual.aDeg = 0;
         if (typeof q.visual.bDeg !== 'number') q.visual.bDeg = q.visual.targetDeg;
       }
+    }
+    // Slider validation
+    if (q.kind === 'slider') {
+      if (typeof q.min !== 'number' || typeof q.max !== 'number') return false;
+      if (typeof q.answer !== 'number') return false;
+      if (typeof q.step !== 'number') q.step = 1;
+      if (typeof q.tolerance !== 'number') q.tolerance = Math.max(1, Math.round((q.max - q.min) / 20));
+      if (q.answer < q.min || q.answer > q.max) return false;
+    }
+    // Match validation
+    if (q.kind === 'match') {
+      if (!Array.isArray(q.pairs) || q.pairs.length < 2) return false;
+      q.pairs.forEach((p: any, i: number) => {
+        if (!p.leftId)  p.leftId  = `l${i + 1}`;
+        if (!p.rightId) p.rightId = `r${i + 1}`;
+      });
+      if (!q.answers || typeof q.answers !== 'object') {
+        // Auto-build answers from pair order if missing
+        q.answers = Object.fromEntries(q.pairs.map((p: any) => [p.leftId, p.rightId]));
+      }
+    }
+    // Fill-expr validation
+    if (q.kind === 'fill-expr') {
+      if (typeof q.template !== 'string') return false;
+      if (!Array.isArray(q.blanks) || q.blanks.length === 0) return false;
+      if (!Array.isArray(q.chips) || q.chips.length === 0) return false;
+      if (!q.answers || typeof q.answers !== 'object') return false;
+      // Count __ in template must match blanks length
+      const blankCount = (q.template.match(/_{2,}/g) || []).length;
+      if (blankCount !== q.blanks.length) return false;
     }
     if (!q.points) q.points = 1;
     return true;

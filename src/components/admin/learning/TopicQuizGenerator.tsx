@@ -27,12 +27,15 @@ interface TopicQuizGeneratorProps {
 type Step = 'topics' | 'settings' | 'generating' | 'review' | 'preview' | 'save';
 
 const QUESTION_TYPES = [
-  { value: 'single', label: 'Single Choice', description: 'One correct answer' },
-  { value: 'multi', label: 'Multi Choice', description: 'Multiple correct answers' },
-  { value: 'numeric', label: 'Numeric', description: 'Number answer' },
-  { value: 'ordering', label: 'Ordering', description: 'Arrange in sequence' },
-  { value: 'visual_pie', label: 'Visual (Pie)', description: 'Pie chart fraction question' },
-  { value: 'visual_angle', label: 'Visual (Angle)', description: 'Angle measurement question' },
+  { value: 'single',       label: 'Single Choice',          description: 'One correct answer from 4 options' },
+  { value: 'multi',        label: 'Multiple Choice',         description: 'Several correct answers from 4 options' },
+  { value: 'numeric',      label: 'Numeric',                 description: 'Type a number as the answer' },
+  { value: 'ordering',     label: 'Ordering',                description: 'Arrange items in the correct sequence' },
+  { value: 'slider',       label: '🎚️ Slider',               description: 'Drag a slider to the correct value — great for estimating quantities' },
+  { value: 'match',        label: '🔗 Match pairs',           description: 'Connect left-column items to their right-column matches' },
+  { value: 'fill_expr',    label: '🧩 Fill the expression',  description: 'Drag number chips into blanks to complete a formula' },
+  { value: 'visual_pie',   label: '🥧 Visual (Pie chart)',   description: 'Interact with a fraction pie chart' },
+  { value: 'visual_angle', label: '📐 Visual (Angle)',       description: 'Measure or identify angles' },
 ];
 
 const DIFFICULTIES = [
