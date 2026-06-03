@@ -141,8 +141,21 @@
   "practice.subject.exams.exerciseCount_other": "{{count}} exercises",
   "practice.subject.exams.cta": "Open exam papers",
 
-  "practice.subject.ai.title": "Create AI practice",
-  "practice.subject.ai.subtitle": "Coming soon",
+  "practice.subject.ai.title": "Practice by topic",
+  "practice.subject.ai.subtitle": "Adaptive questions mapped to your curriculum",
+  "practice.subject.ai.cta": "Choose a topic",
+
+  "practice.topics.metaTitle": "Practice by topic — {{subject}}",
+  "practice.topics.back": "Back",
+  "practice.topics.practiceAll": "Practice all",
+  "practice.topics.nobanks": "No practice questions available for this subject yet.",
+  "practice.topics.mastery.notStarted": "Not started",
+  "practice.topics.mastery.needsPractice": "Needs practice",
+  "practice.topics.mastery.inProgress": "In progress",
+  "practice.topics.mastery.mastered": "Mastered",
+  "practice.topics.practiceBtn": "Practice",
+  "practice.topics.questionsCount_one": "{{count}} question",
+  "practice.topics.questionsCount_other": "{{count}} questions",
 
   "practice.annals.heading": "Past papers",
   "practice.annals.metaTitle": "Past papers — {{subject}}",

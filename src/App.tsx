@@ -42,9 +42,9 @@ const ExamSessionPage = lazy(() => import("./pages/practice/ExamSessionPage"));
 const TrainingSessionPage = lazy(() => import("./pages/practice/TrainingSessionPage"));
 const PracticeSubjectPage = lazy(() => import("./pages/practice/PracticeSubjectPage"));
 const PracticeAnnalsPage = lazy(() => import("./pages/practice/PracticeAnnalsPage"));
+const PracticeTopicsPage = lazy(() => import("./pages/practice/PracticeTopicsPage"));
 const CurriculumBrowser = lazy(() => import("./components/curriculum/CurriculumBrowser"));
 const CurriculumDebug = lazy(() => import("./pages/CurriculumDebug"));
-const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 
 // Admin Pages
 import AIModelManagement from "./components/admin/AIModelManagement";
@@ -79,6 +79,8 @@ const TeacherClasses = lazy(() => import("./pages/teacher/TeacherClasses"));
 const ClassDetailPage = lazy(() => import("./pages/teacher/ClassDetailPage"));
 const TeacherStudentDetail = lazy(() => import("./pages/teacher/TeacherStudentDetail"));
 const TeacherTopicDetail = lazy(() => import("./pages/teacher/TeacherTopicDetail"));
+
+const isDev = import.meta.env.DEV;
 
 // Loading Component
 const LoadingFallback = () => (
@@ -172,15 +174,21 @@ const App = () => {
                         <Route path="/profile" element={<MainLayout />}>
                           <Route index element={<ProfilePage />} />
                         </Route>
-                        <Route path="/tokens" element={<MainLayout />}>
-                          <Route index element={<TokensPreview />} />
-                        </Route>
-                        <Route path="/game" element={<MainLayout />}>
-                          <Route index element={<GamePreview />} />
-                        </Route>
-                        <Route path="/dnb-preview" element={<MainLayout />}>
-                          <Route index element={<DnbSvgPreview />} />
-                        </Route>
+                        {isDev && (
+                          <Route path="/tokens" element={<MainLayout />}>
+                            <Route index element={<TokensPreview />} />
+                          </Route>
+                        )}
+                        {isDev && (
+                          <Route path="/game" element={<MainLayout />}>
+                            <Route index element={<GamePreview />} />
+                          </Route>
+                        )}
+                        {isDev && (
+                          <Route path="/dnb-preview" element={<MainLayout />}>
+                            <Route index element={<DnbSvgPreview />} />
+                          </Route>
+                        )}
                         <Route path="/exercise-history" element={<MainLayout />}>
                           <Route index element={<ExerciseHistoryPage />} />
                         </Route>
@@ -195,20 +203,20 @@ const App = () => {
                           <Route path="session" element={<TrainingSessionPage />} />
                           <Route path="exam/:paperId" element={<ExamSessionPage />} />
                           <Route path=":subject/annales" element={<PracticeAnnalsPage />} />
+                          <Route path=":subject/topics" element={<PracticeTopicsPage />} />
                           <Route path=":subject" element={<PracticeSubjectPage />} />
                         </Route>
                 <Route path="/my-program" element={<MainLayout />}>
                   <Route index element={<MyProgramPage />} />
                 </Route>
-                <Route path="/dashboard" element={<MainLayout />}>
-                  <Route index element={<StudentDashboard />} />
-                </Route>
                 <Route path="/curriculum" element={<MainLayout />}>
                   <Route index element={<CurriculumBrowser />} />
                 </Route>
                         
-                        {/* Management Dashboard */}
-                        <Route path="/management" element={<ManagementDashboard />} />
+                        {/* Management Dashboard (dev-only until a proper admin guard is added) */}
+                        {isDev && (
+                          <Route path="/management" element={<ManagementDashboard />} />
+                        )}
                         
                         {/* Admin Panel Routes */}
                         <Route path="/admin" element={
@@ -264,7 +272,9 @@ const App = () => {
           </Route>
                         
                         {/* Curriculum Debug */}
-                        <Route path="/curriculum-debug" element={<CurriculumDebug />} />
+                        {isDev && (
+                          <Route path="/curriculum-debug" element={<CurriculumDebug />} />
+                        )}
                         
                         {/* 404 Route */}
                         <Route path="*" element={<NotFound />} />

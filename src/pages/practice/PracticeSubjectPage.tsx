@@ -113,10 +113,10 @@ export default function PracticeSubjectPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/70 opacity-90">
+          <Card className="border-border/70">
             <CardHeader className="pb-2">
               <div className="flex items-start gap-3">
-                <div className="rounded-xl bg-muted p-2 text-muted-foreground">
+                <div className="rounded-xl bg-violet-50 dark:bg-violet-950/30 p-2 text-violet-600 dark:text-violet-400">
                   <Brain className="h-4 w-4" aria-hidden />
                 </div>
                 <div className="min-w-0">
@@ -126,8 +126,11 @@ export default function PracticeSubjectPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <Button className="w-full" variant="secondary" disabled>
-                {t('tools.comingSoon')}
+              <Button
+                className="w-full"
+                onClick={() => navigate(`/practice/${encodeURIComponent(subjectSlug)}/topics?level=${encodeURIComponent(activeLevel)}`)}
+              >
+                {t('practice.subject.ai.cta')}
               </Button>
             </CardContent>
           </Card>
