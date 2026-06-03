@@ -85,9 +85,11 @@ function buildTypeInstructions(questionTypes: string[]): string {
   }`;
 
       case 'match':
-        return `- "match": Student connects left-column items to their right-column matches by tapping pairs. Great for vocabulary, definitions, equivalences, cause/effect.
-  Required: pairs array where each pair has leftId, left (text), rightId, right (text). Use 3-5 pairs.
-  The answers object maps leftId → rightId for correct pairs.
+        return `- "match": Student connects left-column items to their right-column matches by tapping pairs. Great for vocabulary ↔ definition, fraction ↔ decimal, term ↔ example, cause ↔ effect.
+  CRITICAL: "left" and "right" fields MUST be short plain-text strings only. NO objects, NO images, NO HTML, NO SVG, NO pie charts, NO visual references. If the topic involves fractions, write the fraction as text (e.g. "1/2") and its equivalent as text (e.g. "0.5" or "50%"). If the topic involves shapes, write the shape name as text. Never attempt to embed visual content — the component only renders plain text.
+  Required: pairs array (3-5 pairs), each with leftId, left (plain text ≤ 30 chars), rightId, right (plain text ≤ 30 chars). answers maps leftId → rightId.
+  Good examples: fraction↔decimal, word↔definition, operation name↔symbol, unit↔equivalent, term↔example.
+  Bad examples (DO NOT DO): left="1/2" right={visual object} — this will be blank and discarded.
   Example:
   {
     "id": "q-X", "kind": "match",
@@ -204,12 +206,18 @@ function validateQuestions(questions: any[]): any[] {
     // Match validation
     if (q.kind === 'match') {
       if (!Array.isArray(q.pairs) || q.pairs.length < 2) return false;
+      // Ensure left/right are plain non-empty strings — reject any pair with object values
+      const validPairs = q.pairs.filter((p: any) =>
+        typeof p.left === 'string' && p.left.trim() !== '' &&
+        typeof p.right === 'string' && p.right.trim() !== ''
+      );
+      if (validPairs.length < 2) return false; // discard the whole question if <2 valid pairs
+      q.pairs = validPairs;
       q.pairs.forEach((p: any, i: number) => {
         if (!p.leftId)  p.leftId  = `l${i + 1}`;
         if (!p.rightId) p.rightId = `r${i + 1}`;
       });
       if (!q.answers || typeof q.answers !== 'object') {
-        // Auto-build answers from pair order if missing
         q.answers = Object.fromEntries(q.pairs.map((p: any) => [p.leftId, p.rightId]));
       }
     }
