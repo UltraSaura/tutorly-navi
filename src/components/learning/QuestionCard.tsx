@@ -28,7 +28,7 @@ const choiceVariants = {
 };
 
 // ── Read-only context visual shown above a question ──────────────────────────
-function ContextVisual({ visual }: { visual: any }) {
+function ContextVisual({ visual, showLabel = true }: { visual: any; showLabel?: boolean }) {
   if (!visual) return null;
 
   if (visual.subtype === "pie") {
@@ -64,9 +64,11 @@ function ContextVisual({ visual }: { visual: any }) {
             );
           })}
         </svg>
-        <p className="text-xs text-muted-foreground">
-          {colored}/{total} parts
-        </p>
+        {showLabel && (
+          <p className="text-xs text-muted-foreground">
+            {colored}/{total} parts
+          </p>
+        )}
       </div>
     );
   }
@@ -172,7 +174,7 @@ export function QuestionCard({
       {/* Read-only context visual (e.g. cake/pie diagram shown above the question) */}
       {(question as any).context_visual && (
         <div className="mb-3 flex justify-center">
-          <ContextVisual visual={(question as any).context_visual} />
+          <ContextVisual visual={(question as any).context_visual} showLabel={false} />
         </div>
       )}
       <h3 className="text-lg font-semibold mb-3">{question.prompt}</h3>
