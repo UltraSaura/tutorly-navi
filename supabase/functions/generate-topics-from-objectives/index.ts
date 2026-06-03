@@ -323,9 +323,9 @@ Deno.serve(async (req) => {
 
     let existQuery = admin
       .from("topics")
-      .select("id, curriculum_level_code, curriculum_subdomain_id_uuid")
+      .select("id, curriculum_level_code, curriculum_subdomain_id")
       .in(
-        "curriculum_subdomain_id_uuid",
+        "curriculum_subdomain_id",
         subdomainIdsForCheck.length
           ? subdomainIdsForCheck
           : ["00000000-0000-0000-0000-000000000000"],
@@ -346,7 +346,7 @@ Deno.serve(async (req) => {
     const existingMap = new Map<string, string>();
     for (const t of existingTopics || []) {
       existingMap.set(
-        `${t.curriculum_level_code}|${t.curriculum_subdomain_id_uuid}`,
+        `${t.curriculum_level_code}|${t.curriculum_subdomain_id}`,
         t.id,
       );
     }
@@ -437,9 +437,9 @@ Deno.serve(async (req) => {
         description: null,
         curriculum_country_code: country_code,
         curriculum_level_code: p.level_code,
-        curriculum_subject_id_uuid: p.subject_id_uuid,
-        curriculum_domain_id_uuid: p.domain_id_uuid,
-        curriculum_subdomain_id_uuid: p.subdomain_id_uuid,
+        curriculum_subject_id: p.subject_id_uuid,
+        curriculum_domain_id: p.domain_id_uuid,
+        curriculum_subdomain_id: p.subdomain_id_uuid,
         is_active: true,
         order_index: idx,
       }));
@@ -448,7 +448,7 @@ Deno.serve(async (req) => {
     const upsertedTopics: {
       id: string;
       curriculum_level_code: string;
-      curriculum_subdomain_id_uuid: string;
+      curriculum_subdomain_id: string;
     }[] = [];
     for (let i = 0; i < toUpsert.length; i += CHUNK) {
       const slice = toUpsert.slice(i, i + CHUNK);
@@ -456,10 +456,10 @@ Deno.serve(async (req) => {
         .from("topics")
         .upsert(slice, {
           onConflict:
-            "curriculum_level_code,curriculum_subdomain_id_uuid,category_id",
+            "curriculum_level_code,curriculum_subdomain_id,category_id",
           ignoreDuplicates: false,
         })
-        .select("id, curriculum_level_code, curriculum_subdomain_id_uuid");
+        .select("id, curriculum_level_code, curriculum_subdomain_id");
       if (error) throw error;
       if (data) upsertedTopics.push(...(data as any));
     }
@@ -467,7 +467,7 @@ Deno.serve(async (req) => {
     const topicIdMap = new Map<string, string>();
     for (const t of upsertedTopics) {
       topicIdMap.set(
-        `${t.curriculum_level_code}|${t.curriculum_subdomain_id_uuid}`,
+        `${t.curriculum_level_code}|${t.curriculum_subdomain_id}`,
         t.id,
       );
     }
