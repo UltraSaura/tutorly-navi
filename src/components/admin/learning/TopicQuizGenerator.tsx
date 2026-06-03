@@ -216,8 +216,26 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
       const { error: questionsError } = await supabase.from('quiz_bank_questions').insert(questionsToInsert);
       if (questionsError) throw questionsError;
 
+      // Link the bank to all selected topics so the practice page can find it
+      if (selectedTopicIds.length > 0) {
+        const assignmentRows = selectedTopicIds.map(topicId => ({
+          id: `assign-${bankId}-${topicId}`,
+          bank_id: bankId,
+          topic_id: topicId,
+          is_active: true,
+          trigger_after_n_videos: 0,
+        }));
+        const { error: assignError } = await supabase
+          .from('quiz_bank_assignments')
+          .insert(assignmentRows);
+        if (assignError) {
+          console.warn('Bank saved but topic assignments failed:', assignError);
+        }
+      }
+
       toast.success('Quiz bank saved successfully!');
       queryClient.invalidateQueries({ queryKey: ['quiz-banks'] });
+      queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
       onSaved?.();
       handleReset();
       onOpenChange(false);
