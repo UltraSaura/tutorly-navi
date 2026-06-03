@@ -52,6 +52,8 @@ export interface MatchQuestion {
     rightId: string;
     right: string;
   }>;
+  /** When true, fraction/decimal text is hidden on items that render a pie — students must count slices */
+  hide_labels?: boolean;
   hint?: string;
   locale?: string;
   points?: number;

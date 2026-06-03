@@ -132,6 +132,8 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       { leftId: 'l1', left: '', rightId: 'r1', right: '' },
       { leftId: 'l2', left: '', rightId: 'r2', right: '' },
     ]);
+  const [matchHideLabels, setMatchHideLabels] = useState<boolean>(
+    question?.kind === 'match' ? (question.hide_labels ?? false) : false);
 
   // Fill-expr state
   const [fillTemplate, setFillTemplate] = useState<string>(
@@ -184,6 +186,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         setSliderTrackLabel(question.trackLabel ?? '');
       } else if (question.kind === 'match') {
         setMatchPairs(question.pairs);
+        setMatchHideLabels(question.hide_labels ?? false);
       } else if (question.kind === 'fill-expr') {
         setFillTemplate(question.template);
         setFillBlanks(question.blanks.join(','));
@@ -222,6 +225,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         { leftId: 'l1', left: '', rightId: 'r1', right: '' },
         { leftId: 'l2', left: '', rightId: 'r2', right: '' },
       ]);
+      setMatchHideLabels(false);
       setFillTemplate('__ + __ = __');
       setFillBlanks('b1,b2');
       setFillChips('');
@@ -396,6 +400,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       questionData = {
         id, kind: 'match', prompt, hint: hint || undefined,
         points, pairs: matchPairs,
+        hide_labels: matchHideLabels || undefined,
       } satisfies MatchQuestion;
     } else if (kind === 'fill-expr') {
       const blanksArr = fillBlanks.split(',').map(s => s.trim()).filter(Boolean);
@@ -863,7 +868,25 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
 
           {kind === 'match' && (
             <div className="space-y-3">
-              <Label>Paires (gauche ↔ droite)</Label>
+              <div className="flex items-center justify-between">
+                <Label>Paires (gauche ↔ droite)</Label>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={matchHideLabels}
+                    onChange={e => setMatchHideLabels(e.target.checked)}
+                    className="rounded"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    Masquer les fractions <span className="text-xs">(pie uniquement)</span>
+                  </span>
+                </label>
+              </div>
+              {matchHideLabels && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 rounded-lg px-3 py-2">
+                  Les textes de fraction (ex: "1/2") seront cachés côté étudiant — seul le diagramme circulaire sera visible. Parfait pour les exercices "Compte les parts".
+                </p>
+              )}
               {matchPairs.map((pair, i) => (
                 <div key={pair.leftId} className="flex gap-2 items-center">
                   <Input

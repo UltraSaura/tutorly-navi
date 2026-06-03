@@ -90,6 +90,20 @@ function buildTypeInstructions(questionTypes: string[]): string {
   Required: pairs array (3-5 pairs), each with leftId, left (plain text ≤ 30 chars), rightId, right (plain text ≤ 30 chars). answers maps leftId → rightId.
   Good examples: fraction↔decimal, word↔definition, operation name↔symbol, unit↔equivalent, term↔example.
   Bad examples (DO NOT DO): left="1/2" right={visual object} — this will be blank and discarded.
+  OPTIONAL: Add "hide_labels": true to hide the fraction text from students, leaving only the pie chart visible (good for "count the slices" challenge questions). Only use this when the left column contains fractions and the right column contains word descriptions or decimal equivalents.
+  Example with hidden labels (challenge mode):
+  {
+    "id": "q-X", "kind": "match", "hide_labels": true,
+    "prompt": "Match each pie chart to its fraction.",
+    "hint": "Count the colored slices vs total slices",
+    "points": 2,
+    "pairs": [
+      {"leftId": "l1", "left": "1/4", "rightId": "r1", "right": "One quarter"},
+      {"leftId": "l2", "left": "1/2", "rightId": "r2", "right": "One half"},
+      {"leftId": "l3", "left": "3/4", "rightId": "r3", "right": "Three quarters"}
+    ],
+    "answers": {"l1":"r1","l2":"r2","l3":"r3"}
+  }
   Example:
   {
     "id": "q-X", "kind": "match",
@@ -220,6 +234,8 @@ function validateQuestions(questions: any[]): any[] {
       if (!q.answers || typeof q.answers !== 'object') {
         q.answers = Object.fromEntries(q.pairs.map((p: any) => [p.leftId, p.rightId]));
       }
+      // Preserve hide_labels if set
+      if (q.hide_labels !== true) delete q.hide_labels;
     }
     // Fill-expr validation
     if (q.kind === 'fill-expr') {

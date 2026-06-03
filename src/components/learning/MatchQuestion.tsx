@@ -88,14 +88,14 @@ function parseDecimalAsFraction(s: string): { n: number; d: number } | null {
   return null;
 }
 
-function PairLabel({ text }: { text: string }) {
+function PairLabel({ text, hideLabel = false }: { text: string; hideLabel?: boolean }) {
   // Try fraction first
   const frac = parseFraction(text);
   if (frac) {
     return (
       <span className="flex items-center gap-1.5">
         <MiniPie n={frac.n} d={frac.d} size={26} />
-        <span>{text}</span>
+        {!hideLabel && <span>{text}</span>}
       </span>
     );
   }
@@ -105,11 +105,11 @@ function PairLabel({ text }: { text: string }) {
     return (
       <span className="flex items-center gap-1.5">
         <MiniPie n={dec.n} d={dec.d} size={26} />
-        <span>{text}</span>
+        {!hideLabel && <span>{text}</span>}
       </span>
     );
   }
-  // Plain text fallback
+  // Plain text fallback — never hidden
   return <span>{text}</span>;
 }
 
@@ -117,6 +117,7 @@ function PairLabel({ text }: { text: string }) {
 
 export function MatchQuestionView({ question, value, onChange }: Props) {
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
+  const hideLabel = question.hide_labels === true;
 
   const confirmedPairs: string[] = Array.isArray(value) ? value : [];
   const pairedLeftIds  = confirmedPairs.map(p => p.split(":")[0]);
@@ -164,7 +165,7 @@ export function MatchQuestionView({ question, value, onChange }: Props) {
                     : "border-neutral-300 hover:border-primary/50"
                 )}
               >
-                <PairLabel text={pair.left} />
+                <PairLabel text={pair.left} hideLabel={hideLabel} />
               </motion.button>
             );
           })}
@@ -225,7 +226,7 @@ export function MatchQuestionView({ question, value, onChange }: Props) {
                              border border-green-200 rounded-lg px-3 py-1.5"
                 >
                   <span className="font-medium flex items-center gap-1">
-                    {left && <PairLabel text={left} />}
+                    {left && <PairLabel text={left} hideLabel={hideLabel} />}
                   </span>
                   <span className="text-muted-foreground">↔</span>
                   <span className="font-medium flex items-center gap-1">
