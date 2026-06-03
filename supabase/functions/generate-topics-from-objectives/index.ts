@@ -450,19 +450,33 @@ Deno.serve(async (req) => {
       curriculum_level_code: string;
       curriculum_subdomain_id: string;
     }[] = [];
+
     // Only insert rows that are genuinely new (not already in existingMap)
     const toInsert = toUpsert.filter((row) => {
       const key = `${row.curriculum_level_code}|${row.curriculum_subdomain_id}`;
       return !existingMap.has(key);
     });
+
+    // Insert in chunks; if a chunk fails (e.g. slug conflict), fall back to
+    // row-by-row inserts so a single bad row never aborts the whole batch.
     for (let i = 0; i < toInsert.length; i += CHUNK) {
       const slice = toInsert.slice(i, i + CHUNK);
       const { data, error } = await admin
         .from("topics")
         .insert(slice)
         .select("id, curriculum_level_code, curriculum_subdomain_id");
-      if (error) throw error;
-      if (data) upsertedTopics.push(...(data as any));
+      if (error) {
+        // Fall back: insert one at a time, skipping rows that conflict
+        for (const row of slice) {
+          const { data: single } = await admin
+            .from("topics")
+            .insert(row)
+            .select("id, curriculum_level_code, curriculum_subdomain_id");
+          if (single?.[0]) upsertedTopics.push(single[0] as any);
+        }
+      } else if (data) {
+        upsertedTopics.push(...(data as any));
+      }
     }
 
     const topicIdMap = new Map<string, string>();
@@ -473,12 +487,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    let created = 0;
-    let skipped_existing = 0;
-    for (const p of preview) {
-      if (p.status === "will_create") created++;
-      if (p.status === "already_exists") skipped_existing++;
-    }
+    const created = upsertedTopics.length;
+    const skipped_existing = preview.filter((p) => p.status === "already_exists").length;
 
     // ── Build and upsert topic_objective_links ────────────────────────────────
     const linkRows: {
@@ -508,12 +518,14 @@ Deno.serve(async (req) => {
         .insert(slice)
         .select("id");
       if (error) {
-        // If insert fails (e.g. duplicate), try ignoring duplicates via upsert
-        const { error: e2 } = await admin
-          .from("topic_objective_links")
-          .upsert(slice, { ignoreDuplicates: true });
-        if (e2) throw e2;
-        links_added += slice.length; // approximate
+        // Fall back: insert one at a time, skipping duplicates
+        for (const row of slice) {
+          const { data: single } = await admin
+            .from("topic_objective_links")
+            .insert(row)
+            .select("id");
+          if (single?.[0]) links_added++;
+        }
       } else {
         links_added += inserted?.length ?? 0;
       }
