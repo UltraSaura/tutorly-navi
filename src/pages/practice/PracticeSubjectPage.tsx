@@ -8,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { useStudentCurriculum } from '@/hooks/useStudentCurriculum';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { useAuth } from '@/context/AuthContext';
 import { useExamPapers } from '@/hooks/useExamImport';
+import { useLearningSubjects } from '@/hooks/useLearningSubjects';
+import { usePracticeTopics } from '@/hooks/usePracticeTopics';
 import { normalizeStudentLevelForExamFilter } from '@/domain/exams';
-import type { CurriculumSubject, CurriculumTopic } from '@/domain/curriculum';
+import type { PracticeDomainGroup, PracticeTopic } from '@/hooks/usePracticeTopics';
 
 type TopicState = 'mastered' | 'in_progress' | 'not_started';
 
@@ -29,18 +30,18 @@ type TopicMasterySummary = {
 type DomainTopicGroup = {
   domainId: string;
   domainLabel: string;
-  topics: CurriculumTopic[];
+  topics: PracticeTopic[];
   masteredTopics: number;
 };
 
 const NO_ACTIVE_LEVEL = '__no_active_level__';
 
-function normalizeText(value: string | null | undefined) {
-  return (value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
+function formatSubjectLabel(subjectSlug: string) {
+  return subjectSlug
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 function practiceModeForState(state: TopicState) {
@@ -74,37 +75,23 @@ export default function PracticeSubjectPage() {
   const { subject } = useParams<{ subject: string }>();
   const { user } = useAuth();
   const activeSchoolLevel = useActiveSchoolLevel();
-  const { subjects, isLoading } = useStudentCurriculum();
+  const { data: learningSubjects = [] } = useLearningSubjects();
 
   const subjectSlug = subject ?? '';
-  const normalizedParam = normalizeText(subjectSlug);
   const activeLevel = activeSchoolLevel.normalizedLevel ?? NO_ACTIVE_LEVEL;
   const examLevel = normalizeStudentLevelForExamFilter(activeSchoolLevel.normalizedLevel);
-
-  const matchedSubject = useMemo<CurriculumSubject | null>(() => {
-    return subjects.find((item) => {
-      return item.slug === subjectSlug || normalizeText(item.subjectLabel) === normalizedParam;
-    }) ?? null;
-  }, [subjects, subjectSlug, normalizedParam]);
+  const { domainGroups: practiceDomainGroups, isLoading: topicsLoading, error } = usePracticeTopics(subjectSlug, activeLevel);
 
   const domainGroups = useMemo<DomainTopicGroup[]>(() => {
-    if (!matchedSubject) return [];
-
-    return matchedSubject.domains
-      .map((domain) => {
-        const topics = domain.subdomains
-          .flatMap((subdomain) => subdomain.topics)
-          .sort((a, b) => a.orderIndex - b.orderIndex);
-
-        return {
-          domainId: domain.domainId,
-          domainLabel: domain.domainLabel,
-          topics,
-          masteredTopics: 0,
-        };
-      })
+    return practiceDomainGroups
+      .map((domain: PracticeDomainGroup) => ({
+        domainId: domain.domainId,
+        domainLabel: domain.domainLabel,
+        topics: [...domain.topics].sort((a, b) => a.orderIndex - b.orderIndex),
+        masteredTopics: 0,
+      }))
       .filter((domain) => domain.topics.length > 0);
-  }, [matchedSubject]);
+  }, [practiceDomainGroups]);
 
   const topicIds = useMemo(
     () => domainGroups.flatMap((domain) => domain.topics.map((topic) => topic.id)),
@@ -112,7 +99,7 @@ export default function PracticeSubjectPage() {
   );
 
   const masteryQuery = useQuery({
-    queryKey: ['practice-topic-mastery', user?.id, matchedSubject?.id, topicIds.join(',')],
+    queryKey: ['practice-topic-mastery', user?.id, subjectSlug, activeLevel, topicIds.join(',')],
     queryFn: async (): Promise<Record<string, TopicMasterySummary>> => {
       if (!user?.id || topicIds.length === 0) return {};
 
@@ -202,12 +189,13 @@ export default function PracticeSubjectPage() {
       .find(({ summary }) => summary?.state === 'in_progress') ?? null;
   }, [flatTopics, topicMastery]);
 
-  const subjectLabel = matchedSubject?.subjectLabel || subjectSlug;
-  const pageTitle = matchedSubject ? `S'entraîner - ${subjectLabel}` : "S'entraîner";
+  const matchedSubject = learningSubjects.find((entry) => entry.subject.slug === subjectSlug);
+  const subjectLabel = matchedSubject?.subject.name || formatSubjectLabel(subjectSlug) || subjectSlug;
+  const pageTitle = subjectLabel ? `S'entraîner - ${subjectLabel}` : "S'entraîner";
   const showExamSection = Boolean(examLevel);
   const examPaperCount = papersQuery.data?.length ?? 0;
 
-  if (isLoading || activeSchoolLevel.isLoading) {
+  if (topicsLoading || activeSchoolLevel.isLoading) {
     return (
       <div className="min-h-screen bg-background pb-24">
         <PageMeta title={pageTitle} description="" />
@@ -220,7 +208,7 @@ export default function PracticeSubjectPage() {
     );
   }
 
-  if (!matchedSubject || enrichedDomains.length === 0) {
+  if (enrichedDomains.length === 0) {
     return (
       <div className="min-h-screen bg-background pb-24">
         <PageMeta title={pageTitle} description="" />
