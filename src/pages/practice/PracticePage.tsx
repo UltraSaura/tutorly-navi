@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { useExamPapers, useTrainingItemSubjectCounts } from '@/hooks/useExamImport';
 import { useLearningSubjects } from '@/hooks/useLearningSubjects';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
-import { normalizeStudentLevelForExamFilter } from '@/domain/exams';
 import { normalizeDisciplineKey, resolveExamDisciplinesForSubjectSlug, resolveSubjectSlugForExamDiscipline, getSubjectNameForSlug } from '@/utils/examSubjectMapping';
 
 const NO_ACTIVE_LEVEL = '__no_active_level__';
@@ -62,11 +61,14 @@ export default function PracticePage() {
         slug: subjectSlug,
         name: row.subject.name,
         levelLabel,
+        masteryPercent: 0,
+        masteredTopics: 0,
+        totalTopics: 0,
         examPapers: counts.papers,
         exercises: trainingItems,
         sourceExercises: counts.exercises,
       };
-      return card.examPapers > 0 || card.exercises > 0 ? [card] : [];
+      return [card];
     });
 
     const fallbackCards = [];
@@ -96,18 +98,19 @@ export default function PracticePage() {
         return sum + Math.max(direct, normalized);
       }, 0);
 
-      if (counts.papers > 0 || trainingItems > 0) {
-        seenSlugs.add(slug);
-        fallbackCards.push({
-          id: `fallback-${slug}`,
-          slug: slug,
-          name: getSubjectNameForSlug(slug, i18n.language),
-          levelLabel,
-          examPapers: counts.papers,
-          exercises: trainingItems,
-          sourceExercises: counts.exercises,
-        });
-      }
+      seenSlugs.add(slug);
+      fallbackCards.push({
+        id: `fallback-${slug}`,
+        slug: slug,
+        name: getSubjectNameForSlug(slug, i18n.language),
+        levelLabel,
+        masteryPercent: 0,
+        masteredTopics: 0,
+        totalTopics: 0,
+        examPapers: counts.papers,
+        exercises: trainingItems,
+        sourceExercises: counts.exercises,
+      });
     }
 
     return [...mappedFromCurriculum, ...fallbackCards];
@@ -173,9 +176,16 @@ export default function PracticePage() {
                         {t('practice.subjects.levelLabel', { level: subject.levelLabel })}
                       </p>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{t('practice.subjects.exerciseCount', { count: subject.exercises })}</span>
-                      <span>{t('practice.subjects.examPaperCount', { count: subject.examPapers })}</span>
+                    <div className="space-y-1.5">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-primary/20">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all"
+                          style={{ width: `${subject.masteryPercent}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {subject.masteredTopics} sujets maîtrisés
+                      </p>
                     </div>
                     <Button className="w-full" onClick={() => navigate(`/practice/${subject.slug}`)}>
                       <BookOpen className="mr-1 h-4 w-4" />
