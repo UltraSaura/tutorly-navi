@@ -159,6 +159,31 @@ export default function PracticeSubjectPage() {
     enabled: !!user?.id && topicIds.length > 0,
   });
 
+  const bankAssignmentsQuery = useQuery({
+    queryKey: ['practice-bank-assignments', topicIds.join(',')],
+    queryFn: async (): Promise<{ topic_id: string; bank_id: string }[]> => {
+      const { data, error } = await supabase
+        .from('quiz_bank_assignments')
+        .select('topic_id, bank_id')
+        .eq('is_active', true)
+        .in('topic_id', topicIds);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: topicIds.length > 0,
+  });
+
+  const topicBankMap = useMemo(() => {
+    const map = new Map<string, string>();
+    (bankAssignmentsQuery.data || []).forEach((row) => {
+      if (!map.has(row.topic_id)) {
+        map.set(row.topic_id, row.bank_id);
+      }
+    });
+    return map;
+  }, [bankAssignmentsQuery.data]);
+
   const papersQuery = useExamPapers({
     exam: 'dnb',
     discipline: [],
@@ -275,7 +300,14 @@ export default function PracticeSubjectPage() {
         {continueTopic && (
           <button
             type="button"
-            onClick={() => navigate(`/practice/session?topicId=${continueTopic.topic.id}&mode=continue`)}
+            onClick={() => {
+              const bankId = topicBankMap.get(continueTopic.topic.id);
+              navigate(
+                bankId
+                  ? `/practice/${encodeURIComponent(subjectSlug)}/topics?quiz=${encodeURIComponent(bankId)}`
+                  : `/practice/${encodeURIComponent(subjectSlug)}/topics`,
+              );
+            }}
             className="flex w-full items-center justify-between rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-left"
           >
             <div className="space-y-1">
@@ -371,7 +403,14 @@ export default function PracticeSubjectPage() {
                           size="sm"
                           variant={summary.state === 'mastered' ? 'outline' : 'default'}
                           className={summary.state === 'mastered' ? 'rounded-full px-3 py-1 text-xs' : `rounded-full px-3 py-1 text-xs ${buttonClassName}`}
-                          onClick={() => navigate(`/practice/session?topicId=${topic.id}&mode=${mode}`)}
+                          onClick={() => {
+                            const bankId = topicBankMap.get(topic.id);
+                            navigate(
+                              bankId
+                                ? `/practice/${encodeURIComponent(subjectSlug)}/topics?quiz=${encodeURIComponent(bankId)}`
+                                : `/practice/${encodeURIComponent(subjectSlug)}/topics`,
+                            );
+                          }}
                         >
                           {buttonLabel}
                         </Button>
