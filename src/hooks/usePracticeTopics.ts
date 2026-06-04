@@ -74,23 +74,40 @@ export function usePracticeTopics(
         });
       }
 
-      const groupedTopics = new Map<string, PracticeTopic[]>();
+      const groupedTopics = new Map<
+        string,
+        {
+          domainId: string;
+          domainLabel: string;
+          topics: PracticeTopic[];
+        }
+      >();
 
       topicRows.forEach((topic) => {
         const domainId = topic.curriculum_domain_id || 'unassigned';
-        if (!groupedTopics.has(domainId)) groupedTopics.set(domainId, []);
-        groupedTopics.get(domainId)!.push({
+        const domainLabel = domainLabelMap.get(domainId) || domainId;
+        const groupKey = domainLabel || domainId;
+
+        if (!groupedTopics.has(groupKey)) {
+          groupedTopics.set(groupKey, {
+            domainId,
+            domainLabel,
+            topics: [],
+          });
+        }
+
+        groupedTopics.get(groupKey)!.topics.push({
           id: topic.id,
           topicLabel: topic.name,
           orderIndex: topic.order_index,
         });
       });
 
-      return Array.from(groupedTopics.entries())
-        .map(([domainId, grouped]) => ({
-          domainId,
-          domainLabel: domainLabelMap.get(domainId) || domainId,
-          topics: [...grouped].sort((a, b) => a.orderIndex - b.orderIndex),
+      return Array.from(groupedTopics.values())
+        .map((grouped) => ({
+          domainId: grouped.domainId,
+          domainLabel: grouped.domainLabel,
+          topics: [...grouped.topics].sort((a, b) => a.orderIndex - b.orderIndex),
         }))
         .sort((a, b) => a.domainLabel.localeCompare(b.domainLabel));
     },
