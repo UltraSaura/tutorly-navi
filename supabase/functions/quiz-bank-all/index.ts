@@ -7,6 +7,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function normalizeLevel(level?: string | null): string | null {
+  if (!level) return null;
+  return level
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[:_\s-]+/g, '');
+}
+
+function matchesLevel(userLevel: string | null, schoolLevels?: string[] | null): boolean {
+  if (!schoolLevels || schoolLevels.length === 0) return true;
+  const normalizedUserLevel = normalizeLevel(userLevel);
+  if (!normalizedUserLevel) return true;
+  return schoolLevels.some((level) => {
+    const normalizedLevel = normalizeLevel(level);
+    return normalizedLevel === normalizedUserLevel;
+  });
+}
+
 // context: 'practice' | 'lesson' | 'both' (default)
 // - 'practice'  → only return assignments where display_context IN ('practice','both')
 // - 'lesson'    → only return assignments where display_context IN ('lesson','both')
@@ -18,7 +37,7 @@ serve(async (req) => {
   }
 
   try {
-    const { topicId, videoId, completedVideoIds, userId, context = 'both' } = await req.json();
+    const { topicId, videoId, completedVideoIds, userId, context = 'both', userLevel = null, language = 'en' } = await req.json();
 
     if (!topicId && !videoId) {
       return new Response(
@@ -65,7 +84,52 @@ serve(async (req) => {
       return false;
     });
 
+    const relevantBankIds = [...new Set(relevant.map((assignment: any) => assignment.bank_id).filter(Boolean))];
+    const topicIds = [...new Set(relevant.map((assignment: any) => assignment.topic_id).filter(Boolean))];
+
+    const [{ data: banks, error: bankError }, { data: topics, error: topicsError }] = await Promise.all([
+      relevantBankIds.length > 0
+        ? supabase
+            .from('quiz_banks')
+            .select('id, school_levels, source_language, primary_topic_id, source_topic_ids')
+            .in('id', relevantBankIds)
+        : Promise.resolve({ data: [], error: null }),
+      topicIds.length > 0
+        ? supabase
+            .from('topics')
+            .select('id, curriculum_level_code')
+            .in('id', topicIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+
+    if (bankError) {
+      return new Response(
+        JSON.stringify({ error: bankError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (topicsError) {
+      return new Response(
+        JSON.stringify({ error: topicsError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const bankMap = new Map((banks || []).map((bank: any) => [bank.id, bank]));
+    const topicLevelMap = new Map((topics || []).map((topic: any) => [topic.id, topic.curriculum_level_code]));
+
     const allBanks = relevant.map((a: any) => {
+      const bank = bankMap.get(a.bank_id);
+      const fallbackLevel = a.topic_id ? topicLevelMap.get(a.topic_id) : null;
+      const effectiveSchoolLevels = Array.isArray(bank?.school_levels) && bank.school_levels.length > 0
+        ? bank.school_levels
+        : (fallbackLevel ? [fallbackLevel] : []);
+
+      if (!matchesLevel(userLevel, effectiveSchoolLevels)) {
+        return null;
+      }
+
       let isUnlocked = false;
       let progressMessage = '';
       let completedCount = 0;
@@ -113,8 +177,9 @@ serve(async (req) => {
         topicId: a.topic_id || null,
         triggerVideoId: a.trigger_video_id || null,
         displayContext: dc,
+        language: typeof language === 'string' && language.trim() ? language : (bank?.source_language || 'en'),
       };
-    });
+    }).filter(Boolean);
 
     return new Response(
       JSON.stringify({ banks: allBanks }),

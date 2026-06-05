@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, BookOpen, CheckCircle2, Circle, Sparkles } from 'lucide-react';
@@ -7,6 +8,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/integrations/supabase/client';
 import { useSubjectDashboard } from '@/hooks/useSubjectDashboard';
 import { useAllBanks, useBankAttemptStatus } from '@/hooks/useQuizBank';
 import { useAuth } from '@/context/AuthContext';
@@ -124,6 +126,27 @@ export default function PracticeTopicsPage() {
     [dashboardQuery.data],
   );
 
+  const topicIds = useMemo(() => allTopics.map((topic) => topic.id), [allTopics]);
+
+  const bankAssignmentsQuery = useQuery({
+    queryKey: ['practice-topics-bank-assignments', topicIds.join(',')],
+    queryFn: async (): Promise<{ topic_id: string }[]> => {
+      const { data, error } = await supabase
+        .from('quiz_bank_assignments')
+        .select('topic_id')
+        .eq('is_active', true)
+        .in('topic_id', topicIds);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: allTopics.length > 0,
+  });
+
+  const topicsWithBanks = useMemo(() => {
+    return new Set((bankAssignmentsQuery.data || []).map((row) => row.topic_id));
+  }, [bankAssignmentsQuery.data]);
+
   const openQuiz = (bankId: string) => {
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
@@ -141,7 +164,7 @@ export default function PracticeTopicsPage() {
         const pb = b.progress_percentage ?? 0;
         return pa - pb; // least progress first
       }),
-    }));
+    })).filter(category => (category.topics?.length ?? 0) > 0);
   }, [dashboardQuery.data]);
 
   const isLoading = dashboardQuery.isLoading;
@@ -196,25 +219,30 @@ export default function PracticeTopicsPage() {
         )}
 
         {/* Topics by category */}
-        {!isLoading && sortedCategories.map((category, catIdx) => (
-          <section key={category.id} className="space-y-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
-              {category.name}
-            </h2>
-            <div className="space-y-2">
-              {(category.topics ?? []).map((topic, topicIdx) =>
-                user ? (
-                  <TopicCard
-                    key={topic.id}
-                    topic={topic}
-                    userId={user.id}
-                    index={catIdx * 10 + topicIdx}
-                    onPractice={openQuiz}
-                  />
-                ) : null
-              )}
-            </div>
-          </section>
+        {!isLoading && sortedCategories
+          .filter(cat => (cat.topics ?? []).length > 0)
+          .filter(cat => topicsWithBanks.size === 0 || (cat.topics ?? []).some(t => topicsWithBanks.has(t.id)))
+          .map((category, catIdx) => (
+          (category.topics?.length ?? 0) > 0 ? (
+            <section key={category.id} className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                {category.name}
+              </h2>
+              <div className="space-y-2">
+                {(category.topics ?? []).map((topic, topicIdx) =>
+                  user ? (
+                    <TopicCard
+                      key={topic.id}
+                      topic={topic}
+                      userId={user.id}
+                      index={catIdx * 10 + topicIdx}
+                      onPractice={openQuiz}
+                    />
+                  ) : null
+                )}
+              </div>
+            </section>
+          ) : null
         ))}
       </div>
     </div>

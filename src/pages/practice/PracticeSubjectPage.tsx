@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Check, Play } from 'lucide-react';
+import { ArrowRight, Check, Play, Sparkles } from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +13,6 @@ import { useAuth } from '@/context/AuthContext';
 import { useExamPapers } from '@/hooks/useExamImport';
 import { useLearningSubjects } from '@/hooks/useLearningSubjects';
 import { usePracticeTopics } from '@/hooks/usePracticeTopics';
-import { normalizeStudentLevelForExamFilter } from '@/domain/exams';
 import type { PracticeDomainGroup, PracticeTopic } from '@/hooks/usePracticeTopics';
 
 type TopicState = 'mastered' | 'in_progress' | 'not_started';
@@ -35,6 +34,7 @@ type DomainTopicGroup = {
 };
 
 const NO_ACTIVE_LEVEL = '__no_active_level__';
+const EXAM_PREP_LEVELS = new Set(['3eme', '3e', 'troisieme', '4eme', '2nde', '1ere', 'terminale', 'bac']);
 
 function formatSubjectLabel(subjectSlug: string) {
   return subjectSlug
@@ -79,7 +79,6 @@ export default function PracticeSubjectPage() {
 
   const subjectSlug = subject ?? '';
   const activeLevel = activeSchoolLevel.normalizedLevel ?? NO_ACTIVE_LEVEL;
-  const examLevel = normalizeStudentLevelForExamFilter(activeSchoolLevel.normalizedLevel);
   const { domainGroups: practiceDomainGroups, isLoading: topicsLoading, error } = usePracticeTopics(subjectSlug, activeLevel);
 
   const domainGroups = useMemo<DomainTopicGroup[]>(() => {
@@ -213,11 +212,12 @@ export default function PracticeSubjectPage() {
       .map(({ topic }) => ({ topic, summary: topicMastery[topic.id] }))
       .find(({ summary }) => summary?.state === 'in_progress') ?? null;
   }, [flatTopics, topicMastery]);
+  const showTopicActionSkeletons = masteryQuery.isLoading || bankAssignmentsQuery.isLoading;
 
   const matchedSubject = learningSubjects.find((entry) => entry.subject.slug === subjectSlug);
   const subjectLabel = matchedSubject?.subject.name || formatSubjectLabel(subjectSlug) || subjectSlug;
   const pageTitle = subjectLabel ? `S'entraîner - ${subjectLabel}` : "S'entraîner";
-  const showExamSection = Boolean(examLevel);
+  const showExamSection = EXAM_PREP_LEVELS.has((activeSchoolLevel.normalizedLevel ?? '').toLowerCase());
   const examPaperCount = papersQuery.data?.length ?? 0;
 
   if (topicsLoading || activeSchoolLevel.isLoading) {
@@ -292,12 +292,12 @@ export default function PracticeSubjectPage() {
               <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${masteryPercent}%` }} />
             </div>
             <p className="text-xs text-muted-foreground">
-              {masteredTopics} sujet{masteredTopics > 1 ? 's' : ''} maitrise{masteredTopics > 1 ? 's' : ''} · {Math.max(totalTopics - masteredTopics, 0)} restant{Math.max(totalTopics - masteredTopics, 0) > 1 ? 's' : ''}
+              {masteredTopics} sujet{masteredTopics > 1 ? 's' : ''} maîtrisé{masteredTopics > 1 ? 's' : ''} · {Math.max(totalTopics - masteredTopics, 0)} restant{Math.max(totalTopics - masteredTopics, 0) > 1 ? 's' : ''}
             </p>
           </div>
         </section>
 
-        {continueTopic && (
+        {continueTopic && topicBankMap.get(continueTopic.topic.id) && (
           <button
             type="button"
             onClick={() => {
@@ -353,6 +353,8 @@ export default function PracticeSubjectPage() {
 
               <div className="space-y-2">
                 {domain.topics.map((topic) => {
+                  const availableBankId = topicBankMap.get(topic.id) ?? null;
+                  const hasExercises = availableBankId !== null;
                   const summary = topicMastery[topic.id] || {
                     topicId: topic.id,
                     totalObjectives: 0,
@@ -361,24 +363,28 @@ export default function PracticeSubjectPage() {
                     remainingObjectives: 0,
                     state: 'not_started' as TopicState,
                   };
-                  const mode = practiceModeForState(summary.state);
 
-                  let description = `Pas commencé · ${summary.totalObjectives} notion${summary.totalObjectives > 1 ? 's' : ''}`;
+                  let description = hasExercises
+                    ? `${summary.totalObjectives} notion${summary.totalObjectives > 1 ? 's' : ''} · Exercices disponibles`
+                    : 'Exercices en cours de préparation';
                   let titleClassName = 'text-sm font-medium';
                   let buttonClassName = '';
                   let buttonLabel = 'Pratiquer';
-                  let cardClassName = 'rounded-xl border border-border bg-background p-3';
+                  let cardClassName = `rounded-xl border border-border bg-background p-3${hasExercises ? '' : ' opacity-60'}`;
+                  let buttonVariant: 'default' | 'outline' = hasExercises ? 'default' : 'outline';
+                  let buttonDisabled = !hasExercises;
 
                   if (summary.state === 'mastered') {
                     description = `Maîtrisé · ${summary.masteredObjectives}/${summary.totalObjectives} notions`;
                     titleClassName = 'text-sm font-medium text-muted-foreground';
                     buttonClassName = '';
-                    buttonLabel = 'Refaire';
+                    buttonLabel = hasExercises ? 'Refaire' : 'Bientôt';
+                    buttonVariant = 'outline';
                   } else if (summary.state === 'in_progress') {
                     description = `En cours · ${summary.remainingObjectives} notion${summary.remainingObjectives > 1 ? 's' : ''} restante${summary.remainingObjectives > 1 ? 's' : ''}`;
                     titleClassName = 'text-sm font-medium text-primary';
-                    buttonLabel = 'Continuer';
-                    cardClassName = 'rounded-xl border-2 border-primary/20 bg-background p-3';
+                    buttonLabel = hasExercises ? 'Continuer' : 'Bientôt';
+                    cardClassName = `rounded-xl border-2 bg-primary/5 p-3${hasExercises ? ' border-primary/30' : ' border-border opacity-60'}`;
                   }
 
                   return (
@@ -393,27 +399,32 @@ export default function PracticeSubjectPage() {
                                 ? 'text-xs text-emerald-700 dark:text-emerald-400'
                                 : summary.state === 'in_progress'
                                   ? 'text-xs text-primary'
-                                  : 'text-xs text-muted-foreground'
+                                : 'text-xs text-muted-foreground'
                             }
                           >
                             {description}
                           </p>
                         </div>
-                        <Button
-                          size="sm"
-                          variant={summary.state === 'mastered' ? 'outline' : 'default'}
-                          className={summary.state === 'mastered' ? 'rounded-full px-3 py-1 text-xs' : `rounded-full px-3 py-1 text-xs ${buttonClassName}`}
-                          onClick={() => {
-                            const bankId = topicBankMap.get(topic.id);
-                            navigate(
-                              bankId
-                                ? `/practice/${encodeURIComponent(subjectSlug)}/topics?quiz=${encodeURIComponent(bankId)}`
-                                : `/practice/${encodeURIComponent(subjectSlug)}/topics`,
-                            );
-                          }}
-                        >
-                          {buttonLabel}
-                        </Button>
+                        {showTopicActionSkeletons ? (
+                          <Skeleton className="h-8 w-24 rounded-full" />
+                        ) : !hasExercises ? (
+                          <span className="rounded-full border border-border px-2 py-1 text-xs text-muted-foreground">
+                            À venir
+                          </span>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant={buttonVariant}
+                            className={buttonVariant === 'outline' ? 'rounded-full px-3 py-1 text-xs' : `rounded-full px-3 py-1 text-xs ${buttonClassName}`}
+                            onClick={() => {
+                              if (!availableBankId) return;
+                              navigate(`/practice/${encodeURIComponent(subjectSlug)}/topics?quiz=${encodeURIComponent(availableBankId)}`);
+                            }}
+                          >
+                            {buttonVariant === 'default' ? <Sparkles className="mr-1.5 h-3.5 w-3.5" /> : null}
+                            {buttonLabel}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   );

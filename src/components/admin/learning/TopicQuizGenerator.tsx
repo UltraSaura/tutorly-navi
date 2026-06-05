@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, ArrowLeft, ArrowRight, Loader2, Check, BookOpen, Pencil, Trash2, Play } from 'lucide-react';
+import { Sparkles, ArrowLeft, ArrowRight, Loader2, Check, BookOpen, Pencil, Trash2, Play, Layers } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -17,8 +17,12 @@ import { QuestionEditor } from './QuestionEditor';
 import { QuizPreviewDialog } from './QuizPreviewDialog';
 import { QuizOverlay } from '@/components/learning/QuizOverlay';
 import { useAuth } from '@/context/AuthContext';
+import { useLearningVideos } from '@/hooks/useManageLearningContent';
 import type { Question, QuizBank } from '@/types/quiz-bank';
 import { ensureQuizBank } from '@/types/quiz-bank';
+import type { Video } from '@/types/learning';
+import { dedupeSchoolLevels, getSchoolLevelLabel, normalizeSchoolLevel } from '@/domain/schoolLevels';
+import { SUPPORTED_LANGUAGES } from '@/locales';
 
 interface TopicQuizGeneratorProps {
   open: boolean;
@@ -26,7 +30,7 @@ interface TopicQuizGeneratorProps {
   onSaved?: () => void;
 }
 
-type Step = 'topics' | 'settings' | 'generating' | 'review' | 'preview' | 'try' | 'save';
+type Step = 'topics' | 'settings' | 'generating' | 'review' | 'preview' | 'try' | 'save' | 'assign';
 
 const QUESTION_TYPES = [
   { value: 'single',       label: 'Single Choice',          description: 'One correct answer from 4 options' },
@@ -46,7 +50,30 @@ const DIFFICULTIES = [
   { value: 'hard', label: 'Hard' },
 ];
 
-const STEP_ORDER: Step[] = ['topics', 'settings', 'review', 'preview', 'save'];
+// 'preview' and 'try' are overlays — not numbered steps in the indicator
+const STEP_ORDER: Step[] = ['topics', 'settings', 'review', 'save', 'assign'];
+
+function normalizeTopicDisplayKey(value: string | null | undefined) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/\bfractions\b/g, 'fraction')
+    .replace(/\bdecimaux\b/g, 'decimal')
+    .replace(/\bnombres\b/g, 'nombre');
+}
+
+function isSchemaMismatchError(error: unknown) {
+  const message = String((error as any)?.message || '');
+  return (
+    message.includes('Could not find') ||
+    message.includes('schema cache') ||
+    message.includes('column') ||
+    message.includes('violates foreign key constraint')
+  );
+}
 
 export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGeneratorProps) {
   const queryClient = useQueryClient();
@@ -54,7 +81,9 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   const { user } = useAuth();
 
   const [step, setStep] = useState<Step>('topics');
+  const [selectedCountryCode, setSelectedCountryCode] = useState<string>('');
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+  const [selectedSchoolLevel, setSelectedSchoolLevel] = useState<string>('');
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -63,6 +92,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   const [questionTypes, setQuestionTypes] = useState<string[]>(['single', 'multi']);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [mixMode, setMixMode] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('fr');
 
   // Generated questions
   const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([]);
@@ -71,6 +101,14 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   // Save form
   const [bankTitle, setBankTitle] = useState('');
   const [bankDescription, setBankDescription] = useState('');
+
+  // Assign step state
+  const [savedBankId, setSavedBankId] = useState<string | null>(null);
+  const [assignContext, setAssignContext] = useState<'practice' | 'lesson' | 'both'>('practice');
+  const [assignTriggerVideoId, setAssignTriggerVideoId] = useState<string | null>(null);
+  // Use first selected topic for video picker; user already chose topic(s) in step 1
+  const assignTopicId = selectedTopicIds[0] ?? '';
+  const { data: assignVideos = [] } = useLearningVideos(assignTopicId || undefined);
 
   // Ephemeral QuizBank used for the interactive "Try it" preview
   const tryBank = useMemo<QuizBank>(() => ensureQuizBank({
@@ -96,49 +134,145 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     },
   });
 
-  // Fetch categories for selected subject
-  const { data: categories = [] } = useQuery({
-    queryKey: ['learning-categories', selectedSubjectId],
+  const { data: countries = [] } = useQuery({
+    queryKey: ['learning-countries-for-gen'],
     queryFn: async () => {
-      if (!selectedSubjectId) return [];
+      const { data, error } = await supabase
+        .from('countries')
+        .select('code, name')
+        .order('name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch active categories once; subject options are derived from matching topics
+  const { data: categories = [] } = useQuery({
+    queryKey: ['learning-categories-for-gen'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('learning_categories')
-        .select('id, name')
-        .eq('subject_id', selectedSubjectId)
+        .select('id, subject_id')
         .eq('is_active', true)
         .order('order_index');
       if (error) throw error;
       return data || [];
     },
-    enabled: !!selectedSubjectId,
   });
 
-  // Fetch topics for selected subject's categories
-  const { data: topics = [], isLoading: topicsLoading } = useQuery({
-    queryKey: ['learning-topics-for-gen', selectedSubjectId],
+  const { data: schoolLevels = [] } = useQuery({
+    queryKey: ['school-levels-for-gen', selectedCountryCode],
     queryFn: async () => {
-      if (!selectedSubjectId || categories.length === 0) return [];
-      const categoryIds = categories.map(c => c.id);
+      if (!selectedCountryCode) return [];
+      const { data, error } = await supabase
+        .from('school_levels')
+        .select('level_code, level_name, country_code, sort_order')
+        .eq('country_code', selectedCountryCode)
+        .order('sort_order');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedCountryCode,
+  });
+
+  // Fetch active topics once; curriculum scoping stays normalized client-side
+  const { data: topics = [], isLoading: topicsLoading } = useQuery({
+    queryKey: ['learning-topics-for-gen'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('topics')
-        .select('id, name, description, category_id')
-        .in('category_id', categoryIds)
+        .select('id, name, description, category_id, curriculum_country_code, curriculum_level_code, curriculum_subject_id, curriculum_subject_id_uuid')
         .eq('is_active', true)
         .order('order_index');
       if (error) throw error;
       return data || [];
     },
-    enabled: !!selectedSubjectId && categories.length > 0,
   });
 
-  const filteredTopics = useMemo(() => {
-    if (!searchQuery.trim()) return topics;
-    const q = searchQuery.toLowerCase();
-    return topics.filter(t => t.name.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q));
-  }, [topics, searchQuery]);
+  const categorySubjectMap = useMemo(
+    () => new Map(categories.map((category) => [category.id, category.subject_id])),
+    [categories],
+  );
 
+  const countryScopedTopics = useMemo(() => {
+    if (!selectedCountryCode) return [];
+    return topics.filter(
+      (topic) =>
+        String(topic.curriculum_country_code || '').trim().toLowerCase() ===
+        String(selectedCountryCode).trim().toLowerCase()
+    );
+  }, [topics, selectedCountryCode]);
+
+  const levelScopedTopics = useMemo(() => {
+    if (!selectedSchoolLevel) return [];
+    return countryScopedTopics.filter(
+      (topic) => normalizeSchoolLevel(topic.curriculum_level_code) === normalizeSchoolLevel(selectedSchoolLevel)
+    );
+  }, [countryScopedTopics, selectedSchoolLevel]);
+
+  const resolveTopicSubjectId = (topic: (typeof topics)[number]) =>
+    topic.curriculum_subject_id_uuid ||
+    topic.curriculum_subject_id ||
+    (topic.category_id ? categorySubjectMap.get(topic.category_id) : null);
+
+  const visibleSubjects = useMemo(() => {
+    const subjectIds = new Set(
+      levelScopedTopics
+        .map((topic) => resolveTopicSubjectId(topic))
+        .filter(Boolean)
+    );
+    return subjects.filter((subject) => subjectIds.has(subject.id));
+  }, [subjects, levelScopedTopics]);
+
+  const filteredTopics = useMemo(() => {
+    const subjectFiltered = selectedSubjectId
+      ? levelScopedTopics.filter((topic) => {
+          const subjectId = resolveTopicSubjectId(topic);
+          return subjectId === selectedSubjectId;
+        })
+      : [];
+    const dedupedTopics = Array.from(
+      subjectFiltered.reduce((map, topic) => {
+        const key = normalizeTopicDisplayKey(topic.name);
+        if (!map.has(key)) {
+          map.set(key, topic);
+        }
+        return map;
+      }, new Map<string, (typeof subjectFiltered)[number]>()).values()
+    );
+    if (!searchQuery.trim()) return dedupedTopics;
+    const q = searchQuery.toLowerCase();
+    return dedupedTopics.filter(t => t.name.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q));
+  }, [levelScopedTopics, searchQuery, selectedSubjectId]);
+
+  const selectedTopicLevel = useMemo(() => {
+    const selectedTopics = topics.filter(topic => selectedTopicIds.includes(topic.id));
+    const levels = Array.from(new Set(selectedTopics.map(topic => normalizeSchoolLevel(topic.curriculum_level_code)).filter(Boolean)));
+    return levels[0] ?? null;
+  }, [selectedTopicIds, topics]);
+
+  const selectedTopicLevelLabel = selectedTopicLevel ? getSchoolLevelLabel(selectedTopicLevel) : '';
+
+  const availableTopicLevels = useMemo(() => {
+    return dedupeSchoolLevels(schoolLevels).map((level) => ({
+      value: normalizeSchoolLevel(level.level_code) || level.level_code,
+      label: level.level_name || getSchoolLevelLabel(level.level_code),
+    }));
+  }, [schoolLevels]);
+
+  const selectedTopicNames = selectedTopicIds
+    .map(topicId => topics.find(topic => topic.id === topicId)?.name)
+    .filter(Boolean) as string[];
+  const assignTopicName = selectedTopicNames[0] ?? 'Selected topic';
+  const sortedAssignVideos = [...assignVideos].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
 
   const toggleTopic = (topicId: string) => {
+    const topic = topics.find((item) => item.id === topicId);
+    const topicLevel = normalizeSchoolLevel(topic?.curriculum_level_code);
+    if (selectedTopicLevel && topicLevel && topicLevel !== selectedTopicLevel) {
+      toast.error('Selected topics must belong to the same school level');
+      return;
+    }
     setSelectedTopicIds(prev =>
       prev.includes(topicId) ? prev.filter(id => id !== topicId) : [...prev, topicId]
     );
@@ -157,6 +291,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
         questionTypes: mixMode ? ['mix'] : questionTypes,
         difficulty,
         mix: mixMode,
+        language: selectedLanguage,
       });
       setGeneratedQuestions(result.questions);
       setStep('review');
@@ -197,14 +332,31 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     setIsSaving(true);
     try {
       const bankId = `bank-${Date.now()}`;
-      const { error: bankError } = await supabase.from('quiz_banks').insert({
+      const fullBankPayload = {
         id: bankId,
         title: bankTitle,
         description: bankDescription || null,
         shuffle: true,
         source_type: 'topic_generated',
-      });
-      if (bankError) throw bankError;
+        subject_id: selectedSubjectId,
+        primary_topic_id: selectedTopicIds[0] ?? null,
+        source_topic_ids: selectedTopicIds,
+        school_levels: selectedTopicLevel ? [selectedTopicLevel] : [],
+        source_language: selectedLanguage,
+      };
+      const legacyBankPayload = {
+        id: bankId,
+        title: bankTitle,
+        description: bankDescription || null,
+        shuffle: true,
+      };
+
+      const { error: bankError } = await supabase.from('quiz_banks').insert(fullBankPayload as any);
+      if (bankError) {
+        if (!isSchemaMismatchError(bankError)) throw bankError;
+        const { error: legacyBankError } = await supabase.from('quiz_banks').insert(legacyBankPayload);
+        if (legacyBankError) throw legacyBankError;
+      }
 
       const questionsToInsert = generatedQuestions.map((q, index) => {
         const uniqueId = `q-${bankId}-${index}-${Math.random().toString(36).slice(2, 8)}`;
@@ -218,33 +370,12 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
       const { error: questionsError } = await supabase.from('quiz_bank_questions').insert(questionsToInsert);
       if (questionsError) throw questionsError;
 
-      // Link the bank to all selected topics so the practice page can find it
-      if (selectedTopicIds.length > 0) {
-        const assignmentRows = selectedTopicIds.map(topicId => ({
-          id: `assign-${bankId}-${topicId}`,
-          bank_id: bankId,
-          topic_id: topicId,
-          is_active: true,
-          display_context: 'practice',
-          trigger_after_n_videos: 0,
-          trigger_video_id: null,
-          video_ids: null,
-          min_completed_in_set: null,
-        }));
-        const { error: assignError } = await supabase
-          .from('quiz_bank_assignments')
-          .insert(assignmentRows);
-        if (assignError) {
-          console.warn('Bank saved but topic assignments failed:', assignError);
-        }
-      }
-
-      toast.success('Quiz bank saved successfully!');
+      toast.success('Quiz bank saved! Now choose where to assign it.');
       queryClient.invalidateQueries({ queryKey: ['quiz-banks'] });
-      queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
-      onSaved?.();
-      handleReset();
-      onOpenChange(false);
+      setSavedBankId(bankId);
+      setAssignContext('practice');
+      setAssignTriggerVideoId(null);
+      setStep('assign');
     } catch (error) {
       console.error('Save failed:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to save');
@@ -253,26 +384,124 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     }
   };
 
+  const handleAssign = async () => {
+    if (!savedBankId || selectedTopicIds.length === 0) return;
+    if ((assignContext === 'lesson' || assignContext === 'both') && !assignTriggerVideoId) {
+      toast.error('Please select the trigger video');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      for (const topicId of selectedTopicIds) {
+        const isPrimaryTopic = topicId === assignTopicId;
+        const contextForTopic = assignContext === 'both' && !isPrimaryTopic ? 'practice' : assignContext;
+        await createAssignmentWithFallback({
+          bank_id: savedBankId,
+          topic_id: topicId,
+          is_active: true,
+          display_context: contextForTopic,
+          trigger_video_id: (contextForTopic !== 'practice') ? assignTriggerVideoId : null,
+          trigger_after_n_videos: contextForTopic === 'practice' ? 0 : null,
+          video_ids: null,
+          min_completed_in_set: null,
+        });
+        if (assignContext === 'lesson') break;
+      }
+      queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
+      toast.success('Quiz assigned successfully!');
+      onSaved?.();
+      handleReset();
+      onOpenChange(false);
+    } catch (e) {
+      toast.error('Assignment failed — the quiz was saved but not assigned.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSkipAssign = async () => {
+    // Auto-assign as practice-only so the quiz is immediately available
+    if (savedBankId) {
+      setIsSaving(true);
+      try {
+        await Promise.all(selectedTopicIds.map(topicId =>
+          createAssignmentWithFallback({
+            bank_id: savedBankId,
+            topic_id: topicId,
+            is_active: true,
+            display_context: 'practice',
+            trigger_after_n_videos: 0,
+            trigger_video_id: null,
+            video_ids: null,
+            min_completed_in_set: null,
+          })
+        ));
+        queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
+        onSaved?.();
+      } catch (error) {
+        toast.error('Assignment failed — the quiz was saved but not assigned.');
+        return;
+      } finally {
+        setIsSaving(false);
+      }
+    }
+    handleReset();
+    onOpenChange(false);
+  };
+
+  const createAssignmentWithFallback = async (assignment: {
+    bank_id: string;
+    topic_id?: string | null;
+    trigger_after_n_videos?: number | null;
+    video_ids?: string[] | null;
+    min_completed_in_set?: number | null;
+    is_active?: boolean;
+    display_context?: 'practice' | 'lesson' | 'both';
+    trigger_video_id?: string | null;
+  }) => {
+    const { error } = await supabase.from('quiz_bank_assignments').insert(assignment as any);
+    if (!error) return;
+    if (!isSchemaMismatchError(error)) throw error;
+
+    const legacyAssignment = {
+      bank_id: assignment.bank_id,
+      topic_id: assignment.topic_id ?? null,
+      is_active: assignment.is_active ?? true,
+      trigger_after_n_videos: assignment.display_context === 'lesson' ? 1 : 0,
+      video_ids: assignment.video_ids ?? null,
+      min_completed_in_set: assignment.min_completed_in_set ?? null,
+    };
+    const { error: legacyError } = await supabase.from('quiz_bank_assignments').insert(legacyAssignment);
+    if (legacyError) throw legacyError;
+  };
+
   const handleReset = () => {
     setStep('topics');
+    setSelectedCountryCode('');
     setSelectedSubjectId('');
+    setSelectedSchoolLevel('');
     setSelectedTopicIds([]);
     setSearchQuery('');
     setQuestionCount(5);
     setQuestionTypes(['single', 'multi']);
     setDifficulty('medium');
     setMixMode(false);
+    setSelectedLanguage('fr');
     setGeneratedQuestions([]);
     setEditingQuestionIndex(null);
     setBankTitle('');
     setBankDescription('');
+    setSavedBankId(null);
+    setAssignContext('practice');
+    setAssignTriggerVideoId(null);
   };
 
-  const canProceedFromTopics = selectedTopicIds.length > 0;
-  const canProceedFromSettings = (mixMode || questionTypes.length > 0) && questionCount >= 1;
+  const canProceedFromTopics = !!selectedCountryCode && !!selectedSchoolLevel && !!selectedSubjectId && selectedTopicIds.length > 0;
+  const canProceedFromSettings = !!selectedLanguage && (mixMode || questionTypes.length > 0) && questionCount >= 1;
 
   const getStepIndex = (s: Step) => {
     if (s === 'generating') return STEP_ORDER.indexOf('review');
+    if (s === 'preview' || s === 'try') return STEP_ORDER.indexOf('review');
     return STEP_ORDER.indexOf(s);
   };
 
@@ -321,13 +550,46 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
         {step === 'topics' && (
           <div className="flex-1 flex flex-col min-h-0">
             <div className="mb-4 flex gap-3">
-              <Select value={selectedSubjectId} onValueChange={(v) => { setSelectedSubjectId(v); setSelectedTopicIds([]); }}>
+              <Select value={selectedCountryCode} onValueChange={(value) => {
+                setSelectedCountryCode(value);
+                setSelectedSchoolLevel('');
+                setSelectedSubjectId('');
+                setSelectedTopicIds([]);
+                setSearchQuery('');
+              }}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Select country" />
+                </SelectTrigger>
+                <SelectContent>
+                  {countries.map((country) => (
+                    <SelectItem key={country.code} value={country.code}>{country.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedSchoolLevel} onValueChange={(value) => {
+                setSelectedSchoolLevel(value);
+                setSelectedSubjectId('');
+                setSelectedTopicIds([]);
+              }} disabled={!selectedCountryCode}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="School level" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableTopicLevels.map((level) => (
+                    <SelectItem key={level.value} value={level.value}>{level.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedSubjectId} onValueChange={(value) => {
+                setSelectedSubjectId(value);
+                setSelectedTopicIds([]);
+              }} disabled={!selectedCountryCode || !selectedSchoolLevel}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
                 <SelectContent>
-                  {subjects.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  {visibleSubjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -336,12 +598,17 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1"
+                disabled={!selectedCountryCode || !selectedSchoolLevel || !selectedSubjectId}
               />
             </div>
 
             <ScrollArea className="border rounded-lg h-[50vh]">
-              {!selectedSubjectId ? (
-                <div className="p-8 text-center text-muted-foreground">Select a subject to see topics</div>
+              {!selectedCountryCode ? (
+                <div className="p-8 text-center text-muted-foreground">Select a country to start filtering topics</div>
+              ) : !selectedSchoolLevel ? (
+                <div className="p-8 text-center text-muted-foreground">Select a school level for this country</div>
+              ) : !selectedSubjectId ? (
+                <div className="p-8 text-center text-muted-foreground">Select a subject to see matching topics</div>
               ) : topicsLoading ? (
                 <div className="p-8 text-center text-muted-foreground">Loading topics...</div>
               ) : filteredTopics.length === 0 ? (
@@ -364,6 +631,11 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                           {topic.description && (
                             <div className="text-sm text-muted-foreground truncate">{topic.description}</div>
                           )}
+                          {topic.curriculum_level_code && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {getSchoolLevelLabel(topic.curriculum_level_code)}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -374,9 +646,12 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
 
             {selectedTopicIds.length > 0 && (
               <div className="mt-4 p-3 bg-muted rounded-lg flex items-center justify-between">
-                <span className="text-sm">
-                  <strong>{selectedTopicIds.length}</strong> topic{selectedTopicIds.length !== 1 ? 's' : ''} selected
-                </span>
+                <div className="text-sm">
+                  <div><strong>{selectedTopicIds.length}</strong> topic{selectedTopicIds.length !== 1 ? 's' : ''} selected</div>
+                  {selectedTopicLevelLabel && (
+                    <div className="text-muted-foreground mt-1">School level: {selectedTopicLevelLabel}</div>
+                  )}
+                </div>
                 <Button variant="ghost" size="sm" onClick={() => setSelectedTopicIds([])}>Clear</Button>
               </div>
             )}
@@ -425,6 +700,30 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                         {d.label}
                       </button>
                     ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">Language</Label>
+                  <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue placeholder="Select language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUPPORTED_LANGUAGES.map((language) => (
+                        <SelectItem key={language} value={language}>
+                          {language === 'fr' ? 'Français' : 'English'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">School level</Label>
+                  <div className="h-8 rounded-md border px-3 flex items-center text-sm text-muted-foreground">
+                    {selectedTopicLevelLabel || 'Inherited from topic'}
                   </div>
                 </div>
               </div>
@@ -603,6 +902,116 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
               <Button onClick={handleSave} disabled={!bankTitle.trim() || isSaving}>
                 {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : <><Check className="w-4 h-4 mr-2" /> Save Quiz Bank</>}
               </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step: Assign */}
+        {step === 'assign' && (
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="space-y-4 overflow-y-auto pr-1">
+              <div className="rounded-lg border bg-muted/40 p-3">
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Topic</Label>
+                <div className="mt-1 font-medium">{assignTopicName}</div>
+                {selectedTopicIds.length > 1 && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Practice assignment will be created for all {selectedTopicIds.length} selected topics. Video placement uses the first selected topic.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label className="mb-2 block">Show this quiz in</Label>
+                <RadioGroup
+                  value={assignContext}
+                  onValueChange={(value) => {
+                    setAssignContext(value as 'practice' | 'lesson' | 'both');
+                    setAssignTriggerVideoId(null);
+                  }}
+                  className="space-y-2"
+                >
+                  <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                    assignContext === 'practice' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                  }`}>
+                    <RadioGroupItem value="practice" className="mt-0.5" />
+                    <BookOpen className="h-4 w-4 text-violet-500 mt-0.5" />
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm">Practice page only</div>
+                      <p className="text-xs text-muted-foreground">Always available in "S'entraîner par thème", no video required.</p>
+                    </div>
+                  </label>
+
+                  <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                    assignContext === 'lesson' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                  }`}>
+                    <RadioGroupItem value="lesson" className="mt-0.5" />
+                    <Play className="h-4 w-4 text-blue-500 mt-0.5" />
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm">After a specific video</div>
+                      <p className="text-xs text-muted-foreground">Appears in the lesson player after the selected video is completed.</p>
+                    </div>
+                  </label>
+
+                  <label className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                    assignContext === 'both' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                  }`}>
+                    <RadioGroupItem value="both" className="mt-0.5" />
+                    <Layers className="h-4 w-4 text-green-500 mt-0.5" />
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm">Both</div>
+                      <p className="text-xs text-muted-foreground">Available on the practice page and after the selected video.</p>
+                    </div>
+                  </label>
+                </RadioGroup>
+              </div>
+
+              {(assignContext === 'lesson' || assignContext === 'both') && (
+                <div>
+                  <Label className="mb-1.5 block">Trigger video</Label>
+                  {sortedAssignVideos.length === 0 ? (
+                    <p className="text-sm text-muted-foreground border rounded-lg p-3">
+                      No videos found for {assignTopicName}.
+                    </p>
+                  ) : (
+                    <div className="border rounded-lg overflow-hidden">
+                      {sortedAssignVideos.map((video: Video, index: number) => {
+                        const isSelected = assignTriggerVideoId === video.id;
+                        return (
+                          <button
+                            key={video.id}
+                            type="button"
+                            onClick={() => setAssignTriggerVideoId(video.id)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+                              index > 0 ? 'border-t border-border/60' : ''
+                            } ${isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50'}`}
+                          >
+                            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold ${
+                              isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/40 text-muted-foreground'
+                            }`}>
+                              {index + 1}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-sm font-medium">{video.title}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-between mt-auto pt-4 border-t">
+              <Button variant="outline" onClick={() => setStep('save')}>
+                <ArrowLeft className="w-4 h-4 mr-2" /> Back
+              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleSkipAssign} disabled={isSaving}>
+                  Use practice only
+                </Button>
+                <Button onClick={handleAssign} disabled={isSaving}>
+                  {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Assigning...</> : 'Finish'}
+                </Button>
+              </div>
             </div>
           </div>
         )}

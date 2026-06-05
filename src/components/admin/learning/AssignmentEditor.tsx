@@ -14,12 +14,13 @@ type DisplayContext = 'practice' | 'lesson' | 'both';
 
 interface AssignmentEditorProps {
   assignment?: any;
+  defaultTopicId?: string | null;
   isOpen: boolean;
   onClose: () => void;
   onSave: (assignment: any) => void;
 }
 
-export function AssignmentEditor({ assignment, isOpen, onClose, onSave }: AssignmentEditorProps) {
+export function AssignmentEditor({ assignment, defaultTopicId, isOpen, onClose, onSave }: AssignmentEditorProps) {
   const [displayContext, setDisplayContext] = useState<DisplayContext>('practice');
   const [topicId, setTopicId] = useState('');
   const [triggerVideoId, setTriggerVideoId] = useState<string | null>(null);
@@ -42,11 +43,11 @@ export function AssignmentEditor({ assignment, isOpen, onClose, onSave }: Assign
       setIsActive(assignment.is_active ?? true);
     } else {
       setDisplayContext('practice');
-      setTopicId('');
+      setTopicId(defaultTopicId || '');
       setTriggerVideoId(null);
       setIsActive(true);
     }
-  }, [assignment, isOpen]);
+  }, [assignment, defaultTopicId, isOpen]);
 
   // When topic changes, clear trigger video if it doesn't belong to the new topic
   const handleTopicChange = (newTopicId: string) => {

@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  buildReadonlyContextVisual,
+  inferPromptFigure,
+  promptReferencesVisual,
+} from "../../../src/lib/quiz/promptVisual.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +17,7 @@ interface GenerateRequest {
   questionTypes?: string[];
   difficulty?: 'easy' | 'medium' | 'hard';
   mix?: boolean;
+  language?: string;
 }
 
 function buildTypeInstructions(questionTypes: string[]): string {
@@ -19,9 +25,11 @@ function buildTypeInstructions(questionTypes: string[]): string {
     switch (type) {
       case 'single':
         return `- "single": Multiple choice with exactly ONE correct answer. Include 4 choices with "correct": true on only one.
-  OPTIONAL context_visual: If the question naturally refers to a visual (a cake, a shape, a diagram), add a "context_visual" field with a read-only pie or angle visual shown above the question. This way "Quelle fraction représente la partie colorée de ce gâteau?" is valid because the student actually sees the cake.
+  REQUIRED context_visual whenever the prompt refers to a visual object, figure, image, schema, bar, cake, pie, shape, or colored part. This way "Quelle fraction représente la partie colorée de ce gâteau?" is valid because the student actually sees it.
   context_visual for a pie (e.g. "gâteau coupé en 4 parts, 3 colorées"):
   "context_visual": { "subtype": "pie", "correctColoredCount": 3, "segments": [{"id":"s1","value":1},{"id":"s2","value":1},{"id":"s3","value":1},{"id":"s4","value":1}] }
+  context_visual for a bar/rectangle (e.g. "barre divisée en 5 parts, 2 colorées"):
+  "context_visual": { "subtype": "bar", "totalParts": 5, "coloredParts": 2, "orientation": "horizontal" }
   context_visual for an angle (e.g. "angle de 45°"):
   "context_visual": { "subtype": "angle", "aDeg": 0, "bDeg": 45, "targetDeg": 45, "toleranceDeg": 2 }
   If NO visual is needed, omit context_visual entirely and keep the prompt self-contained.`;
@@ -154,7 +162,7 @@ Create a rich Brilliant-style variety when the topic allows it:
 - visual pie: fractions, proportions — use color_slices AND select_pie modes alternately
 - visual angle: geometry, angle measurement
 Prioritise slider, match, and fill-expr when the topic involves numbers, equivalences, or formulas — these create the most engaging interactive experience.
-For single/multi questions that reference a cake, shape, or diagram, always include a "context_visual" (pie or angle) so the student can see it.`;
+For single/multi questions that reference a cake, shape, diagram, figure, image, bar, band, segment, or colored part, always include a matching "context_visual" (pie, bar, or angle) so the student can see it.`;
       default:
         return '';
     }
@@ -172,7 +180,52 @@ function buildLearningFriendlyGuidance(): string {
 - Do not use technical labels such as visual learner, auditory learner, kinesthetic learner, learning modality, or cognitive preference.
 - Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, visual, slider, match, fill-expr.
 - For slider: always include min, max, step, answer, tolerance. For match: always include 3-5 pairs and an answers object. For fill-expr: always include template, blanks, chips, answers.
-- If a "single" or "multi" prompt references a visual ("ce gâteau", "cette figure", "la partie colorée", etc.), you MUST include a matching "context_visual" field so the student can actually see it. Never reference a visual without providing it.`;
+- If a "single" or "multi" prompt references a visual ("ce gâteau", "cette figure", "cette barre", "la partie colorée", etc.), you MUST include a matching "context_visual" field so the student can actually see it. Never reference a visual without providing it.`;
+}
+
+function isValidContextVisual(visual: any): boolean {
+  if (!visual || typeof visual !== "object") return false;
+
+  if (visual.subtype === "pie") {
+    if (!Array.isArray(visual.segments) || visual.segments.length < 2) return false;
+    visual.segments.forEach((segment: any, index: number) => {
+      if (!segment.id) segment.id = `s${index + 1}`;
+    });
+    if (typeof visual.correctColoredCount !== "number") {
+      visual.correctColoredCount = visual.segments.filter((segment: any) => segment.colored).length;
+    }
+    return true;
+  }
+
+  if (visual.subtype === "bar") {
+    const totalParts = Number(visual.totalParts);
+    const coloredParts = Number(visual.coloredParts);
+    if (!Number.isFinite(totalParts) || !Number.isFinite(coloredParts)) return false;
+    if (totalParts <= 0 || coloredParts < 0 || coloredParts > totalParts) return false;
+    visual.totalParts = totalParts;
+    visual.coloredParts = coloredParts;
+    if (visual.orientation !== "horizontal") visual.orientation = "horizontal";
+    return true;
+  }
+
+  if (visual.subtype === "angle") {
+    return typeof visual.targetDeg === "number";
+  }
+
+  return false;
+}
+
+function repairContextVisual(question: any) {
+  if (isValidContextVisual(question.context_visual)) {
+    return;
+  }
+
+  delete question.context_visual;
+
+  const inferred = inferPromptFigure(question);
+  if (inferred) {
+    question.context_visual = buildReadonlyContextVisual(inferred);
+  }
 }
 
 function validateQuestions(questions: any[]): any[] {
@@ -184,23 +237,13 @@ function validateQuestions(questions: any[]): any[] {
     if (!q.prompt) return false;
     if (!validKinds.has(q.kind)) return false;
 
-    // Validate context_visual if present
-    if (q.context_visual) {
-      const cv = q.context_visual;
-      if (cv.subtype === 'pie') {
-        if (!Array.isArray(cv.segments) || cv.segments.length < 2) {
-          delete q.context_visual; // remove invalid visual rather than rejecting whole question
-        } else {
-          cv.segments.forEach((s: any, i: number) => { if (!s.id) s.id = `s${i + 1}`; });
-          if (typeof cv.correctColoredCount !== 'number') {
-            cv.correctColoredCount = cv.segments.filter((s: any) => s.colored).length;
-          }
-        }
-      } else if (cv.subtype === 'angle') {
-        if (typeof cv.targetDeg !== 'number') delete q.context_visual;
-      } else {
-        delete q.context_visual; // unknown subtype — remove
+    if (q.kind === "single" || q.kind === "multi") {
+      repairContextVisual(q);
+      if (promptReferencesVisual(q.prompt) && !q.context_visual) {
+        return false;
       }
+    } else if (q.context_visual) {
+      repairContextVisual(q);
     }
 
     if (q.kind === 'single') {
@@ -293,7 +336,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { topicIds, questionCount = 5, questionTypes = ['single', 'multi', 'numeric', 'ordering'], difficulty = 'medium', mix = false }: GenerateRequest = await req.json();
+    const { topicIds, questionCount = 5, questionTypes = ['single', 'multi', 'numeric', 'ordering'], difficulty = 'medium', mix = false, language = 'fr' }: GenerateRequest = await req.json();
 
     if (!topicIds || topicIds.length === 0) {
       return new Response(JSON.stringify({ error: "No topic IDs provided" }),
@@ -363,6 +406,8 @@ ${topicContext}
 
 Generate exactly ${questionCount} quiz questions based on these topics and learning objectives. Questions should test the student's understanding of the concepts described above.
 
+WRITE ALL STUDENT-FACING TEXT IN ${language === 'fr' ? 'French' : 'English'}.
+
 QUESTION TYPES TO USE:
 ${typeInstructions}
 
@@ -387,6 +432,7 @@ RULES:
 - Each question ID unique (q-1, q-2, etc.)
 - 4 choices for single/multi; multi has 2-3 correct
 - Hints must be short, encouraging, and actionable without giving away the answer
+- All prompts, hints, labels, explanations, instructions, and answer text must be written in ${language === 'fr' ? 'French' : 'English'}
 - Visual prompts must mention the visual object the student should inspect
 - Use only supported output kinds: single, multi, numeric, ordering, visual
 - Return ONLY the JSON array`;

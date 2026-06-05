@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FillExprQuestion } from "@/types/quiz-bank";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,7 @@ interface Props {
 
 export function FillExprQuestionView({ question, value, onChange }: Props) {
   const filled = value ?? {};
+  const [draggedChip, setDraggedChip] = useState<string | null>(null);
 
   const handleChip = (blank: string, chip: string) => {
     if (filled[blank] === chip) {
@@ -24,6 +26,19 @@ export function FillExprQuestionView({ question, value, onChange }: Props) {
   const clearSlot = (blank: string) => {
     const next = { ...filled };
     delete next[blank];
+    onChange(next);
+  };
+
+  const moveChipToBlank = (blank: string, chip: string) => {
+    const next = { ...filled };
+
+    Object.entries(next).forEach(([existingBlank, existingChip]) => {
+      if (existingChip === chip) {
+        delete next[existingBlank];
+      }
+    });
+
+    next[blank] = chip;
     onChange(next);
   };
 
@@ -43,13 +58,23 @@ export function FillExprQuestionView({ question, value, onChange }: Props) {
                 key={`blank-${blank}`}
                 type="button"
                 onClick={() => filledValue && clearSlot(blank)}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const chip = event.dataTransfer.getData("text/plain");
+                  if (!chip) return;
+                  moveChipToBlank(blank, chip);
+                  setDraggedChip(null);
+                }}
                 whileTap={{ scale: 0.95 }}
                 className={cn(
                   "min-w-[48px] h-12 px-3 rounded-xl border-2 flex items-center justify-center",
                   "text-lg font-bold transition-colors",
                   filledValue
                     ? "border-primary bg-primary/10 text-primary cursor-pointer"
-                    : "border-dashed border-neutral-400 bg-neutral-50 dark:bg-neutral-800 text-neutral-400"
+                    : draggedChip
+                      ? "border-primary/50 bg-primary/5 text-neutral-400"
+                      : "border-dashed border-neutral-400 bg-neutral-50 dark:bg-neutral-800 text-neutral-400"
                 )}
               >
                 <AnimatePresence mode="wait">
@@ -95,10 +120,16 @@ export function FillExprQuestionView({ question, value, onChange }: Props) {
             <motion.button
               key={chip}
               type="button"
+              draggable
               initial={{ opacity: 0, scale: 0.7 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 20 }}
               whileTap={{ scale: 0.9 }}
+              onDragStart={(event) => {
+                event.dataTransfer.setData("text/plain", chip);
+                setDraggedChip(chip);
+              }}
+              onDragEnd={() => setDraggedChip(null)}
               onClick={() => {
                 if (isUsed) {
                   clearSlot(usedInBlank!);
@@ -107,10 +138,12 @@ export function FillExprQuestionView({ question, value, onChange }: Props) {
                 }
               }}
               className={cn(
-                "w-12 h-12 rounded-xl border text-lg font-semibold transition-all",
+                "w-12 h-12 rounded-xl border text-lg font-semibold transition-all cursor-grab active:cursor-grabbing",
                 isUsed
                   ? "bg-primary/10 border-primary text-primary opacity-50"
-                  : "bg-secondary border-transparent hover:border-primary/40 shadow-sm"
+                  : draggedChip === chip
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-secondary border-transparent hover:border-primary/40 shadow-sm"
               )}
             >
               {chip}
@@ -120,7 +153,7 @@ export function FillExprQuestionView({ question, value, onChange }: Props) {
       </div>
 
       <p className="text-xs text-center text-muted-foreground">
-        Tape sur un nombre pour le placer, retape pour l'enlever.
+        Glisse un nombre dans une case, ou tapote pour le placer.
       </p>
     </div>
   );

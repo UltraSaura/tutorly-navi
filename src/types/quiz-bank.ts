@@ -84,6 +84,12 @@ export type QuizBank = {
   description?: string;
   timeLimitSec?: number;
   shuffle?: boolean;
+  language?: string;
+  sourceLanguage?: string;
+  schoolLevels?: string[];
+  subjectId?: string | null;
+  primaryTopicId?: string | null;
+  sourceTopicIds?: string[];
   questions: Question[];
 };
 
@@ -114,6 +120,12 @@ export function ensureQuizBank(bank?: Partial<QuizBank> | null): QuizBank {
     description: bank.description ?? DEFAULT_BANK.description,
     timeLimitSec: bank.timeLimitSec ?? DEFAULT_BANK.timeLimitSec,
     shuffle: bank.shuffle ?? DEFAULT_BANK.shuffle,
+    language: bank.language,
+    sourceLanguage: bank.sourceLanguage,
+    schoolLevels: Array.isArray(bank.schoolLevels) ? bank.schoolLevels : [],
+    subjectId: bank.subjectId ?? null,
+    primaryTopicId: bank.primaryTopicId ?? null,
+    sourceTopicIds: Array.isArray(bank.sourceTopicIds) ? bank.sourceTopicIds : [],
     questions: Array.isArray(bank.questions) ? bank.questions : [],
   };
 }

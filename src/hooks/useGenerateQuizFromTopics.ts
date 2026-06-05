@@ -8,6 +8,7 @@ interface GenerateRequest {
   questionTypes?: string[];
   difficulty?: 'easy' | 'medium' | 'hard';
   mix?: boolean;
+  language: string;
 }
 
 interface GenerateResponse {

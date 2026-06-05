@@ -7,13 +7,29 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function normalizeLevel(level?: string | null): string | null {
+  if (!level) return null;
+  return level
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[:_\s-]+/g, '');
+}
+
+function matchesLevel(userLevel: string | null, schoolLevels?: string[] | null): boolean {
+  if (!schoolLevels || schoolLevels.length === 0) return true;
+  const normalizedUserLevel = normalizeLevel(userLevel);
+  if (!normalizedUserLevel) return true;
+  return schoolLevels.some((level) => normalizeLevel(level) === normalizedUserLevel);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { topicId, completedVideoIds, userId, context = 'both' } = await req.json();
+    const { topicId, completedVideoIds, userId, context = 'both', userLevel = null, language = 'en' } = await req.json();
 
     if (!topicId) {
       return new Response(
@@ -39,6 +55,31 @@ serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const relevantBankIds = [...new Set((assigns || []).map((assignment: any) => assignment.bank_id).filter(Boolean))];
+    const [{ data: banks, error: bankError }, { data: topic }] = await Promise.all([
+      relevantBankIds.length > 0
+        ? supabase
+            .from('quiz_banks')
+            .select('id, school_levels')
+            .in('id', relevantBankIds)
+        : Promise.resolve({ data: [], error: null }),
+      supabase
+        .from('topics')
+        .select('curriculum_level_code')
+        .eq('id', topicId)
+        .maybeSingle(),
+    ]);
+
+    if (bankError) {
+      return new Response(
+        JSON.stringify({ error: bankError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const bankMap = new Map((banks || []).map((bank: any) => [bank.id, bank]));
+    const fallbackLevel = topic?.curriculum_level_code ?? null;
 
     const completedIds = Array.isArray(completedVideoIds) ? completedVideoIds : [];
     const doneCount = completedIds.length;
@@ -67,7 +108,18 @@ serve(async (req) => {
       }
 
       return false;
-    }).map((a: any) => ({ id: a.id, bankId: a.bank_id }));
+    }).map((a: any) => {
+      const bank = bankMap.get(a.bank_id);
+      const effectiveSchoolLevels = Array.isArray(bank?.school_levels) && bank.school_levels.length > 0
+        ? bank.school_levels
+        : (fallbackLevel ? [fallbackLevel] : []);
+
+      if (!matchesLevel(userLevel, effectiveSchoolLevels)) {
+        return null;
+      }
+
+      return { id: a.id, bankId: a.bank_id, language };
+    }).filter(Boolean);
 
     return new Response(
       JSON.stringify({ visible }),

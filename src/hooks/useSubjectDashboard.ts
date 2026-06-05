@@ -4,6 +4,7 @@ import { useUserCurriculumProfile } from './useUserCurriculumProfile';
 import { useAdminAuth } from './useAdminAuth';
 import { useActiveSchoolLevel } from './useActiveSchoolLevel';
 import type { Subject, Category, Topic } from '@/types/learning';
+import { normalizeSchoolLevel } from '@/domain/schoolLevels';
 
 interface SubjectDashboardData {
   subject: Subject | null;
@@ -37,8 +38,9 @@ export function useSubjectDashboard(subjectSlug: string) {
 
       if (subjectError) throw subjectError;
 
-      // Get categories with topics filtered by curriculum
-      let topicsQuery = supabase
+      // Get categories with topics, then normalize/filter curriculum fields client-side.
+      // Some imported curriculum rows differ in casing/format, so exact DB filters can hide valid topics.
+      const topicsQuery = supabase
         .from('learning_categories')
         .select(`
           *,
@@ -48,22 +50,27 @@ export function useSubjectDashboard(subjectSlug: string) {
         .eq('is_active', true)
         .eq('topics.is_active', true);
 
-      // Add curriculum filters if profile exists (skip for admin to see all content)
-      if ((activeSchoolLevel.isPreviewing || !isAdmin) && effectiveCountryCode && effectiveLevelCode) {
-        topicsQuery = topicsQuery
-          .eq('topics.curriculum_country_code', effectiveCountryCode)
-          .eq('topics.curriculum_level_code', effectiveLevelCode);
-      }
-
       const { data: categories, error: categoriesError } = await topicsQuery.order('order_index');
 
       if (categoriesError) throw categoriesError;
+      const shouldFilterCurriculum = (activeSchoolLevel.isPreviewing || !isAdmin) && effectiveCountryCode && effectiveLevelCode;
+      const normalizedCountry = String(effectiveCountryCode || '').trim().toLowerCase();
+      const normalizedLevel = normalizeSchoolLevel(effectiveLevelCode);
+      const curriculumFilteredCategories = (categories as any[]).map((category) => ({
+        ...category,
+        topics: shouldFilterCurriculum
+          ? (category.topics || []).filter((topic: any) => {
+              const topicCountry = String(topic.curriculum_country_code || '').trim().toLowerCase();
+              return topicCountry === normalizedCountry && normalizeSchoolLevel(topic.curriculum_level_code) === normalizedLevel;
+            })
+          : (category.topics || []),
+      })).filter((category) => (category.topics || []).length > 0);
 
       // Calculate progress for each topic if user is logged in
-      let categoriesWithProgress = categories as any[];
+      let categoriesWithProgress = curriculumFilteredCategories;
       if (user) {
         categoriesWithProgress = await Promise.all(
-          (categories as any[]).map(async (category: any) => {
+          curriculumFilteredCategories.map(async (category: any) => {
             const topicsWithProgress = await Promise.all(
               (category.topics || []).map(async (topic: any) => {
                 const { data: videos } = await (supabase as any)

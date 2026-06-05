@@ -13,6 +13,12 @@ function setsEqual<T>(a: Set<T>, b: Set<T>) {
   return true;
 }
 
+function getPieSegmentsSignature(segments: VisualPie["segments"]) {
+  return segments
+    .map((seg) => `${Number(seg.value) || 0}:${seg.colored ? 1 : 0}`)
+    .join("|");
+}
+
 // The student's answer format per subtype:
 // pie:          string[] of selected segment ids
 // grid:         string[] of selected cell ids like "r1c2"
@@ -33,13 +39,26 @@ export function evaluateVisual(visual: VisualUnion, answer: unknown): boolean {
       }
       // Multiple pie charts - student selects correct pie(s)
       const selectedArray = Array.isArray(answer) ? (answer as string[]) : [];
-      const selected = new Set<string>(selectedArray);
-      const correctIds = new Set<string>();
-      if (v.baseCorrect) correctIds.add("base");
-      (v.variants ?? [])
-        .filter((variant) => variant.correct)
-        .forEach((variant) => correctIds.add(variant.id));
-      return setsEqual(selected, correctIds);
+      const selectedIds = new Set<string>(selectedArray);
+      const selectedSignatures = new Set<string>();
+      const correctSignatures = new Set<string>();
+
+      const pies = [
+        { id: "base", segments: v.segments, correct: !!v.baseCorrect },
+        ...(v.variants ?? []).map((variant) => ({
+          id: variant.id,
+          segments: variant.segments,
+          correct: !!variant.correct,
+        })),
+      ];
+
+      for (const pie of pies) {
+        const signature = getPieSegmentsSignature(pie.segments);
+        if (selectedIds.has(pie.id)) selectedSignatures.add(signature);
+        if (pie.correct) correctSignatures.add(signature);
+      }
+
+      return setsEqual(selectedSignatures, correctSignatures);
     }
     case "grid": {
       const v = visual as VisualGrid;

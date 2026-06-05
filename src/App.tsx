@@ -220,7 +220,7 @@ const App = () => {
                         
                         {/* Admin Panel Routes */}
                         <Route path="/admin" element={
-                          <ErrorBoundary fallback={<RouteErrorFallback section="Admin Panel" />}>
+                          <ErrorBoundary fallback={isDev ? undefined : <RouteErrorFallback section="Admin Panel" />}>
                             <AdminLayout />
                           </ErrorBoundary>
                         }>

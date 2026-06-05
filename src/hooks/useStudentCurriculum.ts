@@ -19,6 +19,7 @@ import {
   getSubdomainsByDomain,
 } from '@/lib/curriculum';
 import { buildSubjectsFromCurriculum } from '@/domain/curriculum';
+import { normalizeSchoolLevel } from '@/domain/schoolLevels';
 import type { CurriculumSubject } from '@/domain/curriculum';
 
 interface UseStudentCurriculumResult {
@@ -103,17 +104,25 @@ export function useStudentCurriculum(): UseStudentCurriculumResult {
         learning_categories: subject.learning_categories || [],
       }));
 
-      // Step 3: Fetch topics filtered by curriculum
+      // Step 3: Fetch topics, then normalize/filter curriculum fields client-side.
+      // Imported curriculum rows are not fully consistent in casing/format, and exact DB
+      // filters can hide valid CM1 topics during student/admin preview flows.
       const { data: learningTopics, error: topicsError } = await supabase
         .from('topics')
         .select('*')
-        .eq('curriculum_country_code', effectiveCountryCode)
-        .eq('curriculum_level_code', effectiveLevelCode)
         .eq('is_active', true)
         .order('order_index');
 
       if (topicsError) throw topicsError;
-      if (!learningTopics || learningTopics.length === 0) {
+      const normalizedCountry = String(effectiveCountryCode).trim().toLowerCase();
+      const normalizedLevel = normalizeSchoolLevel(effectiveLevelCode);
+      const curriculumTopics = (learningTopics || []).filter((topic: any) => {
+        const topicCountry = String(topic.curriculum_country_code || '').trim().toLowerCase();
+        return topicCountry === normalizedCountry
+          && normalizeSchoolLevel(topic.curriculum_level_code) === normalizedLevel;
+      });
+
+      if (curriculumTopics.length === 0) {
         console.warn(
           `No topics found for curriculum ${effectiveCountryCode} - ${effectiveLevelCode}`
         );
@@ -123,7 +132,7 @@ export function useStudentCurriculum(): UseStudentCurriculumResult {
       // Step 4: Build nested structure
       const subjects = buildSubjectsFromCurriculum({
         learningSubjects: typedSubjects as any,
-        learningTopics,
+        learningTopics: curriculumTopics,
         curriculumSubjects,
         curriculumDomains,
         curriculumSubdomains,

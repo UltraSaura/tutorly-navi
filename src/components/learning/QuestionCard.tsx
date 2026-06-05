@@ -3,13 +3,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Question } from "@/types/quiz-bank";
 import { evaluateQuestion } from "@/utils/quizEvaluation";
 import { cn } from "@/lib/utils";
-import type { VisualAngle, VisualUnion, VisualPie } from "@/lib/quiz/visual-types";
+import type { VisualAngle, VisualBar, VisualUnion, VisualPie } from "@/lib/quiz/visual-types";
 import { normalizeAngle } from "@/lib/quiz/visual-geometry";
+import { GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ManipulativeMathRenderer } from "@/components/manipulative-maths/ManipulativeMathRenderer";
 import { SliderQuestionView } from "./SliderQuestion";
 import { MatchQuestionView } from "./MatchQuestion";
 import { FillExprQuestionView } from "./FillExprQuestion";
+import { inferPromptFigure, type PromptFigureSpec } from "@/lib/quiz/promptVisual";
 
 interface QuestionCardProps {
   question: Question;
@@ -28,7 +30,7 @@ const choiceVariants = {
 };
 
 // ── Read-only context visual shown above a question ──────────────────────────
-function ContextVisual({ visual, showLabel = true }: { visual: any; showLabel?: boolean }) {
+function ContextVisual({ visual }: { visual: any }) {
   if (!visual) return null;
 
   if (visual.subtype === "pie") {
@@ -64,11 +66,6 @@ function ContextVisual({ visual, showLabel = true }: { visual: any; showLabel?: 
             );
           })}
         </svg>
-        {showLabel && (
-          <p className="text-xs text-muted-foreground">
-            {colored}/{total} parts
-          </p>
-        )}
       </div>
     );
   }
@@ -90,7 +87,113 @@ function ContextVisual({ visual, showLabel = true }: { visual: any; showLabel?: 
     );
   }
 
+  if (visual.subtype === "bar") {
+    const bar = visual as VisualBar;
+    const total = Number(bar.totalParts) || 0;
+    const colored = Number(bar.coloredParts) || 0;
+    if (total <= 0 || colored < 0 || colored > total) return null;
+
+    return (
+      <div className="flex flex-col items-center gap-2">
+        <div
+          className="grid overflow-hidden rounded-lg border-2 border-slate-300 bg-white shadow-sm"
+          style={{
+            gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))`,
+            width: "100%",
+            maxWidth: "320px",
+            minHeight: "88px",
+            aspectRatio: "4 / 1.25",
+          }}
+        >
+          {Array.from({ length: total }, (_, i) => (
+            <div
+              key={i}
+              className="border border-slate-300"
+              style={{ backgroundColor: i < colored ? "#2563eb" : "#f8fafc" }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return null;
+}
+
+function factorizeRectParts(total: number) {
+  if (total <= 6) {
+    return { rows: 1, cols: total };
+  }
+  const root = Math.floor(Math.sqrt(total));
+  for (let rows = root; rows >= 1; rows -= 1) {
+    if (total % rows === 0) {
+      return { rows, cols: total / rows };
+    }
+  }
+  return { rows: 1, cols: total };
+}
+
+function PromptFigure({ spec }: { spec: PromptFigureSpec }) {
+  if (spec.kind === "pie") {
+    const size = 150;
+    const cx = size / 2, cy = size / 2, r = size / 2 - 6;
+    const sliceAngle = (2 * Math.PI) / spec.total;
+    const start = -Math.PI / 2;
+
+    return (
+      <div className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="drop-shadow-sm">
+          <circle cx={cx} cy={cy} r={r} fill="#ffffff" stroke="#cbd5e1" strokeWidth={1.5} />
+          {Array.from({ length: spec.total }, (_, i) => {
+            const a1 = start + i * sliceAngle, a2 = a1 + sliceAngle;
+            const large = sliceAngle > Math.PI ? 1 : 0;
+            const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+            const x2 = cx + r * Math.cos(a2), y2 = cy + r * Math.sin(a2);
+            return (
+              <path
+                key={i}
+                d={`M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`}
+                fill={i < spec.colored ? "#2563eb" : "#e2e8f0"}
+                stroke="#ffffff"
+                strokeWidth={2}
+              />
+            );
+          })}
+        </svg>
+      </div>
+    );
+  }
+
+  const { rows, cols } = factorizeRectParts(spec.total);
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div
+        className="grid overflow-hidden rounded-lg border-2 border-slate-300 bg-white shadow-sm"
+        style={{
+          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+          gridAutoRows: "1fr",
+          width: "100%",
+          maxWidth: "320px",
+          minHeight: rows === 1 ? "88px" : "140px",
+          aspectRatio: rows === 1 ? "4 / 1.25" : `${Math.max(cols * 1.5, 3)} / ${Math.max(rows, 1.5)}`
+        }}
+      >
+        {Array.from({ length: spec.total }, (_, i) => (
+          <div
+            key={i}
+            className="border border-slate-300"
+            style={{ backgroundColor: i < spec.colored ? "#2563eb" : "#f8fafc" }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function getPieSegmentsSignature(segments: VisualPie["segments"]) {
+  return segments
+    .map((seg) => `${Number(seg.value) || 0}:${seg.colored ? 1 : 0}`)
+    .join("|");
 }
 
 export function QuestionCard({
@@ -119,9 +222,14 @@ export function QuestionCard({
 
   const [value, setValue] = useState<any>(initialValue);
   const [selectedChip, setSelectedChip] = useState<number | null>(null);
+  const [draggedOrderingItem, setDraggedOrderingItem] = useState<string | null>(null);
   const [tries, setTries] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const inferredPromptFigure = useMemo(() => {
+    if ((question as any).context_visual) return null;
+    return inferPromptFigure(question);
+  }, [question]);
 
   const setVal = (v: any) => {
     setValue(v);
@@ -146,6 +254,17 @@ export function QuestionCard({
     const x = [...arr];
     [x[i], x[j]] = [x[j], x[i]];
     return x;
+  };
+
+  const moveOrderingItem = (arr: string[], sourceItem: string, targetItem: string) => {
+    if (sourceItem === targetItem) return arr;
+    const next = [...arr];
+    const sourceIndex = next.indexOf(sourceItem);
+    const targetIndex = next.indexOf(targetItem);
+    if (sourceIndex === -1 || targetIndex === -1) return arr;
+    next.splice(sourceIndex, 1);
+    next.splice(targetIndex, 0, sourceItem);
+    return next;
   };
 
   const getSingleVariant = (choiceId: string, isCorrect_: boolean) => {
@@ -174,7 +293,12 @@ export function QuestionCard({
       {/* Read-only context visual (e.g. cake/pie diagram shown above the question) */}
       {(question as any).context_visual && (
         <div className="mb-3 flex justify-center">
-          <ContextVisual visual={(question as any).context_visual} showLabel={false} />
+          <ContextVisual visual={(question as any).context_visual} />
+        </div>
+      )}
+      {!(question as any).context_visual && inferredPromptFigure && (
+        <div className="mb-3 flex justify-center">
+          <PromptFigure spec={inferredPromptFigure} />
         </div>
       )}
       <h3 className="text-lg font-semibold mb-3">{question.prompt}</h3>
@@ -406,10 +530,31 @@ export function QuestionCard({
                 layout
                 layoutId={it}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="px-3 py-2 rounded-2xl border border-neutral-300 flex justify-between items-center"
+                draggable
+                onDragStart={(event) => {
+                  event.dataTransfer.setData("text/plain", it);
+                  setDraggedOrderingItem(it);
+                }}
+                onDragEnd={() => setDraggedOrderingItem(null)}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const draggedItem = event.dataTransfer.getData("text/plain") || draggedOrderingItem;
+                  if (!draggedItem) return;
+                  setVal(moveOrderingItem(arr, draggedItem, it));
+                  setDraggedOrderingItem(null);
+                }}
+                className={cn(
+                  "px-3 py-2 rounded-2xl border border-neutral-300 flex justify-between items-center gap-3 bg-white transition-colors",
+                  draggedOrderingItem === it ? "opacity-60" : "",
+                  draggedOrderingItem && draggedOrderingItem !== it ? "hover:border-primary/40" : ""
+                )}
               >
-                <span>{it}</span>
-                <div className="flex gap-1">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground cursor-grab active:cursor-grabbing" />
+                  <span>{it}</span>
+                </div>
+                <div className="flex gap-1 shrink-0">
                   <button onClick={() => i > 0 && setVal(swap(arr, i, i - 1))}>↑</button>
                   <button onClick={() => i < arr.length - 1 && setVal(swap(arr, i, i + 1))}>↓</button>
                 </div>
@@ -762,22 +907,29 @@ function PieStudentView({
               );
             })}
           </svg>
-          <div className="text-sm text-neutral-500">
-            {selected.length}/{sliceCount} parts coloriées
-          </div>
         </div>
       </div>
     );
   }
 
-  const allPies = [
-    { id: "base", label: "Pie 1", segments: visual.segments },
-    ...(visual.variants ?? []).map((v, index) => ({
-      id: v.id,
-      label: `Pie ${index + 2}`,
+  const rawPies = [
+    { ids: ["base"], segments: visual.segments },
+    ...(visual.variants ?? []).map((v) => ({
+      ids: [v.id],
       segments: v.segments
     })),
   ];
+
+  const allPies = rawPies.reduce<typeof rawPies>((acc, pie) => {
+    const signature = getPieSegmentsSignature(pie.segments);
+    const existing = acc.find((entry) => getPieSegmentsSignature(entry.segments) === signature);
+    if (existing) {
+      existing.ids.push(...pie.ids);
+      return acc;
+    }
+    acc.push({ ...pie });
+    return acc;
+  }, []);
 
   const calculateFraction = (segments: typeof visual.segments) => {
     const totalSlices = segments.length;
@@ -792,18 +944,18 @@ function PieStudentView({
       </p>
       <div className="grid grid-cols-2 gap-3">
         {allPies.map((pie) => {
-          const isActive = selected.includes(pie.id);
+          const isActive = pie.ids.some((id) => selected.includes(id));
           const total = pie.segments.reduce((sum, seg) => sum + (Number(seg.value) || 0), 0) || 1;
           let start = 0;
 
           return (
             <button
-              key={pie.id}
+              key={pie.ids.join("|")}
               type="button"
               onClick={() => {
                 const next = isActive
-                  ? selected.filter((id) => id !== pie.id)
-                  : [...selected, pie.id];
+                  ? selected.filter((id) => !pie.ids.includes(id))
+                  : [...new Set([...selected, ...pie.ids])];
                 onChange(next);
               }}
               className={cn(
@@ -845,12 +997,6 @@ function PieStudentView({
                   );
                 })}
               </svg>
-              <div className="mt-2 text-center">
-                <div className="text-xs text-neutral-500">{pie.label}</div>
-                {visual.showFractionLabel === true && (
-                  <div className="text-sm font-medium">{calculateFraction(pie.segments)}</div>
-                )}
-              </div>
               {isActive && (
                 <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

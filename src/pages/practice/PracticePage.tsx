@@ -122,7 +122,7 @@ export default function PracticePage() {
       <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-6">
         <section className="space-y-2">
           <h1 className="text-2xl font-bold tracking-tight">{t('practice.title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('practice.subtitle')}</p>
+          <p className="text-sm text-muted-foreground">Entraîne-toi sur les sujets de ton programme.</p>
         </section>
 
         {import.meta.env.DEV && import.meta.env.VITE_SHOW_PRACTICE_DEBUG === 'true' && (

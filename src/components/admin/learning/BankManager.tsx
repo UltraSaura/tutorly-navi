@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Pencil, Trash2, Settings, ChevronRight, ChevronDown, Sparkles, BookOpen } from 'lucide-react';
@@ -17,6 +18,7 @@ import { TopicQuizGenerator } from './TopicQuizGenerator';
 import { useQuizBankQuestions, useCreateQuizBankQuestion, useUpdateQuizBankQuestion, useDeleteQuizBankQuestion } from '@/hooks/useManageQuizBanks';
 import { useQuizBankAssignments, useCreateQuizBankAssignment, useUpdateQuizBankAssignment, useDeleteQuizBankAssignment } from '@/hooks/useManageQuizBanks';
 import type { Question } from '@/types/quiz-bank';
+import { getSchoolLevelLabel, getSchoolLevelOptions, normalizeSchoolLevel } from '@/domain/schoolLevels';
 
 const BankManager = () => {
   const queryClient = useQueryClient();
@@ -29,6 +31,10 @@ const BankManager = () => {
   const [editingAssignment, setEditingAssignment] = useState<any>(null);
   const [generatorOpen, setGeneratorOpen] = useState(false);
   const [topicGeneratorOpen, setTopicGeneratorOpen] = useState(false);
+  const [subjectFilter, setSubjectFilter] = useState<string>('all');
+  const [topicFilter, setTopicFilter] = useState<string>('all');
+  const [schoolLevelFilter, setSchoolLevelFilter] = useState<string>('all');
+  const [languageFilter, setLanguageFilter] = useState<string>('all');
   const [formData, setFormData] = useState({
     id: '',
     title: '',
@@ -51,6 +57,54 @@ const BankManager = () => {
     },
   });
 
+  const { data: subjects = [] } = useQuery({
+    queryKey: ['quiz-bank-filter-subjects'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('subjects')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('order_index');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['quiz-bank-filter-categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('learning_categories')
+        .select('id, subject_id');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: topics = [] } = useQuery({
+    queryKey: ['quiz-bank-filter-topics'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('topics')
+        .select('id, name, category_id, curriculum_level_code')
+        .eq('is_active', true)
+        .order('name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: bankAssignmentsIndex = [] } = useQuery({
+    queryKey: ['quiz-bank-filter-assignments'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('quiz_bank_assignments')
+        .select('bank_id, topic_id');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   // Fetch questions for selected bank
   const { data: questions = [] } = useQuizBankQuestions(selectedBank || undefined);
   const createQuestion = useCreateQuizBankQuestion();
@@ -62,6 +116,81 @@ const BankManager = () => {
   const createAssignment = useCreateQuizBankAssignment();
   const updateAssignment = useUpdateQuizBankAssignment();
   const deleteAssignment = useDeleteQuizBankAssignment();
+  const defaultAssignmentTopicId = editingAssignment?.topic_id || assignments.find((assignment: any) => assignment.topic_id)?.topic_id || null;
+
+  const categorySubjectMap = useMemo(
+    () => new Map(categories.filter((category: any) => category?.id).map((category: any) => [category.id, category.subject_id])),
+    [categories],
+  );
+
+  const subjectNameMap = useMemo(
+    () => new Map(subjects.filter((subject: any) => subject?.id).map((subject: any) => [subject.id, subject.name])),
+    [subjects],
+  );
+
+  const topicMap = useMemo(() => {
+    return new Map(topics.filter((topic: any) => topic?.id).map((topic: any) => [topic.id, {
+      ...topic,
+      subject_id: topic.category_id ? categorySubjectMap.get(topic.category_id) ?? null : null,
+      normalized_level: normalizeSchoolLevel(topic.curriculum_level_code),
+    }]));
+  }, [topics, categorySubjectMap]);
+
+  const visibleTopics = useMemo(() => {
+    const validTopics = topics.filter((topic: any) => topic?.id);
+    if (subjectFilter === 'all') return validTopics;
+    return validTopics.filter((topic: any) => {
+      const subjectId = topic.category_id ? categorySubjectMap.get(topic.category_id) : null;
+      return subjectId === subjectFilter;
+    });
+  }, [topics, subjectFilter, categorySubjectMap]);
+
+  const decoratedBanks = useMemo(() => {
+    const assignmentTopicMap = new Map<string, string[]>();
+    bankAssignmentsIndex.forEach((assignment: any) => {
+      if (!assignment.bank_id || !assignment.topic_id) return;
+      const existing = assignmentTopicMap.get(assignment.bank_id) || [];
+      if (!existing.includes(assignment.topic_id)) existing.push(assignment.topic_id);
+      assignmentTopicMap.set(assignment.bank_id, existing);
+    });
+
+    return banks.map((bank: any) => {
+      const sourceTopicIds = 'source_topic_ids' in bank ? bank.source_topic_ids : null;
+      const primaryTopicId = 'primary_topic_id' in bank ? bank.primary_topic_id : null;
+      const schoolLevels = 'school_levels' in bank ? bank.school_levels : null;
+      const subjectId = 'subject_id' in bank ? bank.subject_id : null;
+      const sourceLanguage = 'source_language' in bank ? bank.source_language : null;
+
+      const topicIds: string[] = Array.isArray(sourceTopicIds) && sourceTopicIds.length > 0
+        ? bank.source_topic_ids
+        : (primaryTopicId ? [primaryTopicId] : (assignmentTopicMap.get(bank.id) || []));
+      const primaryTopic = topicIds.map((topicId) => topicMap.get(topicId)).find(Boolean) || null;
+      const effectiveSubjectId = subjectId || primaryTopic?.subject_id || null;
+      const effectiveLevel = (Array.isArray(schoolLevels) && schoolLevels[0]) || primaryTopic?.normalized_level || null;
+      const effectiveLanguage = sourceLanguage || 'unknown';
+
+      return {
+        ...bank,
+        effectiveTopicIds: topicIds,
+        effectiveSubjectId,
+        effectiveSubjectName: effectiveSubjectId ? subjectNameMap.get(effectiveSubjectId) || 'Unknown subject' : 'Unassigned',
+        effectivePrimaryTopicName: primaryTopic?.name || 'Unassigned',
+        effectiveSchoolLevel: effectiveLevel,
+        effectiveSchoolLevelLabel: effectiveLevel ? getSchoolLevelLabel(effectiveLevel) : 'Unassigned',
+        effectiveLanguage,
+      };
+    });
+  }, [banks, bankAssignmentsIndex, subjectNameMap, topicMap]);
+
+  const filteredBanks = useMemo(() => {
+    return decoratedBanks.filter((bank: any) => {
+      if (subjectFilter !== 'all' && bank.effectiveSubjectId !== subjectFilter) return false;
+      if (topicFilter !== 'all' && !bank.effectiveTopicIds.includes(topicFilter)) return false;
+      if (schoolLevelFilter !== 'all' && normalizeSchoolLevel(bank.effectiveSchoolLevel) !== normalizeSchoolLevel(schoolLevelFilter)) return false;
+      if (languageFilter !== 'all' && bank.effectiveLanguage !== languageFilter) return false;
+      return true;
+    });
+  }, [decoratedBanks, subjectFilter, topicFilter, schoolLevelFilter, languageFilter]);
 
   // Create mutation
   const createMutation = useMutation({
@@ -343,13 +472,70 @@ const BankManager = () => {
         </Dialog>
         </div>
       </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div>
+          <Label className="mb-1 block">School level</Label>
+          <Select value={schoolLevelFilter} onValueChange={setSchoolLevelFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="All levels" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All levels</SelectItem>
+              {getSchoolLevelOptions('fr').map((level) => (
+                <SelectItem key={level.value} value={level.value}>{level.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="mb-1 block">Subject</Label>
+          <Select value={subjectFilter} onValueChange={(value) => { setSubjectFilter(value); setTopicFilter('all'); }}>
+            <SelectTrigger>
+              <SelectValue placeholder="All subjects" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All subjects</SelectItem>
+              {subjects.filter((subject: any) => subject?.id).map((subject: any) => (
+                <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="mb-1 block">Topic</Label>
+          <Select value={topicFilter} onValueChange={setTopicFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="All topics" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All topics</SelectItem>
+              {visibleTopics.filter((topic: any) => topic?.id).map((topic: any) => (
+                <SelectItem key={topic.id} value={topic.id}>{topic.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="mb-1 block">Language</Label>
+          <Select value={languageFilter} onValueChange={setLanguageFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="All languages" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All languages</SelectItem>
+              <SelectItem value="fr">Français</SelectItem>
+              <SelectItem value="en">English</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
       <div className="space-y-2">
-        {banks.length === 0 ? (
+        {filteredBanks.length === 0 ? (
           <div className="border rounded-lg p-8 text-center text-muted-foreground">
             No quiz banks found. Create one to get started.
           </div>
         ) : (
-          banks.map((bank: any) => (
+          filteredBanks.map((bank: any) => (
             <div key={bank.id} className="border rounded-lg">
               <div
                 className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted/50"
@@ -364,6 +550,12 @@ const BankManager = () => {
                   <div className="flex-1">
                     <div className="font-medium">{bank.title}</div>
                     <div className="text-sm text-muted-foreground font-mono">{bank.id}</div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      <span className="px-2 py-1 rounded bg-muted">{bank.effectiveSchoolLevelLabel}</span>
+                      <span className="px-2 py-1 rounded bg-muted">{bank.effectiveSubjectName}</span>
+                      <span className="px-2 py-1 rounded bg-muted">{bank.effectivePrimaryTopicName}</span>
+                      <span className="px-2 py-1 rounded bg-muted">{bank.effectiveLanguage === 'fr' ? 'Français' : bank.effectiveLanguage === 'en' ? 'English' : bank.effectiveLanguage}</span>
+                    </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                     <Button
@@ -522,36 +714,45 @@ const BankManager = () => {
         )}
       </div>
 
-      <QuestionEditor
-        question={editingQuestion || undefined}
-        isOpen={questionEditorOpen}
-        onClose={() => {
-          setQuestionEditorOpen(false);
-          setEditingQuestion(null);
-        }}
-        onSave={handleQuestionSave}
-        position={editingQuestion?.position ?? questions.length}
-      />
+      {questionEditorOpen && (
+        <QuestionEditor
+          question={editingQuestion || undefined}
+          isOpen={questionEditorOpen}
+          onClose={() => {
+            setQuestionEditorOpen(false);
+            setEditingQuestion(null);
+          }}
+          onSave={handleQuestionSave}
+          position={editingQuestion?.position ?? questions.length}
+        />
+      )}
 
-      <AssignmentEditor
-        assignment={editingAssignment}
-        isOpen={assignmentEditorOpen}
-        onClose={() => {
-          setAssignmentEditorOpen(false);
-          setEditingAssignment(null);
-        }}
-        onSave={handleAssignmentSave}
-      />
+      {assignmentEditorOpen && (
+        <AssignmentEditor
+          assignment={editingAssignment}
+          defaultTopicId={defaultAssignmentTopicId}
+          isOpen={assignmentEditorOpen}
+          onClose={() => {
+            setAssignmentEditorOpen(false);
+            setEditingAssignment(null);
+          }}
+          onSave={handleAssignmentSave}
+        />
+      )}
 
-      <TranscriptQuizGenerator
-        open={generatorOpen}
-        onOpenChange={setGeneratorOpen}
-      />
+      {generatorOpen && (
+        <TranscriptQuizGenerator
+          open={generatorOpen}
+          onOpenChange={setGeneratorOpen}
+        />
+      )}
 
-      <TopicQuizGenerator
-        open={topicGeneratorOpen}
-        onOpenChange={setTopicGeneratorOpen}
-      />
+      {topicGeneratorOpen && (
+        <TopicQuizGenerator
+          open={topicGeneratorOpen}
+          onOpenChange={setTopicGeneratorOpen}
+        />
+      )}
     </div>
   );
 };

@@ -13,6 +13,13 @@ export type VisualPie = {
   }[];
 };
 
+export type VisualBar = {
+  subtype: "bar";
+  totalParts: number;
+  coloredParts: number;
+  orientation?: "horizontal";
+};
+
 export type VisualGrid = {
   subtype: "grid";
   rows: number;
@@ -68,6 +75,7 @@ export type VisualAngle = {
 };
 
 export type VisualUnion =
+  | VisualBar
   | VisualPie
   | VisualGrid
   | VisualShapeSelect
