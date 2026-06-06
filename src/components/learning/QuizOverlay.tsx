@@ -1,15 +1,12 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, ChevronRight, HelpCircle, Trophy, Zap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Check, X, ChevronRight, Trophy, Zap } from 'lucide-react';
 import type { Choice, Question, QuizBank } from '@/types/quiz-bank';
 import { QuestionCard } from './QuestionCard';
 import { gradeQuiz, shuffle } from '@/utils/quizEvaluation';
 import { evaluateQuestion } from '@/utils/quizEvaluation';
 import { useSubmitBankAttempt } from '@/hooks/useQuizBank';
 import { useAuth } from '@/context/AuthContext';
-import { cn } from '@/lib/utils';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
 import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { useUserContext } from '@/hooks/useUserContext';
@@ -487,44 +484,43 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
 
   // Step-by-step question flow
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-3">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">{bank.title}</h2>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close quiz">
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
-
-        {/* Progress indicator */}
-        {questions.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Question {currentIndex + 1} / {questions.length}
-            </p>
-            <div className="w-full h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+    <div className="fixed inset-0 z-[200] flex flex-col" style={{ background: '#F3F6FA' }}>
+      <div style={{ background: 'white', borderBottom: '0.5px solid #EAECEF' }}>
+        <div className="flex items-center gap-3 px-4 py-3">
+          <button
+            onClick={onClose}
+            aria-label="Fermer"
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
+            style={{ border: '0.5px solid #EAECEF', background: 'white', cursor: 'pointer' }}
+          >
+            <X className="h-4 w-4" style={{ color: '#667085' }} />
+          </button>
+          <div className="flex-1">
+            <div className="overflow-hidden rounded-full" style={{ height: '5px', background: '#EAECEF' }}>
               <motion.div
-                className="h-2 bg-primary rounded-full"
-                animate={{ width: `${((currentIndex + (questionSubmitted ? 1 : 0)) / questions.length) * 100}%` }}
-                transition={{ type: "spring", stiffness: 80, damping: 20 }}
+                className="h-full rounded-full"
+                style={{ background: '#12C6A0' }}
+                animate={{ width: `${((currentIndex + (questionSubmitted ? 1 : 0)) / Math.max(questions.length, 1)) * 100}%` }}
+                transition={{ type: 'spring', stiffness: 80, damping: 20 }}
               />
             </div>
+            <p className="mt-0.5 text-xs" style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>
+              {bank.title}
+            </p>
           </div>
-        )}
+          <span className="flex-shrink-0 text-xs font-semibold" style={{ color: '#12C6A0', fontFamily: 'Poppins, sans-serif' }}>
+            {currentIndex + 1}/{questions.length}
+          </span>
+        </div>
+      </div>
 
+      <div className="flex-1 overflow-y-auto px-4 py-5">
         {questions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Aucune question disponible pour le moment.
-          </p>
+          <p className="text-sm" style={{ color: '#667085' }}>Aucune question disponible pour le moment.</p>
         ) : currentQuestion ? (
           <div
-            className={cn(
-              "rounded-2xl transition-all",
-              questionSubmitted && questionResult === true &&
-                "ring-2 ring-green-400 shadow-[0_0_24px_4px_rgba(34,197,94,0.35)]",
-              questionSubmitted && questionResult === false &&
-                "ring-2 ring-red-400 shadow-[0_0_16px_4px_rgba(239,68,68,0.2)]",
-            )}
+            className="rounded-2xl bg-white p-4"
+            style={{ border: '0.5px solid #EAECEF' }}
           >
             <AnimatePresence mode="wait">
               <motion.div
@@ -532,7 +528,7 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
                 initial={{ opacity: 0, x: 40 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -40 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               >
                 <QuestionCard
                   question={currentQuestion}
@@ -540,54 +536,30 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
                 />
               </motion.div>
             </AnimatePresence>
-
-            {/* Feedback after submit */}
-            {questionSubmitted && (
-              <div className={cn(
-                "mt-3 rounded-xl px-4 py-3 text-sm font-medium",
-                questionResult
-                  ? "bg-green-50 dark:bg-green-950/20 text-green-600"
-                  : "bg-red-50 dark:bg-red-950/20 text-red-600"
-              )}>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <span>{questionResult ? "✅ Correct !" : "❌ Incorrect"}</span>
-                  {questionResult === false && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleShowExplanation}
-                      disabled={teaching.loading}
-                      className="self-start gap-2 bg-white text-red-700 hover:bg-red-50 dark:bg-card dark:text-red-300 dark:hover:bg-red-950/30"
-                    >
-                      <HelpCircle className="h-4 w-4" />
-                      {teaching.loading ? "Préparation..." : "Afficher l'explication"}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         ) : null}
+      </div>
 
+      <div className="px-4 pt-3" style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom, 24px))' }}>
         {!questionSubmitted ? (
           <button
             onClick={handleQuestionSubmit}
             disabled={questions.length === 0}
-            className="mt-4 w-full rounded-xl py-3 text-sm font-bold"
+            className="w-full rounded-2xl py-4 text-sm font-bold"
             style={{
               background: questions.length === 0 ? '#EAECEF' : '#12C6A0',
               color: questions.length === 0 ? '#B4B2A9' : '#0F172A',
               border: 'none',
               fontFamily: 'Poppins, sans-serif',
               cursor: questions.length === 0 ? 'not-allowed' : 'pointer',
+              fontSize: '15px',
             }}
           >
             Valider
           </button>
         ) : (
           <div
-            className="mt-4 flex items-center gap-3 rounded-xl px-4 py-3"
+            className="flex items-center gap-3 rounded-2xl px-4 py-3"
             style={{
               background: questionResult ? '#EAF3DE' : '#FEF3C7',
               border: `1px solid ${questionResult ? '#9FE1CB' : '#FCD34D'}`,
@@ -602,10 +574,7 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
                 : <X className="h-5 w-5" style={{ color: '#0F172A' }} />}
             </div>
             <div className="min-w-0 flex-1">
-              <p
-                className="text-sm font-bold"
-                style={{ color: questionResult ? '#27500A' : '#633806', fontFamily: 'Poppins, sans-serif' }}
-              >
+              <p className="text-sm font-bold" style={{ color: questionResult ? '#27500A' : '#633806', fontFamily: 'Poppins, sans-serif' }}>
                 {questionResult ? 'Exacte !' : 'Pas cette fois...'}
               </p>
               {questionResult === false && (
@@ -613,14 +582,7 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
                   type="button"
                   onClick={handleShowExplanation}
                   disabled={teaching.loading}
-                  className="text-xs underline"
-                  style={{
-                    color: '#854F0B',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: 0,
-                  }}
+                  style={{ color: '#854F0B', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', textDecoration: 'underline' }}
                 >
                   {teaching.loading ? 'Préparation...' : "Voir l'explication"}
                 </button>
@@ -628,7 +590,7 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
             </div>
             {questionResult && (
               <span
-                className="rounded-full px-2 py-1 text-xs font-bold"
+                className="flex-shrink-0 rounded-full px-2 py-1 text-xs font-bold"
                 style={{ background: '#FAC775', color: '#633806' }}
               >
                 +10 XP
@@ -637,19 +599,13 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
             <button
               onClick={handleNext}
               className="flex-shrink-0 rounded-xl px-4 py-2 text-sm font-bold"
-              style={{
-                background: '#12C6A0',
-                border: 'none',
-                color: '#0F172A',
-                fontFamily: 'Poppins, sans-serif',
-                cursor: 'pointer',
-              }}
+              style={{ background: '#12C6A0', border: 'none', color: '#0F172A', fontFamily: 'Poppins, sans-serif', cursor: 'pointer' }}
             >
               {currentIndex < questions.length - 1 ? 'Suivant' : 'Résultats'}
             </button>
           </div>
         )}
-      </Card>
+      </div>
 
       <ExplanationModal
         open={teaching.open}
@@ -659,10 +615,7 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
         error={teaching.error}
         exerciseQuestion={currentQuestion?.prompt}
       />
-
-      {showXpPill && (
-        <XpPill onDone={() => setShowXpPill(false)} />
-      )}
+      {showXpPill && <XpPill onDone={() => setShowXpPill(false)} />}
     </div>
   );
 }
