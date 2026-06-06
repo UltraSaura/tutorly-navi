@@ -28,35 +28,35 @@ export function usePracticeTopics(
   const query = useQuery({
     queryKey: ['practice-topics', subjectSlug, levelCode, countryCode],
     queryFn: async (): Promise<PracticeDomainGroup[]> => {
-      const { data: categoryRows, error: categoryError } = await supabase
-        .from('learning_categories')
-        .select('id, learning_subjects:subjects!inner(slug)')
-        .eq('learning_subjects.slug', subjectSlug);
-
-      if (categoryError) throw categoryError;
-
-      const categoryIds = (categoryRows || []).map((row) => row.id);
-      if (categoryIds.length === 0) return [];
-
+      // Query topics directly by subject slug - bypasses the subjects/categories
+      // join chain which fails for curriculum subjects stored as fallback cards.
       const { data: topics, error: topicsError } = await supabase
         .from('topics')
         .select('id, name, order_index, curriculum_domain_id')
         .eq('curriculum_level_code', levelCode)
-        .eq('curriculum_country_code', countryCode)
-        .eq('is_active', true)
-        .in('category_id', categoryIds)
+        .eq('curriculum_subject_id', subjectSlug)
+        .or(`curriculum_country_code.eq.${countryCode},curriculum_country_code.is.null`)
+        .or('is_active.eq.true,is_active.is.null')
         .order('order_index', { ascending: true });
 
       if (topicsError) throw topicsError;
 
       const topicRows: TopicRow[] = topics || [];
-      if (topicRows.length === 0) return [];
 
+      if (topicRows.length === 0) {
+        console.warn(
+          '[usePracticeTopics] no topics found for subject:', subjectSlug,
+          'level:', levelCode,
+        );
+        return [];
+      }
+
+      // Build domain groups from results.
       const uniqueDomainIds = Array.from(
         new Set(
           topicRows
-            .map((topic) => topic.curriculum_domain_id)
-            .filter((domainId): domainId is string => Boolean(domainId)),
+            .map((t) => t.curriculum_domain_id)
+            .filter((id): id is string => Boolean(id)),
         ),
       );
 
@@ -69,9 +69,7 @@ export function usePracticeTopics(
 
         if (domainsError) throw domainsError;
 
-        (domains || []).forEach((domain) => {
-          domainLabelMap.set(domain.id, domain.label || domain.id);
-        });
+        (domains || []).forEach((d) => domainLabelMap.set(d.id, d.label || d.id));
       }
 
       const groupedTopics = new Map<
@@ -86,17 +84,16 @@ export function usePracticeTopics(
       topicRows.forEach((topic) => {
         const domainId = topic.curriculum_domain_id || 'unassigned';
         const domainLabel = domainLabelMap.get(domainId) || domainId;
-        const groupKey = domainLabel || domainId;
 
-        if (!groupedTopics.has(groupKey)) {
-          groupedTopics.set(groupKey, {
+        if (!groupedTopics.has(domainLabel)) {
+          groupedTopics.set(domainLabel, {
             domainId,
             domainLabel,
             topics: [],
           });
         }
 
-        groupedTopics.get(groupKey)!.topics.push({
+        groupedTopics.get(domainLabel)!.topics.push({
           id: topic.id,
           topicLabel: topic.name,
           orderIndex: topic.order_index,
@@ -104,10 +101,10 @@ export function usePracticeTopics(
       });
 
       return Array.from(groupedTopics.values())
-        .map((grouped) => ({
-          domainId: grouped.domainId,
-          domainLabel: grouped.domainLabel,
-          topics: [...grouped.topics].sort((a, b) => a.orderIndex - b.orderIndex),
+        .map((g) => ({
+          domainId: g.domainId,
+          domainLabel: g.domainLabel,
+          topics: [...g.topics].sort((a, b) => a.orderIndex - b.orderIndex),
         }))
         .sort((a, b) => a.domainLabel.localeCompare(b.domainLabel));
     },

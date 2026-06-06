@@ -5,6 +5,7 @@ export interface Subject {
   icon_name: string;
   icon_image_url: string | null;
   color_scheme: string;
+  display_context: 'learn' | 'practice' | 'both';
   order_index: number;
   is_active: boolean;
   created_at: string;

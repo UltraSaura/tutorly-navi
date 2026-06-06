@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MessageSquare, User, History, GraduationCap, Target } from "lucide-react";
+import { Bot, BookOpen, Dumbbell, History, User } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -16,26 +16,31 @@ import { AccountTabContent } from "./AccountTabContent";
 const bottomTabItems = [
   { 
     title: "nav.home", 
+    mobileLabel: "Tuteur",
     url: "/chat", 
-    icon: MessageSquare 
-  },
-  { 
-    title: "nav.learning", 
-    url: "/learning", 
-    icon: GraduationCap 
+    icon: Bot 
   },
   {
     title: "nav.practice",
+    mobileLabel: "S’exercer",
     url: "/practice",
-    icon: Target
+    icon: Dumbbell
+  },
+  { 
+    title: "nav.learning", 
+    mobileLabel: "Leçons",
+    url: "/learning", 
+    icon: BookOpen 
   },
   { 
     title: "nav.history", 
+    mobileLabel: "Historique",
     url: "/exercise-history", 
     icon: History 
   },
   { 
     title: "nav.account", 
+    mobileLabel: "Compte",
     url: null, // Special case - opens sheet
     icon: User 
   },
@@ -64,26 +69,28 @@ export function MobileBottomTabs() {
 
   return (
     <>
-      <div className="fixed left-0 right-0 z-50 md:hidden bg-white dark:bg-card shadow-2xl rounded-t-xl border-t border-border/40"
-           style={{ bottom: 'max(env(safe-area-inset-bottom), 0px)' }}>
-        <div className="grid grid-cols-5 items-center h-16 px-2">
+      <div
+        className="fixed inset-x-4 z-50 md:hidden"
+        style={{ bottom: 'calc(max(env(safe-area-inset-bottom), 0px) + 12px)' }}
+      >
+        <div className="grid h-[72px] grid-cols-5 items-center rounded-[24px] bg-white px-2 shadow-[0_18px_45px_rgba(15,23,42,0.10)]">
           {bottomTabItems.map((item) => {
             const isActiveTab = isActive(item.url);
+            const label = item.mobileLabel ?? t(item.title);
             
             if (item.url) {
               return (
                 <NavLink
                   key={item.title}
                   to={item.url}
-                  style={isActiveTab ? { backgroundColor: '#253C7B' } : undefined}
-                  className={`flex flex-col items-center justify-center h-12 w-16 rounded-lg transition-colors ${
+                  className={`mx-auto flex h-14 w-[66px] flex-col items-center justify-center rounded-2xl transition-colors ${
                     isActiveTab 
-                      ? "text-white" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      ? "text-[#12C6A0]" 
+                      : "text-[#667085] hover:text-[#0F172A]"
                   }`}
                 >
-                  <item.icon className="h-5 w-5 mb-1" />
-                  <span className="text-xs font-medium">{t(item.title)}</span>
+                  <item.icon className="mb-1 h-6 w-6 stroke-[2.4]" />
+                  <span className="text-[11px] font-bold leading-none">{label}</span>
                 </NavLink>
               );
             }
@@ -94,15 +101,14 @@ export function MobileBottomTabs() {
                 variant="ghost"
                 size="sm"
                 onClick={() => handleTabClick(item)}
-                style={isAccountOpen ? { backgroundColor: '#253C7B' } : undefined}
-                className={`flex flex-col items-center justify-center h-12 w-16 rounded-lg p-0 ${
+                className={`mx-auto flex h-14 w-[66px] flex-col items-center justify-center rounded-2xl p-0 ${
                   isAccountOpen 
-                    ? "text-white hover:text-white" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                    ? "text-[#12C6A0] hover:text-[#12C6A0]" 
+                    : "text-[#667085] hover:text-[#0F172A]"
                 }`}
               >
-                <item.icon className="h-5 w-5 mb-1" />
-                <span className="text-xs font-medium">{t(item.title)}</span>
+                <item.icon className="mb-1 h-6 w-6 stroke-[2.4]" />
+                <span className="text-[11px] font-bold leading-none">{label}</span>
               </Button>
             );
           })}

@@ -35,6 +35,8 @@ export const useCreateSubject = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-learning-subjects'] });
+      queryClient.invalidateQueries({ queryKey: ['learning-subjects'] });
+      queryClient.invalidateQueries({ queryKey: ['practice-subject-buttons'] });
       toast.success('Subject created successfully');
     },
     onError: (error: Error) => {
@@ -60,6 +62,8 @@ export const useUpdateSubject = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-learning-subjects'] });
+      queryClient.invalidateQueries({ queryKey: ['learning-subjects'] });
+      queryClient.invalidateQueries({ queryKey: ['practice-subject-buttons'] });
       toast.success('Subject updated successfully');
     },
     onError: (error: Error) => {
@@ -82,6 +86,8 @@ export const useDeleteSubject = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-learning-subjects'] });
+      queryClient.invalidateQueries({ queryKey: ['learning-subjects'] });
+      queryClient.invalidateQueries({ queryKey: ['practice-subject-buttons'] });
       toast.success('Subject deleted successfully');
     },
     onError: (error: Error) => {

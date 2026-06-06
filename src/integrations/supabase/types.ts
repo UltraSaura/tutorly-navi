@@ -1627,39 +1627,39 @@ export type Database = {
         Row: {
           bank_id: string
           created_at: string
-          display_context: string | null
+          display_context: string
           id: string
           is_active: boolean | null
           min_completed_in_set: number | null
           topic_id: string | null
-          trigger_video_id: string | null
           trigger_after_n_videos: number | null
+          trigger_video_id: string | null
           updated_at: string
           video_ids: string[] | null
         }
         Insert: {
           bank_id: string
           created_at?: string
-          display_context?: string | null
+          display_context?: string
           id?: string
           is_active?: boolean | null
           min_completed_in_set?: number | null
           topic_id?: string | null
-          trigger_video_id?: string | null
           trigger_after_n_videos?: number | null
+          trigger_video_id?: string | null
           updated_at?: string
           video_ids?: string[] | null
         }
         Update: {
           bank_id?: string
           created_at?: string
-          display_context?: string | null
+          display_context?: string
           id?: string
           is_active?: boolean | null
           min_completed_in_set?: number | null
           topic_id?: string | null
-          trigger_video_id?: string | null
           trigger_after_n_videos?: number | null
+          trigger_video_id?: string | null
           updated_at?: string
           video_ids?: string[] | null
         }
@@ -1669,6 +1669,13 @@ export type Database = {
             columns: ["bank_id"]
             isOneToOne: false
             referencedRelation: "quiz_banks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_bank_assignments_trigger_video_id_fkey"
+            columns: ["trigger_video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
             referencedColumns: ["id"]
           },
         ]
@@ -1746,61 +1753,15 @@ export type Database = {
           },
         ]
       }
-      quiz_bank_variants: {
-        Row: {
-          bank_id: string
-          created_at: string
-          description: string | null
-          id: string
-          language: string
-          questions: Json
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          bank_id: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          language: string
-          questions?: Json
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          bank_id?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          language?: string
-          questions?: Json
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_bank_variants_bank_id_fkey"
-            columns: ["bank_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_banks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       quiz_banks: {
         Row: {
           created_at: string
           description: string | null
           id: string
-          primary_topic_id: string | null
-          school_levels: string[] | null
           shuffle: boolean | null
-          source_language: string | null
           source_text_snapshot: string | null
-          source_topic_ids: string[] | null
           source_type: string | null
           source_video_ids: string[] | null
-          subject_id: string | null
           time_limit_sec: number | null
           title: string
           updated_at: string
@@ -1809,15 +1770,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           id: string
-          primary_topic_id?: string | null
-          school_levels?: string[] | null
           shuffle?: boolean | null
-          source_language?: string | null
           source_text_snapshot?: string | null
-          source_topic_ids?: string[] | null
           source_type?: string | null
           source_video_ids?: string[] | null
-          subject_id?: string | null
           time_limit_sec?: number | null
           title: string
           updated_at?: string
@@ -1826,35 +1782,15 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          primary_topic_id?: string | null
-          school_levels?: string[] | null
           shuffle?: boolean | null
-          source_language?: string | null
           source_text_snapshot?: string | null
-          source_topic_ids?: string[] | null
           source_type?: string | null
           source_video_ids?: string[] | null
-          subject_id?: string | null
           time_limit_sec?: number | null
           title?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_banks_primary_topic_id_fkey"
-            columns: ["primary_topic_id"]
-            isOneToOne: false
-            referencedRelation: "topics"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "quiz_banks_subject_id_fkey"
-            columns: ["subject_id"]
-            isOneToOne: false
-            referencedRelation: "subjects"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       school_levels: {
         Row: {

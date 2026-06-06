@@ -30,7 +30,8 @@ export function useLearningSubjects() {
             )
           )
         `)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .in('display_context', ['learn', 'both']);
 
       // Add curriculum filters if profile exists
       if (effectiveCountryCode && effectiveLevelCode) {
@@ -134,5 +135,23 @@ export function useLearningSubjects() {
       return subjectsWithProgress;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function usePracticeSubjectButtons() {
+  return useQuery({
+    queryKey: ['practice-subject-buttons'],
+    queryFn: async (): Promise<Subject[]> => {
+      const { data, error } = await supabase
+        .from('subjects')
+        .select('*')
+        .eq('is_active', true)
+        .in('display_context', ['practice', 'both'])
+        .order('order_index', { ascending: true });
+
+      if (error) throw error;
+      return (data ?? []) as Subject[];
+    },
+    staleTime: 5 * 60 * 1000,
   });
 }

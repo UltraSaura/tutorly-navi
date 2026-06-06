@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Check, Play, Sparkles } from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -10,10 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { useAuth } from '@/context/AuthContext';
-import { useExamPapers } from '@/hooks/useExamImport';
+import { useExamPapers, useTrainingItems } from '@/hooks/useExamImport';
 import { useLearningSubjects } from '@/hooks/useLearningSubjects';
 import { usePracticeTopics } from '@/hooks/usePracticeTopics';
 import type { PracticeDomainGroup, PracticeTopic } from '@/hooks/usePracticeTopics';
+import { resolveExamDisciplinesForSubjectSlug } from '@/utils/examSubjectMapping';
+import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
 
 type TopicState = 'mastered' | 'in_progress' | 'not_started';
 
@@ -35,6 +37,22 @@ type DomainTopicGroup = {
 
 const NO_ACTIVE_LEVEL = '__no_active_level__';
 const EXAM_PREP_LEVELS = new Set(['3eme', '3e', 'troisieme', '4eme', '2nde', '1ere', 'terminale', 'bac']);
+
+function normalizeSchoolLevel(level?: string | null): string | null {
+  if (!level) return null;
+  return level
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[:_\s-]+/g, '');
+}
+
+function bankMatchesLevel(schoolLevels: string[] | null, activeLevel: string) {
+  if (!schoolLevels || schoolLevels.length === 0) return true;
+  const normalizedActiveLevel = normalizeSchoolLevel(activeLevel);
+  if (!normalizedActiveLevel) return true;
+  return schoolLevels.some((level) => normalizeSchoolLevel(level) === normalizedActiveLevel);
+}
 
 function formatSubjectLabel(subjectSlug: string) {
   return subjectSlug
@@ -72,6 +90,7 @@ function TopicStateIcon({ state }: { state: TopicState }) {
 
 export default function PracticeSubjectPage() {
   const navigate = useNavigate();
+  const [, setSearchParams] = useSearchParams();
   const { subject } = useParams<{ subject: string }>();
   const { user } = useAuth();
   const activeSchoolLevel = useActiveSchoolLevel();
@@ -80,6 +99,43 @@ export default function PracticeSubjectPage() {
   const subjectSlug = subject ?? '';
   const activeLevel = activeSchoolLevel.normalizedLevel ?? NO_ACTIVE_LEVEL;
   const { domainGroups: practiceDomainGroups, isLoading: topicsLoading, error } = usePracticeTopics(subjectSlug, activeLevel);
+  const examDisciplines = useMemo(
+    () => (subjectSlug ? resolveExamDisciplinesForSubjectSlug(subjectSlug) : []),
+    [subjectSlug],
+  );
+
+  const subjectQuery = useQuery({
+    queryKey: ['practice-subject-row', subjectSlug],
+    queryFn: async (): Promise<{ id: string; name: string; slug: string } | null> => {
+      const { data, error: subjectError } = await supabase
+        .from('subjects')
+        .select('id, name, slug')
+        .eq('slug', subjectSlug)
+        .maybeSingle();
+
+      if (subjectError) throw subjectError;
+      return data;
+    },
+    enabled: Boolean(subjectSlug),
+  });
+
+  const subjectQuizBanksQuery = useQuery({
+    queryKey: ['practice-subject-quiz-banks', subjectQuery.data?.id, activeLevel],
+    queryFn: async (): Promise<{ id: string; title: string; school_levels: string[] | null }[]> => {
+      if (!subjectQuery.data?.id) return [];
+
+      const { data, error: banksError } = await supabase
+        .from('quiz_banks')
+        .select('id, title, school_levels')
+        .eq('subject_id', subjectQuery.data.id)
+        .order('updated_at', { ascending: false })
+        .limit(50);
+
+      if (banksError) throw banksError;
+      return (data ?? []).filter((bank) => bankMatchesLevel(bank.school_levels, activeLevel));
+    },
+    enabled: Boolean(subjectQuery.data?.id && activeLevel),
+  });
 
   const domainGroups = useMemo<DomainTopicGroup[]>(() => {
     return practiceDomainGroups
@@ -185,8 +241,14 @@ export default function PracticeSubjectPage() {
 
   const papersQuery = useExamPapers({
     exam: 'dnb',
-    discipline: [],
+    discipline: examDisciplines,
     level: activeLevel,
+  });
+  const trainingItemsQuery = useTrainingItems({
+    subject_slug: examDisciplines[0] ?? subjectSlug,
+    level: activeLevel,
+    status: 'published',
+    limit: 1,
   });
 
   const topicMastery = masteryQuery.data || {};
@@ -215,12 +277,21 @@ export default function PracticeSubjectPage() {
   const showTopicActionSkeletons = masteryQuery.isLoading || bankAssignmentsQuery.isLoading;
 
   const matchedSubject = learningSubjects.find((entry) => entry.subject.slug === subjectSlug);
-  const subjectLabel = matchedSubject?.subject.name || formatSubjectLabel(subjectSlug) || subjectSlug;
+  const subjectLabel = matchedSubject?.subject.name || subjectQuery.data?.name || formatSubjectLabel(subjectSlug) || subjectSlug;
   const pageTitle = subjectLabel ? `S'entraîner - ${subjectLabel}` : "S'entraîner";
   const showExamSection = EXAM_PREP_LEVELS.has((activeSchoolLevel.normalizedLevel ?? '').toLowerCase());
   const examPaperCount = papersQuery.data?.length ?? 0;
+  const hasTrainingItems = (trainingItemsQuery.data?.length ?? 0) > 0;
+  const firstSubjectQuizBank = subjectQuizBanksQuery.data?.[0] ?? null;
+  const hasSubjectQuizBanks = Boolean(firstSubjectQuizBank);
+  const hasExamPrepContent = showExamSection && (hasTrainingItems || examPaperCount > 0);
+  const hasPracticeQuizContent = hasSubjectQuizBanks || hasExamPrepContent;
+  const isResolvingExamPrepFallback =
+    showExamSection && enrichedDomains.length === 0 && (papersQuery.isLoading || trainingItemsQuery.isLoading);
+  const isResolvingQuizFallback =
+    enrichedDomains.length === 0 && (subjectQuery.isLoading || subjectQuizBanksQuery.isLoading);
 
-  if (topicsLoading || activeSchoolLevel.isLoading) {
+  if (topicsLoading || activeSchoolLevel.isLoading || isResolvingExamPrepFallback || isResolvingQuizFallback) {
     return (
       <div className="min-h-screen bg-background pb-24">
         <PageMeta title={pageTitle} description="" />
@@ -233,7 +304,7 @@ export default function PracticeSubjectPage() {
     );
   }
 
-  if (enrichedDomains.length === 0) {
+  if (enrichedDomains.length === 0 && !hasPracticeQuizContent) {
     return (
       <div className="min-h-screen bg-background pb-24">
         <PageMeta title={pageTitle} description="" />
@@ -271,6 +342,7 @@ export default function PracticeSubjectPage() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <PageMeta title={pageTitle} description="" />
+      {user && <QuizOverlayController />}
       <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 sm:px-6">
         <section className="space-y-3">
           <div className="flex items-start justify-between gap-3">
@@ -287,15 +359,40 @@ export default function PracticeSubjectPage() {
             </Button>
           </div>
 
-          <div className="space-y-2">
-            <div className="h-1.5 overflow-hidden rounded-full bg-primary/20">
-              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${masteryPercent}%` }} />
+          {totalTopics > 0 && (
+            <div className="space-y-2">
+              <div className="h-1.5 overflow-hidden rounded-full bg-primary/20">
+                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${masteryPercent}%` }} />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {masteredTopics} sujet{masteredTopics > 1 ? 's' : ''} maîtrisé{masteredTopics > 1 ? 's' : ''} · {Math.max(totalTopics - masteredTopics, 0)} restant{Math.max(totalTopics - masteredTopics, 0) > 1 ? 's' : ''}
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {masteredTopics} sujet{masteredTopics > 1 ? 's' : ''} maîtrisé{masteredTopics > 1 ? 's' : ''} · {Math.max(totalTopics - masteredTopics, 0)} restant{Math.max(totalTopics - masteredTopics, 0) > 1 ? 's' : ''}
-            </p>
-          </div>
+          )}
         </section>
+
+        {firstSubjectQuizBank && (
+          <Card className="border-border/70">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Quiz disponibles</CardTitle>
+              <p className="text-sm text-muted-foreground">{firstSubjectQuizBank.title}</p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <Button
+                onClick={() => {
+                  setSearchParams((current) => {
+                    const next = new URLSearchParams(current);
+                    next.set('quiz', firstSubjectQuizBank.id);
+                    return next;
+                  });
+                }}
+              >
+                <Sparkles className="mr-1.5 h-4 w-4" />
+                Commencer le quiz
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {continueTopic && topicBankMap.get(continueTopic.topic.id) && (
           <button
@@ -327,14 +424,16 @@ export default function PracticeSubjectPage() {
               <p className="text-sm text-muted-foreground">Épreuves chronométrées alignées sur le programme</p>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2 pt-0">
+              {hasTrainingItems && (
+                <Button onClick={() => navigate(`/practice/session?subject=${encodeURIComponent(examDisciplines[0] ?? subjectSlug)}&level=${encodeURIComponent(activeLevel)}&mode=mixed`)}>
+                  Exercices interactifs
+                </Button>
+              )}
               {examPaperCount > 0 && (
                 <Button variant="outline" onClick={() => navigate(`/practice/${encodeURIComponent(subjectSlug)}/annales`)}>
                   Voir les annales
                 </Button>
               )}
-              <Button onClick={() => navigate(`/practice/exam/generated?subject=${encodeURIComponent(subjectSlug)}&level=${encodeURIComponent(activeLevel)}`)}>
-                Épreuve générée
-              </Button>
             </CardContent>
           </Card>
         )}

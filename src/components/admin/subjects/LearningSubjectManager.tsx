@@ -4,9 +4,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Image as ImageIcon, Loader2, Pencil, Save, Upload, X } from 'lucide-react';
+import { Image as ImageIcon, Loader2, Pencil, Plus, Save, Trash2, Upload, X } from 'lucide-react';
 import { useAdmin, Subject as ChatSubject } from '@/context/AdminContext';
-import { useLearningSubjects, useCreateSubject, useUpdateSubject } from '@/hooks/useManageLearningContent';
+import { useLearningSubjects, useCreateSubject, useUpdateSubject, useDeleteSubject } from '@/hooks/useManageLearningContent';
 import { DynamicIcon } from './DynamicIcon';
 import type { Subject as LearningSubject } from '@/types/learning';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,6 +21,7 @@ interface LearningSubjectData {
   icon_name: string;
   icon_image_url: string | null;
   color_scheme: string;
+  display_context: 'learn' | 'practice' | 'both';
   order_index: number;
   is_active: boolean;
 }
@@ -48,6 +49,7 @@ const createInitialData = (row: ManagedSubjectRow): LearningSubjectData => {
       icon_name: row.learningSubject.icon_name,
       icon_image_url: row.learningSubject.icon_image_url,
       color_scheme: row.learningSubject.color_scheme,
+      display_context: row.learningSubject.display_context ?? 'both',
       order_index: row.learningSubject.order_index,
       is_active: row.learningSubject.is_active,
     };
@@ -62,10 +64,22 @@ const createInitialData = (row: ManagedSubjectRow): LearningSubjectData => {
     icon_name: chatSubject?.icon || 'book',
     icon_image_url: null,
     color_scheme: '#dbeafe',
+    display_context: 'both',
     order_index: chatSubject?.order || 0,
     is_active: chatSubject?.active ?? true,
   };
 };
+
+const createBlankSubjectData = (orderIndex: number): LearningSubjectData => ({
+  name: 'New subject',
+  slug: 'new-subject',
+  icon_name: 'book',
+  icon_image_url: null,
+  color_scheme: '#dbeafe',
+  display_context: 'both',
+  order_index: orderIndex,
+  is_active: true,
+});
 
 const sanitizeFileName = (fileName: string) =>
   fileName
@@ -94,10 +108,12 @@ const LearningSubjectManager = () => {
   const { data: learningSubjects = [], isLoading } = useLearningSubjects();
   const createSubject = useCreateSubject();
   const updateSubject = useUpdateSubject();
+  const deleteSubject = useDeleteSubject();
 
   const [editingSubjectId, setEditingSubjectId] = useState<string | null>(null);
   const [editedData, setEditedData] = useState<Record<string, LearningSubjectData>>({});
   const [uploadingRowId, setUploadingRowId] = useState<string | null>(null);
+  const [customRows, setCustomRows] = useState<ManagedSubjectRow[]>([]);
 
   const managedRows = useMemo<ManagedSubjectRow[]>(() => {
     const chatByName = new Map(chatSubjects.map(subject => [normalizeName(subject.name), subject]));
@@ -122,12 +138,12 @@ const LearningSubjectManager = () => {
         chatSubject,
       }));
 
-    return [...learningRows, ...unsyncedChatRows].sort((a, b) => {
+    return [...learningRows, ...unsyncedChatRows, ...customRows].sort((a, b) => {
       const aOrder = (a as ManagedSubjectRow).learningSubject?.order_index ?? (a as ManagedSubjectRow).chatSubject?.order ?? 0;
       const bOrder = (b as ManagedSubjectRow).learningSubject?.order_index ?? (b as ManagedSubjectRow).chatSubject?.order ?? 0;
       return aOrder - bOrder;
     });
-  }, [chatSubjects, learningSubjects]);
+  }, [chatSubjects, customRows, learningSubjects]);
 
   useEffect(() => {
     const initialData: Record<string, LearningSubjectData> = {};
@@ -141,12 +157,28 @@ const LearningSubjectManager = () => {
     setEditingSubjectId(rowId);
   };
 
+  const handleAddSubject = () => {
+    const rowId = `new:${crypto.randomUUID()}`;
+    const maxOrder = managedRows.reduce((max, row) => {
+      const order = row.learningSubject?.order_index ?? row.chatSubject?.order ?? 0;
+      return Math.max(max, order);
+    }, 0);
+
+    setCustomRows(prev => [...prev, { id: rowId }]);
+    setEditedData(prev => ({
+      ...prev,
+      [rowId]: createBlankSubjectData(maxOrder + 1),
+    }));
+    setEditingSubjectId(rowId);
+  };
+
   const handleCancel = () => {
     const resetData: Record<string, LearningSubjectData> = {};
     managedRows.forEach(row => {
       resetData[row.id] = createInitialData(row);
     });
     setEditedData(resetData);
+    setCustomRows([]);
     setEditingSubjectId(null);
   };
 
@@ -209,6 +241,7 @@ const LearningSubjectManager = () => {
         icon_name: data.icon_name,
         icon_image_url: data.icon_image_url,
         color_scheme: data.color_scheme,
+        display_context: data.display_context,
         order_index: data.order_index,
         is_active: data.is_active,
       };
@@ -225,6 +258,9 @@ const LearningSubjectManager = () => {
         });
       } else {
         await createSubject.mutateAsync(payload);
+        if (row.id.startsWith('new:')) {
+          setCustomRows(prev => prev.filter(customRow => customRow.id !== row.id));
+        }
       }
 
       setEditingSubjectId(null);
@@ -232,6 +268,38 @@ const LearningSubjectManager = () => {
     } catch (error) {
       console.error('Error saving learning subject:', error);
       toast.error(`Failed to save learning subject: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleDelete = async (row: ManagedSubjectRow) => {
+    const data = editedData[row.id];
+    const name = data?.name || row.learningSubject?.name || row.chatSubject?.name || 'this subject';
+
+    if (!row.learningSubject && row.id.startsWith('new:')) {
+      setCustomRows(prev => prev.filter(customRow => customRow.id !== row.id));
+      setEditedData(prev => {
+        const next = { ...prev };
+        delete next[row.id];
+        return next;
+      });
+      setEditingSubjectId(null);
+      return;
+    }
+
+    if (!row.learningSubject) return;
+
+    const confirmed = window.confirm(
+      `Delete "${name}"? This will also delete categories, topics, videos, and quizzes under this subject.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteSubject.mutateAsync(row.learningSubject.id);
+      toast.success(`Learning subject "${name}" deleted`);
+    } catch (error) {
+      console.error('Error deleting learning subject:', error);
+      toast.error(`Failed to delete learning subject: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -245,9 +313,13 @@ const LearningSubjectManager = () => {
         <div>
           <h2 className="text-2xl font-bold">Learning Platform Subjects</h2>
           <p className="text-muted-foreground">
-            Manage learning-specific properties for your subjects. These settings control how subjects appear in the learning platform.
+            Manage subject buttons, high-definition icon images, and where each button appears.
           </p>
         </div>
+        <Button onClick={handleAddSubject}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add subject button
+        </Button>
       </div>
 
       <div className="rounded-md border">
@@ -260,6 +332,7 @@ const LearningSubjectManager = () => {
               <TableHead>Upload icon image</TableHead>
               <TableHead>Fallback icon</TableHead>
               <TableHead>Color Scheme</TableHead>
+              <TableHead>Display</TableHead>
               <TableHead>Order</TableHead>
               <TableHead>Active</TableHead>
               <TableHead>Actions</TableHead>
@@ -271,6 +344,7 @@ const LearningSubjectManager = () => {
               const data = editedData[row.id];
               const isSynced = !!row.learningSubject;
               const isUploading = uploadingRowId === row.id;
+              const canDelete = !!row.learningSubject || row.id.startsWith('new:');
 
               if (!data) return null;
 
@@ -410,6 +484,31 @@ const LearningSubjectManager = () => {
                   </TableCell>
                   <TableCell>
                     {isEditing ? (
+                      <Select
+                        value={data.display_context}
+                        onValueChange={(value: 'learn' | 'practice' | 'both') => updateField(row.id, 'display_context', value)}
+                      >
+                        <SelectTrigger className="w-36">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="both">Learn + Practice</SelectItem>
+                          <SelectItem value="learn">Learn only</SelectItem>
+                          <SelectItem value="practice">Practice only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-sm">
+                        {data.display_context === 'both'
+                          ? 'Learn + Practice'
+                          : data.display_context === 'learn'
+                            ? 'Learn only'
+                            : 'Practice only'}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isEditing ? (
                       <Input
                         type="number"
                         value={data.order_index}
@@ -452,16 +551,41 @@ const LearningSubjectManager = () => {
                           <X className="w-4 h-4 mr-1" />
                           Cancel
                         </Button>
+                        {canDelete ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(row)}
+                            disabled={deleteSubject.isPending}
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Delete
+                          </Button>
+                        ) : null}
                       </div>
                     ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(row.id)}
-                      >
-                        <Pencil className="w-4 h-4 mr-1" />
-                        Edit
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(row.id)}
+                        >
+                          <Pencil className="w-4 h-4 mr-1" />
+                          Edit
+                        </Button>
+                        {canDelete ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(row)}
+                            disabled={deleteSubject.isPending}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        ) : null}
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>
@@ -477,12 +601,13 @@ const LearningSubjectManager = () => {
           Subject icon images and display names are separate fields.
         </p>
         <ul className="list-disc list-inside space-y-1">
-          <li><strong>Subject display name:</strong> Text shown below the image on learning tiles</li>
-          <li><strong>Upload icon image:</strong> Image shown above the subject name; fallback icon is used when no image is uploaded</li>
+          <li><strong>Subject display name:</strong> Text shown on the Learn and Practice subject buttons</li>
+          <li><strong>Upload icon image:</strong> High-definition image shown on subject buttons; fallback icon is used when no image is uploaded</li>
           <li><strong>Fallback icon:</strong> Lucide icon name or emoji used only when no icon image exists</li>
           <li><strong>Color Scheme:</strong> Tile background color supporting RGB or hex values</li>
+          <li><strong>Display:</strong> Choose whether the button appears on Learn, Practice, or both</li>
           <li><strong>Order:</strong> Display order in the learning platform</li>
-          <li><strong>Active:</strong> Whether the subject is visible in the learning platform</li>
+          <li><strong>Active:</strong> Whether the subject button is visible anywhere</li>
         </ul>
       </div>
     </div>
