@@ -190,6 +190,38 @@ function PromptFigure({ spec }: { spec: PromptFigureSpec }) {
   );
 }
 
+function renderChoiceLabel(label: string) {
+  const frac = label.trim().match(/^(-?\d+)\s*\/\s*(-?\d+)$/);
+  if (frac) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+        <span style={{
+          fontSize: '22px', fontWeight: '800', color: '#0F172A',
+          borderBottom: '2.5px solid #0F172A',
+          paddingBottom: '3px', lineHeight: '1', display: 'block',
+          fontFamily: 'Poppins, sans-serif',
+          minWidth: '20px', textAlign: 'center',
+        }}>
+          {frac[1]}
+        </span>
+        <span style={{
+          fontSize: '22px', fontWeight: '800', color: '#0F172A',
+          lineHeight: '1', display: 'block',
+          fontFamily: 'Poppins, sans-serif',
+          minWidth: '20px', textAlign: 'center',
+        }}>
+          {frac[2]}
+        </span>
+      </div>
+    );
+  }
+  return (
+    <span style={{ fontSize: '15px', fontWeight: '700', color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
+      {label}
+    </span>
+  );
+}
+
 function getPieSegmentsSignature(segments: VisualPie["segments"]) {
   return segments
     .map((seg) => `${Number(seg.value) || 0}:${seg.colored ? 1 : 0}`)
@@ -304,24 +336,55 @@ export function QuestionCard({
       <h3 className="text-lg font-semibold mb-3">{question.prompt}</h3>
 
       {question.kind === "single" && (
-        <div className="space-y-2">
-          {question.choices.map((c, i) => (
-            <motion.button
-              key={c.id}
-              onClick={() => setVal(c.id)}
-              className="w-full text-left px-3 py-2 rounded-xl border"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07, type: "spring", stiffness: 220, damping: 20 }}
-              whileTap={{ scale: 0.97 }}
-              style={{
-                backgroundColor: value === c.id ? "hsl(var(--primary) / 0.1)" : "transparent",
-                borderColor: value === c.id ? "hsl(var(--primary))" : "rgb(212 212 212)",
-              }}
-            >
-              {c.label}
-            </motion.button>
-          ))}
+        <div className={question.choices.length === 4 ? "mt-4 grid grid-cols-2 gap-3" : "mt-4 space-y-2"}>
+          {question.choices.map((c, idx) => {
+            const letter = ["A", "B", "C", "D"][idx] ?? String(idx + 1);
+            const isSelected = value === c.id;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setVal(c.id)}
+                className="w-full rounded-2xl text-left transition-all"
+                style={{
+                  background: isSelected ? "#F2FBF8" : "white",
+                  border: `1.5px solid ${isSelected ? "#12C6A0" : "#EAECEF"}`,
+                  padding: question.choices.length === 4 ? "14px 12px" : "12px 14px",
+                  cursor: "pointer",
+                }}
+              >
+                {question.choices.length === 4 ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <span
+                      className="self-start text-xs font-semibold"
+                      style={{ color: isSelected ? "#085041" : "#9CA3AF" }}
+                    >
+                      {letter}
+                    </span>
+                    {renderChoiceLabel(c.label)}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                      style={{
+                        background: isSelected ? "#12C6A0" : "#F3F6FA",
+                        color: isSelected ? "#0F172A" : "#667085",
+                      }}
+                    >
+                      {letter}
+                    </span>
+                    <span
+                      className="text-sm font-medium"
+                      style={{ color: "#0F172A", fontFamily: "Poppins, sans-serif" }}
+                    >
+                      {c.label}
+                    </span>
+                  </div>
+                )}
+              </button>
+            );
+          })}
           <AnimatePresence>
             {submitted && (
               <motion.div
@@ -512,13 +575,49 @@ export function QuestionCard({
       })()}
 
       {question.kind === "numeric" && (question as any).answerFormat !== "fraction" && (
-        <input
-          className="w-full border rounded-2xl px-3 py-2"
-          inputMode="numeric"
-          type="number"
-          value={value}
-          onChange={e => setVal(e.target.value)}
-        />
+        <div className="mt-2 flex flex-col items-center gap-3 py-2">
+          <p className="text-xs font-medium" style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>
+            Tape ta réponse
+          </p>
+          <div
+            className="flex items-center justify-center rounded-2xl transition-all"
+            style={{
+              width: '160px',
+              height: '96px',
+              background: value !== '' ? '#F2FBF8' : 'white',
+              border: `2.5px solid ${value !== '' ? '#12C6A0' : '#EAECEF'}`,
+            }}
+          >
+            <input
+              type="number"
+              inputMode="numeric"
+              autoComplete="off"
+              autoFocus
+              value={value}
+              onChange={e => setVal(e.target.value)}
+              placeholder="?"
+              style={{
+                width: '100%',
+                height: '100%',
+                textAlign: 'center',
+                fontSize: '44px',
+                fontWeight: '800',
+                color: '#0F172A',
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                fontFamily: 'Poppins, sans-serif',
+                WebkitAppearance: 'none',
+                MozAppearance: 'textfield' as any,
+              }}
+            />
+          </div>
+          {(question as any).range && (
+            <p className="text-xs" style={{ color: '#9CA3AF' }}>
+              Entre {(question as any).range.min} et {(question as any).range.max}
+            </p>
+          )}
+        </div>
       )}
 
       {question.kind === "ordering" && (
