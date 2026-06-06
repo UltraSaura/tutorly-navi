@@ -19,6 +19,8 @@ interface QuestionCardProps {
   onFinish?: (correct: boolean, tries: number) => void;
   onSkip?: () => void;
   allowRetry?: boolean;
+  submittedAnswer?: any;
+  isCorrect?: boolean;
 }
 
 const choiceVariants = {
@@ -195,31 +197,39 @@ function renderChoiceLabel(label: string) {
   if (frac) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-        <span style={{
-          fontSize: '22px', fontWeight: '800', color: '#0F172A',
-          borderBottom: '2.5px solid #0F172A',
-          paddingBottom: '3px', lineHeight: '1', display: 'block',
-          fontFamily: 'Poppins, sans-serif',
-          minWidth: '20px', textAlign: 'center',
-        }}>
+        <span style={{ fontSize: '22px', fontWeight: '800', color: 'inherit', borderBottom: '2.5px solid currentColor', paddingBottom: '3px', lineHeight: '1', display: 'block', minWidth: '20px', textAlign: 'center' }}>
           {frac[1]}
         </span>
-        <span style={{
-          fontSize: '22px', fontWeight: '800', color: '#0F172A',
-          lineHeight: '1', display: 'block',
-          fontFamily: 'Poppins, sans-serif',
-          minWidth: '20px', textAlign: 'center',
-        }}>
+        <span style={{ fontSize: '22px', fontWeight: '800', color: 'inherit', lineHeight: '1', display: 'block', minWidth: '20px', textAlign: 'center' }}>
           {frac[2]}
         </span>
       </div>
     );
   }
-  return (
-    <span style={{ fontSize: '15px', fontWeight: '700', color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
-      {label}
-    </span>
-  );
+  return <span style={{ fontSize: '15px', fontWeight: '600', fontFamily: 'Poppins, sans-serif', color: 'inherit' }}>{label}</span>;
+}
+
+function choiceState(
+  c: { id: string; correct?: boolean },
+  currentValue: any,
+  submittedAnswer: any,
+  isMulti: boolean,
+) {
+  const isSubmitted = submittedAnswer !== undefined;
+  const wasSelected = isMulti
+    ? Array.isArray(submittedAnswer) && submittedAnswer.includes(c.id)
+    : submittedAnswer === c.id;
+  const isSelected = isMulti
+    ? Array.isArray(currentValue) && currentValue.includes(c.id)
+    : currentValue === c.id;
+
+  if (!isSubmitted) {
+    return { border: isSelected ? '#12C6A0' : '#EAECEF', bg: isSelected ? '#F2FBF8' : 'white', color: '#0F172A', opacity: 1, shake: false };
+  }
+  if (wasSelected) {
+    return { border: '#F7C1C1', bg: '#FCEBEB', color: '#C0121A', opacity: 1, shake: true };
+  }
+  return { border: '#EAECEF', bg: 'white', color: '#9CA3AF', opacity: 0.45, shake: false };
 }
 
 function getPieSegmentsSignature(segments: VisualPie["segments"]) {
@@ -233,7 +243,9 @@ export function QuestionCard({
   onChange,
   onFinish,
   onSkip,
-  allowRetry = false
+  allowRetry = false,
+  submittedAnswer,
+  isCorrect: isCorrectProp
 }: QuestionCardProps) {
   const initialValue = useMemo(() => {
     if (question.kind === "multi") return [];
@@ -336,123 +348,99 @@ export function QuestionCard({
       <h3 className="text-lg font-semibold mb-3">{question.prompt}</h3>
 
       {question.kind === "single" && (
-        <div className={question.choices.length === 4 ? "mt-4 grid grid-cols-2 gap-3" : "mt-4 space-y-2"}>
+        <div className={question.choices.length === 4 ? "grid grid-cols-2 gap-3 mt-4" : "space-y-2 mt-3"}>
           {question.choices.map((c, idx) => {
-            const letter = ["A", "B", "C", "D"][idx] ?? String(idx + 1);
-            const isSelected = value === c.id;
+            const letter = ['A', 'B', 'C', 'D'][idx] ?? String(idx + 1);
+            const cs = choiceState(c, value, submittedAnswer, false);
             return (
-              <button
+              <motion.button
                 key={c.id}
                 type="button"
-                onClick={() => setVal(c.id)}
-                className="w-full rounded-2xl text-left transition-all"
+                onClick={() => { if (submittedAnswer === undefined) setVal(c.id); }}
+                animate={cs.shake ? { x: [0, -10, 10, -7, 7, -4, 4, 0] } : { x: 0 }}
+                transition={{ duration: 0.4 }}
+                className="w-full rounded-2xl transition-all"
                 style={{
-                  background: isSelected ? "#F2FBF8" : "white",
-                  border: `1.5px solid ${isSelected ? "#12C6A0" : "#EAECEF"}`,
-                  padding: question.choices.length === 4 ? "14px 12px" : "12px 14px",
-                  cursor: "pointer",
+                  background: cs.bg,
+                  border: `1.5px solid ${cs.border}`,
+                  opacity: cs.opacity,
+                  color: cs.color,
+                  padding: question.choices.length === 4 ? '14px 12px' : '12px 14px',
+                  cursor: submittedAnswer !== undefined ? 'default' : 'pointer',
+                  textAlign: 'left',
                 }}
               >
                 {question.choices.length === 4 ? (
                   <div className="flex flex-col items-center gap-2">
-                    <span
-                      className="self-start text-xs font-semibold"
-                      style={{ color: isSelected ? "#085041" : "#9CA3AF" }}
-                    >
-                      {letter}
-                    </span>
+                    <span className="self-start text-xs font-semibold" style={{ opacity: 0.55 }}>{letter}</span>
                     {renderChoiceLabel(c.label)}
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
                     <span
                       className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                      style={{
-                        background: isSelected ? "#12C6A0" : "#F3F6FA",
-                        color: isSelected ? "#0F172A" : "#667085",
-                      }}
+                      style={{ background: value === c.id ? '#12C6A0' : '#F3F6FA', color: value === c.id ? '#0F172A' : '#667085' }}
                     >
                       {letter}
                     </span>
-                    <span
-                      className="text-sm font-medium"
-                      style={{ color: "#0F172A", fontFamily: "Poppins, sans-serif" }}
-                    >
-                      {c.label}
-                    </span>
+                    {renderChoiceLabel(c.label)}
                   </div>
                 )}
-              </button>
+              </motion.button>
             );
           })}
-          <AnimatePresence>
-            {submitted && (
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.15 }}
-                className={cn(
-                  "mt-3 flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium",
-                  isCorrect
-                    ? "bg-green-50 text-green-800 border border-green-200"
-                    : "bg-red-50 text-red-800 border border-red-200"
-                )}
-              >
-                <span className="text-base">{isCorrect ? "✓" : "✗"}</span>
-                {isCorrect ? "Bonne réponse !" : (question.hint && tries > 0 ? `Indice : ${question.hint}` : "Pas tout à fait…")}
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       )}
 
       {question.kind === "multi" && (
-        <div className="space-y-2">
-          {question.choices.map((c, i) => {
+        <div className={question.choices.length === 4 ? "grid grid-cols-2 gap-3 mt-4" : "space-y-2 mt-3"}>
+          {question.choices.map((c, idx) => {
+            const letter = ['A', 'B', 'C', 'D'][idx] ?? String(idx + 1);
             const checked = Array.isArray(value) && value.includes(c.id);
+            const cs = choiceState(c, value, submittedAnswer, true);
             return (
               <motion.button
                 key={c.id}
+                type="button"
                 onClick={() => {
+                  if (submittedAnswer !== undefined) return;
                   const next = checked
-                    ? value.filter((x: string) => x !== c.id)
-                    : [...value, c.id];
+                    ? (Array.isArray(value) ? value.filter((x: string) => x !== c.id) : [])
+                    : [...(Array.isArray(value) ? value : []), c.id];
                   setVal(next);
                 }}
-                className="w-full text-left px-3 py-2 rounded-xl border"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.07, type: "spring", stiffness: 220, damping: 20 }}
-                whileTap={{ scale: 0.97 }}
+                animate={cs.shake ? { x: [0, -10, 10, -7, 7, -4, 4, 0] } : { x: 0 }}
+                transition={{ duration: 0.4 }}
+                className="w-full rounded-2xl transition-all"
                 style={{
-                  backgroundColor: checked ? "hsl(var(--primary) / 0.1)" : "transparent",
-                  borderColor: checked ? "hsl(var(--primary))" : "rgb(212 212 212)",
+                  background: cs.bg,
+                  border: `1.5px solid ${cs.border}`,
+                  opacity: cs.opacity,
+                  color: cs.color,
+                  padding: question.choices.length === 4 ? '14px 12px' : '12px 14px',
+                  cursor: submittedAnswer !== undefined ? 'default' : 'pointer',
+                  textAlign: 'left',
                 }}
               >
-                {c.label}
+                {question.choices.length === 4 ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <span className="self-start text-xs font-semibold" style={{ opacity: 0.55 }}>{letter}</span>
+                    {renderChoiceLabel(c.label)}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                      style={{ background: checked ? '#12C6A0' : '#F3F6FA', color: checked ? '#0F172A' : '#667085' }}
+                    >
+                      {letter}
+                    </span>
+                    {renderChoiceLabel(c.label)}
+                  </div>
+                )}
               </motion.button>
             );
           })}
-          <AnimatePresence>
-            {submitted && (
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.15 }}
-                className={cn(
-                  "mt-3 flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium",
-                  isCorrect
-                    ? "bg-green-50 text-green-800 border border-green-200"
-                    : "bg-red-50 text-red-800 border border-red-200"
-                )}
-              >
-                <span className="text-base">{isCorrect ? "✓" : "✗"}</span>
-                {isCorrect ? "Bonne réponse !" : (question.hint && tries > 0 ? `Indice : ${question.hint}` : "Pas tout à fait…")}
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       )}
 

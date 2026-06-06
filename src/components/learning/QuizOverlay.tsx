@@ -334,6 +334,17 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
     });
   }, [answers, bank, currentQuestion, language, teaching, userContext?.learning_style, userContext?.student_level, userId]);
 
+  const handleRetry = useCallback(() => {
+    setQuestionSubmitted(false);
+    setQuestionResult(null);
+    setShowXpPill(false);
+    setAnswers(prev => {
+      const next = { ...prev };
+      if (currentQuestion) delete next[currentQuestion.id];
+      return next;
+    });
+  }, [currentQuestion]);
+
   const handleNext = async () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(i => i + 1);
@@ -533,6 +544,8 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
                 <QuestionCard
                   question={currentQuestion}
                   onChange={val => onAnswer(currentQuestion.id, val)}
+                  submittedAnswer={questionSubmitted ? answers[currentQuestion.id] : undefined}
+                  isCorrect={questionSubmitted ? (questionResult ?? undefined) : undefined}
                 />
               </motion.div>
             </AnimatePresence>
@@ -567,7 +580,7 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
           >
             <div
               className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
-              style={{ background: questionResult ? '#12C6A0' : '#F59E0B' }}
+              style={{ background: questionResult ? '#12C6A0' : '#EF4444' }}
             >
               {questionResult
                 ? <Check className="h-5 w-5" style={{ color: '#0F172A' }} />
@@ -596,13 +609,32 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
                 +10 XP
               </span>
             )}
-            <button
-              onClick={handleNext}
-              className="flex-shrink-0 rounded-xl px-4 py-2 text-sm font-bold"
-              style={{ background: '#12C6A0', border: 'none', color: '#0F172A', fontFamily: 'Poppins, sans-serif', cursor: 'pointer' }}
-            >
-              {currentIndex < questions.length - 1 ? 'Suivant' : 'Résultats'}
-            </button>
+            {questionResult ? (
+              <button
+                onClick={handleNext}
+                className="flex-shrink-0 rounded-xl px-4 py-2 text-sm font-bold"
+                style={{ background: '#12C6A0', border: 'none', color: '#0F172A', fontFamily: 'Poppins, sans-serif', cursor: 'pointer' }}
+              >
+                {currentIndex < questions.length - 1 ? 'Suivant' : 'Résultats'}
+              </button>
+            ) : (
+              <div className="flex flex-shrink-0 gap-2">
+                <button
+                  onClick={handleRetry}
+                  className="rounded-xl px-3 py-2 text-sm font-bold"
+                  style={{ background: 'white', border: '1.5px solid #EAECEF', color: '#0F172A', fontFamily: 'Poppins, sans-serif', cursor: 'pointer' }}
+                >
+                  Réessayer
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="rounded-xl px-4 py-2 text-sm font-bold"
+                  style={{ background: '#12C6A0', border: 'none', color: '#0F172A', fontFamily: 'Poppins, sans-serif', cursor: 'pointer' }}
+                >
+                  {currentIndex < questions.length - 1 ? 'Suivant' : 'Résultats'}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
