@@ -28,14 +28,28 @@ export function usePracticeTopics(
   const query = useQuery({
     queryKey: ['practice-topics', subjectSlug, levelCode, countryCode],
     queryFn: async (): Promise<PracticeDomainGroup[]> => {
-      // Query topics directly by subject slug - bypasses the subjects/categories
-      // join chain which fails for curriculum subjects stored as fallback cards.
+      // Step 1 - resolve subject UUID from URL slug.
+      // topics store curriculum_subject_id as the subject UUID, not the slug.
+      const { data: subjectData, error: subjectError } = await supabase
+        .from('subjects')
+        .select('id')
+        .eq('slug', subjectSlug)
+        .maybeSingle();
+
+      if (subjectError) throw subjectError;
+
+      if (!subjectData) {
+        console.warn('[usePracticeTopics] no subject row for slug:', subjectSlug);
+        return [];
+      }
+
+      // Step 2 - fetch topics using the UUID stored in curriculum_subject_id.
       const { data: topics, error: topicsError } = await supabase
         .from('topics')
         .select('id, name, order_index, curriculum_domain_id')
         .eq('curriculum_level_code', levelCode)
-        .eq('curriculum_subject_id', subjectSlug)
-        .or(`curriculum_country_code.eq.${countryCode},curriculum_country_code.is.null`)
+        .eq('curriculum_subject_id', subjectData.id)
+        .eq('curriculum_country_code', countryCode)
         .or('is_active.eq.true,is_active.is.null')
         .order('order_index', { ascending: true });
 
@@ -44,14 +58,10 @@ export function usePracticeTopics(
       const topicRows: TopicRow[] = topics || [];
 
       if (topicRows.length === 0) {
-        console.warn(
-          '[usePracticeTopics] no topics found for subject:', subjectSlug,
-          'level:', levelCode,
-        );
+        console.warn('[usePracticeTopics] no topics - subject UUID:', subjectData.id, 'level:', levelCode);
         return [];
       }
 
-      // Build domain groups from results.
       const uniqueDomainIds = Array.from(
         new Set(
           topicRows
