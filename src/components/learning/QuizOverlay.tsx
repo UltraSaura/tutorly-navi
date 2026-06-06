@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, ChevronRight, HelpCircle } from 'lucide-react';
+import { X, ChevronRight, HelpCircle, Trophy, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import type { Choice, Question, QuizBank } from '@/types/quiz-bank';
@@ -388,86 +388,99 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
   if (submitted) {
     const g = gradeQuiz(questions, answers);
     const pct = g.maxScore ? Math.round((100 * g.score) / g.maxScore) : 0;
+    const xpEarned = g.score * 10;
+    const isMastered = pct >= 80;
 
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 260, damping: 24 }}
-          className="w-full max-w-2xl"
+      <div
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 py-8 text-center"
+        style={{ background: '#F3F6FA' }}
+      >
+        <div
+          className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl"
+          style={{ background: '#F2FBF8', border: '1.5px solid #12C6A0' }}
         >
-          <Card className="max-h-[90vh] overflow-y-auto p-6 space-y-4">
-            <div className="flex justify-between items-center">
-              <motion.h2
-                className="text-xl font-semibold"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                {bank.title}
-              </motion.h2>
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
+          <Trophy className="h-10 w-10" style={{ color: '#12C6A0' }} />
+        </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-            >
-              <p className="text-lg">Score: {g.score} / {g.maxScore} ({pct}%)</p>
-              <div className="w-full h-3 bg-neutral-200 rounded-full mt-2 overflow-hidden">
-                <motion.div
-                  className="h-3 bg-primary rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${pct}%` }}
-                  transition={{ type: "spring", stiffness: 60, damping: 18, delay: 0.3 }}
-                />
-              </div>
-            </motion.div>
+        <h2
+          className="mb-1 text-2xl font-bold"
+          style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}
+        >
+          {pct >= 80 ? 'Bonne séance !' : pct >= 50 ? 'Pas mal !' : "Continue d'essayer !"}
+        </h2>
+        <p className="mb-6 text-sm" style={{ color: '#667085' }}>{bank.title}</p>
 
-            <div className="space-y-3">
-              {g.details.map((d, i) => {
-                const q = questions.find(q => q.id === d.questionId);
-                return (
-                  <motion.div
-                    key={d.questionId}
-                    initial={{ opacity: 0, x: -16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + i * 0.07, type: "spring", stiffness: 200, damping: 22 }}
-                    className={cn(
-                      "rounded-2xl border p-3",
-                      d.correct
-                        ? "border-green-500 bg-green-50 dark:bg-green-950/20"
-                        : "border-red-500 bg-red-50 dark:bg-red-950/20"
-                    )}
-                  >
-                    <p className="font-medium">{q?.prompt ?? "Question"}</p>
-                    <p className={d.correct ? "text-green-600" : "text-red-600"}>
-                      {d.correct ? "✓ Correct" : "✗ Incorrect"}
-                    </p>
-                  </motion.div>
-                );
-              })}
-            </div>
+        <div className="mb-5 grid w-full max-w-xs grid-cols-3 gap-3">
+          <div
+            className="rounded-xl p-3 text-center"
+            style={{ background: '#F2FBF8', border: '0.5px solid #9FE1CB' }}
+          >
+            <p className="text-xl font-bold" style={{ color: '#085041', fontFamily: 'Poppins, sans-serif' }}>
+              {g.score}/{g.maxScore}
+            </p>
+            <p className="text-xs" style={{ color: '#0F6E56' }}>Reponses</p>
+          </div>
+          <div
+            className="rounded-xl p-3 text-center"
+            style={{ background: '#FAEEDA', border: '0.5px solid #FAC775' }}
+          >
+            <p className="text-xl font-bold" style={{ color: '#633806', fontFamily: 'Poppins, sans-serif' }}>
+              +{xpEarned}
+            </p>
+            <p className="text-xs" style={{ color: '#854F0B' }}>XP gagne</p>
+          </div>
+          <div
+            className="rounded-xl p-3 text-center"
+            style={{ background: '#FAEEDA', border: '0.5px solid #FAC775' }}
+          >
+            <p className="text-xl font-bold" style={{ color: '#633806', fontFamily: 'Poppins, sans-serif' }}>
+              {pct}%
+            </p>
+            <p className="text-xs" style={{ color: '#854F0B' }}>Score</p>
+          </div>
+        </div>
 
-            <motion.div
-              className="flex gap-3"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 + g.details.length * 0.07 }}
-            >
-              <Button variant="outline" onClick={handleRetest} className="flex-1">
-                Retest
-              </Button>
-              <Button onClick={onClose} className="flex-1">
-                Fermer
-              </Button>
-            </motion.div>
-          </Card>
-        </motion.div>
+        {isMastered && (
+          <div
+            className="mb-6 flex w-full max-w-xs items-center gap-2 rounded-xl px-4 py-3"
+            style={{ background: '#F2FBF8', border: '0.5px solid #9FE1CB' }}
+          >
+            <Zap className="h-4 w-4 flex-shrink-0" style={{ color: '#0A8C72' }} />
+            <p className="text-left text-sm" style={{ color: '#085041' }}>
+              <span className="font-semibold">Notion maitrisee : </span>{bank.title}
+            </p>
+          </div>
+        )}
+
+        <div className="flex w-full max-w-xs gap-3">
+          <button
+            onClick={handleRetest}
+            className="flex-1 rounded-xl py-3 text-sm font-semibold"
+            style={{
+              border: '1.5px solid #EAECEF',
+              background: 'white',
+              color: '#0F172A',
+              fontFamily: 'Poppins, sans-serif',
+              cursor: 'pointer',
+            }}
+          >
+            Refaire
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-[2] rounded-xl py-3 text-sm font-bold"
+            style={{
+              background: '#12C6A0',
+              border: 'none',
+              color: '#0F172A',
+              fontFamily: 'Poppins, sans-serif',
+              cursor: 'pointer',
+            }}
+          >
+            Continuer
+          </button>
+        </div>
       </div>
     );
   }
@@ -475,7 +488,7 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
   // Step-by-step question flow
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-4">
+      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-3">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">{bank.title}</h2>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close quiz">
@@ -557,29 +570,85 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
           </div>
         ) : null}
 
-        {/* Action buttons */}
-        <div className="flex justify-end gap-3">
-          {!questionSubmitted ? (
-            <Button
-              onClick={handleQuestionSubmit}
-              disabled={questions.length === 0}
-              className="px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black"
+        {!questionSubmitted ? (
+          <button
+            onClick={handleQuestionSubmit}
+            disabled={questions.length === 0}
+            className="mt-4 w-full rounded-xl py-3 text-sm font-bold"
+            style={{
+              background: questions.length === 0 ? '#EAECEF' : '#12C6A0',
+              color: questions.length === 0 ? '#B4B2A9' : '#0F172A',
+              border: 'none',
+              fontFamily: 'Poppins, sans-serif',
+              cursor: questions.length === 0 ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Valider
+          </button>
+        ) : (
+          <div
+            className="mt-4 flex items-center gap-3 rounded-xl px-4 py-3"
+            style={{
+              background: questionResult ? '#EAF3DE' : '#FEF3C7',
+              border: `1px solid ${questionResult ? '#9FE1CB' : '#FCD34D'}`,
+            }}
+          >
+            <div
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
+              style={{ background: questionResult ? '#12C6A0' : '#F59E0B' }}
             >
-              Soumettre
-            </Button>
-          ) : (
-            <Button
-              onClick={handleNext}
-              className="px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black gap-1"
-            >
-              {currentIndex < questions.length - 1 ? (
-                <>Suivant <ChevronRight className="w-4 h-4" /></>
-              ) : (
-                "Voir le résultat"
+              {questionResult
+                ? <Check className="h-5 w-5" style={{ color: '#0F172A' }} />
+                : <X className="h-5 w-5" style={{ color: '#0F172A' }} />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p
+                className="text-sm font-bold"
+                style={{ color: questionResult ? '#27500A' : '#633806', fontFamily: 'Poppins, sans-serif' }}
+              >
+                {questionResult ? 'Exacte !' : 'Pas cette fois...'}
+              </p>
+              {questionResult === false && (
+                <button
+                  type="button"
+                  onClick={handleShowExplanation}
+                  disabled={teaching.loading}
+                  className="text-xs underline"
+                  style={{
+                    color: '#854F0B',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                >
+                  {teaching.loading ? 'Préparation...' : "Voir l'explication"}
+                </button>
               )}
-            </Button>
-          )}
-        </div>
+            </div>
+            {questionResult && (
+              <span
+                className="rounded-full px-2 py-1 text-xs font-bold"
+                style={{ background: '#FAC775', color: '#633806' }}
+              >
+                +10 XP
+              </span>
+            )}
+            <button
+              onClick={handleNext}
+              className="flex-shrink-0 rounded-xl px-4 py-2 text-sm font-bold"
+              style={{
+                background: '#12C6A0',
+                border: 'none',
+                color: '#0F172A',
+                fontFamily: 'Poppins, sans-serif',
+                cursor: 'pointer',
+              }}
+            >
+              {currentIndex < questions.length - 1 ? 'Suivant' : 'Résultats'}
+            </button>
+          </div>
+        )}
       </Card>
 
       <ExplanationModal
