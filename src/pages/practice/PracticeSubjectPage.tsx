@@ -1,7 +1,20 @@
 import { useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Check, Play, Sparkles } from 'lucide-react';
+import {
+  ArrowLeft,
+  BarChart2,
+  BookOpen,
+  Calculator,
+  Check,
+  ChevronRight,
+  Play,
+  Ruler,
+  Sparkles,
+  Star,
+  Target,
+  Triangle,
+} from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +50,22 @@ type DomainTopicGroup = {
 
 const NO_ACTIVE_LEVEL = '__no_active_level__';
 const EXAM_PREP_LEVELS = new Set(['3eme', '3e', 'troisieme', '4eme', '2nde', '1ere', 'terminale', 'bac']);
+const DOMAIN_CONFIGS = [
+  { bg: '#E2F7F1', iconBg: '#9FE1CB', iconColor: '#085041', Icon: Calculator },
+  { bg: '#E8EEFF', iconBg: '#BEC9FC', iconColor: '#3346B0', Icon: Triangle },
+  { bg: '#FFF3DC', iconBg: '#FDE4A6', iconColor: '#B45309', Icon: Ruler },
+  { bg: '#EDE9FD', iconBg: '#CECBF6', iconColor: '#3C3489', Icon: BookOpen },
+  { bg: '#FDE8F2', iconBg: '#F9C3DE', iconColor: '#C0157A', Icon: BarChart2 },
+] as const;
+
+function getDomainConfig(domainLabel: string, index: number) {
+  const l = domainLabel.toLowerCase();
+  if (l.includes('nombre') || l.includes('calcul')) return DOMAIN_CONFIGS[0];
+  if (l.includes('geomet') || l.includes('géomét') || l.includes('espace')) return DOMAIN_CONFIGS[1];
+  if (l.includes('grandeur') || l.includes('mesure')) return DOMAIN_CONFIGS[2];
+  if (l.includes('organi') || l.includes('données') || l.includes('donnees')) return DOMAIN_CONFIGS[3];
+  return DOMAIN_CONFIGS[index % DOMAIN_CONFIGS.length];
+}
 
 function normalizeSchoolLevel(level?: string | null): string | null {
   if (!level) return null;
@@ -269,11 +298,21 @@ export default function PracticeSubjectPage() {
   const masteredTopics = flatTopics.filter(({ topic }) => topicMastery[topic.id]?.state === 'mastered').length;
   const masteryPercent = totalTopics > 0 ? Math.round((masteredTopics / totalTopics) * 100) : 0;
 
-  const continueTopic = useMemo(() => {
-    return flatTopics
-      .map(({ topic }) => ({ topic, summary: topicMastery[topic.id] }))
-      .find(({ summary }) => summary?.state === 'in_progress') ?? null;
-  }, [flatTopics, topicMastery]);
+  const recommendedTopic = useMemo(() => {
+    const withExercises = flatTopics
+      .map(({ topic }) => ({
+        topic,
+        summary: topicMastery[topic.id],
+        bankId: topicBankMap.get(topic.id),
+      }))
+      .filter(({ bankId }) => Boolean(bankId));
+
+    return (
+      withExercises.find(({ summary }) => summary?.state === 'in_progress') ??
+      withExercises.find(({ summary }) => !summary || summary.state === 'not_started') ??
+      null
+    );
+  }, [flatTopics, topicMastery, topicBankMap]);
   const showTopicActionSkeletons = masteryQuery.isLoading || bankAssignmentsQuery.isLoading;
 
   const matchedSubject = learningSubjects.find((entry) => entry.subject.slug === subjectSlug);
@@ -340,90 +379,194 @@ export default function PracticeSubjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen pb-24" style={{ background: '#F3F6FA' }}>
       <PageMeta title={pageTitle} description="" />
       {user && <QuizOverlayController />}
-      <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 sm:px-6">
-        <section className="space-y-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-2">
-              <h1 className="text-2xl font-bold tracking-tight">{subjectLabel}</h1>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary">
-                  {activeSchoolLevel.activeLevel ?? activeSchoolLevel.normalizedLevel ?? '—'}
-                </Badge>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" className="shrink-0" onClick={() => navigate('/practice')}>
-              Retour
-            </Button>
+      <div className="border-b border-border bg-white px-4 py-3 sm:px-6">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
+              {subjectLabel}
+            </h1>
+            <span
+              className="mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold"
+              style={{ background: '#F2FBF8', color: '#0A8C72' }}
+            >
+              {activeSchoolLevel.activeLevel ?? activeSchoolLevel.normalizedLevel ?? '—'}
+            </span>
           </div>
-
-          {totalTopics > 0 && (
-            <div className="space-y-2">
-              <div className="h-1.5 overflow-hidden rounded-full bg-primary/20">
-                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${masteryPercent}%` }} />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {masteredTopics} sujet{masteredTopics > 1 ? 's' : ''} maîtrisé{masteredTopics > 1 ? 's' : ''} · {Math.max(totalTopics - masteredTopics, 0)} restant{Math.max(totalTopics - masteredTopics, 0) > 1 ? 's' : ''}
-              </p>
-            </div>
-          )}
-        </section>
-
-        {firstSubjectQuizBank && (
-          <Card className="border-border/70">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Quiz disponibles</CardTitle>
-              <p className="text-sm text-muted-foreground">{firstSubjectQuizBank.title}</p>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <Button
-                onClick={() => {
-                  setSearchParams((current) => {
-                    const next = new URLSearchParams(current);
-                    next.set('quiz', firstSubjectQuizBank.id);
-                    return next;
-                  });
-                }}
-              >
-                <Sparkles className="mr-1.5 h-4 w-4" />
-                Commencer le quiz
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {continueTopic && topicBankMap.get(continueTopic.topic.id) && (
           <button
-            type="button"
-            onClick={() => {
-              const bankId = topicBankMap.get(continueTopic.topic.id);
-              navigate(
-                bankId
-                  ? `/practice/${encodeURIComponent(subjectSlug)}/topics?quiz=${encodeURIComponent(bankId)}`
-                  : `/practice/${encodeURIComponent(subjectSlug)}/topics`,
-              );
-            }}
-            className="flex w-full items-center justify-between rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-left"
+            onClick={() => navigate('/practice')}
+            className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm"
+            style={{ borderColor: '#EAECEF', color: '#667085' }}
           >
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Reprendre</p>
-              <p className="text-sm font-semibold text-primary">
-                {continueTopic.topic.topicLabel} - {continueTopic.summary?.remainingObjectives ?? 0} notion{(continueTopic.summary?.remainingObjectives ?? 0) > 1 ? 's' : ''} restante{(continueTopic.summary?.remainingObjectives ?? 0) > 1 ? 's' : ''}
-              </p>
-            </div>
-            <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Retour
           </button>
+        </div>
+      </div>
+
+      <div className="mx-auto w-full max-w-3xl space-y-5 px-4 py-5 sm:px-6">
+        {totalTopics > 0 && (
+          <div>
+            <div className="mb-1.5 flex justify-between text-xs" style={{ color: '#667085' }}>
+              <span>{masteredTopics} sujet{masteredTopics !== 1 ? 's' : ''} maîtrisé{masteredTopics !== 1 ? 's' : ''}</span>
+              <span>{Math.max(totalTopics - masteredTopics, 0)} restant{Math.max(totalTopics - masteredTopics, 0) !== 1 ? 's' : ''}</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full" style={{ background: '#EAECEF' }}>
+              <div className="h-full rounded-full transition-all" style={{ width: `${masteryPercent}%`, background: '#12C6A0' }} />
+            </div>
+          </div>
         )}
+
+        {recommendedTopic && (
+          <div className="rounded-2xl border-2 p-4" style={{ background: '#F2FBF8', borderColor: '#12C6A0' }}>
+            <div
+              className="mb-3 inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1"
+              style={{ borderColor: '#12C6A0' }}
+            >
+              <Star className="h-3 w-3" style={{ color: '#12C6A0' }} />
+              <span className="text-xs font-semibold" style={{ color: '#12C6A0' }}>Recommandé pour toi</span>
+            </div>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <p className="mb-1 text-xl font-bold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
+                  {recommendedTopic.topic.topicLabel}
+                </p>
+                <p className="mb-4 text-xs" style={{ color: '#667085' }}>
+                  {recommendedTopic.summary?.totalObjectives ?? 0} notion{(recommendedTopic.summary?.totalObjectives ?? 0) !== 1 ? 's' : ''} · {activeSchoolLevel.activeLevel ?? activeSchoolLevel.normalizedLevel ?? '—'}
+                </p>
+                <button
+                  onClick={() => navigate(`/practice/${encodeURIComponent(subjectSlug)}/topics?quiz=${encodeURIComponent(recommendedTopic.bankId!)}`)}
+                  className="rounded-xl px-5 py-2.5 text-sm font-bold"
+                  style={{ background: '#12C6A0', color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}
+                >
+                  {recommendedTopic.summary?.state === 'in_progress' ? 'Continuer' : 'Commencer'}
+                </button>
+              </div>
+              <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white">
+                <img src="/practice-mascot.png" alt="Mascotte" className="h-full w-full object-cover" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!recommendedTopic && firstSubjectQuizBank && (
+          <div className="rounded-2xl border-2 p-4" style={{ background: '#F2FBF8', borderColor: '#12C6A0' }}>
+            <p className="mb-1 text-xl font-bold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
+              {firstSubjectQuizBank.title}
+            </p>
+            <p className="mb-4 text-xs" style={{ color: '#667085' }}>
+              Quiz disponible pour cette matière
+            </p>
+            <button
+              onClick={() => {
+                setSearchParams((current) => {
+                  const next = new URLSearchParams(current);
+                  next.set('quiz', firstSubjectQuizBank.id);
+                  return next;
+                });
+              }}
+              className="rounded-xl px-5 py-2.5 text-sm font-bold"
+              style={{ background: '#12C6A0', color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}
+            >
+              Commencer le quiz
+            </button>
+          </div>
+        )}
+
+        {enrichedDomains.length > 0 && (
+          <div>
+            <h2 className="mb-3 text-sm font-bold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
+              Par compétence
+            </h2>
+            <div className="space-y-3">
+              {enrichedDomains.map((domain, idx) => {
+                const config = getDomainConfig(domain.domainLabel, idx);
+                const { Icon } = config;
+                const domainTotalExercises = domain.topics.length;
+                const domainMastered = domain.topics.filter((t) => topicMastery[t.id]?.state === 'mastered').length;
+                const domainPercent = domainTotalExercises > 0
+                  ? Math.round((domainMastered / domainTotalExercises) * 100)
+                  : 0;
+                const firstBankId = domain.topics
+                  .map((t) => topicBankMap.get(t.id))
+                  .find(Boolean);
+                const isClickable = Boolean(firstBankId);
+
+                return (
+                  <button
+                    key={domain.domainId}
+                    type="button"
+                    disabled={!isClickable}
+                    onClick={() => {
+                      if (firstBankId) {
+                        navigate(`/practice/${encodeURIComponent(subjectSlug)}/topics?quiz=${encodeURIComponent(firstBankId)}`);
+                      }
+                    }}
+                    className="flex w-full items-center gap-3 rounded-2xl border bg-white p-3 text-left transition-opacity disabled:opacity-50"
+                    style={{ borderColor: '#EAECEF' }}
+                  >
+                    <div
+                      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+                      style={{ background: config.iconBg }}
+                    >
+                      <Icon className="h-5 w-5" style={{ color: config.iconColor }} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
+                        {domain.domainLabel}
+                      </p>
+                      <p className="mb-1.5 text-xs" style={{ color: '#667085' }}>
+                        {domainTotalExercises} exercice{domainTotalExercises !== 1 ? 's' : ''}
+                      </p>
+                      <div className="h-1 overflow-hidden rounded-full" style={{ background: '#EAECEF' }}>
+                        <div className="h-full rounded-full" style={{ width: `${domainPercent}%`, background: config.iconColor }} />
+                      </div>
+                    </div>
+                    <span className="flex-shrink-0 text-xs font-bold" style={{ color: config.iconColor }}>
+                      {domainPercent}%
+                    </span>
+                    <ChevronRight className="h-4 w-4 flex-shrink-0" style={{ color: '#EAECEF' }} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="rounded-2xl border p-4" style={{ background: '#FFF8EE', borderColor: '#F59E0B' }}>
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl" style={{ background: '#FDE4A6' }}>
+              <Target className="h-6 w-6" style={{ color: '#B45309' }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
+                Défi du jour
+              </p>
+              <p className="text-xs" style={{ color: '#667085' }}>
+                Résous 5 exercices et gagne 50 XP !
+              </p>
+              <div className="mt-1.5 flex items-center gap-2">
+                <span className="text-xs font-bold" style={{ color: '#B45309' }}>0/5</span>
+                <div className="h-1 flex-1 overflow-hidden rounded-full" style={{ background: '#EAECEF' }}>
+                  <div className="h-full rounded-full" style={{ width: '0%', background: '#F59E0B' }} />
+                </div>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 flex-shrink-0" style={{ color: '#F59E0B' }} />
+          </div>
+        </div>
 
         {showExamSection && (
-          <Card className="border-border/70">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Préparer l'examen</CardTitle>
-              <p className="text-sm text-muted-foreground">Épreuves chronométrées alignées sur le programme</p>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2 pt-0">
+          <div className="rounded-2xl border bg-white p-4" style={{ borderColor: '#EAECEF' }}>
+            <p className="mb-1 text-sm font-bold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
+              Préparer l&apos;examen
+            </p>
+            <p className="mb-3 text-xs" style={{ color: '#667085' }}>
+              Épreuves chronométrées alignées sur le programme
+            </p>
+            <div className="flex flex-wrap gap-2">
               {hasTrainingItems && (
                 <Button onClick={() => navigate(`/practice/session?subject=${encodeURIComponent(examDisciplines[0] ?? subjectSlug)}&level=${encodeURIComponent(activeLevel)}&mode=mixed`)}>
                   Exercices interactifs
@@ -434,104 +577,9 @@ export default function PracticeSubjectPage() {
                   Voir les annales
                 </Button>
               )}
-            </CardContent>
-          </Card>
-        )}
-
-        <section className="space-y-5">
-          {enrichedDomains.map((domain) => (
-            <div key={domain.domainId} className="space-y-2">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {domain.domainLabel}
-                </h2>
-                <span className="text-xs text-muted-foreground">
-                  {domain.masteredTopics}/{domain.topics.length}
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                {domain.topics.map((topic) => {
-                  const availableBankId = topicBankMap.get(topic.id) ?? null;
-                  const hasExercises = availableBankId !== null;
-                  const summary = topicMastery[topic.id] || {
-                    topicId: topic.id,
-                    totalObjectives: 0,
-                    masteredObjectives: 0,
-                    inProgressObjectives: 0,
-                    remainingObjectives: 0,
-                    state: 'not_started' as TopicState,
-                  };
-
-                  let description = hasExercises
-                    ? `${summary.totalObjectives} notion${summary.totalObjectives > 1 ? 's' : ''} · Exercices disponibles`
-                    : 'Exercices en cours de préparation';
-                  let titleClassName = 'text-sm font-medium';
-                  let buttonClassName = '';
-                  let buttonLabel = 'Pratiquer';
-                  let cardClassName = `rounded-xl border border-border bg-background p-3${hasExercises ? '' : ' opacity-60'}`;
-                  let buttonVariant: 'default' | 'outline' = hasExercises ? 'default' : 'outline';
-                  let buttonDisabled = !hasExercises;
-
-                  if (summary.state === 'mastered') {
-                    description = `Maîtrisé · ${summary.masteredObjectives}/${summary.totalObjectives} notions`;
-                    titleClassName = 'text-sm font-medium text-muted-foreground';
-                    buttonClassName = '';
-                    buttonLabel = hasExercises ? 'Refaire' : 'Bientôt';
-                    buttonVariant = 'outline';
-                  } else if (summary.state === 'in_progress') {
-                    description = `En cours · ${summary.remainingObjectives} notion${summary.remainingObjectives > 1 ? 's' : ''} restante${summary.remainingObjectives > 1 ? 's' : ''}`;
-                    titleClassName = 'text-sm font-medium text-primary';
-                    buttonLabel = hasExercises ? 'Continuer' : 'Bientôt';
-                    cardClassName = `rounded-xl border-2 bg-primary/5 p-3${hasExercises ? ' border-primary/30' : ' border-border opacity-60'}`;
-                  }
-
-                  return (
-                    <div key={topic.id} className={cardClassName}>
-                      <div className="flex items-center gap-3">
-                        <TopicStateIcon state={summary.state} />
-                        <div className="min-w-0 flex-1">
-                          <p className={titleClassName}>{topic.topicLabel}</p>
-                          <p
-                            className={
-                              summary.state === 'mastered'
-                                ? 'text-xs text-emerald-700 dark:text-emerald-400'
-                                : summary.state === 'in_progress'
-                                  ? 'text-xs text-primary'
-                                : 'text-xs text-muted-foreground'
-                            }
-                          >
-                            {description}
-                          </p>
-                        </div>
-                        {showTopicActionSkeletons ? (
-                          <Skeleton className="h-8 w-24 rounded-full" />
-                        ) : !hasExercises ? (
-                          <span className="rounded-full border border-border px-2 py-1 text-xs text-muted-foreground">
-                            À venir
-                          </span>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant={buttonVariant}
-                            className={buttonVariant === 'outline' ? 'rounded-full px-3 py-1 text-xs' : `rounded-full px-3 py-1 text-xs ${buttonClassName}`}
-                            onClick={() => {
-                              if (!availableBankId) return;
-                              navigate(`/practice/${encodeURIComponent(subjectSlug)}/topics?quiz=${encodeURIComponent(availableBankId)}`);
-                            }}
-                          >
-                            {buttonVariant === 'default' ? <Sparkles className="mr-1.5 h-3.5 w-3.5" /> : null}
-                            {buttonLabel}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
-          ))}
-        </section>
+          </div>
+        )}
       </div>
     </div>
   );
