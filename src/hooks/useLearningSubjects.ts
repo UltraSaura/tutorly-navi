@@ -142,7 +142,7 @@ export function usePracticeSubjectButtons() {
   return useQuery({
     queryKey: ['practice-subject-buttons'],
     queryFn: async (): Promise<Subject[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('subjects')
         .select('*')
         .eq('is_active', true)
