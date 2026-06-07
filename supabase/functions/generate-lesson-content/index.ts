@@ -137,9 +137,6 @@ Description: ${topic.description || 'N/A'}
 Learning Objectives:
 ${objectives.map((obj, i) => `${i + 1}. ${obj.text}`).join('\n') || 'None specified'}
 
-Success Criteria:
-${objectives.flatMap(obj => obj.success_criteria || []).map((sc, i) => `${i + 1}. ${sc.text}`).join('\n') || 'None specified'}
-
 Create a comprehensive lesson with:
 
 1. EXPLANATION (200-300 words):
