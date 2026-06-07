@@ -17,7 +17,7 @@ export function useLearningSubjects() {
       const { data: { user } } = await supabase.auth.getUser();
       
       // Get active subjects filtered by curriculum if profile exists
-      let subjectsQuery = supabase
+      let subjectsQuery: any = (supabase as any)
         .from('subjects')
         .select(`
           *,
