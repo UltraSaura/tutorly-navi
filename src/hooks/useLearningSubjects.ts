@@ -10,104 +10,61 @@ export function useLearningSubjects() {
   const { profile } = useUserCurriculumProfile();
   const effectiveCountryCode = profile?.countryCode ?? (activeSchoolLevel.isPreviewing ? 'fr' : undefined);
   const effectiveLevelCode = activeSchoolLevel.normalizedLevel ?? profile?.levelCode;
-  
+
   return useQuery({
     queryKey: ['learning-subjects', activeSchoolLevel.activeLevel, effectiveCountryCode, effectiveLevelCode],
     queryFn: async (): Promise<SubjectProgress[]> => {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      // Get active subjects filtered by curriculum if profile exists
-      let subjectsQuery: any = (supabase as any)
+
+      // Step 1: all active subjects — no !inner join, no display_context restriction
+      const { data: subjects, error: subjectsError } = await supabase
         .from('subjects')
-        .select(`
-          *,
-          learning_categories!inner (
-            id,
-            topics!inner (
-              id,
-              curriculum_country_code,
-              curriculum_level_code
-            )
-          )
-        `)
+        .select('*')
         .eq('is_active', true)
-        .in('display_context', ['learn', 'practice', 'both']);
+        .order('order_index');
 
-      // Add curriculum filters if profile exists
-      if (effectiveCountryCode && effectiveLevelCode) {
-        subjectsQuery = subjectsQuery
-          .eq('learning_categories.topics.curriculum_country_code', effectiveCountryCode)
-          .eq('learning_categories.topics.curriculum_level_code', effectiveLevelCode);
-      }
-
-      const { data: subjects, error: subjectsError } = await subjectsQuery.order('order_index');
-      
       if (subjectsError) throw subjectsError;
       if (!subjects) return [];
-      
-      // For each subject, count videos and filter by user level
+
+      // Step 2: for each subject count lessons + videos via curriculum_subject_id
       const subjectsWithProgress = await Promise.all(
         subjects.map(async (subject) => {
-          // Get categories for this subject
-          const { data: categories } = await supabase
-            .from('learning_categories')
-            .select('id')
-            .eq('subject_id', subject.id)
-            .eq('is_active', true);
-          
-          if (!categories || categories.length === 0) {
-            return {
-              subject: subject as Subject,
-              videos_ready: 0,
-              videos_completed: 0,
-              progress_percentage: 0,
-            };
-          }
-          
-          // Get topics (including lesson_content status)
-          const { data: topics } = await supabase
+          // Topics via curriculum_subject_id — same approach that works in S'exercer
+          const { data: allTopics } = await supabase
             .from('topics')
-            .select('id, lesson_content')
-            .in('category_id', categories.map(c => c.id))
+            .select('id, lesson_content, curriculum_country_code, curriculum_level_code')
+            .eq('curriculum_subject_id', subject.id)
             .eq('is_active', true);
 
-          const lessons_ready = (topics ?? []).filter(t => t.lesson_content !== null).length;
-          
-          if (!topics || topics.length === 0) {
-            return {
-              subject: subject as Subject,
-              videos_ready: 0,
-              videos_completed: 0,
-              progress_percentage: 0,
-            };
+          // Client-side curriculum filter (permissive: null = universal)
+          const topics = (allTopics ?? []).filter(t => {
+            if (effectiveCountryCode && t.curriculum_country_code && t.curriculum_country_code !== effectiveCountryCode) return false;
+            if (effectiveLevelCode && t.curriculum_level_code && t.curriculum_level_code !== effectiveLevelCode) return false;
+            return true;
+          });
+
+          const lessons_ready = topics.filter(t => t.lesson_content !== null).length;
+
+          if (topics.length === 0) {
+            return { subject: subject as Subject, videos_ready: 0, videos_completed: 0, progress_percentage: 0 };
           }
-          
-          // Get all videos for these topics
+
+          // Count videos
           const { data: allVideos } = await supabase
             .from('videos')
             .select('*')
             .in('topic_id', topics.map(t => t.id))
             .eq('is_active', true);
-          
-          if (!allVideos) {
-            return {
-              subject: subject as Subject,
-              videos_ready: 0,
-              videos_completed: 0,
-              progress_percentage: 0,
-            };
-          }
-          
-          // Filter videos by user's age/level
+
           const suitableVideos = filterContentByUserLevel(
-            allVideos as any,
+            (allVideos ?? []) as any,
             activeSchoolLevel.activeLevel,
             activeSchoolLevel.age
           );
-          
-          const videos_ready = suitableVideos.length + lessons_ready;
-          
-          // Count completed videos if user is logged in
+
+          const videos_ready = suitableVideos.length;
+          const content_ready = videos_ready + lessons_ready;
+
           let videos_completed = 0;
           if (user && videos_ready > 0) {
             const videoIds = suitableVideos.map((v: any) => v.id);
@@ -117,26 +74,27 @@ export function useLearningSubjects() {
               .eq('user_id', user.id)
               .eq('progress_type', 'video_completed')
               .in('video_id', videoIds);
-            
+
             videos_completed = count || 0;
           }
-          
-          const progress_percentage = videos_ready > 0 
+
+          const progress_percentage = videos_ready > 0
             ? Math.round((videos_completed / videos_ready) * 100)
             : 0;
-          
+
           return {
             subject: subject as Subject,
-            videos_ready,
+            videos_ready: content_ready,
             videos_completed,
             progress_percentage,
           };
         })
       );
-      
-      return subjectsWithProgress;
+
+      // Only return subjects that have actual content
+      return subjectsWithProgress.filter(s => s.videos_ready > 0);
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
