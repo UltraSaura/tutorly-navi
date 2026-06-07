@@ -31,7 +31,7 @@ export function useLearningSubjects() {
           )
         `)
         .eq('is_active', true)
-        .in('display_context', ['learn', 'both']);
+        .in('display_context', ['learn', 'practice', 'both']);
 
       // Add curriculum filters if profile exists
       if (effectiveCountryCode && effectiveLevelCode) {
@@ -64,12 +64,14 @@ export function useLearningSubjects() {
             };
           }
           
-          // Get topics
+          // Get topics (including lesson_content status)
           const { data: topics } = await supabase
             .from('topics')
-            .select('id')
+            .select('id, lesson_content')
             .in('category_id', categories.map(c => c.id))
             .eq('is_active', true);
+
+          const lessons_ready = (topics ?? []).filter(t => t.lesson_content !== null).length;
           
           if (!topics || topics.length === 0) {
             return {
@@ -103,7 +105,7 @@ export function useLearningSubjects() {
             activeSchoolLevel.age
           );
           
-          const videos_ready = suitableVideos.length;
+          const videos_ready = suitableVideos.length + lessons_ready;
           
           // Count completed videos if user is logged in
           let videos_completed = 0;
