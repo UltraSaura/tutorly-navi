@@ -618,8 +618,8 @@ export function QuestionCard({
                 layoutId={it}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 draggable
-                onDragStart={(event) => {
-                  event.dataTransfer.setData("text/plain", it);
+                onDragStart={(event: any) => {
+                  event.dataTransfer?.setData("text/plain", it);
                   setDraggedOrderingItem(it);
                 }}
                 onDragEnd={() => setDraggedOrderingItem(null)}
