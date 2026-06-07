@@ -125,8 +125,8 @@ export function FillExprQuestionView({ question, value, onChange }: Props) {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 20 }}
               whileTap={{ scale: 0.9 }}
-              onDragStart={(event) => {
-                event.dataTransfer.setData("text/plain", chip);
+              onDragStart={(event: any) => {
+                event.dataTransfer?.setData("text/plain", chip);
                 setDraggedChip(chip);
               }}
               onDragEnd={() => setDraggedChip(null)}
