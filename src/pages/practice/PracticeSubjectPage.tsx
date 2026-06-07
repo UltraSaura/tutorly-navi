@@ -153,7 +153,7 @@ export default function PracticeSubjectPage() {
     queryFn: async (): Promise<{ id: string; title: string; school_levels: string[] | null }[]> => {
       if (!subjectQuery.data?.id) return [];
 
-      const { data, error: banksError } = await supabase
+      const { data, error: banksError } = await (supabase as any)
         .from('quiz_banks')
         .select('id, title, school_levels')
         .eq('subject_id', subjectQuery.data.id)
@@ -161,7 +161,7 @@ export default function PracticeSubjectPage() {
         .limit(50);
 
       if (banksError) throw banksError;
-      return (data ?? []).filter((bank) => bankMatchesLevel(bank.school_levels, activeLevel));
+      return ((data ?? []) as any[]).filter((bank) => bankMatchesLevel(bank.school_levels, activeLevel));
     },
     enabled: Boolean(subjectQuery.data?.id && activeLevel),
   });
