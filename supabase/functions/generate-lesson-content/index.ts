@@ -7,10 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Supported models by the AI runtime
 const SUPPORTED_MODELS = ['gpt-5', 'gpt-4.1', 'deepseek-chat', 'claude-3-5-sonnet-20241022'];
 
-// Map database model IDs to AI runtime model IDs
 function normalizeModelId(modelId: string): string {
   const modelMap: Record<string, string> = {
     'gpt-5-2025-08-07': 'gpt-5',
@@ -25,25 +23,14 @@ function normalizeModelId(modelId: string): string {
     'google/gemini-2.5-flash': 'gpt-5',
     'google/gemini-2.5-pro': 'gpt-5',
   };
-  
   return modelMap[modelId] || modelId;
 }
 
-// Validate and resolve model to a supported one
 function resolveModel(modelId: string | undefined): string {
-  if (!modelId) {
-    console.log('[resolveModel] No model provided, using gpt-5');
-    return 'gpt-5';
-  }
-  
+  if (!modelId) return 'gpt-5';
   const normalized = normalizeModelId(modelId);
-  
-  if (SUPPORTED_MODELS.includes(normalized)) {
-    console.log(`[resolveModel] Using model: ${normalized}${normalized !== modelId ? ` (normalized from ${modelId})` : ''}`);
-    return normalized;
-  }
-  
-  console.warn(`[resolveModel] Model "${modelId}" (normalized: "${normalized}") is not supported. Falling back to gpt-5`);
+  if (SUPPORTED_MODELS.includes(normalized)) return normalized;
+  console.warn(`[resolveModel] Model "${modelId}" not supported, falling back to gpt-5`);
   return 'gpt-5';
 }
 
@@ -75,7 +62,6 @@ serve(async (req) => {
       );
     }
 
-    // Check admin or teacher role
     const { data: roles } = await supabase
       .from('user_roles')
       .select('role')
@@ -89,33 +75,7 @@ serve(async (req) => {
       );
     }
 
-    const { topicId, modelId: requestModelId } = await req.json();
-
-    // Query the default model from database
-    let adminSelectedModel = 'deepseek-chat';
-    try {
-      const { data: modelConfig, error: modelError } = await supabase
-        .rpc('get_model_with_fallback')
-        .single();
-
-      const config = modelConfig as { default_model_id?: string } | null;
-      if (!modelError && config?.default_model_id) {
-        adminSelectedModel = config.default_model_id;
-        console.log('[generate-lesson-content] Admin-configured model:', adminSelectedModel);
-      }
-    } catch (err) {
-      console.warn('[generate-lesson-content] Error fetching model config:', err);
-    }
-
-    // Use provided modelId or fall back to admin-configured default
-    const rawModelId = requestModelId || adminSelectedModel;
-    const modelId = resolveModel(rawModelId);
-
-    console.log('[generate-lesson-content] Model selection:', {
-      requested: requestModelId,
-      adminDefault: adminSelectedModel,
-      resolved: modelId
-    });
+    const { topicId, modelId: requestModelId, language = 'fr' } = await req.json();
 
     if (!topicId) {
       return new Response(
@@ -124,25 +84,29 @@ serve(async (req) => {
       );
     }
 
-    console.log('[generate-lesson-content] Starting for topic:', topicId);
+    let adminSelectedModel = 'deepseek-chat';
+    try {
+      const { data: modelConfig, error: modelError } = await supabase
+        .rpc('get_model_with_fallback')
+        .single();
+      const config = modelConfig as { default_model_id?: string } | null;
+      if (!modelError && config?.default_model_id) {
+        adminSelectedModel = config.default_model_id;
+      }
+    } catch (err) {
+      console.warn('[generate-lesson-content] Error fetching model config:', err);
+    }
 
-    // Fetch topic with curriculum info
+    const modelId = resolveModel(requestModelId || adminSelectedModel);
+    console.log('[generate-lesson-content] Starting for topic:', topicId, '| model:', modelId, '| language:', language);
+
     const { data: topic, error: topicError } = await supabase
       .from('topics')
       .select(`
-        id,
-        name,
-        description,
-        curriculum_country_code,
-        curriculum_level_code,
-        curriculum_subject_id,
-        curriculum_domain_id,
-        curriculum_subdomain_id,
-        learning_categories (
-          subjects (
-            name
-          )
-        )
+        id, name, description,
+        curriculum_country_code, curriculum_level_code,
+        curriculum_subject_id, curriculum_domain_id, curriculum_subdomain_id,
+        learning_categories ( subjects ( name ) )
       `)
       .eq('id', topicId)
       .single();
@@ -151,170 +115,127 @@ serve(async (req) => {
       throw new Error(`Topic not found: ${topicError?.message}`);
     }
 
-    // Fetch linked objectives with success criteria
     const { data: topicObjectives, error: objError } = await supabase
       .from('topic_objective_links')
       .select(`
         objective_id,
         objectives (
-          id,
-          text,
-          success_criteria (
-            id,
-            text
-          )
+          id, text,
+          success_criteria ( id, text )
         )
       `)
       .eq('topic_id', topicId)
       .order('order_index');
 
-    if (objError) throw objError;
+    if (objError) throw new Error(`Failed to fetch objectives: ${objError.message ?? JSON.stringify(objError)}`);
 
     const objectives = (topicObjectives?.map(to => to.objectives).filter(Boolean).flat() || []) as Array<{
       id: string;
       text: string;
       success_criteria?: Array<{ id: string; text: string }>;
     }>;
-    const successCriteriaIds = objectives.flatMap(obj => 
+    const successCriteriaIds = objectives.flatMap(obj =>
       obj.success_criteria?.map(sc => sc.id) || []
     );
 
-    // Fetch tasks for these success criteria
-    const { data: tasks } = await supabase
-      .from('tasks')
-      .select('*')
-      .in('success_criterion_id', successCriteriaIds);
+    // Guard empty array — .in('col', []) generates invalid SQL in PostgREST
+    const tasksQuery = successCriteriaIds.length > 0
+      ? await supabase.from('tasks').select('*').in('success_criterion_id', successCriteriaIds)
+      : { data: [] as any[], error: null };
+    const tasks = tasksQuery.data ?? [];
 
-    const practiceTasks = tasks?.filter(t => t.type === 'practice') || [];
-    const exitTasks = tasks?.filter(t => t.type === 'exit') || [];
+    const practiceTasks = tasks.filter(t => t.type === 'practice');
+    const exitTasks = tasks.filter(t => t.type === 'exit');
 
-    console.log('[generate-lesson-content] Fetched data:', {
-      objectives: objectives.length,
-      tasks: tasks?.length || 0,
-      practice: practiceTasks.length,
-      exit: exitTasks.length,
-    });
-
-    // Generate AI content
     const categories = topic.learning_categories as { subjects?: { name: string } } | null;
     const subjectName = categories?.subjects?.name || 'General';
-    
-    const prompt = `You are an expert educator creating lesson content for students.
+    const langLabel = language === 'fr' ? 'French' : 'English';
+
+    const prompt = `You are an expert educator creating lesson content for ${langLabel}-speaking students. Write the entire response in ${langLabel}.
 
 Topic: ${topic.name}
 Subject: ${subjectName}
 Description: ${topic.description || 'N/A'}
 
 Learning Objectives:
-${objectives.map((obj, i) => `${i + 1}. ${obj.text}`).join('\n')}
+${objectives.map((obj, i) => `${i + 1}. ${obj.text}`).join('\n') || 'None specified'}
 
 Success Criteria:
-${objectives.flatMap(obj => obj.success_criteria || []).map((sc, i) => `${i + 1}. ${sc.text}`).join('\n')}
+${objectives.flatMap(obj => obj.success_criteria || []).map((sc, i) => `${i + 1}. ${sc.text}`).join('\n') || 'None specified'}
 
 Create a comprehensive lesson with:
 
 1. EXPLANATION (200-300 words):
-   - Student-friendly explanation of the concept
+   - Student-friendly explanation of the concept in ${langLabel}
    - Connect to real-world examples
    - Build on prior knowledge
    - Use clear, simple language appropriate for the level
 
 2. WORKED EXAMPLE:
-   - One complete, step-by-step worked example
+   - One complete, step-by-step worked example in ${langLabel}
    - Show all reasoning and calculations
    - Highlight key decision points
-   - Format as a clear narrative
 
 3. COMMON MISTAKES (3-5 items):
    - List 3-5 common errors students make with this concept
    - Explain WHY each mistake happens
    - Brief tip on how to avoid each one
 
-Return your response as JSON:
+Return ONLY valid JSON, no markdown fences:
 {
   "explanation": "...",
   "example": "...",
   "common_mistakes": ["...", "...", "..."]
 }`;
 
-    console.log('[generate-lesson-content] Calling AI with model:', modelId);
-
-    // Call AI service with increased token limit for lesson content
     const aiResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/ai-chat`, {
       method: 'POST',
-      headers: {
-        'Authorization': authHeader,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message: prompt,
         modelId: modelId,
         history: [],
-        language: 'en',
-        maxTokens: 3000,  // Increased from default 800 to allow full lesson content
-        userContext: {
-          response_language: 'English',
-          format: 'json'
-        }
+        language: language,
+        maxTokens: 3000,
+        userContext: { response_language: langLabel, format: 'json' }
       }),
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('[generate-lesson-content] AI call failed:', errorText);
       throw new Error(`AI generation failed: ${errorText}`);
     }
 
     const aiData = await aiResponse.json();
-    console.log('[generate-lesson-content] AI response received');
 
     let generatedContent;
     try {
       const rawContent = aiData.content || aiData.data?.content || aiData;
 
-      // Helper: strip leading/trailing markdown fences even if the closing fence is missing
       const stripFences = (s: string) => {
         let out = s.trim();
         out = out.replace(/^```(?:json)?\s*/i, '');
         out = out.replace(/```\s*$/i, '');
-        // Also remove any trailing fence that might appear later
         out = out.replace(/```/g, '');
         return out.trim();
       };
 
-      let jsonStr = '';
-
       if (typeof rawContent === 'string') {
         const cleaned = stripFences(rawContent);
-
-        // Prefer extracting between braces (more robust than relying on ``` fences)
         const firstBrace = cleaned.indexOf('{');
         const lastBrace = cleaned.lastIndexOf('}');
-
-        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-          jsonStr = cleaned.substring(firstBrace, lastBrace + 1);
-          console.log('[generate-lesson-content] Extracted JSON between braces');
-        } else {
-          // Fall back to using cleaned content as-is
-          jsonStr = cleaned;
-          console.log('[generate-lesson-content] Using cleaned content');
-        }
-
+        const jsonStr = firstBrace !== -1 && lastBrace > firstBrace
+          ? cleaned.substring(firstBrace, lastBrace + 1)
+          : cleaned;
         generatedContent = JSON.parse(jsonStr);
       } else {
-        // Content is already an object
         generatedContent = rawContent;
       }
-
-      console.log('[generate-lesson-content] Successfully parsed AI response');
-
     } catch (parseError) {
       console.error('[generate-lesson-content] Failed to parse AI response:', parseError);
-      console.error('[generate-lesson-content] Raw AI data:', JSON.stringify(aiData, null, 2));
       throw new Error('AI returned invalid JSON format');
     }
 
-    // Select tasks
     const selectedPractice = practiceTasks
       .sort(() => 0.5 - Math.random())
       .slice(0, Math.min(5, practiceTasks.length))
@@ -325,7 +246,6 @@ Return your response as JSON:
       .slice(0, Math.min(2, exitTasks.length))
       .map(t => t.id);
 
-    // Assemble final lesson_content
     const lessonContent = {
       explanation: generatedContent.explanation,
       example: generatedContent.example,
@@ -334,46 +254,31 @@ Return your response as JSON:
       exit_ticket: selectedExit,
       generated_at: new Date().toISOString(),
       generated_by_model: modelId,
+      language: language,
     };
 
-    console.log('[generate-lesson-content] Assembled lesson content');
-
-    // Save to database
     const { error: updateError } = await supabase
       .from('topics')
       .update({ lesson_content: lessonContent })
       .eq('id', topicId);
 
     if (updateError) {
-      console.error('[generate-lesson-content] Database update failed:', updateError);
-      throw updateError;
+      throw new Error(`Failed to save lesson: ${updateError.message ?? JSON.stringify(updateError)}`);
     }
 
-    console.log('[generate-lesson-content] Successfully saved to database');
-
     return new Response(
-      JSON.stringify({
-        success: true,
-        lesson_content: lessonContent,
-        topic_id: topicId,
-      }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      JSON.stringify({ success: true, lesson_content: lessonContent, topic_id: topicId }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('[generate-lesson-content] Error:', error);
+    const errorMessage = error instanceof Error
+      ? error.message
+      : (error as any)?.message ?? JSON.stringify(error) ?? 'Unknown error';
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Unknown error',
-        details: error instanceof Error ? error.stack : undefined,
-      }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      JSON.stringify({ error: errorMessage, details: error instanceof Error ? error.stack : JSON.stringify(error) }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
