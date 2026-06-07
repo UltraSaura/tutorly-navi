@@ -115,34 +115,11 @@ serve(async (req) => {
       throw new Error(`Topic not found: ${topicError?.message}`);
     }
 
-    const { data: topicObjectives, error: objError } = await supabase
-      .from('topic_objective_links')
-      .select(`
-        objective_id,
-        objectives (
-          id, text,
-          success_criteria ( id, text )
-        )
-      `)
-      .eq('topic_id', topicId)
-      .order('order_index');
+    const objectives: Array<{ text: string }> = [];
+    const successCriteriaTexts: string[] = [];
+    const successCriteriaIds: string[] = [];
 
-    if (objError) throw new Error(`Failed to fetch objectives: ${objError.message ?? JSON.stringify(objError)}`);
-
-    const objectives = (topicObjectives?.map(to => to.objectives).filter(Boolean).flat() || []) as Array<{
-      id: string;
-      text: string;
-      success_criteria?: Array<{ id: string; text: string }>;
-    }>;
-    const successCriteriaIds = objectives.flatMap(obj =>
-      obj.success_criteria?.map(sc => sc.id) || []
-    );
-
-    // Guard empty array — .in('col', []) generates invalid SQL in PostgREST
-    const tasksQuery = successCriteriaIds.length > 0
-      ? await supabase.from('tasks').select('*').in('success_criterion_id', successCriteriaIds)
-      : { data: [] as any[], error: null };
-    const tasks = tasksQuery.data ?? [];
+    const tasks: any[] = [];
 
     const practiceTasks = tasks.filter(t => t.type === 'practice');
     const exitTasks = tasks.filter(t => t.type === 'exit');
@@ -159,9 +136,6 @@ Description: ${topic.description || 'N/A'}
 
 Learning Objectives:
 ${objectives.map((obj, i) => `${i + 1}. ${obj.text}`).join('\n') || 'None specified'}
-
-Success Criteria:
-${objectives.flatMap(obj => obj.success_criteria || []).map((sc, i) => `${i + 1}. ${sc.text}`).join('\n') || 'None specified'}
 
 Create a comprehensive lesson with:
 
