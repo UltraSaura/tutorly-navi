@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useMemo } from 'react';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { useGuardianExerciseHistory } from '@/hooks/useGuardianExerciseHistory';
+import { useGuardianLessonData } from '@/hooks/useGuardianLessonData';
 import { useGuardianProgress } from '@/hooks/useGuardianProgress';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +15,9 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { SubjectMasteryCard } from '@/components/user/SubjectMasteryCard';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { LearningInsightsCard } from '@/components/learning/LearningInsightsCard';
+import { BookOpen, Clock } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface ChildDetailsUser {
   first_name?: string | null;
@@ -114,6 +118,9 @@ export default function ChildDashboard() {
 
   // Fetch progress data for subjects
   const { data: progressData } = useGuardianProgress(guardianId, childId);
+  const childUserIds = child?.user_id ? [child.user_id] : [];
+  const { getChildStats } = useGuardianLessonData(guardianId, childUserIds);
+  const lessonStats = child?.user_id ? getChildStats(child.user_id) : undefined;
 
   if (authLoading || childLoading || historyLoading || quizLoading) {
     return (
@@ -173,6 +180,88 @@ export default function ChildDashboard() {
       />
 
       <LearningInsightsCard studentId={child.user_id} />
+
+      {lessonStats && lessonStats.lessonsCompleted > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <div className="rounded-lg p-2" style={{ background: '#F2FBF8' }}>
+                <BookOpen className="h-4 w-4" style={{ color: '#12C6A0' }} />
+              </div>
+              Leçons
+              <div className="ml-auto flex items-center gap-4 text-sm font-normal text-muted-foreground">
+                {lessonStats.currentStreak > 0 && (
+                  <span>🔥 {lessonStats.currentStreak} jours de suite</span>
+                )}
+                <span style={{ color: '#12C6A0', fontWeight: 700 }}>
+                  {lessonStats.totalXp} XP
+                </span>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4 grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold" style={{ color: '#0F172A' }}>
+                  {lessonStats.lessonsCompleted}
+                </p>
+                <p className="text-xs text-muted-foreground">Total leçons</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold" style={{ color: '#0F172A' }}>
+                  {lessonStats.lessonsThisWeek}
+                </p>
+                <p className="text-xs text-muted-foreground">Cette semaine</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold" style={{ color: lessonStats.currentStreak > 0 ? '#B45309' : '#9CA3AF' }}>
+                  {lessonStats.currentStreak > 0 ? `🔥 ${lessonStats.currentStreak}j` : '—'}
+                </p>
+                <p className="text-xs text-muted-foreground">Série actuelle</p>
+              </div>
+            </div>
+
+            {lessonStats.recentLessons.length > 0 && (
+              <div className="space-y-2">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Dernières leçons
+                </p>
+                {lessonStats.recentLessons.map((lesson, i) => {
+                  const minutes = Math.max(1, Math.round(lesson.timeSpentSeconds / 60));
+                  const timeAgo = formatDistanceToNow(new Date(lesson.completedAt), {
+                    addSuffix: true,
+                    locale: fr,
+                  });
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 rounded-lg p-3"
+                      style={{ background: '#F3F6FA' }}
+                    >
+                      <div
+                        className="rounded-lg p-2 flex-shrink-0"
+                        style={{ background: '#F2FBF8', border: '0.5px solid #9FE1CB' }}
+                      >
+                        <BookOpen className="h-3.5 w-3.5" style={{ color: '#12C6A0' }} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {lesson.topicName}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{timeAgo}</p>
+                      </div>
+                      <div className="flex flex-shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {minutes} min
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {progressData?.[0]?.subjects && progressData[0].subjects.length > 0 && (
         <div className="space-y-2">
