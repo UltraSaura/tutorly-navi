@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button';
 import { BookOpen } from 'lucide-react';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
+import { CompactStreakChip } from '@/components/game';
+import { useStudentStats } from '@/hooks/useStudentStats';
+import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { toast } from 'sonner';
 import { PageMeta } from '@/components/seo/PageMeta';
 
@@ -25,6 +28,7 @@ const LearningPage = () => {
   const { profile } = useUserCurriculumProfile();
   const activeSchoolLevel = useActiveSchoolLevel();
   const { data: subjects, isLoading } = useLearningSubjects();
+  const { data: stats } = useStudentStats();
 
   if (isLoading) {
     return <div className="min-h-screen bg-gray-50 dark:bg-background pb-20">
@@ -38,25 +42,9 @@ const LearningPage = () => {
       </div>;
   }
 
-  // Check if user has curriculum profile
+  // Check if user has curriculum profile — show onboarding wizard instead of dead-end card
   if ((!profile?.countryCode || !profile?.levelCode) && !activeSchoolLevel.isPreviewing) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center p-6">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle>{t('learning.setupRequired')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              {t('learning.setupMessage')}
-            </p>
-            <Button onClick={() => navigate('/profile')}>
-              {t('learning.goToProfile')}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <OnboardingWizard />;
   }
 
   // Check if no subjects available
@@ -86,7 +74,11 @@ const LearningPage = () => {
           <h1 className="font-extrabold text-white text-xl">
             {t('learning.chooseSubject') || 'Choose Your Subject'}
           </h1>
-          
+          <CompactStreakChip
+            days={stats?.currentStreak ?? 0}
+            active={Boolean(stats && (stats.activeToday || stats.streakAtRisk))}
+            className="bg-white/15 text-white"
+          />
         </div>
         
       </header>
