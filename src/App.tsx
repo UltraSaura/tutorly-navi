@@ -35,6 +35,7 @@ const GeneralChatPage = lazy(() => import("./pages/GeneralChatPage"));
 const LearningPage = lazy(() => import("./pages/learning/LearningPage"));
 const SubjectDashboardPage = lazy(() => import("./pages/learning/SubjectDashboardPage"));
 const CoursePlaylistPage = lazy(() => import("./pages/learning/CoursePlaylistPage"));
+const LessonPage = lazy(() => import("./pages/learning/LessonPage"));
 const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
 const MyProgramPage = lazy(() => import("./pages/learning/MyProgramPage"));
 const PracticePage = lazy(() => import("./pages/practice/PracticePage"));
@@ -195,7 +196,7 @@ const App = () => {
                         <Route path="/learning" element={<MainLayout />}>
                           <Route index element={<LearningPage />} />
                           <Route path=":subjectSlug" element={<SubjectDashboardPage />} />
-                          <Route path=":subjectSlug/:topicSlug" element={<CoursePlaylistPage />} />
+                          <Route path=":subjectSlug/:topicSlug" element={<LessonPage />} />
                         </Route>
                         <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
                         <Route path="/practice" element={<MainLayout />}>
