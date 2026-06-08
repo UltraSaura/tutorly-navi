@@ -34,6 +34,59 @@ function resolveModel(modelId: string | undefined): string {
   return 'gpt-5';
 }
 
+const CURRICULUM_MAP: Record<string, Record<string, string>> = {
+  fr: {
+    CP: "Programme Education Nationale francaise - Cycle 2, CP (6-7 ans)",
+    CE1: "Programme Education Nationale francaise - Cycle 2, CE1 (7-8 ans)",
+    CE2: "Programme Education Nationale francaise - Cycle 2, CE2 (8-9 ans)",
+    CM1: "Programme Education Nationale francaise - Cycle 3, CM1 (9-10 ans)",
+    CM2: "Programme Education Nationale francaise - Cycle 3, CM2 (10-11 ans)",
+    "6EME": "Programme Education Nationale francaise - Cycle 3, 6eme (11-12 ans)",
+    "5EME": "Programme Education Nationale francaise - College, 5eme (12-13 ans)",
+    "4EME": "Programme Education Nationale francaise - College, 4eme (13-14 ans)",
+  },
+  be: {
+    P3: "Programme enseignement fondamental belge - 3eme primaire (8-9 ans)",
+    P4: "Programme enseignement fondamental belge - 4eme primaire (9-10 ans)",
+    P5: "Programme enseignement fondamental belge - 5eme primaire (10-11 ans)",
+    P6: "Programme enseignement fondamental belge - 6eme primaire (11-12 ans)",
+  },
+  ch: {
+    CM1: "Plan d'etudes romand (PER) - 5eme HarmoS (9-10 ans)",
+    CM2: "Plan d'etudes romand (PER) - 6eme HarmoS (10-11 ans)",
+  },
+};
+
+const AGE_MAP: Record<string, string> = {
+  CP: "6-7 ans",
+  CE1: "7-8 ans",
+  CE2: "8-9 ans",
+  CM1: "9-10 ans",
+  CM2: "10-11 ans",
+  "6EME": "11-12 ans",
+  "5EME": "12-13 ans",
+  "4EME": "13-14 ans",
+};
+
+const WORD_BUDGET_MAP: Record<string, string> = {
+  CP: "25-35",
+  CE1: "30-40",
+  CE2: "35-45",
+  CM1: "40-60",
+  CM2: "50-70",
+  "6EME": "60-80",
+  "5EME": "70-90",
+  "4EME": "80-100",
+};
+
+function substituteVariables(template: string, vars: Record<string, string>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(vars)) {
+    result = result.replaceAll(`{{${key}}}`, value);
+  }
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -75,7 +128,7 @@ serve(async (req) => {
       );
     }
 
-    const { topicId, modelId: requestModelId, language = 'fr' } = await req.json();
+    const { topicId, modelId: requestModelId, language: requestLanguage } = await req.json();
 
     if (!topicId) {
       return new Response(
@@ -98,6 +151,7 @@ serve(async (req) => {
     }
 
     const modelId = resolveModel(requestModelId || adminSelectedModel);
+    const language = requestLanguage === 'fr' ? 'fr' : 'en';
     console.log('[generate-lesson-content] Starting for topic:', topicId, '| model:', modelId, '| language:', language);
 
     const { data: topic, error: topicError } = await supabase
@@ -126,41 +180,96 @@ serve(async (req) => {
 
     const categories = topic.learning_categories as { subjects?: { name: string } } | null;
     const subjectName = categories?.subjects?.name || 'General';
-    const langLabel = language === 'fr' ? 'French' : 'English';
 
-    const prompt = `You are an expert educator creating lesson content for ${langLabel}-speaking students. Write the entire response in ${langLabel}.
+    const rawLevel = String(topic.curriculum_level_code ?? 'CM1').toUpperCase();
+    const rawCountry = String(topic.curriculum_country_code ?? 'fr').toLowerCase();
+    const responseLang = language === 'fr' ? 'francais' : 'English';
+    const countryLabel = rawCountry === 'fr'
+      ? 'France'
+      : rawCountry === 'be'
+        ? 'Belgique'
+        : rawCountry === 'ch'
+          ? 'Suisse'
+          : rawCountry;
 
-Topic: ${topic.name}
-Subject: ${subjectName}
-Description: ${topic.description || 'N/A'}
+    const curriculumKey = rawLevel in (CURRICULUM_MAP[rawCountry] ?? {})
+      ? rawLevel
+      : Object.keys(CURRICULUM_MAP[rawCountry] ?? {}).find((key) => key.toUpperCase() === rawLevel) ?? rawLevel;
+    const curriculum = CURRICULUM_MAP[rawCountry]?.[curriculumKey] ?? `Niveau ${rawLevel} - ${countryLabel}`;
+    const ageGroup = AGE_MAP[rawLevel] ?? '9-10 ans';
+    const wordBudget = WORD_BUDGET_MAP[rawLevel] ?? '40-60';
 
-Learning Objectives:
-${objectives.map((obj, i) => `${i + 1}. ${obj.text}`).join('\n') || 'None specified'}
+    const promptVariables: Record<string, string> = {
+      curriculum,
+      grade_level: rawLevel,
+      age_group: ageGroup,
+      word_budget: wordBudget,
+      country: countryLabel,
+      response_language: responseLang,
+      learning_style: 'visual',
+      subject: subjectName,
+      topic_name: topic.name,
+      topic_description: topic.description ?? '',
+      learning_objectives: objectives.map((objective) => objective.text).join(', ') || 'Non precises',
+    };
 
-Create a comprehensive lesson with:
+    console.log('[generate-lesson-content] Curriculum context:', {
+      curriculum,
+      grade_level: rawLevel,
+      age_group: ageGroup,
+      word_budget: wordBudget,
+      language,
+    });
 
-1. EXPLANATION (200-300 words):
-   - Student-friendly explanation of the concept in ${langLabel}
-   - Connect to real-world examples
-   - Build on prior knowledge
-   - Use clear, simple language appropriate for the level
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
 
-2. WORKED EXAMPLE:
-   - One complete, step-by-step worked example in ${langLabel}
-   - Show all reasoning and calculations
-   - Highlight key decision points
+    let promptTemplate: string | null = null;
+    try {
+      const { data: templateRow } = await supabaseAdmin
+        .from('prompt_templates')
+        .select('prompt_content')
+        .eq('is_active', true)
+        .eq('usage_type', 'lesson_generation')
+        .order('priority', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-3. COMMON MISTAKES (3-5 items):
-   - List 3-5 common errors students make with this concept
-   - Explain WHY each mistake happens
-   - Brief tip on how to avoid each one
+      if (templateRow?.prompt_content) {
+        promptTemplate = templateRow.prompt_content;
+        console.log('[generate-lesson-content] Loaded prompt from prompt_templates table');
+      } else {
+        console.warn('[generate-lesson-content] No active lesson_generation prompt in DB - using fallback');
+      }
+    } catch (promptErr) {
+      console.warn('[generate-lesson-content] Failed to load prompt from DB (non-fatal):', promptErr);
+    }
 
-Return ONLY valid JSON, no markdown fences:
+    const FALLBACK_PROMPT = `Tu es un professeur expert creant une lecon pour des eleves de {{grade_level}} ({{age_group}}) en {{country}}.
+
+Programme : {{curriculum}}
+Matiere : {{subject}}
+Sujet : {{topic_name}}
+Description : {{topic_description}}
+Objectifs : {{learning_objectives}}
+
+REGLES : Reponds en {{response_language}}. Maximum {{word_budget}} mots pour l'explication. Exemples du quotidien d'un enfant.
+
+REPONDS EN JSON VALIDE UNIQUEMENT :
 {
-  "explanation": "...",
-  "example": "...",
-  "common_mistakes": ["...", "...", "..."]
+  "explanation": "{{word_budget}} mots max en {{response_language}}",
+  "example": "Etape 1: ...\nEtape 2: ...\nEtape 3: ...",
+  "common_mistakes": [
+    { "mistake": "erreur", "why": "raison" }
+  ]
 }`;
+
+    const prompt = substituteVariables(
+      promptTemplate ?? FALLBACK_PROMPT,
+      promptVariables
+    );
 
     const aiResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/ai-chat`, {
       method: 'POST',
@@ -170,8 +279,16 @@ Return ONLY valid JSON, no markdown fences:
         modelId: modelId,
         history: [],
         language: language,
-        maxTokens: 3000,
-        userContext: { response_language: langLabel, format: 'json' }
+        maxTokens: 1800,
+        userContext: {
+          grade_level: rawLevel,
+          age_group: ageGroup,
+          curriculum: curriculum,
+          country: countryLabel,
+          response_language: responseLang,
+          learning_style: 'visual',
+          format: 'json',
+        }
       }),
     });
 
@@ -220,15 +337,26 @@ Return ONLY valid JSON, no markdown fences:
       .slice(0, Math.min(2, exitTasks.length))
       .map(t => t.id);
 
+    const rawMistakes = generatedContent.common_mistakes || [];
+    const normalizedMistakes = rawMistakes.map((mistake: any) => {
+      if (typeof mistake === 'string') return { mistake, why: '' };
+      if (typeof mistake === 'object' && mistake !== null) {
+        return { mistake: mistake.mistake || mistake.tip || '', why: mistake.why || '' };
+      }
+      return { mistake: String(mistake), why: '' };
+    });
+
     const lessonContent = {
       explanation: generatedContent.explanation,
       example: generatedContent.example,
-      common_mistakes: generatedContent.common_mistakes || [],
+      common_mistakes: normalizedMistakes,
       guided_practice: selectedPractice,
       exit_ticket: selectedExit,
       generated_at: new Date().toISOString(),
       generated_by_model: modelId,
-      language: language,
+      curriculum_level: rawLevel,
+      curriculum_country: rawCountry,
+      generated_language: language,
     };
 
     const { error: updateError } = await supabase
