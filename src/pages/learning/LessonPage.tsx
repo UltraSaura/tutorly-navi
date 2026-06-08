@@ -1,11 +1,13 @@
 import { ArrowLeft } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useCoursePlaylist } from '@/hooks/useCoursePlaylist';
 import { useAllBanks } from '@/hooks/useQuizBank';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { VideoPlayerBox } from '@/components/learning/VideoPlayerBox';
-import { LessonStepper } from '@/components/learning/LessonStepper';
+import { LessonCardPlayer } from '@/components/learning/LessonCardPlayer';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { LessonContent } from '@/types/learning';
@@ -24,6 +26,20 @@ export default function LessonPage() {
   const { data, isLoading } = useCoursePlaylist(topicSlug || '');
   const topic = data?.topic ?? null;
   const videos = data?.videos ?? [];
+
+  const { data: subject } = useQuery({
+    queryKey: ['lesson-subject', subjectSlug],
+    queryFn: async () => {
+      const { data: subjectData } = await supabase
+        .from('subjects')
+        .select('id, name')
+        .eq('slug', subjectSlug ?? '')
+        .maybeSingle();
+      return subjectData;
+    },
+    enabled: !!subjectSlug,
+    staleTime: 10 * 60 * 1000,
+  });
 
   const { data: banksData } = useAllBanks(
     topic?.id ?? '',
@@ -116,7 +132,9 @@ export default function LessonPage() {
             <p style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {topic?.name ?? '…'}
             </p>
-            <p style={{ fontSize: 10, color: '#667085', margin: 0 }}>Leçons · Mathématiques</p>
+            <p style={{ fontSize: 10, color: '#667085', margin: 0 }}>
+              Leçons · {subject?.name ?? '…'}
+            </p>
           </div>
           {hasVideos && (
             <span style={{ background: '#FAEEDA', color: '#633806', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, flexShrink: 0 }}>
@@ -208,14 +226,15 @@ export default function LessonPage() {
           </div>
         )}
 
-        {/* ── LESSON STEPPER — always rendered ─────────────── */}
+        {/* ── LESSON PLAYER — always rendered ─────────────── */}
         {topic && (
-          <LessonStepper
+          <LessonCardPlayer
             topicId={topic.id}
             topicName={topic.name}
             lessonContent={lessonContent}
             inlineBankId={inlineBank?.bankId ?? null}
             onSexercer={handleSexercer}
+            subjectId={(topic as any).curriculum_subject_id ?? subject?.id ?? null}
           />
         )}
       </div>
