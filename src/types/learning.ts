@@ -132,7 +132,7 @@ export interface UserProgress {
   category_id: string | null;
   topic_id: string | null;
   video_id: string | null;
-  progress_type: 'video_started' | 'video_completed' | 'quiz_attempted' | 'quiz_passed';
+  progress_type: 'video_started' | 'video_completed' | 'quiz_attempted' | 'quiz_passed' | 'lesson_completed';
   progress_percentage: number;
   quiz_score: number | null;
   time_spent_seconds: number;
@@ -145,6 +145,7 @@ export interface SubjectProgress {
   subject: Subject;
   videos_ready: number;
   videos_completed: number;
+  lessons_completed: number;
   progress_percentage: number;
 }
 

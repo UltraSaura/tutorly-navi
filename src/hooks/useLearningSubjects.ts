@@ -78,6 +78,18 @@ export function useLearningSubjects() {
             videos_completed = count || 0;
           }
 
+          let lessons_completed = 0;
+          if (user && topics.length > 0) {
+            const { count } = await supabase
+              .from('user_learning_progress')
+              .select('topic_id', { count: 'exact', head: true })
+              .eq('user_id', user.id)
+              .eq('progress_type', 'lesson_completed')
+              .in('topic_id', topics.map((t: any) => t.id));
+
+            lessons_completed = count || 0;
+          }
+
           const progress_percentage = videos_ready > 0
             ? Math.round((videos_completed / videos_ready) * 100)
             : 0;
@@ -86,6 +98,7 @@ export function useLearningSubjects() {
             subject: subject as Subject,
             videos_ready: content_ready,
             videos_completed,
+            lessons_completed,
             progress_percentage,
           };
         })

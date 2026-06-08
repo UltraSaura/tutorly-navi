@@ -1,145 +1,163 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Zap } from 'lucide-react';
+import { ArrowLeft, BookOpen, Play, CheckCircle2, Lock } from 'lucide-react';
 import { useSubjectDashboard } from '@/hooks/useSubjectDashboard';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useLanguage } from '@/context/SimpleLanguageContext';
-import { CurriculumLocation } from '@/components/admin/curriculum/CurriculumLocation';
-import * as Icons from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
+
 const SubjectDashboardPage = () => {
-  const {
-    subjectSlug
-  } = useParams<{
-    subjectSlug: string;
-  }>();
+  const { subjectSlug } = useParams<{ subjectSlug: string }>();
   const navigate = useNavigate();
-  const {
-    t
-  } = useLanguage();
-  const {
-    data,
-    isLoading
-  } = useSubjectDashboard(subjectSlug || '');
+  const { data, isLoading } = useSubjectDashboard(subjectSlug || '');
+
   if (isLoading) {
-    return <div className="container mx-auto p-4 space-y-6 max-w-6xl">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>;
+    return (
+      <div style={{ background: '#F3F6FA', minHeight: '100vh', paddingBottom: 96 }}>
+        <div style={{ background: 'white', padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: '0.5px solid #EAECEF' }}>
+          <Skeleton className="h-7 w-7 rounded-full" />
+          <Skeleton className="h-5 w-40" />
+        </div>
+        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {[1, 2, 3, 4, 5].map((item) => <Skeleton key={item} className="h-20 w-full rounded-2xl" />)}
+        </div>
+      </div>
+    );
   }
+
   if (!data?.subject) {
-    return <div className="container mx-auto p-4 text-center">
-        <p className="text-muted-foreground">{t('learning.subjectNotFound') || 'Subject not found'}</p>
-      </div>;
+    return (
+      <div style={{ background: '#F3F6FA', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>Sujet introuvable</p>
+      </div>
+    );
   }
-  const {
-    subject,
-    categories,
-    overallProgress
-  } = data;
-  const getIconComponent = (iconName: string) => {
-    const Icon = (Icons as any)[iconName];
-    return Icon ? <Icon className="w-6 h-6" /> : null;
-  };
+
+  const { subject, categories, overallProgress } = data;
+  const allTopics = categories.flatMap((category) => (category.topics || []) as any[]);
+  const lessonsAvailable = allTopics.filter((topic: any) => topic.has_lesson).length;
+  const lessonsCompleted = allTopics.filter((topic: any) => topic.lesson_completed).length;
+
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <PageMeta title="Subject" description="Explore topics, videos, and exercises for this subject on Stuwy." />
-      {/* Header */}
-      <div 
-        className="flex items-center gap-4 px-4 py-3 border-b"
-        style={{ backgroundColor: subject.color_scheme }}
-      >
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => navigate('/learning')}
-          className="text-white hover:bg-white/20"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <h1 className="text-xl font-bold flex-1 text-white">{subject.name}</h1>
+    <div style={{ background: '#F3F6FA', minHeight: '100vh', paddingBottom: 96 }}>
+      <PageMeta title={subject.name} description={`Lecons et exercices - ${subject.name}`} />
+
+      <div style={{ background: 'white', borderBottom: '0.5px solid #EAECEF', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={() => navigate('/learning')}
+            aria-label="Retour"
+            style={{ width: 28, height: 28, borderRadius: '50%', border: '0.5px solid #EAECEF', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          >
+            <ArrowLeft className="h-3.5 w-3.5" style={{ color: '#667085' }} />
+          </button>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
+              {subject.name}
+            </p>
+          </div>
+          {lessonsAvailable > 0 && (
+            <span style={{ background: '#F2FBF8', color: '#085041', border: '0.5px solid #9FE1CB', borderRadius: 999, padding: '3px 10px', fontSize: 10, fontWeight: 600, flexShrink: 0 }}>
+              {lessonsCompleted}/{lessonsAvailable} lecons
+            </span>
+          )}
+        </div>
+
+        {overallProgress.totalTopics > 0 && (
+          <div style={{ padding: '0 16px 10px' }}>
+            <div style={{ height: 4, background: '#EAECEF', borderRadius: 999, overflow: 'hidden' }}>
+              <div style={{ width: `${overallProgress.percentage}%`, height: '100%', background: '#12C6A0', borderRadius: 999, transition: 'width 0.4s ease' }} />
+            </div>
+            <p style={{ fontSize: 10, color: '#667085', margin: '3px 0 0', fontFamily: 'Poppins, sans-serif' }}>
+              {overallProgress.completedTopics}/{overallProgress.totalTopics} termines
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Scrollable Content */}
-      <ScrollArea className="flex-1">
-        <div className="pb-24">
-          {/* Topics List */}
-          <div className="py-4">
-            <h2 className="text-xl font-bold text-foreground mx-4 mt-2 mb-3">
-              {t('learning.learningTopics') || 'Learning Topics'}
-            </h2>
+      <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {categories.map((category: any) =>
+          (category.topics || []).map((topic: any) => {
+            const hasLesson = !!topic.has_lesson;
+            const isCompleted = !!topic.lesson_completed;
+            const hasVideos = (topic.video_count || 0) > 0;
+            const isAccessible = hasLesson || hasVideos;
 
-            <div className="space-y-3 px-4">
-              {categories.map(category => 
-                category.topics?.map(topic => {
-                  const Icon = (Icons as any)[category.icon_name] || Play;
-                  const progressColor = topic.progress_percentage === 100 
-                    ? 'bg-green-500' 
-                    : topic.progress_percentage && topic.progress_percentage > 50 
-                    ? 'bg-yellow-500' 
-                    : 'bg-red-500';
+            return (
+              <button
+                key={topic.id}
+                onClick={() => isAccessible && navigate(`/learning/${subjectSlug}/${topic.slug}`)}
+                disabled={!isAccessible}
+                style={{
+                  width: '100%',
+                  background: 'white',
+                  borderRadius: 14,
+                  border: `1px solid ${isCompleted ? '#9FE1CB' : '#EAECEF'}`,
+                  padding: '12px 14px',
+                  cursor: isAccessible ? 'pointer' : 'not-allowed',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  opacity: isAccessible ? 1 : 0.5,
+                  transition: 'box-shadow 0.15s',
+                }}
+              >
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    flexShrink: 0,
+                    background: isCompleted ? '#F2FBF8' : hasLesson ? '#F3F6FA' : '#F9F9F9',
+                    border: `1px solid ${isCompleted ? '#9FE1CB' : '#EAECEF'}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {isCompleted ? (
+                    <CheckCircle2 className="h-5 w-5" style={{ color: '#12C6A0' }} />
+                  ) : hasLesson ? (
+                    <BookOpen className="h-4.5 w-4.5" style={{ color: '#667085' }} />
+                  ) : hasVideos ? (
+                    <Play className="h-4.5 w-4.5" style={{ color: '#667085' }} />
+                  ) : (
+                    <Lock className="h-4 w-4" style={{ color: '#9CA3AF' }} />
+                  )}
+                </div>
 
-                  return (
-                    <Card
-                      key={topic.id}
-                      className="p-4 cursor-pointer transition-all hover:shadow-lg border-2"
-                      style={{ borderColor: `${subject.color_scheme}40` }}
-                      onClick={() => navigate(`/learning/${subjectSlug}/${topic.slug}`)}
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-3 flex-1">
-                          <div 
-                            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                            style={{ backgroundColor: `${subject.color_scheme}20` }}
-                          >
-                            <Icon className="w-5 h-5" style={{ color: subject.color_scheme }} />
-                          </div>
-                          <h3 className="text-lg font-bold text-foreground">{topic.name}</h3>
-                        </div>
-                        
-                        <div className="flex items-center text-sm font-semibold text-muted-foreground ml-2">
-                          <Zap className="w-4 h-4 mr-1" style={{ color: subject.color_scheme }} />
-                          {topic.video_count} {t('learning.videos') || 'videos'}
-                        </div>
-                      </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: '0 0 4px', fontFamily: 'Poppins, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {topic.name}
+                  </p>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {hasLesson && (
+                      <span style={{ background: '#F2FBF8', color: '#085041', border: '0.5px solid #9FE1CB', borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 600 }}>
+                        Lecon
+                      </span>
+                    )}
+                    {hasVideos && (
+                      <span style={{ background: '#F3F6FA', color: '#667085', border: '0.5px solid #EAECEF', borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 600 }}>
+                        {topic.video_count} video{topic.video_count > 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {!hasLesson && !hasVideos && (
+                      <span style={{ color: '#9CA3AF', fontSize: 10 }}>Bientot disponible</span>
+                    )}
+                  </div>
+                </div>
 
-                      {/* Curriculum Location */}
-                      {topic.curriculum_country_code && (
-                        <div className="mb-2">
-                          <CurriculumLocation
-                            countryId={topic.curriculum_country_code}
-                            levelId={topic.curriculum_level_code}
-                            subjectId={topic.curriculum_subject_id}
-                            domainId={topic.curriculum_domain_id}
-                            subdomainId={topic.curriculum_subdomain_id}
-                            variant="compact"
-                            locale="en"
-                          />
-                        </div>
-                      )}
-
-                      {/* Progress Bar */}
-                      <div className="w-full bg-muted rounded-full h-2.5">
-                        <div 
-                          className={`h-2.5 rounded-full ${progressColor} transition-all`}
-                          style={{ width: `${topic.progress_percentage || 0}%` }}
-                        />
-                      </div>
-                      <div className="text-right text-sm font-medium mt-1 text-muted-foreground">
-                        {topic.progress_percentage || 0}% {t('learning.complete') || 'Complete'}
-                      </div>
-                    </Card>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </div>
-      </ScrollArea>
+                {isAccessible && (
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M6 4l4 4-4 4" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 };
+
 export default SubjectDashboardPage;

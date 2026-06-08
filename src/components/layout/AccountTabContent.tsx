@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { User, HeadphonesIcon, Globe, LogOut, Settings, BookOpen, Trophy } from "lucide-react";
+import { User, HeadphonesIcon, Globe, LogOut, Settings, BookOpen, Trophy, Zap } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { hardLogout } from "@/lib/logout";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useStudentStats } from "@/hooks/useStudentStats";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -22,6 +23,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { isAdmin } = useAdminAuth();
+  const { data: stats } = useStudentStats();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const userInitials = user?.email?.charAt(0).toUpperCase() || 'U';
@@ -46,6 +48,32 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
       </div>
 
       <Separator />
+
+      {stats && (
+        <>
+          <div style={{ margin: '0 4px', background: '#F2FBF8', borderRadius: 14, padding: '12px 14px', border: '0.5px solid #9FE1CB', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: '#12C6A0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Zap className="h-5 w-5" style={{ color: '#0F172A' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <span style={{ fontSize: 22, fontWeight: 800, color: '#085041', fontFamily: 'Poppins, sans-serif', lineHeight: 1 }}>
+                  {stats.totalXp}
+                </span>
+                <span style={{ fontSize: 12, color: '#0F6E56', fontWeight: 600 }}>XP</span>
+                <span style={{ fontSize: 11, color: '#667085', marginLeft: 'auto' }}>Niveau {stats.level}</span>
+              </div>
+              <div style={{ height: 4, background: '#EAECEF', borderRadius: 999, overflow: 'hidden', marginTop: 6 }}>
+                <div style={{ width: `${Math.round(stats.xpProgressInLevel * 100)}%`, height: '100%', background: '#12C6A0', borderRadius: 999, transition: 'width 0.4s ease' }} />
+              </div>
+              <p style={{ fontSize: 10, color: '#667085', margin: '3px 0 0', fontFamily: 'Poppins, sans-serif' }}>
+                {stats.lessonsCompleted} lecon{stats.lessonsCompleted !== 1 ? 's' : ''} terminee{stats.lessonsCompleted !== 1 ? 's' : ''} · encore {stats.xpToNextLevel} XP pour le niveau {stats.level + 1}
+              </p>
+            </div>
+          </div>
+          <Separator />
+        </>
+      )}
 
       {/* Account Actions */}
       <div className="space-y-2">

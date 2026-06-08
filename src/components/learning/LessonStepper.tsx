@@ -1,9 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useRef, useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Zap, BookOpen, Lightbulb, AlertCircle } from 'lucide-react';
 import { QuestionCard } from '@/components/learning/QuestionCard';
+import { useAuth } from '@/context/AuthContext';
+import { showXpToast } from '@/components/game/XpToast';
+import { trackLearningInteraction } from '@/services/learningAnalytics';
 import type { LessonContent } from '@/types/learning';
 import type { Question } from '@/types/quiz-bank';
 
@@ -14,6 +17,7 @@ interface LessonStepperProps {
   lessonContent: LessonContent | null;
   inlineBankId: string | null;
   onSexercer: () => void;
+  subjectId?: string | null;
 }
 
 // ── Helpers ────────────────────────────────────────────────
@@ -105,9 +109,19 @@ function SuivantButton({ onClick, label = 'Suivant →', disabled = false }: {
 }
 
 // ── Main component ─────────────────────────────────────────
-export function LessonStepper({ topicId, topicName, lessonContent, inlineBankId, onSexercer }: LessonStepperProps) {
+export function LessonStepper({
+  topicId,
+  topicName,
+  lessonContent,
+  inlineBankId,
+  onSexercer,
+  subjectId,
+}: LessonStepperProps) {
   const TOTAL_STEPS = 5;
   const [currentStep, setCurrentStep] = useState(0);
+  const { user } = useAuth();
+  const startTimeRef = useRef<number>(Date.now());
+  const [actualMinutes, setActualMinutes] = useState<number | null>(null);
   const [quizAnswer, setQuizAnswer] = useState<any>(null);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [revealedCount, setRevealedCount] = useState(0);
@@ -141,9 +155,58 @@ export function LessonStepper({ topicId, topicName, lessonContent, inlineBankId,
   const keyPoints = explanation ? extractKeyPoints(explanation, 4) : [];
   const exampleSteps = exampleText ? parseExampleSteps(exampleText) : [];
 
+  const recordLessonCompletion = useCallback(async () => {
+    if (!user?.id) return;
+
+    const timeSpentSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    setActualMinutes(Math.max(1, Math.ceil(timeSpentSeconds / 60)));
+
+    try {
+      const { data: existing } = await supabase
+        .from('user_learning_progress')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('topic_id', topicId)
+        .eq('progress_type', 'lesson_completed')
+        .maybeSingle();
+
+      if (!existing) {
+        const { error } = await supabase
+          .from('user_learning_progress')
+          .insert({
+            user_id: user.id,
+            topic_id: topicId,
+            subject_id: subjectId ?? null,
+            progress_type: 'lesson_completed',
+            progress_percentage: 100,
+            time_spent_seconds: timeSpentSeconds,
+          });
+
+        if (!error) {
+          showXpToast(5, 'Leçon terminée !');
+        }
+      }
+
+      trackLearningInteraction({
+        studentId: user.id,
+        eventType: 'lesson_completed',
+        topicId,
+        metadata: { timeSpentSeconds, isFirstCompletion: !existing },
+      });
+    } catch (err) {
+      console.warn('[LessonStepper] Failed to record completion:', err);
+    }
+  }, [user?.id, topicId, subjectId]);
+
   // ── Step navigation helpers ───────────────────────────────
   const goNext = useCallback(() => {
-    setCurrentStep(s => Math.min(s + 1, TOTAL_STEPS - 1));
+    const nextStep = Math.min(currentStep + 1, TOTAL_STEPS - 1);
+
+    if (nextStep === 4) {
+      recordLessonCompletion();
+    }
+
+    setCurrentStep(nextStep);
     // Reset step-local state when leaving that step
     if (currentStep === 1) {
       setQuizAnswer(null);
@@ -152,13 +215,15 @@ export function LessonStepper({ topicId, topicName, lessonContent, inlineBankId,
     if (currentStep === 2) {
       setRevealedCount(0);
     }
-  }, [currentStep]);
+  }, [currentStep, recordLessonCompletion]);
 
   const resetLesson = useCallback(() => {
     setCurrentStep(0);
     setQuizAnswer(null);
     setQuizSubmitted(false);
     setRevealedCount(0);
+    setActualMinutes(null);
+    startTimeRef.current = Date.now();
   }, []);
 
   // ── Render ────────────────────────────────────────────────
@@ -189,7 +254,7 @@ export function LessonStepper({ topicId, topicName, lessonContent, inlineBankId,
                 </p>
                 <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {keyPoints.map((point, i) => (
-                    <li key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: '#085041', lineHeight: 1.5 }}>
+                    <li key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: '#085041', lineHeight: 1.6 }}>
                       <span style={{ color: '#12C6A0', fontWeight: 800, flexShrink: 0 }}>✦</span>
                       {point}
                     </li>
@@ -208,7 +273,7 @@ export function LessonStepper({ topicId, topicName, lessonContent, inlineBankId,
                   Le cours
                 </p>
               </div>
-              <p style={{ fontSize: 13, color: '#374151', margin: 0, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
+              <p style={{ fontSize: 15, color: '#374151', margin: 0, lineHeight: 1.85, whiteSpace: 'pre-wrap' }}>
                 {explanation || 'Leçon en cours de préparation.'}
               </p>
             </div>
@@ -452,7 +517,9 @@ export function LessonStepper({ topicId, topicName, lessonContent, inlineBankId,
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, width: '100%', maxWidth: 280 }}>
               <div style={{ background: '#F2FBF8', borderRadius: 12, padding: '10px 8px', border: '0.5px solid #9FE1CB', textAlign: 'center' }}>
-                <p style={{ fontSize: 20, fontWeight: 800, color: '#085041', margin: '0 0 2px', fontFamily: 'Poppins, sans-serif' }}>3 min</p>
+                <p style={{ fontSize: 20, fontWeight: 800, color: '#085041', margin: '0 0 2px', fontFamily: 'Poppins, sans-serif' }}>
+                  {actualMinutes ?? '—'} min
+                </p>
                 <p style={{ fontSize: 10, color: '#0F6E56', margin: 0 }}>Durée</p>
               </div>
               <div style={{ background: '#FAEEDA', borderRadius: 12, padding: '10px 8px', border: '0.5px solid #FAC775', textAlign: 'center' }}>

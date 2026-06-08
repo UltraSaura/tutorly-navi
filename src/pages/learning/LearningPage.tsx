@@ -95,7 +95,8 @@ const LearningPage = () => {
       <main className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 lg:grid-cols-4">
         {subjects?.map(({
         subject,
-        videos_ready
+        videos_ready,
+        lessons_completed
       }) => {
         const isReady = videos_ready > 0;
         return <div 
@@ -136,6 +137,22 @@ const LearningPage = () => {
                   <span className="line-clamp-2 text-sm font-semibold leading-tight text-slate-900 sm:text-base">
                     {subject.name}
                   </span>
+                  {videos_ready > 0 && (
+                    <div style={{ marginTop: 4 }}>
+                      <div style={{ height: 3, background: 'rgba(15,23,42,0.12)', borderRadius: 999, overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%',
+                          background: '#12C6A0',
+                          borderRadius: 999,
+                          width: `${Math.round((lessons_completed / Math.max(videos_ready, 1)) * 100)}%`,
+                          transition: 'width 0.3s ease',
+                        }} />
+                      </div>
+                      <p style={{ fontSize: 9, color: 'rgba(15,23,42,0.5)', margin: '2px 0 0', fontFamily: 'Poppins, sans-serif' }}>
+                        {lessons_completed}/{videos_ready} lecons
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>;

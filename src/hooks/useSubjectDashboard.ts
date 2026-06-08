@@ -110,9 +110,39 @@ export function useSubjectDashboard(subjectSlug: string) {
         );
       }
 
+      let lessonCompletedTopicIds = new Set<string>();
+      if (user) {
+        const allTopicIds = curriculumFilteredCategories
+          .flatMap((category: any) => (category.topics || []).map((topic: any) => topic.id));
+
+        if (allTopicIds.length > 0) {
+          const { data: lessonProgress } = await supabase
+            .from('user_learning_progress')
+            .select('topic_id')
+            .eq('user_id', user.id)
+            .eq('progress_type', 'lesson_completed')
+            .in('topic_id', allTopicIds);
+
+          lessonCompletedTopicIds = new Set(
+            (lessonProgress ?? []).map((row: any) => row.topic_id).filter(Boolean)
+          );
+        }
+      }
+
+      categoriesWithProgress = categoriesWithProgress.map((category: any) => ({
+        ...category,
+        topics: (category.topics || []).map((topic: any) => ({
+          ...topic,
+          has_lesson: !!topic.lesson_content,
+          lesson_completed: lessonCompletedTopicIds.has(topic.id),
+        })),
+      }));
+
       // Calculate overall progress
       const allTopics = categoriesWithProgress.flatMap((c: any) => c.topics || []);
-      const completedTopics = allTopics.filter((t: any) => (t.progress_percentage || 0) === 100).length;
+      const completedTopics = allTopics.filter((topic: any) =>
+        (topic.progress_percentage || 0) === 100 || topic.lesson_completed === true
+      ).length;
       const overallPercentage = allTopics.length > 0 
         ? Math.round(completedTopics / allTopics.length * 100)
         : 0;
