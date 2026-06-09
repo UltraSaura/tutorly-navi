@@ -4,10 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Zap, BookOpen, AlertCircle, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { useUserCurriculumProfile } from '@/hooks/useUserCurriculumProfile';
 import { showXpToast } from '@/components/game/XpToast';
 import { trackLearningInteraction } from '@/services/learningAnalytics';
 import { TopicVisual } from './visuals/TopicVisual';
 import { QuestionCard } from './QuestionCard';
+import { getAgeConfig } from './lesson/ageConfig';
 import type { LessonContent, LessonExample } from '@/types/learning';
 import type { Question } from '@/types/quiz-bank';
 
@@ -20,7 +22,7 @@ interface LessonCardPlayerProps {
   subjectId?: string | null;
 }
 
-type CardType = 'hook' | 'vocabulary' | 'concept' | 'examples' | 'quiz' | 'mistake' | 'complete';
+type CardType = 'intro' | 'vocabulary' | 'examples' | 'quiz' | 'mistake' | 'complete';
 
 interface Card {
   type: CardType;
@@ -28,12 +30,11 @@ interface Card {
 }
 
 function buildCards(content: LessonContent | null, hasQuiz: boolean): Card[] {
-  const cards: Card[] = [{ type: 'hook', label: 'Accroche' }];
+  const cards: Card[] = [{ type: 'intro', label: 'Leçon' }];
   if (content?.vocabulary?.length) cards.push({ type: 'vocabulary', label: 'Vocabulaire' });
-  cards.push({ type: 'concept', label: 'Concept' });
   if (content?.examples?.length) cards.push({ type: 'examples', label: 'Exemples' });
   if (hasQuiz) cards.push({ type: 'quiz', label: 'Quiz' });
-  if (content?.common_mistakes?.length) cards.push({ type: 'mistake', label: 'Erreur fréquente' });
+  if (content?.common_mistakes?.length) cards.push({ type: 'mistake', label: 'Piège' });
   cards.push({ type: 'complete', label: 'Terminé' });
   return cards;
 }
@@ -91,27 +92,75 @@ function NextButton({ onClick, label = 'Suivant →', disabled = false }: { onCl
   );
 }
 
-function HookCard({ topicName, explanation, onNext }: { topicName: string; explanation: string; onNext: () => void }) {
-  const hook = explanation.split(/(?<=[.!?])\s+/)[0] ?? explanation;
+function IntroCard({
+  topicName,
+  lessonContent,
+  onNext,
+  visualSize,
+  bodySize,
+}: {
+  topicName: string;
+  lessonContent: LessonContent | null;
+  onNext: () => void;
+  visualSize: number;
+  bodySize: number;
+}) {
+  const explanation = lessonContent?.explanation ?? '';
+  const sentences = explanation.split(/(?<=[.!?])\s+/).filter(Boolean);
+  const hookSentence = sentences[0] ?? explanation;
+  const restOfExplanation = sentences.slice(1).join(' ');
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-      <CardBadge icon={<BookOpen className="h-3 w-3" />} label="Leçon" color="teal" />
-      <h2 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif', lineHeight: 1.3 }}>
+      <CardBadge icon={<BookOpen className="h-3 w-3" />} label="Nouvelle leçon" color="teal" />
+      <h2 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif', lineHeight: 1.25 }}>
         {topicName}
       </h2>
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
-        <TopicVisual topicName={topicName} total={4} taken={1} animated size={100} />
+
+      <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
+        <TopicVisual topicName={topicName} total={4} taken={1} animated size={visualSize} />
+        {/fraction|diviser|partager|moitié|tiers|quart/i.test(topicName) && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: 22, fontWeight: 900, color: '#12C6A0', margin: 0, borderBottom: '2.5px solid #12C6A0', paddingBottom: 2, lineHeight: 1, fontFamily: 'Poppins, sans-serif' }}>1</p>
+                <p style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0, lineHeight: 1.2, fontFamily: 'Poppins, sans-serif' }}>4</p>
+              </div>
+              <div style={{ fontSize: 9, color: '#667085', lineHeight: 1.9 }}>← prises<br />← total</div>
+            </div>
+            <span style={{ fontSize: 9, color: '#12C6A0', fontWeight: 700 }}>= 1 part sur 4</span>
+          </div>
+        )}
       </div>
-      <p style={{ fontSize: 14, color: '#374151', margin: 0, lineHeight: 1.75, background: '#F2FBF8', borderRadius: 12, padding: '12px 14px', border: '0.5px solid #9FE1CB' }}>
-        {hook}
-      </p>
-      <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0, textAlign: 'center' }}>Appuie sur Suivant pour apprendre !</p>
+
+      <div style={{ background: '#F2FBF8', borderRadius: 12, border: '0.5px solid #9FE1CB', padding: '11px 14px' }}>
+        <p style={{ fontSize: bodySize, color: '#374151', margin: 0, lineHeight: 1.8 }}
+           dangerouslySetInnerHTML={{ __html: hookSentence }} />
+      </div>
+
+      {restOfExplanation && (
+        <div style={{ background: 'white', borderRadius: 12, border: '0.5px solid #EAECEF', padding: '11px 14px' }}>
+          <p style={{ fontSize: bodySize - 1, color: '#374151', margin: 0, lineHeight: 1.8 }}
+             dangerouslySetInnerHTML={{ __html: restOfExplanation }} />
+        </div>
+      )}
+
       <NextButton onClick={onNext} />
     </div>
   );
 }
 
-function VocabularyCard({ vocabulary, onNext }: { vocabulary: NonNullable<LessonContent['vocabulary']>; onNext: () => void }) {
+function VocabularyCard({
+  vocabulary,
+  onNext,
+  bodySize = 14,
+  isYoung = false,
+}: {
+  vocabulary: NonNullable<LessonContent['vocabulary']>;
+  onNext: () => void;
+  bodySize?: number;
+  isYoung?: boolean;
+}) {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const chipColors = [
     { bg: '#F2FBF8', border: '#9FE1CB', text: '#085041' },
@@ -122,8 +171,8 @@ function VocabularyCard({ vocabulary, onNext }: { vocabulary: NonNullable<Lesson
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
       <CardBadge icon={<span style={{ fontSize: 11 }}>📖</span>} label={`${vocabulary.length} mots à connaître`} color="purple" />
-      <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
-        Appuie sur chaque mot
+      <h2 style={{ fontSize: isYoung ? 18 : 16, fontWeight: isYoung ? 900 : 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
+        {isYoung ? 'Apprends ces mots !' : 'Appuie sur chaque mot'}
       </h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {vocabulary.map((item, i) => {
@@ -150,7 +199,7 @@ function VocabularyCard({ vocabulary, onNext }: { vocabulary: NonNullable<Lesson
               <span style={{ background: c.bg, border: `0.5px solid ${c.border}`, borderRadius: 6, padding: '2px 8px', fontSize: 12, fontWeight: 700, color: c.text, flexShrink: 0 }}>
                 {item.term}
               </span>
-              <span style={{ flex: 1, fontSize: 12, color: isOpen ? '#374151' : '#9CA3AF', lineHeight: 1.5, textAlign: 'left' }}>
+              <span style={{ flex: 1, fontSize: bodySize - 2, color: isOpen ? '#374151' : '#9CA3AF', lineHeight: 1.5, textAlign: 'left' }}>
                 {isOpen ? item.definition : '· · ·'}
               </span>
               <ChevronDown className="h-3.5 w-3.5" style={{ color: '#9CA3AF', flexShrink: 0, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} />
@@ -163,26 +212,24 @@ function VocabularyCard({ vocabulary, onNext }: { vocabulary: NonNullable<Lesson
   );
 }
 
-function ConceptCard({ topicName, explanation, onNext }: { topicName: string; explanation: string; onNext: () => void }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-      <CardBadge icon={<BookOpen className="h-3 w-3" />} label="Le concept" color="teal" />
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <TopicVisual topicName={topicName} total={4} taken={1} animated size={95} />
-      </div>
-      <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14 }}>
-        <p style={{ fontSize: 15, color: '#374151', margin: 0, lineHeight: 1.85 }}>
-          {explanation}
-        </p>
-      </div>
-      <NextButton onClick={onNext} />
-    </div>
-  );
-}
-
-function ExamplesCard({ topicName, examples, onNext }: { topicName: string; examples: LessonExample[]; onNext: () => void }) {
+function ExamplesCard({
+  topicName,
+  examples,
+  onNext,
+  bodySize = 14,
+  visualSize = 95,
+  exampleCount = 3,
+}: {
+  topicName: string;
+  examples: LessonExample[];
+  onNext: () => void;
+  bodySize?: number;
+  visualSize?: number;
+  exampleCount?: number;
+}) {
   const [active, setActive] = useState(0);
-  const ex = examples[active];
+  const shownExamples = examples.slice(0, exampleCount);
+  const ex = shownExamples[active] ?? shownExamples[0];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
       <CardBadge icon={<Zap className="h-3 w-3" />} label="Vois le pattern" color="amber" />
@@ -191,7 +238,7 @@ function ExamplesCard({ topicName, examples, onNext }: { topicName: string; exam
       </h2>
 
       <div style={{ display: 'flex', gap: 6 }}>
-        {examples.map((e, i) => (
+        {shownExamples.map((e, i) => (
           <button
             key={i}
             onClick={() => setActive(i)}
@@ -224,9 +271,9 @@ function ExamplesCard({ topicName, examples, onNext }: { topicName: string; exam
           style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
         >
           <div style={{ display: 'flex', justifyContent: 'center', background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14 }}>
-            <TopicVisual topicName={topicName} total={ex.total} taken={ex.taken} animated size={95} />
+            <TopicVisual topicName={topicName} total={ex.total} taken={ex.taken} animated size={visualSize} />
           </div>
-          <p style={{ fontSize: 13, color: '#374151', margin: 0, lineHeight: 1.6 }}>
+          <p style={{ fontSize: bodySize - 1, color: '#374151', margin: 0, lineHeight: 1.6 }}>
             {ex.context}
           </p>
           <div style={{ background: '#F2FBF8', borderRadius: 12, border: '0.5px solid #9FE1CB', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -238,7 +285,7 @@ function ExamplesCard({ topicName, examples, onNext }: { topicName: string; exam
                 {ex.total}
               </p>
             </div>
-            <p style={{ fontSize: 12, color: '#374151', margin: 0, lineHeight: 1.6, flex: 1 }}>
+            <p style={{ fontSize: bodySize - 2, color: '#374151', margin: 0, lineHeight: 1.6, flex: 1 }}>
               {ex.explanation}
             </p>
           </div>
@@ -263,7 +310,7 @@ function QuizCard({
   topicId: string;
   onNext: () => void;
 }) {
-  const [answer, setAnswer] = useState<any>(null);
+  const [answer, setAnswer] = useState<unknown>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const { data: question } = useQuery<Question | null>({
@@ -327,10 +374,15 @@ function QuizCard({
   );
 }
 
+function getMistakeText(mistake: LessonContent['common_mistakes'][number] | undefined) {
+  if (!mistake) return { text: '', why: '' };
+  if (typeof mistake === 'string') return { text: mistake, why: '' };
+  return { text: mistake.mistake, why: mistake.why };
+}
+
 function MistakeCard({ mistakes, onNext }: { mistakes: LessonContent['common_mistakes']; onNext: () => void }) {
   const first = mistakes[0];
-  const text = typeof first === 'string' ? first : (first as any)?.mistake ?? '';
-  const why = typeof first === 'object' && first !== null ? (first as any)?.why ?? '' : '';
+  const { text, why } = getMistakeText(first);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
       <CardBadge icon={<AlertCircle className="h-3 w-3" />} label="Erreur fréquente" color="red" />
@@ -343,8 +395,7 @@ function MistakeCard({ mistakes, onNext }: { mistakes: LessonContent['common_mis
       </div>
       {mistakes.length > 1 && (() => {
         const second = mistakes[1];
-        const t2 = typeof second === 'string' ? second : (second as any)?.mistake ?? '';
-        const w2 = typeof second === 'object' && second !== null ? (second as any)?.why ?? '' : '';
+        const { text: t2, why: w2 } = getMistakeText(second);
         return (
           <div style={{ background: 'white', borderRadius: 12, border: '0.5px solid #EAECEF', padding: '12px 14px' }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', margin: '0 0 4px', lineHeight: 1.5 }}>{t2}</p>
@@ -426,10 +477,15 @@ export function LessonCardPlayer({
   subjectId,
 }: LessonCardPlayerProps) {
   const { user } = useAuth();
+  const { profile } = useUserCurriculumProfile();
   const queryClient = useQueryClient();
   const startTimeRef = useRef<number>(Date.now());
   const [cardIndex, setCardIndex] = useState(0);
   const [actualMinutes, setActualMinutes] = useState<number | null>(null);
+  const ageConfig = getAgeConfig(profile?.levelCode);
+  const isYoung = ageConfig.group === 'young';
+  const visualSize = ageConfig.visualSize;
+  const bodySize = ageConfig.bodySize;
 
   const cards = buildCards(lessonContent, !!inlineBankId);
 
@@ -500,17 +556,27 @@ export function LessonCardPlayer({
           transition={{ type: 'spring', stiffness: 320, damping: 32 }}
           style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
         >
-          {currentCard.type === 'hook' && (
-            <HookCard topicName={topicName} explanation={lessonContent?.explanation ?? ''} onNext={goNext} />
+          {currentCard.type === 'intro' && (
+            <IntroCard
+              topicName={topicName}
+              lessonContent={lessonContent}
+              onNext={goNext}
+              visualSize={visualSize}
+              bodySize={bodySize}
+            />
           )}
           {currentCard.type === 'vocabulary' && lessonContent?.vocabulary && (
-            <VocabularyCard vocabulary={lessonContent.vocabulary} onNext={goNext} />
-          )}
-          {currentCard.type === 'concept' && (
-            <ConceptCard topicName={topicName} explanation={lessonContent?.explanation ?? ''} onNext={goNext} />
+            <VocabularyCard vocabulary={lessonContent.vocabulary} onNext={goNext} bodySize={bodySize} isYoung={isYoung} />
           )}
           {currentCard.type === 'examples' && lessonContent?.examples && (
-            <ExamplesCard topicName={topicName} examples={lessonContent.examples} onNext={goNext} />
+            <ExamplesCard
+              topicName={topicName}
+              examples={lessonContent.examples}
+              onNext={goNext}
+              bodySize={bodySize}
+              visualSize={visualSize}
+              exampleCount={ageConfig.exampleCount}
+            />
           )}
           {currentCard.type === 'quiz' && inlineBankId && (
             <QuizCard topicName={topicName} inlineBankId={inlineBankId} topicId={topicId} onNext={goNext} />

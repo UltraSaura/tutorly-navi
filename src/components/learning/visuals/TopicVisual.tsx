@@ -6,16 +6,17 @@ interface TopicVisualProps {
   size?: number;
 }
 
-type VisualType = 'fraction-pizza' | 'fraction-bar' | 'number-line' | 'groups' | 'shapes' | 'generic';
+type VisualType = 'fraction-pizza' | 'fraction-bar' | 'number-line' | 'groups' | 'shapes' | 'cartesian' | 'generic';
 
 function detectVisualType(topicName: string): VisualType {
   const name = topicName.toLowerCase();
-  if (/fraction|diviser|partager|moitié|tiers|quart/.test(name)) return 'fraction-pizza';
+  if (/fraction|partager|moitié|tiers|quart/.test(name)) return 'fraction-pizza';
   if (/addition|somme|plus|ajouter/.test(name)) return 'number-line';
-  if (/multiplication|fois|produit|groupe/.test(name)) return 'groups';
-  if (/géométrie|forme|cercle|carré|triangle|rectangle/.test(name)) return 'shapes';
   if (/soustraction|moins|enlever|différence/.test(name)) return 'number-line';
-  if (/division|partage|égal/.test(name)) return 'fraction-bar';
+  if (/multiplication|fois|produit|groupe/.test(name)) return 'groups';
+  if (/division|diviser|partage/.test(name)) return 'fraction-bar';
+  if (/géométrie|forme|périmètre|aire|cercle|carré|triangle|rectangle|angle/.test(name)) return 'shapes';
+  if (/fonction|équation|algèbre|variable|graphe|courbe|droite|coordonnée|repère/.test(name)) return 'cartesian';
   return 'generic';
 }
 
@@ -99,6 +100,93 @@ function BarVisual({ total = 4, taken = 1, size = 110 }: { total: number; taken:
   );
 }
 
+function GroupsVisual({ total = 12, taken = 3, size = 110 }: { total: number; taken: number; size: number }) {
+  const cols = Math.max(2, Math.round(total / Math.max(taken, 1)));
+  const rows = Math.ceil(total / cols);
+  const dotR = size <= 85 ? 6 : 8;
+  const gap = size <= 85 ? 18 : 22;
+  const startX = 10;
+  const startY = 10;
+  const svgW = startX * 2 + (cols - 1) * gap + dotR * 2;
+  const svgH = startY * 2 + (rows - 1) * gap + dotR * 2;
+
+  return (
+    <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} aria-label={`Grille de ${rows} rangées × ${cols} colonnes = ${total} points`}>
+      {Array.from({ length: rows }).map((_, row) =>
+        Array.from({ length: cols }).map((_, col) => {
+          const idx = row * cols + col;
+          if (idx >= total) return null;
+          const isHighlighted = row < taken;
+          return (
+            <circle
+              key={`${row}-${col}`}
+              cx={startX + col * gap + dotR}
+              cy={startY + row * gap + dotR}
+              r={dotR}
+              fill={isHighlighted ? '#12C6A0' : '#EAECEF'}
+              style={{ transition: `fill .3s ease ${idx * 0.04}s`, opacity: isHighlighted ? 1 : 0.5 }}
+            />
+          );
+        })
+      )}
+      <text
+        x={svgW - 6}
+        y={startY + ((Math.max(taken, 1) - 1) * gap) / 2 + dotR + 4}
+        fontSize="10"
+        fontFamily="Poppins,sans-serif"
+        fontWeight="700"
+        fill="#085041"
+        textAnchor="end"
+      >
+        {`×${cols}`}
+      </text>
+    </svg>
+  );
+}
+
+function ShapesVisual({ size = 110 }: { size: number }) {
+  return (
+    <svg width={size * 2.6} height={size * 0.78} viewBox="0 0 286 86" aria-label="Formes géométriques: triangle, carré et cercle">
+      <polygon points="44,4 84,62 4,62" fill="#F2FBF8" stroke="#12C6A0" strokeWidth="2" />
+      <text x="44" y="78" fontSize="10" textAnchor="middle" fill="#085041" fontFamily="Poppins,sans-serif" fontWeight="700">triangle</text>
+      <rect x="106" y="6" width="56" height="56" rx="4" fill="#FFF3DC" stroke="#F97316" strokeWidth="2" />
+      <text x="134" y="78" fontSize="10" textAnchor="middle" fill="#633806" fontFamily="Poppins,sans-serif" fontWeight="700">carré</text>
+      <circle cx="244" cy="34" r="28" fill="#FCEBEB" stroke="#F7C1C1" strokeWidth="2" />
+      <text x="244" y="78" fontSize="10" textAnchor="middle" fill="#791F1F" fontFamily="Poppins,sans-serif" fontWeight="700">cercle</text>
+    </svg>
+  );
+}
+
+function CartesianVisual({ size = 110 }: { size: number }) {
+  const points = [
+    { x: 40, y: 50 },
+    { x: 80, y: 38 },
+    { x: 120, y: 26 },
+    { x: 160, y: 14 },
+  ];
+
+  return (
+    <svg width={size * 1.9} height={size * 0.7} viewBox="0 0 210 80" aria-label="Plan cartésien avec une droite y = 2x + 1">
+      {[20, 60, 100, 140, 180].map((x) => (
+        <line key={x} x1={x} y1="5" x2={x} y2="65" stroke="#EAECEF" strokeWidth="0.5" />
+      ))}
+      {[15, 35, 55].map((y) => (
+        <line key={y} x1="15" y1={y} x2="195" y2={y} stroke="#EAECEF" strokeWidth="0.5" />
+      ))}
+      <line x1="15" y1="65" x2="195" y2="65" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="20" y1="5" x2="20" y2="70" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
+      <text x="197" y="68" fontSize="9" fill="#9CA3AF" fontFamily="Poppins,sans-serif">x</text>
+      <text x="22" y="9" fontSize="9" fill="#9CA3AF" fontFamily="Poppins,sans-serif">y</text>
+      <line x1={points[0].x} y1={points[0].y} x2={points[3].x} y2={points[3].y} stroke="#12C6A0" strokeWidth="2" strokeLinecap="round" />
+      {points.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r="4" fill="#12C6A0" />
+      ))}
+      <rect x="120" y="28" width="72" height="16" rx="4" fill="white" opacity="0.9" />
+      <text x="156" y="40" fontSize="10" textAnchor="middle" fill="#085041" fontFamily="Poppins,sans-serif" fontWeight="700">y = 2x + 1</text>
+    </svg>
+  );
+}
+
 function NumberLineVisual({ total = 10, taken = 3, size = 110 }: { total: number; taken: number; size: number }) {
   const w = 260;
   const step = w / total;
@@ -121,12 +209,24 @@ function NumberLineVisual({ total = 10, taken = 3, size = 110 }: { total: number
 export function TopicVisual({ topicName, total = 4, taken = 1, animated = true, size = 110 }: TopicVisualProps) {
   const type = detectVisualType(topicName);
   if (type === 'fraction-pizza') return <PizzaVisual total={total} taken={taken} size={size} animated={animated} />;
-  if (type === 'fraction-bar') return <BarVisual total={total} taken={taken} size={size} />;
-  if (type === 'number-line') return <NumberLineVisual total={Math.min(total, 12)} taken={taken} size={size} />;
+  if (type === 'fraction-bar')   return <BarVisual total={total} taken={taken} size={size} />;
+  if (type === 'number-line')    return <NumberLineVisual total={Math.min(total, 12)} taken={taken} size={size} />;
+  if (type === 'groups')         return <GroupsVisual total={total} taken={taken} size={size} />;
+  if (type === 'shapes')         return <ShapesVisual size={size} />;
+  if (type === 'cartesian')      return <CartesianVisual size={size} />;
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center', maxWidth: size * 2 }}>
       {Array.from({ length: Math.min(total, 12) }).map((_, i) => (
-        <div key={i} style={{ width: 24, height: 24, borderRadius: '50%', background: i < taken ? '#12C6A0' : '#EAECEF', transition: `background .3s ease ${i * 0.06}s` }} />
+        <div
+          key={i}
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: '50%',
+            background: i < taken ? '#12C6A0' : '#EAECEF',
+            transition: `background .3s ease ${i * 0.06}s`,
+          }}
+        />
       ))}
     </div>
   );
