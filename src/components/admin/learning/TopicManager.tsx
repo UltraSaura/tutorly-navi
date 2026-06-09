@@ -15,6 +15,7 @@ import { CurriculumSelector } from '@/components/admin/curriculum/CurriculumSele
 import { CurriculumLocation } from '@/components/admin/curriculum/CurriculumLocation';
 import { TopicObjectivesSelector } from './TopicObjectivesSelector';
 import { GenerateLessonButton } from './GenerateLessonButton';
+import { BulkLessonGenerator } from './BulkLessonGenerator';
 import { LessonContentDisplay } from './LessonContentDisplay';
 import { useProgramTopicsForAdmin } from '@/hooks/useProgramTopicsForAdmin';
 import { useAutoLinkObjectives } from '@/hooks/useAutoSuggestObjectives';
@@ -200,6 +201,7 @@ const TopicManager = () => {
           <p className="text-muted-foreground">Manage topics within categories and curriculum</p>
         </div>
         <div className="flex gap-2">
+          <BulkLessonGenerator />
           <Button variant="outline" onClick={() => setGenerateDialogOpen(true)}>
             <Sparkles className="w-4 h-4 mr-2" />
             Generate from Objectives

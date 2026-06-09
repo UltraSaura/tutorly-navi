@@ -27,7 +27,7 @@ const LearningPage = () => {
   const { t } = useLanguage();
   const { profile } = useUserCurriculumProfile();
   const activeSchoolLevel = useActiveSchoolLevel();
-  const { data: subjects, isLoading } = useLearningSubjects();
+  const { data: subjects, isLoading, isError } = useLearningSubjects();
   const { data: stats } = useStudentStats();
 
   if (isLoading) {
@@ -48,7 +48,7 @@ const LearningPage = () => {
   }
 
   // Check if no subjects available
-  if (!subjects || subjects.length === 0) {
+  if (isError || !subjects || subjects.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center p-6">
         <Card className="max-w-md text-center">

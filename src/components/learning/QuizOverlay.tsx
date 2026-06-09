@@ -3,8 +3,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Check, X, ChevronRight, Trophy, Zap } from 'lucide-react';
 import type { Choice, Question, QuizBank } from '@/types/quiz-bank';
 import { QuestionCard } from './QuestionCard';
-import { gradeQuiz, shuffle } from '@/utils/quizEvaluation';
-import { evaluateQuestion } from '@/utils/quizEvaluation';
+import {
+  gradeQuizWithDetails,
+  shuffle,
+  evaluateQuestion,
+  scoreQuestionWithPenalty,
+  type QuizQuestionGradeDetail,
+} from '@/utils/quizEvaluation';
 import { useSubmitBankAttempt } from '@/hooks/useQuizBank';
 import { useAuth } from '@/context/AuthContext';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
@@ -110,8 +115,13 @@ function getQuestionDifficulty(question: Question): string | undefined {
   return (question as any).difficulty;
 }
 
+function formatScoreValue(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/\.?0+$/, '');
+}
+
 export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
   const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [questionGrades, setQuestionGrades] = useState<Record<string, QuizQuestionGradeDetail>>({});
   const [submitted, setSubmitted] = useState(false);
   const [startTs] = useState<number>(Date.now());
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -150,6 +160,10 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
   }, [bank]);
 
   const currentQuestion = questions[currentIndex];
+  const gradedQuiz = useMemo(
+    () => gradeQuizWithDetails(questions, questionGrades),
+    [questions, questionGrades],
+  );
 
   useEffect(() => {
     if (quizStartedRef.current) return;
@@ -193,10 +207,13 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
 
   const handleQuestionSubmit = () => {
     if (!currentQuestion) return;
-    const correct = evaluateQuestion(currentQuestion, answers[currentQuestion.id]);
+    const currentAnswer = answers[currentQuestion.id];
+    const correct = evaluateQuestion(currentQuestion, currentAnswer);
     const attemptNumber = (questionAttemptCountsRef.current[currentQuestion.id] || 0) + 1;
     questionAttemptCountsRef.current[currentQuestion.id] = attemptNumber;
     const timeToAnswerMs = Date.now() - questionViewStartedAtRef.current;
+    const maxPoints = currentQuestion.points ?? 1;
+    const { awardedPoints, penaltyFactor } = scoreQuestionWithPenalty(maxPoints, attemptNumber, correct);
 
     trackLearningInteraction({
       studentId: userId,
@@ -260,6 +277,19 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
       remediationQuestionRef.current = null;
     }
 
+    setQuestionGrades(prev => ({
+      ...prev,
+      [currentQuestion.id]: {
+        questionId: currentQuestion.id,
+        attemptCount: attemptNumber,
+        correct,
+        awardedPoints,
+        maxPoints,
+        penaltyFactor,
+        answeredCorrectlyOnAttempt: correct ? attemptNumber : null,
+        finalAnswer: currentAnswer,
+      },
+    }));
     setQuestionResult(correct);
     if (correct) setShowXpPill(true);
     setQuestionSubmitted(true);
@@ -352,15 +382,15 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
       setQuestionResult(null);
     } else {
       // Last question — submit full attempt
-      const g = gradeQuiz(questions, answers);
       if (user && bank.quizBankId !== "__empty__") {
         try {
           await submitAttempt.mutateAsync({
             bankId: bank.quizBankId,
             userId: user.id,
-            score: g.score,
-            maxScore: g.maxScore,
-            tookSeconds: Math.round((Date.now() - startTs) / 1000)
+            score: gradedQuiz.score,
+            maxScore: gradedQuiz.maxScore,
+            tookSeconds: Math.round((Date.now() - startTs) / 1000),
+            details: gradedQuiz.details,
           });
         } catch (error) {
           console.error('Failed to save attempt:', error);
@@ -373,11 +403,11 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
         learningStyleUsed: userContext?.learning_style,
         quizId: bank.quizBankId,
         topicId: getQuizTopicId(bank),
-        wasCorrect: g.score === g.maxScore,
+        wasCorrect: gradedQuiz.score === gradedQuiz.maxScore,
         metadata: {
-          score: g.score,
-          total: g.maxScore,
-          percent: g.maxScore ? Math.round((100 * g.score) / g.maxScore) : 0,
+          score: gradedQuiz.score,
+          total: gradedQuiz.maxScore,
+          percent: gradedQuiz.maxScore ? Math.round((100 * gradedQuiz.score) / gradedQuiz.maxScore) : 0,
           tookSeconds: Math.round((Date.now() - startTs) / 1000),
         },
       });
@@ -386,17 +416,21 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
 
   const handleRetest = () => {
     setAnswers({});
+    setQuestionGrades({});
     setSubmitted(false);
     setCurrentIndex(0);
     setQuestionSubmitted(false);
     setQuestionResult(null);
+    setShowXpPill(false);
+    questionAttemptCountsRef.current = {};
+    remediationUsedRef.current = false;
+    remediationQuestionRef.current = null;
   };
 
   // Final summary screen
   if (submitted) {
-    const g = gradeQuiz(questions, answers);
-    const pct = g.maxScore ? Math.round((100 * g.score) / g.maxScore) : 0;
-    const xpEarned = g.score * 10;
+    const pct = gradedQuiz.maxScore ? Math.round((100 * gradedQuiz.score) / gradedQuiz.maxScore) : 0;
+    const xpEarned = gradedQuiz.score * 10;
     const isMastered = pct >= 80;
 
     return (
@@ -425,7 +459,7 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
             style={{ background: '#F2FBF8', border: '0.5px solid #9FE1CB' }}
           >
             <p className="text-xl font-bold" style={{ color: '#085041', fontFamily: 'Poppins, sans-serif' }}>
-              {g.score}/{g.maxScore}
+              {formatScoreValue(gradedQuiz.score)}/{formatScoreValue(gradedQuiz.maxScore)}
             </p>
             <p className="text-xs" style={{ color: '#0F6E56' }}>Reponses</p>
           </div>
@@ -434,7 +468,7 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
             style={{ background: '#FAEEDA', border: '0.5px solid #FAC775' }}
           >
             <p className="text-xl font-bold" style={{ color: '#633806', fontFamily: 'Poppins, sans-serif' }}>
-              +{xpEarned}
+              +{formatScoreValue(xpEarned)}
             </p>
             <p className="text-xs" style={{ color: '#854F0B' }}>XP gagne</p>
           </div>

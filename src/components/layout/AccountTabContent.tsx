@@ -69,6 +69,28 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
               <p style={{ fontSize: 10, color: '#667085', margin: '3px 0 0', fontFamily: 'Poppins, sans-serif' }}>
                 {stats.lessonsCompleted} lecon{stats.lessonsCompleted !== 1 ? 's' : ''} terminee{stats.lessonsCompleted !== 1 ? 's' : ''} · encore {stats.xpToNextLevel} XP pour le niveau {stats.level + 1}
               </p>
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: '0.5px solid rgba(18, 198, 160, 0.22)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 10, background: '#FFF3DC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ fontSize: 16, lineHeight: 1 }}>🔥</span>
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
+                    {stats.currentStreak > 0 ? `${stats.currentStreak} jours de suite` : 'Aucune serie active'}
+                  </p>
+                  <p style={{ fontSize: 10, color: '#667085', margin: '2px 0 0', fontFamily: 'Poppins, sans-serif' }}>
+                    {stats.streakAtRisk
+                      ? 'Ta serie est en danger aujourd hui.'
+                      : stats.activeToday
+                        ? 'Serie maintenue aujourd hui.'
+                        : `Record: ${stats.longestStreak} jour${stats.longestStreak > 1 ? 's' : ''}`}
+                  </p>
+                </div>
+                {stats.longestStreak > stats.currentStreak && stats.longestStreak > 0 ? (
+                  <div style={{ borderRadius: 999, background: '#FFF3DC', border: '0.5px solid #FAC775', padding: '4px 8px', fontSize: 10, fontWeight: 700, color: '#854F0B', whiteSpace: 'nowrap' }}>
+                    Record {stats.longestStreak}
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
           <Separator />

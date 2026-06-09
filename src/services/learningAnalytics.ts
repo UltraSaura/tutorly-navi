@@ -32,7 +32,9 @@ export type LearningInteractionEventType =
   | "recommended_quiz_clicked"
   | "recommended_practice_clicked"
   | "resource_recommendation_empty"
-  | "learning_preference_changed";
+  | "learning_preference_changed"
+  | "lesson_started"
+  | "lesson_completed";
 
 export type LearningSupportType = LearningStyle;
 export type PracticeStyle = LearningStyle;

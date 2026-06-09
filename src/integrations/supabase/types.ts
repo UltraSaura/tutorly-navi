@@ -1684,6 +1684,7 @@ export type Database = {
         Row: {
           bank_id: string
           created_at: string
+          details: Json | null
           id: string
           max_score: number
           score: number
@@ -1693,6 +1694,7 @@ export type Database = {
         Insert: {
           bank_id: string
           created_at?: string
+          details?: Json | null
           id?: string
           max_score: number
           score: number
@@ -1702,6 +1704,7 @@ export type Database = {
         Update: {
           bank_id?: string
           created_at?: string
+          details?: Json | null
           id?: string
           max_score?: number
           score?: number

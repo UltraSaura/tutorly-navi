@@ -73,11 +73,11 @@ Border radius:      14px cards, 12px smaller cards, 999px pills
   - `quiz_bank_assignments` — links banks to topics (`topic_id`, `bank_id`, `trigger_video_id`, `trigger_after_n_videos`, `display_context`)
   - `prompt_templates` — all AI prompts stored here (`usage_type`, `is_active`, `priority`, `prompt_content`, `tags`)
   - `exercise_explanations_cache` — cached AI explanations (`exercise_hash`, `explanation_data JSONB`, `usage_count`)
-  - `user_learning_progress` — tracks video completions per user
+  - `user_learning_progress` — tracks video completions and lesson completions per user (`progress_type` includes `video_completed` and `lesson_completed`)
 
 ### Critical DB rules
 - **`quiz_banks` has NO `questions` column.** Always query `quiz_bank_questions` table for questions: `.from('quiz_bank_questions').select('payload, position').eq('bank_id', bankId).order('position')`
-- **`topics.lesson_content`** is JSONB with shape: `{ explanation: string, example: string, common_mistakes: string[], guided_practice: string[], exit_ticket: string[] }`
+- **`topics.lesson_content`** is JSONB with shape: `{ vocabulary?: { term: string, definition: string }[], explanation: string, example: string, common_mistakes: string[] | { mistake: string, why: string }[], guided_practice: string[], exit_ticket: string[] }`
 - **RLS is enabled.** Edge functions that query protected tables must use `SUPABASE_SERVICE_ROLE_KEY`, not the anon key.
 - **`.in('column', [])` with empty arrays generates invalid SQL** — always guard with `if (ids.length > 0)` before calling `.in()`
 
@@ -91,6 +91,8 @@ Border radius:      14px cards, 12px smaller cards, 999px pills
 | `useAllBanks(topicId, playingVideoId, completedVideoIds, userId)` | `src/hooks/useQuizBank.ts` | Returns all quiz banks for a topic with unlock status. Each bank: `{ bankId, topicId, triggerVideoId, isUnlocked, displayContext }` |
 | `useLearningSubjects()` | `src/hooks/useLearningSubjects.ts` | Returns subjects with `videos_ready` (counts both videos AND lesson content). Powers Leçons tab. |
 | `useSubjectDashboard(subjectSlug)` | `src/hooks/useSubjectDashboard.ts` | Returns subject + topics list for SubjectDashboardPage |
+| `useStudentStats()` | `src/hooks/useStudentStats.ts` | Returns XP + level + streak state derived from `lesson_completed` rows |
+| `useGuardianLessonData(guardianId, childUserIds)` | `src/hooks/useGuardianLessonData.ts` | Returns lesson completions, XP, streaks, and recent lessons for guardian dashboards |
 | `useAuth()` | `src/context/AuthContext` | Returns `{ user }` |
 | `useLanguage()` | `src/context/SimpleLanguageContext` | Returns `{ t, language }` |
 | `generateSystemMessage(...)` | `supabase/functions/ai-chat/utils/systemPrompts.ts` | Loads prompt from `prompt_templates` table and substitutes `{{variables}}` |
@@ -104,6 +106,7 @@ Border radius:      14px cards, 12px smaller cards, 999px pills
 | `VideoPlayerBox` | `src/components/learning/VideoPlayerBox.tsx` | Renders YouTube or hosted video. Props: `videoId: string \| null`, `onVideoEnd?: () => void`, `autoPlay?: boolean` |
 | `QuestionCard` | `src/components/learning/QuestionCard.tsx` | Renders any question type. Props: `question: Question`, `onChange?: (v: any) => void`, `submittedAnswer?: any`, `isCorrect?: boolean` |
 | `QuizOverlay` | `src/components/learning/QuizOverlay.tsx` | Full-screen quiz session (z-index 200). Takes a pre-assembled bank object with questions array. |
+| `OnboardingWizard` | `src/components/onboarding/OnboardingWizard.tsx` | Inline 3-step onboarding on Leçons when curriculum is missing |
 | `LessonStepper` | `src/components/learning/LessonStepper.tsx` | 5-step adaptive lesson (concept → quiz → example → mistakes → complete) |
 | `LessonPage` | `src/pages/learning/LessonPage.tsx` | Adaptive lesson page — video section if videos exist, always shows LessonStepper |
 | `PageMeta` | `src/components/seo/PageMeta.tsx` | SEO meta tags. Props: `title: string`, `description: string` |
@@ -166,7 +169,7 @@ loads the active prompt by `usage_type` and substitutes variables.
 {{curriculum}}        — "Programme Éducation Nationale française — Cycle 3, CM1 (9-10 ans)"
 {{grade_level}}       — "CM1"
 {{age_group}}         — "9-10 ans"
-{{word_budget}}       — "40-60" (words for explanation)
+{{word_budget}}       — "60-90" (example CM1 explanation budget)
 {{country}}           — "France"
 {{response_language}} — "français" or "English"
 {{learning_style}}    — "visual" | "auditory" | "kinesthetic" | "mixed"
@@ -213,6 +216,8 @@ File: `supabase/functions/generate-lesson-content/index.ts`
 5. **Quiz questions are in `quiz_bank_questions` table** (not `quiz_banks`). Always use `.from('quiz_bank_questions').select('payload, position').eq('bank_id', id).order('position')` to fetch them.
 6. **`useLearningSubjects` uses `curriculum_subject_id`** (UUID match) to find topics, not the `!inner` join chain on `learning_categories`. This is intentional — the join chain is unreliable.
 7. **`.in('col', [])` with empty arrays generates invalid SQL** — always guard.
+8. **Learning onboarding should not redirect to Profile.** If curriculum is missing, `LearningPage` shows the inline `OnboardingWizard`.
+9. **Curriculum profile reads must fall back to legacy `users.country` / `users.level`** if `curriculum_country_code` / `curriculum_level_code` are not populated yet, because signup still writes the older fields in some flows.
 
 ---
 
@@ -228,16 +233,20 @@ File: `supabase/functions/generate-lesson-content/index.ts`
 - Leçons tab showing subjects with lesson content (useLearningSubjects fixed)
 - LessonPage + LessonStepper (adaptive, video-optional, 5-step)
 - Lesson completion tracking (`user_learning_progress`, XP toast, deduplication)
+- Streak system based on `lesson_completed` rows (`useStudentStats`, completion toast, learning/account surfaces)
 - SubjectDashboardPage redesigned with lesson availability + completion state
 - LearningPage subject cards show lesson progress
+- LearningPage onboarding wizard replaces dead-end setup card
 - Historique page shows lesson completions
 - Account tab shows real XP stats + level
+- Guardian dashboards show lesson completions, streaks, XP, and recent lessons per child
 - BulkLessonGenerator admin component
+- Lesson step 0 supports vocabulary cards when `lesson_content.vocabulary` exists
 
 ### 🔲 Pending / Next
 - Generate lesson content for all CM1 topics (admin task, use BulkLessonGenerator)
 - Video production (content task, not code)
-- Student onboarding flow (set level + learning style on first login)
+- Clean up registration flow so it writes `curriculum_country_code` / `curriculum_level_code` directly and no longer depends on legacy fallback behavior
 
 ---
 

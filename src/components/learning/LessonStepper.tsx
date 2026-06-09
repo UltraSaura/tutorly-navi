@@ -1,11 +1,13 @@
 import { useRef, useCallback, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Zap, BookOpen, Lightbulb, AlertCircle } from 'lucide-react';
 import { QuestionCard } from '@/components/learning/QuestionCard';
 import { useAuth } from '@/context/AuthContext';
 import { showXpToast } from '@/components/game/XpToast';
+import { StreakChip } from '@/components/game';
+import { useStudentStats } from '@/hooks/useStudentStats';
 import { trackLearningInteraction } from '@/services/learningAnalytics';
 import type { LessonContent } from '@/types/learning';
 import type { Question } from '@/types/quiz-bank';
@@ -28,7 +30,7 @@ function extractKeyPoints(text: string, max: number): string[] {
   return text
     .split(/[.!?]+/)
     .map(s => s.trim())
-    .filter(s => s.length > 20 && s.length < 180)
+    .filter(s => s.length > 15 && s.length < 90)
     .slice(0, max);
 }
 
@@ -120,6 +122,8 @@ export function LessonStepper({
   const TOTAL_STEPS = 5;
   const [currentStep, setCurrentStep] = useState(0);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { data: stats } = useStudentStats();
   const startTimeRef = useRef<number>(Date.now());
   const [actualMinutes, setActualMinutes] = useState<number | null>(null);
   const [quizAnswer, setQuizAnswer] = useState<any>(null);
@@ -154,6 +158,9 @@ export function LessonStepper({
   const mistakes = lessonContent?.common_mistakes ?? [];
   const keyPoints = explanation ? extractKeyPoints(explanation, 4) : [];
   const exampleSteps = exampleText ? parseExampleSteps(exampleText) : [];
+  const completionStreakDays = stats?.activeToday
+    ? stats.currentStreak
+    : Math.max(1, (stats?.currentStreak ?? 0) + 1);
 
   const recordLessonCompletion = useCallback(async () => {
     if (!user?.id) return;
@@ -183,7 +190,18 @@ export function LessonStepper({
           });
 
         if (!error) {
+          void queryClient.invalidateQueries({ queryKey: ['student-stats'] });
           showXpToast(5, 'Leçon terminée !');
+
+          const nextStreak = stats?.activeToday
+            ? stats.currentStreak
+            : Math.max(1, (stats?.currentStreak ?? 0) + 1);
+
+          if (!stats?.activeToday && nextStreak > 1) {
+            window.setTimeout(() => {
+              showXpToast(0, `🔥 ${nextStreak} jours de suite !`);
+            }, 900);
+          }
         }
       }
 
@@ -196,7 +214,7 @@ export function LessonStepper({
     } catch (err) {
       console.warn('[LessonStepper] Failed to record completion:', err);
     }
-  }, [user?.id, topicId, subjectId]);
+  }, [user?.id, topicId, subjectId, queryClient, stats?.activeToday, stats?.currentStreak]);
 
   // ── Step navigation helpers ───────────────────────────────
   const goNext = useCallback(() => {
@@ -263,6 +281,24 @@ export function LessonStepper({
               </div>
             )}
 
+            {lessonContent?.vocabulary && lessonContent.vocabulary.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#667085', letterSpacing: '0.06em', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
+                  VOCABULAIRE CLÉ
+                </p>
+                {lessonContent.vocabulary.map((item, i) => (
+                  <div key={i} style={{ background: 'white', borderRadius: 10, border: '0.5px solid #EAECEF', padding: '9px 12px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <span style={{ background: '#F2FBF8', border: '0.5px solid #9FE1CB', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, color: '#085041', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                      {item.term}
+                    </span>
+                    <p style={{ fontSize: 12, color: '#374151', margin: 0, lineHeight: 1.55 }}>
+                      {item.definition}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Le cours card */}
             <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
@@ -273,7 +309,7 @@ export function LessonStepper({
                   Le cours
                 </p>
               </div>
-              <p style={{ fontSize: 15, color: '#374151', margin: 0, lineHeight: 1.85, whiteSpace: 'pre-wrap' }}>
+              <p style={{ fontSize: 15, color: '#374151', margin: 0, lineHeight: 1.85 }}>
                 {explanation || 'Leçon en cours de préparation.'}
               </p>
             </div>
@@ -513,6 +549,11 @@ export function LessonStepper({
               <p style={{ fontSize: 13, color: '#667085', margin: 0 }}>
                 {topicName}
               </p>
+              <StreakChip
+                days={completionStreakDays}
+                active={completionStreakDays > 0}
+                className="mt-3"
+              />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, width: '100%', maxWidth: 280 }}>

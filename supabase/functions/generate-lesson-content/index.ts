@@ -69,11 +69,11 @@ const AGE_MAP: Record<string, string> = {
 };
 
 const WORD_BUDGET_MAP: Record<string, string> = {
-  CP: "25-35",
-  CE1: "30-40",
-  CE2: "35-45",
-  CM1: "40-60",
-  CM2: "50-70",
+  CP: "40-55",
+  CE1: "50-65",
+  CE2: "55-70",
+  CM1: "60-90",
+  CM2: "70-100",
   "6EME": "60-80",
   "5EME": "70-90",
   "4EME": "80-100",

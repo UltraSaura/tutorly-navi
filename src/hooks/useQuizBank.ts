@@ -4,6 +4,7 @@ import type { QuizBank } from '@/types/quiz-bank';
 import { ensureQuizBank } from '@/types/quiz-bank';
 import { useActiveSchoolLevel } from './useActiveSchoolLevel';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import type { QuizQuestionGradeDetail } from '@/utils/quizEvaluation';
 
 type AllBankRow = {
   id: string;
@@ -261,6 +262,7 @@ export function useSubmitBankAttempt() {
       score: number;
       maxScore: number;
       tookSeconds?: number;
+      details?: QuizQuestionGradeDetail[];
     }) => {
       if (activeSchoolLevel.isPreviewing) {
         return { success: true, preview: true };
