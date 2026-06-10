@@ -347,7 +347,9 @@ REPONDS EN JSON VALIDE UNIQUEMENT :
     });
 
     const lessonContent = {
+      vocabulary: generatedContent.vocabulary || [],
       explanation: generatedContent.explanation,
+      examples: generatedContent.examples || [],
       example: generatedContent.example,
       common_mistakes: normalizedMistakes,
       guided_practice: selectedPractice,

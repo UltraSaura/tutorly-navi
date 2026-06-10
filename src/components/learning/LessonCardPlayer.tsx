@@ -300,6 +300,26 @@ function ExamplesCard({
   );
 }
 
+// Evaluates a single/multi question answer without relying on QuestionCard internals
+function evaluateAnswer(question: Question, answer: any): boolean {
+  if ((question as any).kind === 'single') {
+    const correct = (question as any).choices?.find((c: any) => c.correct);
+    return answer !== null && answer === correct?.id;
+  }
+  if ((question as any).kind === 'multi') {
+    const correctIds: string[] = ((question as any).choices || [])
+      .filter((c: any) => c.correct)
+      .map((c: any) => c.id);
+    return (
+      Array.isArray(answer) &&
+      answer.length === correctIds.length &&
+      correctIds.every(id => answer.includes(id))
+    );
+  }
+  // visual, numeric, ordering, slider, match, fill-expr -> accept any answer
+  return true;
+}
+
 function QuizCard({
   inlineBankId,
   topicId,
@@ -310,8 +330,9 @@ function QuizCard({
   topicId: string;
   onNext: () => void;
 }) {
-  const [answer, setAnswer] = useState<unknown>(null);
+  const [answer, setAnswer]       = useState<any>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [correct, setCorrect]     = useState<boolean | null>(null);
 
   const { data: question } = useQuery<Question | null>({
     queryKey: ['lesson-inline-q', topicId, inlineBankId],
@@ -322,12 +343,18 @@ function QuizCard({
         .eq('bank_id', inlineBankId)
         .order('position');
       if (!rows?.length) return null;
-      const questions = rows.map((r) => r.payload as unknown as Question);
-      return questions[Math.floor(Math.random() * questions.length)] ?? null;
+      const qs = rows.map(r => r.payload as unknown as Question);
+      return qs[Math.floor(Math.random() * qs.length)] ?? null;
     },
     enabled: !!inlineBankId,
     staleTime: Infinity,
   });
+
+  const handleValidate = () => {
+    if (answer == null) return;
+    setCorrect(question ? evaluateAnswer(question, answer) : true);
+    setSubmitted(true);
+  };
 
   if (!question) {
     return (
@@ -344,25 +371,52 @@ function QuizCard({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
       <CardBadge icon={<Zap className="h-3 w-3" />} label="Petit test" color="amber" />
+
+      {/* QuestionCard - interactive mode, never shows red/green internally */}
       <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14 }}>
-        <QuestionCard question={question} onChange={setAnswer} submittedAnswer={submitted ? answer : undefined} isCorrect={undefined} />
+        <QuestionCard
+          question={question}
+          onChange={setAnswer}
+          allowRetry={false}
+          onFinish={(isCorrect) => {
+            setCorrect(isCorrect);
+            setSubmitted(true);
+          }}
+        />
       </div>
+
+      {/* Feedback banner - shown after Valider */}
+      {submitted && (
+        <div style={{
+          borderRadius: 12, padding: '11px 14px',
+          background: correct ? '#EAF3DE' : '#FFF3DC',
+          border: `0.5px solid ${correct ? '#9FE1CB' : '#FAC775'}`,
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          <span style={{ fontSize: 18 }}>{correct ? '🎉' : '💡'}</span>
+          <p style={{
+            fontSize: 13, fontWeight: 700, margin: 0, flex: 1,
+            color: correct ? '#27500A' : '#B45309',
+          }}>
+            {correct
+              ? 'Parfait ! Tu as bien compris.'
+              : 'Pas tout à fait — continue, tu apprends !'}
+          </p>
+        </div>
+      )}
+
+      {/* Valider -> Suivant */}
       {!submitted ? (
         <button
-          onClick={() => { if (answer != null) setSubmitted(true); }}
+          onClick={handleValidate}
           disabled={answer == null}
           style={{
-            width: '100%',
-            padding: 13,
-            borderRadius: 14,
-            border: 'none',
+            marginTop: 'auto', width: '100%', padding: 13, borderRadius: 14, border: 'none',
             background: answer != null ? '#12C6A0' : '#EAECEF',
             color: answer != null ? '#0F172A' : '#B4B2A9',
-            fontSize: 13,
-            fontWeight: 700,
+            fontSize: 13, fontWeight: 700,
             cursor: answer != null ? 'pointer' : 'not-allowed',
             fontFamily: 'Poppins, sans-serif',
-            marginTop: 'auto',
           }}
         >
           Valider
