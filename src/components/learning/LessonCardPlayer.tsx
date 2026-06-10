@@ -593,6 +593,22 @@ export function LessonCardPlayer({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: 520 }}>
       <div style={{ padding: '8px 16px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        {cardIndex > 0 && (
+          <button
+            onClick={() => setCardIndex(cardIndex - 1)}
+            aria-label="Carte précédente"
+            style={{
+              width: 28, height: 28, borderRadius: '50%',
+              border: '0.5px solid #EAECEF', background: 'white',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M8 2L4 6l4 4" stroke="#667085" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        )}
         <ProgressBar current={cardIndex} total={cards.length} label={currentCard.label} />
         <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
           {cards.map((_, i) => (
