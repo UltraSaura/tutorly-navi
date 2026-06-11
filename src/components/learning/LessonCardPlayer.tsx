@@ -108,7 +108,9 @@ function IntroCard({
   const explanation = lessonContent?.explanation ?? '';
   const sentences = explanation.split(/(?<=[.!?])\s+/).filter(Boolean);
   const hookSentence = sentences[0] ?? explanation;
-  const restOfExplanation = sentences.slice(1).join(' ');
+  const conceptSentences = sentences.slice(1, 4);
+
+  const isFraction = /fraction|diviser|partager|moitié|tiers|quart/i.test(topicName);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
@@ -117,9 +119,10 @@ function IntroCard({
         {topicName}
       </h2>
 
-      <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
-        <TopicVisual topicName={topicName} total={4} taken={1} animated size={visualSize} />
-        {/fraction|diviser|partager|moitié|tiers|quart/i.test(topicName) && (
+      {/* Visual - shows fraction notation only for fraction topics */}
+      <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14, display: 'flex', alignItems: 'center', justifyContent: isFraction ? 'flex-start' : 'center', gap: 14 }}>
+        <TopicVisual topicName={topicName} total={isFraction ? 4 : 6} taken={isFraction ? 1 : 3} animated size={visualSize} />
+        {isFraction && (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
               <div style={{ textAlign: 'center' }}>
@@ -133,15 +136,32 @@ function IntroCard({
         )}
       </div>
 
-      <div style={{ background: '#F2FBF8', borderRadius: 12, border: '0.5px solid #9FE1CB', padding: '11px 14px' }}>
-        <p style={{ fontSize: bodySize, color: '#374151', margin: 0, lineHeight: 1.8 }}
-           dangerouslySetInnerHTML={{ __html: hookSentence }} />
+      {/* Hook - first sentence, big and teal */}
+      <div style={{ background: '#F2FBF8', borderRadius: 12, border: '0.5px solid #9FE1CB', padding: '12px 14px' }}>
+        <p style={{ fontSize: bodySize + 1, color: '#374151', margin: 0, lineHeight: 1.85, fontWeight: 600 }}>
+          {hookSentence}
+        </p>
       </div>
 
-      {restOfExplanation && (
-        <div style={{ background: 'white', borderRadius: 12, border: '0.5px solid #EAECEF', padding: '11px 14px' }}>
-          <p style={{ fontSize: bodySize - 1, color: '#374151', margin: 0, lineHeight: 1.8 }}
-             dangerouslySetInnerHTML={{ __html: restOfExplanation }} />
+      {/* Concept - each sentence as a numbered visual card */}
+      {conceptSentences.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {conceptSentences.map((sentence, i) => (
+            <div key={i} style={{
+              background: 'white', borderRadius: 12, border: '0.5px solid #EAECEF',
+              padding: '10px 13px', display: 'flex', alignItems: 'flex-start', gap: 10,
+            }}>
+              <span style={{
+                width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                background: '#F2FBF8', border: '0.5px solid #9FE1CB',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10, fontWeight: 800, color: '#12C6A0', marginTop: 2,
+              }}>{i + 1}</span>
+              <p style={{ fontSize: bodySize, color: '#374151', margin: 0, lineHeight: 1.85 }}>
+                {sentence}
+              </p>
+            </div>
+          ))}
         </div>
       )}
 
