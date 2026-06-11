@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Wand2, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { BookOpen, Wand2, Loader2, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 interface TopicRow {
@@ -72,6 +72,7 @@ export function BulkLessonGenerator() {
   const [isRunning, setIsRunning] = useState(false);
   const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!isRunning || runStartedAt === null) return;
@@ -129,6 +130,37 @@ export function BulkLessonGenerator() {
 
   const toggle = (id: string) => {
     setSelected((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  };
+
+  const handleDeleteOne = async (topicId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm('Supprimer la leçon générée pour ce sujet ?')) return;
+    setDeletingIds(prev => new Set([...prev, topicId]));
+    const { error } = await supabase
+      .from('topics')
+      .update({ lesson_content: null })
+      .eq('id', topicId);
+    setDeletingIds(prev => { const n = new Set(prev); n.delete(topicId); return n; });
+    if (!error) {
+      queryClient.invalidateQueries({ queryKey: ['topics-bulk-lesson'] });
+      queryClient.invalidateQueries({ queryKey: ['topic-lesson-content'] });
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    const toDelete = selected.filter(id => topics.find(t => t.id === id)?.lesson_content);
+    if (!toDelete.length) return;
+    if (!window.confirm(`Supprimer les leçons de ${toDelete.length} sujet(s) ?`)) return;
+    setDeletingIds(new Set(toDelete));
+    await Promise.all(
+      toDelete.map(id =>
+        supabase.from('topics').update({ lesson_content: null }).eq('id', id)
+      )
+    );
+    setDeletingIds(new Set());
+    setSelected([]);
+    queryClient.invalidateQueries({ queryKey: ['topics-bulk-lesson'] });
+    queryClient.invalidateQueries({ queryKey: ['topic-lesson-content'] });
   };
 
   const handleGenerate = async () => {
@@ -342,9 +374,21 @@ export function BulkLessonGenerator() {
                         </Badge>
                       )}
                       {topic.lesson_content ? (
-                        <Badge className="h-5 border-green-200 bg-green-50 text-xs text-green-700 hover:bg-green-50">
-                          Leçon ✓
-                        </Badge>
+                        <>
+                          <Badge className="h-5 border-green-200 bg-green-50 text-xs text-green-700 hover:bg-green-50">
+                            Leçon ✓
+                          </Badge>
+                          <button
+                            onClick={(e) => handleDeleteOne(topic.id, e)}
+                            disabled={deletingIds.has(topic.id)}
+                            title="Supprimer la leçon"
+                            className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-red-50 hover:text-red-500 disabled:opacity-40"
+                          >
+                            {deletingIds.has(topic.id)
+                              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              : <Trash2 className="h-3.5 w-3.5" />}
+                          </button>
+                        </>
                       ) : (
                         <Badge variant="outline" className="h-5 text-xs text-muted-foreground">
                           Pas de leçon
@@ -360,10 +404,23 @@ export function BulkLessonGenerator() {
               <span className="text-sm text-muted-foreground">
                 {selected.length} sélectionné{selected.length !== 1 ? 's' : ''}
               </span>
-              <Button onClick={handleGenerate} disabled={!selected.length || isRunning} className="gap-2">
-                <Wand2 className="h-4 w-4" />
-                Générer {selected.length > 0 ? `${selected.length} leçon${selected.length !== 1 ? 's' : ''}` : ''}
-              </Button>
+              <div className="flex gap-2">
+                {selected.some(id => topics.find(t => t.id === id)?.lesson_content) && (
+                  <Button
+                    variant="outline"
+                    onClick={handleDeleteSelected}
+                    disabled={isRunning || deletingIds.size > 0}
+                    className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Supprimer les leçons
+                  </Button>
+                )}
+                <Button onClick={handleGenerate} disabled={!selected.length || isRunning} className="gap-2">
+                  <Wand2 className="h-4 w-4" />
+                  Générer {selected.length > 0 ? `${selected.length} leçon${selected.length !== 1 ? 's' : ''}` : ''}
+                </Button>
+              </div>
             </div>
           </>
         )}
