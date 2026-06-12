@@ -1,31 +1,20 @@
-## Goal
-For every `numeric` question (non-fraction variant), render a tap-to-fill keypad under the input so students can answer without a hardware keyboard. Matches CM1 mobile-first UX.
+## Problem
 
-## Scope
-- Student-facing and admin preview both use `QuestionCard.tsx` numeric branch, so a single change covers both.
-- Only the `numeric` kind with `answerFormat !== "fraction"` (lines 586–630). The fraction variant already has its own keypad and is untouched.
+On `/admin/learning`, when previewing a quiz with a "Compléter l'expression" (`fill-expr`) question, the preview only shows the expression with answers filled in and a small `blank: answer` legend. The "suggested responses" chips that the student would drag into the blanks are missing.
 
-## Design (follows project tokens)
-- Layout: 3×4 grid centered below the existing input, max-width ~240px.
-  - Row 1–3: `1 2 3 / 4 5 6 / 7 8 9`
-  - Row 4: `± 0 ⌫`
-- Chip style: `w-14 h-12 rounded-xl bg-white border border-[#EAECEF] text-[#0F172A] font-bold text-xl shadow-sm active:scale-95 active:bg-[#F2FBF8]`, Poppins.
-- `±` toggles sign of current value (no-op when empty / when range.min ≥ 0).
-- `⌫` removes last character.
-- Digit tap appends digit; if appending would exceed `range.max` or fall below `range.min`, ignore the tap.
-- Tap also calls existing `setVal(...)` so `onChange` flows through unchanged. The native `<input>` stays mounted and editable (keyboard typing still works).
+Cause: `src/components/admin/learning/QuizPreviewDialog.tsx` (lines 119–139) has its own custom renderer for `fill-expr` that ignores `question.chips`. The student-facing `FillExprQuestionView` does render them, but it's not used here.
 
-## Edits
-- File: `src/components/learning/QuestionCard.tsx`
-  - Inside the existing `question.kind === "numeric" && answerFormat !== "fraction"` block (around line 586–630), add a `<NumericKeypad value={value} onChange={setVal} range={(question as any).range} />` directly below the range hint.
-  - Add a small inline `NumericKeypad` component at the bottom of the same file (kept local to avoid new files). Pure presentational, no new deps.
+## Fix
 
-## Out of scope
-- Fraction numeric input (already has keypad).
-- Fill-expr chips (separate change).
-- Hiding the native input — kept for accessibility and admins.
+Update the `case 'fill-expr':` block in `QuizPreviewDialog.tsx` so the admin preview shows the same layout a student sees, with the answer revealed:
 
-## Verification
-- Open admin Preview on a numeric question → keypad visible, taps fill the box, `⌫` deletes, `±` toggles, out-of-range taps ignored.
-- Run a student quiz with a numeric question → same behavior.
-- Build passes (no new types).
+1. Render the template, replacing each `___` with a green pill containing the correct answer for that blank (keep current behavior — answers stay visible since this is the "answers revealed" dialog).
+2. **Add a chips row below the expression**, rendered from `question.chips`, styled like the student `FillExprQuestionView` chips (square rounded tiles, neutral background). These are non-interactive in the admin preview — purely a visual representation of what the student will see to drag.
+3. Add a small caption above the chips row: `Suggested responses (drag targets):` so admins understand the role of the chips.
+4. Keep the existing `blank: answer` badge legend below the chips as an answer key.
+
+No changes to question data, types, or the student-facing component. Scope is purely the admin preview renderer.
+
+## Files
+
+- `src/components/admin/learning/QuizPreviewDialog.tsx` — replace the `fill-expr` case in `AnswerDisplay`.
