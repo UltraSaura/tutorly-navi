@@ -626,6 +626,11 @@ export function QuestionCard({
               Entre {(question as any).range.min} et {(question as any).range.max}
             </p>
           )}
+          <NumericKeypad
+            value={value}
+            onChange={setVal}
+            range={(question as any).range}
+          />
         </div>
       )}
 
