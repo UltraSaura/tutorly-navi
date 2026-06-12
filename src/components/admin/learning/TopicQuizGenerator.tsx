@@ -23,6 +23,7 @@ import { ensureQuizBank } from '@/types/quiz-bank';
 import type { Video } from '@/types/learning';
 import { dedupeSchoolLevels, getSchoolLevelLabel, normalizeSchoolLevel } from '@/domain/schoolLevels';
 import { SUPPORTED_LANGUAGES } from '@/locales';
+import { MathText } from '@/components/ui/MathText';
 
 interface TopicQuizGeneratorProps {
   open: boolean;
@@ -815,7 +816,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                           <span className="text-sm font-medium text-muted-foreground">Q{index + 1}</span>
                           <span className="text-xs px-2 py-0.5 bg-muted rounded">{question.kind}</span>
                         </div>
-                        <p className="font-medium">{question.prompt}</p>
+                        <p className="font-medium"><MathText>{question.prompt}</MathText></p>
                         {question.hint && <p className="text-sm text-muted-foreground mt-1">Hint: {question.hint}</p>}
                       </div>
                       <div className="flex gap-1">

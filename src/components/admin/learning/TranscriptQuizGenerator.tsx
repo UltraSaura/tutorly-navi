@@ -18,6 +18,7 @@ import { QuestionEditor } from './QuestionEditor';
 import { QuestionCard } from '@/components/learning/QuestionCard';
 import { gradeQuiz } from '@/utils/quizEvaluation';
 import type { Question } from '@/types/quiz-bank';
+import { MathText } from '@/components/ui/MathText';
 
 interface TranscriptQuizGeneratorProps {
   open: boolean;
@@ -505,7 +506,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                             {question.kind}
                           </span>
                         </div>
-                        <p className="font-medium">{question.prompt}</p>
+                        <p className="font-medium"><MathText>{question.prompt}</MathText></p>
                         {question.hint && (
                           <p className="text-sm text-muted-foreground mt-1">
                             Hint: {question.hint}
@@ -678,7 +679,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                           )}
                           <div className="flex-1 min-w-0">
                             <span className="text-sm font-medium">Q{index + 1}:</span>{' '}
-                            <span className="text-sm truncate">{question?.prompt}</span>
+                            <span className="text-sm truncate"><MathText>{question?.prompt ?? ''}</MathText></span>
                           </div>
                           <span className="text-xs text-muted-foreground flex-shrink-0">
                             {detail.correct ? `+${detail.points}` : '0'} pts

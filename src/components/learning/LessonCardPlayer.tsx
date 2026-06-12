@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Zap, BookOpen, AlertCircle, ChevronDown } from 'lucide-react';
+import { Trophy, Zap, BookOpen, AlertCircle, ChevronDown, Lightbulb } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useUserCurriculumProfile } from '@/hooks/useUserCurriculumProfile';
@@ -10,8 +10,8 @@ import { trackLearningInteraction } from '@/services/learningAnalytics';
 import { TopicVisual } from './visuals/TopicVisual';
 import { QuestionCard } from './QuestionCard';
 import { getAgeConfig } from './lesson/ageConfig';
-import type { LessonContent, LessonExample } from '@/types/learning';
-import type { Question } from '@/types/quiz-bank';
+import type { LessonContent, LessonExample, LessonExampleStep } from '@/types/learning';
+import type { Question, SingleQ } from '@/types/quiz-bank';
 
 interface LessonCardPlayerProps {
   topicId: string;
@@ -22,7 +22,7 @@ interface LessonCardPlayerProps {
   subjectId?: string | null;
 }
 
-type CardType = 'intro' | 'vocabulary' | 'examples' | 'quiz' | 'mistake' | 'complete';
+type CardType = 'intro' | 'vocabulary' | 'examples' | 'worked-example' | 'quiz' | 'vocab-quiz' | 'mistake' | 'complete';
 
 interface Card {
   type: CardType;
@@ -33,7 +33,9 @@ function buildCards(content: LessonContent | null, hasQuiz: boolean): Card[] {
   const cards: Card[] = [{ type: 'intro', label: 'Leçon' }];
   if (content?.vocabulary?.length) cards.push({ type: 'vocabulary', label: 'Vocabulaire' });
   if (content?.examples?.length) cards.push({ type: 'examples', label: 'Exemples' });
+  if (content?.example) cards.push({ type: 'worked-example', label: 'Résolution' });
   if (hasQuiz) cards.push({ type: 'quiz', label: 'Quiz' });
+  else if ((content?.vocabulary?.length ?? 0) >= 2) cards.push({ type: 'vocab-quiz', label: 'Quiz' });
   if (content?.common_mistakes?.length) cards.push({ type: 'mistake', label: 'Piège' });
   cards.push({ type: 'complete', label: 'Terminé' });
   return cards;
@@ -250,11 +252,16 @@ function ExamplesCard({
   const [active, setActive] = useState(0);
   const shownExamples = examples.slice(0, exampleCount);
   const ex = shownExamples[active] ?? shownExamples[0];
+
+  const isPartWhole = shownExamples.some(
+    e => Number.isInteger(e.total) && Number.isInteger(e.taken) && (e.total ?? 0) > 0
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
       <CardBadge icon={<Zap className="h-3 w-3" />} label="Vois le pattern" color="amber" />
       <h2 style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif', lineHeight: 1.3 }}>
-        La même règle, des chiffres différents
+        {isPartWhole ? 'La même règle, des chiffres différents' : '3 exemples · Même principe'}
       </h2>
 
       <div style={{ display: 'flex', gap: 6 }}>
@@ -276,7 +283,7 @@ function ExamplesCard({
               transition: 'all .15s',
             }}
           >
-            {e.fraction ?? `${e.taken}/${e.total}`}
+            {isPartWhole ? (e.fraction ?? `${e.taken}/${e.total}`) : `Ex. ${i + 1}`}
           </button>
         ))}
       </div>
@@ -290,32 +297,246 @@ function ExamplesCard({
           transition={{ duration: 0.2 }}
           style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
         >
-          <div style={{ display: 'flex', justifyContent: 'center', background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14 }}>
-            <TopicVisual topicName={topicName} total={ex.total} taken={ex.taken} animated size={visualSize} />
-          </div>
-          <p style={{ fontSize: bodySize - 1, color: '#374151', margin: 0, lineHeight: 1.6 }}>
-            {ex.context}
-          </p>
-          <div style={{ background: '#F2FBF8', borderRadius: 12, border: '0.5px solid #9FE1CB', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: 22, fontWeight: 800, color: '#12C6A0', margin: 0, borderBottom: '2.5px solid #12C6A0', paddingBottom: 2, lineHeight: 1, fontFamily: 'Poppins, sans-serif' }}>
-                {ex.taken}
+          {isPartWhole ? (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'center', background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14 }}>
+                <TopicVisual topicName={topicName} total={ex.total} taken={ex.taken} animated size={visualSize} />
+              </div>
+              <p style={{ fontSize: bodySize - 1, color: '#374151', margin: 0, lineHeight: 1.6 }}>
+                {ex.context}
               </p>
-              <p style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', margin: 0, lineHeight: 1.2, fontFamily: 'Poppins, sans-serif' }}>
-                {ex.total}
-              </p>
-            </div>
-            <p style={{ fontSize: bodySize - 2, color: '#374151', margin: 0, lineHeight: 1.6, flex: 1 }}>
-              {ex.explanation}
-            </p>
-          </div>
+              <div style={{ background: '#F2FBF8', borderRadius: 12, border: '0.5px solid #9FE1CB', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: 22, fontWeight: 800, color: '#12C6A0', margin: 0, borderBottom: '2.5px solid #12C6A0', paddingBottom: 2, lineHeight: 1, fontFamily: 'Poppins, sans-serif' }}>
+                    {ex.taken}
+                  </p>
+                  <p style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', margin: 0, lineHeight: 1.2, fontFamily: 'Poppins, sans-serif' }}>
+                    {ex.total}
+                  </p>
+                </div>
+                <p style={{ fontSize: bodySize - 2, color: '#374151', margin: 0, lineHeight: 1.6, flex: 1 }}>
+                  {ex.explanation}
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ background: '#F2FBF8', borderRadius: 12, border: '0.5px solid #9FE1CB', padding: '12px 14px' }}>
+                <p style={{ fontSize: bodySize, color: '#085041', margin: 0, lineHeight: 1.7, fontWeight: 600, fontFamily: 'Poppins, sans-serif' }}>
+                  {ex.context}
+                </p>
+              </div>
+              <div style={{ background: 'white', borderRadius: 12, border: '0.5px solid #EAECEF', padding: '12px 14px' }}>
+                <p style={{ fontSize: bodySize - 1, color: '#374151', margin: 0, lineHeight: 1.7, fontFamily: 'Poppins, sans-serif' }}>
+                  {ex.explanation}
+                </p>
+              </div>
+            </>
+          )}
         </motion.div>
       </AnimatePresence>
 
       <p style={{ fontSize: 10, color: '#9CA3AF', margin: 0, textAlign: 'center' }}>
-        Appuie sur chaque fraction pour voir le changement
+        {isPartWhole ? 'Appuie sur chaque fraction pour voir le changement' : 'Appuie sur chaque exemple'}
       </p>
-      <NextButton onClick={onNext} />
+      <NextButton onClick={onNext} label="J'ai vu le pattern →" />
+    </div>
+  );
+}
+
+function parseExampleSteps(text: string): LessonExampleStep[] {
+  const parts = text
+    .split(/\n(?=\d+\.\s|Étape\s*\d+\s*:)/i)
+    .map(s => s.trim())
+    .filter(Boolean);
+  if (parts.length > 1) {
+    return parts.map((part, i) => {
+      const m = part.match(/^(?:\d+\.\s*|Étape\s*\d+\s*:\s*)(.+)/is);
+      return { label: `Étape ${i + 1}`, line: m ? m[1].trim() : part };
+    });
+  }
+  return text
+    .split('\n')
+    .map((s, i) => ({ label: `Étape ${i + 1}`, line: s.trim() }))
+    .filter(s => s.line.length > 0);
+}
+
+function WorkedExampleCard({
+  example,
+  exampleSteps,
+  onNext,
+  bodySize = 14,
+}: {
+  example: string;
+  exampleSteps?: LessonExampleStep[];
+  onNext: () => void;
+  bodySize?: number;
+}) {
+  const steps = exampleSteps?.length ? exampleSteps : parseExampleSteps(example);
+  const [revealed, setRevealed] = useState(1);
+  const hasLabels = !!exampleSteps?.length;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
+      <CardBadge icon={<Lightbulb className="h-3 w-3" />} label="Exemple résolu" color="teal" />
+      <h2 style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif', lineHeight: 1.3 }}>
+        Résolution pas à pas
+      </h2>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+        {steps.map((step, idx) => {
+          const isRevealed = idx < revealed;
+          const isVerif = step.label.toLowerCase().startsWith('vérif') || step.label.toLowerCase().startsWith('verif');
+          return (
+            <div
+              key={idx}
+              style={{
+                background: isRevealed ? (isVerif ? '#EAF3DE' : '#F2FBF8') : '#F9FAFB',
+                border: `0.5px solid ${isRevealed ? (isVerif ? '#9FE1CB' : '#9FE1CB') : '#EAECEF'}`,
+                borderRadius: 11,
+                padding: '9px 12px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 10,
+                transition: 'background .25s, border-color .25s',
+              }}
+            >
+              <span style={{
+                fontSize: 9,
+                fontWeight: 700,
+                color: isRevealed ? '#0F6E56' : '#D1D5DB',
+                flexShrink: 0,
+                minWidth: hasLabels ? 80 : 18,
+                paddingTop: 2,
+                lineHeight: 1.4,
+                textTransform: hasLabels ? 'none' : 'none',
+              }}>
+                {isRevealed ? step.label : '···'}
+              </span>
+              <p style={{
+                fontSize: bodySize - 1,
+                color: isRevealed ? '#0F172A' : '#D1D5DB',
+                margin: 0,
+                lineHeight: 1.7,
+                fontFamily: 'Poppins, sans-serif',
+                transition: 'color .25s',
+                fontWeight: isVerif ? 600 : 400,
+              }}>
+                {isRevealed ? step.line : '· · · · · ·'}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      {revealed < steps.length ? (
+        <button
+          onClick={() => setRevealed(r => Math.min(r + 1, steps.length))}
+          style={{
+            width: '100%',
+            padding: 12,
+            borderRadius: 12,
+            border: '1.5px solid #12C6A0',
+            background: 'white',
+            color: '#085041',
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: 'pointer',
+            fontFamily: 'Poppins, sans-serif',
+            marginTop: 'auto',
+          }}
+        >
+          Révéler l'étape {revealed + 1} →
+        </button>
+      ) : (
+        <NextButton onClick={onNext} />
+      )}
+    </div>
+  );
+}
+
+function buildVocabQuestion(vocabulary: NonNullable<LessonContent['vocabulary']>): SingleQ {
+  const idx = Math.floor(Math.random() * vocabulary.length);
+  const target = vocabulary[idx];
+  const distractors = vocabulary
+    .filter((_, i) => i !== idx)
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 3);
+
+  const choices = [
+    { id: 'c0', label: target.definition, correct: true },
+    ...distractors.map((d, i) => ({ id: `w${i}`, label: d.definition, correct: false })),
+  ].sort(() => Math.random() - 0.5);
+
+  return {
+    id: `vocab_${target.term}`,
+    kind: 'single',
+    prompt: `Que signifie « ${target.term} » ?`,
+    choices,
+  };
+}
+
+function VocabQuizCard({
+  vocabulary,
+  onNext,
+}: {
+  vocabulary: NonNullable<LessonContent['vocabulary']>;
+  onNext: () => void;
+}) {
+  const [question] = useState<SingleQ>(() => buildVocabQuestion(vocabulary));
+  const [answer, setAnswer] = useState<any>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const correct = submitted
+    ? question.choices.find(c => c.id === answer)?.correct ?? false
+    : null;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
+      <CardBadge icon={<Zap className="h-3 w-3" />} label="Petit test" color="amber" />
+
+      <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14 }}>
+        <QuestionCard
+          question={question as unknown as Question}
+          onChange={setAnswer}
+          allowRetry={false}
+          onFinish={(_isCorrect) => {
+            setSubmitted(true);
+          }}
+        />
+      </div>
+
+      {submitted && (
+        <div style={{
+          borderRadius: 12, padding: '11px 14px',
+          background: correct ? '#EAF3DE' : '#FFF3DC',
+          border: `0.5px solid ${correct ? '#9FE1CB' : '#FAC775'}`,
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          <span style={{ fontSize: 18 }}>{correct ? '🎉' : '💡'}</span>
+          <p style={{ fontSize: 13, fontWeight: 700, margin: 0, flex: 1, color: correct ? '#27500A' : '#B45309' }}>
+            {correct ? 'Parfait ! Tu as bien compris.' : 'Pas tout à fait — continue, tu apprends !'}
+          </p>
+        </div>
+      )}
+
+      {!submitted ? (
+        <button
+          onClick={() => { if (answer != null) setSubmitted(true); }}
+          disabled={answer == null}
+          style={{
+            marginTop: 'auto', width: '100%', padding: 13, borderRadius: 14, border: 'none',
+            background: answer != null ? '#12C6A0' : '#EAECEF',
+            color: answer != null ? '#0F172A' : '#B4B2A9',
+            fontSize: 13, fontWeight: 700,
+            cursor: answer != null ? 'pointer' : 'not-allowed',
+            fontFamily: 'Poppins, sans-serif',
+          }}
+        >
+          Valider
+        </button>
+      ) : (
+        <NextButton onClick={onNext} />
+      )}
     </div>
   );
 }
@@ -667,6 +888,17 @@ export function LessonCardPlayer({
               visualSize={visualSize}
               exampleCount={ageConfig.exampleCount}
             />
+          )}
+          {currentCard.type === 'worked-example' && lessonContent?.example && (
+            <WorkedExampleCard
+              example={lessonContent.example}
+              exampleSteps={lessonContent.example_steps}
+              onNext={goNext}
+              bodySize={bodySize}
+            />
+          )}
+          {currentCard.type === 'vocab-quiz' && lessonContent?.vocabulary && (
+            <VocabQuizCard vocabulary={lessonContent.vocabulary} onNext={goNext} />
           )}
           {currentCard.type === 'quiz' && inlineBankId && (
             <QuizCard topicName={topicName} inlineBankId={inlineBankId} topicId={topicId} onNext={goNext} />

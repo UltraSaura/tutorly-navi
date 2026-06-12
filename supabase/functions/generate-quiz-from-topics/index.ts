@@ -35,9 +35,14 @@ function buildTypeInstructions(questionTypes: string[]): string {
   If NO visual is needed, omit context_visual entirely and keep the prompt self-contained.`;
       case 'multi':
         return `- "multi": Multiple choice with MULTIPLE correct answers (2-3 typically). Include 4 choices with "correct": true on multiple.
-  Same context_visual support as "single" — add one if the question references a visual element.`;
+  Same context_visual support as "single" — add one if the question references a visual element.
+  CRITICAL — choice labels must be SHORT, SELF-CONTAINED AFFIRMATIONS (≤ 15 words each). Never embed a derivation, calculation walkthrough, or verification inside a choice label. Wrong: "Si x = 4, alors 3(4) − 7 = 5, donc 5 ≠ 8, ce qui est faux." Right: "La solution est x = 5." or "Ajouter 7 aux deux membres est la première étape."
+  A choice should state ONE claim, not explain it. The student decides if the claim is true or false.`;
       case 'numeric':
-        return `- "numeric": Answer is a number. Include "answer" (the correct number) and optionally "range": { "min": X, "max": Y }.`;
+        return `- "numeric": Answer is a number. Include "answer" (the correct number) and optionally "range": { "min": X, "max": Y }.
+  ALWAYS include "dragOptions": an array of 4 shuffled numbers — the correct answer plus 3 plausible but wrong distractors (close but distinct values). This lets students tap/drag chips instead of typing.
+  Example: answer is 48 → "dragOptions": [48, 42, 50, 36] (shuffled so correct is not always first).
+  Choose distractors that are numerically close, follow a common mistake pattern (off-by-one, wrong operation, etc.), and are distinct from each other.`;
       case 'ordering':
         return `- "ordering": Put items in correct order. Include "items" (shuffled array) and "correctOrder" (correct sequence). Frame these as step-building, process-ordering, or action-ordering when appropriate.`;
       case 'visual_pie':
@@ -177,6 +182,7 @@ function buildLearningFriendlyGuidance(): string {
 - For visual questions, the prompt and hint must clearly refer to the visual element the student sees, such as the pie, slices, angle, or rays.
 - For ordering questions, use step-building, process-ordering, or action-ordering language when appropriate.
 - For single and multi questions, include some verbal-reasoning answer choices when appropriate, such as short explanations, comparison statements, or "which sentence is true" choices.
+- Choice labels for "single" and "multi" must be concise affirmations (≤ 15 words). Never embed a calculation, derivation, or verification inside a choice. "La solution est x = 5." is correct. "Si x = 4, alors 3(4) − 7 = 5, donc 5 ≠ 8, ce qui est faux." is forbidden — that is an explanation, not a claim.
 - Do not use technical labels such as visual learner, auditory learner, kinesthetic learner, learning modality, or cognitive preference.
 - Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, visual, slider, match, fill-expr.
 - For slider: always include min, max, step, answer, tolerance. For match: always include 3-5 pairs and an answers object. For fill-expr: always include template, blanks, chips, answers.
@@ -228,6 +234,78 @@ function repairContextVisual(question: any) {
   }
 }
 
+/**
+ * Solve ax + b = c  or  ax = c  extracted from prompt text (strips LaTeX $).
+ * Returns null if no solvable linear equation is found.
+ */
+function solveLinearFromPrompt(prompt: string): number | null {
+  // Normalise: strip LaTeX wrappers, replace unicode minus U+2212 with hyphen
+  const clean = prompt
+    .replace(/\$/g, '')
+    .replace(/\\[a-zA-Z]+\{?/g, '')
+    .replace(/−/g, '-')   // unicode minus → ASCII hyphen
+    .replace(/[{}]/g, '');
+
+  // ax ± b = c
+  let m = clean.match(/(\d+(?:\.\d+)?)\s*x\s*([+\-])\s*(\d+(?:\.\d+)?)\s*=\s*(-?\d+(?:\.\d+)?)/);
+  if (m) {
+    const a = parseFloat(m[1]);
+    const b = parseFloat(m[3]) * (m[2] === '+' ? 1 : -1);
+    const c = parseFloat(m[4]);
+    const x = (c - b) / a;
+    return isFinite(x) ? Math.round(x * 10000) / 10000 : null;
+  }
+  // ax = c  (no b term)
+  m = clean.match(/(\d+(?:\.\d+)?)\s*x\s*=\s*(-?\d+(?:\.\d+)?)/);
+  if (m) {
+    const a = parseFloat(m[1]);
+    const c = parseFloat(m[2]);
+    const x = c / a;
+    return isFinite(x) ? Math.round(x * 10000) / 10000 : null;
+  }
+  return null;
+}
+
+/**
+ * If a "single" question contains a linear equation in its prompt and ALL choices
+ * are of the form "x = N", override the correct flags with mathematically verified values.
+ * This catches AI hallucinations where the correct flag is placed on the wrong choice.
+ */
+function fixLinearEquationCorrectness(q: any): void {
+  if (q.kind !== 'single' && q.kind !== 'numeric') return;
+  const correctX = solveLinearFromPrompt(q.prompt ?? '');
+  if (correctX === null) return;
+
+  if (q.kind === 'numeric') {
+    // Override AI answer with computed solution
+    q.answer = correctX;
+    return;
+  }
+
+  // For single: all choices must be parseable as "x = N" (or "… x = N.")
+  const parsed: (number | null)[] = q.choices.map((ch: any) => {
+    const label: string = (ch.label ?? '').replace(/\$/g, '');
+    const m = label.match(/x\s*=\s*(-?\d+(?:\.\d+)?)/);
+    return m ? parseFloat(m[1]) : null;
+  });
+
+  if (parsed.some(v => v === null)) return; // mixed/unknown format — don't override
+
+  let corrected = 0;
+  q.choices.forEach((ch: any, i: number) => {
+    ch.correct = Math.abs((parsed[i] as number) - correctX) < 0.001;
+    if (ch.correct) corrected++;
+  });
+
+  // If no choice matches (e.g. correct answer not among options), revert to AI data
+  if (corrected === 0) {
+    q.choices.forEach((ch: any, i: number) => {
+      ch.correct = !!(ch.correct); // restore (already overwritten to false — log only)
+    });
+    console.warn(`fixLinear: no choice matches x=${correctX} for: ${q.prompt}`);
+  }
+}
+
 function validateQuestions(questions: any[]): any[] {
   const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'visual', 'slider', 'match', 'fill-expr']);
   const validVisualSubtypes = new Set(['pie', 'angle']);
@@ -248,6 +326,8 @@ function validateQuestions(questions: any[]): any[] {
 
     if (q.kind === 'single') {
       if (!Array.isArray(q.choices) || q.choices.length < 2) return false;
+      // Run math verifier BEFORE the correct-count check so it can fix wrong flags
+      fixLinearEquationCorrectness(q);
       if (q.choices.filter((c: any) => c.correct).length !== 1) return false;
       q.choices.forEach((c: any, i: number) => { if (!c.id) c.id = `c${i + 1}`; });
     }
@@ -256,7 +336,15 @@ function validateQuestions(questions: any[]): any[] {
       if (q.choices.filter((c: any) => c.correct).length < 2) return false;
       q.choices.forEach((c: any, i: number) => { if (!c.id) c.id = `c${i + 1}`; });
     }
-    if (q.kind === 'numeric' && typeof q.answer !== 'number') return false;
+    if (q.kind === 'numeric') {
+      if (typeof q.answer !== 'number') return false;
+      // Ensure dragOptions is an array of numbers; if present but malformed, drop it
+      if (q.dragOptions !== undefined) {
+        if (!Array.isArray(q.dragOptions) || q.dragOptions.some((v: any) => typeof v !== 'number')) {
+          delete q.dragOptions;
+        }
+      }
+    }
     if (q.kind === 'ordering') {
       if (!Array.isArray(q.items) || !Array.isArray(q.correctOrder) || q.items.length < 2) return false;
     }
@@ -317,7 +405,24 @@ function validateQuestions(questions: any[]): any[] {
       // Count __ in template must match blanks length
       const blankCount = (q.template.match(/_{2,}/g) || []).length;
       if (blankCount !== q.blanks.length) return false;
+      // Deduplicate blank IDs and remap answers so each slot has a unique key
+      const seenIds = new Map<string, number>();
+      const deduped: string[] = [];
+      const remappedAnswers: Record<string, string> = {};
+      q.blanks.forEach((id: string) => {
+        const count = seenIds.get(id) ?? 0;
+        seenIds.set(id, count + 1);
+        const safeId = count === 0 ? id : `${id}_${count}`;
+        deduped.push(safeId);
+        const answerVal = q.answers[id];
+        if (answerVal !== undefined) remappedAnswers[safeId] = answerVal;
+      });
+      q.blanks = deduped;
+      q.answers = remappedAnswers;
     }
+    // Fix numeric answer for linear equations (single already handled above)
+    if (q.kind === 'numeric') fixLinearEquationCorrectness(q);
+
     if (!q.points) q.points = 1;
     return true;
   });
@@ -422,7 +527,7 @@ For "single" or "multi":
 { "id": "q-1", "kind": "single", "prompt": "...", "hint": "...", "points": 1, "choices": [{"id": "c1", "label": "...", "correct": true/false}, ...] }
 
 For "numeric":
-{ "id": "q-2", "kind": "numeric", "prompt": "...", "hint": "...", "points": 1, "answer": 42, "range": {"min": 40, "max": 44} }
+{ "id": "q-2", "kind": "numeric", "prompt": "...", "hint": "...", "points": 1, "answer": 42, "range": {"min": 40, "max": 44}, "dragOptions": [42, 38, 45, 36] }
 
 For "ordering":
 { "id": "q-3", "kind": "ordering", "prompt": "...", "hint": "...", "points": 1, "items": ["B","A","C"], "correctOrder": ["A","B","C"] }
@@ -435,7 +540,38 @@ RULES:
 - All prompts, hints, labels, explanations, instructions, and answer text must be written in ${language === 'fr' ? 'French' : 'English'}
 - Visual prompts must mention the visual object the student should inspect
 - Use only supported output kinds: single, multi, numeric, ordering, visual
-- Return ONLY the JSON array`;
+- Return ONLY the JSON array
+
+IMPORTANT — MANDATORY REASONING BLOCK BEFORE JSON:
+
+Before the JSON array, write a reasoning block for every question that involves a calculation, equation, or numeric answer. Use this exact format:
+
+=== REASONING ===
+Q1: [question summary]
+  Solve: [step-by-step working]
+  Answer: [final value]
+  Verify: [plug answer back in to confirm]
+  Correct choice: [which choice label matches the answer]
+Q2: ...
+=== END REASONING ===
+
+[then the JSON array]
+
+Example for "Quelle est la solution de 5x − 3 = 12 ?":
+  Solve: 5x − 3 = 12 → 5x = 15 → x = 3
+  Verify: 5(3) − 3 = 15 − 3 = 12 ✓
+  Correct choice: "x = 3" → set "correct": true on THAT choice only
+
+Example for "40 ÷ 2.5 = ?":
+  Solve: 40 ÷ 2.5 = 16
+  Verify: 16 × 2.5 = 40 ✓
+  Correct choice: 16 → "answer": 16, "dragOptions": [16, 14, 18, 20]
+
+CRITICAL RULES:
+- NEVER assign "correct": true to a choice you have not verified by substitution.
+- NEVER assign "answer" to a value you have not computed step by step.
+- The reasoning block is mandatory — do not skip it even for "easy" questions.
+- After the reasoning block, the JSON must exactly reflect your verified answers.`;
 
     console.log("Calling AI gateway for topic-based generation, prompt length:", prompt.length);
 
@@ -474,9 +610,16 @@ RULES:
     let rawQuestions;
     try {
       let jsonStr = content.trim();
+      // Strip markdown code fences if present
       if (jsonStr.startsWith('```json')) jsonStr = jsonStr.slice(7);
       else if (jsonStr.startsWith('```')) jsonStr = jsonStr.slice(3);
       if (jsonStr.endsWith('```')) jsonStr = jsonStr.slice(0, -3);
+      // Extract the JSON array — skip any reasoning block that precedes it
+      const arrayStart = jsonStr.indexOf('[');
+      const arrayEnd = jsonStr.lastIndexOf(']');
+      if (arrayStart !== -1 && arrayEnd > arrayStart) {
+        jsonStr = jsonStr.slice(arrayStart, arrayEnd + 1);
+      }
       rawQuestions = JSON.parse(jsonStr.trim());
     } catch {
       console.error("Failed to parse AI response:", content);

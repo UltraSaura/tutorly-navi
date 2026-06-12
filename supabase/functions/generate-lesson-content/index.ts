@@ -44,6 +44,10 @@ const CURRICULUM_MAP: Record<string, Record<string, string>> = {
     "6EME": "Programme Education Nationale francaise - Cycle 3, 6eme (11-12 ans)",
     "5EME": "Programme Education Nationale francaise - College, 5eme (12-13 ans)",
     "4EME": "Programme Education Nationale francaise - College, 4eme (13-14 ans)",
+    "3EME": "Programme Education Nationale francaise - College, 3eme (14-15 ans)",
+    "SECONDE": "Programme Education Nationale francaise - Lycee, Seconde (15-16 ans)",
+    "PREMIERE": "Programme Education Nationale francaise - Lycee, Premiere (16-17 ans)",
+    "TERMINALE": "Programme Education Nationale francaise - Lycee, Terminale (17-18 ans)",
   },
   be: {
     P3: "Programme enseignement fondamental belge - 3eme primaire (8-9 ans)",
@@ -66,6 +70,10 @@ const AGE_MAP: Record<string, string> = {
   "6EME": "11-12 ans",
   "5EME": "12-13 ans",
   "4EME": "13-14 ans",
+  "3EME": "14-15 ans",
+  "SECONDE": "15-16 ans",
+  "PREMIERE": "16-17 ans",
+  "TERMINALE": "17-18 ans",
 };
 
 const WORD_BUDGET_MAP: Record<string, string> = {
@@ -74,9 +82,13 @@ const WORD_BUDGET_MAP: Record<string, string> = {
   CE2: "55-70",
   CM1: "60-90",
   CM2: "70-100",
-  "6EME": "60-80",
-  "5EME": "70-90",
-  "4EME": "80-100",
+  "6EME": "100-130",
+  "5EME": "110-140",
+  "4EME": "120-150",
+  "3EME": "120-150",
+  "SECONDE": "130-160",
+  "PREMIERE": "140-170",
+  "TERMINALE": "140-170",
 };
 
 function substituteVariables(template: string, vars: Record<string, string>): string {
@@ -279,7 +291,7 @@ REPONDS EN JSON VALIDE UNIQUEMENT :
         modelId: modelId,
         history: [],
         language: language,
-        maxTokens: 1800,
+        maxTokens: 2400,
         userContext: {
           grade_level: rawLevel,
           age_group: ageGroup,
@@ -351,6 +363,9 @@ REPONDS EN JSON VALIDE UNIQUEMENT :
       explanation: generatedContent.explanation,
       examples: generatedContent.examples || [],
       example: generatedContent.example,
+      ...(Array.isArray(generatedContent.example_steps) && generatedContent.example_steps.length > 0
+        ? { example_steps: generatedContent.example_steps }
+        : {}),
       common_mistakes: normalizedMistakes,
       guided_practice: selectedPractice,
       exit_ticket: selectedExit,

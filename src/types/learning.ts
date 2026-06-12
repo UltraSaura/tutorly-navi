@@ -31,12 +31,17 @@ export interface Category {
   topics?: Topic[];
 }
 
+export interface LessonExampleStep {
+  label: string;
+  line: string;
+}
+
 export interface LessonExample {
   context: string;
-  fraction?: string;
-  total: number;
-  taken: number;
   explanation: string;
+  fraction?: string;
+  total?: number;
+  taken?: number;
 }
 
 export interface LessonVocabItem {
@@ -50,6 +55,7 @@ export interface LessonContent {
   explanation: string;
   examples?: LessonExample[];
   example: string;
+  example_steps?: LessonExampleStep[];
   common_mistakes: (string | { mistake: string; why: string })[];
   guided_practice: string[]; // Array of task IDs
   exit_ticket: string[];     // Array of task IDs

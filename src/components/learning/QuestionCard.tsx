@@ -12,6 +12,7 @@ import { SliderQuestionView } from "./SliderQuestion";
 import { MatchQuestionView } from "./MatchQuestion";
 import { FillExprQuestionView } from "./FillExprQuestion";
 import { inferPromptFigure, type PromptFigureSpec } from "@/lib/quiz/promptVisual";
+import { MathText } from "@/components/ui/MathText";
 
 interface QuestionCardProps {
   question: Question;
@@ -206,7 +207,11 @@ function renderChoiceLabel(label: string) {
       </div>
     );
   }
-  return <span style={{ fontSize: '15px', fontWeight: '600', fontFamily: 'Poppins, sans-serif', color: 'inherit' }}>{label}</span>;
+  return (
+    <MathText className="text-[15px] font-semibold font-[Poppins,sans-serif]">
+      {label}
+    </MathText>
+  );
 }
 
 function choiceState(
@@ -345,7 +350,7 @@ export function QuestionCard({
           <PromptFigure spec={inferredPromptFigure} />
         </div>
       )}
-      <h3 className="text-lg font-semibold mb-3">{question.prompt}</h3>
+      <h3 className="text-lg font-semibold mb-3"><MathText>{question.prompt}</MathText></h3>
 
       {question.kind === "single" && (
         <div className={question.choices.length === 4 ? "grid grid-cols-2 gap-3 mt-4" : "space-y-2 mt-3"}>
@@ -562,51 +567,176 @@ export function QuestionCard({
         );
       })()}
 
-      {question.kind === "numeric" && (question as any).answerFormat !== "fraction" && (
-        <div className="mt-2 flex flex-col items-center gap-3 py-2">
-          <p className="text-xs font-medium" style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>
-            Tape ta réponse
-          </p>
-          <div
-            className="flex items-center justify-center rounded-2xl transition-all"
-            style={{
-              width: '160px',
-              height: '96px',
-              background: value !== '' ? '#F2FBF8' : 'white',
-              border: `2.5px solid ${value !== '' ? '#12C6A0' : '#EAECEF'}`,
-            }}
-          >
-            <input
-              type="number"
-              inputMode="numeric"
-              autoComplete="off"
-              autoFocus
-              value={value}
-              onChange={e => setVal(e.target.value)}
-              placeholder="?"
-              style={{
-                width: '100%',
-                height: '100%',
-                textAlign: 'center',
-                fontSize: '44px',
-                fontWeight: '800',
-                color: '#0F172A',
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                fontFamily: 'Poppins, sans-serif',
-                WebkitAppearance: 'none',
-                MozAppearance: 'textfield' as any,
-              }}
-            />
-          </div>
-          {(question as any).range && (
-            <p className="text-xs" style={{ color: '#9CA3AF' }}>
-              Entre {(question as any).range.min} et {(question as any).range.max}
+      {question.kind === "numeric" && (question as any).answerFormat !== "fraction" && (() => {
+        const rawOpts: number[] = (question as any).dragOptions ?? [];
+        // Auto-generate distractors when dragOptions absent so chips always show
+        const dragOpts: number[] = rawOpts.length >= 4 ? rawOpts : (() => {
+          const ans: number = (question as any).answer;
+          // Guard: if answer is missing or NaN, fall back to [1,2,3,4]
+          if (typeof ans !== 'number' || !isFinite(ans)) return [1, 2, 3, 4];
+          const isDecimal = !Number.isInteger(ans);
+          const step = isDecimal
+            ? Math.round(ans * 0.25 * 100) / 100 || 0.25
+            : Math.max(1, Math.round(Math.abs(ans) * 0.15) || 1);
+          const candidates = new Set<number>([ans]);
+          let offset = step;
+          let guard = 0;
+          while (candidates.size < 4 && guard++ < 50) {
+            const lo = isDecimal
+              ? Math.round((ans - offset) * 100) / 100
+              : Math.round(ans - offset);
+            const hi = isDecimal
+              ? Math.round((ans + offset) * 100) / 100
+              : Math.round(ans + offset);
+            if (lo !== ans && isFinite(lo)) candidates.add(lo);
+            if (candidates.size < 4 && hi !== ans && isFinite(hi)) candidates.add(hi);
+            offset += step;
+          }
+          // Pad to 4 if still short
+          let pad = ans + step * 10;
+          while (candidates.size < 4) { candidates.add(pad++); }
+          return [...candidates].sort(() => Math.random() - 0.5).slice(0, 4);
+        })();
+        const hasChips = true;
+
+        if (hasChips) {
+          const handleTapChip = (num: number) => {
+            if (selectedChip === num) { setSelectedChip(null); return; }
+            setSelectedChip(num);
+          };
+          const handleTapZone = () => {
+            if (selectedChip !== null) { setVal(String(selectedChip)); setSelectedChip(null); }
+          };
+          const handleDropZone = (e: React.DragEvent) => {
+            e.preventDefault();
+            const num = e.dataTransfer.getData("text/plain");
+            if (num) setVal(num);
+          };
+
+          return (
+            <div className="mt-2 flex flex-col items-center gap-4 py-2">
+              {/* Drop zone */}
+              <div
+                onDragOver={e => e.preventDefault()}
+                onDrop={handleDropZone}
+                onClick={handleTapZone}
+                style={{
+                  width: 160,
+                  height: 96,
+                  borderRadius: 18,
+                  border: `2.5px dashed ${value !== '' ? '#12C6A0' : '#D1D5DB'}`,
+                  background: value !== '' ? '#F2FBF8' : 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: selectedChip !== null ? 'pointer' : 'default',
+                  transition: 'all .2s',
+                }}
+              >
+                {value !== '' ? (
+                  <span style={{ fontSize: 44, fontWeight: 800, color: '#12C6A0', fontFamily: 'Poppins, sans-serif', lineHeight: 1 }}>
+                    {value}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 44, fontWeight: 800, color: '#D1D5DB', fontFamily: 'Poppins, sans-serif', lineHeight: 1 }}>
+                    ?
+                  </span>
+                )}
+              </div>
+
+              {/* Chips */}
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+                {dragOpts.map((num, i) => {
+                  const isUsed = String(num) === String(value);
+                  const isSelected = selectedChip === num;
+                  return (
+                    <motion.div
+                      key={`${num}-${i}`}
+                      initial={{ opacity: 0, scale: 0.7 }}
+                      animate={{ opacity: isUsed ? 0.35 : 1, scale: 1 }}
+                      transition={{ delay: i * 0.06, type: 'spring', stiffness: 300, damping: 20 }}
+                      whileTap={{ scale: 0.88 }}
+                      draggable={!isUsed}
+                      onDragStart={(e: any) => e.dataTransfer?.setData('text/plain', String(num))}
+                      onClick={() => !isUsed && handleTapChip(num)}
+                      style={{
+                        width: 56,
+                        height: 56,
+                        borderRadius: 14,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 20,
+                        fontWeight: 700,
+                        fontFamily: 'Poppins, sans-serif',
+                        cursor: isUsed ? 'default' : 'grab',
+                        userSelect: 'none',
+                        border: isSelected ? '2.5px solid #12C6A0' : '1.5px solid #EAECEF',
+                        background: isSelected ? '#F2FBF8' : 'white',
+                        color: isSelected ? '#085041' : '#374151',
+                        boxShadow: isSelected ? '0 0 0 3px #9FE1CB55' : '0 1px 3px rgba(0,0,0,0.07)',
+                        transition: 'all .15s',
+                      }}
+                    >
+                      {num}
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
+                Glisse ou appuie sur un nombre, puis sur la case
+              </p>
+            </div>
+          );
+        }
+
+        return (
+          <div className="mt-2 flex flex-col items-center gap-3 py-2">
+            <p className="text-xs font-medium" style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>
+              Tape ta réponse
             </p>
-          )}
-        </div>
-      )}
+            <div
+              className="flex items-center justify-center rounded-2xl transition-all"
+              style={{
+                width: '160px',
+                height: '96px',
+                background: value !== '' ? '#F2FBF8' : 'white',
+                border: `2.5px solid ${value !== '' ? '#12C6A0' : '#EAECEF'}`,
+              }}
+            >
+              <input
+                type="number"
+                inputMode="numeric"
+                autoComplete="off"
+                autoFocus
+                value={value}
+                onChange={e => setVal(e.target.value)}
+                placeholder="?"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  textAlign: 'center',
+                  fontSize: '44px',
+                  fontWeight: '800',
+                  color: '#0F172A',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  fontFamily: 'Poppins, sans-serif',
+                  WebkitAppearance: 'none',
+                  MozAppearance: 'textfield' as any,
+                }}
+              />
+            </div>
+            {(question as any).range && (
+              <p className="text-xs" style={{ color: '#9CA3AF' }}>
+                Entre {(question as any).range.min} et {(question as any).range.max}
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {question.kind === "ordering" && (
         <ul className="space-y-2">
@@ -639,7 +769,7 @@ export function QuestionCard({
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground cursor-grab active:cursor-grabbing" />
-                  <span>{it}</span>
+                  <MathText>{it}</MathText>
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <button onClick={() => i > 0 && setVal(swap(arr, i, i - 1))}>↑</button>
