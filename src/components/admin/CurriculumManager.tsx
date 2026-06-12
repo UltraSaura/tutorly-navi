@@ -397,9 +397,9 @@ export default function CurriculumManager() {
                   <SelectValue placeholder="All subjects" />
                 </SelectTrigger>
                 <SelectContent>
-                  {allSubjects.map((subject) => (
+                  {dbSubjects.map((subject) => (
                     <SelectItem key={subject.id} value={subject.id}>
-                      {getLocalizedLabel(subject.labels, 'en')}
+                      {subject.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -416,9 +416,9 @@ export default function CurriculumManager() {
                   <SelectValue placeholder="All domains" />
                 </SelectTrigger>
                 <SelectContent>
-                  {filteredDomains.map((d) => (
+                  {dbDomains.map((d) => (
                     <SelectItem key={d.id} value={d.id}>
-                      {getLocalizedLabel(d.labels, 'en')}
+                      {d.label || d.code}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -432,9 +432,9 @@ export default function CurriculumManager() {
                   <SelectValue placeholder="All subdomains" />
                 </SelectTrigger>
                 <SelectContent>
-                  {filteredSubdomains.map((sd) => (
-                    <SelectItem key={sd.id} value={sd.id}>
-                      {getLocalizedLabel(sd.labels, 'en')}
+                  {dbSubdomains.map((sd) => (
+                    <SelectItem key={sd.id_new} value={sd.id_new}>
+                      {sd.label || sd.code}
                     </SelectItem>
                   ))}
                 </SelectContent>
