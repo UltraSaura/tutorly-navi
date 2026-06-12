@@ -423,7 +423,7 @@ export default function CurriculumManager() {
                 <SelectContent>
                   {dbSubjects.map((subject) => (
                     <SelectItem key={subject.id} value={subject.id}>
-                      {subject.name}
+                      {subject.name} ({subject.objectiveCount})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -442,7 +442,7 @@ export default function CurriculumManager() {
                 <SelectContent>
                   {dbDomains.map((d) => (
                     <SelectItem key={d.id} value={d.id}>
-                      {d.label || d.code}
+                      {d.label || d.code} ({d.objectiveCount})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -458,7 +458,7 @@ export default function CurriculumManager() {
                 <SelectContent>
                   {dbSubdomains.map((sd) => (
                     <SelectItem key={sd.id_new} value={sd.id_new}>
-                      {sd.label || sd.code}
+                      {sd.label || sd.code} ({sd.objectiveCount})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -531,9 +531,9 @@ export default function CurriculumManager() {
                         <CurriculumLocation
                           countryId={filterCountry || 'fr'}
                           levelId={objective.level?.toLowerCase()}
-                          subjectId={objective.subject_id}
-                          domainId={objective.domain_id}
-                          subdomainId={objective.subdomain_id}
+                          subjectId={objective.subject_id_uuid ?? objective.subject_id}
+                          domainId={objective.domain_id_uuid ?? objective.domain_id}
+                          subdomainId={objective.subdomain_id_uuid ?? objective.subdomain_id}
                           locale="en"
                           variant="full"
                         />
@@ -553,9 +553,9 @@ export default function CurriculumManager() {
                                   <CurriculumLocation
                                     countryId={filterCountry || 'fr'}
                                     levelId={objective.level?.toLowerCase()}
-                                    subjectId={sc.subject_id}
-                                    domainId={sc.domain_id}
-                                    subdomainId={sc.subdomain_id}
+                                    subjectId={sc.subject_id_uuid ?? sc.subject_id}
+                                    domainId={sc.domain_id_uuid ?? sc.domain_id}
+                                    subdomainId={sc.subdomain_id_uuid ?? sc.subdomain_id}
                                     locale="en"
                                     variant="compact"
                                   />
