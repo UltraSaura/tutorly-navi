@@ -41,28 +41,22 @@ export default function CurriculumManager() {
   const [domain, setDomain] = useState<string>('');
   const [subdomain, setSubdomain] = useState<string>('');
   const [search, setSearch] = useState<string>('');
-  
-  // New curriculum bundle hooks
+
+  // Curriculum bundle hooks (country/level only)
   const countries = useCurriculumCountries();
   const levels = useCurriculumLevels(filterCountry);
-  const allSubjects = useAllCurriculumSubjects(filterCountry);
 
-  // Get filtered domains and subdomains from curriculumBundle.json
-  const filteredDomains = useMemo(() => {
-    if (!filterCountry || !level || !filterSubject) return [];
-    return getDomainsBySubject(filterCountry, level, filterSubject);
-  }, [filterCountry, level, filterSubject]);
-
-  const filteredSubdomains = useMemo(() => {
-    if (!filterCountry || !level || !filterSubject || !domain) return [];
-    return getSubdomainsByDomain(filterCountry, level, filterSubject, domain);
-  }, [filterCountry, level, filterSubject, domain]);
+  // DB-sourced filter options (match imported objectives)
+  const { data: dbSubjects = [] } = useDbSubjects();
+  const { data: dbDomains = [] } = useDbDomains(filterSubject || undefined);
+  const { data: dbSubdomains = [] } = useDbSubdomains(domain || undefined);
 
   // Queries
   const { data: objectives, refetch: refetchObjectives } = useObjectives({
     level: level || undefined,
-    domain: domain || undefined,
-    subdomain: subdomain || undefined,
+    subjectId: filterSubject || undefined,
+    domainId: domain || undefined,
+    subdomainId: subdomain || undefined,
     search: search || undefined,
   });
   const { data: stats, refetch: refetchStats } = useCurriculumStats();
