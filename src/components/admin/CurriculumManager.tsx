@@ -11,9 +11,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useObjectives, useCurriculumStats } from '@/hooks/useCurriculumData';
-import { useCurriculumCountries, useCurriculumLevels, useAllCurriculumSubjects } from '@/hooks/useCurriculumBundle';
-import { getLocalizedLabel, getDomainsBySubject, getSubdomainsByDomain } from '@/lib/curriculum';
+import { useObjectives, useCurriculumStats, useDbSubjects, useDbDomains, useDbSubdomains } from '@/hooks/useCurriculumData';
+import { useCurriculumCountries, useCurriculumLevels } from '@/hooks/useCurriculumBundle';
 import { CurriculumLocation } from './curriculum/CurriculumLocation';
 import { TaskViewer } from './curriculum/TaskViewer';
 import type { ImportCounts } from '@/types/curriculum';
