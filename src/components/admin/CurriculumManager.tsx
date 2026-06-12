@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,9 +11,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useObjectives, useCurriculumStats } from '@/hooks/useCurriculumData';
-import { useCurriculumCountries, useCurriculumLevels, useAllCurriculumSubjects } from '@/hooks/useCurriculumBundle';
-import { getLocalizedLabel, getDomainsBySubject, getSubdomainsByDomain } from '@/lib/curriculum';
+import { useObjectives, useCurriculumStats, useDbSubjects, useDbDomains, useDbSubdomains } from '@/hooks/useCurriculumData';
+import { useCurriculumCountries, useCurriculumLevels } from '@/hooks/useCurriculumBundle';
 import { CurriculumLocation } from './curriculum/CurriculumLocation';
 import { TaskViewer } from './curriculum/TaskViewer';
 import type { ImportCounts } from '@/types/curriculum';
@@ -42,28 +41,22 @@ export default function CurriculumManager() {
   const [domain, setDomain] = useState<string>('');
   const [subdomain, setSubdomain] = useState<string>('');
   const [search, setSearch] = useState<string>('');
-  
-  // New curriculum bundle hooks
+
+  // Curriculum bundle hooks (country/level only)
   const countries = useCurriculumCountries();
   const levels = useCurriculumLevels(filterCountry);
-  const allSubjects = useAllCurriculumSubjects(filterCountry);
 
-  // Get filtered domains and subdomains from curriculumBundle.json
-  const filteredDomains = useMemo(() => {
-    if (!filterCountry || !level || !filterSubject) return [];
-    return getDomainsBySubject(filterCountry, level, filterSubject);
-  }, [filterCountry, level, filterSubject]);
-
-  const filteredSubdomains = useMemo(() => {
-    if (!filterCountry || !level || !filterSubject || !domain) return [];
-    return getSubdomainsByDomain(filterCountry, level, filterSubject, domain);
-  }, [filterCountry, level, filterSubject, domain]);
+  // DB-sourced filter options (match imported objectives)
+  const { data: dbSubjects = [] } = useDbSubjects();
+  const { data: dbDomains = [] } = useDbDomains(filterSubject || undefined);
+  const { data: dbSubdomains = [] } = useDbSubdomains(domain || undefined);
 
   // Queries
   const { data: objectives, refetch: refetchObjectives } = useObjectives({
     level: level || undefined,
-    domain: domain || undefined,
-    subdomain: subdomain || undefined,
+    subjectId: filterSubject || undefined,
+    domainId: domain || undefined,
+    subdomainId: subdomain || undefined,
     search: search || undefined,
   });
   const { data: stats, refetch: refetchStats } = useCurriculumStats();
@@ -404,9 +397,9 @@ export default function CurriculumManager() {
                   <SelectValue placeholder="All subjects" />
                 </SelectTrigger>
                 <SelectContent>
-                  {allSubjects.map((subject) => (
+                  {dbSubjects.map((subject) => (
                     <SelectItem key={subject.id} value={subject.id}>
-                      {getLocalizedLabel(subject.labels, 'en')}
+                      {subject.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -423,9 +416,9 @@ export default function CurriculumManager() {
                   <SelectValue placeholder="All domains" />
                 </SelectTrigger>
                 <SelectContent>
-                  {filteredDomains.map((d) => (
+                  {dbDomains.map((d) => (
                     <SelectItem key={d.id} value={d.id}>
-                      {getLocalizedLabel(d.labels, 'en')}
+                      {d.label || d.code}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -439,9 +432,9 @@ export default function CurriculumManager() {
                   <SelectValue placeholder="All subdomains" />
                 </SelectTrigger>
                 <SelectContent>
-                  {filteredSubdomains.map((sd) => (
-                    <SelectItem key={sd.id} value={sd.id}>
-                      {getLocalizedLabel(sd.labels, 'en')}
+                  {dbSubdomains.map((sd) => (
+                    <SelectItem key={sd.id_new} value={sd.id_new}>
+                      {sd.label || sd.code}
                     </SelectItem>
                   ))}
                 </SelectContent>

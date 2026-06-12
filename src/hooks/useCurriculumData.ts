@@ -39,8 +39,9 @@ export const useSubdomains = (domain?: string) => {
 
 export const useObjectives = (filters?: {
   level?: string;
-  domain?: string;
-  subdomain?: string;
+  subjectId?: string;
+  domainId?: string;
+  subdomainId?: string;
   search?: string;
 }) => {
   return useQuery({
@@ -53,24 +54,75 @@ export const useObjectives = (filters?: {
           success_criteria (*)
         `)
         .order('id');
-      
+
       if (filters?.level) {
         query = query.eq('level', filters.level);
       }
-      if (filters?.domain) {
-        query = query.eq('domain', filters.domain);
+      if (filters?.subjectId) {
+        query = query.eq('subject_id_uuid', filters.subjectId);
       }
-      if (filters?.subdomain) {
-        query = query.eq('subdomain', filters.subdomain);
+      if (filters?.domainId) {
+        query = query.eq('domain_id_uuid', filters.domainId);
+      }
+      if (filters?.subdomainId) {
+        query = query.eq('subdomain_id_uuid', filters.subdomainId);
       }
       if (filters?.search) {
         query = query.ilike('text', `%${filters.search}%`);
       }
-      
+
       const { data, error } = await query;
       if (error) throw error;
       return data as ObjectiveWithSuccessCriteria[];
     },
+  });
+};
+
+export const useDbSubjects = () => {
+  return useQuery({
+    queryKey: ['db-subjects'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('subjects')
+        .select('id, name, slug')
+        .order('name');
+      if (error) throw error;
+      return data as { id: string; name: string; slug: string }[];
+    },
+  });
+};
+
+export const useDbDomains = (subjectId?: string) => {
+  return useQuery({
+    queryKey: ['db-domains', subjectId],
+    queryFn: async () => {
+      if (!subjectId) return [];
+      const { data, error } = await supabase
+        .from('domains')
+        .select('id, code, label')
+        .eq('subject_id', subjectId)
+        .order('label');
+      if (error) throw error;
+      return data as { id: string; code: string; label: string }[];
+    },
+    enabled: !!subjectId,
+  });
+};
+
+export const useDbSubdomains = (domainId?: string) => {
+  return useQuery({
+    queryKey: ['db-subdomains', domainId],
+    queryFn: async () => {
+      if (!domainId) return [];
+      const { data, error } = await (supabase as any)
+        .from('subdomains')
+        .select('id_new, code, label')
+        .eq('domain_id_new', domainId)
+        .order('label');
+      if (error) throw error;
+      return (data ?? []) as { id_new: string; code: string; label: string }[];
+    },
+    enabled: !!domainId,
   });
 };
 
