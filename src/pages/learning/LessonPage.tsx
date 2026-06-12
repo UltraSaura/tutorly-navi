@@ -180,7 +180,7 @@ export default function LessonPage() {
                 {videos.map((video, index) => {
                   const isPlaying = video.id === playingVideoId;
                   const isDone = completedVideoIds.includes(video.id);
-                  const durationMin = Math.floor((video.duration_seconds ?? 0) / 60);
+                  const durationMin = Math.floor(((video as any).duration_seconds ?? 0) / 60);
                   return (
                     <button
                       key={video.id}

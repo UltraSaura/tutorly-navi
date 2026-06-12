@@ -16,6 +16,8 @@ import { SubjectMasteryCard } from '@/components/user/SubjectMasteryCard';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { LearningInsightsCard } from '@/components/learning/LearningInsightsCard';
 import { BookOpen, Clock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
