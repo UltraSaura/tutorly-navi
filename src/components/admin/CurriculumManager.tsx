@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -47,9 +47,9 @@ export default function CurriculumManager() {
   const levels = useCurriculumLevels(filterCountry);
 
   // DB-sourced filter options (match imported objectives)
-  const { data: dbSubjects = [] } = useDbSubjects();
-  const { data: dbDomains = [] } = useDbDomains(filterSubject || undefined);
-  const { data: dbSubdomains = [] } = useDbSubdomains(domain || undefined);
+  const { data: dbSubjects = [], isFetched: subjectsFetched } = useDbSubjects(filterCountry, level || undefined);
+  const { data: dbDomains = [], isFetched: domainsFetched } = useDbDomains(filterSubject || undefined, level || undefined);
+  const { data: dbSubdomains = [], isFetched: subdomainsFetched } = useDbSubdomains(domain || undefined, level || undefined);
 
   // Queries
   const { data: objectives, refetch: refetchObjectives } = useObjectives({
@@ -60,6 +60,30 @@ export default function CurriculumManager() {
     search: search || undefined,
   });
   const { data: stats, refetch: refetchStats } = useCurriculumStats();
+
+  useEffect(() => {
+    if (!filterSubject || !subjectsFetched) return;
+    if (!dbSubjects.some((subject) => subject.id === filterSubject)) {
+      setFilterSubject('');
+      setDomain('');
+      setSubdomain('');
+    }
+  }, [dbSubjects, filterSubject, subjectsFetched]);
+
+  useEffect(() => {
+    if (!domain || !domainsFetched) return;
+    if (!dbDomains.some((d) => d.id === domain)) {
+      setDomain('');
+      setSubdomain('');
+    }
+  }, [dbDomains, domain, domainsFetched]);
+
+  useEffect(() => {
+    if (!subdomain || !subdomainsFetched) return;
+    if (!dbSubdomains.some((sd) => sd.id_new === subdomain)) {
+      setSubdomain('');
+    }
+  }, [dbSubdomains, subdomain, subdomainsFetched]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

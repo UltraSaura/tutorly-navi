@@ -56,7 +56,7 @@ export const useObjectives = (filters?: {
         .order('id');
 
       if (filters?.level) {
-        query = query.eq('level', filters.level);
+        query = query.ilike('level', filters.level);
       }
       if (filters?.subjectId) {
         query = query.eq('subject_id_uuid', filters.subjectId);
@@ -78,49 +78,135 @@ export const useObjectives = (filters?: {
   });
 };
 
-export const useDbSubjects = () => {
+export const useDbSubjects = (countryCode?: string, level?: string) => {
   return useQuery({
-    queryKey: ['db-subjects'],
+    queryKey: ['db-subjects', countryCode, level],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let subjectsQuery = supabase
         .from('subjects')
-        .select('id, name, slug')
+        .select('id, name, slug, country_code')
+        .eq('is_active', true)
         .order('name');
-      if (error) throw error;
-      return data as { id: string; name: string; slug: string }[];
+
+      if (countryCode) {
+        subjectsQuery = subjectsQuery.eq('country_code', countryCode.toLowerCase());
+      }
+
+      let objectivesQuery = supabase
+        .from('objectives')
+        .select('subject_id_uuid');
+
+      if (level) {
+        objectivesQuery = objectivesQuery.ilike('level', level);
+      }
+
+      const [{ data: subjects, error: subjectsError }, { data: objectives, error: objectivesError }] = await Promise.all([
+        subjectsQuery,
+        objectivesQuery,
+      ]);
+
+      if (subjectsError) throw subjectsError;
+      if (objectivesError) throw objectivesError;
+
+      const counts = new Map<string, number>();
+      (objectives ?? []).forEach((objective) => {
+        if (!objective.subject_id_uuid) return;
+        const id = String(objective.subject_id_uuid);
+        counts.set(id, (counts.get(id) ?? 0) + 1);
+      });
+
+      return (subjects ?? [])
+        .map((subject) => ({
+          id: subject.id,
+          name: subject.name,
+          slug: subject.slug,
+          objectiveCount: counts.get(subject.id) ?? 0,
+        }))
+        .filter((subject) => subject.objectiveCount > 0) as { id: string; name: string; slug: string; objectiveCount: number }[];
     },
   });
 };
 
-export const useDbDomains = (subjectId?: string) => {
+export const useDbDomains = (subjectId?: string, level?: string) => {
   return useQuery({
-    queryKey: ['db-domains', subjectId],
+    queryKey: ['db-domains', subjectId, level],
     queryFn: async () => {
       if (!subjectId) return [];
-      const { data, error } = await supabase
+      let objectivesQuery = supabase
+        .from('objectives')
+        .select('domain_id_uuid')
+        .eq('subject_id_uuid', subjectId);
+
+      if (level) {
+        objectivesQuery = objectivesQuery.ilike('level', level);
+      }
+
+      const [{ data: domains, error: domainsError }, { data: objectives, error: objectivesError }] = await Promise.all([
+        supabase
         .from('domains')
         .select('id, code, label')
         .eq('subject_id', subjectId)
-        .order('label');
-      if (error) throw error;
-      return data as { id: string; code: string; label: string }[];
+          .order('label'),
+        objectivesQuery,
+      ]);
+
+      if (domainsError) throw domainsError;
+      if (objectivesError) throw objectivesError;
+
+      const counts = new Map<string, number>();
+      (objectives ?? []).forEach((objective) => {
+        if (!objective.domain_id_uuid) return;
+        const id = String(objective.domain_id_uuid);
+        counts.set(id, (counts.get(id) ?? 0) + 1);
+      });
+
+      return (domains ?? [])
+        .map((domain) => ({ ...domain, objectiveCount: counts.get(domain.id) ?? 0 }))
+        .filter((domain) => domain.objectiveCount > 0) as { id: string; code: string; label: string; objectiveCount: number }[];
     },
     enabled: !!subjectId,
   });
 };
 
-export const useDbSubdomains = (domainId?: string) => {
+export const useDbSubdomains = (domainId?: string, level?: string) => {
   return useQuery({
-    queryKey: ['db-subdomains', domainId],
+    queryKey: ['db-subdomains', domainId, level],
     queryFn: async () => {
       if (!domainId) return [];
-      const { data, error } = await (supabase as any)
-        .from('subdomains')
-        .select('id_new, code, label')
-        .eq('domain_id_new', domainId)
-        .order('label');
-      if (error) throw error;
-      return (data ?? []) as { id_new: string; code: string; label: string }[];
+      let objectivesQuery = supabase
+        .from('objectives')
+        .select('subdomain_id_uuid')
+        .eq('domain_id_uuid', domainId);
+
+      if (level) {
+        objectivesQuery = objectivesQuery.ilike('level', level);
+      }
+
+      const [{ data: subdomains, error: subdomainsError }, { data: objectives, error: objectivesError }] = await Promise.all([
+        (supabase as any)
+          .from('subdomains')
+          .select('id_new, code, label')
+          .eq('domain_id_new', domainId)
+          .order('label'),
+        objectivesQuery,
+      ]);
+
+      if (subdomainsError) throw subdomainsError;
+      if (objectivesError) throw objectivesError;
+
+      const counts = new Map<string, number>();
+      (objectives ?? []).forEach((objective) => {
+        if (!objective.subdomain_id_uuid) return;
+        const id = String(objective.subdomain_id_uuid);
+        counts.set(id, (counts.get(id) ?? 0) + 1);
+      });
+
+      return (subdomains ?? [])
+        .map((subdomain: { id_new: string; code: string; label: string }) => ({
+          ...subdomain,
+          objectiveCount: counts.get(subdomain.id_new) ?? 0,
+        }))
+        .filter((subdomain: { objectiveCount: number }) => subdomain.objectiveCount > 0) as { id_new: string; code: string; label: string; objectiveCount: number }[];
     },
     enabled: !!domainId,
   });
