@@ -51,12 +51,12 @@ export const useObjectives = (filters?: {
         .from('objectives')
         .select(`
           *,
-          success_criteria (*)
+          success_criteria!success_criteria_objective_id_uuid_fkey (*)
         `)
         .order('id');
 
       if (filters?.level) {
-        query = query.ilike('level', filters.level);
+        query = query.ilike('level', filters.level.toLowerCase());
       }
       if (filters?.subjectId) {
         query = query.eq('subject_id_uuid', filters.subjectId);
@@ -97,7 +97,7 @@ export const useDbSubjects = (countryCode?: string, level?: string) => {
         .select('subject_id_uuid');
 
       if (level) {
-        objectivesQuery = objectivesQuery.ilike('level', level);
+        objectivesQuery = objectivesQuery.ilike('level', level.toLowerCase());
       }
 
       const [{ data: subjects, error: subjectsError }, { data: objectives, error: objectivesError }] = await Promise.all([
@@ -138,7 +138,7 @@ export const useDbDomains = (subjectId?: string, level?: string) => {
         .eq('subject_id_uuid', subjectId);
 
       if (level) {
-        objectivesQuery = objectivesQuery.ilike('level', level);
+        objectivesQuery = objectivesQuery.ilike('level', level.toLowerCase());
       }
 
       const [{ data: domains, error: domainsError }, { data: objectives, error: objectivesError }] = await Promise.all([
@@ -179,7 +179,7 @@ export const useDbSubdomains = (domainId?: string, level?: string) => {
         .eq('domain_id_uuid', domainId);
 
       if (level) {
-        objectivesQuery = objectivesQuery.ilike('level', level);
+        objectivesQuery = objectivesQuery.ilike('level', level.toLowerCase());
       }
 
       const [{ data: subdomains, error: subdomainsError }, { data: objectives, error: objectivesError }] = await Promise.all([
