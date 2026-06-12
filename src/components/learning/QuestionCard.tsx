@@ -626,6 +626,11 @@ export function QuestionCard({
               Entre {(question as any).range.min} et {(question as any).range.max}
             </p>
           )}
+          <NumericKeypad
+            value={value}
+            onChange={setVal}
+            range={(question as any).range}
+          />
         </div>
       )}
 
@@ -1116,6 +1121,92 @@ function PieStudentView({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function NumericKeypad({
+  value,
+  onChange,
+  range,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  range?: { min: number; max: number };
+}) {
+  const allowNegative = range ? range.min < 0 : true;
+
+  const tryUpdate = (next: string) => {
+    if (next === '' || next === '-') {
+      onChange(next);
+      return;
+    }
+    const n = Number(next);
+    if (Number.isNaN(n)) return;
+    if (range) {
+      if (n > range.max) return;
+      if (n < range.min) return;
+    }
+    onChange(next);
+  };
+
+  const handleDigit = (d: string) => {
+    const base = value === '0' ? '' : value;
+    tryUpdate(base + d);
+  };
+
+  const handleBackspace = () => {
+    if (!value) return;
+    const next = value.slice(0, -1);
+    onChange(next === '-' ? '' : next);
+  };
+
+  const handleSign = () => {
+    if (!allowNegative) return;
+    if (!value) {
+      onChange('-');
+      return;
+    }
+    if (value === '-') {
+      onChange('');
+      return;
+    }
+    const next = value.startsWith('-') ? value.slice(1) : '-' + value;
+    tryUpdate(next);
+  };
+
+  const keys: { label: string; onPress: () => void; disabled?: boolean }[] = [
+    { label: '1', onPress: () => handleDigit('1') },
+    { label: '2', onPress: () => handleDigit('2') },
+    { label: '3', onPress: () => handleDigit('3') },
+    { label: '4', onPress: () => handleDigit('4') },
+    { label: '5', onPress: () => handleDigit('5') },
+    { label: '6', onPress: () => handleDigit('6') },
+    { label: '7', onPress: () => handleDigit('7') },
+    { label: '8', onPress: () => handleDigit('8') },
+    { label: '9', onPress: () => handleDigit('9') },
+    { label: '±', onPress: handleSign, disabled: !allowNegative },
+    { label: '0', onPress: () => handleDigit('0') },
+    { label: '⌫', onPress: handleBackspace, disabled: !value },
+  ];
+
+  return (
+    <div
+      className="grid grid-cols-3 gap-2 mt-2"
+      style={{ width: '240px', fontFamily: 'Poppins, sans-serif' }}
+    >
+      {keys.map((k) => (
+        <button
+          key={k.label}
+          type="button"
+          onClick={k.onPress}
+          disabled={k.disabled}
+          className="h-12 rounded-xl bg-white border text-xl font-bold shadow-sm transition-all active:scale-95 active:bg-[#F2FBF8] disabled:opacity-40 disabled:active:scale-100"
+          style={{ borderColor: '#EAECEF', color: '#0F172A' }}
+        >
+          {k.label}
+        </button>
+      ))}
     </div>
   );
 }
