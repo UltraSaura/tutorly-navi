@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -47,9 +47,9 @@ export default function CurriculumManager() {
   const levels = useCurriculumLevels(filterCountry);
 
   // DB-sourced filter options (match imported objectives)
-  const { data: dbSubjects = [] } = useDbSubjects();
-  const { data: dbDomains = [] } = useDbDomains(filterSubject || undefined);
-  const { data: dbSubdomains = [] } = useDbSubdomains(domain || undefined);
+  const { data: dbSubjects = [], isFetched: subjectsFetched } = useDbSubjects(filterCountry, level || undefined);
+  const { data: dbDomains = [], isFetched: domainsFetched } = useDbDomains(filterSubject || undefined, level || undefined);
+  const { data: dbSubdomains = [], isFetched: subdomainsFetched } = useDbSubdomains(domain || undefined, level || undefined);
 
   // Queries
   const { data: objectives, refetch: refetchObjectives } = useObjectives({
@@ -60,6 +60,30 @@ export default function CurriculumManager() {
     search: search || undefined,
   });
   const { data: stats, refetch: refetchStats } = useCurriculumStats();
+
+  useEffect(() => {
+    if (!filterSubject || !subjectsFetched) return;
+    if (!dbSubjects.some((subject) => subject.id === filterSubject)) {
+      setFilterSubject('');
+      setDomain('');
+      setSubdomain('');
+    }
+  }, [dbSubjects, filterSubject, subjectsFetched]);
+
+  useEffect(() => {
+    if (!domain || !domainsFetched) return;
+    if (!dbDomains.some((d) => d.id === domain)) {
+      setDomain('');
+      setSubdomain('');
+    }
+  }, [dbDomains, domain, domainsFetched]);
+
+  useEffect(() => {
+    if (!subdomain || !subdomainsFetched) return;
+    if (!dbSubdomains.some((sd) => sd.id_new === subdomain)) {
+      setSubdomain('');
+    }
+  }, [dbSubdomains, subdomain, subdomainsFetched]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -399,7 +423,7 @@ export default function CurriculumManager() {
                 <SelectContent>
                   {dbSubjects.map((subject) => (
                     <SelectItem key={subject.id} value={subject.id}>
-                      {subject.name}
+                      {subject.name} ({subject.objectiveCount})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -418,7 +442,7 @@ export default function CurriculumManager() {
                 <SelectContent>
                   {dbDomains.map((d) => (
                     <SelectItem key={d.id} value={d.id}>
-                      {d.label || d.code}
+                      {d.label || d.code} ({d.objectiveCount})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -434,7 +458,7 @@ export default function CurriculumManager() {
                 <SelectContent>
                   {dbSubdomains.map((sd) => (
                     <SelectItem key={sd.id_new} value={sd.id_new}>
-                      {sd.label || sd.code}
+                      {sd.label || sd.code} ({sd.objectiveCount})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -507,9 +531,9 @@ export default function CurriculumManager() {
                         <CurriculumLocation
                           countryId={filterCountry || 'fr'}
                           levelId={objective.level?.toLowerCase()}
-                          subjectId={objective.subject_id}
-                          domainId={objective.domain_id}
-                          subdomainId={objective.subdomain_id}
+                          subjectId={objective.subject_id_uuid ?? objective.subject_id}
+                          domainId={objective.domain_id_uuid ?? objective.domain_id}
+                          subdomainId={objective.subdomain_id_uuid ?? objective.subdomain_id}
                           locale="en"
                           variant="full"
                         />
@@ -529,9 +553,9 @@ export default function CurriculumManager() {
                                   <CurriculumLocation
                                     countryId={filterCountry || 'fr'}
                                     levelId={objective.level?.toLowerCase()}
-                                    subjectId={sc.subject_id}
-                                    domainId={sc.domain_id}
-                                    subdomainId={sc.subdomain_id}
+                                    subjectId={sc.subject_id_uuid ?? sc.subject_id}
+                                    domainId={sc.domain_id_uuid ?? sc.domain_id}
+                                    subdomainId={sc.subdomain_id_uuid ?? sc.subdomain_id}
                                     locale="en"
                                     variant="compact"
                                   />
