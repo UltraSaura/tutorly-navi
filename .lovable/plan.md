@@ -1,20 +1,39 @@
-## Problem
+# Numeric Question — Drag‑and‑Drop Suggestion Chips
 
-On `/admin/learning`, when previewing a quiz with a "Compléter l'expression" (`fill-expr`) question, the preview only shows the expression with answers filled in and a small `blank: answer` legend. The "suggested responses" chips that the student would drag into the blanks are missing.
+Currently, the `numeric` (non‑fraction) question only shows a "Tape ta réponse" input box. We will add a row of **suggestion chips below the input**, including the correct answer plus a few distractors, that the student can drag into (or tap) the answer box — matching the pattern already used by the fraction quiz (second screenshot).
 
-Cause: `src/components/admin/learning/QuizPreviewDialog.tsx` (lines 119–139) has its own custom renderer for `fill-expr` that ignores `question.chips`. The student-facing `FillExprQuestionView` does render them, but it's not used here.
+## Behavior
 
-## Fix
+- Chips appear **below** the answer box, in the same visual style as fraction chips (`w-12 h-12 rounded-xl`, neutral bg, Poppins, primary teal active state).
+- **4 chips total**: the correct answer + 3 random distractors, shuffled.
+- Distractors are deterministic per question (seeded by `question.id`) so the order is stable across re‑renders and previews.
+- **Drag and drop**: chip → answer box fills the input (HTML5 drag, same `dataTransfer text/plain` approach as `FillExprQuestion`).
+- **Tap**: tapping a chip fills the input with that value; tapping again clears it.
+- Used chip shows the dimmed/used state (same styling as fraction chips).
+- Caption below: `Glisse un nombre, ou tapote pour le placer.`
+- Keyboard typing into the input still works as today (chips are an aid, not a restriction).
 
-Update the `case 'fill-expr':` block in `QuizPreviewDialog.tsx` so the admin preview shows the same layout a student sees, with the answer revealed:
+## Source of chips
 
-1. Render the template, replacing each `___` with a green pill containing the correct answer for that blank (keep current behavior — answers stay visible since this is the "answers revealed" dialog).
-2. **Add a chips row below the expression**, rendered from `question.chips`, styled like the student `FillExprQuestionView` chips (square rounded tiles, neutral background). These are non-interactive in the admin preview — purely a visual representation of what the student will see to drag.
-3. Add a small caption above the chips row: `Suggested responses (drag targets):` so admins understand the role of the chips.
-4. Keep the existing `blank: answer` badge legend below the chips as an answer key.
+- If the question payload already has `dragOptions: number[]` (existing optional field on `NumericQ`), use it as‑is (shuffled).
+- Otherwise auto‑generate 3 distractors around the correct `answer`:
+  - Integers: pick `answer ± 1, ± 2, ± 3` (clamped to `range.min/max` when present), drop duplicates, pick 3.
+  - If `range` exists and is small (≤10 span), pick from the range excluding the answer.
+  - Always include the correct answer; shuffle deterministically by `question.id`.
 
-No changes to question data, types, or the student-facing component. Scope is purely the admin preview renderer.
+## Scope (files)
 
-## Files
+- `src/components/learning/QuestionCard.tsx` — extend the existing `numeric && answerFormat !== "fraction"` block (lines ~586–630) to render a chip row beneath the input, with drag/drop + tap handlers wired to `setVal`.
+- Small helper for deterministic distractor generation, colocated in the same file (or `src/lib/quiz/numericSuggestions.ts` if you prefer a dedicated util — flag your preference).
 
-- `src/components/admin/learning/QuizPreviewDialog.tsx` — replace the `fill-expr` case in `AnswerDisplay`.
+No changes to types (`dragOptions` already exists), DB, admin builder, or grading logic.
+
+## Out of scope
+
+- Fraction numeric variant (already has its own chips).
+- Admin UI for manually editing `dragOptions` (can be a follow‑up).
+- Changing answer validation — typed and dropped values are both written to the same `value` state.
+
+## Open question
+
+Do you want the admin to be able to **define** the distractor chips per question (edit `dragOptions` in the admin builder), or is auto‑generation enough for now? Default in this plan: auto‑generate, ignore `dragOptions` editing UI for now.
