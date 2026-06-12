@@ -52,8 +52,8 @@ export default function CurriculumManager() {
   const { data: dbSubdomains = [], isFetched: subdomainsFetched } = useDbSubdomains(domain || undefined, level || undefined);
 
   // Queries
-  const { data: objectives, refetch: refetchObjectives } = useObjectives({
-    level: level || undefined,
+  const { data: objectives, isError: objectivesError, error: objectivesErrorDetails, refetch: refetchObjectives } = useObjectives({
+    level: level ? level.toLowerCase() : undefined,
     subjectId: filterSubject || undefined,
     domainId: domain || undefined,
     subdomainId: subdomain || undefined,
@@ -595,8 +595,20 @@ export default function CurriculumManager() {
             })}
             </Accordion>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No objectives found. Try adjusting your filters or import curriculum data.
+            <div className="text-center py-8 text-muted-foreground space-y-3">
+              <div>
+                {objectivesError
+                  ? 'Unable to load objectives for these filters.'
+                  : 'No objectives found. Try adjusting your filters or import curriculum data.'}
+              </div>
+              <div className="mx-auto max-w-2xl rounded-md border border-border bg-muted/40 p-3 text-left text-xs font-mono text-muted-foreground">
+                <div>level: {level || 'all'}</div>
+                <div>subject_id_uuid: {filterSubject || 'all'}</div>
+                <div>domain_id_uuid: {domain || 'all'}</div>
+                <div>subdomain_id_uuid: {subdomain || 'all'}</div>
+                {search && <div>search: {search}</div>}
+                {objectivesError && <div>error: {objectivesErrorDetails?.message ?? 'Unknown query error'}</div>}
+              </div>
             </div>
           )}
         </CardContent>
