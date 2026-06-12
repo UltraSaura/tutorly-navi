@@ -23,6 +23,53 @@ interface QuestionCardProps {
   isCorrect?: boolean;
 }
 
+// ── Deterministic numeric suggestion chips (correct answer + distractors) ──
+function buildNumericChips(q: any): number[] {
+  if (Array.isArray(q?.dragOptions) && q.dragOptions.length > 0) {
+    return seededShuffle(
+      Array.from(new Set(q.dragOptions.map((n: any) => Number(n)).filter((n: number) => Number.isFinite(n)))),
+      String(q.id ?? 'n')
+    );
+  }
+  const answer = Number(q?.answer);
+  if (!Number.isFinite(answer)) return [];
+  const min = q?.range?.min;
+  const max = q?.range?.max;
+  const isInt = Number.isInteger(answer);
+  const pool = new Set<number>([answer]);
+  const candidates: number[] = [];
+  if (isInt) {
+    for (let d = 1; d <= 6; d++) candidates.push(answer + d, answer - d);
+  } else {
+    for (let d = 1; d <= 6; d++) {
+      candidates.push(+(answer + d * 0.1).toFixed(2), +(answer - d * 0.1).toFixed(2));
+    }
+  }
+  for (const c of candidates) {
+    if (pool.size >= 4) break;
+    if (typeof min === 'number' && c < min) continue;
+    if (typeof max === 'number' && c > max) continue;
+    if (c < 0 && answer >= 0) continue;
+    pool.add(c);
+  }
+  if (pool.size < 4 && typeof min === 'number' && typeof max === 'number') {
+    for (let v = min; v <= max && pool.size < 4; v++) pool.add(v);
+  }
+  return seededShuffle(Array.from(pool), String(q.id ?? 'n'));
+}
+
+function seededShuffle<T>(arr: T[], seed: string): T[] {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
+  const out = arr.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    h = Math.imul(h ^ (h >>> 13), 2654435761);
+    const j = Math.abs(h) % (i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 const choiceVariants = {
   idle:     { x: 0, backgroundColor: "transparent", borderColor: "hsl(var(--border))", scale: 1 },
   selected: { backgroundColor: "hsl(var(--primary) / 0.1)", borderColor: "hsl(var(--primary))", scale: 1 },
