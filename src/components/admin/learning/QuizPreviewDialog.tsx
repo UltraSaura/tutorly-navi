@@ -118,15 +118,47 @@ function AnswerDisplay({ question }: { question: Question }) {
 
     case 'fill-expr': {
       const q = question;
-      let display = q.template;
-      q.blanks.forEach(blank => {
-        display = display.replace(/_{2,}/, `[${q.answers[blank] ?? '?'}]`);
-      });
+      const parts = q.template.split(/(_{2,})/g);
+      let blankIdx = 0;
       return (
-        <div className="space-y-2">
-          <div className="px-3 py-3 rounded-xl border border-green-300 bg-green-50 dark:bg-green-950/20 text-lg font-semibold text-center">
-            {display}
+        <div className="space-y-3">
+          {/* Expression with answers revealed in blank slots */}
+          <div className="px-3 py-3 rounded-xl border border-green-300 bg-green-50 dark:bg-green-950/20 text-lg font-semibold flex flex-wrap items-center justify-center gap-2">
+            {parts.map((part, i) => {
+              if (/^_{2,}$/.test(part)) {
+                const blank = q.blanks[blankIdx] ?? `blank_${blankIdx}`;
+                blankIdx++;
+                return (
+                  <span
+                    key={`slot-${i}`}
+                    className="inline-flex min-w-[44px] h-10 px-3 rounded-lg bg-green-500 text-white items-center justify-center text-base font-bold"
+                  >
+                    {q.answers[blank] ?? '?'}
+                  </span>
+                );
+              }
+              return <span key={`txt-${i}`}>{part}</span>;
+            })}
           </div>
+
+          {/* Suggested-response chips (what the student drags) */}
+          {q.chips && q.chips.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">Suggested responses (drag targets):</p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {q.chips.map((chip, i) => (
+                  <div
+                    key={`${chip}-${i}`}
+                    className="w-11 h-11 rounded-xl border border-border bg-secondary text-foreground text-base font-semibold flex items-center justify-center shadow-sm"
+                  >
+                    {chip}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Answer key legend */}
           <div className="flex flex-wrap gap-2 justify-center">
             {q.blanks.map(blank => (
               <Badge key={blank} variant="default" className="text-sm bg-green-500">
@@ -137,6 +169,7 @@ function AnswerDisplay({ question }: { question: Question }) {
         </div>
       );
     }
+
 
     case 'visual': {
       return (
