@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Question } from "@/types/quiz-bank";
 import { evaluateQuestion } from "@/utils/quizEvaluation";
@@ -226,6 +226,9 @@ function choiceState(
   if (!isSubmitted) {
     return { border: isSelected ? '#12C6A0' : '#EAECEF', bg: isSelected ? '#F2FBF8' : 'white', color: '#0F172A', opacity: 1, shake: false };
   }
+  if (c.correct) {
+    return { border: '#9FE1CB', bg: '#EAF3DE', color: '#27500A', opacity: 1, shake: false };
+  }
   if (wasSelected) {
     return { border: '#F7C1C1', bg: '#FCEBEB', color: '#C0121A', opacity: 1, shake: true };
   }
@@ -270,15 +273,33 @@ export function QuestionCard({
   const [tries, setTries] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const onChangeRef = useRef(onChange);
   const inferredPromptFigure = useMemo(() => {
     if ((question as any).context_visual) return null;
     return inferPromptFigure(question);
   }, [question]);
 
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
   const setVal = (v: any) => {
     setValue(v);
     onChange?.(v);
   };
+
+  useEffect(() => {
+    setValue(initialValue);
+    setSelectedChip(null);
+    setDraggedOrderingItem(null);
+    setTries(0);
+    setSubmitted(false);
+    setIsCorrect(null);
+
+    if (question.kind === "ordering") {
+      onChangeRef.current?.(initialValue);
+    }
+  }, [initialValue, question.kind]);
 
   const submitIfTimeline = () => {
     if (!onFinish) return;

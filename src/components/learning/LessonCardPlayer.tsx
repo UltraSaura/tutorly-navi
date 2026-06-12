@@ -12,6 +12,7 @@ import { QuestionCard } from './QuestionCard';
 import { getAgeConfig } from './lesson/ageConfig';
 import type { LessonContent, LessonExample } from '@/types/learning';
 import type { Question } from '@/types/quiz-bank';
+import { evaluateQuestion } from '@/utils/quizEvaluation';
 
 interface LessonCardPlayerProps {
   topicId: string;
@@ -320,24 +321,16 @@ function ExamplesCard({
   );
 }
 
-// Evaluates a single/multi question answer without relying on QuestionCard internals
-function evaluateAnswer(question: Question, answer: any): boolean {
-  if ((question as any).kind === 'single') {
-    const correct = (question as any).choices?.find((c: any) => c.correct);
-    return answer !== null && answer === correct?.id;
+function hasAnswer(question: Question | null | undefined, answer: any): boolean {
+  if (!question) return false;
+  if (question.kind === 'multi') return Array.isArray(answer) && answer.length > 0;
+  if (question.kind === 'numeric' && (question as any).answerFormat === 'fraction') {
+    return Boolean(answer?.numerator) && Boolean(answer?.denominator);
   }
-  if ((question as any).kind === 'multi') {
-    const correctIds: string[] = ((question as any).choices || [])
-      .filter((c: any) => c.correct)
-      .map((c: any) => c.id);
-    return (
-      Array.isArray(answer) &&
-      answer.length === correctIds.length &&
-      correctIds.every(id => answer.includes(id))
-    );
-  }
-  // visual, numeric, ordering, slider, match, fill-expr -> accept any answer
-  return true;
+  if (question.kind === 'match') return Array.isArray(answer) && answer.length > 0;
+  if (question.kind === 'fill-expr') return answer && Object.keys(answer).length > 0;
+  if (question.kind === 'ordering') return Array.isArray(answer) && answer.length > 0;
+  return answer !== null && answer !== undefined && answer !== '';
 }
 
 function QuizCard({
@@ -371,8 +364,8 @@ function QuizCard({
   });
 
   const handleValidate = () => {
-    if (answer == null) return;
-    setCorrect(question ? evaluateAnswer(question, answer) : true);
+    if (!hasAnswer(question, answer)) return;
+    setCorrect(question ? evaluateQuestion(question, answer) : true);
     setSubmitted(true);
   };
 
@@ -398,10 +391,6 @@ function QuizCard({
           question={question}
           onChange={setAnswer}
           allowRetry={false}
-          onFinish={(isCorrect) => {
-            setCorrect(isCorrect);
-            setSubmitted(true);
-          }}
         />
       </div>
 
@@ -429,13 +418,13 @@ function QuizCard({
       {!submitted ? (
         <button
           onClick={handleValidate}
-          disabled={answer == null}
+          disabled={!hasAnswer(question, answer)}
           style={{
             marginTop: 'auto', width: '100%', padding: 13, borderRadius: 14, border: 'none',
-            background: answer != null ? '#12C6A0' : '#EAECEF',
-            color: answer != null ? '#0F172A' : '#B4B2A9',
+            background: hasAnswer(question, answer) ? '#12C6A0' : '#EAECEF',
+            color: hasAnswer(question, answer) ? '#0F172A' : '#B4B2A9',
             fontSize: 13, fontWeight: 700,
-            cursor: answer != null ? 'pointer' : 'not-allowed',
+            cursor: hasAnswer(question, answer) ? 'pointer' : 'not-allowed',
             fontFamily: 'Poppins, sans-serif',
           }}
         >
