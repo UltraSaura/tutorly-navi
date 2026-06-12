@@ -23,6 +23,53 @@ interface QuestionCardProps {
   isCorrect?: boolean;
 }
 
+// ── Deterministic numeric suggestion chips (correct answer + distractors) ──
+function buildNumericChips(q: any): number[] {
+  if (Array.isArray(q?.dragOptions) && q.dragOptions.length > 0) {
+    return seededShuffle(
+      Array.from(new Set(q.dragOptions.map((n: any) => Number(n)).filter((n: number) => Number.isFinite(n)))),
+      String(q.id ?? 'n')
+    );
+  }
+  const answer = Number(q?.answer);
+  if (!Number.isFinite(answer)) return [];
+  const min = q?.range?.min;
+  const max = q?.range?.max;
+  const isInt = Number.isInteger(answer);
+  const pool = new Set<number>([answer]);
+  const candidates: number[] = [];
+  if (isInt) {
+    for (let d = 1; d <= 6; d++) candidates.push(answer + d, answer - d);
+  } else {
+    for (let d = 1; d <= 6; d++) {
+      candidates.push(+(answer + d * 0.1).toFixed(2), +(answer - d * 0.1).toFixed(2));
+    }
+  }
+  for (const c of candidates) {
+    if (pool.size >= 4) break;
+    if (typeof min === 'number' && c < min) continue;
+    if (typeof max === 'number' && c > max) continue;
+    if (c < 0 && answer >= 0) continue;
+    pool.add(c);
+  }
+  if (pool.size < 4 && typeof min === 'number' && typeof max === 'number') {
+    for (let v = min; v <= max && pool.size < 4; v++) pool.add(v);
+  }
+  return seededShuffle(Array.from(pool), String(q.id ?? 'n'));
+}
+
+function seededShuffle<T>(arr: T[], seed: string): T[] {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
+  const out = arr.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    h = Math.imul(h ^ (h >>> 13), 2654435761);
+    const j = Math.abs(h) % (i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 const choiceVariants = {
   idle:     { x: 0, backgroundColor: "transparent", borderColor: "hsl(var(--border))", scale: 1 },
   selected: { backgroundColor: "hsl(var(--primary) / 0.1)", borderColor: "hsl(var(--primary))", scale: 1 },
@@ -583,51 +630,97 @@ export function QuestionCard({
         );
       })()}
 
-      {question.kind === "numeric" && (question as any).answerFormat !== "fraction" && (
-        <div className="mt-2 flex flex-col items-center gap-3 py-2">
-          <p className="text-xs font-medium" style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>
-            Tape ta réponse
-          </p>
-          <div
-            className="flex items-center justify-center rounded-2xl transition-all"
-            style={{
-              width: '160px',
-              height: '96px',
-              background: value !== '' ? '#F2FBF8' : 'white',
-              border: `2.5px solid ${value !== '' ? '#12C6A0' : '#EAECEF'}`,
-            }}
-          >
-            <input
-              type="number"
-              inputMode="numeric"
-              autoComplete="off"
-              autoFocus
-              value={value}
-              onChange={e => setVal(e.target.value)}
-              placeholder="?"
-              style={{
-                width: '100%',
-                height: '100%',
-                textAlign: 'center',
-                fontSize: '44px',
-                fontWeight: '800',
-                color: '#0F172A',
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                fontFamily: 'Poppins, sans-serif',
-                WebkitAppearance: 'none',
-                MozAppearance: 'textfield' as any,
-              }}
-            />
-          </div>
-          {(question as any).range && (
-            <p className="text-xs" style={{ color: '#9CA3AF' }}>
-              Entre {(question as any).range.min} et {(question as any).range.max}
+      {question.kind === "numeric" && (question as any).answerFormat !== "fraction" && (() => {
+        const q: any = question;
+        const chips: number[] = buildNumericChips(q);
+        const currentStr = String(value ?? '');
+        return (
+          <div className="mt-2 flex flex-col items-center gap-3 py-2">
+            <p className="text-xs font-medium" style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>
+              Tape ta réponse
             </p>
-          )}
-        </div>
-      )}
+            <div
+              className="flex items-center justify-center rounded-2xl transition-all"
+              style={{
+                width: '160px',
+                height: '96px',
+                background: value !== '' ? '#F2FBF8' : 'white',
+                border: `2.5px solid ${value !== '' ? '#12C6A0' : '#EAECEF'}`,
+              }}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const chip = e.dataTransfer.getData('text/plain');
+                if (chip !== '') setVal(chip);
+              }}
+            >
+              <input
+                type="number"
+                inputMode="numeric"
+                autoComplete="off"
+                autoFocus
+                value={value}
+                onChange={e => setVal(e.target.value)}
+                placeholder="?"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  textAlign: 'center',
+                  fontSize: '44px',
+                  fontWeight: '800',
+                  color: '#0F172A',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  fontFamily: 'Poppins, sans-serif',
+                  WebkitAppearance: 'none',
+                  MozAppearance: 'textfield' as any,
+                }}
+              />
+            </div>
+            {q.range && (
+              <p className="text-xs" style={{ color: '#9CA3AF' }}>
+                Entre {q.range.min} et {q.range.max}
+              </p>
+            )}
+            {chips.length > 0 && (
+              <div className="flex flex-wrap gap-2 justify-center pt-1">
+                {chips.map((chip, i) => {
+                  const chipStr = String(chip);
+                  const isUsed = currentStr === chipStr;
+                  return (
+                    <motion.button
+                      key={`${chip}-${i}`}
+                      type="button"
+                      draggable
+                      initial={{ opacity: 0, scale: 0.7 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
+                      whileTap={{ scale: 0.9 }}
+                      onDragStart={(event: any) => {
+                        event.dataTransfer?.setData('text/plain', chipStr);
+                      }}
+                      onClick={() => setVal(isUsed ? '' : chipStr)}
+                      className={cn(
+                        'w-12 h-12 rounded-xl border text-lg font-semibold transition-all cursor-grab active:cursor-grabbing',
+                        isUsed
+                          ? 'bg-primary/10 border-primary text-primary opacity-50'
+                          : 'bg-secondary border-transparent hover:border-primary/40 shadow-sm'
+                      )}
+                      style={{ fontFamily: 'Poppins, sans-serif' }}
+                    >
+                      {chip}
+                    </motion.button>
+                  );
+                })}
+                <p className="basis-full text-xs text-center text-muted-foreground mt-1">
+                  Glisse un nombre, ou tapote pour le placer.
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {question.kind === "ordering" && (
         <ul className="space-y-2">
