@@ -1722,6 +1722,7 @@ export type Database = {
         Row: {
           bank_id: string
           created_at: string
+          difficulty: number
           id: string
           payload: Json
           position: number
@@ -1730,6 +1731,7 @@ export type Database = {
         Insert: {
           bank_id: string
           created_at?: string
+          difficulty?: number
           id: string
           payload: Json
           position?: number
@@ -1738,6 +1740,7 @@ export type Database = {
         Update: {
           bank_id?: string
           created_at?: string
+          difficulty?: number
           id?: string
           payload?: Json
           position?: number
@@ -2327,15 +2330,21 @@ export type Database = {
           curriculum_subject_id: string | null
           curriculum_subject_id_uuid: string | null
           description: string | null
+          difficulty_level: number
           estimated_duration_minutes: number
           id: string
           is_active: boolean
+          is_parent_topic: boolean
           keywords: string[] | null
           lesson_content: Json | null
+          mastery_threshold: number
           name: string
           order_index: number
+          parent_topic_id: string | null
           quiz_count: number
+          sequence_order: number
           slug: string
+          step_name: string | null
           updated_at: string
           video_count: number
         }
@@ -2351,15 +2360,21 @@ export type Database = {
           curriculum_subject_id?: string | null
           curriculum_subject_id_uuid?: string | null
           description?: string | null
+          difficulty_level?: number
           estimated_duration_minutes?: number
           id?: string
           is_active?: boolean
+          is_parent_topic?: boolean
           keywords?: string[] | null
           lesson_content?: Json | null
+          mastery_threshold?: number
           name: string
           order_index?: number
+          parent_topic_id?: string | null
           quiz_count?: number
+          sequence_order?: number
           slug: string
+          step_name?: string | null
           updated_at?: string
           video_count?: number
         }
@@ -2375,15 +2390,21 @@ export type Database = {
           curriculum_subject_id?: string | null
           curriculum_subject_id_uuid?: string | null
           description?: string | null
+          difficulty_level?: number
           estimated_duration_minutes?: number
           id?: string
           is_active?: boolean
+          is_parent_topic?: boolean
           keywords?: string[] | null
           lesson_content?: Json | null
+          mastery_threshold?: number
           name?: string
           order_index?: number
+          parent_topic_id?: string | null
           quiz_count?: number
+          sequence_order?: number
           slug?: string
+          step_name?: string | null
           updated_at?: string
           video_count?: number
         }
@@ -2414,6 +2435,13 @@ export type Database = {
             columns: ["curriculum_subject_id_uuid"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topics_parent_topic_id_fkey"
+            columns: ["parent_topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
             referencedColumns: ["id"]
           },
         ]
@@ -2495,9 +2523,11 @@ export type Database = {
       user_learning_progress: {
         Row: {
           category_id: string | null
+          consecutive_correct: number
           created_at: string
           id: string
           last_watched_position_seconds: number
+          mastery_score: number
           progress_percentage: number
           progress_type: string
           quiz_score: number | null
@@ -2510,9 +2540,11 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          consecutive_correct?: number
           created_at?: string
           id?: string
           last_watched_position_seconds?: number
+          mastery_score?: number
           progress_percentage?: number
           progress_type: string
           quiz_score?: number | null
@@ -2525,9 +2557,11 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          consecutive_correct?: number
           created_at?: string
           id?: string
           last_watched_position_seconds?: number
+          mastery_score?: number
           progress_percentage?: number
           progress_type?: string
           quiz_score?: number | null
