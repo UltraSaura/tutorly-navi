@@ -484,9 +484,20 @@ export default function CurriculumManager() {
             <div className="text-sm text-muted-foreground">
               {objectives?.length || 0} objective(s) found
             </div>
-            <Button variant="outline" size="sm" onClick={resetFilters}>
-              Reset Filters
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportObjectivesCsv(objectives)}
+                disabled={!objectives || objectives.length === 0}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button variant="outline" size="sm" onClick={resetFilters}>
+                Reset Filters
+              </Button>
+            </div>
           </div>
 
           {/* Objectives List */}
