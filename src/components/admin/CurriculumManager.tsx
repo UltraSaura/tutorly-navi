@@ -8,7 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3, AlertTriangle } from 'lucide-react';
+import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3, AlertTriangle, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useObjectives, useCurriculumStats, useDbSubjects, useDbDomains, useDbSubdomains } from '@/hooks/useCurriculumData';
@@ -216,6 +216,38 @@ export default function CurriculumManager() {
     setDomain('');
     setSubdomain('');
     setSearch('');
+  };
+
+  const exportObjectivesCsv = (rows: typeof objectives) => {
+    if (!rows || rows.length === 0) return;
+    const escape = (v: unknown) => {
+      const s = v === null || v === undefined ? '' : String(v);
+      return `"${s.replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
+    };
+    const headers = [
+      'objective_id', 'objective_text', 'level', 'subject', 'domain', 'subdomain',
+      'notes_from_prog', 'success_criterion_id', 'success_criterion_text',
+    ];
+    const lines: string[] = [headers.join(',')];
+    rows.forEach((o: any) => {
+      const scs = o.success_criteria && o.success_criteria.length > 0 ? o.success_criteria : [null];
+      scs.forEach((sc: any) => {
+        lines.push([
+          o.id, o.text, o.level, o.subject ?? '', o.domain ?? '', o.subdomain ?? '',
+          o.notes_from_prog ?? '', sc?.id ?? '', sc?.text ?? '',
+        ].map(escape).join(','));
+      });
+    });
+    const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `curriculum-objectives-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast({ title: 'Export ready', description: `${rows.length} objective(s) exported.` });
   };
 
   return (
@@ -484,9 +516,20 @@ export default function CurriculumManager() {
             <div className="text-sm text-muted-foreground">
               {objectives?.length || 0} objective(s) found
             </div>
-            <Button variant="outline" size="sm" onClick={resetFilters}>
-              Reset Filters
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportObjectivesCsv(objectives)}
+                disabled={!objectives || objectives.length === 0}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button variant="outline" size="sm" onClick={resetFilters}>
+                Reset Filters
+              </Button>
+            </div>
           </div>
 
           {/* Objectives List */}
