@@ -8,7 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3, AlertTriangle } from 'lucide-react';
+import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3, AlertTriangle, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useObjectives, useCurriculumStats, useDbSubjects, useDbDomains, useDbSubdomains } from '@/hooks/useCurriculumData';
