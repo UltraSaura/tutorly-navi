@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNB Métropole juillet 2024</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #f0f0f0; color: #111; min-height: 100vh; padding-bottom: 80px; }
+
+  .top-bar { background: white; border-bottom: 1px solid #e0e0e0; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .top-bar h1 { font-size: 15px; font-weight: 600; }
+  .badge { background: #f0f0f0; border: 1px solid #ddd; border-radius: 12px; padding: 3px 10px; font-size: 11px; color: #555; }
+  .badge-draft { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
+  .badge-published { background: #f0fdf4; border-color: #86efac; color: #166534; }
+
+  .content { max-width: 680px; margin: 0 auto; padding: 16px; }
+
+  .exercise { background: white; border-radius: 12px; border: 1px solid #e0e0e0; overflow: hidden; }
+
+  .ex-header { padding: 16px 20px 12px; border-bottom: 1px solid #e8e8e8; }
+  .ex-header h2 { font-size: 16px; font-weight: 700; line-height: 1.4; }
+  .ex-meta { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .context { padding: 14px 20px; border-bottom: 1px solid #f0f0f0; }
+  .context p { font-size: 14px; line-height: 1.6; color: #444; white-space: pre-wrap; }
+
+  .docs-zone { border-top: 1px solid #e8e8e8; border-bottom: 1px solid #e8e8e8; }
+  .doc-label { padding: 8px 16px 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #888; }
+  .doc-content { padding: 8px 16px 12px; font-size: 14px; line-height: 1.6; color: #444; white-space: pre-wrap; }
+  .doc-img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+  .table-wrap { overflow-x: auto; padding: 0 0 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  caption { padding: 8px 12px; text-align: left; font-size: 13px; font-weight: 600; }
+  th { background: #f5f5f5; padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e0e0e0; }
+  td { padding: 7px 12px; border-bottom: 1px solid #efefef; }
+  tr:last-child td { border-bottom: none; }
+  .fallback-details { border-top: 1px dashed #ddd; padding: 8px 16px; }
+  .fallback-details summary { cursor: pointer; font-size: 13px; color: #666; }
+
+  .questions-zone { padding: 16px 20px 20px; }
+  .q-sep { border: none; border-top: 1px dashed #ddd; margin: 16px 0; }
+  .q-prompt { font-size: 14px; font-weight: 500; line-height: 1.5; margin-bottom: 10px; }
+  .q-label { color: #888; margin-right: 6px; }
+  textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 14px; font-family: inherit; resize: vertical; outline: none; transition: border-color .2s; }
+  textarea:focus { border-color: #4C97FF; }
+  .choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .choice-label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+  .choice-letter { font-weight: 700; min-width: 1.6em; color: #555; }
+  .item-docs-zone { margin: 10px 0 6px; }
+  .q-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .btn-hint, .btn-check { border: 1px solid #ddd; background: white; border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: inherit; transition: background .15s; }
+  .btn-hint:hover { background: #fffbe6; border-color: #f0c040; }
+  .btn-check:hover { background: #f0f8ff; border-color: #4C97FF; }
+  .hints-box { margin-top: 10px; background: #fffbe6; border: 1px solid #f0c040; border-radius: 8px; padding: 10px 14px; }
+  .hint { font-size: 13px; line-height: 1.5; margin-bottom: 4px; }
+  .hint:last-child { margin-bottom: 0; }
+  .answer-box { margin-top: 10px; background: #f0f8ef; border: 1px solid #6cc070; border-radius: 8px; padding: 10px 14px; font-size: 13px; line-height: 1.6; }
+
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e0e0e0; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; z-index: 10; }
+  .nav-btn { border: 1px solid #ddd; background: white; border-radius: 8px; padding: 9px 18px; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .nav-btn:disabled { opacity: 0.35; cursor: default; }
+  .nav-btn:not(:disabled):hover { background: #f5f5f5; }
+  .nav-counter { font-size: 14px; font-weight: 600; color: #555; }
+
+  @media (max-width: 480px) {
+    .content { padding: 10px; }
+    .ex-header { padding: 14px 16px 10px; }
+    .context { padding: 12px 16px; }
+    .questions-zone { padding: 14px 16px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>DNB Métropole juillet 2024</h1>
+  <span class="badge">5 exercices</span>
+</div>
+
+<div class="content">
+
+<div class="exercise" id="exercise-0" style="display:block">
+  <div class="ex-header">
+    <h2>DNB mathématiques metropole 2024 - Exercice 1 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2024</span> <span class="badge">medium</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Au casino, la roulette est un jeu de hasard pour lequel chaque joueur mise au choix sur un ou plusieurs numéros. On lance une bille sur une roue qui tourne, numérotée de 0 à 36. La bille a la même probabilité de s’arrêter sur chaque numéro.</p></div>
+  <div class="docs-zone"><p class="doc-label">roulette</p><img src="exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/roulette.webp" alt="roulette" class="doc-img"></div>
+  <div class="questions-zone">
+<div class="question" id="ex0q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Expliquer pourquoi la probabilité que la bille s’arrête sur le numéro 7 est (1)/(37).</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Liste les cas favorables et le nombre total de cas possibles.</div><div class="hint"><b>Indice 2 :</b> La probabilité = (nombre de cas favorables) ÷ (total des cas).</div><div class="hint"><b>Indice 3 :</b> Vérifie que la probabilité est bien entre 0 et 1.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex0q1">
+  <p class="q-prompt"><span class="q-label">2.</span> Déterminer la probabilité que la bille s’arrête sur une case à la fois noire et paire.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Liste les cas favorables et le nombre total de cas possibles.</div><div class="hint"><b>Indice 2 :</b> La probabilité = (nombre de cas favorables) ÷ (total des cas).</div><div class="hint"><b>Indice 3 :</b> Vérifie que la probabilité est bien entre 0 et 1.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex0q2">
+  <p class="q-prompt"><span class="q-label">a.</span> Déterminer la probabilité que la bille s’arrête sur un numéro inférieur ou égal à 6.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Liste les cas favorables et le nombre total de cas possibles.</div><div class="hint"><b>Indice 2 :</b> La probabilité = (nombre de cas favorables) ÷ (total des cas).</div><div class="hint"><b>Indice 3 :</b> Vérifie que la probabilité est bien entre 0 et 1.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex0q3">
+  <p class="q-prompt"><span class="q-label">b.</span> En déduire la probabilité que la bille s’arrête sur un numéro supérieur ou égal à 7.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Liste les cas favorables et le nombre total de cas possibles.</div><div class="hint"><b>Indice 2 :</b> La probabilité = (nombre de cas favorables) ÷ (total des cas).</div><div class="hint"><b>Indice 3 :</b> Vérifie que la probabilité est bien entre 0 et 1.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex0q4">
+  <p class="q-prompt"><span class="q-label">c.</span> Un joueur affirme qu’on a plus de 3 chances sur 4 d’obtenir un numéro supérieur ou égal à 7. A-t-il raison ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les données importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode ou la propriété adaptée à cette question.</div><div class="hint"><b>Indice 3 :</b> Rédige ta réponse complète et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-1" style="display:none">
+  <div class="ex-header">
+    <h2>DNB mathématiques metropole 2024 - Exercice 2 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2024</span> <span class="badge">hard</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Programme A : • Choisir un nombre. • Prendre le carré du nombre choisi. • Multiplier le résultat par 2. • Ajouter le double du nombre de départ. • Soustraire 4 au résultat. Programme B : [Programme Scratch]</p></div>
+  <div class="docs-zone"><p class="doc-label">Programme Scratch</p><img src="exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex02-diagram-1.webp" alt="Schéma exercice 2" class="doc-img"></div>
+  <div class="questions-zone">
+<div class="question" id="ex1q0">
+  <p class="q-prompt"><span class="q-label">a.</span> Vérifier que, si on choisit 5 comme nombre de départ, le résultat du programme A est 56.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Lis le programme bloc par bloc dans l'ordre d'exécution.</div><div class="hint"><b>Indice 2 :</b> Applique chaque instruction avec la valeur de départ choisie.</div><div class="hint"><b>Indice 3 :</b> Note les valeurs intermédiaires de chaque variable à chaque étape.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex1q1">
+  <p class="q-prompt"><span class="q-label">b.</span> Quel résultat obtient-on avec le programme B si on choisit -9 comme nombre de départ ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Lis le programme bloc par bloc dans l'ordre d'exécution.</div><div class="hint"><b>Indice 2 :</b> Applique chaque instruction avec la valeur de départ choisie.</div><div class="hint"><b>Indice 3 :</b> Note les valeurs intermédiaires de chaque variable à chaque étape.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex1q2">
+  <p class="q-prompt"><span class="q-label">a.</span> Parmi les trois propositions ci-dessous, recopier l’expression qui donne le résultat obtenu par le programme B ?</p>
+  <div class="choices"><label class="choice-label"><input type="radio" name="ex1q2" value="E_1 = (x + 2) - 1"><span class="choice-letter">A.</span> E_1 = (x + 2) - 1</label><label class="choice-label"><input type="radio" name="ex1q2" value="E_2 = (x + 2) × (x - 1)"><span class="choice-letter">B.</span> E_2 = (x + 2) × (x - 1)</label><label class="choice-label"><input type="radio" name="ex1q2" value="E_3 = x + 2 × x - 1"><span class="choice-letter">C.</span> E_3 = x + 2 × x - 1</label></div>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Lis la question en entier : s'agit-il d'une image (calcul direct) ou d'un antécédent (équation à résoudre) ?</div><div class="hint"><b>Indice 2 :</b> Pour l'image de x : substitue x dans l'expression de f(x) et calcule.</div><div class="hint"><b>Indice 3 :</b> Pour l'antécédent : pose f(x) = valeur connue et résous l'équation.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex1q3">
+  <p class="q-prompt"><span class="q-label">b.</span> Exprimer en fonction de x le résultat obtenu avec le programme A.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Lis la question en entier : s'agit-il d'une image (calcul direct) ou d'un antécédent (équation à résoudre) ?</div><div class="hint"><b>Indice 2 :</b> Pour l'image de x : substitue x dans l'expression de f(x) et calcule.</div><div class="hint"><b>Indice 3 :</b> Pour l'antécédent : pose f(x) = valeur connue et résous l'équation.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex1q4">
+  <p class="q-prompt"><span class="q-label">3.</span> Démontrer que, quel que soit le nombre choisi au départ, le résultat du programme A est toujours le double du résultat du programme B.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Identifie les données utiles dans l'énoncé et sur la figure.</div><div class="hint"><b>Indice 2 :</b> Rappelle le théorème ou la propriété que tu vas utiliser.</div><div class="hint"><b>Indice 3 :</b> Rédige ta démonstration étape par étape : hypothèse → application → conclusion.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-2" style="display:none">
+  <div class="ex-header">
+    <h2>DNB mathématiques metropole 2024 - Exercice 3 (22 points)</h2>
+    <div class="ex-meta"><span class="badge">2024</span> <span class="badge">hard</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Sur la figure ci-dessous, on a : • C est un cercle de centre O et de rayon 4,5 cm ; • [AB] est un diamètre de ce cercle et D est un point du cercle ; • les points B, E, A sont alignés, ainsi que les points D, F, A ; • les droites (BD) et (EF) sont parallèles ; • BD = 5,4 cm ; DA = 7,2 cm et AE = 2,7 cm.</p></div>
+  <div class="docs-zone"><p class="doc-label">Schéma 1</p><img src="exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex03-diagram-1.webp" alt="Schéma exercice 3" class="doc-img"></div>
+  <div class="questions-zone">
+<div class="question" id="ex2q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Justifier que le diamètre [AB] mesure 9 cm.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les données importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode ou la propriété adaptée à cette question.</div><div class="hint"><b>Indice 3 :</b> Rédige ta réponse complète et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex2q1">
+  <p class="q-prompt"><span class="q-label">2.</span> Démontrer que le triangle ABD est rectangle en D.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Identifie les données utiles dans l'énoncé et sur la figure.</div><div class="hint"><b>Indice 2 :</b> Rappelle le théorème ou la propriété que tu vas utiliser.</div><div class="hint"><b>Indice 3 :</b> Rédige ta démonstration étape par étape : hypothèse → application → conclusion.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex2q2">
+  <p class="q-prompt"><span class="q-label">3.</span> Calculer AF.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les données importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode ou la propriété adaptée à cette question.</div><div class="hint"><b>Indice 3 :</b> Rédige ta réponse complète et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex2q3">
+  <p class="q-prompt"><span class="q-label">a.</span> Justifier que l’aire du triangle ABD est égale à 19,44 cm^2.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Identifie la forme géométrique et ses dimensions.</div><div class="hint"><b>Indice 2 :</b> Rappelle la formule : aire d'un disque = π × R², aire d'un triangle = (base × hauteur) ÷ 2…</div><div class="hint"><b>Indice 3 :</b> Remplace les valeurs et calcule. N'oublie pas les unités (cm², m²…).</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex2q4">
+  <p class="q-prompt"><span class="q-label">b.</span> Calculer l’aire du disque, arrondie au centième. Rappel : l’aire du disque est égale à π × R^2, où R est le rayon du disque.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Identifie la forme géométrique et ses dimensions.</div><div class="hint"><b>Indice 2 :</b> Rappelle la formule : aire d'un disque = π × R², aire d'un triangle = (base × hauteur) ÷ 2…</div><div class="hint"><b>Indice 3 :</b> Remplace les valeurs et calcule. N'oublie pas les unités (cm², m²…).</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex2q5">
+  <p class="q-prompt"><span class="q-label">5.</span> Quel pourcentage de l’aire du disque représente l’aire du triangle ABD ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Identifie la forme géométrique et ses dimensions.</div><div class="hint"><b>Indice 2 :</b> Rappelle la formule : aire d'un disque = π × R², aire d'un triangle = (base × hauteur) ÷ 2…</div><div class="hint"><b>Indice 3 :</b> Remplace les valeurs et calcule. N'oublie pas les unités (cm², m²…).</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-3" style="display:none">
+  <div class="ex-header">
+    <h2>DNB mathématiques metropole 2024 - Exercice 4 (18 points)</h2>
+    <div class="ex-meta"><span class="badge">2024</span> <span class="badge">medium</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Cet exercice est un questionnaire à choix multiple (QCM). Pour chaque question, trois réponses ( A, B ou C) sont proposées. Une seule réponse est exacte. Recopier sur la copie le numéro de la question et la lettre correspondant à la réponse exacte. Aucune justification n’est demandée. Question | Réponse A | Réponse B | Réponse C</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex3q0">
+  <p class="q-prompt"><span class="q-label">1.</span> On considère la fonction f définie par f(x) = 3x - 2. Quelle est l’image de -4 par cette fonction ?</p>
+  <div class="choices"><label class="choice-label"><input type="radio" name="ex3q0" value="-14"><span class="choice-letter">A.</span> -14</label><label class="choice-label"><input type="radio" name="ex3q0" value="-10"><span class="choice-letter">B.</span> -10</label><label class="choice-label"><input type="radio" name="ex3q0" value="-3"><span class="choice-letter">C.</span> -3</label></div>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Lis la question en entier : s'agit-il d'une image (calcul direct) ou d'un antécédent (équation à résoudre) ?</div><div class="hint"><b>Indice 2 :</b> Pour l'image de x : substitue x dans l'expression de f(x) et calcule.</div><div class="hint"><b>Indice 3 :</b> Pour l'antécédent : pose f(x) = valeur connue et résous l'équation.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex3q1">
+  <p class="q-prompt"><span class="q-label">2.</span> Combien vaut (-5)^3 ?</p>
+  <div class="choices"><label class="choice-label"><input type="radio" name="ex3q1" value="-125"><span class="choice-letter">A.</span> -125</label><label class="choice-label"><input type="radio" name="ex3q1" value="-15"><span class="choice-letter">B.</span> -15</label><label class="choice-label"><input type="radio" name="ex3q1" value="125"><span class="choice-letter">C.</span> 125</label></div>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les données importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode ou la propriété adaptée à cette question.</div><div class="hint"><b>Indice 3 :</b> Rédige ta réponse complète et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep"><div class="item-docs-zone"><p class="doc-label">Schéma 1</p><img src="exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex04-diagram-1.webp" alt="Schéma exercice 4" class="doc-img"></div>
+<div class="question" id="ex3q2">
+  <p class="q-prompt"><span class="q-label">3.</span> Quelle est l’image du point J par la translation qui transforme C en A ?</p>
+  <div class="choices"><label class="choice-label"><input type="radio" name="ex3q2" value="H"><span class="choice-letter">A.</span> H</label><label class="choice-label"><input type="radio" name="ex3q2" value="E"><span class="choice-letter">B.</span> E</label><label class="choice-label"><input type="radio" name="ex3q2" value="D"><span class="choice-letter">C.</span> D</label></div>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Lis la question en entier : s'agit-il d'une image (calcul direct) ou d'un antécédent (équation à résoudre) ?</div><div class="hint"><b>Indice 2 :</b> Pour l'image de x : substitue x dans l'expression de f(x) et calcule.</div><div class="hint"><b>Indice 3 :</b> Pour l'antécédent : pose f(x) = valeur connue et résous l'équation.</div></div>
+  
+</div><hr class="q-sep"><div class="item-docs-zone"><p class="doc-label">Schéma 2</p><img src="exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex04-diagram-2.webp" alt="Schéma exercice 4" class="doc-img"></div>
+<div class="question" id="ex3q3">
+  <p class="q-prompt"><span class="q-label">4.</span> Quel est l’antécédent de 3 par la fonction f ?</p>
+  <div class="choices"><label class="choice-label"><input type="radio" name="ex3q3" value="3"><span class="choice-letter">A.</span> 3</label><label class="choice-label"><input type="radio" name="ex3q3" value="- 3"><span class="choice-letter">B.</span> - 3</label><label class="choice-label"><input type="radio" name="ex3q3" value="0"><span class="choice-letter">C.</span> 0</label></div>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Lis la question en entier : s'agit-il d'une image (calcul direct) ou d'un antécédent (équation à résoudre) ?</div><div class="hint"><b>Indice 2 :</b> Pour l'image de x : substitue x dans l'expression de f(x) et calcule.</div><div class="hint"><b>Indice 3 :</b> Pour l'antécédent : pose f(x) = valeur connue et résous l'équation.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex3q4">
+  <p class="q-prompt"><span class="q-label">5.</span> On a mesuré les tailles, en m, de sept élèves : 1,46 ; 1,65 ; 1,6 ; 1,72 ; 1,7 ; 1,67 ; 1,75 Quelle est la médiane, en m, de ces tailles ?</p>
+  <div class="choices"><label class="choice-label"><input type="radio" name="ex3q4" value="1,72"><span class="choice-letter">A.</span> 1,72</label><label class="choice-label"><input type="radio" name="ex3q4" value="1,67"><span class="choice-letter">B.</span> 1,67</label><label class="choice-label"><input type="radio" name="ex3q4" value="1,65"><span class="choice-letter">C.</span> 1,65</label></div>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Trie les valeurs de la série dans l'ordre croissant.</div><div class="hint"><b>Indice 2 :</b> Pour la médiane : repère la valeur du milieu (ou la moyenne des deux valeurs centrales).</div><div class="hint"><b>Indice 3 :</b> Relis les données pour vérifier que ta valeur est cohérente avec la série.</div></div>
+  
+</div><hr class="q-sep"><div class="item-docs-zone"><p class="doc-label">Schéma 3</p><img src="exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex04-diagram-3.webp" alt="Schéma exercice 4" class="doc-img"></div>
+<div class="question" id="ex3q5">
+  <p class="q-prompt"><span class="q-label">6.</span> Dans le triangle ABC rectangle en A ci-contre, qui n’est pas en vraie grandeur, quelle est la valeur de cos α ?</p>
+  <div class="choices"><label class="choice-label"><input type="radio" name="ex3q5" value="0,8"><span class="choice-letter">A.</span> 0,8</label><label class="choice-label"><input type="radio" name="ex3q5" value="0,75"><span class="choice-letter">B.</span> 0,75</label><label class="choice-label"><input type="radio" name="ex3q5" value="0,6"><span class="choice-letter">C.</span> 0,6</label></div>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Identifie les données utiles dans l'énoncé et sur la figure.</div><div class="hint"><b>Indice 2 :</b> Rappelle le théorème ou la propriété que tu vas utiliser.</div><div class="hint"><b>Indice 3 :</b> Rédige ta démonstration étape par étape : hypothèse → application → conclusion.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-4" style="display:none">
+  <div class="ex-header">
+    <h2>DNB mathématiques metropole 2024 - Exercice 5 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2024</span> <span class="badge">medium</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Un club de natation propose un après-midi découverte pour les enfants.</p></div>
+  <div class="docs-zone"><p class="doc-label">Schéma 1</p><img src="exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex05-diagram-1.webp" alt="Schéma exercice 5" class="doc-img"></div>
+  <div class="questions-zone">
+<div class="question" id="ex4q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Pourquoi n’est-il pas possible de faire 15 sachets ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Identifie la forme géométrique et ses dimensions.</div><div class="hint"><b>Indice 2 :</b> Rappelle la formule : aire d'un disque = π × R², aire d'un triangle = (base × hauteur) ÷ 2…</div><div class="hint"><b>Indice 3 :</b> Remplace les valeurs et calcule. N'oublie pas les unités (cm², m²…).</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex4q1">
+  <p class="q-prompt"><span class="q-label">a.</span> Décomposer 330 et 132 en produits de facteurs premiers.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Essaie de diviser par 2, puis par 3, puis par 5, puis par 7…</div><div class="hint"><b>Indice 2 :</b> Écris la décomposition en facteurs premiers sous forme de puissances.</div><div class="hint"><b>Indice 3 :</b> Le PGCD = produit des facteurs communs à la puissance minimale.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex4q2">
+  <p class="q-prompt"><span class="q-label">b.</span> En déduire le plus grand nombre de sachets que la présidente pourra réaliser.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les données importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode ou la propriété adaptée à cette question.</div><div class="hint"><b>Indice 3 :</b> Rédige ta réponse complète et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex4q3">
+  <p class="q-prompt"><span class="q-label">c.</span> Dans ce cas, combien mettra-t-elle d’autocollants et de drapeaux dans chaque sachet ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les données importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode ou la propriété adaptée à cette question.</div><div class="hint"><b>Indice 3 :</b> Rédige ta réponse complète et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex4q4">
+  <p class="q-prompt"><span class="q-label">1.</span> Combien coûte le remplissage de la piscine ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les données importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode ou la propriété adaptée à cette question.</div><div class="hint"><b>Indice 3 :</b> Rédige ta réponse complète et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+</div>
+
+<div class="bottom-nav">
+  <button class="nav-btn" id="btn-prev" onclick="navigate(-1)" disabled>← Précédent</button>
+  <span class="nav-counter" id="nav-counter">1 / 5</span>
+  <button class="nav-btn" id="btn-next" onclick="navigate(1)">Suivant →</button>
+</div>
+
+<script>
+let current = 0;
+const total = 5;
+
+function navigate(dir) {
+  const next = current + dir;
+  if (next < 0 || next >= total) return;
+  document.getElementById('exercise-' + current).style.display = 'none';
+  current = next;
+  document.getElementById('exercise-' + current).style.display = 'block';
+  document.getElementById('nav-counter').textContent = (current + 1) + ' / ' + total;
+  document.getElementById('btn-prev').disabled = current === 0;
+  document.getElementById('btn-next').disabled = current === total - 1;
+  window.scrollTo(0, 0);
+}
+
+function toggleHint(btn) {
+  const box = btn.closest('.question').querySelector('.hints-box');
+  if (!box) return;
+  const shown = box.style.display !== 'none';
+  box.style.display = shown ? 'none' : 'block';
+  btn.textContent = shown ? '💡 Indice' : '💡 Cacher';
+}
+
+function toggleAnswer(btn) {
+  const box = btn.closest('.question').querySelector('.answer-box');
+  if (!box) return;
+  const shown = box.style.display !== 'none';
+  box.style.display = shown ? 'none' : 'block';
+  btn.textContent = shown ? '✓ Vérifier' : '✓ Cacher';
+}
+</script>
+</body>
+</html>

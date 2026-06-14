@@ -1,0 +1,631 @@
+{
+  "sources": [
+    {
+      "id": "apmep",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr",
+      "fetched_at": "2026-05-27T20:05:38.916Z"
+    }
+  ],
+  "papers": [
+    {
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr",
+      "fetched_at": "2026-05-27T20:05:38.916Z",
+      "exam": "dnb",
+      "session_year": 2024,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole",
+      "variant": "standard",
+      "pdf_url": "/Users/hiroshigawa/Library/CloudStorage/GoogleDrive-hmtraore@gmail.com/My Drive/Business/Elearning Tutoring/StudyWiz/Ressources/Annales/Brevet/Sujet/Brevet_Metropole_1_07_2024_DV.zip",
+      "latex_zip_url": "/Users/hiroshigawa/Library/CloudStorage/GoogleDrive-hmtraore@gmail.com/My Drive/Business/Elearning Tutoring/StudyWiz/Ressources/Annales/Brevet/Sujet/Brevet_Metropole_1_07_2024_DV.zip",
+      "title": "DNB mathématiques metropole 2024",
+      "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac",
+      "level": "3eme",
+      "school_cycle": "cycle_4",
+      "pdf_hash": "dddf1632b5aca0f7834451d64d283bd022ed37a15c479153241eac50adbf8387",
+      "raw_text": ". M. E. P.\n\nBrevet Métropole Guadeloupe--Guyane 1er juillet 2024\n\nExercice 1 20 points\n\nAu casino, la roulette est un jeu de hasard pour lequel chaque joueur mise au choix sur un ou plusieurs numéros.\n\nOn lance une bille sur une roue qui tourne, numérotée de 0 à 36.\n\nLa bille a la même probabilité de s’arrêter sur chaque numéro.\n\n1. Expliquer pourquoi la probabilité que la bille s’arrête sur le numéro 7 est (1)/(37).\n\n2. Déterminer la probabilité que la bille s’arrête sur une case à la fois noire et paire.\n\n3. a. Déterminer la probabilité que la bille s’arrête sur un numéro inférieur ou égal à 6.\n\nb. En déduire la probabilité que la bille s’arrête sur un numéro supérieur ou égal à 7.\n\nc. Un joueur affirme qu’on a plus de 3 chances sur 4 d’obtenir un numéro supérieur ou égal à 7. A-t-il raison ?\n\nExercice 2 20 points\n\nProgramme A :\n\n• Choisir un nombre.\n\n• Prendre le carré du nombre choisi.\n\n• Multiplier le résultat par 2.\n\n• Ajouter le double du nombre\nde départ.\n\n• Soustraire 4 au résultat.\n\nProgramme B :\n[Programme Scratch]\n\n1. a. Vérifier que, si on choisit 5 comme nombre de départ, le résultat du programme A est 56.\n\nb. Quel résultat obtient-on avec le programme B si on choisit -9 comme nombre de départ ?\n\n2. On choisit un nombre quelconque x comme nombre de départ.\n\na. Parmi les trois propositions ci-dessous, recopier l’expression qui donne le résultat obtenu par le programme B ?\n\nE_1 = (x + 2) - 1\nE_2 = (x + 2) × (x - 1)\nE_3 = x + 2 × x - 1\n\nb. Exprimer en fonction de x le résultat obtenu avec le programme A.\n\n3. Démontrer que, quel que soit le nombre choisi au départ, le résultat du programme A est toujours le double du résultat du programme B.\n\nExercice 3 22 points\n\nSur la figure ci-dessous, on a :\n\n• C est un cercle de centre O et de rayon 4,5 cm ;\n\n• [AB] est un diamètre de ce cercle et D est un point du cercle ;\n\n• les points B, E, A sont alignés, ainsi que les points D, F, A ;\n\n• les droites (BD) et (EF) sont parallèles ;\n\n• BD = 5,4 cm ; DA = 7,2 cm et AE = 2,7 cm.\n\n[Schéma — voir document original]\n\n1. Justifier que le diamètre [AB] mesure 9 cm.\n\n2. Démontrer que le triangle ABD est rectangle en D.\n\n3. Calculer AF.\n\n4. a. Justifier que l’aire du triangle ABD est égale à 19,44 cm^2.\n\nb. Calculer l’aire du disque, arrondie au centième.\n\nRappel : l’aire du disque est égale à π × R^2, où R est le rayon du disque.\n\n5. Quel pourcentage de l’aire du disque représente l’aire du triangle ABD ?\n\nExercice 4 18 points\n\nCet exercice est un questionnaire à choix multiple (QCM).\nPour chaque question, trois réponses ( A, B ou C) sont proposées.\nUne seule réponse est exacte.\nRecopier sur la copie le numéro de la question et la lettre correspondant à la réponse exacte.\nAucune justification n’est demandée.\n\nQuestion | Réponse A | Réponse B | Réponse C\n1. On considère la fonction f définie par f(x) = 3x - 2.\n\nQuelle est l’image de -4 par cette fonction ? | -14 | -10 | -3\n2. Combien vaut (-5)^3 ? | -125 | -15 | 125\n3. Quelle est l’image du point J par la translation qui transforme C en A ?\n\n[Schéma — voir document original]\n| H | E | D\n4. Quel est l’antécédent de 3 par la fonction f ?\n\n[Schéma — voir document original]\n\n| 3 | - 3 | 0\n5. On a mesuré les tailles, en m, de sept élèves :\n\n1,46 ; 1,65 ; 1,6 ; 1,72 ; 1,7 ; 1,67 ; 1,75\n\nQuelle est la médiane, en m, de ces tailles ? | 1,72 | 1,67 | 1,65\n\n6. Dans le triangle ABC rectangle en A ci-contre, qui n’est pas en vraie grandeur, quelle est la valeur de cos α ?\n\n[Schéma — voir document original]\n\n| 0,8 | 0,75 | 0,6\nExercice 5 20 points\n\nUn club de natation propose un après-midi découverte pour les enfants.\n\nPARTIE A\n\nLa présidente du club veut offrir des petits sachets cadeaux tous identiques contenant des autocollants et des drapeaux avec le logo du club. Elle a acheté 330 autocollants et 132 drapeaux et veut tous les utiliser. Elle veut que, dans chaque sachet, il y ait exactement le même nombre d’autocollants et que, dans chaque sachet, il y ait exactement le même nombre de drapeaux.\n\n1. Pourquoi n’est-il pas possible de faire 15 sachets ?\n\n2. a. Décomposer 330 et 132 en produits de facteurs premiers.\n\nb. En déduire le plus grand nombre de sachets que la présidente pourra réaliser.\n\nc. Dans ce cas, combien mettra-t-elle d’autocollants et de drapeaux dans chaque sachet ?\n\nPARTIE B\n\nLa piscine a la forme d’un pavé droit représenté ci-dessous.\n\nElle est remplie aux (9)/(10) du volume.\n\n1 m^3 d’eau coûte 4,14 €.\n\nCombien coûte le remplissage de la piscine ?\n\n[Schéma — voir document original]",
+      "exercises": [
+        "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex01",
+        "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex02",
+        "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex03",
+        "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex04",
+        "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex05"
+      ],
+      "parsing_status": "parsed"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex01",
+      "paper_id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr",
+      "fetched_at": "2026-05-27T20:05:38.916Z",
+      "exam": "dnb",
+      "session_year": 2024,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole",
+      "variant": "standard",
+      "pdf_url": "/Users/hiroshigawa/Library/CloudStorage/GoogleDrive-hmtraore@gmail.com/My Drive/Business/Elearning Tutoring/StudyWiz/Ressources/Annales/Brevet/Sujet/Brevet_Metropole_1_07_2024_DV.zip",
+      "pdf_hash": "dddf1632b5aca0f7834451d64d283bd022ed37a15c479153241eac50adbf8387",
+      "exercise_number": 1,
+      "title": "Exercice 1 (20 points)",
+      "raw_text": "Au casino, la roulette est un jeu de hasard pour lequel chaque joueur mise au choix sur un ou plusieurs numéros.\n\nOn lance une bille sur une roue qui tourne, numérotée de 0 à 36.\n\nLa bille a la même probabilité de s’arrêter sur chaque numéro.\n\n1. Expliquer pourquoi la probabilité que la bille s’arrête sur le numéro 7 est (1)/(37).\n\n2. Déterminer la probabilité que la bille s’arrête sur une case à la fois noire et paire.\n\n3. a. Déterminer la probabilité que la bille s’arrête sur un numéro inférieur ou égal à 6.\n\nb. En déduire la probabilité que la bille s’arrête sur un numéro supérieur ou égal à 7.\n\nc. Un joueur affirme qu’on a plus de 3 chances sur 4 d’obtenir un numéro supérieur ou égal à 7. A-t-il raison ?",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 1 (20 points)",
+        "context": "Au casino, la roulette est un jeu de hasard pour lequel chaque joueur mise au choix sur un ou plusieurs numéros.\n\nOn lance une bille sur une roue qui tourne, numérotée de 0 à 36.\n\nLa bille a la même probabilité de s’arrêter sur chaque numéro.",
+        "documents": [
+          {
+            "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex01:img-roulette",
+            "type": "image",
+            "label": "roulette",
+            "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/roulette.webp",
+            "alt": "roulette",
+            "render_mode": "image_first"
+          }
+        ],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "Expliquer pourquoi la probabilité que la bille s’arrête sur le numéro 7 est (1)/(37).",
+            "points": 6.7,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Déterminer la probabilité que la bille s’arrête sur une case à la fois noire et paire.",
+            "points": 6.7,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "",
+            "points": 6.7,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": [
+              {
+                "id": "3a",
+                "label": "a.",
+                "text": "Déterminer la probabilité que la bille s’arrête sur un numéro inférieur ou égal à 6."
+              },
+              {
+                "id": "3b",
+                "label": "b.",
+                "text": "En déduire la probabilité que la bille s’arrête sur un numéro supérieur ou égal à 7."
+              },
+              {
+                "id": "3c",
+                "label": "c.",
+                "text": "Un joueur affirme qu’on a plus de 3 chances sur 4 d’obtenir un numéro supérieur ou égal à 7. A-t-il raison ?"
+              }
+            ]
+          }
+        ],
+        "raw_excerpt": "Au casino, la roulette est un jeu de hasard pour lequel chaque joueur mise au choix sur un ou plusieurs numéros.\n\nOn lance une bille sur une roue qui tourne, numérotée de 0 à 36.\n\nLa bille a la même probabilité de s’arrêter sur chaque numéro.\n\n1. Expliquer pourquoi la probabilité que la bille s’arrête sur le numéro 7 est (1)/(37).\n\n2. Déterminer la probabilité que la bille s’arrête sur une case à la fois noire et paire.\n\n3. a. Déterminer la probabilité que la bille s’arrête sur un numéro inférieur ou égal à 6.\n\nb. En déduire la probabilité que la bille s’arrête sur un numéro supérieur ou égal à 7.\n\nc. Un joueur affirme qu’on a plus de 3 chances sur 4 d’obtenir un numéro supérieur ou égal à 7. A-t-il raison ?",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    },
+    {
+      "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex02",
+      "paper_id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr",
+      "fetched_at": "2026-05-27T20:05:38.916Z",
+      "exam": "dnb",
+      "session_year": 2024,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole",
+      "variant": "standard",
+      "pdf_url": "/Users/hiroshigawa/Library/CloudStorage/GoogleDrive-hmtraore@gmail.com/My Drive/Business/Elearning Tutoring/StudyWiz/Ressources/Annales/Brevet/Sujet/Brevet_Metropole_1_07_2024_DV.zip",
+      "pdf_hash": "dddf1632b5aca0f7834451d64d283bd022ed37a15c479153241eac50adbf8387",
+      "exercise_number": 2,
+      "title": "Exercice 2 (20 points)",
+      "raw_text": "Programme A :\n\n• Choisir un nombre.\n\n• Prendre le carré du nombre choisi.\n\n• Multiplier le résultat par 2.\n\n• Ajouter le double du nombre\nde départ.\n\n• Soustraire 4 au résultat.\n\nProgramme B :\n[Programme Scratch]\n\n1. a. Vérifier que, si on choisit 5 comme nombre de départ, le résultat du programme A est 56.\n\nb. Quel résultat obtient-on avec le programme B si on choisit -9 comme nombre de départ ?\n\n2. On choisit un nombre quelconque x comme nombre de départ.\n\na. Parmi les trois propositions ci-dessous, recopier l’expression qui donne le résultat obtenu par le programme B ?\n\nE_1 = (x + 2) - 1\nE_2 = (x + 2) × (x - 1)\nE_3 = x + 2 × x - 1\n\nb. Exprimer en fonction de x le résultat obtenu avec le programme A.\n\n3. Démontrer que, quel que soit le nombre choisi au départ, le résultat du programme A est toujours le double du résultat du programme B.",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 2 (20 points)",
+        "context": "Programme A :\n\n• Choisir un nombre.\n\n• Prendre le carré du nombre choisi.\n\n• Multiplier le résultat par 2.\n\n• Ajouter le double du nombre\nde départ.\n\n• Soustraire 4 au résultat.\n\nProgramme B :\n[Programme Scratch]",
+        "documents": [
+          {
+            "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex02:diagram-1",
+            "type": "image",
+            "label": "Programme Scratch",
+            "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex02-diagram-1.webp",
+            "alt": "Schéma exercice 2",
+            "render_mode": "image_first"
+          }
+        ],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "",
+            "points": 6.7,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": [
+              {
+                "id": "1a",
+                "label": "a.",
+                "text": "Vérifier que, si on choisit 5 comme nombre de départ, le résultat du programme A est 56."
+              },
+              {
+                "id": "1b",
+                "label": "b.",
+                "text": "Quel résultat obtient-on avec le programme B si on choisit -9 comme nombre de départ ?"
+              }
+            ]
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "On choisit un nombre quelconque x comme nombre de départ.",
+            "points": 6.7,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": [
+              {
+                "id": "2a",
+                "label": "a.",
+                "text": "Parmi les trois propositions ci-dessous, recopier l’expression qui donne le résultat obtenu par le programme B ?\n\nE_1 = (x + 2) - 1\nE_2 = (x + 2) × (x - 1)\nE_3 = x + 2 × x - 1"
+              },
+              {
+                "id": "2b",
+                "label": "b.",
+                "text": "Exprimer en fonction de x le résultat obtenu avec le programme A."
+              }
+            ]
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "Démontrer que, quel que soit le nombre choisi au départ, le résultat du programme A est toujours le double du résultat du programme B.",
+            "points": 6.7,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Programme A :\n\n• Choisir un nombre.\n\n• Prendre le carré du nombre choisi.\n\n• Multiplier le résultat par 2.\n\n• Ajouter le double du nombre\nde départ.\n\n• Soustraire 4 au résultat.\n\nProgramme B :\n[Programme Scratch]\n\n1. a. Vérifier que, si on choisit 5 comme nombre de départ, le résultat du programme A est 56.\n\nb. Quel résultat obtient-on avec le programme B si on choisit -9 comme nombre de départ ?\n\n2. On choisit un nombre quelconque x comme nombre de départ.\n\na. Parmi les trois propositions ci-dessous, recopier l’expression qui donne le résultat obtenu par le programme B ?\n\nE_1 = (x + 2) - 1\nE_2 = (x + 2) × (x - 1)\nE_3 = x + 2 × x - 1\n\nb. Exprimer en fonction de x le résultat obtenu avec le programme A.\n\n3. Démontrer que, quel que soit le nombre choisi au départ, le résultat du programme A…",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    },
+    {
+      "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex03",
+      "paper_id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr",
+      "fetched_at": "2026-05-27T20:05:38.916Z",
+      "exam": "dnb",
+      "session_year": 2024,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole",
+      "variant": "standard",
+      "pdf_url": "/Users/hiroshigawa/Library/CloudStorage/GoogleDrive-hmtraore@gmail.com/My Drive/Business/Elearning Tutoring/StudyWiz/Ressources/Annales/Brevet/Sujet/Brevet_Metropole_1_07_2024_DV.zip",
+      "pdf_hash": "dddf1632b5aca0f7834451d64d283bd022ed37a15c479153241eac50adbf8387",
+      "exercise_number": 3,
+      "title": "Exercice 3 (22 points)",
+      "raw_text": "Sur la figure ci-dessous, on a :\n\n• C est un cercle de centre O et de rayon 4,5 cm ;\n\n• [AB] est un diamètre de ce cercle et D est un point du cercle ;\n\n• les points B, E, A sont alignés, ainsi que les points D, F, A ;\n\n• les droites (BD) et (EF) sont parallèles ;\n\n• BD = 5,4 cm ; DA = 7,2 cm et AE = 2,7 cm.\n\n[Schéma — voir document original]\n\n1. Justifier que le diamètre [AB] mesure 9 cm.\n\n2. Démontrer que le triangle ABD est rectangle en D.\n\n3. Calculer AF.\n\n4. a. Justifier que l’aire du triangle ABD est égale à 19,44 cm^2.\n\nb. Calculer l’aire du disque, arrondie au centième.\n\nRappel : l’aire du disque est égale à π × R^2, où R est le rayon du disque.\n\n5. Quel pourcentage de l’aire du disque représente l’aire du triangle ABD ?",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 3 (22 points)",
+        "context": "Sur la figure ci-dessous, on a :\n\n• C est un cercle de centre O et de rayon 4,5 cm ;\n\n• [AB] est un diamètre de ce cercle et D est un point du cercle ;\n\n• les points B, E, A sont alignés, ainsi que les points D, F, A ;\n\n• les droites (BD) et (EF) sont parallèles ;\n\n• BD = 5,4 cm ; DA = 7,2 cm et AE = 2,7 cm.\n\n[Schéma — voir document original]",
+        "documents": [
+          {
+            "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex03:diagram-1",
+            "type": "image",
+            "label": "Schéma 1",
+            "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex03-diagram-1.webp",
+            "alt": "Schéma exercice 3",
+            "render_mode": "image_first"
+          }
+        ],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "Justifier que le diamètre [AB] mesure 9 cm.",
+            "points": 4.4,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Démontrer que le triangle ABD est rectangle en D.",
+            "points": 4.4,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "Calculer AF.",
+            "points": 4.4,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "4",
+            "label": "4.",
+            "text": "",
+            "points": 4.4,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": [
+              {
+                "id": "4a",
+                "label": "a.",
+                "text": "Justifier que l’aire du triangle ABD est égale à 19,44 cm^2."
+              },
+              {
+                "id": "4b",
+                "label": "b.",
+                "text": "Calculer l’aire du disque, arrondie au centième.\n\nRappel : l’aire du disque est égale à π × R^2, où R est le rayon du disque."
+              }
+            ]
+          },
+          {
+            "id": "5",
+            "label": "5.",
+            "text": "Quel pourcentage de l’aire du disque représente l’aire du triangle ABD ?",
+            "points": 4.4,
+            "answer_type": "math",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Sur la figure ci-dessous, on a :\n\n• C est un cercle de centre O et de rayon 4,5 cm ;\n\n• [AB] est un diamètre de ce cercle et D est un point du cercle ;\n\n• les points B, E, A sont alignés, ainsi que les points D, F, A ;\n\n• les droites (BD) et (EF) sont parallèles ;\n\n• BD = 5,4 cm ; DA = 7,2 cm et AE = 2,7 cm.\n\n[Schéma — voir document original]\n\n1. Justifier que le diamètre [AB] mesure 9 cm.\n\n2. Démontrer que le triangle ABD est rectangle en D.\n\n3. Calculer AF.\n\n4. a. Justifier que l’aire du triangle ABD est égale à 19,44 cm^2.\n\nb. Calculer l’aire du disque, arrondie au centième.\n\nRappel : l’aire du disque est égale à π × R^2, où R est le rayon du disque.\n\n5. Quel pourcentage de l’aire du disque représente l’aire du triangle ABD ?",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    },
+    {
+      "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex04",
+      "paper_id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr",
+      "fetched_at": "2026-05-27T20:05:38.916Z",
+      "exam": "dnb",
+      "session_year": 2024,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole",
+      "variant": "standard",
+      "pdf_url": "/Users/hiroshigawa/Library/CloudStorage/GoogleDrive-hmtraore@gmail.com/My Drive/Business/Elearning Tutoring/StudyWiz/Ressources/Annales/Brevet/Sujet/Brevet_Metropole_1_07_2024_DV.zip",
+      "pdf_hash": "dddf1632b5aca0f7834451d64d283bd022ed37a15c479153241eac50adbf8387",
+      "exercise_number": 4,
+      "title": "Exercice 4 (18 points)",
+      "raw_text": "Cet exercice est un questionnaire à choix multiple (QCM).\nPour chaque question, trois réponses ( A, B ou C) sont proposées.\nUne seule réponse est exacte.\nRecopier sur la copie le numéro de la question et la lettre correspondant à la réponse exacte.\nAucune justification n’est demandée.\n\nQuestion | Réponse A | Réponse B | Réponse C\n1. On considère la fonction f définie par f(x) = 3x - 2.\n\nQuelle est l’image de -4 par cette fonction ? | -14 | -10 | -3\n2. Combien vaut (-5)^3 ? | -125 | -15 | 125\n3. Quelle est l’image du point J par la translation qui transforme C en A ?\n\n[Schéma — voir document original]\n| H | E | D\n4. Quel est l’antécédent de 3 par la fonction f ?\n\n[Schéma — voir document original]\n\n| 3 | - 3 | 0\n5. On a mesuré les tailles, en m, de sept élèves :\n\n1,46 ; 1,65 ; 1,6 ; 1,72 ; 1,7 ; 1,67 ; 1,75\n\nQuelle est la médiane, en m, de ces tailles ? | 1,72 | 1,67 | 1,65\n\n6. Dans le triangle ABC rectangle en A ci-contre, qui n’est pas en vraie grandeur, quelle est la valeur de cos α ?\n\n[Schéma — voir document original]\n\n| 0,8 | 0,75 | 0,6",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 4 (18 points)",
+        "context": "Cet exercice est un questionnaire à choix multiple (QCM).\nPour chaque question, trois réponses ( A, B ou C) sont proposées.\nUne seule réponse est exacte.\nRecopier sur la copie le numéro de la question et la lettre correspondant à la réponse exacte.\nAucune justification n’est demandée.\n\nQuestion | Réponse A | Réponse B | Réponse C",
+        "documents": [
+          {
+            "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex04:diagram-1",
+            "type": "image",
+            "label": "Schéma 1",
+            "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex04-diagram-1.webp",
+            "alt": "Schéma exercice 4",
+            "render_mode": "image_first"
+          },
+          {
+            "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex04:diagram-2",
+            "type": "image",
+            "label": "Schéma 2",
+            "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex04-diagram-2.webp",
+            "alt": "Schéma exercice 4",
+            "render_mode": "image_first"
+          },
+          {
+            "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex04:diagram-3",
+            "type": "image",
+            "label": "Schéma 3",
+            "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex04-diagram-3.webp",
+            "alt": "Schéma exercice 4",
+            "render_mode": "image_first"
+          },
+          {
+            "label": "Tableau 1",
+            "content": "Quelle est l’image de -4 par cette fonction ? | -14 | -10 | -3\n2. Combien vaut (-5)^3 ? | -125 | -15 | 125",
+            "type": "table"
+          }
+        ],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "On considère la fonction f définie par f(x) = 3x - 2.\n\nQuelle est l’image de -4 par cette fonction ?",
+            "answer_type": "multiple_choice",
+            "choices": [
+              "-14",
+              "-10",
+              "-3"
+            ],
+            "expected_answer": null,
+            "points": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "Combien vaut (-5)^3 ?",
+            "answer_type": "multiple_choice",
+            "choices": [
+              "-125",
+              "-15",
+              "125"
+            ],
+            "expected_answer": null,
+            "points": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "3",
+            "label": "3.",
+            "text": "Quelle est l’image du point J par la translation qui transforme C en A ?\n\n\n\n[Schéma]",
+            "answer_type": "multiple_choice",
+            "choices": [
+              "H",
+              "E",
+              "D"
+            ],
+            "expected_answer": null,
+            "points": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "4",
+            "label": "4.",
+            "text": "Quel est l’antécédent de 3 par la fonction f ?\n \n\n\n[Schéma]",
+            "answer_type": "multiple_choice",
+            "choices": [
+              "3",
+              "- 3",
+              "0"
+            ],
+            "expected_answer": null,
+            "points": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "5",
+            "label": "5.",
+            "text": "On a mesuré les tailles, en m, de sept élèves :\n\n 1,46 ; 1,65 ; 1,6 ; 1,72 ; 1,7 ; 1,67 ; 1,75 \n\nQuelle est la médiane, en m, de ces tailles ?",
+            "answer_type": "multiple_choice",
+            "choices": [
+              "1,72",
+              "1,67",
+              "1,65"
+            ],
+            "expected_answer": null,
+            "points": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "6",
+            "label": "6.",
+            "text": "Dans le triangle ABC rectangle en A ci-contre, qui n’est pas en vraie grandeur, quelle est la valeur de cos α ?\n\n\n\n[Schéma]",
+            "answer_type": "multiple_choice",
+            "choices": [
+              "0,8",
+              "0,75",
+              "0,6"
+            ],
+            "expected_answer": null,
+            "points": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Cet exercice est un questionnaire à choix multiple (QCM).\nPour chaque question, trois réponses ( A, B ou C) sont proposées.\nUne seule réponse est exacte.\nRecopier sur la copie le numéro de la question et la lettre correspondant à la réponse exacte.\nAucune justification n’est demandée.\n\nQuestion | Réponse A | Réponse B | Réponse C\n1. On considère la fonction f définie par f(x) = 3x - 2.\n\nQuelle est l’image de -4 par cette fonction ? | -14 | -10 | -3\n2. Combien vaut (-5)^3 ? | -125 | -15 | 125\n3. Quelle est l’image du point J par la translation qui transforme C en A ?\n\n[Schéma — voir document original]\n| H | E | D\n4. Quel est l’antécédent de 3 par la fonction f ?\n\n[Schéma — voir document original]\n\n| 3 | - 3 | 0\n5. On a mesuré les tailles, en m, de sept élèves :\n\n1,46 ; 1,65 ; 1,6 ; 1,72 ; 1…",
+        "confidence": "medium"
+      },
+      "parsing_confidence": "medium"
+    },
+    {
+      "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex05",
+      "paper_id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr",
+      "fetched_at": "2026-05-27T20:05:38.916Z",
+      "exam": "dnb",
+      "session_year": 2024,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole",
+      "variant": "standard",
+      "pdf_url": "/Users/hiroshigawa/Library/CloudStorage/GoogleDrive-hmtraore@gmail.com/My Drive/Business/Elearning Tutoring/StudyWiz/Ressources/Annales/Brevet/Sujet/Brevet_Metropole_1_07_2024_DV.zip",
+      "pdf_hash": "dddf1632b5aca0f7834451d64d283bd022ed37a15c479153241eac50adbf8387",
+      "exercise_number": 5,
+      "title": "Exercice 5 (20 points)",
+      "raw_text": "Un club de natation propose un après-midi découverte pour les enfants.\n\nPARTIE A\n\nLa présidente du club veut offrir des petits sachets cadeaux tous identiques contenant des autocollants et des drapeaux avec le logo du club. Elle a acheté 330 autocollants et 132 drapeaux et veut tous les utiliser. Elle veut que, dans chaque sachet, il y ait exactement le même nombre d’autocollants et que, dans chaque sachet, il y ait exactement le même nombre de drapeaux.\n\n1. Pourquoi n’est-il pas possible de faire 15 sachets ?\n\n2. a. Décomposer 330 et 132 en produits de facteurs premiers.\n\nb. En déduire le plus grand nombre de sachets que la présidente pourra réaliser.\n\nc. Dans ce cas, combien mettra-t-elle d’autocollants et de drapeaux dans chaque sachet ?\n\nPARTIE B\n\nLa piscine a la forme d’un pavé droit représenté ci-dessous.\n\nElle est remplie aux (9)/(10) du volume.\n\n1 m^3 d’eau coûte 4,14 €.\n\nCombien coûte le remplissage de la piscine ?\n\n[Schéma — voir document original]",
+      "parsing_status": "parsed",
+      "parsed_content": {
+        "title": "Exercice 5 (20 points)",
+        "context": "Un club de natation propose un après-midi découverte pour les enfants.",
+        "parts": [
+          {
+            "label": "Partie A",
+            "context": "La présidente du club veut offrir des petits sachets cadeaux tous identiques contenant des autocollants et des drapeaux avec le logo du club. Elle a acheté 330 autocollants et 132 drapeaux et veut tous les utiliser. Elle veut que, dans chaque sachet, il y ait exactement le même nombre d’autocollants et que, dans chaque sachet, il y ait exactement le même nombre de drapeaux.",
+            "questions": [
+              {
+                "id": "1",
+                "label": "1.",
+                "text": "Pourquoi n’est-il pas possible de faire 15 sachets ?",
+                "points": 10,
+                "answer_type": "free_text",
+                "expected_answer": null,
+                "student_answer": null,
+                "options": [],
+                "subquestions": []
+              },
+              {
+                "id": "2",
+                "label": "2.",
+                "text": "",
+                "points": 10,
+                "answer_type": "short_text",
+                "expected_answer": null,
+                "student_answer": null,
+                "options": [],
+                "subquestions": [
+                  {
+                    "id": "2a",
+                    "label": "a.",
+                    "text": "Décomposer 330 et 132 en produits de facteurs premiers."
+                  },
+                  {
+                    "id": "2b",
+                    "label": "b.",
+                    "text": "En déduire le plus grand nombre de sachets que la présidente pourra réaliser."
+                  },
+                  {
+                    "id": "2c",
+                    "label": "c.",
+                    "text": "Dans ce cas, combien mettra-t-elle d’autocollants et de drapeaux dans chaque sachet ?"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "Partie B",
+            "context": "La piscine a la forme d’un pavé droit représenté ci-dessous.\n\nElle est remplie aux (9)/(10) du volume.\n\n1 m^3 d’eau coûte 4,14 €.\n\n[Schéma — voir document original]",
+            "questions": [
+              {
+                "id": "3",
+                "label": "1.",
+                "text": "Combien coûte le remplissage de la piscine ?",
+                "answer_type": "numeric",
+                "expected_answer": null,
+                "points": null,
+                "student_answer": null,
+                "options": [],
+                "subquestions": []
+              }
+            ]
+          }
+        ],
+        "documents": [
+          {
+            "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex05:diagram-1",
+            "type": "image",
+            "label": "Schéma 1",
+            "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex05-diagram-1.webp",
+            "alt": "Schéma exercice 5",
+            "render_mode": "image_first"
+          }
+        ],
+        "questions": [
+          {
+            "id": "1",
+            "label": "1.",
+            "text": "Pourquoi n’est-il pas possible de faire 15 sachets ?",
+            "points": 10,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          },
+          {
+            "id": "2",
+            "label": "2.",
+            "text": "",
+            "points": 10,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": [
+              {
+                "id": "2a",
+                "label": "a.",
+                "text": "Décomposer 330 et 132 en produits de facteurs premiers."
+              },
+              {
+                "id": "2b",
+                "label": "b.",
+                "text": "En déduire le plus grand nombre de sachets que la présidente pourra réaliser."
+              },
+              {
+                "id": "2c",
+                "label": "c.",
+                "text": "Dans ce cas, combien mettra-t-elle d’autocollants et de drapeaux dans chaque sachet ?"
+              }
+            ]
+          },
+          {
+            "id": "3",
+            "label": "1.",
+            "text": "Combien coûte le remplissage de la piscine ?",
+            "answer_type": "numeric",
+            "expected_answer": null,
+            "points": null,
+            "student_answer": null,
+            "options": [],
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Un club de natation propose un après-midi découverte pour les enfants.\n\nPARTIE A\n\nLa présidente du club veut offrir des petits sachets cadeaux tous identiques contenant des autocollants et des drapeaux avec le logo du club. Elle a acheté 330 autocollants et 132 drapeaux et veut tous les utiliser. Elle veut que, dans chaque sachet, il y ait exactement le même nombre d’autocollants et que, dans chaque sachet, il y ait exactement le même nombre de drapeaux.\n\n1. Pourquoi n’est-il pas possible de faire 15 sachets ?\n\n2. a. Décomposer 330 et 132 en produits de facteurs premiers.\n\nb. En déduire le plus grand nombre de sachets que la présidente pourra réaliser.\n\nc. Dans ce cas, combien mettra-t-elle d’autocollants et de drapeaux dans chaque sachet ?\n\nPARTIE B\n\nLa piscine a la forme d’un pavé droit…",
+        "confidence": "high"
+      },
+      "parsing_confidence": "high"
+    }
+  ],
+  "exercise_program_links": []
+}
