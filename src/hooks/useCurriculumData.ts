@@ -50,7 +50,7 @@ export const useObjectives = (filters?: {
         .from('objectives')
         .select(`
           *,
-          success_criteria (*)
+          success_criteria!success_criteria_objective_id_uuid_fkey (*)
         `)
         .order('id');
       
