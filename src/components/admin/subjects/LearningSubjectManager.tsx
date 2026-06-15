@@ -120,6 +120,7 @@ const LearningSubjectManager = () => {
       .map(chatSubject => ({
         id: `chat:${chatSubject.id}`,
         chatSubject,
+        learningSubject: undefined as undefined | (typeof learningSubjects)[number],
       }));
 
     return [...learningRows, ...unsyncedChatRows].sort((a, b) => {

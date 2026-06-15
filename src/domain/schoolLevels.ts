@@ -63,13 +63,13 @@ export function dedupeSchoolLevels<T extends Record<string, any>>(levels: T[]): 
     if (!map.has(normalized)) {
       const canon = SCHOOL_LEVELS.find((l) => l.code === normalized);
       
-      const copy = { ...item };
+      const copy: any = { ...item };
       if ('code' in copy) copy.code = normalized;
       if ('level' in copy) copy.level = normalized;
       if ('level_code' in copy) copy.level_code = normalized;
-      if ('level_name' in copy) copy.level_name = canon ? getSchoolLevelLabel(normalized) : item.level_name;
-      if ('order' in copy) copy.order = canon?.order ?? item.order ?? 999;
-      if ('sort_order' in copy) copy.sort_order = canon?.order ?? item.sort_order ?? 999;
+      if ('level_name' in copy) copy.level_name = canon ? getSchoolLevelLabel(normalized) : copy.level_name;
+      if ('order' in copy) copy.order = canon?.order ?? copy.order ?? 999;
+      if ('sort_order' in copy) copy.sort_order = canon?.order ?? copy.sort_order ?? 999;
       
       // Keep a shadow order for sorting if it doesn't exist
       Object.defineProperty(copy, '__order', { value: canon?.order ?? item.sort_order ?? item.order ?? 999, enumerable: false });
