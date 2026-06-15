@@ -43,8 +43,17 @@ function sha256Hex(data: string): Promise<string> {
   );
 }
 
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
 async function extractTextFromPdf(pdfBytes: Uint8Array, mistralKey: string): Promise<string> {
-  const base64 = btoa(String.fromCharCode(...pdfBytes));
+  const base64 = uint8ArrayToBase64(pdfBytes);
   const dataUrl = `data:application/pdf;base64,${base64}`;
 
   const res = await fetch("https://api.mistral.ai/v1/ocr", {
@@ -108,6 +117,126 @@ async function callDeepSeek(
   return content;
 }
 
+interface DomainStructure {
+  code: string | null;
+  label: string;
+  description: string;
+  subdomains: Array<{ code: string | null; label: string; description: string }>;
+}
+
+async function extractDomainStructure(
+  pdfText: string,
+  subject: string,
+  cycle: string,
+  boReference: string,
+  deepSeekKey: string,
+): Promise<DomainStructure[]> {
+  const systemPrompt =
+    "Tu es un expert du système éducatif français. Réponds en JSON valide uniquement, sans markdown.";
+
+  const userPrompt = `Voici le texte du programme officiel de "${subject}" pour le "${cycle}" (${boReference}).
+
+Extrais UNIQUEMENT la liste des domaines et leurs sous-parties (compétences/thèmes).
+Ne cherche PAS les objectifs détaillés pour l'instant.
+
+Réponds avec ce JSON :
+{
+  "domains": [
+    {
+      "code": "code ou null",
+      "label": "nom court du domaine (≤ 60 car.)",
+      "description": "intitulé complet tel qu'il apparaît dans le document",
+      "subdomains": [
+        {
+          "code": "code ou null",
+          "label": "nom court (≤ 80 car.)",
+          "description": "intitulé complet de la compétence/thème"
+        }
+      ]
+    }
+  ]
+}
+
+TEXTE DU PROGRAMME :
+${pdfText.slice(0, 40000)}`;
+
+  const content = await callDeepSeek(systemPrompt, userPrompt, deepSeekKey, 4000);
+  const parsed = JSON.parse(content);
+  return parsed.domains as DomainStructure[];
+}
+
+async function extractAllObjectives(
+  pdfText: string,
+  domainStructures: DomainStructure[],
+  cycle: string,
+  deepSeekKey: string,
+): Promise<Map<string, ExtractedObjective[]>> {
+  const cycleLevels: Record<string, string[]> = {
+    "cycle 2": ["CP", "CE1", "CE2"],
+    "cycle 3": ["CM1", "CM2", "6e"],
+  };
+  const levels = cycleLevels[cycle] ?? [];
+
+  // Build a nested listing: domain → subdomain → objectives
+  // Use a KEYED object (not positional array) so DeepSeek can't mis-align entries
+  const domainsListing = domainStructures.map((d) => ({
+    domain: d.label,
+    subdomains: d.subdomains.map((s) => `${s.label}: ${s.description}`),
+  }));
+
+  const systemPrompt =
+    "Tu es un expert du système éducatif français. Réponds en JSON valide uniquement, sans markdown.";
+
+  const userPrompt = `Programme officiel (${cycle}). Extrais les attendus de fin de cycle pour chaque sous-domaine ci-dessous.
+
+Domaines et sous-domaines à traiter :
+${JSON.stringify(domainsListing, null, 2)}
+
+Pour chaque sous-domaine, extrais ses attendus de fin de cycle EXACTS tirés du texte (phrases commençant par un verbe d'action).
+"levels" = toujours ${JSON.stringify(levels)}.
+
+Réponds avec ce JSON — utilise EXACTEMENT les mêmes labels de domaine et sous-domaine qu'en entrée :
+{
+  "byDomain": {
+    "<label exact du domaine>": {
+      "<label exact du sous-domaine>": [
+        { "text": "attendu exact", "levels": ${JSON.stringify(levels)}, "successCriteria": [] }
+      ]
+    }
+  }
+}
+
+TEXTE DU PROGRAMME :
+${pdfText.slice(0, 50000)}`;
+
+  const content = await callDeepSeek(systemPrompt, userPrompt, deepSeekKey, 8000);
+  console.log(`[ingest] Objectives raw (first 800): ${content.slice(0, 800)}`);
+
+  const parsed = JSON.parse(content);
+  const byDomain = parsed.byDomain ?? {};
+  console.log(`[ingest] Objectives byDomain keys: ${Object.keys(byDomain).join(", ")}`);
+
+  const result = new Map<string, ExtractedObjective[]>();
+  for (const domain of domainStructures) {
+    const domainEntry = byDomain[domain.label] ?? {};
+    for (const sub of domain.subdomains) {
+      const raw = domainEntry[sub.label];
+      const objectives: ExtractedObjective[] = Array.isArray(raw)
+        ? raw.map((o: { text?: string; levels?: string[]; successCriteria?: string[] }) => ({
+            text: o.text ?? "",
+            levels: Array.isArray(o.levels) ? o.levels : levels,
+            successCriteria: Array.isArray(o.successCriteria) ? o.successCriteria : [],
+          })).filter((o) => o.text.length > 0)
+        : [];
+      result.set(`${domain.label}||${sub.label}`, objectives);
+    }
+  }
+
+  const totalObjectives = Array.from(result.values()).reduce((sum, arr) => sum + arr.length, 0);
+  console.log(`[ingest] Objectives extracted: ${totalObjectives} total across ${result.size} subdomains`);
+  return result;
+}
+
 async function extractCurriculumFromText(
   pdfText: string,
   subject: string,
@@ -115,60 +244,34 @@ async function extractCurriculumFromText(
   boReference: string,
   deepSeekKey: string,
 ): Promise<ExtractionResult> {
-  const cycleLevels: Record<string, string[]> = {
-    "cycle 2": ["CP", "CE1", "CE2"],
-    "cycle 3": ["CM1", "CM2", "6e"],
-  };
-  const levels = cycleLevels[cycle] ?? [];
+  // Pass 1: get domain + subdomain structure
+  console.log("[ingest] Pass 1: extracting domain structure...");
+  const domainStructures = await extractDomainStructure(pdfText, subject, cycle, boReference, deepSeekKey);
+  console.log(`[ingest] Pass 1 done: ${domainStructures.length} domains`);
 
-  const systemPrompt =
-    "Tu es un expert du système éducatif français. Tu extrais fidèlement la structure des programmes officiels. Réponds en JSON valide uniquement, sans markdown.";
-
-  const userPrompt = `Voici le texte extrait du programme officiel de "${subject}" pour le "${cycle}" (${boReference}).
-Niveaux concernés : ${levels.join(", ")}.
-
-Extrais FIDÈLEMENT la structure en JSON. Ne paraphrase pas, copie exactement les textes.
-
-Structure attendue :
-{
-  "domains": [
-    {
-      "code": "code court ou null si absent",
-      "label": "nom court du domaine (≤ 60 car.)",
-      "description": "intitulé complet du domaine tel qu'il apparaît dans le document",
-      "subdomains": [
-        {
-          "code": "code ou null",
-          "label": "nom court (≤ 80 car.)",
-          "description": "intitulé complet de la compétence/thème",
-          "objectives": [
-            {
-              "text": "énoncé exact de l'attendu ou objectif d'apprentissage",
-              "levels": ${JSON.stringify(levels)},
-              "successCriteria": ["exemple de réussite si présent dans le document, sinon tableau vide"]
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-
-Règles :
-- "levels" = niveaux auxquels l'objectif s'applique. S'il s'applique à tout le cycle, inclus tous : ${JSON.stringify(levels)}.
-- "successCriteria" = exemples du livret d'accompagnement si disponibles dans le texte, sinon [].
-- Ne génère AUCUN contenu. Extrais uniquement ce qui est dans le document.
-
-TEXTE DU PROGRAMME :
-${pdfText.slice(0, 60000)}`;
-
-  const content = await callDeepSeek(systemPrompt, userPrompt, deepSeekKey, 8000);
-
+  // Pass 2: extract objectives — non-blocking, failures leave subdomains with empty objectives
+  console.log("[ingest] Pass 2: extracting objectives...");
+  let objectivesMap = new Map<string, ExtractedObjective[]>();
   try {
-    return JSON.parse(content) as ExtractionResult;
-  } catch {
-    throw new Error(`DeepSeek returned invalid JSON: ${content.slice(0, 200)}`);
+    objectivesMap = await extractAllObjectives(pdfText, domainStructures, cycle, deepSeekKey);
+    console.log(`[ingest] Pass 2 done: ${objectivesMap.size} subdomains have objectives`);
+  } catch (err) {
+    console.warn(`[ingest] Pass 2 failed (objectives skipped): ${err}`);
   }
+
+  const domains: ExtractedDomain[] = domainStructures.map((ds) => ({
+    code: ds.code,
+    label: ds.label,
+    description: ds.description,
+    subdomains: ds.subdomains.map((s) => ({
+      code: s.code,
+      label: s.label,
+      description: s.description,
+      objectives: objectivesMap.get(`${ds.label}||${s.label}`) ?? [],
+    })),
+  }));
+
+  return { domains };
 }
 
 async function generateSuccessCriteria(
