@@ -41,6 +41,11 @@ export const adminNavGroups = [
         iconName: 'BookOpen',
       },
       {
+        title: 'Programmes officiels',
+        path: '/admin/curriculum-editions',
+        iconName: 'BookOpen',
+      },
+      {
         title: 'Annales',
         path: '/admin/exams',
         iconName: 'FileText',
