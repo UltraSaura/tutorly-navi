@@ -24,6 +24,7 @@ interface BundleDomain {
   code: string;
   label: string;
   domain?: string;
+  edition_id?: string;
 }
 
 interface BundleSubdomain {
@@ -34,6 +35,7 @@ interface BundleSubdomain {
   label: string;
   domain?: string;
   subdomain?: string;
+  edition_id?: string;
 }
 
 interface BundleObjective {
@@ -315,6 +317,7 @@ Deno.serve(async (req) => {
               code: d.code,
               label: d.label,
               domain: canonicalDomain,
+              ...(d.edition_id ? { edition_id: d.edition_id } : {}),
             },
             { onConflict: 'id' }
           );
@@ -592,7 +595,26 @@ Deno.serve(async (req) => {
     }
 
     // ----------------------------------------------------------------------
-    // 9. Verification — scoped to imported subjects only so stale orphans
+    // 9. Mark curriculum editions as ingested
+    // ----------------------------------------------------------------------
+    const importedEditionIds = new Set<string>();
+    bundle.domains?.forEach(d => d.edition_id && importedEditionIds.add(d.edition_id));
+
+    if (importedEditionIds.size > 0) {
+      const { error: editionErr } = await supabaseAdmin
+        .from('curriculum_edition')
+        .update({ ingested_at: new Date().toISOString(), status: 'active' })
+        .in('id', Array.from(importedEditionIds))
+        .is('ingested_at', null); // only touch editions not yet marked done
+      if (editionErr) {
+        console.warn(`⚠️ Could not update curriculum_edition.ingested_at: ${editionErr.message}`);
+      } else {
+        console.log(`✓ curriculum_edition marked ingested: ${[...importedEditionIds].join(', ')}`);
+      }
+    }
+
+    // ----------------------------------------------------------------------
+    // Verification — scoped to imported subjects only so stale orphans
     // from unrelated subjects don't poison the readiness flag.
     // ----------------------------------------------------------------------
     const verifyChecks: Array<[string, string]> = [

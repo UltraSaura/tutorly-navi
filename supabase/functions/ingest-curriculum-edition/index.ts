@@ -35,6 +35,33 @@ interface ExtractionResult {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+/**
+ * Generate a short, unique domain code prefix from edition metadata.
+ * Matches the manual convention used for français/maths seeds.
+ * e.g. "FRA-C2", "MAT-C3A", "HIS-C3", "GEO-C2"
+ */
+function editionPrefix(subject: string, cycle: string): string {
+  const subjMap: Record<string, string> = {
+    francais: "FRA",
+    mathematiques: "MAT",
+    histoire: "HIS",
+    geographie: "GEO",
+    sciences: "SCI",
+    emc: "EMC",
+    arts_plastiques: "ART",
+    education_musicale: "MUS",
+    eps: "EPS",
+    langues_vivantes: "LVE",
+    technologie: "TEC",
+  };
+  const subjCode = subjMap[subject] ?? subject.toUpperCase().slice(0, 3);
+  const cycleCode = cycle === "cycle 2" ? "C2"
+    : cycle === "cycle 3" ? "C3"
+    : cycle === "cycle 3 ancien" ? "C3A"
+    : cycle.replace(/\s+/g, "").toUpperCase().slice(0, 4);
+  return `${subjCode}-${cycleCode}`;
+}
+
 function sha256Hex(data: string): Promise<string> {
   return crypto.subtle.digest("SHA-256", new TextEncoder().encode(data)).then((hash) =>
     Array.from(new Uint8Array(hash))
@@ -352,7 +379,7 @@ serve(async (req) => {
     // Fetch edition
     const { data: edition, error: editionError } = await admin
       .from("curriculum_edition")
-      .select("id, subject, cycle, bo_reference, source_pdf_url, status")
+      .select("id, subject, cycle, bo_reference, source_pdf_url, status, subject_id")
       .eq("id", edition_id)
       .single();
 
@@ -416,13 +443,40 @@ serve(async (req) => {
     let totalObjectives = 0;
     let totalCriteria = 0;
 
-    for (const domain of extraction.domains) {
+    // Resolve subject_id from the edition row (populated by migration) or fall back to slug lookup.
+    let subjectId: string | null = edition.subject_id ?? null;
+    if (!subjectId) {
+      const slugMap: Record<string, string> = {
+        francais: "francais",
+        mathematiques: "mathematiques",
+        histoire: "history",
+        geographie: "geography",
+        sciences: "physics",
+        emc: "emc",
+      };
+      const slug = slugMap[edition.subject] ?? edition.subject;
+      const { data: subjectRow } = await admin
+        .from("subjects")
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle();
+      subjectId = subjectRow?.id ?? null;
+    }
+
+    const prefix = editionPrefix(edition.subject, edition.cycle);
+
+    for (let di = 0; di < extraction.domains.length; di++) {
+      const domain = extraction.domains[di];
+      // Use coded PK to avoid collisions across editions (e.g. "FRA-C3-D1").
+      const domainCode = domain.code ?? `${prefix}-D${di + 1}`;
+
       const { data: domainRow, error: domainErr } = await admin
         .from("domains")
         .insert({
-          code: domain.code,
+          code: domainCode,
           label: domain.label,
-          domain: domain.description,
+          domain: domainCode,        // PK column — must be globally unique
+          subject_id: subjectId,
           edition_id: edition_id,
         })
         .select("id")
@@ -435,14 +489,19 @@ serve(async (req) => {
       const domainId = domainRow.id as string;
       totalDomains++;
 
-      for (const subdomain of domain.subdomains) {
+      for (let si = 0; si < domain.subdomains.length; si++) {
+        const subdomain = domain.subdomains[si];
+        const subdomainCode = subdomain.code ?? `${domainCode}-S${si + 1}`;
+
         const { data: subdomainRow, error: subdomainErr } = await admin
           .from("subdomains")
           .insert({
-            code: subdomain.code,
+            code: subdomainCode,
             label: subdomain.label,
-            subdomain: subdomain.description,
+            subdomain: subdomain.label,   // human-readable name; not a PK
+            domain: domainCode,           // text FK → domains.domain
             domain_id_new: domainId,
+            subject_id: subjectId,
           })
           .select("id_new")
           .single();
@@ -454,6 +513,9 @@ serve(async (req) => {
         const subdomainIdNew = subdomainRow.id_new as string;
         totalSubdomains++;
 
+        // Insert objectives for this subdomain
+        const objectiveIdMap: Array<{ idNew: string; text: string; levels: string[]; hasCriteria: boolean }> = [];
+
         for (const objective of subdomain.objectives) {
           const { data: objectiveRow, error: objectiveErr } = await admin
             .from("objectives")
@@ -461,51 +523,69 @@ serve(async (req) => {
               id: crypto.randomUUID(),
               text: objective.text,
               level: objective.levels.join(","),
-              subdomain: subdomain.description,
+              subdomain: subdomain.label,
+              subject_id_uuid: subjectId,
               domain_id_uuid: domainId,
               subdomain_id_uuid: subdomainIdNew,
             })
-            .select("id, id_new")
+            .select("id_new")
             .single();
 
           if (objectiveErr || !objectiveRow) {
             throw new Error(`Failed to insert objective: ${objectiveErr?.message}`);
           }
 
-          const objectiveIdNew = objectiveRow.id_new as string;
           totalObjectives++;
+          const hasCriteria = objective.successCriteria.filter((c) => c.trim().length > 0).length > 0;
+          objectiveIdMap.push({
+            idNew: objectiveRow.id_new as string,
+            text: objective.text,
+            levels: objective.levels,
+            hasCriteria,
+          });
 
-          let criteriaTexts = objective.successCriteria.filter((c) => c.trim().length > 0);
-          const source: "official" | "generated" = criteriaTexts.length > 0 ? "official" : "generated";
-
-          if (criteriaTexts.length === 0) {
-            criteriaTexts = await generateSuccessCriteria(
-              objective.text,
-              edition.subject,
-              objective.levels,
-              deepSeekKey,
-            );
+          // Insert official criteria immediately if the PDF contained them
+          if (hasCriteria) {
+            const criteriaRows = objective.successCriteria
+              .filter((c) => c.trim().length > 0)
+              .map((text) => ({
+                id: crypto.randomUUID(),
+                text,
+                source: "official",
+                objective_id_uuid: objectiveRow.id_new,
+                domain_id_uuid: domainId,
+                subdomain_id_uuid: subdomainIdNew,
+              }));
+            const { error: cErr } = await admin.from("success_criteria").insert(criteriaRows);
+            if (cErr) console.warn(`[ingest] criteria insert warn: ${cErr.message}`);
+            else totalCriteria += criteriaRows.length;
           }
+        }
 
-          if (criteriaTexts.length > 0) {
-            const criteriaRows = criteriaTexts.map((text) => ({
+        // Generate criteria for objectives that had none — batched 5 at a time
+        const needsGeneration = objectiveIdMap.filter((o) => !o.hasCriteria);
+        const BATCH = 5;
+        for (let b = 0; b < needsGeneration.length; b += BATCH) {
+          const batch = needsGeneration.slice(b, b + BATCH);
+          const generated = await Promise.all(
+            batch.map((o) =>
+              generateSuccessCriteria(o.text, edition.subject, o.levels, deepSeekKey)
+                .then((criteria) => ({ idNew: o.idNew, criteria }))
+            ),
+          );
+          for (const { idNew, criteria } of generated) {
+            if (criteria.length === 0) continue;
+            const rows = criteria.map((text) => ({
               id: crypto.randomUUID(),
               text,
-              source,
-              objective_id_uuid: objectiveIdNew,
+              source: "generated",
+              objective_id_uuid: idNew,
               domain_id_uuid: domainId,
               subdomain_id_uuid: subdomainIdNew,
             }));
-
-            const { error: criteriaErr } = await admin
-              .from("success_criteria")
-              .insert(criteriaRows);
-
-            if (criteriaErr) {
-              console.warn(`[ingest] Failed to insert criteria: ${criteriaErr.message}`);
-            } else {
-              totalCriteria += criteriaTexts.length;
-            }
+            const { error: cErr } = await admin.from("success_criteria").insert(rows);
+            if (cErr) console.warn(`[ingest] generated criteria warn: ${cErr.message}`);
+            else totalCriteria += rows.length;
           }
         }
       }
