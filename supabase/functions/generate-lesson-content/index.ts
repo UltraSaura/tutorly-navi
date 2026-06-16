@@ -179,13 +179,108 @@ serve(async (req) => {
     }
 
     const objectives: Array<{ text: string }> = [];
-    const successCriteriaTexts: string[] = [];
-    const successCriteriaIds: string[] = [];
-
     const tasks: any[] = [];
-
     const practiceTasks = tasks.filter(t => t.type === 'practice');
     const exitTasks = tasks.filter(t => t.type === 'exit');
+
+    // Resolve curriculum edition and fetch objectives for this topic's level+subject
+    try {
+      const supabaseAdminEarly = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+
+      // Map rawLevel (uppercase from topic) to the two formats we need
+      const levelRpcMap: Record<string, string> = {
+        'CP': 'CP', 'CE1': 'CE1', 'CE2': 'CE2',
+        'CM1': 'CM1', 'CM2': 'CM2',
+        '6EME': '6e', '5EME': '5e', '4EME': '4e', '3EME': '3e',
+      };
+      const levelDbMap: Record<string, string> = {
+        'CP': 'cp', 'CE1': 'ce1', 'CE2': 'ce2',
+        'CM1': 'cm1', 'CM2': 'cm2',
+        '6EME': '6eme', '5EME': '5eme', '4EME': '4eme', '3EME': '3eme',
+      };
+      const rpcLevel = levelRpcMap[rawLevel] ?? rawLevel;
+      const dbLevel  = levelDbMap[rawLevel]  ?? rawLevel.toLowerCase();
+
+      // Get subject slug from curriculum_subject_id on the topic
+      const { data: subjectRow } = await supabaseAdminEarly
+        .from('subjects')
+        .select('slug')
+        .eq('id', topic.curriculum_subject_id)
+        .maybeSingle();
+
+      const subjectSlug = subjectRow?.slug;
+
+      if (subjectSlug) {
+        let editionId: string | null = null;
+
+        // Primary: use resolve_edition RPC (français + maths have applicability rows)
+        const { data: resolvedId } = await supabaseAdminEarly.rpc('resolve_edition', {
+          p_level: rpcLevel,
+          p_subject: subjectSlug,
+          p_track: null,
+        }).maybeSingle().catch(() => ({ data: null }));
+        editionId = resolvedId as string | null;
+
+        // Fallback for subjects without applicability rows (histoire, géo, sciences, emc)
+        if (!editionId) {
+          const cycleMap: Record<string, string> = {
+            'cp': 'cycle 2', 'ce1': 'cycle 2', 'ce2': 'cycle 2',
+            'cm1': 'cycle 3', 'cm2': 'cycle 3', '6eme': 'cycle 3',
+          };
+          const cycle = cycleMap[dbLevel];
+          if (cycle) {
+            const { data: edition } = await supabaseAdminEarly
+              .from('curriculum_edition')
+              .select('id')
+              .eq('subject', subjectSlug)
+              .eq('cycle', cycle)
+              .eq('status', 'active')
+              .maybeSingle();
+            editionId = edition?.id ?? null;
+          }
+        }
+
+        if (editionId) {
+          // Get domain IDs — scope to the topic's domain if specified
+          let domainIds: string[] = [];
+          if (topic.curriculum_domain_id) {
+            domainIds = [topic.curriculum_domain_id];
+          } else {
+            const { data: domainRows } = await supabaseAdminEarly
+              .from('domains')
+              .select('id')
+              .eq('edition_id', editionId);
+            domainIds = (domainRows ?? []).map((d: { id: string }) => d.id);
+          }
+
+          if (domainIds.length > 0) {
+            // Fetch objectives for this level in this edition
+            let objQuery = supabaseAdminEarly
+              .from('objectives')
+              .select('text')
+              .eq('level', dbLevel)
+              .in('domain_id_uuid', domainIds)
+              .limit(12);
+
+            // Narrow to subdomain if topic specifies one
+            if (topic.curriculum_subdomain_id) {
+              objQuery = objQuery.eq('subdomain_id_uuid', topic.curriculum_subdomain_id);
+            }
+
+            const { data: editionObjectives } = await objQuery;
+            if (editionObjectives?.length) {
+              objectives.push(...(editionObjectives as Array<{ text: string }>));
+            }
+          }
+        }
+      }
+    } catch (curriculumErr) {
+      // Non-fatal — lesson generation continues without objectives if resolution fails
+      console.warn('[generate-lesson-content] Curriculum resolution failed (non-fatal):', curriculumErr);
+    }
 
     const categories = topic.learning_categories as { subjects?: { name: string } } | null;
     const subjectName = categories?.subjects?.name || 'General';
