@@ -263,23 +263,41 @@ Deno.serve(async (req) => {
         const subjSlug = asciiSlug(subjName);
 
         // learning_categories.subject_id references the `subjects` table directly.
-        // Use the curriculum subject UUID as-is — no learning_subjects table in this schema.
         const learningSubjectId: string = subjectUuid;
 
-        // Upsert one learning_category per curriculum domain
+        // Build target slugs for this subject's domains
+        const domainMeta: Array<{ uuid: string; label: string; slug: string; idx: number }> = [];
         for (let domIdx = 0; domIdx < domainUuids.length; domIdx++) {
           const domainUuid = domainUuids[domIdx];
           const dom = domainMap.get(domainUuid) as any;
           const domLabel: string =
             dom?.label ?? dom?.domain ?? `Domain ${domainUuid.slice(0, 8)}`;
-          // Slug is subject-scoped so "Nombres et calculs" under Maths ≠
-          // any same-named domain under another subject.
           const catSlug = asciiSlug(`${subjSlug}-${domLabel}`);
+          domainMeta.push({ uuid: domainUuid, label: domLabel, slug: catSlug, idx: domIdx });
+        }
 
-          const { data: lcRows, error: lcErr } = await admin
-            .from("learning_categories")
-            .upsert(
-              {
+        // Pre-fetch all existing categories with these slugs in ONE query.
+        // This avoids the Supabase JS upsert onConflict bug where non-PK conflict
+        // targets are not sent correctly in older SDK versions.
+        const targetSlugs = domainMeta.map((d) => d.slug);
+        const { data: existingCats, error: fetchErr } = await admin
+          .from("learning_categories")
+          .select("id, slug")
+          .in("slug", targetSlugs);
+        if (fetchErr) throw fetchErr;
+
+        const existingBySlug = new Map<string, string>(
+          (existingCats ?? []).map((c: any) => [c.slug, c.id]),
+        );
+
+        for (const { uuid: domainUuid, label: domLabel, slug: catSlug, idx: domIdx } of domainMeta) {
+          let learningCategoryId = existingBySlug.get(catSlug);
+
+          if (!learningCategoryId) {
+            // Not found — INSERT new category
+            const { data: inserted, error: insErr } = await admin
+              .from("learning_categories")
+              .insert({
                 subject_id: learningSubjectId,
                 name: domLabel,
                 slug: catSlug,
@@ -287,14 +305,15 @@ Deno.serve(async (req) => {
                 description: null,
                 order_index: domIdx,
                 is_active: true,
-              },
-              { onConflict: "slug", ignoreDuplicates: false },
-            )
-            .select("id");
-          if (lcErr) throw lcErr;
-          const learningCategoryId = (lcRows as any[])?.[0]?.id as string | undefined;
+              })
+              .select("id")
+              .single();
+            if (insErr) throw insErr;
+            learningCategoryId = (inserted as any)?.id;
+          }
+
           if (!learningCategoryId) {
-            throw new Error(`Failed to upsert learning_category for domain "${domLabel}"`);
+            throw new Error(`Failed to create learning_category for domain "${domLabel}"`);
           }
 
           domainToCategoryId.set(domainUuid, learningCategoryId);
