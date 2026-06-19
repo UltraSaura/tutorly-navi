@@ -33,14 +33,7 @@ interface GenResult {
   stepsCompleted?: number;
 }
 
-const PROGRESSION_STEPS = [
-  { step_name: 'Découverte', difficulty_level: 1 },
-  { step_name: 'Application', difficulty_level: 2 },
-  { step_name: 'Consolidation', difficulty_level: 3 },
-  { step_name: 'Approfondissement', difficulty_level: 4 },
-] as const;
-
-const GENERATION_TIMEOUT_MS = 90000;
+const GENERATION_TIMEOUT_MS = 120000;
 
 async function getFunctionErrorMessage(err: unknown, response?: Response) {
   let errorMessage =
@@ -82,7 +75,6 @@ export function BulkLessonGenerator() {
   const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
-  const [progressiveMode, setProgressiveMode] = useState(false);
 
   useEffect(() => {
     if (!isRunning || runStartedAt === null) return;
@@ -173,60 +165,36 @@ export function BulkLessonGenerator() {
     queryClient.invalidateQueries({ queryKey: ['topic-lesson-content'] });
   };
 
-  const invokeStep = async (topicId: string, body: object) => {
-    let response: Response | undefined;
-    const invokePromise = supabase.functions.invoke('generate-lesson-content', { body });
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      window.setTimeout(() => reject(new Error('La génération a dépassé 90 secondes.')), GENERATION_TIMEOUT_MS);
-    });
-    const result = await Promise.race([invokePromise, timeoutPromise]);
-    const { data: fnData, error: fnError, response: invokeResponse } = result;
-    response = invokeResponse;
-    if (fnError) throw new Error(fnError.message ?? 'Erreur réseau');
-    if (fnData?.error) throw new Error(fnData.error);
-    return { response };
-  };
-
   const handleGenerate = async () => {
     if (!selected.length) return;
 
     const batch = topics.filter((t) => selected.includes(t.id));
-    setResults(batch.map((t) => ({ topicId: t.id, name: t.name, status: 'idle', stepsCompleted: 0 })));
+    setResults(batch.map((t) => ({ topicId: t.id, name: t.name, status: 'idle' })));
     setIsRunning(true);
     setRunStartedAt(Date.now());
     setElapsedMs(0);
 
     for (const topic of batch) {
-      if (progressiveMode) {
-        setResults((p) => p.map((r) => r.topicId === topic.id ? { ...r, status: 'running', currentStep: PROGRESSION_STEPS[0].step_name } : r));
-        let failed = false;
-        for (let i = 0; i < PROGRESSION_STEPS.length; i++) {
-          const step = PROGRESSION_STEPS[i];
-          setResults((p) => p.map((r) => r.topicId === topic.id ? { ...r, currentStep: step.step_name } : r));
-          try {
-            await invokeStep(topic.id, { topicId: topic.id, language, step_name: step.step_name, difficulty_level: step.difficulty_level });
-            setResults((p) => p.map((r) => r.topicId === topic.id ? { ...r, stepsCompleted: i + 1 } : r));
-          } catch (err) {
-            const errorMessage = await getFunctionErrorMessage(err);
-            setResults((p) => p.map((r) => r.topicId === topic.id ? { ...r, status: 'error', error: `${step.step_name}: ${errorMessage}` } : r));
-            failed = true;
-            break;
-          }
-        }
-        if (!failed) {
-          setResults((p) => p.map((r) => r.topicId === topic.id ? { ...r, status: 'done', currentStep: undefined } : r));
-        }
-      } else {
-        setResults((p) => p.map((r) => (r.topicId === topic.id ? { ...r, status: 'running' } : r)));
-        try {
-          await invokeStep(topic.id, { topicId: topic.id, language });
-          setResults((p) => p.map((r) => (r.topicId === topic.id ? { ...r, status: 'done' } : r)));
-        } catch (err) {
-          const errorMessage = await getFunctionErrorMessage(err);
-          setResults((p) =>
-            p.map((r) => r.topicId === topic.id ? { ...r, status: 'error', error: errorMessage } : r),
-          );
-        }
+      setResults((p) => p.map((r) => r.topicId === topic.id ? { ...r, status: 'running' } : r));
+      try {
+        const invokePromise = supabase.functions.invoke('generate-lesson-content', {
+          body: { topicId: topic.id, language },
+        });
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          window.setTimeout(() => reject(new Error('La génération a dépassé 120 secondes.')), GENERATION_TIMEOUT_MS);
+        });
+        const result = await Promise.race([invokePromise, timeoutPromise]);
+        const { data: fnData, error: fnError, response: invokeResponse } = result;
+        if (fnError) throw new Error(fnError.message ?? 'Erreur réseau');
+        if (fnData?.error) throw new Error(fnData.error);
+        const stepCount = (fnData?.lesson_content?.steps?.length ?? 0);
+        setResults((p) => p.map((r) => r.topicId === topic.id
+          ? { ...r, status: 'done', currentStep: stepCount > 1 ? `${stepCount} étapes` : undefined }
+          : r));
+        void invokeResponse;
+      } catch (err) {
+        const errorMessage = await getFunctionErrorMessage(err);
+        setResults((p) => p.map((r) => r.topicId === topic.id ? { ...r, status: 'error', error: errorMessage } : r));
       }
     }
 
@@ -298,13 +266,8 @@ export function BulkLessonGenerator() {
                   {r.status === 'error' && <XCircle className="h-4 w-4 flex-shrink-0 text-red-500" />}
                   {r.status === 'idle' && <div className="h-4 w-4 flex-shrink-0 rounded-full border-2 border-muted" />}
                   <span className="flex-1 truncate">{r.name}</span>
-                  {r.status === 'running' && progressiveMode && r.currentStep && (
-                    <span className="text-xs text-primary font-medium">
-                      {r.currentStep} {r.stepsCompleted}/{PROGRESSION_STEPS.length}
-                    </span>
-                  )}
-                  {r.status === 'done' && progressiveMode && (
-                    <span className="text-xs text-green-600 font-medium">4 étapes</span>
+                  {r.status === 'done' && r.currentStep && (
+                    <span className="text-xs text-green-600 font-medium">{r.currentStep}</span>
                   )}
                   {r.error && <span className="max-w-[160px] truncate text-xs text-red-500">{r.error}</span>}
                 </div>
@@ -367,14 +330,6 @@ export function BulkLessonGenerator() {
               <label className="flex cursor-pointer items-center gap-1.5 text-sm">
                 <Checkbox checked={onlyMissing} onCheckedChange={(v) => setOnlyMissing(Boolean(v))} />
                 Sans leçon
-              </label>
-
-              <label className="flex cursor-pointer items-center gap-1.5 text-sm">
-                <Checkbox checked={progressiveMode} onCheckedChange={(v) => setProgressiveMode(Boolean(v))} />
-                <span className="flex items-center gap-1">
-                  Progressif
-                  <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">4 étapes</span>
-                </span>
               </label>
             </div>
 
@@ -462,9 +417,7 @@ export function BulkLessonGenerator() {
                 )}
                 <Button onClick={handleGenerate} disabled={!selected.length || isRunning} className="gap-2">
                   <Wand2 className="h-4 w-4" />
-                  {progressiveMode
-                    ? `Générer ${selected.length > 0 ? `${selected.length} × 4 étapes` : '4 étapes'}`
-                    : `Générer ${selected.length > 0 ? `${selected.length} leçon${selected.length !== 1 ? 's' : ''}` : ''}`}
+                  {`Générer ${selected.length > 0 ? `${selected.length} leçon${selected.length !== 1 ? 's' : ''}` : ''}`}
                 </Button>
               </div>
             </div>

@@ -44,6 +44,10 @@ const CURRICULUM_MAP: Record<string, Record<string, string>> = {
     "6EME": "Programme Education Nationale francaise - Cycle 3, 6eme (11-12 ans)",
     "5EME": "Programme Education Nationale francaise - College, 5eme (12-13 ans)",
     "4EME": "Programme Education Nationale francaise - College, 4eme (13-14 ans)",
+    "3EME": "Programme Education Nationale francaise - College, 3eme (14-15 ans)",
+    "SECONDE": "Programme Education Nationale francaise - Lycee, Seconde (15-16 ans)",
+    "PREMIERE": "Programme Education Nationale francaise - Lycee, Premiere (16-17 ans)",
+    "TERMINALE": "Programme Education Nationale francaise - Lycee, Terminale (17-18 ans)",
   },
   be: {
     P3: "Programme enseignement fondamental belge - 3eme primaire (8-9 ans)",
@@ -66,17 +70,21 @@ const AGE_MAP: Record<string, string> = {
   "6EME": "11-12 ans",
   "5EME": "12-13 ans",
   "4EME": "13-14 ans",
+  "3EME": "14-15 ans",
+  "SECONDE": "15-16 ans",
+  "PREMIERE": "16-17 ans",
+  "TERMINALE": "17-18 ans",
 };
 
 const WORD_BUDGET_MAP: Record<string, string> = {
-  CP: "40-55",
-  CE1: "50-65",
-  CE2: "55-70",
-  CM1: "60-90",
-  CM2: "70-100",
-  "6EME": "60-80",
-  "5EME": "70-90",
-  "4EME": "80-100",
+  CP: '40-55',  CE1: '50-65',  CE2: '55-70',
+  CM1: '60-90', CM2: '70-100',
+  '6EME': '100-130', '5EME': '110-140',
+  '4EME': '120-150', '3EME': '120-150',
+  SECONDE: '130-160', PREMIERE: '140-170', TERMINALE: '140-170',
+  P3: '55-70',  P4: '60-90',   P5: '70-100',  P6: '80-110',
+  '5H': '60-90', '6H': '70-100', '7H': '80-110',
+  '8H': '90-120', '9H': '100-130', '10H': '110-150',
 };
 
 function substituteVariables(template: string, vars: Record<string, string>): string {
@@ -128,7 +136,8 @@ serve(async (req) => {
       );
     }
 
-    const { topicId, modelId: requestModelId, language: requestLanguage } = await req.json();
+    const body = await req.json();
+    const { topicId, modelId: requestModelId, language: requestLanguage, difficulty_level: requestDifficultyLevel, step_name: requestStepName } = body;
 
     if (!topicId) {
       return new Response(
@@ -170,18 +179,114 @@ serve(async (req) => {
     }
 
     const objectives: Array<{ text: string }> = [];
-    const successCriteriaTexts: string[] = [];
-    const successCriteriaIds: string[] = [];
-
     const tasks: any[] = [];
-
     const practiceTasks = tasks.filter(t => t.type === 'practice');
     const exitTasks = tasks.filter(t => t.type === 'exit');
+
+    const rawLevel = String(topic.curriculum_level_code ?? 'CM1').toUpperCase();
+
+    // Resolve curriculum edition and fetch objectives for this topic's level+subject
+    try {
+      const supabaseAdminEarly = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+
+      // Map rawLevel (uppercase from topic) to the two formats we need
+      const levelRpcMap: Record<string, string> = {
+        'CP': 'CP', 'CE1': 'CE1', 'CE2': 'CE2',
+        'CM1': 'CM1', 'CM2': 'CM2',
+        '6EME': '6e', '5EME': '5e', '4EME': '4e', '3EME': '3e',
+      };
+      const levelDbMap: Record<string, string> = {
+        'CP': 'cp', 'CE1': 'ce1', 'CE2': 'ce2',
+        'CM1': 'cm1', 'CM2': 'cm2',
+        '6EME': '6eme', '5EME': '5eme', '4EME': '4eme', '3EME': '3eme',
+      };
+      const rpcLevel = levelRpcMap[rawLevel] ?? rawLevel;
+      const dbLevel  = levelDbMap[rawLevel]  ?? rawLevel.toLowerCase();
+
+      // Get subject slug from curriculum_subject_id on the topic
+      const { data: subjectRow } = await supabaseAdminEarly
+        .from('subjects')
+        .select('slug')
+        .eq('id', topic.curriculum_subject_id)
+        .maybeSingle();
+
+      const subjectSlug = subjectRow?.slug;
+
+      if (subjectSlug) {
+        let editionId: string | null = null;
+
+        // Primary: use resolve_edition RPC (français + maths have applicability rows)
+        const { data: resolvedId } = await supabaseAdminEarly.rpc('resolve_edition', {
+          p_level: rpcLevel,
+          p_subject: subjectSlug,
+          p_track: null,
+        }).maybeSingle().catch(() => ({ data: null }));
+        editionId = resolvedId as string | null;
+
+        // Fallback for subjects without applicability rows (histoire, géo, sciences, emc)
+        if (!editionId) {
+          const cycleMap: Record<string, string> = {
+            'cp': 'cycle 2', 'ce1': 'cycle 2', 'ce2': 'cycle 2',
+            'cm1': 'cycle 3', 'cm2': 'cycle 3', '6eme': 'cycle 3',
+          };
+          const cycle = cycleMap[dbLevel];
+          if (cycle) {
+            const { data: edition } = await supabaseAdminEarly
+              .from('curriculum_edition')
+              .select('id')
+              .eq('subject', subjectSlug)
+              .eq('cycle', cycle)
+              .eq('status', 'active')
+              .maybeSingle();
+            editionId = edition?.id ?? null;
+          }
+        }
+
+        if (editionId) {
+          // Get domain IDs — scope to the topic's domain if specified
+          let domainIds: string[] = [];
+          if (topic.curriculum_domain_id) {
+            domainIds = [topic.curriculum_domain_id];
+          } else {
+            const { data: domainRows } = await supabaseAdminEarly
+              .from('domains')
+              .select('id')
+              .eq('edition_id', editionId);
+            domainIds = (domainRows ?? []).map((d: { id: string }) => d.id);
+          }
+
+          if (domainIds.length > 0) {
+            // Fetch objectives for this level in this edition
+            let objQuery = supabaseAdminEarly
+              .from('objectives')
+              .select('text')
+              .eq('level', dbLevel)
+              .in('domain_id_uuid', domainIds)
+              .limit(12);
+
+            // Narrow to subdomain if topic specifies one
+            if (topic.curriculum_subdomain_id) {
+              objQuery = objQuery.eq('subdomain_id_uuid', topic.curriculum_subdomain_id);
+            }
+
+            const { data: editionObjectives } = await objQuery;
+            if (editionObjectives?.length) {
+              objectives.push(...(editionObjectives as Array<{ text: string }>));
+            }
+          }
+        }
+      }
+    } catch (curriculumErr) {
+      // Non-fatal — lesson generation continues without objectives if resolution fails
+      console.warn('[generate-lesson-content] Curriculum resolution failed (non-fatal):', curriculumErr);
+    }
 
     const categories = topic.learning_categories as { subjects?: { name: string } } | null;
     const subjectName = categories?.subjects?.name || 'General';
 
-    const rawLevel = String(topic.curriculum_level_code ?? 'CM1').toUpperCase();
     const rawCountry = String(topic.curriculum_country_code ?? 'fr').toLowerCase();
     const responseLang = language === 'fr' ? 'francais' : 'English';
     const countryLabel = rawCountry === 'fr'
@@ -199,28 +304,6 @@ serve(async (req) => {
     const ageGroup = AGE_MAP[rawLevel] ?? '9-10 ans';
     const wordBudget = WORD_BUDGET_MAP[rawLevel] ?? '40-60';
 
-    const promptVariables: Record<string, string> = {
-      curriculum,
-      grade_level: rawLevel,
-      age_group: ageGroup,
-      word_budget: wordBudget,
-      country: countryLabel,
-      response_language: responseLang,
-      learning_style: 'visual',
-      subject: subjectName,
-      topic_name: topic.name,
-      topic_description: topic.description ?? '',
-      learning_objectives: objectives.map((objective) => objective.text).join(', ') || 'Non precises',
-    };
-
-    console.log('[generate-lesson-content] Curriculum context:', {
-      curriculum,
-      grade_level: rawLevel,
-      age_group: ageGroup,
-      word_budget: wordBudget,
-      language,
-    });
-
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -236,16 +319,8 @@ serve(async (req) => {
         .order('priority', { ascending: false })
         .limit(1)
         .maybeSingle();
-
-      if (templateRow?.prompt_content) {
-        promptTemplate = templateRow.prompt_content;
-        console.log('[generate-lesson-content] Loaded prompt from prompt_templates table');
-      } else {
-        console.warn('[generate-lesson-content] No active lesson_generation prompt in DB - using fallback');
-      }
-    } catch (promptErr) {
-      console.warn('[generate-lesson-content] Failed to load prompt from DB (non-fatal):', promptErr);
-    }
+      if (templateRow?.prompt_content) promptTemplate = templateRow.prompt_content;
+    } catch { /* non-fatal */ }
 
     const FALLBACK_PROMPT = `Tu es un professeur expert creant une lecon pour des eleves de {{grade_level}} ({{age_group}}) en {{country}}.
 
@@ -254,6 +329,7 @@ Matiere : {{subject}}
 Sujet : {{topic_name}}
 Description : {{topic_description}}
 Objectifs : {{learning_objectives}}
+{{difficulty_instruction}}
 
 REGLES : Reponds en {{response_language}}. Maximum {{word_budget}} mots pour l'explication. Exemples du quotidien d'un enfant.
 
@@ -261,109 +337,222 @@ REPONDS EN JSON VALIDE UNIQUEMENT :
 {
   "explanation": "{{word_budget}} mots max en {{response_language}}",
   "example": "Etape 1: ...\nEtape 2: ...\nEtape 3: ...",
-  "common_mistakes": [
-    { "mistake": "erreur", "why": "raison" }
-  ]
+  "common_mistakes": [{ "mistake": "erreur", "why": "raison" }]
 }`;
 
-    const prompt = substituteVariables(
-      promptTemplate ?? FALLBACK_PROMPT,
-      promptVariables
-    );
-
-    const aiResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/ai-chat`, {
-      method: 'POST',
-      headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: prompt,
-        modelId: modelId,
-        history: [],
-        language: language,
-        maxTokens: 1800,
-        userContext: {
-          grade_level: rawLevel,
-          age_group: ageGroup,
-          curriculum: curriculum,
-          country: countryLabel,
-          response_language: responseLang,
-          learning_style: 'visual',
-          format: 'json',
-        }
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      throw new Error(`AI generation failed: ${errorText}`);
-    }
-
-    const aiData = await aiResponse.json();
-
-    let generatedContent;
-    try {
-      const rawContent = aiData.content || aiData.data?.content || aiData;
-
-      const stripFences = (s: string) => {
-        let out = s.trim();
-        out = out.replace(/^```(?:json)?\s*/i, '');
-        out = out.replace(/```\s*$/i, '');
-        out = out.replace(/```/g, '');
-        return out.trim();
-      };
-
-      if (typeof rawContent === 'string') {
-        const cleaned = stripFences(rawContent);
-        const firstBrace = cleaned.indexOf('{');
-        const lastBrace = cleaned.lastIndexOf('}');
-        const jsonStr = firstBrace !== -1 && lastBrace > firstBrace
-          ? cleaned.substring(firstBrace, lastBrace + 1)
-          : cleaned;
-        generatedContent = JSON.parse(jsonStr);
-      } else {
-        generatedContent = rawContent;
+    // ── Helper: call ai-chat and return parsed JSON content ──────────────
+    const callAI = async (message: string, maxTokens: number) => {
+      const res = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/ai-chat`, {
+        method: 'POST',
+        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message, modelId, history: [], language, maxTokens,
+          userContext: { grade_level: rawLevel, age_group: ageGroup, curriculum, country: countryLabel,
+                         response_language: responseLang, learning_style: 'visual', format: 'json' },
+        }),
+      });
+      if (!res.ok) throw new Error(`AI generation failed: ${await res.text()}`);
+      const data = await res.json();
+      const raw = data.content || data.data?.content || data;
+      const stripFences = (s: string) => s.trim()
+        .replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').replace(/```/g, '').trim();
+      if (typeof raw === 'string') {
+        const cleaned = stripFences(raw);
+        const start = cleaned.indexOf('{'); const end = cleaned.lastIndexOf('}');
+        return JSON.parse(start !== -1 && end > start ? cleaned.slice(start, end + 1) : cleaned);
       }
-    } catch (parseError) {
-      console.error('[generate-lesson-content] Failed to parse AI response:', parseError);
-      throw new Error('AI returned invalid JSON format');
-    }
-
-    const selectedPractice = practiceTasks
-      .sort(() => 0.5 - Math.random())
-      .slice(0, Math.min(5, practiceTasks.length))
-      .map(t => t.id);
-
-    const selectedExit = exitTasks
-      .sort(() => 0.5 - Math.random())
-      .slice(0, Math.min(2, exitTasks.length))
-      .map(t => t.id);
-
-    const rawMistakes = generatedContent.common_mistakes || [];
-    const normalizedMistakes = rawMistakes.map((mistake: any) => {
-      if (typeof mistake === 'string') return { mistake, why: '' };
-      if (typeof mistake === 'object' && mistake !== null) {
-        return { mistake: mistake.mistake || mistake.tip || '', why: mistake.why || '' };
-      }
-      return { mistake: String(mistake), why: '' };
-    });
-
-    const lessonContent = {
-      vocabulary: generatedContent.vocabulary || [],
-      explanation: generatedContent.explanation,
-      examples: generatedContent.examples || [],
-      example: generatedContent.example,
-      common_mistakes: normalizedMistakes,
-      guided_practice: selectedPractice,
-      exit_ticket: selectedExit,
-      generated_at: new Date().toISOString(),
-      generated_by_model: modelId,
-      curriculum_level: rawLevel,
-      curriculum_country: rawCountry,
-      generated_language: language,
+      return raw;
     };
+
+    // ── Helper: normalize an AI "quiz" object into a renderable SingleQ ──
+    // Returns undefined when malformed (≠4 choices, ≠1 correct, missing text)
+    // so the frontend simply skips that level's "Teste-toi" card.
+    const buildQuiz = (raw: any, difficultyLevel: number): Record<string, unknown> | undefined => {
+      if (!raw || typeof raw !== 'object') return undefined;
+      if (!raw.prompt || typeof raw.prompt !== 'string') return undefined;
+      const rawChoices = Array.isArray(raw.choices) ? raw.choices : [];
+      if (rawChoices.length !== 4) return undefined;
+      const choices = rawChoices.map((c: any, i: number) => ({
+        id: String.fromCharCode(97 + i), // a, b, c, d
+        label: typeof c === 'string' ? c : String(c?.label ?? c?.text ?? ''),
+        correct: typeof c === 'object' && c !== null && (c.correct === true || c.is_correct === true),
+      }));
+      if (choices.some((c) => !c.label.trim())) return undefined;
+      if (choices.filter((c) => c.correct).length !== 1) return undefined;
+      return {
+        id: `lesson-q-l${difficultyLevel}`,
+        kind: 'single',
+        prompt: raw.prompt.trim(),
+        choices,
+      };
+    };
+
+    // ── Helper: build lesson content object from AI response ─────────────
+    const buildLessonContent = (generatedContent: any, stepName: string, difficultyLevel: number) => {
+      const rawMistakes = generatedContent.common_mistakes || [];
+      const normalizedMistakes = rawMistakes.map((m: any) => {
+        if (typeof m === 'string') return { mistake: m, why: '' };
+        if (typeof m === 'object' && m !== null) return { mistake: m.mistake || m.tip || '', why: m.why || '' };
+        return { mistake: String(m), why: '' };
+      });
+      const quiz = buildQuiz(generatedContent.quiz, difficultyLevel);
+      return {
+        vocabulary: generatedContent.vocabulary || [],
+        explanation: generatedContent.explanation,
+        examples: generatedContent.examples || [],
+        example: generatedContent.example,
+        ...(Array.isArray(generatedContent.example_steps) && generatedContent.example_steps.length > 0
+          ? { example_steps: generatedContent.example_steps } : {}),
+        common_mistakes: normalizedMistakes,
+        ...(quiz ? { quiz } : {}),
+        generated_at: new Date().toISOString(),
+        generated_by_model: modelId,
+        curriculum_level: rawLevel,
+        curriculum_country: rawCountry,
+        generated_language: language,
+        ...(stepName ? { step_name: stepName, difficulty_level: difficultyLevel } : {}),
+      };
+    };
+
+    // ── Helper: generate content for one step ────────────────────────────
+    const generateOneStep = async (stepName: string, stepFocus: string, difficultyLevel: number, totalSteps: number) => {
+      const difficultyInstruction = stepName
+        ? `CONTEXTE DE PROGRESSION (étape ${difficultyLevel}/${totalSteps}) :
+Tu génères le contenu pour l'étape "${stepName}".
+Focus de cette étape : ${stepFocus}
+Adapte la complexité en conséquence — les étapes suivantes approfondiront le sujet.`
+        : '';
+      const promptVariables: Record<string, string> = {
+        curriculum, grade_level: rawLevel, age_group: ageGroup, word_budget: wordBudget,
+        country: countryLabel, response_language: responseLang, learning_style: 'visual',
+        subject: subjectName, topic_name: topic.name, topic_description: topic.description ?? '',
+        learning_objectives: objectives.map(o => o.text).join(', ') || 'Non précisés',
+        difficulty_level: String(difficultyLevel), step_name: stepName,
+        difficulty_instruction: difficultyInstruction,
+      };
+      const quizInstruction = `
+
+EN PLUS de tout le reste, ajoute dans le JSON une question "teste-toi" qui vérifie la compréhension de CETTE étape précise${stepName ? ` ("${stepName}")` : ''}.
+Clé "quiz", format STRICT :
+"quiz": {
+  "prompt": "<question courte, claire et concrète, adaptée à ${ageGroup}>",
+  "choices": [
+    {"label": "<la bonne réponse>", "correct": true},
+    {"label": "<distracteur plausible>", "correct": false},
+    {"label": "<distracteur plausible>", "correct": false},
+    {"label": "<distracteur plausible>", "correct": false}
+  ]
+}
+RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la position de la bonne réponse, distracteurs crédibles (erreurs typiques).`;
+      const prompt = substituteVariables(promptTemplate ?? FALLBACK_PROMPT, promptVariables) + quizInstruction;
+      const generated = await callAI(prompt, 2600);
+      return buildLessonContent(generated, stepName, difficultyLevel);
+    };
+
+    // ── Step 1: Planning — AI decides step names, grade level enforces minimum count ──
+    let plannedSteps: Array<{ name: string; focus: string }> = [];
+
+    // Grade-level minimum step counts (hard floor — AI can add more, never fewer)
+    const gradeMin = ['CP','CE1'].includes(rawLevel) ? 1
+      : ['CE2','CM1','CM2'].includes(rawLevel) ? 2
+      : 2; // 6EME–3EME always at least 2 steps
+
+    // Default step name sets per grade band (used as fallback when AI fails)
+    const defaultStepsByGrade = (): Array<{ name: string; focus: string }> => {
+      if (['CP','CE1'].includes(rawLevel)) {
+        return [{ name: 'Découverte', focus: 'Comprendre la notion de base' }];
+      }
+      if (['CE2','CM1','CM2'].includes(rawLevel)) {
+        return [
+          { name: 'Comprendre', focus: 'Découvrir et comprendre la notion' },
+          { name: 'Appliquer', focus: 'Mettre en pratique avec des exercices' },
+        ];
+      }
+      // Collège: 6ème–3ème
+      return [
+        { name: 'Maîtriser les bases', focus: 'Comprendre et savoir utiliser les définitions et propriétés fondamentales' },
+        { name: 'Résoudre des problèmes', focus: 'Appliquer les notions à des situations variées et plus complexes' },
+      ];
+    };
+
+    // Only plan when no explicit step_name was passed in the request
+    if (!requestStepName) {
+      const objectivesText = objectives.map(o => o.text).join('\n- ') || 'Non précisés';
+      const gradeDefault = gradeMin; // use the minimum as the target for the AI prompt
+
+      const planningPrompt = `Tu es un expert pédagogique pour ${curriculum} (${ageGroup}).
+
+Sujet : "${topic.name}"
+Niveau : ${rawLevel}
+Objectifs du programme :
+- ${objectivesText}
+
+Découpe ce sujet en ${gradeDefault} à ${Math.min(gradeDefault + 1, 3)} étapes pédagogiques progressives.
+IMPORTANT : tu DOIS retourner EXACTEMENT ${gradeDefault} étapes minimum (${rawLevel} oblige).
+Maximum absolu : 3 étapes.
+
+Chaque étape doit avoir un nom COURT et SPÉCIFIQUE au sujet (pas "Découverte" générique — ex: "Comprendre le coefficient directeur", "Résoudre des équations").
+
+Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
+{"steps":[{"name":"<nom court spécifique en français>","focus":"<ce qu'on travaille ici en une phrase>"}]}`;
+
+      try {
+        const planData = await callAI(planningPrompt, 400);
+        if (Array.isArray(planData?.steps) && planData.steps.length > 0) {
+          plannedSteps = planData.steps.slice(0, 3);
+          console.log('[generate-lesson-content] AI planned steps:', plannedSteps.map((s: any) => s.name));
+        }
+      } catch (planErr) {
+        console.warn('[generate-lesson-content] Planning failed, using grade defaults:', planErr);
+      }
+
+      // Enforce grade-level minimum: if AI returned fewer steps than required, use defaults
+      if (plannedSteps.length < gradeMin) {
+        console.log(`[generate-lesson-content] AI returned ${plannedSteps.length} step(s), minimum is ${gradeMin} — using grade defaults`);
+        plannedSteps = defaultStepsByGrade();
+      }
+    } else {
+      // Explicit step_name passed — treat as a single targeted generation
+      plannedSteps = [{ name: requestStepName, focus: '' }];
+    }
+
+    // ── Step 2: Generate content for each planned step ───────────────────
+    const generatedSteps: Record<string, unknown>[] = [];
+    for (let i = 0; i < plannedSteps.length; i++) {
+      const step = plannedSteps[i];
+      const content = await generateOneStep(step.name, step.focus, i + 1, plannedSteps.length);
+      generatedSteps.push(content as Record<string, unknown>);
+    }
+
+    // ── Step 3: Build final content structure ────────────────────────────
+    let finalContent: Record<string, unknown>;
+
+    if (generatedSteps.length === 1) {
+      // Single step — save as flat content (no steps[] wrapper)
+      finalContent = generatedSteps[0];
+    } else {
+      // Multiple steps — save under steps[]
+      // If explicit step_name was provided, merge into existing steps[]
+      if (requestStepName) {
+        const { data: existingTopic } = await supabase
+          .from('topics').select('lesson_content').eq('id', topicId).single();
+        const existing = (existingTopic?.lesson_content as Record<string, unknown>) ?? {};
+        const existingSteps: Record<string, unknown>[] = Array.isArray(existing.steps)
+          ? (existing.steps as Record<string, unknown>[]) : [];
+        const stepIdx = existingSteps.findIndex((s) => (s as any).step_name === requestStepName);
+        const updatedSteps = stepIdx >= 0
+          ? existingSteps.map((s, i) => i === stepIdx ? generatedSteps[0] : s)
+          : [...existingSteps, generatedSteps[0]];
+        updatedSteps.sort((a: any, b: any) => (a.difficulty_level ?? 0) - (b.difficulty_level ?? 0));
+        finalContent = { ...existing, steps: updatedSteps };
+      } else {
+        finalContent = { steps: generatedSteps };
+      }
+    }
 
     const { error: updateError } = await supabase
       .from('topics')
-      .update({ lesson_content: lessonContent })
+      .update({ lesson_content: finalContent })
       .eq('id', topicId);
 
     if (updateError) {
@@ -371,7 +560,7 @@ REPONDS EN JSON VALIDE UNIQUEMENT :
     }
 
     return new Response(
-      JSON.stringify({ success: true, lesson_content: lessonContent, topic_id: topicId }),
+      JSON.stringify({ success: true, lesson_content: finalContent, topic_id: topicId }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

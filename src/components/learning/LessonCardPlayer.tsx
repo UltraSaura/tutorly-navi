@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, type ReactNode } from 'react';
+import { useState, useCallback, useRef, useEffect, type ReactNode, type TouchEvent as RTouchEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Zap, BookOpen, AlertCircle, ChevronDown } from 'lucide-react';
@@ -10,7 +10,8 @@ import { trackLearningInteraction } from '@/services/learningAnalytics';
 import { TopicVisual } from './visuals/TopicVisual';
 import { QuestionCard } from './QuestionCard';
 import { getAgeConfig } from './lesson/ageConfig';
-import type { LessonContent, LessonExample } from '@/types/learning';
+import { useLessonResume } from '@/hooks/useLessonResume';
+import type { LessonContent, LessonExample, LessonExampleStep } from '@/types/learning';
 import type { Question } from '@/types/quiz-bank';
 import { evaluateQuestion } from '@/utils/quizEvaluation';
 
@@ -28,15 +29,22 @@ type CardType = 'intro' | 'vocabulary' | 'examples' | 'quiz' | 'mistake' | 'comp
 interface Card {
   type: CardType;
   label: string;
+  stepIdx: number; // which level (step) this card draws its content from
 }
 
-function buildCards(content: LessonContent | null, hasQuiz: boolean): Card[] {
-  const cards: Card[] = [{ type: 'intro', label: 'Leçon' }];
-  if (content?.vocabulary?.length) cards.push({ type: 'vocabulary', label: 'Vocabulaire' });
-  if (content?.examples?.length) cards.push({ type: 'examples', label: 'Exemples' });
-  if (hasQuiz) cards.push({ type: 'quiz', label: 'Quiz' });
-  if (content?.common_mistakes?.length) cards.push({ type: 'mistake', label: 'Piège' });
-  cards.push({ type: 'complete', label: 'Terminé' });
+// Flatten all progressive levels into one continuous forward sequence:
+// for each level → concept → vocab? → example → teste-toi? → piège? ; then one final complete card.
+function buildFlowCards(steps: LessonContent[], hasTopicQuiz: boolean): Card[] {
+  const cards: Card[] = [];
+  steps.forEach((content, i) => {
+    cards.push({ type: 'intro', label: 'Leçon', stepIdx: i });
+    if (content?.vocabulary?.length) cards.push({ type: 'vocabulary', label: 'Vocabulaire', stepIdx: i });
+    if (content?.examples?.length || content?.example_steps?.length) cards.push({ type: 'examples', label: 'Exemple', stepIdx: i });
+    // Per-level "Teste-toi": use the in-content quiz; for a single flat lesson, fall back to the topic bank.
+    if (content?.quiz || (steps.length === 1 && hasTopicQuiz)) cards.push({ type: 'quiz', label: 'Teste-toi', stepIdx: i });
+    if (content?.common_mistakes?.length) cards.push({ type: 'mistake', label: 'Piège', stepIdx: i });
+  });
+  cards.push({ type: 'complete', label: 'Terminé', stepIdx: Math.max(0, steps.length - 1) });
   return cards;
 }
 
@@ -74,6 +82,7 @@ function NextButton({ onClick, label = 'Suivant →', disabled = false }: { onCl
     <button
       onClick={onClick}
       disabled={disabled}
+      data-primary-cta=""
       style={{
         width: '100%',
         padding: 13,
@@ -93,49 +102,104 @@ function NextButton({ onClick, label = 'Suivant →', disabled = false }: { onCl
   );
 }
 
+// Lightweight haptic feedback. Uses the web Vibration API (Android web/PWA);
+// a no-op where unsupported (iOS Safari). Native iOS haptics would use @capacitor/haptics later.
+function buzz(pattern: number | number[]) {
+  try { navigator.vibrate?.(pattern); } catch { /* ignore */ }
+}
+
+const CONFETTI_COLORS = ['#12C6A0', '#3B82F6', '#F59E0B', '#8B5CF6', '#EF4444'];
+
+// A short confetti burst + label, shown when a level is cleared or the lesson is finished.
+function CelebrationOverlay({ label }: { label: string }) {
+  const pieces = useRef(
+    Array.from({ length: 18 }, (_, i) => ({
+      id: i,
+      x: (Math.random() * 2 - 1) * 150,
+      rot: Math.random() * 540,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      delay: Math.random() * 0.12,
+      size: 6 + Math.random() * 5,
+    })),
+  ).current;
+  return (
+    <div style={{ position: 'absolute', inset: 0, zIndex: 60, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      {pieces.map((p) => (
+        <motion.div
+          key={p.id}
+          initial={{ opacity: 1, x: 0, y: -20, rotate: 0 }}
+          animate={{ opacity: 0, x: p.x, y: 380, rotate: p.rot }}
+          transition={{ duration: 1.3, delay: p.delay, ease: 'easeOut' }}
+          style={{ position: 'absolute', top: '32%', width: p.size, height: p.size * 0.6, background: p.color, borderRadius: 2 }}
+        />
+      ))}
+      <motion.div
+        initial={{ scale: 0.6, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+        style={{ background: '#0F172A', color: 'white', padding: '10px 18px', borderRadius: 999, fontWeight: 800, fontSize: 14, fontFamily: 'Poppins, sans-serif', display: 'flex', gap: 8, alignItems: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}
+      >
+        🎉 {label}
+      </motion.div>
+    </div>
+  );
+}
+
 function IntroCard({
   topicName,
   lessonContent,
   onNext,
   visualSize,
   bodySize,
+  compact = false,
+  heading,
 }: {
   topicName: string;
   lessonContent: LessonContent | null;
   onNext: () => void;
   visualSize: number;
   bodySize: number;
+  compact?: boolean;   // levels 2+ : lighter header, no big topic visual
+  heading?: string;    // override the H2 (e.g. the level name)
 }) {
   const explanation = lessonContent?.explanation ?? '';
   const sentences = explanation.split(/(?<=[.!?])\s+/).filter(Boolean);
   const hookSentence = sentences[0] ?? explanation;
   const conceptSentences = sentences.slice(1, 4);
 
+  // Concept points reveal one at a time so the idea is worked through, not scrolled past.
+  const [revealed, setRevealed] = useState(1);
+  const total = conceptSentences.length;
+  const allRevealed = revealed >= total;
+
   const isFraction = /fraction|diviser|partager|moitié|tiers|quart/i.test(topicName);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-      <CardBadge icon={<BookOpen className="h-3 w-3" />} label="Nouvelle leçon" color="teal" />
-      <h2 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif', lineHeight: 1.25 }}>
-        {topicName}
+      <CardBadge icon={<BookOpen className="h-3 w-3" />} label={compact ? 'On continue' : 'Nouvelle leçon'} color="teal" />
+      <h2 style={{ fontSize: compact ? 16 : 18, fontWeight: 900, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif', lineHeight: 1.25 }}>
+        {heading ?? topicName}
       </h2>
 
-      {/* Visual - shows fraction notation only for fraction topics */}
-      <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14, display: 'flex', alignItems: 'center', justifyContent: isFraction ? 'flex-start' : 'center', gap: 14 }}>
-        <TopicVisual topicName={topicName} total={isFraction ? 4 : 6} taken={isFraction ? 1 : 3} animated size={visualSize} />
-        {isFraction && (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: 22, fontWeight: 900, color: '#12C6A0', margin: 0, borderBottom: '2.5px solid #12C6A0', paddingBottom: 2, lineHeight: 1, fontFamily: 'Poppins, sans-serif' }}>1</p>
-                <p style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0, lineHeight: 1.2, fontFamily: 'Poppins, sans-serif' }}>4</p>
+      {/* Big topic visual — only on the first level (skipped on compact level intros) */}
+      {!compact && (
+        <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14, display: 'flex', alignItems: 'center', justifyContent: isFraction ? 'flex-start' : 'center', gap: 14 }}>
+          <TopicVisual topicName={topicName} total={isFraction ? 4 : 6} taken={isFraction ? 1 : 3} animated size={visualSize} />
+          {isFraction && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: 22, fontWeight: 900, color: '#12C6A0', margin: 0, borderBottom: '2.5px solid #12C6A0', paddingBottom: 2, lineHeight: 1, fontFamily: 'Poppins, sans-serif' }}>1</p>
+                  <p style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0, lineHeight: 1.2, fontFamily: 'Poppins, sans-serif' }}>4</p>
+                </div>
+                <div style={{ fontSize: 9, color: '#667085', lineHeight: 1.9 }}>← prises<br />← total</div>
               </div>
-              <div style={{ fontSize: 9, color: '#667085', lineHeight: 1.9 }}>← prises<br />← total</div>
+              <span style={{ fontSize: 9, color: '#12C6A0', fontWeight: 700 }}>= 1 part sur 4</span>
             </div>
-            <span style={{ fontSize: 9, color: '#12C6A0', fontWeight: 700 }}>= 1 part sur 4</span>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Hook - first sentence, big and teal */}
       <div style={{ background: '#F2FBF8', borderRadius: 12, border: '0.5px solid #9FE1CB', padding: '12px 14px' }}>
@@ -144,14 +208,20 @@ function IntroCard({
         </p>
       </div>
 
-      {/* Concept - each sentence as a numbered visual card */}
-      {conceptSentences.length > 0 && (
+      {/* Concept - each sentence revealed one at a time as a numbered visual card */}
+      {total > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {conceptSentences.map((sentence, i) => (
-            <div key={i} style={{
-              background: 'white', borderRadius: 12, border: '0.5px solid #EAECEF',
-              padding: '10px 13px', display: 'flex', alignItems: 'flex-start', gap: 10,
-            }}>
+          {conceptSentences.slice(0, revealed).map((sentence, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              style={{
+                background: 'white', borderRadius: 12, border: '0.5px solid #EAECEF',
+                padding: '10px 13px', display: 'flex', alignItems: 'flex-start', gap: 10,
+              }}
+            >
               <span style={{
                 width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
                 background: '#F2FBF8', border: '0.5px solid #9FE1CB',
@@ -161,12 +231,26 @@ function IntroCard({
               <p style={{ fontSize: bodySize, color: '#374151', margin: 0, lineHeight: 1.85 }}>
                 {sentence}
               </p>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
 
-      <NextButton onClick={onNext} />
+      {total > 1 && !allRevealed ? (
+        <button
+          onClick={() => setRevealed((r) => Math.min(r + 1, total))}
+          data-primary-cta=""
+          style={{
+            marginTop: 'auto', width: '100%', padding: 13, borderRadius: 14,
+            border: '1.5px solid #9FE1CB', background: '#F2FBF8', color: '#085041',
+            fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif',
+          }}
+        >
+          Continuer ↓
+        </button>
+      ) : (
+        <NextButton onClick={onNext} />
+      )}
     </div>
   );
 }
@@ -277,7 +361,7 @@ function ExamplesCard({
               transition: 'all .15s',
             }}
           >
-            {e.fraction ?? `${e.taken}/${e.total}`}
+            {e.fraction ?? (e.taken != null && e.total != null ? `${e.taken}/${e.total}` : `Ex. ${i + 1}`)}
           </button>
         ))}
       </div>
@@ -291,21 +375,25 @@ function ExamplesCard({
           transition={{ duration: 0.2 }}
           style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
         >
-          <div style={{ display: 'flex', justifyContent: 'center', background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14 }}>
-            <TopicVisual topicName={topicName} total={ex.total} taken={ex.taken} animated size={visualSize} />
-          </div>
+          {ex.taken != null && ex.total != null && (
+            <div style={{ display: 'flex', justifyContent: 'center', background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14 }}>
+              <TopicVisual topicName={topicName} total={ex.total} taken={ex.taken} animated size={visualSize} />
+            </div>
+          )}
           <p style={{ fontSize: bodySize - 1, color: '#374151', margin: 0, lineHeight: 1.6 }}>
             {ex.context}
           </p>
           <div style={{ background: '#F2FBF8', borderRadius: 12, border: '0.5px solid #9FE1CB', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: 22, fontWeight: 800, color: '#12C6A0', margin: 0, borderBottom: '2.5px solid #12C6A0', paddingBottom: 2, lineHeight: 1, fontFamily: 'Poppins, sans-serif' }}>
-                {ex.taken}
-              </p>
-              <p style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', margin: 0, lineHeight: 1.2, fontFamily: 'Poppins, sans-serif' }}>
-                {ex.total}
-              </p>
-            </div>
+            {ex.taken != null && ex.total != null && (
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: 22, fontWeight: 800, color: '#12C6A0', margin: 0, borderBottom: '2.5px solid #12C6A0', paddingBottom: 2, lineHeight: 1, fontFamily: 'Poppins, sans-serif' }}>
+                  {ex.taken}
+                </p>
+                <p style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', margin: 0, lineHeight: 1.2, fontFamily: 'Poppins, sans-serif' }}>
+                  {ex.total}
+                </p>
+              </div>
+            )}
             <p style={{ fontSize: bodySize - 2, color: '#374151', margin: 0, lineHeight: 1.6, flex: 1 }}>
               {ex.explanation}
             </p>
@@ -314,9 +402,81 @@ function ExamplesCard({
       </AnimatePresence>
 
       <p style={{ fontSize: 10, color: '#9CA3AF', margin: 0, textAlign: 'center' }}>
-        Appuie sur chaque fraction pour voir le changement
+        Appuie sur chaque exemple pour voir le changement
       </p>
       <NextButton onClick={onNext} />
+    </div>
+  );
+}
+
+// Worked example revealed one step at a time (Brilliant-style).
+// Renders structured example_steps ({ label, line }) with a tap-to-reveal sequence.
+function ExampleStepsCard({
+  exampleSteps,
+  context,
+  onNext,
+  bodySize = 14,
+}: {
+  exampleSteps: LessonExampleStep[];
+  context?: string;
+  onNext: () => void;
+  bodySize?: number;
+}) {
+  const [revealed, setRevealed] = useState(1);
+  const allRevealed = revealed >= exampleSteps.length;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
+      <CardBadge icon={<Zap className="h-3 w-3" />} label="Exemple résolu" color="amber" />
+      <h2 style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif', lineHeight: 1.3 }}>
+        Suis la résolution, étape par étape
+      </h2>
+
+      {context && (
+        <div style={{ background: '#F2FBF8', borderRadius: 12, border: '0.5px solid #9FE1CB', padding: '11px 13px' }}>
+          <p style={{ fontSize: bodySize - 1, color: '#374151', margin: 0, lineHeight: 1.7 }}>{context}</p>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {exampleSteps.slice(0, revealed).map((s, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22 }}
+            style={{ background: 'white', borderRadius: 12, border: '0.5px solid #EAECEF', padding: '10px 13px', display: 'flex', alignItems: 'flex-start', gap: 10 }}
+          >
+            <span style={{
+              width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+              background: '#FFF3DC', border: '0.5px solid #FAC775',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 10, fontWeight: 800, color: '#B45309', marginTop: 2,
+            }}>{i + 1}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {s.label && (
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#B45309', margin: '0 0 3px', letterSpacing: '0.02em' }}>{s.label}</p>
+              )}
+              <p style={{ fontSize: bodySize, color: '#0F172A', margin: 0, lineHeight: 1.6, fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}>{s.line}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {!allRevealed ? (
+        <button
+          onClick={() => setRevealed((r) => Math.min(r + 1, exampleSteps.length))}
+          data-primary-cta=""
+          style={{
+            marginTop: 'auto', width: '100%', padding: 13, borderRadius: 14,
+            border: '1.5px solid #FAC775', background: '#FFF3DC', color: '#B45309',
+            fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif',
+          }}
+        >
+          Étape suivante ↓
+        </button>
+      ) : (
+        <NextButton onClick={onNext} />
+      )}
     </div>
   );
 }
@@ -337,19 +497,24 @@ function QuizCard({
   inlineBankId,
   topicId,
   onNext,
+  presetQuestion,
 }: {
-  topicName: string;
-  inlineBankId: string;
+  topicName?: string;
+  inlineBankId?: string | null;
   topicId: string;
   onNext: () => void;
+  presetQuestion?: Question | null;
 }) {
-  const [answer, setAnswer]       = useState<any>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const [correct, setCorrect]     = useState<boolean | null>(null);
+  const [answer, setAnswer]   = useState<any>(null);
+  const [correct, setCorrect] = useState(false);      // solved this card
+  const [wrong, setWrong]     = useState(false);      // last attempt was wrong (showing nudge)
+  const [attempts, setAttempts] = useState(0);
 
-  const { data: question } = useQuery<Question | null>({
+  // When the level carries its own quiz, use it directly; otherwise fetch from the topic bank.
+  const { data: fetchedQuestion } = useQuery<Question | null>({
     queryKey: ['lesson-inline-q', topicId, inlineBankId],
     queryFn: async () => {
+      if (!inlineBankId) return null;
       const { data: rows } = await supabase
         .from('quiz_bank_questions')
         .select('payload, position')
@@ -359,20 +524,34 @@ function QuizCard({
       const qs = rows.map(r => r.payload as unknown as Question);
       return qs[Math.floor(Math.random() * qs.length)] ?? null;
     },
-    enabled: !!inlineBankId,
+    enabled: !presetQuestion && !!inlineBankId,
     staleTime: Infinity,
   });
+  const question = presetQuestion ?? fetchedQuestion;
+  const hint = (question as any)?.hint as string | undefined;
 
   const handleValidate = () => {
-    if (!hasAnswer(question, answer)) return;
-    setCorrect(question ? evaluateQuestion(question, answer) : true);
-    setSubmitted(true);
+    if (!hasAnswer(question, answer) || correct) return;
+    const ok = question ? evaluateQuestion(question, answer) : true;
+    if (ok) {
+      setCorrect(true);
+      setWrong(false);
+      buzz([0, 35]);
+    } else {
+      setAttempts((a) => a + 1);
+      setWrong(true);
+      buzz([0, 25, 40, 25]);
+    }
   };
+
+  // Let the student change their answer → clears the wrong-nudge so they can re-validate.
+  const handleRetry = () => setWrong(false);
+  const onAnswerChange = (v: any) => { setAnswer(v); if (wrong) setWrong(false); };
 
   if (!question) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-        <CardBadge icon={<Zap className="h-3 w-3" />} label="Petit test" color="amber" />
+        <CardBadge icon={<Zap className="h-3 w-3" />} label="Teste-toi" color="amber" />
         <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 24, textAlign: 'center', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>Quiz non disponible.</p>
         </div>
@@ -381,57 +560,90 @@ function QuizCard({
     );
   }
 
+  const canValidate = hasAnswer(question, answer) && !correct;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-      <CardBadge icon={<Zap className="h-3 w-3" />} label="Petit test" color="amber" />
+      <CardBadge icon={<Zap className="h-3 w-3" />} label="Teste-toi" color="amber" />
 
-      {/* QuestionCard - interactive mode, never shows red/green internally */}
-      <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14 }}>
+      {/* QuestionCard - interactive mode, never shows the correct answer */}
+      <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14, opacity: correct ? 0.85 : 1, pointerEvents: correct ? 'none' : 'auto' }}>
         <QuestionCard
           question={question}
-          onChange={setAnswer}
+          onChange={onAnswerChange}
           allowRetry={false}
         />
       </div>
 
-      {/* Feedback banner - shown after Valider */}
-      {submitted && (
-        <div style={{
-          borderRadius: 12, padding: '11px 14px',
-          background: correct ? '#EAF3DE' : '#FFF3DC',
-          border: `0.5px solid ${correct ? '#9FE1CB' : '#FAC775'}`,
-          display: 'flex', alignItems: 'center', gap: 10,
-        }}>
-          <span style={{ fontSize: 18 }}>{correct ? '🎉' : '💡'}</span>
-          <p style={{
-            fontSize: 13, fontWeight: 700, margin: 0, flex: 1,
-            color: correct ? '#27500A' : '#B45309',
-          }}>
-            {correct
-              ? 'Parfait ! Tu as bien compris.'
-              : 'Pas tout à fait — continue, tu apprends !'}
-          </p>
+      {/* Success banner */}
+      {correct && (
+        <div style={{ borderRadius: 12, padding: '11px 14px', background: '#EAF3DE', border: '0.5px solid #9FE1CB', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 18 }}>🎉</span>
+          <p style={{ fontSize: 13, fontWeight: 700, margin: 0, flex: 1, color: '#27500A' }}>Parfait ! Tu as bien compris.</p>
         </div>
       )}
 
-      {/* Valider -> Suivant */}
-      {!submitted ? (
+      {/* Wrong → encouraging nudge + hint (never reveals the answer) */}
+      {wrong && !correct && (
+        <div style={{ borderRadius: 12, padding: '11px 14px', background: '#FFF3DC', border: '0.5px solid #FAC775', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <span style={{ fontSize: 18, lineHeight: 1.2 }}>💪</span>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: '#B45309' }}>
+              Pas tout à fait — réessaie, tu y es presque !
+            </p>
+            {hint && (
+              <p style={{ fontSize: 12, fontWeight: 500, margin: '4px 0 0', color: '#92500A', lineHeight: 1.5 }}>
+                💡 Indice : {hint}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Actions */}
+      {correct ? (
+        <NextButton onClick={onNext} />
+      ) : wrong ? (
+        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button
+            onClick={handleRetry}
+            data-primary-cta=""
+            style={{
+              width: '100%', padding: 13, borderRadius: 14, border: 'none',
+              background: '#12C6A0', color: '#0F172A', fontSize: 13, fontWeight: 700,
+              cursor: 'pointer', fontFamily: 'Poppins, sans-serif',
+            }}
+          >
+            Réessayer
+          </button>
+          {attempts >= 2 && (
+            <button
+              onClick={onNext}
+              style={{
+                width: '100%', padding: 8, borderRadius: 12, border: 'none', background: 'transparent',
+                color: '#9CA3AF', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Poppins, sans-serif',
+              }}
+            >
+              Continuer quand même →
+            </button>
+          )}
+        </div>
+      ) : (
         <button
           onClick={handleValidate}
-          disabled={!hasAnswer(question, answer)}
+          disabled={!canValidate}
+          data-primary-cta=""
           style={{
             marginTop: 'auto', width: '100%', padding: 13, borderRadius: 14, border: 'none',
-            background: hasAnswer(question, answer) ? '#12C6A0' : '#EAECEF',
-            color: hasAnswer(question, answer) ? '#0F172A' : '#B4B2A9',
+            background: canValidate ? '#12C6A0' : '#EAECEF',
+            color: canValidate ? '#0F172A' : '#B4B2A9',
             fontSize: 13, fontWeight: 700,
-            cursor: hasAnswer(question, answer) ? 'pointer' : 'not-allowed',
+            cursor: canValidate ? 'pointer' : 'not-allowed',
             fontFamily: 'Poppins, sans-serif',
           }}
         >
           Valider
         </button>
-      ) : (
-        <NextButton onClick={onNext} />
       )}
     </div>
   );
@@ -531,6 +743,69 @@ function CompleteCard({
   );
 }
 
+// Continuous segmented progress: one segment per level, the current level fills as you advance.
+function SegmentedProgress({ cards, cardIndex, totalLevels }: {
+  cards: Card[];
+  cardIndex: number;
+  totalLevels: number;
+}) {
+  const curLevel = cards[cardIndex]?.stepIdx ?? 0;
+  return (
+    <div style={{ flex: 1, display: 'flex', gap: 4 }}>
+      {Array.from({ length: totalLevels }).map((_, L) => {
+        const levelCardIdxs = cards
+          .map((c, idx) => ({ c, idx }))
+          .filter((x) => x.c.stepIdx === L && x.c.type !== 'complete');
+        const size = levelCardIdxs.length || 1;
+        let fill = 0;
+        if (curLevel > L) fill = 1;
+        else if (curLevel === L) {
+          const pos = levelCardIdxs.filter((x) => x.idx <= cardIndex).length;
+          fill = Math.min(1, pos / size);
+        }
+        return (
+          <div key={L} style={{ flex: 1, height: 6, background: '#EAECEF', borderRadius: 999, overflow: 'hidden' }}>
+            <div style={{ width: `${Math.round(fill * 100)}%`, height: '100%', background: '#12C6A0', borderRadius: 999, transition: 'width .35s ease' }} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// "Niveau N/total · {name}" banner shown as each new level begins.
+function LevelBanner({ levelIdx, totalLevels, stepName }: {
+  levelIdx: number;
+  totalLevels: number;
+  stepName?: string;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        margin: '0 16px 8px', padding: '7px 12px',
+        background: '#F2FBF8', border: '0.5px solid #9FE1CB', borderRadius: 10,
+      }}
+    >
+      <span style={{
+        flexShrink: 0, fontSize: 10, fontWeight: 800, color: 'white',
+        background: '#12C6A0', borderRadius: 999, padding: '2px 9px',
+        fontFamily: 'Poppins, sans-serif',
+      }}>
+        Niveau {levelIdx + 1}/{totalLevels}
+      </span>
+      {stepName && (
+        <span style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 700, color: '#085041', fontFamily: 'Poppins, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {stepName}
+        </span>
+      )}
+    </motion.div>
+  );
+}
+
 export function LessonCardPlayer({
   topicId,
   topicName,
@@ -545,12 +820,49 @@ export function LessonCardPlayer({
   const startTimeRef = useRef<number>(Date.now());
   const [cardIndex, setCardIndex] = useState(0);
   const [actualMinutes, setActualMinutes] = useState<number | null>(null);
+  const [celebration, setCelebration] = useState<string | null>(null);
+  const celebrateTimer = useRef<number | null>(null);
+
+  const celebrate = useCallback((label: string, haptic: number[] = [0, 35, 30, 35]) => {
+    buzz(haptic);
+    setCelebration(label);
+    if (celebrateTimer.current) window.clearTimeout(celebrateTimer.current);
+    celebrateTimer.current = window.setTimeout(() => setCelebration(null), 1700);
+  }, []);
+  useEffect(() => () => { if (celebrateTimer.current) window.clearTimeout(celebrateTimer.current); }, []);
   const ageConfig = getAgeConfig(profile?.levelCode);
   const isYoung = ageConfig.group === 'young';
   const visualSize = ageConfig.visualSize;
   const bodySize = ageConfig.bodySize;
 
-  const cards = buildCards(lessonContent, !!inlineBankId);
+  // Flatten progressive levels into one continuous forward flow.
+  // A flat (non-progressive) lesson becomes a single "level" via the same code path.
+  const steps: LessonContent[] = (lessonContent?.steps?.length
+    ? (lessonContent.steps as unknown as LessonContent[])
+    : lessonContent ? [lessonContent] : []);
+  const totalLevels = steps.length;
+
+  const cards = buildFlowCards(steps, !!inlineBankId);
+  const lastIndex = Math.max(1, cards.length - 1);
+
+  // ── Resume: restore saved position, persist on each move ────────────
+  const { restoredIndex, save: saveProgress, clear: clearProgress } = useLessonResume(
+    topicId, user?.id, lastIndex,
+  );
+  const didRestore = useRef(false);
+  useEffect(() => {
+    if (!didRestore.current && restoredIndex != null && restoredIndex <= lastIndex) {
+      didRestore.current = true;
+      setCardIndex(restoredIndex);
+    }
+  }, [restoredIndex, lastIndex]);
+
+  const goTo = useCallback((index: number) => {
+    setCardIndex(index);
+    if (index > 0 && index < lastIndex) {
+      saveProgress(index, Math.round((index / lastIndex) * 100));
+    }
+  }, [lastIndex, saveProgress]);
 
   const recordCompletion = useCallback(async () => {
     if (!user?.id) return;
@@ -576,35 +888,98 @@ export function LessonCardPlayer({
         if (!error) {
           showXpToast(5, 'Leçon terminée !');
           window.setTimeout(() => showXpToast(0, '🔥 Continue comme ça !'), 900);
+          celebrate('Bravo, leçon terminée !', [0, 40, 30, 40, 30, 60]);
         }
       }
       void queryClient.invalidateQueries({ queryKey: ['student-stats'] });
       trackLearningInteraction({ studentId: user.id, eventType: 'lesson_completed', topicId });
     } catch (err) {
       console.warn('[LessonCardPlayer] completion error:', err);
+    } finally {
+      clearProgress(); // finished → don't resume into a completed lesson
     }
-  }, [user?.id, topicId, subjectId, queryClient]);
+  }, [user?.id, topicId, subjectId, queryClient, clearProgress, celebrate]);
 
   const goNext = useCallback(() => {
     const next = cardIndex + 1;
+    const cur = cards[cardIndex];
+    const nxt = cards[next];
+    // Crossing into a new level (but not the final complete card) = level cleared → reward beat.
+    if (cur && nxt && nxt.type !== 'complete' && nxt.stepIdx > cur.stepIdx) {
+      showXpToast(3, `Niveau ${cur.stepIdx + 1} terminé !`);
+      celebrate(`Niveau ${nxt.stepIdx + 1} débloqué`);
+    }
     if (next === cards.length - 1) void recordCompletion();
-    if (next < cards.length) setCardIndex(next);
-  }, [cardIndex, cards.length, recordCompletion]);
+    if (next < cards.length) goTo(next);
+  }, [cardIndex, cards, recordCompletion, goTo, celebrate]);
+
+  // ── Swipe + keyboard navigation ─────────────────────────────────────
+  // Forward = click the card's own primary CTA, so per-card gating (reveal /
+  // validate / next) is respected rather than bypassed.
+  const cardContentRef = useRef<HTMLDivElement>(null);
+  const triggerPrimary = useCallback(() => {
+    const btn = cardContentRef.current?.querySelector('button[data-primary-cta]:not([disabled])') as HTMLButtonElement | null;
+    btn?.click();
+  }, []);
+  const goForward = useCallback(() => {
+    if (cards[cardIndex]?.type === 'complete') return;
+    triggerPrimary();
+  }, [cards, cardIndex, triggerPrimary]);
+  const goBack = useCallback(() => {
+    if (cardIndex > 0) goTo(cardIndex - 1);
+  }, [cardIndex, goTo]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = document.activeElement as HTMLElement | null;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+      if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); goForward(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); goBack(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [goForward, goBack]);
+
+  const touchRef = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: RTouchEvent) => {
+    const t = e.touches[0];
+    touchRef.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: RTouchEvent) => {
+    const s = touchRef.current;
+    touchRef.current = null;
+    if (!s) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - s.x;
+    const dy = t.clientY - s.y;
+    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy)) return; // ignore taps / vertical scroll
+    if (dx < 0) goForward(); else goBack();
+  };
 
   const replay = useCallback(() => {
+    clearProgress();
     setCardIndex(0);
     startTimeRef.current = Date.now();
     setActualMinutes(null);
-  }, []);
+  }, [clearProgress]);
 
   const currentCard = cards[cardIndex];
+  if (!currentCard) return null;
+  const stepContent = steps[currentCard.stepIdx] ?? null;
+  // A new level "begins" on its intro card — show the level banner there (only when >1 level).
+  const isLevelStart = currentCard.type === 'intro' && totalLevels > 1;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 520 }}>
+    <div
+      style={{ display: 'flex', flexDirection: 'column', minHeight: 520, position: 'relative' }}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
+      {celebration && <CelebrationOverlay label={celebration} />}
       <div style={{ padding: '8px 16px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
         {cardIndex > 0 && (
           <button
-            onClick={() => setCardIndex(cardIndex - 1)}
+            onClick={() => goTo(cardIndex - 1)}
             aria-label="Carte précédente"
             style={{
               width: 28, height: 28, borderRadius: '50%',
@@ -618,16 +993,24 @@ export function LessonCardPlayer({
             </svg>
           </button>
         )}
-        <ProgressBar current={cardIndex} total={cards.length} label={currentCard.label} />
-        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-          {cards.map((_, i) => (
-            <div key={i} style={{ width: i === cardIndex ? 16 : 6, height: 6, borderRadius: 999, background: i <= cardIndex ? '#12C6A0' : '#EAECEF', transition: 'all .25s ease' }} />
-          ))}
-        </div>
+        {totalLevels > 1 ? (
+          <SegmentedProgress cards={cards} cardIndex={cardIndex} totalLevels={totalLevels} />
+        ) : (
+          <ProgressBar current={cardIndex} total={cards.length} label={currentCard.label} />
+        )}
       </div>
+
+      {isLevelStart && (
+        <LevelBanner
+          levelIdx={currentCard.stepIdx}
+          totalLevels={totalLevels}
+          stepName={stepContent?.step_name ?? undefined}
+        />
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div
+          ref={cardContentRef}
           key={cardIndex}
           initial={{ opacity: 0, x: 24 }}
           animate={{ opacity: 1, x: 0 }}
@@ -638,30 +1021,44 @@ export function LessonCardPlayer({
           {currentCard.type === 'intro' && (
             <IntroCard
               topicName={topicName}
-              lessonContent={lessonContent}
+              lessonContent={stepContent}
               onNext={goNext}
               visualSize={visualSize}
               bodySize={bodySize}
+              compact={currentCard.stepIdx > 0}
+              heading={currentCard.stepIdx > 0 ? (stepContent?.step_name ?? undefined) : undefined}
             />
           )}
-          {currentCard.type === 'vocabulary' && lessonContent?.vocabulary && (
-            <VocabularyCard vocabulary={lessonContent.vocabulary} onNext={goNext} bodySize={bodySize} isYoung={isYoung} />
+          {currentCard.type === 'vocabulary' && stepContent?.vocabulary && (
+            <VocabularyCard vocabulary={stepContent.vocabulary} onNext={goNext} bodySize={bodySize} isYoung={isYoung} />
           )}
-          {currentCard.type === 'examples' && lessonContent?.examples && (
+          {currentCard.type === 'examples' && stepContent?.example_steps?.length ? (
+            <ExampleStepsCard
+              exampleSteps={stepContent.example_steps}
+              onNext={goNext}
+              bodySize={bodySize}
+            />
+          ) : currentCard.type === 'examples' && stepContent?.examples ? (
             <ExamplesCard
               topicName={topicName}
-              examples={lessonContent.examples}
+              examples={stepContent.examples}
               onNext={goNext}
               bodySize={bodySize}
               visualSize={visualSize}
               exampleCount={ageConfig.exampleCount}
             />
+          ) : null}
+          {currentCard.type === 'quiz' && (
+            <QuizCard
+              topicName={topicName}
+              topicId={topicId}
+              onNext={goNext}
+              presetQuestion={stepContent?.quiz ?? null}
+              inlineBankId={stepContent?.quiz ? null : inlineBankId}
+            />
           )}
-          {currentCard.type === 'quiz' && inlineBankId && (
-            <QuizCard topicName={topicName} inlineBankId={inlineBankId} topicId={topicId} onNext={goNext} />
-          )}
-          {currentCard.type === 'mistake' && lessonContent?.common_mistakes?.length && (
-            <MistakeCard mistakes={lessonContent.common_mistakes} onNext={goNext} />
+          {currentCard.type === 'mistake' && stepContent?.common_mistakes?.length && (
+            <MistakeCard mistakes={stepContent.common_mistakes} onNext={goNext} />
           )}
           {currentCard.type === 'complete' && (
             <CompleteCard topicName={topicName} actualMinutes={actualMinutes} lessonContent={lessonContent} onSexercer={onSexercer} onReplay={replay} />

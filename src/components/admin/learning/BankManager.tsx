@@ -42,6 +42,8 @@ const BankManager = () => {
     time_limit_sec: null as number | null,
     shuffle: true,
   });
+  const [dialogTopicId, setDialogTopicId] = useState<string>('');
+  const [dialogStepName, setDialogStepName] = useState<string>('');
 
   // Fetch all quiz banks
   const { data: banks = [], isLoading } = useQuery({
@@ -86,7 +88,7 @@ const BankManager = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('topics')
-        .select('id, name, category_id, curriculum_level_code')
+        .select('id, name, category_id, curriculum_level_code, lesson_content')
         .eq('is_active', true)
         .order('name');
       if (error) throw error;
@@ -254,15 +256,42 @@ const BankManager = () => {
     },
   });
 
+  const getTopicSteps = (topicId: string): Array<{ step_name: string }> => {
+    const topic = topics.find((t: any) => t.id === topicId);
+    const steps = (topic?.lesson_content as any)?.steps;
+    return Array.isArray(steps) ? steps : [];
+  };
+
+  const buildAutoTitle = (topicId: string, stepName: string) => {
+    const topic = topics.find((t: any) => t.id === topicId);
+    if (!topic) return '';
+    return stepName ? `${topic.name} — ${stepName}` : topic.name;
+  };
+
   const resetForm = () => {
+    const preselectedTopicId = topicFilter !== 'all' ? topicFilter : '';
+    const preselectedTopic = topics.find((t: any) => t.id === preselectedTopicId);
+    setDialogTopicId(preselectedTopicId);
+    setDialogStepName('');
     setFormData({
       id: '',
-      title: '',
+      title: preselectedTopic ? preselectedTopic.name : '',
       description: '',
       time_limit_sec: null,
       shuffle: true,
     });
     setEditingBank(null);
+  };
+
+  const handleDialogTopicChange = (topicId: string) => {
+    setDialogTopicId(topicId);
+    setDialogStepName('');
+    setFormData(prev => ({ ...prev, title: buildAutoTitle(topicId, '') }));
+  };
+
+  const handleDialogStepChange = (stepName: string) => {
+    setDialogStepName(stepName);
+    setFormData(prev => ({ ...prev, title: buildAutoTitle(dialogTopicId, stepName) }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -404,8 +433,42 @@ const BankManager = () => {
                 </p>
               </div>
 
+              {!editingBank && (
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Label>Topic</Label>
+                    <Select value={dialogTopicId} onValueChange={handleDialogTopicChange}>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Sélectionner un topic…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {topics.map((t: any) => (
+                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {dialogTopicId && getTopicSteps(dialogTopicId).length > 0 && (
+                    <div className="flex-1">
+                      <Label>Étape progressive</Label>
+                      <Select value={dialogStepName} onValueChange={handleDialogStepChange}>
+                        <SelectTrigger className="h-8 text-sm">
+                          <SelectValue placeholder="Toutes les étapes" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Toutes les étapes</SelectItem>
+                          {getTopicSteps(dialogTopicId).map((s) => (
+                            <SelectItem key={s.step_name} value={s.step_name}>{s.step_name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div>
-                <Label htmlFor="title">Title</Label>
+                <Label htmlFor="title">Titre</Label>
                 <Input
                   id="title"
                   value={formData.title}
@@ -457,6 +520,8 @@ const BankManager = () => {
                   type="button"
                   variant="outline"
                   onClick={() => {
+                    setDialogTopicId('');
+                    setDialogStepName('');
                     setDialogOpen(false);
                     resetForm();
                   }}

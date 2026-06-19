@@ -1,3 +1,11 @@
+import type { SingleQ } from '@/types/quiz-bank';
+
+// A labelled line in a worked example, revealed step by step
+export interface LessonExampleStep {
+  label: string;
+  line: string;
+}
+
 export interface Subject {
   id: string;
   name: string;
@@ -51,7 +59,10 @@ export interface LessonStep {
   vocabulary?: LessonVocabItem[];
   explanation: string;
   example: string;
+  examples?: LessonExample[];
+  example_steps?: LessonExampleStep[];
   common_mistakes: (string | { mistake: string; why: string })[];
+  quiz?: SingleQ;
   generated_at?: string;
 }
 
@@ -61,7 +72,9 @@ export interface LessonContent {
   explanation: string;
   examples?: LessonExample[];
   example: string;
+  example_steps?: LessonExampleStep[];
   common_mistakes: (string | { mistake: string; why: string })[];
+  quiz?: SingleQ;
   guided_practice: string[]; // Array of task IDs
   exit_ticket: string[];     // Array of task IDs
   generated_at: string;
@@ -71,7 +84,7 @@ export interface LessonContent {
   generated_language?: string;
   difficulty_level?: number;
   step_name?: string | null;
-  // When generated in progressive mode, all 4 steps live here
+  // When generated in progressive mode, all steps live here
   steps?: LessonStep[];
 }
 
