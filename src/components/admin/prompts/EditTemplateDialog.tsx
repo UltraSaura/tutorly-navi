@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Trash2 } from 'lucide-react';
 import { PromptTemplate } from '@/types/admin';
+import type { PromptUsageType } from './promptUsageLabels';
 
 interface EditTemplateDialogProps {
   open: boolean;
@@ -132,7 +133,7 @@ export const EditTemplateDialog = ({
             </Label>
             <Select 
               value={editedTemplate.usage_type || ''} 
-              onValueChange={(value: 'chat' | 'grading' | 'explanation' | 'math_enhanced' | 'grouped_retry_practice') => 
+              onValueChange={(value: PromptUsageType) => 
                 setEditedTemplate({ ...editedTemplate, usage_type: value })
               }
             >
@@ -144,6 +145,7 @@ export const EditTemplateDialog = ({
                 <SelectItem value="grading">Grading</SelectItem>
                 <SelectItem value="explanation">Explanation</SelectItem>
                 <SelectItem value="math_enhanced">Math Enhanced</SelectItem>
+                <SelectItem value="lesson_generation">Lesson Generation</SelectItem>
                 <SelectItem value="grouped_retry_practice">Grouped Retry Practice</SelectItem>
               </SelectContent>
             </Select>

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash2 } from 'lucide-react';
 import { NewPromptTemplate } from '@/types/admin';
+import type { PromptUsageType } from './promptUsageLabels';
 
 interface NewTemplateDialogProps {
   open: boolean;
@@ -160,7 +161,7 @@ export const NewTemplateDialog = ({
             </label>
             <Select 
               value={newTemplate.usage_type} 
-              onValueChange={(value: 'chat' | 'grading' | 'explanation' | 'math_enhanced' | 'grouped_retry_practice') => onNewTemplateChange({ ...newTemplate, usage_type: value })}
+              onValueChange={(value: PromptUsageType) => onNewTemplateChange({ ...newTemplate, usage_type: value })}
             >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select template type" />
@@ -170,6 +171,7 @@ export const NewTemplateDialog = ({
                 <SelectItem value="grading">Grading</SelectItem>
                 <SelectItem value="explanation">Explanation</SelectItem>
                 <SelectItem value="math_enhanced">Math Enhanced</SelectItem>
+                <SelectItem value="lesson_generation">Lesson Generation</SelectItem>
                 <SelectItem value="grouped_retry_practice">Grouped Retry Practice</SelectItem>
               </SelectContent>
             </Select>

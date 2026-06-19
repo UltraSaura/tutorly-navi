@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PromptTemplate, NewPromptTemplate, SubjectPromptAssignment } from '@/types/admin';
+import { PROMPT_USAGE_TYPES, type PromptUsageType } from '@/components/admin/prompts/promptUsageLabels';
 import { toast } from 'sonner';
 
 type SupabasePromptError = {
@@ -61,7 +62,7 @@ export const usePromptManagement = () => {
         ...template,
         created_at: new Date(template.created_at),
         updated_at: new Date(template.updated_at),
-        usage_type: template.usage_type as 'chat' | 'grading' | 'explanation' | 'math_enhanced' | 'grouped_retry_practice' | 'grouped_problem_extraction' | 'grouped_problem_grading' | 'lesson_generation',
+        usage_type: template.usage_type as PromptUsageType,
         tags: template.tags || [],
         is_active: template.is_active || false,
         auto_activate: template.auto_activate || false,
@@ -223,7 +224,7 @@ export const usePromptManagement = () => {
       );
 
       // Group by usage type and activate highest priority
-      const usageTypes = ['chat', 'grading', 'explanation', 'math_enhanced', 'grouped_retry_practice'];
+      const usageTypes = PROMPT_USAGE_TYPES;
       
       for (const usageType of usageTypes) {
         const typeTemplates = subjectTemplates.filter(t => t.usage_type === usageType);

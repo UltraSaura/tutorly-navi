@@ -44,6 +44,10 @@ const CURRICULUM_MAP: Record<string, Record<string, string>> = {
     "6EME": "Programme Education Nationale francaise - Cycle 3, 6eme (11-12 ans)",
     "5EME": "Programme Education Nationale francaise - College, 5eme (12-13 ans)",
     "4EME": "Programme Education Nationale francaise - College, 4eme (13-14 ans)",
+    "3EME": "Programme Education Nationale francaise - College, 3eme (14-15 ans)",
+    "SECONDE": "Programme Education Nationale francaise - Lycee, Seconde (15-16 ans)",
+    "PREMIERE": "Programme Education Nationale francaise - Lycee, Premiere (16-17 ans)",
+    "TERMINALE": "Programme Education Nationale francaise - Lycee, Terminale (17-18 ans)",
   },
   be: {
     P3: "Programme enseignement fondamental belge - 3eme primaire (8-9 ans)",
@@ -66,17 +70,21 @@ const AGE_MAP: Record<string, string> = {
   "6EME": "11-12 ans",
   "5EME": "12-13 ans",
   "4EME": "13-14 ans",
+  "3EME": "14-15 ans",
+  "SECONDE": "15-16 ans",
+  "PREMIERE": "16-17 ans",
+  "TERMINALE": "17-18 ans",
 };
 
 const WORD_BUDGET_MAP: Record<string, string> = {
-  CP: "40-55",
-  CE1: "50-65",
-  CE2: "55-70",
-  CM1: "60-90",
-  CM2: "70-100",
-  "6EME": "60-80",
-  "5EME": "70-90",
-  "4EME": "80-100",
+  CP: '40-55',  CE1: '50-65',  CE2: '55-70',
+  CM1: '60-90', CM2: '70-100',
+  '6EME': '100-130', '5EME': '110-140',
+  '4EME': '120-150', '3EME': '120-150',
+  SECONDE: '130-160', PREMIERE: '140-170', TERMINALE: '140-170',
+  P3: '55-70',  P4: '60-90',   P5: '70-100',  P6: '80-110',
+  '5H': '60-90', '6H': '70-100', '7H': '80-110',
+  '8H': '90-120', '9H': '100-130', '10H': '110-150',
 };
 
 function substituteVariables(template: string, vars: Record<string, string>): string {
@@ -128,7 +136,8 @@ serve(async (req) => {
       );
     }
 
-    const { topicId, modelId: requestModelId, language: requestLanguage } = await req.json();
+    const body = await req.json();
+    const { topicId, modelId: requestModelId, language: requestLanguage, difficulty_level: requestDifficultyLevel, step_name: requestStepName } = body;
 
     if (!topicId) {
       return new Response(
@@ -170,13 +179,108 @@ serve(async (req) => {
     }
 
     const objectives: Array<{ text: string }> = [];
-    const successCriteriaTexts: string[] = [];
-    const successCriteriaIds: string[] = [];
-
     const tasks: any[] = [];
-
     const practiceTasks = tasks.filter(t => t.type === 'practice');
     const exitTasks = tasks.filter(t => t.type === 'exit');
+
+    // Resolve curriculum edition and fetch objectives for this topic's level+subject
+    try {
+      const supabaseAdminEarly = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+
+      // Map rawLevel (uppercase from topic) to the two formats we need
+      const levelRpcMap: Record<string, string> = {
+        'CP': 'CP', 'CE1': 'CE1', 'CE2': 'CE2',
+        'CM1': 'CM1', 'CM2': 'CM2',
+        '6EME': '6e', '5EME': '5e', '4EME': '4e', '3EME': '3e',
+      };
+      const levelDbMap: Record<string, string> = {
+        'CP': 'cp', 'CE1': 'ce1', 'CE2': 'ce2',
+        'CM1': 'cm1', 'CM2': 'cm2',
+        '6EME': '6eme', '5EME': '5eme', '4EME': '4eme', '3EME': '3eme',
+      };
+      const rpcLevel = levelRpcMap[rawLevel] ?? rawLevel;
+      const dbLevel  = levelDbMap[rawLevel]  ?? rawLevel.toLowerCase();
+
+      // Get subject slug from curriculum_subject_id on the topic
+      const { data: subjectRow } = await supabaseAdminEarly
+        .from('subjects')
+        .select('slug')
+        .eq('id', topic.curriculum_subject_id)
+        .maybeSingle();
+
+      const subjectSlug = subjectRow?.slug;
+
+      if (subjectSlug) {
+        let editionId: string | null = null;
+
+        // Primary: use resolve_edition RPC (français + maths have applicability rows)
+        const { data: resolvedId } = await supabaseAdminEarly.rpc('resolve_edition', {
+          p_level: rpcLevel,
+          p_subject: subjectSlug,
+          p_track: null,
+        }).maybeSingle().catch(() => ({ data: null }));
+        editionId = resolvedId as string | null;
+
+        // Fallback for subjects without applicability rows (histoire, géo, sciences, emc)
+        if (!editionId) {
+          const cycleMap: Record<string, string> = {
+            'cp': 'cycle 2', 'ce1': 'cycle 2', 'ce2': 'cycle 2',
+            'cm1': 'cycle 3', 'cm2': 'cycle 3', '6eme': 'cycle 3',
+          };
+          const cycle = cycleMap[dbLevel];
+          if (cycle) {
+            const { data: edition } = await supabaseAdminEarly
+              .from('curriculum_edition')
+              .select('id')
+              .eq('subject', subjectSlug)
+              .eq('cycle', cycle)
+              .eq('status', 'active')
+              .maybeSingle();
+            editionId = edition?.id ?? null;
+          }
+        }
+
+        if (editionId) {
+          // Get domain IDs — scope to the topic's domain if specified
+          let domainIds: string[] = [];
+          if (topic.curriculum_domain_id) {
+            domainIds = [topic.curriculum_domain_id];
+          } else {
+            const { data: domainRows } = await supabaseAdminEarly
+              .from('domains')
+              .select('id')
+              .eq('edition_id', editionId);
+            domainIds = (domainRows ?? []).map((d: { id: string }) => d.id);
+          }
+
+          if (domainIds.length > 0) {
+            // Fetch objectives for this level in this edition
+            let objQuery = supabaseAdminEarly
+              .from('objectives')
+              .select('text')
+              .eq('level', dbLevel)
+              .in('domain_id_uuid', domainIds)
+              .limit(12);
+
+            // Narrow to subdomain if topic specifies one
+            if (topic.curriculum_subdomain_id) {
+              objQuery = objQuery.eq('subdomain_id_uuid', topic.curriculum_subdomain_id);
+            }
+
+            const { data: editionObjectives } = await objQuery;
+            if (editionObjectives?.length) {
+              objectives.push(...(editionObjectives as Array<{ text: string }>));
+            }
+          }
+        }
+      }
+    } catch (curriculumErr) {
+      // Non-fatal — lesson generation continues without objectives if resolution fails
+      console.warn('[generate-lesson-content] Curriculum resolution failed (non-fatal):', curriculumErr);
+    }
 
     const categories = topic.learning_categories as { subjects?: { name: string } } | null;
     const subjectName = categories?.subjects?.name || 'General';
@@ -199,18 +303,35 @@ serve(async (req) => {
     const ageGroup = AGE_MAP[rawLevel] ?? '9-10 ans';
     const wordBudget = WORD_BUDGET_MAP[rawLevel] ?? '40-60';
 
+    const difficultyLevel: number = requestDifficultyLevel ?? 1;
+    const stepName: string        = requestStepName ?? '';
+
+    const difficultyInstruction = stepName
+      ? `CONTEXTE DE PROGRESSION :
+Tu génères le contenu pour l'étape "${stepName}" (niveau ${difficultyLevel}/4) d'un parcours progressif.
+- Niveau 1/4 : concepts de base, chiffres simples, vocabulaire minimal, exemples directs
+- Niveau 2/4 : application directe, vocabulaire complet, 3 exemples montrant le pattern
+- Niveau 3/4 : comparaisons, cas complexes, fractions équivalentes ou abstraction légère
+- Niveau 4/4 : problèmes multi-étapes, transfert à de nouveaux contextes, abstractions
+Adapte le contenu de cette étape (${stepName}) au niveau ${difficultyLevel}/4
+en tenant compte que l'élève est en ${rawLevel} (${ageGroup}).`
+      : '';
+
     const promptVariables: Record<string, string> = {
       curriculum,
-      grade_level: rawLevel,
-      age_group: ageGroup,
-      word_budget: wordBudget,
-      country: countryLabel,
-      response_language: responseLang,
-      learning_style: 'visual',
-      subject: subjectName,
-      topic_name: topic.name,
-      topic_description: topic.description ?? '',
-      learning_objectives: objectives.map((objective) => objective.text).join(', ') || 'Non precises',
+      grade_level:            rawLevel,
+      age_group:              ageGroup,
+      word_budget:            wordBudget,
+      country:                countryLabel,
+      response_language:      responseLang,
+      learning_style:         'visual',
+      subject:                subjectName,
+      topic_name:             topic.name,
+      topic_description:      topic.description ?? '',
+      learning_objectives:    objectives.map((objective) => objective.text).join(', ') || 'Non precises',
+      difficulty_level:       String(difficultyLevel),
+      step_name:              stepName || '',
+      difficulty_instruction: difficultyInstruction,
     };
 
     console.log('[generate-lesson-content] Curriculum context:', {
@@ -279,7 +400,7 @@ REPONDS EN JSON VALIDE UNIQUEMENT :
         modelId: modelId,
         history: [],
         language: language,
-        maxTokens: 1800,
+        maxTokens: 2400,
         userContext: {
           grade_level: rawLevel,
           age_group: ageGroup,
@@ -351,6 +472,9 @@ REPONDS EN JSON VALIDE UNIQUEMENT :
       explanation: generatedContent.explanation,
       examples: generatedContent.examples || [],
       example: generatedContent.example,
+      ...(Array.isArray(generatedContent.example_steps) && generatedContent.example_steps.length > 0
+        ? { example_steps: generatedContent.example_steps }
+        : {}),
       common_mistakes: normalizedMistakes,
       guided_practice: selectedPractice,
       exit_ticket: selectedExit,
@@ -359,6 +483,8 @@ REPONDS EN JSON VALIDE UNIQUEMENT :
       curriculum_level: rawLevel,
       curriculum_country: rawCountry,
       generated_language: language,
+      difficulty_level:  difficultyLevel,
+      step_name:         stepName || null,
     };
 
     const { error: updateError } = await supabase

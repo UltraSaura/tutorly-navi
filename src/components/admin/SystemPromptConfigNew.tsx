@@ -87,6 +87,7 @@ const SystemPromptConfigNew = () => {
     { value: 'chat', label: 'Chat Assistant', description: 'General assistant with cross-subject support, including math specialist' },
     { value: 'grading', label: 'Exercise Grader', description: 'Prompts for grading student answers' },
     { value: 'explanation', label: 'Explanation System', description: 'Prompts for generating step-by-step explanations' },
+    { value: 'lesson_generation', label: 'Lesson Generation', description: 'Prompts for generating lesson explanations, examples, and common mistakes' },
     { value: 'grouped_retry_practice', label: 'Grouped Retry Practice', description: 'Prompts for grouped problem TwoCard-style retry explanations' }
   ];
 
@@ -177,7 +178,7 @@ const SystemPromptConfigNew = () => {
       </div>
 
       <Tabs value={selectedUsageType} onValueChange={setSelectedUsageType}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           {usageTypes.map((type) => (
             <TabsTrigger key={type.value} value={type.value} className="text-xs">
               {type.label}
