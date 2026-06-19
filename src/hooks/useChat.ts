@@ -184,6 +184,7 @@ export const useChat = () => {
         language,
         undefined,
         userContext as unknown as Record<string, unknown>
+
       );
       
       console.log('[useChat] Response received:', { 
