@@ -12,13 +12,22 @@ import { supabase } from '@/integrations/supabase/client';
  * Note: there is no unique constraint on (user_id, topic_id, progress_type), so we avoid
  * upsert/onConflict (unreliable in supabase-js for non-PK columns) and keep the row id in a ref.
  */
-const storageKey = (topicId: string) => `stuwy:lesson-pos:${topicId}`;
+const storageKey = (topicId: string, suffix = '') => `stuwy:lesson-pos:${topicId}${suffix}`;
 
+/**
+ * @param opts.keySuffix  namespaces the localStorage key (e.g. per level `:lvl2`).
+ * @param opts.dbEnabled  when false, resume is localStorage-only — used for per-level
+ *   sessions so multiple levels of one topic don't collide on the single
+ *   `lesson_in_progress` DB row (the path's useLessonLevelProgress owns DB state).
+ */
 export function useLessonResume(
   topicId: string,
   userId: string | undefined,
   maxIndex: number,
+  opts?: { keySuffix?: string; dbEnabled?: boolean },
 ) {
+  const keySuffix = opts?.keySuffix ?? '';
+  const dbEnabled = opts?.dbEnabled !== false;
   const [restoredIndex, setRestoredIndex] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
   const rowIdRef = useRef<string | null>(null);
@@ -30,14 +39,14 @@ export function useLessonResume(
       let idx: number | null = null;
 
       try {
-        const ls = localStorage.getItem(storageKey(topicId));
+        const ls = localStorage.getItem(storageKey(topicId, keySuffix));
         if (ls != null) {
           const n = parseInt(ls, 10);
           if (!Number.isNaN(n)) idx = n;
         }
       } catch { /* ignore */ }
 
-      if (userId) {
+      if (userId && dbEnabled) {
         try {
           const { data } = await supabase
             .from('user_learning_progress')
@@ -64,8 +73,8 @@ export function useLessonResume(
   }, [topicId, userId]);
 
   const save = useCallback((index: number, percentage: number) => {
-    try { localStorage.setItem(storageKey(topicId), String(index)); } catch { /* ignore */ }
-    if (!userId) return;
+    try { localStorage.setItem(storageKey(topicId, keySuffix), String(index)); } catch { /* ignore */ }
+    if (!userId || !dbEnabled) return;
     void (async () => {
       try {
         if (rowIdRef.current) {
@@ -89,16 +98,16 @@ export function useLessonResume(
         }
       } catch { /* ignore */ }
     })();
-  }, [topicId, userId]);
+  }, [topicId, userId, keySuffix, dbEnabled]);
 
   const clear = useCallback(() => {
-    try { localStorage.removeItem(storageKey(topicId)); } catch { /* ignore */ }
-    if (userId && rowIdRef.current) {
+    try { localStorage.removeItem(storageKey(topicId, keySuffix)); } catch { /* ignore */ }
+    if (userId && dbEnabled && rowIdRef.current) {
       const id = rowIdRef.current;
       rowIdRef.current = null;
       void supabase.from('user_learning_progress').delete().eq('id', id);
     }
-  }, [topicId, userId]);
+  }, [topicId, userId, keySuffix, dbEnabled]);
 
   return { restoredIndex, ready, save, clear };
 }

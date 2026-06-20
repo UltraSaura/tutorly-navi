@@ -1,4 +1,5 @@
-import { useState, useCallback, useRef, useEffect, type ReactNode, type TouchEvent as RTouchEvent } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo, createContext, useContext, type ReactNode, type TouchEvent as RTouchEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Zap, BookOpen, AlertCircle, ChevronDown } from 'lucide-react';
@@ -15,6 +16,20 @@ import type { LessonContent, LessonExample, LessonExampleStep } from '@/types/le
 import type { Question } from '@/types/quiz-bank';
 import { evaluateQuestion } from '@/utils/quizEvaluation';
 
+// ── Persistent bottom action bar ──────────────────────────────────────
+// Each card renders its primary (and secondary) button(s) inside <LessonFooter>,
+// which portals them into the single fixed bar at the bottom of the player. This
+// keeps the button in the SAME screen position on every card (best-app pattern)
+// while leaving each button's state/closures inside its own card.
+const LessonFooterContext = createContext<HTMLElement | null>(null);
+
+function LessonFooter({ children }: { children: ReactNode }) {
+  const barEl = useContext(LessonFooterContext);
+  // Until the bar mounts, render inline as a fallback so the CTA is never lost.
+  if (!barEl) return <>{children}</>;
+  return createPortal(children, barEl);
+}
+
 interface LessonCardPlayerProps {
   topicId: string;
   topicName: string;
@@ -22,6 +37,15 @@ interface LessonCardPlayerProps {
   inlineBankId: string | null;
   onSexercer: () => void;
   subjectId?: string | null;
+  // ── Level mode (driven by LessonLevelPath) ──────────────────────────
+  // When `levelContent` is set, the player runs ONE level as a flat lesson:
+  // no whole-lesson XP write (the path owns it), per-level localStorage resume,
+  // and a level-aware completion card.
+  levelContent?: LessonContent;
+  levelIndex?: number;        // 0-based level position
+  totalLevelsCount?: number;  // total levels in the topic (for "Niveau N/total" + isFinal)
+  onLevelComplete?: () => void; // fired once when the level's flow reaches the end
+  onExitToPath?: () => void;    // return to the path (complete-card button)
 }
 
 type CardType = 'intro' | 'vocabulary' | 'examples' | 'quiz' | 'mistake' | 'complete';
@@ -94,7 +118,6 @@ function NextButton({ onClick, label = 'Suivant →', disabled = false }: { onCl
         fontWeight: 700,
         cursor: disabled ? 'not-allowed' : 'pointer',
         fontFamily: 'Poppins, sans-serif',
-        marginTop: 'auto',
       }}
     >
       {label}
@@ -104,14 +127,14 @@ function NextButton({ onClick, label = 'Suivant →', disabled = false }: { onCl
 
 // Lightweight haptic feedback. Uses the web Vibration API (Android web/PWA);
 // a no-op where unsupported (iOS Safari). Native iOS haptics would use @capacitor/haptics later.
-function buzz(pattern: number | number[]) {
+export function buzz(pattern: number | number[]) {
   try { navigator.vibrate?.(pattern); } catch { /* ignore */ }
 }
 
 const CONFETTI_COLORS = ['#12C6A0', '#3B82F6', '#F59E0B', '#8B5CF6', '#EF4444'];
 
 // A short confetti burst + label, shown when a level is cleared or the lesson is finished.
-function CelebrationOverlay({ label }: { label: string }) {
+export function CelebrationOverlay({ label }: { label: string }) {
   const pieces = useRef(
     Array.from({ length: 18 }, (_, i) => ({
       id: i,
@@ -236,12 +259,13 @@ function IntroCard({
         </div>
       )}
 
+      <LessonFooter>
       {total > 1 && !allRevealed ? (
         <button
           onClick={() => setRevealed((r) => Math.min(r + 1, total))}
           data-primary-cta=""
           style={{
-            marginTop: 'auto', width: '100%', padding: 13, borderRadius: 14,
+            width: '100%', padding: 13, borderRadius: 14,
             border: '1.5px solid #9FE1CB', background: '#F2FBF8', color: '#085041',
             fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif',
           }}
@@ -251,6 +275,7 @@ function IntroCard({
       ) : (
         <NextButton onClick={onNext} />
       )}
+      </LessonFooter>
     </div>
   );
 }
@@ -312,7 +337,7 @@ function VocabularyCard({
           );
         })}
       </div>
-      <NextButton onClick={onNext} label="J'ai compris →" />
+      <LessonFooter><NextButton onClick={onNext} label="J'ai compris →" /></LessonFooter>
     </div>
   );
 }
@@ -404,7 +429,7 @@ function ExamplesCard({
       <p style={{ fontSize: 10, color: '#9CA3AF', margin: 0, textAlign: 'center' }}>
         Appuie sur chaque exemple pour voir le changement
       </p>
-      <NextButton onClick={onNext} />
+      <LessonFooter><NextButton onClick={onNext} /></LessonFooter>
     </div>
   );
 }
@@ -462,12 +487,13 @@ function ExampleStepsCard({
         ))}
       </div>
 
+      <LessonFooter>
       {!allRevealed ? (
         <button
           onClick={() => setRevealed((r) => Math.min(r + 1, exampleSteps.length))}
           data-primary-cta=""
           style={{
-            marginTop: 'auto', width: '100%', padding: 13, borderRadius: 14,
+            width: '100%', padding: 13, borderRadius: 14,
             border: '1.5px solid #FAC775', background: '#FFF3DC', color: '#B45309',
             fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif',
           }}
@@ -477,6 +503,7 @@ function ExampleStepsCard({
       ) : (
         <NextButton onClick={onNext} />
       )}
+      </LessonFooter>
     </div>
   );
 }
@@ -555,7 +582,7 @@ function QuizCard({
         <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 24, textAlign: 'center', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>Quiz non disponible.</p>
         </div>
-        <NextButton onClick={onNext} />
+        <LessonFooter><NextButton onClick={onNext} /></LessonFooter>
       </div>
     );
   }
@@ -601,10 +628,11 @@ function QuizCard({
       )}
 
       {/* Actions */}
+      <LessonFooter>
       {correct ? (
         <NextButton onClick={onNext} />
       ) : wrong ? (
-        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <button
             onClick={handleRetry}
             data-primary-cta=""
@@ -634,7 +662,7 @@ function QuizCard({
           disabled={!canValidate}
           data-primary-cta=""
           style={{
-            marginTop: 'auto', width: '100%', padding: 13, borderRadius: 14, border: 'none',
+            width: '100%', padding: 13, borderRadius: 14, border: 'none',
             background: canValidate ? '#12C6A0' : '#EAECEF',
             color: canValidate ? '#0F172A' : '#B4B2A9',
             fontSize: 13, fontWeight: 700,
@@ -645,6 +673,7 @@ function QuizCard({
           Valider
         </button>
       )}
+      </LessonFooter>
     </div>
   );
 }
@@ -678,7 +707,7 @@ function MistakeCard({ mistakes, onNext }: { mistakes: LessonContent['common_mis
           </div>
         );
       })()}
-      <NextButton onClick={onNext} label="Voir mon résultat →" />
+      <LessonFooter><NextButton onClick={onNext} label="Voir mon résultat →" /></LessonFooter>
     </div>
   );
 }
@@ -689,12 +718,22 @@ function CompleteCard({
   lessonContent,
   onSexercer,
   onReplay,
+  title,
+  xpLabel = '+5 XP',
+  primaryLabel,
+  onPrimary,
+  onExitToPath,
 }: {
   topicName: string;
   actualMinutes: number | null;
   lessonContent: LessonContent | null;
   onSexercer: () => void;
   onReplay: () => void;
+  title?: string;            // level mode: "Niveau N terminé !"
+  xpLabel?: string;
+  primaryLabel?: string;     // level mode: "Continuer le parcours →"
+  onPrimary?: () => void;    // overrides the default S'exercer primary
+  onExitToPath?: () => void; // level mode: secondary "Retour au parcours"
 }) {
   const recap = lessonContent?.vocabulary?.slice(0, 3).map((v) => v.term) ?? [];
   return (
@@ -704,7 +743,7 @@ function CompleteCard({
       </div>
       <div>
         <h2 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', margin: '0 0 4px', fontFamily: 'Poppins, sans-serif' }}>
-          Leçon terminée !
+          {title ?? 'Leçon terminée !'}
         </h2>
         <p style={{ fontSize: 13, color: '#667085', margin: 0 }}>{topicName}</p>
       </div>
@@ -716,7 +755,7 @@ function CompleteCard({
           <p style={{ fontSize: 10, color: '#0F6E56', margin: 0 }}>Durée</p>
         </div>
         <div style={{ background: '#FAEEDA', borderRadius: 12, padding: '10px 8px', border: '0.5px solid #FAC775', textAlign: 'center' }}>
-          <p style={{ fontSize: 20, fontWeight: 800, color: '#633806', margin: '0 0 2px', fontFamily: 'Poppins, sans-serif' }}>+5 XP</p>
+          <p style={{ fontSize: 20, fontWeight: 800, color: '#633806', margin: '0 0 2px', fontFamily: 'Poppins, sans-serif' }}>{xpLabel}</p>
           <p style={{ fontSize: 10, color: '#854F0B', margin: 0 }}>Gagné</p>
         </div>
       </div>
@@ -731,14 +770,28 @@ function CompleteCard({
           ))}
         </div>
       )}
-      <div style={{ width: '100%', maxWidth: 280, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <button onClick={onSexercer} style={{ width: '100%', padding: 14, borderRadius: 14, border: 'none', background: '#12C6A0', color: '#0F172A', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <Zap className="h-4 w-4" /> S'exercer sur {topicName}
-        </button>
-        <button onClick={onReplay} style={{ width: '100%', padding: 12, borderRadius: 12, border: '1.5px solid #EAECEF', background: 'white', color: '#667085', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
-          Recommencer la leçon
-        </button>
+      <LessonFooter>
+      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {onPrimary ? (
+          <button onClick={onPrimary} style={{ width: '100%', padding: 14, borderRadius: 14, border: 'none', background: '#12C6A0', color: '#0F172A', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            {primaryLabel ?? 'Continuer →'}
+          </button>
+        ) : (
+          <button onClick={onSexercer} style={{ width: '100%', padding: 14, borderRadius: 14, border: 'none', background: '#12C6A0', color: '#0F172A', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <Zap className="h-4 w-4" /> S'exercer sur {topicName}
+          </button>
+        )}
+        {onExitToPath ? (
+          <button onClick={onExitToPath} style={{ width: '100%', padding: 12, borderRadius: 12, border: '1.5px solid #EAECEF', background: 'white', color: '#667085', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
+            Retour au parcours
+          </button>
+        ) : (
+          <button onClick={onReplay} style={{ width: '100%', padding: 12, borderRadius: 12, border: '1.5px solid #EAECEF', background: 'white', color: '#667085', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
+            Recommencer la leçon
+          </button>
+        )}
       </div>
+      </LessonFooter>
     </div>
   );
 }
@@ -813,7 +866,14 @@ export function LessonCardPlayer({
   inlineBankId,
   onSexercer,
   subjectId,
+  levelContent,
+  levelIndex,
+  totalLevelsCount,
+  onLevelComplete,
+  onExitToPath,
 }: LessonCardPlayerProps) {
+  const levelMode = !!levelContent;
+  const isFinalLevel = levelMode && totalLevelsCount != null && (levelIndex ?? 0) === totalLevelsCount - 1;
   const { user } = useAuth();
   const { profile } = useUserCurriculumProfile();
   const queryClient = useQueryClient();
@@ -821,6 +881,7 @@ export function LessonCardPlayer({
   const [cardIndex, setCardIndex] = useState(0);
   const [actualMinutes, setActualMinutes] = useState<number | null>(null);
   const [celebration, setCelebration] = useState<string | null>(null);
+  const [barEl, setBarEl] = useState<HTMLElement | null>(null); // bottom action bar node (footer portal target)
   const celebrateTimer = useRef<number | null>(null);
 
   const celebrate = useCallback((label: string, haptic: number[] = [0, 35, 30, 35]) => {
@@ -835,19 +896,28 @@ export function LessonCardPlayer({
   const visualSize = ageConfig.visualSize;
   const bodySize = ageConfig.bodySize;
 
-  // Flatten progressive levels into one continuous forward flow.
-  // A flat (non-progressive) lesson becomes a single "level" via the same code path.
-  const steps: LessonContent[] = (lessonContent?.steps?.length
-    ? (lessonContent.steps as unknown as LessonContent[])
-    : lessonContent ? [lessonContent] : []);
+  // Level mode → render the single passed level as a flat lesson.
+  // Otherwise flatten progressive levels into one continuous flow (a flat lesson = one level).
+  // Memoized so the array identity is stable across renders — an unstable steps/cards
+  // array churns the card-switcher and stalls its AnimatePresence exit animation.
+  const steps: LessonContent[] = useMemo(() => (
+    levelMode
+      ? [levelContent as LessonContent]
+      : (lessonContent?.steps?.length
+          ? (lessonContent.steps as unknown as LessonContent[])
+          : lessonContent ? [lessonContent] : [])
+  ), [levelMode, levelContent, lessonContent]);
   const totalLevels = steps.length;
 
-  const cards = buildFlowCards(steps, !!inlineBankId);
+  const cards = useMemo(() => buildFlowCards(steps, !levelMode && !!inlineBankId), [steps, levelMode, inlineBankId]);
   const lastIndex = Math.max(1, cards.length - 1);
 
   // ── Resume: restore saved position, persist on each move ────────────
+  // Level sessions resume from localStorage only, namespaced per level, so multiple
+  // levels of one topic don't collide on the single lesson_in_progress DB row.
   const { restoredIndex, save: saveProgress, clear: clearProgress } = useLessonResume(
     topicId, user?.id, lastIndex,
+    levelMode ? { keySuffix: `:lvl${levelIndex ?? 0}`, dbEnabled: false } : undefined,
   );
   const didRestore = useRef(false);
   useEffect(() => {
@@ -865,9 +935,15 @@ export function LessonCardPlayer({
   }, [lastIndex, saveProgress]);
 
   const recordCompletion = useCallback(async () => {
-    if (!user?.id) return;
     const secs = Math.floor((Date.now() - startTimeRef.current) / 1000);
     setActualMinutes(Math.max(1, Math.ceil(secs / 60)));
+    // Level mode: the path (useLessonLevelProgress) owns persistence + XP. Just notify it.
+    if (levelMode) {
+      clearProgress();
+      onLevelComplete?.();
+      return;
+    }
+    if (!user?.id) return;
     try {
       const { data: existing } = await supabase
         .from('user_learning_progress')
@@ -898,7 +974,7 @@ export function LessonCardPlayer({
     } finally {
       clearProgress(); // finished → don't resume into a completed lesson
     }
-  }, [user?.id, topicId, subjectId, queryClient, clearProgress, celebrate]);
+  }, [user?.id, topicId, subjectId, queryClient, clearProgress, celebrate, levelMode, onLevelComplete]);
 
   const goNext = useCallback(() => {
     const next = cardIndex + 1;
@@ -918,9 +994,12 @@ export function LessonCardPlayer({
   // validate / next) is respected rather than bypassed.
   const cardContentRef = useRef<HTMLDivElement>(null);
   const triggerPrimary = useCallback(() => {
-    const btn = cardContentRef.current?.querySelector('button[data-primary-cta]:not([disabled])') as HTMLButtonElement | null;
+    // CTAs now live in the bottom action bar (portaled), so look there first,
+    // with the card content as a fallback (in the brief frame before the bar mounts).
+    const btn = (barEl?.querySelector('button[data-primary-cta]:not([disabled])')
+      ?? cardContentRef.current?.querySelector('button[data-primary-cta]:not([disabled])')) as HTMLButtonElement | null;
     btn?.click();
-  }, []);
+  }, [barEl]);
   const goForward = useCallback(() => {
     if (cards[cardIndex]?.type === 'complete') return;
     triggerPrimary();
@@ -970,13 +1049,14 @@ export function LessonCardPlayer({
   const isLevelStart = currentCard.type === 'intro' && totalLevels > 1;
 
   return (
+    <LessonFooterContext.Provider value={barEl}>
     <div
-      style={{ display: 'flex', flexDirection: 'column', minHeight: 520, position: 'relative' }}
+      style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, position: 'relative' }}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
       {celebration && <CelebrationOverlay label={celebration} />}
-      <div style={{ padding: '8px 16px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ padding: '8px 16px 6px', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
         {cardIndex > 0 && (
           <button
             onClick={() => goTo(cardIndex - 1)}
@@ -1008,13 +1088,16 @@ export function LessonCardPlayer({
         />
       )}
 
-      <AnimatePresence mode="wait">
+      {/* Scrollable content region — the card scrolls here; the action bar below stays put. */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+      {/* Keyed motion.div (no AnimatePresence): the changing key remounts the card and
+          plays the enter animation each step. We dropped AnimatePresence/exit because its
+          mode="wait" exit could stall and leave a card stuck mounted. */}
         <motion.div
           ref={cardContentRef}
           key={cardIndex}
-          initial={{ opacity: 0, x: 24 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -24 }}
+          initial={{ x: 24 }}
+          animate={{ x: 0 }}
           transition={{ type: 'spring', stiffness: 320, damping: 32 }}
           style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
         >
@@ -1061,10 +1144,35 @@ export function LessonCardPlayer({
             <MistakeCard mistakes={stepContent.common_mistakes} onNext={goNext} />
           )}
           {currentCard.type === 'complete' && (
-            <CompleteCard topicName={topicName} actualMinutes={actualMinutes} lessonContent={lessonContent} onSexercer={onSexercer} onReplay={replay} />
+            levelMode ? (
+              <CompleteCard
+                topicName={topicName}
+                actualMinutes={actualMinutes}
+                lessonContent={steps[0] ?? null}
+                onSexercer={onSexercer}
+                onReplay={replay}
+                title={isFinalLevel ? 'Leçon terminée !' : `Niveau ${(levelIndex ?? 0) + 1} terminé !`}
+                xpLabel={isFinalLevel ? '+5 XP' : '✓'}
+                primaryLabel={isFinalLevel ? 'Terminer le parcours →' : 'Continuer le parcours →'}
+                onPrimary={onExitToPath}
+              />
+            ) : (
+              <CompleteCard topicName={topicName} actualMinutes={actualMinutes} lessonContent={lessonContent} onSexercer={onSexercer} onReplay={replay} />
+            )
           )}
         </motion.div>
-      </AnimatePresence>
+      </div>
+
+      {/* Persistent bottom action bar — every card's CTA(s) portal in here (via <LessonFooter>),
+          so the primary button stays in the same spot on every step. */}
+      <div style={{
+        flexShrink: 0, background: 'white', borderTop: '0.5px solid #EAECEF',
+        boxShadow: '0 -2px 10px rgba(15,23,42,0.05)',
+        padding: '10px 16px', paddingBottom: 'max(env(safe-area-inset-bottom), 12px)',
+      }}>
+        <div ref={setBarEl} style={{ maxWidth: 680, margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }} />
+      </div>
     </div>
+    </LessonFooterContext.Provider>
   );
 }
