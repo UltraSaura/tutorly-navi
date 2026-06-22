@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import katex from "katex";
 import type { Question } from "@/types/quiz-bank";
 import { evaluateQuestion } from "@/utils/quizEvaluation";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,35 @@ import { SliderQuestionView } from "./SliderQuestion";
 import { MatchQuestionView } from "./MatchQuestion";
 import { FillExprQuestionView } from "./FillExprQuestion";
 import { inferPromptFigure, type PromptFigureSpec } from "@/lib/quiz/promptVisual";
+
+// Renders text that may contain $...$ inline or $$...$$ display LaTeX.
+function MathText({ text, style }: { text: string; style?: React.CSSProperties }) {
+  const parts: { math: boolean; display: boolean; content: string }[] = [];
+  const re = /\$\$([^$]+)\$\$|\$([^$\n]+)\$/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push({ math: false, display: false, content: text.slice(last, m.index) });
+    if (m[1] !== undefined) parts.push({ math: true, display: true,  content: m[1] });
+    else                    parts.push({ math: true, display: false, content: m[2] });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push({ math: false, display: false, content: text.slice(last) });
+
+  return (
+    <span style={style}>
+      {parts.map((p, i) => {
+        if (!p.math) return <span key={i}>{p.content}</span>;
+        try {
+          const html = katex.renderToString(p.content, { throwOnError: false, displayMode: p.display });
+          return <span key={i} dangerouslySetInnerHTML={{ __html: html }} />;
+        } catch {
+          return <span key={i}>{p.content}</span>;
+        }
+      })}
+    </span>
+  );
+}
 
 interface QuestionCardProps {
   question: Question;
@@ -255,6 +285,9 @@ function renderChoiceLabel(label: string) {
       </div>
     );
   }
+  if (/\$/.test(label)) {
+    return <MathText text={label} style={{ fontSize: '15px', fontWeight: '600', fontFamily: 'Poppins, sans-serif', color: 'inherit' }} />;
+  }
   return <span style={{ fontSize: '15px', fontWeight: '600', fontFamily: 'Poppins, sans-serif', color: 'inherit' }}>{label}</span>;
 }
 
@@ -417,7 +450,9 @@ export function QuestionCard({
           <PromptFigure spec={inferredPromptFigure} />
         </div>
       )}
-      <h3 className="text-lg font-semibold mb-3">{question.prompt}</h3>
+      <h3 className="text-lg font-semibold mb-3">
+        <MathText text={question.prompt} />
+      </h3>
 
       {question.kind === "single" && (
         <div className={question.choices.length === 4 ? "grid grid-cols-2 gap-3 mt-4" : "space-y-2 mt-3"}>
