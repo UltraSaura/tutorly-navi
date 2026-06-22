@@ -147,12 +147,20 @@ const LearningSubjectManager = () => {
   }, [chatSubjects, customRows, learningSubjects]);
 
   useEffect(() => {
-    const initialData: Record<string, LearningSubjectData> = {};
-    managedRows.forEach(row => {
-      initialData[row.id] = createInitialData(row);
+    setEditedData(prev => {
+      const next: Record<string, LearningSubjectData> = {};
+      managedRows.forEach(row => {
+        // Keep in-progress edits; only initialise rows that have no data yet
+        // or are not currently being edited (so closed rows pick up DB changes).
+        if (prev[row.id] && row.id === editingSubjectId) {
+          next[row.id] = prev[row.id];
+        } else {
+          next[row.id] = createInitialData(row);
+        }
+      });
+      return next;
     });
-    setEditedData(initialData);
-  }, [managedRows]);
+  }, [managedRows, editingSubjectId]);
 
   const handleEdit = (rowId: string) => {
     setEditingSubjectId(rowId);
