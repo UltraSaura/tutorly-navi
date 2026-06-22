@@ -89,11 +89,8 @@ export function LessonLevelPath({
     <div style={{ position: 'relative', padding: '14px 16px 24px' }}>
       {celebration && <CelebrationOverlay label={celebration} />}
 
-      {/* Header */}
+      {/* Progress line */}
       <div style={{ marginBottom: 16 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 900, color: '#0F172A', margin: '0 0 4px', fontFamily: 'Poppins, sans-serif', lineHeight: 1.25 }}>
-          {topicName}
-        </h1>
         <p style={{ fontSize: 12, fontWeight: 700, color: allDone ? TEAL_DARK : '#667085', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
           {allDone ? '✓ Parcours terminé' : `Niveau ${Math.min(completedCount + 1, total)} sur ${total}`}
         </p>
