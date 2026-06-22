@@ -30,7 +30,6 @@ interface GenResult {
   status: GenStatus;
   error?: string;
   currentStep?: string;
-  stepsCompleted?: number;
 }
 
 const GENERATION_TIMEOUT_MS = 120000;
