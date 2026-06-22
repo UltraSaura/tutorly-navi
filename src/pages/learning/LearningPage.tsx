@@ -121,7 +121,7 @@ const LearningPage = () => {
                       loading="lazy"
                     />
                   ) : (
-                    <DynamicIcon name={subject.icon_name} className="h-[5.5rem] w-[5.5rem] text-slate-800 sm:h-[6.6rem] sm:w-[6.6rem]" />
+                    <DynamicIcon name={subject.icon_name} className="h-[5.5rem] w-[5.5rem] sm:h-[6.6rem] sm:w-[6.6rem]" style={{ color: subject.icon_color ?? '#1e3a5f' }} />
                   )}
                 </div>
 

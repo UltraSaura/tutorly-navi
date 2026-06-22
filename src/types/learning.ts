@@ -13,6 +13,7 @@ export interface Subject {
   icon_name: string;
   icon_image_url: string | null;
   color_scheme: string;
+  icon_color?: string;
   display_context?: 'learn' | 'practice' | 'both';
   order_index: number;
   is_active: boolean;
