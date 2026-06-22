@@ -599,6 +599,9 @@ function QuizCard({
           question={question}
           onChange={onAnswerChange}
           allowRetry={false}
+          submittedAnswer={wrong ? answer : undefined}
+          isCorrect={false}
+          hideCorrect={true}
         />
       </div>
 
