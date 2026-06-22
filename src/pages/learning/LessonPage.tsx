@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { VideoPlayerBox } from '@/components/learning/VideoPlayerBox';
 import { LessonCardPlayer } from '@/components/learning/LessonCardPlayer';
+import { LessonLevelPath } from '@/components/learning/LessonLevelPath';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { LessonContent } from '@/types/learning';
@@ -226,16 +227,31 @@ export default function LessonPage() {
           </div>
         )}
 
-        {/* ── LESSON PLAYER — always rendered ─────────────── */}
+        {/* ── LESSON — multi-level → bubble path; single-level → flow ─── */}
         {topic && (
-          <LessonCardPlayer
-            topicId={topic.id}
-            topicName={topic.name}
-            lessonContent={lessonContent}
-            inlineBankId={inlineBank?.bankId ?? null}
-            onSexercer={handleSexercer}
-            subjectId={(topic as any).curriculum_subject_id ?? subject?.id ?? null}
-          />
+          (lessonContent?.steps?.length ?? 0) > 1 ? (
+            <LessonLevelPath
+              topicId={topic.id}
+              topicName={topic.name}
+              lessonContent={lessonContent as LessonContent}
+              inlineBankId={inlineBank?.bankId ?? null}
+              onSexercer={handleSexercer}
+              subjectId={(topic as any).curriculum_subject_id ?? subject?.id ?? null}
+            />
+          ) : (
+            // Single-level (flat) lesson: bound the height so the player's bottom
+            // action bar pins consistently instead of moving with content.
+            <div style={{ height: 'calc(100dvh - 132px)', minHeight: 460 }}>
+              <LessonCardPlayer
+                topicId={topic.id}
+                topicName={topic.name}
+                lessonContent={lessonContent}
+                inlineBankId={inlineBank?.bankId ?? null}
+                onSexercer={handleSexercer}
+                subjectId={(topic as any).curriculum_subject_id ?? subject?.id ?? null}
+              />
+            </div>
+          )
         )}
       </div>
     </div>
