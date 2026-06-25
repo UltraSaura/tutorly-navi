@@ -273,6 +273,53 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     return dedupedTopics.filter(t => t.name.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q));
   }, [levelScopedTopics, searchQuery, selectedSubjectId]);
 
+  const { data: topicAssignmentRows = [] } = useQuery({
+    queryKey: ['topic-quiz-generator-assignments', filteredTopics.map((topic) => topic.id).sort().join(',')],
+    queryFn: async () => {
+      if (filteredTopics.length === 0) return [];
+      const topicIds = filteredTopics.map((topic) => topic.id);
+      const { data, error } = await supabase
+        .from('quiz_bank_assignments')
+        .select('bank_id, topic_id, display_context, is_active')
+        .in('topic_id', topicIds)
+        .eq('is_active', true);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: filteredTopics.length > 0,
+  });
+
+  const topicQuizAvailability = useMemo(() => {
+    const availabilityByTopicId = new Map<string, { practice: Set<string>; lesson: Set<string> }>();
+    for (const row of topicAssignmentRows) {
+      const topicId = row.topic_id;
+      const bankId = row.bank_id;
+      if (!bankId) continue;
+      if (!topicId) continue;
+      const existing = availabilityByTopicId.get(topicId) || { practice: new Set<string>(), lesson: new Set<string>() };
+      const context = String(row.display_context || 'practice');
+      if (context === 'practice') existing.practice.add(bankId);
+      if (context === 'lesson') existing.lesson.add(bankId);
+      if (context === 'both') {
+        existing.practice.add(bankId);
+        existing.lesson.add(bankId);
+      }
+      availabilityByTopicId.set(topicId, existing);
+    }
+
+    const availabilityByDisplayKey = new Map<string, { practice: Set<string>; lesson: Set<string> }>();
+    for (const topic of filteredTopics) {
+      const key = normalizeTopicDisplayKey(topic.name);
+      const existing = availabilityByDisplayKey.get(key) || { practice: new Set<string>(), lesson: new Set<string>() };
+      const topicAvailability = availabilityByTopicId.get(topic.id);
+      topicAvailability?.practice.forEach((id) => existing.practice.add(id));
+      topicAvailability?.lesson.forEach((id) => existing.lesson.add(id));
+      availabilityByDisplayKey.set(key, existing);
+    }
+
+    return availabilityByDisplayKey;
+  }, [filteredTopics, topicAssignmentRows]);
+
   const selectedTopicLevel = useMemo(() => {
     const selectedTopics = topics.filter(topic => selectedTopicIds.includes(topic.id));
     const levels = Array.from(new Set(selectedTopics.map(topic => normalizeSchoolLevel(topic.curriculum_level_code)).filter(Boolean)));
@@ -809,8 +856,17 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                 <div className="p-8 text-center text-muted-foreground">No topics found</div>
               ) : (
                 <div className="p-2 space-y-1">
+                  <div className="flex items-center gap-3 px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <div className="w-4" />
+                    <div className="flex-1 min-w-0">Topic</div>
+                    <div className="w-16 text-center">Video</div>
+                    <div className="w-16 text-center">Practice</div>
+                  </div>
                   {filteredTopics.map((topic) => {
                     const isSelected = selectedTopicIds.includes(topic.id);
+                    const quizAvailability = topicQuizAvailability.get(normalizeTopicDisplayKey(topic.name));
+                    const lessonCount = quizAvailability?.lesson.size ?? 0;
+                    const practiceCount = quizAvailability?.practice.size ?? 0;
                     return (
                       <div
                         key={topic.id}
@@ -830,6 +886,12 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                               {getSchoolLevelLabel(topic.curriculum_level_code)}
                             </div>
                           )}
+                        </div>
+                        <div className="w-16 text-center text-sm font-medium tabular-nums text-muted-foreground">
+                          {lessonCount > 0 ? lessonCount : '0'}
+                        </div>
+                        <div className="w-16 text-center text-sm font-medium tabular-nums text-muted-foreground">
+                          {practiceCount > 0 ? practiceCount : '0'}
                         </div>
                       </div>
                     );
