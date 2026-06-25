@@ -9,7 +9,7 @@ import { showXpToast } from '@/components/game/XpToast';
 import { StreakChip } from '@/components/game';
 import { useStudentStats } from '@/hooks/useStudentStats';
 import { trackLearningInteraction } from '@/services/learningAnalytics';
-import type { LessonContent } from '@/types/learning';
+import type { LessonContent, LessonStep } from '@/types/learning';
 import type { Question } from '@/types/quiz-bank';
 
 // ── Types ──────────────────────────────────────────────────
@@ -110,6 +110,49 @@ function SuivantButton({ onClick, label = 'Suivant →', disabled = false }: {
   );
 }
 
+const DIFFICULTY_STEPS = ['Découverte', 'Application', 'Consolidation', 'Approfondissement'] as const;
+const DIFFICULTY_COLORS = ['#12C6A0', '#3B82F6', '#F59E0B', '#8B5CF6'] as const;
+
+function DifficultyPicker({
+  steps,
+  activeIdx,
+  onChange,
+}: {
+  steps: LessonStep[];
+  activeIdx: number;
+  onChange: (idx: number) => void;
+}) {
+  return (
+    <div style={{ display: 'flex', gap: 6, padding: '0 16px 12px', overflowX: 'auto' }}>
+      {steps.map((step, i) => {
+        const active = i === activeIdx;
+        const color = DIFFICULTY_COLORS[i] ?? '#12C6A0';
+        return (
+          <button
+            key={step.step_name}
+            onClick={() => onChange(i)}
+            style={{
+              flexShrink: 0,
+              padding: '5px 12px',
+              borderRadius: 999,
+              border: `1.5px solid ${active ? color : '#EAECEF'}`,
+              background: active ? color : 'white',
+              color: active ? (i === 2 ? '#0F172A' : '#0F172A') : '#667085',
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontFamily: 'Poppins, sans-serif',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            {step.step_name}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────
 export function LessonStepper({
   topicId,
@@ -121,6 +164,7 @@ export function LessonStepper({
 }: LessonStepperProps) {
   const TOTAL_STEPS = 5;
   const [currentStep, setCurrentStep] = useState(0);
+  const [activeDifficultyIdx, setActiveDifficultyIdx] = useState(0);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: stats } = useStudentStats();
@@ -153,9 +197,17 @@ export function LessonStepper({
   });
 
   // ── Derived data from lesson_content ─────────────────────
-  const explanation = lessonContent?.explanation ?? '';
-  const exampleText = lessonContent?.example ?? '';
-  const mistakes = lessonContent?.common_mistakes ?? [];
+  // When the lesson has progressive steps, read from the active step
+  const progressiveSteps = lessonContent?.steps ?? [];
+  const activeStepContent: LessonContent | LessonStep | null =
+    progressiveSteps.length > 0
+      ? (progressiveSteps[activeDifficultyIdx] ?? progressiveSteps[0])
+      : lessonContent;
+
+  const explanation = activeStepContent?.explanation ?? '';
+  const exampleText = activeStepContent?.example ?? '';
+  const mistakes = activeStepContent?.common_mistakes ?? [];
+  const vocabulary = activeStepContent?.vocabulary ?? lessonContent?.vocabulary ?? [];
   const keyPoints = explanation ? extractKeyPoints(explanation, 4) : [];
   const exampleSteps = exampleText ? parseExampleSteps(exampleText) : [];
   const completionStreakDays = stats?.activeToday
@@ -244,6 +296,15 @@ export function LessonStepper({
     startTimeRef.current = Date.now();
   }, []);
 
+  const handleDifficultyChange = useCallback((idx: number) => {
+    setActiveDifficultyIdx(idx);
+    setCurrentStep(0);
+    setQuizAnswer(null);
+    setQuizSubmitted(false);
+    setRevealedCount(0);
+    startTimeRef.current = Date.now();
+  }, []);
+
   // ── Render ────────────────────────────────────────────────
   return (
     <AnimatePresence mode="wait">
@@ -264,6 +325,14 @@ export function LessonStepper({
           <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
             <ProgressDots current={0} total={TOTAL_STEPS} />
 
+            {progressiveSteps.length > 1 && (
+              <DifficultyPicker
+                steps={progressiveSteps}
+                activeIdx={activeDifficultyIdx}
+                onChange={handleDifficultyChange}
+              />
+            )}
+
             {/* En bref strip */}
             {keyPoints.length > 0 && (
               <div style={{ background: '#F2FBF8', borderRadius: 14, padding: 14, border: '0.5px solid #9FE1CB' }}>
@@ -281,12 +350,12 @@ export function LessonStepper({
               </div>
             )}
 
-            {lessonContent?.vocabulary && lessonContent.vocabulary.length > 0 && (
+            {vocabulary.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <p style={{ fontSize: 10, fontWeight: 700, color: '#667085', letterSpacing: '0.06em', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
                   VOCABULAIRE CLÉ
                 </p>
-                {lessonContent.vocabulary.map((item, i) => (
+                {vocabulary.map((item, i) => (
                   <div key={i} style={{ background: 'white', borderRadius: 10, border: '0.5px solid #EAECEF', padding: '9px 12px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                     <span style={{ background: '#F2FBF8', border: '0.5px solid #9FE1CB', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, color: '#085041', flexShrink: 0, whiteSpace: 'nowrap' }}>
                       {item.term}

@@ -3,12 +3,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2, Lightbulb, RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { SessionProgress } from '@/components/practice/SessionProgress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -16,7 +16,6 @@ import { useTrainingItems } from '@/hooks/useExamImport';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import {
   saveTrainingItemAnswer,
-  validateTrainingAnswer,
   trainingAnswerTypeFromItemType,
   type ExamTrainingItem,
   type TrainingDocument,
@@ -48,7 +47,7 @@ function DocumentTable({ document }: { document: TrainingDocument }) {
   if (!document.table) return null;
 
   return (
-    <div className="max-w-full overflow-x-auto rounded-md border border-border/60 bg-background">
+    <div className="mt-2 max-w-full overflow-x-auto rounded-md border border-border/60 bg-background">
       <table className="w-full min-w-[34rem] border-collapse text-left text-xs sm:text-sm">
         {document.caption ? (
           <caption className="caption-top px-3 py-2 text-left text-sm font-medium text-foreground">
@@ -89,15 +88,10 @@ function DocumentImage({ document }: { document: TrainingDocument }) {
     <>
       <button
         type="button"
-        className="flex w-full justify-center overflow-hidden rounded-md border border-border/60 bg-background p-2"
+        className="mt-2 block w-full overflow-hidden rounded-md border border-border/60 bg-background text-left"
         onClick={() => setOpen(true)}
       >
-        <img
-          src={src}
-          alt={document.alt ?? document.label ?? 'Document'}
-          className="mx-auto max-h-[300px] w-auto max-w-full object-contain sm:max-h-[380px]"
-          loading="lazy"
-        />
+        <img src={src} alt={document.alt ?? document.label ?? 'Document'} className="h-auto w-full object-contain" loading="lazy" />
       </button>
       {open ? (
         <div className="fixed inset-0 z-[80] bg-background/95 p-3" role="dialog" aria-modal="true">
@@ -118,55 +112,54 @@ function DocumentImage({ document }: { document: TrainingDocument }) {
   );
 }
 
-function ExerciseDocuments({ documents }: { documents: TrainingDocument[] }) {
-  const visibleDocuments = documents.filter((doc) => !doc.fallback);
-  const fallbackDocuments = documents.filter((doc) => doc.fallback);
+function TrainingDocuments({ documents }: { documents: TrainingDocument[] }) {
+  const visibleDocuments = documents.filter((document) => !document.fallback);
+  const fallbackDocuments = documents.filter((document) => document.fallback);
   if (visibleDocuments.length === 0 && fallbackDocuments.length === 0) return null;
 
   return (
-    <div className="space-y-4">
+    <section className="space-y-2">
       {visibleDocuments.map((document, index) => {
         const isImageFirst = document.render_mode === 'image_first' && (document.public_url || document.local_path);
+
         return (
-          <div key={document.id ?? `${document.label}-${index}`}>
-            {document.label ? (
-              <p className="mb-1 text-sm font-medium text-muted-foreground">{document.label}</p>
-            ) : null}
+          <div key={document.id ?? `${document.label}-${index}`} className="rounded-md border border-border/60 bg-muted/20 p-3">
+            <p className="text-sm font-medium">{document.label ?? 'Document'}</p>
             {isImageFirst ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <DocumentImage document={document} />
-                {document.table ? (
-                  <details className="rounded-md border border-dashed border-border/70 p-2">
-                    <summary className="cursor-pointer text-sm">Voir en tableau accessible</summary>
+                {document.table && (
+                  <details className="mt-2 rounded-md border border-dashed border-border/70 p-2">
+                    <summary className="cursor-pointer text-sm font-medium">Voir en tableau accessible</summary>
                     <div className="mt-2">
                       <DocumentTable document={document} />
                     </div>
                   </details>
-                ) : null}
+                )}
               </div>
             ) : (
               <>
                 {document.type === 'table' ? <DocumentTable document={document} /> : null}
                 {document.type === 'image' ? <DocumentImage document={document} /> : null}
-                {document.content ? (
-                  <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{document.content}</p>
-                ) : null}
               </>
             )}
+            {document.content && !isImageFirst ? (
+              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">{document.content}</p>
+            ) : null}
           </div>
         );
       })}
       {fallbackDocuments.length > 0 ? (
-        <details className="rounded-md border border-dashed border-border/70 p-2">
-          <summary className="cursor-pointer text-sm">Source visuelle</summary>
-          <div className="mt-2 space-y-2">
-            {fallbackDocuments.map((doc, i) => (
-              <DocumentImage key={doc.id ?? `fallback-${i}`} document={doc} />
+        <details className="rounded-md border border-dashed border-border/70 bg-muted/10 p-3">
+          <summary className="cursor-pointer text-sm font-medium">Voir la source visuelle</summary>
+          <div className="mt-3 space-y-3">
+            {fallbackDocuments.map((document, index) => (
+              <DocumentImage key={document.id ?? `${document.label}-fallback-${index}`} document={document} />
             ))}
           </div>
         </details>
       ) : null}
-    </div>
+    </section>
   );
 }
 
@@ -199,8 +192,8 @@ function AnswerControl({
       <Textarea
         value={value}
         onChange={(event) => onChange(event.currentTarget.value)}
-        placeholder="Votre réponse"
-        className="min-h-28"
+        placeholder="Ta réponse"
+        className="min-h-32"
       />
     );
   }
@@ -210,7 +203,7 @@ function AnswerControl({
       value={value}
       onChange={(event) => onChange(event.currentTarget.value)}
       inputMode={question.answer_type === 'numeric' || question.answer_type === 'math' ? 'decimal' : 'text'}
-      placeholder="Votre réponse"
+      placeholder="Ta réponse"
     />
   );
 }
@@ -229,16 +222,10 @@ function questionsForItem(item: ExamTrainingItem): TrainingQuestion[] {
         hints: [],
         correct_feedback: 'Bonne réponse.',
         almost_feedback: 'Tu es proche.',
-        incorrect_feedback: "Essaie d'abord de répondre à cette question.",
+        incorrect_feedback: 'Essaie d’abord de répondre à cette question.',
       },
     },
   ];
-}
-
-function displayQuestionLabel(question: TrainingQuestion): string | undefined {
-  const childId = question.id.replace(/^\d+-/, '');
-  if (/^\d+[a-z]$/i.test(childId)) return `${childId}.`;
-  return question.label;
 }
 
 export function shouldPersistTrainingAnswer(isPreviewing: boolean): boolean {
@@ -264,39 +251,39 @@ export function TrainingQuestionBlock({
   const hints = question.guidance?.hints ?? [];
   const visibleHints = hints.filter((hint) => hint.level <= state.hint_level);
   const hasNextHint = state.hint_level < hints.length;
-  const label = displayQuestionLabel(question);
 
   return (
-    <div className="space-y-3" data-item-id={itemId} data-question-id={question.id}>
-      <p className="text-sm font-semibold leading-6">
-        {label ? <span className="mr-2 text-muted-foreground">{label}</span> : null}
-        <span>{question.prompt}</span>
-      </p>
+    <section className="space-y-3 rounded-md border border-border/60 bg-muted/10 p-3" data-item-id={itemId} data-question-id={question.id}>
+      <div className="space-y-1">
+        <p className="text-sm font-semibold leading-6">
+          {question.label ? <span className="mr-2 text-muted-foreground">{question.label}</span> : null}
+          <span>{question.prompt}</span>
+        </p>
+      </div>
 
       <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Réponse</p>
         <AnswerControl question={question} value={state.answer} onChange={onAnswerChange} />
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" size="sm" onClick={onCheck}>
+        <Button type="button" onClick={onCheck}>
           <CheckCircle2 className="mr-1 h-4 w-4" />
           {t('practice.guidance.checkAnswer')}
         </Button>
-        <Button type="button" size="sm" variant="outline" onClick={onHint} disabled={!hasNextHint}>
+        <Button type="button" variant="outline" onClick={onHint} disabled={!hasNextHint}>
           <Lightbulb className="mr-1 h-4 w-4" />
           {state.hint_level > 0 ? t('practice.guidance.nextHint') : t('practice.guidance.hint')}
         </Button>
-        {hints.length > 0 ? (
-          <span className="self-center text-xs text-muted-foreground">
-            {state.hint_level} / {hints.length}
-          </span>
-        ) : null}
+        <span className="self-center text-xs text-muted-foreground">
+          {state.hint_level} / {hints.length}
+        </span>
       </div>
 
       {visibleHints.length > 0 ? (
         <div className="space-y-2">
           {visibleHints.map((hint) => (
-            <div key={hint.level} className="rounded-md border border-border/60 bg-muted/20 p-3 text-sm leading-6">
+            <div key={hint.level} className="rounded-md border border-border/60 bg-background p-3 text-sm leading-6">
               <span className="mr-2 font-semibold">{t('practice.guidance.hint')} {hint.level}</span>
               {hint.text}
             </div>
@@ -305,21 +292,11 @@ export function TrainingQuestionBlock({
       ) : null}
 
       {state.feedback ? (
-        <div
-          className={[
-            "rounded-md border p-3 text-sm leading-6",
-            state.is_correct === true
-              ? "border-green-300 bg-green-50 text-green-900 dark:border-green-800 dark:bg-green-950/40 dark:text-green-100"
-              : state.is_correct === false
-                ? "border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-100"
-                : "border-border/60 bg-background",
-          ].join(" ")}
-          role="status"
-        >
-          <p className="whitespace-pre-wrap">{state.feedback}</p>
+        <div className="rounded-md border border-border/60 bg-background p-3 text-sm leading-6" role="status">
+          {state.feedback}
         </div>
       ) : null}
-    </div>
+    </section>
   );
 }
 
@@ -331,12 +308,9 @@ export default function TrainingSessionPage() {
   const sourcePaperId = searchParams.get('sourcePaperId') ?? undefined;
   const activeSchoolLevel = useActiveSchoolLevel();
   const activeLevel = activeSchoolLevel.isPreviewing
-    ? activeSchoolLevel.normalizedLevel ?? undefined
-    : searchParams.get('level') ?? activeSchoolLevel.normalizedLevel ?? undefined;
-  // When browsing a specific paper, load all its items (a paper rarely has >100 items).
-  // When browsing by subject/level without a paper, keep the default cap at 10.
-  const defaultLimit = sourcePaperId ? '100' : '10';
-  const limit = Number(searchParams.get('limit') ?? defaultLimit);
+    ? activeSchoolLevel.normalizedLevel ?? '__no_active_level__'
+    : searchParams.get('level') ?? activeSchoolLevel.normalizedLevel ?? '__no_active_level__';
+  const limit = Number(searchParams.get('limit') ?? '10');
   const itemsQuery = useTrainingItems({
     subject_slug: subject,
     paper_id: sourcePaperId,
@@ -344,95 +318,15 @@ export default function TrainingSessionPage() {
     status: 'published',
     limit: Number.isFinite(limit) ? limit : 10,
   });
-  const [exerciseIndex, setExerciseIndex] = useState(0);
+  const [index, setIndex] = useState(0);
   const [questionStates, setQuestionStates] = useState<GuidanceStateMap>({});
 
   const items = itemsQuery.data ?? [];
+  const item = items[index] ?? null;
+  const questions = useMemo(() => (item ? questionsForItem(item) : []), [item]);
 
-  // Group items by source_label to build exercise groups, then order the groups
-  // by exercise number (parsed from the label, e.g. "… - Exercice 4 (14 points)")
-  // so exercises always appear in their natural 1, 2, 3… order rather than the
-  // order the items happen to come back from the query.
-  const exerciseGroups = useMemo(() => {
-    const groups: Map<string, ExamTrainingItem[]> = new Map();
-    const firstSeen: Map<string, number> = new Map();
-    let seq = 0;
-    for (const item of items) {
-      const key = item.source_label ?? item.id;
-      if (!groups.has(key)) {
-        groups.set(key, []);
-        firstSeen.set(key, seq++);
-      }
-      groups.get(key)!.push(item);
-    }
-    const exerciseNumber = (label: string | null | undefined): number => {
-      const m = /exercice\s+(\d+)/i.exec(label ?? '');
-      return m ? Number(m[1]) : Number.POSITIVE_INFINITY;
-    };
-    return Array.from(groups.entries())
-      .sort(([aKey], [bKey]) => {
-        const aNum = exerciseNumber(aKey);
-        const bNum = exerciseNumber(bKey);
-        if (aNum !== bNum) return aNum - bNum;
-        // Fallback: preserve original first-seen order for ungroupable labels.
-        return (firstSeen.get(aKey) ?? 0) - (firstSeen.get(bKey) ?? 0);
-      })
-      .map(([, group]) => group);
-  }, [items]);
-
-  const exerciseGroup = exerciseGroups[exerciseIndex] ?? [];
-  const firstItem = exerciseGroup[0] ?? null;
-  const exerciseLabel = firstItem?.source_label ?? null;
-  const exerciseContext = firstItem?.context ?? null;
-
-  // Collect unique documents across the whole exercise group.
-  // A document is keyed by public_url (or label as fallback) to detect duplicates.
-  // Documents that appear on EVERY item are "exercise-level" and shown once at the top.
-  // Documents unique to a single item are "per-question" and shown inline near that item.
-  const { exerciseDocuments, itemDocumentMap } = useMemo(() => {
-    // Use just the filename from the URL so that the same image stored under
-    // different item-scoped paths (e.g. /item-id/diagram-1.webp) is treated as one.
-    const docKey = (d: TrainingDocument) => {
-      const url: string = (d as any).public_url ?? (d as any).storage_path ?? '';
-      if (url) {
-        const filename = url.split('/').pop() ?? url;
-        return filename;
-      }
-      return d.label ?? d.type ?? '';
-    };
-    // Collect all docs with their item IDs
-    const allDocKeys = new Map<string, { doc: TrainingDocument; itemIds: Set<string> }>();
-    for (const item of exerciseGroup) {
-      for (const doc of (item.documents ?? []) as TrainingDocument[]) {
-        const k = docKey(doc);
-        if (!allDocKeys.has(k)) allDocKeys.set(k, { doc, itemIds: new Set() });
-        allDocKeys.get(k)!.itemIds.add(item.id);
-      }
-    }
-    // Exercise-level: doc appears on more than one item (shared)
-    const exerciseLevelDocs: TrainingDocument[] = [];
-    // Per-item: doc unique to a single item
-    const perItemDocs = new Map<string, TrainingDocument[]>(); // item.id → docs
-    for (const [, { doc, itemIds }] of allDocKeys) {
-      if (itemIds.size > 1) {
-        exerciseLevelDocs.push(doc);
-      } else {
-        const [onlyItemId] = [...itemIds];
-        if (!perItemDocs.has(onlyItemId)) perItemDocs.set(onlyItemId, []);
-        perItemDocs.get(onlyItemId)!.push(doc);
-      }
-    }
-    return { exerciseDocuments: exerciseLevelDocs, itemDocumentMap: perItemDocs };
-  }, [exerciseGroup]);
-
-  // Flatten questions from all items in the current exercise group
-  const exerciseQuestions = useMemo(
-    () => exerciseGroup.flatMap((item) => questionsForItem(item).map((question) => ({ item, question }))),
-    [exerciseGroup],
-  );
-
-  function goToExercise(nextIndex: number) {
-    setExerciseIndex(Math.max(0, Math.min(nextIndex, Math.max(exerciseGroups.length - 1, 0))));
+  function goTo(nextIndex: number) {
+    setIndex(Math.max(0, Math.min(nextIndex, Math.max(items.length - 1, 0))));
   }
 
   function stateForQuestion(itemId: string, questionId: string): GuidanceQuestionState {
@@ -443,18 +337,9 @@ export default function TrainingSessionPage() {
     setQuestionStates((current) => updateQuestionAnswer(current, questionStateKey(itemId, questionId), value));
   }
 
-  function clearExercise() {
-    setQuestionStates((current) => {
-      const next = { ...current };
-      for (const { item, question } of exerciseQuestions) {
-        next[questionStateKey(item.id, question.id)] = initialQuestionState();
-      }
-      return next;
-    });
-  }
-
   async function handleHint(item: ExamTrainingItem, question: TrainingQuestion) {
-    const key = questionStateKey(item.id, question.id);
+    const itemId = item.id;
+    const key = questionStateKey(itemId, question.id);
     const maxHintLevel = question.guidance?.hints?.length ?? 0;
     const currentState = questionStates[key] ?? initialQuestionState();
     const nextHintLevel = Math.min(currentState.hint_level + 1, Math.max(maxHintLevel, 0));
@@ -479,33 +364,18 @@ export default function TrainingSessionPage() {
   async function handleCheck(item: ExamTrainingItem, question: TrainingQuestion) {
     const key = questionStateKey(item.id, question.id);
     const state = questionStates[key] ?? initialQuestionState();
-    const shouldPersist = shouldPersistTrainingAnswer(activeSchoolLevel.isPreviewing);
-    let result: { isCorrect: boolean | null; feedback: string };
-
-    try {
-      const server = await validateTrainingAnswer({
-        item_id: item.id,
-        question_id: question.id,
-        user_answer: state.answer,
-      });
-      result = {
-        isCorrect: server.is_correct ?? null,
-        feedback: server.feedback ?? (server.is_correct ? t('practice.guidance.correct') : t('practice.guidance.almost')),
-      };
-    } catch {
-      result = evaluateTrainingAnswer({
-        answer: state.answer,
-        expectedAnswer: null,
-        guidance: question.guidance,
-        fallbackCorrect: t('practice.guidance.correct'),
-        fallbackAlmost: t('practice.guidance.almost'),
-        fallbackIncorrect: t('practice.guidance.tryFirst'),
-      });
-    }
+    const result = evaluateTrainingAnswer({
+      answer: state.answer,
+      expectedAnswer: question.expected_answer,
+      guidance: question.guidance,
+      fallbackCorrect: t('practice.guidance.correct'),
+      fallbackAlmost: t('practice.guidance.almost'),
+      fallbackIncorrect: t('practice.guidance.tryFirst'),
+    });
 
     setQuestionStates((current) => applyCheckFeedback(current, key, result));
 
-    if (!shouldPersist) return;
+    if (!shouldPersistTrainingAnswer(activeSchoolLevel.isPreviewing)) return;
 
     try {
       await saveTrainingItemAnswer({
@@ -514,7 +384,6 @@ export default function TrainingSessionPage() {
         answer_text: state.answer,
         hint_level: state.hint_level,
         guidance_feedback: result.feedback,
-        feedback: result.feedback,
         is_correct: result.isCorrect,
       });
     } catch {
@@ -523,26 +392,22 @@ export default function TrainingSessionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-40 md:pb-32">
+    <div className="min-h-screen bg-background pb-24">
       <PageMeta title="Session d'entraînement" description="Exercices interactifs issus des annales normalisées." />
       <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-4 sm:px-6 sm:py-6">
-        {/* Top bar */}
         <div className="flex items-center justify-between gap-3">
           <Button variant="outline" size="sm" onClick={() => navigate(subject ? `/practice/${encodeURIComponent(subject)}` : '/practice')}>
             <ArrowLeft className="mr-1 h-4 w-4" />
             Retour
           </Button>
-          {firstItem ? (
-            <Badge variant="secondary">{firstItem.exam_style ?? 'Entraînement'}</Badge>
-          ) : null}
+          {item ? <Badge variant="secondary">{item.source_label ?? item.exam_style ?? 'Entraînement'}</Badge> : null}
         </div>
 
-        {/* Loading */}
         {itemsQuery.isLoading ? (
           <Card>
             <CardContent className="space-y-4 p-4">
               <Skeleton className="h-5 w-2/3" />
-              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-28 w-full" />
               <Skeleton className="h-10 w-full" />
             </CardContent>
           </Card>
@@ -557,7 +422,7 @@ export default function TrainingSessionPage() {
               </p>
             </CardContent>
           </Card>
-        ) : exerciseGroups.length === 0 ? (
+        ) : !item ? (
           <Card className="border-dashed">
             <CardHeader>
               <CardTitle className="text-base">Aucun exercice publié</CardTitle>
@@ -568,107 +433,65 @@ export default function TrainingSessionPage() {
           </Card>
         ) : (
           <>
-            {/* Preview warning */}
-            {activeSchoolLevel.isPreviewing ? (
-              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
-                Les réponses ne sont pas enregistrées en mode aperçu.
-              </div>
-            ) : null}
-
-            {/* Exercise card */}
+            <SessionProgress current={index + 1} total={items.length} />
             <Card className="border-border/80">
-              {/* Exercise header */}
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">{exerciseLabel ?? 'Exercice'}</CardTitle>
+              <CardHeader className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline">{item.item_type.replace(/_/g, ' ')}</Badge>
+                  <Badge variant="outline">{item.difficulty}</Badge>
+                  {item.source_year ? <Badge variant="outline">{item.source_year}</Badge> : null}
+                </div>
+                <CardTitle className="text-lg leading-7">{item.prompt}</CardTitle>
               </CardHeader>
-
-              <CardContent className="space-y-5 pt-0">
-                {/* Context paragraph */}
-                {exerciseContext ? (
-                  <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{exerciseContext}</p>
+              <CardContent className="space-y-5">
+                {activeSchoolLevel.isPreviewing ? (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                    Les réponses ne sont pas enregistrées en mode aperçu.
+                  </div>
                 ) : null}
+                {item.context ? <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{item.context}</p> : null}
+                <TrainingDocuments documents={item.documents ?? []} />
 
-                {/* Documents — full width, no card wrapper */}
-                <ExerciseDocuments documents={exerciseDocuments} />
-
-                <Separator />
-
-                {/* Questions */}
-                <div className="space-y-6">
-                  {(() => {
-                    // Track which items have already had their per-question docs shown.
-                    const renderedPerItemDocs = new Set<string>();
-                    return exerciseQuestions.map(({ item, question }, idx) => {
-                      const perDocs = itemDocumentMap.get(item.id) ?? [];
-                      const showPerDocs = perDocs.length > 0 && !renderedPerItemDocs.has(item.id);
-                      if (showPerDocs) renderedPerItemDocs.add(item.id);
-                      return (
-                        <div key={`${item.id}-${question.id}`}>
-                          {idx > 0 ? <Separator className="mb-6 border-dashed" /> : null}
-                          {showPerDocs ? (
-                            <div className="mb-3">
-                              <ExerciseDocuments documents={perDocs} />
-                            </div>
-                          ) : null}
-                          <TrainingQuestionBlock
-                            itemId={item.id}
-                            question={question}
-                            state={stateForQuestion(item.id, question.id)}
-                            onAnswerChange={(value) => handleAnswerChange(item.id, question.id, value)}
-                            onHint={() => void handleHint(item, question)}
-                            onCheck={() => void handleCheck(item, question)}
-                          />
-                        </div>
-                      );
-                    });
-                  })()}
+                <div className="space-y-3">
+                  {questions.map((question) => (
+                    <TrainingQuestionBlock
+                      key={question.id}
+                      itemId={item.id}
+                      question={question}
+                      state={stateForQuestion(item.id, question.id)}
+                      onAnswerChange={(value) => handleAnswerChange(item.id, question.id, value)}
+                      onHint={() => void handleHint(item, question)}
+                      onCheck={() => void handleCheck(item, question)}
+                    />
+                  ))}
                 </div>
               </CardContent>
             </Card>
+
+            <div className="flex items-center justify-between gap-3">
+              <Button variant="outline" onClick={() => goTo(index - 1)} disabled={index === 0}>
+                <ArrowLeft className="mr-1 h-4 w-4" />
+                Précédent
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setQuestionStates((current) => {
+                  const next = { ...current };
+                  for (const question of questions) next[questionStateKey(item.id, question.id)] = initialQuestionState();
+                  return next;
+                })}
+              >
+                <RotateCcw className="mr-1 h-4 w-4" />
+                Effacer
+              </Button>
+              <Button onClick={() => goTo(index + 1)} disabled={index >= items.length - 1}>
+                Suivant
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
           </>
         )}
       </div>
-
-      {/* Fixed bottom navigation */}
-      {exerciseGroups.length > 0 ? (
-        <div
-          className="fixed bottom-16 left-0 right-0 z-[51] border-t border-border/60 bg-background/95 backdrop-blur-sm md:bottom-0"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-        >
-          <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => goToExercise(exerciseIndex - 1)}
-              disabled={exerciseIndex === 0}
-              className="shrink-0"
-            >
-              <ArrowLeft className="h-4 w-4 sm:mr-1" />
-              <span className="hidden sm:inline">Précédent</span>
-            </Button>
-
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground">
-                {exerciseIndex + 1} / {exerciseGroups.length}
-              </span>
-              <Button variant="ghost" size="sm" onClick={clearExercise} title="Effacer les réponses">
-                <RotateCcw className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => goToExercise(exerciseIndex + 1)}
-              disabled={exerciseIndex >= exerciseGroups.length - 1}
-              className="shrink-0"
-            >
-              <span className="hidden sm:inline">Suivant</span>
-              <ArrowRight className="h-4 w-4 sm:ml-1" />
-            </Button>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

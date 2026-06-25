@@ -29,9 +29,10 @@ interface GenResult {
   name: string;
   status: GenStatus;
   error?: string;
+  currentStep?: string;
 }
 
-const GENERATION_TIMEOUT_MS = 90000;
+const GENERATION_TIMEOUT_MS = 120000;
 
 async function getFunctionErrorMessage(err: unknown, response?: Response) {
   let errorMessage =
@@ -173,32 +174,26 @@ export function BulkLessonGenerator() {
     setElapsedMs(0);
 
     for (const topic of batch) {
-      setResults((p) => p.map((r) => (r.topicId === topic.id ? { ...r, status: 'running' } : r)));
-      let response: Response | undefined;
+      setResults((p) => p.map((r) => r.topicId === topic.id ? { ...r, status: 'running' } : r));
       try {
         const invokePromise = supabase.functions.invoke('generate-lesson-content', {
           body: { topicId: topic.id, language },
         });
         const timeoutPromise = new Promise<never>((_, reject) => {
-          window.setTimeout(() => {
-            reject(new Error('La génération a dépassé 90 secondes. Vérifie les logs de la fonction ou réessaie.'));
-          }, GENERATION_TIMEOUT_MS);
+          window.setTimeout(() => reject(new Error('La génération a dépassé 120 secondes.')), GENERATION_TIMEOUT_MS);
         });
         const result = await Promise.race([invokePromise, timeoutPromise]);
         const { data: fnData, error: fnError, response: invokeResponse } = result;
-        response = invokeResponse;
         if (fnError) throw new Error(fnError.message ?? 'Erreur réseau');
         if (fnData?.error) throw new Error(fnData.error);
-        setResults((p) => p.map((r) => (r.topicId === topic.id ? { ...r, status: 'done' } : r)));
+        const stepCount = (fnData?.lesson_content?.steps?.length ?? 0);
+        setResults((p) => p.map((r) => r.topicId === topic.id
+          ? { ...r, status: 'done', currentStep: stepCount > 1 ? `${stepCount} étapes` : undefined }
+          : r));
+        void invokeResponse;
       } catch (err) {
-        const errorMessage = await getFunctionErrorMessage(err, response);
-        setResults((p) =>
-          p.map((r) =>
-            r.topicId === topic.id
-              ? { ...r, status: 'error', error: errorMessage }
-              : r,
-          ),
-        );
+        const errorMessage = await getFunctionErrorMessage(err);
+        setResults((p) => p.map((r) => r.topicId === topic.id ? { ...r, status: 'error', error: errorMessage } : r));
       }
     }
 
@@ -270,6 +265,9 @@ export function BulkLessonGenerator() {
                   {r.status === 'error' && <XCircle className="h-4 w-4 flex-shrink-0 text-red-500" />}
                   {r.status === 'idle' && <div className="h-4 w-4 flex-shrink-0 rounded-full border-2 border-muted" />}
                   <span className="flex-1 truncate">{r.name}</span>
+                  {r.status === 'done' && r.currentStep && (
+                    <span className="text-xs text-green-600 font-medium">{r.currentStep}</span>
+                  )}
                   {r.error && <span className="max-w-[160px] truncate text-xs text-red-500">{r.error}</span>}
                 </div>
               ))}
@@ -418,7 +416,7 @@ export function BulkLessonGenerator() {
                 )}
                 <Button onClick={handleGenerate} disabled={!selected.length || isRunning} className="gap-2">
                   <Wand2 className="h-4 w-4" />
-                  Générer {selected.length > 0 ? `${selected.length} leçon${selected.length !== 1 ? 's' : ''}` : ''}
+                  {`Générer ${selected.length > 0 ? `${selected.length} leçon${selected.length !== 1 ? 's' : ''}` : ''}`}
                 </Button>
               </div>
             </div>

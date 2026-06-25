@@ -21,6 +21,7 @@ interface LearningSubjectData {
   icon_name: string;
   icon_image_url: string | null;
   color_scheme: string;
+  icon_color: string;
   display_context: 'learn' | 'practice' | 'both';
   order_index: number;
   is_active: boolean;
@@ -49,6 +50,7 @@ const createInitialData = (row: ManagedSubjectRow): LearningSubjectData => {
       icon_name: row.learningSubject.icon_name,
       icon_image_url: row.learningSubject.icon_image_url,
       color_scheme: row.learningSubject.color_scheme,
+      icon_color: row.learningSubject.icon_color ?? '#1e3a5f',
       display_context: row.learningSubject.display_context ?? 'both',
       order_index: row.learningSubject.order_index,
       is_active: row.learningSubject.is_active,
@@ -64,6 +66,7 @@ const createInitialData = (row: ManagedSubjectRow): LearningSubjectData => {
     icon_name: chatSubject?.icon || 'book',
     icon_image_url: null,
     color_scheme: '#dbeafe',
+    icon_color: '#1e3a5f',
     display_context: 'both',
     order_index: chatSubject?.order || 0,
     is_active: chatSubject?.active ?? true,
@@ -76,6 +79,7 @@ const createBlankSubjectData = (orderIndex: number): LearningSubjectData => ({
   icon_name: 'book',
   icon_image_url: null,
   color_scheme: '#dbeafe',
+  icon_color: '#1e3a5f',
   display_context: 'both',
   order_index: orderIndex,
   is_active: true,
@@ -136,6 +140,7 @@ const LearningSubjectManager = () => {
       .map(chatSubject => ({
         id: `chat:${chatSubject.id}`,
         chatSubject,
+        learningSubject: undefined as undefined | (typeof learningSubjects)[number],
       }));
 
     return [...learningRows, ...unsyncedChatRows, ...customRows].sort((a, b) => {
@@ -146,12 +151,20 @@ const LearningSubjectManager = () => {
   }, [chatSubjects, customRows, learningSubjects]);
 
   useEffect(() => {
-    const initialData: Record<string, LearningSubjectData> = {};
-    managedRows.forEach(row => {
-      initialData[row.id] = createInitialData(row);
+    setEditedData(prev => {
+      const next: Record<string, LearningSubjectData> = {};
+      managedRows.forEach(row => {
+        // Keep in-progress edits; only initialise rows that have no data yet
+        // or are not currently being edited (so closed rows pick up DB changes).
+        if (prev[row.id] && row.id === editingSubjectId) {
+          next[row.id] = prev[row.id];
+        } else {
+          next[row.id] = createInitialData(row);
+        }
+      });
+      return next;
     });
-    setEditedData(initialData);
-  }, [managedRows]);
+  }, [managedRows, editingSubjectId]);
 
   const handleEdit = (rowId: string) => {
     setEditingSubjectId(rowId);
@@ -241,6 +254,7 @@ const LearningSubjectManager = () => {
         icon_name: data.icon_name,
         icon_image_url: data.icon_image_url,
         color_scheme: data.color_scheme,
+        icon_color: data.icon_color,
         display_context: data.display_context,
         order_index: data.order_index,
         is_active: data.is_active,
@@ -467,18 +481,29 @@ const LearningSubjectManager = () => {
                   </TableCell>
                   <TableCell>
                     {isEditing ? (
-                      <ColorPicker
-                        value={data.color_scheme}
-                        onChange={(color) => updateField(row.id, 'color_scheme', color)}
-                        format="rgb"
-                      />
+                      <div className="flex flex-col gap-2">
+                        <div>
+                          <span className="text-xs text-muted-foreground mb-1 block">Fond</span>
+                          <ColorPicker
+                            value={data.color_scheme}
+                            onChange={(color) => updateField(row.id, 'color_scheme', color)}
+                            format="hex"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-xs text-muted-foreground mb-1 block">Icône</span>
+                          <ColorPicker
+                            value={data.icon_color}
+                            onChange={(color) => updateField(row.id, 'icon_color', color)}
+                            format="hex"
+                          />
+                        </div>
+                      </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <div
-                          className="w-6 h-6 rounded border border-border flex-shrink-0"
-                          style={{ backgroundColor: data.color_scheme }}
-                        />
-                        <span className="text-sm font-mono">{data.color_scheme}</span>
+                        <div className="w-5 h-5 rounded border border-border flex-shrink-0" style={{ backgroundColor: data.color_scheme }} />
+                        <div className="w-5 h-5 rounded border border-border flex-shrink-0" style={{ backgroundColor: data.icon_color }} />
+                        <span className="text-xs font-mono text-muted-foreground">{data.color_scheme}</span>
                       </div>
                     )}
                   </TableCell>

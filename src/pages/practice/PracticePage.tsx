@@ -212,6 +212,7 @@ export default function PracticePage() {
       icon_name: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.icon_name ?? fallback.icon_name,
       icon_image_url: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.icon_image_url ?? null,
       color_scheme: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.color_scheme ?? null,
+      icon_color: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.icon_color ?? null,
     }));
   }, [practiceButtonsQuery.data]);
 
@@ -273,7 +274,7 @@ export default function PracticePage() {
                     <div className="flex items-start">
                       <span
                         className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full p-3"
-                        style={{ backgroundColor: colors.iconBg, color: colors.icon }}
+                        style={{ backgroundColor: colors.iconBg, color: subject.icon_color ?? colors.icon }}
                       >
                         {subject.icon_image_url ? (
                           <img

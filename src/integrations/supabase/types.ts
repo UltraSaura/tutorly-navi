@@ -355,6 +355,95 @@ export type Database = {
         }
         Relationships: []
       }
+      curriculum_applicability: {
+        Row: {
+          created_at: string
+          edition_id: string
+          id: string
+          level: Database["public"]["Enums"]["class_level"]
+          school_year: string
+          status: Database["public"]["Enums"]["applicability_status"]
+          subject: Database["public"]["Enums"]["subject_code"]
+          track: string | null
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          edition_id: string
+          id?: string
+          level: Database["public"]["Enums"]["class_level"]
+          school_year: string
+          status: Database["public"]["Enums"]["applicability_status"]
+          subject: Database["public"]["Enums"]["subject_code"]
+          track?: string | null
+          valid_from: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          edition_id?: string
+          id?: string
+          level?: Database["public"]["Enums"]["class_level"]
+          school_year?: string
+          status?: Database["public"]["Enums"]["applicability_status"]
+          subject?: Database["public"]["Enums"]["subject_code"]
+          track?: string | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_applicability_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_edition"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculum_edition: {
+        Row: {
+          bo_reference: string
+          bo_url: string | null
+          content_hash: string | null
+          created_at: string
+          cycle: string
+          id: string
+          ingested_at: string | null
+          published_at: string | null
+          source_pdf_url: string | null
+          status: Database["public"]["Enums"]["edition_status"]
+          subject: Database["public"]["Enums"]["subject_code"]
+        }
+        Insert: {
+          bo_reference: string
+          bo_url?: string | null
+          content_hash?: string | null
+          created_at?: string
+          cycle: string
+          id?: string
+          ingested_at?: string | null
+          published_at?: string | null
+          source_pdf_url?: string | null
+          status?: Database["public"]["Enums"]["edition_status"]
+          subject: Database["public"]["Enums"]["subject_code"]
+        }
+        Update: {
+          bo_reference?: string
+          bo_url?: string | null
+          content_hash?: string | null
+          created_at?: string
+          cycle?: string
+          id?: string
+          ingested_at?: string | null
+          published_at?: string | null
+          source_pdf_url?: string | null
+          status?: Database["public"]["Enums"]["edition_status"]
+          subject?: Database["public"]["Enums"]["subject_code"]
+        }
+        Relationships: []
+      }
       curriculum_task_attempts: {
         Row: {
           answer_data: Json | null
@@ -472,6 +561,7 @@ export type Database = {
         Row: {
           code: string | null
           domain: string
+          edition_id: string | null
           id: string
           label: string | null
           subject_id: string | null
@@ -479,6 +569,7 @@ export type Database = {
         Insert: {
           code?: string | null
           domain: string
+          edition_id?: string | null
           id?: string
           label?: string | null
           subject_id?: string | null
@@ -486,11 +577,19 @@ export type Database = {
         Update: {
           code?: string | null
           domain?: string
+          edition_id?: string | null
           id?: string
           label?: string | null
           subject_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "domains_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_edition"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "domains_subject_id_fkey"
             columns: ["subject_id"]
@@ -1321,7 +1420,9 @@ export type Database = {
       }
       lessons: {
         Row: {
+          bo_reference: string | null
           created_at: string
+          edition_id: string | null
           id: string
           id_new: string
           materials: string | null
@@ -1335,7 +1436,9 @@ export type Database = {
           unit_id: string | null
         }
         Insert: {
+          bo_reference?: string | null
           created_at?: string
+          edition_id?: string | null
           id: string
           id_new?: string
           materials?: string | null
@@ -1349,7 +1452,9 @@ export type Database = {
           unit_id?: string | null
         }
         Update: {
+          bo_reference?: string | null
           created_at?: string
+          edition_id?: string | null
           id?: string
           id_new?: string
           materials?: string | null
@@ -1363,6 +1468,13 @@ export type Database = {
           unit_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "lessons_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_edition"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lessons_topic_id_fkey"
             columns: ["topic_id"]
@@ -2068,6 +2180,7 @@ export type Database = {
           objective_id: string | null
           objective_id_uuid: string | null
           skill_id: string | null
+          source: Database["public"]["Enums"]["content_source"]
           subdomain_id: string | null
           subdomain_id_uuid: string | null
           subject_id: string | null
@@ -2083,6 +2196,7 @@ export type Database = {
           objective_id?: string | null
           objective_id_uuid?: string | null
           skill_id?: string | null
+          source?: Database["public"]["Enums"]["content_source"]
           subdomain_id?: string | null
           subdomain_id_uuid?: string | null
           subject_id?: string | null
@@ -2098,6 +2212,7 @@ export type Database = {
           objective_id?: string | null
           objective_id_uuid?: string | null
           skill_id?: string | null
+          source?: Database["public"]["Enums"]["content_source"]
           subdomain_id?: string | null
           subdomain_id_uuid?: string | null
           subject_id?: string | null
@@ -2857,6 +2972,7 @@ export type Database = {
         Args: { secret_name: string; secret_value: string }
         Returns: undefined
       }
+      current_school_year: { Args: { ref_date?: string }; Returns: string }
       get_model_with_fallback: {
         Args: never
         Returns: {
@@ -2876,6 +2992,15 @@ export type Database = {
         Args: { _child_user_id: string; _guardian_user_id: string }
         Returns: boolean
       }
+      resolve_edition: {
+        Args: {
+          p_date?: string
+          p_level: Database["public"]["Enums"]["class_level"]
+          p_subject: Database["public"]["Enums"]["subject_code"]
+          p_track?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role:
@@ -2885,6 +3010,23 @@ export type Database = {
         | "parent"
         | "guardian"
         | "teacher"
+      applicability_status: "en_vigueur" | "transitoire" | "planifie"
+      class_level:
+        | "CP"
+        | "CE1"
+        | "CE2"
+        | "CM1"
+        | "CM2"
+        | "6e"
+        | "5e"
+        | "4e"
+        | "3e"
+        | "2nde"
+        | "1re"
+        | "terminale"
+      content_source: "official" | "generated"
+      edition_status: "projet" | "active" | "superseded"
+      subject_code: "francais" | "mathematiques"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3020,6 +3162,24 @@ export const Constants = {
         "guardian",
         "teacher",
       ],
+      applicability_status: ["en_vigueur", "transitoire", "planifie"],
+      class_level: [
+        "CP",
+        "CE1",
+        "CE2",
+        "CM1",
+        "CM2",
+        "6e",
+        "5e",
+        "4e",
+        "3e",
+        "2nde",
+        "1re",
+        "terminale",
+      ],
+      content_source: ["official", "generated"],
+      edition_status: ["projet", "active", "superseded"],
+      subject_code: ["francais", "mathematiques"],
     },
   },
 } as const

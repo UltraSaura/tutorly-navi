@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import katex from "katex";
 import type { Question } from "@/types/quiz-bank";
 import { evaluateQuestion } from "@/utils/quizEvaluation";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,35 @@ import { MatchQuestionView } from "./MatchQuestion";
 import { FillExprQuestionView } from "./FillExprQuestion";
 import { inferPromptFigure, type PromptFigureSpec } from "@/lib/quiz/promptVisual";
 
+// Renders text that may contain $...$ inline or $$...$$ display LaTeX.
+function MathText({ text, style }: { text: string; style?: React.CSSProperties }) {
+  const parts: { math: boolean; display: boolean; content: string }[] = [];
+  const re = /\$\$([^$]+)\$\$|\$([^$\n]+)\$/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push({ math: false, display: false, content: text.slice(last, m.index) });
+    if (m[1] !== undefined) parts.push({ math: true, display: true,  content: m[1] });
+    else                    parts.push({ math: true, display: false, content: m[2] });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push({ math: false, display: false, content: text.slice(last) });
+
+  return (
+    <span style={style}>
+      {parts.map((p, i) => {
+        if (!p.math) return <span key={i}>{p.content}</span>;
+        try {
+          const html = katex.renderToString(p.content, { throwOnError: false, displayMode: p.display });
+          return <span key={i} dangerouslySetInnerHTML={{ __html: html }} />;
+        } catch {
+          return <span key={i}>{p.content}</span>;
+        }
+      })}
+    </span>
+  );
+}
+
 interface QuestionCardProps {
   question: Question;
   onChange?: (value: any) => void;
@@ -21,6 +51,8 @@ interface QuestionCardProps {
   allowRetry?: boolean;
   submittedAnswer?: any;
   isCorrect?: boolean;
+  /** When true, correct choices are NOT highlighted green after a wrong attempt (lesson mode). */
+  hideCorrect?: boolean;
 }
 
 // ── Deterministic numeric suggestion chips (correct answer + distractors) ──
@@ -253,6 +285,9 @@ function renderChoiceLabel(label: string) {
       </div>
     );
   }
+  if (/\$/.test(label)) {
+    return <MathText text={label} style={{ fontSize: '15px', fontWeight: '600', fontFamily: 'Poppins, sans-serif', color: 'inherit' }} />;
+  }
   return <span style={{ fontSize: '15px', fontWeight: '600', fontFamily: 'Poppins, sans-serif', color: 'inherit' }}>{label}</span>;
 }
 
@@ -261,6 +296,7 @@ function choiceState(
   currentValue: any,
   submittedAnswer: any,
   isMulti: boolean,
+  hideCorrect = false,
 ) {
   const isSubmitted = submittedAnswer !== undefined;
   const wasSelected = isMulti
@@ -273,13 +309,13 @@ function choiceState(
   if (!isSubmitted) {
     return { border: isSelected ? '#12C6A0' : '#EAECEF', bg: isSelected ? '#F2FBF8' : 'white', color: '#0F172A', opacity: 1, shake: false };
   }
-  if (c.correct) {
+  if (c.correct && !hideCorrect) {
     return { border: '#9FE1CB', bg: '#EAF3DE', color: '#27500A', opacity: 1, shake: false };
   }
   if (wasSelected) {
     return { border: '#F7C1C1', bg: '#FCEBEB', color: '#C0121A', opacity: 1, shake: true };
   }
-  return { border: '#EAECEF', bg: 'white', color: '#9CA3AF', opacity: 0.45, shake: false };
+  return { border: '#EAECEF', bg: 'white', color: hideCorrect ? '#0F172A' : '#9CA3AF', opacity: hideCorrect ? 1 : 0.45, shake: false };
 }
 
 function getPieSegmentsSignature(segments: VisualPie["segments"]) {
@@ -295,7 +331,8 @@ export function QuestionCard({
   onSkip,
   allowRetry = false,
   submittedAnswer,
-  isCorrect: isCorrectProp
+  isCorrect: isCorrectProp,
+  hideCorrect = false,
 }: QuestionCardProps) {
   const initialValue = useMemo(() => {
     if (question.kind === "multi") return [];
@@ -413,13 +450,15 @@ export function QuestionCard({
           <PromptFigure spec={inferredPromptFigure} />
         </div>
       )}
-      <h3 className="text-lg font-semibold mb-3">{question.prompt}</h3>
+      <h3 className="text-lg font-semibold mb-3">
+        <MathText text={question.prompt} />
+      </h3>
 
       {question.kind === "single" && (
         <div className={question.choices.length === 4 ? "grid grid-cols-2 gap-3 mt-4" : "space-y-2 mt-3"}>
           {question.choices.map((c, idx) => {
             const letter = ['A', 'B', 'C', 'D'][idx] ?? String(idx + 1);
-            const cs = choiceState(c, value, submittedAnswer, false);
+            const cs = choiceState(c, value, submittedAnswer, false, hideCorrect);
             return (
               <motion.button
                 key={c.id}
@@ -465,7 +504,7 @@ export function QuestionCard({
           {question.choices.map((c, idx) => {
             const letter = ['A', 'B', 'C', 'D'][idx] ?? String(idx + 1);
             const checked = Array.isArray(value) && value.includes(c.id);
-            const cs = choiceState(c, value, submittedAnswer, true);
+            const cs = choiceState(c, value, submittedAnswer, true, hideCorrect);
             return (
               <motion.button
                 key={c.id}

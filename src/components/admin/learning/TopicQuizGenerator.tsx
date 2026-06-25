@@ -32,6 +32,27 @@ interface TopicQuizGeneratorProps {
 
 type Step = 'topics' | 'settings' | 'generating' | 'review' | 'preview' | 'try' | 'save' | 'assign';
 
+// One future quiz bank in batch mode (per topic, or per progressif level).
+interface BatchUnit {
+  key: string;
+  topicId: string;
+  topicName: string;
+  stepIndex?: number;
+  stepName?: string;
+  title: string;          // auto-title: topic name, or "{topic} — {level}"
+  focusLabel?: string;
+  focusContext?: string;
+  difficulty?: 'easy' | 'medium' | 'hard'; // per-level ramp (per-level batch only)
+  questions: Question[];
+}
+
+// Map a level's position to a difficulty ramp: first third easy → last third hard.
+function rampDifficulty(index: number, total: number): 'easy' | 'medium' | 'hard' {
+  if (total <= 1) return 'medium';
+  const p = index / (total - 1);
+  return p <= 0.34 ? 'easy' : p <= 0.67 ? 'medium' : 'hard';
+}
+
 const QUESTION_TYPES = [
   { value: 'single',       label: 'Single Choice',          description: 'One correct answer from 4 options' },
   { value: 'multi',        label: 'Multiple Choice',         description: 'Several correct answers from 4 options' },
@@ -94,9 +115,16 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   const [mixMode, setMixMode] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('fr');
 
+  // Batch mode: one bank per topic (or per progressif level) instead of one mixed bank
+  const [batchMode, setBatchMode] = useState(false);
+  const [batchBy, setBatchBy] = useState<'topic' | 'level'>('topic');
+  const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null);
+
   // Generated questions
   const [generatedQuestions, setGeneratedQuestions] = useState<Question[]>([]);
   const [editingQuestionIndex, setEditingQuestionIndex] = useState<number | null>(null);
+  // Batch results: one entry per future bank
+  const [batchUnits, setBatchUnits] = useState<BatchUnit[]>([]);
 
   // Save form
   const [bankTitle, setBankTitle] = useState('');
@@ -278,20 +306,110 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     );
   };
 
+  const commonGenArgs = () => ({
+    questionCount,
+    questionTypes: mixMode ? ['mix'] : questionTypes,
+    difficulty,
+    mix: mixMode,
+    language: selectedLanguage,
+  });
+
+  // Build the list of banks to generate (one per topic, or per progressif level).
+  const buildBatchUnits = async (): Promise<BatchUnit[]> => {
+    const nameOf = (id: string) => topics.find((t) => t.id === id)?.name ?? id;
+    if (batchBy === 'topic') {
+      return selectedTopicIds.map((topicId) => ({
+        key: topicId,
+        topicId,
+        topicName: nameOf(topicId),
+        title: nameOf(topicId),
+        questions: [],
+      }));
+    }
+    // Per level — fetch lesson_content for the selected topics.
+    const { data: rows } = await supabase
+      .from('topics')
+      .select('id, name, lesson_content')
+      .in('id', selectedTopicIds);
+    const byId = new Map((rows ?? []).map((r: any) => [r.id, r]));
+    const units: BatchUnit[] = [];
+    for (const topicId of selectedTopicIds) {
+      const row: any = byId.get(topicId);
+      const topicName = row?.name ?? nameOf(topicId);
+      const steps = row?.lesson_content?.steps as any[] | undefined;
+      if (steps?.length) {
+        steps.forEach((step, i) => {
+          const stepName = step?.step_name || `Niveau ${i + 1}`;
+          const focusContext = [
+            step?.explanation,
+            Array.isArray(step?.examples) && step.examples[0]?.context ? `Exemple : ${step.examples[0].context}` : '',
+          ].filter(Boolean).join('\n').slice(0, 1500);
+          units.push({
+            key: `${topicId}:${i}`,
+            topicId,
+            topicName,
+            stepIndex: i,
+            stepName,
+            title: `${topicName} — ${stepName}`,
+            focusLabel: stepName,
+            focusContext: focusContext || undefined,
+            difficulty: rampDifficulty(i, steps.length), // easy → hard across the levels
+            questions: [],
+          });
+        });
+      } else {
+        // No progressif levels → one bank for the whole topic.
+        units.push({ key: topicId, topicId, topicName, title: topicName, questions: [] });
+      }
+    }
+    return units;
+  };
+
   const handleGenerate = async () => {
     if (selectedTopicIds.length === 0) {
       toast.error('Please select at least one topic');
       return;
     }
     setStep('generating');
+
+    // ── Batch mode: one bank per unit (topic or level) ──────────────
+    if (batchMode) {
+      try {
+        const units = await buildBatchUnits();
+        if (units.length === 0) throw new Error('No banks to generate');
+        setBatchProgress({ done: 0, total: units.length });
+        const filled: BatchUnit[] = [];
+        for (let i = 0; i < units.length; i++) {
+          const u = units[i];
+          const result = await generateMutation.mutateAsync({
+            topicIds: [u.topicId],
+            ...commonGenArgs(),
+            difficulty: u.difficulty ?? difficulty, // per-level ramp overrides the global picker
+            focusLabel: u.focusLabel,
+            focusContext: u.focusContext,
+          });
+          filled.push({ ...u, questions: result.questions ?? [] });
+          setBatchProgress({ done: i + 1, total: units.length });
+        }
+        setBatchUnits(filled);
+        setBatchProgress(null);
+        setStep('review');
+        const totalQ = filled.reduce((n, u) => n + u.questions.length, 0);
+        toast.success(`Generated ${totalQ} questions across ${filled.length} bank(s)!`);
+      } catch (error) {
+        console.error('Batch generation failed:', error);
+        toast.error(error instanceof Error ? error.message : 'Failed to generate questions');
+        setBatchProgress(null);
+        setStep('settings');
+      }
+      return;
+    }
+
+    // ── Default: one mixed bank across all selected topics ──────────
     try {
       const result = await generateMutation.mutateAsync({
         topicIds: selectedTopicIds,
-        questionCount,
-        questionTypes: mixMode ? ['mix'] : questionTypes,
-        difficulty,
-        mix: mixMode,
-        language: selectedLanguage,
+        ...commonGenArgs(),
       });
       setGeneratedQuestions(result.questions);
       setStep('review');
@@ -382,6 +500,78 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Batch save: one bank per unit (auto-titled), each auto-assigned to its topic as Practice.
+  const handleSaveBatch = async () => {
+    const units = batchUnits.filter((u) => u.questions.length > 0);
+    if (units.length === 0) {
+      toast.error('No questions to save');
+      return;
+    }
+    setIsSaving(true);
+    let created = 0;
+    try {
+      for (let u = 0; u < units.length; u++) {
+        const unit = units[u];
+        const bankId = `bank-${Date.now()}-${u}`;
+        const fullBankPayload = {
+          id: bankId,
+          title: unit.title,
+          description: null,
+          shuffle: true,
+          source_type: 'topic_generated',
+          subject_id: selectedSubjectId,
+          primary_topic_id: unit.topicId,
+          source_topic_ids: [unit.topicId],
+          school_levels: selectedTopicLevel ? [selectedTopicLevel] : [],
+          source_language: selectedLanguage,
+        };
+        const { error: bankError } = await supabase.from('quiz_banks').insert(fullBankPayload as any);
+        if (bankError) {
+          if (!isSchemaMismatchError(bankError)) throw bankError;
+          const { error: legacyErr } = await supabase.from('quiz_banks').insert({ id: bankId, title: unit.title, description: null, shuffle: true });
+          if (legacyErr) throw legacyErr;
+        }
+
+        const questionsToInsert = unit.questions.map((q, index) => {
+          const uniqueId = `q-${bankId}-${index}-${Math.random().toString(36).slice(2, 8)}`;
+          return { id: uniqueId, bank_id: bankId, payload: { ...q, id: uniqueId }, position: index };
+        });
+        const { error: questionsError } = await supabase.from('quiz_bank_questions').insert(questionsToInsert);
+        if (questionsError) throw questionsError;
+
+        // Auto-assign to its topic in the Practice context.
+        await createAssignmentWithFallback({
+          bank_id: bankId,
+          topic_id: unit.topicId,
+          is_active: true,
+          display_context: 'practice',
+          trigger_after_n_videos: 0,
+          trigger_video_id: null,
+          video_ids: null,
+          min_completed_in_set: null,
+        });
+        created++;
+      }
+      queryClient.invalidateQueries({ queryKey: ['quiz-banks'] });
+      queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
+      toast.success(`${created} banque(s) créée(s) et assignée(s) en entraînement.`);
+      onSaved?.();
+      handleReset();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Batch save failed:', error);
+      toast.error(`Échec après ${created} banque(s). ${error instanceof Error ? error.message : ''}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleBatchQuestionDelete = (unitKey: string, qIndex: number) => {
+    setBatchUnits((prev) => prev.map((u) => (
+      u.key === unitKey ? { ...u, questions: u.questions.filter((_, i) => i !== qIndex) } : u
+    )));
   };
 
   const handleAssign = async () => {
@@ -487,6 +677,10 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     setDifficulty('medium');
     setMixMode(false);
     setSelectedLanguage('fr');
+    setBatchMode(false);
+    setBatchBy('topic');
+    setBatchProgress(null);
+    setBatchUnits([]);
     setGeneratedQuestions([]);
     setEditingQuestionIndex(null);
     setBankTitle('');
@@ -685,11 +879,12 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                 </div>
                 <div>
                   <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 block">Difficulty</Label>
-                  <div className="flex gap-1 h-8">
+                  <div className={`flex gap-1 h-8 ${batchMode && batchBy === 'level' ? 'opacity-40 pointer-events-none' : ''}`}>
                     {DIFFICULTIES.map((d) => (
                       <button
                         key={d.value}
                         type="button"
+                        disabled={batchMode && batchBy === 'level'}
                         onClick={() => setDifficulty(d.value as typeof difficulty)}
                         className={`flex-1 rounded-md text-xs font-medium border transition-colors ${
                           difficulty === d.value
@@ -701,6 +896,9 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                       </button>
                     ))}
                   </div>
+                  {batchMode && batchBy === 'level' && (
+                    <p className="text-[11px] text-muted-foreground mt-1">Rampe automatique par niveau : facile → moyen → difficile.</p>
+                  )}
                 </div>
               </div>
 
@@ -726,6 +924,39 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                     {selectedTopicLevelLabel || 'Inherited from topic'}
                   </div>
                 </div>
+              </div>
+
+              {/* Batch mode — one bank per topic / per progressif level */}
+              <div>
+                <label className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+                  batchMode ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
+                }`}>
+                  <Checkbox checked={batchMode} onCheckedChange={(checked) => setBatchMode(!!checked)} />
+                  <div>
+                    <div className="text-xs font-medium">📚 Batch — une banque par {batchBy === 'level' ? 'niveau' : 'sujet'}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      Crée une banque distincte pour chaque {batchBy === 'level' ? 'niveau progressif' : 'sujet'} ({questionCount} questions chacune). Décoché = une banque mixte.
+                    </div>
+                  </div>
+                </label>
+                {batchMode && (
+                  <div className="mt-2 grid grid-cols-2 gap-1.5">
+                    {([['topic', 'Par sujet'], ['level', 'Par niveau progressif']] as const).map(([val, label]) => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setBatchBy(val)}
+                        className={`px-2.5 py-2 rounded-lg border text-xs font-medium text-left transition-colors ${
+                          batchBy === val ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
+                        }`}
+                      >
+                        {label}
+                        {val === 'level' && <span className="block text-[11px] font-normal text-muted-foreground">1 banque par niveau (sujet sans niveaux → 1 banque)</span>}
+                        {val === 'topic' && <span className="block text-[11px] font-normal text-muted-foreground">1 banque par sujet sélectionné</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Question types */}
@@ -790,14 +1021,71 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
             <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
             <h3 className="text-lg font-medium mb-2">Generating Questions</h3>
             <p className="text-muted-foreground text-center">
-              Analyzing {selectedTopicIds.length} topic{selectedTopicIds.length !== 1 ? 's' : ''}...<br />
-              This may take 10-30 seconds.
+              {batchProgress ? (
+                <>Banque {batchProgress.done}/{batchProgress.total} en cours…<br />Génération de chaque banque séparément.</>
+              ) : (
+                <>Analyzing {selectedTopicIds.length} topic{selectedTopicIds.length !== 1 ? 's' : ''}...<br />This may take 10-30 seconds.</>
+              )}
             </p>
           </div>
         )}
 
+        {/* Step: Review — BATCH (grouped per bank) */}
+        {step === 'review' && batchMode && (
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="mb-3">
+              <p className="text-muted-foreground">
+                {batchUnits.length} banque(s) à créer · {batchUnits.reduce((n, u) => n + u.questions.length, 0)} questions au total.
+                Vérifie et supprime les questions à problème, puis crée tout.
+              </p>
+            </div>
+            <ScrollArea className="border rounded-lg h-[50vh]">
+              <div className="p-3 space-y-4">
+                {batchUnits.map((unit) => (
+                  <div key={unit.key} className="border rounded-lg">
+                    <div className="px-3 py-2 bg-muted/60 rounded-t-lg border-b flex items-center justify-between">
+                      <div className="font-semibold text-sm truncate">{unit.title}</div>
+                      <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                        {unit.difficulty ? `${unit.difficulty} · ` : ''}{unit.questions.length} q · 1 banque
+                      </span>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      {unit.questions.length === 0 && (
+                        <p className="text-xs text-muted-foreground italic">Aucune question — cette banque sera ignorée.</p>
+                      )}
+                      {unit.questions.map((question, index) => (
+                        <div key={question.id ?? index} className="border rounded-lg p-3 flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-medium text-muted-foreground">Q{index + 1}</span>
+                              <span className="text-[11px] px-1.5 py-0.5 bg-muted rounded">{question.kind}</span>
+                            </div>
+                            <p className="text-sm font-medium">{question.prompt}</p>
+                          </div>
+                          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => handleBatchQuestionDelete(unit.key, index)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+            <div className="flex justify-between mt-4">
+              <Button variant="outline" onClick={() => setStep('settings')}>
+                <ArrowLeft className="w-4 h-4 mr-2" /> Back
+              </Button>
+              <Button onClick={handleSaveBatch} disabled={isSaving || batchUnits.every((u) => u.questions.length === 0)}>
+                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+                Créer {batchUnits.filter((u) => u.questions.length > 0).length} banque(s)
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Step: Review */}
-        {step === 'review' && (
+        {step === 'review' && !batchMode && (
           <div className="flex-1 flex flex-col min-h-0">
             <div className="mb-4">
               <p className="text-muted-foreground">

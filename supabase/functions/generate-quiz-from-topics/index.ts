@@ -18,6 +18,10 @@ interface GenerateRequest {
   difficulty?: 'easy' | 'medium' | 'hard';
   mix?: boolean;
   language?: string;
+  // Optional progressif-level focus (batch "per level" mode): generate questions
+  // targeted to one specific level of the topic.
+  focusLabel?: string;
+  focusContext?: string;
 }
 
 function buildTypeInstructions(questionTypes: string[]): string {
@@ -336,7 +340,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { topicIds, questionCount = 5, questionTypes = ['single', 'multi', 'numeric', 'ordering'], difficulty = 'medium', mix = false, language = 'fr' }: GenerateRequest = await req.json();
+    const { topicIds, questionCount = 5, questionTypes = ['single', 'multi', 'numeric', 'ordering'], difficulty = 'medium', mix = false, language = 'fr', focusLabel, focusContext }: GenerateRequest = await req.json();
 
     if (!topicIds || topicIds.length === 0) {
       return new Response(JSON.stringify({ error: "No topic IDs provided" }),
@@ -397,13 +401,21 @@ serve(async (req) => {
       hard: 'Complex reasoning, subtle distinctions.'
     };
 
+    // Batch "per level" mode: focus the questions on one progressif level of the topic.
+    const focusBlock = (focusLabel || focusContext)
+      ? `\nFOCUS — this quiz targets ONE specific progressif level of the topic:\n` +
+        (focusLabel ? `Level: ${focusLabel}\n` : '') +
+        (focusContext ? `Base the questions PRIMARILY on this level's content:\n${focusContext}\n` : '') +
+        `Stay within this level's scope and difficulty; do NOT cover other levels.\n`
+      : '';
+
     const prompt = `You are an expert educator creating quiz questions based on curriculum topics and learning objectives.
 
 TOPIC AND CURRICULUM CONTEXT:
 ---
 ${topicContext}
 ---
-
+${focusBlock}
 Generate exactly ${questionCount} quiz questions based on these topics and learning objectives. Questions should test the student's understanding of the concepts described above.
 
 WRITE ALL STUDENT-FACING TEXT IN ${language === 'fr' ? 'French' : 'English'}.

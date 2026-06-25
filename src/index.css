@@ -389,3 +389,13 @@
     bottom: 64px; /* Above mobile tabs */
   }
 }
+
+/* Pulsing ring on the current level bubble in the lesson Parcours (LessonLevelPath).
+   CSS (not framer) so it doesn't stall the lesson card-switcher's AnimatePresence exits. */
+@keyframes stuwy-pulse-ring {
+  0%   { opacity: 0.5; transform: scale(1); }
+  100% { opacity: 0;   transform: scale(1.6); }
+}
+.stuwy-pulse-ring {
+  animation: stuwy-pulse-ring 1.4s ease-out infinite;
+}

@@ -9,6 +9,9 @@ interface GenerateRequest {
   difficulty?: 'easy' | 'medium' | 'hard';
   mix?: boolean;
   language: string;
+  // Optional progressif-level focus (batch "per level" mode).
+  focusLabel?: string;
+  focusContext?: string;
 }
 
 interface GenerateResponse {
