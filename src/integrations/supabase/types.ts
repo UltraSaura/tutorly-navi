@@ -2130,7 +2130,11 @@ export type Database = {
           color_scheme: string
           country_code: string | null
           created_at: string
+          display_context: string
+          font_size: number
+          font_family: string
           icon_image_url: string | null
+          icon_color: string
           icon_name: string
           id: string
           is_active: boolean
@@ -2138,13 +2142,18 @@ export type Database = {
           name: string
           order_index: number
           slug: string
+          text_color: string
           updated_at: string
         }
         Insert: {
           color_scheme: string
           country_code?: string | null
           created_at?: string
+          display_context?: string
+          font_size?: number
+          font_family?: string
           icon_image_url?: string | null
+          icon_color?: string
           icon_name: string
           id?: string
           is_active?: boolean
@@ -2152,13 +2161,18 @@ export type Database = {
           name: string
           order_index?: number
           slug: string
+          text_color?: string
           updated_at?: string
         }
         Update: {
           color_scheme?: string
           country_code?: string | null
           created_at?: string
+          display_context?: string
+          font_size?: number
+          font_family?: string
           icon_image_url?: string | null
+          icon_color?: string
           icon_name?: string
           id?: string
           is_active?: boolean
@@ -2166,6 +2180,7 @@ export type Database = {
           name?: string
           order_index?: number
           slug?: string
+          text_color?: string
           updated_at?: string
         }
         Relationships: []

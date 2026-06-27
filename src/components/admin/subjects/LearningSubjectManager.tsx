@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +23,9 @@ interface LearningSubjectData {
   icon_image_url: string | null;
   color_scheme: string;
   icon_color: string;
+  text_color: string;
+  font_size: number;
+  font_family: string;
   display_context: 'learn' | 'practice' | 'both';
   order_index: number;
   is_active: boolean;
@@ -34,6 +38,15 @@ type ManagedSubjectRow = {
 };
 
 const normalizeName = (value: string) => value.trim().toLowerCase();
+const DEFAULT_SUBJECT_TEXT_COLOR = '#050B34';
+const DEFAULT_SUBJECT_FONT_SIZE = 18;
+const DEFAULT_SUBJECT_FONT_FAMILY = 'Poppins, sans-serif';
+const SUBJECT_FONT_OPTIONS = [
+  { label: 'Poppins', value: 'Poppins, sans-serif' },
+  { label: 'SF Pro Display', value: "'SF Pro Display', system-ui, sans-serif" },
+  { label: 'System Sans', value: 'system-ui, sans-serif' },
+  { label: 'Georgia Serif', value: 'Georgia, serif' },
+] as const;
 
 const slugify = (value: string) =>
   value
@@ -51,6 +64,9 @@ const createInitialData = (row: ManagedSubjectRow): LearningSubjectData => {
       icon_image_url: row.learningSubject.icon_image_url,
       color_scheme: row.learningSubject.color_scheme,
       icon_color: row.learningSubject.icon_color ?? '#1e3a5f',
+      text_color: row.learningSubject.text_color ?? DEFAULT_SUBJECT_TEXT_COLOR,
+      font_size: row.learningSubject.font_size ?? DEFAULT_SUBJECT_FONT_SIZE,
+      font_family: row.learningSubject.font_family ?? DEFAULT_SUBJECT_FONT_FAMILY,
       display_context: row.learningSubject.display_context ?? 'both',
       order_index: row.learningSubject.order_index,
       is_active: row.learningSubject.is_active,
@@ -67,6 +83,9 @@ const createInitialData = (row: ManagedSubjectRow): LearningSubjectData => {
     icon_image_url: null,
     color_scheme: '#dbeafe',
     icon_color: '#1e3a5f',
+    text_color: DEFAULT_SUBJECT_TEXT_COLOR,
+    font_size: DEFAULT_SUBJECT_FONT_SIZE,
+    font_family: DEFAULT_SUBJECT_FONT_FAMILY,
     display_context: 'both',
     order_index: chatSubject?.order || 0,
     is_active: chatSubject?.active ?? true,
@@ -80,6 +99,9 @@ const createBlankSubjectData = (orderIndex: number): LearningSubjectData => ({
   icon_image_url: null,
   color_scheme: '#dbeafe',
   icon_color: '#1e3a5f',
+  text_color: DEFAULT_SUBJECT_TEXT_COLOR,
+  font_size: DEFAULT_SUBJECT_FONT_SIZE,
+  font_family: DEFAULT_SUBJECT_FONT_FAMILY,
   display_context: 'both',
   order_index: orderIndex,
   is_active: true,
@@ -108,6 +130,7 @@ const getIconUploadErrorMessage = (error: unknown) => {
 };
 
 const LearningSubjectManager = () => {
+  const queryClient = useQueryClient();
   const { subjects: chatSubjects } = useAdmin();
   const { data: learningSubjects = [], isLoading } = useLearningSubjects();
   const createSubject = useCreateSubject();
@@ -118,6 +141,10 @@ const LearningSubjectManager = () => {
   const [editedData, setEditedData] = useState<Record<string, LearningSubjectData>>({});
   const [uploadingRowId, setUploadingRowId] = useState<string | null>(null);
   const [customRows, setCustomRows] = useState<ManagedSubjectRow[]>([]);
+  const [bulkFontSize, setBulkFontSize] = useState<string>(String(DEFAULT_SUBJECT_FONT_SIZE));
+  const [bulkFontFamily, setBulkFontFamily] = useState<string>(DEFAULT_SUBJECT_FONT_FAMILY);
+  const [isApplyingBulkFontSize, setIsApplyingBulkFontSize] = useState(false);
+  const [isApplyingBulkFontFamily, setIsApplyingBulkFontFamily] = useState(false);
 
   const managedRows = useMemo<ManagedSubjectRow[]>(() => {
     const chatByName = new Map(chatSubjects.map(subject => [normalizeName(subject.name), subject]));
@@ -166,6 +193,14 @@ const LearningSubjectManager = () => {
     });
   }, [managedRows, editingSubjectId]);
 
+  useEffect(() => {
+    if (learningSubjects.length === 0) return;
+    const firstFontSize = learningSubjects[0]?.font_size ?? DEFAULT_SUBJECT_FONT_SIZE;
+    setBulkFontSize(String(firstFontSize));
+    const firstFontFamily = learningSubjects[0]?.font_family ?? DEFAULT_SUBJECT_FONT_FAMILY;
+    setBulkFontFamily(firstFontFamily);
+  }, [learningSubjects]);
+
   const handleEdit = (rowId: string) => {
     setEditingSubjectId(rowId);
   };
@@ -209,6 +244,94 @@ const LearningSubjectManager = () => {
     }));
   };
 
+  const parseFontSize = (value: string | number) => {
+    const parsed = typeof value === 'number' ? value : parseInt(value, 10);
+    if (!Number.isFinite(parsed) || parsed < 12 || parsed > 36) return null;
+    return parsed;
+  };
+
+  const handleApplyFontSizeToAll = async () => {
+    const parsedFontSize = parseFontSize(bulkFontSize);
+    if (parsedFontSize === null) {
+      toast.error('Font size must be a number between 12 and 36');
+      return;
+    }
+
+    setEditedData((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((rowId) => {
+        next[rowId] = { ...next[rowId], font_size: parsedFontSize };
+      });
+      return next;
+    });
+
+    if (learningSubjects.length === 0) {
+      toast.success(`Font size ${parsedFontSize}px applied to local subject rows`);
+      return;
+    }
+
+    setIsApplyingBulkFontSize(true);
+    try {
+      const { error } = await supabase
+        .from('subjects')
+        .update({ font_size: parsedFontSize })
+        .not('id', 'is', null);
+      if (error) throw new Error(error.message ?? error.details ?? JSON.stringify(error));
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-learning-subjects'] }),
+        queryClient.invalidateQueries({ queryKey: ['learning-subjects'] }),
+        queryClient.invalidateQueries({ queryKey: ['practice-subject-buttons'] }),
+      ]);
+
+      toast.success(`Applied ${parsedFontSize}px font size to all subjects`);
+    } catch (error) {
+      console.error('Error applying bulk font size:', error);
+      toast.error(`Failed to apply font size to all subjects: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsApplyingBulkFontSize(false);
+    }
+  };
+
+  const handleApplyFontFamilyToAll = async () => {
+    const fontFamily = bulkFontFamily || DEFAULT_SUBJECT_FONT_FAMILY;
+
+    setEditedData((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((rowId) => {
+        next[rowId] = { ...next[rowId], font_family: fontFamily };
+      });
+      return next;
+    });
+
+    if (learningSubjects.length === 0) {
+      toast.success(`Font style applied to local subject rows`);
+      return;
+    }
+
+    setIsApplyingBulkFontFamily(true);
+    try {
+      const { error } = await supabase
+        .from('subjects')
+        .update({ font_family: fontFamily })
+        .neq('id', '');
+      if (error) throw error;
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-learning-subjects'] }),
+        queryClient.invalidateQueries({ queryKey: ['learning-subjects'] }),
+        queryClient.invalidateQueries({ queryKey: ['practice-subject-buttons'] }),
+      ]);
+
+      toast.success('Applied font style to all subjects');
+    } catch (error) {
+      console.error('Error applying bulk font family:', error);
+      toast.error(`Failed to apply font style to all subjects: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsApplyingBulkFontFamily(false);
+    }
+  };
+
   const handleIconUpload = async (row: ManagedSubjectRow, file: File | null) => {
     if (!file) return;
 
@@ -247,6 +370,12 @@ const LearningSubjectManager = () => {
     const data = editedData[row.id];
     if (!data) return;
 
+    const parsedFontSize = parseFontSize(data.font_size);
+    if (parsedFontSize === null) {
+      toast.error('Font size must be a number between 12 and 36');
+      return;
+    }
+
     try {
       const payload = {
         name: data.name.trim(),
@@ -255,6 +384,9 @@ const LearningSubjectManager = () => {
         icon_image_url: data.icon_image_url,
         color_scheme: data.color_scheme,
         icon_color: data.icon_color,
+        text_color: data.text_color,
+        font_size: parsedFontSize,
+        font_family: data.font_family || DEFAULT_SUBJECT_FONT_FAMILY,
         display_context: data.display_context,
         order_index: data.order_index,
         is_active: data.is_active,
@@ -336,6 +468,63 @@ const LearningSubjectManager = () => {
         </Button>
       </div>
 
+      <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/20 p-4">
+        <div className="space-y-2">
+          <Label htmlFor="bulk-subject-font-size">Font size for all subjects</Label>
+          <Input
+            id="bulk-subject-font-size"
+            type="number"
+            min={12}
+            max={36}
+            value={bulkFontSize}
+            onChange={(e) => setBulkFontSize(e.target.value)}
+            className="w-32"
+          />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => void handleApplyFontSizeToAll()}
+          disabled={isApplyingBulkFontSize}
+        >
+          {isApplyingBulkFontSize ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Apply to all subjects
+        </Button>
+        <p className="text-sm text-muted-foreground">
+          Updates every existing subject row in one go and keeps new unsaved rows aligned.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/20 p-4">
+        <div className="space-y-2">
+          <Label htmlFor="bulk-subject-font-family">Font style for all subjects</Label>
+          <Select value={bulkFontFamily} onValueChange={setBulkFontFamily}>
+            <SelectTrigger id="bulk-subject-font-family" className="w-56">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SUBJECT_FONT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => void handleApplyFontFamilyToAll()}
+          disabled={isApplyingBulkFontFamily}
+        >
+          {isApplyingBulkFontFamily ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Apply style to all subjects
+        </Button>
+        <p className="text-sm text-muted-foreground">
+          Changes the subject title font family everywhere the subject tiles appear.
+        </p>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -346,6 +535,7 @@ const LearningSubjectManager = () => {
               <TableHead>Upload icon image</TableHead>
               <TableHead>Fallback icon</TableHead>
               <TableHead>Color Scheme</TableHead>
+              <TableHead>Text Style</TableHead>
               <TableHead>Display</TableHead>
               <TableHead>Order</TableHead>
               <TableHead>Active</TableHead>
@@ -375,7 +565,12 @@ const LearningSubjectManager = () => {
                       ) : (
                         <DynamicIcon name={data.icon_name} className="h-8 w-8" />
                       )}
-                      <span className="line-clamp-2 text-xs font-medium">{data.name}</span>
+                      <span
+                        className="line-clamp-2 font-medium leading-tight"
+                        style={{ color: data.text_color, fontSize: `${data.font_size}px`, fontFamily: data.font_family }}
+                      >
+                        {data.name}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell className="min-w-48">
@@ -509,6 +704,58 @@ const LearningSubjectManager = () => {
                   </TableCell>
                   <TableCell>
                     {isEditing ? (
+                      <div className="flex flex-col gap-3">
+                        <div>
+                          <span className="mb-1 block text-xs text-muted-foreground">Text color</span>
+                          <ColorPicker
+                            value={data.text_color}
+                            onChange={(color) => updateField(row.id, 'text_color', color)}
+                            format="hex"
+                          />
+                        </div>
+                        <div>
+                          <span className="mb-1 block text-xs text-muted-foreground">Font size</span>
+                          <Input
+                            type="number"
+                            min={12}
+                            max={36}
+                            value={data.font_size}
+                            onChange={(e) => updateField(row.id, 'font_size', parseInt(e.target.value, 10) || DEFAULT_SUBJECT_FONT_SIZE)}
+                            className="w-24"
+                          />
+                        </div>
+                        <div>
+                          <span className="mb-1 block text-xs text-muted-foreground">Font style</span>
+                          <Select
+                            value={data.font_family}
+                            onValueChange={(value) => updateField(row.id, 'font_family', value)}
+                          >
+                            <SelectTrigger className="w-56">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SUBJECT_FONT_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <div className="h-5 w-5 rounded border border-border" style={{ backgroundColor: data.text_color }} />
+                          <span className="text-xs font-mono text-muted-foreground">{data.text_color}</span>
+                        </div>
+                        <div className="text-sm text-muted-foreground">{data.font_size}px</div>
+                        <div className="text-sm text-muted-foreground">{SUBJECT_FONT_OPTIONS.find((option) => option.value === data.font_family)?.label ?? data.font_family}</div>
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isEditing ? (
                       <Select
                         value={data.display_context}
                         onValueChange={(value: 'learn' | 'practice' | 'both') => updateField(row.id, 'display_context', value)}
@@ -630,6 +877,7 @@ const LearningSubjectManager = () => {
           <li><strong>Upload icon image:</strong> High-definition image shown on subject buttons; fallback icon is used when no image is uploaded</li>
           <li><strong>Fallback icon:</strong> Lucide icon name or emoji used only when no icon image exists</li>
           <li><strong>Color Scheme:</strong> Tile background color supporting RGB or hex values</li>
+          <li><strong>Text Style:</strong> Subject title color, size, and font family used on the subject tiles</li>
           <li><strong>Display:</strong> Choose whether the button appears on Learn, Practice, or both</li>
           <li><strong>Order:</strong> Display order in the learning platform</li>
           <li><strong>Active:</strong> Whether the subject button is visible anywhere</li>
