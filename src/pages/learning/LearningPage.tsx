@@ -91,6 +91,8 @@ const LearningPage = () => {
         lessons_completed
       }) => {
         const isReady = videos_ready > 0;
+        const subjectTitleFontSize = Math.max(subject.font_size ?? 18, 12);
+        const subjectTitleFontFamily = subject.font_family ?? 'Poppins, sans-serif';
         return <div 
           key={subject.id} 
           onClick={() => {
@@ -126,7 +128,10 @@ const LearningPage = () => {
                 </div>
 
                 <div className="w-full rounded-xl bg-white/80 px-3 py-2 text-center shadow-sm backdrop-blur-sm">
-                  <span className="line-clamp-2 text-sm font-semibold leading-tight text-slate-900 sm:text-base">
+                  <span
+                    className="line-clamp-2 font-semibold leading-tight"
+                    style={{ color: subject.text_color ?? '#050B34', fontSize: `${subjectTitleFontSize}px`, fontFamily: subjectTitleFontFamily }}
+                  >
                     {subject.name}
                   </span>
                   {videos_ready > 0 && (

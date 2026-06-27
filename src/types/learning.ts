@@ -14,6 +14,9 @@ export interface Subject {
   icon_image_url: string | null;
   color_scheme: string;
   icon_color?: string;
+  text_color?: string;
+  font_size?: number;
+  font_family?: string;
   display_context?: 'learn' | 'practice' | 'both';
   order_index: number;
   is_active: boolean;

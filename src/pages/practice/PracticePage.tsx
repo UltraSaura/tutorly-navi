@@ -213,6 +213,9 @@ export default function PracticePage() {
       icon_image_url: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.icon_image_url ?? null,
       color_scheme: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.color_scheme ?? null,
       icon_color: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.icon_color ?? null,
+      text_color: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.text_color ?? null,
+      font_size: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.font_size ?? null,
+      font_family: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.font_family ?? null,
     }));
   }, [practiceButtonsQuery.data]);
 
@@ -263,6 +266,8 @@ export default function PracticePage() {
                 const exerciseCount = sourceSubject?.exercises ?? 0;
                 const exerciseLabel = `${exerciseCount} exercice${exerciseCount > 1 ? 's' : ''}`;
                 const Icon = subject.icon;
+                const subjectTitleFontSize = Math.max((subject.font_size ?? 18) + 4, 16);
+                const subjectTitleFontFamily = subject.font_family ?? 'Poppins, sans-serif';
 
                 return (
                   <button
@@ -293,7 +298,10 @@ export default function PracticePage() {
                       </span>
                     </div>
                     <div className="space-y-1.5">
-                      <h2 className="text-[22px] font-extrabold leading-tight tracking-normal text-[#050B34]">
+                      <h2
+                        className="font-extrabold leading-tight tracking-normal"
+                        style={{ color: subject.text_color ?? '#050B34', fontSize: `${subjectTitleFontSize}px`, fontFamily: subjectTitleFontFamily }}
+                      >
                         {subject.name}
                       </h2>
                       <p className="text-base font-semibold leading-snug text-[#667085]">
