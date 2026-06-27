@@ -17,6 +17,12 @@ export interface Subject {
   text_color?: string;
   font_size?: number;
   font_family?: string;
+  lesson_text_color?: string;
+  lesson_font_size?: number;
+  lesson_font_family?: string;
+  practice_text_color?: string;
+  practice_font_size?: number;
+  practice_font_family?: string;
   display_context?: 'learn' | 'practice' | 'both';
   order_index: number;
   is_active: boolean;
