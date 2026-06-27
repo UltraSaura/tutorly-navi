@@ -15,8 +15,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useExamPapers, useTrainingItemSubjectCounts } from '@/hooks/useExamImport';
 import { useLearningSubjects, usePracticeSubjectButtons } from '@/hooks/useLearningSubjects';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
-import { normalizeDisciplineKey, resolveExamDisciplinesForSubjectSlug, resolveSubjectSlugForExamDiscipline, getSubjectNameForSlug } from '@/utils/examSubjectMapping';
+import { getSubjectNameForSlug, getSubjectSlugAliases, normalizeDisciplineKey, resolveExamDisciplinesForSubjectSlug, resolveSubjectSlugForExamDiscipline } from '@/utils/examSubjectMapping';
 import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
+import type { Subject } from '@/types/learning';
 
 const NO_ACTIVE_LEVEL = '__no_active_level__';
 const MASCOT_SRC = '/practice-mascot.png';
@@ -200,23 +201,38 @@ export default function PracticePage() {
   }, [subjectCards]);
 
   const practiceSubjects = useMemo(() => {
-    const adminSubjectsBySlug = new Map(
-      (practiceButtonsQuery.data ?? []).map((subject) => [normalizeSubjectKey(subject.slug), subject])
-    );
+    const adminSubjectsBySlug = new Map<string, Subject>();
+    const adminSubjectsByAlias = new Map<string, Subject>();
 
-    return defaultPracticeSubjects.map((fallback) => ({
-      ...fallback,
-      id: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.id ?? fallback.slug,
-      slug: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.slug ?? fallback.slug,
-      name: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.name ?? fallback.name,
-      icon_name: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.icon_name ?? fallback.icon_name,
-      icon_image_url: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.icon_image_url ?? null,
-      color_scheme: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.color_scheme ?? null,
-      icon_color: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.icon_color ?? null,
-      text_color: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.text_color ?? null,
-      font_size: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.font_size ?? null,
-      font_family: adminSubjectsBySlug.get(normalizeSubjectKey(fallback.slug))?.font_family ?? null,
-    }));
+    for (const subject of practiceButtonsQuery.data ?? []) {
+      const normalizedSlug = normalizeSubjectKey(subject.slug);
+      adminSubjectsBySlug.set(normalizedSlug, subject);
+      for (const alias of getSubjectSlugAliases(subject.slug)) {
+        const normalizedAlias = normalizeSubjectKey(alias);
+        if (!adminSubjectsByAlias.has(normalizedAlias)) {
+          adminSubjectsByAlias.set(normalizedAlias, subject);
+        }
+      }
+    }
+
+    return defaultPracticeSubjects.map((fallback) => {
+      const normalizedSlug = normalizeSubjectKey(fallback.slug);
+      const adminSubject = adminSubjectsBySlug.get(normalizedSlug) || adminSubjectsByAlias.get(normalizedSlug);
+
+      return {
+        ...fallback,
+        id: adminSubject?.id ?? fallback.slug,
+        slug: adminSubject?.slug ?? fallback.slug,
+        name: adminSubject?.name ?? fallback.name,
+        icon_name: adminSubject?.icon_name ?? fallback.icon_name,
+        icon_image_url: adminSubject?.icon_image_url ?? null,
+        color_scheme: adminSubject?.color_scheme ?? null,
+        icon_color: adminSubject?.icon_color ?? null,
+        practice_text_color: adminSubject?.practice_text_color ?? adminSubject?.text_color ?? null,
+        practice_font_size: adminSubject?.practice_font_size ?? adminSubject?.font_size ?? null,
+        practice_font_family: adminSubject?.practice_font_family ?? adminSubject?.font_family ?? null,
+      };
+    });
   }, [practiceButtonsQuery.data]);
 
   return (
@@ -266,8 +282,8 @@ export default function PracticePage() {
                 const exerciseCount = sourceSubject?.exercises ?? 0;
                 const exerciseLabel = `${exerciseCount} exercice${exerciseCount > 1 ? 's' : ''}`;
                 const Icon = subject.icon;
-                const subjectTitleFontSize = Math.max((subject.font_size ?? 18) + 4, 16);
-                const subjectTitleFontFamily = subject.font_family ?? 'Poppins, sans-serif';
+                const subjectTitleFontSize = Math.max((subject.practice_font_size ?? 18) + 4, 16);
+                const subjectTitleFontFamily = subject.practice_font_family ?? 'Poppins, sans-serif';
 
                 return (
                   <button
@@ -300,7 +316,7 @@ export default function PracticePage() {
                     <div className="space-y-1.5">
                       <h2
                         className="font-extrabold leading-tight tracking-normal"
-                        style={{ color: subject.text_color ?? '#050B34', fontSize: `${subjectTitleFontSize}px`, fontFamily: subjectTitleFontFamily }}
+                        style={{ color: subject.practice_text_color ?? '#050B34', fontSize: `${subjectTitleFontSize}px`, fontFamily: subjectTitleFontFamily }}
                       >
                         {subject.name}
                       </h2>

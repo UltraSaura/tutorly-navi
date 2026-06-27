@@ -2139,8 +2139,14 @@ export type Database = {
           id: string
           is_active: boolean
           language: string | null
+          lesson_font_family: string
+          lesson_font_size: number
+          lesson_text_color: string
           name: string
           order_index: number
+          practice_font_family: string
+          practice_font_size: number
+          practice_text_color: string
           slug: string
           text_color: string
           updated_at: string
@@ -2158,8 +2164,14 @@ export type Database = {
           id?: string
           is_active?: boolean
           language?: string | null
+          lesson_font_family?: string
+          lesson_font_size?: number
+          lesson_text_color?: string
           name: string
           order_index?: number
+          practice_font_family?: string
+          practice_font_size?: number
+          practice_text_color?: string
           slug: string
           text_color?: string
           updated_at?: string
@@ -2177,8 +2189,14 @@ export type Database = {
           id?: string
           is_active?: boolean
           language?: string | null
+          lesson_font_family?: string
+          lesson_font_size?: number
+          lesson_text_color?: string
           name?: string
           order_index?: number
+          practice_font_family?: string
+          practice_font_size?: number
+          practice_text_color?: string
           slug?: string
           text_color?: string
           updated_at?: string
