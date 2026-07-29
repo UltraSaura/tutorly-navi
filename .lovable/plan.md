@@ -1,38 +1,39 @@
-## Problem
-Creating a prompt template with type "Grouped Retry Practice" fails because the database CHECK constraint `prompt_templates_usage_type_check` on `public.prompt_templates.usage_type` only permits the legacy values:
+# Numeric Question — Drag‑and‑Drop Suggestion Chips
 
-```
-('chat', 'grading', 'explanation', 'math_enhanced')
-```
+Currently, the `numeric` (non‑fraction) question only shows a "Tape ta réponse" input box. We will add a row of **suggestion chips below the input**, including the correct answer plus a few distractors, that the student can drag into (or tap) the answer box — matching the pattern already used by the fraction quiz (second screenshot).
 
-The application code (`src/types/admin.ts`, `src/hooks/usePromptManagement.ts`, the create/edit dialogs) already lists `grouped_retry_practice` as a valid type, but the matching DB migration was never applied — so every insert/update with `usage_type = 'grouped_retry_practice'` is rejected by Postgres (error code 23514). The toast message in the screenshot is the friendly version of that exact error.
+## Behavior
 
-## Fix
-Apply a single Supabase migration that updates the CHECK constraint to include the new value.
+- Chips appear **below** the answer box, in the same visual style as fraction chips (`w-12 h-12 rounded-xl`, neutral bg, Poppins, primary teal active state).
+- **4 chips total**: the correct answer + 3 random distractors, shuffled.
+- Distractors are deterministic per question (seeded by `question.id`) so the order is stable across re‑renders and previews.
+- **Drag and drop**: chip → answer box fills the input (HTML5 drag, same `dataTransfer text/plain` approach as `FillExprQuestion`).
+- **Tap**: tapping a chip fills the input with that value; tapping again clears it.
+- Used chip shows the dimmed/used state (same styling as fraction chips).
+- Caption below: `Glisse un nombre, ou tapote pour le placer.`
+- Keyboard typing into the input still works as today (chips are an aid, not a restriction).
 
-```sql
-ALTER TABLE public.prompt_templates
-  DROP CONSTRAINT IF EXISTS prompt_templates_usage_type_check;
+## Source of chips
 
-ALTER TABLE public.prompt_templates
-  ADD CONSTRAINT prompt_templates_usage_type_check
-  CHECK (usage_type IN (
-    'chat',
-    'grading',
-    'explanation',
-    'math_enhanced',
-    'grouped_retry_practice'
-  ));
-```
+- If the question payload already has `dragOptions: number[]` (existing optional field on `NumericQ`), use it as‑is (shuffled).
+- Otherwise auto‑generate 3 distractors around the correct `answer`:
+  - Integers: pick `answer ± 1, ± 2, ± 3` (clamped to `range.min/max` when present), drop duplicates, pick 3.
+  - If `range` exists and is small (≤10 span), pick from the range excluding the answer.
+  - Always include the correct answer; shuffle deterministically by `question.id`.
 
-Also extend the same allowed list on `public.subject_prompt_assignments.usage_type` if a matching CHECK constraint exists there, so subject assignments can reference the new type too.
+## Scope (files)
 
-## Files touched
-- One new migration file under `supabase/migrations/` containing the ALTER TABLE statements above.
+- `src/components/learning/QuestionCard.tsx` — extend the existing `numeric && answerFormat !== "fraction"` block (lines ~586–630) to render a chip row beneath the input, with drag/drop + tap handlers wired to `setVal`.
+- Small helper for deterministic distractor generation, colocated in the same file (or `src/lib/quiz/numericSuggestions.ts` if you prefer a dedicated util — flag your preference).
 
-## No code changes needed
-- TypeScript types, hooks, and admin UI already support `grouped_retry_practice`. Once the constraint is updated, creating the template will succeed and the existing "Grouped Retry Practice Explanation" form (visible in the screenshot) will save without error.
+No changes to types (`dragOptions` already exists), DB, admin builder, or grading logic.
 
-## Verification after apply
-1. Reopen Admin → System Prompts → Add Template, choose Type = "Grouped Retry Practice", click Create — should succeed with no toast error.
-2. The new template appears in the list and can be activated.
+## Out of scope
+
+- Fraction numeric variant (already has its own chips).
+- Admin UI for manually editing `dragOptions` (can be a follow‑up).
+- Changing answer validation — typed and dropped values are both written to the same `value` state.
+
+## Open question
+
+Do you want the admin to be able to **define** the distractor chips per question (edit `dragOptions` in the admin builder), or is auto‑generation enough for now? Default in this plan: auto‑generate, ignore `dragOptions` editing UI for now.

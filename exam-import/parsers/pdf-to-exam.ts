@@ -10,7 +10,7 @@ import { detectStructuredTables } from "./table-detector.ts";
 
 const execFileAsync = promisify(execFile);
 
-export type SourceName = "eduscol" | "ac-amiens-maths";
+export type SourceName = "eduscol" | "ac-amiens-maths" | "apmep";
 export type ExamName = "dnb";
 export type ExamSeries = "generale" | "professionnelle" | null;
 export type ExamVariant =
@@ -97,6 +97,7 @@ export interface CollectedPaper {
   location: string;
   variant: ExamVariant;
   pdf_url: string;
+  latex_zip_url?: string;
   title: string;
 }
 
@@ -149,7 +150,7 @@ export function sha256(buffer: Uint8Array): string {
 export async function downloadPdf(url: string): Promise<Uint8Array> {
   try {
     const response = await fetch(url, {
-      headers: { "user-agent": "TutorlyExamImport/1.0 (+https://github.com/UltraSaura/tutorly-learning)" },
+      headers: { "user-agent": "TutorlyExamImport/1.0 (+https://github.com/UltraSaura/tutorly-schoolprg)" },
     });
 
     if (!response.ok) {
@@ -685,10 +686,16 @@ function buildQuestion(
 function inferAnswerType(text: string): AnswerType {
   const normalized = text.toLowerCase();
   if (inferMultipleChoiceOptions(text).length > 0) return "multiple_choice";
-  if (/\b(calculer|déterminer|arrondi|pourcentage|probabilité|volume|aire|longueur|hauteur|combien)\b/i.test(normalized)) {
+  // Proof / demonstration — structured free text required
+  if (/\b(démontrer|prouver|établir|montrer que)\b/i.test(normalized)) return "free_text";
+  // Numeric computation (single value expected)
+  if (/\b(calculer|déterminer|arrondi|pourcentage|probabilité|volume|aire|longueur|hauteur|combien|valeur de|mesure)\b/i.test(normalized)) {
     return "math";
   }
-  if (/\bjustifier|expliquer|montrer|vérifier|affirmer|vrai|fausse?\b/i.test(normalized)) return "free_text";
+  // Short justification / explanation
+  if (/\b(justifier|expliquer|pourquoi|vérifier|affirmer|a-t-il raison|vrai|fausse?)\b/i.test(normalized)) return "free_text";
+  // Expression / formula construction
+  if (/\b(exprimer|écrire|développer|factoriser|simplifier|réduire|donner l'expression)\b/i.test(normalized)) return "math";
   if (/\bquelle formule|quel nombre|quelle est|quel est\b/i.test(normalized)) return "short_text";
   return text.length > 180 ? "free_text" : "short_text";
 }

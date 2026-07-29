@@ -10,6 +10,8 @@ export type BaseQ = {
   hint?: string;
   points?: number;
   tags?: string[];
+  /** Optional read-only visual shown above the question (e.g. a cake/pie diagram for fraction questions) */
+  context_visual?: VisualUnion;
 };
 
 export type SingleQ = BaseQ & { kind: "single"; choices: Choice[] };
@@ -25,7 +27,56 @@ export type OperationPoseeQ = BaseQ & {
   locale?: "fr" | "en";
 };
 
-export type Question = SingleQ | MultiQ | NumericQ | OrderingQ | VisualQ | OperationPoseeQ;
+export interface SliderQuestion {
+  id: string;
+  kind: "slider";
+  prompt: string;
+  min: number;
+  max: number;
+  step: number;
+  answer: number;
+  tolerance: number;
+  unit?: string;
+  trackLabel?: string;
+  hint?: string;
+  locale?: string;
+  points?: number;
+  tags?: string[];
+}
+
+export interface MatchQuestion {
+  id: string;
+  kind: "match";
+  prompt: string;
+  pairs: Array<{
+    leftId: string;
+    left: string;
+    rightId: string;
+    right: string;
+  }>;
+  /** When true, fraction/decimal text is hidden on items that render a pie — students must count slices */
+  hide_labels?: boolean;
+  hint?: string;
+  locale?: string;
+  points?: number;
+  tags?: string[];
+}
+
+export interface FillExprQuestion {
+  id: string;
+  kind: "fill-expr";
+  prompt: string;
+  template: string;
+  blanks: string[];
+  chips: string[];
+  answers: Record<string, string>;
+  hint?: string;
+  locale?: string;
+  points?: number;
+  tags?: string[];
+}
+
+export type Question = SingleQ | MultiQ | NumericQ | OrderingQ | VisualQ | OperationPoseeQ | SliderQuestion | MatchQuestion | FillExprQuestion;
 
 export type QuizBank = {
   quizBankId: string;
@@ -33,6 +84,12 @@ export type QuizBank = {
   description?: string;
   timeLimitSec?: number;
   shuffle?: boolean;
+  language?: string;
+  sourceLanguage?: string;
+  schoolLevels?: string[];
+  subjectId?: string | null;
+  primaryTopicId?: string | null;
+  sourceTopicIds?: string[];
   questions: Question[];
 };
 
@@ -63,6 +120,12 @@ export function ensureQuizBank(bank?: Partial<QuizBank> | null): QuizBank {
     description: bank.description ?? DEFAULT_BANK.description,
     timeLimitSec: bank.timeLimitSec ?? DEFAULT_BANK.timeLimitSec,
     shuffle: bank.shuffle ?? DEFAULT_BANK.shuffle,
+    language: bank.language,
+    sourceLanguage: bank.sourceLanguage,
+    schoolLevels: Array.isArray(bank.schoolLevels) ? bank.schoolLevels : [],
+    subjectId: bank.subjectId ?? null,
+    primaryTopicId: bank.primaryTopicId ?? null,
+    sourceTopicIds: Array.isArray(bank.sourceTopicIds) ? bank.sourceTopicIds : [],
     questions: Array.isArray(bank.questions) ? bank.questions : [],
   };
 }

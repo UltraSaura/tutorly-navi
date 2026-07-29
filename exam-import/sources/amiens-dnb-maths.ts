@@ -46,7 +46,7 @@ export async function collectAmiensDnbMaths(options: AmiensCollectOptions = {}):
 async function fetchText(url: string): Promise<string> {
   try {
     const response = await fetch(url, {
-      headers: { "user-agent": "TutorlyExamImport/1.0 (+https://github.com/UltraSaura/tutorly-learning)" },
+      headers: { "user-agent": "TutorlyExamImport/1.0 (+https://github.com/UltraSaura/tutorly-schoolprg)" },
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.text();

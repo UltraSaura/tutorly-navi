@@ -36,6 +36,10 @@ interface BundleQuestion {
   label?: string;
   text: string;
   answer_type?: string;
+  /** QCM choices extracted from table-based exercises */
+  choices?: string[];
+  /** Nested sub-questions (a., b., c.) from LaTeX enumerate level 2 */
+  subquestions?: Array<{ id: string; label: string; text: string }>;
 }
 
 interface NormalizedQuestion {
@@ -131,22 +135,81 @@ function generateItemsForExercise(exercise: BundleExercise, paper: BundlePaper |
   const sourceExerciseUuid = deterministicUuid(`exam_exercise:${exercise.id}`);
   const paperUuid = paper ? deterministicUuid(`exam_paper:${paper.pdf_hash || paper.id}`) : null;
   const level = resolveTrainingItemLevel(exercise, paper);
-  return questions.map((question) => {
+
+  // Top-level exercise context (shared across all questions)
+  const exerciseContext = exercise.parsed_content?.context ?? "";
+
+  // Build a per-question part-context map so each question's tag inference uses only
+  // its own part's context, preventing cross-part vocabulary contamination.
+  // (e.g. Exercise 5 Partie B "pavé droit / m^3" should NOT tag Partie A arithmetic items)
+  const questionPartContextMap = new Map<string, string>();
+  for (const part of exercise.parsed_content?.parts ?? []) {
+    const partCtx = (part as Record<string, unknown>).context as string ?? "";
+    for (const q of ((part as Record<string, unknown>).questions as Array<{id: string}>) ?? []) {
+      questionPartContextMap.set(q.id, partCtx);
+    }
+  }
+
+  // For QCM exercises (all questions are multiple_choice from a table), assign diagrams
+  // per-question rather than giving every item all exercise diagrams.
+  //
+  // Important: check for [Schéma] on the ORIGINAL (pre-split, pre-cleanPrompt) question texts
+  // because cleanPrompt strips [Schéma] before we ever reach the questions.map() loop below.
+  const allQcmChoices = questions.map((q) => q.choices ?? detectQcmChoices(q.text));
+  const isQcmExercise = allQcmChoices.every((c) => c && c.length >= 2);
+  const exerciseImageDocs = isQcmExercise
+    ? sanitizeDocumentsForTraining(
+        (exercise.parsed_content?.documents ?? []).filter(
+          (d) => (d as Record<string, unknown>).type === "image"
+        )
+      )
+    : [];
+  // Build a map: question id → diagram document (from original question texts).
+  // Only used for QCM exercises; other exercises always get all docs.
+  const questionDiagramMap = new Map<string, unknown>();
+  if (isQcmExercise && exerciseImageDocs.length > 0) {
+    let dIdx = 0;
+    for (const origQ of exercise.parsed_content?.questions ?? []) {
+      if (origQ.text?.includes("[Schéma]") && dIdx < exerciseImageDocs.length) {
+        questionDiagramMap.set(origQ.id, exerciseImageDocs[dIdx++]);
+      }
+    }
+  }
+
+  return questions.map((question, qIndex) => {
     const qcmChoices = question.choices ?? detectQcmChoices(question.text);
-    const itemType = qcmChoices ? "multiple_choice" : inferItemType(question.text, question.answer_type);
+    // Pass choices to inferItemType so it can shortcut to "multiple_choice" when they exist
+    const itemType = inferItemType(question.text, question.answer_type, qcmChoices);
+    // Use only the question's own part context (not all parts) to avoid cross-part tag bleed
+    const ownPartContext = questionPartContextMap.get(question.id) ?? "";
+    const tagText = `${question.text} ${exerciseContext} ${ownPartContext}`;
+
+    // Per-question documents: QCM items only get their own diagram (looked up by question id).
+    // Non-QCM exercises keep all exercise documents on every item (e.g. roulette image in Ex1).
+    let itemDocuments: unknown[];
+    if (isQcmExercise) {
+      // question.id for non-split questions is the original id (e.g. "3", "4", "6")
+      // for split subquestions it's "2-2a" — strip the parent prefix to get the original id
+      const origId = question.id.includes("-") ? question.id.split("-")[0] : question.id;
+      const diagramDoc = questionDiagramMap.get(origId);
+      itemDocuments = diagramDoc ? [diagramDoc] : [];
+    } else {
+      itemDocuments = sanitizeDocumentsForTraining(exercise.parsed_content?.documents ?? []);
+    }
+
     return {
-      id: deterministicUuid(`training_item:${exercise.id}:${question.id}`),
+      id: deterministicUuid(`training_item:${exercise.id}:${qIndex}:${question.id}`),
       source_exercise_id: sourceExerciseUuid,
       paper_id: paperUuid,
       exam: exercise.exam,
       subject_slug: subjectSlugForDiscipline(exercise.discipline),
       level,
-      skill_tags: inferSkillTags(question.text),
+      skill_tags: inferSkillTags(tagText),
       curriculum_objective_ids: null,
       item_type: itemType,
       prompt: cleanPrompt(question.text),
-      context: cleanNullable(exercise.parsed_content?.context),
-      documents: sanitizeDocumentsForTraining(exercise.parsed_content?.documents ?? []),
+      context: cleanNullable(exerciseContext),
+      documents: itemDocuments,
       choices: qcmChoices,
       expected_answer: null,
       solution: null,
@@ -181,9 +244,26 @@ function generateItemsForExercise(exercise: BundleExercise, paper: BundlePaper |
 
 export function splitQuestionIntoTrainingQuestions(question: BundleQuestion): NormalizedQuestion[] {
   const text = cleanPrompt(question.text);
-  const qcmChoices = detectQcmChoices(text);
-  const subquestions = splitLetteredSubquestions(text);
+  // Prefer explicit choices from the bundle (QCM table extraction), fall back to text detection
+  // detectQcmChoices needs raw text (before cleanPrompt collapses \n) to find newline-separated expressions
+  const qcmChoices = question.choices?.length ? question.choices : detectQcmChoices(question.text);
 
+  // If the question has structured sub-questions (from LaTeX enumerate level 2), use those
+  const bundleSubquestions = question.subquestions;
+  if (bundleSubquestions && bundleSubquestions.length > 0) {
+    return bundleSubquestions.map((sub) => ({
+      id: `${question.id}-${sub.id}`,
+      label: sub.label,
+      text: cleanPrompt(sub.text),
+      answer_type: question.answer_type,
+      // detectQcmChoices must run on raw text (before cleanPrompt collapses \n to spaces)
+      // so that newline-separated expressions like E_1 = ...\nE_2 = ... are detected
+      choices: detectQcmChoices(sub.text),
+    }));
+  }
+
+  // Try to find sub-questions embedded in the text (fallback for text-based parsing)
+  const subquestions = splitLetteredSubquestions(text);
   if (subquestions.length > 1) {
     return subquestions.map((sub, index) => ({
       id: `${question.id}-${sub.label.replace(/[^a-z0-9]+/gi, "").toLowerCase() || index + 1}`,
@@ -192,6 +272,11 @@ export function splitQuestionIntoTrainingQuestions(question: BundleQuestion): No
       answer_type: question.answer_type,
       choices: detectQcmChoices(sub.text),
     }));
+  }
+
+  // Skip questions with no meaningful text (bare container labels like "3.")
+  if (!text || text === `${question.id}.` || text === question.label?.trim()) {
+    return [];
   }
 
   return [{
@@ -233,10 +318,27 @@ export function detectQcmChoices(text: string): string[] | null {
     .filter(Boolean);
   if (responseChoices.length >= 2) return responseChoices;
 
+  // Detect labelled algebraic expressions on separate lines: E_1 = ...\nE_2 = ...\nE_3 = ...
+  // These appear when \qquad-separated display-math propositions were each put on their own line.
+  // Only trigger for questions that ask to "recopier" or "choisir" among labelled propositions.
+  const exprLines = text.split("\n")
+    .map((l) => l.trim())
+    .filter((l) => /^[A-Z][_\d]*\s*=/.test(l));  // lines like "E_1 = ..." or "A = ..."
+  if (
+    exprLines.length >= 2 &&
+    /parmi|proposition|recopier|choisir/i.test(normalized)
+  ) return exprLines.map((l) => cleanPrompt(l));
+
   const bulletMatches = [...normalized.matchAll(/(?:^|\s)[-•]\s*([^•-]+?)(?=\s[-•]\s|$)/g)]
     .map((match) => cleanPrompt(match[1]))
     .filter((choice) => choice.length > 0);
-  if (bulletMatches.length >= 2 && /qcm|choisir|proposition|réponse/i.test(normalized)) return bulletMatches;
+  // Only treat bullets as QCM choices when the question clearly signals MCQ phrasing,
+  // AND does NOT use "recopier" (which means "copy out the answer", not "tick a box")
+  if (
+    bulletMatches.length >= 2 &&
+    /qcm|choisir|proposition|réponse/i.test(normalized) &&
+    !/recopier/i.test(normalized)
+  ) return bulletMatches;
 
   return null;
 }
@@ -457,30 +559,119 @@ function guidanceForAmiensTemperatureSpec(key: string): TrainingQuestion["guidan
   };
 }
 
+/**
+ * Generate topic-aware hints and feedback based on the question text.
+ * Uses the same cognitive verb tiers as inferDifficulty for consistency.
+ */
 function genericGuidanceForText(text: string): TrainingQuestion["guidance"] {
-  const normalized = text.toLowerCase();
-  if (/étendue|maximum|minimum/.test(normalized)) {
-    return {
-      hints: [
-        { level: 1, text: "Repère d'abord les valeurs utiles." },
-        { level: 2, text: "Compare les valeurs extrêmes." },
-        { level: 3, text: "Écris le calcul avant de conclure." },
-      ],
-      correct_feedback: "Bonne méthode.",
-      almost_feedback: "Tu es proche : vérifie les valeurs utilisées.",
-      incorrect_feedback: "Reviens aux données de l'énoncé et repère les valeurs utiles.",
-    };
-  }
+  const n = text.toLowerCase();
 
+  // ── Probability ──────────────────────────────────────────────────────────────
+  if (/probabilit/.test(n)) return {
+    hints: [
+      { level: 1, text: "Liste les cas favorables et le nombre total de cas possibles." },
+      { level: 2, text: "La probabilité = (nombre de cas favorables) ÷ (total des cas)." },
+      { level: 3, text: "Vérifie que la probabilité est bien entre 0 et 1." },
+    ],
+    correct_feedback: "Bonne réponse : ton raisonnement probabiliste est correct.",
+    almost_feedback: "Tu es proche : vérifie le dénominateur (total des cas).",
+    incorrect_feedback: "Recommence en listant tous les cas possibles et les cas favorables.",
+  };
+
+  // ── Geometry / proof ─────────────────────────────────────────────────────────
+  if (/démontrer|montrer que|rectangle en|pythagore|thalès/.test(n)) return {
+    hints: [
+      { level: 1, text: "Identifie les données utiles dans l'énoncé et sur la figure." },
+      { level: 2, text: "Rappelle le théorème ou la propriété que tu vas utiliser." },
+      { level: 3, text: "Rédige ta démonstration étape par étape : hypothèse → application → conclusion." },
+    ],
+    correct_feedback: "Bonne démonstration : la rédaction est complète.",
+    almost_feedback: "La méthode est bonne, mais la rédaction doit être plus complète.",
+    incorrect_feedback: "Reviens à la figure et identifie la propriété applicable (Pythagore, Thalès, angles…).",
+  };
+
+  // ── Area / volume ─────────────────────────────────────────────────────────────
+  if (/aire|surface|volume|périmètre/.test(n)) return {
+    hints: [
+      { level: 1, text: "Identifie la forme géométrique et ses dimensions." },
+      { level: 2, text: "Rappelle la formule : aire d'un disque = π × R², aire d'un triangle = (base × hauteur) ÷ 2…" },
+      { level: 3, text: "Remplace les valeurs et calcule. N'oublie pas les unités (cm², m²…)." },
+    ],
+    correct_feedback: "Bonne réponse : formule et calcul corrects.",
+    almost_feedback: "Le calcul est presque bon : vérifie les unités et l'arrondi.",
+    incorrect_feedback: "Revérifie quelle formule s'applique à cette forme géométrique.",
+  };
+
+  // ── Statistics / data analysis ────────────────────────────────────────────────
+  if (/étendue|maximum|minimum|médiane|moyenne|quartile/.test(n)) return {
+    hints: [
+      { level: 1, text: "Trie les valeurs de la série dans l'ordre croissant." },
+      { level: 2, text: "Pour la médiane : repère la valeur du milieu (ou la moyenne des deux valeurs centrales)." },
+      { level: 3, text: "Relis les données pour vérifier que ta valeur est cohérente avec la série." },
+    ],
+    correct_feedback: "Bonne méthode de traitement de données.",
+    almost_feedback: "Tu es proche : as-tu bien trié la série en ordre croissant ?",
+    incorrect_feedback: "Reviens aux données et trie-les d'abord de la plus petite à la plus grande.",
+  };
+
+  // ── Percentages / proportionality ────────────────────────────────────────────
+  if (/pourcentage|augmentation|diminution|évolution|taux/.test(n)) return {
+    hints: [
+      { level: 1, text: "Identifie la valeur de départ et la variation." },
+      { level: 2, text: "Taux d'évolution = (valeur finale − valeur initiale) ÷ valeur initiale." },
+      { level: 3, text: "Convertis en pourcentage (× 100) et vérifie le signe (+/−)." },
+    ],
+    correct_feedback: "Bonne réponse : tu as bien calculé ce taux.",
+    almost_feedback: "Tu es proche : vérifie l'arrondi ou la valeur de référence utilisée.",
+    incorrect_feedback: "Reprends la formule du taux d'évolution et identifie la valeur initiale.",
+  };
+
+  // ── Algebra / functions ───────────────────────────────────────────────────────
+  if (/fonction|image|antécédent|f\(x\)|expression|équation|développer|factoriser/.test(n)) return {
+    hints: [
+      { level: 1, text: "Lis la question en entier : s'agit-il d'une image (calcul direct) ou d'un antécédent (équation à résoudre) ?" },
+      { level: 2, text: "Pour l'image de x : substitue x dans l'expression de f(x) et calcule." },
+      { level: 3, text: "Pour l'antécédent : pose f(x) = valeur connue et résous l'équation." },
+    ],
+    correct_feedback: "Bonne réponse : tu as bien appliqué la définition de la fonction.",
+    almost_feedback: "Tu es proche : vérifie si la question demande l'image ou l'antécédent.",
+    incorrect_feedback: "Relis la question : cherche-t-on f(−4) (image) ou f(x) = 3 (antécédent) ?",
+  };
+
+  // ── Arithmetic / prime numbers / GCD ─────────────────────────────────────────
+  if (/premier|decompos|pgcd|ppcm|diviseur|multiple/.test(n)) return {
+    hints: [
+      { level: 1, text: "Essaie de diviser par 2, puis par 3, puis par 5, puis par 7…" },
+      { level: 2, text: "Écris la décomposition en facteurs premiers sous forme de puissances." },
+      { level: 3, text: "Le PGCD = produit des facteurs communs à la puissance minimale." },
+    ],
+    correct_feedback: "Bonne décomposition en facteurs premiers.",
+    almost_feedback: "Tu es proche : vérifie que tous les facteurs sont bien premiers.",
+    incorrect_feedback: "Recommence la division euclidienne ou la décomposition en branche.",
+  };
+
+  // ── Programming / Scratch ─────────────────────────────────────────────────────
+  if (/programme|scratch|algorithme|boucle|variable|script/.test(n)) return {
+    hints: [
+      { level: 1, text: "Lis le programme bloc par bloc dans l'ordre d'exécution." },
+      { level: 2, text: "Applique chaque instruction avec la valeur de départ choisie." },
+      { level: 3, text: "Note les valeurs intermédiaires de chaque variable à chaque étape." },
+    ],
+    correct_feedback: "Bonne exécution du programme.",
+    almost_feedback: "Tu es proche : as-tu bien suivi l'ordre des instructions ?",
+    incorrect_feedback: "Reprends depuis le début du programme et applique chaque bloc une fois.",
+  };
+
+  // ── Generic fallback ─────────────────────────────────────────────────────────
   return {
     hints: [
-      { level: 1, text: "Repère les informations importantes dans l'énoncé." },
-      { level: 2, text: "Choisis la méthode adaptée à la question." },
-      { level: 3, text: "Rédige une réponse courte et vérifie les unités si nécessaire." },
+      { level: 1, text: "Repère les données importantes dans l'énoncé." },
+      { level: 2, text: "Choisis la méthode ou la propriété adaptée à cette question." },
+      { level: 3, text: "Rédige ta réponse complète et vérifie les unités si nécessaire." },
     ],
     correct_feedback: "Bonne réponse.",
-    almost_feedback: "Tu es proche.",
-    incorrect_feedback: "Relis la question et repère les données utiles.",
+    almost_feedback: "Tu es proche : relis et vérifie les calculs.",
+    incorrect_feedback: "Relis l'énoncé et repère les données utiles avant de recommencer.",
   };
 }
 
@@ -506,30 +697,135 @@ function sanitizeDocumentsForTraining(documents: unknown[]): unknown[] {
   });
 }
 
-function inferItemType(text: string, parsedAnswerType: string | undefined): ItemType {
+/**
+ * Cognitive verb tiers (Bloom's taxonomy adapted for French middle-school math).
+ * Used by inferDifficulty and inferItemType.
+ */
+const COGNITIVE_VERBS = {
+  // Tier 1 — recall / apply (easy–medium)
+  apply: /\b(calculer|déterminer|trouver|compléter|lire|relever|recopier|choisir|sélectionner|cocher)\b/i,
+  // Tier 2 — understand / analyse (medium)
+  analyse: /\b(expliquer|déduire|en déduire|vérifier|comparer|justifier que|montrer que|utiliser|appliquer)\b/i,
+  // Tier 3 — synthesise / evaluate / prove (hard)
+  synthesise: /\b(démontrer|prouver|établir|raisonner|construire la preuve|déduire que|montrer que|affirmer)\b/i,
+} as const;
+
+function inferItemType(text: string, parsedAnswerType: string | undefined, choices?: string[] | null): ItemType {
   const normalized = text.toLowerCase();
-  if (parsedAnswerType === "multiple_choice" || /\b(7\s*%|10\s*%|13\s*%)\b/.test(normalized)) return "multiple_choice";
-  if (/\bjustifier|expliquer|montrer|vérifier|démontrer|preuve\b/i.test(normalized)) return "free_response";
-  if (/\bcalculer|déterminer|combien|étendue|moyenne|pourcentage|probabilité|volume|aire|longueur|hauteur\b/i.test(normalized)) return "numeric";
-  if (/\btableau|figure|document|graphique\b/i.test(normalized)) return "document_question";
+  // If structured choices were already extracted by the QCM parser, trust them
+  if (parsedAnswerType === "multiple_choice" || (choices && choices.length >= 2)) return "multiple_choice";
+  // Linguistic MCQ markers: "Parmi les N propositions" / "Parmi les réponses" / "Choisir parmi"
+  if (/parmi les\s+\d+\s+|parmi les réponses|choisir parmi|sélectionner (la|une) réponse/i.test(normalized)) return "multiple_choice";
+  // Historical DNB anomaly: explicit percentage choices
+  if (/\b(7\s*%|10\s*%|13\s*%)\b/.test(normalized)) return "multiple_choice";
+  // Proof / demonstration → free_response (structured writeup required)
+  if (COGNITIVE_VERBS.synthesise.test(normalized)) return "free_response";
+  // Short justifications / explanations → free_response
+  // Also: "A-t-il raison?" / "a-t-elle raison?" / "ont-ils raison?" require written justification
+  if (/\b(justifier|expliquer|pourquoi|montrer|vérifier|comparer)\b/i.test(normalized)) return "free_response";
+  if (/a-t-(?:il|elle|on)\s+raison|ont-ils\s+raison|affirm(?:e|ent|ation)/i.test(normalized)) return "free_response";
+  // Numeric computation
+  if (/\b(calculer|déterminer|combien|étendue|moyenne|pourcentage|probabilité|volume|aire|longueur|hauteur|rayon|diamètre|angle|distance|mesure|résultat|valeur)\b/i.test(normalized)) return "numeric";
+  // Expression / formula writing
+  if (/\b(exprimer|écrire|donner l'expression|développer|réduire|factoriser|simplifier)\b/i.test(normalized)) return "short_answer";
+  // Document-dependent questions
+  if (/\b(tableau|figure|document|graphique|schéma|programme|script)\b/i.test(normalized)) return "document_question";
   return "short_answer";
 }
 
+/**
+ * Infer curriculum-aligned skill tags from a question prompt.
+ * Covers all major DNB Maths domains: Numbers, Algebra, Geometry, Data, Programming.
+ */
 function inferSkillTags(text: string): string[] {
-  const normalized = text.toLowerCase();
+  const n = text.toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, ""); // strip accents for broader matching
   const tags = new Set<string>();
-  if (/tableau|cellule|formule|feuille de calcul/.test(normalized)) tags.add("tableur");
-  if (/moyenne|étendue|serie|série|température/.test(normalized)) tags.add("statistiques");
-  if (/pourcentage|augmentation|evolution|évolution/.test(normalized)) tags.add("pourcentage");
-  if (/probabilit/.test(normalized)) tags.add("probabilites");
-  if (/symétrie|rotation|homothétie|figure/.test(normalized)) tags.add("geometrie");
-  if (/calculer|déterminer|vérifier/.test(normalized)) tags.add("calcul");
-  return tags.size > 0 ? [...tags] : ["annale_dnb"];
+
+  // NOTE: use \b word-boundary anchors to avoid false-positives
+  // (e.g. "paire" contains "aire", "noire" contains "oire" etc.)
+
+  // ── Nombres et calculs ───────────────────────────────────────────────────────
+  if (/\bfraction\b|numerat|denominat|\brapport\b|\bquotient\b/.test(n)) tags.add("fractions");
+  // Also catch caret notation: (-5)^3 or x^2 in question text
+  if (/\bpuissance\b|\bexposant\b|\bcar[ré]+\b|\bcube\b|racine carr|\^\d|\d\^/.test(n)) tags.add("puissances");
+  // "produit de facteurs premiers" / "decomposer" / "pgcd" / sachet-distribution context
+  if (/\bpremier\b|decompos|facteur premier|\bpgcd\b|\bppcm\b/.test(n)) tags.add("arithmetique");
+  if (/d[eé]cimal|\bvirgule\b|\barrondi\b|approxi/.test(n)) tags.add("calcul_decimal");
+  if (/\bpourcentage\b|augmentation|diminution|[eé]volution|\btaux\b/.test(n)) tags.add("pourcentages");
+  if (/proportion|\b[eé]chelle\b|grandeur propor/.test(n)) tags.add("proportionnalite");
+  // "multiple" alone is too broad (matches "choix multiple" in QCM context); require "multiple de" or "multiples de"
+  // Also detect equal-distribution problems (PGCD context): "nombre de sachets", "répartir", "le plus grand nombre"
+  if (/\bpgcd\b|\bppcm\b|\bdiviseur\b|\bmultiples? de\b|divisib|\best un multiple\b/.test(n)) tags.add("divisibilite");
+  // "sachet" is a strong PGCD-problem indicator in French middle-school arithmetic
+  if (/nombre de\s+(?:sachets?|groupes?|lots?|[eé]quipes?|bouquets?|rang[eé]es?)|\b[rr][eé]partir|\bdistribuer\b|\ble plus grand nombre\b|\bsachets?\b/.test(n)) tags.add("divisibilite");
+
+  // ── Calcul littéral & fonctions ─────────────────────────────────────────────
+  if (/\bfonction\b|\bimage\b|\bant[eé]c[eé]dent\b|\bf\(x\)|\bcourbe\b|repr[eé]sentation graphi/.test(n)) tags.add("fonctions");
+  if (/d[eé]velopp|r[eé]dui|factori|\bidentit[eé]\b|distributi/.test(n)) tags.add("calcul_litteral");
+  if (/[eé]quation|r[eé]soudre|in[eé]quation|\bsolution\b|\binconnue\b/.test(n)) tags.add("equations");
+  // \blettre\b also matches "la lettre correspondant" in QCM preamble; remove it (use "variable" / "inconnue" instead)
+  // x\b alone matches "choix" (ends with x at word boundary); use \bx\b (standalone x) for algebraic variables
+  if (/\bexpression\b|\bvariable\b|\binconnue\b|substituer|remplacer|\bx\b/.test(n)) tags.add("calcul_litteral");
+  if (/programme de calcul|\bscratch\b|\bboucle\b|\bcondition\b|\balgorithme\b|\bscript\b|s[eé]quence/.test(n)) tags.add("programmation");
+
+  // ── Géométrie ────────────────────────────────────────────────────────────────
+  if (/\btriangle\b|rectangle en|\bhypot[eé]nuse\b|\bpythagore\b|\bcos\b|\bsin\b|\btan\b|\bangle\b|\bcosinus\b|\bsinus\b/.test(n)) tags.add("trigonometrie");
+  if (/\bcercle\b|\brayon\b|\bdiametre\b|\bdiamètre\b|\bdisque\b|\barc\b|\binscrit\b/.test(n)) tags.add("cercles");
+  // Use \baire\b to avoid matching "paire", "aire" as standalone word only
+  if (/\baire\b|\bsurface\b|\bvolume\b|p[eé]rim[eè]tre|\bpav[eé]\b|\bprisme\b|\bcylindre\b/.test(n)) tags.add("aires_volumes");
+  // "image de X par la fonction" is a function concept, not geometric transformation;
+  // only tag transformations when the geometric context is explicit
+  if (/sym[eé]trie|rotation|\btranslation\b|transformation|\bimage d[u']\s*point\b|\bimage du\b/.test(n)) tags.add("transformations");
+  if (/\bquadrilat[eè]re\b|\bpolyg[oô]ne\b|\blosange\b|parall[eé]logramme|trap[eè]ze/.test(n)) tags.add("geometrie_plane");
+  if (/thal[eè]s|semblable|configuration de thal/.test(n)) tags.add("thales");
+  if (/\bvecteur\b|coordonn[eé]es|\brepère\b|\babscisse\b|\bordonnée\b/.test(n)) tags.add("reperage");
+
+  // ── Données & probabilités ───────────────────────────────────────────────────
+  if (/probabilit|fr[eé]quence relative|\bhasard\b|al[eé]atoire/.test(n)) tags.add("probabilites");
+  if (/\bmoyenne\b|\bm[eé]diane\b|[eé]tendue|\bquartile\b|statistique|\bs[eé]rie\b|\beffectif\b/.test(n)) tags.add("statistiques");
+  if (/tableau de valeurs|tableau de donn[eé]es|fr[eé]quence/.test(n)) tags.add("lecture_donnees");
+  if (/\btableur\b|\bcellule\b|formule tableur|feuille de calcul/.test(n)) tags.add("tableur");
+
+  // ── Raisonnement ────────────────────────────────────────────────────────────
+  if (COGNITIVE_VERBS.synthesise.test(text)) tags.add("demonstration");
+  if (/justifier|\bpourquoi\b|expliquer pourquoi|a-t-(?:il|elle|on) raison|ont-ils raison|vrai ou faux/.test(n)) tags.add("justification");
+
+  // Fallback: mark as DNB official exam content so it's at least searchable
+  if (tags.size === 0) tags.add("annale_dnb");
+  return [...tags];
 }
 
+/**
+ * Infer difficulty using Bloom's taxonomy cognitive verb tiers + structural heuristics.
+ * Returns "easy" | "medium" | "hard".
+ */
 function inferDifficulty(itemType: ItemType, text: string): Difficulty {
-  if (itemType === "free_response" || text.length > 260) return "hard";
-  if (itemType === "numeric" || itemType === "calculation" || itemType === "multiple_choice") return "medium";
+  const n = text.toLowerCase();
+
+  // Tier 3 — synthesis/proof: always hard
+  if (COGNITIVE_VERBS.synthesise.test(text)) return "hard";
+  // Multi-step proofs signalled by "donc" / "en déduire" chains
+  if (/\b(en déduire|donc|par conséquent)\b.*\b(calculer|déterminer)\b/i.test(text)) return "hard";
+  // Explicit proof/justification verbs: hard
+  if (/\bjustifier|démontrer|prouver|vérifier que\b/i.test(n)) return "hard";
+  // Very long prompts (multi-step word problems)
+  if (text.length > 280) return "hard";
+
+  // Tier 2 — analysis: medium
+  // "Pourquoi" and "A-t-il raison?" questions require arithmetic reasoning / justification
+  if (/\bpourquoi\b|a-t-(?:il|elle|on)\s+raison|ont-ils\s+raison/i.test(n)) return "medium";
+  if (COGNITIVE_VERBS.analyse.test(text)) return "medium";
+  if (itemType === "numeric" || itemType === "calculation") return "medium";
+  if (itemType === "multiple_choice") return "medium";
+  // "Parmi", "choisir", "recopier" suggests evaluation/selection = medium
+  if (/\b(parmi|choisir|sélectionner|recopier)\b/i.test(n)) return "medium";
+  // Expression writing / algebraic manipulation
+  if (/\b(exprimer|développer|factoriser|réduire|simplifier)\b/i.test(n)) return "medium";
+
+  // Tier 1 — recall/apply: easy
+  if (COGNITIVE_VERBS.apply.test(text)) return "easy";
   return "easy";
 }
 
@@ -540,7 +836,7 @@ function summarizePattern(text: string): string {
 
 function sourceLabel(exercise: BundleExercise, paper: BundlePaper | undefined): string {
   const title = paper?.title ?? "Sujet officiel";
-  const exerciseLabel = exercise.exercise_number !== null ? `Exercice ${exercise.exercise_number}` : "Exercice";
+  const exerciseLabel = exercise.title ?? (exercise.exercise_number !== null ? `Exercice ${exercise.exercise_number}` : "Exercice");
   return `${title} - ${exerciseLabel}`;
 }
 
@@ -554,7 +850,18 @@ export function resolveTrainingItemLevel(exercise: Pick<BundleExercise, "exam">,
 }
 
 function cleanPrompt(value: string): string {
-  return value.replace(/\s+/g, " ").trim();
+  let s = value;
+  // Strip raw LaTeX display math delimiters \[...\]
+  s = s.replace(/\\\[/g, " ").replace(/\\\]/g, " ");
+  // Strip remaining LaTeX commands (e.g. \[1,46~;...\] in statistics question)
+  s = s.replace(/\\[a-zA-Z]+\*?(?:\[[^\]]*\])?(?:\{[^}]*\})*/g, " ");
+  // Strip [Schéma — voir document original] placeholders from QCM question prompts
+  // (the actual diagram image is in the documents array, not the prompt)
+  s = s.replace(/\[Schéma[^\]]*\]/g, "").replace(/\[Schéma\]/g, "");
+  // Strip labelled expression choices (E_1 = ..., E_2 = ...) from the prompt text
+  // when they are embedded after the question sentence — they appear as radio buttons instead
+  s = s.replace(/\n[A-Z][_\d]*\s*=[\s\S]*/g, "");
+  return s.replace(/\s+/g, " ").trim();
 }
 
 function cleanNullable(value: string | null | undefined): string | null {

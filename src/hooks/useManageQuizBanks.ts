@@ -37,12 +37,12 @@ export const useCreateQuizBankQuestion = () => {
         .insert({
           id: question.id || `q-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           bank_id: bankId,
-          payload: question,
+          payload: question as any,
           position,
         })
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -64,7 +64,7 @@ export const useUpdateQuizBankQuestion = () => {
       const { data, error } = await supabase
         .from('quiz_bank_questions')
         .update({
-          payload: question,
+          payload: question as any,
           position,
         })
         .eq('id', dbId)
@@ -133,11 +133,13 @@ export const useCreateQuizBankAssignment = () => {
   return useMutation({
     mutationFn: async (assignment: {
       bank_id: string;
-      topic_id?: string;
-      trigger_after_n_videos?: number;
-      video_ids?: string[];
-      min_completed_in_set?: number;
+      topic_id?: string | null;
+      trigger_after_n_videos?: number | null;
+      video_ids?: string[] | null;
+      min_completed_in_set?: number | null;
       is_active?: boolean;
+      display_context?: 'practice' | 'lesson' | 'both';
+      trigger_video_id?: string | null;
     }) => {
       const { data, error } = await supabase
         .from('quiz_bank_assignments')

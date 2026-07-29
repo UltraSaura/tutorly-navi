@@ -11,12 +11,7 @@ export function useIsMobile() {
       // Check user agent for actual mobile devices
       const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
-      // Use visualViewport width if available (more accurate on mobile)
-      const viewportWidth = window.visualViewport 
-        ? window.visualViewport.width 
-        : window.innerWidth;
-      
-      const isSmallViewport = viewportWidth < MOBILE_BREAKPOINT;
+      const isSmallViewport = window.innerWidth < MOBILE_BREAKPOINT;
       
       return isMobileDevice || isSmallViewport;
     }

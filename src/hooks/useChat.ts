@@ -183,7 +183,8 @@ export const useChat = () => {
         selectedModelId, 
         language,
         undefined,
-        userContext
+        userContext as unknown as Record<string, unknown>
+
       );
       
       console.log('[useChat] Response received:', { 

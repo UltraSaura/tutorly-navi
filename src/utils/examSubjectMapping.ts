@@ -59,7 +59,11 @@ export function getSubjectSlugAliases(subjectSlug: string): string[] {
     svt: ["sciences", "svt"],
     physique_chimie: ["physique_chimie", "physics", "physique", "chimie", "chemistry"],
     physics: ["physique_chimie", "physics", "physique", "chimie", "chemistry"],
+    anglais: ["anglais", "english"],
+    english: ["anglais", "english"],
     histoire_geographie: ["histoire_geographie", "histoire", "geographie", "geography", "history", "histoire_geo"],
+    geographie: ["histoire_geographie", "histoire", "geographie", "geography", "history", "histoire_geo"],
+    geography: ["histoire_geographie", "histoire", "geographie", "geography", "history", "histoire_geo"],
     history: ["histoire_geographie", "histoire", "geographie", "geography", "history", "histoire_geo"],
     emc: ["emc"],
   };

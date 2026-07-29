@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 
 interface ChildOverview {
   id: string;
+  userId: string;
   name: string;
   successRate: number;
   exercisesThisWeek: number;
@@ -198,6 +199,7 @@ export function useGuardianHomeData(guardianId?: string) {
 
       return {
         id: child.id,
+        userId: child.user_id,
         name,
         successRate,
         exercisesThisWeek: exercisesThisWeek.length,
@@ -271,10 +273,19 @@ export function useGuardianHomeData(guardianId?: string) {
     };
   }, [childrenData, exerciseData, quizData, childrenOverview]);
 
+  const childUserIds: string[] = useMemo(
+    () =>
+      (childrenData ?? [])
+        .map((link: any) => link.children?.user_id)
+        .filter(Boolean) as string[],
+    [childrenData]
+  );
+
   return {
     childrenOverview,
     recentActivity,
     aggregatedStats,
+    childUserIds,
     isLoading: childrenLoading || exerciseLoading || quizLoading,
   };
 }

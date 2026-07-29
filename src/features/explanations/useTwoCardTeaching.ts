@@ -6,7 +6,7 @@ import { normalizeLearningStyle, type LearningStyle } from "@/types/learning-sty
 import type { Step } from "./types";
 import { getLearningMode } from "@/domain/learningMode";
 
-const ADAPTIVE_EXPLANATION_CACHE_VERSION = 3;
+const ADAPTIVE_EXPLANATION_CACHE_VERSION = 4;
 
 const ADAPTIVE_TWOCARD_PROMPT = `You are a patient math tutor. Your job is to TEACH the underlying mathematical concept, NOT to solve the student's exercise.
 
@@ -62,6 +62,103 @@ Subject: {{subject}}
 Language: {{language}}
 Grade level: {{gradeLevel}}
 Learning style: {{learning_style}}`;
+
+function buildExerciseHash(
+  exerciseContent: string,
+  language: string,
+  gradeLevel: string,
+  learningStyle: LearningStyle
+) {
+  const normalizedExercise = exerciseContent.trim().toLowerCase().replace(/\s+/g, " ");
+  const normalizedLanguage = language.trim().toLowerCase();
+  const normalizedGradeLevel = gradeLevel.trim().toLowerCase();
+  const normalizedLearningStyle = learningStyle.trim().toLowerCase();
+
+  return [
+    normalizedExercise,
+    normalizedLanguage,
+    normalizedGradeLevel,
+    normalizedLearningStyle,
+    `adaptive-v${ADAPTIVE_EXPLANATION_CACHE_VERSION}`,
+  ].join(":");
+}
+
+async function checkExplanationCache(hash: string): Promise<TeachingSections | null> {
+  try {
+    const { data: cacheEntry, error } = await supabase
+      .from("exercise_explanations_cache")
+      .select("id, explanation_data, usage_count")
+      .eq("exercise_hash", hash)
+      .maybeSingle();
+
+    if (error) {
+      console.error("[TwoCardTeaching] Cache lookup failed:", error);
+      return null;
+    }
+
+    if (!cacheEntry?.explanation_data || typeof cacheEntry.explanation_data !== "object") {
+      return null;
+    }
+
+    void supabase
+      .from("exercise_explanations_cache")
+      .update({
+        usage_count: (cacheEntry.usage_count ?? 0) + 1,
+      })
+      .eq("id", cacheEntry.id)
+      .then(({ error: updateError }) => {
+        if (updateError) {
+          console.error("[TwoCardTeaching] Cache usage_count update failed:", updateError);
+        }
+      });
+
+    console.log("[TwoCardTeaching] Cache hit:", cacheEntry.id);
+    return cacheEntry.explanation_data as unknown as TeachingSections;
+  } catch (err) {
+    console.error("[TwoCardTeaching] Cache read error:", err);
+    return null;
+  }
+}
+
+async function saveExplanationToCache(
+  hash: string,
+  exerciseContent: string,
+  subjectId: string | null,
+  sections: TeachingSections,
+  correctAnswer?: string | null
+): Promise<void> {
+  try {
+    const { data: cacheEntry, error } = await supabase
+      .from("exercise_explanations_cache")
+      .upsert(
+        {
+          exercise_content: exerciseContent,
+          exercise_hash: hash,
+          subject_id: subjectId,
+          explanation_data: {
+            ...sections,
+            adaptiveExplanationVersion: ADAPTIVE_EXPLANATION_CACHE_VERSION,
+          } as any,
+          correct_answer: correctAnswer ?? null,
+          quality_score: 0,
+          usage_count: 1,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "exercise_hash" }
+      )
+      .select("id")
+      .single();
+
+    if (error) {
+      console.error("[TwoCardTeaching] Failed to save to cache:", error);
+      return;
+    }
+
+    console.log("[TwoCardTeaching] Explanation saved to cache:", cacheEntry.id);
+  } catch (err) {
+    console.error("[TwoCardTeaching] Error saving explanation:", err);
+  }
+}
 
 /**
  * Detect the operation type from a math exercise
@@ -288,6 +385,19 @@ export function useTwoCardTeaching() {
 
       console.log('[TwoCardTeaching] Using adaptive explanation prompt with context:', explanationContext);
 
+      const cacheHash = buildExerciseHash(
+        exercise_content,
+        response_language,
+        grade_level,
+        learning_style
+      );
+      const cachedSections = await checkExplanationCache(cacheHash);
+      if (cachedSections) {
+        debugSetSections(cachedSections);
+        setLoading(false);
+        return;
+      }
+
       console.log('[TwoCardTeaching] Sending explanation request to AI using database prompt');
 
       // Use a custom prompt and plain JSON response so the UI is not constrained
@@ -403,39 +513,15 @@ export function useTwoCardTeaching() {
 
       console.log('[TwoCardTeaching] ✓ Explanation sections generated:', explanationSections);
       console.log('[TwoCardTeaching] ✓ Method field length:', explanationSections.method.length);
-      setSections(explanationSections);
+      debugSetSections(explanationSections);
 
-      // Save explanation to cache for guardian visibility
-      try {
-        const { data: user } = await supabase.auth.getUser();
-        if (!user.user) throw new Error('No authenticated user');
-
-        // Create explanation cache entry
-        const { data: cacheEntry, error: cacheError } = await supabase
-          .from('exercise_explanations_cache')
-          .insert([{
-            exercise_content: exercise_content,
-            exercise_hash: `${exercise_content.toLowerCase().replace(/\s+/g, '')}:adaptive-v${ADAPTIVE_EXPLANATION_CACHE_VERSION}`,
-            subject_id: subject.toLowerCase(),
-            explanation_data: {
-              ...explanationSections,
-              adaptiveExplanationVersion: ADAPTIVE_EXPLANATION_CACHE_VERSION,
-            } as any,
-            correct_answer: correctAnswer, // NEW
-            quality_score: 0,
-            usage_count: 1
-          }])
-          .select('id')
-          .single();
-
-        if (cacheError) {
-          console.error('[TwoCardTeaching] Failed to save to cache:', cacheError);
-        } else {
-          console.log('[TwoCardTeaching] Explanation saved to cache:', cacheEntry.id);
-        }
-      } catch (err) {
-        console.error('[TwoCardTeaching] Error saving explanation:', err);
-      }
+      void saveExplanationToCache(
+        cacheHash,
+        exercise_content,
+        null,
+        explanationSections,
+        correctAnswer
+      );
 
       setLoading(false);
       

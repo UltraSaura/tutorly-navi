@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
-import { copyFile, mkdtemp, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { copyFile, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { promisify } from "node:util";
 import type { ExamExercise, ExamPaper } from "../parsers/pdf-to-exam.ts";
 
@@ -56,10 +56,11 @@ export async function applyCropsToExercises(
       await mkdir(exerciseAssetsDir, { recursive: true });
 
       for (const crop of crops) {
-        // 1. Render specific page
+        // 1. Render specific page at 300 DPI for high-quality output
+        const DPI = "300";
         const prefix = join(dir, `page-${crop.page}`);
         try {
-          await execFileAsync("pdftoppm", ["-png", "-r", "144", "-f", String(crop.page), "-l", String(crop.page), pdfPath, prefix], {
+          await execFileAsync("pdftoppm", ["-png", "-r", DPI, "-f", String(crop.page), "-l", String(crop.page), pdfPath, prefix], {
             timeout: 30_000,
           });
         } catch {
@@ -68,7 +69,7 @@ export async function applyCropsToExercises(
         }
 
         const renderedPath = join(dir, `page-${crop.page}-${crop.page}.png`);
-        
+
         // 2. Read dimensions
         const dimensions = await readPngDimensions(renderedPath);
         if (!dimensions) {
@@ -76,18 +77,18 @@ export async function applyCropsToExercises(
           continue;
         }
 
-        // 3. Compute crop pixels
+        // 3. Compute crop pixels from percentage bounding box (scales with DPI automatically)
         const [pctX, pctY, pctMaxX, pctMaxY] = crop.bbox_percent;
         const x = Math.round(pctX * dimensions.width);
         const y = Math.round(pctY * dimensions.height);
         const w = Math.round((pctMaxX - pctX) * dimensions.width);
         const h = Math.round((pctMaxY - pctY) * dimensions.height);
 
-        // 4. Run pdftoppm again with crop
+        // 4. Crop at 300 DPI
         const cropPrefix = join(dir, `crop-${crop.id}`);
         try {
           await execFileAsync("pdftoppm", [
-            "-png", "-r", "144",
+            "-png", "-r", DPI,
             "-f", String(crop.page), "-l", String(crop.page),
             "-x", String(x), "-y", String(y),
             "-W", String(w), "-H", String(h),
@@ -99,46 +100,65 @@ export async function applyCropsToExercises(
         }
 
         const cropRenderedPath = join(dir, `crop-${crop.id}-${crop.page}.png`);
-        const fileName = `${crop.id}.png`;
+
+        // 5. Convert PNG → WebP for ~30% smaller files
+        const webpPath = join(dir, `crop-${crop.id}.webp`);
+        try {
+          await execFileAsync("cwebp", ["-q", "90", cropRenderedPath, "-o", webpPath], { timeout: 30_000 });
+        } catch {
+          console.warn(`[CROP] cwebp conversion failed for ${crop.id}, falling back to PNG`);
+          const pngFileName = `${crop.id}.png`;
+          const pngDestination = join(exerciseAssetsDir, pngFileName);
+          await copyFile(cropRenderedPath, pngDestination);
+          const local_path = [assetsRoot, safePaperId, safeExerciseId, pngFileName].join("/");
+          if (exercise.parsed_content) {
+            updateExerciseDocs(exercise, crop, local_path);
+          }
+          continue;
+        }
+
+        const fileName = `${crop.id}.webp`;
         const destination = join(exerciseAssetsDir, fileName);
-        await copyFile(cropRenderedPath, destination);
+        await copyFile(webpPath, destination);
 
         const local_path = [assetsRoot, safePaperId, safeExerciseId, fileName].join("/");
 
-        // 5. Update the exercise documents
+        // 6. Update the exercise documents
         if (exercise.parsed_content) {
-          let docs = exercise.parsed_content.documents ?? [];
-          
-          // Check if we should merge with existing structured table
-          let existingDocIndex = docs.findIndex(d => d.type === crop.type);
-          // Just a heuristic: if crop type is table and we have a table, we enrich it
-          if (existingDocIndex >= 0 && crop.type === 'table') {
-            docs[existingDocIndex] = {
-              ...docs[existingDocIndex],
-              id: crop.id,
-              label: crop.label ?? docs[existingDocIndex].label,
-              local_path,
-              alt: crop.alt ?? docs[existingDocIndex].alt,
-              render_mode: crop.render_mode,
-            };
-          } else {
-            docs.push({
-              id: crop.id,
-              type: crop.type as any,
-              label: crop.label,
-              local_path,
-              alt: crop.alt,
-              render_mode: crop.render_mode,
-              source: { page: crop.page },
-            });
-          }
-          exercise.parsed_content.documents = docs;
+          updateExerciseDocs(exercise, crop, local_path);
         }
       }
     }
   } finally {
     await rm(dir, { force: true, recursive: true });
   }
+}
+
+function updateExerciseDocs(exercise: ExamExercise, crop: CropConfigItem, local_path: string): void {
+  const docs = exercise.parsed_content!.documents ?? [];
+  // For tables: merge with an existing table doc (enriches HTML table with a crop image)
+  const existingTableIdx = crop.type === "table" ? docs.findIndex(d => d.type === "table") : -1;
+  if (existingTableIdx >= 0) {
+    docs[existingTableIdx] = {
+      ...docs[existingTableIdx],
+      id: crop.id,
+      label: crop.label ?? docs[existingTableIdx].label,
+      local_path,
+      alt: crop.alt ?? docs[existingTableIdx].alt,
+      render_mode: crop.render_mode,
+    };
+  } else {
+    docs.push({
+      id: crop.id,
+      type: crop.type as any,
+      label: crop.label,
+      local_path,
+      alt: crop.alt,
+      render_mode: crop.render_mode,
+      source: { page: crop.page },
+    });
+  }
+  exercise.parsed_content!.documents = docs;
 }
 
 async function readPngDimensions(filePath: string): Promise<{ width: number; height: number } | null> {

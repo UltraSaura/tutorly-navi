@@ -53,7 +53,8 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
   const [countryCode, setCountryCode] = useState("fr");
   const [levelCode, setLevelCode] = useState<string>("__all__");
   const [subjectId, setSubjectId] = useState<string>("__all__");
-  const [categoryId, setCategoryId] = useState<string>("");
+  // "__auto__" = let the backend auto-create categories from curriculum domains
+  const [categoryId, setCategoryId] = useState<string>("__auto__");
   const [preview, setPreview] = useState<GenerateTopicsResult | null>(null);
 
   // Distinct levels and subjects available in objectives
@@ -87,7 +88,7 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
     setPreview(null);
     setLevelCode("__all__");
     setSubjectId("__all__");
-    setCategoryId("");
+    setCategoryId("__auto__");
   };
 
   const handleClose = (next: boolean) => {
@@ -95,19 +96,18 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
     onOpenChange(next);
   };
 
+  const buildParams = (dry_run: boolean) => ({
+    // Omit category_id entirely in auto mode so the backend derives categories.
+    ...(categoryId !== "__auto__" ? { category_id: categoryId } : {}),
+    country_code: countryCode,
+    level_code: levelCode === "__all__" ? null : levelCode,
+    subject_id_uuid: subjectId === "__all__" ? null : subjectId,
+    dry_run,
+  });
+
   const runDryRun = async () => {
-    if (!categoryId) {
-      toast.error("Please pick a category");
-      return;
-    }
     try {
-      const result = await generate.mutateAsync({
-        category_id: categoryId,
-        country_code: countryCode,
-        level_code: levelCode === "__all__" ? null : levelCode,
-        subject_id_uuid: subjectId === "__all__" ? null : subjectId,
-        dry_run: true,
-      });
+      const result = await generate.mutateAsync(buildParams(true));
       setPreview(result);
       setStep("preview");
     } catch (e: any) {
@@ -117,13 +117,7 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
 
   const runCommit = async () => {
     try {
-      const result = await generate.mutateAsync({
-        category_id: categoryId,
-        country_code: countryCode,
-        level_code: levelCode === "__all__" ? null : levelCode,
-        subject_id_uuid: subjectId === "__all__" ? null : subjectId,
-        dry_run: false,
-      });
+      const result = await generate.mutateAsync(buildParams(false));
       setPreview(result);
       setStep("done");
       toast.success(
@@ -211,14 +205,15 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
                 </Select>
               </div>
               <div>
-                <Label>
-                  Category <span className="text-destructive">*</span>
-                </Label>
+                <Label>Category</Label>
                 <Select value={categoryId} onValueChange={setCategoryId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pick a category" />
+                    <SelectValue placeholder="Auto-create from domains" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="__auto__">
+                      Auto-create from curriculum domains
+                    </SelectItem>
                     {categories.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
                         {c.name}
@@ -226,6 +221,9 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Leave blank to auto-create categories from curriculum domains
+                </p>
               </div>
             </div>
 
@@ -241,7 +239,7 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
               <Button variant="outline" onClick={() => handleClose(false)}>
                 Cancel
               </Button>
-              <Button onClick={runDryRun} disabled={generate.isPending || !categoryId}>
+              <Button onClick={runDryRun} disabled={generate.isPending}>
                 {generate.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Preview
               </Button>
@@ -257,6 +255,11 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
               {orphans > 0 && (
                 <Badge variant="destructive">{orphans} orphan objectives</Badge>
               )}
+              {preview.auto_categories && (
+                <Badge variant="outline">
+                  {preview.categories_created ?? 0} categories auto-created
+                </Badge>
+              )}
             </div>
 
             <div className="border rounded-md max-h-[50vh] overflow-y-auto">
@@ -266,6 +269,7 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
                     <TableHead>Level</TableHead>
                     <TableHead>Subject</TableHead>
                     <TableHead>Domain</TableHead>
+                    <TableHead>Category</TableHead>
                     <TableHead>Topic name</TableHead>
                     <TableHead className="text-right"># objectives</TableHead>
                     <TableHead>Status</TableHead>
@@ -277,6 +281,7 @@ export const GenerateTopicsFromObjectivesDialog = ({ open, onOpenChange }: Props
                       <TableCell className="font-mono text-xs">{t.level_code}</TableCell>
                       <TableCell>{t.subject_name || "—"}</TableCell>
                       <TableCell>{t.domain_name || "—"}</TableCell>
+                      <TableCell>{t.category_name || "—"}</TableCell>
                       <TableCell className="font-medium">{t.topic_name}</TableCell>
                       <TableCell className="text-right">{t.objective_count}</TableCell>
                       <TableCell>

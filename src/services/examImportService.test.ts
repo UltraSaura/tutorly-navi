@@ -43,15 +43,9 @@ describe('exam import service practice filters', () => {
   });
 
   function expectSubjectSlugFilter(calls: Array<[string, unknown, unknown?]>, subjectSlug: string) {
-    const hasEq = calls.some(
-      (call) => call[0] === 'eq' && call[1] === 'subject_slug' && call[2] === subjectSlug
-    );
+    const hasEq = calls.some((call) => call[0] === 'eq' && call[1] === 'subject_slug' && call[2] === subjectSlug);
     const hasIn = calls.some(
-      (call) =>
-        call[0] === 'in' &&
-        call[1] === 'subject_slug' &&
-        Array.isArray(call[2]) &&
-        (call[2] as unknown[]).includes(subjectSlug)
+      (call) => call[0] === 'in' && call[1] === 'subject_slug' && Array.isArray(call[2]) && (call[2] as unknown[]).includes(subjectSlug),
     );
     expect(hasEq || hasIn).toBe(true);
   }

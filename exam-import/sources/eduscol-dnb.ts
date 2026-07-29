@@ -77,7 +77,7 @@ function mapRow(row: EduscolRow, fetched_at: string): CollectedPaper[] {
 
 async function fetchText(url: string): Promise<string> {
   const response = await fetch(url, {
-    headers: { "user-agent": "TutorlyExamImport/1.0 (+https://github.com/UltraSaura/tutorly-learning)" },
+    headers: { "user-agent": "TutorlyExamImport/1.0 (+https://github.com/UltraSaura/tutorly-schoolprg)" },
   });
   if (!response.ok) throw new Error(`Unable to fetch ${url}: HTTP ${response.status}`);
   return response.text();

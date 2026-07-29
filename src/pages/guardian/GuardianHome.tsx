@@ -1,5 +1,6 @@
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { useGuardianHomeData } from '@/hooks/useGuardianHomeData';
+import { useGuardianLessonData } from '@/hooks/useGuardianLessonData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, BookOpen, TrendingUp, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,8 +17,12 @@ export default function GuardianHome() {
     childrenOverview,
     recentActivity,
     aggregatedStats,
+    childUserIds,
     isLoading
   } = useGuardianHomeData(guardianId);
+  const { lessonStats, getChildStats } = useGuardianLessonData(guardianId, childUserIds);
+  const totalLessonsThisWeek = lessonStats.reduce((sum, stats) => sum + stats.lessonsThisWeek, 0);
+  const totalXp = lessonStats.reduce((sum, stats) => sum + stats.totalXp, 0);
   if (isLoading) {
     return <div className="space-y-8">
         <div>
@@ -86,6 +91,20 @@ export default function GuardianHome() {
               </div>
             </CardContent>
           </Card>
+          <Card>
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="rounded-lg p-3" style={{ background: '#F2FBF8' }}>
+                <BookOpen className="h-5 w-5" style={{ color: '#12C6A0' }} />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Leçons cette semaine</p>
+                <p className="text-2xl font-bold">{totalLessonsThisWeek}</p>
+                {totalXp > 0 && (
+                  <p className="text-xs text-muted-foreground">{totalXp} XP total</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
@@ -118,7 +137,48 @@ export default function GuardianHome() {
               </Button>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {childrenOverview.map(child => <ChildOverviewCard key={child.id} {...child} />)}
+              {childrenOverview.map((child) => {
+                const lessonData = getChildStats(child.userId);
+                return (
+                  <div key={child.id} className="relative">
+                    <ChildOverviewCard {...child} />
+                    {lessonData && (lessonData.lessonsCompleted > 0 || lessonData.currentStreak > 0) && (
+                      <div
+                        style={{
+                          marginTop: -8,
+                          background: '#F2FBF8',
+                          border: '0.5px solid #9FE1CB',
+                          borderRadius: '0 0 12px 12px',
+                          padding: '8px 16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        {lessonData.lessonsThisWeek > 0 && (
+                          <span style={{ fontSize: 12, color: '#085041', fontWeight: 600 }}>
+                            📚 {lessonData.lessonsThisWeek} leçon{lessonData.lessonsThisWeek > 1 ? 's' : ''} cette semaine
+                          </span>
+                        )}
+                        {lessonData.currentStreak > 0 && (
+                          <span style={{ fontSize: 12, color: '#B45309', fontWeight: 600 }}>
+                            🔥 {lessonData.currentStreak} jour{lessonData.currentStreak > 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {lessonData.streakAtRisk && (
+                          <span style={{ fontSize: 11, color: '#A32D2D', fontWeight: 600 }}>
+                            ⚠️ Série en danger
+                          </span>
+                        )}
+                        <span style={{ fontSize: 11, color: '#667085', marginLeft: 'auto' }}>
+                          {lessonData.totalXp} XP
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 

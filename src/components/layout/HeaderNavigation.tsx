@@ -4,6 +4,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { hardLogout } from "@/lib/logout";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -102,28 +103,7 @@ export function HeaderNavigation() {
   const currentPath = location.pathname;
   const isActive = (path: string) => currentPath === path;
 
-  const handleSignOut = async () => {
-    if (isSigningOut) return;
-    
-    setIsSigningOut(true);
-    try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Signed out successfully",
-        description: "You have been logged out of your account.",
-      });
-      navigate('/auth');
-    } catch (error) {
-      console.error('Sign out error:', error);
-      toast({
-        title: "Error signing out",
-        description: "There was a problem signing out. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
+  const handleSignOut = () => { hardLogout(); };
 
   const userInitials = user?.email?.charAt(0).toUpperCase() || 'U';
 
@@ -136,8 +116,7 @@ export function HeaderNavigation() {
       </div>
 
       {/* Navigation Links - Hidden on mobile as MobileBottomTabs handles it */}
-      {!isMobile && (
-        <nav className="flex items-center space-x-1">
+      <nav className="hidden md:flex items-center space-x-1">
           {desktopNavigation.map((item) => {
             const isActiveRoute = isActive(item.url);
             return (
@@ -156,11 +135,9 @@ export function HeaderNavigation() {
             );
           })}
         </nav>
-      )}
 
       {/* User Account Dropdown - Desktop Only */}
-      {!isMobile && (
-        <div className="flex items-center gap-3">
+      <div className="hidden md:flex items-center gap-3">
         <AdminPreviewSelector />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -232,7 +209,6 @@ export function HeaderNavigation() {
           </DropdownMenuContent>
         </DropdownMenu>
         </div>
-      )}
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.stuwy',
-  appName: 'Stuwy',
+  appId: 'com.tutorly.learning',
+  appName: 'Tutorly Learning',
   webDir: 'dist',
   plugins: {
     Camera: {

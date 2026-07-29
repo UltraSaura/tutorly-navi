@@ -2,7 +2,8 @@ import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface GenerateTopicsParams {
-  category_id: string;
+  /** Optional — omit to auto-create categories from curriculum domains. */
+  category_id?: string;
   country_code?: string;
   level_code?: string | null;
   subject_id_uuid?: string | null;
@@ -15,6 +16,8 @@ export interface PreviewTopic {
   subject_name: string | null;
   domain_id_uuid: string | null;
   domain_name: string | null;
+  category_id: string | null;
+  category_name: string | null;
   subdomain_id_uuid: string | null;
   topic_name: string;
   slug: string;
@@ -25,6 +28,8 @@ export interface PreviewTopic {
 
 export interface GenerateTopicsResult {
   dry_run: boolean;
+  auto_categories?: boolean;
+  categories_created?: number;
   created: number;
   skipped_existing: number;
   links_added: number;

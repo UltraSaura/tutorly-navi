@@ -36,7 +36,7 @@ serve(async (req) => {
       );
     }
 
-    const { bankId, score, maxScore, tookSeconds } = await req.json();
+    const { bankId, score, maxScore, tookSeconds, details } = await req.json();
 
     if (!bankId || score === undefined || maxScore === undefined) {
       return new Response(
@@ -52,7 +52,8 @@ serve(async (req) => {
         user_id: user.id,
         score,
         max_score: maxScore,
-        took_seconds: tookSeconds || null
+        took_seconds: tookSeconds || null,
+        details: details ?? null,
       })
       .select('*')
       .single();
@@ -77,4 +78,3 @@ serve(async (req) => {
     );
   }
 });
-

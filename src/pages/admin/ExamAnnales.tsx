@@ -114,7 +114,7 @@ export default function ExamAnnales() {
           />
           <FilterSelect
             label="Discipline"
-            value={filters.discipline ?? ALL}
+            value={(Array.isArray(filters.discipline) ? filters.discipline[0] : filters.discipline) ?? ALL}
             onChange={(value) => setFilter('discipline', value)}
             options={(optionsQuery.data?.disciplines ?? []).map((value) => ({ value, label: value }))}
           />

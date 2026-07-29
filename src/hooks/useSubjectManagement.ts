@@ -2,25 +2,37 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Subject } from '@/types/admin';
 
-// Default subjects
+// Canonical French subjects — must match slugs in the subjects DB table.
 const DEFAULT_SUBJECTS: Subject[] = [
-  { id: 'math', name: 'Mathematics', active: true, icon: 'calculator', category: 'STEM', order: 0 },
-  { id: 'physics', name: 'Physics', active: true, icon: 'atom', category: 'STEM', order: 1 },
-  { id: 'chemistry', name: 'Chemistry', active: true, icon: 'flask-conical', category: 'STEM', order: 2 },
-  { id: 'biology', name: 'Biology', active: true, icon: 'dna', category: 'STEM', order: 3 },
-  { id: 'english', name: 'English', active: true, icon: 'book-open', category: 'Languages', order: 0 },
-  { id: 'history', name: 'History', active: true, icon: 'landmark', category: 'Humanities', order: 0 },
-  { id: 'geography', name: 'Geography', active: true, icon: 'globe', category: 'Humanities', order: 1 },
-  { id: 'french', name: 'French', active: true, icon: 'languages', category: 'Languages', order: 1 },
-  { id: 'spanish', name: 'Spanish', active: true, icon: 'languages', category: 'Languages', order: 2 },
-  { id: 'computer-science', name: 'Computer Science', active: true, icon: 'code', category: 'STEM', order: 4 }
+  { id: 'mathematiques',          name: 'Mathématiques',              active: true,  icon: 'calculator', category: 'Sciences', order: 0 },
+  { id: 'francais',               name: 'Français',                   active: true,  icon: 'book-open',  category: 'Langues',  order: 1 },
+  { id: 'sciences',               name: 'Sciences',                   active: true,  icon: 'atom',       category: 'Sciences', order: 2 },
+  { id: 'histoire',               name: 'Histoire',                   active: true,  icon: 'landmark',   category: 'SHS',      order: 3 },
+  { id: 'geographie',             name: 'Géographie',                 active: true,  icon: 'globe',      category: 'SHS',      order: 4 },
+  { id: 'emc',                    name: 'Éducation Morale et Civique',active: true,  icon: 'scale',      category: 'SHS',      order: 5 },
 ];
 
+// Old English subject ids that were shipped in earlier versions — clear stale localStorage.
+const LEGACY_ENGLISH_IDS = new Set(['math','physics','chemistry','biology','english','history','geography','french','spanish','computer-science']);
+
+function loadOrMigrateSubjects(): Subject[] {
+  try {
+    const raw = localStorage.getItem('subjects');
+    if (!raw) return DEFAULT_SUBJECTS;
+    const saved: Subject[] = JSON.parse(raw);
+    // If the saved list still contains legacy English subjects, reset to French defaults.
+    if (saved.some(s => LEGACY_ENGLISH_IDS.has(s.id))) {
+      localStorage.removeItem('subjects');
+      return DEFAULT_SUBJECTS;
+    }
+    return saved;
+  } catch {
+    return DEFAULT_SUBJECTS;
+  }
+}
+
 export const useSubjectManagement = () => {
-  const [subjects, setSubjects] = useState<Subject[]>(() => {
-    const savedSubjects = localStorage.getItem('subjects');
-    return savedSubjects ? JSON.parse(savedSubjects) : DEFAULT_SUBJECTS;
-  });
+  const [subjects, setSubjects] = useState<Subject[]>(loadOrMigrateSubjects);
 
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(() => {
     const savedSubject = localStorage.getItem('selectedSubject');

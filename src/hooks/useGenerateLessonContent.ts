@@ -19,9 +19,19 @@ export function useGenerateLessonContent() {
         description: 'This may take 30-60 seconds',
       });
 
-      const { data, error } = await supabase.functions.invoke('generate-lesson-content', {
+      const { data, error, response } = await supabase.functions.invoke('generate-lesson-content', {
         body: { topicId, modelId },
       });
+
+      if (error && response) {
+        try {
+          const payload = await response.clone().json();
+          throw new Error(payload?.error || payload?.details || payload?.message || error.message);
+        } catch {
+          const text = await response.text().catch(() => '');
+          throw new Error(text || error.message);
+        }
+      }
 
       if (error) throw error;
       return data;
