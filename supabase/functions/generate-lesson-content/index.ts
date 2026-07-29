@@ -322,7 +322,7 @@ serve(async (req) => {
       if (templateRow?.prompt_content) promptTemplate = templateRow.prompt_content;
     } catch { /* non-fatal */ }
 
-    const FALLBACK_PROMPT = `Tu es un professeur expert creant une lecon pour des eleves de {{grade_level}} ({{age_group}}) en {{country}}.
+    const FALLBACK_PROMPT = `Tu es un professeur excellent et tres clair. Tu crées une leçon pour des eleves de {{grade_level}} ({{age_group}}) en {{country}}.
 
 Programme : {{curriculum}}
 Matiere : {{subject}}
@@ -331,13 +331,63 @@ Description : {{topic_description}}
 Objectifs : {{learning_objectives}}
 {{difficulty_instruction}}
 
-REGLES : Reponds en {{response_language}}. Maximum {{word_budget}} mots pour l'explication. Exemples du quotidien d'un enfant.
+MISSION PEDAGOGIQUE
+- Réponds en {{response_language}}.
+- Enseigne comme un vrai professeur : simple, progressif, rassurant, précis.
+- Explique toujours d'abord l'idée, puis la methode, puis l'exemple.
+- Ne suppose jamais qu'un symbole, une notation ou un mot technique est déjà compris.
+- Si tu utilises une notation mathematique, explique-la clairement AVANT ou AU MOMENT où tu l'utilises.
+- Pour un niveau 1 ou une première étape, évite les explications trop condensées, trop symboliques ou trop abstraites.
+- En géométrie, définis clairement les points, segments, droites parallèles, rapports et longueurs avant d'écrire une égalité de rapports.
+- Pour les opérations, chaque étape doit dire l'action à faire : calculer, simplifier, transformer, trouver, comparer, remplacer, additionner, soustraire, etc.
+
+REGLES DE CLARTE
+- L'explication principale doit faire maximum {{word_budget}} mots.
+- Utilise des phrases courtes.
+- Commence par ce que l'élève cherche à comprendre ou à faire.
+- Explique le "pourquoi", pas seulement le "quoi".
+- Donne un ton naturel de professeur, pas un résumé sec.
+- N'écris pas une liste de formules sans explication.
+- Si une formule est utile, introduis-la avec une phrase simple qui dit à quoi elle sert.
+
+REGLES POUR L'EXEMPLE RESOLU
+- Produis "example_steps" avec 4 à 6 étapes si le sujet s'y prête.
+- Chaque étape doit contenir :
+  - "action" : un titre d'action court et clair, pas un mot isolé. Exemple : "Trouver le dénominateur commun", "Additionner les deux fractions", "Écrire les rapports de Thalès".
+  - "explanation" : une phrase complète qui explique ce qu'on fait et pourquoi, avec un langage simple.
+  - "math" : le calcul, l'égalité, la transformation ou la relation utile pour cette étape.
+  - "why" : facultatif, une précision très courte si cela aide l'élève à comprendre.
+- Tu peux aussi renseigner "label" et "line" pour compatibilité, mais la priorité est de remplir clairement "action", "explanation" et "math".
+- N'écris pas des titres vagues comme "Transformation", "Addition", "Simplification" sans précision.
+- Chaque étape doit être compréhensible seule par un élève.
+- Si le sujet est plutôt conceptuel, l'exemple doit quand même guider l'élève avec des actions concrètes.
+
+VOCABULAIRE
+- Ajoute 0 à 3 éléments de "vocabulary" seulement si cela aide vraiment.
+- Chaque définition doit être simple, courte et utile pour l'élève.
+
+ERREURS FREQUENTES
+- Donne 1 à 2 erreurs fréquentes.
+- Pour chaque erreur, explique clairement pourquoi c'est une erreur et comment l'éviter.
 
 REPONDS EN JSON VALIDE UNIQUEMENT :
 {
-  "explanation": "{{word_budget}} mots max en {{response_language}}",
-  "example": "Etape 1: ...\nEtape 2: ...\nEtape 3: ...",
-  "common_mistakes": [{ "mistake": "erreur", "why": "raison" }]
+  "explanation": "<explication claire, simple, progressive, {{word_budget}} mots max>",
+  "example": "<résumé très court de l'exemple résolu>",
+  "example_steps": [
+    {
+      "action": "<action claire>",
+      "explanation": "<phrase complète qui explique ce qu'on fait et pourquoi>",
+      "math": "<calcul, égalité ou relation utile>",
+      "why": "<précision courte facultative>",
+      "label": "<optionnel: même idée que action>",
+      "line": "<optionnel: phrase compacte pour compatibilité>"
+    }
+  ],
+  "vocabulary": [
+    { "term": "<mot utile>", "definition": "<définition simple>" }
+  ],
+  "common_mistakes": [{ "mistake": "<erreur fréquente>", "why": "<pourquoi c'est faux et comment l'éviter>" }]
 }`;
 
     // ── Helper: call ai-chat and return parsed JSON content ──────────────
@@ -387,6 +437,29 @@ REPONDS EN JSON VALIDE UNIQUEMENT :
       };
     };
 
+    const normalizeExampleSteps = (rawExampleSteps: any): Array<Record<string, string>> => {
+      if (!Array.isArray(rawExampleSteps)) return [];
+      return rawExampleSteps
+        .map((step: any) => {
+          if (!step || typeof step !== 'object') return null;
+          const normalized = {
+            label: typeof step.label === 'string' ? step.label.trim() : '',
+            line: typeof step.line === 'string' ? step.line.trim() : '',
+            action: typeof step.action === 'string' ? step.action.trim() : '',
+            explanation: typeof step.explanation === 'string' ? step.explanation.trim() : '',
+            math: typeof step.math === 'string' ? step.math.trim() : '',
+            why: typeof step.why === 'string' ? step.why.trim() : '',
+          };
+          if (!normalized.label && normalized.action) normalized.label = normalized.action;
+          if (!normalized.line) {
+            normalized.line = [normalized.explanation, normalized.math].filter(Boolean).join(' : ').trim();
+          }
+          if (!normalized.label && !normalized.line && !normalized.action && !normalized.explanation && !normalized.math) return null;
+          return normalized;
+        })
+        .filter(Boolean) as Array<Record<string, string>>;
+    };
+
     // ── Helper: build lesson content object from AI response ─────────────
     const buildLessonContent = (generatedContent: any, stepName: string, difficultyLevel: number) => {
       const rawMistakes = generatedContent.common_mistakes || [];
@@ -395,14 +468,14 @@ REPONDS EN JSON VALIDE UNIQUEMENT :
         if (typeof m === 'object' && m !== null) return { mistake: m.mistake || m.tip || '', why: m.why || '' };
         return { mistake: String(m), why: '' };
       });
+      const normalizedExampleSteps = normalizeExampleSteps(generatedContent.example_steps);
       const quiz = buildQuiz(generatedContent.quiz, difficultyLevel);
       return {
         vocabulary: generatedContent.vocabulary || [],
         explanation: generatedContent.explanation,
         examples: generatedContent.examples || [],
         example: generatedContent.example,
-        ...(Array.isArray(generatedContent.example_steps) && generatedContent.example_steps.length > 0
-          ? { example_steps: generatedContent.example_steps } : {}),
+        ...(normalizedExampleSteps.length > 0 ? { example_steps: normalizedExampleSteps } : {}),
         common_mistakes: normalizedMistakes,
         ...(quiz ? { quiz } : {}),
         generated_at: new Date().toISOString(),

@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect, useMemo, createContext, useCo
 import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
+import katex from 'katex';
 import { Trophy, Zap, BookOpen, AlertCircle, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
@@ -98,6 +99,62 @@ function CardBadge({ icon, label, color }: { icon: ReactNode; label: string; col
       {icon}
       <span style={{ fontSize: 10, fontWeight: 700, color: c.text, fontFamily: 'Poppins, sans-serif' }}>{label}</span>
     </div>
+  );
+}
+
+function LargeCardBadge({ icon, label, color }: { icon: ReactNode; label: string; color: string }) {
+  const configs: Record<string, { bg: string; border: string; text: string }> = {
+    teal: { bg: '#F2FBF8', border: '#9FE1CB', text: '#085041' },
+    amber: { bg: '#FFF3DC', border: '#FAC775', text: '#B45309' },
+    purple: { bg: '#EDE9FE', border: '#A78BFA', text: '#5B21B6' },
+    red: { bg: '#FCEBEB', border: '#F7C1C1', text: '#A32D2D' },
+  };
+  const c = configs[color] ?? configs.teal;
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: c.bg, border: `1px solid ${c.border}`, borderRadius: 999, padding: '7px 14px', width: 'fit-content' }}>
+      {icon}
+      <span style={{ fontSize: 14, fontWeight: 800, color: c.text, fontFamily: 'Poppins, sans-serif', lineHeight: 1.1 }}>{label}</span>
+    </div>
+  );
+}
+
+function InlineWorkedMath({ text }: { text: string }) {
+  const parts: Array<{ type: 'text' | 'math'; value: string }> = [];
+  const re = /(\d+)\s*\/\s*(\d+)/g;
+  let last = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > last) {
+      parts.push({ type: 'text', value: text.slice(last, match.index) });
+    }
+    parts.push({ type: 'math', value: `\\dfrac{${match[1]}}{${match[2]}}` });
+    last = match.index + match[0].length;
+  }
+
+  if (last < text.length) {
+    parts.push({ type: 'text', value: text.slice(last) });
+  }
+
+  if (parts.length === 0) {
+    return <>{text}</>;
+  }
+
+  return (
+    <span className="worked-math-line">
+      {parts.map((part, index) => {
+        if (part.type === 'text') {
+          return <span key={`text-${index}`}>{part.value}</span>;
+        }
+
+        try {
+          const html = katex.renderToString(part.value, { throwOnError: false, displayMode: false });
+          return <span key={`math-${index}`} className="worked-math-inline" dangerouslySetInnerHTML={{ __html: html }} />;
+        } catch {
+          return <span key={`math-${index}`}>{part.value}</span>;
+        }
+      })}
+    </span>
   );
 }
 
@@ -300,10 +357,12 @@ function VocabularyCard({
   ];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-      <CardBadge icon={<span style={{ fontSize: 11 }}>📖</span>} label={`${vocabulary.length} mots à connaître`} color="purple" />
-      <h2 style={{ fontSize: isYoung ? 18 : 16, fontWeight: isYoung ? 900 : 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
-        {isYoung ? 'Apprends ces mots !' : 'Appuie sur chaque mot'}
-      </h2>
+      <LargeCardBadge icon={<span style={{ fontSize: 14, lineHeight: 1 }}>📖</span>} label={`${vocabulary.length} mots à connaître`} color="purple" />
+      <p style={{ fontSize: 13, fontWeight: 400, color: '#667085', margin: '-2px 0 0', fontFamily: 'Poppins, sans-serif', lineHeight: 1.55 }}>
+        {isYoung
+          ? 'Appuie sur chaque mot pour apprendre les mots importants de cette leçon.'
+          : 'Appuie sur chaque mot pour comprendre les mots importants de la leçon.'}
+      </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {vocabulary.map((item, i) => {
           const c = chipColors[i % chipColors.length];
@@ -321,18 +380,22 @@ function VocabularyCard({
                 cursor: 'pointer',
                 textAlign: 'left',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 gap: 10,
                 transition: 'all .2s',
               }}
             >
-              <span style={{ background: c.bg, border: `0.5px solid ${c.border}`, borderRadius: 6, padding: '2px 8px', fontSize: 12, fontWeight: 700, color: c.text, flexShrink: 0 }}>
-                {item.term}
-              </span>
-              <span style={{ flex: 1, fontSize: bodySize - 2, color: isOpen ? '#374151' : '#9CA3AF', lineHeight: 1.5, textAlign: 'left' }}>
-                {isOpen ? item.definition : '· · ·'}
-              </span>
-              <ChevronDown className="h-3.5 w-3.5" style={{ color: '#9CA3AF', flexShrink: 0, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} />
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <span style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 8, padding: '5px 12px', fontSize: 15, fontWeight: 800, color: c.text, flexShrink: 0, lineHeight: 1.15, boxShadow: isOpen ? '0 1px 0 rgba(15, 23, 42, 0.04)' : 'none' }}>
+                    {item.term}
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5" style={{ color: '#9CA3AF', flexShrink: 0, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} />
+                </div>
+                <span style={{ fontSize: bodySize - 1, color: isOpen ? '#374151' : '#9CA3AF', lineHeight: 1.65, textAlign: 'left', display: 'block' }}>
+                  {isOpen ? item.definition : 'Appuie pour voir la définition.'}
+                </span>
+              </div>
             </button>
           );
         })}
@@ -435,7 +498,7 @@ function ExamplesCard({
 }
 
 // Worked example revealed one step at a time (Brilliant-style).
-// Renders structured example_steps ({ label, line }) with a tap-to-reveal sequence.
+// Renders structured example_steps with backward compatibility for legacy { label, line } steps.
 function ExampleStepsCard({
   exampleSteps,
   context,
@@ -449,12 +512,50 @@ function ExampleStepsCard({
 }) {
   const [revealed, setRevealed] = useState(1);
   const allRevealed = revealed >= exampleSteps.length;
+  const stepRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const buildFallbackExplanation = (title: string, math: string, fallbackLine: string) => {
+    const normalizedTitle = title.trim();
+    const normalizedMath = (math || fallbackLine || '').trim();
+    if (/dénominateur commun/i.test(normalizedTitle)) return 'On cherche un même dénominateur pour pouvoir continuer correctement.';
+    if (/addition/i.test(normalizedTitle)) return 'On additionne les valeurs qui peuvent maintenant être réunies.';
+    if (/soustraction/i.test(normalizedTitle)) return 'On soustrait en suivant la règle vue juste avant.';
+    if (/simplifi/i.test(normalizedTitle)) return 'On simplifie le résultat pour obtenir une écriture plus simple.';
+    if (/transform/i.test(normalizedTitle)) return 'On réécrit l’expression sous une forme plus pratique pour la suite.';
+    if (/rapport|thalès/i.test(normalizedTitle)) return 'On écrit la relation utile pour comparer les longueurs correctement.';
+    if (/calcul/i.test(normalizedTitle)) return 'On effectue le calcul demandé en appliquant la bonne méthode.';
+    if (/départ|commencer/i.test(normalizedTitle)) return 'On observe l’expression de départ pour savoir quelle méthode utiliser.';
+    if (/ppcm/i.test(normalizedMath)) return 'On cherche le plus petit dénominateur commun pour pouvoir mettre les fractions sur la même base.';
+    if (/pgcd/i.test(normalizedMath)) return 'On cherche le plus grand diviseur commun pour simplifier l’écriture du résultat.';
+    if (/\d+\s*\/\s*\d+\s*[+=-]\s*\d+\s*\/\s*\d+/.test(normalizedMath)) return 'On effectue l’opération entre les fractions en appliquant la règle adaptée.';
+    if (/\d+\s*\/\s*\d+\s*=\s*\d+\s*\/\s*\d+/.test(normalizedMath)) return 'On transforme la fraction pour obtenir une écriture équivalente plus utile pour la suite.';
+    if (/\b[A-Z]{2}\s*\/\s*[A-Z]{2}\b|\b[A-Z]{2}\s*=\s*[A-Z]{2}\b/.test(normalizedMath)) return 'On écrit la relation entre les longueurs pour utiliser correctement la propriété géométrique.';
+    if (/\/\//.test(normalizedMath)) return 'On repère les droites parallèles pour savoir quelle propriété géométrique appliquer.';
+    if (/=/.test(normalizedMath) && /[A-Za-z]/.test(normalizedMath)) return 'On écrit l’égalité utile à cette étape pour relier correctement les éléments du calcul.';
+    if (/[+\-×x÷*/]/.test(normalizedMath)) return 'On réalise ici l’opération demandée en suivant la bonne méthode.';
+    if (normalizedTitle || normalizedMath) return 'On applique ici la règle utile pour faire avancer la résolution étape par étape.';
+    return '';
+  };
+  useEffect(() => {
+    const activeStep = stepRefs.current[revealed - 1];
+    if (!activeStep) return;
+    requestAnimationFrame(() => {
+      activeStep.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    });
+  }, [revealed]);
+  const resolveStep = (step: LessonExampleStep) => {
+    const title = step.action || step.label || '';
+    const math = step.math || '';
+    const why = step.why || '';
+    const fallbackLine = step.line || '';
+    const explanation = step.explanation || buildFallbackExplanation(title, math, fallbackLine);
+    return { title, explanation, math, why, fallbackLine };
+  };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-      <CardBadge icon={<Zap className="h-3 w-3" />} label="Exemple résolu" color="amber" />
-      <h2 style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif', lineHeight: 1.3 }}>
-        Suis la résolution, étape par étape
-      </h2>
+      <LargeCardBadge icon={<Zap className="h-3.5 w-3.5" />} label="Exemple résolu" color="amber" />
+      <p style={{ fontSize: 13, fontWeight: 400, color: '#667085', margin: '-2px 0 0', fontFamily: 'Poppins, sans-serif', lineHeight: 1.55 }}>
+        Suis la résolution, étape par étape, pour comprendre comment résoudre l’exemple.
+      </p>
 
       {context && (
         <div style={{ background: '#F2FBF8', borderRadius: 12, border: '0.5px solid #9FE1CB', padding: '11px 13px' }}>
@@ -463,28 +564,64 @@ function ExampleStepsCard({
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {exampleSteps.slice(0, revealed).map((s, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.22 }}
-            style={{ background: 'white', borderRadius: 12, border: '0.5px solid #EAECEF', padding: '10px 13px', display: 'flex', alignItems: 'flex-start', gap: 10 }}
-          >
-            <span style={{
-              width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
-              background: '#FFF3DC', border: '0.5px solid #FAC775',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 10, fontWeight: 800, color: '#B45309', marginTop: 2,
-            }}>{i + 1}</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              {s.label && (
-                <p style={{ fontSize: 10, fontWeight: 700, color: '#B45309', margin: '0 0 3px', letterSpacing: '0.02em' }}>{s.label}</p>
-              )}
-              <p style={{ fontSize: bodySize, color: '#0F172A', margin: 0, lineHeight: 1.6, fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}>{s.line}</p>
-            </div>
-          </motion.div>
-        ))}
+        {exampleSteps.slice(0, revealed).map((s, i) => {
+          const step = resolveStep(s);
+          const isActiveStep = i === revealed - 1;
+          return (
+            <motion.div
+              key={i}
+              ref={(node) => { stepRefs.current[i] = node; }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.22 }}
+              style={{
+                background: isActiveStep ? '#FFF9EF' : 'white',
+                borderRadius: 12,
+                border: isActiveStep ? '1px solid #FAC775' : '0.5px solid #EAECEF',
+                boxShadow: isActiveStep ? '0 6px 18px rgba(250, 199, 117, 0.18)' : 'none',
+                padding: '10px 13px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 10,
+                opacity: isActiveStep ? 1 : 0.62,
+                transform: isActiveStep ? 'scale(1)' : 'scale(0.985)',
+                transition: 'all .2s ease',
+              }}
+            >
+              <span style={{
+                width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+                background: isActiveStep ? '#FFF3DC' : '#F5F5F5',
+                border: isActiveStep ? '1px solid #FAC775' : '1px solid #D5D9E2',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, fontWeight: 800, color: isActiveStep ? '#B45309' : '#98A2B3', marginTop: 2,
+              }}>{i + 1}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {step.title && (
+                  <p style={{ fontSize: 15, fontWeight: 800, color: isActiveStep ? '#B45309' : '#7A8699', margin: '0 0 6px', lineHeight: 1.25, fontFamily: 'Poppins, sans-serif' }}>{step.title}</p>
+                )}
+                {step.explanation ? (
+                  <p style={{ fontSize: bodySize - 1, color: isActiveStep ? '#374151' : '#8B95A7', margin: '0 0 8px', lineHeight: 1.65, fontFamily: 'Poppins, sans-serif', fontWeight: 500 }}>
+                    {step.explanation}
+                  </p>
+                ) : null}
+                {step.math ? (
+                  <p style={{ fontSize: bodySize + 1, color: isActiveStep ? '#0F172A' : '#667085', margin: 0, lineHeight: 1.6, fontFamily: 'Poppins, sans-serif', fontWeight: 800 }}>
+                    <InlineWorkedMath text={step.math} />
+                  </p>
+                ) : step.fallbackLine ? (
+                  <p style={{ fontSize: bodySize + 1, color: isActiveStep ? '#0F172A' : '#667085', margin: 0, lineHeight: 1.6, fontFamily: 'Poppins, sans-serif', fontWeight: 700 }}>
+                    <InlineWorkedMath text={step.fallbackLine} />
+                  </p>
+                ) : null}
+                {step.why ? (
+                  <p style={{ fontSize: bodySize - 2, color: isActiveStep ? '#667085' : '#98A2B3', margin: '6px 0 0', lineHeight: 1.6, fontFamily: 'Poppins, sans-serif' }}>
+                    {step.why}
+                  </p>
+                ) : null}
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
 
       <LessonFooter>
@@ -578,7 +715,10 @@ function QuizCard({
   if (!question) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-        <CardBadge icon={<Zap className="h-3 w-3" />} label="Teste-toi" color="amber" />
+        <LargeCardBadge icon={<Zap className="h-3.5 w-3.5" />} label="Teste-toi" color="amber" />
+        <p style={{ fontSize: 13, fontWeight: 400, color: '#667085', margin: '-2px 0 0', fontFamily: 'Poppins, sans-serif', lineHeight: 1.55 }}>
+          Vérifie si tu as bien compris en répondant à cette question.
+        </p>
         <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 24, textAlign: 'center', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>Quiz non disponible.</p>
         </div>
@@ -591,17 +731,21 @@ function QuizCard({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-      <CardBadge icon={<Zap className="h-3 w-3" />} label="Teste-toi" color="amber" />
+      <LargeCardBadge icon={<Zap className="h-3.5 w-3.5" />} label="Teste-toi" color="amber" />
+      <p style={{ fontSize: 13, fontWeight: 400, color: '#667085', margin: '-2px 0 0', fontFamily: 'Poppins, sans-serif', lineHeight: 1.55 }}>
+        Vérifie si tu as bien compris en répondant à cette question.
+      </p>
 
       {/* QuestionCard - interactive mode, never shows the correct answer */}
-      <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 14, opacity: correct ? 0.85 : 1, pointerEvents: correct ? 'none' : 'auto' }}>
+      <div style={{ background: correct ? '#F8FFFC' : '#FFF9EF', borderRadius: 14, border: correct ? '1px solid #9FE1CB' : '1px solid #FAC775', padding: 14, opacity: correct ? 0.9 : 1, pointerEvents: correct ? 'none' : 'auto', boxShadow: correct ? '0 4px 14px rgba(18, 198, 160, 0.10)' : '0 6px 18px rgba(250, 199, 117, 0.12)' }}>
         <QuestionCard
+          key={`${question.id ?? 'lesson-q'}-${correct ? 'correct' : wrong ? 'wrong' : 'idle'}`}
           question={question}
           onChange={onAnswerChange}
           allowRetry={false}
-          submittedAnswer={wrong ? answer : undefined}
-          isCorrect={false}
-          hideCorrect={true}
+          submittedAnswer={correct || wrong ? answer : undefined}
+          isCorrect={correct}
+          hideCorrect={!correct}
         />
       </div>
 
@@ -692,21 +836,21 @@ function MistakeCard({ mistakes, onNext }: { mistakes: LessonContent['common_mis
   const { text, why } = getMistakeText(first);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-      <CardBadge icon={<AlertCircle className="h-3 w-3" />} label="Erreur fréquente" color="red" />
-      <h2 style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
-        Attention à ce piège !
-      </h2>
+      <LargeCardBadge icon={<AlertCircle className="h-3.5 w-3.5" />} label="Erreur fréquente" color="red" />
+      <p style={{ fontSize: 13, fontWeight: 400, color: '#667085', margin: '-2px 0 0', fontFamily: 'Poppins, sans-serif', lineHeight: 1.55 }}>
+        Repère l’erreur à éviter pour comprendre comment bien faire.
+      </p>
       <div style={{ background: '#FCEBEB', borderRadius: 14, border: '0.5px solid #F7C1C1', padding: '12px 14px' }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#A32D2D', margin: '0 0 6px', lineHeight: 1.5 }}>{text}</p>
-        {why && <p style={{ fontSize: 12, color: '#374151', margin: 0, lineHeight: 1.6 }}>{why}</p>}
+        <p style={{ fontSize: 15, fontWeight: 800, color: '#A32D2D', margin: '0 0 8px', lineHeight: 1.35, fontFamily: 'Poppins, sans-serif' }}>{text}</p>
+        {why && <p style={{ fontSize: 13, color: '#374151', margin: 0, lineHeight: 1.65, fontFamily: 'Poppins, sans-serif' }}>{why}</p>}
       </div>
       {mistakes.length > 1 && (() => {
         const second = mistakes[1];
         const { text: t2, why: w2 } = getMistakeText(second);
         return (
           <div style={{ background: 'white', borderRadius: 12, border: '0.5px solid #EAECEF', padding: '12px 14px' }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', margin: '0 0 4px', lineHeight: 1.5 }}>{t2}</p>
-            {w2 && <p style={{ fontSize: 12, color: '#667085', margin: 0, lineHeight: 1.6 }}>{w2}</p>}
+            <p style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', margin: '0 0 6px', lineHeight: 1.4, fontFamily: 'Poppins, sans-serif' }}>{t2}</p>
+            {w2 && <p style={{ fontSize: 13, color: '#667085', margin: 0, lineHeight: 1.6, fontFamily: 'Poppins, sans-serif' }}>{w2}</p>}
           </div>
         );
       })()}
@@ -996,6 +1140,7 @@ export function LessonCardPlayer({
   // Forward = click the card's own primary CTA, so per-card gating (reveal /
   // validate / next) is respected rather than bypassed.
   const cardContentRef = useRef<HTMLDivElement>(null);
+  const scrollRegionRef = useRef<HTMLDivElement>(null);
   const triggerPrimary = useCallback(() => {
     // CTAs now live in the bottom action bar (portaled), so look there first,
     // with the card content as a fallback (in the brief frame before the bar mounts).
@@ -1045,6 +1190,14 @@ export function LessonCardPlayer({
     setActualMinutes(null);
   }, [clearProgress]);
 
+  useEffect(() => {
+    const region = scrollRegionRef.current;
+    if (!region) return;
+    requestAnimationFrame(() => {
+      region.scrollTo({ top: 0, behavior: 'auto' });
+    });
+  }, [cardIndex]);
+
   const currentCard = cards[cardIndex];
   if (!currentCard) return null;
   const stepContent = steps[currentCard.stepIdx] ?? null;
@@ -1092,7 +1245,7 @@ export function LessonCardPlayer({
       )}
 
       {/* Scrollable content region — the card scrolls here; the action bar below stays put. */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+      <div ref={scrollRegionRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
       {/* Keyed motion.div (no AnimatePresence): the changing key remounts the card and
           plays the enter animation each step. We dropped AnimatePresence/exit because its
           mode="wait" exit could stall and leave a card stuck mounted. */}

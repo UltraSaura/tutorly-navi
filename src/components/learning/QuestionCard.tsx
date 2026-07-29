@@ -214,7 +214,88 @@ function factorizeRectParts(total: number) {
   return { rows: 1, cols: total };
 }
 
+function TrianglePromptFigure({
+  labels,
+  pointOnAB,
+  pointOnAC,
+  parallelSegment,
+}: {
+  labels: [string, string, string];
+  pointOnAB?: string;
+  pointOnAC?: string;
+  parallelSegment?: [string, string];
+}) {
+  const [aLabel, bLabel, cLabel] = labels;
+  const A = { x: 40, y: 124 };
+  const B = { x: 140, y: 124 };
+  const C = { x: 112, y: 36 };
+  const lerp = (p1: { x: number; y: number }, p2: { x: number; y: number }, t: number) => ({
+    x: p1.x + (p2.x - p1.x) * t,
+    y: p1.y + (p2.y - p1.y) * t,
+  });
+  const M = lerp(A, B, 0.38);
+  const N = lerp(A, C, 0.52);
+
+  return (
+    <div className="flex justify-center rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <svg width={220} height={170} viewBox="0 0 180 140" role="img" aria-label={`Triangle ${aLabel}${bLabel}${cLabel}`}>
+        <polygon
+          points={`${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`}
+          fill="#ffffff"
+          stroke="#0f172a"
+          strokeWidth={3}
+          strokeLinejoin="round"
+        />
+        {(pointOnAB || pointOnAC || parallelSegment) && (
+          <line
+            x1={M.x}
+            y1={M.y}
+            x2={N.x}
+            y2={N.y}
+            stroke="#12C6A0"
+            strokeWidth={3}
+            strokeDasharray="5 4"
+            strokeLinecap="round"
+          />
+        )}
+
+        <circle cx={A.x} cy={A.y} r={3.5} fill="#0f172a" />
+        <circle cx={B.x} cy={B.y} r={3.5} fill="#0f172a" />
+        <circle cx={C.x} cy={C.y} r={3.5} fill="#0f172a" />
+
+        <text x={A.x - 16} y={A.y + 6} fill="#0f172a" fontSize={13} fontWeight={800}>{aLabel}</text>
+        <text x={B.x + 8} y={B.y + 6} fill="#0f172a" fontSize={13} fontWeight={800}>{bLabel}</text>
+        <text x={C.x + 6} y={C.y - 8} fill="#0f172a" fontSize={13} fontWeight={800}>{cLabel}</text>
+
+        {pointOnAB && (
+          <>
+            <circle cx={M.x} cy={M.y} r={3} fill="#12C6A0" />
+            <text x={M.x - 4} y={M.y - 8} fill="#12C6A0" fontSize={12} fontWeight={800}>{pointOnAB}</text>
+          </>
+        )}
+        {pointOnAC && (
+          <>
+            <circle cx={N.x} cy={N.y} r={3} fill="#12C6A0" />
+            <text x={N.x - 14} y={N.y - 8} fill="#12C6A0" fontSize={12} fontWeight={800}>{pointOnAC}</text>
+          </>
+        )}
+      </svg>
+    </div>
+  );
+}
+
 function PromptFigure({ spec }: { spec: PromptFigureSpec }) {
+  if (spec.kind === "triangle") {
+    return (
+      <TrianglePromptFigure
+        labels={spec.labels}
+        pointOnAB={spec.pointOnAB}
+        pointOnAC={spec.pointOnAC}
+        parallelSegment={spec.parallelSegment}
+      />
+    );
+  }
+
   if (spec.kind === "pie") {
     const size = 150;
     const cx = size / 2, cy = size / 2, r = size / 2 - 6;
@@ -307,15 +388,31 @@ function choiceState(
     : currentValue === c.id;
 
   if (!isSubmitted) {
-    return { border: isSelected ? '#12C6A0' : '#EAECEF', bg: isSelected ? '#F2FBF8' : 'white', color: '#0F172A', opacity: 1, shake: false };
+    return { border: isSelected ? '#7C9BFF' : '#EAECEF', bg: isSelected ? '#EEF4FF' : 'white', color: '#0F172A', opacity: 1, shake: false, pulse: false };
   }
   if (c.correct && !hideCorrect) {
-    return { border: '#9FE1CB', bg: '#EAF3DE', color: '#27500A', opacity: 1, shake: false };
+    return { border: '#9FE1CB', bg: '#EAF3DE', color: '#27500A', opacity: 1, shake: false, pulse: true };
   }
   if (wasSelected) {
-    return { border: '#F7C1C1', bg: '#FCEBEB', color: '#C0121A', opacity: 1, shake: true };
+    return { border: '#F7C1C1', bg: '#FCEBEB', color: '#C0121A', opacity: 1, shake: true, pulse: false };
   }
-  return { border: '#EAECEF', bg: 'white', color: hideCorrect ? '#0F172A' : '#9CA3AF', opacity: hideCorrect ? 1 : 0.45, shake: false };
+  return { border: '#EAECEF', bg: 'white', color: hideCorrect ? '#0F172A' : '#9CA3AF', opacity: hideCorrect ? 1 : 0.45, shake: false, pulse: false };
+}
+
+function getChoiceFeedbackMarker(
+  c: { id: string; correct?: boolean },
+  currentValue: any,
+  submittedAnswer: any,
+  isMulti: boolean,
+  hideCorrect = false,
+) {
+  if (submittedAnswer === undefined) return null;
+  const wasSelected = isMulti
+    ? Array.isArray(submittedAnswer) && submittedAnswer.includes(c.id)
+    : submittedAnswer === c.id;
+  if (c.correct && !hideCorrect) return { symbol: '✓', color: '#16A34A', bg: '#DCFCE7' };
+  if (wasSelected) return { symbol: '✕', color: '#C0121A', bg: '#FEE2E2' };
+  return null;
 }
 
 function getPieSegmentsSignature(segments: VisualPie["segments"]) {
@@ -459,13 +556,20 @@ export function QuestionCard({
           {question.choices.map((c, idx) => {
             const letter = ['A', 'B', 'C', 'D'][idx] ?? String(idx + 1);
             const cs = choiceState(c, value, submittedAnswer, false, hideCorrect);
+            const marker = getChoiceFeedbackMarker(c, value, submittedAnswer, false, hideCorrect);
             return (
               <motion.button
                 key={c.id}
                 type="button"
                 onClick={() => { if (submittedAnswer === undefined) setVal(c.id); }}
-                animate={cs.shake ? { x: [0, -10, 10, -7, 7, -4, 4, 0] } : { x: 0 }}
-                transition={{ duration: 0.4 }}
+                animate={
+                  cs.shake
+                    ? { x: [0, -10, 10, -7, 7, -4, 4, 0], scale: 1 }
+                    : cs.pulse
+                      ? { x: 0, scale: [1, 1.04, 1] }
+                      : { x: 0, scale: 1 }
+                }
+                transition={{ duration: cs.pulse ? 0.45 : 0.4 }}
                 className="w-full rounded-2xl transition-all"
                 style={{
                   background: cs.bg,
@@ -475,22 +579,44 @@ export function QuestionCard({
                   padding: question.choices.length === 4 ? '14px 12px' : '12px 14px',
                   cursor: submittedAnswer !== undefined ? 'default' : 'pointer',
                   textAlign: 'left',
+                  boxShadow: cs.pulse ? '0 8px 22px rgba(34, 197, 94, 0.18)' : 'none',
                 }}
+                whileTap={submittedAnswer === undefined ? { scale: 0.98 } : undefined}
               >
                 {question.choices.length === 4 ? (
                   <div className="flex flex-col items-center gap-2">
-                    <span className="self-start text-xs font-semibold" style={{ opacity: 0.55 }}>{letter}</span>
+                    <div className="flex w-full items-center justify-between">
+                      <span className="text-xs font-semibold" style={{ opacity: 0.55 }}>{letter}</span>
+                      {marker ? (
+                        <span
+                          className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold"
+                          style={{ color: marker.color, background: marker.bg }}
+                        >
+                          {marker.symbol}
+                        </span>
+                      ) : <span />}
+                    </div>
                     {renderChoiceLabel(c.label)}
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
                     <span
                       className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                      style={{ background: value === c.id ? '#12C6A0' : '#F3F6FA', color: value === c.id ? '#0F172A' : '#667085' }}
+                      style={{ background: value === c.id ? '#DDE8FF' : '#F3F6FA', color: value === c.id ? '#2F5BDB' : '#667085' }}
                     >
                       {letter}
                     </span>
-                    {renderChoiceLabel(c.label)}
+                    <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                      <div className="min-w-0">{renderChoiceLabel(c.label)}</div>
+                      {marker ? (
+                        <span
+                          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                          style={{ color: marker.color, background: marker.bg }}
+                        >
+                          {marker.symbol}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
                 )}
               </motion.button>
@@ -505,6 +631,7 @@ export function QuestionCard({
             const letter = ['A', 'B', 'C', 'D'][idx] ?? String(idx + 1);
             const checked = Array.isArray(value) && value.includes(c.id);
             const cs = choiceState(c, value, submittedAnswer, true, hideCorrect);
+            const marker = getChoiceFeedbackMarker(c, value, submittedAnswer, true, hideCorrect);
             return (
               <motion.button
                 key={c.id}
@@ -516,8 +643,14 @@ export function QuestionCard({
                     : [...(Array.isArray(value) ? value : []), c.id];
                   setVal(next);
                 }}
-                animate={cs.shake ? { x: [0, -10, 10, -7, 7, -4, 4, 0] } : { x: 0 }}
-                transition={{ duration: 0.4 }}
+                animate={
+                  cs.shake
+                    ? { x: [0, -10, 10, -7, 7, -4, 4, 0], scale: 1 }
+                    : cs.pulse
+                      ? { x: 0, scale: [1, 1.04, 1] }
+                      : { x: 0, scale: 1 }
+                }
+                transition={{ duration: cs.pulse ? 0.45 : 0.4 }}
                 className="w-full rounded-2xl transition-all"
                 style={{
                   background: cs.bg,
@@ -527,22 +660,44 @@ export function QuestionCard({
                   padding: question.choices.length === 4 ? '14px 12px' : '12px 14px',
                   cursor: submittedAnswer !== undefined ? 'default' : 'pointer',
                   textAlign: 'left',
+                  boxShadow: cs.pulse ? '0 8px 22px rgba(34, 197, 94, 0.18)' : 'none',
                 }}
+                whileTap={submittedAnswer === undefined ? { scale: 0.98 } : undefined}
               >
                 {question.choices.length === 4 ? (
                   <div className="flex flex-col items-center gap-2">
-                    <span className="self-start text-xs font-semibold" style={{ opacity: 0.55 }}>{letter}</span>
+                    <div className="flex w-full items-center justify-between">
+                      <span className="text-xs font-semibold" style={{ opacity: 0.55 }}>{letter}</span>
+                      {marker ? (
+                        <span
+                          className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold"
+                          style={{ color: marker.color, background: marker.bg }}
+                        >
+                          {marker.symbol}
+                        </span>
+                      ) : <span />}
+                    </div>
                     {renderChoiceLabel(c.label)}
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
                     <span
                       className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                      style={{ background: checked ? '#12C6A0' : '#F3F6FA', color: checked ? '#0F172A' : '#667085' }}
+                      style={{ background: checked ? '#DDE8FF' : '#F3F6FA', color: checked ? '#2F5BDB' : '#667085' }}
                     >
                       {letter}
                     </span>
-                    {renderChoiceLabel(c.label)}
+                    <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                      <div className="min-w-0">{renderChoiceLabel(c.label)}</div>
+                      {marker ? (
+                        <span
+                          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                          style={{ color: marker.color, background: marker.bg }}
+                        >
+                          {marker.symbol}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
                 )}
               </motion.button>

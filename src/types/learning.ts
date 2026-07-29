@@ -2,8 +2,12 @@ import type { SingleQ } from '@/types/quiz-bank';
 
 // A labelled line in a worked example, revealed step by step
 export interface LessonExampleStep {
-  label: string;
-  line: string;
+  label?: string;
+  line?: string;
+  action?: string;
+  explanation?: string;
+  math?: string;
+  why?: string;
 }
 
 export interface Subject {
