@@ -34,6 +34,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
 }) => {
   console.log('[CompactMathStepper] Rendering with expression:', expression);
   const { language } = useLanguage();
+  const parserExpression = useMemo(() => expression.replace(/,/g, '.'), [expression]);
   
   const [currentStep, setCurrentStep] = useState(0);
   const [steps, setSteps] = useState<AnimatorStep[]>([]);
@@ -42,6 +43,74 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [autoRead, setAutoRead] = useState(false);
   
+  const parseDecimalOperand = (value: string) => {
+    const normalized = value.trim().replace(',', '.');
+    const [intPartRaw, fracPartRaw = ''] = normalized.split('.');
+    const intPart = intPartRaw.replace(/\D/g, '') || '0';
+    const fracPart = fracPartRaw.replace(/\D/g, '');
+    return { intPart, fracPart };
+  };
+
+  const formatScaledDecimal = (value: bigint, fractionalDigits: number, separator: ',' | '.') => {
+    const negative = value < 0n;
+    const abs = negative ? -value : value;
+    const raw = abs.toString().padStart(fractionalDigits + 1, '0');
+    if (fractionalDigits === 0) return `${negative ? '-' : ''}${raw}`;
+    const intPart = raw.slice(0, -fractionalDigits) || '0';
+    const fracPart = raw.slice(-fractionalDigits);
+    return `${negative ? '-' : ''}${intPart}${separator}${fracPart}`;
+  };
+
+  const buildAlignedDecimalLayout = (leftRaw: string, rightRaw: string, separator: ',' | '.') => {
+    const left = parseDecimalOperand(leftRaw);
+    const right = parseDecimalOperand(rightRaw);
+    const fractionalDigits = Math.max(left.fracPart.length, right.fracPart.length);
+    const leftInt = left.intPart;
+    const rightInt = right.intPart;
+    const leftFrac = left.fracPart.padEnd(fractionalDigits, '0');
+    const rightFrac = right.fracPart.padEnd(fractionalDigits, '0');
+    return {
+      fractionalDigits,
+      hasDecimal: fractionalDigits > 0,
+      separator,
+      leftInt,
+      rightInt,
+      leftFrac,
+      rightFrac,
+    };
+  };
+
+  const decimalPlaceName = (colFromRight: number, fractionalDigits: number) => {
+    if (colFromRight < fractionalDigits) {
+      const fr = ['dixièmes', 'centièmes', 'millièmes'];
+      const en = ['tenths', 'hundredths', 'thousandths'];
+      const names = language === 'fr' ? fr : en;
+      return names[colFromRight] || (language === 'fr' ? `décimales` : `decimal places`);
+    }
+
+    const integerCol = colFromRight - fractionalDigits;
+    return placeName(integerCol);
+  };
+
+  const digitColToVisualIndex = (digitIndex: number, integerDigits: number, hasDecimal: boolean) => {
+    if (!hasDecimal) return digitIndex;
+    return digitIndex >= integerDigits ? digitIndex + 1 : digitIndex;
+  };
+
+  const buildDisplayRow = (
+    digitChars: string[],
+    integerDigits: number,
+    hasDecimal: boolean,
+    separator: ',' | '.',
+  ) => {
+    const row: string[] = [];
+    digitChars.forEach((ch, idx) => {
+      if (hasDecimal && idx === integerDigits) row.push(separator);
+      row.push(ch);
+    });
+    if (hasDecimal && integerDigits === digitChars.length) row.push(separator);
+    return row;
+  };
 
   useEffect(() => {
     const generateStepperSteps = async () => {
@@ -52,7 +121,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         console.log('[CompactMathStepper] Processing expression:', expression);
         
         // Generate steps with AST-based animator (default to English locale)
-        const generatedSteps = buildStepsGeneral(expression, 'en');
+        const generatedSteps = buildStepsGeneral(parserExpression, 'en');
         console.log('[CompactMathStepper] Generated steps:', generatedSteps);
         
         setSteps(generatedSteps);
@@ -66,7 +135,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     };
 
     generateStepperSteps();
-  }, [expression]);
+  }, [expression, parserExpression]);
 
   // Calculate the max step dynamically based on current operation type
   const getMaxStep = () => {
@@ -99,9 +168,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     }
     
     // Fallback to flexibleStepCalculator
-    const maxStep = getMaxStepIndex(expression);
-    const stepCalculation = calculateSteps(expression);
-    console.log(`[CompactMathStepper] Using flexibleStepCalculator: Expression: ${expression}, Operation: ${stepCalculation.operationType}, Total Steps: ${stepCalculation.totalSteps}, Max Step Index: ${maxStep}`);
+    const maxStep = getMaxStepIndex(parserExpression);
+    const stepCalculation = calculateSteps(parserExpression);
+    console.log(`[CompactMathStepper] Using flexibleStepCalculator: Expression: ${parserExpression}, Operation: ${stepCalculation.operationType}, Total Steps: ${stepCalculation.totalSteps}, Max Step Index: ${maxStep}`);
     return maxStep;
   };
 
@@ -127,9 +196,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     setIsAutoPlaying(!isAutoPlaying);
   };
 
-  // Detect simple integer addition for two-phase column animation
-  const isSimpleAddition = useMemo(() => /^(\s*\d+\s*\+\s*\d+\s*)$/.test(expression), [expression]);
-  const isSimpleSubtraction = useMemo(() => /^(\s*\d+\s*-\s*\d+\s*)$/.test(expression), [expression]);
+  // Detect simple addition/subtraction including decimals for custom column animation
+  const isSimpleAddition = useMemo(() => /^(\s*\d+(?:[.,]\d+)?\s*\+\s*\d+(?:[.,]\d+)?\s*)$/.test(expression), [expression]);
+  const isSimpleSubtraction = useMemo(() => /^(\s*\d+(?:[.,]\d+)?\s*-\s*\d+(?:[.,]\d+)?\s*)$/.test(expression), [expression]);
   const isSimpleDivision = useMemo(() => /^(\s*\d+\s*[\/÷]\s*\d+\s*)$/.test(expression), [expression]);
   const isSimpleMultiplication = useMemo(() => /^(\s*\d+\s*[×*]\s*\d+\s*)$/.test(expression), [expression]);
 
@@ -145,28 +214,23 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   const additionData = useMemo(() => {
     if (!isSimpleAddition) return null;
     const parts = expression.split('+');
-    const numA = (parts[0] || '0').replace(/[^0-9]/g, '');
-    const numB = (parts[1] || '0').replace(/[^0-9]/g, '');
-    const addStrings = (s1: string, s2: string): string => {
-      let i = s1.length - 1, j = s2.length - 1, carry = 0;
-      const out: string[] = [];
-      while (i >= 0 || j >= 0 || carry) {
-        const d1 = i >= 0 ? s1.charCodeAt(i) - 48 : 0;
-        const d2 = j >= 0 ? s2.charCodeAt(j) - 48 : 0;
-        const sum = d1 + d2 + carry;
-        out.push(String(sum % 10));
-        carry = Math.floor(sum / 10);
-        i--; j--;
-      }
-      return out.reverse().join('').replace(/^0+(?!$)/, '');
-    };
-    const maxLen = Math.max(numA.length, numB.length);
-    const padTo = (s: string, len: number) => s.padStart(len, '0').split('').map(Number);
-    const aDigits = padTo(numA, maxLen);
-    const bDigits = padTo(numB, maxLen);
+    const leftRaw = (parts[0] || '0').trim();
+    const rightRaw = (parts[1] || '0').trim();
+    const separator: ',' | '.' = expression.includes(',') ? ',' : '.';
+    const layout = buildAlignedDecimalLayout(leftRaw, rightRaw, separator);
+    const scaledA = BigInt(layout.leftInt + layout.leftFrac);
+    const scaledB = BigInt(layout.rightInt + layout.rightFrac);
+    const sumValue = scaledA + scaledB;
+    const formattedSum = formatScaledDecimal(sumValue, layout.fractionalDigits, separator);
+    const [sumIntRaw, sumFracRaw = ''] = formattedSum.replace('-', '').replace(',', '.').split('.');
+    const resultIntDigits = Math.max(layout.leftInt.length, layout.rightInt.length, sumIntRaw.length);
+    const digitCols = resultIntDigits + layout.fractionalDigits;
+    const aDigits = `${layout.leftInt.padStart(resultIntDigits, '0')}${layout.leftFrac}`.split('').map(Number);
+    const bDigits = `${layout.rightInt.padStart(resultIntDigits, '0')}${layout.rightFrac}`.split('').map(Number);
+    const sumDigits = `${sumIntRaw.padStart(resultIntDigits, '0')}${sumFracRaw.padEnd(layout.fractionalDigits, '0')}`;
     const stepsRTL: { index: number; ad: number; bd: number; carryIn: number; raw: number; digit: number; carryOut: number }[] = [];
     let carry = 0;
-    for (let i = maxLen - 1; i >= 0; i--) {
+    for (let i = digitCols - 1; i >= 0; i--) {
       const ad = aDigits[i];
       const bd = bDigits[i];
       const carryIn = carry;
@@ -176,11 +240,13 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       stepsRTL.push({ index: i, ad, bd, carryIn, raw, digit, carryOut });
       carry = carryOut;
     }
-    const fullResult = addStrings(numA, numB);
-    const resLen = fullResult.length;
-    const offset = resLen - maxLen;
+    const fullResult = formattedSum;
+    const resultDisplay = buildDisplayRow(sumDigits.split(''), resultIntDigits, layout.hasDecimal, separator);
+    const displayLen = resultDisplay.length;
+    const aDisplay = buildDisplayRow(aDigits.map(String), resultIntDigits, layout.hasDecimal, separator);
+    const bDisplay = buildDisplayRow(bDigits.map(String), resultIntDigits, layout.hasDecimal, separator);
     const finalCarry = carry;
-    const totalColumnPhases = maxLen * 2;
+    const totalColumnPhases = digitCols * 2;
     const maxStep = totalColumnPhases + (finalCarry > 0 ? 1 : 0);
 
     // Build explanations array
@@ -188,7 +254,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     for (let k = 0; k < stepsRTL.length; k++) {
       const info = stepsRTL[k];
       const colFromRight = k;
-      const pn = placeName(colFromRight);
+      const pn = decimalPlaceName(colFromRight, layout.fractionalDigits);
       const carryText = info.carryIn > 0
         ? (language === 'fr' ? ` + ${info.carryIn} (retenue)` : ` + ${info.carryIn} (carry)`)
         : '';
@@ -215,30 +281,50 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     }
     // Completion explanation (used when step >= maxStep)
     if (language === 'fr') {
-      explanations.push(`L'addition est terminée ! ${numA} + ${numB} = ${fullResult}.`);
+      explanations.push(`L'addition est terminée ! ${leftRaw} + ${rightRaw} = ${fullResult}.`);
     } else {
-      explanations.push(`Addition complete! ${numA} + ${numB} = ${fullResult}.`);
+      explanations.push(`Addition complete! ${leftRaw} + ${rightRaw} = ${fullResult}.`);
     }
 
-    return { numA, numB, aDigits, bDigits, stepsRTL, fullResult, resLen, offset, finalCarry, totalColumnPhases, maxStep, explanations };
+    return {
+      aDigits,
+      bDigits,
+      aDisplay,
+      bDisplay,
+      stepsRTL,
+      fullResult,
+      resultDisplay,
+      resultIntDigits,
+      displayLen,
+      digitCols,
+      hasDecimal: layout.hasDecimal,
+      separator,
+      fractionalDigits: layout.fractionalDigits,
+      finalCarry,
+      totalColumnPhases,
+      maxStep,
+      explanations
+    };
   }, [isSimpleAddition, expression, language]);
 
   const subtractionData = useMemo(() => {
     if (!isSimpleSubtraction) return null;
     const parts = expression.split('-');
-    const numA = (parts[0] || '0').replace(/[^0-9]/g, '');
-    const numB = (parts[1] || '0').replace(/[^0-9]/g, '');
-    const maxLen = Math.max(numA.length, numB.length);
-    const padTo = (s: string, len: number) => s.padStart(len, '0').split('').map(Number);
-    let A = padTo(numA, maxLen);
-    let B = padTo(numB, maxLen);
+    const leftRaw = (parts[0] || '0').trim();
+    const rightRaw = (parts[1] || '0').trim();
+    const separator: ',' | '.' = expression.includes(',') ? ',' : '.';
+    const layout = buildAlignedDecimalLayout(leftRaw, rightRaw, separator);
+    const integerDigits = Math.max(layout.leftInt.length, layout.rightInt.length);
+    const digitCols = integerDigits + layout.fractionalDigits;
+    let A = `${layout.leftInt.padStart(integerDigits, '0')}${layout.leftFrac}`.split('').map(Number);
+    let B = `${layout.rightInt.padStart(integerDigits, '0')}${layout.rightFrac}`.split('').map(Number);
     let neg = false;
     const aStr = A.join('');
     const bStr = B.join('');
-    if (Number(aStr) < Number(bStr)) { neg = true; [A, B] = [B, A]; }
+    if (BigInt(aStr) < BigInt(bStr)) { neg = true; [A, B] = [B, A]; }
     const stepsRTL: { index: number; top: number; bottom: number; borrowed: boolean; diff: number }[] = [];
     let borrowCarry = 0;
-    for (let i = maxLen - 1; i >= 0; i--) {
+    for (let i = digitCols - 1; i >= 0; i--) {
       let t = A[i] - borrowCarry;
       const bd = B[i];
       let borrowed = false;
@@ -246,16 +332,25 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       const diff = t - bd;
       stepsRTL.push({ index: i, top: t, bottom: bd, borrowed, diff });
     }
-    const resultArr: number[] = new Array(maxLen).fill(0);
+    const resultArr: number[] = new Array(digitCols).fill(0);
     stepsRTL.forEach((s, idx) => {
-      const pos = maxLen - 1 - idx;
+      const pos = digitCols - 1 - idx;
       resultArr[pos] = s.diff;
     });
-    let finalStr = resultArr.join('').replace(/^0+(?!$)/, '');
-    if (neg && finalStr !== '0') finalStr = '-' + finalStr;
-    const resLen = finalStr.length;
-    const offset = resLen - maxLen;
-    const totalColumnPhases = maxLen * 2;
+    let finalStr = formatScaledDecimal(BigInt(resultArr.join('') || '0'), layout.fractionalDigits, separator);
+    if (neg && finalStr !== '0' && finalStr !== `${separator}${'0'.repeat(layout.fractionalDigits)}`) finalStr = '-' + finalStr;
+    const finalAbs = finalStr.replace('-', '');
+    const [finalIntRaw, finalFracRaw = ''] = finalAbs.replace(',', '.').split('.');
+    const displayIntDigits = integerDigits;
+    const finalDigitsDisplay = buildDisplayRow(
+      `${finalIntRaw.padStart(displayIntDigits, '0')}${finalFracRaw.padEnd(layout.fractionalDigits, '0')}`.split(''),
+      displayIntDigits,
+      layout.hasDecimal,
+      separator,
+    );
+    const aDisplay = buildDisplayRow(A.map(String), displayIntDigits, layout.hasDecimal, separator);
+    const bDisplay = buildDisplayRow(B.map(String), displayIntDigits, layout.hasDecimal, separator);
+    const totalColumnPhases = digitCols * 2;
     const maxStep = totalColumnPhases;
 
     // Build explanations array
@@ -263,7 +358,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     for (let k = 0; k < stepsRTL.length; k++) {
       const info = stepsRTL[k];
       const colFromRight = k;
-      const pn = placeName(colFromRight);
+      const pn = decimalPlaceName(colFromRight, layout.fractionalDigits);
       const origTop = A[info.index];
       // Even phase: borrow check
       if (info.borrowed) {
@@ -288,12 +383,28 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     }
     // Completion
     if (language === 'fr') {
-      explanations.push(`La soustraction est terminée ! ${numA} − ${numB} = ${finalStr}.`);
+      explanations.push(`La soustraction est terminée ! ${leftRaw} − ${rightRaw} = ${finalStr}.`);
     } else {
-      explanations.push(`Subtraction complete! ${numA} − ${numB} = ${finalStr}.`);
+      explanations.push(`Subtraction complete! ${leftRaw} − ${rightRaw} = ${finalStr}.`);
     }
 
-    return { numA, numB, aDigits: A, bDigits: B, stepsRTL, finalStr, resLen, offset, totalColumnPhases, maxStep, explanations };
+    return {
+      aDigits: A,
+      bDigits: B,
+      aDisplay,
+      bDisplay,
+      stepsRTL,
+      finalStr,
+      finalDigitsDisplay,
+      displayIntDigits,
+      digitCols,
+      hasDecimal: layout.hasDecimal,
+      separator,
+      fractionalDigits: layout.fractionalDigits,
+      totalColumnPhases,
+      maxStep,
+      explanations
+    };
   }, [isSimpleSubtraction, expression, language]);
 
   const divisionData = useMemo(() => {
@@ -811,16 +922,18 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
           {additionData ? (
             // Two-phase column addition view
             (() => {
-              const { resLen, offset, aDigits, bDigits, fullResult, totalColumnPhases } = additionData;
+              const { aDisplay, bDisplay, fullResult, resultDisplay, totalColumnPhases, digitCols, resultIntDigits, hasDecimal, separator, finalCarry } = additionData;
               const withinColumns = currentStep >= 0 && currentStep < totalColumnPhases;
               const colPhaseIndex = withinColumns ? currentStep : null;
               const colIndexFromRight = withinColumns ? Math.floor((colPhaseIndex as number) / 2) : null;
               const activeInputIndex = withinColumns ? additionData.stepsRTL.length - 1 - (colIndexFromRight as number) : null;
-              const activeVisualCol = activeInputIndex != null ? additionData.offset + activeInputIndex : null;
+              const activeVisualCol = activeInputIndex != null
+                ? digitColToVisualIndex(activeInputIndex, resultIntDigits, hasDecimal)
+                : null;
 
               const carriesToShow = (() => {
-                const row = Array(resLen).fill('');
-                const strikeRow = Array(resLen).fill(false);
+                const row = Array(resultDisplay.length).fill('');
+                const strikeRow = Array(resultDisplay.length).fill(false);
                 let carryCount = 0;
                 if (withinColumns) {
                   carryCount = Math.floor((colPhaseIndex as number) / 2) + 1;
@@ -830,8 +943,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 for (let k = 0; k < carryCount; k++) {
                   const inputIndex = additionData.stepsRTL.length - 1 - k;
                   const info = additionData.stepsRTL.find(s => s.index === inputIndex);
-                  const visualCol = additionData.offset + inputIndex;
-                  if (info && info.carryIn > 0 && visualCol >= 0 && visualCol < resLen) {
+                  const visualCol = info ? digitColToVisualIndex(inputIndex, resultIntDigits, hasDecimal) : -1;
+                  if (info && info.carryIn > 0 && visualCol >= 0 && visualCol < resultDisplay.length) {
                     row[visualCol] = String(info.carryIn);
                     // Mark for strikethrough if this carry has been used (processed in previous steps)
                     if (k < carryCount - 1) {
@@ -839,30 +952,29 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                     }
                   }
                 }
-                if (currentStep >= totalColumnPhases && additionData.finalCarry > 0) {
-                  row[0] = String(additionData.finalCarry);
-                }
                 return { carries: row, strikes: strikeRow };
               })();
 
               const revealedStr = (() => {
-                const arr = fullResult.split('');
-                const out = Array(resLen).fill(' ');
+                const out = resultDisplay.map(ch => (ch === separator ? separator : ' '));
                 let digitPhases = 0;
                 if (withinColumns) {
                   digitPhases = Math.floor(((colPhaseIndex as number) + 1) / 2);
                 } else if (currentStep >= totalColumnPhases) {
                   digitPhases = additionData.stepsRTL.length;
                 }
-                let toReveal = digitPhases;
-                for (let i = resLen - 1; i >= 0; i--) {
-                  if (toReveal > 0) {
-                    out[i] = arr[i];
-                    toReveal--;
-                  }
+                for (let k = 0; k < digitPhases; k++) {
+                  const digitIndex = additionData.stepsRTL[k]?.index;
+                  if (digitIndex == null) continue;
+                  const visualIndex = digitColToVisualIndex(digitIndex, resultIntDigits, hasDecimal);
+                  out[visualIndex] = resultDisplay[visualIndex];
                 }
-                if (currentStep >= totalColumnPhases && additionData.finalCarry > 0) {
-                  out[0] = arr[0];
+                if (currentStep >= totalColumnPhases) {
+                  for (let i = 0; i < resultDisplay.length; i++) {
+                    if (resultDisplay[i] !== separator) {
+                      out[i] = resultDisplay[i];
+                    }
+                  }
                 }
                 return out.join('');
               })();
@@ -870,7 +982,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               return (
                 <div className="relative font-mono">
                   {/* Carries row */}
-                  <div className="ml-auto grid justify-end min-h-[28px]" style={{ gridTemplateColumns: `repeat(${additionData.resLen + 1}, 2rem)` }}>
+                  <div className="ml-auto grid justify-end min-h-[28px]" style={{ gridTemplateColumns: `repeat(${resultDisplay.length + 1}, 2rem)` }}>
                     {/* Empty column for operator */}
                     <div className="w-8 text-center text-slate-400 font-semibold"></div>
                     {/* Carries for digits */}
@@ -893,44 +1005,38 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
 
                   {/* First number row */}
-                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${additionData.resLen + 1}, 2rem)` }}>
+                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${aDisplay.length + 1}, 2rem)` }}>
                     {/* Empty column for operator */}
                     <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200"></div>
                     {/* First number digits */}
-                    {Array.from({ length: additionData.resLen }).map((_, i) => {
-                      const j = i - offset;
-                      return (
-                        <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
-                          {j >= 0 ? aDigits[j] : ''}
-                        </div>
-                      );
-                    })}
+                    {aDisplay.map((ch, i) => (
+                      <div key={i} className={cn("w-8 text-center text-lg md:text-xl font-bold", ch === separator ? "text-slate-500 dark:text-slate-400" : "text-gray-800 dark:text-gray-200")}>
+                        {ch}
+                      </div>
+                    ))}
                   </div>
 
                   {/* Second number row with + operator */}
-                  <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${additionData.resLen + 1}, 2rem)` }}>
+                  <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${bDisplay.length + 1}, 2rem)` }}>
                     {/* + operator in first column */}
                     <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">+</div>
                     {/* Second number digits */}
-                    {Array.from({ length: additionData.resLen }).map((_, i) => {
-                      const j = i - offset;
-                      return (
-                        <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
-                          {j >= 0 ? bDigits[j] : ''}
-                        </div>
-                      );
-                    })}
+                    {bDisplay.map((ch, i) => (
+                      <div key={i} className={cn("w-8 text-center text-lg md:text-xl font-bold", ch === separator ? "text-slate-500 dark:text-slate-400" : "text-gray-800 dark:text-gray-200")}>
+                        {ch}
+                      </div>
+                    ))}
                   </div>
 
                   <div className="my-2 h-[2px] w-full bg-slate-200" />
 
                   {/* Result row (digit-phase reveal) */}
-                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${additionData.resLen + 1}, 2rem)` }}>
+                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${resultDisplay.length + 1}, 2rem)` }}>
                     {/* Empty column for operator */}
                     <div className="w-8 text-center text-lg md:text-xl font-bold"></div>
                     {/* Result digits */}
                     {revealedStr.split('').map((ch, i) => (
-                      <motion.div key={i} className="w-8 text-center text-lg md:text-xl font-bold" initial={{ opacity: 0.2 }} animate={{ opacity: ch.trim() ? 1 : 0.2 }}>
+                      <motion.div key={i} className={cn("w-8 text-center text-lg md:text-xl font-bold", ch === separator ? "text-slate-500 dark:text-slate-400" : "")} initial={{ opacity: 0.2 }} animate={{ opacity: ch.trim() ? 1 : 0.2 }}>
                         {ch}
                       </motion.div>
                     ))}
@@ -939,8 +1045,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   {/* Active column highlight */}
                   <AnimatePresence>
                     {activeVisualCol != null && (
-                      <motion.div key={`hl-${activeVisualCol}`} className="pointer-events-none absolute inset-y-4 right-0 grid" style={{ gridTemplateColumns: `repeat(${additionData.resLen + 1}, 2rem)` }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        {Array.from({ length: additionData.resLen + 1 }).map((_, i) => (
+                      <motion.div key={`hl-${activeVisualCol}`} className="pointer-events-none absolute inset-y-4 right-0 grid" style={{ gridTemplateColumns: `repeat(${resultDisplay.length + 1}, 2rem)` }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        {Array.from({ length: resultDisplay.length + 1 }).map((_, i) => (
                           <div key={i} className="w-8 h-[92px]" style={{ gridColumn: `${i + 1} / ${i + 2}` }}>
                             {i === activeVisualCol + 1 && (
                               <motion.div className="h-full w-full rounded-xl ring-2 ring-sky-300/90" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 20 }} />
@@ -967,8 +1073,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
           ) : subtractionData ? (
             // French-style subtraction with borrowing indicators
             (() => {
-              const { aDigits, bDigits, finalStr, totalColumnPhases, stepsRTL } = subtractionData;
-              const n = aDigits.length;
+              const { finalStr, totalColumnPhases, stepsRTL, aDisplay, bDisplay, finalDigitsDisplay, displayIntDigits, hasDecimal, separator } = subtractionData;
+              const n = aDisplay.length;
               const withinColumns = currentStep >= 0 && currentStep < totalColumnPhases;
               const colPhaseIndex = withinColumns ? currentStep : null;
               const colIndexFromRight = withinColumns ? Math.floor((colPhaseIndex as number) / 2) : null;
@@ -996,7 +1102,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               for (let k = 0; k < processedColumns; k++) {
                 const info = stepsRTL[k]; // stepsRTL is already right-to-left
                 if (info && info.borrowed) {
-                  const colIndex = info.index; // actual column index in the digit array
+                  const colIndex = digitColToVisualIndex(info.index, displayIntDigits, hasDecimal); // actual column index in the display array
                   showBorrow1[colIndex] = true;
                   // The "+1" appears on the column to the left (where we borrowed from)
                   if (colIndex > 0) {
@@ -1026,8 +1132,11 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   const info = stepsRTL[k];
                   if (info) {
                     // The diff from stepsRTL is the result digit for this column
-                    out[info.index] = String(info.diff);
+                    out[digitColToVisualIndex(info.index, displayIntDigits, hasDecimal)] = String(info.diff);
                   }
+                }
+                if (hasDecimal) {
+                  out[displayIntDigits] = separator;
                 }
                 return out;
               })();
@@ -1035,7 +1144,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               return (
                 <div className="relative font-mono">
                   {/* Carries row above minuend - right-aligned like addition */}
-                  <div className="ml-auto grid justify-end min-h-[28px]" style={{ gridTemplateColumns: `repeat(${n}, 2rem)` }}>
+                  <div className="ml-auto grid justify-end min-h-[28px]" style={{ gridTemplateColumns: `repeat(${n + 1}, 2rem)` }}>
+                    <div className="w-8 text-center text-slate-400 font-semibold" />
                     {Array.from({ length: n }).map((_, i) => (
                       <div key={i} className="w-8 text-center text-slate-400 font-semibold">
                         <AnimatePresence>
@@ -1055,19 +1165,21 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
 
                   {/* Minuend row - right-aligned like addition */}
-                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${n}, 2rem)` }}>
-                    {Array.from({ length: n }).map((_, i) => (
-                      <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
-                        {aDigits[i]}
+                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${n + 1}, 2rem)` }}>
+                    <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200" />
+                    {aDisplay.map((ch, i) => (
+                      <div key={i} className={cn("w-8 text-center text-lg md:text-xl font-bold", ch === separator ? "text-slate-500 dark:text-slate-400" : "text-gray-800 dark:text-gray-200")}>
+                        {ch}
                         </div>
                     ))}
                   </div>
 
                   {/* Subtrahend row with minus sign - right-aligned like addition */}
-                  <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${n}, 2rem)` }}>
-                    {Array.from({ length: n }).map((_, i) => (
-                      <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
-                        {i === 0 ? '−' : ''}{bDigits[i]}
+                  <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${n + 1}, 2rem)` }}>
+                    <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">−</div>
+                    {bDisplay.map((ch, i) => (
+                      <div key={i} className={cn("w-8 text-center text-lg md:text-xl font-bold", ch === separator ? "text-slate-500 dark:text-slate-400" : "text-gray-800 dark:text-gray-200")}>
+                        {ch}
                         </div>
                     ))}
                   </div>
@@ -1076,7 +1188,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   <div className="my-2 h-[2px] w-full bg-gray-800 dark:bg-gray-200" />
 
                   {/* Result row - right-aligned like addition */}
-                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${n}, 2rem)` }}>
+                  <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${n + 1}, 2rem)` }}>
+                    <div className="w-8 text-center" />
                     {Array.from({ length: n }).map((_, i) => (
                       <motion.div
                         key={`res-${i}`}
@@ -1084,7 +1197,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                       >
-                        {resultDigits[i] ? (
+                        {resultDigits[i] === separator ? (
+                          <span className="text-slate-500 dark:text-slate-400">{separator}</span>
+                        ) : resultDigits[i] ? (
                           <motion.span 
                             className="text-green-700 dark:text-green-300"
                             initial={{ scale: 0.8, opacity: 0 }}
@@ -1098,6 +1213,33 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                       </motion.div>
                     ))}
                   </div>
+
+                  {/* Active column highlight */}
+                  <AnimatePresence>
+                    {activeColumnIndex != null && (
+                      <motion.div
+                        key={`sub-hl-${activeColumnIndex}`}
+                        className="pointer-events-none absolute inset-y-4 right-0 grid"
+                        style={{ gridTemplateColumns: `repeat(${n + 1}, 2rem)` }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        {Array.from({ length: n + 1 }).map((_, i) => (
+                          <div key={i} className="w-8 h-[92px]" style={{ gridColumn: `${i + 1} / ${i + 2}` }}>
+                            {i === digitColToVisualIndex(activeColumnIndex ?? 0, displayIntDigits, hasDecimal) + 1 && (
+                              <motion.div
+                                className="h-full w-full rounded-xl ring-2 ring-sky-300/90"
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   {/* Explanation panel */}
                   <motion.div
@@ -1121,98 +1263,168 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               const { dividendStr, divisorStr, phases, quotientSoFar: finalQuotient, finalRemainder } = divisionData;
               const phase = phases[Math.min(currentStep, phases.length - 1)];
               const dividendDigits = dividendStr.split('');
-              const maxWorkWidth = dividendStr.length + 2; // extra space for indentation
+              const digitCols = dividendStr.length;
+              const totalLeftCols = digitCols + 1;
 
               // Determine which quotient digits to show
               const qDigitsToShow = phase.quotientSoFar || '';
 
               // Determine which work rows to show
               const visibleWorkRows = phase.workRows || [];
+              const partialDividendText = String(phase.partialDividend ?? '');
+              const activeDividendStart = Math.max(0, dividendStr.indexOf(partialDividendText));
+              const activeDividendEnd = activeDividendStart + partialDividendText.length - 1;
+              const activeQuotientIndex = Math.max(0, qDigitsToShow.length - 1);
+              const isBringDownPhase = phase.type === 'bringDown' && Boolean(phase.bringDownDigit);
+              const rightWidthRem = Math.max(divisorStr.length, finalQuotient.length, qDigitsToShow.length, 1) * 1.75 + 0.5;
+              const carryDownColumn = isBringDownPhase ? Math.min(dividendDigits.length - 1, activeDividendEnd + 1) : -1;
+
+              const renderLeftGridRow = (
+                chars: Array<{ value: string; tone?: 'default' | 'active' | 'subtract' | 'result' | 'partial' }>,
+                key: string,
+              ) => (
+                <div key={key} className="grid justify-end" style={{ gridTemplateColumns: `repeat(${totalLeftCols}, 2rem)` }}>
+                  {Array.from({ length: totalLeftCols }).map((_, i) => {
+                    const cell = chars[i];
+                    return (
+                      <div
+                        key={`${key}-${i}`}
+                        className={cn(
+                          "w-8 h-8 flex items-center justify-center text-lg font-bold rounded-md transition-colors",
+                          cell?.tone === 'active' && "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300",
+                          cell?.tone === 'subtract' && "text-red-600 dark:text-red-400",
+                          cell?.tone === 'result' && "text-blue-700 dark:text-blue-300",
+                          cell?.tone === 'partial' && "bg-sky-100/70 text-blue-700 dark:bg-sky-900/30 dark:text-blue-300",
+                          !cell?.tone || cell.tone === 'default' ? "text-foreground" : ""
+                        )}
+                      >
+                        {cell?.value || ''}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+
+              const dividendRow = [
+                { value: '', tone: 'default' as const },
+                ...Array.from({ length: digitCols }).map((_, i) => ({
+                  value: dividendDigits[i] || '',
+                  tone: i >= activeDividendStart && i <= activeDividendEnd ? 'active' as const : 'default' as const,
+                })),
+              ];
+
+              const workGridRows = visibleWorkRows.map((row, idx) => {
+                const rowChars = Array.from({ length: totalLeftCols }).map(() => ({ value: '', tone: 'default' as const }));
+                const isSubtractRow = row.type === 'subtract';
+                const rawValue = row.value;
+                const valueStr = isSubtractRow ? rawValue.replace(/^-/, '') : rawValue;
+                const startCol = Math.max(0, row.indent) + 1;
+
+                if (isSubtractRow) {
+                  rowChars[0] = { value: '−', tone: 'subtract' as const };
+                }
+
+                for (let j = 0; j < valueStr.length; j++) {
+                  const col = startCol + j;
+                  if (col >= 1 && col < totalLeftCols) {
+                    rowChars[col] = {
+                      value: valueStr[j],
+                      tone:
+                        row.type === 'subtract'
+                          ? 'subtract'
+                          : idx === visibleWorkRows.length - 1
+                            ? (row.type === 'partial' ? 'partial' : 'result')
+                            : 'default',
+                    };
+                  }
+                }
+
+                return rowChars;
+              });
 
               return (
                 <div className="relative font-mono text-base">
-                  {/* French division layout: dividend | divisor */}
-                  <div className="flex items-start justify-center gap-0">
+                  <div className="flex items-stretch justify-center gap-0">
                     {/* Left side: dividend + working */}
-                    <div className="flex flex-col items-end min-w-0">
+                    <div className="relative flex flex-col items-end min-w-0 pr-2">
                       {/* Dividend row */}
-                      <div className="flex items-center">
-                        {dividendDigits.map((d, i) => (
+                      <div className="relative">
+                        {renderLeftGridRow(dividendRow, 'division-dividend')}
+                        {isBringDownPhase && (
                           <motion.div
-                            key={`dd-${i}`}
-                            className={cn(
-                              "w-7 h-8 flex items-center justify-center text-lg font-bold",
-                              phase.type === 'inspect' && i < String(phase.partialDividend).length + (dividendStr.length - String(phase.partialDividend).length - (qDigitsToShow.length - (phase.quotientDigit !== undefined ? 0 : 0)))
-                                ? "text-foreground"
-                                : "text-foreground"
-                            )}
+                            className="absolute -bottom-10 flex flex-col items-center text-red-500"
+                            style={{ left: `${(carryDownColumn + 1) * 2 + 0.75}rem` }}
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
                           >
-                            {d}
+                            <div className="flex flex-col items-center">
+                              <div className="h-8 border-l-2 border-dashed border-red-500" />
+                              <div className="-mt-1 text-base leading-none">▼</div>
+                            </div>
                           </motion.div>
-                        ))}
+                        )}
                       </div>
 
                       {/* Working rows (products, remainders, brought-down partials) */}
                       <AnimatePresence>
-                        {visibleWorkRows.map((row, idx) => (
+                        {workGridRows.map((rowChars, idx) => (
                           <motion.div
                             key={`work-${idx}`}
-                            className="flex items-center"
                             initial={{ opacity: 0, y: -8 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                           >
-                            {/* Indent + value */}
-                            {Array.from({ length: maxWorkWidth }).map((_, ci) => {
-                              const valueStr = row.value;
-                              const startCol = row.indent;
-                              const charIdx = ci - startCol;
-                              const ch = charIdx >= 0 && charIdx < valueStr.length ? valueStr[charIdx] : '';
-                              const isSubtract = row.type === 'subtract';
-                              const isRemainder = row.type === 'remainder';
-                              const isPartial = row.type === 'partial';
-                              const isLastWorkRow = idx === visibleWorkRows.length - 1;
-                              return (
-                                <div
-                                  key={ci}
-                                  className={cn(
-                                    "w-7 h-7 flex items-center justify-center text-sm",
-                                    isSubtract && "text-red-600 dark:text-red-400",
-                                    isRemainder && isLastWorkRow && "text-blue-600 dark:text-blue-400 font-bold",
-                                    isRemainder && !isLastWorkRow && "text-muted-foreground",
-                                    isPartial && isLastWorkRow && "text-blue-600 dark:text-blue-400 font-bold",
-                                    isPartial && !isLastWorkRow && "text-muted-foreground"
-                                  )}
-                                >
-                                  {ch}
-                                </div>
-                              );
-                            })}
+                            {renderLeftGridRow(rowChars, `division-work-${idx}`)}
                           </motion.div>
                         ))}
                       </AnimatePresence>
+
+                      {/* Underlines below subtraction rows to match the written method */}
+                      <div className="pointer-events-none absolute inset-0">
+                        <div className="relative ml-auto" style={{ width: `${totalLeftCols * 2}rem` }}>
+                          {visibleWorkRows.map((row, idx) => {
+                            if (row.type !== 'subtract') return null;
+                            const digitsOnly = row.value.replace(/^-/, '');
+                            const start = Math.max(0, row.indent) + 1;
+                            const width = digitsOnly.length;
+                            const topOffsetRem = (idx + 2) * 2;
+                            return (
+                              <div
+                                key={`division-line-${idx}`}
+                                className="absolute border-b-2 border-foreground/70"
+                                style={{
+                                  left: `${start * 2}rem`,
+                                  top: `${topOffsetRem - 0.2}rem`,
+                                  width: `${Math.max(width, 1) * 2}rem`,
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Vertical bar + divisor/quotient on the right */}
-                    <div className="flex flex-col items-start">
+                    <div className="ml-1 flex min-h-full flex-col items-start border-l-2 border-foreground pl-2">
                       {/* Divisor row */}
-                      <div className="flex items-center h-8">
-                        <div className="w-[2px] h-8 bg-foreground mr-1" />
-                        <span className="text-lg font-bold text-foreground px-1">{divisorStr}</span>
+                      <div className="flex h-8 items-center">
+                        <span className="rounded-md bg-sky-100 px-1 text-lg font-bold text-foreground dark:bg-sky-900/40 dark:text-sky-300">
+                          {divisorStr}
+                        </span>
                       </div>
-                      {/* Horizontal line under divisor */}
-                      <div className="flex items-center">
-                        <div className="w-[2px] bg-transparent mr-1" />
-                        <div className="h-[2px] bg-foreground" style={{ width: `${Math.max(divisorStr.length, finalQuotient.length) * 1.75 + 0.5}rem` }} />
-                      </div>
-                      {/* Quotient appearing progressively */}
-                      <div className="flex items-center">
-                        <div className="w-[2px] bg-transparent mr-1" />
-                        <div className="flex">
-                          {qDigitsToShow.split('').map((qd, qi) => (
+                      {/* Horizontal line */}
+                      <div className="h-[2px] bg-foreground" style={{ width: `${rightWidthRem}rem` }} />
+                      {/* Quotient row */}
+                      <div className="mt-1 flex min-h-8" style={{ minWidth: `${rightWidthRem}rem` }}>
+                        {qDigitsToShow.split('').map((qd, qi) => (
                             <motion.div
                               key={`q-${qi}`}
-                              className="w-7 h-7 flex items-center justify-center text-lg font-bold text-green-700 dark:text-green-300"
+                              className={cn(
+                                "w-7 h-7 flex items-center justify-center text-lg font-bold rounded-md",
+                                qi === activeQuotientIndex
+                                  ? "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300"
+                                  : "text-green-700 dark:text-green-300"
+                              )}
                               initial={{ scale: 0.5, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
                               transition={{ type: 'spring', stiffness: 400, damping: 20 }}
@@ -1220,16 +1432,14 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                               {qd}
                             </motion.div>
                           ))}
-                        </div>
                       </div>
                       {/* Final remainder display */}
                       {phase.type === 'complete' && finalRemainder > 0 && (
                         <motion.div
-                          className="flex items-center mt-1"
+                          className="mt-2 flex items-center"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                         >
-                          <div className="w-[2px] bg-transparent mr-1" />
                           <span className="text-xs text-muted-foreground">r. {finalRemainder}</span>
                         </motion.div>
                       )}

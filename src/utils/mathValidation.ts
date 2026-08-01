@@ -17,8 +17,8 @@ export function areMathematicallyEquivalent(
     console.log('[mathValidation] Raw inputs:', { question, userAnswer, tolerance });
     
     // Convert LaTeX to plain text for both question and answer
-    const plainTextQuestion = isLatex(question) ? latexToPlainText(question) : question;
-    const plainTextAnswer = isLatex(userAnswer) ? latexToPlainText(userAnswer) : userAnswer;
+    const plainTextQuestion = normalizeDecimalSeparators(isLatex(question) ? latexToPlainText(question) : question);
+    const plainTextAnswer = normalizeDecimalSeparators(isLatex(userAnswer) ? latexToPlainText(userAnswer) : userAnswer);
     
     console.log('[mathValidation] After LaTeX conversion:', { 
       plainTextQuestion,
@@ -181,6 +181,10 @@ function extractCorrectAnswer(question: string): number | null {
   }
 
   return null;
+}
+
+function normalizeDecimalSeparators(value: string): string {
+  return value.replace(/,/g, '.');
 }
 
 /**
