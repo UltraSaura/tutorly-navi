@@ -80,8 +80,12 @@ export function localGrade(question: string, userAnswer: string): LocalGradeResu
   return null; // Unsupported — fall back to AI
 }
 
+function normalizeDecimalInput(value: string): string {
+  return value.replace(/,/g, '.');
+}
+
 function compareNumeric(correct: number, userAnswer: string): LocalGradeResult {
-  const stripped = userAnswer.replace(/[^-\d.]/g, '');
+  const stripped = normalizeDecimalInput(userAnswer).replace(/[^-\d.]/g, '');
   const userVal = parseFloat(stripped);
   const isCorrect = !isNaN(userVal) && Math.abs(userVal - correct) < 0.01;
   return {
@@ -94,7 +98,8 @@ function compareNumeric(correct: number, userAnswer: string): LocalGradeResult {
 
 function solveLinearEquation(q: string): number | null {
   // ax + b = c  or  ax - b = c
-  const match = q.match(/([+-]?\d*\.?\d*)x\s*([+-])\s*(\d+\.?\d*)\s*=\s*([+-]?\d+\.?\d*)/);
+  const normalized = normalizeDecimalInput(q);
+  const match = normalized.match(/([+-]?\d*\.?\d*)x\s*([+-])\s*(\d+\.?\d*)\s*=\s*([+-]?\d+\.?\d*)/);
   if (!match) return null;
   const [, coeffStr, op, constStr, rhs] = match;
   const coeff = coeffStr === '' || coeffStr === '+' ? 1 : coeffStr === '-' ? -1 : parseFloat(coeffStr);
@@ -105,12 +110,13 @@ function solveLinearEquation(q: string): number | null {
 }
 
 function solveLikeTerms(q: string): number | null {
+  const normalized = normalizeDecimalInput(q);
   // Match patterns like "2x + 3x" or "5x - 2x + x"
   const termRegex = /([+-]?\s*\d*\.?\d*)x/g;
-  const matches = [...q.matchAll(termRegex)];
+  const matches = [...normalized.matchAll(termRegex)];
   if (matches.length < 2) return null;
   // Make sure there's no = sign (that's an equation, not like-terms)
-  if (q.includes('=')) return null;
+  if (normalized.includes('=')) return null;
   let sum = 0;
   for (const m of matches) {
     let coeffStr = m[1].replace(/\s/g, '');
@@ -122,12 +128,13 @@ function solveLikeTerms(q: string): number | null {
 }
 
 function extractArithmeticAnswer(q: string): number | null {
+  const normalized = normalizeDecimalInput(q);
   // Division
-  const divMatch = q.match(/(\d+(?:\.\d+)?)\s*[÷\/]\s*(\d+(?:\.\d+)?)/);
+  const divMatch = normalized.match(/(\d+(?:\.\d+)?)\s*[÷\/]\s*(\d+(?:\.\d+)?)/);
   if (divMatch) return parseFloat(divMatch[1]) / parseFloat(divMatch[2]);
 
   // Basic arithmetic
-  const arithMatch = q.match(/(\d+(?:\.\d+)?)\s*([+\-*/×])\s*(\d+(?:\.\d+)?)/);
+  const arithMatch = normalized.match(/(\d+(?:\.\d+)?)\s*([+\-*/×])\s*(\d+(?:\.\d+)?)/);
   if (arithMatch) {
     const a = parseFloat(arithMatch[1]);
     const b = parseFloat(arithMatch[3]);
@@ -140,11 +147,11 @@ function extractArithmeticAnswer(q: string): number | null {
   }
 
   // Power
-  const powMatch = q.match(/(\d+(?:\.\d+)?)\s*\^\s*(\d+(?:\.\d+)?)/);
+  const powMatch = normalized.match(/(\d+(?:\.\d+)?)\s*\^\s*(\d+(?:\.\d+)?)/);
   if (powMatch) return Math.pow(parseFloat(powMatch[1]), parseFloat(powMatch[2]));
 
   // Square root
-  const sqrtMatch = q.match(/(?:√|sqrt\(?)(\d+(?:\.\d+)?)/);
+  const sqrtMatch = normalized.match(/(?:√|sqrt\(?)(\d+(?:\.\d+)?)/);
   if (sqrtMatch) return Math.sqrt(parseFloat(sqrtMatch[1]));
 
   return null;

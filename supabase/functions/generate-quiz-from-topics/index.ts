@@ -41,7 +41,20 @@ function buildTypeInstructions(questionTypes: string[]): string {
         return `- "multi": Multiple choice with MULTIPLE correct answers (2-3 typically). Include 4 choices with "correct": true on multiple.
   Same context_visual support as "single" — add one if the question references a visual element.`;
       case 'numeric':
-        return `- "numeric": Answer is a number. Include "answer" (the correct number) and optionally "range": { "min": X, "max": Y }.`;
+        return `- "numeric": Answer is a number. Include "answer" (the correct number) and optionally "range": { "min": X, "max": Y }.
+  For geometry calculations involving a triangle, angle, side length, figure, diagram, solid, or shape, include a read-only "context_visual" so the student can see the situation.
+  Example for a right triangle:
+  "context_visual": {
+    "subtype": "triangle",
+    "labels": ["A", "B", "C"],
+    "rightAngleAt": "B",
+    "angleLabel": { "vertex": "A", "degrees": 30 },
+    "sideLabels": { "AB": "8 cm" },
+    "targetSide": "BC"
+  }
+  Example for a named shape or solid:
+  "context_visual": { "subtype": "geometry_figure", "shape": "rectangle", "label": "Rectangle" }
+  Supported shape values: triangle, rectangle, square, circle, rhombus, parallelogram, trapezoid, pentagon, hexagon, polygon, cube, cuboid, cylinder, cone, sphere.`;
       case 'ordering':
         return `- "ordering": Put items in correct order. Include "items" (shuffled array) and "correctOrder" (correct sequence). Frame these as step-building, process-ordering, or action-ordering when appropriate.`;
       case 'visual_pie':
@@ -166,7 +179,7 @@ Create a rich Brilliant-style variety when the topic allows it:
 - visual pie: fractions, proportions — use color_slices AND select_pie modes alternately
 - visual angle: geometry, angle measurement
 Prioritise slider, match, and fill-expr when the topic involves numbers, equivalences, or formulas — these create the most engaging interactive experience.
-For single/multi questions that reference a cake, shape, diagram, figure, image, bar, band, segment, or colored part, always include a matching "context_visual" (pie, bar, or angle) so the student can see it.`;
+For single/multi/numeric questions that reference a cake, shape, diagram, figure, image, triangle, rectangle, square, circle, solid, angle, side, bar, band, segment, or colored part, always include a matching "context_visual" (pie, bar, angle, triangle, or geometry_figure) so the student can see it.`;
       default:
         return '';
     }
@@ -184,7 +197,7 @@ function buildLearningFriendlyGuidance(): string {
 - Do not use technical labels such as visual learner, auditory learner, kinesthetic learner, learning modality, or cognitive preference.
 - Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, visual, slider, match, fill-expr.
 - For slider: always include min, max, step, answer, tolerance. For match: always include 3-5 pairs and an answers object. For fill-expr: always include template, blanks, chips, answers.
-- If a "single" or "multi" prompt references a visual ("ce gâteau", "cette figure", "cette barre", "la partie colorée", etc.), you MUST include a matching "context_visual" field so the student can actually see it. Never reference a visual without providing it.`;
+- If a "single", "multi", or "numeric" prompt references a visual ("ce gâteau", "cette figure", "ce triangle", "cette barre", "la partie colorée", etc.), you MUST include a matching "context_visual" field so the student can actually see it. Never reference a visual without providing it.`;
 }
 
 function isValidContextVisual(visual: any): boolean {
@@ -216,6 +229,30 @@ function isValidContextVisual(visual: any): boolean {
     return typeof visual.targetDeg === "number";
   }
 
+  if (visual.subtype === "triangle") {
+    return Array.isArray(visual.labels) && visual.labels.length === 3;
+  }
+
+  if (visual.subtype === "geometry_figure") {
+    return typeof visual.shape === "string" && [
+      "triangle",
+      "rectangle",
+      "square",
+      "circle",
+      "rhombus",
+      "parallelogram",
+      "trapezoid",
+      "pentagon",
+      "hexagon",
+      "polygon",
+      "cube",
+      "cuboid",
+      "cylinder",
+      "cone",
+      "sphere",
+    ].includes(visual.shape);
+  }
+
   return false;
 }
 
@@ -237,11 +274,12 @@ function validateQuestions(questions: any[]): any[] {
   const validVisualSubtypes = new Set(['pie', 'angle']);
 
   return questions.filter((q, idx) => {
+    if (q.kind === 'fill_expr') q.kind = 'fill-expr';
     if (!q.id) q.id = `q-${idx + 1}`;
     if (!q.prompt) return false;
     if (!validKinds.has(q.kind)) return false;
 
-    if (q.kind === "single" || q.kind === "multi") {
+    if (q.kind === "single" || q.kind === "multi" || q.kind === "numeric") {
       repairContextVisual(q);
       if (promptReferencesVisual(q.prompt) && !q.context_visual) {
         return false;
@@ -260,7 +298,10 @@ function validateQuestions(questions: any[]): any[] {
       if (q.choices.filter((c: any) => c.correct).length < 2) return false;
       q.choices.forEach((c: any, i: number) => { if (!c.id) c.id = `c${i + 1}`; });
     }
-    if (q.kind === 'numeric' && typeof q.answer !== 'number') return false;
+    if (q.kind === 'numeric') {
+      if (typeof q.answer !== 'number') q.answer = Number(q.answer);
+      if (!Number.isFinite(q.answer)) return false;
+    }
     if (q.kind === 'ordering') {
       if (!Array.isArray(q.items) || !Array.isArray(q.correctOrder) || q.items.length < 2) return false;
     }
@@ -286,8 +327,13 @@ function validateQuestions(questions: any[]): any[] {
     }
     // Slider validation
     if (q.kind === 'slider') {
-      if (typeof q.min !== 'number' || typeof q.max !== 'number') return false;
-      if (typeof q.answer !== 'number') return false;
+      q.min = Number(q.min);
+      q.max = Number(q.max);
+      q.answer = Number(q.answer);
+      if (q.step !== undefined) q.step = Number(q.step);
+      if (q.tolerance !== undefined) q.tolerance = Number(q.tolerance);
+      if (!Number.isFinite(q.min) || !Number.isFinite(q.max)) return false;
+      if (!Number.isFinite(q.answer)) return false;
       if (typeof q.step !== 'number') q.step = 1;
       if (typeof q.tolerance !== 'number') q.tolerance = Math.max(1, Math.round((q.max - q.min) / 20));
       if (q.answer < q.min || q.answer > q.max) return false;
@@ -408,15 +454,16 @@ serve(async (req) => {
         (focusContext ? `Base the questions PRIMARILY on this level's content:\n${focusContext}\n` : '') +
         `Stay within this level's scope and difficulty; do NOT cover other levels.\n`
       : '';
-
-    const prompt = `You are an expert educator creating quiz questions based on curriculum topics and learning objectives.
+    const buildPrompt = (count: number, existingPrompts: string[] = []) => `You are an expert educator creating quiz questions based on curriculum topics and learning objectives.
 
 TOPIC AND CURRICULUM CONTEXT:
 ---
 ${topicContext}
 ---
 ${focusBlock}
-Generate exactly ${questionCount} quiz questions based on these topics and learning objectives. Questions should test the student's understanding of the concepts described above.
+
+Generate exactly ${count} quiz questions based on these topics and learning objectives. Questions should test the student's understanding of the concepts described above.
+${existingPrompts.length ? `\nDo NOT repeat these existing prompts:\n${existingPrompts.map((prompt) => `- ${prompt}`).join('\n')}\n` : ''}
 
 WRITE ALL STUDENT-FACING TEXT IN ${language === 'fr' ? 'French' : 'English'}.
 
@@ -446,64 +493,91 @@ RULES:
 - Hints must be short, encouraging, and actionable without giving away the answer
 - All prompts, hints, labels, explanations, instructions, and answer text must be written in ${language === 'fr' ? 'French' : 'English'}
 - Visual prompts must mention the visual object the student should inspect
-- Use only supported output kinds: single, multi, numeric, ordering, visual
+- Use only supported output kinds: single, multi, numeric, ordering, visual, slider, match, fill-expr
 - Return ONLY the JSON array`;
 
-    console.log("Calling AI gateway for topic-based generation, prompt length:", prompt.length);
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "You are a quiz generation assistant. Always respond with valid JSON only." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      throw new Error("AI generation failed");
-    }
-
-    const aiResponse = await response.json();
-    const content = aiResponse.choices?.[0]?.message?.content;
-    if (!content) throw new Error("No content in AI response");
-
-    let rawQuestions;
-    try {
+    const parseAiQuestions = (content: string) => {
       let jsonStr = content.trim();
       if (jsonStr.startsWith('```json')) jsonStr = jsonStr.slice(7);
       else if (jsonStr.startsWith('```')) jsonStr = jsonStr.slice(3);
       if (jsonStr.endsWith('```')) jsonStr = jsonStr.slice(0, -3);
-      rawQuestions = JSON.parse(jsonStr.trim());
-    } catch {
-      console.error("Failed to parse AI response:", content);
-      throw new Error("Failed to parse generated questions");
+      const parsed = JSON.parse(jsonStr.trim());
+      if (!Array.isArray(parsed)) throw new Error("AI response is not an array");
+      return parsed;
+    };
+
+    const callAiForQuestions = async (count: number, existingPrompts: string[]) => {
+      const prompt = buildPrompt(count, existingPrompts);
+      console.log("Calling AI gateway for topic-based generation, prompt length:", prompt.length, "requested:", count);
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: "You are a quiz generation assistant. Always respond with valid JSON only." },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Rate limit exceeded. Please try again later.");
+        }
+        if (response.status === 402) {
+          throw new Error("AI credits exhausted.");
+        }
+        throw new Error("AI generation failed");
+      }
+
+      const aiResponse = await response.json();
+      const content = aiResponse.choices?.[0]?.message?.content;
+      if (!content) throw new Error("No content in AI response");
+
+      try {
+        return parseAiQuestions(content);
+      } catch {
+        console.error("Failed to parse AI response:", content);
+        throw new Error("Failed to parse generated questions");
+      }
+    };
+
+    const questions: any[] = [];
+    const seenPromptKeys = new Set<string>();
+    const desiredCount = Math.max(1, Math.min(20, Number(questionCount) || 5));
+
+    for (let attempt = 0; attempt < 3 && questions.length < desiredCount; attempt += 1) {
+      const remaining = desiredCount - questions.length;
+      const rawQuestions = await callAiForQuestions(remaining, questions.map((question) => question.prompt).slice(-12));
+      const validQuestions = validateQuestions(rawQuestions);
+      for (const question of validQuestions) {
+        const key = String(question.prompt || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        if (!key || seenPromptKeys.has(key)) continue;
+        seenPromptKeys.add(key);
+        questions.push(question);
+        if (questions.length >= desiredCount) break;
+      }
+      console.log(`Generation attempt ${attempt + 1}: ${validQuestions.length}/${rawQuestions.length} valid, total accepted ${questions.length}/${desiredCount}`);
     }
 
-    if (!Array.isArray(rawQuestions)) throw new Error("AI response is not an array");
+    if (questions.length < desiredCount) {
+      throw new Error(`Only generated ${questions.length} valid questions out of ${desiredCount}. Please retry or choose fewer restrictive question types.`);
+    }
 
-    const questions = validateQuestions(rawQuestions);
-    if (questions.length === 0) throw new Error("No valid questions after validation");
+    questions.forEach((question, index) => {
+      question.id = `q-${index + 1}`;
+    });
 
     console.log(`Generated ${questions.length} valid questions from ${topics.length} topics`);
 
     return new Response(
-      JSON.stringify({ questions, topicNames }),
+      JSON.stringify({ questions: questions.slice(0, desiredCount), topicNames }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 

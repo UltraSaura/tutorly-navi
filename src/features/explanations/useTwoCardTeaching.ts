@@ -5,8 +5,17 @@ import { toast } from "@/hooks/use-toast";
 import { normalizeLearningStyle, type LearningStyle } from "@/types/learning-style";
 import type { Step } from "./types";
 import { getLearningMode } from "@/domain/learningMode";
+import {
+  analyzeExerciseProfile,
+  countOperandDigits,
+  detectOperationType as detectOperationTypeFromExpression,
+  generateFallbackExampleWithDigits,
+  generateProfileMatchedExample,
+  type OperationType,
+  validateExampleOperationType,
+} from "@/utils/operationTypeDetector";
 
-const ADAPTIVE_EXPLANATION_CACHE_VERSION = 4;
+const ADAPTIVE_EXPLANATION_CACHE_VERSION = 6;
 
 const ADAPTIVE_TWOCARD_PROMPT = `You are a patient math tutor. Your job is to TEACH the underlying mathematical concept, NOT to solve the student's exercise.
 
@@ -50,6 +59,17 @@ Rules for steps:
 - If student exercise is multiplication (× or *), show a multiplication example.
 - If student exercise is addition (+), show an addition example.
 - If student exercise is subtraction (-), show a subtraction example.
+- The guided example MUST keep the same exercise family as the student's exercise:
+  - decimal exercise → decimal example
+  - fraction exercise → fraction example
+  - percentage exercise → percentage example
+  - division with remainder → division with remainder example
+  - exact division → exact division example
+- The guided example must also keep the same difficulty shape when possible:
+  - same digit band: 1-digit, 2-digit, or 3+ digit
+  - same decimal-place count for decimal exercises
+  - if the student's addition needs a carry/retained 1, the guided example must also need a carry
+  - if the student's subtraction needs a borrow/emprunt, the guided example must also need a borrow
 - The self-check step should tell the student what to verify or try next without revealing the original answer.
 - The method step should give reusable steps, not another full worked example.
 - The common mistake step should warn about one likely trap.
@@ -63,11 +83,34 @@ Language: {{language}}
 Grade level: {{gradeLevel}}
 Learning style: {{learning_style}}`;
 
+export interface TeachingSections {
+  exercise: string;
+  steps?: Step[];
+  concept: string;
+  example: string;
+  method: string;
+  currentExercise: string;
+  pitfall: string;
+  check: string;
+  practice: string;
+  parentHelpHint: string;
+  correctAnswer?: string;
+}
+
+type ExplanationFeedback = "like" | "dislike" | null;
+
+type ExplanationReuseMeta = {
+  operationType: OperationType;
+  digitBand: "one_digit_example_required" | "two_digit_example_required" | "three_digit_example_required" | "non_arithmetic";
+  responseLanguage: "French" | "English";
+  subjectId: string;
+};
+
 function buildExerciseHash(
   exerciseContent: string,
   language: string,
   gradeLevel: string,
-  learningStyle: LearningStyle
+  learningStyle: LearningStyle,
 ) {
   const normalizedExercise = exerciseContent.trim().toLowerCase().replace(/\s+/g, " ");
   const normalizedLanguage = language.trim().toLowerCase();
@@ -83,12 +126,100 @@ function buildExerciseHash(
   ].join(":");
 }
 
-async function checkExplanationCache(hash: string): Promise<TeachingSections | null> {
+function detectOperationType(exercise: string): { type: OperationType; symbol: string } {
+  const detection = detectOperationTypeFromExpression(exercise);
+  return { type: detection.type, symbol: detection.operator };
+}
+
+function getDigitBandForExercise(exercise: string): ExplanationReuseMeta["digitBand"] {
+  const operationType = detectOperationTypeFromExpression(exercise).type;
+  if (operationType === "unknown") return "non_arithmetic";
+  const { maxDigits } = countOperandDigits(exercise);
+  if (maxDigits <= 1) return "one_digit_example_required";
+  if (maxDigits === 2) return "two_digit_example_required";
+  return "three_digit_example_required";
+}
+
+function buildReuseMeta(
+  exerciseContent: string,
+  responseLanguage: "French" | "English",
+  subjectId: string,
+): ExplanationReuseMeta {
+  return {
+    operationType: detectOperationTypeFromExpression(exerciseContent).type,
+    digitBand: getDigitBandForExercise(exerciseContent),
+    responseLanguage,
+    subjectId,
+  };
+}
+
+function getTargetExampleDigits(exerciseContent: string): number {
+  const { digitBand } = analyzeExerciseProfile(exerciseContent);
+  return digitBand;
+}
+
+function normalizeExampleForExercise(exerciseContent: string, example: string): string {
+  const profile = analyzeExerciseProfile(exerciseContent);
+  const validation = validateExampleOperationType(exerciseContent, example);
+  const fallback = generateProfileMatchedExample(profile);
+
+  if (!validation.isValid) {
+    return fallback;
+  }
+
+  return example;
+}
+
+function normalizeStepsForExercise(exerciseContent: string, steps?: Step[] | null): Step[] | undefined {
+  if (!Array.isArray(steps) || steps.length === 0) return steps ?? undefined;
+
+  const expectedExample = generateProfileMatchedExample(analyzeExerciseProfile(exerciseContent));
+
+  return steps.map((step) => {
+    if ((step.kind !== "example" && step.kind !== "strategy") || !step.body?.trim()) {
+      return step;
+    }
+
+    const body = step.body;
+    const expressionMatch = body.match(/(\d+(?:[.,]\d+)?\s*[+\-×÷*/]\s*\d+(?:[.,]\d+)?(?:\s*=\s*\d+(?:[.,]\d+)?)?)/);
+    if (!expressionMatch) return step;
+
+    const currentExpression = expressionMatch[1];
+    const safeExample = normalizeExampleForExercise(exerciseContent, currentExpression) || expectedExample;
+    if (!safeExample || safeExample === currentExpression) return step;
+
+    return {
+      ...step,
+      body: body.replace(currentExpression, safeExample),
+    };
+  });
+}
+
+function hasMatchingReuseMeta(candidate: any, expected: ExplanationReuseMeta) {
+  const meta = candidate?.explanation_data?.reuseMeta;
+  if (!meta || typeof meta !== "object") return false;
+
+  return (
+    meta.operationType === expected.operationType &&
+    meta.digitBand === expected.digitBand &&
+    meta.responseLanguage === expected.responseLanguage &&
+    meta.subjectId === expected.subjectId &&
+    candidate?.explanation_data?.adaptiveExplanationVersion === ADAPTIVE_EXPLANATION_CACHE_VERSION
+  );
+}
+
+async function checkExplanationCache(
+  hash: string,
+): Promise<{ id: string; sections: TeachingSections } | null> {
   try {
     const { data: cacheEntry, error } = await supabase
       .from("exercise_explanations_cache")
-      .select("id, explanation_data, usage_count")
+      .select("id, explanation_data, usage_count, quality_score")
       .eq("exercise_hash", hash)
+      .gte("quality_score", 0)
+      .order("quality_score", { ascending: false })
+      .order("updated_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (error) {
@@ -113,7 +244,10 @@ async function checkExplanationCache(hash: string): Promise<TeachingSections | n
       });
 
     console.log("[TwoCardTeaching] Cache hit:", cacheEntry.id);
-    return cacheEntry.explanation_data as unknown as TeachingSections;
+    return {
+      id: cacheEntry.id,
+      sections: cacheEntry.explanation_data as unknown as TeachingSections,
+    };
   } catch (err) {
     console.error("[TwoCardTeaching] Cache read error:", err);
     return null;
@@ -125,8 +259,9 @@ async function saveExplanationToCache(
   exerciseContent: string,
   subjectId: string | null,
   sections: TeachingSections,
-  correctAnswer?: string | null
-): Promise<void> {
+  reuseMeta: ExplanationReuseMeta,
+  correctAnswer?: string | null,
+): Promise<string | null> {
   try {
     const { data: cacheEntry, error } = await supabase
       .from("exercise_explanations_cache")
@@ -138,71 +273,38 @@ async function saveExplanationToCache(
           explanation_data: {
             ...sections,
             adaptiveExplanationVersion: ADAPTIVE_EXPLANATION_CACHE_VERSION,
+            reuseMeta,
           } as any,
           correct_answer: correctAnswer ?? null,
           quality_score: 0,
           usage_count: 1,
           updated_at: new Date().toISOString(),
         },
-        { onConflict: "exercise_hash" }
+        { onConflict: "exercise_hash" },
       )
       .select("id")
       .single();
 
     if (error) {
       console.error("[TwoCardTeaching] Failed to save to cache:", error);
-      return;
+      return null;
     }
 
     console.log("[TwoCardTeaching] Explanation saved to cache:", cacheEntry.id);
+    return cacheEntry.id;
   } catch (err) {
     console.error("[TwoCardTeaching] Error saving explanation:", err);
+    return null;
   }
-}
-
-/**
- * Detect the operation type from a math exercise
- */
-function detectOperationType(exercise: string): { type: string; symbol: string } {
-  const cleanEx = exercise.trim();
-  
-  if (cleanEx.includes('×') || cleanEx.includes('*')) {
-    return { type: 'multiplication', symbol: cleanEx.includes('×') ? '×' : '*' };
-  }
-  if (cleanEx.includes('÷') || cleanEx.includes('/')) {
-    return { type: 'division', symbol: cleanEx.includes('÷') ? '÷' : '/' };
-  }
-  if (cleanEx.includes('+')) {
-    return { type: 'addition', symbol: '+' };
-  }
-  if (cleanEx.includes('-')) {
-    return { type: 'subtraction', symbol: '-' };
-  }
-  
-  return { type: 'unknown', symbol: '' };
 }
 
 function parseOpAndOperands(text: string): { symbol: string; a: string; b: string } | null {
-  const cleaned = text.replace(/\s+/g, ' ').trim();
+  const cleaned = text.replace(/\s+/g, " ").trim();
   const m = cleaned.match(/(-?\d+(?:[.,]\d+)?)(?:\s*)([×*÷\/+\-])(?:\s*)(-?\d+(?:[.,]\d+)?)/);
   if (m) {
     return { a: m[1], symbol: m[2], b: m[3] };
   }
   return null;
-}
-
-export interface TeachingSections {
-  exercise: string;
-  steps?: Step[];
-  concept: string;
-  example: string;
-  method: string;  // Renamed from strategy
-  currentExercise: string;  // Full step-by-step solution with correct answer
-  pitfall: string;
-  check: string;
-  practice: string;
-  parentHelpHint: string;   // Guidance for parents
-  correctAnswer?: string;   // For backwards compatibility
 }
 
 const VALID_STEP_ICONS = new Set(["lightbulb", "magnifier", "divide", "checklist", "warning", "target"]);
@@ -258,7 +360,7 @@ function learningSupportIntro(style: LearningStyle, responseLanguage: string) {
 function synthesizeAdaptiveStepsFromLegacySections(
   sections: any,
   learningStyle: LearningStyle,
-  responseLanguage: string
+  responseLanguage: string,
 ): Step[] | undefined {
   if (!sections || typeof sections !== "object") return undefined;
 
@@ -314,229 +416,329 @@ export function useTwoCardTeaching() {
   const [loading, setLoading] = React.useState(false);
   const [sections, setSections] = React.useState<TeachingSections | null>(null);
   const [error, setError] = React.useState<string | null>(null);
-  
+  const [cacheEntryId, setCacheEntryId] = React.useState<string | null>(null);
+  const [feedback, setFeedback] = React.useState<ExplanationFeedback>(null);
+  const [feedbackLoading, setFeedbackLoading] = React.useState(false);
+
   const { selectedModelId } = useAdmin();
 
-  // Debug wrapper for setSections
+  const resetFeedbackState = React.useCallback(() => {
+    setCacheEntryId(null);
+    setFeedback(null);
+    setFeedbackLoading(false);
+  }, []);
+
   const debugSetSections = (newSections: TeachingSections | null) => {
-    console.log('[useTwoCardTeaching] setSections called with:', newSections);
-    console.log('[useTwoCardTeaching] Current sections state before update:', sections);
-    console.log('[useTwoCardTeaching] New sections type:', typeof newSections);
-    console.log('[useTwoCardTeaching] New sections keys:', newSections ? Object.keys(newSections) : 'null');
+    console.log("[useTwoCardTeaching] setSections called with:", newSections);
+    console.log("[useTwoCardTeaching] Current sections state before update:", sections);
+    console.log("[useTwoCardTeaching] New sections type:", typeof newSections);
+    console.log("[useTwoCardTeaching] New sections keys:", newSections ? Object.keys(newSections) : "null");
     setSections(newSections);
-    // Check state after update
     setTimeout(() => {
-      console.log('[useTwoCardTeaching] Sections state after update:', sections);
-      console.log('[useTwoCardTeaching] Sections state type after update:', typeof sections);
+      console.log("[useTwoCardTeaching] Sections state after update:", sections);
+      console.log("[useTwoCardTeaching] Sections state type after update:", typeof sections);
     }, 100);
   };
 
-  async function openFor(row: any, profile: { response_language?: string; grade_level?: string; learning_style?: string | LearningStyle | null }) {
-    console.log('[TwoCardTeaching] Opening explanation for:', { row, profile });
+  async function openFor(
+    row: any,
+    profile: { response_language?: string; grade_level?: string; learning_style?: string | LearningStyle | null },
+  ) {
+    console.log("[TwoCardTeaching] Opening explanation for:", { row, profile });
     setOpen(true);
     setError(null);
     setLoading(true);
-    
+    resetFeedbackState();
+
     try {
-      // Extract exercise details
       const exercise_content = row?.prompt || row?.question || row?.exercise_content || "";
       const student_answer = row?.userAnswer || row?.student_answer || "";
       const subject = row?.subject || row?.subjectId || "math";
       const promptSubject = String(subject).toLowerCase() === "math" ? "Math" : subject;
       const rawLang = profile?.response_language || "English";
-      // Normalize: accept 'fr', 'French', 'french' etc.
-      const response_language = /^fr/i.test(rawLang) ? 'French' : 'English';
+      const response_language = /^fr/i.test(rawLang) ? "French" : "English";
       const grade_level = profile?.grade_level ?? "High School";
       const learning_style = normalizeLearningStyle(profile?.learning_style);
-      
-      // NEW: Determine learning mode
-      const location = typeof window !== 'undefined' ? window.location.pathname : '';
-      const isAcademicContext = location.includes('/practice') || 
-                                location.includes('/exam') || 
-                                location.includes('/annales');
-      
-      const learningMode = isAcademicContext ? 'student' : getLearningMode(grade_level);
 
-      // Detect the operation type from the exercise
+      const location = typeof window !== "undefined" ? window.location.pathname : "";
+      const isAcademicContext = location.includes("/practice") || location.includes("/exam") || location.includes("/annales");
+      const learningMode = isAcademicContext ? "student" : getLearningMode(grade_level);
+
       const operationInfo = detectOperationType(exercise_content);
-      console.log('[TwoCardTeaching] Detected operation:', operationInfo);
+      console.log("[TwoCardTeaching] Detected operation:", operationInfo);
 
-      // Build the exercise message (NOT a prompt - just the exercise)
-      const exerciseMessage = `${exercise_content}${student_answer ? `\nStudent's answer: ${student_answer}` : ''}`;
+      const exerciseMessage = `${exercise_content}${student_answer ? `\nStudent's answer: ${student_answer}` : ""}`;
 
-      // Build context for variable substitution in the database prompt
       const explanationContext = {
-        exercise_content: exercise_content,
-        student_answer: student_answer || 'Not provided',
-        correct_answer: '', // Don't provide, let AI guide discovery
+        exercise_content,
+        student_answer: student_answer || "Not provided",
+        correct_answer: "",
         exercise: exercise_content,
-        studentAnswer: student_answer || 'Not provided',
+        studentAnswer: student_answer || "Not provided",
         language: response_language,
         gradeLevel: grade_level,
-        first_name: 'Student',
-        grade_level: grade_level,
-        country: 'your country',
+        first_name: "Student",
+        grade_level,
+        country: "your country",
         learning_style,
         learning_mode: learningMode,
         subject: promptSubject,
-        user_type: 'student',
-        response_language: response_language
+        user_type: "student",
+        response_language,
       };
 
-      console.log('[TwoCardTeaching] Using adaptive explanation prompt with context:', explanationContext);
+      console.log("[TwoCardTeaching] Using adaptive explanation prompt with context:", explanationContext);
 
-      const cacheHash = buildExerciseHash(
-        exercise_content,
-        response_language,
-        grade_level,
-        learning_style
-      );
-      const cachedSections = await checkExplanationCache(cacheHash);
-      if (cachedSections) {
-        debugSetSections(cachedSections);
+      const cacheHash = buildExerciseHash(exercise_content, response_language, grade_level, learning_style);
+      const reuseMeta = buildReuseMeta(exercise_content, response_language, subject.toLowerCase());
+
+      const cachedResult = await checkExplanationCache(cacheHash);
+      if (cachedResult) {
+        const normalizedCachedSections = {
+          ...cachedResult.sections,
+          example: normalizeExampleForExercise(exercise_content, cachedResult.sections.example || ""),
+          steps: normalizeStepsForExercise(exercise_content, cachedResult.sections.steps),
+        };
+        debugSetSections(normalizedCachedSections);
+        setCacheEntryId(cachedResult.id);
         setLoading(false);
         return;
       }
 
-      console.log('[TwoCardTeaching] Sending explanation request to AI using database prompt');
+      if (reuseMeta.operationType !== "unknown" && reuseMeta.digitBand !== "non_arithmetic") {
+        try {
+          const { data: similarExplanations, error: similarError } = await supabase
+            .from("exercise_explanations_cache")
+            .select("id, exercise_content, explanation_data, usage_count, quality_score, updated_at")
+            .eq("subject_id", subject.toLowerCase())
+            .gte("quality_score", 0)
+            .order("quality_score", { ascending: false })
+            .order("updated_at", { ascending: false })
+            .limit(25);
 
-      // Use a custom prompt and plain JSON response so the UI is not constrained
-      // by older deployed function-tool schemas that only returned legacy sections.
-      const { data, error: aiError } = await supabase.functions.invoke('ai-chat', {
+          if (similarError) {
+            console.error("[TwoCardTeaching] Similar cache lookup failed:", similarError);
+          } else {
+            const reusableCandidate = (similarExplanations ?? []).find(
+              (candidate) => candidate.exercise_content !== exercise_content && hasMatchingReuseMeta(candidate, reuseMeta),
+            );
+
+            if (reusableCandidate?.explanation_data && typeof reusableCandidate.explanation_data === "object") {
+              const similarSections = {
+                ...(reusableCandidate.explanation_data as unknown as TeachingSections),
+                exercise: exercise_content,
+                example: normalizeExampleForExercise(
+                  exercise_content,
+                  ((reusableCandidate.explanation_data as unknown as TeachingSections).example || ""),
+                ),
+                steps: normalizeStepsForExercise(
+                  exercise_content,
+                  (reusableCandidate.explanation_data as unknown as TeachingSections).steps,
+                ),
+              } satisfies TeachingSections;
+
+              debugSetSections(similarSections);
+              setCacheEntryId(reusableCandidate.id);
+              setLoading(false);
+
+              void supabase
+                .from("exercise_explanations_cache")
+                .update({ usage_count: (reusableCandidate.usage_count ?? 0) + 1 })
+                .eq("id", reusableCandidate.id);
+
+              return;
+            }
+          }
+        } catch (similarLookupError) {
+          console.error("[TwoCardTeaching] Unexpected similar cache lookup error:", similarLookupError);
+        }
+      }
+
+      console.log("[TwoCardTeaching] Sending explanation request to AI using database prompt");
+
+      const { data, error: aiError } = await supabase.functions.invoke("ai-chat", {
         body: {
           message: exerciseMessage,
-          modelId: selectedModelId || 'gpt-5',
+          modelId: selectedModelId || "gpt-5",
           isUnified: false,
           requestExplanation: false,
-          usageType: 'explanation',
+          usageType: "explanation",
           customPrompt: ADAPTIVE_TWOCARD_PROMPT,
-          language: /^fr/i.test(rawLang) ? 'fr' : 'en',
+          language: /^fr/i.test(rawLang) ? "fr" : "en",
           userContext: explanationContext,
           maxTokens: 1600,
-        }
+        },
       });
 
       if (aiError) {
-        console.error('[TwoCardTeaching] AI service error:', aiError);
-        throw new Error('Failed to generate explanation');
+        console.error("[TwoCardTeaching] AI service error:", aiError);
+        throw new Error("Failed to generate explanation");
       }
 
-      console.log('[TwoCardTeaching] AI response received:', data);
+      console.log("[TwoCardTeaching] AI response received:", data);
 
       let result: any = null;
 
-      // Try parsing tool calling response first
       if (data?.tool_calls?.[0]?.function?.arguments) {
-        console.log('[TwoCardTeaching] Parsing from tool_calls');
+        console.log("[TwoCardTeaching] Parsing from tool_calls");
         result = JSON.parse(data.tool_calls[0].function.arguments);
-      } 
-      // Fallback: parse from content (handles plain JSON strings or fenced blocks)
-      else if (data?.content) {
-        console.log('[TwoCardTeaching] Parsing from content');
+      } else if (data?.content) {
+        console.log("[TwoCardTeaching] Parsing from content");
         const rawContent = data.content;
-        
+
         try {
-          // Try to extract JSON from fenced code block: ```json ... ```
           const fenceMatch = rawContent.match(/```(?:json)?\s*([\s\S]*?)```/i);
-          let jsonStr = '';
-          
+          let jsonStr = "";
+
           if (fenceMatch) {
             jsonStr = fenceMatch[1].trim();
           } else {
-            // Fallback: extract between first "{" and last "}"
-            const firstBrace = rawContent.indexOf('{');
-            const lastBrace = rawContent.lastIndexOf('}');
+            const firstBrace = rawContent.indexOf("{");
+            const lastBrace = rawContent.lastIndexOf("}");
             if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
               jsonStr = rawContent.substring(firstBrace, lastBrace + 1);
             } else {
-              // Try parsing the whole content as JSON
               jsonStr = rawContent;
             }
           }
-          
+
           result = JSON.parse(jsonStr);
-          console.log('[TwoCardTeaching] Successfully parsed JSON from content');
+          console.log("[TwoCardTeaching] Successfully parsed JSON from content");
         } catch (parseError) {
-          console.error('[TwoCardTeaching] Failed to parse JSON from content:', parseError);
-          console.error('[TwoCardTeaching] Raw content:', rawContent);
-          throw new Error('The AI returned an unexpected format. Please try again.');
+          console.error("[TwoCardTeaching] Failed to parse JSON from content:", parseError);
+          console.error("[TwoCardTeaching] Raw content:", rawContent);
+          throw new Error("The AI returned an unexpected format. Please try again.");
         }
       } else {
-        console.error('[TwoCardTeaching] No tool calls or content in response');
-        throw new Error('Invalid response format from AI');
+        console.error("[TwoCardTeaching] No tool calls or content in response");
+        throw new Error("Invalid response format from AI");
       }
 
-      // Validate and extract sections (allow missing isMath flag)
       if (result.isMath === false) {
-        throw new Error('This does not appear to be a math problem');
+        throw new Error("This does not appear to be a math problem");
       }
 
       const sections = result.sections || {};
-      const steps = normalizeSteps(result.steps || sections.steps)
+      sections.steps = normalizeStepsForExercise(exercise_content, normalizeSteps(result.steps || sections.steps));
+      const steps = sections.steps
         || synthesizeAdaptiveStepsFromLegacySections(sections, learning_style, response_language);
       const correctAnswer = result.correctAnswer || null;
 
-      // VALIDATION LOGGING: Track what the AI returned
       const studentOp = detectOperationType(exercise_content);
-      const exampleOp = detectOperationType(sections.example || '');
-      
-      if (studentOp.type !== 'unknown' && exampleOp.type !== studentOp.type) {
+      sections.example = normalizeExampleForExercise(exercise_content, sections.example || "");
+      const exampleOp = detectOperationType(sections.example || "");
+
+      if (studentOp.type !== "unknown" && exampleOp.type !== studentOp.type) {
         console.warn(`⚠️ Operation mismatch - Expected: ${studentOp.type}, Got: ${exampleOp.type}`);
-        console.warn('Database prompt may need refinement');
+        console.warn("Database prompt may need refinement");
       }
 
       const exerciseParts = parseOpAndOperands(exercise_content);
-      const exampleParts = parseOpAndOperands(sections.example || '');
-      
-      if (
-        exerciseParts && exampleParts &&
-        exerciseParts.a === exampleParts.a &&
-        exerciseParts.b === exampleParts.b
-      ) {
-        console.warn('⚠️ Example uses same numbers as exercise - prompt needs refinement');
+      const exampleParts = parseOpAndOperands(sections.example || "");
+
+      if (exerciseParts && exampleParts && exerciseParts.a === exampleParts.a && exerciseParts.b === exampleParts.b) {
+        console.warn("⚠️ Example uses same numbers as exercise - prompt needs refinement");
       }
 
-      // Set the sections from AI response (trust the database prompt)
       const explanationSections: TeachingSections = {
         exercise: result.exercise || exercise_content,
         steps,
-        concept: sections.concept || 'No concept provided',
-        example: sections.example || 'No example provided',
-        method: sections.method || sections.strategy || 'No method provided',
-        currentExercise: sections.currentExercise || 'No solution provided',
-        pitfall: sections.pitfall || 'No common pitfalls identified',
-        check: sections.check || 'No verification method provided',
-        practice: sections.practice || 'Practice similar problems',
-        parentHelpHint: sections.parentHelpHint || 'Encourage your child to break down the problem step by step',
-        correctAnswer: correctAnswer
+        concept: sections.concept || "No concept provided",
+        example: sections.example || "No example provided",
+        method: sections.method || sections.strategy || "No method provided",
+        currentExercise: sections.currentExercise || "No solution provided",
+        pitfall: sections.pitfall || "No common pitfalls identified",
+        check: sections.check || "No verification method provided",
+        practice: sections.practice || "Practice similar problems",
+        parentHelpHint: sections.parentHelpHint || "Encourage your child to break down the problem step by step",
+        correctAnswer,
       };
 
-      console.log('[TwoCardTeaching] ✓ Explanation sections generated:', explanationSections);
-      console.log('[TwoCardTeaching] ✓ Method field length:', explanationSections.method.length);
+      console.log("[TwoCardTeaching] ✓ Explanation sections generated:", explanationSections);
+      console.log("[TwoCardTeaching] ✓ Method field length:", explanationSections.method.length);
       debugSetSections(explanationSections);
 
-      void saveExplanationToCache(
+      const savedCacheEntryId = await saveExplanationToCache(
         cacheHash,
         exercise_content,
-        null,
+        subject.toLowerCase(),
         explanationSections,
-        correctAnswer
+        reuseMeta,
+        correctAnswer,
       );
+      if (savedCacheEntryId) {
+        setCacheEntryId(savedCacheEntryId);
+      }
 
       setLoading(false);
-      
     } catch (err) {
-      console.error('[TwoCardTeaching] Error generating explanation:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      console.error("[TwoCardTeaching] Error generating explanation:", err);
+      setError(err instanceof Error ? err.message : "Unknown error");
       setLoading(false);
-      
+
       toast({
         title: "Error",
         description: "Failed to generate explanation. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   }
 
-  return { open, setOpen, loading, sections, error, openFor, setSections: debugSetSections };
+  async function submitFeedback(vote: Exclude<ExplanationFeedback, null>) {
+    if (!cacheEntryId || feedbackLoading || feedback === vote) return;
+
+    setFeedbackLoading(true);
+    try {
+      const { data: current, error: currentError } = await supabase
+        .from("exercise_explanations_cache")
+        .select("quality_score")
+        .eq("id", cacheEntryId)
+        .single();
+
+      if (currentError) throw currentError;
+
+      const currentScore = current?.quality_score ?? 0;
+      const nextScore =
+        vote === "like"
+          ? feedback === "dislike"
+            ? currentScore + 2
+            : currentScore + 1
+          : feedback === "like"
+            ? currentScore - 2
+            : currentScore - 1;
+
+      const { error: updateError } = await supabase
+        .from("exercise_explanations_cache")
+        .update({ quality_score: nextScore })
+        .eq("id", cacheEntryId);
+
+      if (updateError) throw updateError;
+
+      setFeedback(vote);
+    } catch (feedbackError) {
+      console.error("[TwoCardTeaching] Failed to save feedback:", feedbackError);
+      toast({
+        title: "Error",
+        description: "Failed to save feedback.",
+        variant: "destructive",
+      });
+    } finally {
+      setFeedbackLoading(false);
+    }
+  }
+
+  return {
+    open,
+    setOpen,
+    loading,
+    sections,
+    error,
+    openFor,
+    setSections: debugSetSections,
+    submitFeedback,
+    feedback,
+    feedbackLoading,
+    cacheEntryId,
+    resetFeedbackState,
+  };
 }

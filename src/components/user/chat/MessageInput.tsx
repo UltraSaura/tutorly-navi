@@ -249,6 +249,10 @@ const MessageInput = ({
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
                 className="min-h-[40px] max-h-32 resize-none border-0 shadow-none focus-visible:ring-0 text-neutral-text placeholder:text-neutral-muted bg-transparent"
                 disabled={isLoading}
               />

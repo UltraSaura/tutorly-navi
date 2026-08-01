@@ -679,6 +679,10 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
         loading={teaching.loading}
         sections={teaching.sections}
         error={teaching.error}
+        onLike={() => void teaching.submitFeedback('like')}
+        onDislike={() => void teaching.submitFeedback('dislike')}
+        feedback={teaching.feedback}
+        feedbackLoading={teaching.feedbackLoading}
         exerciseQuestion={currentQuestion?.prompt}
       />
       {showXpPill && <XpPill onDone={() => setShowXpPill(false)} />}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X } from 'lucide-react';
+import { ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showXpToast } from '@/components/game/XpToast';
@@ -24,6 +24,10 @@ interface ExplanationModalProps {
   homeworkLearningRows?: SafeHomeworkLearningRow[];
   homeworkSourceId?: string;
   homeworkTitle?: string;
+  onLike?: () => void;
+  onDislike?: () => void;
+  feedback?: 'like' | 'dislike' | null;
+  feedbackLoading?: boolean;
 }
 
 export function ExplanationModal({ 
@@ -40,7 +44,11 @@ export function ExplanationModal({
   topicSlug,
   homeworkLearningRows = [],
   homeworkSourceId,
-  homeworkTitle
+  homeworkTitle,
+  onLike,
+  onDislike,
+  feedback = null,
+  feedbackLoading = false,
 }: ExplanationModalProps) {
   const { t } = useLanguage();
   
@@ -111,6 +119,30 @@ export function ExplanationModal({
                 topicSlug={topicSlug}
                 onClose={onClose} 
               />
+              {(onLike || onDislike) && (
+                <div className="mt-4 flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant={feedback === 'like' ? 'default' : 'outline'}
+                    size="sm"
+                    disabled={feedbackLoading}
+                    onClick={onLike}
+                  >
+                    <ThumbsUp className="mr-2 h-4 w-4" />
+                    {t('common.like', { defaultValue: 'Like' })}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={feedback === 'dislike' ? 'destructive' : 'outline'}
+                    size="sm"
+                    disabled={feedbackLoading}
+                    onClick={onDislike}
+                  >
+                    <ThumbsDown className="mr-2 h-4 w-4" />
+                    {t('common.dislike', { defaultValue: 'Dislike' })}
+                  </Button>
+                </div>
+              )}
               {homeworkLearningRows.length > 0 && (
                 <div className="mt-4">
                   <HomeworkSmartLearningResourcesCard
