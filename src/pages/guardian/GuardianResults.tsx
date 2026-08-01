@@ -161,6 +161,10 @@ export default function GuardianResults() {
             : null)
         }
         error={teaching.error}
+        onLike={() => void teaching.submitFeedback('like')}
+        onDislike={() => void teaching.submitFeedback('dislike')}
+        feedback={teaching.feedback}
+        feedbackLoading={teaching.feedbackLoading}
         onTryAgain={() => {}}
         exerciseQuestion={selectedExercise?.exercise_content || ''}
       />

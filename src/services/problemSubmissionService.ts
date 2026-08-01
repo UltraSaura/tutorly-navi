@@ -6,12 +6,23 @@ import {
   cleanGroupedProblemDisplayText,
   createProblemSubmissionFromText,
 } from '@/utils/problemSubmission';
+import {
+  analyzeExerciseProfile,
+  countOperandDigits,
+  detectOperationType,
+  generateFallbackExampleWithDigits,
+  generateProfileMatchedExample,
+  type OperationType,
+  validateExampleOperationType,
+} from '@/utils/operationTypeDetector';
 
 const GROUPED_GRADING_TIMEOUT_MS = 20000;
 const GROUPED_RETRY_PRACTICE_TIMEOUT_MS = 20000;
 const GROUPED_PROBLEM_EXTRACTION_USAGE_TYPE = 'grouped_problem_extraction';
 const GROUPED_PROBLEM_GRADING_USAGE_TYPE = 'grouped_problem_grading';
 const GROUPED_RETRY_PRACTICE_USAGE_TYPE = 'grouped_retry_practice';
+const GROUPED_RETRY_PRACTICE_CACHE_VERSION = 3;
+const GROUPED_RETRY_PRACTICE_SUBJECT_ID = 'grouped_homework';
 
 export const DEFAULT_GROUPED_PROBLEM_GRADING_PROMPT = `You are grading a grouped homework problem.
 Return ONLY valid JSON. Do not use markdown fences. Do not include prose outside JSON.
@@ -140,6 +151,16 @@ Strict privacy and learning rules:
 - Do NOT give the original exercise's final answer as the teaching content.
 - Do NOT tell the student whether their original answer is correct inside this teaching response.
 - Keep all teaching content focused on the similar example and transferable method.
+- The similar example MUST stay in the same exercise family as the original selected row:
+  - decimal → decimal
+  - fraction → fraction
+  - percentage → percentage
+  - division with remainder → division with remainder
+  - exact division → exact division
+- Keep the same digit band when possible: 1-digit, 2-digit, or 3+ digit.
+- For decimal exercises, keep the same number of decimal places when possible.
+- If the original addition requires a carry/retained 1, the similar example must also require a carry.
+- If the original subtraction requires a borrow/emprunt, the similar example must also require a borrow.
 
 Return exactly this JSON shape:
 {
@@ -276,6 +297,103 @@ type GroupedRetryPracticeProfile = {
   curriculum?: string;
   learningStyle?: string;
 };
+
+type GroupedRetryPracticeReuseMeta = {
+  operationType: OperationType;
+  digitBand: 'one_digit_example_required' | 'two_digit_example_required' | 'three_digit_example_required' | 'non_arithmetic';
+  responseLanguage: 'French' | 'English';
+  subjectId: string;
+  schoolLevel?: string;
+};
+
+function buildGroupedRetryPracticeHash(prompt: string, responseLanguage: 'French' | 'English') {
+  return `grouped-retry:${prompt.toLowerCase().replace(/\s+/g, '')}:${responseLanguage.toLowerCase()}:v${GROUPED_RETRY_PRACTICE_CACHE_VERSION}`;
+}
+
+function deriveGroupedRetryArithmeticSource(problem: ProblemSubmission, selectedPrompt: string): string {
+  const baseOp = detectOperationType(selectedPrompt).type;
+  const candidates = [
+    selectedPrompt,
+    problem.rawText,
+    problem.statement,
+    problem.title,
+    problem.sharedContext,
+    ...problem.sections.flatMap(section => [
+      section.context,
+      ...section.rows.flatMap(row => [row.prompt, row.relatedContext]),
+    ]),
+  ]
+    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    .map(value => value.trim());
+
+  const scored = candidates
+    .map(candidate => ({
+      candidate,
+      operationType: detectOperationType(candidate).type,
+      digits: countOperandDigits(candidate).maxDigits,
+    }))
+    .filter(item => item.operationType !== 'unknown' && item.digits > 0);
+
+  const sameOperation = scored.filter(item => item.operationType === baseOp);
+  const preferredPool = sameOperation.length > 0 ? sameOperation : scored;
+  const best = preferredPool.sort((a, b) => b.digits - a.digits)[0];
+
+  return best?.candidate || selectedPrompt;
+}
+
+function getGroupedRetryPracticeDigitBand(prompt: string): GroupedRetryPracticeReuseMeta['digitBand'] {
+  const op = detectOperationType(prompt).type;
+  if (op === 'unknown') return 'non_arithmetic';
+  const { maxDigits } = countOperandDigits(prompt);
+  if (maxDigits <= 1) return 'one_digit_example_required';
+  if (maxDigits === 2) return 'two_digit_example_required';
+  return 'three_digit_example_required';
+}
+
+function buildGroupedRetryPracticeReuseMeta(
+  prompt: string,
+  responseLanguage: 'French' | 'English',
+  schoolLevel?: string,
+): GroupedRetryPracticeReuseMeta {
+  return {
+    operationType: detectOperationType(prompt).type,
+    digitBand: getGroupedRetryPracticeDigitBand(prompt),
+    responseLanguage,
+    subjectId: GROUPED_RETRY_PRACTICE_SUBJECT_ID,
+    schoolLevel,
+  };
+}
+
+function getGroupedRetryExampleDigits(prompt: string): number {
+  return analyzeExerciseProfile(prompt).digitBand;
+}
+
+function normalizeGroupedRetryPracticeExample(prompt: string, example: string): string {
+  const profile = analyzeExerciseProfile(prompt);
+  const validation = validateExampleOperationType(prompt, example);
+  const fallback = generateProfileMatchedExample(profile);
+
+  if (!validation.isValid) {
+    return fallback;
+  }
+
+  return example;
+}
+
+function hasMatchingGroupedRetryPracticeReuseMeta(candidate: any, expected: GroupedRetryPracticeReuseMeta) {
+  const explanationData = candidate?.explanation_data;
+  const meta = explanationData?.reuseMeta;
+  if (!meta || typeof meta !== 'object') return false;
+
+  return (
+    meta.operationType === expected.operationType &&
+    meta.digitBand === expected.digitBand &&
+    meta.responseLanguage === expected.responseLanguage &&
+    meta.subjectId === expected.subjectId &&
+    (meta.schoolLevel || '') === (expected.schoolLevel || '') &&
+    explanationData?.groupedRetryPracticeVersion === GROUPED_RETRY_PRACTICE_CACHE_VERSION
+  );
+}
 
 function buildGroupedRetryPracticeContext(
   problem: ProblemSubmission,
@@ -1530,8 +1648,9 @@ export async function generateGroupedRetryPractice(input: {
   curriculum?: string;
   learningStyle?: string;
 }): Promise<GroupedRetryPractice> {
+  const responseLanguage = input.language === 'fr' ? 'French' : 'English';
   const context = buildGroupedRetryPracticeContext(input.problem, input.rowId, {
-    responseLanguage: input.language === 'fr' ? 'French' : 'English',
+    responseLanguage,
     schoolLevel: input.schoolLevel,
     country: input.country,
     curriculum: input.curriculum,
@@ -1539,6 +1658,82 @@ export async function generateGroupedRetryPractice(input: {
   });
   if (context.selectedRows.length === 0) {
     throw new Error('No evaluated selected rows are available for retry practice.');
+  }
+  const selectedPrompt = context.selectedRows[0]?.prompt || '';
+  const arithmeticSourcePrompt = deriveGroupedRetryArithmeticSource(input.problem, selectedPrompt);
+  const cacheHash = buildGroupedRetryPracticeHash(arithmeticSourcePrompt, responseLanguage);
+  const reuseMeta = buildGroupedRetryPracticeReuseMeta(arithmeticSourcePrompt, responseLanguage, input.schoolLevel);
+
+  try {
+    const { data: exactCached, error: exactCacheError } = await supabase
+      .from('exercise_explanations_cache')
+      .select('id, explanation_data, usage_count, quality_score')
+      .eq('exercise_hash', cacheHash)
+      .gte('quality_score', 0)
+      .order('quality_score', { ascending: false })
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (exactCacheError) {
+      console.error('[problemSubmissionService] Grouped retry exact cache lookup failed:', exactCacheError);
+    } else if (exactCached?.explanation_data && typeof exactCached.explanation_data === 'object') {
+      const cachedPractice = {
+        ...(exactCached.explanation_data as unknown as GroupedRetryPractice),
+        cacheEntryId: exactCached.id,
+      };
+      cachedPractice.similarProblem = normalizeGroupedRetryPracticeExample(
+        arithmeticSourcePrompt,
+        cachedPractice.similarProblem,
+      );
+      void supabase
+        .from('exercise_explanations_cache')
+        .update({ usage_count: (exactCached.usage_count ?? 0) + 1 })
+        .eq('id', exactCached.id);
+      return cachedPractice;
+    }
+  } catch (exactCacheLookupError) {
+    console.error('[problemSubmissionService] Unexpected grouped retry exact cache error:', exactCacheLookupError);
+  }
+
+  if (reuseMeta.operationType !== 'unknown' && reuseMeta.digitBand !== 'non_arithmetic') {
+    try {
+      const { data: similarCached, error: similarCacheError } = await supabase
+        .from('exercise_explanations_cache')
+        .select('id, exercise_content, explanation_data, usage_count, quality_score, updated_at')
+        .eq('subject_id', GROUPED_RETRY_PRACTICE_SUBJECT_ID)
+        .gte('quality_score', 0)
+        .neq('exercise_hash', cacheHash)
+        .order('quality_score', { ascending: false })
+        .order('updated_at', { ascending: false })
+        .limit(25);
+
+      if (similarCacheError) {
+        console.error('[problemSubmissionService] Grouped retry similar cache lookup failed:', similarCacheError);
+      } else {
+        const reusableCandidate = (similarCached ?? []).find((candidate) =>
+          hasMatchingGroupedRetryPracticeReuseMeta(candidate, reuseMeta)
+        );
+
+        if (reusableCandidate?.explanation_data && typeof reusableCandidate.explanation_data === 'object') {
+          const cachedPractice = {
+            ...(reusableCandidate.explanation_data as unknown as GroupedRetryPractice),
+            cacheEntryId: reusableCandidate.id,
+          };
+          cachedPractice.similarProblem = normalizeGroupedRetryPracticeExample(
+            arithmeticSourcePrompt,
+            cachedPractice.similarProblem,
+          );
+          void supabase
+            .from('exercise_explanations_cache')
+            .update({ usage_count: (reusableCandidate.usage_count ?? 0) + 1 })
+            .eq('id', reusableCandidate.id);
+          return cachedPractice;
+        }
+      }
+    } catch (similarCacheLookupError) {
+      console.error('[problemSubmissionService] Unexpected grouped retry similar cache error:', similarCacheLookupError);
+    }
   }
 
   const customPrompt = await loadGroupedRetryPracticePrompt();
@@ -1567,6 +1762,36 @@ export async function generateGroupedRetryPractice(input: {
   );
   if (!parsed) {
     throw new Error('The practice service did not return a usable similar example.');
+  }
+
+  parsed.similarProblem = normalizeGroupedRetryPracticeExample(
+    arithmeticSourcePrompt,
+    parsed.similarProblem,
+  );
+
+  try {
+    const { data: cacheEntry } = await supabase
+      .from('exercise_explanations_cache')
+      .upsert([{
+        exercise_content: selectedPrompt,
+        exercise_hash: cacheHash,
+        subject_id: GROUPED_RETRY_PRACTICE_SUBJECT_ID,
+        explanation_data: {
+          ...parsed,
+          groupedRetryPracticeVersion: GROUPED_RETRY_PRACTICE_CACHE_VERSION,
+          reuseMeta,
+        } as any,
+        quality_score: 0,
+        usage_count: 1,
+      }], { onConflict: 'exercise_hash' })
+      .select('id')
+      .single();
+
+    if (cacheEntry?.id) {
+      parsed.cacheEntryId = cacheEntry.id;
+    }
+  } catch (cacheSaveError) {
+    console.error('[problemSubmissionService] Failed to save grouped retry cache:', cacheSaveError);
   }
 
   return parsed;
@@ -1598,4 +1823,5 @@ export const __problemSubmissionServiceTest = {
   mergeExtractedProblem,
   normalizeNoEvidenceNeededMultipartEvaluations,
   parseGroupedRetryPractice,
+  buildGroupedRetryPracticeHash,
 };

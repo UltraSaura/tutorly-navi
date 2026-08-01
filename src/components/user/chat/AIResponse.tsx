@@ -394,6 +394,8 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
   const [groupedRetryPractice, setGroupedRetryPractice] = useState<GroupedRetryPractice | null>(null);
   const [groupedRetryPracticeLoading, setGroupedRetryPracticeLoading] = useState(false);
   const [groupedRetryPracticeError, setGroupedRetryPracticeError] = useState<string | null>(null);
+  const [groupedRetryPracticeFeedback, setGroupedRetryPracticeFeedback] = useState<'like' | 'dislike' | null>(null);
+  const [groupedRetryPracticeFeedbackLoading, setGroupedRetryPracticeFeedbackLoading] = useState(false);
   const [simpleExplanationLearningRows, setSimpleExplanationLearningRows] = useState<SafeHomeworkLearningRow[]>([]);
   const [simpleExplanationSourceId, setSimpleExplanationSourceId] = useState<string | undefined>(undefined);
   const [simpleExplanationTitle, setSimpleExplanationTitle] = useState<string | undefined>(undefined);
@@ -426,6 +428,8 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
     setGroupedExplanationLearningRows(buildSafeHomeworkLearningRows(problem, rowId));
     setGroupedRetryPractice(null);
     setGroupedRetryPracticeError(null);
+    setGroupedRetryPracticeFeedback(null);
+    setGroupedRetryPracticeFeedbackLoading(false);
     setGroupedRetryPracticeLoading(true);
 
     try {
@@ -452,6 +456,45 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
       setGroupedRetryPracticeLoading(false);
     }
   }, [language, selectedModelId, userContext?.country, userContext?.learning_style, userContext?.student_level]);
+
+  const submitGroupedRetryPracticeFeedback = useCallback(async (vote: 'like' | 'dislike') => {
+    const cacheEntryId = groupedRetryPractice?.cacheEntryId;
+    if (!cacheEntryId || groupedRetryPracticeFeedbackLoading || groupedRetryPracticeFeedback === vote) return;
+
+    setGroupedRetryPracticeFeedbackLoading(true);
+    try {
+      const { data: current, error: currentError } = await supabase
+        .from('exercise_explanations_cache')
+        .select('quality_score')
+        .eq('id', cacheEntryId)
+        .single();
+
+      if (currentError) throw currentError;
+
+      const currentScore = current?.quality_score ?? 0;
+      const nextScore =
+        vote === 'like'
+          ? groupedRetryPracticeFeedback === 'dislike'
+            ? currentScore + 2
+            : currentScore + 1
+          : groupedRetryPracticeFeedback === 'like'
+            ? currentScore - 2
+            : currentScore - 1;
+
+      const { error: updateError } = await supabase
+        .from('exercise_explanations_cache')
+        .update({ quality_score: nextScore })
+        .eq('id', cacheEntryId);
+
+      if (updateError) throw updateError;
+
+      setGroupedRetryPracticeFeedback(vote);
+    } catch (error) {
+      console.error('[AIResponse] Failed to save grouped explanation feedback:', error);
+    } finally {
+      setGroupedRetryPracticeFeedbackLoading(false);
+    }
+  }, [groupedRetryPractice?.cacheEntryId, groupedRetryPracticeFeedback, groupedRetryPracticeFeedbackLoading]);
 
   const exercisePairs = useMemo(() => {
     const pairs: Array<{ userMessage: Message; aiResponse: Message }> = [];
@@ -563,6 +606,10 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
         loading={teaching.loading}
         sections={teaching.sections}
         error={teaching.error}
+        onLike={() => void teaching.submitFeedback('like')}
+        onDislike={() => void teaching.submitFeedback('dislike')}
+        feedback={teaching.feedback}
+        feedbackLoading={teaching.feedbackLoading}
         onTryAgain={() => teaching.setOpen(false)}
         homeworkLearningRows={simpleExplanationLearningRows}
         homeworkSourceId={simpleExplanationSourceId}
@@ -576,6 +623,10 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
         error={groupedRetryPracticeError}
         rowId={groupedExplanationRowId}
         homeworkLearningRows={groupedExplanationLearningRows}
+        onLike={() => void submitGroupedRetryPracticeFeedback('like')}
+        onDislike={() => void submitGroupedRetryPracticeFeedback('dislike')}
+        feedback={groupedRetryPracticeFeedback}
+        feedbackLoading={groupedRetryPracticeFeedbackLoading}
         onRetry={groupedExplanationProblem ? () => void handleShowGroupedExplanation(groupedExplanationProblem, groupedExplanationRowId) : undefined}
         onClose={() => {
           setGroupedExplanationProblem(null);
@@ -583,6 +634,8 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
           setGroupedExplanationLearningRows([]);
           setGroupedRetryPractice(null);
           setGroupedRetryPracticeError(null);
+          setGroupedRetryPracticeFeedback(null);
+          setGroupedRetryPracticeFeedbackLoading(false);
           setGroupedRetryPracticeLoading(false);
         }}
       />

@@ -157,7 +157,8 @@ function validateQuestions(questions: any[]): any[] {
     }
 
     if (q.kind === 'numeric') {
-      if (typeof q.answer !== 'number') return false;
+      if (typeof q.answer !== 'number') q.answer = Number(q.answer);
+      if (!Number.isFinite(q.answer)) return false;
     }
 
     if (q.kind === 'ordering') {
@@ -242,14 +243,15 @@ serve(async (req) => {
       hard: 'Complex reasoning, subtle distinctions, requires deep comprehension.'
     };
 
-    const prompt = `You are an expert educator creating quiz questions based on video transcript content.
+    const buildPrompt = (count: number, existingPrompts: string[] = []) => `You are an expert educator creating quiz questions based on video transcript content.
 
 TRANSCRIPT CONTENT:
 ---
 ${aggregatedTranscript}
 ---
 
-Generate exactly ${questionCount} quiz questions based on this content.
+Generate exactly ${count} quiz questions based on this content.
+${existingPrompts.length ? `\nDo NOT repeat these existing prompts:\n${existingPrompts.map((prompt) => `- ${prompt}`).join('\n')}\n` : ''}
 
 QUESTION TYPES TO USE:
 ${typeInstructions}
@@ -275,59 +277,78 @@ RULES:
 - Use only supported output kinds: single, multi, numeric, ordering, visual
 - Return ONLY the JSON array, no markdown, no explanation`;
 
-    console.log("Calling AI gateway, prompt length:", prompt.length);
+    const callAiForQuestions = async (count: number, existingPrompts: string[]) => {
+      const prompt = buildPrompt(count, existingPrompts);
+      console.log("Calling AI gateway, prompt length:", prompt.length, "requested:", count);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "You are a quiz generation assistant. Always respond with valid JSON only." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.7,
-      }),
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: "You are a quiz generation assistant. Always respond with valid JSON only." },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) throw new Error("Rate limit exceeded. Please try again later.");
+        if (response.status === 402) throw new Error("AI credits exhausted. Please add funds to continue.");
+        const errorText = await response.text();
+        console.error("AI gateway error:", response.status, errorText);
+        throw new Error("AI generation failed");
+      }
+
+      const aiResponse = await response.json();
+      const content = aiResponse.choices?.[0]?.message?.content;
+      if (!content) throw new Error("No content in AI response");
+
+      try {
+        const parsed = parseJsonResponse(content);
+        if (!Array.isArray(parsed)) throw new Error("AI response is not an array of questions");
+        return parsed;
+      } catch {
+        console.error("Failed to parse AI response:", content);
+        throw new Error("Failed to parse generated questions");
+      }
+    };
+
+    const questions: any[] = [];
+    const seenPromptKeys = new Set<string>();
+    const desiredCount = Math.max(1, Math.min(20, Number(questionCount) || 5));
+
+    for (let attempt = 0; attempt < 3 && questions.length < desiredCount; attempt += 1) {
+      const remaining = desiredCount - questions.length;
+      const rawQuestions = await callAiForQuestions(remaining, questions.map((question) => question.prompt).slice(-12));
+      const validQuestions = validateQuestions(rawQuestions);
+      for (const question of validQuestions) {
+        const key = String(question.prompt || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        if (!key || seenPromptKeys.has(key)) continue;
+        seenPromptKeys.add(key);
+        questions.push(question);
+        if (questions.length >= desiredCount) break;
+      }
+      console.log(`Transcript generation attempt ${attempt + 1}: ${validQuestions.length}/${rawQuestions.length} valid, total accepted ${questions.length}/${desiredCount}`);
+    }
+
+    if (questions.length < desiredCount) {
+      throw new Error(`Only generated ${questions.length} valid questions out of ${desiredCount}. Please retry or choose fewer restrictive question types.`);
+    }
+
+    questions.forEach((question, index) => {
+      question.id = `q-${index + 1}`;
     });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds to continue." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error("AI generation failed");
-    }
-
-    const aiResponse = await response.json();
-    const content = aiResponse.choices?.[0]?.message?.content;
-    if (!content) throw new Error("No content in AI response");
-
-    let rawQuestions;
-    try {
-      rawQuestions = parseJsonResponse(content);
-    } catch {
-      console.error("Failed to parse AI response:", content);
-      throw new Error("Failed to parse generated questions");
-    }
-
-    if (!Array.isArray(rawQuestions)) throw new Error("AI response is not an array of questions");
-
-    const questions = validateQuestions(rawQuestions);
-    if (questions.length === 0) throw new Error("No valid questions after validation");
 
     console.log(`Generated ${questions.length} valid questions from ${videos.length} videos`);
 
     return new Response(
-      JSON.stringify({ questions, aggregatedWordCount: wordCount, aggregatedTranscript, videoTitles }),
+      JSON.stringify({ questions: questions.slice(0, desiredCount), aggregatedWordCount: wordCount, aggregatedTranscript, videoTitles }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 

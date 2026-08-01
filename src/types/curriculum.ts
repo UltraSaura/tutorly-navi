@@ -18,6 +18,9 @@ export interface Objective {
   subject_id: string | null;
   domain_id: string | null;
   subdomain_id: string | null;
+  subject_id_uuid?: string | null;
+  domain_id_uuid?: string | null;
+  subdomain_id_uuid?: string | null;
   skill_id: string | null;
 }
 
@@ -28,6 +31,9 @@ export interface SuccessCriterion {
   subject_id: string | null;
   domain_id: string | null;
   subdomain_id: string | null;
+  subject_id_uuid?: string | null;
+  domain_id_uuid?: string | null;
+  subdomain_id_uuid?: string | null;
   skill_id: string | null;
 }
 

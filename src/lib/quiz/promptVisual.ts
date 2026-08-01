@@ -1,6 +1,34 @@
 export type PromptFigureSpec =
   | { kind: "rect"; total: number; colored: number }
-  | { kind: "pie"; total: number; colored: number };
+  | { kind: "pie"; total: number; colored: number }
+  | {
+      kind: "geometry_figure";
+      shape:
+        | "triangle"
+        | "rectangle"
+        | "square"
+        | "circle"
+        | "rhombus"
+        | "parallelogram"
+        | "trapezoid"
+        | "pentagon"
+        | "hexagon"
+        | "polygon"
+        | "cube"
+        | "cuboid"
+        | "cylinder"
+        | "cone"
+        | "sphere";
+      label?: string;
+    }
+  | {
+      kind: "triangle";
+      labels: [string, string, string];
+      rightAngleAt?: string;
+      angleLabel?: { vertex: string; degrees: number };
+      sideLabels?: Record<string, string>;
+      targetSide?: string;
+    };
 
 export function normalizePromptText(text: string | null | undefined): string {
   return (text || "")
@@ -38,7 +66,7 @@ export function parseFractionText(text: string | null | undefined): { numerator:
 
 export function promptReferencesVisual(text: string | null | undefined): boolean {
   const normalized = normalizePromptText(text);
-  return /\b(figure|image|schema|dessin|forme|rectangle|carre|cercle|disque|gateau|tarte|pizza|camembert|barre|bande|segment|bar model|barmodel)\b/.test(normalized)
+  return /\b(figure|image|schema|dessin|forme|triangle|rectangle|carre|cercle|disque|losange|parallelogramme|trapeze|pentagone|hexagone|polygone|cube|pave droit|pave|cylindre|cone|sphere|boule|solide|gateau|tarte|pizza|camembert|barre|bande|segment|bar model|barmodel)\b/.test(normalized)
     || /\b(partie|portion)\s+coloree\b/.test(normalized);
 }
 
@@ -77,7 +105,11 @@ export function getRecoverableFraction(question: any): { numerator: number; deno
 }
 
 export function inferPromptFigure(question: any): PromptFigureSpec | null {
-  const normalized = normalizePromptText(question?.prompt);
+  const prompt = question?.prompt || "";
+  const triangle = inferTriangleFigure(prompt);
+  if (triangle) return triangle;
+
+  const normalized = normalizePromptText(prompt);
   if (!promptReferencesVisual(normalized)) return null;
 
   const pieLike = /\b(cercle|disque|gateau|tarte|pizza|camembert)\b/.test(normalized);
@@ -95,7 +127,9 @@ export function inferPromptFigure(question: any): PromptFigureSpec | null {
     return { kind: pieLike ? "pie" : "rect", total, colored };
   }
 
-  if (!hasColoredReference) return null;
+  if (!hasColoredReference) {
+    return inferGeometryFigure(prompt);
+  }
 
   const fraction = getRecoverableFraction(question);
   if (!fraction) return null;
@@ -108,7 +142,7 @@ export function inferPromptFigure(question: any): PromptFigureSpec | null {
     return { kind: "rect", total: fraction.denominator, colored: fraction.numerator };
   }
 
-  return null;
+  return inferGeometryFigure(prompt);
 }
 
 export function buildReadonlyContextVisual(spec: PromptFigureSpec) {
@@ -124,10 +158,101 @@ export function buildReadonlyContextVisual(spec: PromptFigureSpec) {
     };
   }
 
+  if (spec.kind === "triangle") {
+    return {
+      subtype: "triangle",
+      labels: spec.labels,
+      rightAngleAt: spec.rightAngleAt,
+      angleLabel: spec.angleLabel,
+      sideLabels: spec.sideLabels,
+      targetSide: spec.targetSide,
+    };
+  }
+
+  if (spec.kind === "geometry_figure") {
+    return {
+      subtype: "geometry_figure",
+      shape: spec.shape,
+      label: spec.label,
+    };
+  }
+
   return {
     subtype: "bar",
     totalParts: spec.total,
     coloredParts: spec.colored,
     orientation: "horizontal",
+  };
+}
+
+function inferGeometryFigure(prompt: string): PromptFigureSpec | null {
+  const normalized = normalizePromptText(prompt);
+  if (!normalized) return null;
+
+  const shapes: Array<{ shape: Extract<PromptFigureSpec, { kind: "geometry_figure" }>["shape"]; pattern: RegExp; label: string }> = [
+    { shape: "square", pattern: /\bcarre\b/, label: "Carré" },
+    { shape: "rectangle", pattern: /\brectangle\b/, label: "Rectangle" },
+    { shape: "circle", pattern: /\b(cercle|disque)\b/, label: "Cercle" },
+    { shape: "rhombus", pattern: /\blosange\b/, label: "Losange" },
+    { shape: "parallelogram", pattern: /\bparallelogramme\b/, label: "Parallélogramme" },
+    { shape: "trapezoid", pattern: /\btrapeze\b/, label: "Trapèze" },
+    { shape: "pentagon", pattern: /\bpentagone\b/, label: "Pentagone" },
+    { shape: "hexagon", pattern: /\bhexagone\b/, label: "Hexagone" },
+    { shape: "cube", pattern: /\bcube\b/, label: "Cube" },
+    { shape: "cuboid", pattern: /\b(pave droit|pave|parallelepipede)\b/, label: "Pavé droit" },
+    { shape: "cylinder", pattern: /\bcylindre\b/, label: "Cylindre" },
+    { shape: "cone", pattern: /\bcone\b/, label: "Cône" },
+    { shape: "sphere", pattern: /\b(sphere|boule)\b/, label: "Sphère" },
+    { shape: "polygon", pattern: /\bpolygone\b/, label: "Polygone" },
+  ];
+
+  const match = shapes.find((candidate) => candidate.pattern.test(normalized));
+  if (!match) return null;
+  return { kind: "geometry_figure", shape: match.shape, label: match.label };
+}
+
+function canonicalSide(a: string, b: string): string {
+  return [a.toUpperCase(), b.toUpperCase()].sort().join("");
+}
+
+function inferTriangleFigure(prompt: string): PromptFigureSpec | null {
+  if (!prompt) return null;
+  const normalized = normalizePromptText(prompt);
+  if (!/\btriangle\b/.test(normalized)) return null;
+
+  const triangleMatch = prompt.match(/\btriangle\s+([A-Z])([A-Z])([A-Z])\b/i);
+  const labels = triangleMatch
+    ? (triangleMatch.slice(1, 4).map((label) => label.toUpperCase()) as [string, string, string])
+    : (["A", "B", "C"] as [string, string, string]);
+
+  const rightAngleMatch = prompt.match(/\brectangle\s+en\s+([A-Z])\b/i);
+  const rightAngleAt = rightAngleMatch?.[1]?.toUpperCase();
+
+  const angleMatch = prompt.match(/\bangle\s+([A-Z])([A-Z])([A-Z])\s+(?:mesure|=|vaut)\s*(\d+(?:[,.]\d+)?)\s*°?/i);
+  const angleLabel = angleMatch
+    ? {
+        vertex: angleMatch[2].toUpperCase(),
+        degrees: Number(angleMatch[4].replace(",", ".")),
+      }
+    : undefined;
+
+  const sideLabels: Record<string, string> = {};
+  const sidePattern = /\b(?:c[oô]t[eé]|segment|longueur)\s+([A-Z])([A-Z])\s+(?:mesure|=|vaut|de)?\s*(\d+(?:[,.]\d+)?)\s*(cm|mm|m|km)?/gi;
+  for (const match of prompt.matchAll(sidePattern)) {
+    const value = match[3].replace(",", ".");
+    const unit = match[4] ? ` ${match[4]}` : "";
+    sideLabels[canonicalSide(match[1], match[2])] = `${value}${unit}`;
+  }
+
+  const targetMatch = prompt.match(/\b(?:calculez|calculer|trouver|determinez|déterminez)\s+(?:la\s+)?(?:longueur\s+du\s+)?c[oô]t[eé]\s+([A-Z])([A-Z])\b/i);
+  const targetSide = targetMatch ? canonicalSide(targetMatch[1], targetMatch[2]) : undefined;
+
+  return {
+    kind: "triangle",
+    labels,
+    rightAngleAt,
+    angleLabel: Number.isFinite(angleLabel?.degrees) ? angleLabel : undefined,
+    sideLabels: Object.keys(sideLabels).length ? sideLabels : undefined,
+    targetSide,
   };
 }

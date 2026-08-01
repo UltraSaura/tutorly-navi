@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, Loader2, X } from 'lucide-react';
+import { AlertCircle, Loader2, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import { GroupedRetryPractice, ProblemSubmission } from '@/types/chat';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,10 @@ interface GroupedProblemExplanationModalProps {
   onClose: () => void;
   onRetry?: () => void;
   homeworkLearningRows?: SafeHomeworkLearningRow[];
+  onLike?: () => void;
+  onDislike?: () => void;
+  feedback?: 'like' | 'dislike' | null;
+  feedbackLoading?: boolean;
 }
 
 const selectedEvaluatedRows = (problem: ProblemSubmission, rowId?: string) =>
@@ -55,6 +59,10 @@ const GroupedProblemExplanationModal = ({
   onClose,
   onRetry,
   homeworkLearningRows = [],
+  onLike,
+  onDislike,
+  feedback = null,
+  feedbackLoading = false,
 }: GroupedProblemExplanationModalProps) => {
   const { language } = useLanguage();
   const { userContext } = useUserContext();
@@ -317,6 +325,31 @@ const GroupedProblemExplanationModal = ({
                     </section>
                   )}
                 </>
+              )}
+
+              {(onLike || onDislike) && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant={feedback === 'like' ? 'default' : 'outline'}
+                    size="sm"
+                    disabled={feedbackLoading}
+                    onClick={onLike}
+                  >
+                    <ThumbsUp className="mr-2 h-4 w-4" />
+                    {language === 'fr' ? 'J’aime' : 'Like'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={feedback === 'dislike' ? 'destructive' : 'outline'}
+                    size="sm"
+                    disabled={feedbackLoading}
+                    onClick={onDislike}
+                  >
+                    <ThumbsDown className="mr-2 h-4 w-4" />
+                    {language === 'fr' ? 'Je n’aime pas' : 'Dislike'}
+                  </Button>
+                </div>
               )}
 
               {homeworkLearningRows.length > 0 && (
