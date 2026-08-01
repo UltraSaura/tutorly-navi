@@ -1,39 +1,22 @@
-# Numeric Question — Drag‑and‑Drop Suggestion Chips
+## Plan
 
-Currently, the `numeric` (non‑fraction) question only shows a "Tape ta réponse" input box. We will add a row of **suggestion chips below the input**, including the correct answer plus a few distractors, that the student can drag into (or tap) the answer box — matching the pattern already used by the fraction quiz (second screenshot).
+1. **Fix the objective query relationship**
+   - Update the Curriculum Viewer objective fetch so success criteria are joined through the UUID relationship (`objective_id_uuid -> objectives.id_new`) instead of relying on the legacy text relationship.
+   - Keep the existing filters for level, subject, domain, subdomain, and search.
 
-## Behavior
+2. **Make filter values resilient**
+   - Normalize level filtering to lowercase consistently.
+   - Ensure domain/subdomain selections reset immediately when their available DB options no longer contain the selected value.
 
-- Chips appear **below** the answer box, in the same visual style as fraction chips (`w-12 h-12 rounded-xl`, neutral bg, Poppins, primary teal active state).
-- **4 chips total**: the correct answer + 3 random distractors, shuffled.
-- Distractors are deterministic per question (seeded by `question.id`) so the order is stable across re‑renders and previews.
-- **Drag and drop**: chip → answer box fills the input (HTML5 drag, same `dataTransfer text/plain` approach as `FillExprQuestion`).
-- **Tap**: tapping a chip fills the input with that value; tapping again clears it.
-- Used chip shows the dimmed/used state (same styling as fraction chips).
-- Caption below: `Glisse un nombre, ou tapote pour le placer.`
-- Keyboard typing into the input still works as today (chips are an aid, not a restriction).
+3. **Improve empty-state visibility**
+   - Add a small admin-only diagnostic message in the empty state showing the active filter IDs, so if a filter combination truly has no rows it is obvious which value is blocking results.
 
-## Source of chips
+4. **Verify with live data**
+   - Check that the selected France / CM1 / Mathématiques filters return the existing CM1 math objectives from Supabase.
+   - Confirm the viewer no longer shows `0 objective(s)` for filter combinations that exist in the database.
 
-- If the question payload already has `dragOptions: number[]` (existing optional field on `NumericQ`), use it as‑is (shuffled).
-- Otherwise auto‑generate 3 distractors around the correct `answer`:
-  - Integers: pick `answer ± 1, ± 2, ± 3` (clamped to `range.min/max` when present), drop duplicates, pick 3.
-  - If `range` exists and is small (≤10 span), pick from the range excluding the answer.
-  - Always include the correct answer; shuffle deterministically by `question.id`.
+## Technical notes
 
-## Scope (files)
-
-- `src/components/learning/QuestionCard.tsx` — extend the existing `numeric && answerFormat !== "fraction"` block (lines ~586–630) to render a chip row beneath the input, with drag/drop + tap handlers wired to `setVal`.
-- Small helper for deterministic distractor generation, colocated in the same file (or `src/lib/quiz/numericSuggestions.ts` if you prefer a dedicated util — flag your preference).
-
-No changes to types (`dragOptions` already exists), DB, admin builder, or grading logic.
-
-## Out of scope
-
-- Fraction numeric variant (already has its own chips).
-- Admin UI for manually editing `dragOptions` (can be a follow‑up).
-- Changing answer validation — typed and dropped values are both written to the same `value` state.
-
-## Open question
-
-Do you want the admin to be able to **define** the distractor chips per question (edit `dragOptions` in the admin builder), or is auto‑generation enough for now? Default in this plan: auto‑generate, ignore `dragOptions` editing UI for now.
+- The data exists in Supabase: CM1 Mathématiques objectives are present.
+- The most likely remaining blocker is the nested `success_criteria (*)` relationship in the `objectives` query, which may be resolving through the legacy `objective_id` foreign key rather than the imported UUID key.
+- No database schema change is planned; this is a frontend query/display fix only.

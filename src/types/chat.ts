@@ -97,6 +97,7 @@ export interface GroupedAnswerPayload {
 export interface GroupedRetryPractice {
   concept: string;
   similarProblem: string;
+  cacheEntryId?: string;
   diagram?: {
     type: 'rectangle' | 'square' | 'triangle' | 'circle';
     labels?: string[];

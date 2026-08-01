@@ -4,11 +4,12 @@ import katex from "katex";
 import type { Question } from "@/types/quiz-bank";
 import { evaluateQuestion } from "@/utils/quizEvaluation";
 import { cn } from "@/lib/utils";
-import type { VisualAngle, VisualBar, VisualUnion, VisualPie } from "@/lib/quiz/visual-types";
+import type { GeometryFigureShape, VisualAngle, VisualBar, VisualUnion, VisualPie, VisualTriangle } from "@/lib/quiz/visual-types";
 import { normalizeAngle } from "@/lib/quiz/visual-geometry";
 import { GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ManipulativeMathRenderer } from "@/components/manipulative-maths/ManipulativeMathRenderer";
+import { MathRenderer } from "@/components/math/MathRenderer";
 import { SliderQuestionView } from "./SliderQuestion";
 import { MatchQuestionView } from "./MatchQuestion";
 import { FillExprQuestionView } from "./FillExprQuestion";
@@ -198,7 +199,208 @@ function ContextVisual({ visual }: { visual: any }) {
     );
   }
 
+  if (visual.subtype === "triangle") {
+    return <TriangleDiagram visual={visual as VisualTriangle} />;
+  }
+
+  if (visual.subtype === "geometry_figure") {
+    return <GeometryFigureDiagram shape={visual.shape} label={visual.label} />;
+  }
+
   return null;
+}
+
+function regularPolygonPoints(cx: number, cy: number, r: number, sides: number, rotation = -Math.PI / 2) {
+  return Array.from({ length: sides }, (_, i) => {
+    const angle = rotation + (i * 2 * Math.PI) / sides;
+    return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
+  }).join(" ");
+}
+
+function GeometryFigureDiagram({ shape, label }: { shape: GeometryFigureShape; label?: string }) {
+  const stroke = "#0f172a";
+  const fill = "#ffffff";
+  const accent = "#12C6A0";
+  const muted = "#94a3b8";
+
+  const shapeNode = (() => {
+    switch (shape) {
+      case "rectangle":
+        return <rect x={32} y={44} width={116} height={58} rx={3} fill={fill} stroke={stroke} strokeWidth={3} />;
+      case "square":
+        return <rect x={52} y={32} width={78} height={78} rx={3} fill={fill} stroke={stroke} strokeWidth={3} />;
+      case "circle":
+        return <circle cx={90} cy={72} r={42} fill={fill} stroke={stroke} strokeWidth={3} />;
+      case "rhombus":
+        return <polygon points="90,26 144,72 90,118 36,72" fill={fill} stroke={stroke} strokeWidth={3} strokeLinejoin="round" />;
+      case "parallelogram":
+        return <polygon points="50,38 150,38 126,108 26,108" fill={fill} stroke={stroke} strokeWidth={3} strokeLinejoin="round" />;
+      case "trapezoid":
+        return <polygon points="64,38 126,38 150,108 38,108" fill={fill} stroke={stroke} strokeWidth={3} strokeLinejoin="round" />;
+      case "pentagon":
+        return <polygon points={regularPolygonPoints(90, 74, 48, 5)} fill={fill} stroke={stroke} strokeWidth={3} strokeLinejoin="round" />;
+      case "hexagon":
+        return <polygon points={regularPolygonPoints(90, 74, 48, 6, Math.PI / 6)} fill={fill} stroke={stroke} strokeWidth={3} strokeLinejoin="round" />;
+      case "polygon":
+        return <polygon points="48,42 104,28 146,62 132,112 72,118 34,82" fill={fill} stroke={stroke} strokeWidth={3} strokeLinejoin="round" />;
+      case "cube":
+        return (
+          <>
+            <rect x={46} y={58} width={62} height={62} fill={fill} stroke={stroke} strokeWidth={3} />
+            <polygon points="46,58 70,34 132,34 108,58" fill="#f8fafc" stroke={stroke} strokeWidth={3} strokeLinejoin="round" />
+            <polygon points="108,58 132,34 132,96 108,120" fill="#e2e8f0" stroke={stroke} strokeWidth={3} strokeLinejoin="round" />
+          </>
+        );
+      case "cuboid":
+        return (
+          <>
+            <rect x={34} y={58} width={84} height={50} fill={fill} stroke={stroke} strokeWidth={3} />
+            <polygon points="34,58 62,36 146,36 118,58" fill="#f8fafc" stroke={stroke} strokeWidth={3} strokeLinejoin="round" />
+            <polygon points="118,58 146,36 146,86 118,108" fill="#e2e8f0" stroke={stroke} strokeWidth={3} strokeLinejoin="round" />
+          </>
+        );
+      case "cylinder":
+        return (
+          <>
+            <path d="M48 44 C48 30 132 30 132 44" fill="#f8fafc" stroke={stroke} strokeWidth={3} />
+            <path d="M48 44 V100 C48 116 132 116 132 100 V44" fill={fill} stroke={stroke} strokeWidth={3} />
+            <ellipse cx={90} cy={100} rx={42} ry={14} fill="#e2e8f0" stroke={stroke} strokeWidth={3} />
+            <ellipse cx={90} cy={44} rx={42} ry={14} fill="#f8fafc" stroke={stroke} strokeWidth={3} />
+          </>
+        );
+      case "cone":
+        return (
+          <>
+            <path d="M90 26 L42 104 C42 120 138 120 138 104 Z" fill={fill} stroke={stroke} strokeWidth={3} strokeLinejoin="round" />
+            <ellipse cx={90} cy={104} rx={48} ry={15} fill="#e2e8f0" stroke={stroke} strokeWidth={3} />
+          </>
+        );
+      case "sphere":
+        return (
+          <>
+            <circle cx={90} cy={74} r={46} fill={fill} stroke={stroke} strokeWidth={3} />
+            <ellipse cx={90} cy={74} rx={44} ry={14} fill="none" stroke={muted} strokeWidth={2} />
+            <ellipse cx={90} cy={74} rx={16} ry={44} fill="none" stroke={muted} strokeWidth={2} />
+          </>
+        );
+      case "triangle":
+      default:
+        return <polygon points="36,112 144,112 118,34" fill={fill} stroke={stroke} strokeWidth={3} strokeLinejoin="round" />;
+    }
+  })();
+
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+      <svg width={220} height={170} viewBox="0 0 180 140" role="img" aria-label={label ?? "Figure géométrique"}>
+        <rect x={10} y={12} width={160} height={116} rx={14} fill="#f8fafc" stroke="#e2e8f0" />
+        {shapeNode}
+        <circle cx={150} cy={32} r={4} fill={accent} opacity={0.85} />
+      </svg>
+      {label && <span className="text-xs font-semibold text-slate-600">{label}</span>}
+    </div>
+  );
+}
+
+const TRIANGLE_POINTS = {
+  A: { x: 24, y: 116 },
+  B: { x: 132, y: 116 },
+  C: { x: 132, y: 54 },
+};
+
+function canonicalSide(a: string, b: string): string {
+  return [a.toUpperCase(), b.toUpperCase()].sort().join("");
+}
+
+function getTrianglePoint(label: string, fallbackIndex: number) {
+  const fallback = [TRIANGLE_POINTS.A, TRIANGLE_POINTS.B, TRIANGLE_POINTS.C][fallbackIndex] ?? TRIANGLE_POINTS.A;
+  return TRIANGLE_POINTS[label.toUpperCase() as keyof typeof TRIANGLE_POINTS] ?? fallback;
+}
+
+function midpoint(a: { x: number; y: number }, b: { x: number; y: number }) {
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+function TriangleDiagram({ visual }: { visual: VisualTriangle }) {
+  const labels = visual.labels ?? ["A", "B", "C"];
+  const points = labels.map((label, index) => getTrianglePoint(label, index));
+  const [p0, p1, p2] = points;
+  const pointByLabel = new Map(labels.map((label, index) => [label.toUpperCase(), points[index]]));
+  const sideLabels = visual.sideLabels ?? {};
+  const sidePairs: Array<[string, string]> = [
+    [labels[0], labels[1]],
+    [labels[1], labels[2]],
+    [labels[0], labels[2]],
+  ];
+  const rightPoint = visual.rightAngleAt ? pointByLabel.get(visual.rightAngleAt.toUpperCase()) : undefined;
+  const anglePoint = visual.angleLabel?.vertex ? pointByLabel.get(visual.angleLabel.vertex.toUpperCase()) : undefined;
+
+  return (
+    <div className="flex justify-center rounded-2xl border border-slate-200 bg-slate-50 p-3">
+      <svg width={220} height={170} viewBox="0 0 160 140" role="img" aria-label="Diagramme de triangle">
+        <polygon
+          points={`${p0.x},${p0.y} ${p1.x},${p1.y} ${p2.x},${p2.y}`}
+          fill="#ffffff"
+          stroke="#0f172a"
+          strokeWidth={2.5}
+          strokeLinejoin="round"
+        />
+
+        {rightPoint && (
+          <path
+            d={`M ${rightPoint.x - 14} ${rightPoint.y} L ${rightPoint.x - 14} ${rightPoint.y - 14} L ${rightPoint.x} ${rightPoint.y - 14}`}
+            fill="none"
+            stroke="#12C6A0"
+            strokeWidth={2}
+          />
+        )}
+
+        {anglePoint && visual.angleLabel && (
+          <>
+            <path d={`M ${anglePoint.x + 24} ${anglePoint.y} A 24 24 0 0 0 ${anglePoint.x + 20} ${anglePoint.y - 14}`} fill="none" stroke="#2563eb" strokeWidth={2} />
+            <text x={anglePoint.x + 24} y={anglePoint.y - 10} fill="#2563eb" fontSize={10} fontWeight={700}>
+              {visual.angleLabel.degrees}°
+            </text>
+          </>
+        )}
+
+        {sidePairs.map(([a, b]) => {
+          const pa = pointByLabel.get(a.toUpperCase());
+          const pb = pointByLabel.get(b.toUpperCase());
+          if (!pa || !pb) return null;
+          const key = canonicalSide(a, b);
+          const label = sideLabels[key] ?? (visual.targetSide === key ? "?" : "");
+          if (!label) return null;
+          const mid = midpoint(pa, pb);
+          const isVertical = Math.abs(pa.x - pb.x) < Math.abs(pa.y - pb.y);
+          const isTarget = visual.targetSide === key;
+          return (
+            <text
+              key={key}
+              x={mid.x + (isVertical ? 10 : 0)}
+              y={mid.y + (isVertical ? 4 : 15)}
+              textAnchor="middle"
+              fill={isTarget ? "#dc2626" : "#475569"}
+              fontSize={11}
+              fontWeight={700}
+            >
+              {label}
+            </text>
+          );
+        })}
+
+        {labels.map((label, index) => {
+          const point = points[index];
+          const dx = label === labels[0] ? -12 : 8;
+          const dy = label === labels[2] ? -8 : 16;
+          return (
+            <text key={label} x={point.x + dx} y={point.y + dy} fill="#0f172a" fontSize={13} fontWeight={800}>
+              {label}
+            </text>
+          );
+        })}
+      </svg>
+    </div>
+  );
 }
 
 function factorizeRectParts(total: number) {
@@ -287,11 +489,15 @@ function TrianglePromptFigure({
 function PromptFigure({ spec }: { spec: PromptFigureSpec }) {
   if (spec.kind === "triangle") {
     return (
-      <TrianglePromptFigure
-        labels={spec.labels}
-        pointOnAB={spec.pointOnAB}
-        pointOnAC={spec.pointOnAC}
-        parallelSegment={spec.parallelSegment}
+      <TriangleDiagram
+        visual={{
+          subtype: "triangle",
+          labels: spec.labels,
+          rightAngleAt: spec.rightAngleAt,
+          angleLabel: spec.angleLabel,
+          sideLabels: spec.sideLabels,
+          targetSide: spec.targetSide,
+        }}
       />
     );
   }
@@ -366,10 +572,75 @@ function renderChoiceLabel(label: string) {
       </div>
     );
   }
-  if (/\$/.test(label)) {
-    return <MathText text={label} style={{ fontSize: '15px', fontWeight: '600', fontFamily: 'Poppins, sans-serif', color: 'inherit' }} />;
+
+  return (
+    <span style={{ fontSize: '15px', fontWeight: '600', fontFamily: 'Poppins, sans-serif', color: 'inherit' }}>
+      <InlineMathText text={label} />
+    </span>
+  );
+}
+
+function InlineMathText({ text }: { text: string }) {
+  const segments = splitMathSegments(text);
+  const hasMath = segments.some((segment) => segment.type === "math");
+
+  if (!hasMath) {
+    return <>{text}</>;
   }
-  return <span style={{ fontSize: '15px', fontWeight: '600', fontFamily: 'Poppins, sans-serif', color: 'inherit' }}>{label}</span>;
+
+  return (
+    <>
+      {segments.map((segment, index) => {
+        if (segment.type === "math") {
+          return (
+            <MathRenderer
+              key={`math-${index}`}
+              latex={segment.value}
+              inline
+              className="inline-block align-middle"
+            />
+          );
+        }
+
+        return (
+          <span key={`text-${index}`} className="whitespace-pre-wrap">
+            {segment.value}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
+function splitMathSegments(text: string): Array<{ type: "text" | "math"; value: string }> {
+  const pattern = /(\$\$[\s\S]+?\$\$|\$[^$]+\$|\\\([\s\S]+?\\\)|\\\[[\s\S]+?\\\])/g;
+  const matches = Array.from(text.matchAll(pattern));
+
+  if (matches.length === 0) {
+    return [{ type: "text", value: text }];
+  }
+
+  const segments: Array<{ type: "text" | "math"; value: string }> = [];
+  let cursor = 0;
+
+  for (const match of matches) {
+    const raw = match[0];
+    const start = match.index ?? 0;
+    const end = start + raw.length;
+
+    if (start > cursor) {
+      segments.push({ type: "text", value: text.slice(cursor, start) });
+    }
+
+    segments.push({ type: "math", value: raw });
+    cursor = end;
+  }
+
+  if (cursor < text.length) {
+    segments.push({ type: "text", value: text.slice(cursor) });
+  }
+
+  return segments;
 }
 
 function choiceState(
@@ -548,7 +819,7 @@ export function QuestionCard({
         </div>
       )}
       <h3 className="text-lg font-semibold mb-3">
-        <MathText text={question.prompt} />
+        <InlineMathText text={question.prompt} />
       </h3>
 
       {question.kind === "single" && (

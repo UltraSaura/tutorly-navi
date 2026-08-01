@@ -23,7 +23,7 @@ export const ExerciseHistoryPage = () => {
   });
   const { data: lessonHistory = [] } = useLessonHistory(5);
 
-  const { sections, loading: explanationLoading, open, setOpen, openFor } = useTwoCardTeaching();
+  const teaching = useTwoCardTeaching();
   const { language } = useLanguage();
 
   const handleShowExplanation = async (exercise: any) => {
@@ -33,7 +33,7 @@ export const ExerciseHistoryPage = () => {
       grade_level: 'High School'
     };
     
-    await openFor({
+    await teaching.openFor({
       question: exercise.exercise_content,
       userAnswer: exercise.user_answer,
       subjectId: exercise.subject_id
@@ -296,12 +296,16 @@ export const ExerciseHistoryPage = () => {
 
       {/* Explanation Modal */}
       <ExplanationModal
-        open={open}
-        onClose={() => setOpen(false)}
-        loading={explanationLoading}
-        sections={sections}
-        error={null}
-        onTryAgain={() => setOpen(false)}
+        open={teaching.open}
+        onClose={() => teaching.setOpen(false)}
+        loading={teaching.loading}
+        sections={teaching.sections}
+        error={teaching.error}
+        onLike={() => void teaching.submitFeedback('like')}
+        onDislike={() => void teaching.submitFeedback('dislike')}
+        feedback={teaching.feedback}
+        feedbackLoading={teaching.feedbackLoading}
+        onTryAgain={() => teaching.setOpen(false)}
       />
     </div>
   );
