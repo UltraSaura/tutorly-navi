@@ -128,6 +128,18 @@ export function evaluateTrainingAnswer({
     };
   }
 
+  const acceptedFeedbackAnswers = accepted.map((value) => normalizeAnswer(value));
+  const safeAlmostFeedback = sanitizeStudentFeedback(
+    guidance?.almost_feedback,
+    acceptedFeedbackAnswers,
+    fallbackAlmost,
+  );
+  const safeIncorrectFeedback = sanitizeStudentFeedback(
+    guidance?.incorrect_feedback,
+    acceptedFeedbackAnswers,
+    fallbackIncorrect,
+  );
+
   const isAlmost = accepted.some((value) => {
     const normalizedExpected = normalizeAnswer(value);
     return normalizedAnswer.length > 0 && (
@@ -140,8 +152,8 @@ export function evaluateTrainingAnswer({
   return {
     isCorrect: false,
     feedback: isAlmost
-      ? guidance?.almost_feedback ?? fallbackAlmost
-      : guidance?.incorrect_feedback ?? fallbackIncorrect,
+      ? safeAlmostFeedback
+      : safeIncorrectFeedback,
   };
 }
 
@@ -173,4 +185,29 @@ function numericDistance(left: string, right: string): number {
   const b = Number(right.replace(/[^0-9.-]/g, ''));
   if (!Number.isFinite(a) || !Number.isFinite(b)) return Number.POSITIVE_INFINITY;
   return Math.abs(a - b);
+}
+
+function sanitizeStudentFeedback(
+  feedback: string | undefined,
+  normalizedAcceptedAnswers: string[],
+  fallback: string,
+): string {
+  const candidate = feedback?.trim();
+  if (!candidate) return fallback;
+
+  const normalizedFeedback = normalizeAnswer(candidate);
+  if (!normalizedFeedback) return fallback;
+
+  const revealsAcceptedAnswer = normalizedAcceptedAnswers.some((accepted) => {
+    if (!accepted) return false;
+    return normalizedFeedback.includes(accepted);
+  });
+
+  if (revealsAcceptedAnswer) return fallback;
+
+  if (/(bonne\s*r[ée]ponse|r[ée]ponse\s*attendue|la\s*r[ée]ponse\s*est|correct\s*answer|the\s*answer\s*is)/i.test(candidate)) {
+    return fallback;
+  }
+
+  return candidate;
 }

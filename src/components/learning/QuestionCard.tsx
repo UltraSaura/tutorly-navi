@@ -589,7 +589,7 @@ function choiceState(
     : currentValue === c.id;
 
   if (!isSubmitted) {
-    return { border: isSelected ? '#12C6A0' : '#EAECEF', bg: isSelected ? '#F2FBF8' : 'white', color: '#0F172A', opacity: 1, shake: false };
+    return { border: isSelected ? '#CBD5E1' : '#EAECEF', bg: isSelected ? '#F8FAFC' : 'white', color: '#0F172A', opacity: 1, shake: false };
   }
   if (c.correct && !hideCorrect) {
     return { border: '#9FE1CB', bg: '#EAF3DE', color: '#27500A', opacity: 1, shake: false };
@@ -698,6 +698,10 @@ export function QuestionCard({
     return next;
   };
 
+  const externallySubmitted = submittedAnswer !== undefined;
+  const effectiveCorrectness = externallySubmitted ? (isCorrectProp ?? null) : isCorrect;
+  const showSubmittedState = submitted || externallySubmitted;
+
   const getSingleVariant = (choiceId: string, isCorrect_: boolean) => {
     if (!submitted) return value === choiceId ? "selected" : "idle";
     const choice = (question as any).choices?.find((c: any) => c.id === choiceId);
@@ -768,7 +772,7 @@ export function QuestionCard({
                   <div className="flex items-center gap-3">
                     <span
                       className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                      style={{ background: value === c.id ? '#12C6A0' : '#F3F6FA', color: value === c.id ? '#0F172A' : '#667085' }}
+                      style={{ background: value === c.id ? '#F8FAFC' : '#F3F6FA', color: value === c.id ? '#0F172A' : '#667085' }}
                     >
                       {letter}
                     </span>
@@ -820,7 +824,7 @@ export function QuestionCard({
                   <div className="flex items-center gap-3">
                     <span
                       className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                      style={{ background: checked ? '#12C6A0' : '#F3F6FA', color: checked ? '#0F172A' : '#667085' }}
+                      style={{ background: checked ? '#F8FAFC' : '#F3F6FA', color: checked ? '#0F172A' : '#667085' }}
                     >
                       {letter}
                     </span>
@@ -838,6 +842,25 @@ export function QuestionCard({
         const chips = dragOpts.length > 0 ? dragOpts : [];
         const numVal = value?.numerator ?? "";
         const denVal = value?.denominator ?? "";
+        const filledFraction = Boolean(numVal || denVal);
+        const fractionBorderColor = showSubmittedState
+          ? effectiveCorrectness === true
+            ? '#16A34A'
+            : effectiveCorrectness === false
+              ? '#EF4444'
+              : '#EAECEF'
+          : filledFraction
+            ? '#CBD5E1'
+            : '#9CA3AF';
+        const fractionBgColor = showSubmittedState
+          ? effectiveCorrectness === true
+            ? '#DCFCE7'
+            : effectiveCorrectness === false
+              ? '#FEE2E2'
+              : '#F3F6FA'
+          : filledFraction
+            ? '#F8FAFC'
+            : '#F3F6FA';
 
         const handleDrop = (zone: "numerator" | "denominator") => (e: React.DragEvent) => {
           e.preventDefault();
@@ -892,8 +915,8 @@ export function QuestionCard({
               <div
                 className={cn(
                   "w-20 h-14 border-2 border-dashed rounded-lg flex items-center justify-center text-2xl font-bold cursor-pointer transition-colors",
-                  numVal ? "border-primary bg-primary/10" : "border-muted-foreground/40 bg-muted/30"
                 )}
+                style={{ borderColor: fractionBorderColor, background: fractionBgColor }}
                 onDragOver={e => e.preventDefault()}
                 onDrop={handleDrop("numerator")}
                 onClick={() => handleTapZone("numerator")}
@@ -905,8 +928,8 @@ export function QuestionCard({
               <div
                 className={cn(
                   "w-20 h-14 border-2 border-dashed rounded-lg flex items-center justify-center text-2xl font-bold cursor-pointer transition-colors",
-                  denVal ? "border-primary bg-primary/10" : "border-muted-foreground/40 bg-muted/30"
                 )}
+                style={{ borderColor: fractionBorderColor, background: fractionBgColor }}
                 onDragOver={e => e.preventDefault()}
                 onDrop={handleDrop("denominator")}
                 onClick={() => handleTapZone("denominator")}
@@ -920,6 +943,8 @@ export function QuestionCard({
               {chips.map((num, i) => {
                 const isUsed = String(num) === String(numVal) || String(num) === String(denVal);
                 const isSelected = selectedChip === num;
+                const isWrongUsed = showSubmittedState && effectiveCorrectness === false && isUsed;
+                const isCorrectUsed = showSubmittedState && effectiveCorrectness === true && isUsed;
                 return (
                   <motion.div
                     key={`${num}-${i}`}
@@ -932,8 +957,12 @@ export function QuestionCard({
                     onClick={() => handleTapChip(num)}
                     className={cn(
                       "w-12 h-12 rounded-xl flex items-center justify-center text-lg font-semibold cursor-grab active:cursor-grabbing select-none transition-all",
-                      isSelected
-                        ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2"
+                      isCorrectUsed
+                        ? "bg-green-100 text-green-800 ring-2 ring-green-500 ring-offset-2"
+                        : isWrongUsed
+                          ? "bg-red-100 text-red-700 ring-2 ring-red-500 ring-offset-2"
+                        : isSelected
+                          ? "bg-slate-50 text-slate-900 ring-2 ring-slate-300 ring-offset-2"
                         : isUsed
                           ? "bg-muted text-muted-foreground opacity-40"
                           : "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm"
@@ -955,6 +984,25 @@ export function QuestionCard({
         const q: any = question;
         const chips: number[] = buildNumericChips(q);
         const currentStr = String(value ?? '');
+        const hasValue = currentStr !== '';
+        const numericBorderColor = showSubmittedState
+          ? effectiveCorrectness === true
+            ? '#16A34A'
+            : effectiveCorrectness === false
+              ? '#EF4444'
+              : '#EAECEF'
+          : hasValue
+            ? '#CBD5E1'
+            : '#EAECEF';
+        const numericBgColor = showSubmittedState
+          ? effectiveCorrectness === true
+            ? '#DCFCE7'
+            : effectiveCorrectness === false
+              ? '#FEE2E2'
+              : 'white'
+          : hasValue
+            ? '#F8FAFC'
+            : 'white';
         return (
           <div className="mt-2 flex flex-col items-center gap-3 py-2">
             <p className="text-xs font-medium" style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>
@@ -965,8 +1013,8 @@ export function QuestionCard({
               style={{
                 width: '160px',
                 height: '96px',
-                background: value !== '' ? '#F2FBF8' : 'white',
-                border: `2.5px solid ${value !== '' ? '#12C6A0' : '#EAECEF'}`,
+                background: numericBgColor,
+                border: `2.5px solid ${numericBorderColor}`,
               }}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
@@ -1009,6 +1057,8 @@ export function QuestionCard({
                 {chips.map((chip, i) => {
                   const chipStr = String(chip);
                   const isUsed = currentStr === chipStr;
+                  const isWrongUsed = showSubmittedState && effectiveCorrectness === false && isUsed;
+                  const isCorrectUsed = showSubmittedState && effectiveCorrectness === true && isUsed;
                   return (
                     <motion.button
                       key={`${chip}-${i}`}
@@ -1024,8 +1074,12 @@ export function QuestionCard({
                       onClick={() => setVal(isUsed ? '' : chipStr)}
                       className={cn(
                         'w-12 h-12 rounded-xl border text-lg font-semibold transition-all cursor-grab active:cursor-grabbing',
-                        isUsed
-                          ? 'bg-primary/10 border-primary text-primary opacity-50'
+                        isCorrectUsed
+                          ? 'bg-green-100 border-green-500 text-green-800'
+                          : isWrongUsed
+                            ? 'bg-red-100 border-red-500 text-red-700'
+                        : isUsed
+                          ? 'bg-slate-50 border-slate-300 text-slate-900 opacity-100'
                           : 'bg-secondary border-transparent hover:border-primary/40 shadow-sm'
                       )}
                       style={{ fontFamily: 'Poppins, sans-serif' }}
@@ -1074,7 +1128,7 @@ export function QuestionCard({
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground cursor-grab active:cursor-grabbing" />
-                  <span>{it}</span>
+                  <span><InlineMathText text={it} /></span>
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <button onClick={() => i > 0 && setVal(swap(arr, i, i - 1))}>↑</button>

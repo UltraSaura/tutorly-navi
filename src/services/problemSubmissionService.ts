@@ -859,8 +859,8 @@ function deterministicGeometryEvaluationForRow(
       feedback: isCorrect
         ? (language === 'fr' ? `Correct : ${expected.explanation}` : `Correct: ${expected.explanation}`)
         : (language === 'fr'
-          ? `La réponse attendue est ${correctAnswer}. ${expected.explanation}`
-          : `The expected answer is ${correctAnswer}. ${expected.explanation}`),
+          ? `Ce n'est pas la bonne valeur. ${expected.explanation}`
+          : `That is not the correct value. ${expected.explanation}`),
       explanation: expected.explanation,
     };
   }
@@ -879,8 +879,8 @@ function deterministicGeometryEvaluationForRow(
     feedback: isCorrect
       ? (language === 'fr' ? `Correct : ${expected.explanation}` : `Correct: ${expected.explanation}`)
       : (language === 'fr'
-        ? `La réponse attendue est ${expected.expected ? 'Oui' : 'Non'}. ${expected.explanation}`
-        : `The expected answer is ${expected.expected ? 'Yes' : 'No'}. ${expected.explanation}`),
+        ? `Ce n'est pas la bonne réponse. ${expected.explanation}`
+        : `That is not the correct answer. ${expected.explanation}`),
     explanation: expected.explanation,
   };
 }

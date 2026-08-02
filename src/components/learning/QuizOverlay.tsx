@@ -580,6 +580,7 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
                   onChange={val => onAnswer(currentQuestion.id, val)}
                   submittedAnswer={questionSubmitted ? answers[currentQuestion.id] : undefined}
                   isCorrect={questionSubmitted ? (questionResult ?? undefined) : undefined}
+                  hideCorrect={questionSubmitted && questionResult === false}
                 />
               </motion.div>
             </AnimatePresence>
