@@ -1081,7 +1081,7 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
             isCorrect: false,
             justificationProvided: true,
             status: 'incorrect',
-            feedback: 'La réponse attendue est 16.',
+            feedback: "Ce n'est pas la bonne valeur.",
           },
         }],
       }],
@@ -1187,7 +1187,7 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
     const evaluation = result.sections[0].rows[0].evaluation;
     expect(evaluation?.status).toBe('incorrect');
     expect(evaluation?.correctAnswer).toBe('12 cm');
-    expect(evaluation?.feedback).toContain('La réponse attendue est 12 cm');
+    expect(evaluation?.feedback).toContain("Ce n'est pas la bonne valeur.");
     expect(evaluation?.feedback).not.toMatch(/justification|provided|requires/i);
   });
 
