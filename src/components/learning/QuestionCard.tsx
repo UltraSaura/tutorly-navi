@@ -13,6 +13,8 @@ import { MathRenderer } from "@/components/math/MathRenderer";
 import { SliderQuestionView } from "./SliderQuestion";
 import { MatchQuestionView } from "./MatchQuestion";
 import { FillExprQuestionView } from "./FillExprQuestion";
+import { ColumnFillQuestionView } from "./ColumnFillQuestion";
+import { useLearningDragDrop } from "./useLearningDragDrop";
 import { inferPromptFigure, type PromptFigureSpec } from "@/lib/quiz/promptVisual";
 
 // Renders text that may contain $...$ inline or $$...$$ display LaTeX.
@@ -630,12 +632,14 @@ export function QuestionCard({
     if (question.kind === "slider") return "";
     if (question.kind === "match") return [];
     if (question.kind === "fill-expr") return {};
+    if (question.kind === "column-fill") return {};
     return "";
   }, [question]);
 
   const [value, setValue] = useState<any>(initialValue);
   const [selectedChip, setSelectedChip] = useState<number | null>(null);
   const [draggedOrderingItem, setDraggedOrderingItem] = useState<string | null>(null);
+  const { draggedValue, getDragSourceProps, getDropTargetProps } = useLearningDragDrop();
   const [tries, setTries] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -917,8 +921,7 @@ export function QuestionCard({
                   "w-20 h-14 border-2 border-dashed rounded-lg flex items-center justify-center text-2xl font-bold cursor-pointer transition-colors",
                 )}
                 style={{ borderColor: fractionBorderColor, background: fractionBgColor }}
-                onDragOver={e => e.preventDefault()}
-                onDrop={handleDrop("numerator")}
+                {...getDropTargetProps((num) => setVal({ ...value, numerator: num }))}
                 onClick={() => handleTapZone("numerator")}
                 aria-label="Numérateur"
               >
@@ -930,8 +933,7 @@ export function QuestionCard({
                   "w-20 h-14 border-2 border-dashed rounded-lg flex items-center justify-center text-2xl font-bold cursor-pointer transition-colors",
                 )}
                 style={{ borderColor: fractionBorderColor, background: fractionBgColor }}
-                onDragOver={e => e.preventDefault()}
-                onDrop={handleDrop("denominator")}
+                {...getDropTargetProps((num) => setVal({ ...value, denominator: num }))}
                 onClick={() => handleTapZone("denominator")}
                 aria-label="Dénominateur"
               >
@@ -947,13 +949,12 @@ export function QuestionCard({
                 const isCorrectUsed = showSubmittedState && effectiveCorrectness === true && isUsed;
                 return (
                   <motion.div
-                    key={`${num}-${i}`}
+                      key={`${num}-${i}`}
                     initial={{ opacity: 0, scale: 0.7 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 20 }}
                     whileTap={{ scale: 0.9 }}
-                    draggable
-                    onDragStart={e => (e as unknown as DragEvent & { dataTransfer: DataTransfer }).dataTransfer.setData("text/plain", String(num))}
+                    {...getDragSourceProps(String(num))}
                     onClick={() => handleTapChip(num)}
                     className={cn(
                       "w-12 h-12 rounded-xl flex items-center justify-center text-lg font-semibold cursor-grab active:cursor-grabbing select-none transition-all",
@@ -1016,12 +1017,9 @@ export function QuestionCard({
                 background: numericBgColor,
                 border: `2.5px solid ${numericBorderColor}`,
               }}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const chip = e.dataTransfer.getData('text/plain');
+              {...getDropTargetProps((chip) => {
                 if (chip !== '') setVal(chip);
-              }}
+              })}
             >
               <input
                 type="number"
@@ -1063,14 +1061,11 @@ export function QuestionCard({
                     <motion.button
                       key={`${chip}-${i}`}
                       type="button"
-                      draggable
                       initial={{ opacity: 0, scale: 0.7 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
                       whileTap={{ scale: 0.9 }}
-                      onDragStart={(event: any) => {
-                        event.dataTransfer?.setData('text/plain', chipStr);
-                      }}
+                      {...getDragSourceProps(chipStr)}
                       onClick={() => setVal(isUsed ? '' : chipStr)}
                       className={cn(
                         'w-12 h-12 rounded-xl border text-lg font-semibold transition-all cursor-grab active:cursor-grabbing',
@@ -1078,6 +1073,8 @@ export function QuestionCard({
                           ? 'bg-green-100 border-green-500 text-green-800'
                           : isWrongUsed
                             ? 'bg-red-100 border-red-500 text-red-700'
+                        : draggedValue === chipStr
+                          ? 'bg-slate-900 border-slate-900 text-white'
                         : isUsed
                           ? 'bg-slate-50 border-slate-300 text-slate-900 opacity-100'
                           : 'bg-secondary border-transparent hover:border-primary/40 shadow-sm'
@@ -1170,6 +1167,17 @@ export function QuestionCard({
             question={question}
             value={value}
             onChange={setVal}
+          />
+        </div>
+      )}
+
+      {question.kind === "column-fill" && (
+        <div className="mt-4">
+          <ColumnFillQuestionView
+            question={question}
+            value={value}
+            onChange={setVal}
+            submittedAnswer={showSubmittedState ? submittedAnswer ?? value : undefined}
           />
         </div>
       )}

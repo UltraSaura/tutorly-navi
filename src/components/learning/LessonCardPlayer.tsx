@@ -516,6 +516,9 @@ function hasAnswer(question: Question | null | undefined, answer: any): boolean 
   }
   if (question.kind === 'match') return Array.isArray(answer) && answer.length > 0;
   if (question.kind === 'fill-expr') return answer && Object.keys(answer).length > 0;
+  if (question.kind === 'column-fill') {
+    return answer && typeof answer === 'object' && question.blanks.every(blank => String(answer[blank.id] ?? '').trim() !== '');
+  }
   if (question.kind === 'ordering') return Array.isArray(answer) && answer.length > 0;
   return answer !== null && answer !== undefined && answer !== '';
 }

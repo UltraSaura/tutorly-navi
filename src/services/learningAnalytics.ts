@@ -69,6 +69,7 @@ const ALLOWED_QUESTION_KINDS = new Set([
   "numeric",
   "ordering",
   "visual",
+  "column-fill",
   "multiple_choice",
   "short_answer",
 ]);

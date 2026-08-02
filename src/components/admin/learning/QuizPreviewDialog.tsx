@@ -197,6 +197,23 @@ function AnswerDisplay({ question }: { question: Question }) {
       );
     }
 
+    case 'column-fill': {
+      return (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Réponses attendues pour les cases manquantes :
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {question.blanks.map((blank) => (
+              <Badge key={blank.id} variant="default" className="text-sm bg-green-500">
+                {blank.id}: {blank.answer}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     default:
       return <p className="text-sm text-muted-foreground">Answer display not available for this type.</p>;
   }

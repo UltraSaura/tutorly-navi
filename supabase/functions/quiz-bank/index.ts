@@ -75,6 +75,10 @@ function mergeTranslatedQuestion(base: any, translated: any) {
     }
   }
 
+  if (base.kind === 'column-fill') {
+    if (typeof translated?.instructions === 'string') merged.instructions = translated.instructions;
+  }
+
   if (base.kind === 'slider') {
     if (typeof translated?.trackLabel === 'string') merged.trackLabel = translated.trackLabel;
     if (typeof translated?.unit === 'string') merged.unit = translated.unit;

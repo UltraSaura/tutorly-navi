@@ -8,8 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X, Plus, GripVertical } from 'lucide-react';
-import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ, OperationPoseeQ } from '@/types/quiz-bank';
+import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ, OperationPoseeQ, ColumnFillQ } from '@/types/quiz-bank';
 import type { SliderQuestion, MatchQuestion, FillExprQuestion } from '@/types/quiz-bank';
+import { buildColumnFillQuestion } from '@/lib/quiz/columnFillBuilder';
 
 interface QuestionEditorProps {
   question?: Question & { dbId?: string; position?: number };
@@ -109,6 +110,18 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   const [poseeLocale, setPoseeLocale] = useState<'fr' | 'en'>(
     question && question.kind === 'operation-posee' ? ((question as OperationPoseeQ).locale || 'fr') : 'fr'
   );
+  const [columnFillOperation, setColumnFillOperation] = useState<ColumnFillQ['operation']>(
+    question?.kind === 'column-fill' ? question.operation : 'addition'
+  );
+  const [columnFirstOperand, setColumnFirstOperand] = useState<number>(
+    question?.kind === 'column-fill' ? Number(question.operands[0] ?? 0) : 29
+  );
+  const [columnSecondOperand, setColumnSecondOperand] = useState<number>(
+    question?.kind === 'column-fill' ? Number(question.operands[1] ?? 0) : 66
+  );
+  const [columnInstructions, setColumnInstructions] = useState<string>(
+    question?.kind === 'column-fill' ? (question.instructions ?? '') : ''
+  );
 
   // Slider state
   const [sliderMin, setSliderMin] = useState<number>(
@@ -176,6 +189,11 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         setTopNumber(poseeQ.topNumber);
         setBottomNumber(poseeQ.bottomNumber);
         setPoseeLocale(poseeQ.locale || 'fr');
+      } else if (question.kind === 'column-fill') {
+        setColumnFillOperation(question.operation);
+        setColumnFirstOperand(Number(question.operands[0] ?? 0));
+        setColumnSecondOperand(Number(question.operands[1] ?? 0));
+        setColumnInstructions(question.instructions ?? '');
       } else if (question.kind === 'slider') {
         setSliderMin(question.min);
         setSliderMax(question.max);
@@ -214,6 +232,10 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setTopNumber(325);
       setBottomNumber(148);
       setPoseeLocale('fr');
+      setColumnFillOperation('addition');
+      setColumnFirstOperand(29);
+      setColumnSecondOperand(66);
+      setColumnInstructions('');
       setSliderMin(0);
       setSliderMax(100);
       setSliderStep(1);
@@ -388,6 +410,30 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         bottomNumber: Math.trunc(bottomNumber),
         locale: poseeLocale,
       } as OperationPoseeQ;
+    } else if (kind === 'column-fill') {
+      if (!Number.isFinite(columnFirstOperand) || !Number.isFinite(columnSecondOperand)) {
+        alert('Please enter valid numbers for the column method exercise');
+        return;
+      }
+      if (columnFillOperation === 'multiplication' && String(Math.abs(Math.trunc(columnSecondOperand))).length > 1) {
+        alert('Phase 1 multiplication supports a one-digit multiplier only.');
+        return;
+      }
+      if (columnFillOperation === 'division' && Math.trunc(columnSecondOperand) === 0) {
+        alert('Division by zero is not allowed.');
+        return;
+      }
+      questionData = buildColumnFillQuestion({
+        id,
+        prompt,
+        hint: hint || undefined,
+        points,
+        operation: columnFillOperation,
+        firstOperand: Math.trunc(columnFirstOperand),
+        secondOperand: Math.trunc(columnSecondOperand),
+        locale: 'fr',
+        instructions: columnInstructions || undefined,
+      });
     } else if (kind === 'slider') {
       questionData = {
         id, kind: 'slider', prompt, hint: hint || undefined,
@@ -442,6 +488,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <SelectItem value="ordering">Ordering</SelectItem>
                 <SelectItem value="visual">Visual</SelectItem>
                 <SelectItem value="operation-posee">Pose et calcule</SelectItem>
+                <SelectItem value="column-fill">Méthode en colonnes</SelectItem>
                 <SelectItem value="slider">Slider</SelectItem>
                 <SelectItem value="match">Associer (Match)</SelectItem>
                 <SelectItem value="fill-expr">Compléter l'expression</SelectItem>
@@ -824,6 +871,58 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+          )}
+
+          {kind === 'column-fill' && (
+            <div className="space-y-3">
+              <div>
+                <Label>Operation</Label>
+                <Select value={columnFillOperation} onValueChange={(value: ColumnFillQ['operation']) => setColumnFillOperation(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="addition">Addition</SelectItem>
+                    <SelectItem value="subtraction">Soustraction</SelectItem>
+                    <SelectItem value="multiplication">Multiplication</SelectItem>
+                    <SelectItem value="division">Division</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>{columnFillOperation === 'division' ? 'Dividende' : 'Premier nombre'}</Label>
+                  <Input
+                    type="number"
+                    value={columnFirstOperand}
+                    onChange={(e) => setColumnFirstOperand(parseInt(e.target.value, 10) || 0)}
+                  />
+                </div>
+                <div>
+                  <Label>{columnFillOperation === 'division' ? 'Diviseur' : 'Deuxième nombre'}</Label>
+                  <Input
+                    type="number"
+                    value={columnSecondOperand}
+                    onChange={(e) => setColumnSecondOperand(parseInt(e.target.value, 10) || 0)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Instruction affichée à l'élève (optionnel)</Label>
+                <Textarea
+                  value={columnInstructions}
+                  onChange={(e) => setColumnInstructions(e.target.value)}
+                  rows={2}
+                  placeholder="ex: Complète les retenues et le résultat."
+                />
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Phase 1: addition, soustraction, multiplication à un chiffre, division avec quotient et reste.
+              </p>
             </div>
           )}
 

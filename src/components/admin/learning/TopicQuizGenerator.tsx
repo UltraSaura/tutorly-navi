@@ -58,6 +58,7 @@ const QUESTION_TYPES = [
   { value: 'multi',        label: 'Multiple Choice',         description: 'Several correct answers from 4 options' },
   { value: 'numeric',      label: 'Numeric',                 description: 'Type a number as the answer' },
   { value: 'ordering',     label: 'Ordering',                description: 'Arrange items in the correct sequence' },
+  { value: 'column-fill',  label: '🧮 Column method',         description: 'Fill missing digits in an arithmetic column layout' },
   { value: 'slider',       label: '🎚️ Slider',               description: 'Drag a slider to the correct value — great for estimating quantities' },
   { value: 'match',        label: '🔗 Match pairs',           description: 'Connect left-column items to their right-column matches' },
   { value: 'fill_expr',    label: '🧩 Fill the expression',  description: 'Drag number chips into blanks to complete a formula' },
