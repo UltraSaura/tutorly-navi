@@ -1,9 +1,11 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import {
+  authenticateRequest,
+  handleCors,
+  jsonResponse,
+  parseJsonBody,
+} from "../_shared/security.ts";
+const MAX_BODY_BYTES = Number(Deno.env.get("EXAM_IMPORT_MAX_BODY_BYTES") ?? 20_000_000);
 
 type ImportMode = 'upsert' | 'replace';
 type SourceName = 'eduscol' | 'ac-amiens-maths';
@@ -104,20 +106,13 @@ function chunk<T>(array: T[], size: number): T[][] {
   return chunks;
 }
 
-function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    status,
-  });
-}
-
-function diagFromPgError(table: string, error: any): Diagnostic {
+function diagFromPgError(table: string, error: unknown): Diagnostic {
   return {
     table,
-    code: error?.code ?? null,
-    message: error?.message ?? String(error),
-    details: error?.details ?? null,
-    hint: error?.hint ?? null,
+    code: typeof error === "object" && error && "code" in error ? String((error as { code?: unknown }).code ?? "") || null : null,
+    message: typeof error === "object" && error && "message" in error ? String((error as { message?: unknown }).message ?? "") || String(error) : String(error),
+    details: typeof error === "object" && error && "details" in error ? String((error as { details?: unknown }).details ?? "") || null : null,
+    hint: typeof error === "object" && error && "hint" in error ? String((error as { hint?: unknown }).hint ?? "") || null : null,
   };
 }
 
@@ -157,13 +152,20 @@ function levelForExam(exam: string | undefined | null): string | null {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  const corsResponse = handleCors(req);
+  if (corsResponse) {
+    return corsResponse;
+  }
+
+  if (req.method !== 'POST') {
+    return jsonResponse(req, { success: false, error: 'Method not allowed' }, 405);
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) return jsonResponse({ success: false, error: 'No authorization header' }, 200);
+    const auth = await authenticateRequest(req, { requireAdmin: true });
+    if (auth.response || !auth.context) {
+      return auth.response!;
+    }
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -171,30 +173,12 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } },
     );
 
-    const token = authHeader.replace('Bearer ', '');
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    let isAuthorized = token === serviceKey;
-    let callerLabel = isAuthorized ? 'service-role' : 'unknown';
-
-    if (!isAuthorized) {
-      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-      if (!authError && user) {
-        const { data: roles } = await supabaseAdmin
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin');
-        if (roles && roles.length > 0) {
-          isAuthorized = true;
-          callerLabel = `admin:${user.id}`;
-        }
-      }
+    const bodyResult = await parseJsonBody<ExamBundle>(req, MAX_BODY_BYTES);
+    if (bodyResult.response || !bodyResult.data) {
+      return bodyResult.response!;
     }
 
-    if (!isAuthorized) return jsonResponse({ success: false, error: 'Unauthorized' }, 200);
-    console.log(`[import-exam-bundle] authorized as ${callerLabel}`);
-
-    const bundle: ExamBundle = await req.json();
+    const bundle: ExamBundle = bodyResult.data;
     const mode: ImportMode = bundle.mode === 'replace' ? 'replace' : 'upsert';
     const sources = bundle.sources ?? [];
     const papers = bundle.papers ?? [];
@@ -231,14 +215,14 @@ Deno.serve(async (req) => {
         const exerciseIdsForPapers = exerciseIdListForPapers(exercises, ids, paperIdByImportId, exerciseIdByImportId);
         if (exerciseIdsForPapers.length > 0) {
           const result = await supabaseAdmin.from('exam_exercise_program_links').delete().in('exercise_id', exerciseIdsForPapers);
-          if (result.error) return jsonResponse({ success: false, error: 'Replace failed', diagnostics: [diagFromPgError('exam_exercise_program_links(delete)', result.error)] }, 200);
+          if (result.error) return jsonResponse(req, { success: false, error: 'Replace failed', diagnostics: [diagFromPgError('exam_exercise_program_links(delete)', result.error)] }, 200);
         }
 
         let result = await supabaseAdmin.from('exam_exercises').delete().in('paper_id', ids);
-        if (result.error) return jsonResponse({ success: false, error: 'Replace failed', diagnostics: [diagFromPgError('exam_exercises(delete)', result.error)] }, 200);
+        if (result.error) return jsonResponse(req, { success: false, error: 'Replace failed', diagnostics: [diagFromPgError('exam_exercises(delete)', result.error)] }, 200);
 
         result = await supabaseAdmin.from('exam_papers').delete().in('id', ids);
-        if (result.error) return jsonResponse({ success: false, error: 'Replace failed', diagnostics: [diagFromPgError('exam_papers(delete)', result.error)] }, 200);
+        if (result.error) return jsonResponse(req, { success: false, error: 'Replace failed', diagnostics: [diagFromPgError('exam_papers(delete)', result.error)] }, 200);
       }
     }
 
@@ -256,7 +240,7 @@ Deno.serve(async (req) => {
 
     for (const rows of chunk(sourceRows, CHUNK_SIZE)) {
       const { error } = await supabaseAdmin.from('exam_sources').upsert(rows, { onConflict: 'source_url' });
-      if (error) return jsonResponse({ success: false, error: error.message, diagnostics: [diagFromPgError('exam_sources', error)] }, 200);
+      if (error) return jsonResponse(req, { success: false, error: error.message, diagnostics: [diagFromPgError('exam_sources', error)] }, 200);
       counts.sources += rows.length;
     }
 
@@ -285,7 +269,7 @@ Deno.serve(async (req) => {
 
     for (const rows of chunk(paperRows, CHUNK_SIZE)) {
       const { error } = await supabaseAdmin.from('exam_papers').upsert(rows, { onConflict: 'pdf_hash' });
-      if (error) return jsonResponse({ success: false, error: error.message, diagnostics: [diagFromPgError('exam_papers', error)] }, 200);
+      if (error) return jsonResponse(req, { success: false, error: error.message, diagnostics: [diagFromPgError('exam_papers', error)] }, 200);
       counts.papers += rows.length;
     }
 
@@ -308,14 +292,14 @@ Deno.serve(async (req) => {
       title: exercise.title,
       raw_text: normalizeText(exercise.raw_text),
       parsing_status: exercise.parsing_status,
-      parsed_content: (exercise as any).parsed_content ?? null,
-      parsing_confidence: (exercise as any).parsing_confidence ?? null,
+      parsed_content: exercise.parsed_content ?? null,
+      parsing_confidence: exercise.parsing_confidence ?? null,
       updated_at: new Date().toISOString(),
     }));
 
     for (const rows of chunk(exerciseRows, CHUNK_SIZE)) {
       const { error } = await supabaseAdmin.from('exam_exercises').upsert(rows, { onConflict: 'import_id' });
-      if (error) return jsonResponse({ success: false, error: error.message, diagnostics: [diagFromPgError('exam_exercises', error)] }, 200);
+      if (error) return jsonResponse(req, { success: false, error: error.message, diagnostics: [diagFromPgError('exam_exercises', error)] }, 200);
       counts.exercises += rows.length;
     }
 
@@ -351,7 +335,7 @@ Deno.serve(async (req) => {
       const { error } = await supabaseAdmin
         .from('exam_assets')
         .upsert(rows, { onConflict: 'storage_path' });
-      if (error) return jsonResponse({ success: false, error: error.message, diagnostics: [diagFromPgError('exam_assets', error)] }, 200);
+      if (error) return jsonResponse(req, { success: false, error: error.message, diagnostics: [diagFromPgError('exam_assets', error)] }, 200);
       counts.exam_assets += rows.length;
     }
 
@@ -383,7 +367,7 @@ Deno.serve(async (req) => {
       const { error } = await supabaseAdmin
         .from('exam_exercise_program_links')
         .upsert(rows, { onConflict: 'exercise_id,program_entry_id,program_entry_type' });
-      if (error) return jsonResponse({ success: false, error: error.message, diagnostics: [diagFromPgError('exam_exercise_program_links', error)] }, 200);
+      if (error) return jsonResponse(req, { success: false, error: error.message, diagnostics: [diagFromPgError('exam_exercise_program_links', error)] }, 200);
       counts.exercise_program_links += rows.length;
     }
 
@@ -400,7 +384,7 @@ Deno.serve(async (req) => {
       },
     });
 
-    return jsonResponse({
+    return jsonResponse(req, {
       success: diagnostics.length === 0,
       mode,
       counts,
@@ -409,7 +393,7 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error('Error importing exam bundle:', error);
-    return jsonResponse({
+    return jsonResponse(req, {
       success: false,
       error: error instanceof Error ? error.message : String(error),
       diagnostics: [{ table: 'unknown', code: null, message: error instanceof Error ? error.message : String(error), details: null, hint: null }],
@@ -431,7 +415,7 @@ function exerciseIdListForPapers(
 }
 
 async function verifyImport(
-  supabaseAdmin: any,
+  supabaseAdmin: SupabaseClient,
   ids: {
     sourceIds: string[];
     paperIds: string[];

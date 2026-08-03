@@ -1,19 +1,23 @@
 
 import { resolveProviderKey } from "../../_shared/resolveProviderKey.ts";
 
+type ProviderMessage = Record<string, unknown>;
+type ProviderToolResponse = {
+  tool_calls: unknown;
+  content: string | null;
+};
+
 // DeepSeek AI provider implementation
 export async function callDeepSeek(
-  systemMessage: any, 
-  history: any[], 
+  systemMessage: ProviderMessage,
+  history: ProviderMessage[],
   userMessage: string, 
   model: string, 
   isExercise: boolean = false,
   requestExplanation: boolean = false,
   maxTokens: number = 800
-): Promise<any> {
-  const { value: deepseekApiKey, source } = await resolveProviderKey('DeepSeek');
-
-  console.log(`[DeepSeek] Calling with model: ${model}, maxTokens: ${maxTokens}, requestExplanation: ${requestExplanation}, key source: ${source}`);
+): Promise<string | ProviderToolResponse> {
+  const { value: deepseekApiKey } = await resolveProviderKey('DeepSeek');
   
   const messages = [
     systemMessage,
@@ -26,7 +30,7 @@ export async function callDeepSeek(
     }
   ];
   
-  const requestBody: any = {
+  const requestBody: Record<string, unknown> = {
     model: model,
     messages: messages,
     temperature: 0.7,
@@ -110,7 +114,6 @@ export async function callDeepSeek(
     console.error('DeepSeek API error details:', {
       status: response.status,
       statusText: response.statusText,
-      errorData: errorData
     });
     throw new Error(`DeepSeek API error (${response.status}): ${errorData.error?.message || errorText || 'Unknown error'}`);
   }

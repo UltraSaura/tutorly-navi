@@ -1,9 +1,18 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import {
+  createAdminClient,
+  consumeRateLimit,
+  getClientIp,
+  handleCors,
+  jsonResponse,
+  parseJsonBody,
+  recordSecurityAuditEvent,
+  sha256Hex,
+} from "../_shared/security.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const MAX_BODY_BYTES = Number(Deno.env.get("CREATE_STUDENT_MAX_BODY_BYTES") ?? 20_000);
+const REQUEST_LIMIT = Number(Deno.env.get("CREATE_STUDENT_RATE_LIMIT") ?? 5);
+const REQUEST_WINDOW_SECONDS = Number(Deno.env.get("CREATE_STUDENT_RATE_WINDOW_SECONDS") ?? 3600);
 
 const USERNAME_RE = /^[a-z0-9_]{3,30}$/;
 
@@ -19,20 +28,36 @@ interface CreateStudentRequest {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  const corsResponse = handleCors(req, ["POST", "OPTIONS"]);
+  if (corsResponse) {
+    return corsResponse;
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse(req, { success: false, error: "Method not allowed" }, 405);
   }
 
   try {
-    if (req.method !== 'POST') {
-      throw new Error('Method not allowed');
+    const requestId = crypto.randomUUID();
+    const supabaseAdmin = createAdminClient();
+    const bodyResult = await parseJsonBody<CreateStudentRequest>(req, MAX_BODY_BYTES);
+    if (bodyResult.response || !bodyResult.data) {
+      return bodyResult.response!;
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const rateKey = await sha256Hex(`${getClientIp(req)}|${req.headers.get("user-agent") ?? "unknown"}`);
+    const rateLimit = await consumeRateLimit(supabaseAdmin, {
+      scope: "create-student-account",
+      actorKey: rateKey,
+      limit: REQUEST_LIMIT,
+      windowSeconds: REQUEST_WINDOW_SECONDS,
+    });
 
-    const body: CreateStudentRequest = await req.json();
+    if (!rateLimit.allowed) {
+      return jsonResponse(req, { success: false, error: "Too many requests", requestId }, 429);
+    }
+
+    const body: CreateStudentRequest = bodyResult.data;
     const {
       username: rawUsername,
       password,
@@ -52,23 +77,19 @@ Deno.serve(async (req) => {
     const schoolLevel = rawSchoolLevel?.toLowerCase() || undefined;
 
     if (!password || !firstName || !lastName || !contactEmail || !schoolLevel) {
-      throw new Error(
-        'Missing required fields: username, password, first name, last name, email, and school level are required',
-      );
+      return jsonResponse(req, { success: false, error: 'Invalid registration data', requestId }, 400);
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(contactEmail).trim())) {
-      throw new Error('Please enter a valid email address');
+      return jsonResponse(req, { success: false, error: 'Invalid registration data', requestId }, 400);
     }
 
     if (!username) {
-      throw new Error('Username is required');
+      return jsonResponse(req, { success: false, error: 'Invalid registration data', requestId }, 400);
     }
 
     if (!USERNAME_RE.test(username)) {
-      throw new Error(
-        'Username must be 3–30 characters: lowercase letters, numbers, and underscores only',
-      );
+      return jsonResponse(req, { success: false, error: 'Invalid registration data', requestId }, 400);
     }
 
     const authEmail = `${username}@student.local`;
@@ -80,7 +101,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existingUsername) {
-      throw new Error('This username is already taken');
+      return jsonResponse(req, { success: false, error: 'Unable to create account', requestId }, 409);
     }
 
     const userMetadata = {
@@ -109,14 +130,14 @@ Deno.serve(async (req) => {
         (authCreateError as { code?: string }).code === 'email_exists';
 
       if (isDup) {
-        throw new Error('This username is already taken');
+        return jsonResponse(req, { success: false, error: 'Unable to create account', requestId }, 409);
       }
-      console.error('Auth creation error:', authCreateError);
-      throw new Error(`Failed to create account: ${authCreateError.message}`);
+      console.error('[create-student-account] auth create failed', { message: authCreateError.message });
+      return jsonResponse(req, { success: false, error: 'Unable to create account', requestId }, 500);
     }
 
     if (!authData.user) {
-      throw new Error('Failed to create account: no user returned');
+      return jsonResponse(req, { success: false, error: 'Unable to create account', requestId }, 500);
     }
 
     const userId = authData.user.id;
@@ -135,29 +156,36 @@ Deno.serve(async (req) => {
       .eq('id', userId);
 
     if (userUpdateError) {
-      console.error('User curriculum update error:', userUpdateError);
+      console.error('[create-student-account] user profile update failed', { message: userUpdateError.message });
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+      return jsonResponse(req, { success: false, error: 'Unable to create account', requestId }, 500);
     }
 
-    return new Response(
-      JSON.stringify({
+    await recordSecurityAuditEvent(supabaseAdmin, {
+      requestId,
+      scope: "create-student-account",
+      eventType: "student_self_registration",
+      outcome: "success",
+      actorUserId: userId,
+      metadata: {
+        username,
+        schoolLevel,
+        country: country || null,
+      },
+    });
+
+    return jsonResponse(req, {
         success: true,
         user_id: userId,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    );
+        requestId,
+      });
   } catch (error) {
-    console.error('Error creating student account:', error);
-    return new Response(
-      JSON.stringify({
+    console.error('[create-student-account] request failed', {
+      message: (error as Error).message || String(error),
+    });
+    return jsonResponse(req, {
         success: false,
-        error: (error as Error).message,
-      }),
-      {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    );
+        error: 'Unable to create account',
+      }, 500);
   }
 });

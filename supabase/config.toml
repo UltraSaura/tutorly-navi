@@ -1,8 +1,8 @@
 project_id = "sibprjxhbxahouejygeu"
 [functions.ai-chat]
-verify_jwt = false
+verify_jwt = true
 [functions.document-processor]
-verify_jwt = false
+verify_jwt = true
 [functions.delete-account]
 verify_jwt = true
 [functions.manage-api-keys]
@@ -15,13 +15,17 @@ verify_jwt = false
 [functions.export-guardian-report]
 verify_jwt = true
 [functions.quiz-bank-visible]
-verify_jwt = false
+verify_jwt = true
 [functions.quiz-bank-all]
-verify_jwt = false
+verify_jwt = true
 [functions.quiz-bank-attempt]
 verify_jwt = true
 [functions.import-curriculum-bundle]
-verify_jwt = false
+verify_jwt = true
+[functions.import-exam-bundle]
+verify_jwt = true
+[functions.import-training-items]
+verify_jwt = true
 [functions.recommendations]
 verify_jwt = true
 

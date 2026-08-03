@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
 // Import provider-specific implementations
 import { callOpenAI } from './providers/openai.ts';
@@ -24,87 +23,78 @@ import {
   generateSystemMessage,
   enhanceSystemMessageForMath
 } from './utils/systemPrompts.ts';
+import {
+  authenticateRequest,
+  consumeRateLimit,
+  handleCors,
+  jsonResponse,
+  parseJsonBody,
+  recordSecurityAuditEvent,
+  withTimeout,
+} from "../_shared/security.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-// Simple in-memory rate limiter
-const rateLimiter = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 30; // 30 requests per minute
-
-const checkRateLimit = (identifier: string): boolean => {
-  const now = Date.now();
-  const limit = rateLimiter.get(identifier);
-
-  if (!limit || now > limit.resetTime) {
-    rateLimiter.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    return true;
-  }
-
-  if (limit.count >= MAX_REQUESTS_PER_WINDOW) {
-    return false;
-  }
-
-  limit.count++;
-  return true;
-};
+const MAX_BODY_BYTES = Number(Deno.env.get("AI_CHAT_MAX_BODY_BYTES") ?? 150_000);
+const MAX_HISTORY_ITEMS = Number(Deno.env.get("AI_CHAT_MAX_HISTORY_ITEMS") ?? 20);
+const MAX_MESSAGE_LENGTH = Number(Deno.env.get("AI_CHAT_MAX_MESSAGE_LENGTH") ?? 12_000);
+const MAX_MAX_TOKENS = Number(Deno.env.get("AI_CHAT_MAX_TOKENS") ?? 2_000);
+const REQUEST_LIMIT = Number(Deno.env.get("AI_CHAT_RATE_LIMIT") ?? 30);
+const REQUEST_WINDOW_SECONDS = Number(Deno.env.get("AI_CHAT_RATE_WINDOW_SECONDS") ?? 60);
+const PROVIDER_TIMEOUT_MS = Number(Deno.env.get("AI_CHAT_PROVIDER_TIMEOUT_MS") ?? 25_000);
 
 serve(async (req) => {
-  // Set CORS headers for all responses
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  };
-
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    console.log('✅ CORS preflight request handled');
-    return new Response(null, { headers: corsHeaders });
+  const corsResponse = handleCors(req);
+  if (corsResponse) {
+    return corsResponse;
   }
 
-  // Rate limiting based on IP or auth header
-  const clientId = req.headers.get('x-forwarded-for') || req.headers.get('authorization') || 'anonymous';
-  if (!checkRateLimit(clientId)) {
-    console.warn('⚠️ Rate limit exceeded for client:', clientId);
-    return new Response(
-      JSON.stringify({ error: 'Rate limit exceeded. Please wait before making more requests.' }),
-      { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+  if (req.method !== "POST") {
+    return jsonResponse(req, { error: "Method not allowed" }, 405);
   }
-
-  console.log(`🚀 ${req.method} request to ai-chat function at ${new Date().toISOString()}`);
-  console.log('📋 Request headers:', Object.fromEntries(req.headers.entries()));
 
   try {
-    // Parse request body with detailed logging
-    const requestText = await req.text();
-    console.log('📥 Raw request received, length:', requestText.length);
-    
-    // Validate request size (max 1MB)
-    if (requestText.length > 1024 * 1024) {
-      console.error('❌ Request too large:', requestText.length);
-      return new Response(
-        JSON.stringify({ error: 'Request payload too large. Maximum 1MB allowed.' }),
-        { status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    const auth = await authenticateRequest(req);
+    if (auth.response || !auth.context) {
+      return auth.response!;
+    }
+
+    const { adminClient, user, requestId } = auth.context;
+
+    const bodyResult = await parseJsonBody<Record<string, unknown>>(req, MAX_BODY_BYTES);
+    if (bodyResult.response || !bodyResult.data) {
+      return bodyResult.response!;
+    }
+
+    const rateLimit = await consumeRateLimit(adminClient, {
+      scope: "ai-chat",
+      actorKey: user.id,
+      limit: REQUEST_LIMIT,
+      windowSeconds: REQUEST_WINDOW_SECONDS,
+    });
+
+    if (!rateLimit.allowed) {
+      await recordSecurityAuditEvent(adminClient, {
+        requestId,
+        scope: "ai-chat",
+        eventType: "rate_limit",
+        outcome: "blocked",
+        actorUserId: user.id,
+        metadata: {
+          currentCount: rateLimit.current_count,
+          resetAt: rateLimit.reset_at,
+        },
+      });
+
+      return jsonResponse(
+        req,
+        {
+          error: "Usage limit reached. Please try again later.",
+          requestId,
+        },
+        429,
       );
     }
-    
-    let parsedBody;
-    try {
-      parsedBody = JSON.parse(requestText);
-    } catch (parseError) {
-      console.error('❌ JSON parse error:', parseError);
-      return new Response(
-        JSON.stringify({ error: 'Invalid JSON in request body' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
+
+    const parsedBody = bodyResult.data;
 
     const { 
       message, 
@@ -118,97 +108,65 @@ serve(async (req) => {
       userContext,
       requestMode,
       problemContext,
-      maxTokens = 800  // Default to 800 for backward compatibility
+      maxTokens = 800
     } = parsedBody;
-    
-    // Normalize language: accept 'fr', 'french', 'French' etc.
-    const language = /^fr/i.test(rawLanguage) ? 'fr' : 'en';
-    
-    console.log('📊 Request analysis:', {
-      modelId, 
-      messageLength: message?.length,
-      historyLength: history?.length,
-      isGradingRequest,
-      isUnified,
-      requestMode,
-      language,
-      hasCustomPrompt: !!customPrompt,
-      hasUserContext: !!userContext
-    });
 
-    // Validate required parameters - allow empty message for grading requests
-    if ((!message && !isGradingRequest) || !modelId) {
-      console.error('❌ Missing required parameters', { 
-        hasMessage: !!message, 
-        hasModelId: !!modelId, 
-        isGradingRequest 
-      });
-      return new Response(
-        JSON.stringify({ 
-          error: 'Missing required parameters: message or modelId',
-          received: { hasMessage: !!message, hasModelId: !!modelId, isGradingRequest }
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+    const language = /^fr/i.test(rawLanguage) ? 'fr' : 'en';
+
+    if (typeof modelId !== "string" || modelId.trim().length === 0) {
+      return jsonResponse(req, { error: "Invalid request body", requestId }, 400);
     }
 
-    // Detect if this is an exercise request (only if not using unified approach)
+    if (!Array.isArray(history) || history.length > MAX_HISTORY_ITEMS) {
+      return jsonResponse(req, { error: "Invalid request body", requestId }, 400);
+    }
+
+    if (!isGradingRequest && (typeof message !== "string" || message.trim().length === 0)) {
+      return jsonResponse(req, { error: "Invalid request body", requestId }, 400);
+    }
+
+    if (typeof message === "string" && message.length > MAX_MESSAGE_LENGTH) {
+      return jsonResponse(req, { error: "Message too long", requestId }, 413);
+    }
+
+    const normalizedHistory = history.filter((entry: unknown) => {
+      if (!entry || typeof entry !== "object") return false;
+      const role = (entry as { role?: unknown }).role;
+      const content = (entry as { content?: unknown }).content;
+      return (
+        (role === "user" || role === "assistant" || role === "system") &&
+        typeof content === "string" &&
+        content.length <= MAX_MESSAGE_LENGTH
+      );
+    });
+
+    if (normalizedHistory.length !== history.length) {
+      return jsonResponse(req, { error: "Invalid request body", requestId }, 400);
+    }
+
     let isExercise = false;
     if (!isUnified) {
       isExercise = !isGradingRequest && detectExercise(message);
     }
-    console.log('🧮 Exercise detection:', { isGradingRequest, isExercise, isUnified });
 
     // Get model configuration
     const modelConfig = getModelConfig(modelId);
     if (!modelConfig) {
-      console.error('❌ Unsupported model:', modelId);
-      return new Response(
-        JSON.stringify({ 
-          error: `Unsupported model: ${modelId}`,
-          supportedModels: ['gpt-5', 'gpt-4.1', 'deepseek-chat', 'claude-3-5-sonnet-20241022']
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      return jsonResponse(req, { error: "Unsupported model", requestId }, 400);
     }
 
-    console.log('⚙️ Model configuration:', modelConfig);
-
-    // Get API key for the provider
     const apiKey = getApiKeyForProvider(modelConfig.provider);
     if (!apiKey) {
-      console.error('❌ API key not found for provider:', modelConfig.provider);
-      const availableKeys = [
-        'OPENAI_API_KEY', 
-        'DEEPSEEK_API_KEY', 
-        'ANTHROPIC_API_KEY', 
-        'GOOGLE_API_KEY'
-      ].filter(key => Deno.env.get(key));
-      
-      console.log('🔑 Available API keys:', availableKeys);
-      
-      return new Response(
-        JSON.stringify({ 
-          error: `Missing API key for ${modelConfig.provider}`,
-          details: `The model "${modelId}" requires a ${modelConfig.provider} API key to be configured in Supabase Secrets. Please add the ${modelConfig.provider.toUpperCase().replace(' ', '_')}_API_KEY to your project secrets.`,
-          provider: modelConfig.provider,
-          modelId: modelId,
-          availableProviders: availableKeys.map(key => key.replace('_API_KEY', ''))
-        }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      await recordSecurityAuditEvent(adminClient, {
+        requestId,
+        scope: "ai-chat",
+        eventType: "missing_secret",
+        outcome: "error",
+        actorUserId: user.id,
+        metadata: { provider: modelConfig.provider },
+      });
+      return jsonResponse(req, { error: "AI service is unavailable", requestId }, 503);
     }
-
-    console.log('🔑 API key found for provider:', modelConfig.provider);
     
     // Generate system message - use unified template if requested
     let usageType = 'chat';
@@ -226,6 +184,12 @@ serve(async (req) => {
       ...userContext,
       response_language: language === 'fr' ? 'French' : 'English'
     };
+
+    const boundedMaxTokens = Math.min(
+      Math.max(Number(maxTokens) || 800, 64),
+      MAX_MAX_TOKENS,
+      modelConfig.maxTokens ?? MAX_MAX_TOKENS,
+    );
 
     let systemMessage;
     let effectiveMessage = message;
@@ -291,117 +255,121 @@ JSON shape:
       systemMessage = enhanceSystemMessageForMath(systemMessage, message);
     }
     
-    console.log('📝 System message generated, length:', systemMessage.content?.length || 0);
-    
     // Format history messages based on provider
-    const formattedHistory = formatHistoryForProvider(history, modelConfig.provider);
+    const formattedHistory = formatHistoryForProvider(normalizedHistory, modelConfig.provider);
     const formattedSystemMessage = formatSystemMessageForProvider(systemMessage, modelConfig.provider);
-    
-    console.log('📚 Formatted history count:', formattedHistory.length);
-    
-    // Call the appropriate API based on the provider
-    console.log(`🔄 Calling ${modelConfig.provider} API with model: ${modelConfig.model}`);
     let responseContent;
     
-    const apiStartTime = Date.now();
     try {
-      switch (modelConfig.provider) {
-        case 'OpenAI':
-          responseContent = await callOpenAI(
-            formattedSystemMessage, 
-            formattedHistory, 
-            effectiveMessage, 
-            modelConfig.model, 
-            isExercise,
-            requestExplanation,
-            maxTokens
-          );
-          break;
-        case 'Anthropic':
-          responseContent = await callAnthropic(
-            formattedSystemMessage, 
-            formattedHistory, 
-            effectiveMessage, 
-            modelConfig.model, 
-            isExercise,
-            maxTokens
-          );
-          break;
-        case 'Mistral AI':
-          responseContent = await callMistral(
-            formattedSystemMessage, 
-            formattedHistory, 
-            effectiveMessage, 
-            modelConfig.model, 
-            isExercise,
-            maxTokens
-          );
-          break;
-        case 'Google':
-          responseContent = await callGoogle(
-            formattedSystemMessage, 
-            formattedHistory, 
-            effectiveMessage, 
-            modelConfig.model, 
-            isExercise,
-            maxTokens
-          );
-          break;
-        case 'DeepSeek':
-          responseContent = await callDeepSeek(
-            formattedSystemMessage, 
-            formattedHistory, 
-            effectiveMessage, 
-            modelConfig.model, 
-            isExercise,
-            requestExplanation,
-            maxTokens
-          );
-          break;
-        case 'xAI':
-          responseContent = await callXAI(
-            formattedSystemMessage, 
-            formattedHistory, 
-            effectiveMessage, 
-            modelConfig.model, 
-            isExercise,
-            maxTokens
-          );
-          break;
-        default:
-          throw new Error(`Provider not implemented: ${modelConfig.provider}`);
-      }
-      
-      const apiEndTime = Date.now();
-      console.log(`✅ ${modelConfig.provider} API success, response time: ${apiEndTime - apiStartTime}ms`);
-      
+      const providerCall = async () => {
+        switch (modelConfig.provider) {
+          case 'OpenAI':
+            return await callOpenAI(
+              formattedSystemMessage,
+              formattedHistory,
+              effectiveMessage,
+              modelConfig.model,
+              isExercise,
+              requestExplanation,
+              boundedMaxTokens
+            );
+          case 'Anthropic':
+            return await callAnthropic(
+              formattedSystemMessage,
+              formattedHistory,
+              effectiveMessage,
+              modelConfig.model,
+              isExercise,
+              boundedMaxTokens
+            );
+          case 'Mistral AI':
+            return await callMistral(
+              formattedSystemMessage,
+              formattedHistory,
+              effectiveMessage,
+              modelConfig.model,
+              isExercise,
+              boundedMaxTokens
+            );
+          case 'Google':
+            return await callGoogle(
+              formattedSystemMessage,
+              formattedHistory,
+              effectiveMessage,
+              modelConfig.model,
+              isExercise,
+              boundedMaxTokens
+            );
+          case 'DeepSeek':
+            return await callDeepSeek(
+              formattedSystemMessage,
+              formattedHistory,
+              effectiveMessage,
+              modelConfig.model,
+              isExercise,
+              requestExplanation,
+              boundedMaxTokens
+            );
+          case 'xAI':
+            return await callXAI(
+              formattedSystemMessage,
+              formattedHistory,
+              effectiveMessage,
+              modelConfig.model,
+              isExercise,
+              boundedMaxTokens
+            );
+          default:
+            throw new Error(`Provider not implemented: ${modelConfig.provider}`);
+        }
+      };
+
+      responseContent = await withTimeout(providerCall(), PROVIDER_TIMEOUT_MS);
     } catch (providerError) {
-      const apiEndTime = Date.now();
-      console.error(`❌ ${modelConfig.provider} API failed after ${apiEndTime - apiStartTime}ms:`, providerError);
+      if ((providerError as Error).message === "TIMEOUT") {
+        await recordSecurityAuditEvent(adminClient, {
+          requestId,
+          scope: "ai-chat",
+          eventType: "provider_timeout",
+          outcome: "error",
+          actorUserId: user.id,
+          metadata: { provider: modelConfig.provider, modelId },
+        });
+        return jsonResponse(req, { error: "AI service timed out", requestId }, 504);
+      }
+
       throw providerError;
     }
-    
-    console.log('📤 Returning successful response, content length:', responseContent?.length || 0);
-    
-    // Handle tool calling responses (e.g. from DeepSeek/OpenAI with requestExplanation)
+
     if (responseContent && typeof responseContent === 'object' && responseContent.tool_calls) {
-      console.log('🔧 Tool calling response detected, passing through directly');
-      return new Response(
-        JSON.stringify({
+      await recordSecurityAuditEvent(adminClient, {
+        requestId,
+        scope: "ai-chat",
+        eventType: "request",
+        outcome: "success",
+        actorUserId: user.id,
+        metadata: {
+          modelId,
+          provider: modelConfig.provider,
+          requestMode: requestMode ?? null,
+          historyCount: formattedHistory.length,
+          messageLength: typeof message === "string" ? message.length : 0,
+        },
+      });
+      return jsonResponse(req, {
           tool_calls: responseContent.tool_calls,
           content: responseContent.content || null,
           modelId,
           modelUsed: modelConfig.model,
           provider: modelConfig.provider,
           isExercise,
-          timestamp: new Date().toISOString()
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+          timestamp: new Date().toISOString(),
+          requestId,
+        });
     }
     
     // Extract structured fields from AI response (handles markdown-wrapped JSON)
-    let parsedFields: Record<string, any> = {};
+    const parsedFields: Record<string, unknown> = {};
     try {
       const jsonMatch = responseContent.match(/```json\s*\n([\s\S]*?)\n\s*```/);
       const jsonStr = jsonMatch ? jsonMatch[1] : responseContent;
@@ -411,64 +379,48 @@ JSON shape:
       if (parsed.sections) parsedFields.sections = parsed.sections;
       if (requestMode === 'problemExtraction') parsedFields.problemSubmission = parsed;
       if (requestMode === 'groupedProblemGrading') parsedFields.problemEvaluation = parsed;
-      console.log('✅ Extracted structured fields from AI response:', Object.keys(parsedFields));
     } catch (e) {
-      console.log('ℹ️ AI response is not JSON, using raw content');
+      // Raw text response is acceptable.
     }
-    
-    // Return the AI's response
-    return new Response(
-      JSON.stringify({ 
+
+    await recordSecurityAuditEvent(adminClient, {
+      requestId,
+      scope: "ai-chat",
+      eventType: "request",
+      outcome: "success",
+      actorUserId: user.id,
+      metadata: {
+        modelId,
+        provider: modelConfig.provider,
+        requestMode: requestMode ?? null,
+        historyCount: formattedHistory.length,
+        messageLength: typeof message === "string" ? message.length : 0,
+        maxTokens: boundedMaxTokens,
+      },
+    });
+
+    return jsonResponse(req, {
         content: responseContent,
         ...parsedFields,
-        modelId: modelId,
+        modelId,
         modelUsed: modelConfig.model,
         provider: modelConfig.provider,
-        isExercise: isExercise,
-        timestamp: new Date().toISOString()
-      }),
-      { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json' 
-        } 
-      }
-    );
-    
-  } catch (error) {
-    console.error('❌ Error in AI chat function:', {
-      error: (error as Error).message || String(error),
-      stack: (error as Error).stack,
-      name: (error as Error).name,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Enhanced error response with more details
-    let errorMessage = (error as Error).message || String(error);
-    let statusCode = 500;
-    
-    // Categorize errors for better user experience
-    if (errorMessage.includes('API key')) {
-      statusCode = 401;
-    } else if (errorMessage.includes('model') || errorMessage.includes('Unsupported')) {
-      statusCode = 400;
-    } else if (errorMessage.includes('timeout') || errorMessage.includes('network')) {
-      statusCode = 503;
-    }
-    
-    return new Response(
-      JSON.stringify({ 
-        error: errorMessage,
+        isExercise,
         timestamp: new Date().toISOString(),
-        statusCode
-      }),
-      { 
-        status: statusCode,
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json' 
-        } 
-      }
+        requestId,
+      });
+  } catch (error) {
+    console.error("[ai-chat] request failed", {
+      name: (error as Error).name,
+      message: (error as Error).message || String(error),
+    });
+
+    return jsonResponse(
+      req,
+      {
+        error: "Unable to complete the AI request",
+      },
+      500,
     );
   }
 });

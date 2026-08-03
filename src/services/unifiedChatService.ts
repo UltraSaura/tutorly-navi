@@ -62,54 +62,6 @@ function extractCorrectAnswerFromSolution(solutionText: string): string | null {
   return null;
 }
 
-/**
- * Save explanation data to cache (from AI response, no additional call needed)
- */
-async function saveExplanationToCache(
-  exerciseContent: string,
-  sections: Record<string, unknown>,
-  subjectId: string | null
-): Promise<void> {
-  try {
-    // Check if explanation already exists
-    const { data: existing } = await supabase
-      .from('exercise_explanations_cache')
-      .select('id')
-      .eq('exercise_content', exerciseContent)
-      .maybeSingle();
-
-    if (existing) {
-      console.log('[SaveExplanation] Explanation already exists in cache');
-      return;
-    }
-
-    // Extract correct answer from currentExercise section
-    const currentExercise = typeof sections.currentExercise === 'string' ? sections.currentExercise : '';
-    const correctAnswer = extractCorrectAnswerFromSolution(currentExercise);
-
-    // Save to cache
-    const { error: insertError } = await supabase
-      .from('exercise_explanations_cache')
-      .insert({
-        exercise_content: exerciseContent,
-        exercise_hash: exerciseContent.toLowerCase().replace(/\s+/g, ''),
-        subject_id: subjectId,
-        explanation_data: sections as any,
-        correct_answer: correctAnswer,
-        quality_score: 0,
-        usage_count: 1
-      } as any);
-
-    if (insertError) {
-      console.error('[SaveExplanation] Error saving to cache:', insertError);
-    } else {
-      console.log('[SaveExplanation] ✅ Explanation saved to cache');
-    }
-  } catch (err) {
-    console.error('[SaveExplanation] Unexpected error:', err);
-  }
-}
-
 export interface UnifiedChatResponse {
   content: string;
   isMath: boolean;
@@ -132,8 +84,6 @@ export async function sendUnifiedMessage(
   userContext?: Record<string, unknown>
 ): Promise<{ data: UnifiedChatResponse | null; error: unknown }> {
   try {
-    console.log('[UnifiedChatService] Sending message to AI:', { inputMessage, selectedModelId });
-
     // Format message history for AI
     const messageHistory = messages
       .filter(msg => ['user', 'assistant', 'system'].includes(msg.role))
@@ -141,14 +91,6 @@ export async function sendUnifiedMessage(
         role: msg.role,
         content: msg.content
       }));
-
-    console.log('[UnifiedChatService] Calling ai-chat with body:', {
-      message: inputMessage,
-      modelId: selectedModelId,
-      historyLength: messageHistory.length,
-      language,
-      isUnified: true
-    });
 
     // Just forward to AI - it handles everything
     const { data, error } = await supabase.functions.invoke('ai-chat', {
@@ -166,29 +108,15 @@ export async function sendUnifiedMessage(
       },
     });
 
-    console.log('[UnifiedChatService] Raw response from ai-chat:', { data, error, hasData: !!data, hasError: !!error });
-
     if (error) {
-      console.error('[UnifiedChatService] AI service error:', error);
       return { data: null, error };
     }
 
     if (!data) {
-      console.error('[UnifiedChatService] No data in response');
       return { data: null, error: 'No data received from AI service' };
     }
 
-    console.log('[UnifiedChatService] Data structure:', {
-      hasContent: !!data?.content,
-      contentType: typeof data?.content,
-      contentLength: data?.content?.length,
-      dataKeys: Object.keys(data),
-      hasSections: !!data?.sections,
-      sectionsKeys: data?.sections ? Object.keys(data.sections) : []
-    });
-
     if (!data?.content) {
-      console.error('[UnifiedChatService] No content in response:', data);
       return { data: null, error: 'No content received from AI service' };
     }
 
@@ -201,13 +129,6 @@ export async function sendUnifiedMessage(
       hasAnswer: /=\s*[^=]*$/.test(inputMessage),
       confidence: data.content.includes('NOT_MATH') ? 95 : 85
     };
-    
-    console.log('[UnifiedChatService] Response parsed successfully:', {
-      isMath: response.isMath,
-      isCorrect: response.isCorrect,
-      hasAnswer: response.hasAnswer,
-      contentPreview: response.content.substring(0, 200)
-    });
 
     // Auto-save math exercises to history for guardian tracking
     if (response.isMath && response.hasAnswer) {
@@ -222,37 +143,11 @@ export async function sendUnifiedMessage(
         isCorrect: response.isCorrect ?? null,
         subjectId: subject,
       }).catch(err => console.error('[UnifiedChatService] Failed to auto-save exercise:', err));
-
-      // Auto-save explanation from AI response (no additional AI call needed!)
-      if (response.isCorrect === false) {
-        // Try to extract sections from the response
-        let sections = data.sections;
-        
-        // If sections not directly available, try parsing from content
-        if (!sections && data.content) {
-          try {
-            const parsed = JSON.parse(data.content);
-            sections = parsed.sections;
-            console.log('[UnifiedChat] Parsed sections from content');
-          } catch (e) {
-            console.log('[UnifiedChat] Could not parse sections from content');
-          }
-        }
-        
-        if (sections) {
-          console.log('[UnifiedChat] Caching explanation with sections:', Object.keys(sections));
-          saveExplanationToCache(question, sections, subject)
-            .catch(err => console.error('[UnifiedChatService] Failed to save explanation:', err));
-        } else {
-          console.warn('[UnifiedChat] No sections found in AI response for caching');
-        }
-      }
     }
     
     return { data: response, error: null };
 
   } catch (error) {
-    console.error('[UnifiedChatService] Caught error:', error);
     return { data: null, error };
   }
 }

@@ -1,9 +1,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import {
+  authenticateRequest,
+  handleCors,
+  jsonResponse,
+  parseJsonBody,
+} from "../_shared/security.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const MAX_BODY_BYTES = Number(Deno.env.get("CURRICULUM_IMPORT_MAX_BODY_BYTES") ?? 20_000_000);
 
 // ============================================================================
 // Bundle shape (post-Phase-2)
@@ -87,8 +90,8 @@ interface BundleLesson {
   id: string;
   topic_id?: string;
   title: string;
-  objective_ids?: any;
-  success_criterion_ids?: any;
+  objective_ids?: unknown[];
+  success_criterion_ids?: unknown[];
   materials?: string;
   misconceptions?: string;
   teacher_talk?: string;
@@ -116,32 +119,21 @@ function chunk<T>(array: T[], size: number): T[][] {
   return chunks;
 }
 
-// Always return 200 so the client can read the JSON body.
-function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    status,
-  });
-}
-
-function diagFromPgError(table: string, error: any) {
-  return {
-    table,
-    code: error?.code ?? null,
-    message: error?.message ?? String(error),
-    details: error?.details ?? null,
-    hint: error?.hint ?? null,
-  };
-}
-
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  const corsResponse = handleCors(req);
+  if (corsResponse) {
+    return corsResponse;
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse(req, { success: false, error: "Method not allowed" }, 405);
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) return jsonResponse({ success: false, error: 'No authorization header' }, 200);
+    const auth = await authenticateRequest(req, { requireAdmin: true });
+    if (auth.response || !auth.context) {
+      return auth.response!;
+    }
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -149,50 +141,26 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const token = authHeader.replace('Bearer ', '');
-    const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
-    let isAuthorized = false;
-    let callerLabel = 'unknown';
-
-    if (token === SERVICE_KEY) {
-      // Path 1: server-to-server (CI, cron, importer pipeline)
-      isAuthorized = true;
-      callerLabel = 'service-role';
-    } else {
-      // Path 2: admin user session (existing /admin/curriculum UI flow)
-      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-      if (!authError && user) {
-        const { data: roles } = await supabaseAdmin
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin');
-        if (roles && roles.length > 0) {
-          isAuthorized = true;
-          callerLabel = `admin:${user.id}`;
-        }
-      }
+    const bodyResult = await parseJsonBody<BundleData>(req, MAX_BODY_BYTES);
+    if (bodyResult.response || !bodyResult.data) {
+      return bodyResult.response!;
     }
 
-    if (!isAuthorized) {
-      return jsonResponse({ success: false, error: 'Unauthorized' }, 200);
-    }
-    console.log(`[import-curriculum-bundle] authorized as ${callerLabel}`);
-
-    const bundle: BundleData = await req.json();
+    const bundle: BundleData = bodyResult.data;
     const mode = bundle.mode === 'replace' ? 'replace' : 'upsert';
-    console.log('📥 Bundle keys:', Object.keys(bundle), 'mode:', mode);
-    console.log('📊 Pre-import counts:', {
-      subjects: bundle.subjects?.length ?? 0,
-      domains: bundle.domains?.length ?? 0,
-      subdomains: bundle.subdomains?.length ?? 0,
-      objectives: bundle.objectives?.length ?? 0,
-      success_criteria: bundle.success_criteria?.length ?? 0,
-      tasks: bundle.tasks?.length ?? 0,
-      topic_objective_links: bundle.topic_objective_links?.length ?? 0,
-      lessons: bundle.lessons?.length ?? 0,
-    });
+
+    if (
+      (bundle.subjects && !Array.isArray(bundle.subjects)) ||
+      (bundle.domains && !Array.isArray(bundle.domains)) ||
+      (bundle.subdomains && !Array.isArray(bundle.subdomains)) ||
+      (bundle.objectives && !Array.isArray(bundle.objectives)) ||
+      (bundle.success_criteria && !Array.isArray(bundle.success_criteria)) ||
+      (bundle.tasks && !Array.isArray(bundle.tasks)) ||
+      (bundle.topic_objective_links && !Array.isArray(bundle.topic_objective_links)) ||
+      (bundle.lessons && !Array.isArray(bundle.lessons))
+    ) {
+      return jsonResponse(req, { success: false, error: "Invalid bundle payload" }, 400);
+    }
 
     const counts = {
       subjects: 0, domains: 0, subdomains: 0, objectives: 0,
@@ -217,19 +185,19 @@ Deno.serve(async (req) => {
         // Delete in dependency order: tasks → success_criteria → objectives → subdomains → domains
         // tasks scoped by subject_id_uuid
         let r = await supabaseAdmin.from('tasks').delete().eq('subject_id_uuid', sid);
-        if (r.error) return jsonResponse({ success: false, error: 'Replace failed', diagnostics: diagFromPgError('tasks(delete)', r.error) }, 200);
+        if (r.error) return jsonResponse(req, { success: false, error: 'Replace failed' }, 200);
 
         r = await supabaseAdmin.from('success_criteria').delete().eq('subject_id_uuid', sid);
-        if (r.error) return jsonResponse({ success: false, error: 'Replace failed', diagnostics: diagFromPgError('success_criteria(delete)', r.error) }, 200);
+        if (r.error) return jsonResponse(req, { success: false, error: 'Replace failed' }, 200);
 
         r = await supabaseAdmin.from('objectives').delete().eq('subject_id_uuid', sid);
-        if (r.error) return jsonResponse({ success: false, error: 'Replace failed', diagnostics: diagFromPgError('objectives(delete)', r.error) }, 200);
+        if (r.error) return jsonResponse(req, { success: false, error: 'Replace failed' }, 200);
 
         r = await supabaseAdmin.from('subdomains').delete().eq('subject_id', sid);
-        if (r.error) return jsonResponse({ success: false, error: 'Replace failed', diagnostics: diagFromPgError('subdomains(delete)', r.error) }, 200);
+        if (r.error) return jsonResponse(req, { success: false, error: 'Replace failed' }, 200);
 
         r = await supabaseAdmin.from('domains').delete().eq('subject_id', sid);
-        if (r.error) return jsonResponse({ success: false, error: 'Replace failed', diagnostics: diagFromPgError('domains(delete)', r.error) }, 200);
+        if (r.error) return jsonResponse(req, { success: false, error: 'Replace failed' }, 200);
       }
       // Purge orphan rows (NULL critical FKs) — leftover demo data that survives subject-scoped deletes
       console.log('🧹 Purging orphan rows with NULL FKs...');
@@ -243,10 +211,9 @@ Deno.serve(async (req) => {
       for (const [tbl, col] of orphanPurges) {
         const r = await supabaseAdmin.from(tbl).delete().is(col, null);
         if (r.error) {
-          console.warn(`⚠️ Orphan purge failed for ${tbl}.${col}:`, r.error.message);
+          console.warn(`[import-curriculum-bundle] orphan purge failed for ${tbl}.${col}`);
         }
       }
-      console.log('🧹 Replace mode: wipe complete');
     }
 
     // ----------------------------------------------------------------------
@@ -261,7 +228,7 @@ Deno.serve(async (req) => {
       }));
       for (const c of chunk(rows, CHUNK_SIZE)) {
         const { error } = await supabaseAdmin.from('subjects').upsert(c, { onConflict: 'id' });
-        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('subjects', error) }, 200);
+        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
         counts.subjects += c.length;
       }
       console.log(`✓ subjects ${counts.subjects}`);
@@ -318,7 +285,7 @@ Deno.serve(async (req) => {
             },
             { onConflict: 'id' }
           );
-        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('domains', error) }, 200);
+        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
         counts.domains += 1;
       }
       console.log(`✓ domains ${counts.domains} (remapped ${domainIdRemap.size})`);
@@ -396,7 +363,7 @@ Deno.serve(async (req) => {
             },
             { onConflict: 'id_new' }
           );
-        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('subdomains', error) }, 200);
+        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
         counts.subdomains += 1;
       }
       console.log(`✓ subdomains ${counts.subdomains} (remapped ${subdomainIdRemap.size})`);
@@ -440,7 +407,7 @@ Deno.serve(async (req) => {
       }));
       for (const c of chunk(rows, CHUNK_SIZE)) {
         const { error } = await supabaseAdmin.from('objectives').upsert(c, { onConflict: 'id' });
-        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('objectives', error) }, 200);
+        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
         counts.objectives += c.length;
       }
       console.log(`✓ objectives ${counts.objectives}`);
@@ -479,7 +446,7 @@ Deno.serve(async (req) => {
       });
       for (const c of chunk(rows, CHUNK_SIZE)) {
         const { error } = await supabaseAdmin.from('success_criteria').upsert(c, { onConflict: 'id' });
-        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('success_criteria', error) }, 200);
+        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
         counts.success_criteria += c.length;
       }
       console.log(`✓ success_criteria ${counts.success_criteria}`);
@@ -509,7 +476,7 @@ Deno.serve(async (req) => {
       });
       for (const c of chunk(rows, CHUNK_SIZE)) {
         const { error } = await supabaseAdmin.from('tasks').upsert(c, { onConflict: 'id' });
-        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('tasks', error) }, 200);
+        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
         counts.tasks += c.length;
       }
       console.log(`✓ tasks ${counts.tasks}`);
@@ -530,7 +497,7 @@ Deno.serve(async (req) => {
         const { error } = await supabaseAdmin
           .from('topic_objective_links')
           .upsert(c, { onConflict: 'topic_id,objective_id_uuid' });
-        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('topic_objective_links', error) }, 200);
+        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
         counts.topic_objective_links += c.length;
       }
       console.log(`✓ topic_objective_links ${counts.topic_objective_links}`);
@@ -554,7 +521,7 @@ Deno.serve(async (req) => {
       }));
       for (const c of chunk(rows, CHUNK_SIZE)) {
         const { error } = await supabaseAdmin.from('lessons').upsert(c, { onConflict: 'id' });
-        if (error) return jsonResponse({ success: false, error: error.message, diagnostics: diagFromPgError('lessons', error) }, 200);
+        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
         counts.lessons += c.length;
       }
       console.log(`✓ lessons ${counts.lessons}`);
@@ -615,7 +582,7 @@ Deno.serve(async (req) => {
     }
     const allClean = Object.values(verification).every(v => v === 0);
 
-    return jsonResponse({
+    return jsonResponse(req, {
       success: true,
       message: allClean
         ? '✅ Curriculum imported, all FKs resolved.'
@@ -630,10 +597,9 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error('Error importing curriculum bundle:', error);
-    return jsonResponse({
+    return jsonResponse(req, {
       success: false,
-      error: (error as Error).message ?? 'Unknown error',
-      diagnostics: { code: null, message: (error as Error).message, details: null, hint: null, table: 'unknown' },
+      error: 'Import failed',
     }, 200);
   }
 });

@@ -1,274 +1,289 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import {
+  authenticateRequest,
+  consumeRateLimit,
+  createAdminClient,
+  handleCors,
+  jsonResponse,
+  parseJsonBody,
+  recordSecurityAuditEvent,
+} from "../_shared/security.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const MAX_BODY_BYTES = Number(Deno.env.get("CREATE_CHILD_MAX_BODY_BYTES") ?? 20_000);
+const REQUEST_LIMIT = Number(Deno.env.get("CREATE_CHILD_RATE_LIMIT") ?? 10);
+const REQUEST_WINDOW_SECONDS = Number(Deno.env.get("CREATE_CHILD_RATE_WINDOW_SECONDS") ?? 3600);
+const USERNAME_RE = /^[a-z0-9_]{3,30}$/;
 
 interface CreateChildRequest {
-  username: string;        // NEW: Required username
-  password: string;        // Required password
+  username: string;
+  password: string;
   firstName: string;
   lastName?: string;
-  email?: string;          // NEW: Optional email for notifications
+  email?: string;
   country?: string;
   phoneNumber?: string;
   schoolLevel: string;
   relation: string;
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+async function getGuardianId(adminClient: ReturnType<typeof createAdminClient>, userId: string) {
+  const { data, error } = await adminClient
+    .from("guardians")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
   }
 
+  return data.id as string;
+}
+
+Deno.serve(async (req) => {
+  const corsResponse = handleCors(req, ["POST", "OPTIONS"]);
+  if (corsResponse) {
+    return corsResponse;
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse(req, { success: false, error: "Method not allowed" }, 405);
+  }
+
+  let createdAuthUserId: string | null = null;
+  let createdChildId: string | null = null;
+
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
+    const auth = await authenticateRequest(req);
+    if (auth.response || !auth.context) {
+      return auth.response!;
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const { adminClient, user, requestId } = auth.context;
+    const guardianId = await getGuardianId(adminClient, user.id);
+    if (!guardianId) {
+      return jsonResponse(req, { success: false, error: "Forbidden", requestId }, 403);
+    }
 
-    // Client for authenticated user
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { Authorization: authHeader },
-      },
+    const rateLimit = await consumeRateLimit(adminClient, {
+      scope: "create-child-account",
+      actorKey: guardianId,
+      limit: REQUEST_LIMIT,
+      windowSeconds: REQUEST_WINDOW_SECONDS,
     });
 
-    // Admin client for creating auth users
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Verify the caller is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      throw new Error('Unauthorized');
+    if (!rateLimit.allowed) {
+      return jsonResponse(req, { success: false, error: "Too many requests", requestId }, 429);
     }
 
-    // Verify the user is a guardian
-    const { data: guardianData, error: guardianError } = await supabase
-      .from('guardians')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (guardianError || !guardianData) {
-      throw new Error('User is not a guardian');
+    const bodyResult = await parseJsonBody<CreateChildRequest>(req, MAX_BODY_BYTES);
+    if (bodyResult.response || !bodyResult.data) {
+      return bodyResult.response!;
     }
 
-    const guardianId = guardianData.id;
+    const body = bodyResult.data;
+    const username = String(body.username ?? "").trim().toLowerCase();
+    const password = String(body.password ?? "");
+    const firstName = String(body.firstName ?? "").trim();
+    const lastName = String(body.lastName ?? "").trim();
+    const email = typeof body.email === "string" ? body.email.trim() : "";
+    const relation = String(body.relation ?? "").trim().toLowerCase();
+    const country = typeof body.country === "string" ? body.country.trim().toLowerCase() : null;
+    const phoneNumber = typeof body.phoneNumber === "string" ? body.phoneNumber.trim() : null;
+    const schoolLevel = String(body.schoolLevel ?? "").trim().toLowerCase();
 
-    // Parse request body
-    const body: CreateChildRequest = await req.json();
-    const { username, password, firstName, lastName, email, country: rawCountry, phoneNumber, schoolLevel: rawSchoolLevel, relation } = body;
-
-    // Normalize curriculum codes to lowercase for consistent matching with content data
-    const country = rawCountry?.toLowerCase() || undefined;
-    const schoolLevel = rawSchoolLevel?.toLowerCase() || undefined;
-
-    // Validate required fields
     if (!username || !password || !firstName || !schoolLevel || !relation) {
-      throw new Error('Missing required fields: username, password, firstName, schoolLevel, and relation are required');
+      return jsonResponse(req, { success: false, error: "Invalid request body", requestId }, 400);
     }
 
-    // Always use username@child.local as auth email for consistent username login
-    const authEmail = `${username}@child.local`;
+    if (!USERNAME_RE.test(username)) {
+      return jsonResponse(req, { success: false, error: "Invalid request body", requestId }, 400);
+    }
 
-    // Create auth user with username
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return jsonResponse(req, { success: false, error: "Invalid request body", requestId }, 400);
+    }
+
+    const authEmail = `${username}@child.local`;
     const userMetadata = {
       first_name: firstName,
-      last_name: lastName || '',
-      user_type: 'student',
-      username: username,
-      country: country || null,
-      phone_number: phoneNumber || null,
+      last_name: lastName || "",
+      user_type: "student",
+      username,
+      country,
+      phone_number: phoneNumber,
       actual_email: email || null,
     };
 
-    let childUserId: string;
+    const { data: existingUser } = await adminClient
+      .from("users")
+      .select("id")
+      .eq("username", username)
+      .maybeSingle();
 
-    const { data: authData, error: authCreateError } = await supabaseAdmin.auth.admin.createUser({
-      email: authEmail,
-      password,
-      email_confirm: true,
-      user_metadata: userMetadata,
-    });
+    let childUserId = existingUser?.id ?? null;
 
-    if (authCreateError) {
-      // Handle case where auth user already exists (e.g. child was deleted and re-created)
-      const isEmailExists = authCreateError.message?.toLowerCase().includes('already been registered') ||
-        authCreateError.message?.toLowerCase().includes('email_exists') ||
-        (authCreateError as any).code === 'email_exists';
+    if (!childUserId) {
+      const { data: authData, error: authCreateError } = await adminClient.auth.admin.createUser({
+        email: authEmail,
+        password,
+        email_confirm: true,
+        user_metadata: userMetadata,
+      });
 
-      if (!isEmailExists) {
-        console.error('Auth creation error:', authCreateError);
-        throw new Error(`Failed to create auth account: ${authCreateError.message}`);
+      if (authCreateError || !authData.user) {
+        console.error("[create-child-account] auth create failed", {
+          requestId,
+          message: authCreateError?.message,
+        });
+        return jsonResponse(req, { success: false, error: "Unable to create child account", requestId }, 409);
       }
 
-      console.log('Auth user already exists for', authEmail, '— attempting to reuse');
-
-      // Look up existing user by email
-      const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-      if (listError) throw new Error(`Failed to list users: ${listError.message}`);
-
-      const existingUser = listData.users.find((u: any) => u.email === authEmail);
-      if (!existingUser) {
-        throw new Error('User reportedly exists but could not be found');
-      }
-
-      // Check if this user is already an active child linked to ANOTHER guardian
-      const { data: activeLinks } = await supabaseAdmin
-        .from('guardian_child_links')
-        .select('guardian_id, child_id')
-        .eq('child_id', (await supabaseAdmin.from('children').select('id').eq('user_id', existingUser.id).maybeSingle()).data?.id || '00000000-0000-0000-0000-000000000000');
-
-      if (activeLinks && activeLinks.length > 0) {
-        // Check if any link belongs to a different guardian
-        const { data: currentGuardian } = await supabaseAdmin
-          .from('guardians')
-          .select('id')
-          .eq('user_id', user!.id)
-          .single();
-
-        const otherGuardianLink = activeLinks.find((l: any) => l.guardian_id !== currentGuardian?.id);
-        if (otherGuardianLink) {
-          throw new Error('This username is already linked to another guardian');
-        }
-      }
-
-      // Update the existing auth user's metadata and password
-      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+      childUserId = authData.user.id;
+      createdAuthUserId = childUserId;
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    } else {
+      const { error: updateAuthError } = await adminClient.auth.admin.updateUserById(childUserId, {
         password,
         user_metadata: userMetadata,
       });
 
-      if (updateError) {
-        console.error('Auth update error:', updateError);
-        throw new Error(`Failed to update existing auth account: ${updateError.message}`);
+      if (updateAuthError) {
+        console.error("[create-child-account] auth update failed", {
+          requestId,
+          message: updateAuthError.message,
+        });
+        return jsonResponse(req, { success: false, error: "Unable to create child account", requestId }, 409);
       }
-
-      childUserId = existingUser.id;
-    } else if (!authData.user) {
-      throw new Error('Failed to create auth account: no user returned');
-    } else {
-      childUserId = authData.user.id;
     }
 
-    // The users table will be populated by the trigger (handle_new_user)
-    // Wait a moment for the trigger to complete
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Update users row with curriculum fields (trigger doesn't set these)
-    const { error: userUpdateError } = await supabaseAdmin
-      .from('users')
+    const { error: userUpdateError } = await adminClient
+      .from("users")
       .update({
-        curriculum_country_code: country || null,
-        curriculum_level_code: schoolLevel || null,
-        country: country || null,
-        level: schoolLevel || null,
+        curriculum_country_code: country,
+        curriculum_level_code: schoolLevel,
+        country,
+        level: schoolLevel,
+        contact_email: email || null,
       })
-      .eq('id', childUserId);
+      .eq("id", childUserId);
 
     if (userUpdateError) {
-      console.error('User curriculum update error:', userUpdateError);
+      throw new Error(`USER_UPDATE_FAILED:${userUpdateError.message}`);
     }
 
-    // Check if child profile already exists (idempotent creation)
-    const { data: existingChild } = await supabaseAdmin
-      .from('children')
-      .select('id')
-      .eq('user_id', childUserId)
+    const { data: existingChild } = await adminClient
+      .from("children")
+      .select("id")
+      .eq("user_id", childUserId)
       .maybeSingle();
 
-    let childData;
-    if (existingChild) {
-      // Child already exists, update curriculum fields
-      await supabaseAdmin
-        .from('children')
-        .update({
-          curriculum_country_code: country || null,
-          curriculum_level_code: schoolLevel || null,
-          grade: schoolLevel,
-          curriculum: country || null,
-        })
-        .eq('id', existingChild.id);
-      childData = existingChild;
-    } else {
-      // Create child profile with optional email
-      const { data: newChildData, error: childError } = await supabaseAdmin
-        .from('children')
+    let childId = existingChild?.id ?? null;
+
+    if (!childId) {
+      const { data: insertedChild, error: childInsertError } = await adminClient
+        .from("children")
         .insert({
           user_id: childUserId,
           grade: schoolLevel,
-          curriculum: country || null,
-          curriculum_country_code: country || null,
-          curriculum_level_code: schoolLevel || null,
-          status: 'active',
+          curriculum: country,
+          curriculum_country_code: country,
+          curriculum_level_code: schoolLevel,
+          status: "active",
           contact_email: email || null,
         })
-        .select()
+        .select("id")
         .single();
 
-      if (childError || !newChildData) {
-        console.error('Child creation error:', childError);
-        await supabaseAdmin.auth.admin.deleteUser(childUserId);
-        throw new Error(`Failed to create child profile: ${childError?.message}`);
+      if (childInsertError || !insertedChild) {
+        throw new Error(`CHILD_CREATE_FAILED:${childInsertError?.message ?? "unknown"}`);
       }
-      childData = newChildData;
+
+      childId = insertedChild.id;
+      createdChildId = childId;
+    } else {
+      const { error: childUpdateError } = await adminClient
+        .from("children")
+        .update({
+          grade: schoolLevel,
+          curriculum: country,
+          curriculum_country_code: country,
+          curriculum_level_code: schoolLevel,
+          contact_email: email || null,
+        })
+        .eq("id", childId);
+
+      if (childUpdateError) {
+        throw new Error(`CHILD_UPDATE_FAILED:${childUpdateError.message}`);
+      }
     }
 
-    // Create guardian-child link
-    const { error: linkError } = await supabaseAdmin
-      .from('guardian_child_links')
-      .insert({
-        guardian_id: guardianId,
-        child_id: childData.id,
-        relation,
-      });
+    const { data: existingLinks } = await adminClient
+      .from("guardian_child_links")
+      .select("guardian_id")
+      .eq("child_id", childId);
 
-    if (linkError) {
-      console.error('Link creation error:', linkError);
-      // Cleanup: delete auth user and child profile
-      await supabaseAdmin.auth.admin.deleteUser(childUserId);
-      await supabaseAdmin.from('children').delete().eq('id', childData.id);
-      throw new Error(`Failed to link child to guardian: ${linkError.message}`);
+    const linkedToOtherGuardian = (existingLinks ?? []).some((link) => link.guardian_id !== guardianId);
+    if (linkedToOtherGuardian) {
+      return jsonResponse(req, { success: false, error: "Unable to create child account", requestId }, 409);
     }
 
-    console.log('Child account created successfully:', {
-      childId: childData.id,
-      userId: childUserId,
-      guardianId,
+    const alreadyLinked = (existingLinks ?? []).some((link) => link.guardian_id === guardianId);
+    if (!alreadyLinked) {
+      const { error: linkInsertError } = await adminClient
+        .from("guardian_child_links")
+        .insert({
+          guardian_id: guardianId,
+          child_id: childId,
+          relation,
+        });
+
+      if (linkInsertError) {
+        throw new Error(`LINK_CREATE_FAILED:${linkInsertError.message}`);
+      }
+    }
+
+    await recordSecurityAuditEvent(adminClient, {
+      requestId,
+      scope: "create-child-account",
+      eventType: "guardian_child_creation",
+      outcome: "success",
+      actorUserId: user.id,
+      metadata: {
+        childUserId,
+        guardianId,
+        schoolLevel,
+        country,
+        alreadyLinked,
+      },
     });
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        child: {
-          id: childData.id,
-          user_id: childUserId,
-          email,
-          firstName,
-          lastName,
-        },
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return jsonResponse(req, {
+      success: true,
+      child: {
+        id: childId,
+        user_id: childUserId,
+        email: email || null,
+        firstName,
+        lastName: lastName || "",
+      },
+      requestId,
+    });
   } catch (error) {
-    console.error('Error creating child account:', error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: (error as Error).message,
-      }),
-      {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    console.error("[create-child-account] request failed", {
+      message: (error as Error).message || String(error),
+    });
+
+    if (createdChildId) {
+      await createAdminClient().from("children").delete().eq("id", createdChildId);
+    }
+
+    if (createdAuthUserId) {
+      await createAdminClient().auth.admin.deleteUser(createdAuthUserId);
+    }
+
+    return jsonResponse(req, {
+      success: false,
+      error: "Unable to create child account",
+    }, 500);
   }
 });

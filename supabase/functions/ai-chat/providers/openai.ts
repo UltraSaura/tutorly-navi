@@ -1,17 +1,22 @@
 import { resolveProviderKey } from "../../_shared/resolveProviderKey.ts";
 
+type ProviderMessage = Record<string, unknown>;
+type ProviderToolResponse = {
+  tool_calls: unknown;
+  content: string | null;
+};
+
 // OpenAI provider implementation
 export async function callOpenAI(
-  systemMessage: any, 
-  history: any[], 
+  systemMessage: ProviderMessage,
+  history: ProviderMessage[],
   userMessage: string, 
   model: string, 
   isExercise: boolean = false,
   requestExplanation: boolean = false,
   maxTokens: number = 800
-): Promise<any> {
-  const { value: openAIApiKey, source } = await resolveProviderKey('OpenAI');
-  console.log(`[OpenAI] key source: ${source}`);
+): Promise<string | ProviderToolResponse> {
+  const { value: openAIApiKey } = await resolveProviderKey('OpenAI');
   
   // Map gpt4o to the actual OpenAI model name
   const actualModel = model === 'gpt4o' ? 'gpt-4o' : model;
@@ -32,10 +37,8 @@ export async function callOpenAI(
   ];
   
   try {
-    console.log(`Calling OpenAI API with model: ${actualModel}, maxTokens: ${maxTokens}, requestExplanation: ${requestExplanation}`);
-    
     // Prepare request body based on model type
-    const requestBody: any = {
+    const requestBody: Record<string, unknown> = {
       model: actualModel,
       messages: messages,
     };
@@ -120,7 +123,6 @@ export async function callOpenAI(
       console.error(`OpenAI API error (${response.status}): ${errorMessage}`);
       
       if (userMessage.startsWith('Grade this answer')) {
-        console.log('Falling back to INCORRECT for failed grading request');
         return "INCORRECT";
       }
       
@@ -147,7 +149,6 @@ export async function callOpenAI(
     console.error('Error in OpenAI API call:', error);
     
     if (userMessage.startsWith('Grade this answer')) {
-      console.log('Falling back to INCORRECT after error for grading request');
       return "INCORRECT";
     }
     

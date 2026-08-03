@@ -1,8 +1,11 @@
 // System prompts utility module for AI chat  
 // Contains specialized system prompts for different chat scenarios
 
-// @ts-ignore Deno environment in edge functions
-declare const Deno: any;
+declare const Deno: {
+  env: {
+    get(name: string): string | undefined;
+  };
+};
 
 /**
  * Available variables for prompt templates
@@ -55,7 +58,6 @@ export function substitutePromptVariables(promptTemplate: string, variables: Pro
   // Clean up any remaining unreplaced variables (fallback handling)
   result = result.replace(/\{\{[^}]+\}\}/g, (match) => {
     const varName = match.slice(2, -2);
-    console.log(`[substitutePromptVariables] Unreplaced variable: ${varName}`);
     switch (varName) {
       case 'student_level':
       case 'grade_level':
@@ -91,7 +93,6 @@ export function substitutePromptVariables(promptTemplate: string, variables: Pro
  */
 async function getActivePromptTemplate(usageType: string, subject?: string) {
   try {
-    // @ts-ignore - Dynamic import for edge function environment
     const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.49.1");
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -154,7 +155,7 @@ export async function generateSystemMessage(
     }
   }
   
-  let subject = variables?.subject;
+  const subject = variables?.subject;
 
   // Try to get active prompt from database
   let activeTemplate;
@@ -162,7 +163,6 @@ export async function generateSystemMessage(
   if (isUnified) {
     // For unified approach, look for templates with 'unified' tag and highest priority
     try {
-      // @ts-ignore - Dynamic import for edge function environment
       const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.49.1");
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -190,14 +190,11 @@ export async function generateSystemMessage(
   }
   
   if (activeTemplate) {
-    console.log(`Using database prompt: ${activeTemplate.name} (${usageType})`);
     const finalPrompt = substitutePromptVariables(activeTemplate.prompt_content, variables || {}, language);
     return { role: "system", content: finalPrompt };
   }
 
   // No database prompts available - return error message
-  console.log(`No active prompt template found for ${usageType} - returning error`);
-  
   return {
     role: 'system',
     content: language === 'fr' 
@@ -219,12 +216,12 @@ export function enhanceSystemMessageForMath(
 ): { role: string, content: string } {
   // Enhanced math pattern detection
   const isMathProblem = [
-    /\d+\s*[\+\-\*\/]\s*\d+/,                    // Basic arithmetic
-    /[0-9x]+\s*[\+\-\*\/]\s*[0-9x]+\s*=/,       // Algebraic equations
+    /\d+\s*[+\-*/]\s*\d+/,                       // Basic arithmetic
+    /[0-9x]+\s*[+\-*/]\s*[0-9x]+\s*=/,          // Algebraic equations
     /\d+\/\d+/,                                  // Fractions
     /\d+\s*%/,                                   // Percentages
     /sqrt|cos|sin|tan|log|exp/,                  // Mathematical functions
-    /\([0-9x\+\-\*\/]+\)/,                      // Parentheses expressions
+    /\([0-9x+\-*/]+\)/,                         // Parentheses expressions
     /\b(solve|calculate|compute|evaluate)\b.*?\d+/i  // Math word problems
   ].some(pattern => pattern.test(userMessage));
   

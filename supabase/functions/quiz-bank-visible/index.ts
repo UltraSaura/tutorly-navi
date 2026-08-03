@@ -1,34 +1,47 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import {
+  authenticateRequest,
+  handleCors,
+  jsonResponse,
+  parseJsonBody,
+} from "../_shared/security.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+type VisibleBanksBody = {
+  topicId?: unknown;
+  completedVideoIds?: unknown;
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  const corsResponse = handleCors(req);
+  if (corsResponse) {
+    return corsResponse;
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse(req, { error: "Method not allowed" }, 405);
   }
 
   try {
-    const { topicId, completedVideoIds, userId } = await req.json();
-
-    if (!topicId) {
-      return new Response(
-        JSON.stringify({ error: 'Topic ID required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const auth = await authenticateRequest(req);
+    if (auth.response || !auth.context) {
+      return auth.response!;
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!
-    );
+    const { adminClient } = auth.context;
 
-    // Fetch active assignments
-    let query = supabase
+    const bodyResult = await parseJsonBody<VisibleBanksBody>(req, 25_000);
+    if (bodyResult.response || !bodyResult.data) {
+      return bodyResult.response!;
+    }
+
+    const { topicId, completedVideoIds } = bodyResult.data;
+
+    if (typeof topicId !== "string" || topicId.trim().length === 0) {
+      return jsonResponse(req, { error: "Topic ID required" }, 400);
+    }
+
+    let query = adminClient
       .from('quiz_bank_assignments')
       .select('*')
       .eq('is_active', true);
@@ -39,39 +52,31 @@ serve(async (req) => {
     const { data: assigns, error } = await query;
 
     if (error) {
-      console.error('Error fetching assignments:', error);
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.error('[quiz-bank-visible] query failed', { message: error.message });
+      return jsonResponse(req, { error: 'Unable to load quiz banks' }, 500);
     }
 
     const doneCount = Array.isArray(completedVideoIds) ? completedVideoIds.length : 0;
     const completedIds = Array.isArray(completedVideoIds) ? completedVideoIds : [];
 
-    const visible = (assigns || []).filter((a: any) => {
+    const visible = (assigns || []).filter((a: Record<string, unknown>) => {
       // Check topic-based assignment
       if (a.topic_id && a.trigger_after_n_videos != null) {
-        return doneCount >= a.trigger_after_n_videos;
+        return doneCount >= Number(a.trigger_after_n_videos);
       }
       // Check video set-based assignment
       if (Array.isArray(a.video_ids) && a.min_completed_in_set != null) {
-        const hits = a.video_ids.filter((id: string) => completedIds.includes(id)).length;
-        return hits >= a.min_completed_in_set;
+        const hits = a.video_ids.filter((id: unknown) => typeof id === "string" && completedIds.includes(id)).length;
+        return hits >= Number(a.min_completed_in_set);
       }
       return false;
-    }).map((a: any) => ({ id: a.id, bankId: a.bank_id }));
+    }).map((a: Record<string, unknown>) => ({ id: a.id, bankId: a.bank_id }));
 
-    return new Response(
-      JSON.stringify({ visible }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse(req, { visible }, 200);
   } catch (error) {
-    console.error('Quiz bank visible function error:', error);
-    return new Response(
-      JSON.stringify({ error: (error as Error).message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    console.error('[quiz-bank-visible] request failed', {
+      message: (error as Error).message || String(error),
+    });
+    return jsonResponse(req, { error: 'Unable to load quiz banks' }, 500);
   }
 });
-
