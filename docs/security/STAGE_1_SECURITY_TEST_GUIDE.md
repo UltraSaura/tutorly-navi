@@ -37,9 +37,7 @@ Completed:
 
 ## Still required
 
-1. Re-run staging `supabase db lint --linked` after the `create_vault_secret(text, text)` removal.
-2. Re-run staging `supabase db advisors --linked` after that same patch.
-3. Re-check:
+1. Re-check:
    - anonymous request to `ai-chat` returns 401
    - anonymous request to `document-processor` returns 401
    - anonymous request to `quiz-bank-visible` and `quiz-bank-all` returns 401
@@ -48,12 +46,14 @@ Completed:
    - repeated `create-student-account` calls hit 429
    - malformed document payloads return 400/415/413 as appropriate
    - `consume_security_rate_limit` increments atomically under repeated requests
+2. Decide whether remaining advisor warnings are accepted baseline debt or must be remediated before deployment review.
+3. Decide whether remaining `npm audit` high findings are accepted temporarily or must be remediated before deployment review.
 
 ## Environment limitations observed in this workspace
 
 - Docker is not installed in this workspace, so `supabase start` / local containerized validation cannot be completed here.
 - The staging project initially had migration drift; that led to multiple historical migration fixes before the clean replay succeeded.
-- The agent process could not reliably inherit the interactive shell's `SUPABASE_DB_PASSWORD`, which blocked the final autonomous rerun of staging lint/advisors after the last schema patch.
+- The agent process could not reliably inherit the interactive shell's `SUPABASE_DB_PASSWORD`, so some final staging checks had to be run from the user shell and then reviewed from the attached output.
 
 ## Database/RLS checks
 

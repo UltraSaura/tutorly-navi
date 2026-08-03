@@ -4,7 +4,7 @@ Status: draft only. Do not run in production yet.
 
 Current blockers as of August 3, 2026:
 
-- the clean replay now succeeds on staging `urskkwizwutodikgznas`, but the final post-patch staging lint/advisor rerun after removing `create_vault_secret(text, text)` is still pending in an execution context that has direct access to `SUPABASE_DB_PASSWORD`
+- the clean replay now succeeds on staging `urskkwizwutodikgznas`, `create_vault_secret(text, text)` is removed, and staging lint is clean; remaining blockers are advisor-warning triage and unresolved `npm audit` highs
 - staging validation found and fixed two Stage 1 migration issues:
   - legacy explanation policy name `Guardians view children explanations` also had to be dropped
   - function grant cleanup needed `REVOKE ALL PRIVILEGES ... FROM PUBLIC, ...`
@@ -54,7 +54,7 @@ Current blockers as of August 3, 2026:
 - `students` no longer appears as an RLS-disabled table after replay
 - rollback reverse-DDL dry-run succeeded inside a transaction
 
-This is enough for branch-level validation, but not enough for production deployment approval because the final post-patch staging lint/advisor rerun and the remaining audit/advisor triage are still outstanding.
+This is enough for branch-level validation, but not enough for production deployment approval because the remaining audit/advisor triage is still outstanding.
 
 ## Rollback trigger
 

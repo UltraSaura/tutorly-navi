@@ -133,7 +133,9 @@ Two real migration issues were found and corrected during staging validation:
 4. `public.create_vault_secret(text, text)` remained as an unused Vault wrapper and caused staging `supabase db lint --linked` failure.
    - Current app and Edge Function code do not call this helper.
    - Fix applied to migration: drop `public.create_vault_secret(text, text)` during Stage 1 hardening.
-   - Final staging lint/advisor confirmation after this removal is still pending because the agent process could not inherit the staging DB password from the interactive user shell.
+   - Revalidated on staging after reset:
+     - `public.create_vault_secret` no longer exists
+     - `supabase db lint --linked` returns `No schema errors found`
 
 ## Staging-only limitations observed
 
@@ -142,7 +144,6 @@ Two real migration issues were found and corrected during staging validation:
 
 ## Remaining blockers that are external to this branch
 
-- The final staging `supabase db lint --linked` and post-removal advisor pass were not rerun after the `create_vault_secret` drop because the agent process could not inherit the staging DB password from the interactive shell. This is now an execution-environment blocker, not a known SQL replay blocker.
 - `npm audit --json` still reports `7` high vulnerabilities:
   - the `react-router` / `react-router-dom` findings remain in the published `<8.3.0` line
   - the remaining high findings are in the current ESLint dependency chain (`eslint` / `minimatch` / `brace-expansion`)
@@ -156,7 +157,6 @@ Two real migration issues were found and corrected during staging validation:
 
 This branch materially reduces the exposed attack surface, and the full clean replay now succeeds on staging, but Stage 1 is still blocked from deployment review. The remaining work is concentrated in:
 
-- rerunning the final staging lint/advisor pass after the `create_vault_secret` removal in an environment where the DB password is visible to the executing process
 - deciding whether the remaining advisor findings are accepted baseline debt or must be remediated before deployment review
 - resolving or explicitly accepting the remaining `npm audit` high findings
 - validating the conditional `quiz_bank_variants` assumptions against a real non-production database
@@ -167,4 +167,4 @@ The registration-model decision is now implemented as:
 - child creation only through authenticated guardian/admin flows
 - no anonymous privileged child/student account creation path remains enabled
 
-Recommendation: not ready for deployment review yet. The clean replay blocker is resolved, but the final staging lint/advisor rerun and the remaining audit/advisor debt still need explicit disposition.
+Recommendation: not ready for deployment review yet. The clean replay blocker and staging lint blocker are resolved, but the remaining audit/advisor debt still needs explicit disposition.

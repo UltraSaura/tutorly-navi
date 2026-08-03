@@ -69,7 +69,6 @@ Branch: `security/stage-1-hardening`
 
 ## Still required before Stage 1 can be declared complete
 
-- rerun final staging `supabase db lint --linked` and `supabase db advisors --linked` after the `create_vault_secret` removal in an execution context that has direct access to `SUPABASE_DB_PASSWORD`
 - decide whether the remaining Supabase advisor findings are accepted baseline debt or must be remediated before deployment review
 - resolve or explicitly accept the remaining `7` high `npm audit` findings
 - verify `quiz_bank_variants` actual deployed shape/relationships against local repo assumptions
@@ -106,4 +105,5 @@ Branch: `security/stage-1-hardening`
 - Rollback dry-run: passes in transaction on staging
 - Not ready for deployment review
 - Clean replay status: passes
-- Final staging lint/advisor rerun after `create_vault_secret` removal: pending
+- Final staging lint after `create_vault_secret` removal: passes
+- Final staging advisor status after `create_vault_secret` removal: warnings only, no reported errors in the captured output
