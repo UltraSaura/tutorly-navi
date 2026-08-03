@@ -208,9 +208,27 @@ export function createAdminClient(): SupabaseClient {
   );
 }
 
+export async function lookupIsAdmin(
+  adminClient: SupabaseClient,
+  userId: string,
+): Promise<boolean> {
+  const { data: roles, error: roleError } = await adminClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .limit(1);
+
+  if (roleError) {
+    throw new Error(`ROLE_LOOKUP_FAILED:${roleError.message}`);
+  }
+
+  return Boolean(roles && roles.length > 0);
+}
+
 export async function authenticateRequest(
   req: Request,
-  options?: { requireAdmin?: boolean },
+  options?: { requireAdmin?: boolean; resolveAdmin?: boolean },
 ): Promise<{ context?: AuthenticatedRequestContext; response?: Response }> {
   const token = getBearerToken(req);
   const requestId = getRequestId(req);
@@ -234,21 +252,20 @@ export async function authenticateRequest(
   }
 
   let isAdmin = false;
-  if (options?.requireAdmin) {
-    const { data: roles, error: roleError } = await adminClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .limit(1);
-
-    if (roleError || !roles || roles.length === 0) {
+  if (options?.requireAdmin || options?.resolveAdmin) {
+    try {
+      isAdmin = await lookupIsAdmin(adminClient, user.id);
+    } catch {
       return {
         response: jsonResponse(req, { error: "Forbidden", requestId }, 403),
       };
     }
+  }
 
-    isAdmin = true;
+  if (options?.requireAdmin && !isAdmin) {
+    return {
+      response: jsonResponse(req, { error: "Forbidden", requestId }, 403),
+    };
   }
 
   return {

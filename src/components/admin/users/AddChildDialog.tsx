@@ -83,7 +83,8 @@ export const AddChildDialog = ({
           lastName: validatedData.lastName,
           email: validatedData.email || null,
           schoolLevel: validatedData.schoolLevel,
-          relation: 'parent'
+          relation: 'parent',
+          guardianUserId: selectedParent?.id ?? null,
         }
       });
 

@@ -1,13 +1,10 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import {
-  createAdminClient,
+  authenticateRequest,
   consumeRateLimit,
-  getClientIp,
   handleCors,
   jsonResponse,
   parseJsonBody,
   recordSecurityAuditEvent,
-  sha256Hex,
 } from "../_shared/security.ts";
 
 const MAX_BODY_BYTES = Number(Deno.env.get("CREATE_STUDENT_MAX_BODY_BYTES") ?? 20_000);
@@ -38,17 +35,20 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const requestId = crypto.randomUUID();
-    const supabaseAdmin = createAdminClient();
+    const auth = await authenticateRequest(req, { requireAdmin: true });
+    if (auth.response || !auth.context) {
+      return auth.response!;
+    }
+
+    const { adminClient: supabaseAdmin, user, requestId } = auth.context;
     const bodyResult = await parseJsonBody<CreateStudentRequest>(req, MAX_BODY_BYTES);
     if (bodyResult.response || !bodyResult.data) {
       return bodyResult.response!;
     }
 
-    const rateKey = await sha256Hex(`${getClientIp(req)}|${req.headers.get("user-agent") ?? "unknown"}`);
     const rateLimit = await consumeRateLimit(supabaseAdmin, {
       scope: "create-student-account",
-      actorKey: rateKey,
+      actorKey: `admin:${user.id}`,
       limit: REQUEST_LIMIT,
       windowSeconds: REQUEST_WINDOW_SECONDS,
     });
@@ -164,10 +164,11 @@ Deno.serve(async (req) => {
     await recordSecurityAuditEvent(supabaseAdmin, {
       requestId,
       scope: "create-student-account",
-      eventType: "student_self_registration",
+      eventType: "admin_student_creation",
       outcome: "success",
-      actorUserId: userId,
+      actorUserId: user.id,
       metadata: {
+        createdUserId: userId,
         username,
         schoolLevel,
         country: country || null,

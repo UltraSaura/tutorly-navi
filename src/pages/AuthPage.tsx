@@ -2,21 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { supabase } from '@/integrations/supabase/client';
-import { UserTypeSelection } from '@/components/auth/UserTypeSelection';
-import { StudentRegistrationForm } from '@/components/auth/StudentRegistrationForm';
 import { ParentRegistrationForm } from '@/components/auth/ParentRegistrationForm';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { PasswordResetForm } from '@/components/auth/PasswordResetForm';
 import { Button } from '@/components/ui/button';
-import { UserType, StudentRegistrationData, ParentRegistrationData } from '@/types/registration';
+import { ParentRegistrationData } from '@/types/registration';
 import { getPhoneAreaCode } from '@/utils/phoneAreaCodes';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
 
-type AuthStep = 'login' | 'userType' | 'studentForm' | 'parentForm' | 'resetPassword';
+type AuthStep = 'login' | 'parentForm' | 'resetPassword';
 
 const AuthPage: React.FC = () => {
   const { user, loading: authLoading, signIn, signUp, signOut, resetPassword } = useAuth();
@@ -25,7 +22,6 @@ const AuthPage: React.FC = () => {
   const { toast } = useToast();
   const location = useLocation();
   const [step, setStep] = useState<AuthStep>('login');
-  const [selectedUserType, setSelectedUserType] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(false);
 
   const state = location.state as { message?: string; returnTo?: string } | null;
@@ -119,62 +115,6 @@ const AuthPage: React.FC = () => {
     }
   };
 
-  const handleUserTypeSelect = (userType: UserType) => {
-    setSelectedUserType(userType);
-    setStep(userType === 'student' ? 'studentForm' : 'parentForm');
-  };
-
-  const handleStudentRegistration = async (data: StudentRegistrationData) => {
-    setLoading(true);
-    try {
-      const { data: result, error: fnError } = await supabase.functions.invoke('create-student-account', {
-        body: {
-          username: data.username,
-          password: data.password,
-          email: data.email,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          country: data.country,
-          phoneNumber: data.phoneNumber,
-          schoolLevel: data.schoolLevel,
-        },
-      });
-
-      const payload = result as { success?: boolean; error?: string } | null;
-      if (fnError && !payload?.error) {
-        toast({
-          title: t('auth.registrationError'),
-          description: fnError.message,
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      if (!payload?.success) {
-        toast({
-          title: t('auth.registrationError'),
-          description: payload?.error || fnError?.message || t('auth.genericError'),
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      toast({
-        title: t('auth.registrationSuccess'),
-        description: t('auth.registrationSuccessStudent'),
-      });
-      setStep('login');
-    } catch (error) {
-      toast({
-        title: t('auth.registrationError'),
-        description: t('auth.genericError'),
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleResetPassword = async (email: string) => {
     setLoading(true);
     try {
@@ -228,7 +168,7 @@ const AuthPage: React.FC = () => {
 
       toast({
         title: t('auth.registrationSuccess'),
-        description: t('auth.checkEmail'),
+        description: t('auth.checkEmailParent'),
       });
       
       setStep('login');
@@ -258,36 +198,17 @@ const AuthPage: React.FC = () => {
               <p className="text-muted-foreground mb-2">
                 {t('auth.noAccount')}
               </p>
-              <Button variant="outline" onClick={() => setStep('userType')}>
+              <Button variant="outline" onClick={() => setStep('parentForm')}>
                 {t('auth.createAccount')}
               </Button>
             </div>
           </div>
         )}
 
-        {step === 'userType' && (
-          <div className="space-y-6">
-            <UserTypeSelection onSelect={handleUserTypeSelect} />
-            <div className="text-center">
-              <Button variant="outline" onClick={() => setStep('login')}>
-                {t('auth.backToLogin')}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {step === 'studentForm' && (
-          <StudentRegistrationForm
-            onSubmit={handleStudentRegistration}
-            onBack={() => setStep('userType')}
-            loading={loading}
-          />
-        )}
-
         {step === 'parentForm' && (
           <ParentRegistrationForm
             onSubmit={handleParentRegistration}
-            onBack={() => setStep('userType')}
+            onBack={() => setStep('login')}
             loading={loading}
           />
         )}

@@ -7,6 +7,7 @@ import {
   parseJsonBody,
   recordSecurityAuditEvent,
 } from "../_shared/security.ts";
+import { resolveChildAccountAuthorization } from "./authorization.ts";
 
 const MAX_BODY_BYTES = Number(Deno.env.get("CREATE_CHILD_MAX_BODY_BYTES") ?? 20_000);
 const REQUEST_LIMIT = Number(Deno.env.get("CREATE_CHILD_RATE_LIMIT") ?? 10);
@@ -23,6 +24,7 @@ interface CreateChildRequest {
   phoneNumber?: string;
   schoolLevel: string;
   relation: string;
+  guardianUserId?: string;
 }
 
 async function getGuardianId(adminClient: ReturnType<typeof createAdminClient>, userId: string) {
@@ -53,27 +55,13 @@ Deno.serve(async (req) => {
   let createdChildId: string | null = null;
 
   try {
-    const auth = await authenticateRequest(req);
+    const auth = await authenticateRequest(req, { resolveAdmin: true });
     if (auth.response || !auth.context) {
       return auth.response!;
     }
 
-    const { adminClient, user, requestId } = auth.context;
-    const guardianId = await getGuardianId(adminClient, user.id);
-    if (!guardianId) {
-      return jsonResponse(req, { success: false, error: "Forbidden", requestId }, 403);
-    }
-
-    const rateLimit = await consumeRateLimit(adminClient, {
-      scope: "create-child-account",
-      actorKey: guardianId,
-      limit: REQUEST_LIMIT,
-      windowSeconds: REQUEST_WINDOW_SECONDS,
-    });
-
-    if (!rateLimit.allowed) {
-      return jsonResponse(req, { success: false, error: "Too many requests", requestId }, 429);
-    }
+    const { adminClient, user, requestId, isAdmin } = auth.context;
+    const callerGuardianId = await getGuardianId(adminClient, user.id);
 
     const bodyResult = await parseJsonBody<CreateChildRequest>(req, MAX_BODY_BYTES);
     if (bodyResult.response || !bodyResult.data) {
@@ -90,6 +78,37 @@ Deno.serve(async (req) => {
     const country = typeof body.country === "string" ? body.country.trim().toLowerCase() : null;
     const phoneNumber = typeof body.phoneNumber === "string" ? body.phoneNumber.trim() : null;
     const schoolLevel = String(body.schoolLevel ?? "").trim().toLowerCase();
+    const requestedGuardianUserId = typeof body.guardianUserId === "string" ? body.guardianUserId.trim() : "";
+
+    const requestedGuardianId = isAdmin && requestedGuardianUserId
+      ? await getGuardianId(adminClient, requestedGuardianUserId)
+      : null;
+
+    const authorization = resolveChildAccountAuthorization({
+      callerGuardianId,
+      isAdmin,
+      requestedGuardianUserId: requestedGuardianUserId || null,
+      requestedGuardianId,
+      adminUserId: user.id,
+    });
+
+    if (!authorization.ok) {
+      return jsonResponse(req, { success: false, error: authorization.error, requestId }, authorization.status);
+    }
+
+    const guardianId = authorization.guardianId;
+    const actorRole = authorization.actorRole;
+
+    const rateLimit = await consumeRateLimit(adminClient, {
+      scope: "create-child-account",
+      actorKey: authorization.actorKey,
+      limit: REQUEST_LIMIT,
+      windowSeconds: REQUEST_WINDOW_SECONDS,
+    });
+
+    if (!rateLimit.allowed) {
+      return jsonResponse(req, { success: false, error: "Too many requests", requestId }, 429);
+    }
 
     if (!username || !password || !firstName || !schoolLevel || !relation) {
       return jsonResponse(req, { success: false, error: "Invalid request body", requestId }, 400);
@@ -249,6 +268,7 @@ Deno.serve(async (req) => {
       outcome: "success",
       actorUserId: user.id,
       metadata: {
+        actorRole,
         childUserId,
         guardianId,
         schoolLevel,
