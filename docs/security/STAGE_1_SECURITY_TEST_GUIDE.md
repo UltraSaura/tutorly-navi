@@ -3,8 +3,10 @@
 ## Current automated checks
 
 - `npm run build`
-- `npx eslint src/services/chatService.ts src/services/unifiedChatService.ts src/utils/connectionTest.ts`
-- `npm test -- --run` (currently red due pre-existing repo issues; not a clean security gate yet)
+- `npx tsc --noEmit`
+- targeted `npx eslint` on modified production/security files
+- `npm test -- --run` → passes after excluding generated `.claude/worktrees/**` mirror copies from test discovery (`30` files, `184` tests)
+- `npm run lint` → still red repo-wide because of unrelated baseline debt (`696` errors, `62` warnings)
 
 ## Required local/disposable Supabase checks
 
@@ -20,6 +22,11 @@
    - repeated `create-student-account` calls hit 429
    - malformed document payloads return 400/415/413 as appropriate
    - `consume_security_rate_limit` increments atomically under repeated requests
+
+### Local blocker in this workspace
+
+- Docker is not installed in this workspace, so `supabase start` / local containerized validation cannot be completed here.
+- Deno is not installed either, so direct Deno-based function tests are not available in this environment.
 
 ## Database/RLS checks
 

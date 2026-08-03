@@ -62,7 +62,7 @@ Would push these migrations:
 Déployer la fonction avec la vérification JWT désactivée, car la fonction gère elle-même l'autorisation admin ou service-role:
 
 ```bash
-supabase functions deploy import-exam-bundle --no-verify-jwt
+supabase functions deploy import-exam-bundle
 ```
 
 ```bash

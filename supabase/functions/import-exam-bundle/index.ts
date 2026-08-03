@@ -1,103 +1,31 @@
-import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import { type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import {
   authenticateRequest,
   handleCors,
   jsonResponse,
   parseJsonBody,
+  recordSecurityAuditEvent,
 } from "../_shared/security.ts";
+import {
+  type BundleExamAsset,
+  type BundleExercise,
+  type BundlePaper,
+  type BundleProgramLink,
+  type BundleSource,
+  type ExamBundle,
+  type ExamSeries,
+  type ExamVariant,
+  type ImportMode,
+  type ParsingStatus,
+  type SourceName,
+  validateExamBundle,
+} from "./validation.ts";
 const MAX_BODY_BYTES = Number(Deno.env.get("EXAM_IMPORT_MAX_BODY_BYTES") ?? 20_000_000);
-
-type ImportMode = 'upsert' | 'replace';
-type SourceName = 'eduscol' | 'ac-amiens-maths';
-type ExamSeries = 'generale' | 'professionnelle' | null;
-type ExamVariant = 'standard' | 'arial16' | 'arial20' | 'arial24' | 'braille_integral' | 'braille_abrege';
-type ParsingStatus = 'parsed' | 'partial' | 'failed';
-
-interface BundleSource {
-  id: string;
-  source_name: SourceName;
-  source_url: string;
-  fetched_at: string;
-}
-
-interface BundlePaper {
-  id: string;
-  source_name: SourceName;
-  source_url: string;
-  fetched_at: string;
-  exam: string;
-  level?: string | null;
-  school_cycle?: string | null;
-  session_year: number;
-  discipline: string;
-  series: ExamSeries;
-  location: string;
-  variant: ExamVariant;
-  title?: string;
-  pdf_url: string;
-  pdf_hash: string;
-  raw_text?: string;
-  exercises?: string[];
-  parsing_status: ParsingStatus;
-}
-
-interface BundleExercise {
-  id: string;
-  paper_id: string;
-  source_name: SourceName;
-  source_url: string;
-  fetched_at: string;
-  exam: string;
-  session_year: number;
-  discipline: string;
-  series: ExamSeries;
-  location: string;
-  variant: ExamVariant;
-  pdf_url: string;
-  pdf_hash: string;
-  exercise_number: number | null;
-  title: string | null;
-  raw_text?: string;
-  parsing_status: ParsingStatus;
-  parsed_content?: unknown;
-  parsing_confidence?: string | null;
-}
-
-interface BundleProgramLink {
-  exercise_id: string;
-  program_entry_id: string;
-  program_entry_type: 'objective' | 'success_criterion' | 'topic' | 'unknown';
-  confidence: number;
-  rationale: string;
-}
-
-interface BundleExamAsset {
-  exercise_id: string;
-  paper_id: string;
-  type: string;
-  label: string;
-  storage_path: string;
-  public_url?: string | null;
-  alt?: string | null;
-  page_number?: number | null;
-  sort_order?: number;
-}
-
-interface ExamBundle {
-  mode?: ImportMode;
-  sources?: BundleSource[];
-  papers?: BundlePaper[];
-  exercises?: BundleExercise[];
-  exam_assets?: BundleExamAsset[];
-  exercise_program_links?: BundleProgramLink[];
-}
 
 interface Diagnostic {
   table: string;
   code: string | null;
   message: string;
-  details: string | null;
-  hint: string | null;
 }
 
 function chunk<T>(array: T[], size: number): T[][] {
@@ -111,8 +39,6 @@ function diagFromPgError(table: string, error: unknown): Diagnostic {
     table,
     code: typeof error === "object" && error && "code" in error ? String((error as { code?: unknown }).code ?? "") || null : null,
     message: typeof error === "object" && error && "message" in error ? String((error as { message?: unknown }).message ?? "") || String(error) : String(error),
-    details: typeof error === "object" && error && "details" in error ? String((error as { details?: unknown }).details ?? "") || null : null,
-    hint: typeof error === "object" && error && "hint" in error ? String((error as { hint?: unknown }).hint ?? "") || null : null,
   };
 }
 
@@ -151,14 +77,23 @@ function levelForExam(exam: string | undefined | null): string | null {
   return null;
 }
 
+function buildImportFailure(
+  req: Request,
+  requestId: string,
+  status = 500,
+  error = "Exam import failed",
+): Response {
+  return jsonResponse(req, {
+    success: false,
+    error,
+    requestId,
+  }, status);
+}
+
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) {
     return corsResponse;
-  }
-
-  if (req.method !== 'POST') {
-    return jsonResponse(req, { success: false, error: 'Method not allowed' }, 405);
   }
 
   try {
@@ -167,18 +102,42 @@ Deno.serve(async (req) => {
       return auth.response!;
     }
 
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      { auth: { persistSession: false } },
-    );
+    if (req.method !== 'POST') {
+      return jsonResponse(req, {
+        success: false,
+        error: 'Method not allowed',
+        requestId: auth.context.requestId,
+      }, 405);
+    }
+
+    const supabaseAdmin = auth.context.adminClient;
 
     const bodyResult = await parseJsonBody<ExamBundle>(req, MAX_BODY_BYTES);
     if (bodyResult.response || !bodyResult.data) {
       return bodyResult.response!;
     }
 
-    const bundle: ExamBundle = bodyResult.data;
+    const validation = validateExamBundle(bodyResult.data);
+    if (!validation.ok) {
+      await recordSecurityAuditEvent(supabaseAdmin, {
+        requestId: auth.context.requestId,
+        scope: "import-exam-bundle",
+        eventType: "validation_failed",
+        outcome: "rejected",
+        actorUserId: auth.context.user.id,
+        metadata: {
+          reason: validation.error,
+        },
+      });
+
+      return jsonResponse(req, {
+        success: false,
+        error: validation.error,
+        requestId: auth.context.requestId,
+      }, validation.status);
+    }
+
+    const bundle: ExamBundle = validation.data;
     const mode: ImportMode = bundle.mode === 'replace' ? 'replace' : 'upsert';
     const sources = bundle.sources ?? [];
     const papers = bundle.papers ?? [];
@@ -215,14 +174,35 @@ Deno.serve(async (req) => {
         const exerciseIdsForPapers = exerciseIdListForPapers(exercises, ids, paperIdByImportId, exerciseIdByImportId);
         if (exerciseIdsForPapers.length > 0) {
           const result = await supabaseAdmin.from('exam_exercise_program_links').delete().in('exercise_id', exerciseIdsForPapers);
-          if (result.error) return jsonResponse(req, { success: false, error: 'Replace failed', diagnostics: [diagFromPgError('exam_exercise_program_links(delete)', result.error)] }, 200);
+          if (result.error) {
+            console.error("[import-exam-bundle] replace delete failed", {
+              requestId: auth.context.requestId,
+              table: "exam_exercise_program_links",
+              code: result.error.code ?? null,
+            });
+            return buildImportFailure(req, auth.context.requestId);
+          }
         }
 
         let result = await supabaseAdmin.from('exam_exercises').delete().in('paper_id', ids);
-        if (result.error) return jsonResponse(req, { success: false, error: 'Replace failed', diagnostics: [diagFromPgError('exam_exercises(delete)', result.error)] }, 200);
+        if (result.error) {
+          console.error("[import-exam-bundle] replace delete failed", {
+            requestId: auth.context.requestId,
+            table: "exam_exercises",
+            code: result.error.code ?? null,
+          });
+          return buildImportFailure(req, auth.context.requestId);
+        }
 
         result = await supabaseAdmin.from('exam_papers').delete().in('id', ids);
-        if (result.error) return jsonResponse(req, { success: false, error: 'Replace failed', diagnostics: [diagFromPgError('exam_papers(delete)', result.error)] }, 200);
+        if (result.error) {
+          console.error("[import-exam-bundle] replace delete failed", {
+            requestId: auth.context.requestId,
+            table: "exam_papers",
+            code: result.error.code ?? null,
+          });
+          return buildImportFailure(req, auth.context.requestId);
+        }
       }
     }
 
@@ -240,7 +220,14 @@ Deno.serve(async (req) => {
 
     for (const rows of chunk(sourceRows, CHUNK_SIZE)) {
       const { error } = await supabaseAdmin.from('exam_sources').upsert(rows, { onConflict: 'source_url' });
-      if (error) return jsonResponse(req, { success: false, error: error.message, diagnostics: [diagFromPgError('exam_sources', error)] }, 200);
+      if (error) {
+        console.error("[import-exam-bundle] upsert failed", {
+          requestId: auth.context.requestId,
+          table: "exam_sources",
+          code: error.code ?? null,
+        });
+        return buildImportFailure(req, auth.context.requestId);
+      }
       counts.sources += rows.length;
     }
 
@@ -269,7 +256,14 @@ Deno.serve(async (req) => {
 
     for (const rows of chunk(paperRows, CHUNK_SIZE)) {
       const { error } = await supabaseAdmin.from('exam_papers').upsert(rows, { onConflict: 'pdf_hash' });
-      if (error) return jsonResponse(req, { success: false, error: error.message, diagnostics: [diagFromPgError('exam_papers', error)] }, 200);
+      if (error) {
+        console.error("[import-exam-bundle] upsert failed", {
+          requestId: auth.context.requestId,
+          table: "exam_papers",
+          code: error.code ?? null,
+        });
+        return buildImportFailure(req, auth.context.requestId);
+      }
       counts.papers += rows.length;
     }
 
@@ -299,7 +293,14 @@ Deno.serve(async (req) => {
 
     for (const rows of chunk(exerciseRows, CHUNK_SIZE)) {
       const { error } = await supabaseAdmin.from('exam_exercises').upsert(rows, { onConflict: 'import_id' });
-      if (error) return jsonResponse(req, { success: false, error: error.message, diagnostics: [diagFromPgError('exam_exercises', error)] }, 200);
+      if (error) {
+        console.error("[import-exam-bundle] upsert failed", {
+          requestId: auth.context.requestId,
+          table: "exam_exercises",
+          code: error.code ?? null,
+        });
+        return buildImportFailure(req, auth.context.requestId);
+      }
       counts.exercises += rows.length;
     }
 
@@ -310,9 +311,7 @@ Deno.serve(async (req) => {
         diagnostics.push({
           table: 'exam_assets',
           code: 'MISSING_PARENT',
-          message: `Skipping asset for missing parent ${asset.paper_id}/${asset.exercise_id}`,
-          details: null,
-          hint: null,
+          message: 'Skipped exam assets with missing parent references',
         });
         return [];
       }
@@ -335,7 +334,14 @@ Deno.serve(async (req) => {
       const { error } = await supabaseAdmin
         .from('exam_assets')
         .upsert(rows, { onConflict: 'storage_path' });
-      if (error) return jsonResponse(req, { success: false, error: error.message, diagnostics: [diagFromPgError('exam_assets', error)] }, 200);
+      if (error) {
+        console.error("[import-exam-bundle] upsert failed", {
+          requestId: auth.context.requestId,
+          table: "exam_assets",
+          code: error.code ?? null,
+        });
+        return buildImportFailure(req, auth.context.requestId);
+      }
       counts.exam_assets += rows.length;
     }
 
@@ -345,9 +351,7 @@ Deno.serve(async (req) => {
         diagnostics.push({
           table: 'exam_exercise_program_links',
           code: 'MISSING_EXERCISE',
-          message: `Skipping program link for missing exercise ${link.exercise_id}`,
-          details: null,
-          hint: null,
+          message: 'Skipped program links with missing exercise references',
         });
         return [];
       }
@@ -367,7 +371,14 @@ Deno.serve(async (req) => {
       const { error } = await supabaseAdmin
         .from('exam_exercise_program_links')
         .upsert(rows, { onConflict: 'exercise_id,program_entry_id,program_entry_type' });
-      if (error) return jsonResponse(req, { success: false, error: error.message, diagnostics: [diagFromPgError('exam_exercise_program_links', error)] }, 200);
+      if (error) {
+        console.error("[import-exam-bundle] upsert failed", {
+          requestId: auth.context.requestId,
+          table: "exam_exercise_program_links",
+          code: error.code ?? null,
+        });
+        return buildImportFailure(req, auth.context.requestId);
+      }
       counts.exercise_program_links += rows.length;
     }
 
@@ -384,20 +395,32 @@ Deno.serve(async (req) => {
       },
     });
 
+    await recordSecurityAuditEvent(supabaseAdmin, {
+      requestId: auth.context.requestId,
+      scope: "import-exam-bundle",
+      eventType: "bundle_import",
+      outcome: diagnostics.length === 0 ? "success" : "partial_success",
+      actorUserId: auth.context.user.id,
+      metadata: {
+        mode,
+        counts,
+        warningCount: diagnostics.length,
+      },
+    });
+
     return jsonResponse(req, {
       success: diagnostics.length === 0,
       mode,
       counts,
       diagnostics,
       verification,
+      requestId: auth.context.requestId,
     });
   } catch (error) {
-    console.error('Error importing exam bundle:', error);
-    return jsonResponse(req, {
-      success: false,
+    console.error("[import-exam-bundle] request failed", {
       error: error instanceof Error ? error.message : String(error),
-      diagnostics: [{ table: 'unknown', code: null, message: error instanceof Error ? error.message : String(error), details: null, hint: null }],
-    }, 200);
+    });
+    return buildImportFailure(req, crypto.randomUUID());
   }
 });
 

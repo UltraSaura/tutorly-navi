@@ -1,115 +1,16 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import {
   authenticateRequest,
   handleCors,
   jsonResponse,
   parseJsonBody,
+  recordSecurityAuditEvent,
 } from "../_shared/security.ts";
+import {
+  type BundleData,
+  validateCurriculumBundle,
+} from "./validation.ts";
 
 const MAX_BODY_BYTES = Number(Deno.env.get("CURRICULUM_IMPORT_MAX_BODY_BYTES") ?? 20_000_000);
-
-// ============================================================================
-// Bundle shape (post-Phase-2)
-// ============================================================================
-
-interface BundleSubject {
-  id: string;
-  slug: string;
-  name: string;
-  language?: string;
-  color_scheme?: string;
-  icon_name?: string;
-}
-
-interface BundleDomain {
-  id: string;
-  subject_id: string;
-  code: string;
-  label: string;
-  domain?: string;
-}
-
-interface BundleSubdomain {
-  id: string;
-  subject_id: string;
-  domain_id: string;
-  code: string;
-  label: string;
-  domain?: string;
-  subdomain?: string;
-}
-
-interface BundleObjective {
-  id: string;
-  subject_id: string;
-  domain_id: string;
-  subdomain_id: string;
-  level: string;
-  text: string;
-  notes_from_prog?: string;
-  keywords?: string[];
-  legacy_id?: string;
-  domain?: string;
-  subdomain?: string;
-}
-
-interface BundleSuccessCriterion {
-  id: string;
-  objective_id: string;
-  subject_id?: string;
-  domain_id?: string;
-  subdomain_id?: string;
-  text: string;
-  legacy_id?: string;
-}
-
-interface BundleTask {
-  id: string;
-  success_criterion_id: string;
-  subject_id?: string;
-  domain_id?: string;
-  subdomain_id?: string;
-  type: string;
-  stem: string;
-  solution?: string;
-  rubric?: string;
-  difficulty?: string;
-  tags?: string[];
-  source?: string;
-  legacy_id?: string;
-}
-
-interface BundleTopicLink {
-  id?: string;
-  topic_id: string;
-  objective_id: string;
-  order_index?: number;
-}
-
-interface BundleLesson {
-  id: string;
-  topic_id?: string;
-  title: string;
-  objective_ids?: unknown[];
-  success_criterion_ids?: unknown[];
-  materials?: string;
-  misconceptions?: string;
-  teacher_talk?: string;
-  student_worksheet?: string;
-  legacy_id?: string;
-}
-
-interface BundleData {
-  mode?: 'replace' | 'upsert';
-  subjects?: BundleSubject[];
-  domains?: BundleDomain[];
-  subdomains?: BundleSubdomain[];
-  objectives?: BundleObjective[];
-  success_criteria?: BundleSuccessCriterion[];
-  tasks?: BundleTask[];
-  topic_objective_links?: BundleTopicLink[];
-  lessons?: BundleLesson[];
-}
 
 function chunk<T>(array: T[], size: number): T[][] {
   const chunks: T[][] = [];
@@ -119,14 +20,23 @@ function chunk<T>(array: T[], size: number): T[][] {
   return chunks;
 }
 
+function buildImportFailure(
+  req: Request,
+  requestId: string,
+  status = 500,
+  error = "Curriculum import failed",
+): Response {
+  return jsonResponse(req, {
+    success: false,
+    error,
+    requestId,
+  }, status);
+}
+
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) {
     return corsResponse;
-  }
-
-  if (req.method !== "POST") {
-    return jsonResponse(req, { success: false, error: "Method not allowed" }, 405);
   }
 
   try {
@@ -135,32 +45,43 @@ Deno.serve(async (req) => {
       return auth.response!;
     }
 
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      { auth: { persistSession: false } }
-    );
+    if (req.method !== "POST") {
+      return jsonResponse(req, {
+        success: false,
+        error: "Method not allowed",
+        requestId: auth.context.requestId,
+      }, 405);
+    }
+
+    const supabaseAdmin = auth.context.adminClient;
 
     const bodyResult = await parseJsonBody<BundleData>(req, MAX_BODY_BYTES);
     if (bodyResult.response || !bodyResult.data) {
       return bodyResult.response!;
     }
 
-    const bundle: BundleData = bodyResult.data;
-    const mode = bundle.mode === 'replace' ? 'replace' : 'upsert';
+    const validation = validateCurriculumBundle(bodyResult.data);
+    if (!validation.ok) {
+      await recordSecurityAuditEvent(supabaseAdmin, {
+        requestId: auth.context.requestId,
+        scope: "import-curriculum-bundle",
+        eventType: "validation_failed",
+        outcome: "rejected",
+        actorUserId: auth.context.user.id,
+        metadata: {
+          reason: validation.error,
+        },
+      });
 
-    if (
-      (bundle.subjects && !Array.isArray(bundle.subjects)) ||
-      (bundle.domains && !Array.isArray(bundle.domains)) ||
-      (bundle.subdomains && !Array.isArray(bundle.subdomains)) ||
-      (bundle.objectives && !Array.isArray(bundle.objectives)) ||
-      (bundle.success_criteria && !Array.isArray(bundle.success_criteria)) ||
-      (bundle.tasks && !Array.isArray(bundle.tasks)) ||
-      (bundle.topic_objective_links && !Array.isArray(bundle.topic_objective_links)) ||
-      (bundle.lessons && !Array.isArray(bundle.lessons))
-    ) {
-      return jsonResponse(req, { success: false, error: "Invalid bundle payload" }, 400);
+      return jsonResponse(req, {
+        success: false,
+        error: validation.error,
+        requestId: auth.context.requestId,
+      }, validation.status);
     }
+
+    const bundle: BundleData = validation.data;
+    const mode = bundle.mode === 'replace' ? 'replace' : 'upsert';
 
     const counts = {
       subjects: 0, domains: 0, subdomains: 0, objectives: 0,
@@ -179,28 +100,25 @@ Deno.serve(async (req) => {
       bundle.subdomains?.forEach(s => s.subject_id && subjectIds.add(s.subject_id));
       bundle.objectives?.forEach(o => o.subject_id && subjectIds.add(o.subject_id));
 
-      console.log(`🧹 Replace mode: wiping data for ${subjectIds.size} subject(s)`);
-
       for (const sid of subjectIds) {
         // Delete in dependency order: tasks → success_criteria → objectives → subdomains → domains
         // tasks scoped by subject_id_uuid
         let r = await supabaseAdmin.from('tasks').delete().eq('subject_id_uuid', sid);
-        if (r.error) return jsonResponse(req, { success: false, error: 'Replace failed' }, 200);
+        if (r.error) return buildImportFailure(req, auth.context.requestId);
 
         r = await supabaseAdmin.from('success_criteria').delete().eq('subject_id_uuid', sid);
-        if (r.error) return jsonResponse(req, { success: false, error: 'Replace failed' }, 200);
+        if (r.error) return buildImportFailure(req, auth.context.requestId);
 
         r = await supabaseAdmin.from('objectives').delete().eq('subject_id_uuid', sid);
-        if (r.error) return jsonResponse(req, { success: false, error: 'Replace failed' }, 200);
+        if (r.error) return buildImportFailure(req, auth.context.requestId);
 
         r = await supabaseAdmin.from('subdomains').delete().eq('subject_id', sid);
-        if (r.error) return jsonResponse(req, { success: false, error: 'Replace failed' }, 200);
+        if (r.error) return buildImportFailure(req, auth.context.requestId);
 
         r = await supabaseAdmin.from('domains').delete().eq('subject_id', sid);
-        if (r.error) return jsonResponse(req, { success: false, error: 'Replace failed' }, 200);
+        if (r.error) return buildImportFailure(req, auth.context.requestId);
       }
       // Purge orphan rows (NULL critical FKs) — leftover demo data that survives subject-scoped deletes
-      console.log('🧹 Purging orphan rows with NULL FKs...');
       const orphanPurges: Array<[string, string]> = [
         ['tasks', 'subject_id_uuid'],
         ['success_criteria', 'objective_id_uuid'],
@@ -211,7 +129,12 @@ Deno.serve(async (req) => {
       for (const [tbl, col] of orphanPurges) {
         const r = await supabaseAdmin.from(tbl).delete().is(col, null);
         if (r.error) {
-          console.warn(`[import-curriculum-bundle] orphan purge failed for ${tbl}.${col}`);
+          console.error("[import-curriculum-bundle] orphan purge failed", {
+            requestId: auth.context.requestId,
+            table: tbl,
+            column: col,
+          });
+          return buildImportFailure(req, auth.context.requestId);
         }
       }
     }
@@ -228,10 +151,9 @@ Deno.serve(async (req) => {
       }));
       for (const c of chunk(rows, CHUNK_SIZE)) {
         const { error } = await supabaseAdmin.from('subjects').upsert(c, { onConflict: 'id' });
-        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
+        if (error) return buildImportFailure(req, auth.context.requestId);
         counts.subjects += c.length;
       }
-      console.log(`✓ subjects ${counts.subjects}`);
     }
 
     // ----------------------------------------------------------------------
@@ -285,10 +207,9 @@ Deno.serve(async (req) => {
             },
             { onConflict: 'id' }
           );
-        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
+        if (error) return buildImportFailure(req, auth.context.requestId);
         counts.domains += 1;
       }
-      console.log(`✓ domains ${counts.domains} (remapped ${domainIdRemap.size})`);
 
       // Apply remap to dependent rows in the bundle so subdomains/objectives/etc.
       // reference the canonical domain id.
@@ -363,10 +284,9 @@ Deno.serve(async (req) => {
             },
             { onConflict: 'id_new' }
           );
-        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
+        if (error) return buildImportFailure(req, auth.context.requestId);
         counts.subdomains += 1;
       }
-      console.log(`✓ subdomains ${counts.subdomains} (remapped ${subdomainIdRemap.size})`);
 
       if (subdomainIdRemap.size > 0) {
         bundle.objectives?.forEach(o => {
@@ -407,10 +327,9 @@ Deno.serve(async (req) => {
       }));
       for (const c of chunk(rows, CHUNK_SIZE)) {
         const { error } = await supabaseAdmin.from('objectives').upsert(c, { onConflict: 'id' });
-        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
+        if (error) return buildImportFailure(req, auth.context.requestId);
         counts.objectives += c.length;
       }
-      console.log(`✓ objectives ${counts.objectives}`);
     }
 
     // ----------------------------------------------------------------------
@@ -446,10 +365,9 @@ Deno.serve(async (req) => {
       });
       for (const c of chunk(rows, CHUNK_SIZE)) {
         const { error } = await supabaseAdmin.from('success_criteria').upsert(c, { onConflict: 'id' });
-        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
+        if (error) return buildImportFailure(req, auth.context.requestId);
         counts.success_criteria += c.length;
       }
-      console.log(`✓ success_criteria ${counts.success_criteria}`);
     }
 
     // ----------------------------------------------------------------------
@@ -476,10 +394,9 @@ Deno.serve(async (req) => {
       });
       for (const c of chunk(rows, CHUNK_SIZE)) {
         const { error } = await supabaseAdmin.from('tasks').upsert(c, { onConflict: 'id' });
-        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
+        if (error) return buildImportFailure(req, auth.context.requestId);
         counts.tasks += c.length;
       }
-      console.log(`✓ tasks ${counts.tasks}`);
     }
 
     // ----------------------------------------------------------------------
@@ -497,10 +414,9 @@ Deno.serve(async (req) => {
         const { error } = await supabaseAdmin
           .from('topic_objective_links')
           .upsert(c, { onConflict: 'topic_id,objective_id_uuid' });
-        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
+        if (error) return buildImportFailure(req, auth.context.requestId);
         counts.topic_objective_links += c.length;
       }
-      console.log(`✓ topic_objective_links ${counts.topic_objective_links}`);
     }
 
     // ----------------------------------------------------------------------
@@ -521,10 +437,9 @@ Deno.serve(async (req) => {
       }));
       for (const c of chunk(rows, CHUNK_SIZE)) {
         const { error } = await supabaseAdmin.from('lessons').upsert(c, { onConflict: 'id' });
-        if (error) return jsonResponse(req, { success: false, error: 'Import failed' }, 200);
+        if (error) return buildImportFailure(req, auth.context.requestId);
         counts.lessons += c.length;
       }
-      console.log(`✓ lessons ${counts.lessons}`);
     }
 
     // ----------------------------------------------------------------------
@@ -541,21 +456,22 @@ Deno.serve(async (req) => {
     if (importedSubjectIds.size > 0) {
       const sids = Array.from(importedSubjectIds);
       // Tasks first (depend on success_criteria)
-      await supabaseAdmin.from('tasks')
+      const tasksCleanup = await supabaseAdmin.from('tasks')
         .delete()
         .in('subject_id_uuid', sids)
         .or('success_criterion_id_uuid.is.null,domain_id_uuid.is.null,subdomain_id_uuid.is.null');
-      // Then success_criteria (depend on objectives)
-      await supabaseAdmin.from('success_criteria')
+      if (tasksCleanup.error) return buildImportFailure(req, auth.context.requestId);
+      const criteriaCleanup = await supabaseAdmin.from('success_criteria')
         .delete()
         .in('subject_id_uuid', sids)
         .or('objective_id_uuid.is.null,domain_id_uuid.is.null,subdomain_id_uuid.is.null');
+      if (criteriaCleanup.error) return buildImportFailure(req, auth.context.requestId);
       // Then objectives
-      await supabaseAdmin.from('objectives')
+      const objectivesCleanup = await supabaseAdmin.from('objectives')
         .delete()
         .in('subject_id_uuid', sids)
         .or('domain_id_uuid.is.null,subdomain_id_uuid.is.null');
-      console.log(`🧹 Orphan cleanup complete for ${sids.length} subject(s)`);
+      if (objectivesCleanup.error) return buildImportFailure(req, auth.context.requestId);
     }
 
     // ----------------------------------------------------------------------
@@ -577,10 +493,24 @@ Deno.serve(async (req) => {
       if (sidsArr.length > 0 && (tbl === 'objectives' || tbl === 'success_criteria')) {
         q = q.in('subject_id_uuid', sidsArr);
       }
-      const { count } = await q;
+      const { count, error } = await q;
+      if (error) return buildImportFailure(req, auth.context.requestId);
       verification[`${tbl}.${col}_null`] = count ?? 0;
     }
     const allClean = Object.values(verification).every(v => v === 0);
+
+    await recordSecurityAuditEvent(supabaseAdmin, {
+      requestId: auth.context.requestId,
+      scope: "import-curriculum-bundle",
+      eventType: "bundle_import",
+      outcome: allClean ? "success" : "partial_success",
+      actorUserId: auth.context.user.id,
+      metadata: {
+        mode,
+        counts,
+        readyForPhase3: allClean,
+      },
+    });
 
     return jsonResponse(req, {
       success: true,
@@ -594,12 +524,12 @@ Deno.serve(async (req) => {
         nullChecks: verification,
       },
       ready_for_phase_3: allClean,
+      requestId: auth.context.requestId,
     });
   } catch (error) {
-    console.error('Error importing curriculum bundle:', error);
-    return jsonResponse(req, {
-      success: false,
-      error: 'Import failed',
-    }, 200);
+    console.error("[import-curriculum-bundle] request failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return buildImportFailure(req, crypto.randomUUID());
   }
 });

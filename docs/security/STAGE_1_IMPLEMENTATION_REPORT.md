@@ -19,6 +19,7 @@ Branch: `security/stage-1-hardening`
 ## Disproved or not yet proven
 
 - `quiz_bank_variants` is not referenced in local app code; the table may exist only in deployed state or be unused locally. The migration therefore hardens it conditionally with `IF EXISTS`, but the deployed table still needs direct validation.
+- The earlier full-test failure was not a branch regression. Vitest was traversing generated `.claude/worktrees/**` mirror trees inside the repository path. Excluding those mirrors restores the actual repo test result.
 
 ## Repository changes made so far
 
@@ -35,7 +36,9 @@ Branch: `security/stage-1-hardening`
   - `supabase/functions/quiz-bank-visible/index.ts`
   - `supabase/functions/quiz-bank-all/index.ts`
   - `supabase/functions/import-curriculum-bundle/index.ts`
+  - `supabase/functions/import-curriculum-bundle/validation.ts`
   - `supabase/functions/import-exam-bundle/index.ts`
+  - `supabase/functions/import-exam-bundle/validation.ts`
   - `supabase/functions/import-training-items/index.ts`
 - Removed:
   - `supabase/functions/run-sql/index.ts`
@@ -45,14 +48,20 @@ Branch: `security/stage-1-hardening`
   - `src/services/unifiedChatService.ts`
   - `src/utils/connectionTest.ts`
   - `src/utils/documentProcessor.ts`
+- Test/config hygiene:
+  - `vite.config.ts`
+  - `eslint.config.js`
+- Documentation safety cleanup:
+  - `exam-import/README.md`
+  - `docs/practice-experience.md`
 
 ## Verification performed
 
 - `npm run build`: passes
 - `npx tsc --noEmit`: passes
 - targeted `npx eslint` on modified production files: passes
-- `npm test -- --run`: red at baseline and still red; failures are dominated by pre-existing duplicated `.claude/worktrees/*` test collection plus pre-existing repo test issues
-- `npm run lint`: red repo-wide at baseline and still red
+- `npm test -- --run`: passes after excluding generated `.claude/worktrees/**` mirrors (`30` files, `184` tests)
+- `npm run lint`: still red repo-wide (`696` errors, `62` warnings); baseline debt remains outside this branch scope
 - `npm audit --json`: 24 vulnerabilities total, including 17 high and 2 critical
 
 ## Current assessment

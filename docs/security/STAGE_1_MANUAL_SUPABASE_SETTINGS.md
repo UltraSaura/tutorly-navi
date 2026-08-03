@@ -24,4 +24,4 @@ These items were identified for manual review. They were not changed in producti
 
 ## CAPTCHA / abuse controls
 
-The student self-registration path still assumes product-supported self-registration. If production wants to keep that path public, add a dashboard-backed CAPTCHA or equivalent abuse control in addition to the new server-side throttling.
+The student self-registration path still assumes product-supported self-registration. `create-student-account` therefore remains intentionally public (`verify_jwt = false`) in this branch. If production wants to keep that path public, add a dashboard-backed CAPTCHA or equivalent abuse control in addition to the new server-side throttling.

@@ -82,7 +82,7 @@ Ces champs serviront a generer des exercices similaires, creer des devoirs, comp
 Validation Amiens 2021 :
 
 - migration `exam_training_items` appliquee sur le projet Supabase `sibprjxhbxahouejygeu` ;
-- Edge Function `import-training-items` deployee avec `--no-verify-jwt` ;
+- Edge Function `import-training-items` déployée avec vérification JWT activée ;
 - import `upsert` valide : 20 items importes ;
 - items publies : 5 ;
 - types publies couverts : `short_answer`, `numeric`, `free_response`, `multiple_choice` ;
