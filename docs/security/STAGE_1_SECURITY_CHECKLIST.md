@@ -67,7 +67,7 @@ Branch: `security/stage-1-hardening`
 
 ## Still required before Stage 1 can be declared complete
 
-- replay the full repo migration chain against a clean disposable Supabase database; staging validation covered the Stage 1 hardening path but not a full from-scratch migration rebuild
+- replay the full repo migration chain against a clean disposable Supabase database; the August 3, 2026 staging replay attempt was blocked before execution because `supabase db reset --linked --yes` could not rotate `cli_login_postgres` and required `SUPABASE_DB_PASSWORD`
 - decide whether the remaining Supabase advisor findings are accepted baseline debt or must be remediated before deployment review
 - resolve the remaining 2 high `react-router` / `react-router-dom` advisories once an upstream fixed published release exists, or replace React Router
 - verify `quiz_bank_variants` actual deployed shape/relationships against local repo assumptions
@@ -100,3 +100,4 @@ Branch: `security/stage-1-hardening`
   - guardian `exercise_explanations_cache` write: blocked
 - Rollback dry-run: passes in transaction on staging
 - Not ready for deployment review
+- Clean replay status: blocked by staging CLI DB-access precondition, not by a confirmed Stage 1 SQL replay failure

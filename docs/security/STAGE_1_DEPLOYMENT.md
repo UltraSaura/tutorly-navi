@@ -4,7 +4,7 @@ Status: draft only. Do not run in production yet.
 
 Current blockers as of August 3, 2026:
 
-- the full repo migration chain has not yet been replayed against a clean disposable Supabase database from scratch
+- the August 3, 2026 clean replay attempt on staging `urskkwizwutodikgznas` failed before destructive execution because `supabase db reset --linked --yes` could not alter `cli_login_postgres` and requested `SUPABASE_DB_PASSWORD`; the full repo migration chain therefore still has not been replayed from zero
 - staging validation found and fixed two Stage 1 migration issues:
   - legacy explanation policy name `Guardians view children explanations` also had to be dropped
   - function grant cleanup needed `REVOKE ALL PRIVILEGES ... FROM PUBLIC, ...`
@@ -49,7 +49,7 @@ Current blockers as of August 3, 2026:
 - Stage 1 database hardening was applied and validated on the staging baseline
 - rollback reverse-DDL dry-run succeeded inside a transaction
 
-This is enough for branch-level validation, but not enough for production deployment approval because the clean full migration replay and advisor triage are still outstanding.
+This is enough for branch-level validation, but not enough for production deployment approval because the clean full migration replay is still blocked at the staging access layer and advisor triage is still outstanding.
 
 ## Rollback trigger
 

@@ -118,12 +118,13 @@ Two real migration issues were found and corrected during staging validation:
 ## Staging-only limitations observed
 
 - The staging project already had pre-existing migration history drift and did not match the repo's full 113-file local migration chain.
-- Because of that drift and the available tooling in this environment, this validation exercised the Stage 1 hardening migration on the live staging baseline rather than replaying the full repo migration chain from an empty database.
+- A clean replay was attempted on staging with `supabase db reset --linked --yes` after relinking the repo to `urskkwizwutodikgznas` for IPv4. The command failed before destructive execution because the CLI could not rotate `cli_login_postgres` and requested `SUPABASE_DB_PASSWORD` instead (`permission denied to alter role`).
+- Remote inspection confirmed the staging project still contains only a partial migration history ending at `20260803115116_stage_1_security_hardening`, so the full 113-file repo chain was not replayed from zero in this environment.
 - The Supabase Management API `apply_migration` endpoint accepted probe migrations, but rejected the full Stage 1 SQL payload as a single request in this environment. Validation therefore applied the Stage 1 DDL in ordered SQL blocks and then recorded the migration version in staging history.
 
 ## Remaining blockers that are external to this branch
 
-- The full repo migration chain was not replayed onto a clean disposable Supabase database from scratch in this environment. Stage 1 was validated against the existing staging baseline only.
+- The full repo migration chain was not replayed onto a clean disposable Supabase database from scratch in this environment. The blocking condition is now explicit: staging reset requires either a valid `SUPABASE_DB_PASSWORD` for `urskkwizwutodikgznas` or restoration of the missing CLI login-role admin path in staging. Until that is available, Stage 1 remains validated only against the existing staging baseline.
 - The final `npm audit` result is blocked by upstream published React Router releases:
   - `react-router-dom@7.18.2` is the latest published version available on August 3, 2026
   - npm audit still reports 2 high vulnerabilities in `react-router` / `react-router-dom` for the published `<8.3.0` line
@@ -149,4 +150,4 @@ The registration-model decision is now implemented as:
 - child creation only through authenticated guardian/admin flows
 - no anonymous privileged child/student account creation path remains enabled
 
-Recommendation: not ready for deployment review yet.
+Recommendation: not ready for deployment review yet. The minimum next unblocker is a successful clean replay on staging or another disposable non-production Supabase database using the full repo migration chain.
