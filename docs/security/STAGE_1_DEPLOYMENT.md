@@ -4,13 +4,17 @@ Status: draft only. Do not run in production yet.
 
 Current blockers as of August 3, 2026:
 
-- local/disposable Supabase validation was not executed in this environment because Docker is unavailable
+- the full repo migration chain has not yet been replayed against a clean disposable Supabase database from scratch
+- staging validation found and fixed two Stage 1 migration issues:
+  - legacy explanation policy name `Guardians view children explanations` also had to be dropped
+  - function grant cleanup needed `REVOKE ALL PRIVILEGES ... FROM PUBLIC, ...`
+- Supabase advisors still report broader existing security/performance debt on staging outside the narrow Stage 1 scope
 - `npm audit` is reduced to 2 high vulnerabilities, both still present in the latest published `react-router` / `react-router-dom` line
 
 ## Planned order
 
 1. Confirm branch contents and review all security diffs.
-2. Validate the Stage 1 migration in a local or disposable Supabase environment.
+2. Replay the full repo migration chain in a clean disposable Supabase environment.
 3. Run build, targeted lint, security tests, migration validation, and advisors.
 4. Deploy updated Edge Function code.
 5. Apply the Stage 1 migration.
@@ -25,6 +29,8 @@ Current blockers as of August 3, 2026:
 
 - Build:
   - `npm run build`
+- Type check:
+  - `npx tsc --noEmit`
 - Tests:
   - `npm test -- --run`
 - Targeted lint:
@@ -33,6 +39,17 @@ Current blockers as of August 3, 2026:
   - inspect `supabase/migrations/20260803115116_stage_1_security_hardening.sql`
 - Migration application:
   - use the approved Supabase deployment flow after explicit production approval
+
+## Validated on staging as of August 3, 2026
+
+- staging project used: `urskkwizwutodikgznas`
+- production project not modified: `sibprjxhbxahouejygeu`
+- staged function deployment completed successfully
+- `ai-chat` and `document-processor` now require JWT on staging
+- Stage 1 database hardening was applied and validated on the staging baseline
+- rollback reverse-DDL dry-run succeeded inside a transaction
+
+This is enough for branch-level validation, but not enough for production deployment approval because the clean full migration replay and advisor triage are still outstanding.
 
 ## Rollback trigger
 

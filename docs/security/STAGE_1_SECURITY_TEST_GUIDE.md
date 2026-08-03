@@ -5,15 +5,37 @@
 - `npm run build`
 - `npx tsc --noEmit`
 - targeted `npx eslint` on modified production/security files
-- `npm test -- --run` → passes after excluding generated `.claude/worktrees/**` mirror copies from test discovery (`30` files, `184` tests)
+- `npm test -- --run` → passes after excluding generated `.claude/worktrees/**` mirror copies from test discovery (`31` files, `189` tests)
 - `npm run lint` → still red repo-wide because of unrelated baseline debt (`696` errors, `62` warnings)
 
-## Required local/disposable Supabase checks
+## Staging checks completed on August 3, 2026
 
-1. Start or connect to a disposable Supabase environment.
-2. Apply the Stage 1 migration.
-3. Deploy the modified functions to that non-production environment.
-4. Verify:
+Target project:
+
+- staging: `urskkwizwutodikgznas`
+- production untouched: `sibprjxhbxahouejygeu`
+
+Completed:
+
+1. Verified branch and Supabase target files point to staging.
+2. Deployed the current Edge Functions from `security/stage-1-hardening` to staging.
+3. Applied the Stage 1 hardening SQL on staging.
+4. Verified:
+   - guardian can read linked child explanation rows
+   - student cannot read guardian-only explanation rows after legacy policy cleanup
+   - admin can read explanation rows
+   - admin can insert into `exercise_explanations_cache`
+   - guardian insert into `exercise_explanations_cache` is rejected
+   - `ai-chat` requires JWT on staging
+   - `document-processor` requires JWT on staging
+5. Ran Supabase advisors against staging.
+6. Ran rollback reverse-DDL in a transaction and rolled it back successfully.
+
+## Still required in a clean disposable database
+
+1. Replay the full repo migration chain from scratch.
+2. Re-run the Stage 1 hardening migration on that clean baseline.
+3. Re-check:
    - anonymous request to `ai-chat` returns 401
    - anonymous request to `document-processor` returns 401
    - anonymous request to `quiz-bank-visible` and `quiz-bank-all` returns 401
@@ -23,21 +45,22 @@
    - malformed document payloads return 400/415/413 as appropriate
    - `consume_security_rate_limit` increments atomically under repeated requests
 
-### Local blocker in this workspace
+## Environment limitations observed in this workspace
 
 - Docker is not installed in this workspace, so `supabase start` / local containerized validation cannot be completed here.
-- Deno is not installed either, so direct Deno-based function tests are not available in this environment.
+- The staging project already had migration drift, so the validation performed here covered the Stage 1 hardening path on staging rather than a clean from-scratch rebuild.
 
 ## Database/RLS checks
 
 - inspect `quiz_bank_variants` existence and confirm RLS state
-- verify no client-write path remains on `explanations_cache`
+- verify no unintended client-write path remains on `explanations_cache`
 - verify only admin writes remain on `exercise_explanations_cache`
 - verify function execute grants after the migration
+- verify no legacy duplicate policy names remain active on hardened tables
 
 ## Advisor checks
 
-Run when available in the validation environment:
+Run and record when available in the validation environment:
 
 - `supabase db advisors`
 - any local SQL lint or schema checks supported by the installed CLI version

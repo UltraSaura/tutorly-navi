@@ -67,14 +67,12 @@ Branch: `security/stage-1-hardening`
 
 ## Still required before Stage 1 can be declared complete
 
-- add/finish role-isolation and negative security tests against a real Supabase environment
-- validate the new migration against a local or disposable Supabase environment
-- run advisors (`supabase db advisors`) where supported, or documented fallback
+- replay the full repo migration chain against a clean disposable Supabase database; staging validation covered the Stage 1 hardening path but not a full from-scratch migration rebuild
+- decide whether the remaining Supabase advisor findings are accepted baseline debt or must be remediated before deployment review
 - resolve the remaining 2 high `react-router` / `react-router-dom` advisories once an upstream fixed published release exists, or replace React Router
 - verify `quiz_bank_variants` actual deployed shape/relationships against local repo assumptions
-- create final deployment and rollback execution order after migration validation
+- finalize the production rollback script for the exact pre-Stage-1 policy/grant baseline
 - harden remaining non-Stage-1 production logging outside the protected request paths if this branch is extended further
-- execute migration/RLS validation on a real non-production Supabase stack; this environment has no Docker, so that validation is still blocked here
 
 ## Current gate status
 
@@ -85,4 +83,20 @@ Branch: `security/stage-1-hardening`
 - Targeted lint on modified files: passes
 - npm audit: `2` high vulnerabilities remain, both in the latest published React Router line
 - Full lint: red (`696` errors, `62` warnings), pre-existing repo-wide debt
-- Not yet safe to deploy
+- Staging target verified: `urskkwizwutodikgznas`
+- Production untouched: `sibprjxhbxahouejygeu`
+- Staging Edge Functions deployed and verified:
+  - `ai-chat` → `verify_jwt: true`
+  - `document-processor` → `verify_jwt: true`
+  - `quiz-bank-visible` → `verify_jwt: true`
+  - `quiz-bank-all` → `verify_jwt: true`
+  - `create-student-account` → `verify_jwt: true`
+  - `create-child-account` → `verify_jwt: true`
+- Staging database/RLS validation completed for Stage 1 target surfaces:
+  - guardian explanation read: passes
+  - student explanation read blocked after legacy-policy cleanup: passes
+  - admin explanation read: passes
+  - admin `exercise_explanations_cache` write: passes
+  - guardian `exercise_explanations_cache` write: blocked
+- Rollback dry-run: passes in transaction on staging
+- Not ready for deployment review

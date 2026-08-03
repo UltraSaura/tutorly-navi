@@ -1,6 +1,6 @@
 # Stage 1 Rollback
 
-Status: draft only. No production rollback has been executed.
+Status: staging dry-run validated on August 3, 2026. No production rollback has been executed.
 
 ## Trigger conditions
 
@@ -16,9 +16,9 @@ Status: draft only. No production rollback has been executed.
 3. Revert the Stage 1 migration only after confirming which policy/function changes caused the regression.
 4. Re-test the previous known-good authenticated flows.
 
-## Migration rollback notes
+## Stage 1 rollback surface
 
-The Stage 1 migration introduces:
+The Stage 1 migration introduces or changes:
 
 - `security_rate_limits`
 - `security_audit_events`
@@ -29,4 +29,31 @@ The Stage 1 migration introduces:
   - `exercise_explanations_cache`
 - execute grant changes on selected functions
 
-Rollback SQL must reverse each of those in the same order as dependency requirements dictate. Final exact rollback SQL should be written only after the migration has been validated locally and the final function list is frozen.
+## Staging rollback dry-run executed
+
+This reverse DDL was executed inside a transaction on staging project `urskkwizwutodikgznas` and then rolled back:
+
+```sql
+begin;
+drop policy if exists "Admins can view all explanations" on public.explanations_cache;
+drop policy if exists "Guardians can view children explanations" on public.explanations_cache;
+drop policy if exists "Admins can insert exercise explanations cache" on public.exercise_explanations_cache;
+drop policy if exists "Admins can update exercise explanations cache" on public.exercise_explanations_cache;
+drop policy if exists "Admins can delete exercise explanations cache" on public.exercise_explanations_cache;
+drop table if exists public.security_audit_events;
+drop function if exists public.consume_security_rate_limit(text, text, integer, integer);
+drop table if exists public.security_rate_limits;
+rollback;
+```
+
+The dry-run confirmed that the reverse DDL is syntactically valid against the staging schema.
+
+## Remaining rollback gap
+
+This document still does not encode the full production rollback to the exact pre-Stage-1 policy/grant state. In particular, the pre-existing legacy policy/grant surface must be restored intentionally if production rollback is ever required.
+
+Before any production deployment approval:
+
+- capture the exact pre-deploy policy list for `explanations_cache` and `exercise_explanations_cache`
+- capture the exact pre-deploy function grants for `create_vault_secret`, `get_model_with_fallback`, `has_role`, and the user/profile helper functions
+- write the final production rollback SQL from that captured state

@@ -75,25 +75,71 @@ Branch: `security/stage-1-hardening`
 - `npm test -- --run`: passes after excluding generated `.claude/worktrees/**` mirrors (`31` files, `189` tests)
 - `npm run lint`: still red repo-wide (`696` errors, `62` warnings); baseline debt remains outside this branch scope
 - `npm audit --json`: reduced from `24` total vulnerabilities (including `17` high and `2` critical) to `2` high vulnerabilities, both in the latest published `react-router` / `react-router-dom` release line
+- staging Supabase target verified before mutation:
+  - branch: `security/stage-1-hardening`
+  - `supabase/config.toml` → `urskkwizwutodikgznas`
+  - `supabase/.temp/project-ref` → `urskkwizwutodikgznas`
+  - production project `sibprjxhbxahouejygeu` was not modified
+- staging Edge Functions deployed successfully to `urskkwizwutodikgznas` using the official Supabase CLI
+- Stage 1 database hardening validated on staging against the real target tables:
+  - `security_rate_limits` table + `consume_security_rate_limit(...)` created
+  - `security_audit_events` table created
+  - `explanations_cache` policies tightened
+  - `exercise_explanations_cache` admin-only write policies applied
+  - function execute privileges tightened for `create_vault_secret`, `get_model_with_fallback`, and `has_role`
+- staging role-isolation checks executed:
+  - guardian test user could see the linked child explanation row (`1`)
+  - student test user could not see that guardian-only explanation row after policy cleanup (`0`)
+  - admin test user could see the explanation row (`1`)
+  - admin insert into `exercise_explanations_cache` succeeded inside a transaction
+  - guardian insert into `exercise_explanations_cache` was rejected under authenticated role simulation
+- rollback dry-run executed successfully in a transaction on staging:
+  - drop Stage 1 explanation policies
+  - drop `security_audit_events`
+  - drop `consume_security_rate_limit(...)`
+  - drop `security_rate_limits`
+  - rollback transaction
+
+## Validation fixes discovered during staging
+
+Two real migration issues were found and corrected during staging validation:
+
+1. Legacy explanation policy cleanup was incomplete.
+   - Existing staging policy name: `Guardians view children explanations`
+   - Original migration only dropped `Guardians can view children explanations`
+   - Result before fix: student test user could still read explanation rows through the old permissive policy path
+   - Fix applied to migration: also drop `Guardians view children explanations`
+
+2. Function execute revokes were not strong enough for existing `PUBLIC` grants.
+   - `create_vault_secret(text, text)` remained executable by `anon` and `authenticated`
+   - `has_role(uuid, public.app_role)` remained executable by `anon`
+   - Fix applied to migration: use `REVOKE ALL PRIVILEGES ... FROM PUBLIC, ...` and then re-grant only the intended roles
+
+## Staging-only limitations observed
+
+- The staging project already had pre-existing migration history drift and did not match the repo's full 113-file local migration chain.
+- Because of that drift and the available tooling in this environment, this validation exercised the Stage 1 hardening migration on the live staging baseline rather than replaying the full repo migration chain from an empty database.
+- The Supabase Management API `apply_migration` endpoint accepted probe migrations, but rejected the full Stage 1 SQL payload as a single request in this environment. Validation therefore applied the Stage 1 DDL in ordered SQL blocks and then recorded the migration version in staging history.
 
 ## Remaining blockers that are external to this branch
 
-- Local/disposable Supabase validation still cannot be completed in this environment because Docker is unavailable, so:
-  - migration application was not executed locally
-  - RLS / role-isolation tests against a real Supabase stack were not executed locally
-  - `supabase db advisors` was not run against a live local database
+- The full repo migration chain was not replayed onto a clean disposable Supabase database from scratch in this environment. Stage 1 was validated against the existing staging baseline only.
 - The final `npm audit` result is blocked by upstream published React Router releases:
   - `react-router-dom@7.18.2` is the latest published version available on August 3, 2026
   - npm audit still reports 2 high vulnerabilities in `react-router` / `react-router-dom` for the published `<8.3.0` line
   - this branch cannot reduce the audit to zero without an upstream release outside the currently published range
+- Supabase advisors still report broader pre-existing security/performance debt on staging outside the narrow Stage 1 path, including:
+  - `public.configured_models` is a `SECURITY DEFINER` view
+  - `public.security_rate_limits` and `public.security_audit_events` have RLS enabled with no explicit policies
+  - multiple GraphQL exposure and permissive-policy findings across legacy tables
+  - Auth leaked-password protection and MFA options are still not enabled at the project level
 
 ## Current assessment
 
-This branch materially reduces the most obvious exposed attack surface, but Stage 1 is still incomplete. The remaining work is concentrated in:
+This branch materially reduces the most obvious exposed attack surface, and the Stage 1 hardening paths were validated on staging, but Stage 1 is still blocked from deployment review. The remaining work is concentrated in:
 
-- migration validation
-- database/security advisor validation
-- role-isolation/security tests
+- validating the full repo migration chain against a clean disposable Supabase database
+- deciding whether the remaining advisor findings are accepted baseline debt or must be remediated before deployment review
 - waiting for a React Router release that clears the last 2 high audit findings, or replacing React Router entirely
 - validating the conditional `quiz_bank_variants` assumptions against a real non-production database
 
@@ -103,4 +149,4 @@ The registration-model decision is now implemented as:
 - child creation only through authenticated guardian/admin flows
 - no anonymous privileged child/student account creation path remains enabled
 
-Recommendation: not safe to deploy yet.
+Recommendation: not ready for deployment review yet.

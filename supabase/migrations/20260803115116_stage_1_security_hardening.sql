@@ -127,6 +127,7 @@ drop policy if exists "Authenticated can update explanations" on public.explanat
 drop policy if exists "Authenticated can delete explanations" on public.explanations_cache;
 
 drop policy if exists "Guardians can view children explanations" on public.explanations_cache;
+drop policy if exists "Guardians view children explanations" on public.explanations_cache;
 create policy "Guardians can view children explanations"
 on public.explanations_cache
 for select
@@ -174,19 +175,19 @@ for delete
 to authenticated
 using (public.has_role(auth.uid(), 'admin'::public.app_role));
 
-revoke execute on function public.create_vault_secret(text, text) from public, anon, authenticated;
-revoke execute on function public.get_model_with_fallback() from public, anon, authenticated;
+revoke all privileges on function public.create_vault_secret(text, text) from PUBLIC, anon, authenticated;
+revoke all privileges on function public.get_model_with_fallback() from PUBLIC, anon, authenticated;
 grant execute on function public.get_model_with_fallback() to service_role;
 
-revoke execute on function public.handle_new_user() from public, anon, authenticated;
-revoke execute on function public.auto_create_guardian_profile() from public, anon, authenticated;
-revoke execute on function public.auto_create_child_profile() from public, anon, authenticated;
-revoke execute on function public.auto_assign_guardian_role() from public, anon, authenticated;
-revoke execute on function public.auto_create_teacher_profile() from public, anon, authenticated;
-revoke execute on function public.auto_assign_teacher_role() from public, anon, authenticated;
-revoke execute on function public.update_topic_video_count() from public, anon, authenticated;
-revoke execute on function public.update_topic_quiz_count() from public, anon, authenticated;
-revoke execute on function public.update_app_feature_flags_updated_at() from public, anon, authenticated;
+revoke all privileges on function public.handle_new_user() from PUBLIC, anon, authenticated;
+revoke all privileges on function public.auto_create_guardian_profile() from PUBLIC, anon, authenticated;
+revoke all privileges on function public.auto_create_child_profile() from PUBLIC, anon, authenticated;
+revoke all privileges on function public.auto_assign_guardian_role() from PUBLIC, anon, authenticated;
+revoke all privileges on function public.auto_create_teacher_profile() from PUBLIC, anon, authenticated;
+revoke all privileges on function public.auto_assign_teacher_role() from PUBLIC, anon, authenticated;
+revoke all privileges on function public.update_topic_video_count() from PUBLIC, anon, authenticated;
+revoke all privileges on function public.update_topic_quiz_count() from PUBLIC, anon, authenticated;
+revoke all privileges on function public.update_app_feature_flags_updated_at() from PUBLIC, anon, authenticated;
 
-revoke execute on function public.has_role(uuid, public.app_role) from public, anon;
+revoke all privileges on function public.has_role(uuid, public.app_role) from PUBLIC, anon;
 grant execute on function public.has_role(uuid, public.app_role) to authenticated, service_role;
