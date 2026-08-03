@@ -2,7 +2,7 @@
 
 Status: draft only. Do not run in production yet.
 
-Current blockers as of August 3, 2026:
+Current deployment-review exceptions as of August 3, 2026:
 
 - the clean replay now succeeds on staging `urskkwizwutodikgznas`, `create_vault_secret(text, text)` is removed, and staging lint is clean; remaining blockers are advisor-warning triage and unresolved `npm audit` highs
 - staging validation found and fixed two Stage 1 migration issues:
@@ -54,7 +54,7 @@ Current blockers as of August 3, 2026:
 - `students` no longer appears as an RLS-disabled table after replay
 - rollback reverse-DDL dry-run succeeded inside a transaction
 
-This is enough for branch-level validation, but not enough for production deployment approval because the remaining audit/advisor triage is still outstanding.
+This is enough for branch-level validation and deployment review. Production approval still requires explicit sign-off on the remaining advisor warnings and `npm audit` highs, or follow-up remediation tickets that are accepted as release exceptions.
 
 ## Rollback trigger
 

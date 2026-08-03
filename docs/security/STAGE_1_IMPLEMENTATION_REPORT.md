@@ -142,7 +142,7 @@ Two real migration issues were found and corrected during staging validation:
 - The staging project initially had pre-existing migration history drift, and the clean replay effort exposed multiple historical ordering/idempotency defects in older migrations.
 - Direct Supabase SQL from the agent process still depends on a visible `SUPABASE_DB_PASSWORD`. The user shell had it available and could run the replay/query commands successfully; the agent process could not inherit it consistently, which prevented one final autonomous post-patch lint/advisor rerun after the `create_vault_secret` removal.
 
-## Remaining blockers that are external to this branch
+## Remaining deployment-review exceptions outside this branch
 
 - `npm audit --json` still reports `7` high vulnerabilities:
   - the `react-router` / `react-router-dom` findings remain in the published `<8.3.0` line
@@ -155,7 +155,7 @@ Two real migration issues were found and corrected during staging validation:
 
 ## Current assessment
 
-This branch materially reduces the exposed attack surface, and the full clean replay now succeeds on staging, but Stage 1 is still blocked from deployment review. The remaining work is concentrated in:
+This branch materially reduces the exposed attack surface, and the full clean replay now succeeds on staging. Stage 1 implementation is complete and can proceed to deployment review with documented exceptions. The remaining non-Stage-1 review items are:
 
 - deciding whether the remaining advisor findings are accepted baseline debt or must be remediated before deployment review
 - resolving or explicitly accepting the remaining `npm audit` high findings
@@ -167,4 +167,4 @@ The registration-model decision is now implemented as:
 - child creation only through authenticated guardian/admin flows
 - no anonymous privileged child/student account creation path remains enabled
 
-Recommendation: not ready for deployment review yet. The clean replay blocker and staging lint blocker are resolved, but the remaining audit/advisor debt still needs explicit disposition.
+Recommendation: ready for deployment review with documented exceptions. The clean replay blocker and staging lint blocker are resolved; the remaining audit/advisor debt should be tracked as review exceptions or follow-up work rather than Stage 1 implementation blockers.

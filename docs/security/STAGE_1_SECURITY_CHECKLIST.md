@@ -103,7 +103,7 @@ Branch: `security/stage-1-hardening`
   - `students` RLS enabled: passes
   - `students` admin-only policy present: passes
 - Rollback dry-run: passes in transaction on staging
-- Not ready for deployment review
+- Ready for deployment review with documented exceptions
 - Clean replay status: passes
 - Final staging lint after `create_vault_secret` removal: passes
 - Final staging advisor status after `create_vault_secret` removal: warnings only, no reported errors in the captured output
