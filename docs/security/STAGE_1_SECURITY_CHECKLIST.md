@@ -7,9 +7,9 @@ Branch: `security/stage-1-hardening`
 
 - Build: passes
 - Type check: passes (`npx tsc --noEmit`)
-- Tests: pass after excluding generated `.claude/worktrees/**` mirror copies from Vitest discovery (`30` files, `184` tests)
+- Tests: pass after excluding generated `.claude/worktrees/**` mirror copies from Vitest discovery (`31` files, `189` tests)
 - Lint: repo-wide baseline remains red; current full lint result is `696` errors and `62` warnings, down from the earlier baseline of `765` errors and `60` warnings
-- npm audit: 24 vulnerabilities total, including critical `vitest` and `tar`, high `react-router-dom`, `vite`, `postcss`, `@capacitor/cli`
+- npm audit baseline before remediation: 24 vulnerabilities total, including critical `vitest` and `tar`, high `react-router-dom`, `vite`, `postcss`, `@capacitor/cli`
 
 ## Implemented in this branch
 
@@ -25,14 +25,13 @@ Branch: `security/stage-1-hardening`
   - switched `quiz-bank-visible` and `quiz-bank-all` to authenticated access
   - removed trust in client-supplied `userId`
 - student self-registration
-  - kept public self-registration path as a product assumption
-  - added durable rate-limit hook
-  - added compensation on partial profile failure
-  - removed duplicate-username enumeration details from responses
-  - added security audit event writes
+  - removed the public student self-registration path from the auth page
+  - switched `create-student-account` to authenticated admin-only access
+  - retained auditing and safer generic failure behavior for the privileged code path
 - guardian child-account creation
-  - switched `create-child-account` to authenticated guardian-only access
-  - added guardian-scoped durable rate limiting
+  - switched `create-child-account` to authenticated access only
+  - added guardian/admin authorization split with explicit guardian targeting for admins
+  - added durable rate limiting scoped to guardian or acting admin
   - removed wildcard CORS and sensitive request logging
   - added idempotent relinking logic for the same guardian
   - blocked cross-family relinking
@@ -47,10 +46,16 @@ Branch: `security/stage-1-hardening`
 - test/lint hygiene
   - excluded generated `.claude/worktrees/**` mirrors from Vitest discovery and ESLint traversal
   - added validation tests for curriculum and exam import bundle payloads
+  - added authorization unit tests for guardian/admin child-account creation flow
 - frontend security cleanup
   - removed stale direct explanation-cache client write path
   - removed hardcoded direct `ai-chat` bearer-token fallback
   - removed sensitive OCR and AI request/response logging from hardened client paths
+- dependency remediation
+  - upgraded the audited direct/runtime packages that had published patched releases
+  - upgraded Vitest/Vite and aligned the toolchain
+  - updated MathLive asset copy logic for the new package layout
+  - reduced `npm audit` from `24` total vulnerabilities to `2` remaining highs in upstream React Router packages
 - database hardening migration scaffold created:
   - `supabase/migrations/20260803115116_stage_1_security_hardening.sql`
   - security rate-limit table + RPC
@@ -65,18 +70,19 @@ Branch: `security/stage-1-hardening`
 - add/finish role-isolation and negative security tests against a real Supabase environment
 - validate the new migration against a local or disposable Supabase environment
 - run advisors (`supabase db advisors`) where supported, or documented fallback
-- complete dependency upgrade pass; audit still reports 24 vulnerabilities total, including 17 high and 2 critical
+- resolve the remaining 2 high `react-router` / `react-router-dom` advisories once an upstream fixed published release exists, or replace React Router
 - verify `quiz_bank_variants` actual deployed shape/relationships against local repo assumptions
 - create final deployment and rollback execution order after migration validation
 - harden remaining non-Stage-1 production logging outside the protected request paths if this branch is extended further
-- decide whether public `create-student-account` self-registration remains acceptable for controlled beta; JWT is intentionally still disabled there under the current product assumption
+- execute migration/RLS validation on a real non-production Supabase stack; this environment has no Docker, so that validation is still blocked here
 
 ## Current gate status
 
 - No production deployment performed
 - Build: passes (`npm run build`)
 - Type check: passes (`npx tsc --noEmit`)
-- Full tests: pass (`npm test -- --run` → `30` files, `184` tests)
+- Full tests: pass (`npm test -- --run` → `31` files, `189` tests)
 - Targeted lint on modified files: passes
+- npm audit: `2` high vulnerabilities remain, both in the latest published React Router line
 - Full lint: red (`696` errors, `62` warnings), pre-existing repo-wide debt
 - Not yet safe to deploy

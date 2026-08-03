@@ -2,6 +2,11 @@
 
 Status: draft only. Do not run in production yet.
 
+Current blockers as of August 3, 2026:
+
+- local/disposable Supabase validation was not executed in this environment because Docker is unavailable
+- `npm audit` is reduced to 2 high vulnerabilities, both still present in the latest published `react-router` / `react-router-dom` line
+
 ## Planned order
 
 1. Confirm branch contents and review all security diffs.
