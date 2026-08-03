@@ -55,7 +55,7 @@ Branch: `security/stage-1-hardening`
   - upgraded the audited direct/runtime packages that had published patched releases
   - upgraded Vitest/Vite and aligned the toolchain
   - updated MathLive asset copy logic for the new package layout
-  - reduced `npm audit` from `24` total vulnerabilities to `2` remaining highs in upstream React Router packages
+  - reduced the earlier baseline materially, but `npm audit` still reports `7` high vulnerabilities in the current dependency tree
 - database hardening migration scaffold created:
   - `supabase/migrations/20260803115116_stage_1_security_hardening.sql`
   - security rate-limit table + RPC
@@ -64,12 +64,14 @@ Branch: `security/stage-1-hardening`
   - `explanations_cache` client-write lock-down
   - tighter `exercise_explanations_cache` write policies
   - least-privilege function execute revokes/grants
+  - `students` RLS enable + admin-only management policy
+  - drop unused `create_vault_secret(text, text)` Vault wrapper
 
 ## Still required before Stage 1 can be declared complete
 
-- replay the full repo migration chain against a clean disposable Supabase database; the August 3, 2026 staging replay attempt was blocked before execution because `supabase db reset --linked --yes` could not rotate `cli_login_postgres` and required `SUPABASE_DB_PASSWORD`
+- rerun final staging `supabase db lint --linked` and `supabase db advisors --linked` after the `create_vault_secret` removal in an execution context that has direct access to `SUPABASE_DB_PASSWORD`
 - decide whether the remaining Supabase advisor findings are accepted baseline debt or must be remediated before deployment review
-- resolve the remaining 2 high `react-router` / `react-router-dom` advisories once an upstream fixed published release exists, or replace React Router
+- resolve or explicitly accept the remaining `7` high `npm audit` findings
 - verify `quiz_bank_variants` actual deployed shape/relationships against local repo assumptions
 - finalize the production rollback script for the exact pre-Stage-1 policy/grant baseline
 - harden remaining non-Stage-1 production logging outside the protected request paths if this branch is extended further
@@ -81,7 +83,7 @@ Branch: `security/stage-1-hardening`
 - Type check: passes (`npx tsc --noEmit`)
 - Full tests: pass (`npm test -- --run` → `31` files, `189` tests)
 - Targeted lint on modified files: passes
-- npm audit: `2` high vulnerabilities remain, both in the latest published React Router line
+- npm audit: `7` high vulnerabilities remain, `0` critical
 - Full lint: red (`696` errors, `62` warnings), pre-existing repo-wide debt
 - Staging target verified: `urskkwizwutodikgznas`
 - Production untouched: `sibprjxhbxahouejygeu`
@@ -98,6 +100,10 @@ Branch: `security/stage-1-hardening`
   - admin explanation read: passes
   - admin `exercise_explanations_cache` write: passes
   - guardian `exercise_explanations_cache` write: blocked
+  - clean replay from zero: passes
+  - `students` RLS enabled: passes
+  - `students` admin-only policy present: passes
 - Rollback dry-run: passes in transaction on staging
 - Not ready for deployment review
-- Clean replay status: blocked by staging CLI DB-access precondition, not by a confirmed Stage 1 SQL replay failure
+- Clean replay status: passes
+- Final staging lint/advisor rerun after `create_vault_secret` removal: pending

@@ -23,7 +23,9 @@ The Stage 1 migration introduces or changes:
 - `security_rate_limits`
 - `security_audit_events`
 - `consume_security_rate_limit(...)`
+- removal of `create_vault_secret(text, text)` if it still exists
 - policy changes on:
+  - `students`
   - `quiz_bank_variants` (if present)
   - `explanations_cache`
   - `exercise_explanations_cache`
@@ -55,5 +57,6 @@ This document still does not encode the full production rollback to the exact pr
 Before any production deployment approval:
 
 - capture the exact pre-deploy policy list for `explanations_cache` and `exercise_explanations_cache`
-- capture the exact pre-deploy function grants for `create_vault_secret`, `get_model_with_fallback`, `has_role`, and the user/profile helper functions
+- capture the exact pre-deploy function grants for `get_model_with_fallback`, `has_role`, and the user/profile helper functions
+- decide whether `create_vault_secret(text, text)` must be recreated in rollback or can remain removed as dead schema surface
 - write the final production rollback SQL from that captured state

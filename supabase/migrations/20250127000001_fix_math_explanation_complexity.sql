@@ -1,4 +1,11 @@
--- Fix Math Explanation Generator template to match operation complexity
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name = 'prompt_templates'
+  ) THEN
 UPDATE prompt_templates 
 SET prompt_content = 'You are a patient math tutor. Your job is to TEACH the underlying mathematical concept, NOT to solve the student''s exercise.
 
@@ -37,3 +44,5 @@ Subject: {{subject}}
 Language: {{language}}
 Grade level: {{gradeLevel}}'
 WHERE name = 'Math Explanation Generator' AND usage_type = 'explanation';
+  END IF;
+END $$;

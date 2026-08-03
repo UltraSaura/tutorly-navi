@@ -4,12 +4,15 @@ Status: draft only. Do not run in production yet.
 
 Current blockers as of August 3, 2026:
 
-- the August 3, 2026 clean replay attempt on staging `urskkwizwutodikgznas` failed before destructive execution because `supabase db reset --linked --yes` could not alter `cli_login_postgres` and requested `SUPABASE_DB_PASSWORD`; the full repo migration chain therefore still has not been replayed from zero
+- the clean replay now succeeds on staging `urskkwizwutodikgznas`, but the final post-patch staging lint/advisor rerun after removing `create_vault_secret(text, text)` is still pending in an execution context that has direct access to `SUPABASE_DB_PASSWORD`
 - staging validation found and fixed two Stage 1 migration issues:
   - legacy explanation policy name `Guardians view children explanations` also had to be dropped
   - function grant cleanup needed `REVOKE ALL PRIVILEGES ... FROM PUBLIC, ...`
+- additional staging validation fixes were required:
+  - `public.students` needed RLS enabled plus admin-only policy
+  - the unused `public.create_vault_secret(text, text)` helper now needs to be removed from the active schema surface
 - Supabase advisors still report broader existing security/performance debt on staging outside the narrow Stage 1 scope
-- `npm audit` is reduced to 2 high vulnerabilities, both still present in the latest published `react-router` / `react-router-dom` line
+- `npm audit` still reports `7` high vulnerabilities in the current dependency tree
 
 ## Planned order
 
@@ -47,9 +50,11 @@ Current blockers as of August 3, 2026:
 - staged function deployment completed successfully
 - `ai-chat` and `document-processor` now require JWT on staging
 - Stage 1 database hardening was applied and validated on the staging baseline
+- full clean replay from zero completed successfully on staging
+- `students` no longer appears as an RLS-disabled table after replay
 - rollback reverse-DDL dry-run succeeded inside a transaction
 
-This is enough for branch-level validation, but not enough for production deployment approval because the clean full migration replay is still blocked at the staging access layer and advisor triage is still outstanding.
+This is enough for branch-level validation, but not enough for production deployment approval because the final post-patch staging lint/advisor rerun and the remaining audit/advisor triage are still outstanding.
 
 ## Rollback trigger
 

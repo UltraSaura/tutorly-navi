@@ -74,7 +74,12 @@ Branch: `security/stage-1-hardening`
 - targeted `npx eslint` on modified production files: passes
 - `npm test -- --run`: passes after excluding generated `.claude/worktrees/**` mirrors (`31` files, `189` tests)
 - `npm run lint`: still red repo-wide (`696` errors, `62` warnings); baseline debt remains outside this branch scope
-- `npm audit --json`: reduced from `24` total vulnerabilities (including `17` high and `2` critical) to `2` high vulnerabilities, both in the latest published `react-router` / `react-router-dom` release line
+- `npm audit --json`: now reports `7` high vulnerabilities and `0` critical:
+  - `brace-expansion`
+  - `minimatch`
+  - `eslint`
+  - `react-router`
+  - `react-router-dom`
 - staging Supabase target verified before mutation:
   - branch: `security/stage-1-hardening`
   - `supabase/config.toml` → `urskkwizwutodikgznas`
@@ -99,6 +104,12 @@ Branch: `security/stage-1-hardening`
   - drop `consume_security_rate_limit(...)`
   - drop `security_rate_limits`
   - rollback transaction
+- full clean replay on staging succeeded on August 3, 2026 after patching legacy migration-order and idempotency issues across the repo migration chain
+- direct post-replay schema validation confirmed:
+  - `students` now has RLS enabled
+  - `students` now has admin-only policy `Admins can manage students`
+  - `explanations_cache`, `exercise_explanations_cache`, `security_rate_limits`, and `security_audit_events` all have RLS enabled
+- post-replay advisor run no longer reports the earlier `public.students` RLS-disabled error
 
 ## Validation fixes discovered during staging
 
@@ -115,33 +126,39 @@ Two real migration issues were found and corrected during staging validation:
    - `has_role(uuid, public.app_role)` remained executable by `anon`
    - Fix applied to migration: use `REVOKE ALL PRIVILEGES ... FROM PUBLIC, ...` and then re-grant only the intended roles
 
+3. Legacy `students` table remained public without RLS after the clean replay.
+   - Supabase advisors reported: `Table public.students is public, but RLS has not been enabled.`
+   - Fix applied to migration: enable RLS on `public.students`, revoke anonymous table access, and add admin-only policy.
+
+4. `public.create_vault_secret(text, text)` remained as an unused Vault wrapper and caused staging `supabase db lint --linked` failure.
+   - Current app and Edge Function code do not call this helper.
+   - Fix applied to migration: drop `public.create_vault_secret(text, text)` during Stage 1 hardening.
+   - Final staging lint/advisor confirmation after this removal is still pending because the agent process could not inherit the staging DB password from the interactive user shell.
+
 ## Staging-only limitations observed
 
-- The staging project already had pre-existing migration history drift and did not match the repo's full 113-file local migration chain.
-- A clean replay was attempted on staging with `supabase db reset --linked --yes` after relinking the repo to `urskkwizwutodikgznas` for IPv4. The command failed before destructive execution because the CLI could not rotate `cli_login_postgres` and requested `SUPABASE_DB_PASSWORD` instead (`permission denied to alter role`).
-- Remote inspection confirmed the staging project still contains only a partial migration history ending at `20260803115116_stage_1_security_hardening`, so the full 113-file repo chain was not replayed from zero in this environment.
-- The Supabase Management API `apply_migration` endpoint accepted probe migrations, but rejected the full Stage 1 SQL payload as a single request in this environment. Validation therefore applied the Stage 1 DDL in ordered SQL blocks and then recorded the migration version in staging history.
+- The staging project initially had pre-existing migration history drift, and the clean replay effort exposed multiple historical ordering/idempotency defects in older migrations.
+- Direct Supabase SQL from the agent process still depends on a visible `SUPABASE_DB_PASSWORD`. The user shell had it available and could run the replay/query commands successfully; the agent process could not inherit it consistently, which prevented one final autonomous post-patch lint/advisor rerun after the `create_vault_secret` removal.
 
 ## Remaining blockers that are external to this branch
 
-- The full repo migration chain was not replayed onto a clean disposable Supabase database from scratch in this environment. The blocking condition is now explicit: staging reset requires either a valid `SUPABASE_DB_PASSWORD` for `urskkwizwutodikgznas` or restoration of the missing CLI login-role admin path in staging. Until that is available, Stage 1 remains validated only against the existing staging baseline.
-- The final `npm audit` result is blocked by upstream published React Router releases:
-  - `react-router-dom@7.18.2` is the latest published version available on August 3, 2026
-  - npm audit still reports 2 high vulnerabilities in `react-router` / `react-router-dom` for the published `<8.3.0` line
-  - this branch cannot reduce the audit to zero without an upstream release outside the currently published range
+- The final staging `supabase db lint --linked` and post-removal advisor pass were not rerun after the `create_vault_secret` drop because the agent process could not inherit the staging DB password from the interactive shell. This is now an execution-environment blocker, not a known SQL replay blocker.
+- `npm audit --json` still reports `7` high vulnerabilities:
+  - the `react-router` / `react-router-dom` findings remain in the published `<8.3.0` line
+  - the remaining high findings are in the current ESLint dependency chain (`eslint` / `minimatch` / `brace-expansion`)
 - Supabase advisors still report broader pre-existing security/performance debt on staging outside the narrow Stage 1 path, including:
   - `public.configured_models` is a `SECURITY DEFINER` view
-  - `public.security_rate_limits` and `public.security_audit_events` have RLS enabled with no explicit policies
   - multiple GraphQL exposure and permissive-policy findings across legacy tables
+  - public bucket listing on `subject-icons`
   - Auth leaked-password protection and MFA options are still not enabled at the project level
 
 ## Current assessment
 
-This branch materially reduces the most obvious exposed attack surface, and the Stage 1 hardening paths were validated on staging, but Stage 1 is still blocked from deployment review. The remaining work is concentrated in:
+This branch materially reduces the exposed attack surface, and the full clean replay now succeeds on staging, but Stage 1 is still blocked from deployment review. The remaining work is concentrated in:
 
-- validating the full repo migration chain against a clean disposable Supabase database
+- rerunning the final staging lint/advisor pass after the `create_vault_secret` removal in an environment where the DB password is visible to the executing process
 - deciding whether the remaining advisor findings are accepted baseline debt or must be remediated before deployment review
-- waiting for a React Router release that clears the last 2 high audit findings, or replacing React Router entirely
+- resolving or explicitly accepting the remaining `npm audit` high findings
 - validating the conditional `quiz_bank_variants` assumptions against a real non-production database
 
 The registration-model decision is now implemented as:
@@ -150,4 +167,4 @@ The registration-model decision is now implemented as:
 - child creation only through authenticated guardian/admin flows
 - no anonymous privileged child/student account creation path remains enabled
 
-Recommendation: not ready for deployment review yet. The minimum next unblocker is a successful clean replay on staging or another disposable non-production Supabase database using the full repo migration chain.
+Recommendation: not ready for deployment review yet. The clean replay blocker is resolved, but the final staging lint/advisor rerun and the remaining audit/advisor debt still need explicit disposition.

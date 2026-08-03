@@ -120,6 +120,18 @@ begin
 end
 $$;
 
+alter table if exists public.students enable row level security;
+
+revoke all on table public.students from anon;
+
+drop policy if exists "Admins can manage students" on public.students;
+create policy "Admins can manage students"
+on public.students
+for all
+to authenticated
+using (public.has_role(auth.uid(), 'admin'::public.app_role))
+with check (public.has_role(auth.uid(), 'admin'::public.app_role));
+
 drop policy if exists "System can create explanations" on public.explanations_cache;
 drop policy if exists "System can update explanations" on public.explanations_cache;
 drop policy if exists "Authenticated can insert explanations" on public.explanations_cache;
@@ -155,6 +167,9 @@ drop policy if exists "Authenticated can insert exercise explanations cache" on 
 drop policy if exists "Authenticated can update exercise explanations cache" on public.exercise_explanations_cache;
 drop policy if exists "System can create exercise explanations cache" on public.exercise_explanations_cache;
 drop policy if exists "System can update exercise explanations cache" on public.exercise_explanations_cache;
+drop policy if exists "Admins can insert exercise explanations cache" on public.exercise_explanations_cache;
+drop policy if exists "Admins can update exercise explanations cache" on public.exercise_explanations_cache;
+drop policy if exists "Admins can delete exercise explanations cache" on public.exercise_explanations_cache;
 
 create policy "Admins can insert exercise explanations cache"
 on public.exercise_explanations_cache
@@ -175,7 +190,7 @@ for delete
 to authenticated
 using (public.has_role(auth.uid(), 'admin'::public.app_role));
 
-revoke all privileges on function public.create_vault_secret(text, text) from PUBLIC, anon, authenticated;
+drop function if exists public.create_vault_secret(text, text);
 revoke all privileges on function public.get_model_with_fallback() from PUBLIC, anon, authenticated;
 grant execute on function public.get_model_with_fallback() to service_role;
 

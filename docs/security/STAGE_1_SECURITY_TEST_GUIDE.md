@@ -7,6 +7,7 @@
 - targeted `npx eslint` on modified production/security files
 - `npm test -- --run` → passes after excluding generated `.claude/worktrees/**` mirror copies from test discovery (`31` files, `189` tests)
 - `npm run lint` → still red repo-wide because of unrelated baseline debt (`696` errors, `62` warnings)
+- `npm audit --json` → `7` high vulnerabilities, `0` critical
 
 ## Staging checks completed on August 3, 2026
 
@@ -28,13 +29,16 @@ Completed:
    - guardian insert into `exercise_explanations_cache` is rejected
    - `ai-chat` requires JWT on staging
    - `document-processor` requires JWT on staging
+   - full repo migration chain replays successfully from zero on staging
+   - `students` has RLS enabled after replay
+   - `students` has admin-only policy after replay
 5. Ran Supabase advisors against staging.
 6. Ran rollback reverse-DDL in a transaction and rolled it back successfully.
 
-## Still required in a clean disposable database
+## Still required
 
-1. Replay the full repo migration chain from scratch.
-2. Re-run the Stage 1 hardening migration on that clean baseline.
+1. Re-run staging `supabase db lint --linked` after the `create_vault_secret(text, text)` removal.
+2. Re-run staging `supabase db advisors --linked` after that same patch.
 3. Re-check:
    - anonymous request to `ai-chat` returns 401
    - anonymous request to `document-processor` returns 401
@@ -48,7 +52,8 @@ Completed:
 ## Environment limitations observed in this workspace
 
 - Docker is not installed in this workspace, so `supabase start` / local containerized validation cannot be completed here.
-- The staging project already had migration drift, so the validation performed here covered the Stage 1 hardening path on staging rather than a clean from-scratch rebuild.
+- The staging project initially had migration drift; that led to multiple historical migration fixes before the clean replay succeeded.
+- The agent process could not reliably inherit the interactive shell's `SUPABASE_DB_PASSWORD`, which blocked the final autonomous rerun of staging lint/advisors after the last schema patch.
 
 ## Database/RLS checks
 
