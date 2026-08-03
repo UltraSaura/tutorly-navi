@@ -13,6 +13,13 @@ export type VisualPie = {
   }[];
 };
 
+export type VisualBar = {
+  subtype: "bar";
+  totalParts: number;
+  coloredParts: number;
+  orientation?: "horizontal";
+};
+
 export type VisualGrid = {
   subtype: "grid";
   rows: number;
@@ -67,9 +74,47 @@ export type VisualAngle = {
   }[];
 };
 
+export type VisualTriangle = {
+  subtype: "triangle";
+  labels: [string, string, string];
+  rightAngleAt?: string;
+  angleLabel?: {
+    vertex: string;
+    degrees: number;
+  };
+  sideLabels?: Record<string, string>;
+  targetSide?: string;
+};
+
+export type GeometryFigureShape =
+  | "triangle"
+  | "rectangle"
+  | "square"
+  | "circle"
+  | "rhombus"
+  | "parallelogram"
+  | "trapezoid"
+  | "pentagon"
+  | "hexagon"
+  | "polygon"
+  | "cube"
+  | "cuboid"
+  | "cylinder"
+  | "cone"
+  | "sphere";
+
+export type VisualGeometryFigure = {
+  subtype: "geometry_figure";
+  shape: GeometryFigureShape;
+  label?: string;
+};
+
 export type VisualUnion =
+  | VisualBar
   | VisualPie
   | VisualGrid
   | VisualShapeSelect
   | VisualLineRelation
-  | VisualAngle;
+  | VisualAngle
+  | VisualTriangle
+  | VisualGeometryFigure;

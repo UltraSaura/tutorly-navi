@@ -1,0 +1,617 @@
+{
+  "sources": [
+    {
+      "id": "apmep:https://www.apmep.fr/Brevet-2018",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-16T17:46:14.716Z"
+    }
+  ],
+  "papers": [
+    {
+      "id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-16T17:46:14.716Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "title": "DNB Brevet Métropole La Réunion 28 juin 2018",
+      "level": "3eme",
+      "school_cycle": "cycle_4",
+      "pdf_hash": "vision-extracted",
+      "raw_text": "Le gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski. Ce trophée pèse 9 kg et mesure 46 cm de hauteur.\n\nParmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées. Les PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm. En janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines.\n\nDans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.\n\nLa figure ci-dessous n'est pas représentée en vraie grandeur. Les points C, B et E sont alignés. Le triangle ABC est rectangle en A. Le triangle BDC est rectangle en B.\n\nProgramme de calcul : Choisir un nombre → Multiplier ce nombre par 4 → Ajouter 8 → Multiplier le résultat par 2.\n\nLes longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. Un programme Scratch dessine un carré (côté = Longueur) puis un triangle équilatéral (côté = Longueur), avance de Longueur÷6, puis répète avec une nouvelle Longueur.\n\nLe « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On lui donne une vitesse de rotation initiale au temps t = 0, puis sa vitesse diminue jusqu'à l'arrêt complet. Sa vitesse de rotation est relevée en nombre de tours par seconde. Pour calculer la vitesse V(t) en fonction du temps t : V(t) = −0,214 × t + V_initiale.",
+      "exercises": [
+        "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision:ex01",
+        "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision:ex02",
+        "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision:ex03",
+        "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision:ex04",
+        "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision:ex05",
+        "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision:ex06",
+        "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision:ex07"
+      ],
+      "parsing_status": "parsed"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision:ex01",
+      "paper_id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-16T17:46:14.716Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "pdf_hash": "vision-extracted",
+      "exercise_number": 1,
+      "title": "Exercice 1 (11 points)",
+      "raw_text": "Le gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski. Ce trophée pèse 9 kg et mesure 46 cm de hauteur.",
+      "parsing_status": "parsed",
+      "parsing_confidence": "high",
+      "parsed_content": {
+        "title": "Exercice 1",
+        "context": "Le gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski. Ce trophée pèse 9 kg et mesure 46 cm de hauteur.",
+        "documents": [
+          {
+            "type": "image",
+            "label": "Globe de cristal",
+            "alt": "Photo du trophée globe de cristal",
+            "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig1.png",
+            "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig1.png"
+          },
+          {
+            "type": "image",
+            "label": "Carte — localisation de Pyeongchang",
+            "alt": "Mappemonde avec Pyeongchang marqué en Corée du Sud (latitude ~37°N, longitude ~128°E)",
+            "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig2.png",
+            "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig2.png"
+          },
+          {
+            "type": "image",
+            "label": "Schéma du trophée",
+            "alt": "Cylindre de 23 cm surmonté d'une sphère de diamètre 23 cm",
+            "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig3.png",
+            "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig3.png"
+          }
+        ],
+        "questions": [
+          {
+            "id": "q1",
+            "label": "1.",
+            "text": "Le biathlète Martin Fourcade a remporté le sixième gros globe de cristal en 2017 à Pyeongchang en Corée du Sud. Donner approximativement la latitude et la longitude de ce lieu repéré sur la carte.",
+            "points": null,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q2",
+            "label": "2.",
+            "text": "On considère que le globe est composé d'un cylindre en cristal de diamètre 6 cm surmonté d'une boule de cristal. Montrer qu'une valeur approchée du volume de la boule est de 6 371 cm³. Rappel : volume d'une boule de rayon R : V = (4/3)·π·R³ ; volume d'un cylindre de rayon r et hauteur h : V = π·r²·h.",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q3",
+            "label": "3.",
+            "text": "Marie affirme que le volume de la boule de cristal représente environ 90 % du volume total du trophée. A-t-elle raison ?",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Le gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski. Ce trophée pèse 9 kg et mesure 46 cm de hauteur.",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision:ex02",
+      "paper_id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-16T17:46:14.716Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "pdf_hash": "vision-extracted",
+      "exercise_number": 2,
+      "title": "Exercice 2 (14 points)",
+      "raw_text": "Parmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées. Les PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm. En janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines.",
+      "parsing_status": "parsed",
+      "parsing_confidence": "high",
+      "parsed_content": {
+        "title": "Exercice 2",
+        "context": "Parmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées. Les PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm. En janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines.",
+        "documents": [
+          {
+            "type": "table",
+            "label": "Données statistiques PM10 — Lyon (16 au 25 janvier 2017)",
+            "table": {
+              "headers": [
+                "Statistique",
+                "Valeur"
+              ],
+              "rows": [
+                [
+                  "Moyenne",
+                  "72,5 μg/m³"
+                ],
+                [
+                  "Médiane",
+                  "83,5 μg/m³"
+                ],
+                [
+                  "Concentration minimale",
+                  "22 μg/m³"
+                ],
+                [
+                  "Concentration maximale",
+                  "107 μg/m³"
+                ]
+              ]
+            }
+          },
+          {
+            "type": "table",
+            "label": "Relevés journaliers PM10 — Grenoble (16 au 25 janvier 2017)",
+            "table": {
+              "headers": [
+                "Date",
+                "Concentration PM10 (μg/m³)"
+              ],
+              "rows": [
+                [
+                  "16 janvier",
+                  "32"
+                ],
+                [
+                  "17 janvier",
+                  "39"
+                ],
+                [
+                  "18 janvier",
+                  "52"
+                ],
+                [
+                  "19 janvier",
+                  "57"
+                ],
+                [
+                  "20 janvier",
+                  "78"
+                ],
+                [
+                  "21 janvier",
+                  "63"
+                ],
+                [
+                  "22 janvier",
+                  "60"
+                ],
+                [
+                  "23 janvier",
+                  "82"
+                ],
+                [
+                  "24 janvier",
+                  "82"
+                ],
+                [
+                  "25 janvier",
+                  "89"
+                ]
+              ]
+            }
+          }
+        ],
+        "questions": [
+          {
+            "id": "q1",
+            "label": "1.",
+            "text": "Laquelle de ces deux villes a eu la plus forte concentration moyenne en PM10 entre le 16 et le 25 janvier ?",
+            "points": null,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q2",
+            "label": "2.",
+            "text": "Calculer l'étendue des séries des relevés en PM10 à Lyon et à Grenoble. Laquelle de ces deux villes a eu l'étendue la plus importante ? Interpréter ce résultat.",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q3",
+            "label": "3.",
+            "text": "L'affirmation suivante est-elle exacte ? « Du 16 au 25 janvier, le seuil d'alerte de 80 μg/m³ par jour a été dépassé au moins 5 fois à Lyon. » Justifier.",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Parmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées. Les PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm. En janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines.",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision:ex03",
+      "paper_id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-16T17:46:14.716Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "pdf_hash": "vision-extracted",
+      "exercise_number": 3,
+      "title": "Exercice 3 (12 points)",
+      "raw_text": "Dans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.",
+      "parsing_status": "parsed",
+      "parsing_confidence": "high",
+      "parsed_content": {
+        "title": "Exercice 3",
+        "context": "Dans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.",
+        "documents": [],
+        "questions": [
+          {
+            "id": "q1",
+            "label": "1.",
+            "text": "Quelle est la probabilité qu'il écoute du rap ?",
+            "points": null,
+            "answer_type": "numeric",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q2",
+            "label": "2.",
+            "text": "La probabilité qu'il écoute du rock est égale à 7/15. Combien Théo a-t-il de morceaux de rock dans son lecteur audio ?",
+            "points": null,
+            "answer_type": "numeric",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q3",
+            "label": "3.",
+            "text": "Alice possède 40 % de morceaux de rock dans son lecteur audio. Si Théo et Alice appuient tous les deux sur « lecture aléatoire », lequel a le plus de chances d'écouter un morceau de rock ?",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Dans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision:ex04",
+      "paper_id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-16T17:46:14.716Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "pdf_hash": "vision-extracted",
+      "exercise_number": 4,
+      "title": "Exercice 4 (14 points)",
+      "raw_text": "La figure ci-dessous n'est pas représentée en vraie grandeur. Les points C, B et E sont alignés. Le triangle ABC est rectangle en A. Le triangle BDC est rectangle en B.",
+      "parsing_status": "parsed",
+      "parsing_confidence": "high",
+      "parsed_content": {
+        "title": "Exercice 4",
+        "context": "La figure ci-dessous n'est pas représentée en vraie grandeur. Les points C, B et E sont alignés. Le triangle ABC est rectangle en A. Le triangle BDC est rectangle en B.",
+        "documents": [
+          {
+            "type": "image",
+            "label": "Figure géométrique — triangles semblables",
+            "alt": "Figure avec triangles ABC rectangle en A, BDC rectangle en B, et BFE. Mesures : CB=7,5 cm, BE=6,8 cm, BF=6 cm, EF=3,2 cm, BD=8,5 cm, angle ACB=61°",
+            "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex04/ex4-fig1.png",
+            "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex04/ex4-fig1.png"
+          }
+        ],
+        "questions": [
+          {
+            "id": "q1",
+            "label": "1.",
+            "text": "Montrer que la longueur BD est égale à 4 cm.",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q2",
+            "label": "2.",
+            "text": "Montrer que les triangles CBD et BFE sont semblables.",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q3",
+            "label": "3.",
+            "text": "Sophie affirme que l'angle BFE est un angle droit. A-t-elle raison ?",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q4",
+            "label": "4.",
+            "text": "Max affirme que l'angle ACD est un angle droit. A-t-il raison ?",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "La figure ci-dessous n'est pas représentée en vraie grandeur. Les points C, B et E sont alignés. Le triangle ABC est rectangle en A. Le triangle BDC est rectangle en B.",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision:ex05",
+      "paper_id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-16T17:46:14.716Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "pdf_hash": "vision-extracted",
+      "exercise_number": 5,
+      "title": "Exercice 5 (16 points)",
+      "raw_text": "Programme de calcul : Choisir un nombre → Multiplier ce nombre par 4 → Ajouter 8 → Multiplier le résultat par 2.",
+      "parsing_status": "parsed",
+      "parsing_confidence": "high",
+      "parsed_content": {
+        "title": "Exercice 5",
+        "context": "Programme de calcul : Choisir un nombre → Multiplier ce nombre par 4 → Ajouter 8 → Multiplier le résultat par 2.",
+        "documents": [],
+        "questions": [
+          {
+            "id": "q1",
+            "label": "1.",
+            "text": "Vérifier que si on choisit le nombre −1, ce programme donne 8 comme résultat final.",
+            "points": null,
+            "answer_type": "numeric",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q2",
+            "label": "2.",
+            "text": "Le programme donne 30 comme résultat final. Quel est le nombre choisi au départ ?",
+            "points": null,
+            "answer_type": "numeric",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q3",
+            "label": "3.",
+            "text": "L'expression A = 2(4x + 8) donne le résultat du programme pour un nombre x. On pose B = (4 + x)² − x². Prouver que A et B sont égales pour toutes les valeurs de x.",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q4",
+            "label": "4.",
+            "text": "Affirmation 1 : Ce programme donne un résultat positif pour toutes les valeurs de x. Affirmation 2 : Si x est un entier, le résultat est un multiple de 8. Pour chacune, indiquer si elle est vraie ou fausse en justifiant.",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Programme de calcul : Choisir un nombre → Multiplier ce nombre par 4 → Ajouter 8 → Multiplier le résultat par 2.",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision:ex06",
+      "paper_id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-16T17:46:14.716Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "pdf_hash": "vision-extracted",
+      "exercise_number": 6,
+      "title": "Exercice 6 (16 points)",
+      "raw_text": "Les longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. Un programme Scratch dessine un carré (côté = Longueur) puis un triangle équilatéral (côté = Longueur), avance de Longueur÷6, puis répète avec une nouvelle Longueur.",
+      "parsing_status": "parsed",
+      "parsing_confidence": "high",
+      "parsed_content": {
+        "title": "Exercice 6",
+        "context": "Les longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. Un programme Scratch dessine un carré (côté = Longueur) puis un triangle équilatéral (côté = Longueur), avance de Longueur÷6, puis répète avec une nouvelle Longueur.",
+        "documents": [
+          {
+            "type": "image",
+            "label": "Programme Scratch",
+            "alt": "Blocs Scratch : initialisation, carré (répéter 4 fois : avancer Longueur, tourner 90°), triangle (répéter 3 fois : avancer Longueur, tourner 120°)",
+            "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig1.png",
+            "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig1.png"
+          },
+          {
+            "type": "image",
+            "label": "Figure obtenue par le programme Scratch",
+            "alt": "Grand carré avec un grand triangle équilatéral inscrit, et à l'intérieur un petit carré avec un petit triangle, axe de symétrie vertical",
+            "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig2.png",
+            "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig2.png"
+          }
+        ],
+        "questions": [
+          {
+            "id": "q1",
+            "label": "1.",
+            "text": "On prend comme échelle 1 cm pour 50 pixels. a. Représenter sur votre copie la figure obtenue si le programme est exécuté jusqu'à la ligne 7 comprise. b. Quelles sont les coordonnées du stylo après l'exécution de la ligne 8 ?",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q2",
+            "label": "2.",
+            "text": "On exécute le programme complet et on obtient la figure ci-dessus qui possède un axe de symétrie vertical. Recopier et compléter la ligne 9 du programme pour obtenir cette figure.",
+            "points": null,
+            "answer_type": "short_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q3",
+            "label": "3.",
+            "text": "a. Parmi les transformations suivantes, translation, homothétie, rotation, symétrie axiale, quelle est la transformation géométrique qui permet d'obtenir le petit carré à partir du grand carré ? Préciser le rapport de réduction. b. Quel est le rapport des aires entre les deux carrés dessinés ?",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Les longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. Un programme Scratch dessine un carré (côté = Longueur) puis un triangle équilatéral (côté = Longueur), avance de Longueur÷6, puis répète avec une nouvelle Longueur.",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision:ex07",
+      "paper_id": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision",
+      "source_name": "apmep",
+      "source_url": "https://www.apmep.fr/Brevet-2018",
+      "fetched_at": "2026-05-16T17:46:14.716Z",
+      "exam": "dnb",
+      "session_year": 2018,
+      "discipline": "mathematiques",
+      "series": "generale",
+      "location": "metropole-reunion",
+      "variant": "standard",
+      "pdf_url": "",
+      "pdf_hash": "vision-extracted",
+      "exercise_number": 7,
+      "title": "Exercice 7 (17 points)",
+      "raw_text": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On lui donne une vitesse de rotation initiale au temps t = 0, puis sa vitesse diminue jusqu'à l'arrêt complet. Sa vitesse de rotation est relevée en nombre de tours par seconde. Pour calculer la vitesse V(t) en fonction du temps t : V(t) = −0,214 × t + V_initiale.",
+      "parsing_status": "parsed",
+      "parsing_confidence": "high",
+      "parsed_content": {
+        "title": "Exercice 7",
+        "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On lui donne une vitesse de rotation initiale au temps t = 0, puis sa vitesse diminue jusqu'à l'arrêt complet. Sa vitesse de rotation est relevée en nombre de tours par seconde. Pour calculer la vitesse V(t) en fonction du temps t : V(t) = −0,214 × t + V_initiale.",
+        "documents": [
+          {
+            "type": "image",
+            "label": "Photo du hand-spinner",
+            "alt": "Photo d'un hand-spinner à trois branches",
+            "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+            "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png"
+          },
+          {
+            "type": "image",
+            "label": "Graphique — vitesse de rotation du hand-spinner en fonction du temps",
+            "alt": "Graphique linéaire décroissant : vitesse (tours/s) de 20 à 0 en fonction du temps (s) de 0 à 94s. Droite de pente −0,214.",
+            "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+            "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png"
+          }
+        ],
+        "questions": [
+          {
+            "id": "q1",
+            "label": "1.",
+            "text": "Le temps et la vitesse de rotation du hand-spinner sont-ils proportionnels ? Justifier.",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q2",
+            "label": "2.",
+            "text": "Par lecture graphique : a. Quelle est la vitesse de rotation initiale (en tours par seconde) ? b. Quelle est la vitesse au bout d'une minute et vingt secondes ? c. Au bout de combien de temps le hand-spinner va-t-il s'arrêter ?",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          },
+          {
+            "id": "q3",
+            "label": "3.",
+            "text": "On lance le hand-spinner à une vitesse initiale de 20 tours/s. a. Calculer sa vitesse au bout de 30 s avec V(t) = −0,214 × t + 20. b. Au bout de combien de temps va-t-il s'arrêter ? Justifier par un calcul. c. Est-il vrai que, si l'on fait tourner le hand-spinner deux fois plus vite au départ, il tournera deux fois plus longtemps ? Justifier.",
+            "points": null,
+            "answer_type": "free_text",
+            "expected_answer": null,
+            "student_answer": null,
+            "subquestions": []
+          }
+        ],
+        "raw_excerpt": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On lui donne une vitesse de rotation initiale au temps t = 0, puis sa vitesse diminue jusqu'à l'arrêt complet. Sa vitesse de rotation est relevée en nombre de tours par seconde. Pour calculer la vitesse V(t) en fonction du temps t : V(t) = −0,214 × t + V_initiale.",
+        "confidence": "high"
+      }
+    }
+  ],
+  "exercise_program_links": []
+}

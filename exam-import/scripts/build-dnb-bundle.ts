@@ -2,6 +2,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { collectAmiensDnbMaths } from "../sources/amiens-dnb-maths.ts";
 import { collectEduscolDnb, type EduscolCollectOptions } from "../sources/eduscol-dnb.ts";
+import { collectApmepDnb } from "../sources/apmep-dnb.ts";
+import { parseLatexZipToExam } from "../parsers/parse-latex-exam.ts";
 import {
   downloadPdf,
   parsePdfToExam,
@@ -14,16 +16,18 @@ import {
   type SchoolProgramEntry,
 } from "../mappers/exam-to-school-program.ts";
 
-type SourceOption = "eduscol" | "amiens" | "all";
+type SourceOption = "eduscol" | "amiens" | "apmep" | "all";
 
 interface CliOptions {
   source: SourceOption;
   year?: number;
   discipline?: string;
+  location?: string;
   out: string;
   programEntries?: string;
   withAssets: boolean;
   assetsRoot: string;
+  latexZip?: string; // path to a locally downloaded APMEP LaTeX ZIP
 }
 
 interface ExamBundle {
@@ -35,20 +39,53 @@ interface ExamBundle {
 
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
+
+  // Local LaTeX ZIP mode — skip scraping
+  if (options.latexZip) {
+    await buildFromLocalLatexZip(options);
+    return;
+  }
+
   const collected = await collectPapers(options);
   const bundle: ExamBundle = { sources: buildSources(collected), papers: [], exercises: [], exercise_program_links: [] };
 
   for (const paper of collected) {
     try {
-      const bytes = await downloadPdf(paper.pdf_url);
-      const parsed = await parsePdfToExam(paper, bytes, {
-        withAssets: options.withAssets,
-        assetsRoot: options.assetsRoot,
-      });
+      let parsed: Awaited<ReturnType<typeof parsePdfToExam>>;
+
+      if (paper.latex_zip_url) {
+        try {
+          process.stdout.write(`[LaTeX] ${paper.title}… `);
+          const zipBytes = await downloadFile(paper.latex_zip_url);
+          parsed = await parseLatexZipToExam(paper, zipBytes, {
+            withAssets: options.withAssets,
+            assetsRoot: options.assetsRoot,
+          });
+          console.log(`ok (${parsed.exercises.length} exercises)`);
+        } catch (latexError) {
+          console.warn(`failed (${latexError instanceof Error ? latexError.message : String(latexError)})`);
+          process.stdout.write(`  [PDF fallback] ${paper.title}… `);
+          const pdfBytes = await downloadPdf(paper.pdf_url);
+          parsed = await parsePdfToExam(paper, pdfBytes, {
+            withAssets: options.withAssets,
+            assetsRoot: options.assetsRoot,
+          });
+          console.log(`ok (${parsed.exercises.length} exercises)`);
+        }
+      } else {
+        process.stdout.write(`[PDF] ${paper.title}… `);
+        const pdfBytes = await downloadPdf(paper.pdf_url);
+        parsed = await parsePdfToExam(paper, pdfBytes, {
+          withAssets: options.withAssets,
+          assetsRoot: options.assetsRoot,
+        });
+        console.log(`ok (${parsed.exercises.length} exercises)`);
+      }
+
       bundle.papers.push(parsed.paper);
       bundle.exercises.push(...parsed.exercises);
     } catch (error) {
-      console.error(`Skipping ${paper.pdf_url}: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`Skipping ${paper.title}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -62,6 +99,48 @@ async function main(): Promise<void> {
   console.log(`Sources: ${bundle.sources.length}; papers: ${bundle.papers.length}; exercises: ${bundle.exercises.length}; links: ${bundle.exercise_program_links.length}`);
 }
 
+async function buildFromLocalLatexZip(options: CliOptions): Promise<void> {
+  if (!options.latexZip) throw new Error("--latex-zip path is required");
+  if (!options.year) throw new Error("--year is required with --latex-zip");
+
+  const { readFile: fsReadFile } = await import("node:fs/promises");
+  const zipBytes = new Uint8Array(await (await fsReadFile(options.latexZip)).buffer);
+
+  const metadata: CollectedPaper = {
+    source_name: "apmep",
+    source_url: "https://www.apmep.fr",
+    fetched_at: new Date().toISOString(),
+    exam: "dnb",
+    session_year: options.year,
+    discipline: options.discipline ?? "mathematiques",
+    series: "generale",
+    location: options.location ?? "metropole",
+    variant: "standard",
+    pdf_url: options.latexZip,
+    latex_zip_url: options.latexZip,
+    title: `DNB mathématiques ${options.location ?? "metropole"} ${options.year}`,
+  };
+
+  process.stdout.write(`[LaTeX] ${metadata.title}… `);
+  const parsed = await parseLatexZipToExam(metadata, zipBytes, {
+    withAssets: options.withAssets,
+    assetsRoot: options.assetsRoot,
+  });
+  console.log(`ok (${parsed.exercises.length} exercises)`);
+
+  const bundle: ExamBundle = {
+    sources: [{ id: "apmep", source_name: "apmep", source_url: metadata.source_url, fetched_at: metadata.fetched_at }],
+    papers: [parsed.paper],
+    exercises: parsed.exercises,
+    exercise_program_links: [],
+  };
+
+  await mkdir(dirname(options.out), { recursive: true });
+  await writeFile(options.out, `${JSON.stringify(bundle, null, 2)}\n`, "utf8");
+  console.log(`Wrote ${options.out}`);
+  console.log(`Papers: ${bundle.papers.length}; exercises: ${bundle.exercises.length}`);
+}
+
 async function collectPapers(options: CliOptions): Promise<CollectedPaper[]> {
   const eduscolOptions: EduscolCollectOptions = {
     year: options.year,
@@ -71,6 +150,7 @@ async function collectPapers(options: CliOptions): Promise<CollectedPaper[]> {
   const batches = await Promise.all([
     options.source === "eduscol" || options.source === "all" ? collectEduscolDnb(eduscolOptions) : Promise.resolve([]),
     options.source === "amiens" || options.source === "all" ? collectAmiensDnbMaths({ year: options.year }) : Promise.resolve([]),
+    options.source === "apmep" || options.source === "all" ? collectApmepDnb({ year: options.year }) : Promise.resolve([]),
   ]);
 
   const papers = batches.flat().filter((paper) => {
@@ -151,6 +231,12 @@ function parseArgs(args: string[]): CliOptions {
     } else if (arg === "--program-entries" && value !== undefined) {
       options.programEntries = value;
       index += 1;
+    } else if (arg === "--location" && value !== undefined) {
+      options.location = value;
+      index += 1;
+    } else if (arg === "--latex-zip" && value !== undefined) {
+      options.latexZip = value;
+      index += 1;
     } else if (arg === "--with-assets") {
       options.withAssets = true;
     } else if (arg === "--assets-root" && value !== undefined) {
@@ -172,7 +258,15 @@ function parseArgs(args: string[]): CliOptions {
 }
 
 function isSourceOption(value: string | undefined): value is SourceOption {
-  return value === "eduscol" || value === "amiens" || value === "all";
+  return value === "eduscol" || value === "amiens" || value === "apmep" || value === "all";
+}
+
+async function downloadFile(url: string): Promise<Uint8Array> {
+  const res = await fetch(url, {
+    headers: { "user-agent": "TutorlyExamImport/1.0 (+https://github.com/UltraSaura/tutorly-schoolprg)" },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
+  return new Uint8Array(await res.arrayBuffer());
 }
 
 function normalizeDiscipline(value: string): string {
@@ -182,9 +276,15 @@ function normalizeDiscipline(value: string): string {
 function printHelp(): void {
   console.log(`Usage: npm run build:dnb-annales -- [options]
 
-Options:
+Local LaTeX ZIP mode (APMEP, download manually):
+  --latex-zip ~/Downloads/dnb2024_metropole.zip
+  --year 2024
+  --location metropole|amerique_du_nord|asie|polynesie|antilles_guyane
+  --out exam-import/bundles/dnb-2024-metropole.json
+
+Scrape mode:
   --source eduscol|amiens|all
-  --year 2021
+  --year 2024
   --discipline mathematiques
   --out exam-import/bundles/dnb-maths.json
   --program-entries path/to/existing-program-entries.json

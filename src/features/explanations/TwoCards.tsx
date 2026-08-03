@@ -8,6 +8,7 @@ import { isUnder11YearsOld } from '@/utils/gradeLevelMapping';
 import { useUserContext } from '@/hooks/useUserContext';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { extractExpressionFromText } from '@/utils/mathStepper/parser';
+import { analyzeExerciseProfile, detectOperationType, generateProfileMatchedExample } from '@/utils/operationTypeDetector';
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/context/SimpleLanguageContext';
@@ -203,9 +204,29 @@ export function TwoCards({
     stepCount: orderedSteps?.length
   });
 
-  const stepTextForExpression = orderedSteps
-    ? orderedSteps.map(step => `${step.title}\n${step.body}`).join('\n\n')
-    : s.example;
+  const stepTextForExpression = React.useMemo(() => {
+    if (!orderedSteps?.length) return s.example;
+
+    const checkIndex = orderedSteps.findIndex(step => step.kind === 'check');
+    const supportOrExampleStep = orderedSteps.find((step, index) =>
+      (step.kind === 'example' || step.kind === 'strategy') &&
+      (checkIndex === -1 || index < checkIndex) &&
+      typeof step.body === 'string' &&
+      /(\d+(?:[.,]\d+)?)\s*[+\-×÷*/]\s*(\d+(?:[.,]\d+)?)/.test(step.body)
+    );
+
+    if (supportOrExampleStep?.body) {
+      return supportOrExampleStep.body;
+    }
+
+    const explicitExampleStep = orderedSteps.find((step) =>
+      step.kind === 'example' &&
+      typeof step.body === 'string' &&
+      step.body.trim().length > 0
+    );
+
+    return explicitExampleStep?.body || s.example;
+  }, [orderedSteps, s.example]);
   const miniPracticeContext = React.useMemo(() => {
     if (!orderedSteps || !s.exercise?.trim()) return undefined;
 
@@ -297,20 +318,18 @@ export function TwoCards({
     });
   }, [orderedSteps, s.exercise, subjectSlug, topicId, userContext?.learning_style]);
 
-  // NEW: Extract math expression from example for InteractiveMathStepper
-  let exampleExpression = stepTextForExpression ? extractExpressionFromText(stepTextForExpression) : null;
-  
-  // Fallback: If no expression extracted, synthesize one matching the operation type
-  if (!exampleExpression) {
-    const opSymbol = detectOp(s.example || s.exercise || '');
-    const fallbacks: Record<string, string> = {
-      '×': '4 × 5',
-      '÷': '20 ÷ 4',
-      '-': '50 - 17',
-      '+': '23 + 45'
-    };
-    exampleExpression = fallbacks[opSymbol] || '23 + 45';
-  }
+  const exampleExpression = React.useMemo(() => {
+    const exerciseText = s.exercise || '';
+    const profile = analyzeExerciseProfile(exerciseText);
+    const op = detectOperationType(exerciseText).type;
+
+    if (op !== 'unknown') {
+      return generateProfileMatchedExample(profile).replace(/\s*=\s*.+$/, '');
+    }
+
+    const extracted = stepTextForExpression ? extractExpressionFromText(stepTextForExpression) : null;
+    return extracted || '2 + 3';
+  }, [s.exercise, stepTextForExpression]);
   
   // Show interactive stepper only for pure arithmetic problems for young students
   const shouldShowInteractiveStepper = !isGuardian && activeLevel &&

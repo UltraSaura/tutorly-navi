@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button';
 import { BookOpen } from 'lucide-react';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
+import { CompactStreakChip } from '@/components/game';
+import { useStudentStats } from '@/hooks/useStudentStats';
+import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { toast } from 'sonner';
 import { PageMeta } from '@/components/seo/PageMeta';
 
@@ -24,7 +27,8 @@ const LearningPage = () => {
   const { t } = useLanguage();
   const { profile } = useUserCurriculumProfile();
   const activeSchoolLevel = useActiveSchoolLevel();
-  const { data: subjects, isLoading } = useLearningSubjects();
+  const { data: subjects, isLoading, isError } = useLearningSubjects();
+  const { data: stats } = useStudentStats();
 
   if (isLoading) {
     return <div className="min-h-screen bg-gray-50 dark:bg-background pb-20">
@@ -38,29 +42,13 @@ const LearningPage = () => {
       </div>;
   }
 
-  // Check if user has curriculum profile
+  // Check if user has curriculum profile — show onboarding wizard instead of dead-end card
   if ((!profile?.countryCode || !profile?.levelCode) && !activeSchoolLevel.isPreviewing) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center p-6">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle>{t('learning.setupRequired')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              {t('learning.setupMessage')}
-            </p>
-            <Button onClick={() => navigate('/profile')}>
-              {t('learning.goToProfile')}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <OnboardingWizard />;
   }
 
   // Check if no subjects available
-  if (!subjects || subjects.length === 0) {
+  if (isError || !subjects || subjects.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center p-6">
         <Card className="max-w-md text-center">
@@ -86,7 +74,11 @@ const LearningPage = () => {
           <h1 className="font-extrabold text-white text-xl">
             {t('learning.chooseSubject') || 'Choose Your Subject'}
           </h1>
-          
+          <CompactStreakChip
+            days={stats?.currentStreak ?? 0}
+            active={Boolean(stats && (stats.activeToday || stats.streakAtRisk))}
+            className="bg-white/15 text-white"
+          />
         </div>
         
       </header>
@@ -95,9 +87,12 @@ const LearningPage = () => {
       <main className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 lg:grid-cols-4">
         {subjects?.map(({
         subject,
-        videos_ready
+        videos_ready,
+        lessons_completed
       }) => {
         const isReady = videos_ready > 0;
+        const subjectTitleFontSize = Math.max(subject.lesson_font_size ?? subject.font_size ?? 18, 12);
+        const subjectTitleFontFamily = subject.lesson_font_family ?? subject.font_family ?? 'Poppins, sans-serif';
         return <div 
           key={subject.id} 
           onClick={() => {
@@ -128,14 +123,33 @@ const LearningPage = () => {
                       loading="lazy"
                     />
                   ) : (
-                    <DynamicIcon name={subject.icon_name} className="h-[5.5rem] w-[5.5rem] text-slate-800 sm:h-[6.6rem] sm:w-[6.6rem]" />
+                    <DynamicIcon name={subject.icon_name} className="h-[5.5rem] w-[5.5rem] sm:h-[6.6rem] sm:w-[6.6rem]" style={{ color: subject.icon_color ?? '#1e3a5f' }} />
                   )}
                 </div>
 
                 <div className="w-full rounded-xl bg-white/80 px-3 py-2 text-center shadow-sm backdrop-blur-sm">
-                  <span className="line-clamp-2 text-sm font-semibold leading-tight text-slate-900 sm:text-base">
+                  <span
+                    className="line-clamp-2 font-semibold leading-tight"
+                    style={{ color: subject.lesson_text_color ?? subject.text_color ?? '#050B34', fontSize: `${subjectTitleFontSize}px`, fontFamily: subjectTitleFontFamily }}
+                  >
                     {subject.name}
                   </span>
+                  {videos_ready > 0 && (
+                    <div style={{ marginTop: 4 }}>
+                      <div style={{ height: 3, background: 'rgba(15,23,42,0.12)', borderRadius: 999, overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%',
+                          background: '#12C6A0',
+                          borderRadius: 999,
+                          width: `${Math.round((lessons_completed / Math.max(videos_ready, 1)) * 100)}%`,
+                          transition: 'width 0.3s ease',
+                        }} />
+                      </div>
+                      <p style={{ fontSize: 9, color: 'rgba(15,23,42,0.5)', margin: '2px 0 0', fontFamily: 'Poppins, sans-serif' }}>
+                        {lessons_completed}/{videos_ready} lecons
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>;

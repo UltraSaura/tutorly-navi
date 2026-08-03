@@ -8,7 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X, Plus, GripVertical } from 'lucide-react';
-import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ, OperationPoseeQ } from '@/types/quiz-bank';
+import type { Question, SingleQ, MultiQ, NumericQ, OrderingQ, VisualQ, OperationPoseeQ, ColumnFillQ } from '@/types/quiz-bank';
+import type { SliderQuestion, MatchQuestion, FillExprQuestion } from '@/types/quiz-bank';
+import { buildColumnFillQuestion } from '@/lib/quiz/columnFillBuilder';
 
 interface QuestionEditorProps {
   question?: Question & { dbId?: string; position?: number };
@@ -108,6 +110,53 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   const [poseeLocale, setPoseeLocale] = useState<'fr' | 'en'>(
     question && question.kind === 'operation-posee' ? ((question as OperationPoseeQ).locale || 'fr') : 'fr'
   );
+  const [columnFillOperation, setColumnFillOperation] = useState<ColumnFillQ['operation']>(
+    question?.kind === 'column-fill' ? question.operation : 'addition'
+  );
+  const [columnFirstOperand, setColumnFirstOperand] = useState<number>(
+    question?.kind === 'column-fill' ? Number(question.operands[0] ?? 0) : 29
+  );
+  const [columnSecondOperand, setColumnSecondOperand] = useState<number>(
+    question?.kind === 'column-fill' ? Number(question.operands[1] ?? 0) : 66
+  );
+  const [columnInstructions, setColumnInstructions] = useState<string>(
+    question?.kind === 'column-fill' ? (question.instructions ?? '') : ''
+  );
+
+  // Slider state
+  const [sliderMin, setSliderMin] = useState<number>(
+    question?.kind === 'slider' ? question.min : 0);
+  const [sliderMax, setSliderMax] = useState<number>(
+    question?.kind === 'slider' ? question.max : 100);
+  const [sliderStep, setSliderStep] = useState<number>(
+    question?.kind === 'slider' ? question.step : 1);
+  const [sliderAnswer, setSliderAnswer] = useState<number>(
+    question?.kind === 'slider' ? question.answer : 50);
+  const [sliderTolerance, setSliderTolerance] = useState<number>(
+    question?.kind === 'slider' ? question.tolerance : 2);
+  const [sliderUnit, setSliderUnit] = useState<string>(
+    question?.kind === 'slider' ? (question.unit ?? '') : '');
+  const [sliderTrackLabel, setSliderTrackLabel] = useState<string>(
+    question?.kind === 'slider' ? (question.trackLabel ?? '') : '');
+
+  // Match state
+  const [matchPairs, setMatchPairs] = useState<Array<{leftId:string;left:string;rightId:string;right:string}>>(
+    question?.kind === 'match' ? question.pairs : [
+      { leftId: 'l1', left: '', rightId: 'r1', right: '' },
+      { leftId: 'l2', left: '', rightId: 'r2', right: '' },
+    ]);
+  const [matchHideLabels, setMatchHideLabels] = useState<boolean>(
+    question?.kind === 'match' ? (question.hide_labels ?? false) : false);
+
+  // Fill-expr state
+  const [fillTemplate, setFillTemplate] = useState<string>(
+    question?.kind === 'fill-expr' ? question.template : '__ + __ = __');
+  const [fillBlanks, setFillBlanks] = useState<string>(
+    question?.kind === 'fill-expr' ? question.blanks.join(',') : 'b1,b2');
+  const [fillChips, setFillChips] = useState<string>(
+    question?.kind === 'fill-expr' ? question.chips.join(',') : '');
+  const [fillAnswers, setFillAnswers] = useState<string>(
+    question?.kind === 'fill-expr' ? JSON.stringify(question.answers) : '{"b1":"","b2":""}');
 
   useEffect(() => {
     if (question) {
@@ -140,6 +189,27 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         setTopNumber(poseeQ.topNumber);
         setBottomNumber(poseeQ.bottomNumber);
         setPoseeLocale(poseeQ.locale || 'fr');
+      } else if (question.kind === 'column-fill') {
+        setColumnFillOperation(question.operation);
+        setColumnFirstOperand(Number(question.operands[0] ?? 0));
+        setColumnSecondOperand(Number(question.operands[1] ?? 0));
+        setColumnInstructions(question.instructions ?? '');
+      } else if (question.kind === 'slider') {
+        setSliderMin(question.min);
+        setSliderMax(question.max);
+        setSliderStep(question.step);
+        setSliderAnswer(question.answer);
+        setSliderTolerance(question.tolerance);
+        setSliderUnit(question.unit ?? '');
+        setSliderTrackLabel(question.trackLabel ?? '');
+      } else if (question.kind === 'match') {
+        setMatchPairs(question.pairs);
+        setMatchHideLabels(question.hide_labels ?? false);
+      } else if (question.kind === 'fill-expr') {
+        setFillTemplate(question.template);
+        setFillBlanks(question.blanks.join(','));
+        setFillChips(question.chips.join(','));
+        setFillAnswers(JSON.stringify(question.answers));
       }
     } else {
       // Reset for new question
@@ -162,6 +232,26 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
       setTopNumber(325);
       setBottomNumber(148);
       setPoseeLocale('fr');
+      setColumnFillOperation('addition');
+      setColumnFirstOperand(29);
+      setColumnSecondOperand(66);
+      setColumnInstructions('');
+      setSliderMin(0);
+      setSliderMax(100);
+      setSliderStep(1);
+      setSliderAnswer(50);
+      setSliderTolerance(2);
+      setSliderUnit('');
+      setSliderTrackLabel('');
+      setMatchPairs([
+        { leftId: 'l1', left: '', rightId: 'r1', right: '' },
+        { leftId: 'l2', left: '', rightId: 'r2', right: '' },
+      ]);
+      setMatchHideLabels(false);
+      setFillTemplate('__ + __ = __');
+      setFillBlanks('b1,b2');
+      setFillChips('');
+      setFillAnswers('{"b1":"","b2":""}');
     }
   }, [question, isOpen]);
 
@@ -320,6 +410,54 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         bottomNumber: Math.trunc(bottomNumber),
         locale: poseeLocale,
       } as OperationPoseeQ;
+    } else if (kind === 'column-fill') {
+      if (!Number.isFinite(columnFirstOperand) || !Number.isFinite(columnSecondOperand)) {
+        alert('Please enter valid numbers for the column method exercise');
+        return;
+      }
+      if (columnFillOperation === 'multiplication' && String(Math.abs(Math.trunc(columnSecondOperand))).length > 1) {
+        alert('Phase 1 multiplication supports a one-digit multiplier only.');
+        return;
+      }
+      if (columnFillOperation === 'division' && Math.trunc(columnSecondOperand) === 0) {
+        alert('Division by zero is not allowed.');
+        return;
+      }
+      questionData = buildColumnFillQuestion({
+        id,
+        prompt,
+        hint: hint || undefined,
+        points,
+        operation: columnFillOperation,
+        firstOperand: Math.trunc(columnFirstOperand),
+        secondOperand: Math.trunc(columnSecondOperand),
+        locale: 'fr',
+        instructions: columnInstructions || undefined,
+      });
+    } else if (kind === 'slider') {
+      questionData = {
+        id, kind: 'slider', prompt, hint: hint || undefined,
+        points, min: sliderMin, max: sliderMax, step: sliderStep,
+        answer: sliderAnswer, tolerance: sliderTolerance,
+        unit: sliderUnit || undefined,
+        trackLabel: sliderTrackLabel || undefined,
+      } satisfies SliderQuestion;
+    } else if (kind === 'match') {
+      questionData = {
+        id, kind: 'match', prompt, hint: hint || undefined,
+        points, pairs: matchPairs,
+        hide_labels: matchHideLabels || undefined,
+      } satisfies MatchQuestion;
+    } else if (kind === 'fill-expr') {
+      const blanksArr = fillBlanks.split(',').map(s => s.trim()).filter(Boolean);
+      const chipsArr = fillChips.split(',').map(s => s.trim()).filter(Boolean);
+      let answersObj: Record<string,string> = {};
+      try { answersObj = JSON.parse(fillAnswers); } catch {}
+      questionData = {
+        id, kind: 'fill-expr', prompt, hint: hint || undefined,
+        points, template: fillTemplate,
+        blanks: blanksArr, chips: chipsArr, answers: answersObj,
+      } satisfies FillExprQuestion;
     } else {
       alert('Unsupported question type');
       return;
@@ -350,6 +488,10 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 <SelectItem value="ordering">Ordering</SelectItem>
                 <SelectItem value="visual">Visual</SelectItem>
                 <SelectItem value="operation-posee">Pose et calcule</SelectItem>
+                <SelectItem value="column-fill">Méthode en colonnes</SelectItem>
+                <SelectItem value="slider">Slider</SelectItem>
+                <SelectItem value="match">Associer (Match)</SelectItem>
+                <SelectItem value="fill-expr">Compléter l'expression</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -728,6 +870,167 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                     <SelectItem value="en">English</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+          )}
+
+          {kind === 'column-fill' && (
+            <div className="space-y-3">
+              <div>
+                <Label>Operation</Label>
+                <Select value={columnFillOperation} onValueChange={(value: ColumnFillQ['operation']) => setColumnFillOperation(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="addition">Addition</SelectItem>
+                    <SelectItem value="subtraction">Soustraction</SelectItem>
+                    <SelectItem value="multiplication">Multiplication</SelectItem>
+                    <SelectItem value="division">Division</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>{columnFillOperation === 'division' ? 'Dividende' : 'Premier nombre'}</Label>
+                  <Input
+                    type="number"
+                    value={columnFirstOperand}
+                    onChange={(e) => setColumnFirstOperand(parseInt(e.target.value, 10) || 0)}
+                  />
+                </div>
+                <div>
+                  <Label>{columnFillOperation === 'division' ? 'Diviseur' : 'Deuxième nombre'}</Label>
+                  <Input
+                    type="number"
+                    value={columnSecondOperand}
+                    onChange={(e) => setColumnSecondOperand(parseInt(e.target.value, 10) || 0)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Instruction affichée à l'élève (optionnel)</Label>
+                <Textarea
+                  value={columnInstructions}
+                  onChange={(e) => setColumnInstructions(e.target.value)}
+                  rows={2}
+                  placeholder="ex: Complète les retenues et le résultat."
+                />
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Phase 1: addition, soustraction, multiplication à un chiffre, division avec quotient et reste.
+              </p>
+            </div>
+          )}
+
+          {kind === 'slider' && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Label>Min</Label>
+                  <Input type="number" value={sliderMin} onChange={e => setSliderMin(Number(e.target.value))} />
+                </div>
+                <div>
+                  <Label>Max</Label>
+                  <Input type="number" value={sliderMax} onChange={e => setSliderMax(Number(e.target.value))} />
+                </div>
+                <div>
+                  <Label>Step</Label>
+                  <Input type="number" value={sliderStep} onChange={e => setSliderStep(Number(e.target.value))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Réponse correcte</Label>
+                  <Input type="number" value={sliderAnswer} onChange={e => setSliderAnswer(Number(e.target.value))} />
+                </div>
+                <div>
+                  <Label>Tolérance (±)</Label>
+                  <Input type="number" value={sliderTolerance} onChange={e => setSliderTolerance(Number(e.target.value))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Unité (optionnel)</Label>
+                  <Input value={sliderUnit} onChange={e => setSliderUnit(e.target.value)} placeholder="ex: °C, km, %" />
+                </div>
+                <div>
+                  <Label>Label (optionnel)</Label>
+                  <Input value={sliderTrackLabel} onChange={e => setSliderTrackLabel(e.target.value)} placeholder="ex: Choisis une valeur" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {kind === 'match' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Paires (gauche ↔ droite)</Label>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={matchHideLabels}
+                    onChange={e => setMatchHideLabels(e.target.checked)}
+                    className="rounded"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    Masquer les fractions <span className="text-xs">(pie uniquement)</span>
+                  </span>
+                </label>
+              </div>
+              {matchHideLabels && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 rounded-lg px-3 py-2">
+                  Les textes de fraction (ex: "1/2") seront cachés côté étudiant — seul le diagramme circulaire sera visible. Parfait pour les exercices "Compte les parts".
+                </p>
+              )}
+              {matchPairs.map((pair, i) => (
+                <div key={pair.leftId} className="flex gap-2 items-center">
+                  <Input
+                    value={pair.left}
+                    onChange={e => setMatchPairs(prev => prev.map((p,j) => j===i ? {...p, left: e.target.value} : p))}
+                    placeholder="Gauche"
+                  />
+                  <span className="text-muted-foreground">↔</span>
+                  <Input
+                    value={pair.right}
+                    onChange={e => setMatchPairs(prev => prev.map((p,j) => j===i ? {...p, right: e.target.value} : p))}
+                    placeholder="Droite"
+                  />
+                  <Button variant="ghost" size="icon" onClick={() => setMatchPairs(prev => prev.filter((_,j) => j!==i))}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={() => setMatchPairs(prev => [...prev, {
+                leftId: `l${Date.now()}`, left: '',
+                rightId: `r${Date.now()}`, right: ''
+              }])}>
+                <Plus className="w-4 h-4 mr-1" /> Ajouter une paire
+              </Button>
+            </div>
+          )}
+
+          {kind === 'fill-expr' && (
+            <div className="space-y-3">
+              <div>
+                <Label>Template (utilise __ pour les blancs)</Label>
+                <Input value={fillTemplate} onChange={e => setFillTemplate(e.target.value)} placeholder="ex: 3 × __ = __" />
+              </div>
+              <div>
+                <Label>IDs des blancs (séparés par virgule)</Label>
+                <Input value={fillBlanks} onChange={e => setFillBlanks(e.target.value)} placeholder="ex: b1,b2" />
+              </div>
+              <div>
+                <Label>Chips disponibles (séparés par virgule)</Label>
+                <Input value={fillChips} onChange={e => setFillChips(e.target.value)} placeholder="ex: 4,6,12,9" />
+              </div>
+              <div>
+                <Label>Réponses correctes (JSON)</Label>
+                <Textarea value={fillAnswers} onChange={e => setFillAnswers(e.target.value)}
+                  placeholder={'{"b1":"4","b2":"12"}'} className="font-mono text-xs" rows={3} />
               </div>
             </div>
           )}

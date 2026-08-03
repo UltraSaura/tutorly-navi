@@ -1,23 +1,97 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
+import {
+  ArrowRight,
+  Calculator,
+  FlaskConical,
+  Globe2,
+  Landmark,
+  Languages,
+  MapPinned,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PageMeta } from '@/components/seo/PageMeta';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
 import { useExamPapers, useTrainingItemSubjectCounts } from '@/hooks/useExamImport';
-import { useLearningSubjects } from '@/hooks/useLearningSubjects';
+import { useLearningSubjects, usePracticeSubjectButtons } from '@/hooks/useLearningSubjects';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
-import { normalizeStudentLevelForExamFilter } from '@/domain/exams';
-import { normalizeDisciplineKey, resolveExamDisciplinesForSubjectSlug, resolveSubjectSlugForExamDiscipline, getSubjectNameForSlug } from '@/utils/examSubjectMapping';
+import { getSubjectNameForSlug, getSubjectSlugAliases, normalizeDisciplineKey, resolveExamDisciplinesForSubjectSlug, resolveSubjectSlugForExamDiscipline } from '@/utils/examSubjectMapping';
+import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
+import type { Subject } from '@/types/learning';
 
 const NO_ACTIVE_LEVEL = '__no_active_level__';
+const MASCOT_SRC = '/practice-mascot.png';
+const FALLBACK_MASCOT_SRC = '/fox-mascot.png';
+
+const subjectColors = {
+  mathematiques: {
+    bg: "#E8F8F3",
+    icon: "#12C6A0",
+    iconBg: "#DDF8F0",
+  },
+  histoire: {
+    bg: "#F0EDFF",
+    icon: "#F5A623",
+    iconBg: "#FFF1D6",
+  },
+  sciences: {
+    bg: "#EAF5FF",
+    icon: "#2F9BFF",
+    iconBg: "#E2F1FF",
+  },
+  geographie: {
+    bg: "#ECFBEA",
+    icon: "#5EC84D",
+    iconBg: "#E6F8DE",
+  },
+  francais: {
+    bg: "#F2EDFF",
+    icon: "#8B5CF6",
+    iconBg: "#EEE6FF",
+  },
+  anglais: {
+    bg: "#FFF0F5",
+    icon: "#F55783",
+    iconBg: "#FFE4EE",
+  },
+  default: {
+    bg: "#F3F6FA",
+    icon: "#667085",
+    iconBg: "#E8ECF2",
+  },
+};
+
+const normalizeSubjectKey = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '');
+
+const getSubjectVisuals = (slug: string, colorScheme?: string | null) => {
+  const key = normalizeSubjectKey(slug) as keyof typeof subjectColors;
+  const mapped = subjectColors[key] ?? subjectColors.default;
+
+  return {
+    ...mapped,
+    iconBg: colorScheme && !colorScheme.startsWith('bg-') ? colorScheme : mapped.iconBg,
+  };
+};
+
+const defaultPracticeSubjects = [
+  { slug: 'mathematiques', name: 'Maths', icon_name: 'calculator', icon: Calculator },
+  { slug: 'francais', name: 'Français', icon_name: 'languages', icon: Languages },
+  { slug: 'sciences', name: 'Sciences', icon_name: 'flask-conical', icon: FlaskConical },
+  { slug: 'histoire', name: 'Histoire', icon_name: 'landmark', icon: Landmark },
+  { slug: 'geographie', name: 'Géographie', icon_name: 'map-pinned', icon: MapPinned },
+  { slug: 'anglais', name: 'Anglais', icon_name: 'globe-2', icon: Globe2 },
+] as const;
 
 export default function PracticePage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const subjectsQuery = useLearningSubjects();
+  const practiceButtonsQuery = usePracticeSubjectButtons();
   const activeSchoolLevel = useActiveSchoolLevel();
   const activeLevel = activeSchoolLevel.normalizedLevel ?? NO_ACTIVE_LEVEL;
   const papersQuery = useExamPapers({ exam: 'dnb', level: activeLevel });
@@ -62,11 +136,14 @@ export default function PracticePage() {
         slug: subjectSlug,
         name: row.subject.name,
         levelLabel,
+        masteryPercent: 0,
+        masteredTopics: 0,
+        totalTopics: 0,
         examPapers: counts.papers,
         exercises: trainingItems,
         sourceExercises: counts.exercises,
       };
-      return card.examPapers > 0 || card.exercises > 0 ? [card] : [];
+      return [card];
     });
 
     const fallbackCards = [];
@@ -96,94 +173,163 @@ export default function PracticePage() {
         return sum + Math.max(direct, normalized);
       }, 0);
 
-      if (counts.papers > 0 || trainingItems > 0) {
-        seenSlugs.add(slug);
-        fallbackCards.push({
-          id: `fallback-${slug}`,
-          slug: slug,
-          name: getSubjectNameForSlug(slug, i18n.language),
-          levelLabel,
-          examPapers: counts.papers,
-          exercises: trainingItems,
-          sourceExercises: counts.exercises,
-        });
-      }
+      seenSlugs.add(slug);
+      fallbackCards.push({
+        id: `fallback-${slug}`,
+        slug: slug,
+        name: getSubjectNameForSlug(slug, i18n.language),
+        levelLabel,
+        masteryPercent: 0,
+        masteredTopics: 0,
+        totalTopics: 0,
+        examPapers: counts.papers,
+        exercises: trainingItems,
+        sourceExercises: counts.exercises,
+      });
     }
 
     return [...mappedFromCurriculum, ...fallbackCards];
   }, [subjectsQuery.data, activeSchoolLevel.activeLevel, papersByDiscipline, trainingCountsQuery.data]);
 
+  const subjectsByKey = useMemo(() => {
+    const map = new Map<string, (typeof subjectCards)[number]>();
+    for (const subject of subjectCards) {
+      map.set(normalizeSubjectKey(subject.slug), subject);
+      map.set(normalizeSubjectKey(subject.name), subject);
+    }
+    return map;
+  }, [subjectCards]);
+
+  const practiceSubjects = useMemo(() => {
+    const adminSubjectsBySlug = new Map<string, Subject>();
+    const adminSubjectsByAlias = new Map<string, Subject>();
+
+    for (const subject of practiceButtonsQuery.data ?? []) {
+      const normalizedSlug = normalizeSubjectKey(subject.slug);
+      adminSubjectsBySlug.set(normalizedSlug, subject);
+      for (const alias of getSubjectSlugAliases(subject.slug)) {
+        const normalizedAlias = normalizeSubjectKey(alias);
+        if (!adminSubjectsByAlias.has(normalizedAlias)) {
+          adminSubjectsByAlias.set(normalizedAlias, subject);
+        }
+      }
+    }
+
+    return defaultPracticeSubjects.map((fallback) => {
+      const normalizedSlug = normalizeSubjectKey(fallback.slug);
+      const adminSubject = adminSubjectsBySlug.get(normalizedSlug) || adminSubjectsByAlias.get(normalizedSlug);
+
+      return {
+        ...fallback,
+        id: adminSubject?.id ?? fallback.slug,
+        slug: adminSubject?.slug ?? fallback.slug,
+        name: adminSubject?.name ?? fallback.name,
+        icon_name: adminSubject?.icon_name ?? fallback.icon_name,
+        icon_image_url: adminSubject?.icon_image_url ?? null,
+        color_scheme: adminSubject?.color_scheme ?? null,
+        icon_color: adminSubject?.icon_color ?? null,
+        practice_text_color: adminSubject?.practice_text_color ?? adminSubject?.text_color ?? null,
+        practice_font_size: adminSubject?.practice_font_size ?? adminSubject?.font_size ?? null,
+        practice_font_family: adminSubject?.practice_font_family ?? adminSubject?.font_family ?? null,
+      };
+    });
+  }, [practiceButtonsQuery.data]);
+
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-[#F7FAFE] pb-28">
       <PageMeta title={t('practice.title')} description={t('practice.metaDescription')} />
-      <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-6">
-        <section className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight">{t('practice.title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('practice.subtitle')}</p>
+      <div className="mx-auto w-full max-w-[430px] space-y-4 px-5 pb-6 pt-3 sm:max-w-[520px]">
+        <section className="relative min-h-[150px] overflow-hidden">
+          <div className="relative z-10 max-w-[62%] space-y-2 pt-8">
+            <h1 className="text-[32px] font-extrabold leading-none tracking-normal text-[#050B34]">
+              S&apos;exercer
+            </h1>
+            <p className="text-[18px] font-semibold leading-snug tracking-normal text-[#667085]">
+              Choisis une matière pour t&apos;entraîner 🚀
+            </p>
+          </div>
+          <span className="absolute right-28 top-[60px] h-3 w-3 rounded-full bg-[#F9D66B]" />
+          <span className="absolute right-24 top-[104px] h-3 w-3 rounded-full bg-[#C7B7FF]" />
+          <span className="absolute right-32 top-[134px] h-3 w-3 rounded-full bg-[#A8E6D8]" />
+          <img
+            src={MASCOT_SRC}
+            alt="Mascotte"
+            onError={(event) => {
+              event.currentTarget.src = FALLBACK_MASCOT_SRC;
+            }}
+            className="pointer-events-none absolute -right-14 top-0 h-48 w-48 object-contain object-left sm:-right-8 sm:h-52 sm:w-52"
+          />
         </section>
 
-        {import.meta.env.DEV && import.meta.env.VITE_SHOW_PRACTICE_DEBUG === 'true' && (
-          <section className="bg-destructive/10 text-destructive p-4 rounded-md text-xs font-mono space-y-1 overflow-x-auto">
-            <h3 className="font-bold mb-2">DEBUG: DNB Visibility (DEV ONLY)</h3>
-            <p>activeLevel: <strong>{activeLevel}</strong></p>
-            <p>source: {activeSchoolLevel.source}</p>
-            <p>trainingCountsQuery.data: {JSON.stringify(trainingCountsQuery.data || {})}</p>
-            <p>papersQuery count: {papersQuery.data?.length ?? 0}</p>
-            <p>If counts are 0, check RLS or DB data.</p>
-          </section>
-        )}
-
-        <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t('practice.subjects.title')}
-          </h2>
-
-          {(subjectsQuery.isLoading || activeSchoolLevel.isLoading || papersQuery.isLoading || trainingCountsQuery.isLoading) ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <section>
+          {(subjectsQuery.isLoading || practiceButtonsQuery.isLoading || activeSchoolLevel.isLoading || papersQuery.isLoading || trainingCountsQuery.isLoading) ? (
+            <div className="grid grid-cols-2 gap-4">
               {Array.from({ length: 6 }).map((_, idx) => (
-                <Card key={idx} className="border-border/70">
-                  <CardContent className="space-y-3 p-4">
-                    <Skeleton className="h-4 w-2/3" />
-                    <Skeleton className="h-4 w-1/2" />
-                    <Skeleton className="h-8 w-full" />
-                  </CardContent>
-                </Card>
+                <div key={idx} className="h-[178px] rounded-[28px] bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+                  <Skeleton className="h-20 w-20 rounded-full" />
+                  <div className="mt-8 space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
               ))}
             </div>
-          ) : subjectCards.length === 0 ? (
-            <Card className="border-dashed">
-              <CardHeader>
-                <CardTitle className="text-base">{t('practice.subjects.emptyTitle')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">{t('practice.subjects.emptyDescription')}</p>
-                <Button variant="outline" onClick={() => navigate('/learning')}>
-                  {t('practice.cta.browseLessons')}
-                </Button>
-              </CardContent>
-            </Card>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {subjectCards.map((subject) => (
-                <Card key={subject.id} className="border-border/70">
-                  <CardContent className="space-y-3 p-4">
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold">{subject.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {t('practice.subjects.levelLabel', { level: subject.levelLabel })}
+            <div className="grid grid-cols-2 gap-4">
+              {practiceSubjects.map((subject) => {
+                const colors = getSubjectVisuals(subject.slug, subject.color_scheme);
+                const sourceSubject = subjectsByKey.get(normalizeSubjectKey(subject.slug));
+                const exerciseCount = sourceSubject?.exercises ?? 0;
+                const exerciseLabel = `${exerciseCount} exercice${exerciseCount > 1 ? 's' : ''}`;
+                const Icon = subject.icon;
+                const subjectTitleFontSize = Math.max((subject.practice_font_size ?? 18) + 4, 16);
+                const subjectTitleFontFamily = subject.practice_font_family ?? 'Poppins, sans-serif';
+
+                return (
+                  <button
+                    key={subject.id}
+                    type="button"
+                    onClick={() => navigate(`/practice/${subject.slug}`)}
+                    className="relative flex h-[178px] flex-col justify-between rounded-[28px] bg-white p-5 text-left shadow-[0_18px_45px_rgba(15,23,42,0.06)] transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#12C6A0] focus-visible:ring-offset-2"
+                  >
+                    <div className="flex items-start">
+                      <span
+                        className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full p-3"
+                        style={{ backgroundColor: colors.iconBg, color: subject.icon_color ?? colors.icon }}
+                      >
+                        {subject.icon_image_url ? (
+                          <img
+                            src={subject.icon_image_url}
+                            alt=""
+                            className="h-full w-full object-contain"
+                            loading="lazy"
+                          />
+                        ) : (
+                          Icon ? (
+                            <Icon className="h-10 w-10 stroke-[2.6]" aria-hidden="true" />
+                          ) : (
+                            <DynamicIcon name={subject.icon_name} className="h-10 w-10 stroke-[2.6]" />
+                          )
+                        )}
+                      </span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <h2
+                        className="font-extrabold leading-tight tracking-normal"
+                        style={{ color: subject.practice_text_color ?? '#050B34', fontSize: `${subjectTitleFontSize}px`, fontFamily: subjectTitleFontFamily }}
+                      >
+                        {subject.name}
+                      </h2>
+                      <p className="text-base font-semibold leading-snug text-[#667085]">
+                        {exerciseLabel}
                       </p>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{t('practice.subjects.exerciseCount', { count: subject.exercises })}</span>
-                      <span>{t('practice.subjects.examPaperCount', { count: subject.examPapers })}</span>
-                    </div>
-                    <Button className="w-full" onClick={() => navigate(`/practice/${subject.slug}`)}>
-                      <BookOpen className="mr-1 h-4 w-4" />
-                      {t('practice.subjects.cta')}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+                    <span className="absolute bottom-6 right-5 flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#050B34] shadow-[0_8px_20px_rgba(15,23,42,0.09)]">
+                      <ArrowRight className="h-5 w-5 stroke-[3]" aria-hidden="true" />
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </section>

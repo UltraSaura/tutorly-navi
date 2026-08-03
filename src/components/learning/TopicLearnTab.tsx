@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { VideoPlayerBox } from './VideoPlayerBox';
 import { CollapsibleVideoSection } from './CollapsibleVideoSection';
 
@@ -25,6 +26,7 @@ interface BankInfo {
   requiredCount: number;
   videoIds: string[];
   topicId: string | null;
+  triggerVideoId?: string | null;
 }
 
 interface TopicLearnTabProps {
@@ -50,19 +52,9 @@ export function TopicLearnTab({
   lessonContent,
   videoAutoPlay = true,
 }: TopicLearnTabProps) {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const quizSectionRef = useRef<HTMLDivElement>(null);
-  const [poseePromptOpen, setPoseePromptOpen] = useState(false);
-  const [poseeExerciseOpen, setPoseeExerciseOpen] = useState(false);
-  const [poseeCompletedVideoIds, setPoseeCompletedVideoIds] = useState<string[]>([]);
-  const defaultOperationPoseeExercise: ManipulativeMathExercise = {
-    id: 'operation-posee-325-148',
-    type: 'operation-posee',
-    operation: 'subtraction',
-    topNumber: 325,
-    bottomNumber: 148,
-    prompt: 'Pose et calcule : 325 − 148',
-    locale: 'fr',
-  };
 
   // Group videos into sections (every 4 videos)
   const videoSections = useMemo(() => {
@@ -95,24 +87,27 @@ export function TopicLearnTab({
   // Auto-scroll to quiz when video ends
   const handleVideoEnd = () => {
     onVideoEnd();
-    if (playingVideoId && !poseeCompletedVideoIds.includes(playingVideoId)) {
-      setPoseePromptOpen(true);
+    if (!playingVideoId) return;
+
+    // Find the quiz bank triggered by this specific video
+    const triggeredBank = allBanks?.find(b => b.triggerVideoId === playingVideoId);
+    if (triggeredBank) {
+      // Small delay so the video completion write finishes first
+      setTimeout(() => {
+        const params = new URLSearchParams(searchParams);
+        params.set('quiz', triggeredBank.bankId);
+        navigate({ search: params.toString() }, { replace: true });
+      }, 800);
+    } else {
+      // No triggered bank — just scroll down to the playlist
+      setTimeout(() => {
+        quizSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 400);
     }
-    // Scroll to quiz section after short delay
-    setTimeout(() => {
-      quizSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 300);
   };
 
   const handleVideoSelect = (videoId: string) => {
-    setPoseePromptOpen(false);
-    setPoseeExerciseOpen(false);
     onVideoSelect(videoId);
-  };
-
-  const handleStartPoseePractice = () => {
-    setPoseePromptOpen(false);
-    setPoseeExerciseOpen(true);
   };
 
   return (
@@ -149,43 +144,6 @@ export function TopicLearnTab({
           />
         ))}
       </div>
-
-      <Dialog open={poseePromptOpen} onOpenChange={setPoseePromptOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Pose et calcule</DialogTitle>
-            <DialogDescription>
-              {currentVideo
-                ? `Tu as termine "${currentVideo.title}". Veux-tu faire un mini entrainement maintenant ?`
-                : 'Veux-tu faire un mini entrainement maintenant ?'}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPoseePromptOpen(false)}>
-              Plus tard
-            </Button>
-            <Button onClick={handleStartPoseePractice}>Commencer</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={poseeExerciseOpen} onOpenChange={setPoseeExerciseOpen}>
-        <DialogContent className="max-w-3xl p-0">
-          <ManipulativeMathRenderer
-            mode="practice"
-            exercise={defaultOperationPoseeExercise}
-            onComplete={(result) => {
-              if (!result.correct) return;
-              if (playingVideoId) {
-                setPoseeCompletedVideoIds(prev =>
-                  prev.includes(playingVideoId) ? prev : [...prev, playingVideoId]
-                );
-              }
-              setPoseeExerciseOpen(false);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

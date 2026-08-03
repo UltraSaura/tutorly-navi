@@ -1,0 +1,971 @@
+{
+  "training_items": [
+    {
+      "id": "dc12d4c4-b64e-44e5-a651-dfcccc228611",
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 1 (11 points)",
+      "exam_style": "dnb_annales",
+      "item_type": "free_response",
+      "difficulty": "hard",
+      "source_year": 2018,
+      "status": "published",
+      "context": "Le gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski. Ce trophée pèse 9 kg et mesure 46 cm de hauteur.",
+      "prompt": "",
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Le biathlète français Martin Fourcade a remporté le sixième gros globe de cristal de sa carrière en 2017 à Pyeongchang en Corée du Sud. La ville de Pyeongchang se trouve à environ 37° de latitude nord et 128° de longitude est. Donner approximativement la latitude et la longitude de Pyeongchang.",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "La latitude mesure la position nord-sud par rapport à l'équateur (0°)."
+              },
+              {
+                "level": 2,
+                "text": "La longitude mesure la position est-ouest par rapport au méridien de Greenwich."
+              },
+              {
+                "level": 3,
+                "text": "Lis directement les coordonnées indiquées dans l'énoncé."
+              }
+            ],
+            "correct_feedback": "Bravo ! Latitude : environ 37° Nord ; Longitude : environ 128° Est.",
+            "incorrect_feedback": "Relis l'énoncé : les coordonnées sont données directement. Latitude = 37° Nord, Longitude = 128° Est."
+          }
+        },
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "On considère que ce globe est composé d'un cylindre en cristal de diamètre 6 cm, surmonté d'une boule de cristal de diamètre 23 cm (voir schéma). Montrer qu'une valeur approchée du volume de la boule de ce trophée est de 6 371 cm³. Rappel : volume d'une boule de rayon R : V = (4/3)πR³",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Le rayon de la boule est la moitié du diamètre."
+              },
+              {
+                "level": 2,
+                "text": "R = 23/2 = 11,5 cm. Applique la formule V = (4/3)π × R³."
+              },
+              {
+                "level": 3,
+                "text": "V = (4/3) × π × 11,5³ ≈ (4/3) × 3,14159 × 1520,875 ≈ 6 370,6 cm³."
+              }
+            ],
+            "correct_feedback": "Parfait ! V = (4/3) × π × 11,5³ ≈ 6 371 cm³.",
+            "incorrect_feedback": "Vérifie que R = 11,5 cm (moitié du diamètre). Calcule 11,5³ = 1520,875, puis (4/3) × π × 1520,875 ≈ 6 371 cm³."
+          }
+        },
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Marie affirme que le volume de la boule de cristal représente environ 90 % du volume total du trophée. A-t-elle raison ? Rappels : volume d'une boule de rayon R : V = (4/3)πR³ ; volume d'un cylindre de rayon r et de hauteur h : V = πr²h.",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Calcule d'abord le volume du cylindre (r = 3 cm, h = 23 cm)."
+              },
+              {
+                "level": 2,
+                "text": "Volume cylindre = π × 3² × 23 ≈ 651 cm³. Volume total = 6 371 + 651 = 7 022 cm³."
+              },
+              {
+                "level": 3,
+                "text": "Proportion = 6 371 / 7 022 ≈ 0,907 = 90,7 %."
+              }
+            ],
+            "correct_feedback": "Excellent ! Volume boule ≈ 6 371 cm³, volume cylindre ≈ 651 cm³, proportion ≈ 90,7 %. Marie a raison.",
+            "incorrect_feedback": "N'oublie pas de calculer le volume du cylindre (r = 3 cm, h = 23 cm) avant de trouver le volume total."
+          }
+        }
+      ],
+      "documents": [
+        {
+          "id": "884c7d33-2a94-47e0-bf0f-1e92277afd14",
+          "type": "image",
+          "label": "Schéma du trophée",
+          "public_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMzMyIiB2aWV3Qm94PSIwIDAgMjAwIDMzMiIgZm9udC1mYW1pbHk9InNlcmlmIj4KICA8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMzMiIgZmlsbD0id2hpdGUiLz4KCiAgPCEtLSBTcGhlcmUgKHNpbXBsZSBjaXJjbGUsIG5vIGZpbGwpIC0tPgogIDxjaXJjbGUgY3g9IjEyMCIgY3k9Ijk4IiByPSI2OCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIyIi8+CgogIDwhLS0gQ3lsaW5kZXIgKHNpbXBsZSByZWN0YW5nbGUsIG5vIGZpbGwpIC0tPgogIDxyZWN0IHg9IjExMyIgeT0iMTY2IiB3aWR0aD0iMTQiIGhlaWdodD0iMTM2IiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiLz4KCiAgPCEtLSBIb3Jpem9udGFsIGRhc2hlZCBndWlkZSBsaW5lcyAoZnVsbCB3aWR0aCkgLS0+CiAgPGxpbmUgeDE9IjUiIHkxPSIzMCIgeDI9IjE5NSIgeTI9IjMwIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjEiIHN0cm9rZS1kYXNoYXJyYXk9IjYsNCIvPgogIDxsaW5lIHgxPSI1IiB5MT0iMTY2IiB4Mj0iMTk1IiB5Mj0iMTY2IiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjEiIHN0cm9rZS1kYXNoYXJyYXk9IjYsNCIvPgogIDxsaW5lIHgxPSI1IiB5MT0iMzAyIiB4Mj0iMTk1IiB5Mj0iMzAyIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjEiIHN0cm9rZS1kYXNoYXJyYXk9IjYsNCIvPgoKICA8IS0tIFZlcnRpY2FsIGRvdWJsZS1hcnJvdzogc3BoZXJlIGhlaWdodCA9IDIzIGNtIC0tPgogIDxsaW5lIHgxPSI0NiIgeTE9IjMwIiB4Mj0iNDYiIHkyPSIxNjYiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgPHBvbHlnb24gcG9pbnRzPSI0MiwzOCA1MCwzOCA0NiwzMCIgZmlsbD0iYmxhY2siLz4KICA8cG9seWdvbiBwb2ludHM9IjQyLDE1OCA1MCwxNTggNDYsMTY2IiBmaWxsPSJibGFjayIvPgogIDx0ZXh0IHg9IjYiIHk9IjEwMyIgZm9udC1zaXplPSIxMyIgZmlsbD0iYmxhY2siPjIzIGNtPC90ZXh0PgoKICA8IS0tIFZlcnRpY2FsIGRvdWJsZS1hcnJvdzogY3lsaW5kZXIgaGVpZ2h0ID0gMjMgY20gLS0+CiAgPGxpbmUgeDE9IjQ2IiB5MT0iMTY2IiB4Mj0iNDYiIHkyPSIzMDIiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgPHBvbHlnb24gcG9pbnRzPSI0MiwxNzQgNTAsMTc0IDQ2LDE2NiIgZmlsbD0iYmxhY2siLz4KICA8cG9seWdvbiBwb2ludHM9IjQyLDI5NCA1MCwyOTQgNDYsMzAyIiBmaWxsPSJibGFjayIvPgogIDx0ZXh0IHg9IjYiIHk9IjIzOSIgZm9udC1zaXplPSIxMyIgZmlsbD0iYmxhY2siPjIzIGNtPC90ZXh0Pgo8L3N2Zz4=",
+          "alt": "Schéma du trophée : une boule de cristal (diamètre 23 cm) surmontant un cylindre (diamètre 6 cm, hauteur 23 cm). Hauteur totale 46 cm."
+        },
+        {
+          "id": "c4d42a43-05af-488e-aeab-c90dc1adaed2",
+          "type": "table",
+          "label": "Statistiques PM10 à Lyon (16–25 janv. 2017)",
+          "table": {
+            "headers": [
+              "Statistique",
+              "Valeur (μg/m³)"
+            ],
+            "rows": [
+              [
+                "Moyenne",
+                "72,5"
+              ],
+              [
+                "Médiane",
+                "83,5"
+              ],
+              [
+                "Minimum",
+                "22"
+              ],
+              [
+                "Maximum",
+                "107"
+              ]
+            ]
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null
+    },
+    {
+      "id": "598fb452-9c58-4a02-87f7-35b2ba68dd94",
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 2 (14 points)",
+      "exam_style": "dnb_annales",
+      "item_type": "free_response",
+      "difficulty": "hard",
+      "source_year": 2018,
+      "status": "published",
+      "context": "Parmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées. Les PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm. En janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines. Voici des données concernant les concentrations journalières en PM10 (en μg/m³).",
+      "prompt": "",
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Laquelle de ces deux villes a eu la plus forte concentration moyenne en PM10 entre le 16 et le 25 janvier ?",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "La moyenne de Lyon est donnée dans le tableau. Pour Grenoble, additionne toutes les valeurs et divise par 10."
+              },
+              {
+                "level": 2,
+                "text": "Somme Grenoble = 32+39+52+57+78+63+60+82+82+89 = 634. Moyenne Grenoble = 634 ÷ 10 = 63,4 μg/m³."
+              },
+              {
+                "level": 3,
+                "text": "Compare : Grenoble = 63,4 μg/m³ et Lyon = 72,5 μg/m³."
+              }
+            ],
+            "correct_feedback": "Correct ! Moyenne Grenoble = 63,4 μg/m³ < Moyenne Lyon = 72,5 μg/m³. Lyon a eu la plus forte concentration moyenne.",
+            "incorrect_feedback": "Calcule la somme des 10 valeurs de Grenoble (634), divise par 10 (63,4), puis compare à Lyon (72,5)."
+          }
+        },
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Calculer l'étendue des séries des relevés en PM10 à Lyon et à Grenoble. Laquelle de ces deux villes a eu l'étendue la plus importante ? Interpréter ce dernier résultat.",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "L'étendue = valeur maximale − valeur minimale."
+              },
+              {
+                "level": 2,
+                "text": "Étendue Lyon = 107 − 22 = 85 μg/m³. Pour Grenoble : max = 89, min = 32."
+              },
+              {
+                "level": 3,
+                "text": "Étendue Grenoble = 89 − 32 = 57 μg/m³. Compare les deux étendues."
+              }
+            ],
+            "correct_feedback": "Bravo ! Étendue Lyon = 85 μg/m³ > Étendue Grenoble = 57 μg/m³. Les concentrations à Lyon ont été plus dispersées (plus irrégulières).",
+            "incorrect_feedback": "Rappel : étendue = max − min. Pour Lyon : 107 − 22 = 85. Pour Grenoble : 89 − 32 = 57."
+          }
+        },
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "L'affirmation suivante est-elle exacte ? Justifier votre réponse. « Du 16 au 25 janvier, le seuil d'alerte de 80 μg/m³ par jour a été dépassé au moins 5 fois à Lyon ».",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "La médiane de Lyon est 83,5 μg/m³, ce qui signifie que 5 valeurs sur 10 sont ≥ 83,5 μg/m³."
+              },
+              {
+                "level": 2,
+                "text": "Si la médiane est 83,5, alors au moins 5 des 10 valeurs dépassent 80 μg/m³."
+              },
+              {
+                "level": 3,
+                "text": "Médiane = 83,5 > 80, donc par définition de la médiane, au moins 5 jours sur 10 ont une valeur ≥ 83,5 > 80."
+              }
+            ],
+            "correct_feedback": "Exact ! La médiane est 83,5 μg/m³ > 80 μg/m³, donc au moins 5 jours ont dépassé le seuil. L'affirmation est vraie.",
+            "incorrect_feedback": "La médiane (83,5) signifie que la moitié des valeurs (≥ 5) sont au-dessus de 83,5, donc au-dessus de 80."
+          }
+        }
+      ],
+      "documents": [
+        {
+          "id": "17f4e765-942f-4911-95e4-72f97aa25541",
+          "type": "table",
+          "label": "Statistiques PM10 à Lyon (16–25 janv. 2017)",
+          "table": {
+            "headers": [
+              "Statistique",
+              "Valeur (μg/m³)"
+            ],
+            "rows": [
+              [
+                "Moyenne",
+                "72,5"
+              ],
+              [
+                "Médiane",
+                "83,5"
+              ],
+              [
+                "Minimum",
+                "22"
+              ],
+              [
+                "Maximum",
+                "107"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "760b3e6c-91d4-4e96-86c8-321177c6b085",
+          "type": "table",
+          "label": "Relevés PM10 à Grenoble (16–25 janv. 2017)",
+          "table": {
+            "headers": [
+              "Date",
+              "Concentration PM10 (μg/m³)"
+            ],
+            "rows": [
+              [
+                "16 janvier",
+                "32"
+              ],
+              [
+                "17 janvier",
+                "39"
+              ],
+              [
+                "18 janvier",
+                "52"
+              ],
+              [
+                "19 janvier",
+                "57"
+              ],
+              [
+                "20 janvier",
+                "78"
+              ],
+              [
+                "21 janvier",
+                "63"
+              ],
+              [
+                "22 janvier",
+                "60"
+              ],
+              [
+                "23 janvier",
+                "82"
+              ],
+              [
+                "24 janvier",
+                "82"
+              ],
+              [
+                "25 janvier",
+                "89"
+              ]
+            ]
+          }
+        }
+      ],
+      "choices": null,
+      "expected_answer": null
+    },
+    {
+      "id": "bc5ef613-f2dd-49c8-9d9b-5097e9a2141b",
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 3 (12 points)",
+      "exam_style": "dnb_annales",
+      "item_type": "free_response",
+      "difficulty": "hard",
+      "source_year": 2018,
+      "status": "published",
+      "context": "Dans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.",
+      "prompt": "",
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Quelle est la probabilité qu'il écoute du rap ?",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Probabilité = nombre de cas favorables / nombre de cas possibles."
+              },
+              {
+                "level": 2,
+                "text": "Nombre de morceaux de rap = 125. Nombre total = 375."
+              },
+              {
+                "level": 3,
+                "text": "P(rap) = 125/375. Simplifie cette fraction."
+              }
+            ],
+            "correct_feedback": "Parfait ! P(rap) = 125/375 = 1/3.",
+            "incorrect_feedback": "La probabilité se calcule : nombre de morceaux de rap / nombre total = 125/375 = 1/3."
+          }
+        },
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "La probabilité qu'il écoute du rock est égale à 7/15. Combien Théo a-t-il de morceaux de rock dans son lecteur audio ?",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Nombre de morceaux = probabilité × total = 7/15 × 375."
+              },
+              {
+                "level": 2,
+                "text": "7/15 × 375 = 7 × 25 = 175."
+              },
+              {
+                "level": 3,
+                "text": "375 ÷ 15 = 25, puis 25 × 7 = 175 morceaux de rock."
+              }
+            ],
+            "correct_feedback": "Exact ! Nombre de morceaux de rock = 7/15 × 375 = 175 morceaux.",
+            "incorrect_feedback": "Multiplie la probabilité par le total : 7/15 × 375 = 175 morceaux de rock."
+          }
+        },
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Alice possède 40 morceaux de rock sur 48 morceaux au total. Si Théo et Alice appuient tous les deux sur la touche « lecture aléatoire » de leur lecteur audio, lequel a le plus de chances d'écouter un morceau de rock ?",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Calcule la probabilité d'écouter du rock pour chacun, puis compare."
+              },
+              {
+                "level": 2,
+                "text": "P(rock Alice) = 40/48 = 5/6 ≈ 0,833. P(rock Théo) = 175/375 = 7/15 ≈ 0,467."
+              },
+              {
+                "level": 3,
+                "text": "Compare 5/6 ≈ 0,833 et 7/15 ≈ 0,467."
+              }
+            ],
+            "correct_feedback": "Très bien ! P(rock Alice) ≈ 0,833 > P(rock Théo) ≈ 0,467. Alice a plus de chances d'écouter du rock.",
+            "incorrect_feedback": "Calcule P(Alice) = 40/48 = 5/6 et P(Théo) = 7/15. Compare les deux fractions : 5/6 > 7/15."
+          }
+        }
+      ],
+      "documents": [],
+      "choices": null,
+      "expected_answer": null
+    },
+    {
+      "id": "a44cf1f2-f3f6-4f08-a149-7ac8d52aa223",
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 4 (14 points)",
+      "exam_style": "dnb_annales",
+      "item_type": "free_response",
+      "difficulty": "hard",
+      "source_year": 2018,
+      "status": "published",
+      "context": "La figure ci-dessous n'est pas représentée en vraie grandeur. Les points C, B et E sont alignés. Le triangle ABC est rectangle en A. Le triangle BDC est rectangle en B. On donne : CB = 7,5 cm, BE = 6,8 cm, BF = 6 cm, FE = 3,2 cm, DC = 8,5 cm et l'angle ACB = 61°.",
+      "prompt": "",
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Montrer que la longueur BD est égale à 4 cm.",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Applique le théorème de Pythagore dans le triangle BDC rectangle en B."
+              },
+              {
+                "level": 2,
+                "text": "DC est l'hypoténuse : DC² = BD² + BC². Cherche BD."
+              },
+              {
+                "level": 3,
+                "text": "BD² = DC² − BC² = 8,5² − 7,5² = 72,25 − 56,25 = 16. Donc BD = 4 cm."
+              }
+            ],
+            "correct_feedback": "Excellent ! BD² = 8,5² − 7,5² = 72,25 − 56,25 = 16, donc BD = √16 = 4 cm.",
+            "incorrect_feedback": "Dans le triangle BDC rectangle en B : DC² = BD² + BC². Donc BD² = 8,5² − 7,5² = 16, BD = 4 cm."
+          }
+        },
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Montrer que les triangles CBD et BFE sont semblables.",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Deux triangles sont semblables si leurs côtés sont proportionnels."
+              },
+              {
+                "level": 2,
+                "text": "Calcule les rapports CB/BF, BD/FE, DC/BE."
+              },
+              {
+                "level": 3,
+                "text": "CB/BF = 7,5/6 = 1,25 ; BD/FE = 4/3,2 = 1,25 ; DC/BE = 8,5/6,8 = 1,25. Les trois rapports sont égaux."
+              }
+            ],
+            "correct_feedback": "Parfait ! Les trois rapports de côtés sont tous égaux à 1,25, donc les triangles CBD et BFE sont semblables.",
+            "incorrect_feedback": "Calcule CB/BF = 7,5/6, BD/FE = 4/3,2, DC/BE = 8,5/6,8 et vérifie qu'ils sont tous égaux à 1,25."
+          }
+        },
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Sophie affirme que l'angle ∠ABD est un angle droit. A-t-elle raison ?",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Calcule d'abord l'angle ABC dans le triangle ABC rectangle en A."
+              },
+              {
+                "level": 2,
+                "text": "Angle ABC = 90° − angle ACB = 90° − 61° = 29°."
+              },
+              {
+                "level": 3,
+                "text": "BD est perpendiculaire à BC (angle droit en B dans BDC), donc angle ABD = 90° − 29° = 61°."
+              }
+            ],
+            "correct_feedback": "Bien raisonné ! angle ABD = 61° ≠ 90°. Sophie a tort.",
+            "incorrect_feedback": "angle ABC = 29° (complémentaire de 61°). BD ⊥ BC, donc angle ABD = 90° − 29° = 61°. Sophie a tort."
+          }
+        },
+        {
+          "id": "4",
+          "label": "4.",
+          "prompt": "Max affirme que l'angle ∠ABF est un angle droit. A-t-il raison ?",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Utilise la similitude des triangles CBD et BFE pour trouver les angles."
+              },
+              {
+                "level": 2,
+                "text": "Si les triangles sont semblables, les angles correspondants sont égaux. Quel angle dans CBD correspond à l'angle FBE dans BFE ?"
+              },
+              {
+                "level": 3,
+                "text": "angle FBE = angle DCB (triangles semblables). angle FBE = 90° − angle FEB. angle ABF = angle ABE − angle FBE = (180° − 29°) − angle FBE. Vérifie si angle ABF = 90°."
+              }
+            ],
+            "correct_feedback": "Très bien ! Par la similitude, les angles se correspondent. Max a raison : angle ABF = 90°.",
+            "incorrect_feedback": "Les triangles semblables ont des angles correspondants égaux. Utilise les angles de CBD pour trouver ceux de BFE, puis calcule angle ABF."
+          }
+        }
+      ],
+      "documents": [
+        {
+          "id": "1fee519f-8b45-4511-ad05-2a259da27403",
+          "type": "image",
+          "label": "Figure géométrique – triangles ABCDEF",
+          "public_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MjAiIGhlaWdodD0iMjMwIiB2aWV3Qm94PSIwIDE1MCA0MjAgMjMwIiBmb250LWZhbWlseT0ic3lzdGVtLXVpLC1hcHBsZS1zeXN0ZW0sc2Fucy1zZXJpZiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj4KICA8cmVjdCB4PSIwIiB5PSIxNTAiIHdpZHRoPSI0MjAiIGhlaWdodD0iMjMwIiBmaWxsPSJ3aGl0ZSIvPgoKICA8IS0tIEhvcml6b250YWwgYmFzZSBsaW5lIEMtQi1FIC0tPgogIDxsaW5lIHgxPSI1MCIgeTE9IjI2MCIgeDI9IjMzNiIgeTI9IjI2MCIgc3Ryb2tlPSIjMTExODI3IiBzdHJva2Utd2lkdGg9IjIuMiIvPgoKICA8IS0tIFRyaWFuZ2xlIEFCQyAtLT4KICA8bGluZSB4MT0iNTAiIHkxPSIyNjAiIHgyPSI4NSIgeTI9IjE5NiIgc3Ryb2tlPSIjMjU2M2ViIiBzdHJva2Utd2lkdGg9IjEuOCIvPgogIDxsaW5lIHgxPSI4NSIgeTE9IjE5NiIgeDI9IjIwMCIgeTI9IjI2MCIgc3Ryb2tlPSIjMjU2M2ViIiBzdHJva2Utd2lkdGg9IjEuOCIvPgoKICA8IS0tIFRyaWFuZ2xlIEJEQzogQkQgYW5kIERDIC0tPgogIDxsaW5lIHgxPSIyMDAiIHkxPSIyNjAiIHgyPSIyMDAiIHkyPSIzNDAiIHN0cm9rZT0iI2RjMjYyNiIgc3Ryb2tlLXdpZHRoPSIxLjgiLz4KICA8bGluZSB4MT0iMjAwIiB5MT0iMzQwIiB4Mj0iNTAiIHkyPSIyNjAiIHN0cm9rZT0iI2RjMjYyNiIgc3Ryb2tlLXdpZHRoPSIxLjgiLz4KCiAgPCEtLSBUcmlhbmdsZSBCRkU6IEJGIGFuZCBGRSAtLT4KICA8bGluZSB4MT0iMjAwIiB5MT0iMjYwIiB4Mj0iMzA2IiB5Mj0iMjA0IiBzdHJva2U9IiMxNmEzNGEiIHN0cm9rZS13aWR0aD0iMS44Ii8+CiAgPGxpbmUgeDE9IjMwNiIgeTE9IjIwNCIgeDI9IjMzNiIgeTI9IjI2MCIgc3Ryb2tlPSIjMTZhMzRhIiBzdHJva2Utd2lkdGg9IjEuOCIvPgoKICA8IS0tIFJpZ2h0IGFuZ2xlIG1hcmtlciBhdCBBIC0tPgogIDxwb2x5bGluZSBwb2ludHM9IjkzLjczNzk4NjMwMDk0OTMsMjAwLjg2Mjg3OTMzMjcwMjIyIDg4LjkzOTg2Mjg4MTUyMjIsMjA5LjYzNjU5MDcyODIyNjA4IDgwLjIwMTg3NjU4MDU3MjksMjA0Ljc3MzcxMTM5NTUyMzg2IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS13aWR0aD0iMS4yIi8+CgogIDwhLS0gUmlnaHQgYW5nbGUgbWFya2VyIGF0IEIgKGZvciBCREMsIEJE4oqlQkMpIC0tPgogIDxwb2x5bGluZSBwb2ludHM9IjIwMCwyNzAgMTkwLDI3MCAxOTAsMjYwIiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS13aWR0aD0iMS4yIi8+CgogIDwhLS0gUmlnaHQgYW5nbGUgbWFya2VyIGF0IEYgLS0+CiAgPHBvbHlsaW5lIHBvaW50cz0iMjk3LjE1ODA2NjE1OTI2MjgsMjA4LjY3MTIxMDMzMDk1NTUyIDMwMS44ODAyODAyODQ0MTcsMjE3LjQ4NjAxMDAzMTI0MzMyIDMxMC43MjIyMTQxMjUxNTQyLDIxMi44MTQ3OTk3MDAyODc4NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzc0MTUxIiBzdHJva2Utd2lkdGg9IjEuMiIvPgoKICA8IS0tIE1lYXN1cmVtZW50IGxhYmVscyAtLT4KICA8IS0tIENCID0gNyw1IGNtIChiZWxvdyBsaW5lKSAtLT4KICA8dGV4dCB4PSIxMjUiIHk9IjI3NiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzM3NDE1MSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Nyw1IGNtPC90ZXh0PgogIDwhLS0gQkUgPSA2LDggY20gKGJlbG93IGxpbmUpIC0tPgogIDx0ZXh0IHg9IjI2OCIgeT0iMjc2IiBmb250LXNpemU9IjExIiBmaWxsPSIjMzc0MTUxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj42LDggY208L3RleHQ+CiAgPCEtLSBEQyA9IDgsNSBjbSAobGVmdCBzaWRlKSAtLT4KICA8dGV4dCB4PSIxMDMiIHk9IjMwNCIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzM3NDE1MSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+OCw1IGNtPC90ZXh0PgogIDwhLS0gQkYgPSA2IGNtIC0tPgogIDx0ZXh0IHg9IjI0OSIgeT0iMjI2IiBmb250LXNpemU9IjExIiBmaWxsPSIjMzc0MTUxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj42IGNtPC90ZXh0PgogIDwhLS0gRkUgPSAzLDIgY20gLS0+CiAgPHRleHQgeD0iMzIzIiB5PSIyMjciIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiMzNzQxNTEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjMsMiBjbTwvdGV4dD4KCiAgPCEtLSBBbmdsZSBBQ0IgPSA2McKwIGF0IEMgLS0+CiAgPHRleHQgeD0iNjIiIHk9IjI1MiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzM3NDE1MSI+NjHCsDwvdGV4dD4KICA8IS0tIFNtYWxsIGFyYyBhdCBDIC0tPgogIDxwYXRoIGQ9Ik0gNjgsMjYwIEEgMTgsMTggMCAwLDAgNTksMjQ0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS13aWR0aD0iMSIvPgoKICA8IS0tIFBvaW50IGxhYmVscyAtLT4KICA8dGV4dCB4PSI3MyIgeT0iMTkwIiBmb250LXNpemU9IjEzIiBmaWxsPSIjMTExODI3IiBmb250LXdlaWdodD0iYm9sZCI+QTwvdGV4dD4KICA8dGV4dCB4PSIxOTYiIHk9IjI4MCIgZm9udC1zaXplPSIxMyIgZmlsbD0iIzExMTgyNyIgZm9udC13ZWlnaHQ9ImJvbGQiPkI8L3RleHQ+CiAgPHRleHQgeD0iMzQiIHk9IjI4MCIgZm9udC1zaXplPSIxMyIgZmlsbD0iIzExMTgyNyIgZm9udC13ZWlnaHQ9ImJvbGQiPkM8L3RleHQ+CiAgPHRleHQgeD0iMjA0IiB5PSIzNTYiIGZvbnQtc2l6ZT0iMTMiIGZpbGw9IiMxMTE4MjciIGZvbnQtd2VpZ2h0PSJib2xkIj5EPC90ZXh0PgogIDx0ZXh0IHg9IjM0MiIgeT0iMjgwIiBmb250LXNpemU9IjEzIiBmaWxsPSIjMTExODI3IiBmb250LXdlaWdodD0iYm9sZCI+RTwvdGV4dD4KICA8dGV4dCB4PSIzMTIiIHk9IjE5OCIgZm9udC1zaXplPSIxMyIgZmlsbD0iIzExMTgyNyIgZm9udC13ZWlnaHQ9ImJvbGQiPkY8L3RleHQ+CgogIDwhLS0gUG9pbnQgZG90cyAtLT4KICA8Y2lyY2xlIGN4PSI4NSIgY3k9IjE5NiIgcj0iMyIgZmlsbD0iIzExMTgyNyIvPgogIDxjaXJjbGUgY3g9IjIwMCIgY3k9IjI2MCIgcj0iMyIgZmlsbD0iIzExMTgyNyIvPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMjYwIiByPSIzIiBmaWxsPSIjMTExODI3Ii8+CiAgPGNpcmNsZSBjeD0iMjAwIiBjeT0iMzQwIiByPSIzIiBmaWxsPSIjMTExODI3Ii8+CiAgPGNpcmNsZSBjeD0iMzM2IiBjeT0iMjYwIiByPSIzIiBmaWxsPSIjMTExODI3Ii8+CiAgPGNpcmNsZSBjeD0iMzA2IiBjeT0iMjA0IiByPSIzIiBmaWxsPSIjMTExODI3Ii8+Cjwvc3ZnPg==",
+          "alt": "Figure géométrique avec triangles ABC (rectangle en A), BDC (rectangle en B), BFE (rectangle en F). Points C, B, E alignés. CB=7,5 cm, BE=6,8 cm, BF=6 cm, FE=3,2 cm, DC=8,5 cm, angle ACB=61°."
+        }
+      ],
+      "choices": null,
+      "expected_answer": null
+    },
+    {
+      "id": "60c9bd4b-7497-4f97-85e0-021a6f0cf5bb",
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 5 (16 points)",
+      "exam_style": "dnb_annales",
+      "item_type": "free_response",
+      "difficulty": "hard",
+      "source_year": 2018,
+      "status": "published",
+      "context": "Voici un programme de calcul :\n• Choisir un nombre\n• Multiplier ce nombre par 4\n• Ajouter 8\n• Multiplier le résultat par 2",
+      "prompt": "",
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Vérifier que si on choisit le nombre −1, ce programme donne 8 comme résultat final.",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Applique chaque étape du programme en partant de −1."
+              },
+              {
+                "level": 2,
+                "text": "−1 × 4 = −4 ; −4 + 8 = 4 ; 4 × 2 = ?"
+              },
+              {
+                "level": 3,
+                "text": "4 × 2 = 8. Le résultat est bien 8."
+              }
+            ],
+            "correct_feedback": "Parfait ! −1 × 4 = −4 ; −4 + 8 = 4 ; 4 × 2 = 8. Vérifié !",
+            "incorrect_feedback": "Suis les étapes : −1 × 4 = −4, puis −4 + 8 = 4, puis 4 × 2 = 8."
+          }
+        },
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Le programme donne 30 comme résultat final. Quel est le nombre choisi au départ ?",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Remonte les étapes en ordre inverse : divise par 2, soustrait 8, divise par 4."
+              },
+              {
+                "level": 2,
+                "text": "30 ÷ 2 = 15 ; 15 − 8 = 7 ; 7 ÷ 4 = ?"
+              },
+              {
+                "level": 3,
+                "text": "7 ÷ 4 = 1,75. Le nombre choisi au départ est 1,75."
+              }
+            ],
+            "correct_feedback": "Excellent ! 30 ÷ 2 = 15 ; 15 − 8 = 7 ; 7 ÷ 4 = 1,75.",
+            "incorrect_feedback": "Remonte : résultat ÷ 2 = 15, puis −8 = 7, puis ÷ 4 = 1,75."
+          }
+        },
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "L'expression A = 2(4x + 8) donne le résultat du programme pour un nombre x. On pose B = (4 + x)² − x². Prouver que A = B pour toutes les valeurs de x.",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Développe A en utilisant la distributivité."
+              },
+              {
+                "level": 2,
+                "text": "Développe B en utilisant l'identité (a+b)² = a² + 2ab + b²."
+              },
+              {
+                "level": 3,
+                "text": "A = 8x + 16. B = 16 + 8x + x² − x² = 8x + 16. Donc A = B."
+              }
+            ],
+            "correct_feedback": "Bravo ! A = 2(4x+8) = 8x+16. B = (4+x)² − x² = 16+8x+x²−x² = 8x+16. A = B.",
+            "incorrect_feedback": "Développe : A = 2×4x + 2×8 = 8x+16. B = 4²+2×4×x+x²−x² = 16+8x. Donc A = B."
+          }
+        },
+        {
+          "id": "4",
+          "label": "4.",
+          "prompt": "Pour chacune des affirmations suivantes, indiquer si elle est vraie ou fausse en justifiant.\nAffirmation 1 : Ce programme donne un résultat positif pour toutes les valeurs de x.\nAffirmation 2 : Si le nombre x choisi est un entier, le résultat obtenu est un multiple de 8.",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Pour l'affirmation 1, cherche une valeur de x qui donne un résultat négatif."
+              },
+              {
+                "level": 2,
+                "text": "Pour l'affirmation 2, factorise l'expression A = 8x + 16."
+              },
+              {
+                "level": 3,
+                "text": "Aff. 1 : Fausse — pour x = −3, A = 8×(−3)+16 = −8 < 0. Aff. 2 : Vraie — A = 8(x+2), multiple de 8 si x entier."
+              }
+            ],
+            "correct_feedback": "Parfait ! Aff. 1 : Fausse (x = −3 donne −8). Aff. 2 : Vraie car A = 8(x+2) est toujours un multiple de 8 pour x entier.",
+            "incorrect_feedback": "Aff. 1 : essaie x = −3. Aff. 2 : A = 8x+16 = 8(x+2) — est-ce un multiple de 8 ?"
+          }
+        }
+      ],
+      "documents": [
+        {
+          "id": "04df248f-46f9-4209-acbe-e6c84e1ae8c8",
+          "type": "image",
+          "label": "Programme de calcul",
+          "public_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyOTAiIGhlaWdodD0iMTg4IiB2aWV3Qm94PSIwIDAgMjkwIDE4OCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSwtYXBwbGUtc3lzdGVtLHNhbnMtc2VyaWYiPgogIDxyZWN0IHdpZHRoPSIyOTAiIGhlaWdodD0iMTg4IiBmaWxsPSJ3aGl0ZSIvPgogIDxyZWN0IHg9IjEwIiB5PSI4IiB3aWR0aD0iMjcwIiBoZWlnaHQ9IjE3MiIgcng9IjgiIGZpbGw9IiNmOGZhZmMiIHN0cm9rZT0iIzM3NDE1MSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHRleHQgeD0iMjIiIHk9IjQ3LjkyIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMTExODI3Ij7igKIgQ2hvaXNpciB1biBub21icmU8L3RleHQ+CiAgPHRleHQgeD0iMjIiIHk9IjgzLjkyIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMTExODI3Ij7igKIgTXVsdGlwbGllciBjZSBub21icmUgcGFyIDQ8L3RleHQ+CiAgPHRleHQgeD0iMjIiIHk9IjExOS45MTk5OTk5OTk5OTk5OSIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzExMTgyNyI+4oCiIEFqb3V0ZXIgODwvdGV4dD4KICA8dGV4dCB4PSIyMiIgeT0iMTU1LjkyIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMTExODI3Ij7igKIgTXVsdGlwbGllciBsZSByw6lzdWx0YXQgcGFyIDI8L3RleHQ+Cjwvc3ZnPg==",
+          "alt": "Programme de calcul : Choisir un nombre → Multiplier par 4 → Ajouter 8 → Multiplier le résultat par 2 → Résultat"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null
+    },
+    {
+      "id": "67746426-ced3-4ec6-b527-291efe54896a",
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 6 (16 points)",
+      "exam_style": "dnb_annales",
+      "item_type": "free_response",
+      "difficulty": "hard",
+      "source_year": 2018,
+      "status": "published",
+      "context": "Les longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. On prend comme échelle 1 cm pour 50 pixels. Le programme suivant utilise deux blocs personnalisés :\n— Carré(Longueur) : répéter 4 fois [avancer de Longueur, tourner à droite de 90°]\n— Triangle(Longueur) : répéter 3 fois [avancer de Longueur, tourner à droite de 120°]",
+      "prompt": "",
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "On prend comme échelle 1 cm pour 50 pixels. Quelle est la longueur en cm du côté du grand carré dessiné par le programme ?",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Divise le nombre de pixels par 50 pour obtenir la longueur en cm."
+              },
+              {
+                "level": 2,
+                "text": "Le grand carré a un côté de 200 pixels. 200 ÷ 50 = ?"
+              },
+              {
+                "level": 3,
+                "text": "200 ÷ 50 = 4 cm."
+              }
+            ],
+            "correct_feedback": "Correct ! Le grand carré a un côté de 200 pixels. À l'échelle : 200 ÷ 50 = 4 cm.",
+            "incorrect_feedback": "Longueur (cm) = pixels ÷ 50 = 200 ÷ 50 = 4 cm."
+          }
+        },
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Représenter sur votre copie la figure obtenue si le programme est exécuté jusqu'à la ligne 7 comprise.",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Les lignes 5 à 7 dessinent le Carré(200) puis le Triangle(200)."
+              },
+              {
+                "level": 2,
+                "text": "Le carré commence en (0,0) et a un côté de 200 pixels. Le triangle équilatéral commence là où le carré s'est terminé."
+              },
+              {
+                "level": 3,
+                "text": "Un grand carré de côté 200 px (4 cm) et un triangle équilatéral de côté 200 px (4 cm) attaché à sa droite."
+              }
+            ],
+            "correct_feedback": "Très bien ! La figure jusqu'à la ligne 7 : un grand carré (4 cm) avec un triangle équilatéral (côté 4 cm) à droite.",
+            "incorrect_feedback": "La ligne 5 dessine le Carré(200) et la ligne 7 dessine le Triangle(200) en partant de x:200, y:0."
+          }
+        },
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Quelles sont les coordonnées du stylo après l'exécution de la ligne 8 ?",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "La ligne 8 est une instruction 'aller à'. Lis directement les coordonnées."
+              },
+              {
+                "level": 2,
+                "text": "Ligne 8 : aller à x: 300  y: -100."
+              },
+              {
+                "level": 3,
+                "text": "Après la ligne 8, le stylo est exactement en (300 ; −100)."
+              }
+            ],
+            "correct_feedback": "Exact ! Après la ligne 8 (aller à x:300 y:−100), le stylo est aux coordonnées (300 ; −100).",
+            "incorrect_feedback": "Relis la ligne 8 du programme : 'aller à x:300 y:−100'. Le stylo va directement à ces coordonnées."
+          }
+        },
+        {
+          "id": "4",
+          "label": "4.",
+          "prompt": "Parmi les transformations suivantes : translation, homothétie, rotation, symétrie axiale — quelle transformation géométrique permet d'obtenir le petit carré à partir du grand carré ? Préciser le rapport de réduction.",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Compare les longueurs des côtés des deux carrés."
+              },
+              {
+                "level": 2,
+                "text": "Grand carré : côté 200 px (4 cm). Petit carré : côté 100 px (2 cm). Rapport = ?"
+              },
+              {
+                "level": 3,
+                "text": "Rapport = 100/200 = 1/2. Une homothétie de rapport 1/2 transforme le grand carré en petit carré."
+              }
+            ],
+            "correct_feedback": "Parfait ! C'est une homothétie de rapport 1/2 (le petit carré a un côté de 2 cm contre 4 cm pour le grand).",
+            "incorrect_feedback": "Le petit carré a un côté moitié moins grand que le grand. C'est une homothétie de rapport 1/2."
+          }
+        },
+        {
+          "id": "5",
+          "label": "5.",
+          "prompt": "Quel est le rapport des aires entre les deux carrés dessinés ?",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "L'aire d'un carré = côté². Le rapport des aires = (rapport des côtés)²."
+              },
+              {
+                "level": 2,
+                "text": "Aire grand carré = 4² = 16 cm². Aire petit carré = 2² = 4 cm²."
+              },
+              {
+                "level": 3,
+                "text": "Rapport = 16/4 = 4. Le rapport des côtés est 1/2, donc le rapport des aires est (1/2)² = 1/4 (ou 4 si grand/petit)."
+              }
+            ],
+            "correct_feedback": "Excellent ! Aire grand = 16 cm², aire petit = 4 cm². Rapport grand/petit = 16/4 = 4.",
+            "incorrect_feedback": "Calcule les aires : 4² = 16 cm² et 2² = 4 cm². Rapport = 16/4 = 4."
+          }
+        }
+      ],
+      "documents": [
+        {
+          "id": "de5193bb-c3d6-4c0e-92fc-33b9ce043139",
+          "type": "image",
+          "label": "Programme Scratch",
+          "public_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MTEiIGhlaWdodD0iMzgxIiB2aWV3Qm94PSIwIDAgNjExIDM4MSIgZm9udC1mYW1pbHk9InN5c3RlbS11aSwtYXBwbGUtc3lzdGVtLHNhbnMtc2VyaWYiPgogIDxyZWN0IHdpZHRoPSI2MTEiIGhlaWdodD0iMzgxIiBmaWxsPSIjZjBmNGY4Ii8+CiAgPHRleHQgeD0iMTAiIHk9IjExIiBmb250LXNpemU9IjkiIGZpbGw9IiM5NGEzYjgiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiPlNjcmlwdCBwcmluY2lwYWw8L3RleHQ+CiAgPHRleHQgeD0iMjIwIiB5PSIxMSIgZm9udC1zaXplPSI5IiBmaWxsPSIjOTRhM2I4IiBmb250LWZhbWlseT0ibW9ub3NwYWNlIj5CbG9jIENhcnLDqTwvdGV4dD4KICA8dGV4dCB4PSI0MjAiIHk9IjExIiBmb250LXNpemU9IjkiIGZpbGw9IiM5NGEzYjgiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiPkJsb2MgVHJpYW5nbGU8L3RleHQ+CiAgCiAgPHBhdGggZD0iTSAxMCwyOCBRIDEyLDE2IDMyLDE2IEwgMTk0LDE2IFEgMjAwLDE2IDIwMCwyNiBMIDIwMCw0MyBRIDIwMCw0NyAxOTYsNDcgTCAzNiw0NyBMIDM2LDUxIEwgMjQsNTEgTCAyNCw0NyBMIDE0LDQ3IFEgMTAsNDcgMTAsNDMgWiIgZmlsbD0iI0ZGQUIxOSIgc3Ryb2tlPSJyZ2JhKDAsMCwwLDAuMjIpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSIxOSIgeT0iNDEiIGZvbnQtc2l6ZT0iMTEiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9InN5c3RlbS11aSwtYXBwbGUtc3lzdGVtLHNhbnMtc2VyaWYiPnF1YW5kIPCfmqkgY2xpcXXDqTwvdGV4dD4KICA8cGF0aCBkPSJNIDE0LDUxIEwgMjQsNTEgTCAyNCw1NSBMIDM2LDU1IEwgMzYsNTEgTCAxOTYsNTEgUSAyMDAsNTEgMjAwLDU1IEwgMjAwLDc0IFEgMjAwLDc4IDE5Niw3OCBMIDM2LDc4IEwgMzYsODIgTCAyNCw4MiBMIDI0LDc4IEwgMTQsNzggUSAxMCw3OCAxMCw3NCBMIDEwLDU1IFEgMTAsNTEgMTQsNTEgWiIgZmlsbD0iIzRDOTdGRiIgc3Ryb2tlPSJyZ2JhKDAsMCwwLDAuMikiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjE5IiB5PSI2OSIgZm9udC1zaXplPSIxMC41IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWksLWFwcGxlLXN5c3RlbSxzYW5zLXNlcmlmIj5hbGxlciDDoCB4OiAoMCkgeTogKDApPC90ZXh0PgogIDxwYXRoIGQ9Ik0gMTQsODIgTCAyNCw4MiBMIDI0LDg2IEwgMzYsODYgTCAzNiw4MiBMIDE5Niw4MiBRIDIwMCw4MiAyMDAsODYgTCAyMDAsMTA1IFEgMjAwLDEwOSAxOTYsMTA5IEwgMzYsMTA5IEwgMzYsMTEzIEwgMjQsMTEzIEwgMjQsMTA5IEwgMTQsMTA5IFEgMTAsMTA5IDEwLDEwNSBMIDEwLDg2IFEgMTAsODIgMTQsODIgWiIgZmlsbD0iIzRDOTdGRiIgc3Ryb2tlPSJyZ2JhKDAsMCwwLDAuMikiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjE5IiB5PSIxMDAiIGZvbnQtc2l6ZT0iMTAuNSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0ic3lzdGVtLXVpLC1hcHBsZS1zeXN0ZW0sc2Fucy1zZXJpZiI+cydvcmllbnRlciDDoCAoOTApPC90ZXh0PgogIDxwYXRoIGQ9Ik0gMTQsMTEzIEwgMjQsMTEzIEwgMjQsMTE3IEwgMzYsMTE3IEwgMzYsMTEzIEwgMTk2LDExMyBRIDIwMCwxMTMgMjAwLDExNyBMIDIwMCwxMzYgUSAyMDAsMTQwIDE5NiwxNDAgTCAzNiwxNDAgTCAzNiwxNDQgTCAyNCwxNDQgTCAyNCwxNDAgTCAxNCwxNDAgUSAxMCwxNDAgMTAsMTM2IEwgMTAsMTE3IFEgMTAsMTEzIDE0LDExMyBaIiBmaWxsPSIjNTlDMDU5IiBzdHJva2U9InJnYmEoMCwwLDAsMC4yKSIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iMTkiIHk9IjEzMSIgZm9udC1zaXplPSIxMC41IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWksLWFwcGxlLXN5c3RlbSxzYW5zLXNlcmlmIj5zdHlsbyBlbiBwb3NpdGlvbiBkJ8OpY3JpdHVyZTwvdGV4dD4KICA8cGF0aCBkPSJNIDE0LDE0NCBMIDI0LDE0NCBMIDI0LDE0OCBMIDM2LDE0OCBMIDM2LDE0NCBMIDE5NiwxNDQgUSAyMDAsMTQ0IDIwMCwxNDggTCAyMDAsMTY3IFEgMjAwLDE3MSAxOTYsMTcxIEwgMzYsMTcxIEwgMzYsMTc1IEwgMjQsMTc1IEwgMjQsMTcxIEwgMTQsMTcxIFEgMTAsMTcxIDEwLDE2NyBMIDEwLDE0OCBRIDEwLDE0NCAxNCwxNDQgWiIgZmlsbD0iI0ZGOEMxQSIgc3Ryb2tlPSJyZ2JhKDAsMCwwLDAuMikiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjE5IiB5PSIxNjIiIGZvbnQtc2l6ZT0iMTAuNSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0ic3lzdGVtLXVpLC1hcHBsZS1zeXN0ZW0sc2Fucy1zZXJpZiI+bWV0dHJlIFtMb25ndWV1cl0gw6AgKDIwMCk8L3RleHQ+CiAgPHBhdGggZD0iTSAxNCwxNzUgTCAyNCwxNzUgTCAyNCwxNzkgTCAzNiwxNzkgTCAzNiwxNzUgTCAxOTYsMTc1IFEgMjAwLDE3NSAyMDAsMTc5IEwgMjAwLDE5OCBRIDIwMCwyMDIgMTk2LDIwMiBMIDM2LDIwMiBMIDM2LDIwNiBMIDI0LDIwNiBMIDI0LDIwMiBMIDE0LDIwMiBRIDEwLDIwMiAxMCwxOTggTCAxMCwxNzkgUSAxMCwxNzUgMTQsMTc1IFoiIGZpbGw9IiM5OTY2RkYiIHN0cm9rZT0icmdiYSgwLDAsMCwwLjIpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSIxOSIgeT0iMTkzIiBmb250LXNpemU9IjEwLjUiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9InN5c3RlbS11aSwtYXBwbGUtc3lzdGVtLHNhbnMtc2VyaWYiPkNhcnLDqTwvdGV4dD4KICA8cGF0aCBkPSJNIDE0LDIwNiBMIDI0LDIwNiBMIDI0LDIxMCBMIDM2LDIxMCBMIDM2LDIwNiBMIDE5NiwyMDYgUSAyMDAsMjA2IDIwMCwyMTAgTCAyMDAsMjI5IFEgMjAwLDIzMyAxOTYsMjMzIEwgMzYsMjMzIEwgMzYsMjM3IEwgMjQsMjM3IEwgMjQsMjMzIEwgMTQsMjMzIFEgMTAsMjMzIDEwLDIyOSBMIDEwLDIxMCBRIDEwLDIwNiAxNCwyMDYgWiIgZmlsbD0iIzk5NjZGRiIgc3Ryb2tlPSJyZ2JhKDAsMCwwLDAuMikiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjE5IiB5PSIyMjQiIGZvbnQtc2l6ZT0iMTAuNSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0ic3lzdGVtLXVpLC1hcHBsZS1zeXN0ZW0sc2Fucy1zZXJpZiI+VHJpYW5nbGU8L3RleHQ+CiAgPHBhdGggZD0iTSAxNCwyMzcgTCAyNCwyMzcgTCAyNCwyNDEgTCAzNiwyNDEgTCAzNiwyMzcgTCAxOTYsMjM3IFEgMjAwLDIzNyAyMDAsMjQxIEwgMjAwLDI2MCBRIDIwMCwyNjQgMTk2LDI2NCBMIDM2LDI2NCBMIDM2LDI2OCBMIDI0LDI2OCBMIDI0LDI2NCBMIDE0LDI2NCBRIDEwLDI2NCAxMCwyNjAgTCAxMCwyNDEgUSAxMCwyMzcgMTQsMjM3IFoiIGZpbGw9IiM0Qzk3RkYiIHN0cm9rZT0icmdiYSgwLDAsMCwwLjIpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSIxOSIgeT0iMjU1IiBmb250LXNpemU9IjEwLjUiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9InN5c3RlbS11aSwtYXBwbGUtc3lzdGVtLHNhbnMtc2VyaWYiPmFsbGVyIMOgIHg6ICgzMDApIHk6ICgtMTAwKTwvdGV4dD4KICA8cGF0aCBkPSJNIDE0LDI2OCBMIDI0LDI2OCBMIDI0LDI3MiBMIDM2LDI3MiBMIDM2LDI2OCBMIDE5NiwyNjggUSAyMDAsMjY4IDIwMCwyNzIgTCAyMDAsMjkxIFEgMjAwLDI5NSAxOTYsMjk1IEwgMzYsMjk1IEwgMzYsMjk5IEwgMjQsMjk5IEwgMjQsMjk1IEwgMTQsMjk1IFEgMTAsMjk1IDEwLDI5MSBMIDEwLDI3MiBRIDEwLDI2OCAxNCwyNjggWiIgZmlsbD0iI0ZGOEMxQSIgc3Ryb2tlPSJyZ2JhKDAsMCwwLDAuMikiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjE5IiB5PSIyODYiIGZvbnQtc2l6ZT0iMTAuNSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0ic3lzdGVtLXVpLC1hcHBsZS1zeXN0ZW0sc2Fucy1zZXJpZiI+bWV0dHJlIFtMb25ndWV1cl0gw6AgKDEwMCk8L3RleHQ+CiAgPHBhdGggZD0iTSAxNCwyOTkgTCAyNCwyOTkgTCAyNCwzMDMgTCAzNiwzMDMgTCAzNiwyOTkgTCAxOTYsMjk5IFEgMjAwLDI5OSAyMDAsMzAzIEwgMjAwLDMyMiBRIDIwMCwzMjYgMTk2LDMyNiBMIDM2LDMyNiBMIDM2LDMzMCBMIDI0LDMzMCBMIDI0LDMyNiBMIDE0LDMyNiBRIDEwLDMyNiAxMCwzMjIgTCAxMCwzMDMgUSAxMCwyOTkgMTQsMjk5IFoiIGZpbGw9IiM5OTY2RkYiIHN0cm9rZT0icmdiYSgwLDAsMCwwLjIpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSIxOSIgeT0iMzE3IiBmb250LXNpemU9IjEwLjUiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9InN5c3RlbS11aSwtYXBwbGUtc3lzdGVtLHNhbnMtc2VyaWYiPkNhcnLDqTwvdGV4dD4KICA8cGF0aCBkPSJNIDE0LDMzMCBMIDI0LDMzMCBMIDI0LDMzNCBMIDM2LDMzNCBMIDM2LDMzMCBMIDE5NiwzMzAgUSAyMDAsMzMwIDIwMCwzMzQgTCAyMDAsMzUzIFEgMjAwLDM1NyAxOTYsMzU3IEwgMTQsMzU3IFEgMTAsMzU3IDEwLDM1MyBMIDEwLDMzNCBRIDEwLDMzMCAxNCwzMzAgWiIgZmlsbD0iIzk5NjZGRiIgc3Ryb2tlPSJyZ2JhKDAsMCwwLDAuMikiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjE5IiB5PSIzNDgiIGZvbnQtc2l6ZT0iMTAuNSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0ic3lzdGVtLXVpLC1hcHBsZS1zeXN0ZW0sc2Fucy1zZXJpZiI+VHJpYW5nbGU8L3RleHQ+CiAgPHBhdGggZD0iTSAyMjAsMjggUSAyMjIsMTYgMjQyLDE2IEwgMzg5LDE2IFEgMzk1LDE2IDM5NSwyNiBMIDM5NSw0MyBRIDM5NSw0NyAzOTEsNDcgTCAyNDYsNDcgTCAyNDYsNTEgTCAyMzQsNTEgTCAyMzQsNDcgTCAyMjQsNDcgUSAyMjAsNDcgMjIwLDQzIFoiIGZpbGw9IiM5OTY2RkYiIHN0cm9rZT0icmdiYSgwLDAsMCwwLjIyKSIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iMjI5IiB5PSI0MSIgZm9udC1zaXplPSIxMSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0ic3lzdGVtLXVpLC1hcHBsZS1zeXN0ZW0sc2Fucy1zZXJpZiI+RMOpZmluaXIgIENhcnLDqTwvdGV4dD4KICA8cGF0aCBkPSJNIDIyNCw1MSBMIDIzNCw1MSBMIDIzNCw1NSBMIDI0Niw1NSBMIDI0Niw1MSBMIDM5MSw1MSBRIDM5NSw1MSAzOTUsNTUgTCAzOTUsNzQgUSAzOTUsNzggMzkxLDc4IEwgMjI0LDc4IFEgMjIwLDc4IDIyMCw3NCBMIDIyMCw1NSBRIDIyMCw1MSAyMjQsNTEgWiIgZmlsbD0iI0ZGQUIxOSIgc3Ryb2tlPSJyZ2JhKDAsMCwwLDAuMikiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjIyOSIgeT0iNjkiIGZvbnQtc2l6ZT0iMTAuNSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0ic3lzdGVtLXVpLC1hcHBsZS1zeXN0ZW0sc2Fucy1zZXJpZiI+csOpcMOpdGVyICg0KTwvdGV4dD4KICA8cmVjdCB4PSIyNDAiIHk9IjgyIiB3aWR0aD0iMTUxIiBoZWlnaHQ9IjY4IiByeD0iMiIgZmlsbD0icmdiYSgwLDAsMCwwLjEzKSIvPgogIDxwYXRoIGQ9Ik0gMjQ0LDUwIEwgMjU0LDUwIEwgMjU0LDU0IEwgMjY2LDU0IEwgMjY2LDUwIEwgMzgzLDUwIFEgMzg3LDUwIDM4Nyw1NCBMIDM4Nyw3MyBRIDM4Nyw3NyAzODMsNzcgTCAyNjYsNzcgTCAyNjYsODEgTCAyNTQsODEgTCAyNTQsNzcgTCAyNDQsNzcgUSAyNDAsNzcgMjQwLDczIEwgMjQwLDU0IFEgMjQwLDUwIDI0NCw1MCBaIiBmaWxsPSIjNEM5N0ZGIiBzdHJva2U9InJnYmEoMCwwLDAsMC4yKSIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iMjQ5IiB5PSI2OCIgZm9udC1zaXplPSIxMC41IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWksLWFwcGxlLXN5c3RlbSxzYW5zLXNlcmlmIj5hdmFuY2VyIGRlIChMb25ndWV1cik8L3RleHQ+CiAgPHBhdGggZD0iTSAyNDQsODEgTCAyNTQsODEgTCAyNTQsODUgTCAyNjYsODUgTCAyNjYsODEgTCAzODMsODEgUSAzODcsODEgMzg3LDg1IEwgMzg3LDEwNCBRIDM4NywxMDggMzgzLDEwOCBMIDI0NCwxMDggUSAyNDAsMTA4IDI0MCwxMDQgTCAyNDAsODUgUSAyNDAsODEgMjQ0LDgxIFoiIGZpbGw9IiM0Qzk3RkYiIHN0cm9rZT0icmdiYSgwLDAsMCwwLjIpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSIyNDkiIHk9Ijk5IiBmb250LXNpemU9IjEwLjUiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9InN5c3RlbS11aSwtYXBwbGUtc3lzdGVtLHNhbnMtc2VyaWYiPnRvdXJuZXIg4oa7ICg5MCkgZGVncsOpczwvdGV4dD4KICA8cGF0aCBkPSJNIDIyMCwxNDYgUSAyMjAsMTUwIDIyNCwxNTAgTCAyMzQsMTUwIEwgMjM0LDE1NCBMIDI0NiwxNTQgTCAyNDYsMTUwIEwgMzkxLDE1MCBRIDM5NSwxNTAgMzk1LDE1NCBMIDM5NSwxNTkuNSBRIDM5NSwxNjMuNSAzOTEsMTYzLjUgTCAyMjQsMTYzLjUgUSAyMjAsMTYzLjUgMjIwLDE1OS41IFoiIGZpbGw9IiNGRkFCMTkiIHN0cm9rZT0icmdiYSgwLDAsMCwwLjIpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8cGF0aCBkPSJNIDQyMCwyOCBRIDQyMiwxNiA0NDIsMTYgTCA1ODksMTYgUSA1OTUsMTYgNTk1LDI2IEwgNTk1LDQzIFEgNTk1LDQ3IDU5MSw0NyBMIDQ0Niw0NyBMIDQ0Niw1MSBMIDQzNCw1MSBMIDQzNCw0NyBMIDQyNCw0NyBRIDQyMCw0NyA0MjAsNDMgWiIgZmlsbD0iIzk5NjZGRiIgc3Ryb2tlPSJyZ2JhKDAsMCwwLDAuMjIpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSI0MjkiIHk9IjQxIiBmb250LXNpemU9IjExIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWksLWFwcGxlLXN5c3RlbSxzYW5zLXNlcmlmIj5Ew6lmaW5pciAgVHJpYW5nbGU8L3RleHQ+CiAgPHBhdGggZD0iTSA0MjQsNTEgTCA0MzQsNTEgTCA0MzQsNTUgTCA0NDYsNTUgTCA0NDYsNTEgTCA1OTEsNTEgUSA1OTUsNTEgNTk1LDU1IEwgNTk1LDc0IFEgNTk1LDc4IDU5MSw3OCBMIDQyNCw3OCBRIDQyMCw3OCA0MjAsNzQgTCA0MjAsNTUgUSA0MjAsNTEgNDI0LDUxIFoiIGZpbGw9IiNGRkFCMTkiIHN0cm9rZT0icmdiYSgwLDAsMCwwLjIpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSI0MjkiIHk9IjY5IiBmb250LXNpemU9IjEwLjUiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9InN5c3RlbS11aSwtYXBwbGUtc3lzdGVtLHNhbnMtc2VyaWYiPnLDqXDDqXRlciAoMyk8L3RleHQ+CiAgPHJlY3QgeD0iNDQwIiB5PSI4MiIgd2lkdGg9IjE1MSIgaGVpZ2h0PSI2OCIgcng9IjIiIGZpbGw9InJnYmEoMCwwLDAsMC4xMykiLz4KICA8cGF0aCBkPSJNIDQ0NCw1MCBMIDQ1NCw1MCBMIDQ1NCw1NCBMIDQ2Niw1NCBMIDQ2Niw1MCBMIDU4Myw1MCBRIDU4Nyw1MCA1ODcsNTQgTCA1ODcsNzMgUSA1ODcsNzcgNTgzLDc3IEwgNDY2LDc3IEwgNDY2LDgxIEwgNDU0LDgxIEwgNDU0LDc3IEwgNDQ0LDc3IFEgNDQwLDc3IDQ0MCw3MyBMIDQ0MCw1NCBRIDQ0MCw1MCA0NDQsNTAgWiIgZmlsbD0iIzRDOTdGRiIgc3Ryb2tlPSJyZ2JhKDAsMCwwLDAuMikiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjQ0OSIgeT0iNjgiIGZvbnQtc2l6ZT0iMTAuNSIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0ic3lzdGVtLXVpLC1hcHBsZS1zeXN0ZW0sc2Fucy1zZXJpZiI+YXZhbmNlciBkZSAoTG9uZ3VldXIpPC90ZXh0PgogIDxwYXRoIGQ9Ik0gNDQ0LDgxIEwgNDU0LDgxIEwgNDU0LDg1IEwgNDY2LDg1IEwgNDY2LDgxIEwgNTgzLDgxIFEgNTg3LDgxIDU4Nyw4NSBMIDU4NywxMDQgUSA1ODcsMTA4IDU4MywxMDggTCA0NDQsMTA4IFEgNDQwLDEwOCA0NDAsMTA0IEwgNDQwLDg1IFEgNDQwLDgxIDQ0NCw4MSBaIiBmaWxsPSIjNEM5N0ZGIiBzdHJva2U9InJnYmEoMCwwLDAsMC4yKSIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iNDQ5IiB5PSI5OSIgZm9udC1zaXplPSIxMC41IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJzeXN0ZW0tdWksLWFwcGxlLXN5c3RlbSxzYW5zLXNlcmlmIj50b3VybmVyIOKGuyAoMTIwKSBkZWdyw6lzPC90ZXh0PgogIDxwYXRoIGQ9Ik0gNDIwLDE0NiBRIDQyMCwxNTAgNDI0LDE1MCBMIDQzNCwxNTAgTCA0MzQsMTU0IEwgNDQ2LDE1NCBMIDQ0NiwxNTAgTCA1OTEsMTUwIFEgNTk1LDE1MCA1OTUsMTU0IEwgNTk1LDE1OS41IFEgNTk1LDE2My41IDU5MSwxNjMuNSBMIDQyNCwxNjMuNSBRIDQyMCwxNjMuNSA0MjAsMTU5LjUgWiIgZmlsbD0iI0ZGQUIxOSIgc3Ryb2tlPSJyZ2JhKDAsMCwwLDAuMikiIHN0cm9rZS13aWR0aD0iMSIvPgo8L3N2Zz4=",
+          "alt": "Programme Scratch en 10 lignes. Ligne 1 : Quand 🚩 cliqué. Ligne 2 : aller à x:0 y:0. Ligne 3 : s'orienter à 90. Ligne 4 : stylo en position d'écriture. Ligne 5 : Carré(200). Ligne 6 : aller à x:200 y:0. Ligne 7 : Triangle(200). Ligne 8 : aller à x:300 y:-100. Ligne 9 : Carré(100). Ligne 10 : Triangle(100). Bloc Carré : répéter 4 [avancer Longueur, tourner 90°]. Bloc Triangle : répéter 3 [avancer Longueur, tourner 120°]."
+        },
+        {
+          "id": "7935b785-8f1e-45fc-b4f6-eea6c9183829",
+          "type": "image",
+          "label": "Figure obtenue par le programme Scratch",
+          "public_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNDAwIDQwMCI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI0MDAiIGZpbGw9IndoaXRlIi8+CiAgPHJlY3QgeD0iNTAiIHk9IjUwIiB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBvbHlnb24gcG9pbnRzPSI1MCwzNTAgMzUwLDM1MCAyMDAsMTE2IiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8cmVjdCB4PSIxMDAiIHk9IjE1MCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMiIvPgogIDxwb2x5Z29uIHBvaW50cz0iMTAwLDM1MCAzMDAsMzUwIDIwMCwxOTQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4=",
+          "alt": "Figure composée d'un grand carré (côté 4 cm) avec un triangle équilatéral à sa droite, et d'un petit carré (côté 2 cm) avec un triangle, avec un axe de symétrie vertical."
+        }
+      ],
+      "choices": null,
+      "expected_answer": null
+    },
+    {
+      "id": "01e3efb8-0376-4091-a185-bd6f6f2f43f7",
+      "source_label": "DNB Métropole La Réunion 2018 - Exercice 7 (17 points)",
+      "exam_style": "dnb_annales",
+      "item_type": "free_response",
+      "difficulty": "hard",
+      "source_year": 2018,
+      "status": "published",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On donne au « hand-spinner » une vitesse de rotation initiale au temps t = 0, puis sa vitesse de rotation diminue jusqu'à l'arrêt complet. Le graphique ci-dessous représente la vitesse de rotation v (en tours par seconde) en fonction du temps t (en secondes).",
+      "prompt": "",
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Le temps et la vitesse de rotation du « hand-spinner » sont-ils proportionnels ? Justifier.",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Pour deux grandeurs proportionnelles, leur rapport doit être constant et le graphique doit passer par l'origine."
+              },
+              {
+                "level": 2,
+                "text": "À t = 0, v = 20 ≠ 0. La droite ne passe pas par l'origine O."
+              },
+              {
+                "level": 3,
+                "text": "Deux grandeurs proportionnelles donnent un graphique passant par (0 ; 0). Ce n'est pas le cas ici."
+              }
+            ],
+            "correct_feedback": "Correct ! Non, ils ne sont pas proportionnels : à t=0, v=20 ≠ 0. La droite ne passe pas par l'origine.",
+            "incorrect_feedback": "Vérifie si la droite passe par l'origine. À t=0, v=20 ≠ 0, donc non proportionnels."
+          }
+        },
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Par lecture graphique : quelle est la vitesse de rotation initiale (à t = 0) ?",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Lis la valeur de v à l'intersection avec l'axe des ordonnées (t = 0)."
+              },
+              {
+                "level": 2,
+                "text": "Sur le graphique, repère le point où la droite coupe l'axe vertical."
+              },
+              {
+                "level": 3,
+                "text": "La droite coupe l'axe des ordonnées en v = 20 tours/s."
+              }
+            ],
+            "correct_feedback": "Exact ! À t = 0 s, la vitesse de rotation initiale est v = 20 tours par seconde.",
+            "incorrect_feedback": "À t = 0, lis la valeur sur l'axe vertical (axe des v). La droite commence à v = 20."
+          }
+        },
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Par lecture graphique : quelle est la vitesse de rotation au bout d'une minute et vingt secondes ?",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Convertis 1 min 20 s en secondes : 60 + 20 = 80 s. Lis la valeur de v pour t = 80 s."
+              },
+              {
+                "level": 2,
+                "text": "Sur le graphique, repère t = 80 s sur l'axe horizontal et lis la valeur de v correspondante."
+              },
+              {
+                "level": 3,
+                "text": "À t = 80 s, la droite donne une valeur d'environ v ≈ 3 tours/s."
+              }
+            ],
+            "correct_feedback": "Très bien ! 1 min 20 s = 80 s. D'après le graphique, à t = 80 s, v ≈ 3 tours/s.",
+            "incorrect_feedback": "1 minute et 20 secondes = 80 secondes. Lis la valeur de v à t = 80 s sur le graphique."
+          }
+        },
+        {
+          "id": "4",
+          "label": "4.",
+          "prompt": "Par lecture graphique : au bout de combien de temps le « hand-spinner » va-t-il s'arrêter ?",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Cherche la valeur de t pour laquelle la droite coupe l'axe des abscisses (v = 0)."
+              },
+              {
+                "level": 2,
+                "text": "Sur le graphique, repère où la droite atteint v = 0."
+              },
+              {
+                "level": 3,
+                "text": "La droite coupe l'axe des abscisses vers t ≈ 94 s."
+              }
+            ],
+            "correct_feedback": "Correct ! D'après le graphique, le hand-spinner s'arrête à t ≈ 94 s (environ 94 secondes).",
+            "incorrect_feedback": "Cherche le point où la ligne touche l'axe horizontal (v = 0). C'est vers t ≈ 94 s."
+          }
+        },
+        {
+          "id": "5",
+          "label": "5.",
+          "prompt": "Pour calculer la vitesse, on utilise V(t) = −0,214 × t + V₀. On lance le hand-spinner à une vitesse initiale de 20 tours/s. Calculer sa vitesse au bout de 30 s.",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Remplace t par 30 dans la formule V(t) = −0,214 × t + 20."
+              },
+              {
+                "level": 2,
+                "text": "V(30) = −0,214 × 30 + 20 = ? + 20."
+              },
+              {
+                "level": 3,
+                "text": "−0,214 × 30 = −6,42. Donc V(30) = −6,42 + 20 = 13,58 tours/s."
+              }
+            ],
+            "correct_feedback": "Excellent ! V(30) = −0,214 × 30 + 20 = −6,42 + 20 = 13,58 tours/s.",
+            "incorrect_feedback": "Remplace t = 30 : V(30) = −0,214 × 30 + 20 = −6,42 + 20 = 13,58 tours/s."
+          }
+        },
+        {
+          "id": "6",
+          "label": "6.",
+          "prompt": "En utilisant la formule V(t) = −0,214 × t + 20, calculer au bout de combien de temps le hand-spinner va-t-il s'arrêter.",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Pose V(t) = 0 et résous l'équation pour t."
+              },
+              {
+                "level": 2,
+                "text": "−0,214 × t + 20 = 0. Donc 0,214 × t = 20. Donc t = ?"
+              },
+              {
+                "level": 3,
+                "text": "t = 20 / 0,214 ≈ 93,5 s."
+              }
+            ],
+            "correct_feedback": "Parfait ! V(t) = 0 ⟹ t = 20 / 0,214 ≈ 93,5 s.",
+            "incorrect_feedback": "V(t) = 0 : −0,214t + 20 = 0, donc t = 20 ÷ 0,214 ≈ 93,5 s."
+          }
+        },
+        {
+          "id": "7",
+          "label": "7.",
+          "prompt": "Est-il vrai que, d'une manière générale, si l'on fait tourner le hand-spinner deux fois plus vite au départ, il tournera deux fois plus longtemps ? Justifier.",
+          "answer_type": "free_response",
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Avec V₀ quelconque : V(t) = 0 ⟹ t = V₀ / 0,214. Que se passe-t-il si V₀ est remplacé par 2V₀ ?"
+              },
+              {
+                "level": 2,
+                "text": "Durée d'arrêt = V₀ / 0,214. Si V₀ double, t double aussi."
+              },
+              {
+                "level": 3,
+                "text": "t(V₀) = V₀/0,214. t(2V₀) = 2V₀/0,214 = 2 × t(V₀). Oui, c'est vrai."
+              }
+            ],
+            "correct_feedback": "Très bien raisonné ! Si V₀ double, la durée t = V₀/0,214 double également. L'affirmation est vraie.",
+            "incorrect_feedback": "Durée = V₀ / 0,214. Si on double V₀, on double aussi la durée. C'est vrai."
+          }
+        }
+      ],
+      "documents": [
+        {
+          "id": "995cab6b-ec4f-456b-8817-e2b8f098dd9d",
+          "type": "image",
+          "label": "Graphique : vitesse de rotation du hand-spinner",
+          "public_url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0ODAiIGhlaWdodD0iMzQwIiB2aWV3Qm94PSIwIDAgNDgwIDM0MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSwtYXBwbGUtc3lzdGVtLHNhbnMtc2VyaWYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+CiAgPHJlY3Qgd2lkdGg9IjQ4MCIgaGVpZ2h0PSIzNDAiIGZpbGw9IndoaXRlIi8+CgogIDwhLS0gR3JpZCAtLT4KICA8bGluZSB4MT0iNTgiIHkxPSIyMiIgeDI9IjU4IiB5Mj0iMjkyIiBzdHJva2U9IiNlNWU3ZWIiIHN0cm9rZS13aWR0aD0iMSIvPjxsaW5lIHgxPSI5OCIgeTE9IjIyIiB4Mj0iOTgiIHkyPSIyOTIiIHN0cm9rZT0iI2U1ZTdlYiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iOTgiIHk9IjMwOCIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzZiNzI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MTA8L3RleHQ+PGxpbmUgeDE9IjEzOCIgeTE9IjIyIiB4Mj0iMTM4IiB5Mj0iMjkyIiBzdHJva2U9IiNlNWU3ZWIiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjEzOCIgeT0iMzA4IiBmb250LXNpemU9IjExIiBmaWxsPSIjNmI3MjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4yMDwvdGV4dD48bGluZSB4MT0iMTc4IiB5MT0iMjIiIHgyPSIxNzgiIHkyPSIyOTIiIHN0cm9rZT0iI2U1ZTdlYiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iMTc4IiB5PSIzMDgiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM2YjcyODAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjMwPC90ZXh0PjxsaW5lIHgxPSIyMTgiIHkxPSIyMiIgeDI9IjIxOCIgeTI9IjI5MiIgc3Ryb2tlPSIjZTVlN2ViIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSIyMTgiIHk9IjMwOCIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzZiNzI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+NDA8L3RleHQ+PGxpbmUgeDE9IjI1OCIgeTE9IjIyIiB4Mj0iMjU4IiB5Mj0iMjkyIiBzdHJva2U9IiNlNWU3ZWIiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjI1OCIgeT0iMzA4IiBmb250LXNpemU9IjExIiBmaWxsPSIjNmI3MjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj41MDwvdGV4dD48bGluZSB4MT0iMjk4IiB5MT0iMjIiIHgyPSIyOTgiIHkyPSIyOTIiIHN0cm9rZT0iI2U1ZTdlYiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iMjk4IiB5PSIzMDgiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM2YjcyODAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjYwPC90ZXh0PjxsaW5lIHgxPSIzMzgiIHkxPSIyMiIgeDI9IjMzOCIgeTI9IjI5MiIgc3Ryb2tlPSIjZTVlN2ViIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSIzMzgiIHk9IjMwOCIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzZiNzI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+NzA8L3RleHQ+PGxpbmUgeDE9IjM3OCIgeTE9IjIyIiB4Mj0iMzc4IiB5Mj0iMjkyIiBzdHJva2U9IiNlNWU3ZWIiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjM3OCIgeT0iMzA4IiBmb250LXNpemU9IjExIiBmaWxsPSIjNmI3MjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj44MDwvdGV4dD48bGluZSB4MT0iNDE4IiB5MT0iMjIiIHgyPSI0MTgiIHkyPSIyOTIiIHN0cm9rZT0iI2U1ZTdlYiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iNDE4IiB5PSIzMDgiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM2YjcyODAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjkwPC90ZXh0PjxsaW5lIHgxPSI0NTgiIHkxPSIyMiIgeDI9IjQ1OCIgeTI9IjI5MiIgc3Ryb2tlPSIjZTVlN2ViIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSI0NTgiIHk9IjMwOCIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzZiNzI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MTAwPC90ZXh0PgogIDxsaW5lIHgxPSI1OCIgeTE9IjI5MiIgeDI9IjQ1OCIgeTI9IjI5MiIgc3Ryb2tlPSIjZTVlN2ViIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSI1MCIgeT0iMjk2IiBmb250LXNpemU9IjExIiBmaWxsPSIjNmI3MjgwIiB0ZXh0LWFuY2hvcj0iZW5kIj4wPC90ZXh0PjxsaW5lIHgxPSI1OCIgeTE9IjI2Ny40NTQ1NDU0NTQ1NDU0NCIgeDI9IjQ1OCIgeTI9IjI2Ny40NTQ1NDU0NTQ1NDU0NCIgc3Ryb2tlPSIjZTVlN2ViIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSI1MCIgeT0iMjcxLjQ1NDU0NTQ1NDU0NTQ0IiBmb250LXNpemU9IjExIiBmaWxsPSIjNmI3MjgwIiB0ZXh0LWFuY2hvcj0iZW5kIj4yPC90ZXh0PjxsaW5lIHgxPSI1OCIgeTE9IjI0Mi45MDkwOTA5MDkwOTA5IiB4Mj0iNDU4IiB5Mj0iMjQyLjkwOTA5MDkwOTA5MDkiIHN0cm9rZT0iI2U1ZTdlYiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iNTAiIHk9IjI0Ni45MDkwOTA5MDkwOTA5IiBmb250LXNpemU9IjExIiBmaWxsPSIjNmI3MjgwIiB0ZXh0LWFuY2hvcj0iZW5kIj40PC90ZXh0PjxsaW5lIHgxPSI1OCIgeTE9IjIxOC4zNjM2MzYzNjM2MzYzNyIgeDI9IjQ1OCIgeTI9IjIxOC4zNjM2MzYzNjM2MzYzNyIgc3Ryb2tlPSIjZTVlN2ViIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSI1MCIgeT0iMjIyLjM2MzYzNjM2MzYzNjM3IiBmb250LXNpemU9IjExIiBmaWxsPSIjNmI3MjgwIiB0ZXh0LWFuY2hvcj0iZW5kIj42PC90ZXh0PjxsaW5lIHgxPSI1OCIgeTE9IjE5My44MTgxODE4MTgxODE4IiB4Mj0iNDU4IiB5Mj0iMTkzLjgxODE4MTgxODE4MTgiIHN0cm9rZT0iI2U1ZTdlYiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iNTAiIHk9IjE5Ny44MTgxODE4MTgxODE4IiBmb250LXNpemU9IjExIiBmaWxsPSIjNmI3MjgwIiB0ZXh0LWFuY2hvcj0iZW5kIj44PC90ZXh0PjxsaW5lIHgxPSI1OCIgeTE9IjE2OS4yNzI3MjcyNzI3MjcyOCIgeDI9IjQ1OCIgeTI9IjE2OS4yNzI3MjcyNzI3MjcyOCIgc3Ryb2tlPSIjZTVlN2ViIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSI1MCIgeT0iMTczLjI3MjcyNzI3MjcyNzI4IiBmb250LXNpemU9IjExIiBmaWxsPSIjNmI3MjgwIiB0ZXh0LWFuY2hvcj0iZW5kIj4xMDwvdGV4dD48bGluZSB4MT0iNTgiIHkxPSIxNDQuNzI3MjcyNzI3MjcyNzUiIHgyPSI0NTgiIHkyPSIxNDQuNzI3MjcyNzI3MjcyNzUiIHN0cm9rZT0iI2U1ZTdlYiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iNTAiIHk9IjE0OC43MjcyNzI3MjcyNzI3NSIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzZiNzI4MCIgdGV4dC1hbmNob3I9ImVuZCI+MTI8L3RleHQ+PGxpbmUgeDE9IjU4IiB5MT0iMTIwLjE4MTgxODE4MTgxODE5IiB4Mj0iNDU4IiB5Mj0iMTIwLjE4MTgxODE4MTgxODE5IiBzdHJva2U9IiNlNWU3ZWIiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjUwIiB5PSIxMjQuMTgxODE4MTgxODE4MTkiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM2YjcyODAiIHRleHQtYW5jaG9yPSJlbmQiPjE0PC90ZXh0PjxsaW5lIHgxPSI1OCIgeTE9Ijk1LjYzNjM2MzYzNjM2MzYzIiB4Mj0iNDU4IiB5Mj0iOTUuNjM2MzYzNjM2MzYzNjMiIHN0cm9rZT0iI2U1ZTdlYiIgc3Ryb2tlLXdpZHRoPSIxIi8+PHRleHQgeD0iNTAiIHk9Ijk5LjYzNjM2MzYzNjM2MzYzIiBmb250LXNpemU9IjExIiBmaWxsPSIjNmI3MjgwIiB0ZXh0LWFuY2hvcj0iZW5kIj4xNjwvdGV4dD48bGluZSB4MT0iNTgiIHkxPSI3MS4wOTA5MDkwOTA5MDkwNyIgeDI9IjQ1OCIgeTI9IjcxLjA5MDkwOTA5MDkwOTA3IiBzdHJva2U9IiNlNWU3ZWIiIHN0cm9rZS13aWR0aD0iMSIvPjx0ZXh0IHg9IjUwIiB5PSI3NS4wOTA5MDkwOTA5MDkwNyIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzZiNzI4MCIgdGV4dC1hbmNob3I9ImVuZCI+MTg8L3RleHQ+PGxpbmUgeDE9IjU4IiB5MT0iNDYuNTQ1NDU0NTQ1NDU0NTYiIHgyPSI0NTgiIHkyPSI0Ni41NDU0NTQ1NDU0NTQ1NiIgc3Ryb2tlPSIjZTVlN2ViIiBzdHJva2Utd2lkdGg9IjEiLz48dGV4dCB4PSI1MCIgeT0iNTAuNTQ1NDU0NTQ1NDU0NTYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM2YjcyODAiIHRleHQtYW5jaG9yPSJlbmQiPjIwPC90ZXh0PgoKICA8IS0tIEF4ZXMgLS0+CiAgPGxpbmUgeDE9IjU4IiB5MT0iMjIiIHgyPSI1OCIgeTI9IjI5MiIgc3Ryb2tlPSIjMzc0MTUxIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8bGluZSB4MT0iNTgiIHkxPSIyOTIiIHgyPSI0NTgiIHkyPSIyOTIiIHN0cm9rZT0iIzM3NDE1MSIgc3Ryb2tlLXdpZHRoPSIyIi8+CgogIDwhLS0gQXhpcyBhcnJvd3MgLS0+CiAgPHBvbHlsaW5lIHBvaW50cz0iNTMsMzAgNTgsMjIgNjMsMzAiIGZpbGw9IiMzNzQxNTEiIHN0cm9rZT0iIzM3NDE1MSIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICA8cG9seWxpbmUgcG9pbnRzPSI0NTAsMjg3IDQ1OCwyOTIgNDUwLDI5NyIgZmlsbD0iIzM3NDE1MSIgc3Ryb2tlPSIjMzc0MTUxIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgoKICA8IS0tIE9yaWdpbiBsYWJlbCAtLT4KICA8dGV4dCB4PSI1MiIgeT0iMzA4IiBmb250LXNpemU9IjEyIiBmaWxsPSIjMzc0MTUxIiB0ZXh0LWFuY2hvcj0iZW5kIj5PPC90ZXh0PgoKICA8IS0tIEF4aXMgbGFiZWxzIC0tPgogIDx0ZXh0IHg9IjI1OCIgeT0iMzM2IiBmb250LXNpemU9IjEyIiBmaWxsPSIjMzc0MTUxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5UZW1wcyAoZW4gcyk8L3RleHQ+CiAgPHRleHQgeD0iMTQiIHk9IjE1NyIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzM3NDE1MSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgdHJhbnNmb3JtPSJyb3RhdGUoLTkwLCAxNCwgMTU3KSI+Vml0ZXNzZSAodG91cnMvcyk8L3RleHQ+CgogIDwhLS0gRGF0YSBsaW5lIC0tPgogIDxsaW5lIHgxPSI1OCIgeTE9IjQ2LjU0NTQ1NDU0NTQ1NDU2IiB4Mj0iNDMyIiB5Mj0iMjkyIiBzdHJva2U9IiMxZDRlZDgiIHN0cm9rZS13aWR0aD0iMi41Ii8+CgogIDwhLS0gS2V5IHBvaW50IGRvdHMgLS0+CiAgPGNpcmNsZSBjeD0iNTgiIGN5PSI0Ni41NDU0NTQ1NDU0NTQ1NiIgcj0iNCIgZmlsbD0iIzFkNGVkOCIvPgogIDxjaXJjbGUgY3g9IjQzMiIgY3k9IjI5MiIgcj0iNCIgZmlsbD0iIzFkNGVkOCIvPgoKICA8IS0tIEtleSBwb2ludCBsYWJlbHMgLS0+CiAgPHRleHQgeD0iNjQiIHk9IjQwLjU0NTQ1NDU0NTQ1NDU2IiBmb250LXNpemU9IjExIiBmaWxsPSIjMWQ0ZWQ4Ij4oMCA7IDIwKTwvdGV4dD4KICA8dGV4dCB4PSIzODgiIHk9IjI4NCIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzFkNGVkOCI+KDkzLDUgOyAwKTwvdGV4dD4KCiAgPCEtLSBEYXNoZWQgcmVmZXJlbmNlIGxpbmVzIGZvciByZWFkaW5nIC0tPgogIDwhLS0gdj0yMCBhdCB0PTAgaG9yaXpvbnRhbCByZWZlcmVuY2UgLS0+CiAgPGxpbmUgeDE9IjU4IiB5MT0iNDYuNTQ1NDU0NTQ1NDU0NTYiIHgyPSI1OCIgeTI9IjQ2LjU0NTQ1NDU0NTQ1NDU2IiBzdHJva2U9IiM5M2M1ZmQiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWRhc2hhcnJheT0iNCwzIi8+CiAgPCEtLSB0PTgwIHZlcnRpY2FsIHJlZmVyZW5jZSBmb3IgUTMgLS0+CiAgPGxpbmUgeDE9IjM3OCIgeTE9IjI5MiIgeDI9IjM3OCIgeTI9IjI1Ni41NjAwMzg4OTE1ODk3IiBzdHJva2U9IiNmY2E1YTUiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWRhc2hhcnJheT0iNCwzIi8+CiAgPHRleHQgeD0iMzc4IiB5PSIzMDgiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiNkYzI2MjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjgwPC90ZXh0PgogIDxjaXJjbGUgY3g9IjM3OCIgY3k9IjI1Ni41NjAwMzg4OTE1ODk3IiByPSIzLjUiIGZpbGw9IiNkYzI2MjYiLz4KICA8dGV4dCB4PSIzODQiIHk9IjI1MS41NjAwMzg4OTE1ODk3MyIgZm9udC1zaXplPSIxMCIgZmlsbD0iI2RjMjYyNiI+4omIIDM8L3RleHQ+Cjwvc3ZnPg==",
+          "alt": "Graphique représentant la vitesse de rotation du hand-spinner (en tours/seconde) en fonction du temps (en secondes). Décroissance linéaire de v=20 tours/s à t=0 jusqu'à v=0 à t≈94 s."
+        }
+      ],
+      "choices": null,
+      "expected_answer": null
+    }
+  ]
+}

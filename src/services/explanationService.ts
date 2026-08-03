@@ -30,8 +30,6 @@ export async function fetchExplanation(
       : `The student answered correctly. Question: "${question}". Answer: "${userAnswer}". Explain step-by-step why this answer is correct, in a supportive tutoring style.`;
     prompt = `${langInstructions} ${successMsg}`;
   } else {
-    const hiddenAnswer = correctAnswer ? ` The correct answer is ${correctAnswer}.` : '';
-    
     let guidanceLevel: string;
     if (attemptNumber === 1) {
       guidanceLevel = language === 'fr'
@@ -47,7 +45,7 @@ export async function fetchExplanation(
         : `Provide step-by-step guidance that almost shows how to solve it, but let them do the final calculation. End with "You can do this!"`;
     }
 
-    prompt = `${langInstructions} The student answered incorrectly (attempt ${attemptNumber}). Question: "${question}". Their answer: "${userAnswer}".${hiddenAnswer} ${guidanceLevel}`;
+    prompt = `${langInstructions} The student answered incorrectly (attempt ${attemptNumber}). Question: "${question}". Their answer: "${userAnswer}". Do not state the correct answer, even if you can infer it. ${guidanceLevel}`;
   }
 
   const { data, error } = await supabase.functions.invoke('ai-chat', {

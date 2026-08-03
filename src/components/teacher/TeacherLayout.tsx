@@ -1,19 +1,18 @@
 import { useState } from 'react';
 import { Outlet, Navigate, NavLink, useNavigate } from 'react-router-dom';
 import { useTeacherAuth } from '@/hooks/useTeacherAuth';
-import { Home, Users, BookOpen, BarChart3, Settings, Menu, LogOut } from 'lucide-react';
+import { Home, Users, Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+// Note: Resources, Analytics, and Settings routes remain registered in App.tsx
+// (direct links still work) but are hidden from nav as "Coming Soon" stubs.
 const teacherNavigation = [
   { title: 'Home', url: '/teacher', icon: Home },
   { title: 'My Classes', url: '/teacher/classes', icon: Users },
-  { title: 'Resources', url: '/teacher/resources', icon: BookOpen },
-  { title: 'Analytics', url: '/teacher/analytics', icon: BarChart3 },
-  { title: 'Settings', url: '/teacher/settings', icon: Settings },
 ];
 
 export default function TeacherLayout() {

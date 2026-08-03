@@ -1,4 +1,4 @@
-package app.lovable.stuwy;
+package com.tutorly.learning;
 
 import com.getcapacitor.BridgeActivity;
 

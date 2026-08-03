@@ -29,11 +29,13 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
 const TokensPreview = lazy(() => import("./pages/TokensPreview"));
 const GamePreview = lazy(() => import("./pages/GamePreview"));
+const DnbSvgPreview = lazy(() => import("./pages/DnbSvgPreview"));
 const ExerciseHistoryPage = lazy(() => import("./pages/ExerciseHistoryPage"));
 const GeneralChatPage = lazy(() => import("./pages/GeneralChatPage"));
 const LearningPage = lazy(() => import("./pages/learning/LearningPage"));
 const SubjectDashboardPage = lazy(() => import("./pages/learning/SubjectDashboardPage"));
 const CoursePlaylistPage = lazy(() => import("./pages/learning/CoursePlaylistPage"));
+const LessonPage = lazy(() => import("./pages/learning/LessonPage"));
 const VideoPlayerPage = lazy(() => import("./pages/learning/VideoPlayerPage"));
 const MyProgramPage = lazy(() => import("./pages/learning/MyProgramPage"));
 const PracticePage = lazy(() => import("./pages/practice/PracticePage"));
@@ -41,9 +43,9 @@ const ExamSessionPage = lazy(() => import("./pages/practice/ExamSessionPage"));
 const TrainingSessionPage = lazy(() => import("./pages/practice/TrainingSessionPage"));
 const PracticeSubjectPage = lazy(() => import("./pages/practice/PracticeSubjectPage"));
 const PracticeAnnalsPage = lazy(() => import("./pages/practice/PracticeAnnalsPage"));
+const PracticeTopicsPage = lazy(() => import("./pages/practice/PracticeTopicsPage"));
 const CurriculumBrowser = lazy(() => import("./components/curriculum/CurriculumBrowser"));
 const CurriculumDebug = lazy(() => import("./pages/CurriculumDebug"));
-const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 
 // Admin Pages
 import AIModelManagement from "./components/admin/AIModelManagement";
@@ -78,6 +80,8 @@ const TeacherClasses = lazy(() => import("./pages/teacher/TeacherClasses"));
 const ClassDetailPage = lazy(() => import("./pages/teacher/ClassDetailPage"));
 const TeacherStudentDetail = lazy(() => import("./pages/teacher/TeacherStudentDetail"));
 const TeacherTopicDetail = lazy(() => import("./pages/teacher/TeacherTopicDetail"));
+
+const isDev = import.meta.env.DEV;
 
 // Loading Component
 const LoadingFallback = () => (
@@ -171,44 +175,53 @@ const App = () => {
                         <Route path="/profile" element={<MainLayout />}>
                           <Route index element={<ProfilePage />} />
                         </Route>
-                        <Route path="/tokens" element={<MainLayout />}>
-                          <Route index element={<TokensPreview />} />
-                        </Route>
-                        <Route path="/game" element={<MainLayout />}>
-                          <Route index element={<GamePreview />} />
-                        </Route>
+                        {isDev && (
+                          <Route path="/tokens" element={<MainLayout />}>
+                            <Route index element={<TokensPreview />} />
+                          </Route>
+                        )}
+                        {isDev && (
+                          <Route path="/game" element={<MainLayout />}>
+                            <Route index element={<GamePreview />} />
+                          </Route>
+                        )}
+                        {isDev && (
+                          <Route path="/dnb-preview" element={<MainLayout />}>
+                            <Route index element={<DnbSvgPreview />} />
+                          </Route>
+                        )}
                         <Route path="/exercise-history" element={<MainLayout />}>
                           <Route index element={<ExerciseHistoryPage />} />
                         </Route>
                         <Route path="/learning" element={<MainLayout />}>
                           <Route index element={<LearningPage />} />
                           <Route path=":subjectSlug" element={<SubjectDashboardPage />} />
-                          <Route path=":subjectSlug/:topicSlug" element={<CoursePlaylistPage />} />
+                          <Route path=":subjectSlug/:topicSlug" element={<LessonPage />} />
                         </Route>
                         <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
                         <Route path="/practice" element={<MainLayout />}>
                           <Route index element={<PracticePage />} />
                           <Route path="session" element={<TrainingSessionPage />} />
-                          <Route path="session/:paperId" element={<ExamSessionPage />} />
+                          <Route path="exam/:paperId" element={<ExamSessionPage />} />
                           <Route path=":subject/annales" element={<PracticeAnnalsPage />} />
+                          <Route path=":subject/topics" element={<PracticeTopicsPage />} />
                           <Route path=":subject" element={<PracticeSubjectPage />} />
                         </Route>
                 <Route path="/my-program" element={<MainLayout />}>
                   <Route index element={<MyProgramPage />} />
                 </Route>
-                <Route path="/dashboard" element={<MainLayout />}>
-                  <Route index element={<StudentDashboard />} />
-                </Route>
                 <Route path="/curriculum" element={<MainLayout />}>
                   <Route index element={<CurriculumBrowser />} />
                 </Route>
                         
-                        {/* Management Dashboard */}
-                        <Route path="/management" element={<ManagementDashboard />} />
+                        {/* Management Dashboard (dev-only until a proper admin guard is added) */}
+                        {isDev && (
+                          <Route path="/management" element={<ManagementDashboard />} />
+                        )}
                         
                         {/* Admin Panel Routes */}
                         <Route path="/admin" element={
-                          <ErrorBoundary fallback={<RouteErrorFallback section="Admin Panel" />}>
+                          <ErrorBoundary fallback={isDev ? undefined : <RouteErrorFallback section="Admin Panel" />}>
                             <AdminLayout />
                           </ErrorBoundary>
                         }>
@@ -260,7 +273,9 @@ const App = () => {
           </Route>
                         
                         {/* Curriculum Debug */}
-                        <Route path="/curriculum-debug" element={<CurriculumDebug />} />
+                        {isDev && (
+                          <Route path="/curriculum-debug" element={<CurriculumDebug />} />
+                        )}
                         
                         {/* 404 Route */}
                         <Route path="*" element={<NotFound />} />

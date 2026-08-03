@@ -81,7 +81,8 @@ const VideoPlayerPage = () => {
     video?.topic_id || '',
     videoId || '',
     completedVideoIds,
-    user?.id || ''
+    user?.id || '',
+    'lesson'
   );
 
   // Debug logging

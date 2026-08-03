@@ -1,0 +1,291 @@
+{
+  "corrections": [
+    {
+      "exercise_number": 1,
+      "question_id": "1",
+      "correct_answer": "130° E ; 35° N",
+      "answer_type": "text",
+      "explanation_steps": [
+        "Par lecture de la carte, le repère de Pyeongchang se situe à environ 130° de longitude Est et 35° de latitude Nord."
+      ]
+    },
+    {
+      "exercise_number": 1,
+      "question_id": "2",
+      "correct_answer": "6371",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Le rayon de la boule est R = 11,5 cm.",
+        "V = 4/3 × π × R³ = 4/3 × π × 11,5³ ≈ 6371 cm³."
+      ]
+    },
+    {
+      "exercise_number": 1,
+      "question_id": "3",
+      "correct_answer": "Oui, Marie a raison",
+      "answer_type": "text",
+      "explanation_steps": [
+        "Volume du socle (cylindre) : v = π × r² × H = π × 3² × 23 ≈ 650 cm³.",
+        "Volume total du trophée = 6371 + 650 = 7021 cm³.",
+        "6371 / 7021 ≈ 0,907, soit environ 91 %. Marie a raison."
+      ]
+    },
+    {
+      "exercise_number": 2,
+      "question_id": "1",
+      "correct_answer": "Lyon",
+      "answer_type": "text",
+      "explanation_steps": [
+        "Moyenne de Grenoble = 634 / 10 = 63,4 µg/m³.",
+        "63,4 < 72,5 : la moyenne de Lyon est supérieure. C'est donc Lyon qui a eu la plus forte concentration moyenne."
+      ]
+    },
+    {
+      "exercise_number": 2,
+      "question_id": "2",
+      "correct_answer": "Lyon (étendue 85 µg/m³)",
+      "answer_type": "text",
+      "explanation_steps": [
+        "Étendue de Grenoble = 89 − 32 = 57 µg/m³.",
+        "Étendue de Lyon = 107 − 22 = 85 µg/m³.",
+        "L'étendue la plus importante est celle de Lyon."
+      ]
+    },
+    {
+      "exercise_number": 2,
+      "question_id": "3",
+      "correct_answer": "Vrai",
+      "answer_type": "text",
+      "explanation_steps": [
+        "La médiane de Lyon est 83,5 µg/m³.",
+        "La série a 10 valeurs : au moins 50 % (5 jours) sont ≥ 83,5 µg/m³, donc a fortiori ≥ 80.",
+        "L'affirmation est exacte (vraie)."
+      ]
+    },
+    {
+      "exercise_number": 3,
+      "question_id": "1",
+      "correct_answer": "1/3",
+      "answer_type": "text",
+      "explanation_steps": [
+        "Il y a 125 morceaux de rap sur 375 morceaux.",
+        "P(rap) = 125 / 375 = 1/3."
+      ]
+    },
+    {
+      "exercise_number": 3,
+      "question_id": "2",
+      "correct_answer": "175",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Nombre de morceaux de rock = 7/15 × 375 = 175."
+      ]
+    },
+    {
+      "exercise_number": 3,
+      "question_id": "3",
+      "correct_answer": "Théo",
+      "answer_type": "text",
+      "explanation_steps": [
+        "Pour Alice : 40/100 = 2/5 = 6/15.",
+        "6/15 < 7/15, donc Théo a plus de chances d'écouter du rock."
+      ]
+    },
+    {
+      "exercise_number": 4,
+      "question_id": "1",
+      "correct_answer": "4 cm",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Le triangle CBD est rectangle en B. D'après le théorème de Pythagore : CD² = DB² + CB².",
+        "DB² = CD² − CB² = 8,5² − 7,5² = 16, donc DB = 4 cm."
+      ]
+    },
+    {
+      "exercise_number": 4,
+      "question_id": "2",
+      "correct_answer": "Oui, ils sont semblables",
+      "answer_type": "text",
+      "explanation_steps": [
+        "6/7,5 = 0,8 ; 3,2/4 = 0,8 ; 6,8/8,5 = 0,8.",
+        "Les côtés sont proportionnels (rapport 0,8) : les triangles CBD et BFE sont semblables."
+      ]
+    },
+    {
+      "exercise_number": 4,
+      "question_id": "3",
+      "correct_answer": "Oui, l'angle BFE est droit",
+      "answer_type": "text",
+      "explanation_steps": [
+        "BE² = 6,8² = 46,24 ; BF² + FE² = 6² + 3,2² = 36 + 10,24 = 46,24.",
+        "BE² = BF² + FE² : d'après la réciproque de Pythagore, le triangle BFE est rectangle en F. Sophie a raison."
+      ]
+    },
+    {
+      "exercise_number": 4,
+      "question_id": "4",
+      "correct_answer": "Non",
+      "answer_type": "text",
+      "explanation_steps": [
+        "Dans le triangle rectangle DCB : cos(DCB) = CB/CD = 7,5/8,5 = 15/17, donc DCB ≈ 28°.",
+        "28° + 61° = 89° ≠ 90° : l'angle ACD n'est pas droit. Max a tort."
+      ]
+    },
+    {
+      "exercise_number": 5,
+      "question_id": "1",
+      "correct_answer": "8",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Avec n = −1 : 2 × (−1 × 4 + 8) = 2 × 4 = 8. On obtient bien 8."
+      ]
+    },
+    {
+      "exercise_number": 5,
+      "question_id": "2",
+      "correct_answer": "1,75",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "On résout 8x + 16 = 30, soit 8x = 14, donc x = 14/8 = 1,75."
+      ]
+    },
+    {
+      "exercise_number": 5,
+      "question_id": "3",
+      "correct_answer": "A = B (8x + 16)",
+      "answer_type": "text",
+      "explanation_steps": [
+        "A = 2(4x + 8) = 8x + 16.",
+        "B = (4 + x)² − x² = 16 + 8x + x² − x² = 8x + 16.",
+        "A = B pour toute valeur de x."
+      ]
+    },
+    {
+      "exercise_number": 5,
+      "question_id": "4",
+      "correct_answer": "Affirmation 1 : fausse ; Affirmation 2 : vraie",
+      "answer_type": "text",
+      "explanation_steps": [
+        "Affirmation 1 : A = 8x + 16 > 0 ⇔ x > −2. Fausse : c'est positif seulement pour x > −2.",
+        "Affirmation 2 : A = 8(2 + x), donc pour x entier le résultat est un multiple de 8. Vraie."
+      ]
+    },
+    {
+      "exercise_number": 6,
+      "question_id": "1",
+      "correct_answer": "6 cm",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Échelle : 1 cm pour 50 pixels.",
+        "Longueur = 300 pixels = 300 / 50 = 6 cm."
+      ]
+    },
+    {
+      "exercise_number": 6,
+      "question_id": "2",
+      "correct_answer": "Un carré puis un triangle de côté 300 px (6 cm)",
+      "answer_type": "text",
+      "explanation_steps": [
+        "Jusqu'à la ligne 7, le programme trace, à partir de l'origine, un carré puis un triangle équilatéral de côté Longueur = 300 px (soit 6 cm)."
+      ]
+    },
+    {
+      "exercise_number": 6,
+      "question_id": "3",
+      "correct_answer": "(50 ; 0)",
+      "answer_type": "text",
+      "explanation_steps": [
+        "Ligne 8 : avancer de Longueur / 6 = 300 / 6 = 50 px, le stylo étant orienté à 90° (vers la droite).",
+        "Le stylo se trouve donc en x = 50 et y = 0, soit (50 ; 0)."
+      ]
+    },
+    {
+      "exercise_number": 6,
+      "question_id": "4",
+      "correct_answer": "Homothétie de rapport 2/3",
+      "answer_type": "text",
+      "explanation_steps": [
+        "Le côté du carré intérieur vaut 300 − 2 × 50 = 200 px.",
+        "On passe du grand carré (300) au petit carré (200) par une homothétie de rapport 200/300 = 2/3."
+      ]
+    },
+    {
+      "exercise_number": 6,
+      "question_id": "5",
+      "correct_answer": "4/9",
+      "answer_type": "text",
+      "explanation_steps": [
+        "Si k est le rapport de réduction des longueurs, le rapport des aires est k².",
+        "k² = (2/3)² = 4/9."
+      ]
+    },
+    {
+      "exercise_number": 7,
+      "question_id": "1",
+      "correct_answer": "Non, ce n'est pas proportionnel",
+      "answer_type": "text",
+      "explanation_steps": [
+        "La représentation graphique est une droite qui ne passe pas par l'origine.",
+        "Donc le temps et la vitesse de rotation ne sont pas proportionnels."
+      ]
+    },
+    {
+      "exercise_number": 7,
+      "question_id": "2",
+      "correct_answer": "20",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Par lecture graphique, à t = 0, la vitesse de rotation initiale est de 20 tours par seconde."
+      ]
+    },
+    {
+      "exercise_number": 7,
+      "question_id": "3",
+      "correct_answer": "3",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "1 min 20 s = 80 s.",
+        "Par lecture graphique, à t = 80 s, la vitesse est d'environ 3 tours par seconde."
+      ]
+    },
+    {
+      "exercise_number": 7,
+      "question_id": "4",
+      "correct_answer": "93 s",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Par lecture graphique, la vitesse s'annule au bout d'environ 93 secondes."
+      ]
+    },
+    {
+      "exercise_number": 7,
+      "question_id": "5",
+      "correct_answer": "13,58",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "V(t) = −0,214 × t + 20 avec t = 30.",
+        "V(30) = −0,214 × 30 + 20 = 13,58 tours/s."
+      ]
+    },
+    {
+      "exercise_number": 7,
+      "question_id": "6",
+      "correct_answer": "93,46 s",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "À l'arrêt, V(t) = 0 : −0,214 t + 20 = 0.",
+        "t = 20 / 0,214 ≈ 93,46 s."
+      ]
+    },
+    {
+      "exercise_number": 7,
+      "question_id": "7",
+      "correct_answer": "Oui, c'est vrai",
+      "answer_type": "text",
+      "explanation_steps": [
+        "Avec une vitesse initiale de 40 tours/s : t = 40 / 0,214 ≈ 186,92 s.",
+        "Or 2 × 93,46 = 186,92 : en doublant la vitesse initiale, le temps double. L'affirmation est vraie."
+      ]
+    }
+  ]
+}

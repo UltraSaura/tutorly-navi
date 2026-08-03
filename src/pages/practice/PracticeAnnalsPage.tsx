@@ -45,11 +45,8 @@ export default function PracticeAnnalsPage() {
     return row?.subject.name ?? subjectSlug;
   }, [subjectsQuery.data, subjectSlug]);
 
-  const papers = [...(papersQuery.data ?? [])].sort((a, b) =>
-    b.session_year !== a.session_year ? b.session_year - a.session_year : (a.variant ?? '').localeCompare(b.variant ?? ''),
-  );
-
   const discLabel = examDisciplines[0]?.replace(/_/g, ' ') ?? '';
+
   const trainingItemsByPaper = useMemo(() => {
     const map = new Map<string, number>();
     for (const item of trainingItemsQuery.data ?? []) {
@@ -58,6 +55,25 @@ export default function PracticeAnnalsPage() {
     }
     return map;
   }, [trainingItemsQuery.data]);
+
+  // Deduplicate: only show the standard-format papers (not accessibility variants like arial16/arial20/arial24),
+  // then within each (session_year, series) group keep the paper with the most training items.
+  const papers = useMemo(() => {
+    const all = papersQuery.data ?? [];
+    // Keep only standard variant + générale series (professionnelle is the vocational track, not regular DNB)
+    const standard = all.filter((p) => (!p.variant || p.variant === 'standard') && (!p.series || p.series === 'generale'));
+    const seen = new Map<string, typeof standard[0]>();
+    for (const paper of standard) {
+      const key = `${paper.session_year}-${paper.series ?? ''}`;
+      const existing = seen.get(key);
+      const existingCount = trainingItemsByPaper.get(existing?.id ?? '') ?? (existing?.exercise_count ?? 0);
+      const paperCount = trainingItemsByPaper.get(paper.id) ?? paper.exercise_count ?? 0;
+      if (!existing || paperCount > existingCount) {
+        seen.set(key, paper);
+      }
+    }
+    return [...seen.values()].sort((a, b) => b.session_year - a.session_year);
+  }, [papersQuery.data, trainingItemsByPaper]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -110,9 +126,9 @@ export default function PracticeAnnalsPage() {
                 onStart={() =>
                   (trainingItemsByPaper.get(paper.id) ?? 0) > 0
                     ? navigate(`/practice/session?subject=${encodeURIComponent(examDisciplines[0] ?? subjectSlug)}&level=${encodeURIComponent(activeLevel)}&mode=mixed&sourcePaperId=${encodeURIComponent(paper.id)}`)
-                    : navigate(`/practice/session/${paper.id}?subject=${encodeURIComponent(subjectSlug)}`)
+                    : navigate(`/practice/exam/${paper.id}?subject=${encodeURIComponent(subjectSlug)}`)
                 }
-                onConsult={() => navigate(`/practice/session/${paper.id}?subject=${encodeURIComponent(subjectSlug)}`)}
+                onConsult={() => navigate(`/practice/exam/${paper.id}?subject=${encodeURIComponent(subjectSlug)}`)}
               />
             ))}
           </div>

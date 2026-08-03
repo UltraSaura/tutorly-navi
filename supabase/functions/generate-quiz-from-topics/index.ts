@@ -1,5 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  buildReadonlyContextVisual,
+  inferPromptFigure,
+  promptReferencesVisual,
+} from "../../../src/lib/quiz/promptVisual.ts";
+import { buildColumnFillQuestion } from "../../../src/lib/quiz/columnFillBuilder.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,19 +18,67 @@ interface GenerateRequest {
   questionTypes?: string[];
   difficulty?: 'easy' | 'medium' | 'hard';
   mix?: boolean;
+  language?: string;
+  // Optional progressif-level focus (batch "per level" mode): generate questions
+  // targeted to one specific level of the topic.
+  focusLabel?: string;
+  focusContext?: string;
 }
 
 function buildTypeInstructions(questionTypes: string[]): string {
   return questionTypes.map(type => {
     switch (type) {
       case 'single':
-        return `- "single": Multiple choice with exactly ONE correct answer. Include 4 choices with "correct": true on only one.`;
+        return `- "single": Multiple choice with exactly ONE correct answer. Include 4 choices with "correct": true on only one.
+  REQUIRED context_visual whenever the prompt refers to a visual object, figure, image, schema, bar, cake, pie, shape, or colored part. This way "Quelle fraction représente la partie colorée de ce gâteau?" is valid because the student actually sees it.
+  context_visual for a pie (e.g. "gâteau coupé en 4 parts, 3 colorées"):
+  "context_visual": { "subtype": "pie", "correctColoredCount": 3, "segments": [{"id":"s1","value":1},{"id":"s2","value":1},{"id":"s3","value":1},{"id":"s4","value":1}] }
+  context_visual for a bar/rectangle (e.g. "barre divisée en 5 parts, 2 colorées"):
+  "context_visual": { "subtype": "bar", "totalParts": 5, "coloredParts": 2, "orientation": "horizontal" }
+  context_visual for an angle (e.g. "angle de 45°"):
+  "context_visual": { "subtype": "angle", "aDeg": 0, "bDeg": 45, "targetDeg": 45, "toleranceDeg": 2 }
+  If NO visual is needed, omit context_visual entirely and keep the prompt self-contained.`;
       case 'multi':
-        return `- "multi": Multiple choice with MULTIPLE correct answers (2-3 typically). Include 4 choices with "correct": true on multiple.`;
+        return `- "multi": Multiple choice with MULTIPLE correct answers (2-3 typically). Include 4 choices with "correct": true on multiple.
+  Same context_visual support as "single" — add one if the question references a visual element.`;
       case 'numeric':
-        return `- "numeric": Answer is a number. Include "answer" (the correct number) and optionally "range": { "min": X, "max": Y }.`;
+        return `- "numeric": Answer is a number. Include "answer" (the correct number) and optionally "range": { "min": X, "max": Y }.
+  For geometry calculations involving a triangle, angle, side length, figure, diagram, solid, or shape, include a read-only "context_visual" so the student can see the situation.
+  Example for a right triangle:
+  "context_visual": {
+    "subtype": "triangle",
+    "labels": ["A", "B", "C"],
+    "rightAngleAt": "B",
+    "angleLabel": { "vertex": "A", "degrees": 30 },
+    "sideLabels": { "AB": "8 cm" },
+    "targetSide": "BC"
+  }
+  Example for a named shape or solid:
+  "context_visual": { "subtype": "geometry_figure", "shape": "rectangle", "label": "Rectangle" }
+  Supported shape values: triangle, rectangle, square, circle, rhombus, parallelogram, trapezoid, pentagon, hexagon, polygon, cube, cuboid, cylinder, cone, sphere.`;
       case 'ordering':
         return `- "ordering": Put items in correct order. Include "items" (shuffled array) and "correctOrder" (correct sequence). Frame these as step-building, process-ordering, or action-ordering when appropriate.`;
+      case 'column-fill':
+        return `- "column-fill": Student fills missing digits inside a column-method arithmetic layout. Use this ONLY for kid-friendly arithmetic topics: addition, subtraction, one-digit multiplication, or integer division with remainder.
+  Required fields:
+  {
+    "id": "q-X",
+    "kind": "column-fill",
+    "prompt": "...",
+    "hint": "...",
+    "points": 1,
+    "operation": "addition" | "subtraction" | "multiplication" | "division",
+    "operands": ["29", "66"],
+    "instructions": "Complète les retenues et le résultat."
+  }
+  IMPORTANT:
+  - Do NOT generate the layout object yourself. The app builds the layout from operation + operands.
+  - Choose operands that fit the method:
+    - addition: include at least one carry when possible
+    - subtraction: include at least one borrow when possible
+    - multiplication: second operand must be ONE digit only
+    - division: use whole numbers only; divisor must be non-zero; prefer cases with a remainder when relevant
+  - Keep prompts short and concrete, for example: "Complète l'addition posée." or "Complète les chiffres manquants dans cette division."`;
       case 'visual_pie':
         return `- "visual" with subtype "pie": A fraction/proportion question using a pie chart. The prompt must clearly refer to the pie/chart the student sees. TWO MODES:
 
@@ -70,14 +124,85 @@ function buildTypeInstructions(questionTypes: string[]): string {
     "visual": { "subtype": "angle", "aDeg": 0, "bDeg": 45, "targetDeg": 45, "toleranceDeg": 2 }
   }
   Use angles 10-350. toleranceDeg 2-5.`;
+      case 'slider':
+        return `- "slider": Student drags a slider to the correct numeric value. Perfect for estimating quantities, reading scales, setting temperatures, choosing a value on a number line, etc.
+  Required fields: min (number), max (number), step (number), answer (correct value), tolerance (acceptable ± error, use 0 for exact).
+  Optional: unit (string like "°C", "km", "%"), trackLabel (short description shown under the value).
+  Example:
+  {
+    "id": "q-X", "kind": "slider",
+    "prompt": "The temperature today is between 20°C and 30°C. Drag the slider to 24°C.",
+    "hint": "Find 24 between the two extremes",
+    "points": 1,
+    "min": 20, "max": 30, "step": 1, "answer": 24, "tolerance": 1, "unit": "°C",
+    "trackLabel": "Temperature"
+  }`;
+
+      case 'match':
+        return `- "match": Student connects left-column items to their right-column matches by tapping pairs. Great for vocabulary ↔ definition, fraction ↔ decimal, term ↔ example, cause ↔ effect.
+  CRITICAL: "left" and "right" fields MUST be short plain-text strings only. NO objects, NO images, NO HTML, NO SVG, NO pie charts, NO visual references. If the topic involves fractions, write the fraction as text (e.g. "1/2") and its equivalent as text (e.g. "0.5" or "50%"). If the topic involves shapes, write the shape name as text. Never attempt to embed visual content — the component only renders plain text.
+  Required: pairs array (3-5 pairs), each with leftId, left (plain text ≤ 30 chars), rightId, right (plain text ≤ 30 chars). answers maps leftId → rightId.
+  Good examples: fraction↔decimal, word↔definition, operation name↔symbol, unit↔equivalent, term↔example.
+  Bad examples (DO NOT DO): left="1/2" right={visual object} — this will be blank and discarded.
+  OPTIONAL: Add "hide_labels": true to hide the fraction text from students, leaving only the pie chart visible (good for "count the slices" challenge questions). Only use this when the left column contains fractions and the right column contains word descriptions or decimal equivalents.
+  Example with hidden labels (challenge mode):
+  {
+    "id": "q-X", "kind": "match", "hide_labels": true,
+    "prompt": "Match each pie chart to its fraction.",
+    "hint": "Count the colored slices vs total slices",
+    "points": 2,
+    "pairs": [
+      {"leftId": "l1", "left": "1/4", "rightId": "r1", "right": "One quarter"},
+      {"leftId": "l2", "left": "1/2", "rightId": "r2", "right": "One half"},
+      {"leftId": "l3", "left": "3/4", "rightId": "r3", "right": "Three quarters"}
+    ],
+    "answers": {"l1":"r1","l2":"r2","l3":"r3"}
+  }
+  Example:
+  {
+    "id": "q-X", "kind": "match",
+    "prompt": "Match each fraction to its decimal equivalent.",
+    "hint": "Divide the numerator by the denominator",
+    "points": 2,
+    "pairs": [
+      {"leftId": "l1", "left": "1/2",  "rightId": "r1", "right": "0.5"},
+      {"leftId": "l2", "left": "1/4",  "rightId": "r2", "right": "0.25"},
+      {"leftId": "l3", "left": "3/4",  "rightId": "r3", "right": "0.75"},
+      {"leftId": "l4", "left": "1/10", "rightId": "r4", "right": "0.1"}
+    ],
+    "answers": {"l1":"r1","l2":"r2","l3":"r3","l4":"r4"}
+  }`;
+
+      case 'fill_expr':
+      case 'fill-expr':
+        return `- "fill-expr": Student drags number chips into blanks in a mathematical expression. Perfect for completing equations, filling missing numbers, step-by-step calculation.
+  Template uses __ (two underscores) for each blank. blanks is an array of blank IDs (must match count of __ in template). chips is the list of available number options (include distractors). answers maps blankId → correct chip value.
+  Example:
+  {
+    "id": "q-X", "kind": "fill-expr",
+    "prompt": "Complete the multiplication: 3 × 4 = __ and 6 × 2 = __",
+    "hint": "Multiply each pair",
+    "points": 2,
+    "template": "3 × 4 = __ et 6 × 2 = __",
+    "blanks": ["b1", "b2"],
+    "chips": ["10", "12", "14", "8"],
+    "answers": {"b1": "12", "b2": "12"}
+  }`;
+
       case 'mix':
-        return `Choose the BEST question type for each question from the supported kinds only: single, multi, numeric, ordering, visual pie (select_pie or color_slices mode), visual angle.
-Create a balanced variety when the topic allows it:
-- Include at least one standard conceptual question using single or multi when possible.
-- Include at least one visual question when the topic naturally supports pie charts, fractions, proportions, geometry, or angle measurement.
-- Include at least one ordering/action-style question when the topic has steps, processes, procedures, comparisons, or sequences.
-- Include at least one numeric or application question when calculation or applying a rule is appropriate.
-For fractions, alternate between pie select_pie mode AND pie color_slices mode when generating multiple pie questions. For geometry use visual angle. For sequences use ordering. For recall and verbal reasoning use single/multi.`;
+        return `Choose the BEST question type for each question from ALL supported kinds: single, multi, numeric, ordering, column-fill, slider, match, fill-expr, visual pie (select_pie or color_slices mode), visual angle.
+Create a rich Brilliant-style variety when the topic allows it:
+- single/multi: conceptual recall, verbal reasoning, "which is true" style
+- numeric: calculation, apply a rule, find a missing number
+- ordering: steps, procedures, sequences, chronological order
+- column-fill: primary-school arithmetic in vertical columns with missing digits
+- slider: estimate a quantity, read a scale, place a value on a number line
+- match: vocabulary ↔ definition, fraction ↔ decimal, term ↔ example
+- fill-expr: complete an equation, fill missing numbers in a formula or calculation
+- visual pie: fractions, proportions — use color_slices AND select_pie modes alternately
+- visual angle: geometry, angle measurement
+Prioritise slider, match, and fill-expr when the topic involves numbers, equivalences, or formulas — these create the most engaging interactive experience.
+For single/multi/numeric questions that reference a cake, shape, diagram, figure, image, triangle, rectangle, square, circle, solid, angle, side, bar, band, segment, or colored part, always include a matching "context_visual" (pie, bar, angle, triangle, or geometry_figure) so the student can see it.`;
       default:
         return '';
     }
@@ -93,17 +218,236 @@ function buildLearningFriendlyGuidance(): string {
 - For ordering questions, use step-building, process-ordering, or action-ordering language when appropriate.
 - For single and multi questions, include some verbal-reasoning answer choices when appropriate, such as short explanations, comparison statements, or "which sentence is true" choices.
 - Do not use technical labels such as visual learner, auditory learner, kinesthetic learner, learning modality, or cognitive preference.
-- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, visual.`;
+- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, column-fill, visual, slider, match, fill-expr.
+- For column-fill: include operation, operands, and optional instructions only. Do NOT include a layout object.
+- For slider: always include min, max, step, answer, tolerance. For match: always include 3-5 pairs and an answers object. For fill-expr: always include template, blanks, chips, answers.
+- If a "single", "multi", or "numeric" prompt references a visual ("ce gâteau", "cette figure", "ce triangle", "cette barre", "la partie colorée", etc.), you MUST include a matching "context_visual" field so the student can actually see it. Never reference a visual without providing it.`;
+}
+
+type ColumnOperation = "addition" | "subtraction" | "multiplication" | "division";
+
+function normalizeFrenchText(value: string) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function pickColumnOperations(topicNames: string[], topicContext: string, count: number): ColumnOperation[] {
+  const text = normalizeFrenchText(`${topicNames.join(" ")} ${topicContext}`);
+  const requested: ColumnOperation[] = [];
+
+  if (/(addition|somme|ajouter|plus)/.test(text)) requested.push("addition");
+  if (/(soustraction|subtraction|difference|retirer|moins)/.test(text)) requested.push("subtraction");
+  if (/(multiplication|produit|multiplier|fois)/.test(text)) requested.push("multiplication");
+  if (/(division|quotient|diviser|reste)/.test(text)) requested.push("division");
+
+  if (requested.length === 0) {
+    requested.push("addition", "subtraction", "multiplication", "division");
+  }
+
+  return Array.from({ length: count }, (_, index) => requested[index % requested.length]);
+}
+
+function buildColumnPrompt(operation: ColumnOperation, language: string) {
+  if (language === "en") {
+    switch (operation) {
+      case "addition":
+        return {
+          prompt: "Complete the column addition.",
+          hint: "Add column by column and watch for any carry.",
+          instructions: "Fill in the carries and the result.",
+        };
+      case "subtraction":
+        return {
+          prompt: "Complete the column subtraction.",
+          hint: "Subtract column by column and check if you need to borrow.",
+          instructions: "Fill in the borrows and the result.",
+        };
+      case "multiplication":
+        return {
+          prompt: "Complete the column multiplication.",
+          hint: "Multiply each digit carefully and complete the product.",
+          instructions: "Fill in the missing digits of the product.",
+        };
+      case "division":
+        return {
+          prompt: "Complete the long division.",
+          hint: "Find the quotient digit by digit and keep track of the remainder.",
+          instructions: "Fill in the quotient and the remainder.",
+        };
+    }
+  }
+
+  switch (operation) {
+    case "addition":
+      return {
+        prompt: "Complète l'addition posée.",
+        hint: "Additionne colonne par colonne et pense aux retenues.",
+        instructions: "Complète les retenues et le résultat.",
+      };
+    case "subtraction":
+      return {
+        prompt: "Complète la soustraction posée.",
+        hint: "Soustrais colonne par colonne et vérifie s'il faut emprunter.",
+        instructions: "Complète les emprunts et le résultat.",
+      };
+    case "multiplication":
+      return {
+        prompt: "Complète la multiplication posée.",
+        hint: "Multiplie chaque chiffre avec soin puis complète le produit.",
+        instructions: "Complète les chiffres manquants du produit.",
+      };
+    case "division":
+      return {
+        prompt: "Complète la division posée.",
+        hint: "Cherche le quotient chiffre par chiffre et garde le reste en tête.",
+        instructions: "Complète le quotient et le reste.",
+      };
+  }
+}
+
+function columnOperandsFor(operation: ColumnOperation, index: number, difficulty: "easy" | "medium" | "hard") {
+  const presets: Record<ColumnOperation, Array<[number, number]>> = {
+    addition: difficulty === "easy"
+      ? [[27, 58], [36, 47], [48, 35], [29, 66]]
+      : difficulty === "hard"
+        ? [[278, 457], [396, 587], [468, 375], [589, 276]]
+        : [[74, 58], [86, 47], [59, 38], [67, 85]],
+    subtraction: difficulty === "easy"
+      ? [[72, 48], [81, 36], [93, 57], [64, 28]]
+      : difficulty === "hard"
+        ? [[702, 458], [831, 476], [940, 587], [623, 289]]
+        : [[92, 57], [84, 39], [73, 48], [61, 27]],
+    multiplication: difficulty === "easy"
+      ? [[14, 3], [23, 4], [32, 2], [18, 5]]
+      : difficulty === "hard"
+        ? [[246, 4], [318, 3], [427, 2], [156, 6]]
+        : [[27, 4], [36, 3], [48, 2], [59, 5]],
+    division: difficulty === "easy"
+      ? [[84, 5], [68, 3], [95, 4], [73, 2]]
+      : difficulty === "hard"
+        ? [[742, 5], [968, 4], [853, 6], [617, 3]]
+        : [[145, 4], [126, 5], [187, 6], [134, 3]],
+  };
+
+  return presets[operation][index % presets[operation].length];
+}
+
+function buildForcedColumnFillQuestions(params: {
+  count: number;
+  topicNames: string[];
+  topicContext: string;
+  difficulty: "easy" | "medium" | "hard";
+  language: string;
+}) {
+  const operations = pickColumnOperations(params.topicNames, params.topicContext, params.count);
+
+  return operations.map((operation, index) => {
+    const [firstOperand, secondOperand] = columnOperandsFor(operation, index, params.difficulty);
+    const text = buildColumnPrompt(operation, params.language);
+
+    return buildColumnFillQuestion({
+      id: `q-${index + 1}`,
+      prompt: text.prompt,
+      hint: text.hint,
+      instructions: text.instructions,
+      points: 1,
+      operation,
+      firstOperand,
+      secondOperand,
+      locale: params.language === "en" ? "en" : "fr",
+    });
+  });
+}
+
+function isValidContextVisual(visual: any): boolean {
+  if (!visual || typeof visual !== "object") return false;
+
+  if (visual.subtype === "pie") {
+    if (!Array.isArray(visual.segments) || visual.segments.length < 2) return false;
+    visual.segments.forEach((segment: any, index: number) => {
+      if (!segment.id) segment.id = `s${index + 1}`;
+    });
+    if (typeof visual.correctColoredCount !== "number") {
+      visual.correctColoredCount = visual.segments.filter((segment: any) => segment.colored).length;
+    }
+    return true;
+  }
+
+  if (visual.subtype === "bar") {
+    const totalParts = Number(visual.totalParts);
+    const coloredParts = Number(visual.coloredParts);
+    if (!Number.isFinite(totalParts) || !Number.isFinite(coloredParts)) return false;
+    if (totalParts <= 0 || coloredParts < 0 || coloredParts > totalParts) return false;
+    visual.totalParts = totalParts;
+    visual.coloredParts = coloredParts;
+    if (visual.orientation !== "horizontal") visual.orientation = "horizontal";
+    return true;
+  }
+
+  if (visual.subtype === "angle") {
+    return typeof visual.targetDeg === "number";
+  }
+
+  if (visual.subtype === "triangle") {
+    return Array.isArray(visual.labels) && visual.labels.length === 3;
+  }
+
+  if (visual.subtype === "geometry_figure") {
+    return typeof visual.shape === "string" && [
+      "triangle",
+      "rectangle",
+      "square",
+      "circle",
+      "rhombus",
+      "parallelogram",
+      "trapezoid",
+      "pentagon",
+      "hexagon",
+      "polygon",
+      "cube",
+      "cuboid",
+      "cylinder",
+      "cone",
+      "sphere",
+    ].includes(visual.shape);
+  }
+
+  return false;
+}
+
+function repairContextVisual(question: any) {
+  if (isValidContextVisual(question.context_visual)) {
+    return;
+  }
+
+  delete question.context_visual;
+
+  const inferred = inferPromptFigure(question);
+  if (inferred) {
+    question.context_visual = buildReadonlyContextVisual(inferred);
+  }
 }
 
 function validateQuestions(questions: any[]): any[] {
-  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'visual']);
+  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'column-fill', 'visual', 'slider', 'match', 'fill-expr']);
   const validVisualSubtypes = new Set(['pie', 'angle']);
 
   return questions.filter((q, idx) => {
+    if (q.kind === 'fill_expr') q.kind = 'fill-expr';
     if (!q.id) q.id = `q-${idx + 1}`;
     if (!q.prompt) return false;
     if (!validKinds.has(q.kind)) return false;
+
+    if (q.kind === "single" || q.kind === "multi" || q.kind === "numeric") {
+      repairContextVisual(q);
+      if (promptReferencesVisual(q.prompt) && !q.context_visual) {
+        return false;
+      }
+    } else if (q.context_visual) {
+      repairContextVisual(q);
+    }
 
     if (q.kind === 'single') {
       if (!Array.isArray(q.choices) || q.choices.length < 2) return false;
@@ -115,9 +459,33 @@ function validateQuestions(questions: any[]): any[] {
       if (q.choices.filter((c: any) => c.correct).length < 2) return false;
       q.choices.forEach((c: any, i: number) => { if (!c.id) c.id = `c${i + 1}`; });
     }
-    if (q.kind === 'numeric' && typeof q.answer !== 'number') return false;
+    if (q.kind === 'numeric') {
+      if (typeof q.answer !== 'number') q.answer = Number(q.answer);
+      if (!Number.isFinite(q.answer)) return false;
+    }
     if (q.kind === 'ordering') {
       if (!Array.isArray(q.items) || !Array.isArray(q.correctOrder) || q.items.length < 2) return false;
+    }
+    if (q.kind === 'column-fill') {
+      if (!['addition', 'subtraction', 'multiplication', 'division'].includes(q.operation)) return false;
+      if (!Array.isArray(q.operands) || q.operands.length !== 2) return false;
+      const first = Number(q.operands[0]);
+      const second = Number(q.operands[1]);
+      if (!Number.isFinite(first) || !Number.isFinite(second)) return false;
+      if (q.operation === 'multiplication' && String(Math.abs(Math.trunc(second))).length > 1) return false;
+      if (q.operation === 'division' && Math.trunc(second) === 0) return false;
+      const built = buildColumnFillQuestion({
+        id: q.id,
+        prompt: q.prompt,
+        hint: q.hint,
+        points: q.points,
+        operation: q.operation,
+        firstOperand: Math.trunc(first),
+        secondOperand: Math.trunc(second),
+        locale: 'fr',
+        instructions: typeof q.instructions === 'string' ? q.instructions : undefined,
+      });
+      Object.assign(q, built);
     }
     if (q.kind === 'visual') {
       if (!q.visual || !validVisualSubtypes.has(q.visual.subtype)) return false;
@@ -139,6 +507,49 @@ function validateQuestions(questions: any[]): any[] {
         if (typeof q.visual.bDeg !== 'number') q.visual.bDeg = q.visual.targetDeg;
       }
     }
+    // Slider validation
+    if (q.kind === 'slider') {
+      q.min = Number(q.min);
+      q.max = Number(q.max);
+      q.answer = Number(q.answer);
+      if (q.step !== undefined) q.step = Number(q.step);
+      if (q.tolerance !== undefined) q.tolerance = Number(q.tolerance);
+      if (!Number.isFinite(q.min) || !Number.isFinite(q.max)) return false;
+      if (!Number.isFinite(q.answer)) return false;
+      if (typeof q.step !== 'number') q.step = 1;
+      if (typeof q.tolerance !== 'number') q.tolerance = Math.max(1, Math.round((q.max - q.min) / 20));
+      if (q.answer < q.min || q.answer > q.max) return false;
+    }
+    // Match validation
+    if (q.kind === 'match') {
+      if (!Array.isArray(q.pairs) || q.pairs.length < 2) return false;
+      // Ensure left/right are plain non-empty strings — reject any pair with object values
+      const validPairs = q.pairs.filter((p: any) =>
+        typeof p.left === 'string' && p.left.trim() !== '' &&
+        typeof p.right === 'string' && p.right.trim() !== ''
+      );
+      if (validPairs.length < 2) return false; // discard the whole question if <2 valid pairs
+      q.pairs = validPairs;
+      q.pairs.forEach((p: any, i: number) => {
+        if (!p.leftId)  p.leftId  = `l${i + 1}`;
+        if (!p.rightId) p.rightId = `r${i + 1}`;
+      });
+      if (!q.answers || typeof q.answers !== 'object') {
+        q.answers = Object.fromEntries(q.pairs.map((p: any) => [p.leftId, p.rightId]));
+      }
+      // Preserve hide_labels if set
+      if (q.hide_labels !== true) delete q.hide_labels;
+    }
+    // Fill-expr validation
+    if (q.kind === 'fill-expr') {
+      if (typeof q.template !== 'string') return false;
+      if (!Array.isArray(q.blanks) || q.blanks.length === 0) return false;
+      if (!Array.isArray(q.chips) || q.chips.length === 0) return false;
+      if (!q.answers || typeof q.answers !== 'object') return false;
+      // Count __ in template must match blanks length
+      const blankCount = (q.template.match(/_{2,}/g) || []).length;
+      if (blankCount !== q.blanks.length) return false;
+    }
     if (!q.points) q.points = 1;
     return true;
   });
@@ -157,7 +568,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { topicIds, questionCount = 5, questionTypes = ['single', 'multi', 'numeric', 'ordering'], difficulty = 'medium', mix = false }: GenerateRequest = await req.json();
+    const { topicIds, questionCount = 5, questionTypes = ['single', 'multi', 'numeric', 'ordering'], difficulty = 'medium', mix = false, language = 'fr', focusLabel, focusContext }: GenerateRequest = await req.json();
 
     if (!topicIds || topicIds.length === 0) {
       return new Response(JSON.stringify({ error: "No topic IDs provided" }),
@@ -209,7 +620,9 @@ serve(async (req) => {
 
     const topicNames = topics.map(t => t.name);
 
+    const desiredCount = Math.max(1, Math.min(20, Number(questionCount) || 5));
     const effectiveTypes = mix ? ['mix'] : questionTypes;
+    const forceOnlyColumnFill = !mix && effectiveTypes.length === 1 && effectiveTypes[0] === 'column-fill';
     const typeInstructions = buildTypeInstructions(effectiveTypes);
 
     const difficultyGuide: Record<string, string> = {
@@ -218,14 +631,25 @@ serve(async (req) => {
       hard: 'Complex reasoning, subtle distinctions.'
     };
 
-    const prompt = `You are an expert educator creating quiz questions based on curriculum topics and learning objectives.
+    // Batch "per level" mode: focus the questions on one progressif level of the topic.
+    const focusBlock = (focusLabel || focusContext)
+      ? `\nFOCUS — this quiz targets ONE specific progressif level of the topic:\n` +
+        (focusLabel ? `Level: ${focusLabel}\n` : '') +
+        (focusContext ? `Base the questions PRIMARILY on this level's content:\n${focusContext}\n` : '') +
+        `Stay within this level's scope and difficulty; do NOT cover other levels.\n`
+      : '';
+    const buildPrompt = (count: number, existingPrompts: string[] = []) => `You are an expert educator creating quiz questions based on curriculum topics and learning objectives.
 
 TOPIC AND CURRICULUM CONTEXT:
 ---
 ${topicContext}
 ---
+${focusBlock}
 
-Generate exactly ${questionCount} quiz questions based on these topics and learning objectives. Questions should test the student's understanding of the concepts described above.
+Generate exactly ${count} quiz questions based on these topics and learning objectives. Questions should test the student's understanding of the concepts described above.
+${existingPrompts.length ? `\nDo NOT repeat these existing prompts:\n${existingPrompts.map((prompt) => `- ${prompt}`).join('\n')}\n` : ''}
+
+WRITE ALL STUDENT-FACING TEXT IN ${language === 'fr' ? 'French' : 'English'}.
 
 QUESTION TYPES TO USE:
 ${typeInstructions}
@@ -246,70 +670,117 @@ For "numeric":
 For "ordering":
 { "id": "q-3", "kind": "ordering", "prompt": "...", "hint": "...", "points": 1, "items": ["B","A","C"], "correctOrder": ["A","B","C"] }
 
+For "column-fill":
+{ "id": "q-4", "kind": "column-fill", "prompt": "...", "hint": "...", "points": 1, "operation": "addition", "operands": ["29","66"], "instructions": "Complète les retenues et le résultat." }
+
 RULES:
 - Questions must test the curriculum topics and objectives provided
 - Each question ID unique (q-1, q-2, etc.)
 - 4 choices for single/multi; multi has 2-3 correct
 - Hints must be short, encouraging, and actionable without giving away the answer
+- All prompts, hints, labels, explanations, instructions, and answer text must be written in ${language === 'fr' ? 'French' : 'English'}
 - Visual prompts must mention the visual object the student should inspect
-- Use only supported output kinds: single, multi, numeric, ordering, visual
+- Use only supported output kinds: single, multi, numeric, ordering, column-fill, visual, slider, match, fill-expr
 - Return ONLY the JSON array`;
 
-    console.log("Calling AI gateway for topic-based generation, prompt length:", prompt.length);
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "You are a quiz generation assistant. Always respond with valid JSON only." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      throw new Error("AI generation failed");
-    }
-
-    const aiResponse = await response.json();
-    const content = aiResponse.choices?.[0]?.message?.content;
-    if (!content) throw new Error("No content in AI response");
-
-    let rawQuestions;
-    try {
+    const parseAiQuestions = (content: string) => {
       let jsonStr = content.trim();
       if (jsonStr.startsWith('```json')) jsonStr = jsonStr.slice(7);
       else if (jsonStr.startsWith('```')) jsonStr = jsonStr.slice(3);
       if (jsonStr.endsWith('```')) jsonStr = jsonStr.slice(0, -3);
-      rawQuestions = JSON.parse(jsonStr.trim());
-    } catch {
-      console.error("Failed to parse AI response:", content);
-      throw new Error("Failed to parse generated questions");
+      const parsed = JSON.parse(jsonStr.trim());
+      if (!Array.isArray(parsed)) throw new Error("AI response is not an array");
+      return parsed;
+    };
+
+    const callAiForQuestions = async (count: number, existingPrompts: string[]) => {
+      const prompt = buildPrompt(count, existingPrompts);
+      console.log("Calling AI gateway for topic-based generation, prompt length:", prompt.length, "requested:", count);
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: "You are a quiz generation assistant. Always respond with valid JSON only." },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Rate limit exceeded. Please try again later.");
+        }
+        if (response.status === 402) {
+          throw new Error("AI credits exhausted.");
+        }
+        throw new Error("AI generation failed");
+      }
+
+      const aiResponse = await response.json();
+      const content = aiResponse.choices?.[0]?.message?.content;
+      if (!content) throw new Error("No content in AI response");
+
+      try {
+        return parseAiQuestions(content);
+      } catch {
+        console.error("Failed to parse AI response:", content);
+        throw new Error("Failed to parse generated questions");
+      }
+    };
+
+    if (forceOnlyColumnFill) {
+      const forcedQuestions = buildForcedColumnFillQuestions({
+        count: desiredCount,
+        topicNames,
+        topicContext,
+        difficulty,
+        language,
+      });
+
+      return new Response(JSON.stringify({
+        questions: forcedQuestions,
+        topicNames,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    if (!Array.isArray(rawQuestions)) throw new Error("AI response is not an array");
+    const questions: any[] = [];
+    const seenPromptKeys = new Set<string>();
 
-    const questions = validateQuestions(rawQuestions);
-    if (questions.length === 0) throw new Error("No valid questions after validation");
+    for (let attempt = 0; attempt < 3 && questions.length < desiredCount; attempt += 1) {
+      const remaining = desiredCount - questions.length;
+      const rawQuestions = await callAiForQuestions(remaining, questions.map((question) => question.prompt).slice(-12));
+      const validQuestions = validateQuestions(rawQuestions);
+      for (const question of validQuestions) {
+        const key = String(question.prompt || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        if (!key || seenPromptKeys.has(key)) continue;
+        seenPromptKeys.add(key);
+        questions.push(question);
+        if (questions.length >= desiredCount) break;
+      }
+      console.log(`Generation attempt ${attempt + 1}: ${validQuestions.length}/${rawQuestions.length} valid, total accepted ${questions.length}/${desiredCount}`);
+    }
+
+    if (questions.length < desiredCount) {
+      throw new Error(`Only generated ${questions.length} valid questions out of ${desiredCount}. Please retry or choose fewer restrictive question types.`);
+    }
+
+    questions.forEach((question, index) => {
+      question.id = `q-${index + 1}`;
+    });
 
     console.log(`Generated ${questions.length} valid questions from ${topics.length} topics`);
 
     return new Response(
-      JSON.stringify({ questions, topicNames }),
+      JSON.stringify({ questions: questions.slice(0, desiredCount), topicNames }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 

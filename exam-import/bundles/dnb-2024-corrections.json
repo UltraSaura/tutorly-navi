@@ -1,0 +1,252 @@
+{
+  "corrections": [
+    {
+      "exercise_number": 1,
+      "question_id": "1",
+      "correct_answer": "37",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "De 0 à 36 il y a 36 - 0 + 1 = 37 nombres.",
+        "La bille a la même probabilité de s'arrêter sur l'une de ces 37 cases, la probabilité de chaque nombre est donc égale à (1)/(37)."
+      ]
+    },
+    {
+      "exercise_number": 1,
+      "question_id": "2",
+      "correct_answer": "37",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Il y a 19 cases blanches donc 18 cases noires et parmi elles 2 ; 4 ; 6 ; 8 ; 10 ; 20 ; 22 ; 24 ; 26 ; 28 soit 10 chances sur 37, donc la probabilité est égale à (10)/(37)."
+      ]
+    },
+    {
+      "exercise_number": 1,
+      "question_id": "3a",
+      "correct_answer": "37",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "De 0 à 6 il y a 7 nombres donc la probabilité est égale à (7)/(37)"
+      ]
+    },
+    {
+      "exercise_number": 1,
+      "question_id": "3b",
+      "correct_answer": "37",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "La probabilité que la bille s’arrête sur un numéro supérieur ou égal à 7 est égale à 1 - (7)/(37) = (30)/(37)."
+      ]
+    },
+    {
+      "exercise_number": 1,
+      "question_id": "3c",
+      "correct_answer": "37",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "On a (30)/(37) ≈ 0,81 > 0,8 > 0,75 = 34 : le joueur a raison.",
+        "Remarque 34 = (3 × 10)/(4 × 10) = (30)/(40).",
+        "Or 37 < 40 (1)/(40) < (1)/(37) et en multipliant chaque membre par 30 : (30)/(40) < (30)/(37)."
+      ]
+    },
+    {
+      "exercise_number": 2,
+      "question_id": "1a",
+      "correct_answer": "56",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "On obtient successivement : 5 5^2 = 25 2 × 25 = 50 50 + 2× 5 = 50 + 10 = 60 60 - 4 = 56."
+      ]
+    },
+    {
+      "exercise_number": 2,
+      "question_id": "1b",
+      "correct_answer": "70",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Avec - 9 au départ on obtient - 9 + 2 = - 7 en résultat 1 et - 9 - 1 = - 10 en résultats 2.",
+        "Le résultat final est - 7 × (-10) = 70."
+      ]
+    },
+    {
+      "exercise_number": 2,
+      "question_id": "2a",
+      "correct_answer": "1",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Résultat 1 = x + 2 ; Résultat 2 : x - 1 et résultat final = (x + 2)(x - 1) soit E_2."
+      ]
+    },
+    {
+      "exercise_number": 2,
+      "question_id": "2b",
+      "correct_answer": "4",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "On obtient successivement : x x^2 2 × x^2 = 2x^2 2x^2 + 2x 2x^2 + 2x - 4."
+      ]
+    },
+    {
+      "exercise_number": 2,
+      "question_id": "3",
+      "correct_answer": "2",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Le résultat avec le programme A est : 2x^2 + 2x - 4 = 2 × x^2 + 2 × x - 2 × 2 = 2 (x^2 + x - 2 ).",
+        "Or en développant E_2 = (x + 2)(x - 1) = x^2 + 2x - x - 2 = x^2 + x - 2 : c'est le résultat du programme B.",
+        "Le résultat du programme A est le double du résultat du programme B."
+      ]
+    },
+    {
+      "exercise_number": 3,
+      "question_id": "1",
+      "correct_answer": "9",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "On a AB = 2R = 2 × 4,5 = 9 (cm)."
+      ]
+    },
+    {
+      "exercise_number": 3,
+      "question_id": "2",
+      "correct_answer": "2",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "On a AD^2 = 7,2^2 et DB^2 = 5,4^2, d'où AD^2 + DB^2 = 7,2^2 + 5,4^2 = 51,84 + 29,16 = 81 = 9^2 = AB^2.",
+        "Donc AD^2 + DB^2 = AB^2 : d'après la réciproque du théorème de Pythagore le triangle ABD est rectangle en D ; [AB] est l'hypoténuse."
+      ]
+    },
+    {
+      "exercise_number": 3,
+      "question_id": "3",
+      "correct_answer": "=ou(2,7)",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Comme les points B, E, A sont alignés, ainsi que les points D, F, A et que les droites (BD) et (EF) sont parallèles on est dans une situation de Thalès et on a donc les égalités : = = .",
+        "En particulier = ou (2,7)/(9) = soit 0,3 = , d'où AF = 0,3 × 7,2 = 2,16 (cm)."
+      ]
+    },
+    {
+      "exercise_number": 3,
+      "question_id": "4a",
+      "correct_answer": "19,44 cm",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Si A est l'aire du triangle ABD, on sait que A = = (5,4 × 7,2)/(2) = 5,4 × 3,6 = 19,44 cm^2."
+      ]
+    },
+    {
+      "exercise_number": 3,
+      "question_id": "4b",
+      "correct_answer": "2",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "L'aire du disque est égale à π × R^2 = π × 4,5^2 = ( 92 )^2 × π = (81)/(4)π ≈ 63,617, soit 63,62 au centième de cm^2."
+      ]
+    },
+    {
+      "exercise_number": 3,
+      "question_id": "5",
+      "correct_answer": "30.6",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Quel pourcentage de l’aire du disque représente l’aire du triangle ABD ?",
+        "L'aire du triangle ABD représente pour l'aire du disque un pourcentage égal à environ : (19,44)/(63,62) × 100 soit environ 30,6 \\"
+      ]
+    },
+    {
+      "exercise_number": 4,
+      "question_id": "1",
+      "correct_answer": "A",
+      "answer_type": "mcq",
+      "explanation_steps": [
+        "f(x) = 3x - 2, donc f(-4) = 3 × (- 4) - 2 = -12 - 2 = - 14. (réponse A)"
+      ]
+    },
+    {
+      "exercise_number": 4,
+      "question_id": "2",
+      "correct_answer": "A",
+      "answer_type": "mcq",
+      "explanation_steps": [
+        "(- 5)^3 = (- 5) × (- 5) × (- 5) = - 125. (réponse A)"
+      ]
+    },
+    {
+      "exercise_number": 4,
+      "question_id": "3",
+      "correct_answer": "B",
+      "answer_type": "mcq",
+      "explanation_steps": [
+        "Si C a pour image A par t_ , alors J a pour image E. (réponse B)"
+      ]
+    },
+    {
+      "exercise_number": 4,
+      "question_id": "4",
+      "correct_answer": "C",
+      "answer_type": "mcq",
+      "explanation_steps": [
+        "L'antécédent de 3 est 0 : f(0) = 3. (réponse C)"
+      ]
+    },
+    {
+      "exercise_number": 4,
+      "question_id": "5",
+      "correct_answer": "B",
+      "answer_type": "mcq",
+      "explanation_steps": [
+        "On a dans l'ordre croissant : 1,46 ; 1,6 ; 1,65 ; 1,67 ; 1,7 ; 1,72 ; 1,75 Il y a autant de tailles inférieures à 1,67 que de tailles supérieures à 1,67 : 1,67 est la médiane. (réponse B)"
+      ]
+    },
+    {
+      "exercise_number": 4,
+      "question_id": "6",
+      "correct_answer": "A",
+      "answer_type": "mcq",
+      "explanation_steps": [
+        "On a par définition : cos α = = 45 = (8)/(10) = 0,8. (réponse A)"
+      ]
+    },
+    {
+      "exercise_number": 5,
+      "question_id": "1",
+      "correct_answer": "15",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "On a (330)/(15) = (66)/(3) = 22, mais (132)/(15) = (3 × 44)/(3 × 5) = (44)/(5) = 8,8 qui n'est pas entier.",
+        "On ne peut donc pas faire 15 sachets car 132 n'est pas un multiple de 15."
+      ]
+    },
+    {
+      "exercise_number": 5,
+      "question_id": "2a",
+      "correct_answer": "11",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "On a 330 = 33 × 10 = 3 × 11 × 2 × 5 = 2 × 3× 5× 11 et 132 = 6 × 22 = 2 × 3 × 2 × 11 = 2^2 × 3× 11."
+      ]
+    },
+    {
+      "exercise_number": 5,
+      "question_id": "2b",
+      "correct_answer": "66",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "On constate que 330 et 132 ont en commun dans leur écriture sous forme de produits de nombres premiers un facteur 2, un facteur 3 et un facteur 11 : ils sont donc tous les deux multiples de 2 × 3× 11 = 6 × 11 = 66.",
+        "La présidente pourra donc faire 66 sachets."
+      ]
+    },
+    {
+      "exercise_number": 5,
+      "question_id": "2c",
+      "correct_answer": "2794.50",
+      "answer_type": "numeric",
+      "explanation_steps": [
+        "Comme 330 = 66 × 5 et 132 = 66 × 2, chaque sachet contiendra 5 autocollants et 2 drapeaux.",
+        "PARTIE B Le volume de la piscine est V = 25 × 15 × 2 = 25 × 2 × 15 = 50 × 15 = 750 (m^3 ).",
+        "On met dans cette piscine : 750 × (9)/(10) = 75 × 9 = 675 (m^3 ) d'eau.",
+        "Remplir la piscine coûtera donc : 675 × 4,14 = 2794,50 €."
+      ]
+    }
+  ]
+}

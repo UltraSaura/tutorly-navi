@@ -218,6 +218,6 @@ export function ExerciseRow({
       });
       
       return finalSections;
-    })()} error={teaching.error} exerciseQuestion={exercise.exercise_content} imageUrl={Array.isArray(exercise.explanation) ? exercise.explanation[0]?.explanation_image_url : exercise.explanation?.explanation_image_url} />
+    })()} error={teaching.error} exerciseQuestion={exercise.exercise_content} imageUrl={Array.isArray(exercise.explanation) ? exercise.explanation[0]?.explanation_image_url : exercise.explanation?.explanation_image_url} onLike={() => void teaching.submitFeedback('like')} onDislike={() => void teaching.submitFeedback('dislike')} feedback={teaching.feedback} feedbackLoading={teaching.feedbackLoading} />
     </>;
 }

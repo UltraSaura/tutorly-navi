@@ -55,4 +55,17 @@ describe('training guidance state', () => {
       guidance: { correct_feedback: 'Bonne réponse.' },
     })).toEqual({ isCorrect: true, feedback: 'Bonne réponse.' });
   });
+
+  it('replaces answer-revealing incorrect feedback with a safe fallback', () => {
+    expect(evaluateTrainingAnswer({
+      answer: '12',
+      expectedAnswer: { value: 18.2, accepted: ['18,2', '18.2'] },
+      guidance: {
+        almost_feedback: 'Tu es proche : la réponse attendue est 18,2.',
+        incorrect_feedback: 'La bonne réponse est 18,2.',
+      },
+      fallbackAlmost: 'Tu es proche.',
+      fallbackIncorrect: 'Réessaie sans regarder la réponse.',
+    })).toEqual({ isCorrect: false, feedback: 'Réessaie sans regarder la réponse.' });
+  });
 });

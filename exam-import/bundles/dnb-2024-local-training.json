@@ -1,0 +1,1972 @@
+{
+  "training_items": [
+    {
+      "id": "c9c08e95-0dab-5903-9404-ca53bb5fc3df",
+      "source_exercise_id": "28da9fa9-be9a-5353-b97b-a23e8d729f53",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "probabilites",
+        "justification"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Expliquer pourquoi la probabilité que la bille s’arrête sur le numéro 7 est (1)/(37).",
+      "context": "Au casino, la roulette est un jeu de hasard pour lequel chaque joueur mise au choix sur un ou plusieurs numéros. On lance une bille sur une roue qui tourne, numérotée de 0 à 36. La bille a la même probabilité de s’arrêter sur chaque numéro.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex01:img-roulette",
+          "type": "image",
+          "label": "roulette",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/roulette.webp",
+          "alt": "roulette",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Expliquer pourquoi la probabilité que la bille s’arrête sur le numéro 7 est (1)/(37).",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Liste les cas favorables et le nombre total de cas possibles."
+              },
+              {
+                "level": 2,
+                "text": "La probabilité = (nombre de cas favorables) ÷ (total des cas)."
+              },
+              {
+                "level": 3,
+                "text": "Vérifie que la probabilité est bien entre 0 et 1."
+              }
+            ],
+            "correct_feedback": "Bonne réponse : ton raisonnement probabiliste est correct.",
+            "almost_feedback": "Tu es proche : vérifie le dénominateur (total des cas).",
+            "incorrect_feedback": "Recommence en listant tous les cas possibles et les cas favorables."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 1 (20 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Expliquer pourquoi la probabilité que la bille s’arrête sur le numéro 7 est (1)/(37).",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "77f3915a-d6b9-55d2-a20b-3fbbb3261525",
+      "source_exercise_id": "28da9fa9-be9a-5353-b97b-a23e8d729f53",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "probabilites"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Déterminer la probabilité que la bille s’arrête sur une case à la fois noire et paire.",
+      "context": "Au casino, la roulette est un jeu de hasard pour lequel chaque joueur mise au choix sur un ou plusieurs numéros. On lance une bille sur une roue qui tourne, numérotée de 0 à 36. La bille a la même probabilité de s’arrêter sur chaque numéro.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex01:img-roulette",
+          "type": "image",
+          "label": "roulette",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/roulette.webp",
+          "alt": "roulette",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Déterminer la probabilité que la bille s’arrête sur une case à la fois noire et paire.",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Liste les cas favorables et le nombre total de cas possibles."
+              },
+              {
+                "level": 2,
+                "text": "La probabilité = (nombre de cas favorables) ÷ (total des cas)."
+              },
+              {
+                "level": 3,
+                "text": "Vérifie que la probabilité est bien entre 0 et 1."
+              }
+            ],
+            "correct_feedback": "Bonne réponse : ton raisonnement probabiliste est correct.",
+            "almost_feedback": "Tu es proche : vérifie le dénominateur (total des cas).",
+            "incorrect_feedback": "Recommence en listant tous les cas possibles et les cas favorables."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 1 (20 points)",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Déterminer la probabilité que la bille s’arrête sur une case à la fois noire et paire.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "cc3752bc-fbbf-54a5-949e-efa132e8e6a3",
+      "source_exercise_id": "28da9fa9-be9a-5353-b97b-a23e8d729f53",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "probabilites"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Déterminer la probabilité que la bille s’arrête sur un numéro inférieur ou égal à 6.",
+      "context": "Au casino, la roulette est un jeu de hasard pour lequel chaque joueur mise au choix sur un ou plusieurs numéros. On lance une bille sur une roue qui tourne, numérotée de 0 à 36. La bille a la même probabilité de s’arrêter sur chaque numéro.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex01:img-roulette",
+          "type": "image",
+          "label": "roulette",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/roulette.webp",
+          "alt": "roulette",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3-3a",
+          "label": "a.",
+          "prompt": "Déterminer la probabilité que la bille s’arrête sur un numéro inférieur ou égal à 6.",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Liste les cas favorables et le nombre total de cas possibles."
+              },
+              {
+                "level": 2,
+                "text": "La probabilité = (nombre de cas favorables) ÷ (total des cas)."
+              },
+              {
+                "level": 3,
+                "text": "Vérifie que la probabilité est bien entre 0 et 1."
+              }
+            ],
+            "correct_feedback": "Bonne réponse : ton raisonnement probabiliste est correct.",
+            "almost_feedback": "Tu es proche : vérifie le dénominateur (total des cas).",
+            "incorrect_feedback": "Recommence en listant tous les cas possibles et les cas favorables."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 1 (20 points)",
+      "metadata": {
+        "source_question_id": "3-3a",
+        "source_question_label": "a.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Déterminer la probabilité que la bille s’arrête sur un numéro inférieur ou égal à 6.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "70886af0-f2bb-54ec-aa2b-2c6720b35d26",
+      "source_exercise_id": "28da9fa9-be9a-5353-b97b-a23e8d729f53",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "probabilites"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "En déduire la probabilité que la bille s’arrête sur un numéro supérieur ou égal à 7.",
+      "context": "Au casino, la roulette est un jeu de hasard pour lequel chaque joueur mise au choix sur un ou plusieurs numéros. On lance une bille sur une roue qui tourne, numérotée de 0 à 36. La bille a la même probabilité de s’arrêter sur chaque numéro.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex01:img-roulette",
+          "type": "image",
+          "label": "roulette",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/roulette.webp",
+          "alt": "roulette",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3-3b",
+          "label": "b.",
+          "prompt": "En déduire la probabilité que la bille s’arrête sur un numéro supérieur ou égal à 7.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Liste les cas favorables et le nombre total de cas possibles."
+              },
+              {
+                "level": 2,
+                "text": "La probabilité = (nombre de cas favorables) ÷ (total des cas)."
+              },
+              {
+                "level": 3,
+                "text": "Vérifie que la probabilité est bien entre 0 et 1."
+              }
+            ],
+            "correct_feedback": "Bonne réponse : ton raisonnement probabiliste est correct.",
+            "almost_feedback": "Tu es proche : vérifie le dénominateur (total des cas).",
+            "incorrect_feedback": "Recommence en listant tous les cas possibles et les cas favorables."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 1 (20 points)",
+      "metadata": {
+        "source_question_id": "3-3b",
+        "source_question_label": "b.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "En déduire la probabilité que la bille s’arrête sur un numéro supérieur ou égal à 7.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "5c14a528-c9a1-5523-bc95-abc137b333dd",
+      "source_exercise_id": "28da9fa9-be9a-5353-b97b-a23e8d729f53",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "probabilites",
+        "justification"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Un joueur affirme qu’on a plus de 3 chances sur 4 d’obtenir un numéro supérieur ou égal à 7. A-t-il raison ?",
+      "context": "Au casino, la roulette est un jeu de hasard pour lequel chaque joueur mise au choix sur un ou plusieurs numéros. On lance une bille sur une roue qui tourne, numérotée de 0 à 36. La bille a la même probabilité de s’arrêter sur chaque numéro.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex01:img-roulette",
+          "type": "image",
+          "label": "roulette",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/roulette.webp",
+          "alt": "roulette",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3-3c",
+          "label": "c.",
+          "prompt": "Un joueur affirme qu’on a plus de 3 chances sur 4 d’obtenir un numéro supérieur ou égal à 7. A-t-il raison ?",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les données importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode ou la propriété adaptée à cette question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ta réponse complète et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : relis et vérifie les calculs.",
+            "incorrect_feedback": "Relis l'énoncé et repère les données utiles avant de recommencer."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 1 (20 points)",
+      "metadata": {
+        "source_question_id": "3-3c",
+        "source_question_label": "c.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Un joueur affirme qu’on a plus de 3 chances sur 4 d’obtenir un numéro supérieur ou égal à 7. A-t-il raison ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "f99ffb00-a63f-523e-ae74-91400596a49a",
+      "source_exercise_id": "e1268870-7a0b-5da0-9817-aba210c28c6c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "programmation"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Vérifier que, si on choisit 5 comme nombre de départ, le résultat du programme A est 56.",
+      "context": "Programme A : • Choisir un nombre. • Prendre le carré du nombre choisi. • Multiplier le résultat par 2. • Ajouter le double du nombre de départ. • Soustraire 4 au résultat. Programme B : [Programme Scratch]",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex02:diagram-1",
+          "type": "image",
+          "label": "Programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex02-diagram-1.webp",
+          "alt": "Schéma exercice 2",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1-1a",
+          "label": "a.",
+          "prompt": "Vérifier que, si on choisit 5 comme nombre de départ, le résultat du programme A est 56.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Lis le programme bloc par bloc dans l'ordre d'exécution."
+              },
+              {
+                "level": 2,
+                "text": "Applique chaque instruction avec la valeur de départ choisie."
+              },
+              {
+                "level": 3,
+                "text": "Note les valeurs intermédiaires de chaque variable à chaque étape."
+              }
+            ],
+            "correct_feedback": "Bonne exécution du programme.",
+            "almost_feedback": "Tu es proche : as-tu bien suivi l'ordre des instructions ?",
+            "incorrect_feedback": "Reprends depuis le début du programme et applique chaque bloc une fois."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 2 (20 points)",
+      "metadata": {
+        "source_question_id": "1-1a",
+        "source_question_label": "a.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Vérifier que, si on choisit 5 comme nombre de départ, le résultat du programme A est 56.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "3da8b98e-679d-58e1-8156-7435fd4be1d1",
+      "source_exercise_id": "e1268870-7a0b-5da0-9817-aba210c28c6c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "programmation"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Quel résultat obtient-on avec le programme B si on choisit -9 comme nombre de départ ?",
+      "context": "Programme A : • Choisir un nombre. • Prendre le carré du nombre choisi. • Multiplier le résultat par 2. • Ajouter le double du nombre de départ. • Soustraire 4 au résultat. Programme B : [Programme Scratch]",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex02:diagram-1",
+          "type": "image",
+          "label": "Programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex02-diagram-1.webp",
+          "alt": "Schéma exercice 2",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1-1b",
+          "label": "b.",
+          "prompt": "Quel résultat obtient-on avec le programme B si on choisit -9 comme nombre de départ ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Lis le programme bloc par bloc dans l'ordre d'exécution."
+              },
+              {
+                "level": 2,
+                "text": "Applique chaque instruction avec la valeur de départ choisie."
+              },
+              {
+                "level": 3,
+                "text": "Note les valeurs intermédiaires de chaque variable à chaque étape."
+              }
+            ],
+            "correct_feedback": "Bonne exécution du programme.",
+            "almost_feedback": "Tu es proche : as-tu bien suivi l'ordre des instructions ?",
+            "incorrect_feedback": "Reprends depuis le début du programme et applique chaque bloc une fois."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 2 (20 points)",
+      "metadata": {
+        "source_question_id": "1-1b",
+        "source_question_label": "b.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quel résultat obtient-on avec le programme B si on choisit -9 comme nombre de départ ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "1ba0d14c-bda8-567c-8385-cbc5fb1ffe4f",
+      "source_exercise_id": "e1268870-7a0b-5da0-9817-aba210c28c6c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "calcul_litteral",
+        "programmation"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "multiple_choice",
+      "prompt": "Parmi les trois propositions ci-dessous, recopier l’expression qui donne le résultat obtenu par le programme B ?",
+      "context": "Programme A : • Choisir un nombre. • Prendre le carré du nombre choisi. • Multiplier le résultat par 2. • Ajouter le double du nombre de départ. • Soustraire 4 au résultat. Programme B : [Programme Scratch]",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex02:diagram-1",
+          "type": "image",
+          "label": "Programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex02-diagram-1.webp",
+          "alt": "Schéma exercice 2",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": [
+        "E_1 = (x + 2) - 1",
+        "E_2 = (x + 2) × (x - 1)",
+        "E_3 = x + 2 × x - 1"
+      ],
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2-2a",
+          "label": "a.",
+          "prompt": "Parmi les trois propositions ci-dessous, recopier l’expression qui donne le résultat obtenu par le programme B ?",
+          "answer_type": "multiple_choice",
+          "choices": [
+            "E_1 = (x + 2) - 1",
+            "E_2 = (x + 2) × (x - 1)",
+            "E_3 = x + 2 × x - 1"
+          ],
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Lis la question en entier : s'agit-il d'une image (calcul direct) ou d'un antécédent (équation à résoudre) ?"
+              },
+              {
+                "level": 2,
+                "text": "Pour l'image de x : substitue x dans l'expression de f(x) et calcule."
+              },
+              {
+                "level": 3,
+                "text": "Pour l'antécédent : pose f(x) = valeur connue et résous l'équation."
+              }
+            ],
+            "correct_feedback": "Bonne réponse : tu as bien appliqué la définition de la fonction.",
+            "almost_feedback": "Tu es proche : vérifie si la question demande l'image ou l'antécédent.",
+            "incorrect_feedback": "Relis la question : cherche-t-on f(−4) (image) ou f(x) = 3 (antécédent) ?"
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 2 (20 points)",
+      "metadata": {
+        "source_question_id": "2-2a",
+        "source_question_label": "a.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Parmi les trois propositions ci-dessous, recopier l’expression qui donne le résultat obtenu par le programme B ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "e3d40b4c-1b27-5848-bf23-e0bfdc0b1223",
+      "source_exercise_id": "e1268870-7a0b-5da0-9817-aba210c28c6c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "fonctions",
+        "calcul_litteral",
+        "programmation"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Exprimer en fonction de x le résultat obtenu avec le programme A.",
+      "context": "Programme A : • Choisir un nombre. • Prendre le carré du nombre choisi. • Multiplier le résultat par 2. • Ajouter le double du nombre de départ. • Soustraire 4 au résultat. Programme B : [Programme Scratch]",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex02:diagram-1",
+          "type": "image",
+          "label": "Programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex02-diagram-1.webp",
+          "alt": "Schéma exercice 2",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2-2b",
+          "label": "b.",
+          "prompt": "Exprimer en fonction de x le résultat obtenu avec le programme A.",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Lis la question en entier : s'agit-il d'une image (calcul direct) ou d'un antécédent (équation à résoudre) ?"
+              },
+              {
+                "level": 2,
+                "text": "Pour l'image de x : substitue x dans l'expression de f(x) et calcule."
+              },
+              {
+                "level": 3,
+                "text": "Pour l'antécédent : pose f(x) = valeur connue et résous l'équation."
+              }
+            ],
+            "correct_feedback": "Bonne réponse : tu as bien appliqué la définition de la fonction.",
+            "almost_feedback": "Tu es proche : vérifie si la question demande l'image ou l'antécédent.",
+            "incorrect_feedback": "Relis la question : cherche-t-on f(−4) (image) ou f(x) = 3 (antécédent) ?"
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 2 (20 points)",
+      "metadata": {
+        "source_question_id": "2-2b",
+        "source_question_label": "b.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Exprimer en fonction de x le résultat obtenu avec le programme A.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "d26294e1-555b-5cbc-963f-dd85df1fe425",
+      "source_exercise_id": "e1268870-7a0b-5da0-9817-aba210c28c6c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "programmation",
+        "demonstration"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Démontrer que, quel que soit le nombre choisi au départ, le résultat du programme A est toujours le double du résultat du programme B.",
+      "context": "Programme A : • Choisir un nombre. • Prendre le carré du nombre choisi. • Multiplier le résultat par 2. • Ajouter le double du nombre de départ. • Soustraire 4 au résultat. Programme B : [Programme Scratch]",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex02:diagram-1",
+          "type": "image",
+          "label": "Programme Scratch",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex02-diagram-1.webp",
+          "alt": "Schéma exercice 2",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Démontrer que, quel que soit le nombre choisi au départ, le résultat du programme A est toujours le double du résultat du programme B.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie les données utiles dans l'énoncé et sur la figure."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle le théorème ou la propriété que tu vas utiliser."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ta démonstration étape par étape : hypothèse → application → conclusion."
+              }
+            ],
+            "correct_feedback": "Bonne démonstration : la rédaction est complète.",
+            "almost_feedback": "La méthode est bonne, mais la rédaction doit être plus complète.",
+            "incorrect_feedback": "Reviens à la figure et identifie la propriété applicable (Pythagore, Thalès, angles…)."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 2 (20 points)",
+      "metadata": {
+        "source_question_id": "3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Démontrer que, quel que soit le nombre choisi au départ, le résultat du programme A est toujours le double du résultat du programme B.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "a313bb09-cd3b-52c1-8a26-a445ed001ce9",
+      "source_exercise_id": "4e930ee3-b277-5f05-9e17-15055fd6a43c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "cercles",
+        "justification"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Justifier que le diamètre [AB] mesure 9 cm.",
+      "context": "Sur la figure ci-dessous, on a : • C est un cercle de centre O et de rayon 4,5 cm ; • [AB] est un diamètre de ce cercle et D est un point du cercle ; • les points B, E, A sont alignés, ainsi que les points D, F, A ; • les droites (BD) et (EF) sont parallèles ; • BD = 5,4 cm ; DA = 7,2 cm et AE = 2,7 cm.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex03:diagram-1",
+          "type": "image",
+          "label": "Schéma 1",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex03-diagram-1.webp",
+          "alt": "Schéma exercice 3",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Justifier que le diamètre [AB] mesure 9 cm.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les données importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode ou la propriété adaptée à cette question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ta réponse complète et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : relis et vérifie les calculs.",
+            "incorrect_feedback": "Relis l'énoncé et repère les données utiles avant de recommencer."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 3 (22 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Justifier que le diamètre [AB] mesure 9 cm.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "254ff3af-9f90-5045-a983-ddac0858a310",
+      "source_exercise_id": "4e930ee3-b277-5f05-9e17-15055fd6a43c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "trigonometrie",
+        "cercles",
+        "demonstration"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Démontrer que le triangle ABD est rectangle en D.",
+      "context": "Sur la figure ci-dessous, on a : • C est un cercle de centre O et de rayon 4,5 cm ; • [AB] est un diamètre de ce cercle et D est un point du cercle ; • les points B, E, A sont alignés, ainsi que les points D, F, A ; • les droites (BD) et (EF) sont parallèles ; • BD = 5,4 cm ; DA = 7,2 cm et AE = 2,7 cm.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex03:diagram-1",
+          "type": "image",
+          "label": "Schéma 1",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex03-diagram-1.webp",
+          "alt": "Schéma exercice 3",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Démontrer que le triangle ABD est rectangle en D.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie les données utiles dans l'énoncé et sur la figure."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle le théorème ou la propriété que tu vas utiliser."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ta démonstration étape par étape : hypothèse → application → conclusion."
+              }
+            ],
+            "correct_feedback": "Bonne démonstration : la rédaction est complète.",
+            "almost_feedback": "La méthode est bonne, mais la rédaction doit être plus complète.",
+            "incorrect_feedback": "Reviens à la figure et identifie la propriété applicable (Pythagore, Thalès, angles…)."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 3 (22 points)",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Démontrer que le triangle ABD est rectangle en D.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "9be78c20-3167-5085-9536-edea953fdbaa",
+      "source_exercise_id": "4e930ee3-b277-5f05-9e17-15055fd6a43c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "cercles"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Calculer AF.",
+      "context": "Sur la figure ci-dessous, on a : • C est un cercle de centre O et de rayon 4,5 cm ; • [AB] est un diamètre de ce cercle et D est un point du cercle ; • les points B, E, A sont alignés, ainsi que les points D, F, A ; • les droites (BD) et (EF) sont parallèles ; • BD = 5,4 cm ; DA = 7,2 cm et AE = 2,7 cm.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex03:diagram-1",
+          "type": "image",
+          "label": "Schéma 1",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex03-diagram-1.webp",
+          "alt": "Schéma exercice 3",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Calculer AF.",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les données importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode ou la propriété adaptée à cette question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ta réponse complète et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : relis et vérifie les calculs.",
+            "incorrect_feedback": "Relis l'énoncé et repère les données utiles avant de recommencer."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 3 (22 points)",
+      "metadata": {
+        "source_question_id": "3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Calculer AF.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "eb8c89d7-4027-5151-9626-c84698c5c001",
+      "source_exercise_id": "4e930ee3-b277-5f05-9e17-15055fd6a43c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "puissances",
+        "trigonometrie",
+        "cercles",
+        "aires_volumes",
+        "justification"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Justifier que l’aire du triangle ABD est égale à 19,44 cm^2.",
+      "context": "Sur la figure ci-dessous, on a : • C est un cercle de centre O et de rayon 4,5 cm ; • [AB] est un diamètre de ce cercle et D est un point du cercle ; • les points B, E, A sont alignés, ainsi que les points D, F, A ; • les droites (BD) et (EF) sont parallèles ; • BD = 5,4 cm ; DA = 7,2 cm et AE = 2,7 cm.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex03:diagram-1",
+          "type": "image",
+          "label": "Schéma 1",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex03-diagram-1.webp",
+          "alt": "Schéma exercice 3",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "4-4a",
+          "label": "a.",
+          "prompt": "Justifier que l’aire du triangle ABD est égale à 19,44 cm^2.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie la forme géométrique et ses dimensions."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle la formule : aire d'un disque = π × R², aire d'un triangle = (base × hauteur) ÷ 2…"
+              },
+              {
+                "level": 3,
+                "text": "Remplace les valeurs et calcule. N'oublie pas les unités (cm², m²…)."
+              }
+            ],
+            "correct_feedback": "Bonne réponse : formule et calcul corrects.",
+            "almost_feedback": "Le calcul est presque bon : vérifie les unités et l'arrondi.",
+            "incorrect_feedback": "Revérifie quelle formule s'applique à cette forme géométrique."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 3 (22 points)",
+      "metadata": {
+        "source_question_id": "4-4a",
+        "source_question_label": "a.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Justifier que l’aire du triangle ABD est égale à 19,44 cm^2.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "99ce6607-7932-5a07-89b1-4d237b3c9369",
+      "source_exercise_id": "4e930ee3-b277-5f05-9e17-15055fd6a43c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "puissances",
+        "cercles",
+        "aires_volumes"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Calculer l’aire du disque, arrondie au centième. Rappel : l’aire du disque est égale à π × R^2, où R est le rayon du disque.",
+      "context": "Sur la figure ci-dessous, on a : • C est un cercle de centre O et de rayon 4,5 cm ; • [AB] est un diamètre de ce cercle et D est un point du cercle ; • les points B, E, A sont alignés, ainsi que les points D, F, A ; • les droites (BD) et (EF) sont parallèles ; • BD = 5,4 cm ; DA = 7,2 cm et AE = 2,7 cm.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex03:diagram-1",
+          "type": "image",
+          "label": "Schéma 1",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex03-diagram-1.webp",
+          "alt": "Schéma exercice 3",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "4-4b",
+          "label": "b.",
+          "prompt": "Calculer l’aire du disque, arrondie au centième. Rappel : l’aire du disque est égale à π × R^2, où R est le rayon du disque.",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie la forme géométrique et ses dimensions."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle la formule : aire d'un disque = π × R², aire d'un triangle = (base × hauteur) ÷ 2…"
+              },
+              {
+                "level": 3,
+                "text": "Remplace les valeurs et calcule. N'oublie pas les unités (cm², m²…)."
+              }
+            ],
+            "correct_feedback": "Bonne réponse : formule et calcul corrects.",
+            "almost_feedback": "Le calcul est presque bon : vérifie les unités et l'arrondi.",
+            "incorrect_feedback": "Revérifie quelle formule s'applique à cette forme géométrique."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 3 (22 points)",
+      "metadata": {
+        "source_question_id": "4-4b",
+        "source_question_label": "b.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Calculer l’aire du disque, arrondie au centième. Rappel : l’aire du disque est égale à π × R^2, où R est le rayon du disque.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "bcc7b584-3c57-575a-a3b6-4c4eac2cc222",
+      "source_exercise_id": "4e930ee3-b277-5f05-9e17-15055fd6a43c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "pourcentages",
+        "trigonometrie",
+        "cercles",
+        "aires_volumes"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Quel pourcentage de l’aire du disque représente l’aire du triangle ABD ?",
+      "context": "Sur la figure ci-dessous, on a : • C est un cercle de centre O et de rayon 4,5 cm ; • [AB] est un diamètre de ce cercle et D est un point du cercle ; • les points B, E, A sont alignés, ainsi que les points D, F, A ; • les droites (BD) et (EF) sont parallèles ; • BD = 5,4 cm ; DA = 7,2 cm et AE = 2,7 cm.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex03:diagram-1",
+          "type": "image",
+          "label": "Schéma 1",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex03-diagram-1.webp",
+          "alt": "Schéma exercice 3",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "5",
+          "label": "5.",
+          "prompt": "Quel pourcentage de l’aire du disque représente l’aire du triangle ABD ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie la forme géométrique et ses dimensions."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle la formule : aire d'un disque = π × R², aire d'un triangle = (base × hauteur) ÷ 2…"
+              },
+              {
+                "level": 3,
+                "text": "Remplace les valeurs et calcule. N'oublie pas les unités (cm², m²…)."
+              }
+            ],
+            "correct_feedback": "Bonne réponse : formule et calcul corrects.",
+            "almost_feedback": "Le calcul est presque bon : vérifie les unités et l'arrondi.",
+            "incorrect_feedback": "Revérifie quelle formule s'applique à cette forme géométrique."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 3 (22 points)",
+      "metadata": {
+        "source_question_id": "5",
+        "source_question_label": "5.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quel pourcentage de l’aire du disque représente l’aire du triangle ABD ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "824fc2d2-4dab-5ae0-a20b-ca067d57a6a4",
+      "source_exercise_id": "077272ef-9979-59e7-b1c3-98bb98557050",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "fonctions",
+        "calcul_litteral"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "multiple_choice",
+      "prompt": "On considère la fonction f définie par f(x) = 3x - 2. Quelle est l’image de -4 par cette fonction ?",
+      "context": "Cet exercice est un questionnaire à choix multiple (QCM). Pour chaque question, trois réponses ( A, B ou C) sont proposées. Une seule réponse est exacte. Recopier sur la copie le numéro de la question et la lettre correspondant à la réponse exacte. Aucune justification n’est demandée. Question | Réponse A | Réponse B | Réponse C",
+      "documents": [],
+      "choices": [
+        "-14",
+        "-10",
+        "-3"
+      ],
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "On considère la fonction f définie par f(x) = 3x - 2. Quelle est l’image de -4 par cette fonction ?",
+          "answer_type": "multiple_choice",
+          "choices": [
+            "-14",
+            "-10",
+            "-3"
+          ],
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Lis la question en entier : s'agit-il d'une image (calcul direct) ou d'un antécédent (équation à résoudre) ?"
+              },
+              {
+                "level": 2,
+                "text": "Pour l'image de x : substitue x dans l'expression de f(x) et calcule."
+              },
+              {
+                "level": 3,
+                "text": "Pour l'antécédent : pose f(x) = valeur connue et résous l'équation."
+              }
+            ],
+            "correct_feedback": "Bonne réponse : tu as bien appliqué la définition de la fonction.",
+            "almost_feedback": "Tu es proche : vérifie si la question demande l'image ou l'antécédent.",
+            "incorrect_feedback": "Relis la question : cherche-t-on f(−4) (image) ou f(x) = 3 (antécédent) ?"
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 4 (18 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "medium",
+        "can_generate_similar": true,
+        "source_pattern_summary": "On considère la fonction f définie par f(x) = 3x - 2. Quelle est l’image de -4 par cette fonction ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "e88651ab-b636-5117-87cf-a702bc540d19",
+      "source_exercise_id": "077272ef-9979-59e7-b1c3-98bb98557050",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "puissances"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "multiple_choice",
+      "prompt": "Combien vaut (-5)^3 ?",
+      "context": "Cet exercice est un questionnaire à choix multiple (QCM). Pour chaque question, trois réponses ( A, B ou C) sont proposées. Une seule réponse est exacte. Recopier sur la copie le numéro de la question et la lettre correspondant à la réponse exacte. Aucune justification n’est demandée. Question | Réponse A | Réponse B | Réponse C",
+      "documents": [],
+      "choices": [
+        "-125",
+        "-15",
+        "125"
+      ],
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2",
+          "label": "2.",
+          "prompt": "Combien vaut (-5)^3 ?",
+          "answer_type": "multiple_choice",
+          "choices": [
+            "-125",
+            "-15",
+            "125"
+          ],
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les données importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode ou la propriété adaptée à cette question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ta réponse complète et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : relis et vérifie les calculs.",
+            "incorrect_feedback": "Relis l'énoncé et repère les données utiles avant de recommencer."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 4 (18 points)",
+      "metadata": {
+        "source_question_id": "2",
+        "source_question_label": "2.",
+        "confidence": "medium",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Combien vaut (-5)^3 ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "f2f024a6-ce8f-5014-8107-724cd3022156",
+      "source_exercise_id": "077272ef-9979-59e7-b1c3-98bb98557050",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "fonctions",
+        "transformations"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "multiple_choice",
+      "prompt": "Quelle est l’image du point J par la translation qui transforme C en A ?",
+      "context": "Cet exercice est un questionnaire à choix multiple (QCM). Pour chaque question, trois réponses ( A, B ou C) sont proposées. Une seule réponse est exacte. Recopier sur la copie le numéro de la question et la lettre correspondant à la réponse exacte. Aucune justification n’est demandée. Question | Réponse A | Réponse B | Réponse C",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex04:diagram-1",
+          "type": "image",
+          "label": "Schéma 1",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex04-diagram-1.webp",
+          "alt": "Schéma exercice 4",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": [
+        "H",
+        "E",
+        "D"
+      ],
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3",
+          "label": "3.",
+          "prompt": "Quelle est l’image du point J par la translation qui transforme C en A ?",
+          "answer_type": "multiple_choice",
+          "choices": [
+            "H",
+            "E",
+            "D"
+          ],
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Lis la question en entier : s'agit-il d'une image (calcul direct) ou d'un antécédent (équation à résoudre) ?"
+              },
+              {
+                "level": 2,
+                "text": "Pour l'image de x : substitue x dans l'expression de f(x) et calcule."
+              },
+              {
+                "level": 3,
+                "text": "Pour l'antécédent : pose f(x) = valeur connue et résous l'équation."
+              }
+            ],
+            "correct_feedback": "Bonne réponse : tu as bien appliqué la définition de la fonction.",
+            "almost_feedback": "Tu es proche : vérifie si la question demande l'image ou l'antécédent.",
+            "incorrect_feedback": "Relis la question : cherche-t-on f(−4) (image) ou f(x) = 3 (antécédent) ?"
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 4 (18 points)",
+      "metadata": {
+        "source_question_id": "3",
+        "source_question_label": "3.",
+        "confidence": "medium",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quelle est l’image du point J par la translation qui transforme C en A ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "3c28a09c-7c39-5700-bb81-6e4f48edf4c3",
+      "source_exercise_id": "077272ef-9979-59e7-b1c3-98bb98557050",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "fonctions"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "multiple_choice",
+      "prompt": "Quel est l’antécédent de 3 par la fonction f ?",
+      "context": "Cet exercice est un questionnaire à choix multiple (QCM). Pour chaque question, trois réponses ( A, B ou C) sont proposées. Une seule réponse est exacte. Recopier sur la copie le numéro de la question et la lettre correspondant à la réponse exacte. Aucune justification n’est demandée. Question | Réponse A | Réponse B | Réponse C",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex04:diagram-2",
+          "type": "image",
+          "label": "Schéma 2",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex04-diagram-2.webp",
+          "alt": "Schéma exercice 4",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": [
+        "3",
+        "- 3",
+        "0"
+      ],
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "4",
+          "label": "4.",
+          "prompt": "Quel est l’antécédent de 3 par la fonction f ?",
+          "answer_type": "multiple_choice",
+          "choices": [
+            "3",
+            "- 3",
+            "0"
+          ],
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Lis la question en entier : s'agit-il d'une image (calcul direct) ou d'un antécédent (équation à résoudre) ?"
+              },
+              {
+                "level": 2,
+                "text": "Pour l'image de x : substitue x dans l'expression de f(x) et calcule."
+              },
+              {
+                "level": 3,
+                "text": "Pour l'antécédent : pose f(x) = valeur connue et résous l'équation."
+              }
+            ],
+            "correct_feedback": "Bonne réponse : tu as bien appliqué la définition de la fonction.",
+            "almost_feedback": "Tu es proche : vérifie si la question demande l'image ou l'antécédent.",
+            "incorrect_feedback": "Relis la question : cherche-t-on f(−4) (image) ou f(x) = 3 (antécédent) ?"
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 4 (18 points)",
+      "metadata": {
+        "source_question_id": "4",
+        "source_question_label": "4.",
+        "confidence": "medium",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quel est l’antécédent de 3 par la fonction f ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "52ca06f9-432b-58e1-b014-acedffb89711",
+      "source_exercise_id": "077272ef-9979-59e7-b1c3-98bb98557050",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "statistiques"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "multiple_choice",
+      "prompt": "On a mesuré les tailles, en m, de sept élèves : 1,46 ; 1,65 ; 1,6 ; 1,72 ; 1,7 ; 1,67 ; 1,75 Quelle est la médiane, en m, de ces tailles ?",
+      "context": "Cet exercice est un questionnaire à choix multiple (QCM). Pour chaque question, trois réponses ( A, B ou C) sont proposées. Une seule réponse est exacte. Recopier sur la copie le numéro de la question et la lettre correspondant à la réponse exacte. Aucune justification n’est demandée. Question | Réponse A | Réponse B | Réponse C",
+      "documents": [],
+      "choices": [
+        "1,72",
+        "1,67",
+        "1,65"
+      ],
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "5",
+          "label": "5.",
+          "prompt": "On a mesuré les tailles, en m, de sept élèves : 1,46 ; 1,65 ; 1,6 ; 1,72 ; 1,7 ; 1,67 ; 1,75 Quelle est la médiane, en m, de ces tailles ?",
+          "answer_type": "multiple_choice",
+          "choices": [
+            "1,72",
+            "1,67",
+            "1,65"
+          ],
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Trie les valeurs de la série dans l'ordre croissant."
+              },
+              {
+                "level": 2,
+                "text": "Pour la médiane : repère la valeur du milieu (ou la moyenne des deux valeurs centrales)."
+              },
+              {
+                "level": 3,
+                "text": "Relis les données pour vérifier que ta valeur est cohérente avec la série."
+              }
+            ],
+            "correct_feedback": "Bonne méthode de traitement de données.",
+            "almost_feedback": "Tu es proche : as-tu bien trié la série en ordre croissant ?",
+            "incorrect_feedback": "Reviens aux données et trie-les d'abord de la plus petite à la plus grande."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 4 (18 points)",
+      "metadata": {
+        "source_question_id": "5",
+        "source_question_label": "5.",
+        "confidence": "medium",
+        "can_generate_similar": true,
+        "source_pattern_summary": "On a mesuré les tailles, en m, de sept élèves : 1,46 ; 1,65 ; 1,6 ; 1,72 ; 1,7 ; 1,67 ; 1,75 Quelle est la médiane, en m, de ces tailles ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "a0f9ba37-6c13-53a4-92fa-53fde66aad6d",
+      "source_exercise_id": "077272ef-9979-59e7-b1c3-98bb98557050",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "trigonometrie"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "multiple_choice",
+      "prompt": "Dans le triangle ABC rectangle en A ci-contre, qui n’est pas en vraie grandeur, quelle est la valeur de cos α ?",
+      "context": "Cet exercice est un questionnaire à choix multiple (QCM). Pour chaque question, trois réponses ( A, B ou C) sont proposées. Une seule réponse est exacte. Recopier sur la copie le numéro de la question et la lettre correspondant à la réponse exacte. Aucune justification n’est demandée. Question | Réponse A | Réponse B | Réponse C",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex04:diagram-3",
+          "type": "image",
+          "label": "Schéma 3",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex04-diagram-3.webp",
+          "alt": "Schéma exercice 4",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": [
+        "0,8",
+        "0,75",
+        "0,6"
+      ],
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "6",
+          "label": "6.",
+          "prompt": "Dans le triangle ABC rectangle en A ci-contre, qui n’est pas en vraie grandeur, quelle est la valeur de cos α ?",
+          "answer_type": "multiple_choice",
+          "choices": [
+            "0,8",
+            "0,75",
+            "0,6"
+          ],
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie les données utiles dans l'énoncé et sur la figure."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle le théorème ou la propriété que tu vas utiliser."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ta démonstration étape par étape : hypothèse → application → conclusion."
+              }
+            ],
+            "correct_feedback": "Bonne démonstration : la rédaction est complète.",
+            "almost_feedback": "La méthode est bonne, mais la rédaction doit être plus complète.",
+            "incorrect_feedback": "Reviens à la figure et identifie la propriété applicable (Pythagore, Thalès, angles…)."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 4 (18 points)",
+      "metadata": {
+        "source_question_id": "6",
+        "source_question_label": "6.",
+        "confidence": "medium",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Dans le triangle ABC rectangle en A ci-contre, qui n’est pas en vraie grandeur, quelle est la valeur de cos α ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "95901dc0-b56d-58d5-87c6-ba5fbddfabc3",
+      "source_exercise_id": "744c7dd9-e6eb-5818-a8dd-ccac5f742e6c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "divisibilite",
+        "justification"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Pourquoi n’est-il pas possible de faire 15 sachets ?",
+      "context": "Un club de natation propose un après-midi découverte pour les enfants.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex05:diagram-1",
+          "type": "image",
+          "label": "Schéma 1",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex05-diagram-1.webp",
+          "alt": "Schéma exercice 5",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "1",
+          "label": "1.",
+          "prompt": "Pourquoi n’est-il pas possible de faire 15 sachets ?",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie la forme géométrique et ses dimensions."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle la formule : aire d'un disque = π × R², aire d'un triangle = (base × hauteur) ÷ 2…"
+              },
+              {
+                "level": 3,
+                "text": "Remplace les valeurs et calcule. N'oublie pas les unités (cm², m²…)."
+              }
+            ],
+            "correct_feedback": "Bonne réponse : formule et calcul corrects.",
+            "almost_feedback": "Le calcul est presque bon : vérifie les unités et l'arrondi.",
+            "incorrect_feedback": "Revérifie quelle formule s'applique à cette forme géométrique."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 5 (20 points)",
+      "metadata": {
+        "source_question_id": "1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Pourquoi n’est-il pas possible de faire 15 sachets ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "2be6674f-2081-55de-add0-646729a325a5",
+      "source_exercise_id": "744c7dd9-e6eb-5818-a8dd-ccac5f742e6c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "arithmetique"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Décomposer 330 et 132 en produits de facteurs premiers.",
+      "context": "Un club de natation propose un après-midi découverte pour les enfants.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex05:diagram-1",
+          "type": "image",
+          "label": "Schéma 1",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex05-diagram-1.webp",
+          "alt": "Schéma exercice 5",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2-2a",
+          "label": "a.",
+          "prompt": "Décomposer 330 et 132 en produits de facteurs premiers.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Essaie de diviser par 2, puis par 3, puis par 5, puis par 7…"
+              },
+              {
+                "level": 2,
+                "text": "Écris la décomposition en facteurs premiers sous forme de puissances."
+              },
+              {
+                "level": 3,
+                "text": "Le PGCD = produit des facteurs communs à la puissance minimale."
+              }
+            ],
+            "correct_feedback": "Bonne décomposition en facteurs premiers.",
+            "almost_feedback": "Tu es proche : vérifie que tous les facteurs sont bien premiers.",
+            "incorrect_feedback": "Recommence la division euclidienne ou la décomposition en branche."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 5 (20 points)",
+      "metadata": {
+        "source_question_id": "2-2a",
+        "source_question_label": "a.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Décomposer 330 et 132 en produits de facteurs premiers.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "459e494d-8cb0-54d7-9685-621f28aecf25",
+      "source_exercise_id": "744c7dd9-e6eb-5818-a8dd-ccac5f742e6c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "divisibilite"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "En déduire le plus grand nombre de sachets que la présidente pourra réaliser.",
+      "context": "Un club de natation propose un après-midi découverte pour les enfants.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex05:diagram-1",
+          "type": "image",
+          "label": "Schéma 1",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex05-diagram-1.webp",
+          "alt": "Schéma exercice 5",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2-2b",
+          "label": "b.",
+          "prompt": "En déduire le plus grand nombre de sachets que la présidente pourra réaliser.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les données importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode ou la propriété adaptée à cette question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ta réponse complète et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : relis et vérifie les calculs.",
+            "incorrect_feedback": "Relis l'énoncé et repère les données utiles avant de recommencer."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 5 (20 points)",
+      "metadata": {
+        "source_question_id": "2-2b",
+        "source_question_label": "b.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "En déduire le plus grand nombre de sachets que la présidente pourra réaliser.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "4b7c29ff-8810-53b0-8541-506dacccb73c",
+      "source_exercise_id": "744c7dd9-e6eb-5818-a8dd-ccac5f742e6c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "divisibilite"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Dans ce cas, combien mettra-t-elle d’autocollants et de drapeaux dans chaque sachet ?",
+      "context": "Un club de natation propose un après-midi découverte pour les enfants.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex05:diagram-1",
+          "type": "image",
+          "label": "Schéma 1",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex05-diagram-1.webp",
+          "alt": "Schéma exercice 5",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "2-2c",
+          "label": "c.",
+          "prompt": "Dans ce cas, combien mettra-t-elle d’autocollants et de drapeaux dans chaque sachet ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les données importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode ou la propriété adaptée à cette question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ta réponse complète et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : relis et vérifie les calculs.",
+            "incorrect_feedback": "Relis l'énoncé et repère les données utiles avant de recommencer."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 5 (20 points)",
+      "metadata": {
+        "source_question_id": "2-2c",
+        "source_question_label": "c.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Dans ce cas, combien mettra-t-elle d’autocollants et de drapeaux dans chaque sachet ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "ebf4d101-8200-5508-a48a-78503694bc82",
+      "source_exercise_id": "744c7dd9-e6eb-5818-a8dd-ccac5f742e6c",
+      "paper_id": "b4cbb02c-0d68-5ca8-91ea-3a5f2124233b",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill_tags": [
+        "puissances",
+        "aires_volumes"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Combien coûte le remplissage de la piscine ?",
+      "context": "Un club de natation propose un après-midi découverte pour les enfants.",
+      "documents": [
+        {
+          "id": "dnb:apmep:2024:mathematiques:generale:metropole:standard:dddf1632b5ac:ex05:diagram-1",
+          "type": "image",
+          "label": "Schéma 1",
+          "local_path": "exam-import/assets/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac/dnb-apmep-2024-mathematiques-generale-metropole-standard-dddf1632b5ac-ex05-diagram-1.webp",
+          "alt": "Schéma exercice 5",
+          "render_mode": "image_first"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "3",
+          "label": "1.",
+          "prompt": "Combien coûte le remplissage de la piscine ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les données importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode ou la propriété adaptée à cette question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ta réponse complète et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : relis et vérifie les calculs.",
+            "incorrect_feedback": "Relis l'énoncé et repère les données utiles avant de recommencer."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2024,
+      "source_label": "DNB mathématiques metropole 2024 - Exercice 5 (20 points)",
+      "metadata": {
+        "source_question_id": "3",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Combien coûte le remplissage de la piscine ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    }
+  ]
+}

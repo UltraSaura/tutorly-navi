@@ -97,8 +97,11 @@ export function LessonContentDisplay({ content }: LessonContentDisplayProps) {
             <CardContent>
               <ul className="list-disc list-inside space-y-2">
                 {content.common_mistakes.map((mistake, idx) => (
-                  <li key={idx} className="text-sm">{mistake}</li>
+                  <li key={idx} className="text-sm">
+                    {typeof mistake === 'string' ? mistake : mistake.mistake}
+                  </li>
                 ))}
+
               </ul>
             </CardContent>
           </CollapsibleContent>

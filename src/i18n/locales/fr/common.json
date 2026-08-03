@@ -141,8 +141,21 @@
   "practice.subject.exams.exerciseCount_other": "{{count}} exercices",
   "practice.subject.exams.cta": "Voir les annales",
 
-  "practice.subject.ai.title": "Créer un entraînement IA",
-  "practice.subject.ai.subtitle": "Bientôt disponible",
+  "practice.subject.ai.title": "S'entraîner par thème",
+  "practice.subject.ai.subtitle": "Questions adaptatives alignées sur le programme",
+  "practice.subject.ai.cta": "Choisir un thème",
+
+  "practice.topics.metaTitle": "S'entraîner par thème — {{subject}}",
+  "practice.topics.back": "Retour",
+  "practice.topics.practiceAll": "Tout pratiquer",
+  "practice.topics.nobanks": "Aucune question disponible pour cette matière pour l'instant.",
+  "practice.topics.mastery.notStarted": "Non commencé",
+  "practice.topics.mastery.needsPractice": "À retravailler",
+  "practice.topics.mastery.inProgress": "En cours",
+  "practice.topics.mastery.mastered": "Maîtrisé",
+  "practice.topics.practiceBtn": "Pratiquer",
+  "practice.topics.questionsCount_one": "{{count}} question",
+  "practice.topics.questionsCount_other": "{{count}} questions",
 
   "practice.annals.heading": "Annales",
   "practice.annals.metaTitle": "Annales — {{subject}}",
