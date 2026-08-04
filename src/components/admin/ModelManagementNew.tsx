@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { useAiModelManagement } from "@/hooks/useAiModelManagement";
+import { useAiModelManagementSecure } from "@/hooks/useAiModelManagementSecure";
 import { Trash2, Plus, Key, Settings } from "lucide-react";
 
 const ModelManagementNew = () => {
@@ -19,7 +19,7 @@ const ModelManagementNew = () => {
     deleteApiKey,
     getModelsByProvider,
     getApiKeysByProvider
-  } = useAiModelManagement();
+  } = useAiModelManagementSecure();
 
   const [selectedProvider, setSelectedProvider] = useState<string>("");
   const [keyName, setKeyName] = useState("");

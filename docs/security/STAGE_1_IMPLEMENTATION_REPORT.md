@@ -147,7 +147,11 @@ Two real migration issues were found and corrected during staging validation:
   - this app imports `BrowserRouter`, `Routes`, `Route`, `Link`, `NavLink`, `useNavigate`, `useLocation`, `useParams`, and `useSearchParams` in a client SPA and does not use React Router SSR or RSC handlers locally, which materially constrains exposure
   - no newer stable `react-router-dom` release than `7.18.2` was available during this verification pass
 - Supabase advisors still report broader pre-existing security/performance debt on staging outside the narrow Stage 1 path, including:
-    - multiple GraphQL exposure and permissive-policy findings across legacy tables
+  - signed-in GraphQL visibility for some internal admin/config tables that still use direct authenticated table access (`admin_audit_log`, `ai_model_*`, `prompt_templates`, `subject_prompt_assignments`, `app_feature_flags`)
+    - anonymous GraphQL visibility was reduced further in the follow-up pass by revoking `anon` grants on those internal tables
+    - the internal admin-table RLS policies were also normalized to the `select auth.uid()` form, clearing the planner warnings introduced by the interim Stage 2 policies
+    - fully removing signed-in visibility requires moving the remaining admin CRUD/read paths behind server-side functions or a private schema, not another safe Stage 1 policy patch
+  - multiple GraphQL exposure and permissive-policy findings across legacy content/user tables
   - public bucket listing on `subject-icons`
   - Auth leaked-password protection and MFA options are still not enabled at the project level
 
