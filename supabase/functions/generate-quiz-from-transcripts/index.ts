@@ -1,10 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { buildCorsHeaders } from "../_shared/security.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const corsHeaders = (req: Request) =>
+  buildCorsHeaders(req, ["POST", "OPTIONS"], ["authorization", "x-client-info", "apikey", "content-type"]);
 
 interface GenerateRequest {
   videoIds: string[];
@@ -199,7 +198,7 @@ function parseJsonResponse(content: string): any[] {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   try {
@@ -214,7 +213,7 @@ serve(async (req) => {
 
     if (!videoIds || videoIds.length === 0) {
       return new Response(JSON.stringify({ error: "No video IDs provided" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
     }
 
     const { data: videos, error: videosError } = await supabase
@@ -226,7 +225,7 @@ serve(async (req) => {
     if (videosError) throw new Error("Failed to fetch videos");
     if (!videos || videos.length === 0) {
       return new Response(JSON.stringify({ error: "No videos with transcripts found" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
     }
 
     const aggregatedTranscript = videos.map(v => `[Video: ${v.title}]\n${v.transcript}`).join('\n\n---\n\n');
@@ -296,11 +295,11 @@ RULES:
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          { status: 429, headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds to continue." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          { status: 402, headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
       }
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
@@ -328,14 +327,14 @@ RULES:
 
     return new Response(
       JSON.stringify({ questions, aggregatedWordCount: wordCount, aggregatedTranscript, videoTitles }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
 
   } catch (error) {
     console.error("generate-quiz-from-transcripts error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

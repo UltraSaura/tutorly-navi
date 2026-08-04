@@ -12,6 +12,11 @@ import {
   withTimeout,
 } from "../_shared/security.ts";
 
+const DOCUMENT_PROCESSOR_DEBUG = Deno.env.get("DOCUMENT_PROCESSOR_DEBUG") === "true";
+if (!DOCUMENT_PROCESSOR_DEBUG) {
+  console.log = (() => undefined) as typeof console.log;
+}
+
 const MAX_BODY_BYTES = Number(Deno.env.get("DOCUMENT_PROCESSOR_MAX_BODY_BYTES") ?? 12_000_000);
 const MAX_PDF_BYTES = Number(Deno.env.get("DOCUMENT_PROCESSOR_MAX_PDF_BYTES") ?? 8_000_000);
 const MAX_IMAGE_BYTES = Number(Deno.env.get("DOCUMENT_PROCESSOR_MAX_IMAGE_BYTES") ?? 5_000_000);

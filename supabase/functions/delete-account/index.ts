@@ -1,15 +1,14 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { buildCorsHeaders } from "../_shared/security.ts"
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const corsHeaders = (req: Request) =>
+  buildCorsHeaders(req, ['POST', 'OPTIONS'], ['authorization', 'x-client-info', 'apikey', 'content-type'])
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders(req) })
   }
 
   try {
@@ -49,7 +48,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ success: true, message: 'Account deleted successfully' }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
         status: 200,
       }
     )
@@ -61,7 +60,7 @@ serve(async (req) => {
         success: false 
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
         status: 400,
       }
     )
