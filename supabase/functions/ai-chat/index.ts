@@ -105,6 +105,7 @@ serve(async (req) => {
       requestExplanation = false,
       language: rawLanguage = 'en',
       customPrompt,
+      usageType: rawUsageType,
       userContext,
       requestMode,
       problemContext,
@@ -177,6 +178,10 @@ serve(async (req) => {
       usageType = 'grading';
     } else if (isExercise) {
       usageType = 'chat';
+    }
+
+    if (typeof rawUsageType === 'string' && rawUsageType.trim().length > 0) {
+      usageType = rawUsageType.trim();
     }
 
     // Create variables object with language information

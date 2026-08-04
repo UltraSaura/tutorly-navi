@@ -162,68 +162,6 @@ Return exactly this JSON shape:
   "parentHelpHint": "optional short guardian guidance, not for display in the student app"
 }`;
 
-async function loadActivePromptTemplate(
-  usageType: string,
-  fallbackPrompt: string,
-  logLabel: string,
-  client: Pick<typeof supabase, 'from'> = supabase
-): Promise<string> {
-  try {
-    const { data, error } = await client
-      .from('prompt_templates')
-      .select('prompt_content')
-      .eq('usage_type', usageType)
-      .eq('is_active', true)
-      .order('priority', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      console.warn(`[problemSubmissionService] Failed to load ${logLabel} prompt:`, error);
-      return fallbackPrompt;
-    }
-
-    const prompt = typeof data?.prompt_content === 'string' ? data.prompt_content.trim() : '';
-    return prompt || fallbackPrompt;
-  } catch (error) {
-    console.warn(`[problemSubmissionService] Unexpected ${logLabel} prompt load failure:`, error);
-    return fallbackPrompt;
-  }
-}
-
-async function loadGroupedProblemExtractionPrompt(
-  client: Pick<typeof supabase, 'from'> = supabase
-): Promise<string> {
-  return loadActivePromptTemplate(
-    GROUPED_PROBLEM_EXTRACTION_USAGE_TYPE,
-    DEFAULT_GROUPED_PROBLEM_EXTRACTION_PROMPT,
-    'grouped problem extraction',
-    client
-  );
-}
-
-async function loadGroupedProblemGradingPrompt(
-  client: Pick<typeof supabase, 'from'> = supabase
-): Promise<string> {
-  return loadActivePromptTemplate(
-    GROUPED_PROBLEM_GRADING_USAGE_TYPE,
-    DEFAULT_GROUPED_PROBLEM_GRADING_PROMPT,
-    'grouped problem grading',
-    client
-  );
-}
-
-async function loadGroupedRetryPracticePrompt(
-  client: Pick<typeof supabase, 'from'> = supabase
-): Promise<string> {
-  return loadActivePromptTemplate(
-    GROUPED_RETRY_PRACTICE_USAGE_TYPE,
-    DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT,
-    'grouped retry practice',
-    client
-  );
-}
-
 function extractJsonObject(content: unknown): any | null {
   if (!content) return null;
   if (typeof content === 'object') return content;
@@ -1435,15 +1373,13 @@ export async function extractProblemSubmission(input: {
   });
 
   try {
-    const customPrompt = await loadGroupedProblemExtractionPrompt();
-
     const { data, error } = await supabase.functions.invoke('ai-chat', {
       body: {
         message: `Extract this grouped homework problem. Return only the required JSON.\n\n${input.rawText}`,
         modelId: input.selectedModelId,
         isUnified: true,
         language: input.language,
-        customPrompt,
+        requestMode: 'problemExtraction',
         problemContext: fallback,
         maxTokens: 2500,
       },
@@ -1481,8 +1417,6 @@ export async function gradeGroupedProblem(input: {
   }
 
   const gradingContext = buildGroupedGradingContext(answeredProblem, aiRowIds);
-  const gradingPrompt = await loadGroupedProblemGradingPrompt();
-
   try {
     const { data, error } = await withTimeout(
       supabase.functions.invoke('ai-chat', {
@@ -1491,7 +1425,7 @@ export async function gradeGroupedProblem(input: {
           modelId: input.selectedModelId,
           isUnified: true,
           language: input.language,
-          customPrompt: gradingPrompt,
+          requestMode: 'groupedProblemGrading',
           problemContext: gradingContext,
           maxTokens: 3000,
         },
@@ -1541,8 +1475,6 @@ export async function generateGroupedRetryPractice(input: {
     throw new Error('No evaluated selected rows are available for retry practice.');
   }
 
-  const customPrompt = await loadGroupedRetryPracticePrompt();
-
   const { data, error } = await withTimeout(
     supabase.functions.invoke('ai-chat', {
       body: {
@@ -1550,7 +1482,7 @@ export async function generateGroupedRetryPractice(input: {
         modelId: input.selectedModelId,
         isUnified: true,
         language: input.language,
-        customPrompt,
+        usageType: GROUPED_RETRY_PRACTICE_USAGE_TYPE,
         problemContext: context,
         maxTokens: 1800,
       },
@@ -1592,9 +1524,6 @@ export const __problemSubmissionServiceTest = {
   groupedGradingError,
   hasValidGroupedEvaluation,
   hasValidGroupedRetryPractice,
-  loadGroupedProblemExtractionPrompt,
-  loadGroupedProblemGradingPrompt,
-  loadGroupedRetryPracticePrompt,
   mergeExtractedProblem,
   normalizeNoEvidenceNeededMultipartEvaluations,
   parseGroupedRetryPractice,
