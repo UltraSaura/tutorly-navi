@@ -147,8 +147,7 @@ Two real migration issues were found and corrected during staging validation:
   - this app imports `BrowserRouter`, `Routes`, `Route`, `Link`, `NavLink`, `useNavigate`, `useLocation`, `useParams`, and `useSearchParams` in a client SPA and does not use React Router SSR or RSC handlers locally, which materially constrains exposure
   - no newer stable `react-router-dom` release than `7.18.2` was available during this verification pass
 - Supabase advisors still report broader pre-existing security/performance debt on staging outside the narrow Stage 1 path, including:
-  - `public.configured_models` is a `SECURITY DEFINER` view
-  - multiple GraphQL exposure and permissive-policy findings across legacy tables
+    - multiple GraphQL exposure and permissive-policy findings across legacy tables
   - public bucket listing on `subject-icons`
   - Auth leaked-password protection and MFA options are still not enabled at the project level
 
