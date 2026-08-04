@@ -1,6 +1,6 @@
 # Stage 1 Implementation Report
 
-Updated: August 3, 2026
+Updated: August 4, 2026
 Branch: `security/stage-1-hardening`
 
 ## Confirmed findings
@@ -74,12 +74,10 @@ Branch: `security/stage-1-hardening`
 - targeted `npx eslint` on modified production files: passes
 - `npm test -- --run`: passes after excluding generated `.claude/worktrees/**` mirrors (`31` files, `189` tests)
 - `npm run lint`: still red repo-wide (`696` errors, `62` warnings); baseline debt remains outside this branch scope
-- `npm audit --json`: now reports `7` high vulnerabilities and `0` critical:
-  - `brace-expansion`
-  - `minimatch`
-  - `eslint`
+- `npm audit --json`: now reports `2` high vulnerabilities and `0` critical:
   - `react-router`
   - `react-router-dom`
+  - the earlier ESLint dependency-chain findings were remediated by overriding `brace-expansion` v1 to `1.1.18`
 - staging Supabase target verified before mutation:
   - branch: `security/stage-1-hardening`
   - `supabase/config.toml` → `urskkwizwutodikgznas`
@@ -144,9 +142,10 @@ Two real migration issues were found and corrected during staging validation:
 
 ## Remaining deployment-review exceptions outside this branch
 
-- `npm audit --json` still reports `7` high vulnerabilities:
-  - the `react-router` / `react-router-dom` findings remain in the published `<8.3.0` line
-  - the remaining high findings are in the current ESLint dependency chain (`eslint` / `minimatch` / `brace-expansion`)
+- `npm audit --json` still reports `2` high vulnerabilities:
+  - both are the published `react-router` / `react-router-dom` RSC advisory on the current stable `7.x` line (`>=7.12.0 <8.3.0`)
+  - this app imports `BrowserRouter`, `Routes`, `Route`, `Link`, `NavLink`, `useNavigate`, `useLocation`, `useParams`, and `useSearchParams` in a client SPA and does not use React Router SSR or RSC handlers locally, which materially constrains exposure
+  - no newer stable `react-router-dom` release than `7.18.2` was available during this verification pass
 - Supabase advisors still report broader pre-existing security/performance debt on staging outside the narrow Stage 1 path, including:
   - `public.configured_models` is a `SECURITY DEFINER` view
   - multiple GraphQL exposure and permissive-policy findings across legacy tables
@@ -158,7 +157,7 @@ Two real migration issues were found and corrected during staging validation:
 This branch materially reduces the exposed attack surface, and the full clean replay now succeeds on staging. Stage 1 implementation is complete and can proceed to deployment review with documented exceptions. The remaining non-Stage-1 review items are:
 
 - deciding whether the remaining advisor findings are accepted baseline debt or must be remediated before deployment review
-- resolving or explicitly accepting the remaining `npm audit` high findings
+- explicitly accepting or deferring the remaining `react-router` audit findings until an upstream stable release beyond `7.18.2` exists
 - validating the conditional `quiz_bank_variants` assumptions against a real non-production database
 
 The registration-model decision is now implemented as:
@@ -167,4 +166,4 @@ The registration-model decision is now implemented as:
 - child creation only through authenticated guardian/admin flows
 - no anonymous privileged child/student account creation path remains enabled
 
-Recommendation: ready for deployment review with documented exceptions. The clean replay blocker and staging lint blocker are resolved; the remaining audit/advisor debt should be tracked as review exceptions or follow-up work rather than Stage 1 implementation blockers.
+Recommendation: ready for deployment review with documented exceptions. The clean replay blocker, staging lint blocker, and ESLint dependency-chain audit findings are resolved; the remaining React Router audit exception and broader advisor debt should be tracked as review exceptions or follow-up work rather than Stage 1 implementation blockers.

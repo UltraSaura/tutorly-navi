@@ -2,9 +2,9 @@
 
 Status: draft only. Do not run in production yet.
 
-Current deployment-review exceptions as of August 3, 2026:
+Current deployment-review exceptions as of August 4, 2026:
 
-- the clean replay now succeeds on staging `urskkwizwutodikgznas`, `create_vault_secret(text, text)` is removed, and staging lint is clean; remaining blockers are advisor-warning triage and unresolved `npm audit` highs
+- the clean replay now succeeds on staging `urskkwizwutodikgznas`, `create_vault_secret(text, text)` is removed, and staging lint is clean; remaining deployment-review exceptions are advisor-warning triage and `2` remaining `react-router` audit highs
 - staging validation found and fixed two Stage 1 migration issues:
   - legacy explanation policy name `Guardians view children explanations` also had to be dropped
   - function grant cleanup needed `REVOKE ALL PRIVILEGES ... FROM PUBLIC, ...`
@@ -12,7 +12,7 @@ Current deployment-review exceptions as of August 3, 2026:
   - `public.students` needed RLS enabled plus admin-only policy
   - the unused `public.create_vault_secret(text, text)` helper now needs to be removed from the active schema surface
 - Supabase advisors still report broader existing security/performance debt on staging outside the narrow Stage 1 scope
-- `npm audit` still reports `7` high vulnerabilities in the current dependency tree
+- `npm audit` now reports `2` high vulnerabilities in the current dependency tree, both in `react-router` / `react-router-dom`
 
 ## Planned order
 
@@ -43,7 +43,7 @@ Current deployment-review exceptions as of August 3, 2026:
 - Migration application:
   - use the approved Supabase deployment flow after explicit production approval
 
-## Validated on staging as of August 3, 2026
+## Validated on staging as of August 4, 2026
 
 - staging project used: `urskkwizwutodikgznas`
 - production project not modified: `sibprjxhbxahouejygeu`
@@ -54,7 +54,7 @@ Current deployment-review exceptions as of August 3, 2026:
 - `students` no longer appears as an RLS-disabled table after replay
 - rollback reverse-DDL dry-run succeeded inside a transaction
 
-This is enough for branch-level validation and deployment review. Production approval still requires explicit sign-off on the remaining advisor warnings and `npm audit` highs, or follow-up remediation tickets that are accepted as release exceptions.
+This is enough for branch-level validation and deployment review. Production approval still requires explicit sign-off on the remaining advisor warnings and the `react-router` audit exception, or follow-up remediation tickets that are accepted as release exceptions.
 
 ## Rollback trigger
 

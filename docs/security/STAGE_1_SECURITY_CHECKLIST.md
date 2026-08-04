@@ -1,6 +1,6 @@
 # Stage 1 Security Checklist
 
-Updated: August 3, 2026
+Updated: August 4, 2026
 Branch: `security/stage-1-hardening`
 
 ## Baseline
@@ -55,7 +55,8 @@ Branch: `security/stage-1-hardening`
   - upgraded the audited direct/runtime packages that had published patched releases
   - upgraded Vitest/Vite and aligned the toolchain
   - updated MathLive asset copy logic for the new package layout
-  - reduced the earlier baseline materially, but `npm audit` still reports `7` high vulnerabilities in the current dependency tree
+  - reduced the earlier baseline materially, and `npm audit` now reports `2` high vulnerabilities in the current dependency tree
+  - remediated the ESLint dependency-chain findings by overriding `brace-expansion` v1 to `1.1.18`
 - database hardening migration scaffold created:
   - `supabase/migrations/20260803115116_stage_1_security_hardening.sql`
   - security rate-limit table + RPC
@@ -70,7 +71,7 @@ Branch: `security/stage-1-hardening`
 ## Still required before Stage 1 can be declared complete
 
 - decide whether the remaining Supabase advisor findings are accepted baseline debt or must be remediated before deployment review
-- resolve or explicitly accept the remaining `7` high `npm audit` findings
+- explicitly accept or defer the remaining `2` high `npm audit` findings in `react-router` / `react-router-dom` until an upstream stable release beyond `7.18.2` exists
 - verify `quiz_bank_variants` actual deployed shape/relationships against local repo assumptions
 - finalize the production rollback script for the exact pre-Stage-1 policy/grant baseline
 - harden remaining non-Stage-1 production logging outside the protected request paths if this branch is extended further
@@ -82,7 +83,7 @@ Branch: `security/stage-1-hardening`
 - Type check: passes (`npx tsc --noEmit`)
 - Full tests: pass (`npm test -- --run` → `31` files, `189` tests)
 - Targeted lint on modified files: passes
-- npm audit: `7` high vulnerabilities remain, `0` critical
+- npm audit: `2` high vulnerabilities remain, `0` critical
 - Full lint: red (`696` errors, `62` warnings), pre-existing repo-wide debt
 - Staging target verified: `urskkwizwutodikgznas`
 - Production untouched: `sibprjxhbxahouejygeu`

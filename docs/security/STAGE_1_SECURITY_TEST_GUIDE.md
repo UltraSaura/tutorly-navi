@@ -7,9 +7,9 @@
 - targeted `npx eslint` on modified production/security files
 - `npm test -- --run` → passes after excluding generated `.claude/worktrees/**` mirror copies from test discovery (`31` files, `189` tests)
 - `npm run lint` → still red repo-wide because of unrelated baseline debt (`696` errors, `62` warnings)
-- `npm audit --json` → `7` high vulnerabilities, `0` critical
+- `npm audit --json` → `2` high vulnerabilities, `0` critical
 
-## Staging checks completed on August 3, 2026
+## Staging checks completed on August 4, 2026
 
 Target project:
 
@@ -47,7 +47,7 @@ Completed:
    - malformed document payloads return 400/415/413 as appropriate
    - `consume_security_rate_limit` increments atomically under repeated requests
 2. Decide whether remaining advisor warnings are accepted baseline debt or must be remediated before deployment review.
-3. Decide whether remaining `npm audit` high findings are accepted temporarily or must be remediated before deployment review.
+3. Decide whether the remaining `react-router` / `react-router-dom` audit findings are accepted temporarily or must wait for an upstream stable fix before deployment review.
 
 ## Environment limitations observed in this workspace
 
