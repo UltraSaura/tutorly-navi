@@ -124,6 +124,13 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  body.explanation-modal-open [data-explanation-hide="chat-input"],
+  body.explanation-modal-open [data-explanation-hide="mobile-bottom-tabs"] {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(12px);
+  }
+
   input[type="number"]::-webkit-outer-spin-button,
   input[type="number"]::-webkit-inner-spin-button {
     -webkit-appearance: none;
