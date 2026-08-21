@@ -70,6 +70,7 @@ export function MobileBottomTabs() {
   return (
     <>
       <div
+        data-explanation-hide="mobile-bottom-tabs"
         className="fixed inset-x-4 z-50 md:hidden"
         style={{ bottom: 'calc(max(env(safe-area-inset-bottom), 0px) + 12px)' }}
       >

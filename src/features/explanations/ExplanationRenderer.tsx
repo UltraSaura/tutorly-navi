@@ -9,12 +9,18 @@ interface ExplanationRendererProps {
   mode: LearningMode;
   steps: Step[];
   miniPracticeContext?: RuntimeMiniPracticeContext;
+  onPracticeMore?: () => void;
+  onViewLesson?: () => void;
+  canViewLesson?: boolean;
 }
 
 export function ExplanationRenderer({
   mode,
   steps,
   miniPracticeContext,
+  onPracticeMore,
+  onViewLesson,
+  canViewLesson,
 }: ExplanationRendererProps) {
   console.log("DEBUG COMPONENT:", {
     mode,
@@ -25,6 +31,9 @@ export function ExplanationRenderer({
       <KidExplanation 
         steps={steps} 
         miniPracticeContext={miniPracticeContext} 
+        onPracticeMore={onPracticeMore}
+        onViewLesson={onViewLesson}
+        canViewLesson={canViewLesson}
       />
     );
   }

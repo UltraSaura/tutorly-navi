@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import type { MatchQuestion } from "@/types/quiz-bank";
 import { cn } from "@/lib/utils";
@@ -109,10 +109,28 @@ const LINE_COLORS = [
   "#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4",
 ];
 
+function hashString(value: string) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+function rotateRightColumn(pairs: MatchQuestion["pairs"]) {
+  if (pairs.length <= 1) return pairs;
+
+  const seed = pairs.map(pair => `${pair.leftId}:${pair.rightId}`).join("|");
+  const offset = (hashString(seed) % (pairs.length - 1)) + 1;
+
+  return pairs.map((_, index) => pairs[(index + offset) % pairs.length]);
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function MatchQuestionView({ question, value, onChange }: Props) {
   const hideLabel = question.hide_labels === true;
+  const rightColumnPairs = useMemo(() => rotateRightColumn(question.pairs), [question.pairs]);
   const confirmedPairs: string[] = Array.isArray(value) ? value : [];
   const pairedLeftIds  = confirmedPairs.map(p => p.split(":")[0]);
   const pairedRightIds = confirmedPairs.map(p => p.split(":")[1]);
@@ -260,8 +278,8 @@ export function MatchQuestionView({ question, value, onChange }: Props) {
 
         {/* Right column */}
         <div className="flex flex-col gap-2">
-          {/* Shuffle right items so order doesn't give away matches */}
-          {question.pairs.map((pair, i) => {
+          {/* Offset right items so order doesn't give away matches */}
+          {rightColumnPairs.map((pair, i) => {
             const isPaired = pairedRightIds.includes(pair.rightId);
             const isTarget = !!dragging && !isPaired;
             const color = isPaired
