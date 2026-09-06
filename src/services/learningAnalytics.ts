@@ -32,7 +32,9 @@ export type LearningInteractionEventType =
   | "recommended_quiz_clicked"
   | "recommended_practice_clicked"
   | "resource_recommendation_empty"
-  | "learning_preference_changed";
+  | "learning_preference_changed"
+  | "lesson_started"
+  | "lesson_completed";
 
 export type LearningSupportType = LearningStyle;
 export type PracticeStyle = LearningStyle;
@@ -67,6 +69,7 @@ const ALLOWED_QUESTION_KINDS = new Set([
   "numeric",
   "ordering",
   "visual",
+  "column-fill",
   "multiple_choice",
   "short_answer",
 ]);
@@ -201,6 +204,7 @@ export function buildLearningResourceAnalyticsMetadata({
 }: Omit<LearningResourceAnalyticsInput, "eventName">): Record<string, unknown> {
   return {
     source,
+    skillTag: skillMatch?.skillTag,
     topicId: skillMatch?.topicId,
     objectiveId: skillMatch?.objectiveId,
     resourceType: recommendation?.type,

@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNB Annales locales 2016–2024</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #f0f0f0; color: #111; min-height: 100vh; padding-bottom: 80px; }
+
+  .top-bar { background: white; border-bottom: 1px solid #e0e0e0; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .top-bar h1 { font-size: 15px; font-weight: 600; }
+  .badge { background: #f0f0f0; border: 1px solid #ddd; border-radius: 12px; padding: 3px 10px; font-size: 11px; color: #555; }
+  .badge-draft { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
+  .badge-published { background: #f0fdf4; border-color: #86efac; color: #166534; }
+
+  .content { max-width: 680px; margin: 0 auto; padding: 16px; }
+
+  .exercise { background: white; border-radius: 12px; border: 1px solid #e0e0e0; overflow: hidden; }
+
+  .ex-header { padding: 16px 20px 12px; border-bottom: 1px solid #e8e8e8; }
+  .ex-header h2 { font-size: 16px; font-weight: 700; line-height: 1.4; }
+  .ex-meta { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .context { padding: 14px 20px; border-bottom: 1px solid #f0f0f0; }
+  .context p { font-size: 14px; line-height: 1.6; color: #444; white-space: pre-wrap; }
+
+  .docs-zone { border-top: 1px solid #e8e8e8; border-bottom: 1px solid #e8e8e8; }
+  .doc-label { padding: 8px 16px 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #888; }
+  .doc-content { padding: 8px 16px 12px; font-size: 14px; line-height: 1.6; color: #444; white-space: pre-wrap; }
+  .doc-img { display: block; width: 100%; height: auto; }
+  .table-wrap { overflow-x: auto; padding: 0 0 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  caption { padding: 8px 12px; text-align: left; font-size: 13px; font-weight: 600; }
+  th { background: #f5f5f5; padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e0e0e0; }
+  td { padding: 7px 12px; border-bottom: 1px solid #efefef; }
+  tr:last-child td { border-bottom: none; }
+  .fallback-details { border-top: 1px dashed #ddd; padding: 8px 16px; }
+  .fallback-details summary { cursor: pointer; font-size: 13px; color: #666; }
+
+  .questions-zone { padding: 16px 20px 20px; }
+  .q-sep { border: none; border-top: 1px dashed #ddd; margin: 16px 0; }
+  .q-prompt { font-size: 14px; font-weight: 500; line-height: 1.5; margin-bottom: 10px; }
+  .q-label { color: #888; margin-right: 6px; }
+  textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 14px; font-family: inherit; resize: vertical; outline: none; transition: border-color .2s; }
+  textarea:focus { border-color: #4C97FF; }
+  .choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .choice-label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+  .q-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .btn-hint, .btn-check { border: 1px solid #ddd; background: white; border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: inherit; transition: background .15s; }
+  .btn-hint:hover { background: #fffbe6; border-color: #f0c040; }
+  .btn-check:hover { background: #f0f8ff; border-color: #4C97FF; }
+  .hints-box { margin-top: 10px; background: #fffbe6; border: 1px solid #f0c040; border-radius: 8px; padding: 10px 14px; }
+  .hint { font-size: 13px; line-height: 1.5; margin-bottom: 4px; }
+  .hint:last-child { margin-bottom: 0; }
+  .answer-box { margin-top: 10px; background: #f0f8ef; border: 1px solid #6cc070; border-radius: 8px; padding: 10px 14px; font-size: 13px; line-height: 1.6; }
+
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e0e0e0; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; z-index: 10; }
+  .nav-btn { border: 1px solid #ddd; background: white; border-radius: 8px; padding: 9px 18px; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .nav-btn:disabled { opacity: 0.35; cursor: default; }
+  .nav-btn:not(:disabled):hover { background: #f5f5f5; }
+  .nav-counter { font-size: 14px; font-weight: 600; color: #555; }
+
+  @media (max-width: 480px) {
+    .content { padding: 10px; }
+    .ex-header { padding: 14px 16px 10px; }
+    .context { padding: 12px 16px; }
+    .questions-zone { padding: 14px 16px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>DNB Annales locales 2016–2024</h1>
+  <span class="badge">32 exercices</span>
+</div>
+
+<div class="content">
+
+<div class="exercise" id="exercise-0" style="display:block">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2017 - Exercice 2 (7 points)</h2>
+    <div class="ex-meta"><span class="badge">2017</span> <span class="badge">hard</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Pour illustrer l'exercice, la figure ci-dessous a été faite à main levée. Les points D, F, A et B sont alignés, ainsi que les points E, G, A et C. De plus, les droites (DE) et (FG) sont parallèles.</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex0q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Montrer que le triangle AFG est un triangle rectangle.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex0q1">
+  <p class="q-prompt"><span class="q-label">2.</span> Calculer la longueur du segment [AD]. En déduire la longueur du segment [FD].</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex0q2">
+  <p class="q-prompt"><span class="q-label">3.</span> Les droites (FG) et (BC) sont-elles parallèles ? Justifier.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-1" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2017 - Exercice 3 (6 points)</h2>
+    <div class="ex-meta"><span class="badge">2017</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Voici trois figures différentes, aucune n'est à l'échelle indiquée dans l'exercice : *3&gt; X | | figure 1 | figure 2 | figure 3 Le programme ci-dessous contient une variable nommée « longueur ». Script [Programme Scratch] ~ Le~bloc~:~un~tour [Programme Scratch] On rappelle que l'instruction signifie que l'on s'oriente vers la droite avec le stylo.</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex1q0">
+  <p class="q-prompt"><span class="q-label">1.</span> 1.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex1q1">
+  <p class="q-prompt"><span class="q-label">1.</span> Dessiner la figure obtenue avec le bloc « un tour » donné dans le cadre de droite ci-dessus, pour une longueur de départ égale à 30, étant orienté vers la droite avec le stylo, en début de tracé. On prendra 1~cm pour 30~unités de longueur, c'est-à-dire 30 pixels.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex1q2">
+  <p class="q-prompt"><span class="q-label">2.</span> Comment est-on orienté avec le stylo après ce tracé ? (aucune justification n'est demandée) • Laquelle des figures 1 ou 3 le programme ci-dessus permet-il d'obtenir ? Justifier votre réponse. • Quelle modification faut-il apporter au bloc « un tour » pour obtenir la figure 2 ci-dessus ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-2" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2017 - Exercice 4 (9 points)</h2>
+    <div class="ex-meta"><span class="badge">2017</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Monsieur Chapuis souhaite changer le carrelage et les plinthes dans le salon de son appartement. Pour cela il doit acheter des carreaux, de la colle et des plinthes en bois qui seront clouées. Il dispose des documents suivants : |X|p0.4cm|X| Document 2 | | Document 3 Carrelage | | Colle pour le carrelage Taille d'un carreau : 50 cm × 50 cm | | Epaisseur d'un carreau : 0,9 cm | | Conditionnement: sac de 25 kg Conditionnement: 1,25 m^2 par boîte | | Rendement (aire que l'on peut coller) : 4 m^2 par sac Prix : 19,95 € par boîte | | Prix : 22 € le sac Plinthe | | Paquet de clous pour les plinthes Forme: rectangulaire de longueur 1~m | | Prix: 5,50 € le paquet Vendue à l'unité | | Prix: 2,95 € la plinthe en bois | |</p></div>
+  <div class="docs-zone"><p class="doc-label">Tableau 1</p></div>
+  <div class="questions-zone">
+<div class="question" id="ex2q0">
+  <p class="q-prompt"><span class="q-label">1.</span> 1.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex2q1">
+  <p class="q-prompt"><span class="q-label">1.</span> En remarquant que la longueur GD est égale à 7~m, déterminer l'aire du triangle BCH.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex2q2">
+  <p class="q-prompt"><span class="q-label">2.</span> Montrer que l'aire de la pièce est 32 m^2. • Pour ne pas manquer de carrelage ni de colle, le vendeur conseille à monsieur Chapuis de prévoir une aire supérieure de 10 \ Monsieur Chapuis doit acheter des boîtes entières et des sacs entiers. Déterminer le nombre de boîtes de carrelage et le nombre de sacs de colle à acheter. • Le vendeur recommande aussi de prendre une marge de 10 \ Déterminer le nombre total de plinthes que monsieur Chapuis doit acheter pour faire le tour de la pièce. On précise qu'il n'y a pas de plinthe sur la porte. • Quel est le montant de la dépense de monsieur Chapuis, sachant qu'il peut se contenter d'un paquet de clous ? Arrondir la réponse à l'euro près.</p>
+  <div class="choices"><label class="choice-label"><input type="radio" name="ex2q2" value="Pour ne pas manquer de carrelage ni de colle, le vendeur conseille à monsieur Chapuis de prévoir une aire supérieure de 10 \ Monsieur Chapuis doit acheter des boîtes entières et des sacs entiers. Déterminer le nombre de boîtes de carrelage et le nombre de sacs de colle à acheter."> Pour ne pas manquer de carrelage ni de colle, le vendeur conseille à monsieur Chapuis de prévoir une aire supérieure de 10 \ Monsieur Chapuis doit acheter des boîtes entières et des sacs entiers. Déterminer le nombre de boîtes de carrelage et le nombre de sacs de colle à acheter.</label><label class="choice-label"><input type="radio" name="ex2q2" value="Le vendeur recommande aussi de prendre une marge de 10 \ Déterminer le nombre total de plinthes que monsieur Chapuis doit acheter pour faire le tour de la pièce. On précise qu'il n'y a pas de plinthe sur la porte."> Le vendeur recommande aussi de prendre une marge de 10 \ Déterminer le nombre total de plinthes que monsieur Chapuis doit acheter pour faire le tour de la pièce. On précise qu'il n'y a pas de plinthe sur la porte.</label><label class="choice-label"><input type="radio" name="ex2q2" value="Quel est le montant de la dépense de monsieur Chapuis, sachant qu'il peut se contenter d'un paquet de clous ? Arrondir la réponse à l'euro près."> Quel est le montant de la dépense de monsieur Chapuis, sachant qu'il peut se contenter d'un paquet de clous ? Arrondir la réponse à l'euro près.</label></div>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-3" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2017 - Exercice 6 (5 points)</h2>
+    <div class="ex-meta"><span class="badge">2017</span> <span class="badge">medium</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Dans une station de ski, les responsables doivent enneiger la piste de slalom avec de la neige artificielle. La neige artificielle est produite à l'aide de canons à neige. La piste est modélisée par un rectangle dont la largeur est 25 m et la longueur est 480~m. Chaque canon à neige utilise 1 m^3 d'eau pour produire 2 m^3 de neige. Débit de production de neige : 30 m^3 par heure et par canon.</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex3q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Pour préparer correctement la piste de slalom, on souhaite produire une couche de neige artificielle de 40~cm d'épaisseur. Quel volume de neige doit-on produire ? Quel sera le volume d'eau utilisé ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex3q1">
+  <p class="q-prompt"><span class="q-label">2.</span> Sur cette piste de ski, il y a 7 canons à neige qui produisent tous le même volume de neige. Déterminer la durée nécessaire de fonctionnement des canons à neige pour produire les 4800 m^3 de neige souhaités. Donner le résultat à l'heure près.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-4" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2017 - Exercice 7 (7 points)</h2>
+    <div class="ex-meta"><span class="badge">2017</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Les légionelles sont des bactéries présentes dans l'eau potable. Lorsque la température de l'eau est comprise entre 30~° C et 45~° C, ces bactéries prolifèrent et peuvent atteindre, en 2 ou 3 jours, des concentrations dangereuses pour l'homme. On rappelle que « m » est l'abréviation de micromètre. Un micromètre est égal à un millionième de mètre.</p></div>
+  <div class="docs-zone"><p class="doc-label">Tableau 1</p></div>
+  <div class="questions-zone">
+<div class="question" id="ex4q0">
+  <p class="q-prompt"><span class="q-label">1.</span> La taille d'une bactérie légionelle est 0,8 . Exprimer cette taille en m et donner le résultat sous la forme d'une écriture scientifique.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex4q1">
+  <p class="q-prompt"><span class="q-label">2.</span> Lorsque la température de l'eau est 37~° C, cette population de bactéries légionelles double tous les quarts d'heure. Une population de 100 bactéries légionelles est placée dans ces conditions. On a créé la feuille de calcul suivante qui permet de donner le nombre de bactéries légionelles en fonction du nombre de quarts d'heure écoulés: |c|*2&gt; X| | A | B 1 | Nombre de quarts d'heure | Nombre de bactéries 2 | 0 | 100 3 | 1 | 4 | 2 | 5 | 3 | 6 | 4 | 7 | 5 | 8 | 6 | 9 | 7 | 10 | 8 |</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex4q2">
+  <p class="q-prompt"><span class="q-label">1.</span> Dans la cellule B3, on veut saisir une formule que l'on pourra étirer vers le bas dans la colonne B pour calculer le nombre de bactéries légionelles correspondant au nombre de quarts d'heure écoulés. Quelle est cette formule ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex4q3">
+  <p class="q-prompt"><span class="q-label">2.</span> Quel est le nombre de bactéries légionelles au bout d'une heure ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex4q4">
+  <p class="q-prompt"><span class="q-label">3.</span> Le nombre de bactéries légionelles est-il proportionnel au temps écoulé ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex4q5">
+  <p class="q-prompt"><span class="q-label">4.</span> Après combien de quarts d'heure cette population dépasse-t-elle dix mille bactéries légionelles ? • On souhaite tester l'efficacité d'un antibiotique pour lutter contre la bactérie légionelle. On introduit l'antibiotique dans un récipient qui contient 10^4 bactéries légionelles au temps t = 0. La représentation graphique, sur l'annexe, à rendre avec la copie, donne le nombre de bactéries dans le récipient en fonction du temps.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex4q6">
+  <p class="q-prompt"><span class="q-label">1.</span> Au bout de 3 heures, combien reste-t-il environ de bactéries légionelles dans le récipient ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex4q7">
+  <p class="q-prompt"><span class="q-label">2.</span> Au bout de combien de temps environ reste-t-il 6000 bactéries légionelles dans le récipient?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex4q8">
+  <p class="q-prompt"><span class="q-label">3.</span> On estime qu'un antibiotique sera efficace sur l'être humain s'il parvient à réduire de 80 \ En s'aidant du graphique, étudier l'efficacité de l'antibiotique testé sur l'être humain. Annexe à rendre avec la copie Faire apparaître les traits justifiant les réponses de la question 3. de l'exercice 7</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-5" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole juillet 2019 - Exercice 1 (10 points)</h2>
+    <div class="ex-meta"><span class="badge">2019</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Le capitaine d'un navire possède un trésor constitué de 69 diamants, 1150 perles et 4140 pièces d'or.</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex5q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Décomposer 69 ; 1150 et 4140 en produits de facteurs premiers.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex5q1">
+  <p class="q-prompt"><span class="q-label">2.</span> Le capitaine partage équitablement le trésor entre les marins. Combien y-a-t-il de marins sachant que toutes les pièces, perles et diamants ont été distribués ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-6" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole juillet 2019 - Exercice 2 (19 points)</h2>
+    <div class="ex-meta"><span class="badge">2019</span> <span class="badge">hard</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Dans cet exercice, on donnera, si nécessaire, une valeur approchée des résultats au centième près. Pour construire le décor d'une pièce de théâtre (Figure 1), Joanna dispose d'une plaque rectangulaire ABCD de 4~m sur 2~m dans laquelle elle doit découper les trois triangles du décor avant de les superposer. Elle propose un découpage de la plaque (Figure 2). Le triangle ADM respecte les conditions suivantes : [leftmargin=20mm] • [ ~~]le triangle ADM est rectangle en A • [ ~~]AD = 2~m • [ ~~] = 60°</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex6q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Montrer que [AM] mesure environ 3,46~m.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex6q1">
+  <p class="q-prompt"><span class="q-label">2.</span> La partie de la plaque non utilisée est représentée en quadrillé sur la figure 2. Calculer une valeur approchée au centième de la proportion de la plaque qui n'est pas utilisée.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex6q2">
+  <p class="q-prompt"><span class="q-label">3.</span> Pour que la superposition des triangles soit harmonieuse, Joanna veut que les trois triangles AMD, PNM et PDN soient semblables. Démontrer que c'est bien le cas.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex6q3">
+  <p class="q-prompt"><span class="q-label">4.</span> Joanna aimerait que le coefficient d'agrandissement pour passer du triangle PDN au triangle AMD soit plus petit que 1,5. Est-ce le cas ? Justifier.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-7" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole juillet 2019 - Exercice 3 (17 points)</h2>
+    <div class="ex-meta"><span class="badge">2019</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Les questions 1 et 2 sont indépendantes. Un sablier est composé de • Deux cylindres C_1 et C_2 de hauteur 4,2~cm et de diamètre 1,5~cm • Un cylindre C_3 • Deux demi-sphères S_1 et S_2 de diamètre 1,5~cm On rappelle le volume V d'un cylindre d'aire de base B et de hauteur h : V = B × h.</p></div>
+  <div class="docs-zone"><p class="doc-label">Tableau 1</p></div>
+  <div class="questions-zone">
+<div class="question" id="ex7q0">
+  <p class="q-prompt"><span class="q-label">1.</span> 1.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex7q1">
+  <p class="q-prompt"><span class="q-label">1.</span> Au départ, le sable remplît le cylindre C_2 aux deux tiers. Montrer que le volume du sable est environ 4,95 cm^3.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex7q2">
+  <p class="q-prompt"><span class="q-label">2.</span> On retourne le sablier. En supposant que le débit d'écoulement du sable est constant et égal à 1,98 cm^3/min, calculer le temps en minutes et secondes que va mettre le sable à s'écouler dans le cylindre inférieur. • En réalité, le débit d'écoulement d'un même sablier n'est pas constant. Dans une usine où on fabrique des sabliers comme celui-ci, on prend un sablier au hasard et on teste plusieurs fois le temps d'écoulement de ce sablier. Voici les différents temps récapitulés dans le tableau suivant: |m1.25cm|*7&gt; X| Temps mesuré | 2 min 22 s | 2 min 24 s | 2 min 26 s | 2 min 27 s | 2 min 28 s | 2 min 29 s | 2 min 30 s Nombre de tests | 1 | 1 | 2 | 6 | 3 | 7 | 6 |m1.25cm|*7&gt; X| Temps mesuré | 2 min 31 s | 2 min 32 s | 2 min 33 s | 2 min 34 s | 2 min 35 s | 2 min 38 s Nombre de tests | 3 | 1 | 2 | 3 | 2 | 3</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex7q3">
+  <p class="q-prompt"><span class="q-label">1.</span> Combien de tests ont été réalisés au total ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex7q4">
+  <p class="q-prompt"><span class="q-label">2.</span> Un sablier est mis en vente s'il vérifie les trois conditions ci-dessous, sinon il est éliminé : [leftmargin=10mm]</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex7q5">
+  <p class="q-prompt"><span class="q-label">3.</span> [ ~~] L'étendue des temps est inférieure à 20 s.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère d'abord les valeurs utiles.</div><div class="hint"><b>Indice 2 :</b> Compare les valeurs extrêmes.</div><div class="hint"><b>Indice 3 :</b> Écris le calcul avant de conclure.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex7q6">
+  <p class="q-prompt"><span class="q-label">4.</span> [ ~~] La médiane des temps est comprise entre 2 min 29 s et 2 min 31 s.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex7q7">
+  <p class="q-prompt"><span class="q-label">5.</span> [ ~~] La moyenne des temps est comprise entre 2 min 28 s et 2 min 32 s. Le sablier testé sera-t-il éliminé ? 19 points On veut réaliser un dessin constitué de deux types d'éléments (tirets et carrés) mis bout à bout. Chaque script ci-contre trace un élément, et déplace le stylo. On rappelle que « s'orienter à 90 » signifie qu'on oriente le stylo vers la droite. [Programme Scratch]</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex7q8">
+  <p class="q-prompt"><span class="q-label">1.</span> En prenant 1 cm pour 2 pixels, représenter la figure obtenue si on exécute le script Carré. Préciser les positions de départ et d'arrivée du stylo sur votre figure. Pour tracer le dessin complet, on a réalisé 2 scripts qui se servent des blocs « Carré » et « Tiret ». ci-dessus : Script 1 [Programme Scratch] Script 2 [Programme Scratch] On exécute les deux scripts et on obtient les deux dessins ci-dessous.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex7q9">
+  <p class="q-prompt"><span class="q-label">2.</span> Attribuer à chaque script la figure dessinée. Justifier votre choix.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex7q10">
+  <p class="q-prompt"><span class="q-label">3.</span> On exécute le script 2.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex7q11">
+  <p class="q-prompt"><span class="q-label">1.</span> Quelle est la probabilité que le premier élément tracé soit un carré ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex7q12">
+  <p class="q-prompt"><span class="q-label">2.</span> Quelle est la probabilité que les deux premiers éléments soient des carrés ? • Dans le script 2, on aimerait que la couleur des différents éléments, tirets ou carrés, soit aléatoire, avec à chaque fois 50 \ Écrire la suite d'instructions qu'il faut alors créer et préciser où l'insérer dans le script 2. Indication : on pourra utiliser les instructions [Programme Scratch] et [Programme Scratch] pour choisir la couleur du stylo.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-8" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole juillet 2019 - Exercice 5 (18 points)</h2>
+    <div class="ex-meta"><span class="badge">2019</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Olivia s'est acheté un tableau pour décorer le mur de son salon. Ce tableau. représenté ci-contre, est constitué de quatre rectangles identiques nommés , , et dessinés à l'intérieur d'un grand rectangle ABCD d'aire égale à 1,215~m^2. Le ratio longueur : largeur est égal à 3 : 2 pour chacun des cinq rectangles.</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex8q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Recopier, en les complétant, les phrases suivantes. Aucune justification n'est demandée.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex8q1">
+  <p class="q-prompt"><span class="q-label">1.</span> Le rectangle est l'image du rectangle par la translation qui transforme C en E.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex8q2">
+  <p class="q-prompt"><span class="q-label">2.</span> Le rectangle est l'image du rectangle par la rotation de centre F et d'angle 90° dans le sens des aiguilles d'une montre.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex8q3">
+  <p class="q-prompt"><span class="q-label">3.</span> Le rectangle ABCD est l'image du rectangle par l'homothétie de centre et de rapport~3. (Il y a plusieurs réponses possibles, une seule est demandée.) • Quelle est l'aire d'un petit rectangle ? • Quelles sont la longueur et la largeur du rectangle ABCD ?</p>
+  <div class="choices"><label class="choice-label"><input type="radio" name="ex8q3" value="Quelle est l'aire d'un petit rectangle ?"> Quelle est l'aire d'un petit rectangle ?</label><label class="choice-label"><input type="radio" name="ex8q3" value="Quelles sont la longueur et la largeur du rectangle ABCD ?"> Quelles sont la longueur et la largeur du rectangle ABCD ?</label></div>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-9" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole juillet 2019 - Exercice 6 (17 points)</h2>
+    <div class="ex-meta"><span class="badge">2019</span> <span class="badge">hard</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Void deux programmes de calcul :</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex9q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Vérifier que si on choisit 5 comme nombre de départ.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex9q1">
+  <p class="q-prompt"><span class="q-label">2.</span> [ ~~]le résultat du programme 1 vaut 16.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex9q2">
+  <p class="q-prompt"><span class="q-label">3.</span> [ ~~]le résultat du programme 2 vaut 28. On appelle A(x) le résultat du programme 1 en fonction du nombre x choisi au départ. La fonction B : x (x - 1)(x + 2) donne le résultat du programme 2 en fonction du nombre x choisi au départ.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex9q3">
+  <p class="q-prompt"><span class="q-label">4.</span> 4.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex9q4">
+  <p class="q-prompt"><span class="q-label">1.</span> Exprimer A(x) en fonction de x.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex9q5">
+  <p class="q-prompt"><span class="q-label">2.</span> Déterminer le nombre que l'on doit choisir au départ pour obtenir 0 comme résultat du programme 1. • Développer et réduire l'expression : B(x) = (x - 1)(x + 2). •</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex9q6">
+  <p class="q-prompt"><span class="q-label">1.</span> Montrer que B(x) - A(x) = (x + 1)(x - 3).</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex9q7">
+  <p class="q-prompt"><span class="q-label">2.</span> Quels nombres doit-on choisir au départ pour que le programme 1 et le programme 2 donnent le même résultat ? Expliquer la démarche.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-10" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2019 - Exercice 1 (18 points)</h2>
+    <div class="ex-meta"><span class="badge">2019</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  
+  
+  <div class="questions-zone">
+<div class="question" id="ex10q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Le triangle BCD est rectangle en C. Le théorème de Pythagore permet d'écrire : ^2 = ^2 + ^2, soit ^2 = 1,5^2 + 2^2 = 2,25 + 4 = 6,25 = 2,5^2. Donc BD = 2,5~km.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex10q1">
+  <p class="q-prompt"><span class="q-label">2.</span> C, D et E sont alignés ; le triangle BCD est rectangle en C, donc la droite (BC) est perpendiculaire à la droite (CE). Le triangle DEF est rectangle en E, donc la droite (EF) est perpendiculaire à la droite (CE). Conclusion : les droites (BC) et (EF) étant perpendiculaires à la droite (CE) sont parallèles.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex10q2">
+  <p class="q-prompt"><span class="q-label">3.</span> D'après le résultat précédent on peut appliquer le théorème de Thalès : = = , soit = , d'où en multipliant chaque membre par 2,5 : DF = 2,5 × 2,5 = 6,25~km.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex10q3">
+  <p class="q-prompt"><span class="q-label">4.</span> La longueur totale du parcours est égale à : + + + = 7 + 2,5 + 6,25 + 3,5 = 19,25~km.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex10q4">
+  <p class="q-prompt"><span class="q-label">5.</span> Michel parcourt 16 km en 60~min ou 4~km en 15~min ou 1~km en ~min. Pour parcourir 7~km, il mettra donc 7 × = ~min soit × 60 = 1575~s soit 26~min 15~s.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-11" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2019 - Exercice 2 (14 points)</h2>
+    <div class="ex-meta"><span class="badge">2019</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  
+  
+  <div class="questions-zone">
+<div class="question" id="ex11q0">
+  <p class="q-prompt"><span class="q-label">1.</span> 1.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex11q1">
+  <p class="q-prompt"><span class="q-label">1.</span> 2744 est multiple de 4 : 2744 = 4 × 686 = 4 × 2 × 343. Or 343 = 350 - 7 = 7× 50 - 7× 1 = 7 × 49 = 7 × 7 × 7. Donc 2744 = 2^3 × 7^3.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex11q2">
+  <p class="q-prompt"><span class="q-label">2.</span> Le résultat précédent entraîne : 2744^2 = (2^3 × 7^3 )^2 = (2^3 )^2 × (7^3 )^2 = 2^6 × 7^6.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex11q3">
+  <p class="q-prompt"><span class="q-label">3.</span> Inversement le résultat précédent peut s'écrire : 2744^2 = 2^6 × 7^6 = (2^2 )^3 × (7^2 )^3 = (2^2 × 7^2 )^3 = (4 × 49)^3 = 196^3. •</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex11q4">
+  <p class="q-prompt"><span class="q-label">1.</span> On a donc100^3 = b^2 ou 1000000 = b^2, d'où b = 1000.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex11q5">
+  <p class="q-prompt"><span class="q-label">2.</span> 2.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex11q6">
+  <p class="q-prompt"><span class="q-label">3.</span> Si a = 3, a^3 = 27 qui n'est pas un carré ;</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex11q7">
+  <p class="q-prompt"><span class="q-label">4.</span> Si a = 4, a^3 = 64 qui est le carré de 8 ;</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex11q8">
+  <p class="q-prompt"><span class="q-label">5.</span> Si a = 5, a^3 = 125 qui n'est pas un carré ;</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex11q9">
+  <p class="q-prompt"><span class="q-label">6.</span> Si a = 6, a^3 = 216 qui n'est pas un carré ;</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex11q10">
+  <p class="q-prompt"><span class="q-label">7.</span> Si a = 7, a^3 = 343 qui n'est pas un carré ;</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex11q11">
+  <p class="q-prompt"><span class="q-label">8.</span> Si a = 8, a^3 = 512 qui n'est pas un carré ;</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex11q12">
+  <p class="q-prompt"><span class="q-label">9.</span> Si a = 9, a^3 = 729 qui est le carré de 27, mais 27 &gt; 10. Il y a donc une solution : 4^3 = 8^2.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-12" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2019 - Exercice 3 (17 points)</h2>
+    <div class="ex-meta"><span class="badge">2019</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  
+  
+  <div class="questions-zone">
+<div class="question" id="ex12q0">
+  <p class="q-prompt"><span class="q-label">1.</span> On lit sur le graphique :</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex12q1">
+  <p class="q-prompt"><span class="q-label">2.</span> en 1995 : 360~ppm ;</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex12q2">
+  <p class="q-prompt"><span class="q-label">3.</span> en 2005 : 380~ppm.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex12q3">
+  <p class="q-prompt"><span class="q-label">4.</span> 4.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex12q4">
+  <p class="q-prompt"><span class="q-label">1.</span> Les points de la courbe sont à peu près alignés : le modèle affine semble donc pertinent.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex12q5">
+  <p class="q-prompt"><span class="q-label">2.</span> Pour l'année 1995, l'expression de'Arnold donne 2 × 1995 - 3630 = 360, et celle de Billy 2 × 1995 - 2000 = 1990 : ce dernier résultat est complètement erroné. Il vaut mieux prendre l'expression d'Arnold.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex12q6">
+  <p class="q-prompt"><span class="q-label">3.</span> Il faut résoudre l'équation : 2x - 3630 = 450 soit 2x = 4080 et x = 2040. La valeur de 450~ppm sera atteinte en 2040. • Si en 2016, 70 mégatonnes représentent 15 \ × M = 70, soit M = ≈ 466,6, soit 467~mégatonnes de CO_2 à la mégatonne près.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-13" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2019 - Exercice 4 (16 points)</h2>
+    <div class="ex-meta"><span class="badge">2019</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  
+  
+  <div class="questions-zone">
+<div class="question" id="ex13q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Le ratio est égal à = = .</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex13q1">
+  <p class="q-prompt"><span class="q-label">2.</span> On a 250 = 2,5 × 100 : il faut donc multiplier les quantités par 2,5. En particulier il faudra 30 × 2,5 = 3 × 25 = 75~g de farine.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex13q2">
+  <p class="q-prompt"><span class="q-label">3.</span> Le plus petit gâteau carrée a une base carré de côté : 24 - 8 - 8 = 8~cm.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex13q3">
+  <p class="q-prompt"><span class="q-label">4.</span> 4.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex13q4">
+  <p class="q-prompt"><span class="q-label">5.</span> Volume de tour de Pise : π × 15^2 × 6 + π × 11^2 × 6 + π × 7^2 × 6 + π × 3^2 × 6 = 6π (15^2 + 11^2 + 7^2 + 3^2 ) = 6π(225 + 121 + 49 + 9) = 6π × 404 = 2424π ≈ 7615~cm^3.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex13q5">
+  <p class="q-prompt"><span class="q-label">6.</span> Volume de tour Carrée : 24^2× 8 + 16^2 × 8 + 8^2× 8 = 8× (24^2 + 16^2 + 8^2 ) = 8 × 896 = 7168~cm^3. C'est la tour de Pise qui a le plus grand volume.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-14" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2019 - Exercice 5 (15 points)</h2>
+    <div class="ex-meta"><span class="badge">2019</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  
+  
+  <div class="questions-zone">
+<div class="question" id="ex14q0">
+  <p class="q-prompt"><span class="q-label">1.</span> 1.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex14q1">
+  <p class="q-prompt"><span class="q-label">1.</span> On obtient successivement : 4 10 10 × (4 - 5) = -10 20.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex14q2">
+  <p class="q-prompt"><span class="q-label">2.</span> On obtient successivement : - 3 3 3 × (-3 - 5) = -24 6. •</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex14q3">
+  <p class="q-prompt"><span class="q-label">1.</span> On a effectivement 4 + 4^2 = 4 + 16 = 20 et - 3 + (- 3)^2 = - 3 + 9 = 6 trouvés précédemment.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex14q4">
+  <p class="q-prompt"><span class="q-label">2.</span> =B2*B3</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex14q5">
+  <p class="q-prompt"><span class="q-label">3.</span> En partant de x on obtient : x x + 6 (x + 6)(x - 5) (x + 6)(x - 5) + 30 = x^2 - 5x + 6x - 30 + 30 = x^2 + x.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex14q6">
+  <p class="q-prompt"><span class="q-label">4.</span> Il faut résoudre l'équation : x + x^2 = 0 ou x(1 + x) = 0 soit \ x | = | 0 1 + x | = | 0 . soit enfin \ x | = | 0 x | = | - 1 . 0 et - 1 donnent 0 par le programme de calcul.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-15" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2019 - Exercice 6 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2019</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  
+  
+  <div class="questions-zone">
+<div class="question" id="ex15q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Armelle peut tirer 2 ou 6 et Basile 1 ou 5 : il ne peut y avoir égalité, donc de match nul.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex15q1">
+  <p class="q-prompt"><span class="q-label">2.</span> 2.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex15q2">
+  <p class="q-prompt"><span class="q-label">1.</span> Basile a = chances de sortir un 5 donc de battre Armelle.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex15q3">
+  <p class="q-prompt"><span class="q-label">2.</span> Dans tous les cas Armelle tire un 2 un 6 et tous les deux sont supérieurs à 1 : sa probabilité de battre Basile est donc égale à 1.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex15q4">
+  <p class="q-prompt"><span class="q-label">3.</span> 3.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex15q5">
+  <p class="q-prompt"><span class="q-label">1.</span> Il y a = de chances que le nombre tiré soit inférieur à 5 donc que FaceA prenne la valeur 2.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex15q6">
+  <p class="q-prompt"><span class="q-label">2.</span> Si FaceB &lt; FaceA alors</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex15q7">
+  <p class="q-prompt"><span class="q-label">3.</span> C'est le même sous-programme que Lancer le dé A en remplaçant Lancer le dé A par Lancer le dé B, 5 par 4 (troisième ligne), 2 par 1 (quatrième ligne) et 6 par 5 (cinquième ligne). •</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex15q8">
+  <p class="q-prompt"><span class="q-label">1.</span> La fréquence de victoires de A est égale à = ≈ 0,665, soit 66,5 \</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex15q9">
+  <p class="q-prompt"><span class="q-label">2.</span> La probabilité que A gagne contre B est d'environ 66,666 \</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-16" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2020 - Exercice 2 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2020</span> <span class="badge">hard</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>On considère le programme de calcul suivant : |X| ~~ Choisir un nombre; ~~ Ajouter 7 à ce nombre; ~~ Soustraire 7 au nombre choisi au départ; ~~ Multiplier les deux résultats précédents; ~~ Ajouter 50.</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex16q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Montrer que si le nombre choisi au départ est 2, alors le résultat obtenu est 5.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex16q1">
+  <p class="q-prompt"><span class="q-label">2.</span> Quel est le résultat obtenu avec ce programme si le nombre choisi au départ est -10 ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex16q2">
+  <p class="q-prompt"><span class="q-label">3.</span> Un élève s'aperçoit qu'en calculant le double de 2 et en ajoutant 1, il obtient 5, le même résultat que celui qu'il a obtenu à la question 1. Il pense alors que le programme de calcul revient à calculer le double du nombre de départ et à ajouter 1. A-t-il raison ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex16q3">
+  <p class="q-prompt"><span class="q-label">4.</span> Si x désigne le nombre choisi au départ, montrer que le résultat du programme de calcul est x^2 + 1.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex16q4">
+  <p class="q-prompt"><span class="q-label">5.</span> Quel(s) nombre(s) doit-on choisir au départ du programme de calcul pour obtenir 17 comme résultat ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-17" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2020 - Exercice 3 (23 points)</h2>
+    <div class="ex-meta"><span class="badge">2020</span> <span class="badge">medium</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Une entreprise fabrique des portiques pour installer des balançoires sur des aires de jeux. |X m5cm| Document 1 : croquis d'un portique Vue d'ensemble | Vue de côté | (0,0)(1,0) : poutres en bois de diamètre 100 mm (0,0)(1,0) : barres de maintien latérales en bois. | ABC est un triangle isocèle en A. H est le milieu de [BC] (MN)est parallèle à (BC). |X X| Document 2 : coût du matériel Poutres en bois de diamètre 100 mm : -- Longueur 4 m : 12,99 € l'unité ; -- Longueur 3, 5 m : 11,75 € l'unité ; -- Longueur 3 m : 10,25 € l'unité. Barres de maintien latérales en bois: -- Longueur 3 m : 6,99 € l'unité ; -- Longueur 2 m : 4,75 € l'unité; -- Longueur 1,5 m : 3,89 € l'unité. | | Ensemble des fixations nécessaires pour un portique: 80 €. Ensemble de deux balançoires pour un portique : 50 €.</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex17q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Déterminer la hauteur AH du portique, arrondie au cm près.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex17q1">
+  <p class="q-prompt"><span class="q-label">2.</span> Les barres de maintien doivent être fixées à 165 cm du sommet (AN = 165 cm). Montrer que la longueur MN de chaque barre de maintien est d'environ 140 cm.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex17q2">
+  <p class="q-prompt"><span class="q-label">3.</span> Montrer que le coût minimal d'un tel portique équipé de balançoires s'élève à 196,98 €.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex17q3">
+  <p class="q-prompt"><span class="q-label">4.</span> L'entreprise veut vendre ce portique équipé 20 \</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex17q4">
+  <p class="q-prompt"><span class="q-label">5.</span> Pour des raisons de sécurité, l'angle doit être compris entre 45° et 55°. Ce portique respecte-t-il cette condition ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-18" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2020 - Exercice 4 (23 points)</h2>
+    <div class="ex-meta"><span class="badge">2020</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Une association propose diverses activités pour occuper les enfants pendant les vacances scolaires. Plusieurs tarifs sont proposés: • Tarif A : 8 € par demi-journée ; • Tarif B : une adhésion de 30 € donnant droit à un tarif préférentiel de 5~€ par demi-journée Un fichier sur tableur a été préparé pour calculer le coût à payer en fonction du nombre de demi-journées d'activités pour chacun des tarifs proposés : |c|c|*5&gt; X| | A | B | C | D | E | F 1 | Nombre de demi-journées | 1 | 2 | 3 | 4 | 5 2 | Tarif A | 8 | 16 | | | 3 | Tarif B | 35 | 40 | | | Les questions 1, 2, 4 et 5 ne nécessitent pas de justification.</p></div>
+  <div class="docs-zone"><p class="doc-label">Tableau 1</p><p class="doc-label">Tableau 2</p></div>
+  <div class="questions-zone">
+<div class="question" id="ex18q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Compléter ce tableau sur l'annexe 1.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex18q1">
+  <p class="q-prompt"><span class="q-label">2.</span> Retrouver parmi les réponses suivantes la formule qui a été saisie dans la cellule B3 avant de l'étirer vers la droite : |*5&gt; X| Réponse A | Réponse B | Réponse C | Réponse D | Réponse E =8*B1 | =30* 1+5 | =5* 1+30* 1 | =30+5* 1 | =35</p>
+  <div class="choices"><label class="choice-label"><input type="radio" name="ex18q1" value="|"> |</label><label class="choice-label"><input type="radio" name="ex18q1" value="|"> |</label><label class="choice-label"><input type="radio" name="ex18q1" value="|"> |</label><label class="choice-label"><input type="radio" name="ex18q1" value="| Réponse E =8*B1 | =30* 1+5 | =5* 1+30* 1 | =30+5* 1 | =35"> | Réponse E =8*B1 | =30* 1+5 | =5* 1+30* 1 | =30+5* 1 | =35</label></div>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex18q2">
+  <p class="q-prompt"><span class="q-label">3.</span> On considère les fonctions f et g qui donnent les tarifs à payer en fonction du nombre x de demi-journées d'activités :</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex18q3">
+  <p class="q-prompt"><span class="q-label">4.</span> Tarif A : f(x) = 8x</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex18q4">
+  <p class="q-prompt"><span class="q-label">5.</span> Tarif B : g(x) =30 + 5x Parmi ces fonctions, quelle est celle qui traduit une situation de proportionnalité ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex18q5">
+  <p class="q-prompt"><span class="q-label">6.</span> Sur le graphique de l'annexe 2, on a représenté la fonction g. Représenter sur ce même graphique la fonction f.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex18q6">
+  <p class="q-prompt"><span class="q-label">7.</span> Déterminer le nombre de demi-journées d'activités pour lequel le tarif A est égal au tarif B.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex18q7">
+  <p class="q-prompt"><span class="q-label">8.</span> Avec un budget de 100~€, déterminer le nombre maximal de demi-journées auxquelles on peut participer. Décrire la méthode choisie.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-19" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2020 - Exercice 5 (14 points)</h2>
+    <div class="ex-meta"><span class="badge">2020</span> <span class="badge">hard</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>On cherche à dessiner une éolienne avec le logiciel Scratch ; elle est formée de 3 pales qui tournent autour d'un axe central. X m3.5cm</p></div>
+  <div class="docs-zone"><p class="doc-label">Tableau 1</p></div>
+  <div class="questions-zone">
+<div class="question" id="ex19q0">
+  <p class="q-prompt"><span class="q-label">1.</span> La figure ci-dessous représente une pale d'éolienne. -- DEC est un triangle isocèle en D; -- B est le milieu de [EC] ; -- [AB] est perpendiculaire à [EC] ; -- = 85°. a.~ Montrer que l'angle = 10°. b.~ Le script « pale » ci-contre permet de tracer une pale de l'éolienne avec le logiciel Scratch. Pourquoi la valeur indiquée dans le bloc de la ligne 6 est-elle 95 ? c.~ Dans ce même script « pale », par quelle valeur doit-on compléter le bloc situé à la ligne 8 ? Recopier cette valeur sur votre copie. 2.~ Le script « éolienne » ci-contre permet de tracer l'éolienne avec le logiciel Scratch. Par quelle valeur doit-on compléter la boucle « répéter » ? Recopier cette valeur sur votre copie. | ~ [Programme Scratch] [Programme Scratch] ANNEXES à rendre avec votre copie Annexe 1 - Question 1 |c|c|*5&gt; X| | A | B | C | D | E | F 1 | Nombre de demi-journées | 1 | 2 | 3 | 4 | 5 2 | Tarif A | 8 | 16 | | | 3 | Tarif B | 35 | 40 | | | Annexe 2 - Question 4</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-20" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2021 - Exercice 1 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2021</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Cet exercice est un Q.C.M. (Questionnaire à Choix Multiples). Chaque question n'a qu'une seule bonne réponse. Pour chaque question, précisez sur la copie le numéro de la question et la réponse choisie. Aucune justification n'est demandée pour cet exercice. |c|m4cm|*3&gt; X| Question | Réponse A | Réponse B | Réponse C</p></div>
+  <div class="docs-zone"><p class="doc-label">Tableau 1</p><p class="doc-label">Tableau 2</p><p class="doc-label">Tableau 3</p></div>
+  <div class="questions-zone">
+<div class="question" id="ex20q0">
+  <p class="q-prompt"><span class="q-label">1.</span> | + = | | |</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex20q1">
+  <p class="q-prompt"><span class="q-label">2.</span> | Une urne contient 3 boules jaunes, 2 boules bleues et 4 boules vertes, indiscernables au toucher. On tire une boule au hasard. Quelle est la probabilité d'obtenir une boule verte ? | | |</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex20q2">
+  <p class="q-prompt"><span class="q-label">3.</span> | Sur quelle figure a-t-on représenté une flèche et son image par une rotation de centre O et d'angle 90° ? | | |</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex20q3">
+  <p class="q-prompt"><span class="q-label">4.</span> | La décomposition en produit de facteurs premiers de 117 est : | 3 × 3 × 13 | 9 × 13 | 3 × 7 × 7</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex20q4">
+  <p class="q-prompt"><span class="q-label">5.</span> | = | (-2)^-3 | (-2)^3 | 2^-3</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-21" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2021 - Exercice 2 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2021</span> <span class="badge">medium</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Sur l'île de Madagascar, un scientifique mène une étude sur les tortues vertes. La tortue verte a pour nom scientifique: « Chelonia Mydas ». La carapace mesure en moyenne 115~cm et l'animal pèse entre 80 et 130~kg. Elle est classée comme espèce « En Danger». Afin de surveiller la bonne santé des tortues, elles sont régulièrement pesées. Voici les données relevées par ce scientifique en mai 2021. |m3cm|*7&gt; X| Lettres de marquage | A-001 | A-002 | A-003 | A-004 | A-005 | A-006 | A-007 Sexe de la tortue | Mâle | Femelle | Femelle | Femelle | Mâle | Femelle | Femelle Masse (en kg) | 113 | 96 | 125 | 87 | 117 | 104 | 101</p></div>
+  <div class="docs-zone"><p class="doc-label">Tableau 1</p></div>
+  <div class="questions-zone">
+<div class="question" id="ex21q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Calculer l'étendue de cette série statistique.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère d'abord les valeurs utiles.</div><div class="hint"><b>Indice 2 :</b> Compare les valeurs extrêmes.</div><div class="hint"><b>Indice 3 :</b> Écris le calcul avant de conclure.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex21q1">
+  <p class="q-prompt"><span class="q-label">2.</span> Calculer la masse moyenne de ces 7 tortues. Arrondir le résultat à l'unité.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex21q2">
+  <p class="q-prompt"><span class="q-label">3.</span> Déterminer la médiane de cette série statistique. Interpréter le résultat.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex21q3">
+  <p class="q-prompt"><span class="q-label">4.</span> Est-il vrai que les mâles représentent moins de 20 \</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex21q4">
+  <p class="q-prompt"><span class="q-label">5.</span> L'île de Madagascar a pour coordonnées géographiques (20 Sud ; 45 Est). Placer une croix sur le planisphère fourni en annexe afin de marquer la position de l'île de Madagascar. L'annexe est à rendre avec la copie.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-22" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2021 - Exercice 3 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2021</span> <span class="badge">medium</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>On considère le programme de calcul ci-contre. |X| ~~Choisir un nombre. ~~Ajouter 2 à ce nombre. ~~Prendre le carré du résultat précédent. ~~Soustraire le carré du nombre de départ au résultat précédent. On a utilisé la feuille de calcul ci-dessous pour appliquer ce programme de calcul au nombre 5 ; le résultat obtenu est 24. |c|l|X| | A | B 1 | Programme | Résultat 2 | Choisir un nombre | 5 3 | Ajouter 2 à ce nombre | 7 4 | Prendre le carré du résultat précédent | 49 5 | Soustraire le carré du nombre de départ au résultat précédent | 24</p></div>
+  <div class="docs-zone"><p class="doc-label">Tableau 1</p><p class="doc-label">Tableau 2</p></div>
+  <div class="questions-zone">
+<div class="question" id="ex22q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Pour les questions suivantes, faire apparaître les calculs sur la copie.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex22q1">
+  <p class="q-prompt"><span class="q-label">1.</span> Si on choisit 2 comme nombre de départ, vérifier qu'on obtient 12 comme résultat.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex22q2">
+  <p class="q-prompt"><span class="q-label">2.</span> Si on choisit - 8 comme nombre de départ, quel résultat obtient-on ? • Parmi les trois propositions suivantes, recopier sur votre copie la formule qui a été saisie dans la cellule B5. |*3&gt; X| =B4 - B2 * B2 | =B2 + 2 | = B3 * B3 •</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex22q3">
+  <p class="q-prompt"><span class="q-label">1.</span> Si l'on choisit x comme nombre de départ, exprimer en fonction de x, le résultat final de ce programme de calcul.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex22q4">
+  <p class="q-prompt"><span class="q-label">2.</span> Montrer que (x + 2)^2 - x^2 = 4x + 4. • Si on choisit un nombre entier au départ, est-il exact que le résultat du programme est toujours un multiple de 4 ? Justifier. Résultat</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-23" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2021 - Exercice 4 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2021</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Voici trois programmes réalisés avec l'application Scratch. |*3&gt; X| Programme 1 | Programme 2 | Programme 3 [Programme Scratch] | [Programme Scratch] | [Programme Scratch]</p></div>
+  <div class="docs-zone"><p class="doc-label">Tableau 1</p><p class="doc-label">Tableau 2</p></div>
+  <div class="questions-zone">
+<div class="question" id="ex23q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Ils donnent les trois figures suivantes constituées de triangles et de quadrilatères identiques. |*3&gt; X| Figure A | Figure B | Figure C | |</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex23q1">
+  <p class="q-prompt"><span class="q-label">1.</span> Quelle est la nature du triangle et du quadrilatère sur chaque figure ? Aucune justification n'est attendue.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex23q2">
+  <p class="q-prompt"><span class="q-label">2.</span> Quelle est la valeur manquante à la ligne 8 dans ces 3 programmes?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex23q3">
+  <p class="q-prompt"><span class="q-label">3.</span> Indiquer sur la copie, pour chaque figure, le numéro du programme qui permet de l'obtenir. •</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex23q4">
+  <p class="q-prompt"><span class="q-label">1.</span> Maintenant nous allons modifier les programmes précédents pour construire d'autres figures pour lesquelles le périmètre du quadrilatère est égal au périmètre du triangle. Quelle valeur du pas doit-on alors choisir à la ligne 8 de chaque programme ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex23q5">
+  <p class="q-prompt"><span class="q-label">2.</span> Représenter la figure A obtenue avec cette nouvelle valeur, en prenant 1 cm pour 25 pas.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-24" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole septembre 2021 - Exercice 5 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2021</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Une famille a acheté une étagère qu'elle souhaite placer le long d'un mur.</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex24q0">
+  <p class="q-prompt"><span class="q-label">1.</span> L'étagère était affichée au prix de 139,90~€. La famille a obtenu une réduction de 10 \ Quel a été le montant de cette réduction ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex24q1">
+  <p class="q-prompt"><span class="q-label">2.</span> Voici l'image de profil qu'on peut voir sur le guide de montage de l'étagère; ce dessin n'est pas à l'échelle. L'étagère a été montée à plat sur le sol de la pièce ; elle est donc en position 1. On veut s'assurer qu'elle ne touchera pas le plafond au moment de la relever pour atteindre la position 2. On ne dispose d'aucun instrument de mesure. Avec les données du schéma précédent, vérifier que l'étagère ne touchera pas le plafond.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex24q2">
+  <p class="q-prompt"><span class="q-label">3.</span> Dans cette question, on supposera que le meuble a pu être disposé contre le mur. On installe maintenant quatre tablettes horizontales régulièrement espacées et représentées ici par les segments [DE], [FG], [HI] et [JK].</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex24q3">
+  <p class="q-prompt"><span class="q-label">1.</span> Calculer la longueur C'E.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex24q4">
+  <p class="q-prompt"><span class="q-label">2.</span> Calculer la longueur de la tablette [DE].</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex24q5">
+  <p class="q-prompt"><span class="q-label">3.</span> Calculer la longueur de la tablette [HI]. Rappels des données : B'C' = 2,25 m AB' = 0,80 m ANNEXE à rendre avec la copie Exercice 2 - Question 5</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-25" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole juin 2023 - Exercice 1 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2023</span> <span class="badge">hard</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Un opticien vend différents modèles de lunettes de soleil. Il reporte dans le tableur ci-dessous des informations sur cinq modèles vendus pendant l'année 2022. |c|&gt; m4cm|*6&gt; X| | A | B | C | D | E | F | G 1 | Lunettes de soleil | Modèle 1 | Modèle 2 | Modèle 3 | Modèle 4 | Modèle 5 | Total 2 | Nombre de paires de lunettes vendues | 1200 | 950 | 875 | 250 | 300 | 3 | Prix à l'unité en euro | 75 | 100 | 110 | 140 | 160 |</p></div>
+  <div class="docs-zone"><p class="doc-label">Tableau 1</p><p class="doc-label">Tableau 2</p></div>
+  <div class="questions-zone">
+<div class="question" id="ex25q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Montrer que l'étendue des prix de ces paires de lunettes de soleil est de 85 euros.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère d'abord les valeurs utiles.</div><div class="hint"><b>Indice 2 :</b> Compare les valeurs extrêmes.</div><div class="hint"><b>Indice 3 :</b> Écris le calcul avant de conclure.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q1">
+  <p class="q-prompt"><span class="q-label">2.</span> 2.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q2">
+  <p class="q-prompt"><span class="q-label">1.</span> Quelle formule doit-on saisir dans la cellule G2 pour calculer le nombre total de paires de lunettes de soleil vendues en 2022 ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q3">
+  <p class="q-prompt"><span class="q-label">2.</span> Calculer le nombre total de paires de lunettes de soleil vendues en 2022. •</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q4">
+  <p class="q-prompt"><span class="q-label">1.</span> Calculer le montant total, en euros, des ventes des paires de lunettes de soleil en 2022.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q5">
+  <p class="q-prompt"><span class="q-label">2.</span> Calculer le prix moyen d'une paire de lunettes de soleil vendue en 2022 , arrondi au centime près. Sur la figure ci-dessous : [label= ~] • BCDE est un rectangle, BAE est un triangle rectangle en A ; • la perpendiculaire à la droite (CD) passant par A coupe cette droite en H; • les droites (AE) et (CD) se coupent en F. On donne : [label= ~] • = =4,2 ; • = =7 .</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q6">
+  <p class="q-prompt"><span class="q-label">1.</span> Montrer que l'aire du rectangle BCDE est égale à .</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q7">
+  <p class="q-prompt"><span class="q-label">2.</span> 2.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q8">
+  <p class="q-prompt"><span class="q-label">1.</span> Montrer que la longueur AE est égale à .</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q9">
+  <p class="q-prompt"><span class="q-label">2.</span> Calculer l'aire du triangle rectangle ABE. •</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q10">
+  <p class="q-prompt"><span class="q-label">1.</span> Montrer que les droites (ED) et (HA) sont parallèles.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q11">
+  <p class="q-prompt"><span class="q-label">2.</span> Calculer la longueur AH. Exercice 3 20 points Cet exercice est un questionnaire à choix multiple (QCM). Pour chaque question, trois réponses (A, B ou C) sont proposées. Une seule réponse est exacte. Recopier sur la copie le numéro de la question et la réponse choisie. Aucune justification n'est demandée. |m7cm|*3&gt; X| | Réponse A | Réponse B | Réponse C</p>
+  <div class="choices"><label class="choice-label"><input type="radio" name="ex25q11" value="hoisie. Aucune justification n'est demandée. |m7cm|*3&gt; X| |"> hoisie. Aucune justification n'est demandée. |m7cm|*3&gt; X| |</label><label class="choice-label"><input type="radio" name="ex25q11" value="|"> |</label><label class="choice-label"><input type="radio" name="ex25q11" value="|"> |</label><label class="choice-label"><input type="radio" name="ex25q11" value="Réponse C"> Réponse C</label></div>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q12">
+  <p class="q-prompt"><span class="q-label">1.</span> Dans une classe de 25 élèves, 60 \ Combien y a-t-il de filles dans cette classe ? | 10 | 15 | 20</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q13">
+  <p class="q-prompt"><span class="q-label">2.</span> Quelle est la décomposition en produit de facteurs premiers de 126 ? | 2 × 9 × 7 | 2^2 × 5^2 + 2 × 13 | 2 × 3^2 × 7</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q14">
+  <p class="q-prompt"><span class="q-label">3.</span> Dans un sac, il y a 17 jetons rouges, 23 jetons jaunes et 20 jetons bleus, tous indiscernables au toucher. On tire au hasard un jeton du sac. Quelle est la probabilité d'obtenir un jeton rouge ou un jeton jaune? | | 0,6 |</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q15">
+  <p class="q-prompt"><span class="q-label">4.</span> Sur l'octogone régulier ci-dessous, quelle est l'image du segment [DC] par la rotation de centre O qui transforme A en D? ~ ~ | [GE] | [GF] | [AH]</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex25q16">
+  <p class="q-prompt"><span class="q-label">5.</span> Quel est le volume d'un pavé droit de hauteur et de base rectangulaire de de longueur et de largeur ? On rappelle que = $. | | |</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-26" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole juin 2023 - Exercice 4 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2023</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>On veut fabriquer un escalier en bois de hauteur . La figure ci-dessous représente une vue de profil de cet escalier. La hauteur d'une marche est de . La profondeur d'une marche pour poser le pied mesure .</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex26q0">
+  <p class="q-prompt"><span class="q-label">1.</span> 1.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex26q1">
+  <p class="q-prompt"><span class="q-label">1.</span> Montrer qu'il faut prévoir 16 marches pour construire cet escalier.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex26q2">
+  <p class="q-prompt"><span class="q-label">2.</span> Montrer que la longueur AB est égale à . • Pour permettre une montée agréable, l'angle doit être compris entre 25^ et 40^ .</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex26q3">
+  <p class="q-prompt"><span class="q-label">1.</span> Calculer la mesure de l'angle , arrondie au degré près.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex26q4">
+  <p class="q-prompt"><span class="q-label">2.</span> L'escalier permet-il une montée agréable ? • On rédige le programme ci-contre avec le logiciel Scratch pour dessiner cet escalier. ( dans la réalité est représenté par 1 pas dans le programme.) Recopier les lignes 5,6,7 et 9 sur la copie en les complétant. [Programme Scratch]</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-27" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole juin 2023 - Exercice 5 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2023</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Voici deux programmes de calcul. |X|X| Programme A | Programme B ~~ Choisir un nombre | ~~ Choisir un nombre ~~ Multiplier ce nombre par -2 | ~~ Soustraire 5 à ce nombre ~~Ajouter 5 à ce résultat. | ~~ Multiplier le résultat par 3 | ~~ Ajouter 11 au résultat</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex27q0">
+  <p class="q-prompt"><span class="q-label">1.</span> 1.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex27q1">
+  <p class="q-prompt"><span class="q-label">1.</span> Montrer que, si on choisit - 3 comme nombre de départ, le résultat obtenu avec le programme A est 11.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex27q2">
+  <p class="q-prompt"><span class="q-label">2.</span> Quel résultat obtient-on avec le programme B si on choisit 5,5 comme nombre de départ ? • En désignant par x le nombre de départ, on obtient - 2x + 5 comme résultat avec le programme A. Montrer, qu'avec le même nombre de départ, le résultat du programme B est égal à 3x - 4.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex27q3">
+  <p class="q-prompt"><span class="q-label">3.</span> 3.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex27q4">
+  <p class="q-prompt"><span class="q-label">1.</span> On a représenté ci-contre les fonctions f et g définies par f(x) = -2x + 5 et g(x) = 3x - 4. Associer, en justifiant, chaque droite à la fonction qui lui correspond.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex27q5">
+  <p class="q-prompt"><span class="q-label">2.</span> Par lecture graphique, donner, le plus précisément possible, le nombre dont l'image est la même par la fonction f et la fonction g.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex27q6">
+  <p class="q-prompt"><span class="q-label">1.</span> Déterminer par le calcul le nombre de départ pour lequel les programmes A et B donnent le même résultat.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-28" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole juillet 2024 - Exercice 1 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2024</span> <span class="badge">hard</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Au casino, la roulette est un jeu de hasard pour lequel chaque joueur mise au choix sur un ou plusieurs numéros. On lance une bille sur une roue qui tourne, numérotée de 0 à 36. La bille a la même probabilité de s’arrêter sur chaque numéro.</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex28q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Expliquer pourquoi la probabilité que la bille s’arrête sur le numéro 7 est .</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex28q1">
+  <p class="q-prompt"><span class="q-label">2.</span> Déterminer la probabilité que la bille s’arrête sur une case à la fois noire et paire.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex28q2">
+  <p class="q-prompt"><span class="q-label">3.</span> 3.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex28q3">
+  <p class="q-prompt"><span class="q-label">1.</span> Déterminer la probabilité que la bille s’arrête sur un numéro inférieur ou égal à 6.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex28q4">
+  <p class="q-prompt"><span class="q-label">2.</span> En déduire la probabilité que la bille s’arrête sur un numéro supérieur ou égal à 7.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex28q5">
+  <p class="q-prompt"><span class="q-label">3.</span> Un joueur affirme qu’on a plus de 3 chances sur 4 d’obtenir un numéro supérieur ou égal à 7. A-t-il raison ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-29" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole juillet 2024 - Exercice 2 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2024</span> <span class="badge">easy</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>|X|l| Programme A | Programme B • Choisir un nombre. • Prendre le carré du nombre choisi. • Multiplier le résultat par 2. • Ajouter le double du nombre de départ. • Soustraire 4 au résultat. | [Programme Scratch]</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex29q0">
+  <p class="q-prompt"><span class="q-label">1.</span> 1.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex29q1">
+  <p class="q-prompt"><span class="q-label">1.</span> Vérifier que, si on choisit 5 comme nombre de départ, le résultat du programme A est 56.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex29q2">
+  <p class="q-prompt"><span class="q-label">2.</span> Quel résultat obtient-on avec le programme B si on choisit -9 comme nombre de départ ? • On choisit un nombre quelconque x comme nombre de départ.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex29q3">
+  <p class="q-prompt"><span class="q-label">1.</span> Parmi les trois propositions ci-dessous, recopier l’expression qui donne le résultat obtenu par le programme B ? E_1 = (x + 2) - 1 E_2 = (x + 2) × (x - 1) E_3 = x + 2 × x - 1</p>
+  <div class="choices"><label class="choice-label"><input type="radio" name="ex29q3" value="1 E_2 = (x + 2) × (x"> 1 E_2 = (x + 2) × (x</label><label class="choice-label"><input type="radio" name="ex29q3" value="1) E_3 = x + 2 × x"> 1) E_3 = x + 2 × x</label><label class="choice-label"><input type="radio" name="ex29q3" value="1"> 1</label></div>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex29q4">
+  <p class="q-prompt"><span class="q-label">2.</span> Exprimer en fonction de x le résultat obtenu avec le programme A. • Démontrer que, quel que soit le nombre choisi au départ, le résultat du programme A est toujours le double du résultat du programme B.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-30" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole juillet 2024 - Exercice 3 (22 points)</h2>
+    <div class="ex-meta"><span class="badge">2024</span> <span class="badge">hard</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Sur la figure ci-dessous, on a : • est un cercle de centre O et de rayon 4,5~cm ; • [ ] est un diamètre de ce cercle et D est un point du cercle ; • les points B, E, A sont alignés, ainsi que les points D, F, A ; • les droites (BD) et (EF) sont parallèles ; • BD = 5,4 cm ~;~ DA = 7,2 cm et AE = 2,7 cm.</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex30q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Justifier que le diamètre [AB] mesure 9 cm.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex30q1">
+  <p class="q-prompt"><span class="q-label">2.</span> Démontrer que le triangle ABD est rectangle en D.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex30q2">
+  <p class="q-prompt"><span class="q-label">3.</span> Calculer AF.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex30q3">
+  <p class="q-prompt"><span class="q-label">4.</span> 4.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex30q4">
+  <p class="q-prompt"><span class="q-label">1.</span> Justifier que l’aire du triangle ABD est égale à 19,44~ ^2.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex30q5">
+  <p class="q-prompt"><span class="q-label">2.</span> Calculer l’aire du disque, arrondie au centième. Rappel : l’aire du disque est égale à π × R^2, où R est le rayon du disque. • Quel pourcentage de l’aire du disque représente l’aire du triangle ABD ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+
+<div class="exercise" id="exercise-31" style="display:none">
+  <div class="ex-header">
+    <h2>DNB Métropole juillet 2024 - Exercice 5 (20 points)</h2>
+    <div class="ex-meta"><span class="badge">2024</span> <span class="badge">medium</span> <span class="badge badge-status badge-draft">draft</span></div>
+  </div>
+  <div class="context"><p>Un club de natation propose un après-midi découverte pour les enfants.</p></div>
+  
+  <div class="questions-zone">
+<div class="question" id="ex31q0">
+  <p class="q-prompt"><span class="q-label">1.</span> Pourquoi n’est-il pas possible de faire 15 sachets ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex31q1">
+  <p class="q-prompt"><span class="q-label">2.</span> 2.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex31q2">
+  <p class="q-prompt"><span class="q-label">1.</span> Décomposer 330 et 132 en produits de facteurs premiers.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex31q3">
+  <p class="q-prompt"><span class="q-label">2.</span> En déduire le plus grand nombre de sachets que la présidente pourra réaliser.</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div><hr class="q-sep">
+<div class="question" id="ex31q4">
+  <p class="q-prompt"><span class="q-label">3.</span> Dans ce cas, combien mettra-t-elle d’autocollants et de drapeaux dans chaque sachet ?</p>
+  <textarea placeholder="Votre réponse…" rows="3"></textarea>
+  <div class="q-actions"><button class="btn-hint" onclick="toggleHint(this)">💡 Indice</button></div>
+  <div class="hints-box" style="display:none"><div class="hint"><b>Indice 1 :</b> Repère les informations importantes dans l'énoncé.</div><div class="hint"><b>Indice 2 :</b> Choisis la méthode adaptée à la question.</div><div class="hint"><b>Indice 3 :</b> Rédige une réponse courte et vérifie les unités si nécessaire.</div></div>
+  
+</div></div>
+</div>
+</div>
+
+<div class="bottom-nav">
+  <button class="nav-btn" id="btn-prev" onclick="navigate(-1)" disabled>← Précédent</button>
+  <span class="nav-counter" id="nav-counter">1 / 32</span>
+  <button class="nav-btn" id="btn-next" onclick="navigate(1)">Suivant →</button>
+</div>
+
+<script>
+let current = 0;
+const total = 32;
+
+function navigate(dir) {
+  const next = current + dir;
+  if (next < 0 || next >= total) return;
+  document.getElementById('exercise-' + current).style.display = 'none';
+  current = next;
+  document.getElementById('exercise-' + current).style.display = 'block';
+  document.getElementById('nav-counter').textContent = (current + 1) + ' / ' + total;
+  document.getElementById('btn-prev').disabled = current === 0;
+  document.getElementById('btn-next').disabled = current === total - 1;
+  window.scrollTo(0, 0);
+}
+
+function toggleHint(btn) {
+  const box = btn.closest('.question').querySelector('.hints-box');
+  if (!box) return;
+  const shown = box.style.display !== 'none';
+  box.style.display = shown ? 'none' : 'block';
+  btn.textContent = shown ? '💡 Indice' : '💡 Cacher';
+}
+
+function toggleAnswer(btn) {
+  const box = btn.closest('.question').querySelector('.answer-box');
+  if (!box) return;
+  const shown = box.style.display !== 'none';
+  box.style.display = shown ? 'none' : 'block';
+  btn.textContent = shown ? '✓ Vérifier' : '✓ Cacher';
+}
+</script>
+</body>
+</html>

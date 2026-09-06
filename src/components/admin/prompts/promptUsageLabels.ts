@@ -10,6 +10,7 @@ export const PROMPT_USAGE_TYPES: PromptUsageType[] = [
   'grouped_problem_extraction',
   'grouped_problem_grading',
   'grouped_retry_practice',
+  'lesson_generation',
 ];
 
 export const PROMPT_USAGE_LABELS: Record<PromptUsageType, string> = {
@@ -20,7 +21,9 @@ export const PROMPT_USAGE_LABELS: Record<PromptUsageType, string> = {
   grouped_problem_extraction: 'Problem Extraction',
   grouped_problem_grading: 'Problem Grading',
   grouped_retry_practice: 'Problem Explanation',
+  lesson_generation: 'Lesson Generation',
 };
+
 
 export const getPromptUsageLabel = (usageType: string) =>
   PROMPT_USAGE_LABELS[usageType as PromptUsageType] || usageType;

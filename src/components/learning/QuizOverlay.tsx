@@ -1,14 +1,17 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { X, ChevronRight, HelpCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Check, X, ChevronRight, Trophy, Zap } from 'lucide-react';
 import type { Choice, Question, QuizBank } from '@/types/quiz-bank';
 import { QuestionCard } from './QuestionCard';
-import { gradeQuiz, shuffle } from '@/utils/quizEvaluation';
-import { evaluateQuestion } from '@/utils/quizEvaluation';
+import {
+  gradeQuizWithDetails,
+  shuffle,
+  evaluateQuestion,
+  scoreQuestionWithPenalty,
+  type QuizQuestionGradeDetail,
+} from '@/utils/quizEvaluation';
 import { useSubmitBankAttempt } from '@/hooks/useQuizBank';
 import { useAuth } from '@/context/AuthContext';
-import { cn } from '@/lib/utils';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
 import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { useUserContext } from '@/hooks/useUserContext';
@@ -20,6 +23,35 @@ interface QuizOverlayProps {
   bank: QuizBank;
   userId: string;
   onClose: () => void;
+}
+
+function XpPill({ onDone }: { onDone: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 0, scale: 0.7 }}
+      animate={{ opacity: [0, 1, 1, 0], y: -60, scale: 1 }}
+      transition={{ duration: 1.1, ease: "easeOut" }}
+      onAnimationComplete={onDone}
+      style={{
+        position: "fixed",
+        bottom: "120px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 9999,
+        pointerEvents: "none",
+        background: "linear-gradient(135deg, #22C55E, #16A34A)",
+        color: "#fff",
+        fontWeight: 700,
+        fontSize: "15px",
+        padding: "6px 18px",
+        borderRadius: "999px",
+        boxShadow: "0 4px 24px rgba(34,197,94,0.35)",
+        whiteSpace: "nowrap",
+      }}
+    >
+      ✦ Bonne réponse !
+    </motion.div>
+  );
 }
 
 function getQuestionChoices(question: Question): Choice[] {
@@ -48,6 +80,9 @@ function formatQuizAnswerForExplanation(question: Question, answer: any): string
   }
 
   if (typeof answer === 'object') {
+    if (question.kind === 'operation-posee') {
+      return answer.correct ? 'Correct operation-posee submission' : 'Incorrect operation-posee submission';
+    }
     if ('numerator' in answer || 'denominator' in answer) {
       const numerator = answer.numerator || '?';
       const denominator = answer.denominator || '?';
@@ -80,13 +115,19 @@ function getQuestionDifficulty(question: Question): string | undefined {
   return (question as any).difficulty;
 }
 
+function formatScoreValue(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/\.?0+$/, '');
+}
+
 export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
   const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [questionGrades, setQuestionGrades] = useState<Record<string, QuizQuestionGradeDetail>>({});
   const [submitted, setSubmitted] = useState(false);
   const [startTs] = useState<number>(Date.now());
   const [currentIndex, setCurrentIndex] = useState(0);
   const [questionSubmitted, setQuestionSubmitted] = useState(false);
   const [questionResult, setQuestionResult] = useState<boolean | null>(null);
+  const [showXpPill, setShowXpPill] = useState(false);
   const submitAttempt = useSubmitBankAttempt();
   const { user } = useAuth();
   const { userContext } = useUserContext();
@@ -119,6 +160,10 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
   }, [bank]);
 
   const currentQuestion = questions[currentIndex];
+  const gradedQuiz = useMemo(
+    () => gradeQuizWithDetails(questions, questionGrades),
+    [questions, questionGrades],
+  );
 
   useEffect(() => {
     if (quizStartedRef.current) return;
@@ -162,10 +207,13 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
 
   const handleQuestionSubmit = () => {
     if (!currentQuestion) return;
-    const correct = evaluateQuestion(currentQuestion, answers[currentQuestion.id]);
+    const currentAnswer = answers[currentQuestion.id];
+    const correct = evaluateQuestion(currentQuestion, currentAnswer);
     const attemptNumber = (questionAttemptCountsRef.current[currentQuestion.id] || 0) + 1;
     questionAttemptCountsRef.current[currentQuestion.id] = attemptNumber;
     const timeToAnswerMs = Date.now() - questionViewStartedAtRef.current;
+    const maxPoints = currentQuestion.points ?? 1;
+    const { awardedPoints, penaltyFactor } = scoreQuestionWithPenalty(maxPoints, attemptNumber, correct);
 
     trackLearningInteraction({
       studentId: userId,
@@ -229,9 +277,33 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
       remediationQuestionRef.current = null;
     }
 
+    setQuestionGrades(prev => ({
+      ...prev,
+      [currentQuestion.id]: {
+        questionId: currentQuestion.id,
+        attemptCount: attemptNumber,
+        correct,
+        awardedPoints,
+        maxPoints,
+        penaltyFactor,
+        answeredCorrectlyOnAttempt: correct ? attemptNumber : null,
+        finalAnswer: currentAnswer,
+      },
+    }));
     setQuestionResult(correct);
+    if (correct) setShowXpPill(true);
     setQuestionSubmitted(true);
   };
+
+  useEffect(() => {
+    if (!currentQuestion || questionSubmitted) return;
+    if (currentQuestion.kind !== 'operation-posee') return;
+
+    const currentAnswer = answers[currentQuestion.id];
+    if (currentAnswer?.correct === true) {
+      handleQuestionSubmit();
+    }
+  }, [answers, currentQuestion, questionSubmitted]);
 
   const handleShowExplanation = useCallback(async () => {
     if (!currentQuestion) return;
@@ -292,6 +364,17 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
     });
   }, [answers, bank, currentQuestion, language, teaching, userContext?.learning_style, userContext?.student_level, userId]);
 
+  const handleRetry = useCallback(() => {
+    setQuestionSubmitted(false);
+    setQuestionResult(null);
+    setShowXpPill(false);
+    setAnswers(prev => {
+      const next = { ...prev };
+      if (currentQuestion) delete next[currentQuestion.id];
+      return next;
+    });
+  }, [currentQuestion]);
+
   const handleNext = async () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(i => i + 1);
@@ -299,15 +382,15 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
       setQuestionResult(null);
     } else {
       // Last question — submit full attempt
-      const g = gradeQuiz(questions, answers);
       if (user && bank.quizBankId !== "__empty__") {
         try {
           await submitAttempt.mutateAsync({
             bankId: bank.quizBankId,
             userId: user.id,
-            score: g.score,
-            maxScore: g.maxScore,
-            tookSeconds: Math.round((Date.now() - startTs) / 1000)
+            score: gradedQuiz.score,
+            maxScore: gradedQuiz.maxScore,
+            tookSeconds: Math.round((Date.now() - startTs) / 1000),
+            details: gradedQuiz.details,
           });
         } catch (error) {
           console.error('Failed to save attempt:', error);
@@ -320,11 +403,11 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
         learningStyleUsed: userContext?.learning_style,
         quizId: bank.quizBankId,
         topicId: getQuizTopicId(bank),
-        wasCorrect: g.score === g.maxScore,
+        wasCorrect: gradedQuiz.score === gradedQuiz.maxScore,
         metadata: {
-          score: g.score,
-          total: g.maxScore,
-          percent: g.maxScore ? Math.round((100 * g.score) / g.maxScore) : 0,
+          score: gradedQuiz.score,
+          total: gradedQuiz.maxScore,
+          percent: gradedQuiz.maxScore ? Math.round((100 * gradedQuiz.score) / gradedQuiz.maxScore) : 0,
           tookSeconds: Math.round((Date.now() - startTs) / 1000),
         },
       });
@@ -333,169 +416,263 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
 
   const handleRetest = () => {
     setAnswers({});
+    setQuestionGrades({});
     setSubmitted(false);
     setCurrentIndex(0);
     setQuestionSubmitted(false);
     setQuestionResult(null);
+    setShowXpPill(false);
+    questionAttemptCountsRef.current = {};
+    remediationUsedRef.current = false;
+    remediationQuestionRef.current = null;
   };
 
   // Final summary screen
   if (submitted) {
-    const g = gradeQuiz(questions, answers);
-    const pct = g.maxScore ? Math.round((100 * g.score) / g.maxScore) : 0;
+    const pct = gradedQuiz.maxScore ? Math.round((100 * gradedQuiz.score) / gradedQuiz.maxScore) : 0;
+    const xpEarned = gradedQuiz.score * 10;
+    const isMastered = pct >= 80;
 
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">{bank.title}</h2>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="w-5 h-5" />
-            </Button>
-          </div>
+      <div
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 py-8 text-center"
+        style={{ background: '#F3F6FA' }}
+      >
+        <div
+          className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl"
+          style={{ background: '#F2FBF8', border: '1.5px solid #12C6A0' }}
+        >
+          <Trophy className="h-10 w-10" style={{ color: '#12C6A0' }} />
+        </div>
 
-          <div>
-            <p className="text-lg">Score: {g.score} / {g.maxScore} ({pct}%)</p>
-            <div className="w-full h-3 bg-neutral-200 rounded-full mt-2">
-              <div
-                className="h-3 bg-primary rounded-full transition-all"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-          </div>
+        <h2
+          className="mb-1 text-2xl font-bold"
+          style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}
+        >
+          {pct >= 80 ? 'Bonne séance !' : pct >= 50 ? 'Pas mal !' : "Continue d'essayer !"}
+        </h2>
+        <p className="mb-6 text-sm" style={{ color: '#667085' }}>{bank.title}</p>
 
-          <div className="space-y-3">
-            {g.details.map((d) => {
-              const q = questions.find(q => q.id === d.questionId);
-              return (
-                <div
-                  key={d.questionId}
-                  className={cn(
-                    "rounded-2xl border p-3",
-                    d.correct
-                      ? "border-green-500 bg-green-50 dark:bg-green-950/20"
-                      : "border-red-500 bg-red-50 dark:bg-red-950/20"
-                  )}
-                >
-                  <p className="font-medium">{q?.prompt ?? "Question"}</p>
-                  <p className={d.correct ? "text-green-600" : "text-red-600"}>
-                    {d.correct ? "Correct" : "Incorrect"}
-                  </p>
-                </div>
-              );
-            })}
+        <div className="mb-5 grid w-full max-w-xs grid-cols-3 gap-3">
+          <div
+            className="rounded-xl p-3 text-center"
+            style={{ background: '#F2FBF8', border: '0.5px solid #9FE1CB' }}
+          >
+            <p className="text-xl font-bold" style={{ color: '#085041', fontFamily: 'Poppins, sans-serif' }}>
+              {formatScoreValue(gradedQuiz.score)}/{formatScoreValue(gradedQuiz.maxScore)}
+            </p>
+            <p className="text-xs" style={{ color: '#0F6E56' }}>Reponses</p>
           </div>
+          <div
+            className="rounded-xl p-3 text-center"
+            style={{ background: '#FAEEDA', border: '0.5px solid #FAC775' }}
+          >
+            <p className="text-xl font-bold" style={{ color: '#633806', fontFamily: 'Poppins, sans-serif' }}>
+              +{formatScoreValue(xpEarned)}
+            </p>
+            <p className="text-xs" style={{ color: '#854F0B' }}>XP gagne</p>
+          </div>
+          <div
+            className="rounded-xl p-3 text-center"
+            style={{ background: '#FAEEDA', border: '0.5px solid #FAC775' }}
+          >
+            <p className="text-xl font-bold" style={{ color: '#633806', fontFamily: 'Poppins, sans-serif' }}>
+              {pct}%
+            </p>
+            <p className="text-xs" style={{ color: '#854F0B' }}>Score</p>
+          </div>
+        </div>
 
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={handleRetest} className="flex-1">
-              Retest
-            </Button>
-            <Button onClick={onClose} className="flex-1">
-              Close
-            </Button>
+        {isMastered && (
+          <div
+            className="mb-6 flex w-full max-w-xs items-center gap-2 rounded-xl px-4 py-3"
+            style={{ background: '#F2FBF8', border: '0.5px solid #9FE1CB' }}
+          >
+            <Zap className="h-4 w-4 flex-shrink-0" style={{ color: '#0A8C72' }} />
+            <p className="text-left text-sm" style={{ color: '#085041' }}>
+              <span className="font-semibold">Notion maitrisee : </span>{bank.title}
+            </p>
           </div>
-        </Card>
+        )}
+
+        <div className="flex w-full max-w-xs gap-3">
+          <button
+            onClick={handleRetest}
+            className="flex-1 rounded-xl py-3 text-sm font-semibold"
+            style={{
+              border: '1.5px solid #EAECEF',
+              background: 'white',
+              color: '#0F172A',
+              fontFamily: 'Poppins, sans-serif',
+              cursor: 'pointer',
+            }}
+          >
+            Refaire
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-[2] rounded-xl py-3 text-sm font-bold"
+            style={{
+              background: '#12C6A0',
+              border: 'none',
+              color: '#0F172A',
+              fontFamily: 'Poppins, sans-serif',
+              cursor: 'pointer',
+            }}
+          >
+            Continuer
+          </button>
+        </div>
       </div>
     );
   }
 
   // Step-by-step question flow
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">{bank.title}</h2>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close quiz">
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
-
-        {/* Progress indicator */}
-        {questions.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Question {currentIndex + 1} / {questions.length}
-            </p>
-            <div className="w-full h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full">
-              <div
-                className="h-2 bg-primary rounded-full transition-all"
-                style={{ width: `${((currentIndex + (questionSubmitted ? 1 : 0)) / questions.length) * 100}%` }}
+    <div className="fixed inset-0 z-[200] flex flex-col" style={{ background: '#F3F6FA' }}>
+      <div style={{ background: 'white', borderBottom: '0.5px solid #EAECEF' }}>
+        <div className="flex items-center gap-3 px-4 py-3">
+          <button
+            onClick={onClose}
+            aria-label="Fermer"
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
+            style={{ border: '0.5px solid #EAECEF', background: 'white', cursor: 'pointer' }}
+          >
+            <X className="h-4 w-4" style={{ color: '#667085' }} />
+          </button>
+          <div className="flex-1">
+            <div className="overflow-hidden rounded-full" style={{ height: '5px', background: '#EAECEF' }}>
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: '#12C6A0' }}
+                animate={{ width: `${((currentIndex + (questionSubmitted ? 1 : 0)) / Math.max(questions.length, 1)) * 100}%` }}
+                transition={{ type: 'spring', stiffness: 80, damping: 20 }}
               />
             </div>
+            <p className="mt-0.5 text-xs" style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>
+              {bank.title}
+            </p>
           </div>
-        )}
+          <span className="flex-shrink-0 text-xs font-semibold" style={{ color: '#12C6A0', fontFamily: 'Poppins, sans-serif' }}>
+            {currentIndex + 1}/{questions.length}
+          </span>
+        </div>
+      </div>
 
+      <div className="flex-1 overflow-y-auto px-4 py-5">
         {questions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Aucune question disponible pour le moment.
-          </p>
+          <p className="text-sm" style={{ color: '#667085' }}>Aucune question disponible pour le moment.</p>
         ) : currentQuestion ? (
           <div
-            className={cn(
-              "rounded-2xl transition-all",
-              questionSubmitted && questionResult === true && "ring-2 ring-green-500",
-              questionSubmitted && questionResult === false && "ring-2 ring-red-500"
-            )}
+            className="rounded-2xl bg-white p-4"
+            style={{ border: '0.5px solid #EAECEF' }}
           >
-            <QuestionCard
-              key={currentQuestion.id}
-              question={currentQuestion}
-              onChange={val => onAnswer(currentQuestion.id, val)}
-            />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentQuestion.id}
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              >
+                <QuestionCard
+                  question={currentQuestion}
+                  onChange={val => onAnswer(currentQuestion.id, val)}
+                  submittedAnswer={questionSubmitted ? answers[currentQuestion.id] : undefined}
+                  isCorrect={questionSubmitted ? (questionResult ?? undefined) : undefined}
+                  hideCorrect={questionSubmitted && questionResult === false}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        ) : null}
+      </div>
 
-            {/* Feedback after submit */}
-            {questionSubmitted && (
-              <div className={cn(
-                "mt-3 rounded-xl px-4 py-3 text-sm font-medium",
-                questionResult
-                  ? "bg-green-50 dark:bg-green-950/20 text-green-600"
-                  : "bg-red-50 dark:bg-red-950/20 text-red-600"
-              )}>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <span>{questionResult ? "✅ Correct !" : "❌ Incorrect"}</span>
-                  {questionResult === false && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleShowExplanation}
-                      disabled={teaching.loading}
-                      className="self-start gap-2 bg-white text-red-700 hover:bg-red-50 dark:bg-card dark:text-red-300 dark:hover:bg-red-950/30"
-                    >
-                      <HelpCircle className="h-4 w-4" />
-                      {teaching.loading ? "Préparation..." : "Afficher l'explication"}
-                    </Button>
-                  )}
-                </div>
+      <div className="px-4 pt-3" style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom, 24px))' }}>
+        {!questionSubmitted ? (
+          <button
+            onClick={handleQuestionSubmit}
+            disabled={questions.length === 0}
+            className="w-full rounded-2xl py-4 text-sm font-bold"
+            style={{
+              background: questions.length === 0 ? '#EAECEF' : '#12C6A0',
+              color: questions.length === 0 ? '#B4B2A9' : '#0F172A',
+              border: 'none',
+              fontFamily: 'Poppins, sans-serif',
+              cursor: questions.length === 0 ? 'not-allowed' : 'pointer',
+              fontSize: '15px',
+            }}
+          >
+            Valider
+          </button>
+        ) : (
+          <div
+            className="flex items-center gap-3 rounded-2xl px-4 py-3"
+            style={{
+              background: questionResult ? '#EAF3DE' : '#FEF3C7',
+              border: `1px solid ${questionResult ? '#9FE1CB' : '#FCD34D'}`,
+            }}
+          >
+            <div
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
+              style={{ background: questionResult ? '#12C6A0' : '#EF4444' }}
+            >
+              {questionResult
+                ? <Check className="h-5 w-5" style={{ color: '#0F172A' }} />
+                : <X className="h-5 w-5" style={{ color: '#0F172A' }} />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold" style={{ color: questionResult ? '#27500A' : '#633806', fontFamily: 'Poppins, sans-serif' }}>
+                {questionResult ? 'Exacte !' : 'Pas cette fois...'}
+              </p>
+              {questionResult === false && (
+                <button
+                  type="button"
+                  onClick={handleShowExplanation}
+                  disabled={teaching.loading}
+                  style={{ color: '#854F0B', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', textDecoration: 'underline' }}
+                >
+                  {teaching.loading ? 'Préparation...' : "Voir l'explication"}
+                </button>
+              )}
+            </div>
+            {questionResult && (
+              <span
+                className="flex-shrink-0 rounded-full px-2 py-1 text-xs font-bold"
+                style={{ background: '#FAC775', color: '#633806' }}
+              >
+                +10 XP
+              </span>
+            )}
+            {questionResult ? (
+              <button
+                onClick={handleNext}
+                className="flex-shrink-0 rounded-xl px-4 py-2 text-sm font-bold"
+                style={{ background: '#12C6A0', border: 'none', color: '#0F172A', fontFamily: 'Poppins, sans-serif', cursor: 'pointer' }}
+              >
+                {currentIndex < questions.length - 1 ? 'Suivant' : 'Résultats'}
+              </button>
+            ) : (
+              <div className="flex flex-shrink-0 gap-2">
+                <button
+                  onClick={handleRetry}
+                  className="rounded-xl px-3 py-2 text-sm font-bold"
+                  style={{ background: 'white', border: '1.5px solid #EAECEF', color: '#0F172A', fontFamily: 'Poppins, sans-serif', cursor: 'pointer' }}
+                >
+                  Réessayer
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="rounded-xl px-4 py-2 text-sm font-bold"
+                  style={{ background: '#12C6A0', border: 'none', color: '#0F172A', fontFamily: 'Poppins, sans-serif', cursor: 'pointer' }}
+                >
+                  {currentIndex < questions.length - 1 ? 'Suivant' : 'Résultats'}
+                </button>
               </div>
             )}
           </div>
-        ) : null}
-
-        {/* Action buttons */}
-        <div className="flex justify-end gap-3">
-          {!questionSubmitted ? (
-            <Button
-              onClick={handleQuestionSubmit}
-              disabled={questions.length === 0}
-              className="px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black"
-            >
-              Soumettre
-            </Button>
-          ) : (
-            <Button
-              onClick={handleNext}
-              className="px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black gap-1"
-            >
-              {currentIndex < questions.length - 1 ? (
-                <>Suivant <ChevronRight className="w-4 h-4" /></>
-              ) : (
-                "Voir le résultat"
-              )}
-            </Button>
-          )}
-        </div>
-      </Card>
+        )}
+      </div>
 
       <ExplanationModal
         open={teaching.open}
@@ -503,8 +680,13 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
         loading={teaching.loading}
         sections={teaching.sections}
         error={teaching.error}
+        onLike={() => void teaching.submitFeedback('like')}
+        onDislike={() => void teaching.submitFeedback('dislike')}
+        feedback={teaching.feedback}
+        feedbackLoading={teaching.feedbackLoading}
         exerciseQuestion={currentQuestion?.prompt}
       />
+      {showXpPill && <XpPill onDone={() => setShowXpPill(false)} />}
     </div>
   );
 }

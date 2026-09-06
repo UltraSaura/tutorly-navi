@@ -22,7 +22,9 @@ const SubjectManager = () => {
     name: '',
     slug: '',
     icon_name: '',
+    icon_image_url: null as string | null,
     color_scheme: '',
+    display_context: 'both' as 'learn' | 'practice' | 'both',
     order_index: 0,
     is_active: true,
   });
@@ -46,7 +48,9 @@ const SubjectManager = () => {
       name: subject.name,
       slug: subject.slug,
       icon_name: subject.icon_name,
+      icon_image_url: subject.icon_image_url,
       color_scheme: subject.color_scheme,
+      display_context: subject.display_context ?? 'both',
       order_index: subject.order_index,
       is_active: subject.is_active,
     });
@@ -65,7 +69,9 @@ const SubjectManager = () => {
       name: '',
       slug: '',
       icon_name: '',
+      icon_image_url: null,
       color_scheme: '',
+      display_context: 'both',
       order_index: 0,
       is_active: true,
     });
@@ -136,6 +142,19 @@ const SubjectManager = () => {
                 />
               </div>
               <div>
+                <Label htmlFor="display_context">Display</Label>
+                <select
+                  id="display_context"
+                  value={formData.display_context}
+                  onChange={(e) => setFormData({ ...formData, display_context: e.target.value as 'learn' | 'practice' | 'both' })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="both">Learn + Practice</option>
+                  <option value="learn">Learn only</option>
+                  <option value="practice">Practice only</option>
+                </select>
+              </div>
+              <div>
                 <Label htmlFor="order_index">Order Index</Label>
                 <Input
                   id="order_index"
@@ -168,6 +187,7 @@ const SubjectManager = () => {
             <TableHead>Name</TableHead>
             <TableHead>Slug</TableHead>
             <TableHead>Order</TableHead>
+            <TableHead>Display</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -181,6 +201,13 @@ const SubjectManager = () => {
               <TableCell className="font-medium">{subject.name}</TableCell>
               <TableCell>{subject.slug}</TableCell>
               <TableCell>{subject.order_index}</TableCell>
+              <TableCell>
+                {subject.display_context === 'both'
+                  ? 'Learn + Practice'
+                  : subject.display_context === 'learn'
+                    ? 'Learn only'
+                    : 'Practice only'}
+              </TableCell>
               <TableCell>
                 <span className={subject.is_active ? 'text-green-600' : 'text-red-600'}>
                   {subject.is_active ? 'Active' : 'Inactive'}

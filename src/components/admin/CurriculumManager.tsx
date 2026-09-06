@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,12 +8,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3, AlertTriangle } from 'lucide-react';
+import { Upload, FileJson, CheckCircle, XCircle, Loader2, Search, BarChart3, AlertTriangle, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useObjectives, useCurriculumStats } from '@/hooks/useCurriculumData';
-import { useCurriculumCountries, useCurriculumLevels, useAllCurriculumSubjects } from '@/hooks/useCurriculumBundle';
-import { getLocalizedLabel, getDomainsBySubject, getSubdomainsByDomain } from '@/lib/curriculum';
+import { useObjectives, useCurriculumStats, useDbSubjects, useDbDomains, useDbSubdomains } from '@/hooks/useCurriculumData';
+import { useCurriculumCountries, useCurriculumLevels } from '@/hooks/useCurriculumBundle';
 import { CurriculumLocation } from './curriculum/CurriculumLocation';
 import { TaskViewer } from './curriculum/TaskViewer';
 import type { ImportCounts } from '@/types/curriculum';
@@ -42,31 +41,49 @@ export default function CurriculumManager() {
   const [domain, setDomain] = useState<string>('');
   const [subdomain, setSubdomain] = useState<string>('');
   const [search, setSearch] = useState<string>('');
-  
-  // New curriculum bundle hooks
+
+  // Curriculum bundle hooks (country/level only)
   const countries = useCurriculumCountries();
   const levels = useCurriculumLevels(filterCountry);
-  const allSubjects = useAllCurriculumSubjects(filterCountry);
 
-  // Get filtered domains and subdomains from curriculumBundle.json
-  const filteredDomains = useMemo(() => {
-    if (!filterCountry || !level || !filterSubject) return [];
-    return getDomainsBySubject(filterCountry, level, filterSubject);
-  }, [filterCountry, level, filterSubject]);
-
-  const filteredSubdomains = useMemo(() => {
-    if (!filterCountry || !level || !filterSubject || !domain) return [];
-    return getSubdomainsByDomain(filterCountry, level, filterSubject, domain);
-  }, [filterCountry, level, filterSubject, domain]);
+  // DB-sourced filter options (match imported objectives)
+  const { data: dbSubjects = [], isFetched: subjectsFetched } = useDbSubjects(filterCountry, level || undefined);
+  const { data: dbDomains = [], isFetched: domainsFetched } = useDbDomains(filterSubject || undefined, level || undefined);
+  const { data: dbSubdomains = [], isFetched: subdomainsFetched } = useDbSubdomains(domain || undefined, level || undefined);
 
   // Queries
-  const { data: objectives, refetch: refetchObjectives } = useObjectives({
-    level: level || undefined,
-    domain: domain || undefined,
-    subdomain: subdomain || undefined,
+  const { data: objectives, isError: objectivesError, error: objectivesErrorDetails, refetch: refetchObjectives } = useObjectives({
+    level: level ? level.toLowerCase() : undefined,
+    subjectId: filterSubject || undefined,
+    domainId: domain || undefined,
+    subdomainId: subdomain || undefined,
     search: search || undefined,
   });
   const { data: stats, refetch: refetchStats } = useCurriculumStats();
+
+  useEffect(() => {
+    if (!filterSubject || !subjectsFetched) return;
+    if (!dbSubjects.some((subject) => subject.id === filterSubject)) {
+      setFilterSubject('');
+      setDomain('');
+      setSubdomain('');
+    }
+  }, [dbSubjects, filterSubject, subjectsFetched]);
+
+  useEffect(() => {
+    if (!domain || !domainsFetched) return;
+    if (!dbDomains.some((d) => d.id === domain)) {
+      setDomain('');
+      setSubdomain('');
+    }
+  }, [dbDomains, domain, domainsFetched]);
+
+  useEffect(() => {
+    if (!subdomain || !subdomainsFetched) return;
+    if (!dbSubdomains.some((sd) => sd.id_new === subdomain)) {
+      setSubdomain('');
+    }
+  }, [dbSubdomains, subdomain, subdomainsFetched]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -199,6 +216,38 @@ export default function CurriculumManager() {
     setDomain('');
     setSubdomain('');
     setSearch('');
+  };
+
+  const exportObjectivesCsv = (rows: typeof objectives) => {
+    if (!rows || rows.length === 0) return;
+    const escape = (v: unknown) => {
+      const s = v === null || v === undefined ? '' : String(v);
+      return `"${s.replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
+    };
+    const headers = [
+      'objective_id', 'objective_text', 'level', 'subject', 'domain', 'subdomain',
+      'notes_from_prog', 'success_criterion_id', 'success_criterion_text',
+    ];
+    const lines: string[] = [headers.join(',')];
+    rows.forEach((o: any) => {
+      const scs = o.success_criteria && o.success_criteria.length > 0 ? o.success_criteria : [null];
+      scs.forEach((sc: any) => {
+        lines.push([
+          o.id, o.text, o.level, o.subject ?? '', o.domain ?? '', o.subdomain ?? '',
+          o.notes_from_prog ?? '', sc?.id ?? '', sc?.text ?? '',
+        ].map(escape).join(','));
+      });
+    });
+    const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `curriculum-objectives-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast({ title: 'Export ready', description: `${rows.length} objective(s) exported.` });
   };
 
   return (
@@ -404,9 +453,9 @@ export default function CurriculumManager() {
                   <SelectValue placeholder="All subjects" />
                 </SelectTrigger>
                 <SelectContent>
-                  {allSubjects.map((subject) => (
+                  {dbSubjects.map((subject) => (
                     <SelectItem key={subject.id} value={subject.id}>
-                      {getLocalizedLabel(subject.labels, 'en')}
+                      {subject.name} ({subject.objectiveCount})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -423,9 +472,9 @@ export default function CurriculumManager() {
                   <SelectValue placeholder="All domains" />
                 </SelectTrigger>
                 <SelectContent>
-                  {filteredDomains.map((d) => (
+                  {dbDomains.map((d) => (
                     <SelectItem key={d.id} value={d.id}>
-                      {getLocalizedLabel(d.labels, 'en')}
+                      {d.label || d.code} ({d.objectiveCount})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -439,9 +488,9 @@ export default function CurriculumManager() {
                   <SelectValue placeholder="All subdomains" />
                 </SelectTrigger>
                 <SelectContent>
-                  {filteredSubdomains.map((sd) => (
-                    <SelectItem key={sd.id} value={sd.id}>
-                      {getLocalizedLabel(sd.labels, 'en')}
+                  {dbSubdomains.map((sd) => (
+                    <SelectItem key={sd.id_new} value={sd.id_new}>
+                      {sd.label || sd.code} ({sd.objectiveCount})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -467,9 +516,20 @@ export default function CurriculumManager() {
             <div className="text-sm text-muted-foreground">
               {objectives?.length || 0} objective(s) found
             </div>
-            <Button variant="outline" size="sm" onClick={resetFilters}>
-              Reset Filters
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportObjectivesCsv(objectives)}
+                disabled={!objectives || objectives.length === 0}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button variant="outline" size="sm" onClick={resetFilters}>
+                Reset Filters
+              </Button>
+            </div>
           </div>
 
           {/* Objectives List */}
@@ -514,9 +574,9 @@ export default function CurriculumManager() {
                         <CurriculumLocation
                           countryId={filterCountry || 'fr'}
                           levelId={objective.level?.toLowerCase()}
-                          subjectId={objective.subject_id}
-                          domainId={objective.domain_id}
-                          subdomainId={objective.subdomain_id}
+                          subjectId={objective.subject_id_uuid ?? objective.subject_id}
+                          domainId={objective.domain_id_uuid ?? objective.domain_id}
+                          subdomainId={objective.subdomain_id_uuid ?? objective.subdomain_id}
                           locale="en"
                           variant="full"
                         />
@@ -536,9 +596,9 @@ export default function CurriculumManager() {
                                   <CurriculumLocation
                                     countryId={filterCountry || 'fr'}
                                     levelId={objective.level?.toLowerCase()}
-                                    subjectId={sc.subject_id}
-                                    domainId={sc.domain_id}
-                                    subdomainId={sc.subdomain_id}
+                                    subjectId={sc.subject_id_uuid ?? sc.subject_id}
+                                    domainId={sc.domain_id_uuid ?? sc.domain_id}
+                                    subdomainId={sc.subdomain_id_uuid ?? sc.subdomain_id}
                                     locale="en"
                                     variant="compact"
                                   />
@@ -578,8 +638,20 @@ export default function CurriculumManager() {
             })}
             </Accordion>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No objectives found. Try adjusting your filters or import curriculum data.
+            <div className="text-center py-8 text-muted-foreground space-y-3">
+              <div>
+                {objectivesError
+                  ? 'Unable to load objectives for these filters.'
+                  : 'No objectives found. Try adjusting your filters or import curriculum data.'}
+              </div>
+              <div className="mx-auto max-w-2xl rounded-md border border-border bg-muted/40 p-3 text-left text-xs font-mono text-muted-foreground">
+                <div>level: {level || 'all'}</div>
+                <div>subject_id_uuid: {filterSubject || 'all'}</div>
+                <div>domain_id_uuid: {domain || 'all'}</div>
+                <div>subdomain_id_uuid: {subdomain || 'all'}</div>
+                {search && <div>search: {search}</div>}
+                {objectivesError && <div>error: {objectivesErrorDetails?.message ?? 'Unknown query error'}</div>}
+              </div>
             </div>
           )}
         </CardContent>

@@ -37,6 +37,7 @@ const QUESTION_TYPES = [
   { value: 'multi', label: 'Multi Choice', description: 'Multiple correct answers' },
   { value: 'numeric', label: 'Numeric', description: 'Number answer' },
   { value: 'ordering', label: 'Ordering', description: 'Arrange in sequence' },
+  { value: 'column-fill', label: 'Column method', description: 'Fill missing digits in an arithmetic column layout' },
   { value: 'visual_pie', label: 'Visual (Pie)', description: 'Pie chart fraction question' },
   { value: 'visual_angle', label: 'Visual (Angle)', description: 'Angle measurement question' },
 ];

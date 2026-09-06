@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  generateRuntimeMiniPractice,
+  isVerticalOperationVisualText,
   isMiniPracticeAnswerCorrect,
+  parseSimpleArithmeticExercise,
   validateRuntimeMiniPractice,
 } from "./runtimeMiniPractice";
 
@@ -63,5 +66,47 @@ describe("runtimeMiniPractice", () => {
     expect(practice).not.toBeNull();
     expect(isMiniPracticeAnswerCorrect(practice!, ["A", "B"])).toBe(true);
     expect(isMiniPracticeAnswerCorrect(practice!, ["B", "A"])).toBe(false);
+  });
+
+  it("detects vertical operation visual text", () => {
+    expect(isVerticalOperationVisualText("77\n+  6\n----")).toBe(true);
+    expect(isVerticalOperationVisualText("325\n− 148\n-----")).toBe(true);
+    expect(isVerticalOperationVisualText("● ● ●\n● ● ●")).toBe(false);
+    expect(isVerticalOperationVisualText("Use a number line from 0 to 10.")).toBe(false);
+  });
+
+  it("parses simple arithmetic expressions", () => {
+    expect(parseSimpleArithmeticExercise("66 + 88")).toEqual({ a: 66, b: 88, op: "+" });
+  });
+
+  it("keeps direct arithmetic for CM1-level kid practice", async () => {
+    const practice = await generateRuntimeMiniPractice({
+      exercise: "66 + 88",
+      gradeLevel: "CM1",
+      language: "fr",
+      learningStyle: "visual",
+      enabled: true,
+    });
+
+    expect(practice).not.toBeNull();
+    expect(practice?.prompt).toContain("Calcule");
+    expect(practice?.visualText).toContain("66");
+    expect(practice?.visualText).not.toContain("barres");
+    expect(practice?.choices?.some((choice) => choice.label === "154")).toBe(true);
+  });
+
+  it("does not use barres for two-digit arithmetic when grade context is missing", async () => {
+    const practice = await generateRuntimeMiniPractice({
+      exercise: "22 + 3",
+      language: "fr",
+      learningStyle: "visual",
+      enabled: true,
+    });
+
+    expect(practice).not.toBeNull();
+    expect(practice?.prompt).toContain("Calcule");
+    expect(practice?.visualText?.toLowerCase()).not.toContain("barre");
+    expect(practice?.visualText?.toLowerCase()).not.toContain("cube");
+    expect(practice?.choices?.some((choice) => choice.label === "25")).toBe(true);
   });
 });

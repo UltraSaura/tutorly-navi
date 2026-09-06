@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Country, SchoolLevel } from '@/types/registration';
+import { dedupeSchoolLevels } from '@/domain/schoolLevels';
 
 export const useCountriesAndLevels = (defaultCountry?: string) => {
   const [countries, setCountries] = useState<Country[]>([]);
@@ -32,7 +33,7 @@ export const useCountriesAndLevels = (defaultCountry?: string) => {
           .order('country_code, sort_order');
 
         if (error) throw error;
-        setSchoolLevels(data || []);
+        setSchoolLevels(dedupeSchoolLevels(data || []));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch school levels');
       }

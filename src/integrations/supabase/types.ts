@@ -177,6 +177,33 @@ export type Database = {
           },
         ]
       }
+      app_feature_flags: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          key: string
+          metadata: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          key: string
+          metadata?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          key?: string
+          metadata?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       children: {
         Row: {
           contact_email: string | null
@@ -328,6 +355,95 @@ export type Database = {
         }
         Relationships: []
       }
+      curriculum_applicability: {
+        Row: {
+          created_at: string
+          edition_id: string
+          id: string
+          level: Database["public"]["Enums"]["class_level"]
+          school_year: string
+          status: Database["public"]["Enums"]["applicability_status"]
+          subject: Database["public"]["Enums"]["subject_code"]
+          track: string | null
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          edition_id: string
+          id?: string
+          level: Database["public"]["Enums"]["class_level"]
+          school_year: string
+          status: Database["public"]["Enums"]["applicability_status"]
+          subject: Database["public"]["Enums"]["subject_code"]
+          track?: string | null
+          valid_from: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          edition_id?: string
+          id?: string
+          level?: Database["public"]["Enums"]["class_level"]
+          school_year?: string
+          status?: Database["public"]["Enums"]["applicability_status"]
+          subject?: Database["public"]["Enums"]["subject_code"]
+          track?: string | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_applicability_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_edition"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculum_edition: {
+        Row: {
+          bo_reference: string
+          bo_url: string | null
+          content_hash: string | null
+          created_at: string
+          cycle: string
+          id: string
+          ingested_at: string | null
+          published_at: string | null
+          source_pdf_url: string | null
+          status: Database["public"]["Enums"]["edition_status"]
+          subject: Database["public"]["Enums"]["subject_code"]
+        }
+        Insert: {
+          bo_reference: string
+          bo_url?: string | null
+          content_hash?: string | null
+          created_at?: string
+          cycle: string
+          id?: string
+          ingested_at?: string | null
+          published_at?: string | null
+          source_pdf_url?: string | null
+          status?: Database["public"]["Enums"]["edition_status"]
+          subject: Database["public"]["Enums"]["subject_code"]
+        }
+        Update: {
+          bo_reference?: string
+          bo_url?: string | null
+          content_hash?: string | null
+          created_at?: string
+          cycle?: string
+          id?: string
+          ingested_at?: string | null
+          published_at?: string | null
+          source_pdf_url?: string | null
+          status?: Database["public"]["Enums"]["edition_status"]
+          subject?: Database["public"]["Enums"]["subject_code"]
+        }
+        Relationships: []
+      }
       curriculum_task_attempts: {
         Row: {
           answer_data: Json | null
@@ -445,6 +561,7 @@ export type Database = {
         Row: {
           code: string | null
           domain: string
+          edition_id: string | null
           id: string
           label: string | null
           subject_id: string | null
@@ -452,6 +569,7 @@ export type Database = {
         Insert: {
           code?: string | null
           domain: string
+          edition_id?: string | null
           id?: string
           label?: string | null
           subject_id?: string | null
@@ -459,16 +577,468 @@ export type Database = {
         Update: {
           code?: string | null
           domain?: string
+          edition_id?: string | null
           id?: string
           label?: string | null
           subject_id?: string | null
         }
         Relationships: [
           {
+            foreignKeyName: "domains_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_edition"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "domains_subject_id_fkey"
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_assets: {
+        Row: {
+          alt: string | null
+          created_at: string
+          exercise_id: string
+          id: string
+          label: string
+          page_number: number | null
+          paper_id: string
+          public_url: string | null
+          sort_order: number
+          storage_path: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          alt?: string | null
+          created_at?: string
+          exercise_id: string
+          id: string
+          label: string
+          page_number?: number | null
+          paper_id: string
+          public_url?: string | null
+          sort_order?: number
+          storage_path: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          alt?: string | null
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          label?: string
+          page_number?: number | null
+          paper_id?: string
+          public_url?: string | null
+          sort_order?: number
+          storage_path?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_assets_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exam_exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_assets_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "exam_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_exercise_program_links: {
+        Row: {
+          confidence: number
+          created_at: string
+          exercise_id: string
+          exercise_import_id: string
+          id: string
+          program_entry_id: string
+          program_entry_type: string
+          rationale: string
+          updated_at: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          exercise_id: string
+          exercise_import_id: string
+          id: string
+          program_entry_id: string
+          program_entry_type: string
+          rationale?: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          exercise_id?: string
+          exercise_import_id?: string
+          id?: string
+          program_entry_id?: string
+          program_entry_type?: string
+          rationale?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_exercise_program_links_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exam_exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_exercises: {
+        Row: {
+          created_at: string
+          discipline: string
+          exam: string
+          exercise_number: number | null
+          fetched_at: string
+          id: string
+          import_id: string
+          location: string
+          paper_id: string
+          parsed_content: Json | null
+          parsing_confidence: string | null
+          parsing_status: string
+          pdf_hash: string
+          pdf_url: string
+          raw_text: string
+          series: string | null
+          session_year: number
+          source_name: string
+          source_url: string
+          title: string | null
+          updated_at: string
+          variant: string
+        }
+        Insert: {
+          created_at?: string
+          discipline: string
+          exam: string
+          exercise_number?: number | null
+          fetched_at: string
+          id: string
+          import_id: string
+          location: string
+          paper_id: string
+          parsed_content?: Json | null
+          parsing_confidence?: string | null
+          parsing_status: string
+          pdf_hash: string
+          pdf_url: string
+          raw_text?: string
+          series?: string | null
+          session_year: number
+          source_name: string
+          source_url: string
+          title?: string | null
+          updated_at?: string
+          variant: string
+        }
+        Update: {
+          created_at?: string
+          discipline?: string
+          exam?: string
+          exercise_number?: number | null
+          fetched_at?: string
+          id?: string
+          import_id?: string
+          location?: string
+          paper_id?: string
+          parsed_content?: Json | null
+          parsing_confidence?: string | null
+          parsing_status?: string
+          pdf_hash?: string
+          pdf_url?: string
+          raw_text?: string
+          series?: string | null
+          session_year?: number
+          source_name?: string
+          source_url?: string
+          title?: string | null
+          updated_at?: string
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_exercises_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "exam_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_papers: {
+        Row: {
+          created_at: string
+          discipline: string
+          exam: string
+          exercise_ids: Json
+          fetched_at: string
+          id: string
+          import_id: string
+          level: string | null
+          location: string
+          parsing_status: string
+          pdf_hash: string
+          pdf_url: string
+          raw_text: string
+          series: string | null
+          session_year: number
+          source_id: string | null
+          source_name: string
+          source_url: string
+          title: string | null
+          updated_at: string
+          variant: string
+        }
+        Insert: {
+          created_at?: string
+          discipline: string
+          exam: string
+          exercise_ids?: Json
+          fetched_at: string
+          id: string
+          import_id: string
+          level?: string | null
+          location: string
+          parsing_status: string
+          pdf_hash: string
+          pdf_url: string
+          raw_text?: string
+          series?: string | null
+          session_year: number
+          source_id?: string | null
+          source_name: string
+          source_url: string
+          title?: string | null
+          updated_at?: string
+          variant: string
+        }
+        Update: {
+          created_at?: string
+          discipline?: string
+          exam?: string
+          exercise_ids?: Json
+          fetched_at?: string
+          id?: string
+          import_id?: string
+          level?: string | null
+          location?: string
+          parsing_status?: string
+          pdf_hash?: string
+          pdf_url?: string
+          raw_text?: string
+          series?: string | null
+          session_year?: number
+          source_id?: string | null
+          source_name?: string
+          source_url?: string
+          title?: string | null
+          updated_at?: string
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_papers_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_question_corrections: {
+        Row: {
+          correct_answer: string | null
+          created_at: string
+          exam_paper_id: string | null
+          exercise_id: string | null
+          explanation_steps: Json
+          id: string
+          question_id: string
+          source: string
+        }
+        Insert: {
+          correct_answer?: string | null
+          created_at?: string
+          exam_paper_id?: string | null
+          exercise_id?: string | null
+          explanation_steps?: Json
+          id?: string
+          question_id: string
+          source?: string
+        }
+        Update: {
+          correct_answer?: string | null
+          created_at?: string
+          exam_paper_id?: string | null
+          exercise_id?: string | null
+          explanation_steps?: Json
+          id?: string
+          question_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_question_corrections_exam_paper_id_fkey"
+            columns: ["exam_paper_id"]
+            isOneToOne: false
+            referencedRelation: "exam_papers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_question_corrections_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exam_exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_sources: {
+        Row: {
+          created_at: string
+          fetched_at: string
+          id: string
+          source_name: string
+          source_url: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fetched_at: string
+          id: string
+          source_name: string
+          source_url: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          source_name?: string
+          source_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      exam_training_items: {
+        Row: {
+          choices: Json | null
+          context: string | null
+          created_at: string
+          curriculum_objective_ids: string[] | null
+          difficulty: string
+          documents: Json
+          exam: string
+          exam_style: string | null
+          expected_answer: Json | null
+          hints: Json | null
+          id: string
+          item_type: string
+          level: string
+          metadata: Json
+          paper_id: string | null
+          prompt: string
+          questions: Json
+          skill: string | null
+          skill_tags: string[]
+          solution: string | null
+          source_exercise_id: string | null
+          source_label: string | null
+          source_year: number | null
+          status: string
+          subject_slug: string
+          updated_at: string
+        }
+        Insert: {
+          choices?: Json | null
+          context?: string | null
+          created_at?: string
+          curriculum_objective_ids?: string[] | null
+          difficulty?: string
+          documents?: Json
+          exam: string
+          exam_style?: string | null
+          expected_answer?: Json | null
+          hints?: Json | null
+          id: string
+          item_type: string
+          level: string
+          metadata?: Json
+          paper_id?: string | null
+          prompt: string
+          questions?: Json
+          skill?: string | null
+          skill_tags?: string[]
+          solution?: string | null
+          source_exercise_id?: string | null
+          source_label?: string | null
+          source_year?: number | null
+          status?: string
+          subject_slug: string
+          updated_at?: string
+        }
+        Update: {
+          choices?: Json | null
+          context?: string | null
+          created_at?: string
+          curriculum_objective_ids?: string[] | null
+          difficulty?: string
+          documents?: Json
+          exam?: string
+          exam_style?: string | null
+          expected_answer?: Json | null
+          hints?: Json | null
+          id?: string
+          item_type?: string
+          level?: string
+          metadata?: Json
+          paper_id?: string | null
+          prompt?: string
+          questions?: Json
+          skill?: string | null
+          skill_tags?: string[]
+          solution?: string | null
+          source_exercise_id?: string | null
+          source_label?: string | null
+          source_year?: number | null
+          status?: string
+          subject_slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_training_items_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "exam_papers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_training_items_source_exercise_id_fkey"
+            columns: ["source_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exam_exercises"
             referencedColumns: ["id"]
           },
         ]
@@ -781,38 +1351,6 @@ export type Database = {
           },
         ]
       }
-      learning_interaction_events: {
-        Row: {
-          created_at: string
-          event_name: string
-          id: string
-          metadata: Json
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          event_name: string
-          id?: string
-          metadata?: Json
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          event_name?: string
-          id?: string
-          metadata?: Json
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "learning_interaction_events_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       lesson_sessions: {
         Row: {
           child_id: string
@@ -882,7 +1420,9 @@ export type Database = {
       }
       lessons: {
         Row: {
+          bo_reference: string | null
           created_at: string
+          edition_id: string | null
           id: string
           id_new: string
           materials: string | null
@@ -896,7 +1436,9 @@ export type Database = {
           unit_id: string | null
         }
         Insert: {
+          bo_reference?: string | null
           created_at?: string
+          edition_id?: string | null
           id: string
           id_new?: string
           materials?: string | null
@@ -910,7 +1452,9 @@ export type Database = {
           unit_id?: string | null
         }
         Update: {
+          bo_reference?: string | null
           created_at?: string
+          edition_id?: string | null
           id?: string
           id_new?: string
           materials?: string | null
@@ -924,6 +1468,13 @@ export type Database = {
           unit_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "lessons_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_edition"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lessons_topic_id_fkey"
             columns: ["topic_id"]
@@ -1188,33 +1739,39 @@ export type Database = {
         Row: {
           bank_id: string
           created_at: string
+          display_context: string
           id: string
           is_active: boolean | null
           min_completed_in_set: number | null
           topic_id: string | null
           trigger_after_n_videos: number | null
+          trigger_video_id: string | null
           updated_at: string
           video_ids: string[] | null
         }
         Insert: {
           bank_id: string
           created_at?: string
+          display_context?: string
           id?: string
           is_active?: boolean | null
           min_completed_in_set?: number | null
           topic_id?: string | null
           trigger_after_n_videos?: number | null
+          trigger_video_id?: string | null
           updated_at?: string
           video_ids?: string[] | null
         }
         Update: {
           bank_id?: string
           created_at?: string
+          display_context?: string
           id?: string
           is_active?: boolean | null
           min_completed_in_set?: number | null
           topic_id?: string | null
           trigger_after_n_videos?: number | null
+          trigger_video_id?: string | null
           updated_at?: string
           video_ids?: string[] | null
         }
@@ -1224,6 +1781,13 @@ export type Database = {
             columns: ["bank_id"]
             isOneToOne: false
             referencedRelation: "quiz_banks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_bank_assignments_trigger_video_id_fkey"
+            columns: ["trigger_video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
             referencedColumns: ["id"]
           },
         ]
@@ -1270,6 +1834,7 @@ export type Database = {
         Row: {
           bank_id: string
           created_at: string
+          difficulty: number
           id: string
           payload: Json
           position: number
@@ -1278,6 +1843,7 @@ export type Database = {
         Insert: {
           bank_id: string
           created_at?: string
+          difficulty?: number
           id: string
           payload: Json
           position?: number
@@ -1286,6 +1852,7 @@ export type Database = {
         Update: {
           bank_id?: string
           created_at?: string
+          difficulty?: number
           id?: string
           payload?: Json
           position?: number
@@ -1563,39 +2130,75 @@ export type Database = {
           color_scheme: string
           country_code: string | null
           created_at: string
+          display_context: string
+          font_size: number
+          font_family: string
+          icon_image_url: string | null
+          icon_color: string
           icon_name: string
           id: string
           is_active: boolean
           language: string | null
+          lesson_font_family: string
+          lesson_font_size: number
+          lesson_text_color: string
           name: string
           order_index: number
+          practice_font_family: string
+          practice_font_size: number
+          practice_text_color: string
           slug: string
+          text_color: string
           updated_at: string
         }
         Insert: {
           color_scheme: string
           country_code?: string | null
           created_at?: string
+          display_context?: string
+          font_size?: number
+          font_family?: string
+          icon_image_url?: string | null
+          icon_color?: string
           icon_name: string
           id?: string
           is_active?: boolean
           language?: string | null
+          lesson_font_family?: string
+          lesson_font_size?: number
+          lesson_text_color?: string
           name: string
           order_index?: number
+          practice_font_family?: string
+          practice_font_size?: number
+          practice_text_color?: string
           slug: string
+          text_color?: string
           updated_at?: string
         }
         Update: {
           color_scheme?: string
           country_code?: string | null
           created_at?: string
+          display_context?: string
+          font_size?: number
+          font_family?: string
+          icon_image_url?: string | null
+          icon_color?: string
           icon_name?: string
           id?: string
           is_active?: boolean
           language?: string | null
+          lesson_font_family?: string
+          lesson_font_size?: number
+          lesson_text_color?: string
           name?: string
           order_index?: number
+          practice_font_family?: string
+          practice_font_size?: number
+          practice_text_color?: string
           slug?: string
+          text_color?: string
           updated_at?: string
         }
         Relationships: []
@@ -1610,6 +2213,7 @@ export type Database = {
           objective_id: string | null
           objective_id_uuid: string | null
           skill_id: string | null
+          source: Database["public"]["Enums"]["content_source"]
           subdomain_id: string | null
           subdomain_id_uuid: string | null
           subject_id: string | null
@@ -1625,6 +2229,7 @@ export type Database = {
           objective_id?: string | null
           objective_id_uuid?: string | null
           skill_id?: string | null
+          source?: Database["public"]["Enums"]["content_source"]
           subdomain_id?: string | null
           subdomain_id_uuid?: string | null
           subject_id?: string | null
@@ -1640,6 +2245,7 @@ export type Database = {
           objective_id?: string | null
           objective_id_uuid?: string | null
           skill_id?: string | null
+          source?: Database["public"]["Enums"]["content_source"]
           subdomain_id?: string | null
           subdomain_id_uuid?: string | null
           subject_id?: string | null
@@ -1872,15 +2478,21 @@ export type Database = {
           curriculum_subject_id: string | null
           curriculum_subject_id_uuid: string | null
           description: string | null
+          difficulty_level: number
           estimated_duration_minutes: number
           id: string
           is_active: boolean
+          is_parent_topic: boolean
           keywords: string[] | null
           lesson_content: Json | null
+          mastery_threshold: number
           name: string
           order_index: number
+          parent_topic_id: string | null
           quiz_count: number
+          sequence_order: number
           slug: string
+          step_name: string | null
           updated_at: string
           video_count: number
         }
@@ -1896,15 +2508,21 @@ export type Database = {
           curriculum_subject_id?: string | null
           curriculum_subject_id_uuid?: string | null
           description?: string | null
+          difficulty_level?: number
           estimated_duration_minutes?: number
           id?: string
           is_active?: boolean
+          is_parent_topic?: boolean
           keywords?: string[] | null
           lesson_content?: Json | null
+          mastery_threshold?: number
           name: string
           order_index?: number
+          parent_topic_id?: string | null
           quiz_count?: number
+          sequence_order?: number
           slug: string
+          step_name?: string | null
           updated_at?: string
           video_count?: number
         }
@@ -1920,15 +2538,21 @@ export type Database = {
           curriculum_subject_id?: string | null
           curriculum_subject_id_uuid?: string | null
           description?: string | null
+          difficulty_level?: number
           estimated_duration_minutes?: number
           id?: string
           is_active?: boolean
+          is_parent_topic?: boolean
           keywords?: string[] | null
           lesson_content?: Json | null
+          mastery_threshold?: number
           name?: string
           order_index?: number
+          parent_topic_id?: string | null
           quiz_count?: number
+          sequence_order?: number
           slug?: string
+          step_name?: string | null
           updated_at?: string
           video_count?: number
         }
@@ -1959,6 +2583,60 @@ export type Database = {
             columns: ["curriculum_subject_id_uuid"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topics_parent_topic_id_fkey"
+            columns: ["parent_topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_item_answers: {
+        Row: {
+          answer_text: string
+          feedback: string | null
+          guidance_feedback: string | null
+          hint_level: number
+          id: string
+          is_correct: boolean | null
+          item_id: string
+          question_id: string
+          submitted_at: string
+          user_id: string
+        }
+        Insert: {
+          answer_text?: string
+          feedback?: string | null
+          guidance_feedback?: string | null
+          hint_level?: number
+          id?: string
+          is_correct?: boolean | null
+          item_id: string
+          question_id: string
+          submitted_at?: string
+          user_id?: string
+        }
+        Update: {
+          answer_text?: string
+          feedback?: string | null
+          guidance_feedback?: string | null
+          hint_level?: number
+          id?: string
+          is_correct?: boolean | null
+          item_id?: string
+          question_id?: string
+          submitted_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_item_answers_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "exam_training_items"
             referencedColumns: ["id"]
           },
         ]
@@ -1993,9 +2671,11 @@ export type Database = {
       user_learning_progress: {
         Row: {
           category_id: string | null
+          consecutive_correct: number
           created_at: string
           id: string
           last_watched_position_seconds: number
+          mastery_score: number
           progress_percentage: number
           progress_type: string
           quiz_score: number | null
@@ -2008,9 +2688,11 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          consecutive_correct?: number
           created_at?: string
           id?: string
           last_watched_position_seconds?: number
+          mastery_score?: number
           progress_percentage?: number
           progress_type: string
           quiz_score?: number | null
@@ -2023,9 +2705,11 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          consecutive_correct?: number
           created_at?: string
           id?: string
           last_watched_position_seconds?: number
+          mastery_score?: number
           progress_percentage?: number
           progress_type?: string
           quiz_score?: number | null
@@ -2321,6 +3005,7 @@ export type Database = {
         Args: { secret_name: string; secret_value: string }
         Returns: undefined
       }
+      current_school_year: { Args: { ref_date?: string }; Returns: string }
       get_model_with_fallback: {
         Args: never
         Returns: {
@@ -2340,6 +3025,15 @@ export type Database = {
         Args: { _child_user_id: string; _guardian_user_id: string }
         Returns: boolean
       }
+      resolve_edition: {
+        Args: {
+          p_date?: string
+          p_level: Database["public"]["Enums"]["class_level"]
+          p_subject: Database["public"]["Enums"]["subject_code"]
+          p_track?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role:
@@ -2349,6 +3043,23 @@ export type Database = {
         | "parent"
         | "guardian"
         | "teacher"
+      applicability_status: "en_vigueur" | "transitoire" | "planifie"
+      class_level:
+        | "CP"
+        | "CE1"
+        | "CE2"
+        | "CM1"
+        | "CM2"
+        | "6e"
+        | "5e"
+        | "4e"
+        | "3e"
+        | "2nde"
+        | "1re"
+        | "terminale"
+      content_source: "official" | "generated"
+      edition_status: "projet" | "active" | "superseded"
+      subject_code: "francais" | "mathematiques"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2484,6 +3195,24 @@ export const Constants = {
         "guardian",
         "teacher",
       ],
+      applicability_status: ["en_vigueur", "transitoire", "planifie"],
+      class_level: [
+        "CP",
+        "CE1",
+        "CE2",
+        "CM1",
+        "CM2",
+        "6e",
+        "5e",
+        "4e",
+        "3e",
+        "2nde",
+        "1re",
+        "terminale",
+      ],
+      content_source: ["official", "generated"],
+      edition_status: ["projet", "active", "superseded"],
+      subject_code: ["francais", "mathematiques"],
     },
   },
 } as const

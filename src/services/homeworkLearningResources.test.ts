@@ -75,7 +75,7 @@ describe("homework learning resources", () => {
         row: { prompt: "Area", status: "incorrect" },
         matches: [skill("geometry:area", 0.86, "Area")],
       },
-    ]);
+    ], []);
 
     expect(ranked.map((match) => match.skillTag)).toEqual(["fractions:add", "geometry:area"]);
     expect(ranked[0].confidence).toBeCloseTo(0.8);

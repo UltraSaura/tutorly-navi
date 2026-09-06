@@ -11,6 +11,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserCurriculumProfile } from './useUserCurriculumProfile';
+import { useActiveSchoolLevel } from './useActiveSchoolLevel';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import {
   getSubjects,
@@ -18,6 +19,7 @@ import {
   getSubdomainsByDomain,
 } from '@/lib/curriculum';
 import { buildSubjectsFromCurriculum } from '@/domain/curriculum';
+import { normalizeSchoolLevel } from '@/domain/schoolLevels';
 import type { CurriculumSubject } from '@/domain/curriculum';
 
 interface UseStudentCurriculumResult {
@@ -28,25 +30,28 @@ interface UseStudentCurriculumResult {
 
 export function useStudentCurriculum(): UseStudentCurriculumResult {
   const { profile, isLoading: profileLoading } = useUserCurriculumProfile();
+  const activeSchoolLevel = useActiveSchoolLevel();
   const { language } = useLanguage();
+  const effectiveCountryCode = profile?.countryCode ?? (activeSchoolLevel.isPreviewing ? 'fr' : undefined);
+  const effectiveLevelCode = activeSchoolLevel.normalizedLevel ?? profile?.levelCode;
 
   const {
     data,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['student-curriculum', profile?.countryCode, profile?.levelCode, language],
+    queryKey: ['student-curriculum', effectiveCountryCode, effectiveLevelCode, language],
     queryFn: async (): Promise<CurriculumSubject[]> => {
-      if (!profile?.countryCode || !profile?.levelCode) {
+      if (!effectiveCountryCode || !effectiveLevelCode) {
         return [];
       }
 
       // Step 1: Get curriculum structure from bundle
-      const curriculumSubjects = getSubjects(profile.countryCode, profile.levelCode);
+      const curriculumSubjects = getSubjects(effectiveCountryCode, effectiveLevelCode);
 
       if (curriculumSubjects.length === 0) {
         console.warn(
-          `No curriculum subjects found for ${profile.countryCode} - ${profile.levelCode}`
+          `No curriculum subjects found for ${effectiveCountryCode} - ${effectiveLevelCode}`
         );
         return [];
       }
@@ -57,16 +62,16 @@ export function useStudentCurriculum(): UseStudentCurriculumResult {
 
       curriculumSubjects.forEach(subject => {
         const domains = getDomainsBySubject(
-          profile.countryCode,
-          profile.levelCode,
+          effectiveCountryCode,
+          effectiveLevelCode,
           subject.id
         );
         curriculumDomains.push(...domains);
 
         domains.forEach(domain => {
           const subdomains = getSubdomainsByDomain(
-            profile.countryCode,
-            profile.levelCode,
+            effectiveCountryCode,
+            effectiveLevelCode,
             subject.id,
             domain.id
           );
@@ -99,19 +104,27 @@ export function useStudentCurriculum(): UseStudentCurriculumResult {
         learning_categories: subject.learning_categories || [],
       }));
 
-      // Step 3: Fetch topics filtered by curriculum
+      // Step 3: Fetch topics, then normalize/filter curriculum fields client-side.
+      // Imported curriculum rows are not fully consistent in casing/format, and exact DB
+      // filters can hide valid CM1 topics during student/admin preview flows.
       const { data: learningTopics, error: topicsError } = await supabase
         .from('topics')
         .select('*')
-        .eq('curriculum_country_code', profile.countryCode)
-        .eq('curriculum_level_code', profile.levelCode)
         .eq('is_active', true)
         .order('order_index');
 
       if (topicsError) throw topicsError;
-      if (!learningTopics || learningTopics.length === 0) {
+      const normalizedCountry = String(effectiveCountryCode).trim().toLowerCase();
+      const normalizedLevel = normalizeSchoolLevel(effectiveLevelCode);
+      const curriculumTopics = (learningTopics || []).filter((topic: any) => {
+        const topicCountry = String(topic.curriculum_country_code || '').trim().toLowerCase();
+        return topicCountry === normalizedCountry
+          && normalizeSchoolLevel(topic.curriculum_level_code) === normalizedLevel;
+      });
+
+      if (curriculumTopics.length === 0) {
         console.warn(
-          `No topics found for curriculum ${profile.countryCode} - ${profile.levelCode}`
+          `No topics found for curriculum ${effectiveCountryCode} - ${effectiveLevelCode}`
         );
         return [];
       }
@@ -119,7 +132,7 @@ export function useStudentCurriculum(): UseStudentCurriculumResult {
       // Step 4: Build nested structure
       const subjects = buildSubjectsFromCurriculum({
         learningSubjects: typedSubjects as any,
-        learningTopics,
+        learningTopics: curriculumTopics,
         curriculumSubjects,
         curriculumDomains,
         curriculumSubdomains,
@@ -128,13 +141,13 @@ export function useStudentCurriculum(): UseStudentCurriculumResult {
 
       return subjects;
     },
-    enabled: !!profile?.countryCode && !!profile?.levelCode && !profileLoading,
+    enabled: !!effectiveCountryCode && !!effectiveLevelCode && !profileLoading,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   return {
     subjects: data || [],
-    isLoading: isLoading || profileLoading,
+    isLoading: isLoading || profileLoading || activeSchoolLevel.isLoading,
     error: error as Error | null,
   };
 }

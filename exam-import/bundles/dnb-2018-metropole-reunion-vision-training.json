@@ -1,0 +1,2610 @@
+{
+  "training_items": [
+    {
+      "id": "e07f570c-66a3-5848-a21a-cd1722959b67",
+      "source_exercise_id": "f68464df-e523-507d-9c1d-06bb987c9a61",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "general_math",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Le biathlète Martin Fourcade a remporté le sixième gros globe de cristal en 2017 à Pyeongchang en Corée du Sud. Donner approximativement la latitude et la longitude de ce lieu repéré sur la carte.",
+      "context": "Le gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski. Ce trophée pèse 9 kg et mesure 46 cm de hauteur.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Globe de cristal",
+          "alt": "Photo du trophée globe de cristal",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Carte — localisation de Pyeongchang",
+          "alt": "Mappemonde avec Pyeongchang marqué en Corée du Sud (latitude ~37°N, longitude ~128°E)",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig2.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Schéma du trophée",
+          "alt": "Cylindre de 23 cm surmonté d'une sphère de diamètre 23 cm",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig3.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig3.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q1",
+          "label": "1.",
+          "type": "text",
+          "prompt": "Le biathlète Martin Fourcade a remporté le sixième gros globe de cristal en 2017 à Pyeongchang en Corée du Sud. Donner approximativement la latitude et la longitude de ce lieu repéré sur la carte.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              1976.66,
+              2057.34
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 1 (11 points)",
+      "metadata": {
+        "source_question_id": "q1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Le biathlète Martin Fourcade a remporté le sixième gros globe de cristal en 2017 à Pyeongchang en Corée du Sud. Donner approximativement la latitude et la longitude de ce lieu r...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "995ebb02-8312-5145-8a13-fff43ac0fdb1",
+      "source_exercise_id": "f68464df-e523-507d-9c1d-06bb987c9a61",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "volume",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "On considère que le globe est composé d'un cylindre en cristal de diamètre 6 cm surmonté d'une boule de cristal. Montrer qu'une valeur approchée du volume de la boule est de 6 371 cm³. Rappel : volume d'une boule de rayon R : V = (4/3)·π·R³ ; volume d'un cylindre de rayon r et hauteur h : V = π·r²·h.",
+      "context": "Le gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski. Ce trophée pèse 9 kg et mesure 46 cm de hauteur.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Globe de cristal",
+          "alt": "Photo du trophée globe de cristal",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Carte — localisation de Pyeongchang",
+          "alt": "Mappemonde avec Pyeongchang marqué en Corée du Sud (latitude ~37°N, longitude ~128°E)",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig2.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Schéma du trophée",
+          "alt": "Cylindre de 23 cm surmonté d'une sphère de diamètre 23 cm",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig3.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig3.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q2",
+          "label": "2.",
+          "type": "text",
+          "prompt": "On considère que le globe est composé d'un cylindre en cristal de diamètre 6 cm surmonté d'une boule de cristal. Montrer qu'une valeur approchée du volume de la boule est de 6 371 cm³. Rappel : volume d'une boule de rayon R : V = (4/3)·π·R³ ; volume d'un cylindre de rayon r et hauteur h : V = π·r²·h.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              5.88,
+              6.12
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie ce que tu dois montrer ou justifier."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle la propriété ou la définition à utiliser."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ton raisonnement en une ou deux phrases claires."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : précise ton raisonnement ou la propriété invoquée.",
+            "incorrect_feedback": "Reprends l'énoncé et identifie ce que tu dois démontrer."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 1 (11 points)",
+      "metadata": {
+        "source_question_id": "q2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "On considère que le globe est composé d'un cylindre en cristal de diamètre 6 cm surmonté d'une boule de cristal. Montrer qu'une valeur approchée du volume de la boule est de 6 3...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "06cb41f7-85cb-53c5-bc3d-7af2b7bd1aaf",
+      "source_exercise_id": "f68464df-e523-507d-9c1d-06bb987c9a61",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "volume",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Marie affirme que le volume de la boule de cristal représente environ 90 % du volume total du trophée. A-t-elle raison ?",
+      "context": "Le gros globe de cristal est un trophée attribué au vainqueur de la coupe du monde de ski. Ce trophée pèse 9 kg et mesure 46 cm de hauteur.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Globe de cristal",
+          "alt": "Photo du trophée globe de cristal",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Carte — localisation de Pyeongchang",
+          "alt": "Mappemonde avec Pyeongchang marqué en Corée du Sud (latitude ~37°N, longitude ~128°E)",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig2.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Schéma du trophée",
+          "alt": "Cylindre de 23 cm surmonté d'une sphère de diamètre 23 cm",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig3.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex01/ex1-fig3.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q3",
+          "label": "3.",
+          "type": "text",
+          "prompt": "Marie affirme que le volume de la boule de cristal représente environ 90 % du volume total du trophée. A-t-elle raison ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              88.2,
+              91.8
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 1 (11 points)",
+      "metadata": {
+        "source_question_id": "q3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Marie affirme que le volume de la boule de cristal représente environ 90 % du volume total du trophée. A-t-elle raison ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "774a214d-406d-52bf-8a15-ff9a26f5e12e",
+      "source_exercise_id": "63f1ea26-f720-5bc9-a3bd-68434aabef34",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "statistics",
+      "skill_tags": [
+        "statistiques"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Laquelle de ces deux villes a eu la plus forte concentration moyenne en PM10 entre le 16 et le 25 janvier ?",
+      "context": "Parmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées. Les PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm. En janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines.",
+      "documents": [
+        {
+          "type": "table",
+          "label": "Données statistiques PM10 — Lyon (16 au 25 janvier 2017)",
+          "table": {
+            "headers": [
+              "Statistique",
+              "Valeur"
+            ],
+            "rows": [
+              [
+                "Moyenne",
+                "72,5 μg/m³"
+              ],
+              [
+                "Médiane",
+                "83,5 μg/m³"
+              ],
+              [
+                "Concentration minimale",
+                "22 μg/m³"
+              ],
+              [
+                "Concentration maximale",
+                "107 μg/m³"
+              ]
+            ]
+          },
+          "usage": "shared"
+        },
+        {
+          "type": "table",
+          "label": "Relevés journaliers PM10 — Grenoble (16 au 25 janvier 2017)",
+          "table": {
+            "headers": [
+              "Date",
+              "Concentration PM10 (μg/m³)"
+            ],
+            "rows": [
+              [
+                "16 janvier",
+                "32"
+              ],
+              [
+                "17 janvier",
+                "39"
+              ],
+              [
+                "18 janvier",
+                "52"
+              ],
+              [
+                "19 janvier",
+                "57"
+              ],
+              [
+                "20 janvier",
+                "78"
+              ],
+              [
+                "21 janvier",
+                "63"
+              ],
+              [
+                "22 janvier",
+                "60"
+              ],
+              [
+                "23 janvier",
+                "82"
+              ],
+              [
+                "24 janvier",
+                "82"
+              ],
+              [
+                "25 janvier",
+                "89"
+              ]
+            ]
+          },
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q1",
+          "label": "1.",
+          "type": "text",
+          "prompt": "Laquelle de ces deux villes a eu la plus forte concentration moyenne en PM10 entre le 16 et le 25 janvier ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              9.8,
+              10.2
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Regarde le tableau et repère la bonne ligne."
+              },
+              {
+                "level": 2,
+                "text": "Identifie la colonne correspondant à la question."
+              },
+              {
+                "level": 3,
+                "text": "Lis la valeur à l'intersection ligne/colonne."
+              }
+            ],
+            "correct_feedback": "Bonne lecture du tableau.",
+            "almost_feedback": "Tu es proche : vérifie la ligne ou la colonne utilisée.",
+            "incorrect_feedback": "Reviens au tableau et localise les données demandées."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 2 (14 points)",
+      "metadata": {
+        "source_question_id": "q1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Laquelle de ces deux villes a eu la plus forte concentration moyenne en PM10 entre le 16 et le 25 janvier ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "0a701720-7f3f-5853-b5b9-5bbc4c96adfa",
+      "source_exercise_id": "63f1ea26-f720-5bc9-a3bd-68434aabef34",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "statistics",
+      "skill_tags": [
+        "statistiques",
+        "calcul"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Calculer l'étendue des séries des relevés en PM10 à Lyon et à Grenoble. Laquelle de ces deux villes a eu l'étendue la plus importante ? Interpréter ce résultat.",
+      "context": "Parmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées. Les PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm. En janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines.",
+      "documents": [
+        {
+          "type": "table",
+          "label": "Données statistiques PM10 — Lyon (16 au 25 janvier 2017)",
+          "table": {
+            "headers": [
+              "Statistique",
+              "Valeur"
+            ],
+            "rows": [
+              [
+                "Moyenne",
+                "72,5 μg/m³"
+              ],
+              [
+                "Médiane",
+                "83,5 μg/m³"
+              ],
+              [
+                "Concentration minimale",
+                "22 μg/m³"
+              ],
+              [
+                "Concentration maximale",
+                "107 μg/m³"
+              ]
+            ]
+          },
+          "usage": "shared"
+        },
+        {
+          "type": "table",
+          "label": "Relevés journaliers PM10 — Grenoble (16 au 25 janvier 2017)",
+          "table": {
+            "headers": [
+              "Date",
+              "Concentration PM10 (μg/m³)"
+            ],
+            "rows": [
+              [
+                "16 janvier",
+                "32"
+              ],
+              [
+                "17 janvier",
+                "39"
+              ],
+              [
+                "18 janvier",
+                "52"
+              ],
+              [
+                "19 janvier",
+                "57"
+              ],
+              [
+                "20 janvier",
+                "78"
+              ],
+              [
+                "21 janvier",
+                "63"
+              ],
+              [
+                "22 janvier",
+                "60"
+              ],
+              [
+                "23 janvier",
+                "82"
+              ],
+              [
+                "24 janvier",
+                "82"
+              ],
+              [
+                "25 janvier",
+                "89"
+              ]
+            ]
+          },
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q2",
+          "label": "2.",
+          "type": "numeric",
+          "prompt": "Calculer l'étendue des séries des relevés en PM10 à Lyon et à Grenoble. Laquelle de ces deux villes a eu l'étendue la plus importante ? Interpréter ce résultat.",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              9.8,
+              10.2
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Regarde le tableau et repère la bonne ligne."
+              },
+              {
+                "level": 2,
+                "text": "Identifie la colonne correspondant à la question."
+              },
+              {
+                "level": 3,
+                "text": "Lis la valeur à l'intersection ligne/colonne."
+              }
+            ],
+            "correct_feedback": "Bonne lecture du tableau.",
+            "almost_feedback": "Tu es proche : vérifie la ligne ou la colonne utilisée.",
+            "incorrect_feedback": "Reviens au tableau et localise les données demandées."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 2 (14 points)",
+      "metadata": {
+        "source_question_id": "q2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Calculer l'étendue des séries des relevés en PM10 à Lyon et à Grenoble. Laquelle de ces deux villes a eu l'étendue la plus importante ? Interpréter ce résultat.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "9d03909b-30fa-5853-8b69-9cb44bba41d8",
+      "source_exercise_id": "63f1ea26-f720-5bc9-a3bd-68434aabef34",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "general_math",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "L'affirmation suivante est-elle exacte ? « Du 16 au 25 janvier, le seuil d'alerte de 80 μg/m³ par jour a été dépassé au moins 5 fois à Lyon. » Justifier.",
+      "context": "Parmi les nombreux polluants de l'air, les particules fines sont régulièrement surveillées. Les PM10 sont des particules fines dont le diamètre est inférieur à 0,01 mm. En janvier 2017, les villes de Lyon et Grenoble ont connu un épisode de pollution aux particules fines.",
+      "documents": [
+        {
+          "type": "table",
+          "label": "Données statistiques PM10 — Lyon (16 au 25 janvier 2017)",
+          "table": {
+            "headers": [
+              "Statistique",
+              "Valeur"
+            ],
+            "rows": [
+              [
+                "Moyenne",
+                "72,5 μg/m³"
+              ],
+              [
+                "Médiane",
+                "83,5 μg/m³"
+              ],
+              [
+                "Concentration minimale",
+                "22 μg/m³"
+              ],
+              [
+                "Concentration maximale",
+                "107 μg/m³"
+              ]
+            ]
+          },
+          "usage": "shared"
+        },
+        {
+          "type": "table",
+          "label": "Relevés journaliers PM10 — Grenoble (16 au 25 janvier 2017)",
+          "table": {
+            "headers": [
+              "Date",
+              "Concentration PM10 (μg/m³)"
+            ],
+            "rows": [
+              [
+                "16 janvier",
+                "32"
+              ],
+              [
+                "17 janvier",
+                "39"
+              ],
+              [
+                "18 janvier",
+                "52"
+              ],
+              [
+                "19 janvier",
+                "57"
+              ],
+              [
+                "20 janvier",
+                "78"
+              ],
+              [
+                "21 janvier",
+                "63"
+              ],
+              [
+                "22 janvier",
+                "60"
+              ],
+              [
+                "23 janvier",
+                "82"
+              ],
+              [
+                "24 janvier",
+                "82"
+              ],
+              [
+                "25 janvier",
+                "89"
+              ]
+            ]
+          },
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q3",
+          "label": "3.",
+          "type": "text",
+          "prompt": "L'affirmation suivante est-elle exacte ? « Du 16 au 25 janvier, le seuil d'alerte de 80 μg/m³ par jour a été dépassé au moins 5 fois à Lyon. » Justifier.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              15.68,
+              16.32
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Regarde le tableau et repère la bonne ligne."
+              },
+              {
+                "level": 2,
+                "text": "Identifie la colonne correspondant à la question."
+              },
+              {
+                "level": 3,
+                "text": "Lis la valeur à l'intersection ligne/colonne."
+              }
+            ],
+            "correct_feedback": "Bonne lecture du tableau.",
+            "almost_feedback": "Tu es proche : vérifie la ligne ou la colonne utilisée.",
+            "incorrect_feedback": "Reviens au tableau et localise les données demandées."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 2 (14 points)",
+      "metadata": {
+        "source_question_id": "q3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "L'affirmation suivante est-elle exacte ? « Du 16 au 25 janvier, le seuil d'alerte de 80 μg/m³ par jour a été dépassé au moins 5 fois à Lyon. » Justifier.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "e66ff800-4d33-5298-8be8-d4153be5f5ae",
+      "source_exercise_id": "d0cbf516-0e95-57ab-ad53-ea3dbcb60da0",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "probability",
+      "skill_tags": [
+        "probabilites"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Quelle est la probabilité qu'il écoute du rap ?",
+      "context": "Dans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.",
+      "documents": [],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q1",
+          "label": "1.",
+          "type": "text",
+          "prompt": "Quelle est la probabilité qu'il écoute du rap ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              367.5,
+              382.5
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie l'événement et les cas favorables."
+              },
+              {
+                "level": 2,
+                "text": "Compte le nombre total de cas possibles."
+              },
+              {
+                "level": 3,
+                "text": "Probabilité = cas favorables ÷ cas totaux."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : vérifie le numérateur ou le dénominateur.",
+            "incorrect_feedback": "Reviens à la définition de la probabilité et recompte les cas."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 3 (12 points)",
+      "metadata": {
+        "source_question_id": "q1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quelle est la probabilité qu'il écoute du rap ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "53dc7e4b-cf6b-5ee4-961d-695f6f89e73d",
+      "source_exercise_id": "d0cbf516-0e95-57ab-ad53-ea3dbcb60da0",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "probability",
+      "skill_tags": [
+        "probabilites"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "La probabilité qu'il écoute du rock est égale à 7/15. Combien Théo a-t-il de morceaux de rock dans son lecteur audio ?",
+      "context": "Dans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.",
+      "documents": [],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q2",
+          "label": "2.",
+          "type": "numeric",
+          "prompt": "La probabilité qu'il écoute du rock est égale à 7/15. Combien Théo a-t-il de morceaux de rock dans son lecteur audio ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              6.86,
+              7.14
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les données utiles dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Fais le calcul étape par étape."
+              },
+              {
+                "level": 3,
+                "text": "Vérifie ton résultat et n'oublie pas l'unité."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : vérifie chaque étape du calcul.",
+            "incorrect_feedback": "Reprends le calcul depuis le début en utilisant les données de l'énoncé."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 3 (12 points)",
+      "metadata": {
+        "source_question_id": "q2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "La probabilité qu'il écoute du rock est égale à 7/15. Combien Théo a-t-il de morceaux de rock dans son lecteur audio ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "c0b68941-3034-50ad-a5d7-1337cf828cb4",
+      "source_exercise_id": "d0cbf516-0e95-57ab-ad53-ea3dbcb60da0",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "probability",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Alice possède 40 % de morceaux de rock dans son lecteur audio. Si Théo et Alice appuient tous les deux sur « lecture aléatoire », lequel a le plus de chances d'écouter un morceau de rock ?",
+      "context": "Dans son lecteur audio, Théo a téléchargé 375 morceaux de musique. Parmi eux, il y a 125 morceaux de rap. Il appuie sur la touche « lecture aléatoire » qui lui permet d'écouter un morceau choisi au hasard parmi tous les morceaux disponibles.",
+      "documents": [],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q3",
+          "label": "3.",
+          "type": "text",
+          "prompt": "Alice possède 40 % de morceaux de rock dans son lecteur audio. Si Théo et Alice appuient tous les deux sur « lecture aléatoire », lequel a le plus de chances d'écouter un morceau de rock ?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              39.2,
+              40.8
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 3 (12 points)",
+      "metadata": {
+        "source_question_id": "q3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Alice possède 40 % de morceaux de rock dans son lecteur audio. Si Théo et Alice appuient tous les deux sur « lecture aléatoire », lequel a le plus de chances d'écouter un morcea...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "c515e631-8ed9-5a15-b154-91e982cb20f6",
+      "source_exercise_id": "d51c374d-3c1b-5ec6-98f3-db87e36544a5",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "geometry",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Montrer que la longueur BD est égale à 4 cm.",
+      "context": "La figure ci-dessous n'est pas représentée en vraie grandeur. Les points C, B et E sont alignés. Le triangle ABC est rectangle en A. Le triangle BDC est rectangle en B.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Figure géométrique — triangles semblables",
+          "alt": "Figure avec triangles ABC rectangle en A, BDC rectangle en B, et BFE. Mesures : CB=7,5 cm, BE=6,8 cm, BF=6 cm, EF=3,2 cm, BD=8,5 cm, angle ACB=61°",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex04/ex4-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex04/ex4-fig1.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q1",
+          "label": "1.",
+          "type": "text",
+          "prompt": "Montrer que la longueur BD est égale à 4 cm.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              3.92,
+              4.08
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie ce que tu dois montrer ou justifier."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle la propriété ou la définition à utiliser."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ton raisonnement en une ou deux phrases claires."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : précise ton raisonnement ou la propriété invoquée.",
+            "incorrect_feedback": "Reprends l'énoncé et identifie ce que tu dois démontrer."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 4 (14 points)",
+      "metadata": {
+        "source_question_id": "q1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Montrer que la longueur BD est égale à 4 cm.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "0cc9fdc0-c692-5a3a-9664-28d19f97da4d",
+      "source_exercise_id": "d51c374d-3c1b-5ec6-98f3-db87e36544a5",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "geometry",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Montrer que les triangles CBD et BFE sont semblables.",
+      "context": "La figure ci-dessous n'est pas représentée en vraie grandeur. Les points C, B et E sont alignés. Le triangle ABC est rectangle en A. Le triangle BDC est rectangle en B.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Figure géométrique — triangles semblables",
+          "alt": "Figure avec triangles ABC rectangle en A, BDC rectangle en B, et BFE. Mesures : CB=7,5 cm, BE=6,8 cm, BF=6 cm, EF=3,2 cm, BD=8,5 cm, angle ACB=61°",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex04/ex4-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex04/ex4-fig1.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q2",
+          "label": "2.",
+          "type": "text",
+          "prompt": "Montrer que les triangles CBD et BFE sont semblables.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "validation": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie les données connues sur la figure."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle-toi la propriété ou la formule adaptée."
+              },
+              {
+                "level": 3,
+                "text": "Pose le calcul proprement et vérifie l'unité."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : vérifie les données ou la formule utilisée.",
+            "incorrect_feedback": "Relis l'énoncé et identifie la propriété géométrique à appliquer."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 4 (14 points)",
+      "metadata": {
+        "source_question_id": "q2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Montrer que les triangles CBD et BFE sont semblables.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "9f5c7766-6d8f-530d-8c93-f058d1e3cb6e",
+      "source_exercise_id": "d51c374d-3c1b-5ec6-98f3-db87e36544a5",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "geometry",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Sophie affirme que l'angle BFE est un angle droit. A-t-elle raison ?",
+      "context": "La figure ci-dessous n'est pas représentée en vraie grandeur. Les points C, B et E sont alignés. Le triangle ABC est rectangle en A. Le triangle BDC est rectangle en B.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Figure géométrique — triangles semblables",
+          "alt": "Figure avec triangles ABC rectangle en A, BDC rectangle en B, et BFE. Mesures : CB=7,5 cm, BE=6,8 cm, BF=6 cm, EF=3,2 cm, BD=8,5 cm, angle ACB=61°",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex04/ex4-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex04/ex4-fig1.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q3",
+          "label": "3.",
+          "type": "text",
+          "prompt": "Sophie affirme que l'angle BFE est un angle droit. A-t-elle raison ?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "validation": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie les données connues sur la figure."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle-toi la propriété ou la formule adaptée."
+              },
+              {
+                "level": 3,
+                "text": "Pose le calcul proprement et vérifie l'unité."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : vérifie les données ou la formule utilisée.",
+            "incorrect_feedback": "Relis l'énoncé et identifie la propriété géométrique à appliquer."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 4 (14 points)",
+      "metadata": {
+        "source_question_id": "q3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Sophie affirme que l'angle BFE est un angle droit. A-t-elle raison ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "e67d1328-fc86-591c-9df0-9822bee25a98",
+      "source_exercise_id": "d51c374d-3c1b-5ec6-98f3-db87e36544a5",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "geometry",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Max affirme que l'angle ACD est un angle droit. A-t-il raison ?",
+      "context": "La figure ci-dessous n'est pas représentée en vraie grandeur. Les points C, B et E sont alignés. Le triangle ABC est rectangle en A. Le triangle BDC est rectangle en B.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Figure géométrique — triangles semblables",
+          "alt": "Figure avec triangles ABC rectangle en A, BDC rectangle en B, et BFE. Mesures : CB=7,5 cm, BE=6,8 cm, BF=6 cm, EF=3,2 cm, BD=8,5 cm, angle ACB=61°",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex04/ex4-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex04/ex4-fig1.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q4",
+          "label": "4.",
+          "type": "text",
+          "prompt": "Max affirme que l'angle ACD est un angle droit. A-t-il raison ?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "validation": null,
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie les données connues sur la figure."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle-toi la propriété ou la formule adaptée."
+              },
+              {
+                "level": 3,
+                "text": "Pose le calcul proprement et vérifie l'unité."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : vérifie les données ou la formule utilisée.",
+            "incorrect_feedback": "Relis l'énoncé et identifie la propriété géométrique à appliquer."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 4 (14 points)",
+      "metadata": {
+        "source_question_id": "q4",
+        "source_question_label": "4.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Max affirme que l'angle ACD est un angle droit. A-t-il raison ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "2c03a986-82da-5dbe-afc1-c95e386d4264",
+      "source_exercise_id": "4289bda7-df0d-5c22-b365-29575f8b1148",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "general_math",
+      "skill_tags": [
+        "calcul"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Vérifier que si on choisit le nombre −1, ce programme donne 8 comme résultat final.",
+      "context": "Programme de calcul : Choisir un nombre → Multiplier ce nombre par 4 → Ajouter 8 → Multiplier le résultat par 2.",
+      "documents": [],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q1",
+          "label": "1.",
+          "type": "text",
+          "prompt": "Vérifier que si on choisit le nombre −1, ce programme donne 8 comme résultat final.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              0.98,
+              1.02
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie ce que tu dois montrer ou justifier."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle la propriété ou la définition à utiliser."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ton raisonnement en une ou deux phrases claires."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : précise ton raisonnement ou la propriété invoquée.",
+            "incorrect_feedback": "Reprends l'énoncé et identifie ce que tu dois démontrer."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 5 (16 points)",
+      "metadata": {
+        "source_question_id": "q1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Vérifier que si on choisit le nombre −1, ce programme donne 8 comme résultat final.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "e54f9364-6acf-52c7-810f-343e17003a43",
+      "source_exercise_id": "4289bda7-df0d-5c22-b365-29575f8b1148",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "general_math",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Le programme donne 30 comme résultat final. Quel est le nombre choisi au départ ?",
+      "context": "Programme de calcul : Choisir un nombre → Multiplier ce nombre par 4 → Ajouter 8 → Multiplier le résultat par 2.",
+      "documents": [],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q2",
+          "label": "2.",
+          "type": "text",
+          "prompt": "Le programme donne 30 comme résultat final. Quel est le nombre choisi au départ ?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              29.4,
+              30.6
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 5 (16 points)",
+      "metadata": {
+        "source_question_id": "q2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Le programme donne 30 comme résultat final. Quel est le nombre choisi au départ ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "52bc1aeb-53e1-57c4-bc60-d1e3c8124dc8",
+      "source_exercise_id": "4289bda7-df0d-5c22-b365-29575f8b1148",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "algebra",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "L'expression A = 2(4x + 8) donne le résultat du programme pour un nombre x. On pose B = (4 + x)² − x². Prouver que A et B sont égales pour toutes les valeurs de x.",
+      "context": "Programme de calcul : Choisir un nombre → Multiplier ce nombre par 4 → Ajouter 8 → Multiplier le résultat par 2.",
+      "documents": [],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q3",
+          "label": "3.",
+          "type": "expression",
+          "prompt": "L'expression A = 2(4x + 8) donne le résultat du programme pour un nombre x. On pose B = (4 + x)² − x². Prouver que A et B sont égales pour toutes les valeurs de x.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              1.96,
+              2.04
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 5 (16 points)",
+      "metadata": {
+        "source_question_id": "q3",
+        "source_question_label": "3.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "L'expression A = 2(4x + 8) donne le résultat du programme pour un nombre x. On pose B = (4 + x)² − x². Prouver que A et B sont égales pour toutes les valeurs de x.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "732445f0-e1be-5492-b9b9-46df08b66fe3",
+      "source_exercise_id": "4289bda7-df0d-5c22-b365-29575f8b1148",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "general_math",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Affirmation 1 : Ce programme donne un résultat positif pour toutes les valeurs de x. Affirmation 2 : Si x est un entier, le résultat est un multiple de 8. Pour chacune, indiquer si elle est vraie ou fausse en justifiant.",
+      "context": "Programme de calcul : Choisir un nombre → Multiplier ce nombre par 4 → Ajouter 8 → Multiplier le résultat par 2.",
+      "documents": [],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q4",
+          "label": "4.",
+          "type": "text",
+          "prompt": "Affirmation 1 : Ce programme donne un résultat positif pour toutes les valeurs de x. Affirmation 2 : Si x est un entier, le résultat est un multiple de 8. Pour chacune, indiquer si elle est vraie ou fausse en justifiant.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              0.98,
+              1.02
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 5 (16 points)",
+      "metadata": {
+        "source_question_id": "q4",
+        "source_question_label": "4.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Affirmation 1 : Ce programme donne un résultat positif pour toutes les valeurs de x. Affirmation 2 : Si x est un entier, le résultat est un multiple de 8. Pour chacune, indiquer...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "b1cddf3c-ccab-5be3-81c5-a8a7e6398658",
+      "source_exercise_id": "af63c8b7-9c28-586f-a212-01c22596dc94",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "spreadsheet",
+      "skill_tags": [
+        "geometrie"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "document_question",
+      "prompt": "Représenter sur votre copie la figure obtenue si le programme est exécuté jusqu'à la ligne 7 comprise.",
+      "context": "Les longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. Un programme Scratch dessine un carré (côté = Longueur) puis un triangle équilatéral (côté = Longueur), avance de Longueur÷6, puis répète avec une nouvelle Longueur.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Programme Scratch",
+          "alt": "Blocs Scratch : initialisation, carré (répéter 4 fois : avancer Longueur, tourner 90°), triangle (répéter 3 fois : avancer Longueur, tourner 120°)",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Figure obtenue par le programme Scratch",
+          "alt": "Grand carré avec un grand triangle équilatéral inscrit, et à l'intérieur un petit carré avec un petit triangle, axe de symétrie vertical",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig2.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q1-a",
+          "label": "a.",
+          "type": "text",
+          "prompt": "Représenter sur votre copie la figure obtenue si le programme est exécuté jusqu'à la ligne 7 comprise.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              6.86,
+              7.14
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie les données connues sur la figure."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle-toi la propriété ou la formule adaptée."
+              },
+              {
+                "level": 3,
+                "text": "Pose le calcul proprement et vérifie l'unité."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : vérifie les données ou la formule utilisée.",
+            "incorrect_feedback": "Relis l'énoncé et identifie la propriété géométrique à appliquer."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 6 (16 points)",
+      "metadata": {
+        "source_question_id": "q1-a",
+        "source_question_label": "a.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Représenter sur votre copie la figure obtenue si le programme est exécuté jusqu'à la ligne 7 comprise.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "f8ee7c3b-9bff-5f17-8e25-772fa5cbb73a",
+      "source_exercise_id": "af63c8b7-9c28-586f-a212-01c22596dc94",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "spreadsheet",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Quelles sont les coordonnées du stylo après l'exécution de la ligne 8 ?",
+      "context": "Les longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. Un programme Scratch dessine un carré (côté = Longueur) puis un triangle équilatéral (côté = Longueur), avance de Longueur÷6, puis répète avec une nouvelle Longueur.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Programme Scratch",
+          "alt": "Blocs Scratch : initialisation, carré (répéter 4 fois : avancer Longueur, tourner 90°), triangle (répéter 3 fois : avancer Longueur, tourner 120°)",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Figure obtenue par le programme Scratch",
+          "alt": "Grand carré avec un grand triangle équilatéral inscrit, et à l'intérieur un petit carré avec un petit triangle, axe de symétrie vertical",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig2.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q1-b",
+          "label": "b.",
+          "type": "text",
+          "prompt": "Quelles sont les coordonnées du stylo après l'exécution de la ligne 8 ?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              7.84,
+              8.16
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 6 (16 points)",
+      "metadata": {
+        "source_question_id": "q1-b",
+        "source_question_label": "b.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quelles sont les coordonnées du stylo après l'exécution de la ligne 8 ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "76162250-70a2-5e60-a6a8-73d8ebc4a1cc",
+      "source_exercise_id": "af63c8b7-9c28-586f-a212-01c22596dc94",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "spreadsheet",
+      "skill_tags": [
+        "geometrie"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "document_question",
+      "prompt": "On exécute le programme complet et on obtient la figure ci-dessus qui possède un axe de symétrie vertical. Recopier et compléter la ligne 9 du programme pour obtenir cette figure.",
+      "context": "Les longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. Un programme Scratch dessine un carré (côté = Longueur) puis un triangle équilatéral (côté = Longueur), avance de Longueur÷6, puis répète avec une nouvelle Longueur.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Programme Scratch",
+          "alt": "Blocs Scratch : initialisation, carré (répéter 4 fois : avancer Longueur, tourner 90°), triangle (répéter 3 fois : avancer Longueur, tourner 120°)",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Figure obtenue par le programme Scratch",
+          "alt": "Grand carré avec un grand triangle équilatéral inscrit, et à l'intérieur un petit carré avec un petit triangle, axe de symétrie vertical",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig2.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q2",
+          "label": "2.",
+          "type": "text",
+          "prompt": "On exécute le programme complet et on obtient la figure ci-dessus qui possède un axe de symétrie vertical. Recopier et compléter la ligne 9 du programme pour obtenir cette figure.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              8.82,
+              9.18
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie les données connues sur la figure."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle-toi la propriété ou la formule adaptée."
+              },
+              {
+                "level": 3,
+                "text": "Pose le calcul proprement et vérifie l'unité."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : vérifie les données ou la formule utilisée.",
+            "incorrect_feedback": "Relis l'énoncé et identifie la propriété géométrique à appliquer."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 6 (16 points)",
+      "metadata": {
+        "source_question_id": "q2",
+        "source_question_label": "2.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "On exécute le programme complet et on obtient la figure ci-dessus qui possède un axe de symétrie vertical. Recopier et compléter la ligne 9 du programme pour obtenir cette figure.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "b77a170d-62de-55e9-85d9-3ed27f4a2a45",
+      "source_exercise_id": "af63c8b7-9c28-586f-a212-01c22596dc94",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "geometry",
+      "skill_tags": [
+        "geometrie"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Parmi les transformations suivantes, translation, homothétie, rotation, symétrie axiale, quelle est la transformation géométrique qui permet d'obtenir le petit carré à partir du grand carré ? Préciser le rapport de réduction.",
+      "context": "Les longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. Un programme Scratch dessine un carré (côté = Longueur) puis un triangle équilatéral (côté = Longueur), avance de Longueur÷6, puis répète avec une nouvelle Longueur.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Programme Scratch",
+          "alt": "Blocs Scratch : initialisation, carré (répéter 4 fois : avancer Longueur, tourner 90°), triangle (répéter 3 fois : avancer Longueur, tourner 120°)",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Figure obtenue par le programme Scratch",
+          "alt": "Grand carré avec un grand triangle équilatéral inscrit, et à l'intérieur un petit carré avec un petit triangle, axe de symétrie vertical",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig2.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q3-a",
+          "label": "a.",
+          "type": "mcq",
+          "prompt": "Parmi les transformations suivantes, translation, homothétie, rotation, symétrie axiale, quelle est la transformation géométrique qui permet d'obtenir le petit carré à partir du grand carré ? Préciser le rapport de réduction.",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              88.2,
+              91.8
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie les données connues sur la figure."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle-toi la propriété ou la formule adaptée."
+              },
+              {
+                "level": 3,
+                "text": "Pose le calcul proprement et vérifie l'unité."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : vérifie les données ou la formule utilisée.",
+            "incorrect_feedback": "Relis l'énoncé et identifie la propriété géométrique à appliquer."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 6 (16 points)",
+      "metadata": {
+        "source_question_id": "q3-a",
+        "source_question_label": "a.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Parmi les transformations suivantes, translation, homothétie, rotation, symétrie axiale, quelle est la transformation géométrique qui permet d'obtenir le petit carré à partir du...",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "4aa00ccb-5d88-50b3-8ba5-78727d064737",
+      "source_exercise_id": "af63c8b7-9c28-586f-a212-01c22596dc94",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "geometry",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Quel est le rapport des aires entre les deux carrés dessinés ?",
+      "context": "Les longueurs sont en pixels. L'expression « s'orienter à 90 » signifie que l'on s'oriente vers la droite. Un programme Scratch dessine un carré (côté = Longueur) puis un triangle équilatéral (côté = Longueur), avance de Longueur÷6, puis répète avec une nouvelle Longueur.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Programme Scratch",
+          "alt": "Blocs Scratch : initialisation, carré (répéter 4 fois : avancer Longueur, tourner 90°), triangle (répéter 3 fois : avancer Longueur, tourner 120°)",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Figure obtenue par le programme Scratch",
+          "alt": "Grand carré avec un grand triangle équilatéral inscrit, et à l'intérieur un petit carré avec un petit triangle, axe de symétrie vertical",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex06/ex6-fig2.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q3-b",
+          "label": "b.",
+          "type": "text",
+          "prompt": "Quel est le rapport des aires entre les deux carrés dessinés ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              88.2,
+              91.8
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie les données connues sur la figure."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle-toi la propriété ou la formule adaptée."
+              },
+              {
+                "level": 3,
+                "text": "Pose le calcul proprement et vérifie l'unité."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : vérifie les données ou la formule utilisée.",
+            "incorrect_feedback": "Relis l'énoncé et identifie la propriété géométrique à appliquer."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 6 (16 points)",
+      "metadata": {
+        "source_question_id": "q3-b",
+        "source_question_label": "b.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quel est le rapport des aires entre les deux carrés dessinés ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "42a2a7b8-9169-5c26-aae3-219eca4fb12d",
+      "source_exercise_id": "1cd04e4a-702b-5e84-b396-1ef4b04d0367",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "geometry",
+      "skill_tags": [
+        "geometrie"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Le temps et la vitesse de rotation du hand-spinner sont-ils proportionnels ? Justifier.",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On lui donne une vitesse de rotation initiale au temps t = 0, puis sa vitesse diminue jusqu'à l'arrêt complet. Sa vitesse de rotation est relevée en nombre de tours par seconde. Pour calculer la vitesse V(t) en fonction du temps t : V(t) = −0,214 × t + V_initiale.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "alt": "Photo d'un hand-spinner à trois branches",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Graphique — vitesse de rotation du hand-spinner en fonction du temps",
+          "alt": "Graphique linéaire décroissant : vitesse (tours/s) de 20 à 0 en fonction du temps (s) de 0 à 94s. Droite de pente −0,214.",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q1",
+          "label": "1.",
+          "type": "text",
+          "prompt": "Le temps et la vitesse de rotation du hand-spinner sont-ils proportionnels ? Justifier.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              -0.01,
+              0.01
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie ce que tu dois montrer ou justifier."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle la propriété ou la définition à utiliser."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ton raisonnement en une ou deux phrases claires."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : précise ton raisonnement ou la propriété invoquée.",
+            "incorrect_feedback": "Reprends l'énoncé et identifie ce que tu dois démontrer."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "q1",
+        "source_question_label": "1.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Le temps et la vitesse de rotation du hand-spinner sont-ils proportionnels ? Justifier.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "45430051-1e0a-5d4d-9351-b57c027f26e4",
+      "source_exercise_id": "1cd04e4a-702b-5e84-b396-1ef4b04d0367",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "geometry",
+      "skill_tags": [
+        "geometrie"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Quelle est la vitesse de rotation initiale (en tours par seconde) ?",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On lui donne une vitesse de rotation initiale au temps t = 0, puis sa vitesse diminue jusqu'à l'arrêt complet. Sa vitesse de rotation est relevée en nombre de tours par seconde. Pour calculer la vitesse V(t) en fonction du temps t : V(t) = −0,214 × t + V_initiale.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "alt": "Photo d'un hand-spinner à trois branches",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Graphique — vitesse de rotation du hand-spinner en fonction du temps",
+          "alt": "Graphique linéaire décroissant : vitesse (tours/s) de 20 à 0 en fonction du temps (s) de 0 à 94s. Droite de pente −0,214.",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q2-a",
+          "label": "a.",
+          "type": "text",
+          "prompt": "Quelle est la vitesse de rotation initiale (en tours par seconde) ?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              -0.01,
+              0.01
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "q2-a",
+        "source_question_label": "a.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quelle est la vitesse de rotation initiale (en tours par seconde) ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "8c649d5a-bb31-5383-994f-a4bffce86eba",
+      "source_exercise_id": "1cd04e4a-702b-5e84-b396-1ef4b04d0367",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "geometry",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "short_answer",
+      "prompt": "Quelle est la vitesse au bout d'une minute et vingt secondes ?",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On lui donne une vitesse de rotation initiale au temps t = 0, puis sa vitesse diminue jusqu'à l'arrêt complet. Sa vitesse de rotation est relevée en nombre de tours par seconde. Pour calculer la vitesse V(t) en fonction du temps t : V(t) = −0,214 × t + V_initiale.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "alt": "Photo d'un hand-spinner à trois branches",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Graphique — vitesse de rotation du hand-spinner en fonction du temps",
+          "alt": "Graphique linéaire décroissant : vitesse (tours/s) de 20 à 0 en fonction du temps (s) de 0 à 94s. Droite de pente −0,214.",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q2-b",
+          "label": "b.",
+          "type": "text",
+          "prompt": "Quelle est la vitesse au bout d'une minute et vingt secondes ?",
+          "answer_type": "short_answer",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              -0.01,
+              0.01
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les informations importantes dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Choisis la méthode adaptée à la question."
+              },
+              {
+                "level": 3,
+                "text": "Rédige une réponse courte et vérifie les unités si nécessaire."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche.",
+            "incorrect_feedback": "Relis la question et repère les données utiles."
+          }
+        }
+      ],
+      "difficulty": "easy",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "q2-b",
+        "source_question_label": "b.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Quelle est la vitesse au bout d'une minute et vingt secondes ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "1f8a92ff-e14f-5316-89e4-10f656657d78",
+      "source_exercise_id": "1cd04e4a-702b-5e84-b396-1ef4b04d0367",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "geometry",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Au bout de combien de temps le hand-spinner va-t-il s'arrêter ?",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On lui donne une vitesse de rotation initiale au temps t = 0, puis sa vitesse diminue jusqu'à l'arrêt complet. Sa vitesse de rotation est relevée en nombre de tours par seconde. Pour calculer la vitesse V(t) en fonction du temps t : V(t) = −0,214 × t + V_initiale.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "alt": "Photo d'un hand-spinner à trois branches",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Graphique — vitesse de rotation du hand-spinner en fonction du temps",
+          "alt": "Graphique linéaire décroissant : vitesse (tours/s) de 20 à 0 en fonction du temps (s) de 0 à 94s. Droite de pente −0,214.",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q2-c",
+          "label": "c.",
+          "type": "numeric",
+          "prompt": "Au bout de combien de temps le hand-spinner va-t-il s'arrêter ?",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              -0.01,
+              0.01
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les données utiles dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Fais le calcul étape par étape."
+              },
+              {
+                "level": 3,
+                "text": "Vérifie ton résultat et n'oublie pas l'unité."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : vérifie chaque étape du calcul.",
+            "incorrect_feedback": "Reprends le calcul depuis le début en utilisant les données de l'énoncé."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "q2-c",
+        "source_question_label": "c.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Au bout de combien de temps le hand-spinner va-t-il s'arrêter ?",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "e64b65ef-0922-5a1b-99c8-4c73e554642b",
+      "source_exercise_id": "1cd04e4a-702b-5e84-b396-1ef4b04d0367",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "geometry",
+      "skill_tags": [
+        "calcul"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "numeric",
+      "prompt": "Calculer sa vitesse au bout de 30 s avec V(t) = −0,214 × t + 20.",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On lui donne une vitesse de rotation initiale au temps t = 0, puis sa vitesse diminue jusqu'à l'arrêt complet. Sa vitesse de rotation est relevée en nombre de tours par seconde. Pour calculer la vitesse V(t) en fonction du temps t : V(t) = −0,214 × t + V_initiale.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "alt": "Photo d'un hand-spinner à trois branches",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Graphique — vitesse de rotation du hand-spinner en fonction du temps",
+          "alt": "Graphique linéaire décroissant : vitesse (tours/s) de 20 à 0 en fonction du temps (s) de 0 à 94s. Droite de pente −0,214.",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q3-a",
+          "label": "a.",
+          "type": "numeric",
+          "prompt": "Calculer sa vitesse au bout de 30 s avec V(t) = −0,214 × t + 20.",
+          "answer_type": "numeric",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              29.4,
+              30.6
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les données utiles dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Fais le calcul étape par étape."
+              },
+              {
+                "level": 3,
+                "text": "Vérifie ton résultat et n'oublie pas l'unité."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : vérifie chaque étape du calcul.",
+            "incorrect_feedback": "Reprends le calcul depuis le début en utilisant les données de l'énoncé."
+          }
+        }
+      ],
+      "difficulty": "medium",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "q3-a",
+        "source_question_label": "a.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Calculer sa vitesse au bout de 30 s avec V(t) = −0,214 × t + 20.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "53b8eb25-d4a4-55be-ae3f-d968a4ff75d6",
+      "source_exercise_id": "1cd04e4a-702b-5e84-b396-1ef4b04d0367",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "geometry",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Au bout de combien de temps va-t-il s'arrêter ? Justifier par un calcul.",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On lui donne une vitesse de rotation initiale au temps t = 0, puis sa vitesse diminue jusqu'à l'arrêt complet. Sa vitesse de rotation est relevée en nombre de tours par seconde. Pour calculer la vitesse V(t) en fonction du temps t : V(t) = −0,214 × t + V_initiale.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "alt": "Photo d'un hand-spinner à trois branches",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Graphique — vitesse de rotation du hand-spinner en fonction du temps",
+          "alt": "Graphique linéaire décroissant : vitesse (tours/s) de 20 à 0 en fonction du temps (s) de 0 à 94s. Droite de pente −0,214.",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q3-b",
+          "label": "b.",
+          "type": "numeric",
+          "prompt": "Au bout de combien de temps va-t-il s'arrêter ? Justifier par un calcul.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              -0.01,
+              0.01
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Repère les données utiles dans l'énoncé."
+              },
+              {
+                "level": 2,
+                "text": "Fais le calcul étape par étape."
+              },
+              {
+                "level": 3,
+                "text": "Vérifie ton résultat et n'oublie pas l'unité."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : vérifie chaque étape du calcul.",
+            "incorrect_feedback": "Reprends le calcul depuis le début en utilisant les données de l'énoncé."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "q3-b",
+        "source_question_label": "b.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Au bout de combien de temps va-t-il s'arrêter ? Justifier par un calcul.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    },
+    {
+      "id": "c092f617-55ac-57c8-9df2-e021e19f9da7",
+      "source_exercise_id": "1cd04e4a-702b-5e84-b396-1ef4b04d0367",
+      "paper_id": "ea4cf2d9-611a-5ac9-947b-17641a348da1",
+      "exam": "dnb",
+      "subject_slug": "mathematiques",
+      "level": "3eme",
+      "skill": "geometry",
+      "skill_tags": [
+        "annale_dnb"
+      ],
+      "curriculum_objective_ids": null,
+      "item_type": "free_response",
+      "prompt": "Est-il vrai que, si l'on fait tourner le hand-spinner deux fois plus vite au départ, il tournera deux fois plus longtemps ? Justifier.",
+      "context": "Le « hand-spinner » est une sorte de toupie plate qui tourne sur elle-même. On lui donne une vitesse de rotation initiale au temps t = 0, puis sa vitesse diminue jusqu'à l'arrêt complet. Sa vitesse de rotation est relevée en nombre de tours par seconde. Pour calculer la vitesse V(t) en fonction du temps t : V(t) = −0,214 × t + V_initiale.",
+      "documents": [
+        {
+          "type": "image",
+          "label": "Photo du hand-spinner",
+          "alt": "Photo d'un hand-spinner à trois branches",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig1.png",
+          "usage": "shared"
+        },
+        {
+          "type": "image",
+          "label": "Graphique — vitesse de rotation du hand-spinner en fonction du temps",
+          "alt": "Graphique linéaire décroissant : vitesse (tours/s) de 20 à 0 en fonction du temps (s) de 0 à 94s. Droite de pente −0,214.",
+          "storage_path": "dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+          "public_url": "https://sibprjxhbxahouejygeu.supabase.co/storage/v1/object/public/exam-assets/dnb:apmep:2018:mathematiques:toutes-series:metropole-reunion:standard:vision/ex07/ex7-fig2.png",
+          "usage": "shared"
+        }
+      ],
+      "choices": null,
+      "expected_answer": null,
+      "solution": null,
+      "hints": null,
+      "questions": [
+        {
+          "id": "q3-c",
+          "label": "c.",
+          "type": "text",
+          "prompt": "Est-il vrai que, si l'on fait tourner le hand-spinner deux fois plus vite au départ, il tournera deux fois plus longtemps ? Justifier.",
+          "answer_type": "free_response",
+          "choices": null,
+          "expected_answer": null,
+          "validation": {
+            "type": "range",
+            "value": [
+              -0.01,
+              0.01
+            ]
+          },
+          "guidance": {
+            "hints": [
+              {
+                "level": 1,
+                "text": "Identifie ce que tu dois montrer ou justifier."
+              },
+              {
+                "level": 2,
+                "text": "Rappelle la propriété ou la définition à utiliser."
+              },
+              {
+                "level": 3,
+                "text": "Rédige ton raisonnement en une ou deux phrases claires."
+              }
+            ],
+            "correct_feedback": "Bonne réponse.",
+            "almost_feedback": "Tu es proche : précise ton raisonnement ou la propriété invoquée.",
+            "incorrect_feedback": "Reprends l'énoncé et identifie ce que tu dois démontrer."
+          }
+        }
+      ],
+      "difficulty": "hard",
+      "exam_style": "dnb_official",
+      "source_year": 2018,
+      "source_label": "DNB Brevet Métropole La Réunion 28 juin 2018 - Exercice 7 (17 points)",
+      "metadata": {
+        "source_question_id": "q3-c",
+        "source_question_label": "c.",
+        "confidence": "high",
+        "can_generate_similar": true,
+        "source_pattern_summary": "Est-il vrai que, si l'on fait tourner le hand-spinner deux fois plus vite au départ, il tournera deux fois plus longtemps ? Justifier.",
+        "transformation_notes": "Generated from parsed annale question; requires review before publication."
+      },
+      "status": "draft"
+    }
+  ]
+}

@@ -61,7 +61,7 @@ export const usePromptManagement = () => {
         ...template,
         created_at: new Date(template.created_at),
         updated_at: new Date(template.updated_at),
-        usage_type: template.usage_type as 'chat' | 'grading' | 'explanation' | 'math_enhanced' | 'grouped_retry_practice',
+        usage_type: template.usage_type as 'chat' | 'grading' | 'explanation' | 'math_enhanced' | 'grouped_retry_practice' | 'grouped_problem_extraction' | 'grouped_problem_grading' | 'lesson_generation',
         tags: template.tags || [],
         is_active: template.is_active || false,
         auto_activate: template.auto_activate || false,

@@ -1,38 +1,22 @@
-## Problem
-Creating a prompt template with type "Grouped Retry Practice" fails because the database CHECK constraint `prompt_templates_usage_type_check` on `public.prompt_templates.usage_type` only permits the legacy values:
+## Plan
 
-```
-('chat', 'grading', 'explanation', 'math_enhanced')
-```
+1. **Fix the objective query relationship**
+   - Update the Curriculum Viewer objective fetch so success criteria are joined through the UUID relationship (`objective_id_uuid -> objectives.id_new`) instead of relying on the legacy text relationship.
+   - Keep the existing filters for level, subject, domain, subdomain, and search.
 
-The application code (`src/types/admin.ts`, `src/hooks/usePromptManagement.ts`, the create/edit dialogs) already lists `grouped_retry_practice` as a valid type, but the matching DB migration was never applied — so every insert/update with `usage_type = 'grouped_retry_practice'` is rejected by Postgres (error code 23514). The toast message in the screenshot is the friendly version of that exact error.
+2. **Make filter values resilient**
+   - Normalize level filtering to lowercase consistently.
+   - Ensure domain/subdomain selections reset immediately when their available DB options no longer contain the selected value.
 
-## Fix
-Apply a single Supabase migration that updates the CHECK constraint to include the new value.
+3. **Improve empty-state visibility**
+   - Add a small admin-only diagnostic message in the empty state showing the active filter IDs, so if a filter combination truly has no rows it is obvious which value is blocking results.
 
-```sql
-ALTER TABLE public.prompt_templates
-  DROP CONSTRAINT IF EXISTS prompt_templates_usage_type_check;
+4. **Verify with live data**
+   - Check that the selected France / CM1 / Mathématiques filters return the existing CM1 math objectives from Supabase.
+   - Confirm the viewer no longer shows `0 objective(s)` for filter combinations that exist in the database.
 
-ALTER TABLE public.prompt_templates
-  ADD CONSTRAINT prompt_templates_usage_type_check
-  CHECK (usage_type IN (
-    'chat',
-    'grading',
-    'explanation',
-    'math_enhanced',
-    'grouped_retry_practice'
-  ));
-```
+## Technical notes
 
-Also extend the same allowed list on `public.subject_prompt_assignments.usage_type` if a matching CHECK constraint exists there, so subject assignments can reference the new type too.
-
-## Files touched
-- One new migration file under `supabase/migrations/` containing the ALTER TABLE statements above.
-
-## No code changes needed
-- TypeScript types, hooks, and admin UI already support `grouped_retry_practice`. Once the constraint is updated, creating the template will succeed and the existing "Grouped Retry Practice Explanation" form (visible in the screenshot) will save without error.
-
-## Verification after apply
-1. Reopen Admin → System Prompts → Add Template, choose Type = "Grouped Retry Practice", click Create — should succeed with no toast error.
-2. The new template appears in the list and can be activated.
+- The data exists in Supabase: CM1 Mathématiques objectives are present.
+- The most likely remaining blocker is the nested `success_criteria (*)` relationship in the `objectives` query, which may be resolving through the legacy `objective_id` foreign key rather than the imported UUID key.
+- No database schema change is planned; this is a frontend query/display fix only.

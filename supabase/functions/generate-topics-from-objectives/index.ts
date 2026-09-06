@@ -10,7 +10,7 @@ interface RequestBody {
   country_code?: string;
   level_code?: string | null;
   subject_id_uuid?: string | null;
-  category_id: string;
+  category_id?: string; // now optional — omit to auto-derive categories from curriculum domains
   dry_run?: boolean;
 }
 
@@ -20,6 +20,8 @@ interface PreviewRow {
   subject_name: string | null;
   domain_id_uuid: string | null;
   domain_name: string | null;
+  category_id: string | null;
+  category_name: string | null;
   subdomain_id_uuid: string | null;
   topic_name: string;
   slug: string;
@@ -36,6 +38,26 @@ function asciiSlug(input: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80) || "topic";
+}
+
+/** Pick a sensible icon name for a learning subject based on its slug. */
+function subjectIcon(slug: string): string {
+  if (slug.includes("mathemat") || slug.includes("math")) return "calculator";
+  if (slug.includes("fran") || slug.includes("franc") || slug.includes("liter")) return "book-open";
+  if (slug.includes("science") || slug.includes("physi") || slug.includes("chimi") || slug.includes("bio")) return "flask";
+  if (slug.includes("hist") || slug.includes("geog")) return "globe";
+  if (slug.includes("english") || slug.includes("langues") || slug.includes("anglais")) return "message-circle";
+  return "graduation-cap";
+}
+
+/** Pick a colour scheme for a learning subject based on its slug. */
+function subjectColor(slug: string): string {
+  if (slug.includes("mathemat") || slug.includes("math")) return "blue";
+  if (slug.includes("fran") || slug.includes("liter")) return "green";
+  if (slug.includes("science") || slug.includes("physi") || slug.includes("bio")) return "teal";
+  if (slug.includes("hist") || slug.includes("geog")) return "amber";
+  if (slug.includes("english") || slug.includes("anglais")) return "purple";
+  return "slate";
 }
 
 Deno.serve(async (req) => {
@@ -56,7 +78,6 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Authenticated client to identify caller
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -68,10 +89,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Service client to bypass RLS for admin work
     const admin = createClient(supabaseUrl, serviceKey);
 
-    // Verify admin role
     const { data: roleRow, error: roleErr } = await admin
       .from("user_roles")
       .select("role")
@@ -86,37 +105,31 @@ Deno.serve(async (req) => {
     }
 
     const body = (await req.json()) as RequestBody;
-    if (!body.category_id) {
-      return new Response(
-        JSON.stringify({ error: "category_id is required" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
-    }
+    const category_id_manual = body.category_id || null;
     const country_code = (body.country_code || "fr").toLowerCase();
     const level_filter = body.level_code ? body.level_code.toLowerCase() : null;
     const subject_filter = body.subject_id_uuid || null;
     const dry_run = body.dry_run !== false; // default true
 
-    // Verify category exists
-    const { data: category, error: catErr } = await admin
-      .from("learning_categories")
-      .select("id, name")
-      .eq("id", body.category_id)
-      .maybeSingle();
-    if (catErr || !category) {
-      return new Response(
-        JSON.stringify({ error: "Invalid category_id" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
+    // ── Manual mode: verify the provided category exists ─────────────────────
+    if (category_id_manual) {
+      const { data: category, error: catErr } = await admin
+        .from("learning_categories")
+        .select("id, name")
+        .eq("id", category_id_manual)
+        .maybeSingle();
+      if (catErr || !category) {
+        return new Response(
+          JSON.stringify({ error: "Invalid category_id" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
     }
 
-    // Fetch all candidate objectives
+    // ── Fetch candidate objectives ────────────────────────────────────────────
     let q = admin
       .from("objectives")
       .select(
@@ -144,7 +157,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Lookup tables
+    // ── Lookup tables ─────────────────────────────────────────────────────────
     const subjectIds = [
       ...new Set(objectives.map((o) => o.subject_id_uuid).filter(Boolean)),
     ] as string[];
@@ -183,8 +196,8 @@ Deno.serve(async (req) => {
       (subdomainsRes.data || []).map((s: any) => [s.id_new, s]),
     );
 
-    // Group objectives by (level, subdomain_id_uuid)
-    type GroupKey = string; // `${level}|${subdomain_id_uuid}`
+    // ── Group objectives by (level, subdomain_id_uuid) ────────────────────────
+    type GroupKey = string;
     const groups = new Map<
       GroupKey,
       {
@@ -217,51 +230,176 @@ Deno.serve(async (req) => {
       g.objectives.push(o);
     }
 
-    // Check existing topics
+    // ── Auto mode: upsert learning_subjects + learning_categories from domains ─
+    // Categories are structural metadata (idempotent), so we create them even
+    // in dry_run so the preview can show resolved category names.
+    const domainToCategoryId = new Map<string, string>();
+    const domainToCategoryName = new Map<string, string>();
+
+    if (!category_id_manual) {
+      // Collect unique (subject_id_uuid, domain_id_uuid) pairs in stable order
+      const pairsSeen = new Set<string>();
+      const pairs: { subject_id_uuid: string; domain_id_uuid: string }[] = [];
+      for (const [, g] of groups) {
+        if (!g.subject_id_uuid || !g.domain_id_uuid) continue;
+        const pairKey = `${g.subject_id_uuid}|${g.domain_id_uuid}`;
+        if (!pairsSeen.has(pairKey)) {
+          pairsSeen.add(pairKey);
+          pairs.push({ subject_id_uuid: g.subject_id_uuid, domain_id_uuid: g.domain_id_uuid });
+        }
+      }
+
+      // Group domains by subject
+      const subjectToDomains = new Map<string, string[]>();
+      for (const { subject_id_uuid, domain_id_uuid } of pairs) {
+        const doms = subjectToDomains.get(subject_id_uuid) ?? [];
+        if (!doms.includes(domain_id_uuid)) doms.push(domain_id_uuid);
+        subjectToDomains.set(subject_id_uuid, doms);
+      }
+
+      for (const [subjectUuid, domainUuids] of subjectToDomains) {
+        const subj = subjectMap.get(subjectUuid) as any;
+        const subjName: string = subj?.name ?? `Subject ${subjectUuid.slice(0, 8)}`;
+        const subjSlug = asciiSlug(subjName);
+
+        // learning_categories.subject_id references the `subjects` table directly.
+        const learningSubjectId: string = subjectUuid;
+
+        // Build target slugs for this subject's domains
+        const domainMeta: Array<{ uuid: string; label: string; slug: string; idx: number }> = [];
+        for (let domIdx = 0; domIdx < domainUuids.length; domIdx++) {
+          const domainUuid = domainUuids[domIdx];
+          const dom = domainMap.get(domainUuid) as any;
+          const domLabel: string =
+            dom?.label ?? dom?.domain ?? `Domain ${domainUuid.slice(0, 8)}`;
+          const catSlug = asciiSlug(`${subjSlug}-${domLabel}`);
+          domainMeta.push({ uuid: domainUuid, label: domLabel, slug: catSlug, idx: domIdx });
+        }
+
+        // Pre-fetch all existing categories with these slugs in ONE query.
+        // This avoids the Supabase JS upsert onConflict bug where non-PK conflict
+        // targets are not sent correctly in older SDK versions.
+        const targetSlugs = domainMeta.map((d) => d.slug);
+        const { data: existingCats, error: fetchErr } = await admin
+          .from("learning_categories")
+          .select("id, slug")
+          .in("slug", targetSlugs);
+        if (fetchErr) throw fetchErr;
+
+        const existingBySlug = new Map<string, string>(
+          (existingCats ?? []).map((c: any) => [c.slug, c.id]),
+        );
+
+        for (const { uuid: domainUuid, label: domLabel, slug: catSlug, idx: domIdx } of domainMeta) {
+          let learningCategoryId = existingBySlug.get(catSlug);
+
+          if (!learningCategoryId) {
+            // Not found — INSERT new category
+            const { data: inserted, error: insErr } = await admin
+              .from("learning_categories")
+              .insert({
+                subject_id: learningSubjectId,
+                name: domLabel,
+                slug: catSlug,
+                icon_name: "layers",
+                description: null,
+                order_index: domIdx,
+                is_active: true,
+              })
+              .select("id")
+              .single();
+            if (insErr) throw insErr;
+            learningCategoryId = (inserted as any)?.id;
+          }
+
+          if (!learningCategoryId) {
+            throw new Error(`Failed to create learning_category for domain "${domLabel}"`);
+          }
+
+          domainToCategoryId.set(domainUuid, learningCategoryId);
+          domainToCategoryName.set(domainUuid, domLabel);
+        }
+      }
+    }
+
+    /** Resolve the category ID for a given domain (auto) or return the manual one. */
+    function resolveCategory(domainId: string | null): string {
+      if (category_id_manual) return category_id_manual;
+      if (domainId) {
+        const cid = domainToCategoryId.get(domainId);
+        if (cid) return cid;
+      }
+      throw new Error(`No category resolved for domain_id=${domainId}`);
+    }
+
+    // ── Check existing topics ─────────────────────────────────────────────────
     const subdomainIdsForCheck = [...groups.values()].map(
       (g) => g.subdomain_id_uuid,
     );
-    const levelsForCheck = [...new Set([...groups.values()].map((g) => g.level))];
+    const levelsForCheck = [
+      ...new Set([...groups.values()].map((g) => g.level)),
+    ];
 
-    const { data: existingTopics, error: existErr } = await admin
+    let existQuery = admin
       .from("topics")
-      .select("id, curriculum_level_code, curriculum_subdomain_id_uuid")
-      .eq("category_id", body.category_id)
-      .in("curriculum_subdomain_id_uuid", subdomainIdsForCheck.length ? subdomainIdsForCheck : ["00000000-0000-0000-0000-000000000000"])
-      .in("curriculum_level_code", levelsForCheck.length ? levelsForCheck : ["__none__"]);
+      .select("id, curriculum_level_code, curriculum_subdomain_id")
+      .in(
+        "curriculum_subdomain_id",
+        subdomainIdsForCheck.length
+          ? subdomainIdsForCheck
+          : ["00000000-0000-0000-0000-000000000000"],
+      )
+      .in(
+        "curriculum_level_code",
+        levelsForCheck.length ? levelsForCheck : ["__none__"],
+      );
+
+    // In manual mode also filter by category to match original behaviour
+    if (category_id_manual) {
+      existQuery = existQuery.eq("category_id", category_id_manual);
+    }
+
+    const { data: existingTopics, error: existErr } = await existQuery;
     if (existErr) throw existErr;
 
     const existingMap = new Map<string, string>();
     for (const t of existingTopics || []) {
       existingMap.set(
-        `${t.curriculum_level_code}|${t.curriculum_subdomain_id_uuid}`,
+        `${t.curriculum_level_code}|${t.curriculum_subdomain_id}`,
         t.id,
       );
     }
 
-    // Build preview rows
+    // ── Build preview rows ────────────────────────────────────────────────────
     const preview: PreviewRow[] = [];
-    let orderCounter = 0;
     for (const [key, g] of groups) {
-      const sub = subdomainMap.get(g.subdomain_id_uuid);
-      const dom = g.domain_id_uuid ? domainMap.get(g.domain_id_uuid) : null;
-      const subj = g.subject_id_uuid ? subjectMap.get(g.subject_id_uuid) : null;
+      const sub = subdomainMap.get(g.subdomain_id_uuid) as any;
+      const dom = g.domain_id_uuid ? (domainMap.get(g.domain_id_uuid) as any) : null;
+      const subj = g.subject_id_uuid ? (subjectMap.get(g.subject_id_uuid) as any) : null;
 
+      // Prefer human-readable label, fall back to subdomain code, then raw id
       const label =
-        sub?.subdomain ||
-        sub?.label ||
-        sub?.code ||
+        sub?.label ??
+        sub?.subdomain ??
+        sub?.code ??
         `Subdomain ${g.subdomain_id_uuid.slice(0, 8)}`;
-      const subCode = sub?.code || sub?.subdomain || g.subdomain_id_uuid.slice(0, 8);
+      const subCode =
+        sub?.code ?? sub?.subdomain ?? g.subdomain_id_uuid.slice(0, 8);
       const slug = asciiSlug(`${g.level}-${subCode}`);
 
       const existing_topic_id = existingMap.get(key);
+      const resolvedCategoryName = category_id_manual
+        ? null // name not needed; caller knows their category
+        : (g.domain_id_uuid ? domainToCategoryName.get(g.domain_id_uuid) ?? null : null);
+
       preview.push({
         level_code: g.level,
         subject_id_uuid: g.subject_id_uuid,
-        subject_name: subj?.name || null,
+        subject_name: subj?.name ?? null,
         domain_id_uuid: g.domain_id_uuid,
-        domain_name: dom?.label || dom?.domain || null,
+        domain_name: dom?.label ?? dom?.domain ?? null,
+        category_id: category_id_manual ?? (g.domain_id_uuid ? (domainToCategoryId.get(g.domain_id_uuid) ?? null) : null),
+        category_name: resolvedCategoryName,
         subdomain_id_uuid: g.subdomain_id_uuid,
         topic_name: label,
         slug,
@@ -269,19 +407,19 @@ Deno.serve(async (req) => {
         status: existing_topic_id ? "already_exists" : "will_create",
         existing_topic_id,
       });
-      orderCounter++;
     }
 
-    // Add orphans as informational rows
     for (const o of orphans) {
       preview.push({
         level_code: o.level,
         subject_id_uuid: o.subject_id_uuid,
         subject_name: o.subject_id_uuid
-          ? subjectMap.get(o.subject_id_uuid)?.name || null
+          ? (subjectMap.get(o.subject_id_uuid) as any)?.name ?? null
           : null,
         domain_id_uuid: o.domain_id_uuid,
         domain_name: null,
+        category_id: null,
+        category_name: null,
         subdomain_id_uuid: null,
         topic_name: `(orphan: ${o.id})`,
         slug: "",
@@ -294,6 +432,8 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           dry_run: true,
+          auto_categories: !category_id_manual,
+          categories_created: domainToCategoryId.size,
           created: 0,
           skipped_existing: preview.filter((p) => p.status === "already_exists")
             .length,
@@ -307,60 +447,70 @@ Deno.serve(async (req) => {
       );
     }
 
-    // COMMIT MODE
-    let created = 0;
-    let skipped_existing = 0;
-    let links_added = 0;
-
-    // Build topic rows to upsert
+    // ── COMMIT: upsert topics ─────────────────────────────────────────────────
     const toUpsert = preview
       .filter((p) => p.status !== "skipped_orphan")
       .map((p, idx) => ({
-        category_id: body.category_id,
+        category_id: resolveCategory(p.domain_id_uuid),
         name: p.topic_name,
-        slug: `${p.slug}-${p.subdomain_id_uuid?.slice(0, 6) || idx}`,
+        slug: `${p.slug}-${p.subdomain_id_uuid?.slice(0, 6) ?? idx}`,
         description: null,
         curriculum_country_code: country_code,
         curriculum_level_code: p.level_code,
-        curriculum_subject_id_uuid: p.subject_id_uuid,
-        curriculum_domain_id_uuid: p.domain_id_uuid,
-        curriculum_subdomain_id_uuid: p.subdomain_id_uuid,
+        curriculum_subject_id: p.subject_id_uuid,
+        curriculum_domain_id: p.domain_id_uuid,
+        curriculum_subdomain_id: p.subdomain_id_uuid,
         is_active: true,
         order_index: idx,
       }));
 
-    // Chunked upsert
     const CHUNK = 50;
-    const upsertedTopics: { id: string; curriculum_level_code: string; curriculum_subdomain_id_uuid: string }[] = [];
-    for (let i = 0; i < toUpsert.length; i += CHUNK) {
-      const slice = toUpsert.slice(i, i + CHUNK);
+    const upsertedTopics: {
+      id: string;
+      curriculum_level_code: string;
+      curriculum_subdomain_id: string;
+    }[] = [];
+
+    // Only insert rows that are genuinely new (not already in existingMap)
+    const toInsert = toUpsert.filter((row) => {
+      const key = `${row.curriculum_level_code}|${row.curriculum_subdomain_id}`;
+      return !existingMap.has(key);
+    });
+
+    // Insert in chunks; if a chunk fails (e.g. slug conflict), fall back to
+    // row-by-row inserts so a single bad row never aborts the whole batch.
+    for (let i = 0; i < toInsert.length; i += CHUNK) {
+      const slice = toInsert.slice(i, i + CHUNK);
       const { data, error } = await admin
         .from("topics")
-        .upsert(slice, {
-          onConflict:
-            "curriculum_level_code,curriculum_subdomain_id_uuid,category_id",
-          ignoreDuplicates: false,
-        })
-        .select("id, curriculum_level_code, curriculum_subdomain_id_uuid");
-      if (error) throw error;
-      if (data) upsertedTopics.push(...(data as any));
+        .insert(slice)
+        .select("id, curriculum_level_code, curriculum_subdomain_id");
+      if (error) {
+        // Fall back: insert one at a time, skipping rows that conflict
+        for (const row of slice) {
+          const { data: single } = await admin
+            .from("topics")
+            .insert(row)
+            .select("id, curriculum_level_code, curriculum_subdomain_id");
+          if (single?.[0]) upsertedTopics.push(single[0] as any);
+        }
+      } else if (data) {
+        upsertedTopics.push(...(data as any));
+      }
     }
 
-    // Build a fresh map from upserted rows
     const topicIdMap = new Map<string, string>();
     for (const t of upsertedTopics) {
       topicIdMap.set(
-        `${t.curriculum_level_code}|${t.curriculum_subdomain_id_uuid}`,
+        `${t.curriculum_level_code}|${t.curriculum_subdomain_id}`,
         t.id,
       );
     }
 
-    for (const p of preview) {
-      if (p.status === "will_create") created++;
-      if (p.status === "already_exists") skipped_existing++;
-    }
+    const created = upsertedTopics.length;
+    const skipped_existing = preview.filter((p) => p.status === "already_exists").length;
 
-    // Build link rows
+    // ── Build and upsert topic_objective_links ────────────────────────────────
     const linkRows: {
       topic_id: string;
       objective_id: string;
@@ -368,7 +518,7 @@ Deno.serve(async (req) => {
       order_index: number;
     }[] = [];
     for (const [key, g] of groups) {
-      const topicId = topicIdMap.get(key) || existingMap.get(key);
+      const topicId = topicIdMap.get(key) ?? existingMap.get(key);
       if (!topicId) continue;
       g.objectives.forEach((o, idx) => {
         linkRows.push({
@@ -380,29 +530,32 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Chunked upsert for links — rely on existing unique constraint
+    let links_added = 0;
     for (let i = 0; i < linkRows.length; i += CHUNK) {
       const slice = linkRows.slice(i, i + CHUNK);
-      const { error, count } = await admin
+      const { data: inserted, error } = await admin
         .from("topic_objective_links")
-        .upsert(slice, {
-          onConflict: "topic_id,objective_id_uuid",
-          ignoreDuplicates: true,
-          count: "exact",
-        });
+        .insert(slice)
+        .select("id");
       if (error) {
-        // Fallback: try without uuid conflict target
-        const { error: e2 } = await admin
-          .from("topic_objective_links")
-          .upsert(slice, { ignoreDuplicates: true });
-        if (e2) throw e2;
+        // Fall back: insert one at a time, skipping duplicates
+        for (const row of slice) {
+          const { data: single } = await admin
+            .from("topic_objective_links")
+            .insert(row)
+            .select("id");
+          if (single?.[0]) links_added++;
+        }
+      } else {
+        links_added += inserted?.length ?? 0;
       }
-      links_added += count || slice.length;
     }
 
     return new Response(
       JSON.stringify({
         dry_run: false,
+        auto_categories: !category_id_manual,
+        categories_created: domainToCategoryId.size,
         created,
         skipped_existing,
         links_added,

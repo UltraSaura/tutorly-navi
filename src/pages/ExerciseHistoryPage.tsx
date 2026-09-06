@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useExerciseHistory } from '@/hooks/useExerciseHistory';
+import { useLessonHistory } from '@/hooks/useLessonHistory';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Clock, CheckCircle, XCircle, TrendingUp, BookOpen } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
@@ -19,8 +21,9 @@ export const ExerciseHistoryPage = () => {
     limit: 50,
     subject: selectedSubject === 'all' ? undefined : selectedSubject
   });
+  const { data: lessonHistory = [] } = useLessonHistory(5);
 
-  const { sections, loading: explanationLoading, open, setOpen, openFor } = useTwoCardTeaching();
+  const teaching = useTwoCardTeaching();
   const { language } = useLanguage();
 
   const handleShowExplanation = async (exercise: any) => {
@@ -30,7 +33,7 @@ export const ExerciseHistoryPage = () => {
       grade_level: 'High School'
     };
     
-    await openFor({
+    await teaching.openFor({
       question: exercise.exercise_content,
       userAnswer: exercise.user_answer,
       subjectId: exercise.subject_id
@@ -123,6 +126,42 @@ export const ExerciseHistoryPage = () => {
           </Select>
         </div>
       </div>
+
+      {lessonHistory.length > 0 && (
+        <div style={{ padding: '14px 16px 0' }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: '#667085', letterSpacing: '0.05em', margin: '0 0 10px', fontFamily: 'Poppins, sans-serif' }}>
+            LECONS RECENTES
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {lessonHistory.map((entry) => {
+              const minutes = Math.max(1, Math.round(entry.time_spent_seconds / 60));
+              const timeAgo = formatDistanceToNow(new Date(entry.created_at), { addSuffix: true, locale: fr });
+              return (
+                <div
+                  key={entry.id}
+                  style={{ background: 'white', borderRadius: 12, border: '0.5px solid #9FE1CB', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}
+                >
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: '#F2FBF8', border: '0.5px solid #9FE1CB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <BookOpen className="h-4 w-4" style={{ color: '#12C6A0' }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Poppins, sans-serif' }}>
+                      {entry.topic_name}
+                    </p>
+                    <p style={{ fontSize: 10, color: '#667085', margin: 0 }}>
+                      {entry.subject_name} · {timeAgo}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
+                    <Clock className="h-3 w-3" style={{ color: '#9CA3AF' }} />
+                    <span style={{ fontSize: 10, color: '#667085', fontFamily: 'Poppins, sans-serif' }}>{minutes} min</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -257,12 +296,16 @@ export const ExerciseHistoryPage = () => {
 
       {/* Explanation Modal */}
       <ExplanationModal
-        open={open}
-        onClose={() => setOpen(false)}
-        loading={explanationLoading}
-        sections={sections}
-        error={null}
-        onTryAgain={() => setOpen(false)}
+        open={teaching.open}
+        onClose={() => teaching.setOpen(false)}
+        loading={teaching.loading}
+        sections={teaching.sections}
+        error={teaching.error}
+        onLike={() => void teaching.submitFeedback('like')}
+        onDislike={() => void teaching.submitFeedback('dislike')}
+        feedback={teaching.feedback}
+        feedbackLoading={teaching.feedbackLoading}
+        onTryAgain={() => teaching.setOpen(false)}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useUserCurriculumProfile } from '@/hooks/useUserCurriculumProfile';
+import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -29,12 +30,16 @@ interface GroupedTopics {
 
 export default function MyProgramPage() {
   const navigate = useNavigate();
-  const { profile, isLoading: profileLoading, hasProfile } = useUserCurriculumProfile();
+  const { profile, isLoading: profileLoading } = useUserCurriculumProfile();
+  const activeSchoolLevel = useActiveSchoolLevel();
+  const effectiveCountryCode = profile?.countryCode ?? (activeSchoolLevel.isPreviewing ? 'fr' : undefined);
+  const effectiveLevelCode = activeSchoolLevel.normalizedLevel ?? profile?.levelCode;
+  const hasEffectiveProfile = Boolean(effectiveCountryCode && effectiveLevelCode);
 
   const { data: topics, isLoading: topicsLoading } = useQuery({
-    queryKey: ['myProgramTopics', profile?.countryCode, profile?.levelCode],
+    queryKey: ['myProgramTopics', effectiveCountryCode, effectiveLevelCode],
     queryFn: async () => {
-      if (!profile) return [];
+      if (!effectiveCountryCode || !effectiveLevelCode) return [];
       
       const { data, error } = await supabase
         .from('topics')
@@ -49,20 +54,20 @@ export default function MyProgramPage() {
             )
           )
         `)
-        .eq('curriculum_country_code', profile.countryCode)
-        .eq('curriculum_level_code', profile.levelCode)
+        .eq('curriculum_country_code', effectiveCountryCode)
+        .eq('curriculum_level_code', effectiveLevelCode)
         .eq('is_active', true)
         .order('order_index');
       
       if (error) throw error;
       return data || [];
     },
-    enabled: hasProfile,
+    enabled: hasEffectiveProfile,
   });
 
   const groupedTopics: GroupedTopics = {};
   
-  if (topics && profile) {
+  if (topics && effectiveCountryCode && effectiveLevelCode) {
     topics.forEach((topic: any) => {
       const subjectId = topic.curriculum_subject_id;
       const domainId = topic.curriculum_domain_id;
@@ -70,9 +75,9 @@ export default function MyProgramPage() {
       
       if (!subjectId || !domainId || !subdomainId) return;
       
-      const subject = getSubject(profile.countryCode, profile.levelCode, subjectId);
-      const domain = getDomain(profile.countryCode, profile.levelCode, subjectId, domainId);
-      const subdomain = getSubdomain(profile.countryCode, profile.levelCode, subjectId, domainId, subdomainId);
+      const subject = getSubject(effectiveCountryCode, effectiveLevelCode, subjectId);
+      const domain = getDomain(effectiveCountryCode, effectiveLevelCode, subjectId, domainId);
+      const subdomain = getSubdomain(effectiveCountryCode, effectiveLevelCode, subjectId, domainId, subdomainId);
       
       if (!subject || !domain || !subdomain) return;
       
@@ -114,7 +119,7 @@ export default function MyProgramPage() {
     );
   }
 
-  if (!hasProfile) {
+  if (!hasEffectiveProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -141,7 +146,7 @@ export default function MyProgramPage() {
           <div className="mb-6">
             <h1 className="text-3xl font-bold">My Program</h1>
             <p className="text-muted-foreground">
-              {profile.countryName} - {profile.levelLabel}
+              {profile?.countryName ?? 'France'} - {activeSchoolLevel.activeLevel ?? profile?.levelLabel}
             </p>
           </div>
           
@@ -168,8 +173,8 @@ export default function MyProgramPage() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">My Program</h1>
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary">{profile.countryName}</Badge>
-            <Badge variant="secondary">{profile.levelLabel}</Badge>
+            <Badge variant="secondary">{profile?.countryName ?? 'France'}</Badge>
+            <Badge variant="secondary">{activeSchoolLevel.activeLevel ?? profile?.levelLabel}</Badge>
             <Button 
               variant="ghost" 
               size="sm" 

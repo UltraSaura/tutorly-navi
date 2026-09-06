@@ -1,38 +1,34 @@
 import { useNavigate } from 'react-router-dom';
 import { useLearningSubjects } from '@/hooks/useLearningSubjects';
 import { useUserCurriculumProfile } from '@/hooks/useUserCurriculumProfile';
+import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookOpen } from 'lucide-react';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { DynamicIcon } from '@/components/admin/subjects/DynamicIcon';
+import { CompactStreakChip } from '@/components/game';
+import { useStudentStats } from '@/hooks/useStudentStats';
+import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { toast } from 'sonner';
 import { PageMeta } from '@/components/seo/PageMeta';
 
-// Checkmark icon for status
-const CheckmarkIcon = ({
-  className
-}: {
-  className?: string;
-}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-  </svg>;
+const getSubjectTileBackground = (colorScheme?: string | null) => {
+  if (!colorScheme || colorScheme.startsWith('bg-')) {
+    return '#dbeafe';
+  }
 
-// Right arrow icon for navigation
-const ArrowRightIcon = ({
-  className
-}: {
-  className?: string;
-}) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-  </svg>;
+  return colorScheme;
+};
 
 const LearningPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { profile } = useUserCurriculumProfile();
-  const { data: subjects, isLoading } = useLearningSubjects();
+  const activeSchoolLevel = useActiveSchoolLevel();
+  const { data: subjects, isLoading, isError } = useLearningSubjects();
+  const { data: stats } = useStudentStats();
 
   if (isLoading) {
     return <div className="min-h-screen bg-gray-50 dark:bg-background pb-20">
@@ -46,29 +42,13 @@ const LearningPage = () => {
       </div>;
   }
 
-  // Check if user has curriculum profile
-  if (!profile?.countryCode || !profile?.levelCode) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center p-6">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle>{t('learning.setupRequired')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              {t('learning.setupMessage')}
-            </p>
-            <Button onClick={() => navigate('/profile')}>
-              {t('learning.goToProfile')}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  // Check if user has curriculum profile — show onboarding wizard instead of dead-end card
+  if ((!profile?.countryCode || !profile?.levelCode) && !activeSchoolLevel.isPreviewing) {
+    return <OnboardingWizard />;
   }
 
   // Check if no subjects available
-  if (!subjects || subjects.length === 0) {
+  if (isError || !subjects || subjects.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center p-6">
         <Card className="max-w-md text-center">
@@ -86,7 +66,6 @@ const LearningPage = () => {
     );
   }
 
-  const readyCount = subjects?.filter(s => s.videos_ready > 0).length || 0;
   return <div className="min-h-screen bg-gray-50 dark:bg-background pb-20 mx-[5px]">
       <PageMeta title="Learning Library" description="Browse subjects, topics, and video lessons in your Stuwy learning library." />
       {/* Header */}
@@ -95,18 +74,25 @@ const LearningPage = () => {
           <h1 className="font-extrabold text-white text-xl">
             {t('learning.chooseSubject') || 'Choose Your Subject'}
           </h1>
-          
+          <CompactStreakChip
+            days={stats?.currentStreak ?? 0}
+            active={Boolean(stats && (stats.activeToday || stats.streakAtRisk))}
+            className="bg-white/15 text-white"
+          />
         </div>
         
       </header>
 
       {/* Subject List */}
-      <main className="py-4">
+      <main className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 lg:grid-cols-4">
         {subjects?.map(({
         subject,
-        videos_ready
+        videos_ready,
+        lessons_completed
       }) => {
         const isReady = videos_ready > 0;
+        const subjectTitleFontSize = Math.max(subject.lesson_font_size ?? subject.font_size ?? 18, 12);
+        const subjectTitleFontFamily = subject.lesson_font_family ?? subject.font_family ?? 'Poppins, sans-serif';
         return <div 
           key={subject.id} 
           onClick={() => {
@@ -119,30 +105,53 @@ const LearningPage = () => {
             }
           }} 
           className={`
-            flex items-center justify-between 
-            p-4 my-2 mx-0 h-24
-            text-white 
-            rounded-xl shadow-md cursor-pointer
-            transition-transform transform 
+            aspect-square rounded-2xl border border-white/70 px-4 py-4
+            shadow-sm cursor-pointer
+            transition-transform transform
             hover:scale-[1.01] active:scale-[0.99]
             ${!isReady ? 'opacity-60 cursor-not-allowed' : ''}
           `}
-          style={{ backgroundColor: subject.color_scheme }}
+          style={{ backgroundColor: getSubjectTileBackground(subject.color_scheme) }}
         >
-              {/* Left: Icon + Name */}
-              <div className="flex items-center flex-grow">
-                <DynamicIcon name={subject.icon_name as any} className="w-10 h-10" />
-                <span className="ml-4 text-xl font-semibold">{subject.name}</span>
+              <div className="flex h-full flex-col items-center justify-center gap-2 pb-3">
+                <div className="flex min-h-0 items-center justify-center">
+                  {subject.icon_image_url ? (
+                    <img
+                      src={subject.icon_image_url}
+                      alt=""
+                      className="max-h-28 max-w-full object-contain sm:max-h-32"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <DynamicIcon name={subject.icon_name} className="h-[5.5rem] w-[5.5rem] sm:h-[6.6rem] sm:w-[6.6rem]" style={{ color: subject.icon_color ?? '#1e3a5f' }} />
+                  )}
+                </div>
+
+                <div className="w-full rounded-xl bg-white/80 px-3 py-2 text-center shadow-sm backdrop-blur-sm">
+                  <span
+                    className="line-clamp-2 font-semibold leading-tight"
+                    style={{ color: subject.lesson_text_color ?? subject.text_color ?? '#050B34', fontSize: `${subjectTitleFontSize}px`, fontFamily: subjectTitleFontFamily }}
+                  >
+                    {subject.name}
+                  </span>
+                  {videos_ready > 0 && (
+                    <div style={{ marginTop: 4 }}>
+                      <div style={{ height: 3, background: 'rgba(15,23,42,0.12)', borderRadius: 999, overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%',
+                          background: '#12C6A0',
+                          borderRadius: 999,
+                          width: `${Math.round((lessons_completed / Math.max(videos_ready, 1)) * 100)}%`,
+                          transition: 'width 0.3s ease',
+                        }} />
+                      </div>
+                      <p style={{ fontSize: 9, color: 'rgba(15,23,42,0.5)', margin: '2px 0 0', fontFamily: 'Poppins, sans-serif' }}>
+                        {lessons_completed}/{videos_ready} lecons
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
-              
-              {/* Center: Status Indicator */}
-              <div className="flex items-center text-sm font-medium pr-2">
-                <CheckmarkIcon className="w-4 h-4 mr-1" />
-                {videos_ready} {t('learning.ready') || 'ready'}
-              </div>
-              
-              {/* Right: Arrow */}
-              <ArrowRightIcon className="w-6 h-6 text-white ml-2" />
             </div>;
       })}
       </main>

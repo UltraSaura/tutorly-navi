@@ -32,6 +32,36 @@ const StatusIcon = ({ status }: { status?: ProblemRowStatus }) => {
   return <Circle className="h-4 w-4 text-slate-400" />;
 };
 
+const getStatusCopy = (status: ProblemRowStatus | undefined, language: string) => {
+  const fr = language === 'fr';
+
+  if (status === 'correct') {
+    return {
+      title: fr ? 'Bien joué' : 'Good job',
+      message: '',
+    };
+  }
+
+  if (status === 'incorrect') {
+    return {
+      title: fr ? 'Pas encore' : 'Not yet',
+      message: '',
+    };
+  }
+
+  if (status === 'partial') {
+    return {
+      title: fr ? 'Partiellement correct' : 'Partially correct',
+      message: fr ? 'Tu es proche. Revois la partie indiquée.' : 'You are close. Review the highlighted part.',
+    };
+  }
+
+  return {
+    title: fr ? 'À vérifier' : 'Needs review',
+    message: fr ? 'La réponse a été envoyée.' : 'Your answer was submitted.',
+  };
+};
+
 const normalizeJustificationAttachments = (
   attachments: ProblemJustificationAttachment[] = []
 ): ProblemJustificationAttachment[] =>
@@ -608,9 +638,16 @@ const GroupedChoiceProblemCard = ({ problem, onSubmitAnswers, onShowExplanation 
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex flex-wrap items-center gap-2 font-medium">
                             <StatusIcon status={status} />
-                            {evaluation.selectedAnswer && (
-                              <span>{isMultipart ? (language === 'fr' ? 'Réponse envoyée' : 'Submitted answer') : (language === 'fr' ? 'Affirmation sélectionnée' : 'Selected assertion')}</span>
-                            )}
+                            <div>
+                              <div className="font-bold">
+                                {getStatusCopy(status, language).title}
+                              </div>
+                              {getStatusCopy(status, language).message && (
+                                <div className="text-xs font-medium opacity-90">
+                                  {getStatusCopy(status, language).message}
+                                </div>
+                              )}
+                            </div>
                           </div>
                           {onShowExplanation && (
                             <Button

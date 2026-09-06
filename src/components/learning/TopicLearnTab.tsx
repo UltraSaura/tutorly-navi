@@ -1,9 +1,21 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { VideoPlayerBox } from './VideoPlayerBox';
 import { CollapsibleVideoSection } from './CollapsibleVideoSection';
 
 import { TopicProgressIndicator } from './TopicProgressIndicator';
 import type { Video } from '@/types/learning';
+import type { ManipulativeMathExercise } from '@/lib/manipulative-maths/types';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ManipulativeMathRenderer } from '@/components/manipulative-maths/ManipulativeMathRenderer';
 
 interface BankInfo {
   id: string;
@@ -14,6 +26,7 @@ interface BankInfo {
   requiredCount: number;
   videoIds: string[];
   topicId: string | null;
+  triggerVideoId?: string | null;
 }
 
 interface TopicLearnTabProps {
@@ -24,7 +37,7 @@ interface TopicLearnTabProps {
   onVideoEnd: () => void;
   completedVideoIds: string[];
   allBanks?: BankInfo[];
-  lessonContent?: any;
+  lessonContent?: unknown;
   videoAutoPlay?: boolean;
 }
 
@@ -39,6 +52,8 @@ export function TopicLearnTab({
   lessonContent,
   videoAutoPlay = true,
 }: TopicLearnTabProps) {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const quizSectionRef = useRef<HTMLDivElement>(null);
 
   // Group videos into sections (every 4 videos)
@@ -64,14 +79,35 @@ export function TopicLearnTab({
   const isCurrentVideoCompleted = playingVideoId 
     ? completedVideoIds.includes(playingVideoId) 
     : false;
+  const currentVideo = useMemo(
+    () => videos.find(video => video.id === playingVideoId) || null,
+    [videos, playingVideoId]
+  );
 
   // Auto-scroll to quiz when video ends
   const handleVideoEnd = () => {
     onVideoEnd();
-    // Scroll to quiz section after short delay
-    setTimeout(() => {
-      quizSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 300);
+    if (!playingVideoId) return;
+
+    // Find the quiz bank triggered by this specific video
+    const triggeredBank = allBanks?.find(b => b.triggerVideoId === playingVideoId);
+    if (triggeredBank) {
+      // Small delay so the video completion write finishes first
+      setTimeout(() => {
+        const params = new URLSearchParams(searchParams);
+        params.set('quiz', triggeredBank.bankId);
+        navigate({ search: params.toString() }, { replace: true });
+      }, 800);
+    } else {
+      // No triggered bank — just scroll down to the playlist
+      setTimeout(() => {
+        quizSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 400);
+    }
+  };
+
+  const handleVideoSelect = (videoId: string) => {
+    onVideoSelect(videoId);
   };
 
   return (
@@ -89,7 +125,6 @@ export function TopicLearnTab({
         autoPlay={videoAutoPlay}
       />
 
-
       {/* Quiz Section - Shown after video */}
       <div ref={quizSectionRef}>
         {/* Quiz will be rendered by QuizOverlayController */}
@@ -103,7 +138,7 @@ export function TopicLearnTab({
             title={section.title}
             videos={section.videos}
             playingVideoId={playingVideoId}
-            onVideoSelect={onVideoSelect}
+            onVideoSelect={handleVideoSelect}
             allBanks={allBanks}
             topicId={topicId}
           />

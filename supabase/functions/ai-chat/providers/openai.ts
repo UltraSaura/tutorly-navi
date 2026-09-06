@@ -1,3 +1,4 @@
+import { resolveProviderKey } from "../../_shared/resolveProviderKey.ts";
 
 // OpenAI provider implementation
 export async function callOpenAI(
@@ -9,12 +10,8 @@ export async function callOpenAI(
   requestExplanation: boolean = false,
   maxTokens: number = 800
 ): Promise<any> {
-  const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-  
-  if (!openAIApiKey) {
-    console.error("OpenAI API key not configured");
-    throw new Error('OpenAI API key not configured');
-  }
+  const { value: openAIApiKey, source } = await resolveProviderKey('OpenAI');
+  console.log(`[OpenAI] key source: ${source}`);
   
   // Map gpt4o to the actual OpenAI model name
   const actualModel = model === 'gpt4o' ? 'gpt-4o' : model;
