@@ -134,9 +134,15 @@ Required teaching sequence:
 - similarProblem: keep a short structurally similar example setup using changed numbers or a different concrete context. It must practice the same concept but must not copy the original wording or values.
 - diagram: if problemContext.wantsDiagram is true or the selected row is geometry, include a simple structured diagram spec for the similar example. The labels and dimensions must match the similarProblem. For non-geometry rows, omit diagram or set it to null. Do not draw SVG or return markdown images.
 - learningStyleSupport: optional student-facing support that reinforces the same concept using problemContext.profile.learningStyle. It must include one guided example before asking the student to retry. It must not change the academic goal. Do not say "Because you are a visual learner" or label the child.
-  - If learningStyle is visual: use title "See it" or similar. Include a diagram, table, number line, visual grouping instruction, labels, or spatial explanation when useful, then guide through one different example.
+  - If learningStyle is visual: use title "See it" or similar.
+    • For school level CM1, CM2, 6e (or multi-digit arithmetic / numbers > 20): NEVER tell the student to draw individual dots, tallies, or count dozens of dots. Instead, represent the visual structure appropriately for this level:
+      - For multi-digit division: use place-value decomposition (e.g. tens/units breakdown) or explain the column division layout (la potence / division posée: finding quotient digit on tens first, subtracting, bringing down units).
+      - For multi-digit addition, subtraction, multiplication: use column alignment (unités sous unités, dizaines sous dizaines) or place-value blocks/bars.
+    • For CP/CE1 (or small numbers <= 20): drawing dots, groups, or number lines is allowed.
+    • For geometry: describe diagrams, shapes, or spatial relations.
+    • Guide through one different example using this visual framing.
   - If learningStyle is auditory: use title "Say it" or similar. Include a memory phrase, spoken reasoning cue, or sentence the child can repeat, then guide through one different example.
-  - If learningStyle is kinesthetic: use title "Try it" or similar. Include hands-on steps such as draw, move, tap, group, count, sort, build, or act it out, then guide through one different example.
+  - If learningStyle is kinesthetic: use title "Try it" or similar. Include hands-on steps such as draw, move, tap, group, count, sort, build, or act it out (for CM1/CM2 arithmetic, focus on step-by-step column writing), then guide through one different example.
   - If learningStyle is mixed: use title "Learn it your way" or similar. Include one visual hint, one verbal cue, one action idea, then guide through one different example.
 - retryPrompt: Auto-vérification / self-check / try again. This is the student's own turn: invite the student to return to the original exercise and apply the idea without revealing the original final answer.
 - method: give reusable step by step guidance for this kind of problem. Explain why each step is done. Do not make this the student's own retry prompt.

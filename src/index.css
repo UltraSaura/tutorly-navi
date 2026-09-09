@@ -256,8 +256,38 @@
     --ml-color: var(--neutral-text);
     --ml-background: transparent;
     --ml-color-secondary: var(--neutral-muted);
-    --ml-border-color: var(--neutral-border);
-    --ml-focus-border-color: var(--brand-primary);
+    --ml-border-color: transparent;
+    --ml-focus-border-color: transparent;
+    border: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    width: 100% !important;
+    display: block !important;
+  }
+
+  math-field {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    width: 100% !important;
+  }
+
+  /* Hide MathLive internal virtual keyboard toggle glyph and menu button */
+  math-field::part(virtual-keyboard-toggle),
+  math-field::part(menu-toggle),
+  .ML__virtual-keyboard-toggle,
+  .ML__menu-toggle,
+  .mathlive-input .ML__virtual-keyboard-toggle,
+  .mathlive-input .ML__menu-toggle,
+  .mathlive-input [part="virtual-keyboard-toggle"],
+  .mathlive-input button[part="menu-toggle"],
+  .mathlive-input [part="menu-toggle"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
   }
 
   .math-renderer {

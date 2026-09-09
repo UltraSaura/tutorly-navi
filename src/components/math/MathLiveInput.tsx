@@ -1,7 +1,5 @@
-import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 
 interface MathLiveInputProps {
   value?: string;
@@ -22,253 +20,244 @@ const MathLiveInputComponent = ({
   className,
   disabled = false,
   autoFocus = false,
-  onKeyboardChange
+  onKeyboardChange,
 }: MathLiveInputProps) => {
-  const ui = useInterfaceTranslation();
   const mathfieldRef = useRef<any>(null);
+  const onChangeRef = useRef(onChange);
+  const onEnterRef = useRef(onEnter);
+  const onKeyboardChangeRef = useRef(onKeyboardChange);
+  const lastValueRef = useRef(value);
+  const keyboardVisibleRef = useRef(false);
+  const keyboardHeightRef = useRef(0);
   const [isMathLiveReady, setIsMathLiveReady] = useState(false);
-  const [lastValue, setLastValue] = useState(value);
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const keyboardHeight = useRef<number>(0); // Use ref to avoid re-renders
 
   useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    onEnterRef.current = onEnter;
+  }, [onEnter]);
+
+  useEffect(() => {
+    onKeyboardChangeRef.current = onKeyboardChange;
+  }, [onKeyboardChange]);
+
+  useEffect(() => {
+    let disposed = false;
+    let cleanup: (() => void) | undefined;
+
     const initMathField = async () => {
       try {
         const mathlive = await import('mathlive');
         const { MathfieldElement } = mathlive;
-        
-        if (!mathfieldRef.current) return;
 
-        // Use local fonts that are copied by postinstall script
+        if (disposed || !mathfieldRef.current) return;
+
         MathfieldElement.fontsDirectory = '/mathlive/fonts/';
         MathfieldElement.soundsDirectory = '/mathlive/sounds/';
         (MathfieldElement as any).soundEnabled = false;
-        
-        // Set up the math field
-        const mf = mathfieldRef.current;
-        
-        // Force manual keyboard control on mobile
-        const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || 
-                              window.screen.width < 768;
 
-        mf.virtualKeyboardPolicy = isMobileDevice ? 'manual' : 'auto';
-        mf.virtualKeyboards = 'all';
+        const mf = mathfieldRef.current;
+        mf.mathVirtualKeyboardPolicy = 'auto';
+        mf.virtualKeyboardMode = 'onfocus';
+        mf.virtualKeyboards = 'numeric symbols';
         mf.smartFence = true;
         mf.smartSuperscript = true;
         mf.removeExtraneousParentheses = true;
-        
-        // Force keyboard to show on focus for mobile
-        if (isMobileDevice) {
-          mf.addEventListener('focus', () => {
-            console.log('[DEBUG] MathLive focused, showing keyboard');
+        mf.readOnly = disabled;
+        mf.setAttribute('aria-label', placeholder || 'Math input');
+
+        const showVirtualKeyboard = () => {
+          if (typeof window !== 'undefined' && (window as any).mathVirtualKeyboard) {
+            (window as any).mathVirtualKeyboard.show();
+          } else if ('virtualKeyboardVisible' in mf) {
             mf.virtualKeyboardVisible = true;
-            
-            // Improved keyboard detection with actual visible height
-            setTimeout(() => {
-              const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard, .ML__virtual-keyboard');
-              if (keyboardElement) {
-                const rect = keyboardElement.getBoundingClientRect();
-                const computedStyle = window.getComputedStyle(keyboardElement);
-                const isVisible = rect.height > 0 && 
-                                computedStyle.display !== 'none' &&
-                                computedStyle.visibility !== 'hidden';
-                
-                // Get actual keyboard height (capped at 40% of viewport)
-                // Only count as keyboard height if it's actually visible from the bottom
-                let height = 0;
-                
-                // More lenient check - allow 5px tolerance for rounding
-                const isAtBottom = Math.abs(rect.bottom - window.innerHeight) < 5;
-                
-                if (isVisible && isAtBottom) {
-                  // Keyboard is anchored to bottom, use its actual height
-                  height = Math.min(rect.height, window.innerHeight * 0.4);
-                  console.log('[DEBUG] Keyboard anchored to bottom, using rect.height:', rect.height);
-                } else if (isVisible && rect.top > window.innerHeight * 0.5) {
-                  // Keyboard is in lower half of screen
-                  height = Math.min(window.innerHeight - rect.top, window.innerHeight * 0.4);
-                  console.log('[DEBUG] Keyboard in lower half, calculated height:', height);
-                }
-                
-                console.log('[DEBUG] Keyboard detection:', {
-                  isVisible, 
-                  height,
-                  rectHeight: rect.height,
-                  top: rect.top,
-                  bottom: rect.bottom,
-                  isAnchoredToBottom: isAtBottom,
-                  bottomDiff: Math.abs(rect.bottom - window.innerHeight),
-                  display: computedStyle.display,
-                  visibility: computedStyle.visibility,
-                  viewportHeight: window.innerHeight,
-                  maxAllowedHeight: window.innerHeight * 0.4
-                });
-                
-                // Only update if visibility changed or height changed significantly (>10px)
-                if (height > 0 && (isVisible !== keyboardVisible || Math.abs(height - keyboardHeight.current) > 10)) {
-                  setKeyboardVisible(isVisible);
-                  keyboardHeight.current = height;
-                  onKeyboardChange?.(isVisible, height);
-                  console.log('[DEBUG] ✅ Keyboard state updated - visible:', isVisible, 'height:', height);
-                } else if (height === 0 && keyboardVisible) {
-                  // Keyboard not properly detected, hide it
-                  setKeyboardVisible(false);
-                  keyboardHeight.current = 0;
-                  onKeyboardChange?.(false, 0);
-                  console.log('[DEBUG] ⚠️ Keyboard height is 0, hiding input');
-                }
-              }
-            }, 200); // Increased timeout to let keyboard fully render
-          });
-          
-          mf.addEventListener('blur', () => {
-            console.log('[DEBUG] MathLive blurred, hiding keyboard');
-            mf.virtualKeyboardVisible = false;
-            
-            // Only update if visibility actually changed
-            if (keyboardVisible) {
-              setKeyboardVisible(false);
-              keyboardHeight.current = 0;
-              onKeyboardChange?.(false, 0);
-            }
-          });
-        }
-        
-        // Set up event listeners
-        const handleInput = () => {
-          const latex = mf.getValue('latex') || '';
-          console.log('[DEBUG] MathLive input changed:', latex);
-          setLastValue(latex);
-          onChange?.(latex);
+          }
         };
 
-        // Add event listeners
-        mf.addEventListener('input', handleInput);
-        mf.addEventListener('change', handleInput);
-        mf.addEventListener('blur', handleInput);
-
-        // Add Enter key handler for submission
-        mf.addEventListener('keydown', (event: KeyboardEvent) => {
-          console.log('[DEBUG] MathLive keydown:', event.key);
-          if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            event.stopPropagation();
-            console.log('[DEBUG] MathLive Enter pressed, calling onEnter');
-            onEnter?.();
+        const syncValue = () => {
+          const latex = mf.getValue?.('latex') || '';
+          if (latex !== lastValueRef.current) {
+            lastValueRef.current = latex;
+            onChangeRef.current?.(latex);
           }
-        });
+          return latex;
+        };
 
-        // Scroll input into view when keyboard shows
-        mf.addEventListener('focus', () => {
-          setTimeout(() => {
-            // Scroll the input into view above keyboard
+        const updateKeyboardState = () => {
+          window.setTimeout(() => {
+            const keyboardElement = document.querySelector('ml-virtual-keyboard, .ML__keyboard, .ML__virtual-keyboard');
+            if (!keyboardElement) return;
+
+            const rect = keyboardElement.getBoundingClientRect();
+            const computedStyle = window.getComputedStyle(keyboardElement);
+            const isVisible =
+              rect.height > 0 &&
+              computedStyle.display !== 'none' &&
+              computedStyle.visibility !== 'hidden';
+
+            let height = 0;
+            const isAtBottom = Math.abs(rect.bottom - window.innerHeight) < 10;
+            if (isVisible && isAtBottom) {
+              height = Math.min(rect.height, window.innerHeight * 0.45);
+            } else if (isVisible && rect.top > window.innerHeight * 0.4) {
+              height = Math.min(window.innerHeight - rect.top, window.innerHeight * 0.45);
+            }
+
+            if (height > 0) {
+              keyboardVisibleRef.current = true;
+              keyboardHeightRef.current = height;
+              onKeyboardChangeRef.current?.(true, height);
+              return;
+            }
+
+            if (keyboardVisibleRef.current) {
+              keyboardVisibleRef.current = false;
+              keyboardHeightRef.current = 0;
+              onKeyboardChangeRef.current?.(false, 0);
+            }
+          }, 150);
+        };
+
+        const handleFocus = () => {
+          showVirtualKeyboard();
+          updateKeyboardState();
+
+          window.setTimeout(() => {
             const inputElement = mf.closest('.fixed');
             if (inputElement) {
               inputElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
             }
 
-            // Also adjust the body scroll if needed
             if (window.visualViewport) {
-              const keyboardHeight = window.innerHeight - window.visualViewport.height;
-              if (keyboardHeight > 0) {
-                document.body.style.paddingBottom = `${keyboardHeight}px`;
+              const viewportKeyboardHeight = window.innerHeight - window.visualViewport.height;
+              if (viewportKeyboardHeight > 0) {
+                document.body.style.paddingBottom = `${viewportKeyboardHeight}px`;
               }
             }
           }, 300);
-        });
+        };
 
-        // Reset padding when keyboard hides
-        mf.addEventListener('blur', () => {
+        const handleBlur = () => {
+          syncValue();
           document.body.style.paddingBottom = '0px';
-        });
+          if (keyboardVisibleRef.current) {
+            keyboardVisibleRef.current = false;
+            keyboardHeightRef.current = 0;
+            onKeyboardChangeRef.current?.(false, 0);
+          }
+        };
 
-        // Set initial value
+        const handleInput = () => {
+          syncValue();
+        };
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+          if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            event.stopPropagation();
+            syncValue();
+            onEnterRef.current?.();
+          }
+        };
+
+        mf.addEventListener('focus', handleFocus);
+        mf.addEventListener('click', handleFocus);
+        mf.addEventListener('blur', handleBlur);
+        mf.addEventListener('input', handleInput);
+        mf.addEventListener('change', handleInput);
+        mf.addEventListener('keydown', handleKeyDown);
+
         if (value) {
           mf.value = value;
+          lastValueRef.current = value;
         }
 
-        setIsMathLiveReady(true);
-        console.log('[DEBUG] MathLive initialized successfully');
+        if (autoFocus) {
+          window.setTimeout(() => {
+            if (!disposed) {
+              mf.focus();
+              showVirtualKeyboard();
+            }
+          }, 50);
+        }
 
+        cleanup = () => {
+          mf.removeEventListener('focus', handleFocus);
+          mf.removeEventListener('click', handleFocus);
+          mf.removeEventListener('blur', handleBlur);
+          mf.removeEventListener('input', handleInput);
+          mf.removeEventListener('change', handleInput);
+          mf.removeEventListener('keydown', handleKeyDown);
+          document.body.style.paddingBottom = '0px';
+        };
+
+        setIsMathLiveReady(true);
       } catch (error) {
         console.error('Error initializing MathLive:', error);
         setIsMathLiveReady(false);
       }
     };
 
-    initMathField();
-  }, [value, onChange, onEnter, onKeyboardChange]);
+    void initMathField();
 
-  // Update value when prop changes
+    return () => {
+      disposed = true;
+      cleanup?.();
+    };
+  }, [autoFocus, disabled, placeholder]);
+
   useEffect(() => {
-    if (mathfieldRef.current && mathfieldRef.current.value !== value) {
-      mathfieldRef.current.value = value;
+    const mf = mathfieldRef.current;
+    if (!mf) return;
+
+    if ((mf.getValue?.('latex') || '') !== value) {
+      mf.value = value;
+      lastValueRef.current = value;
     }
   }, [value]);
 
-  // Update disabled state
   useEffect(() => {
-    if (mathfieldRef.current) {
-      mathfieldRef.current.readOnly = disabled;
-    }
+    const mf = mathfieldRef.current;
+    if (!mf) return;
+    mf.readOnly = disabled;
   }, [disabled]);
 
-  // Poll for changes as a fallback - but only if MathLive is ready
   useEffect(() => {
     if (!isMathLiveReady) return;
-    
-    const pollInterval = setInterval(() => {
-      if (mathfieldRef.current && typeof mathfieldRef.current.getValue === 'function') {
-        const currentValue = mathfieldRef.current.getValue('latex') || '';
-        if (currentValue !== lastValue) {
-          console.log('[DEBUG] MathLive polled value changed:', currentValue);
-          setLastValue(currentValue);
-          onChange?.(currentValue);
-        }
+
+    const pollInterval = window.setInterval(() => {
+      const mf = mathfieldRef.current;
+      if (!mf || typeof mf.getValue !== 'function') return;
+
+      const currentValue = mf.getValue('latex') || '';
+      if (currentValue !== lastValueRef.current) {
+        lastValueRef.current = currentValue;
+        onChangeRef.current?.(currentValue);
       }
     }, 100);
-    return () => clearInterval(pollInterval);
-  }, [lastValue, onChange, isMathLiveReady]);
 
-  // Show keyboard function
-  const showKeyboard = () => {
-    if (mathfieldRef.current) {
-      mathfieldRef.current.focus();
-      mathfieldRef.current.virtualKeyboardVisible = true;
-      setKeyboardVisible(true);
-    }
-  };
+    return () => window.clearInterval(pollInterval);
+  }, [isMathLiveReady]);
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <math-field
         ref={mathfieldRef}
+        placeholder={placeholder}
         className={cn(
-          "mathlive-input min-h-[40px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          'mathlive-input min-h-[40px] w-full rounded-md border-0 bg-transparent px-3 py-2 text-sm focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}
-        style={{ 
+        style={{
           fontSize: '16px',
           '--ml-hue': '221',
           '--ml-contains-size': 'size',
           '--ml-font-family': 'KaTeX_Main, "Times New Roman", serif',
-          '--ml-font-size': '16px'
+          '--ml-font-size': '16px',
         } as any}
       />
-      
-      {/* Keyboard toggle button for mobile */}
-      {!keyboardVisible && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={showKeyboard}
-          className="absolute top-2 right-2 h-6 px-2 bg-background/80 backdrop-blur-sm text-xs"
-          title={ui("Show keyboard")}
-        >
-          ⌨️
-        </Button>
-      )}
     </div>
   );
 };
