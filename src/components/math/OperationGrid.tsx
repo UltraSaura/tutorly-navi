@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 /**
  * OperationGrid Component
  * Renders visual representations of math operations with highlights and animations
@@ -13,6 +14,7 @@ interface OperationGridProps {
 }
 
 export const OperationGrid: React.FC<OperationGridProps> = ({ visualData, className }) => {
+  const ui = useInterfaceTranslation();
   const { type, layout } = visualData;
   
   const renderColumnLayout = () => {
@@ -161,6 +163,6 @@ export const OperationGrid: React.FC<OperationGridProps> = ({ visualData, classN
     case 'parentheses':
       return renderParenthesesLayout();
     default:
-      return <div className="text-gray-500">Unknown layout type</div>;
+      return <div className="text-gray-500">{ui("Unknown layout type")}</div>;
   }
 };

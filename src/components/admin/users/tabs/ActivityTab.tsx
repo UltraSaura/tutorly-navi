@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import React from 'react';
 import { CalendarDays, BarChart, GraduationCap, UsersRound } from 'lucide-react';
@@ -9,38 +11,40 @@ interface ActivityTabProps {
 }
 
 export const ActivityTab = ({ user }: ActivityTabProps) => {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2 border rounded-lg p-3 text-center">
           <CalendarDays className="h-6 w-6 mx-auto text-blue-500" />
-          <p className="text-sm font-medium">Last Update</p>
+          <p className="text-sm font-medium">{ui("Last Update")}</p>
           <p className="text-sm">
-            {new Date(user.updated_at).toLocaleDateString()}
+            {new Date(user.updated_at).toLocaleDateString(locale)}
           </p>
         </div>
         <div className="space-y-2 border rounded-lg p-3 text-center">
           <BarChart className="h-6 w-6 mx-auto text-purple-500" />
-          <p className="text-sm font-medium">Weekly Usage</p>
-          <p className="text-sm">{totalMinutes(user)} mins</p>
+          <p className="text-sm font-medium">{ui("Weekly Usage")}</p>
+          <p className="text-sm">{totalMinutes(user)} {ui("mins")}</p>
         </div>
         {user.user_type === 'student' ? (
           <div className="space-y-2 border rounded-lg p-3 text-center">
             <GraduationCap className="h-6 w-6 mx-auto text-green-500" />
-            <p className="text-sm font-medium">Avg. Grade</p>
+            <p className="text-sm font-medium">{ui("Avg. Grade")}</p>
             <p className="text-sm">B+ (85%)</p>
           </div>
         ) : (
           <div className="space-y-2 border rounded-lg p-3 text-center">
             <UsersRound className="h-6 w-6 mx-auto text-green-500" />
-            <p className="text-sm font-medium">Children</p>
+            <p className="text-sm font-medium">{ui("Children")}</p>
             <p className="text-sm">{user.children?.length || 0}</p>
           </div>
         )}
       </div>
       
       <div>
-        <h3 className="text-sm font-medium mb-3">Daily Activity</h3>
+        <h3 className="text-sm font-medium mb-3">{ui("Daily Activity")}</h3>
         <div className="space-y-3">
           {user.activity?.map((day, idx) => (
             <div key={idx} className="flex justify-between items-center">
@@ -65,7 +69,7 @@ export const ActivityTab = ({ user }: ActivityTabProps) => {
       </div>
       
       <div>
-        <h3 className="text-sm font-medium mb-3">Recent Sessions</h3>
+        <h3 className="text-sm font-medium mb-3">{ui("Recent Sessions")}</h3>
         <div className="space-y-2">
           {user.user_type === 'student' ? (
             [

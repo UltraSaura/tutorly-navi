@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 interface TopicVisualProps {
   topicName: string;
   total?: number;
@@ -31,6 +32,7 @@ function PizzaVisual({
   size: number;
   animated: boolean;
 }) {
+  const ui = useInterfaceTranslation();
   const sliceColors = ['#12C6A0', '#FDE68A', '#F97316', '#A78BFA', '#F472B6', '#60A5FA', '#34D399', '#FBBF24'];
   const r = 44;
   const cx = 50;
@@ -71,7 +73,7 @@ function PizzaVisual({
   return (
     <>
       <style>{'@keyframes fadeSlice{from{opacity:0;transform-origin:50px 50px;transform:scale(.85)}to{opacity:1;transform-origin:50px 50px;transform:scale(1)}}'}</style>
-      <svg width={size} height={size} viewBox="0 0 100 100" aria-label={`Pizza divisée en ${total} parts, ${taken} sélectionnée${taken > 1 ? 's' : ''}`}>
+      <svg width={size} height={size} viewBox="0 0 100 100" aria-label={ui("pizzaDescription", { total, taken })}>
         <circle cx={cx} cy={cy} r={r} fill="#FEF3C7" stroke="#F59E0B" strokeWidth="2" />
         {slices}
       </svg>
@@ -80,10 +82,11 @@ function PizzaVisual({
 }
 
 function BarVisual({ total = 4, taken = 1, size = 110 }: { total: number; taken: number; size: number }) {
+  const ui = useInterfaceTranslation();
   const segW = Math.floor(260 / total);
   const colors = ['#12C6A0', '#34D399', '#059669', '#047857'];
   return (
-    <svg width={size * 2.4} height={size * 0.44} viewBox="0 0 260 48" aria-label={`Barre divisée en ${total} parts, ${taken} sélectionnée${taken > 1 ? 's' : ''}`}>
+    <svg width={size * 2.4} height={size * 0.44} viewBox="0 0 260 48" aria-label={ui("barDescription", { total, taken })}>
       {Array.from({ length: total }).map((_, i) => (
         <rect
           key={i}
@@ -101,6 +104,7 @@ function BarVisual({ total = 4, taken = 1, size = 110 }: { total: number; taken:
 }
 
 function GroupsVisual({ total = 12, taken = 3, size = 110 }: { total: number; taken: number; size: number }) {
+  const ui = useInterfaceTranslation();
   const cols = Math.max(2, Math.round(total / Math.max(taken, 1)));
   const rows = Math.ceil(total / cols);
   const dotR = size <= 85 ? 6 : 8;
@@ -111,7 +115,7 @@ function GroupsVisual({ total = 12, taken = 3, size = 110 }: { total: number; ta
   const svgH = startY * 2 + (rows - 1) * gap + dotR * 2;
 
   return (
-    <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} aria-label={`Grille de ${rows} rangées × ${cols} colonnes = ${total} points`}>
+    <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} aria-label={ui("gridDescription", { rows, cols, total })}>
       {Array.from({ length: rows }).map((_, row) =>
         Array.from({ length: cols }).map((_, col) => {
           const idx = row * cols + col;
@@ -145,19 +149,21 @@ function GroupsVisual({ total = 12, taken = 3, size = 110 }: { total: number; ta
 }
 
 function ShapesVisual({ size = 110 }: { size: number }) {
+  const ui = useInterfaceTranslation();
   return (
-    <svg width={size * 2.6} height={size * 0.78} viewBox="0 0 286 86" aria-label="Formes géométriques: triangle, carré et cercle">
+    <svg width={size * 2.6} height={size * 0.78} viewBox="0 0 286 86" aria-label={ui("Formes géométriques: triangle, carré et cercle")}>
       <polygon points="44,4 84,62 4,62" fill="#F2FBF8" stroke="#12C6A0" strokeWidth="2" />
       <text x="44" y="78" fontSize="10" textAnchor="middle" fill="#085041" fontFamily="Poppins,sans-serif" fontWeight="700">triangle</text>
       <rect x="106" y="6" width="56" height="56" rx="4" fill="#FFF3DC" stroke="#F97316" strokeWidth="2" />
-      <text x="134" y="78" fontSize="10" textAnchor="middle" fill="#633806" fontFamily="Poppins,sans-serif" fontWeight="700">carré</text>
+      <text x="134" y="78" fontSize="10" textAnchor="middle" fill="#633806" fontFamily="Poppins,sans-serif" fontWeight="700">{ui("carré")}</text>
       <circle cx="244" cy="34" r="28" fill="#FCEBEB" stroke="#F7C1C1" strokeWidth="2" />
-      <text x="244" y="78" fontSize="10" textAnchor="middle" fill="#791F1F" fontFamily="Poppins,sans-serif" fontWeight="700">cercle</text>
+      <text x="244" y="78" fontSize="10" textAnchor="middle" fill="#791F1F" fontFamily="Poppins,sans-serif" fontWeight="700">{ui("cercle")}</text>
     </svg>
   );
 }
 
 function CartesianVisual({ size = 110 }: { size: number }) {
+  const ui = useInterfaceTranslation();
   const points = [
     { x: 40, y: 50 },
     { x: 80, y: 38 },
@@ -166,7 +172,7 @@ function CartesianVisual({ size = 110 }: { size: number }) {
   ];
 
   return (
-    <svg width={size * 1.9} height={size * 0.7} viewBox="0 0 210 80" aria-label="Plan cartésien avec une droite y = 2x + 1">
+    <svg width={size * 1.9} height={size * 0.7} viewBox="0 0 210 80" aria-label={ui("Plan cartésien avec une droite y = 2x + 1")}>
       {[20, 60, 100, 140, 180].map((x) => (
         <line key={x} x1={x} y1="5" x2={x} y2="65" stroke="#EAECEF" strokeWidth="0.5" />
       ))}
@@ -188,10 +194,11 @@ function CartesianVisual({ size = 110 }: { size: number }) {
 }
 
 function NumberLineVisual({ total = 10, taken = 3, size = 110 }: { total: number; taken: number; size: number }) {
+  const ui = useInterfaceTranslation();
   const w = 260;
   const step = w / total;
   return (
-    <svg width={size * 2.4} height={size * 0.4} viewBox={`0 0 ${w} 48`} aria-label={`Droite numérique 0 à ${total}, position ${taken} marquée`}>
+    <svg width={size * 2.4} height={size * 0.4} viewBox={`0 0 ${w} 48`} aria-label={ui("numberLineDescription", { total, taken })}>
       <line x1="10" y1="24" x2={w - 10} y2="24" stroke="#EAECEF" strokeWidth="3" strokeLinecap="round" />
       <line x1="10" y1="24" x2={10 + taken * step} y2="24" stroke="#12C6A0" strokeWidth="3" strokeLinecap="round" style={{ transition: 'x2 .5s ease' }} />
       {Array.from({ length: total + 1 }).map((_, i) => (

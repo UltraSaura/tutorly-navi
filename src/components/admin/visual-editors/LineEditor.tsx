@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 "use client";
 
 import * as React from "react";
@@ -44,6 +45,7 @@ export default function LineEditor({
   state: VisualLineRelation;
   setState: (s: VisualLineRelation) => void;
 }) {
+  const ui = useInterfaceTranslation();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [mode, setMode] = useState<"create" | "delete">("create");
   const [drag, setDrag] = useState<DragHandle | null>(null);
@@ -435,7 +437,7 @@ export default function LineEditor({
               setHoverPairId(null);
             }}
           >
-            Create pairs
+            {ui("Create pairs")}
           </Button>
           <Button
             type="button"
@@ -451,7 +453,7 @@ export default function LineEditor({
         </div>
 
         <div className="flex items-center gap-2">
-          <Label className="text-sm">Allow multiple answers</Label>
+          <Label className="text-sm">{ui("Allow multiple answers")}</Label>
           <input
             type="checkbox"
             checked={!!state.multi}
@@ -460,9 +462,9 @@ export default function LineEditor({
         </div>
 
         <div className="space-y-2 border rounded-md p-2 max-h-60 overflow-auto">
-          <div className="text-xs font-medium text-muted-foreground">Line pairs</div>
+          <div className="text-xs font-medium text-muted-foreground">{ui("Line pairs")}</div>
           {state.pairs.length === 0 && (
-            <div className="text-xs text-muted-foreground">No pairs yet. Use the canvas to add lines.</div>
+            <div className="text-xs text-muted-foreground">{ui("No pairs yet. Use the canvas to add lines.")}</div>
           )}
           {state.pairs.map((pair, index) => (
             <div
@@ -473,7 +475,7 @@ export default function LineEditor({
               onClick={() => setSelectedPairId(pair.id)}
             >
               <span>
-                Pair {index + 1} · {pair.relation ?? "unclassified"}
+                {ui("Pair")} {index + 1} · {pair.relation ?? "unclassified"}
               </span>
               <div className="flex items-center gap-2">
                 <Button
@@ -484,7 +486,7 @@ export default function LineEditor({
                     commitRelation(pair.id);
                   }}
                 >
-                  Recompute
+                  {ui("Recompute")}
                 </Button>
                 <Button
                   size="sm"
@@ -494,7 +496,7 @@ export default function LineEditor({
                     removePair(pair.id);
                   }}
                 >
-                  Remove
+                  {ui("Remove")}
                 </Button>
               </div>
             </div>
@@ -503,7 +505,7 @@ export default function LineEditor({
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <Label>Tolerance (deg)</Label>
+            <Label>{ui("Tolerance (deg)")}</Label>
             <Input
               type="number"
               min={1}
@@ -513,7 +515,7 @@ export default function LineEditor({
             />
           </div>
           <div>
-            <Label>Delete hit tolerance</Label>
+            <Label>{ui("Delete hit tolerance")}</Label>
             <Input
               type="number"
               min={0.5}
@@ -526,12 +528,12 @@ export default function LineEditor({
           </div>
         </div>
         <div>
-          <Label>Snap step</Label>
+          <Label>{ui("Snap step")}</Label>
           <Input type="number" disabled value={DEFAULT_GRID_STEP} />
         </div>
 
         <div>
-          <Label>Target relation</Label>
+          <Label>{ui("Target relation")}</Label>
           <div className="flex gap-4 text-sm">
             <label className="inline-flex items-center gap-2">
               <input
@@ -539,7 +541,7 @@ export default function LineEditor({
                 checked={state.target === "parallel"}
                 onChange={() => setState({ ...state, target: "parallel" })}
               />
-              Parallel
+              {ui("Parallel")}
             </label>
             <label className="inline-flex items-center gap-2">
               <input
@@ -547,7 +549,7 @@ export default function LineEditor({
                 checked={state.target === "perpendicular"}
                 onChange={() => setState({ ...state, target: "perpendicular" })}
               />
-              Perpendicular
+              {ui("Perpendicular")}
             </label>
           </div>
         </div>
@@ -596,7 +598,7 @@ export default function LineEditor({
               fontSize={4}
               fill="#dc2626"
             >
-              Click to delete pair {hoverPairId.slice(0, 4)}
+              {ui("Click to delete pair")} {hoverPairId.slice(0, 4)}
             </text>
           )}
         </svg>

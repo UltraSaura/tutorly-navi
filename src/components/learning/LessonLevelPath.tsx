@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Lock, Play, ArrowLeft, Trophy, Zap } from 'lucide-react';
@@ -29,6 +30,7 @@ const TEAL_DARK = '#085041';
 export function LessonLevelPath({
   topicId, topicName, lessonContent, inlineBankId, onSexercer, subjectId,
 }: LessonLevelPathProps) {
+  const ui = useInterfaceTranslation();
   const { user } = useAuth();
   const steps = (lessonContent.steps ?? []) as unknown as LessonContent[];
   const total = steps.length;
@@ -71,7 +73,7 @@ export function LessonLevelPath({
       justCompletedRef.current = null;
       const finishedLesson = done >= total - 1;
       buzz(finishedLesson ? [0, 40, 30, 40, 30, 60] : [0, 35, 30, 35]);
-      setCelebration(finishedLesson ? 'Bravo, leçon terminée !' : `Niveau ${done + 1} terminé`);
+      setCelebration(finishedLesson ? ui("Bravo, leçon terminée !") : ui("levelCompleted", { level: done + 1 }));
       if (celebrateTimer.current) window.clearTimeout(celebrateTimer.current);
       celebrateTimer.current = window.setTimeout(() => setCelebration(null), 1700);
       // scroll the next bubble into view
@@ -79,7 +81,7 @@ export function LessonLevelPath({
         bubbleRefs.current[Math.min(done + 1, total - 1)]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 350);
     }
-  }, [total]);
+  }, [total, ui]);
 
   if (!ready) {
     return <div style={{ minHeight: 320 }} />; // avoid flashing locked state before restore
@@ -92,7 +94,7 @@ export function LessonLevelPath({
       {/* Progress line */}
       <div style={{ marginBottom: 16 }}>
         <p style={{ fontSize: 12, fontWeight: 700, color: allDone ? TEAL_DARK : '#667085', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
-          {allDone ? '✓ Parcours terminé' : `Niveau ${Math.min(completedCount + 1, total)} sur ${total}`}
+          {allDone ? ui("✓ Parcours terminé") : ui("levelProgress", { level: Math.min(completedCount + 1, total), total })}
         </p>
       </div>
 
@@ -145,12 +147,12 @@ export function LessonLevelPath({
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 10, fontWeight: 800, color: st === 'locked' ? '#9CA3AF' : TEAL, letterSpacing: '0.03em' }}>
-                    NIVEAU {i + 1}
+                    {ui("NIVEAU")} {i + 1}
                   </span>
-                  {st === 'completed' && <span style={{ fontSize: 10, fontWeight: 700, color: TEAL_DARK }}>· Terminé ✓</span>}
+                  {st === 'completed' && <span style={{ fontSize: 10, fontWeight: 700, color: TEAL_DARK }}>{ui("· Terminé ✓")}</span>}
                 </div>
                 <p style={{ fontSize: 14, fontWeight: 800, color: st === 'locked' ? '#9CA3AF' : '#0F172A', margin: '3px 0 0', lineHeight: 1.3 }}>
-                  {step.step_name || `Niveau ${i + 1}`}
+                  {step.step_name || ui("levelNumber", { level: i + 1 })}
                 </p>
                 {st === 'current' && (
                   <>
@@ -164,15 +166,15 @@ export function LessonLevelPath({
                       padding: '7px 14px', borderRadius: 999, background: TEAL, color: '#0F172A',
                       fontSize: 12, fontWeight: 800,
                     }}>
-                      Commencer →
+                      {ui("Commencer →")}
                     </span>
                   </>
                 )}
                 {st === 'completed' && (
-                  <p style={{ fontSize: 11, color: '#9CA3AF', margin: '4px 0 0', fontWeight: 600 }}>Appuie pour revoir</p>
+                  <p style={{ fontSize: 11, color: '#9CA3AF', margin: '4px 0 0', fontWeight: 600 }}>{ui("Appuie pour revoir")}</p>
                 )}
                 {st === 'locked' && (
-                  <p style={{ fontSize: 11, color: '#9CA3AF', margin: '4px 0 0', fontWeight: 600 }}>Termine le niveau précédent</p>
+                  <p style={{ fontSize: 11, color: '#9CA3AF', margin: '4px 0 0', fontWeight: 600 }}>{ui("Termine le niveau précédent")}</p>
                 )}
               </button>
             </div>
@@ -184,9 +186,9 @@ export function LessonLevelPath({
       {allDone && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginTop: 18, padding: '16px', background: '#F2FBF8', border: '1px solid #9FE1CB', borderRadius: 14 }}>
           <Trophy className="h-8 w-8" style={{ color: TEAL }} />
-          <p style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>Tu as terminé tous les niveaux !</p>
+          <p style={{ fontSize: 14, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>{ui("Tu as terminé tous les niveaux !")}</p>
           <button onClick={onSexercer} style={{ width: '100%', maxWidth: 280, padding: 13, borderRadius: 14, border: 'none', background: TEAL, color: '#0F172A', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <Zap className="h-4 w-4" /> S'exercer sur {topicName}
+            <Zap className="h-4 w-4" /> {ui("S'exercer sur")} {topicName}
           </button>
         </div>
       )}
@@ -201,11 +203,11 @@ export function LessonLevelPath({
           >
             {/* Overlay header (fixed top) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'white', borderBottom: '0.5px solid #EAECEF', flexShrink: 0, zIndex: 2 }}>
-              <button onClick={() => setOpenLevel(null)} aria-label="Retour au parcours" style={{ width: 32, height: 32, borderRadius: '50%', border: '0.5px solid #EAECEF', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <button onClick={() => setOpenLevel(null)} aria-label={ui("Retour au parcours")} style={{ width: 32, height: 32, borderRadius: '50%', border: '0.5px solid #EAECEF', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <ArrowLeft className="h-4 w-4" style={{ color: '#667085' }} />
               </button>
               <div style={{ minWidth: 0 }}>
-                <p style={{ fontSize: 10, fontWeight: 800, color: TEAL, margin: 0, letterSpacing: '0.03em' }}>NIVEAU {openLevel + 1} / {total}</p>
+                <p style={{ fontSize: 10, fontWeight: 800, color: TEAL, margin: 0, letterSpacing: '0.03em' }}>{ui("NIVEAU")} {openLevel + 1} / {total}</p>
                 <p style={{ fontSize: 13, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {steps[openLevel]?.step_name}
                 </p>

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState } from 'react';
 import { Plus, Send, Flame, Star, GraduationCap, Lightbulb, FlaskConical, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 const MobileExerciseLanding = () => {
+  const ui = useInterfaceTranslation();
   const { t } = useTranslation();
   const [inputMessage, setInputMessage] = useState('');
   
@@ -73,7 +75,7 @@ const MobileExerciseLanding = () => {
             <div className="w-px h-4 bg-white/30"></div>
             <div className="flex items-center space-x-1.5">
               <Flame className="h-4 w-4 text-orange-300" />
-              <span className="text-sm font-medium">7 day streak</span>
+              <span className="text-sm font-medium">{ui("7 day streak")}</span>
             </div>
           </div>
         </div>
@@ -81,7 +83,7 @@ const MobileExerciseLanding = () => {
         {/* Overall Grade */}
         <div className="flex items-center space-x-2">
           <GraduationCap className="h-5 w-5 text-gray-600" />
-          <span className="text-gray-600 text-sm">Overall grade:</span>
+          <span className="text-gray-600 text-sm">{ui("Overall grade:")}</span>
           <span className="text-red-600 font-semibold text-sm">0% (--)</span>
         </div>
       </div>
@@ -118,7 +120,7 @@ const MobileExerciseLanding = () => {
         {/* Call to Action */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-800 mb-2 flex items-center justify-center space-x-2">
-            <span>Let's Start Learning !</span>
+            <span>{ui("Let's Start Learning !")}</span>
             <Lightbulb className="h-6 w-6 text-yellow-500" />
           </h1>
           
@@ -144,7 +146,7 @@ const MobileExerciseLanding = () => {
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Type your exercise or question..."
+            placeholder={ui("Type your exercise or question...")}
             className="flex-1 border-none bg-transparent focus:ring-0 focus:border-none text-sm placeholder:text-gray-500"
             disabled={isLoading}
           />

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { memo, useMemo, useState, useCallback } from 'react';
 import { Calculator, CheckCircle2, Send, Trash2, X, XCircle } from 'lucide-react';
 import { MathRenderer } from '@/components/math/MathRenderer';
@@ -134,6 +135,7 @@ function ExerciseResultBanner({
 
 // Memoized ExerciseCard component
 const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmitAnswer, onShowExplanation }) => {
+  const ui = useInterfaceTranslation();
   const parsed = parseUserMessage(userMessage.content);
   const { question, answer, hasAnswer } = parsed;
   const choiceOptions = getExerciseChoices(userMessage);
@@ -213,13 +215,13 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const homeworkLearningRows = useMemo(() => {
     if (!question || (!isCorrect && !isIncorrect)) return [];
     return [{
-      label: language === 'fr' ? 'Exercice' : 'Exercise',
+      label: language === 'fr' ? 'Exercice' : ui("Exercise"),
       prompt: question,
       rowKind: 'calculation' as const,
       gradingExplanation: contentTrimmed,
       status: isCorrect ? 'correct' as const : 'incorrect' as const,
     }];
-  }, [contentTrimmed, isCorrect, isIncorrect, language, question]);
+  }, [contentTrimmed, isCorrect, isIncorrect, language, question, ui]);
 
   // JSON response path
   const jsonResponse = parseAIResponse(content);
@@ -448,6 +450,7 @@ const LoadingSkeleton = () => (
 );
 
 const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAnswer, onSubmitGroupedAnswers, onClearAll, onDismissExercise }) => {
+  const ui = useInterfaceTranslation();
   const { t, language } = useLanguage();
   const teaching = useTwoCardTeaching();
   const { selectedModelId } = useAdmin();
@@ -608,7 +611,7 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
             <Button variant="outline" size="sm" onClick={onClearAll}
               className="text-muted-foreground hover:text-destructive hover:border-destructive">
               <Trash2 size={14} />
-              {language === 'fr' ? 'Tout effacer' : 'Clear all'}
+              {language === 'fr' ? ui("Tout effacer") : 'Clear all'}
             </Button>
           </div>
         )}

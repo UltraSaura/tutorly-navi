@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useRef, useState } from 'react';
 import { Plus, Paperclip, Camera, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ interface AttachmentMenuProps {
 }
 
 const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: AttachmentMenuProps) => {
+  const ui = useInterfaceTranslation();
   const isMobile = useIsMobile();
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -26,21 +28,21 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
   const menuItems = [
     {
       icon: Paperclip,
-      label: 'Upload Document (PDF)',
+      label: ui("Upload Document (PDF)"),
       description: 'Upload a PDF or document to extract exercises',
       onClick: () => handleItemClick(onFileUpload),
       color: 'bg-blue-500',
     },
     {
       icon: ImageIcon,
-      label: 'Upload Photo',
+      label: ui("Upload Photo"),
       description: 'Upload an image from your gallery',
       onClick: () => handleItemClick(onPhotoUpload),
       color: 'bg-green-500',
     },
     {
       icon: Camera,
-      label: 'Take Photo',
+      label: ui("Take Photo"),
       description: 'Capture a photo with your camera',
       onClick: () => handleItemClick(onCameraOpen),
       color: 'bg-orange-500',
@@ -132,8 +134,8 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
         >
           <div className="mx-auto w-12 h-1.5 bg-neutral-border rounded-full mb-4" />
           <div className="text-center mb-6">
-            <h3 className="text-xl font-semibold text-neutral-text">Upload Content</h3>
-            <p className="text-neutral-muted">Choose how you'd like to add your homework</p>
+            <h3 className="text-xl font-semibold text-neutral-text">{ui("Upload Content")}</h3>
+            <p className="text-neutral-muted">{ui("Choose how you'd like to add your homework")}</p>
           </div>
           <MenuContent />
         </SheetContent>

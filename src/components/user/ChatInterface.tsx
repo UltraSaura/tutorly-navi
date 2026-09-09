@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -22,6 +23,7 @@ import { classifyProblemSubmission } from '@/utils/problemClassifier';
 import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
 
 const ChatInterface = () => {
+  const ui = useInterfaceTranslation();
   const { t, language } = useLanguage();
   const isMobile = useIsMobile();
   const location = useLocation();
@@ -240,7 +242,7 @@ const ChatInterface = () => {
         showWelcomeState ? 'bg-white' : 'bg-neutral-bg'
       }`}
     >
-      <PageMeta title="Tutor Chat" description="Get instant AI-powered help with math homework, exercises, and explanations from your Stuwy tutor." />
+      <PageMeta title={ui("Tutor Chat")} description={ui("Get instant AI-powered help with math homework, exercises, and explanations from your Stuwy tutor.")} />
       {/* Scrollable Content Area */}
       <div 
         className={`h-full overflow-x-hidden ${
@@ -273,7 +275,7 @@ const ChatInterface = () => {
         <ErrorBoundary
           fallback={
             <div className="p-4 m-4 bg-card border rounded-lg text-center">
-              <p className="text-muted-foreground">Unable to display responses. Please refresh.</p>
+              <p className="text-muted-foreground">{ui("Unable to display responses. Please refresh.")}</p>
             </div>
           }
         >
@@ -329,7 +331,7 @@ const ChatInterface = () => {
         <SheetContent side="bottom" className="h-auto">
           <SheetHeader>
             <SheetTitle className="text-h2 font-semibold text-neutral-text">
-              Upload Homework
+              {ui("Upload Homework")}
             </SheetTitle>
           </SheetHeader>
           
@@ -341,7 +343,7 @@ const ChatInterface = () => {
               variant="outline"
             >
               <FileText size={32} />
-              <span className="text-body font-medium">Upload Document (PDF)</span>
+              <span className="text-body font-medium">{ui("Upload Document (PDF)")}</span>
             </Button>
 
             {/* Photo Upload */}
@@ -351,7 +353,7 @@ const ChatInterface = () => {
               variant="outline"
             >
               <Image size={32} />
-              <span className="text-body font-medium">Upload Photo</span>
+              <span className="text-body font-medium">{ui("Upload Photo")}</span>
             </Button>
 
             {/* Camera */}
@@ -361,7 +363,7 @@ const ChatInterface = () => {
               variant="outline"
             >
               <Camera size={32} />
-              <span className="text-body font-medium">Take Photo</span>
+              <span className="text-body font-medium">{ui("Take Photo")}</span>
             </Button>
           </div>
         </SheetContent>

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,7 @@ import { Calendar, MessageCircle, Video } from "lucide-react";
 import { PageMeta } from "@/components/seo/PageMeta";
 
 export default function SubjectDetail() {
+  const ui = useInterfaceTranslation();
   const { childId, subjectId } = useParams<{ childId: string; subjectId: string }>();
   const { guardianId } = useGuardianAuth();
 
@@ -58,7 +60,7 @@ export default function SubjectDetail() {
 
   return (
     <div className="space-y-6">
-        <PageMeta title="Subject Detail" description="Per-subject breakdown of your child's progress and attempts." />
+        <PageMeta title={ui("Subject Detail")} description={ui("Per-subject breakdown of your child's progress and attempts.")} />
         {/* Subject Header */}
         <Card className="p-6">
           <div className="flex items-start justify-between mb-4">
@@ -71,18 +73,18 @@ export default function SubjectDetail() {
 
           <div className="flex items-baseline gap-3 mb-3">
             <span className="text-4xl font-bold">{subjectProgress?.successRate || 0}%</span>
-            <span className="text-muted-foreground">overall success rate</span>
+            <span className="text-muted-foreground">{ui("overall success rate")}</span>
           </div>
 
           <Progress value={subjectProgress?.successRate || 0} className="h-3 mb-4" />
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-muted-foreground">Exercises completed:</span>
+              <span className="text-muted-foreground">{ui("Exercises completed:")}</span>
               <span className="ml-2 font-semibold">{subjectProgress?.exercisesCompleted || 0} / {subjectProgress?.totalExercises || 0}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Success rate:</span>
+              <span className="text-muted-foreground">{ui("Success rate:")}</span>
               <span className="ml-2 font-semibold">{subjectProgress?.successRate || 0}%</span>
             </div>
           </div>
@@ -100,22 +102,22 @@ export default function SubjectDetail() {
         <Card className="p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Assignments
+            {ui("Assignments")}
           </h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
               <div>
-                <div className="font-medium">Fractions Practice Sheet</div>
-                <div className="text-sm text-muted-foreground">Due: Tomorrow</div>
+                <div className="font-medium">{ui("Fractions Practice Sheet")}</div>
+                <div className="text-sm text-muted-foreground">{ui("Due: Tomorrow")}</div>
               </div>
-              <Badge variant="destructive">Needs review</Badge>
+              <Badge variant="destructive">{ui("Needs review")}</Badge>
             </div>
             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
               <div>
-                <div className="font-medium">Chapter 5 Homework</div>
-                <div className="text-sm text-muted-foreground">Due: Next week</div>
+                <div className="font-medium">{ui("Chapter 5 Homework")}</div>
+                <div className="text-sm text-muted-foreground">{ui("Due: Next week")}</div>
               </div>
-              <Badge>Pending</Badge>
+              <Badge>{ui("Pending")}</Badge>
             </div>
           </div>
         </Card>
@@ -124,20 +126,19 @@ export default function SubjectDetail() {
         <Card className="p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
-            Teacher Feedback
+            {ui("Teacher Feedback")}
           </h3>
           <p className="text-muted-foreground mb-4">
-            {childName} is making good progress in {decodeURIComponent(subjectId || '')}. 
-            Continue practicing the fundamentals to build a strong foundation.
+            {childName} {ui("is making good progress in")} {decodeURIComponent(subjectId || '')}{ui(". Continue practicing the fundamentals to build a strong foundation.")}
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm">
               <MessageCircle className="h-4 w-4 mr-2" />
-              Message Teacher
+              {ui("Message Teacher")}
             </Button>
             <Button variant="outline" size="sm">
               <Video className="h-4 w-4 mr-2" />
-              Schedule Call
+              {ui("Schedule Call")}
             </Button>
           </div>
         </Card>

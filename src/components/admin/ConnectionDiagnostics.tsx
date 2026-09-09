@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +10,8 @@ import { toast } from 'sonner';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 const ConnectionDiagnostics = () => {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   const [testing, setTesting] = useState(false);
   const [lastTest, setLastTest] = useState<ConnectionTestResult | null>(null);
   const [diagnostics, setDiagnostics] = useState<any>(null);
@@ -62,12 +66,12 @@ const ConnectionDiagnostics = () => {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Diagnostics" description="Inspect connectivity and integration health." />
+      <PageMeta title={ui("Diagnostics")} description={ui("Inspect connectivity and integration health.")} />
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Connection Diagnostics</h2>
+          <h2 className="text-2xl font-bold">{ui("Connection Diagnostics")}</h2>
           <p className="text-muted-foreground">
-            Test AI service connectivity and diagnose connection issues
+            {ui("Test AI service connectivity and diagnose connection issues")}
           </p>
         </div>
         
@@ -75,12 +79,12 @@ const ConnectionDiagnostics = () => {
           {testing ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Testing...
+              {ui("Testing...")}
             </>
           ) : (
             <>
               <Wifi className="mr-2 h-4 w-4" />
-              Run Test
+              {ui("Run Test")}
             </>
           )}
         </Button>
@@ -91,40 +95,40 @@ const ConnectionDiagnostics = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {getStatusIcon(lastTest)}
-              Connection Test Result
+              {ui("Connection Test Result")}
             </CardTitle>
             <CardDescription>
-              Last tested: {new Date().toLocaleString()}
+              {ui("Last tested:")} {new Date().toLocaleString(locale)}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <p className="text-sm font-medium">Status</p>
+                <p className="text-sm font-medium">{ui("Status")}</p>
                 <p className={lastTest.success ? "text-green-600" : "text-red-600"}>
                   {lastTest.success ? "Connected" : "Failed"}
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium">Method</p>
+                <p className="text-sm font-medium">{ui("Method")}</p>
                 {getMethodBadge(lastTest.method)}
               </div>
               <div>
-                <p className="text-sm font-medium">Response Time</p>
+                <p className="text-sm font-medium">{ui("Response Time")}</p>
                 <p>{lastTest.responseTime ? `${lastTest.responseTime}ms` : "N/A"}</p>
               </div>
             </div>
             
             {lastTest.error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm font-medium text-red-800">Error Details:</p>
+                <p className="text-sm font-medium text-red-800">{ui("Error Details:")}</p>
                 <p className="text-sm text-red-600 font-mono">{lastTest.error}</p>
               </div>
             )}
             
             {lastTest.details && (
               <details className="mt-4">
-                <summary className="cursor-pointer text-sm font-medium">Technical Details</summary>
+                <summary className="cursor-pointer text-sm font-medium">{ui("Technical Details")}</summary>
                 <pre className="mt-2 text-xs bg-gray-50 p-2 rounded overflow-auto">
                   {JSON.stringify(lastTest.details, null, 2)}
                 </pre>
@@ -143,37 +147,37 @@ const ConnectionDiagnostics = () => {
               ) : (
                 <WifiOff className="h-5 w-5 text-red-500" />
               )}
-              Network Diagnostics
+              {ui("Network Diagnostics")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="font-medium">Online Status:</p>
+                <p className="font-medium">{ui("Online Status:")}</p>
                 <p className={diagnostics.online ? "text-green-600" : "text-red-600"}>
                   {diagnostics.online ? "Online" : "Offline"}
                 </p>
               </div>
               <div>
-                <p className="font-medium">Browser:</p>
+                <p className="font-medium">{ui("Browser:")}</p>
                 <p>{diagnostics.userAgent.split(' ').pop()}</p>
               </div>
               <div>
-                <p className="font-medium">Platform:</p>
+                <p className="font-medium">{ui("Platform:")}</p>
                 <p>{diagnostics.platform}</p>
               </div>
               <div>
-                <p className="font-medium">Language:</p>
+                <p className="font-medium">{ui("Language:")}</p>
                 <p>{diagnostics.language}</p>
               </div>
               {diagnostics.connection && (
                 <>
                   <div>
-                    <p className="font-medium">Connection Type:</p>
+                    <p className="font-medium">{ui("Connection Type:")}</p>
                     <p>{diagnostics.connection.effectiveType || 'Unknown'}</p>
                   </div>
                   <div>
-                    <p className="font-medium">Downlink:</p>
+                    <p className="font-medium">{ui("Downlink:")}</p>
                     <p>{diagnostics.connection.downlink || 'Unknown'} Mbps</p>
                   </div>
                 </>
@@ -187,15 +191,15 @@ const ConnectionDiagnostics = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-blue-500" />
-            Troubleshooting Tips
+            {ui("Troubleshooting Tips")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <p>• If connection fails, try refreshing the page</p>
-          <p>• Check that API keys are configured in Supabase secrets</p>
-          <p>• Verify your internet connection is stable</p>
-          <p>• Try selecting a different AI model</p>
-          <p>• Contact support if issues persist</p>
+          <p>{ui("• If connection fails, try refreshing the page")}</p>
+          <p>{ui("• Check that API keys are configured in Supabase secrets")}</p>
+          <p>{ui("• Verify your internet connection is stable")}</p>
+          <p>{ui("• Try selecting a different AI model")}</p>
+          <p>{ui("• Contact support if issues persist")}</p>
         </CardContent>
       </Card>
     </div>

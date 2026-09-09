@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ const MathLiveInputComponent = ({
   autoFocus = false,
   onKeyboardChange
 }: MathLiveInputProps) => {
+  const ui = useInterfaceTranslation();
   const mathfieldRef = useRef<any>(null);
   const [isMathLiveReady, setIsMathLiveReady] = useState(false);
   const [lastValue, setLastValue] = useState(value);
@@ -262,7 +264,7 @@ const MathLiveInputComponent = ({
           size="sm"
           onClick={showKeyboard}
           className="absolute top-2 right-2 h-6 px-2 bg-background/80 backdrop-blur-sm text-xs"
-          title="Show keyboard"
+          title={ui("Show keyboard")}
         >
           ⌨️
         </Button>

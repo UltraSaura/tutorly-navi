@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { ArrowLeft } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -14,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { LessonContent } from '@/types/learning';
 
 export default function LessonPage() {
+  const ui = useInterfaceTranslation();
   const { subjectSlug, topicSlug } = useParams<{
     subjectSlug: string;
     topicSlug: string;
@@ -111,7 +113,7 @@ export default function LessonPage() {
   return (
     <div className="min-h-screen pb-24" style={{ background: '#F3F6FA' }}>
       <PageMeta
-        title={topic?.name ?? 'Leçon'}
+        title={topic?.name ?? ui("Leçon")}
         description={topic?.description ?? ''}
       />
 
@@ -120,7 +122,7 @@ export default function LessonPage() {
         <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             onClick={() => navigate(-1)}
-            aria-label="Retour"
+            aria-label={ui("Retour")}
             style={{
               width: 28, height: 28, borderRadius: '50%',
               border: '0.5px solid #EAECEF', background: 'white',
@@ -134,12 +136,12 @@ export default function LessonPage() {
               {topic?.name ?? '…'}
             </p>
             <p style={{ fontSize: 10, color: '#667085', margin: 0 }}>
-              Leçons · {subject?.name ?? '…'}
+              {ui("Leçons ·")} {subject?.name ?? '…'}
             </p>
           </div>
           {hasVideos && (
             <span style={{ background: '#FAEEDA', color: '#633806', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, flexShrink: 0 }}>
-              {videos.length} vidéo{videos.length > 1 ? 's' : ''}
+              {ui("videoCount", { count: videos.length })}
             </span>
           )}
         </div>
@@ -150,16 +152,16 @@ export default function LessonPage() {
         {/* ── Content badges (show what's available) ─────── */}
         <div style={{ display: 'flex', gap: 6, padding: '10px 16px 0', flexWrap: 'wrap' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#F2FBF8', color: '#085041', border: '0.5px solid #9FE1CB', borderRadius: 999, padding: '3px 10px', fontSize: 10, fontWeight: 600 }}>
-            ✓ Leçon
+            {ui("✓ Leçon")}
           </span>
           {hasVideos && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#F2FBF8', color: '#085041', border: '0.5px solid #9FE1CB', borderRadius: 999, padding: '3px 10px', fontSize: 10, fontWeight: 600 }}>
-              ✓ {videos.length} vidéo{videos.length > 1 ? 's' : ''}
+              ✓ {ui("videoCount", { count: videos.length })}
             </span>
           )}
           {!hasVideos && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#F3F6FA', color: '#9CA3AF', border: '0.5px solid #EAECEF', borderRadius: 999, padding: '3px 10px', fontSize: 10, fontWeight: 600 }}>
-              Pas encore de vidéo
+              {ui("Pas encore de vidéo")}
             </span>
           )}
         </div>
@@ -222,7 +224,7 @@ export default function LessonPage() {
         {hasVideos && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px 4px' }}>
             <div style={{ flex: 1, height: 0.5, background: '#EAECEF' }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#667085', letterSpacing: '0.05em' }}>LEÇON</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#667085', letterSpacing: '0.05em' }}>{ui("LEÇON")}</span>
             <div style={{ flex: 1, height: 0.5, background: '#EAECEF' }} />
           </div>
         )}

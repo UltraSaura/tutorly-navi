@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import React, { useState } from 'react';
 import { Subject } from '@/types/admin';
@@ -26,6 +27,7 @@ export const SubjectCategory: React.FC<SubjectCategoryProps> = ({
   onRenameCategory,
   onDeleteCategory
 }) => {
+  const ui = useInterfaceTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState(category);
 
@@ -97,7 +99,7 @@ export const SubjectCategory: React.FC<SubjectCategoryProps> = ({
               ))}
               {subjects.length === 0 && (
                 <div className="text-center py-6 text-muted-foreground">
-                  No subjects in this category. Drag subjects here or add a new one.
+                  {ui("No subjects in this category. Drag subjects here or add a new one.")}
                 </div>
               )}
             </div>

@@ -1,3 +1,5 @@
+import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,7 +25,10 @@ interface CurriculumSelectorProps {
   locale?: string;
 }
 
-export function CurriculumSelector({ value, onChange, locale = 'en' }: CurriculumSelectorProps) {
+export function CurriculumSelector({ value, onChange, locale: localeOverride }: CurriculumSelectorProps) {
+  const ui = useInterfaceTranslation();
+  const { language } = useLanguage();
+  const locale = localeOverride ?? language;
   const {
     selection,
     countries,
@@ -59,19 +64,19 @@ export function CurriculumSelector({ value, onChange, locale = 'en' }: Curriculu
     <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
         <MapPin className="h-4 w-4" />
-        <span>Curriculum Location</span>
+        <span>{ui("Curriculum Location")}</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Country Selector */}
         <div>
-          <Label>Country</Label>
+          <Label>{ui("Country")}</Label>
           <Select
             value={selection.countryCode}
             onValueChange={setCountry}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select country" />
+              <SelectValue placeholder={ui("Select country")} />
             </SelectTrigger>
             <SelectContent>
               {countries.map((country) => (
@@ -85,14 +90,14 @@ export function CurriculumSelector({ value, onChange, locale = 'en' }: Curriculu
 
         {/* Level Selector */}
         <div>
-          <Label>Level</Label>
+          <Label>{ui("Level")}</Label>
           <Select
             value={selection.levelCode}
             onValueChange={setLevel}
             disabled={!selection.countryCode}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select level" />
+              <SelectValue placeholder={ui("Select level")} />
             </SelectTrigger>
             <SelectContent>
               {levels.map((level) => (
@@ -106,14 +111,14 @@ export function CurriculumSelector({ value, onChange, locale = 'en' }: Curriculu
 
         {/* Subject Selector */}
         <div>
-          <Label>Subject</Label>
+          <Label>{ui("Subject")}</Label>
           <Select
             value={selection.subjectId}
             onValueChange={setSubject}
             disabled={!selection.levelCode}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select subject" />
+              <SelectValue placeholder={ui("Select subject")} />
             </SelectTrigger>
             <SelectContent>
               {subjects.map((subject) => (
@@ -127,14 +132,14 @@ export function CurriculumSelector({ value, onChange, locale = 'en' }: Curriculu
 
         {/* Domain Selector */}
         <div>
-          <Label>Domain</Label>
+          <Label>{ui("Domain")}</Label>
           <Select
             value={selection.domainId}
             onValueChange={setDomain}
             disabled={!selection.subjectId}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select domain" />
+              <SelectValue placeholder={ui("Select domain")} />
             </SelectTrigger>
             <SelectContent>
               {domains.map((domain) => (
@@ -148,14 +153,14 @@ export function CurriculumSelector({ value, onChange, locale = 'en' }: Curriculu
 
         {/* Subdomain Selector */}
         <div className="md:col-span-2">
-          <Label>Subdomain</Label>
+          <Label>{ui("Subdomain")}</Label>
           <Select
             value={selection.subdomainId}
             onValueChange={setSubdomain}
             disabled={!selection.domainId}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select subdomain" />
+              <SelectValue placeholder={ui("Select subdomain")} />
             </SelectTrigger>
             <SelectContent>
               {subdomains.map((subdomain) => (

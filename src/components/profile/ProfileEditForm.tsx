@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { Loader2, GraduationCap } from 'lucide-react';
 import { getCountries, getLevelsByCountry } from '@/lib/curriculum';
 
 export function ProfileEditForm() {
+  const ui = useInterfaceTranslation();
   const { profile, updateProfile, isUpdating } = useUserCurriculumProfile();
   const { toast } = useToast();
   
@@ -65,19 +67,19 @@ export function ProfileEditForm() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <GraduationCap className="w-5 h-5" />
-          School Program
+          {ui("School Program")}
         </CardTitle>
         <CardDescription>
-          Select your country and grade level to see personalized learning content
+          {ui("Select your country and grade level to see personalized learning content")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-4">
           <div>
-            <Label>Country</Label>
+            <Label>{ui("Country")}</Label>
             <Select value={countryCode} onValueChange={handleCountryChange}>
               <SelectTrigger>
-                <SelectValue placeholder="Select country" />
+                <SelectValue placeholder={ui("Select country")} />
               </SelectTrigger>
               <SelectContent>
                 {countries.map((country) => (
@@ -90,14 +92,14 @@ export function ProfileEditForm() {
           </div>
 
           <div>
-            <Label>Level</Label>
+            <Label>{ui("Level")}</Label>
             <Select 
               value={levelCode} 
               onValueChange={setLevelCode}
               disabled={!countryCode}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select level" />
+                <SelectValue placeholder={ui("Select level")} />
               </SelectTrigger>
               <SelectContent>
                 {levels.map((level) => (
@@ -116,7 +118,7 @@ export function ProfileEditForm() {
           className="w-full"
         >
           {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Save School Program
+          {ui("Save School Program")}
         </Button>
       </CardContent>
     </Card>

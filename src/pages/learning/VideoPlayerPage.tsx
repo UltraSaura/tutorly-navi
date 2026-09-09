@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { X, Play, Pause, Volume2, Maximize } from 'lucide-react';
@@ -18,6 +19,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { resolveVideoLearningRoute } from '@/services/learningNavigation';
 
 const VideoPlayerPage = () => {
+  const ui = useInterfaceTranslation();
   const { videoId } = useParams<{ videoId: string }>();
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -155,14 +157,14 @@ const VideoPlayerPage = () => {
   if (!video) {
     return (
       <div className="fixed inset-0 bg-background z-50 flex items-center justify-center">
-        <p className="text-muted-foreground">{t('learning.videoNotFound') || 'Video not found'}</p>
+        <p className="text-muted-foreground">{t('learning.videoNotFound') || ui("Video not found")}</p>
       </div>
     );
   }
 
   return (
     <div className="fixed inset-0 bg-background z-50 flex flex-col">
-      <PageMeta title="Video Lesson" description="Watch a Stuwy video lesson with interactive quizzes and transcripts." />
+      <PageMeta title={ui("Video Lesson")} description={ui("Watch a Stuwy video lesson with interactive quizzes and transcripts.")} />
       <div className="relative bg-black flex-shrink-0">
         <Button
           variant="ghost"
@@ -238,12 +240,12 @@ const VideoPlayerPage = () => {
           {/* Test Yourself section */}
           {allBanksError && (
             <div className="mb-6 p-4 border border-destructive rounded-xl bg-destructive/10">
-              <p className="text-sm text-destructive">Error loading quiz banks: {allBanksError.message}</p>
+              <p className="text-sm text-destructive">{ui("Error loading quiz banks:")} {allBanksError.message}</p>
             </div>
           )}
           {allBanks?.banks && allBanks.banks.length > 0 && (
             <div className="mb-6 p-4 border rounded-xl">
-              <h4 className="font-semibold mb-3">Test yourself</h4>
+              <h4 className="font-semibold mb-3">{ui("Test yourself")}</h4>
               <div className="flex flex-wrap gap-3">
                 {allBanks.banks.map(bank => (
                   <TestYourselfInline 
@@ -262,7 +264,7 @@ const VideoPlayerPage = () => {
       {showQuiz && currentQuiz && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-4">
           <Card className="w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-t-3xl md:rounded-2xl p-6 space-y-6">
-            <h2 className="text-xl font-bold">{t('learning.quiz') || 'Quiz Time!'}</h2>
+            <h2 className="text-xl font-bold">{t('learning.quiz') || ui("Quiz Time!")}</h2>
             
             <div>
               {currentQuiz.question_latex ? (
@@ -297,7 +299,7 @@ const VideoPlayerPage = () => {
                 quizResult.isCorrect ? "bg-green-500/10 text-green-700 dark:text-green-300" : "bg-red-500/10 text-red-700 dark:text-red-300"
               )}>
                 <p className="font-semibold mb-2">
-                  {quizResult.isCorrect ? '✅ ' + (t('learning.correct') || 'Correct!') : '❌ ' + (t('learning.incorrect') || 'Incorrect')}
+                  {quizResult.isCorrect ? '✅ ' + (t('learning.correct') || 'Correct!') : '❌ ' + (t('learning.incorrect') || ui("Incorrect"))}
                 </p>
                 <p className="text-sm">{quizResult.explanation}</p>
               </div>
@@ -310,11 +312,11 @@ const VideoPlayerPage = () => {
                   onClick={handleQuizSubmit}
                   disabled={selectedAnswer === null}
                 >
-                  {t('learning.submit') || 'Submit Answer'}
+                  {t('learning.submit') || ui("Submit Answer")}
                 </Button>
               ) : (
                 <Button className="flex-1" onClick={handleContinue}>
-                  {t('learning.continueVideo') || 'Continue Video'}
+                  {t('learning.continueVideo') || ui("Continue Video")}
                 </Button>
               )}
             </div>

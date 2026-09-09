@@ -1,3 +1,5 @@
+import { useSubjectLabel } from '@/i18n/useSubjectLabel';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useNavigate } from 'react-router-dom';
 import { useLearningSubjects } from '@/hooks/useLearningSubjects';
 import { useUserCurriculumProfile } from '@/hooks/useUserCurriculumProfile';
@@ -23,6 +25,8 @@ const getSubjectTileBackground = (colorScheme?: string | null) => {
 };
 
 const LearningPage = () => {
+  const subjectLabel = useSubjectLabel();
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { profile } = useUserCurriculumProfile();
@@ -67,12 +71,12 @@ const LearningPage = () => {
   }
 
   return <div className="min-h-screen bg-gray-50 dark:bg-background pb-20 mx-[5px]">
-      <PageMeta title="Learning Library" description="Browse subjects, topics, and video lessons in your Stuwy learning library." />
+      <PageMeta title={ui("Learning Library")} description={ui("Browse subjects, topics, and video lessons in your Stuwy learning library.")} />
       {/* Header */}
       <header className="pt-6 pr-6 pb-4 pl-[20px] bg-[#253c7b] shadow-md">
         <div className="flex justify-between items-center">
           <h1 className="font-extrabold text-white text-xl">
-            {t('learning.chooseSubject') || 'Choose Your Subject'}
+            {t('learning.chooseSubject') || ui("Choose Your Subject")}
           </h1>
           <CompactStreakChip
             days={stats?.currentStreak ?? 0}
@@ -99,8 +103,8 @@ const LearningPage = () => {
             if (isReady) {
               navigate(`/learning/${subject.slug}`);
             } else {
-              toast.info(`${subject.name} is coming soon!`, {
-                description: "We're working hard to bring you this content."
+              toast.info(ui("subjectComingSoon", { subject: subjectLabel(subject.name) }), {
+                description: ui("We're working hard to bring you this content.")
               });
             }
           }} 
@@ -132,7 +136,7 @@ const LearningPage = () => {
                     className="line-clamp-2 font-semibold leading-tight"
                     style={{ color: subject.lesson_text_color ?? subject.text_color ?? '#050B34', fontSize: `${subjectTitleFontSize}px`, fontFamily: subjectTitleFontFamily }}
                   >
-                    {subject.name}
+                    {subjectLabel(subject.name)}
                   </span>
                   {videos_ready > 0 && (
                     <div style={{ marginTop: 4 }}>
@@ -146,7 +150,7 @@ const LearningPage = () => {
                         }} />
                       </div>
                       <p style={{ fontSize: 9, color: 'rgba(15,23,42,0.5)', margin: '2px 0 0', fontFamily: 'Poppins, sans-serif' }}>
-                        {lessons_completed}/{videos_ready} lecons
+                        {lessons_completed}/{videos_ready} {ui("lecons")}
                       </p>
                     </div>
                   )}

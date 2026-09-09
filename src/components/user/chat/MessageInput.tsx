@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import React, { useRef, useState, lazy, Suspense } from 'react';
 import { Send, Calculator, Type } from 'lucide-react';
@@ -33,6 +34,7 @@ const MessageInput = ({
   isLoading, 
   onKeyboardChange 
 }: MessageInputProps) => {
+  const ui = useInterfaceTranslation();
   const { toast } = useToast();
   const { t } = useTranslation();
   const { selectedModelId, getAvailableModels } = useAdmin();
@@ -195,7 +197,7 @@ const MessageInput = ({
       {shouldSuggestMathMode && (
         <div className="flex justify-center">
           <div className="bg-brand-primary/10 text-brand-primary text-xs px-3 py-2 rounded-md">
-            Math detected - <button onClick={toggleMathMode} className="underline font-medium">Switch to math mode</button>
+            {ui("Math detected -")} <button onClick={toggleMathMode} className="underline font-medium">{ui("Switch to math mode")}</button>
           </div>
         </div>
       )}
@@ -266,7 +268,7 @@ const MessageInput = ({
             size="icon"
             onClick={toggleMathMode}
             className="h-9 w-9 text-neutral-muted hover:text-neutral-text hover:bg-neutral-surface flex-shrink-0"
-            title={isMathMode ? "Switch to text mode" : "Switch to math mode"}
+            title={isMathMode ? ui("Switch to text mode") : ui("Switch to math mode")}
           >
             {isMathMode ? <Type className="h-4 w-4" /> : <Calculator className="h-4 w-4" />}
           </Button>

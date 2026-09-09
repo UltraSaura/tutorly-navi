@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import { DynamicIcon } from '../subjects/DynamicIcon';
 import type { Category } from '@/types/learning';
 
 const CategoryManager = () => {
+  const ui = useInterfaceTranslation();
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const { data: subjects = [], isLoading: subjectsLoading, error: subjectsError } = useLearningSubjects();
   const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useLearningCategories(selectedSubjectId || undefined);
@@ -80,23 +82,23 @@ const CategoryManager = () => {
   };
 
   if (subjectsError) {
-    return <div className="text-destructive">Error loading subjects: {subjectsError.message}</div>;
+    return <div className="text-destructive">{ui("Error loading subjects:")} {subjectsError.message}</div>;
   }
 
   if (categoriesError) {
-    return <div className="text-destructive">Error loading categories: {categoriesError.message}</div>;
+    return <div className="text-destructive">{ui("Error loading categories:")} {categoriesError.message}</div>;
   }
 
   if (subjectsLoading) {
-    return <div className="text-muted-foreground">Loading subjects...</div>;
+    return <div className="text-muted-foreground">{ui("Loading subjects...")}</div>;
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Learning Categories</h2>
-          <p className="text-muted-foreground">Manage categories within subjects</p>
+          <h2 className="text-2xl font-bold">{ui("Learning Categories")}</h2>
+          <p className="text-muted-foreground">{ui("Manage categories within subjects")}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);
@@ -105,19 +107,19 @@ const CategoryManager = () => {
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Add Category
+              {ui("Add Category")}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingCategory ? 'Edit Category' : 'Add New Category'}</DialogTitle>
+              <DialogTitle>{editingCategory ? 'Edit Category' : ui("Add New Category")}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="subject_id">Subject</Label>
+                <Label htmlFor="subject_id">{ui("Subject")}</Label>
                 <Select value={formData.subject_id} onValueChange={(value) => setFormData({ ...formData, subject_id: value })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select subject" />
+                    <SelectValue placeholder={ui("Select subject")} />
                   </SelectTrigger>
                   <SelectContent>
                     {subjects.map((subject) => (
@@ -127,7 +129,7 @@ const CategoryManager = () => {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">{ui("Name")}</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -136,7 +138,7 @@ const CategoryManager = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="slug">Slug</Label>
+                <Label htmlFor="slug">{ui("Slug")}</Label>
                 <Input
                   id="slug"
                   value={formData.slug}
@@ -145,7 +147,7 @@ const CategoryManager = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="icon_name">Icon Name</Label>
+                <Label htmlFor="icon_name">{ui("Icon Name")}</Label>
                 <Input
                   id="icon_name"
                   value={formData.icon_name}
@@ -154,7 +156,7 @@ const CategoryManager = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">{ui("Description")}</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
@@ -162,7 +164,7 @@ const CategoryManager = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="order_index">Order Index</Label>
+                <Label htmlFor="order_index">{ui("Order Index")}</Label>
                 <Input
                   id="order_index"
                   type="number"
@@ -177,7 +179,7 @@ const CategoryManager = () => {
                   checked={formData.is_active}
                   onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
                 />
-                <Label htmlFor="is_active">Active</Label>
+                <Label htmlFor="is_active">{ui("Active")}</Label>
               </div>
               <Button type="submit" className="w-full">
                 {editingCategory ? 'Update Category' : 'Create Category'}
@@ -188,10 +190,10 @@ const CategoryManager = () => {
       </div>
 
       <div className="mb-4">
-        <Label>Select Subject</Label>
+        <Label>{ui("Select Subject")}</Label>
         <Select value={selectedSubjectId} onValueChange={setSelectedSubjectId}>
           <SelectTrigger>
-            <SelectValue placeholder="Select a subject to view categories" />
+            <SelectValue placeholder={ui("Select a subject to view categories")} />
           </SelectTrigger>
           <SelectContent>
             {subjects.map((subject) => (
@@ -203,30 +205,30 @@ const CategoryManager = () => {
 
       {!selectedSubjectId ? (
         <div className="text-center py-12 text-muted-foreground">
-          Select a subject above to view and manage categories
+          {ui("Select a subject above to view and manage categories")}
         </div>
       ) : categoriesLoading ? (
         <div className="text-center py-12 text-muted-foreground">
-          Loading categories...
+          {ui("Loading categories...")}
         </div>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Icon</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Slug</TableHead>
-              <TableHead>Subject</TableHead>
-              <TableHead>Order</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{ui("Icon")}</TableHead>
+              <TableHead>{ui("Name")}</TableHead>
+              <TableHead>{ui("Slug")}</TableHead>
+              <TableHead>{ui("Subject")}</TableHead>
+              <TableHead>{ui("Order")}</TableHead>
+              <TableHead>{ui("Status")}</TableHead>
+              <TableHead>{ui("Actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {categories.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  No categories found for this subject
+                  {ui("No categories found for this subject")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -241,7 +243,7 @@ const CategoryManager = () => {
               <TableCell>{category.order_index}</TableCell>
               <TableCell>
                 <span className={category.is_active ? 'text-green-600' : 'text-red-600'}>
-                  {category.is_active ? 'Active' : 'Inactive'}
+                  {category.is_active ? ui("Active") : 'Inactive'}
                 </span>
               </TableCell>
               <TableCell>

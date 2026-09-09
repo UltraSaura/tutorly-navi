@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { useGuardianExerciseHistory } from '@/hooks/useGuardianExerciseHistory';
@@ -11,6 +12,7 @@ import type { ExerciseHistoryWithAttempts } from '@/types/exercise-history';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function GuardianExplanations() {
+  const ui = useInterfaceTranslation();
   const { guardianId, loading: authLoading } = useGuardianAuth();
   const { children, exerciseHistory, loading } = useGuardianExerciseHistory({
     guardianId,
@@ -54,11 +56,11 @@ export default function GuardianExplanations() {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Explanations" description="See AI-generated explanations for the exercises your children attempted." />
+      <PageMeta title={ui("Explanations")} description={ui("See AI-generated explanations for the exercises your children attempted.")} />
       <div>
-        <h1 className="text-3xl font-bold mb-2">Explanations</h1>
+        <h1 className="text-3xl font-bold mb-2">{ui("Explanations")}</h1>
         <p className="text-muted-foreground">
-          View AI-generated explanations for your children's exercises
+          {ui("View AI-generated explanations for your children's exercises")}
         </p>
       </div>
 
@@ -78,9 +80,9 @@ export default function GuardianExplanations() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium mb-2">No explanations yet</p>
+            <p className="text-lg font-medium mb-2">{ui("No explanations yet")}</p>
             <p className="text-sm text-muted-foreground text-center max-w-md">
-              Explanations will appear here when your children complete exercises and request help.
+              {ui("Explanations will appear here when your children complete exercises and request help.")}
             </p>
           </CardContent>
         </Card>

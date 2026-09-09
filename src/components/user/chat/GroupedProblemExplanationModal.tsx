@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -239,6 +240,7 @@ const GroupedProblemExplanationModal = ({
   feedback = null,
   feedbackLoading = false,
 }: GroupedProblemExplanationModalProps) => {
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { userContext } = useUserContext();
@@ -487,9 +489,9 @@ const GroupedProblemExplanationModal = ({
       <div className="w-full max-w-2xl rounded-2xl bg-card border border-border shadow-lg h-[85dvh] max-h-[85dvh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-4 py-4 border-b border-border">
           <h3 className="font-semibold text-base text-foreground sm:text-lg">
-            {language === 'fr' ? 'Explication' : 'Explanation'}
+            {language === 'fr' ? 'Explication' : ui("Explanation")}
           </h3>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8" aria-label="Close">
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8" aria-label={ui("Close")}>
             <X size={16} />
           </Button>
         </div>
@@ -511,7 +513,7 @@ const GroupedProblemExplanationModal = ({
                   <div className="space-y-3">
                     <section className="rounded-lg border bg-muted/40 p-4">
                       <h4 className="text-sm font-semibold text-foreground mb-2">
-                        {language === 'fr' ? 'Exercice' : 'Exercise'}
+                        {language === 'fr' ? ui("Exercice") : ui("Exercise")}
                       </h4>
                       <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                         {toChildFriendlyExplanationText(practice.similarProblem)}
@@ -621,7 +623,7 @@ const GroupedProblemExplanationModal = ({
 
                   <section className="rounded-lg border border-green-200 bg-green-50 p-4">
                     <h4 className="text-sm font-semibold text-green-950 mb-2">
-                      {language === 'fr' ? 'Auto-vérification' : 'Self-check'}
+                      {language === 'fr' ? ui("Auto-vérification") : 'Self-check'}
                     </h4>
                     <p className="text-sm text-green-950 whitespace-pre-wrap">
                       {practice.retryPrompt}
@@ -630,7 +632,7 @@ const GroupedProblemExplanationModal = ({
 
                   <section className="rounded-lg border bg-card p-4">
                     <h4 className="text-sm font-semibold text-foreground mb-2">
-                      {language === 'fr' ? 'Méthode' : 'Method'}
+                      {language === 'fr' ? 'Méthode' : ui("Method")}
                     </h4>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                       {practice.method}

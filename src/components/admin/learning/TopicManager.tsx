@@ -1,3 +1,5 @@
+import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +28,8 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 const TopicManager = () => {
+  const ui = useInterfaceTranslation();
+  const { language } = useLanguage();
   const { t } = useTranslation();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [curriculumFilters, setCurriculumFilters] = useState({
@@ -182,29 +186,29 @@ const TopicManager = () => {
   };
 
   if (categoriesError) {
-    return <div className="text-destructive">Error loading categories: {categoriesError.message}</div>;
+    return <div className="text-destructive">{ui("Error loading categories:")} {categoriesError.message}</div>;
   }
 
   if (topicsError) {
-    return <div className="text-destructive">Error loading topics: {topicsError.message}</div>;
+    return <div className="text-destructive">{ui("Error loading topics:")} {topicsError.message}</div>;
   }
 
   if (categoriesLoading) {
-    return <div className="text-muted-foreground">Loading categories...</div>;
+    return <div className="text-muted-foreground">{ui("Loading categories...")}</div>;
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Learning Topics</h2>
-          <p className="text-muted-foreground">Manage topics within categories and curriculum</p>
+          <h2 className="text-2xl font-bold">{ui("Learning Topics")}</h2>
+          <p className="text-muted-foreground">{ui("Manage topics within categories and curriculum")}</p>
         </div>
         <div className="flex gap-2">
           <BulkLessonGenerator />
           <Button variant="outline" onClick={() => setGenerateDialogOpen(true)}>
             <Sparkles className="w-4 h-4 mr-2" />
-            Generate from Objectives
+            {ui("Generate from Objectives")}
           </Button>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);
@@ -213,7 +217,7 @@ const TopicManager = () => {
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Add Custom Topic
+              {ui("Add Custom Topic")}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -224,15 +228,15 @@ const TopicManager = () => {
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>{t('admin.curriculum.curriculumRequired')}</AlertTitle>
               <AlertDescription>
-                Topics must align with the official curriculum. Populate all curriculum fields (Country, Level, Subject, Domain, Subdomain).
+                {ui("Topics must align with the official curriculum. Populate all curriculum fields (Country, Level, Subject, Domain, Subdomain).")}
               </AlertDescription>
             </Alert>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="category_id">Category</Label>
+                <Label htmlFor="category_id">{ui("Category")}</Label>
                 <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder={ui("Select category")} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
@@ -243,7 +247,7 @@ const TopicManager = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name">{ui("Name")}</Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -252,7 +256,7 @@ const TopicManager = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="slug">Slug</Label>
+                  <Label htmlFor="slug">{ui("Slug")}</Label>
                   <Input
                     id="slug"
                     value={formData.slug}
@@ -262,7 +266,7 @@ const TopicManager = () => {
                 </div>
               </div>
               <div>
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">{ui("Description")}</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
@@ -274,16 +278,16 @@ const TopicManager = () => {
               <div>
                 <Label htmlFor="keywords" className="flex items-center gap-2">
                   <Tags className="w-4 h-4" />
-                  Keywords (comma-separated)
+                  {ui("Keywords (comma-separated)")}
                 </Label>
                 <Input
                   id="keywords"
-                  placeholder="multiplication, tables, produit, calcul mental"
+                  placeholder={ui("multiplication, tables, produit, calcul mental")}
                   value={keywordsInput}
                   onChange={(e) => setKeywordsInput(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Add keywords to help AI match this topic to the correct learning objectives automatically
+                  {ui("Add keywords to help AI match this topic to the correct learning objectives automatically")}
                 </p>
               </div>
               
@@ -297,7 +301,7 @@ const TopicManager = () => {
                   curriculum_subdomain_id: formData.curriculum_subdomain_id,
                 }}
                 onChange={(selection) => setFormData({ ...formData, ...selection })}
-                locale="en"
+                locale={language}
               />
 
               {/* Topic Objectives Selector - Only show when editing */}
@@ -317,7 +321,7 @@ const TopicManager = () => {
               
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="video_count">Video Count</Label>
+                  <Label htmlFor="video_count">{ui("Video Count")}</Label>
                   <Input
                     id="video_count"
                     type="number"
@@ -326,7 +330,7 @@ const TopicManager = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="quiz_count">Quiz Count</Label>
+                  <Label htmlFor="quiz_count">{ui("Quiz Count")}</Label>
                   <Input
                     id="quiz_count"
                     type="number"
@@ -335,7 +339,7 @@ const TopicManager = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="estimated_duration_minutes">Duration (min)</Label>
+                  <Label htmlFor="estimated_duration_minutes">{ui("Duration (min)")}</Label>
                   <Input
                     id="estimated_duration_minutes"
                     type="number"
@@ -346,7 +350,7 @@ const TopicManager = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="order_index">Order Index</Label>
+                  <Label htmlFor="order_index">{ui("Order Index")}</Label>
                   <Input
                     id="order_index"
                     type="number"
@@ -360,7 +364,7 @@ const TopicManager = () => {
                     checked={formData.is_active}
                     onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
                   />
-                  <Label htmlFor="is_active">Active</Label>
+                  <Label htmlFor="is_active">{ui("Active")}</Label>
                 </div>
               </div>
               
@@ -368,7 +372,7 @@ const TopicManager = () => {
               {editingTopic && (
                 <div className="space-y-4 border-t pt-4">
                   <div className="flex items-center justify-between">
-                    <Label className="text-lg font-semibold">Lesson Content</Label>
+                    <Label className="text-lg font-semibold">{ui("Lesson Content")}</Label>
                     <GenerateLessonButton 
                       topicId={editingTopic.id} 
                       hasExistingContent={!!editingTopic.lesson_content}
@@ -379,7 +383,7 @@ const TopicManager = () => {
                     <LessonContentDisplay content={editingTopic.lesson_content as any} />
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      No lesson content generated yet. Click "Generate Lesson Content" to create it automatically.
+                      {ui("No lesson content generated yet. Click \"Generate Lesson Content\" to create it automatically.")}
                     </p>
                   )}
                 </div>
@@ -401,7 +405,7 @@ const TopicManager = () => {
 
       {/* Curriculum Filter View */}
       <Card className="p-4 mb-4">
-        <h3 className="font-semibold mb-3">Filter by Curriculum</h3>
+        <h3 className="font-semibold mb-3">{ui("Filter by Curriculum")}</h3>
         <CurriculumSelector
           value={{
             curriculum_country_code: curriculumFilters.countryCode || null,
@@ -424,10 +428,10 @@ const TopicManager = () => {
       </Card>
 
       <div className="mb-4">
-        <Label>Select Category</Label>
+        <Label>{ui("Select Category")}</Label>
         <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
           <SelectTrigger>
-            <SelectValue placeholder="Select a category to view topics" />
+            <SelectValue placeholder={ui("Select a category to view topics")} />
           </SelectTrigger>
           <SelectContent>
             {categories.map((category) => (
@@ -439,33 +443,33 @@ const TopicManager = () => {
 
       {!selectedCategoryId ? (
         <div className="text-center py-12 text-muted-foreground">
-          Select a category above to view and manage topics
+          {ui("Select a category above to view and manage topics")}
         </div>
       ) : topicsLoading ? (
         <div className="text-center py-12 text-muted-foreground">
-          Loading topics...
+          {ui("Loading topics...")}
         </div>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Curriculum</TableHead>
-              <TableHead>Keywords</TableHead>
-              <TableHead>Videos</TableHead>
-              <TableHead>Quizzes</TableHead>
-              <TableHead>Duration</TableHead>
-              <TableHead>Order</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{ui("Name")}</TableHead>
+              <TableHead>{ui("Category")}</TableHead>
+              <TableHead>{ui("Curriculum")}</TableHead>
+              <TableHead>{ui("Keywords")}</TableHead>
+              <TableHead>{ui("Videos")}</TableHead>
+              <TableHead>{ui("Quizzes")}</TableHead>
+              <TableHead>{ui("Duration")}</TableHead>
+              <TableHead>{ui("Order")}</TableHead>
+              <TableHead>{ui("Status")}</TableHead>
+              <TableHead>{ui("Actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {topics.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="text-center text-muted-foreground">
-                  No topics found for this category
+                  {ui("No topics found for this category")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -488,7 +492,7 @@ const TopicManager = () => {
                 ) : (
                   <span
                     className="cursor-pointer hover:underline hover:text-primary"
-                    title="Click to rename"
+                    title={ui("Click to rename")}
                     onClick={() => startRename(topic)}
                   >
                     {topic.name}
@@ -522,7 +526,7 @@ const TopicManager = () => {
               <TableCell>{topic.order_index}</TableCell>
               <TableCell>
                 <span className={topic.is_active ? 'text-green-600' : 'text-red-600'}>
-                  {topic.is_active ? 'Active' : 'Inactive'}
+                  {topic.is_active ? ui("Active") : 'Inactive'}
                 </span>
               </TableCell>
               <TableCell>

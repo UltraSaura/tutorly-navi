@@ -1,3 +1,5 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
+import { useLocale } from '@/i18n/useLocale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -10,6 +12,8 @@ interface LessonContentDisplayProps {
 }
 
 export function LessonContentDisplay({ content }: LessonContentDisplayProps) {
+  const ui = useInterfaceTranslation();
+  const { locale, dateLocale } = useLocale();
   const [openSections, setOpenSections] = useState<string[]>(['explanation']);
 
   const toggleSection = (section: string) => {
@@ -24,7 +28,7 @@ export function LessonContentDisplay({ content }: LessonContentDisplayProps) {
     <div className="space-y-3">
       {/* Generated info */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <span>Generated: {new Date(content.generated_at).toLocaleString()}</span>
+        <span>{ui("Generated:")} {new Date(content.generated_at).toLocaleString(locale)}</span>
         {content.generated_by_model && (
           <Badge variant="outline" className="text-xs">
             {content.generated_by_model}
@@ -42,7 +46,7 @@ export function LessonContentDisplay({ content }: LessonContentDisplayProps) {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
-                Explanation
+                {ui("Explanation")}
               </CardTitle>
               <ChevronDown className={`w-4 h-4 transition-transform ${openSections.includes('explanation') ? 'rotate-180' : ''}`} />
             </CardHeader>
@@ -65,7 +69,7 @@ export function LessonContentDisplay({ content }: LessonContentDisplayProps) {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Lightbulb className="w-4 h-4" />
-                Worked Example
+                {ui("Worked Example")}
               </CardTitle>
               <ChevronDown className={`w-4 h-4 transition-transform ${openSections.includes('example') ? 'rotate-180' : ''}`} />
             </CardHeader>
@@ -88,7 +92,7 @@ export function LessonContentDisplay({ content }: LessonContentDisplayProps) {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <AlertCircle className="w-4 h-4" />
-                Common Mistakes ({content.common_mistakes.length})
+                {ui("Common Mistakes (")}{content.common_mistakes.length})
               </CardTitle>
               <ChevronDown className={`w-4 h-4 transition-transform ${openSections.includes('mistakes') ? 'rotate-180' : ''}`} />
             </CardHeader>
@@ -114,7 +118,7 @@ export function LessonContentDisplay({ content }: LessonContentDisplayProps) {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <ClipboardList className="w-4 h-4" />
-              Practice Tasks
+              {ui("Practice Tasks")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -126,7 +130,7 @@ export function LessonContentDisplay({ content }: LessonContentDisplayProps) {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <CheckSquare className="w-4 h-4" />
-              Exit Ticket
+              {ui("Exit Ticket")}
             </CardTitle>
           </CardHeader>
           <CardContent>

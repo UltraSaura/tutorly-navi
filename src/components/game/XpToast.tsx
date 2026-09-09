@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React from 'react';
 import { Zap } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -8,6 +9,7 @@ interface XpToastProps {
 }
 
 const XpToast = ({ amount, message }: XpToastProps) => {
+  const ui = useInterfaceTranslation();
   return (
     <div className="flex items-center gap-3 p-4 bg-game-xp/10 border border-game-xp/20 rounded-button animate-scale-in">
       <div className="flex-shrink-0">
@@ -28,7 +30,7 @@ const XpToast = ({ amount, message }: XpToastProps) => {
           </span>
           {amount >= 100 && (
             <span className="text-caption text-neutral-muted font-medium px-2 py-0.5 bg-neutral-border/50 rounded-chip">
-              Great!
+              {ui("Great!")}
             </span>
           )}
         </div>

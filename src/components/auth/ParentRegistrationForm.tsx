@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -40,6 +41,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
   onBack,
   loading = false
 }) => {
+  const ui = useInterfaceTranslation();
   const { t } = useTranslation();
   const { profile } = useUserProfile();
   const { countries, getSchoolLevelsByCountry, loading: dataLoading, selectedCountry, setCountry } = useCountriesAndLevels(profile?.country);
@@ -94,7 +96,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
                   className={errors.firstName ? 'border-destructive' : ''}
                 />
                 {errors.firstName && (
-                  <p className="text-sm text-destructive mt-1">{errors.firstName.message}</p>
+                  <p className="text-sm text-destructive mt-1">{ui(String(errors.firstName.message))}</p>
                 )}
               </div>
               <div>
@@ -105,13 +107,13 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
                   className={errors.lastName ? 'border-destructive' : ''}
                 />
                 {errors.lastName && (
-                  <p className="text-sm text-destructive mt-1">{errors.lastName.message}</p>
+                  <p className="text-sm text-destructive mt-1">{ui(String(errors.lastName.message))}</p>
                 )}
               </div>
             </div>
 
             <div>
-              <Label htmlFor="email">{t('auth.email')} (Username)</Label>
+              <Label htmlFor="email">{t('auth.email')} {ui("(Username)")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -119,7 +121,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
                 className={errors.email ? 'border-destructive' : ''}
               />
               {errors.email && (
-                <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
+                <p className="text-sm text-destructive mt-1">{ui(String(errors.email.message))}</p>
               )}
             </div>
 
@@ -133,7 +135,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
                   className={errors.password ? 'border-destructive' : ''}
                 />
                 {errors.password && (
-                  <p className="text-sm text-destructive mt-1">{errors.password.message}</p>
+                  <p className="text-sm text-destructive mt-1">{ui(String(errors.password.message))}</p>
                 )}
               </div>
               <div>
@@ -145,7 +147,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
                   className={errors.confirmPassword ? 'border-destructive' : ''}
                 />
                 {errors.confirmPassword && (
-                  <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>
+                  <p className="text-sm text-destructive mt-1">{ui(String(errors.confirmPassword.message))}</p>
                 )}
               </div>
             </div>
@@ -168,7 +170,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
                 </SelectContent>
               </Select>
               {errors.country && (
-                <p className="text-sm text-destructive mt-1">{errors.country.message}</p>
+                <p className="text-sm text-destructive mt-1">{ui(String(errors.country.message))}</p>
               )}
             </div>
 
@@ -187,7 +189,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
                 />
               </div>
               {errors.phoneNumber && (
-                <p className="text-sm text-destructive mt-1">{errors.phoneNumber.message}</p>
+                <p className="text-sm text-destructive mt-1">{ui(String(errors.phoneNumber.message))}</p>
               )}
             </div>
           </div>

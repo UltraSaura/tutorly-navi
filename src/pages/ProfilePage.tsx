@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -14,6 +15,7 @@ import { LearningPreferenceSelector } from '@/components/profile/LearningPrefere
 import { PageMeta } from '@/components/seo/PageMeta';
 
 const ProfilePage = () => {
+  const ui = useInterfaceTranslation();
   const { user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -25,11 +27,11 @@ const ProfilePage = () => {
     setIsSigningOut(true);
     try {
       await supabase.auth.signOut();
-      toast({ title: t('profile.signedOut') || 'Signed out successfully' });
+      toast({ title: t('profile.signedOut') || ui("Signed out successfully") });
       navigate('/auth');
     } catch (error) {
       console.error('Sign out error:', error);
-      toast({ title: 'Error signing out', variant: 'destructive' });
+      toast({ title: ui("Error signing out"), variant: 'destructive' });
     } finally {
       setIsSigningOut(false);
     }
@@ -48,7 +50,7 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-950 dark:to-gray-900">
-      <PageMeta title="Profile" description="Manage your Stuwy profile, preferences, and account details." />
+      <PageMeta title={ui("Profile")} description={ui("Manage your Stuwy profile, preferences, and account details.")} />
       <div className="stuwy-container py-8">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Header */}
@@ -166,7 +168,7 @@ const ProfilePage = () => {
             className="w-full h-12"
           >
             <LogOut className="mr-2 h-5 w-5" />
-            {isSigningOut ? 'Signing out...' : (t('nav.signOut') || 'Sign Out')}
+            {isSigningOut ? ui("Signing out...") : (t('nav.signOut') || ui("Sign Out"))}
           </Button>
 
           {/* Extra bottom spacing for mobile bottom tabs */}

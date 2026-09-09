@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Settings2 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ const supportStyleLabels: Record<LearningStyle, { en: string; fr: string }> = {
 };
 
 export default function AdminSettings() {
+  const ui = useInterfaceTranslation();
   const queryClient = useQueryClient();
   const { language } = useLanguage();
   const isFrench = /^fr/i.test(language);
@@ -87,9 +89,9 @@ export default function AdminSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Settings</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{ui("Admin Settings")}</h1>
         <p className="text-muted-foreground">
-          Configure guarded system behavior and rollout switches.
+          {ui("Configure guarded system behavior and rollout switches.")}
         </p>
       </div>
 
@@ -128,7 +130,7 @@ export default function AdminSettings() {
                   enabled: checked,
                 })
               }
-              aria-label="Adaptive teaching recommendations"
+              aria-label={ui("Adaptive teaching recommendations")}
             />
           </div>
         </CardContent>

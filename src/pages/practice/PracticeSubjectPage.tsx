@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -118,6 +119,7 @@ function TopicStateIcon({ state }: { state: TopicState }) {
 }
 
 export default function PracticeSubjectPage() {
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const [, setSearchParams] = useSearchParams();
   const { subject } = useParams<{ subject: string }>();
@@ -356,20 +358,20 @@ export default function PracticeSubjectPage() {
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={() => navigate('/practice')}>
-              Retour
+              {ui("Retour")}
             </Button>
           </div>
 
           <Card className="border-dashed">
             <CardHeader>
-              <CardTitle className="text-base">Bientôt disponible</CardTitle>
+              <CardTitle className="text-base">{ui("Bientôt disponible")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                Les exercices pour ce sujet sont en cours de preparation.
+                {ui("Les exercices pour ce sujet sont en cours de preparation.")}
               </p>
               <Button variant="outline" onClick={() => navigate('/learning')}>
-                Explorer les leçons
+                {ui("Explorer les leçons")}
               </Button>
             </CardContent>
           </Card>
@@ -401,7 +403,7 @@ export default function PracticeSubjectPage() {
             style={{ borderColor: '#EAECEF', color: '#667085' }}
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Retour
+            {ui("Retour")}
           </button>
         </div>
       </div>
@@ -410,8 +412,8 @@ export default function PracticeSubjectPage() {
         {totalTopics > 0 && (
           <div>
             <div className="mb-1.5 flex justify-between text-xs" style={{ color: '#667085' }}>
-              <span>{masteredTopics} sujet{masteredTopics !== 1 ? 's' : ''} maîtrisé{masteredTopics !== 1 ? 's' : ''}</span>
-              <span>{Math.max(totalTopics - masteredTopics, 0)} restant{Math.max(totalTopics - masteredTopics, 0) !== 1 ? 's' : ''}</span>
+              <span>{ui("masteredTopicCount", { count: masteredTopics })}</span>
+              <span>{ui("remainingCount", { count: Math.max(totalTopics - masteredTopics, 0) })}</span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full" style={{ background: '#EAECEF' }}>
               <div className="h-full rounded-full transition-all" style={{ width: `${masteryPercent}%`, background: '#12C6A0' }} />
@@ -426,7 +428,7 @@ export default function PracticeSubjectPage() {
               style={{ borderColor: '#12C6A0' }}
             >
               <Star className="h-3 w-3" style={{ color: '#12C6A0' }} />
-              <span className="text-xs font-semibold" style={{ color: '#12C6A0' }}>Recommandé pour toi</span>
+              <span className="text-xs font-semibold" style={{ color: '#12C6A0' }}>{ui("Recommandé pour toi")}</span>
             </div>
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
@@ -434,18 +436,18 @@ export default function PracticeSubjectPage() {
                   {recommendedTopic.topic.topicLabel}
                 </p>
                 <p className="mb-4 text-xs" style={{ color: '#667085' }}>
-                  {recommendedTopic.summary?.totalObjectives ?? 0} notion{(recommendedTopic.summary?.totalObjectives ?? 0) !== 1 ? 's' : ''} · {activeSchoolLevel.activeLevel ?? activeSchoolLevel.normalizedLevel ?? '—'}
+                  {recommendedTopic.summary?.totalObjectives ?? 0} {ui("notion")}{(recommendedTopic.summary?.totalObjectives ?? 0) !== 1 ? 's' : ''} · {activeSchoolLevel.activeLevel ?? activeSchoolLevel.normalizedLevel ?? '—'}
                 </p>
                 <button
                   onClick={() => navigate(`/practice/${encodeURIComponent(subjectSlug)}/topics?quiz=${encodeURIComponent(recommendedTopic.bankId!)}`)}
                   className="rounded-xl px-5 py-2.5 text-sm font-bold"
                   style={{ background: '#12C6A0', color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}
                 >
-                  {recommendedTopic.summary?.state === 'in_progress' ? 'Continuer' : 'Commencer'}
+                  {recommendedTopic.summary?.state === 'in_progress' ? ui("Continuer") : ui("Commencer")}
                 </button>
               </div>
               <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white">
-                <img src="/practice-mascot.png" alt="Mascotte" className="h-full w-full object-cover" />
+                <img src="/practice-mascot.png" alt={ui("Mascotte")} className="h-full w-full object-cover" />
               </div>
             </div>
           </div>
@@ -457,7 +459,7 @@ export default function PracticeSubjectPage() {
               {firstSubjectQuizBank.title}
             </p>
             <p className="mb-4 text-xs" style={{ color: '#667085' }}>
-              Quiz disponible pour cette matière
+              {ui("Quiz disponible pour cette matière")}
             </p>
             <button
               onClick={() => {
@@ -470,7 +472,7 @@ export default function PracticeSubjectPage() {
               className="rounded-xl px-5 py-2.5 text-sm font-bold"
               style={{ background: '#12C6A0', color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}
             >
-              Commencer le quiz
+              {ui("Commencer le quiz")}
             </button>
           </div>
         )}
@@ -478,7 +480,7 @@ export default function PracticeSubjectPage() {
         {enrichedDomains.length > 0 && (
           <div>
             <h2 className="mb-3 text-sm font-bold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
-              Par compétence
+              {ui("Par compétence")}
             </h2>
             <div className="space-y-3">
               {enrichedDomains.map((domain, idx) => {
@@ -518,7 +520,7 @@ export default function PracticeSubjectPage() {
                         {domain.domainLabel}
                       </p>
                       <p className="mb-1.5 text-xs" style={{ color: '#667085' }}>
-                        {domainTotalExercises} exercice{domainTotalExercises !== 1 ? 's' : ''}
+                        {domainTotalExercises} {ui("exercice")}{domainTotalExercises !== 1 ? 's' : ''}
                       </p>
                       <div className="h-1 overflow-hidden rounded-full" style={{ background: '#EAECEF' }}>
                         <div className="h-full rounded-full" style={{ width: `${domainPercent}%`, background: config.iconColor }} />
@@ -542,10 +544,10 @@ export default function PracticeSubjectPage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
-                Défi du jour
+                {ui("Défi du jour")}
               </p>
               <p className="text-xs" style={{ color: '#667085' }}>
-                Résous 5 exercices et gagne 50 XP !
+                {ui("Résous 5 exercices et gagne 50 XP !")}
               </p>
               <div className="mt-1.5 flex items-center gap-2">
                 <span className="text-xs font-bold" style={{ color: '#B45309' }}>0/5</span>
@@ -561,20 +563,20 @@ export default function PracticeSubjectPage() {
         {showExamSection && (
           <div className="rounded-2xl border bg-white p-4" style={{ borderColor: '#EAECEF' }}>
             <p className="mb-1 text-sm font-bold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
-              Préparer l&apos;examen
+              {ui("Préparer l'examen")}
             </p>
             <p className="mb-3 text-xs" style={{ color: '#667085' }}>
-              Épreuves chronométrées alignées sur le programme
+              {ui("Épreuves chronométrées alignées sur le programme")}
             </p>
             <div className="flex flex-wrap gap-2">
               {hasTrainingItems && (
                 <Button onClick={() => navigate(`/practice/session?subject=${encodeURIComponent(examDisciplines[0] ?? subjectSlug)}&level=${encodeURIComponent(activeLevel)}&mode=mixed`)}>
-                  Exercices interactifs
+                  {ui("Exercices interactifs")}
                 </Button>
               )}
               {examPaperCount > 0 && (
                 <Button variant="outline" onClick={() => navigate(`/practice/${encodeURIComponent(subjectSlug)}/annales`)}>
-                  Voir les annales
+                  {ui("Voir les annales")}
                 </Button>
               )}
             </div>

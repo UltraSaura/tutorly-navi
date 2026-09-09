@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { useGuardianHomeData } from '@/hooks/useGuardianHomeData';
 import { useGuardianLessonData } from '@/hooks/useGuardianLessonData';
@@ -10,6 +11,7 @@ import { RecentActivityFeed } from '@/components/guardian/RecentActivityFeed';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageMeta } from '@/components/seo/PageMeta';
 export default function GuardianHome() {
+  const ui = useInterfaceTranslation();
   const {
     guardianId
   } = useGuardianAuth();
@@ -35,12 +37,12 @@ export default function GuardianHome() {
       </div>;
   }
   return <div className="space-y-8">
-      <PageMeta title="Guardian Home" description="Monitor your children's learning progress and recent activity at a glance." />
+      <PageMeta title={ui("Guardian Home")} description={ui("Monitor your children's learning progress and recent activity at a glance.")} />
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Welcome to Your Guardian Portal</h1>
+        <h1 className="text-3xl font-bold text-foreground">{ui("Welcome to Your Guardian Portal")}</h1>
         <p className="text-muted-foreground mt-2">
-          Monitor and support your children's learning journey
+          {ui("Monitor and support your children's learning journey")}
         </p>
       </div>
 
@@ -53,7 +55,7 @@ export default function GuardianHome() {
                 <Users className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Active Children</p>
+                <p className="text-sm text-muted-foreground">{ui("Active Children")}</p>
                 <p className="text-2xl font-bold">{aggregatedStats.activeChildren}</p>
               </div>
             </CardContent>
@@ -64,7 +66,7 @@ export default function GuardianHome() {
                 <BookOpen className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Exercises This Week</p>
+                <p className="text-sm text-muted-foreground">{ui("Exercises This Week")}</p>
                 <p className="text-2xl font-bold">{aggregatedStats.exercisesThisWeek}</p>
               </div>
             </CardContent>
@@ -75,7 +77,7 @@ export default function GuardianHome() {
                 <TrendingUp className="h-5 w-5 text-cyan-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Quizzes This Week</p>
+                <p className="text-sm text-muted-foreground">{ui("Quizzes This Week")}</p>
                 <p className="text-2xl font-bold">{aggregatedStats.quizAttemptsThisWeek}</p>
               </div>
             </CardContent>
@@ -86,7 +88,7 @@ export default function GuardianHome() {
                 <AlertCircle className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Need Attention</p>
+                <p className="text-sm text-muted-foreground">{ui("Need Attention")}</p>
                 <p className="text-2xl font-bold">{aggregatedStats.needsAttentionCount}</p>
               </div>
             </CardContent>
@@ -97,10 +99,10 @@ export default function GuardianHome() {
                 <BookOpen className="h-5 w-5" style={{ color: '#12C6A0' }} />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Leçons cette semaine</p>
+                <p className="text-sm text-muted-foreground">{ui("Leçons cette semaine")}</p>
                 <p className="text-2xl font-bold">{totalLessonsThisWeek}</p>
                 {totalXp > 0 && (
-                  <p className="text-xs text-muted-foreground">{totalXp} XP total</p>
+                  <p className="text-xs text-muted-foreground">{totalXp} {ui("XP total")}</p>
                 )}
               </div>
             </CardContent>
@@ -111,16 +113,16 @@ export default function GuardianHome() {
       {/* Getting Started */}
       {aggregatedStats.totalChildren === 0 ? <Card className="border-primary/50">
           <CardHeader>
-            <CardTitle>Get Started</CardTitle>
+            <CardTitle>{ui("Get Started")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="mb-4 text-sm text-muted-foreground">
-              Add your first child to start tracking their learning progress and provide support.
+              {ui("Add your first child to start tracking their learning progress and provide support.")}
             </p>
             <Button asChild>
               <Link to="/guardian/children">
                 <Users className="mr-2 h-4 w-4" />
-                Add Your First Child
+                {ui("Add Your First Child")}
               </Link>
             </Button>
           </CardContent>
@@ -128,11 +130,11 @@ export default function GuardianHome() {
           {/* Children Overview */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Your Children</h2>
+              <h2 className="text-2xl font-bold">{ui("Your Children")}</h2>
               <Button variant="outline" asChild>
                 <Link to="/guardian/children">
                   <Users className="mr-2 h-4 w-4" />
-                  Manage Children
+                  {ui("Manage Children")}
                 </Link>
               </Button>
             </div>
@@ -158,17 +160,17 @@ export default function GuardianHome() {
                       >
                         {lessonData.lessonsThisWeek > 0 && (
                           <span style={{ fontSize: 12, color: '#085041', fontWeight: 600 }}>
-                            📚 {lessonData.lessonsThisWeek} leçon{lessonData.lessonsThisWeek > 1 ? 's' : ''} cette semaine
+                            📚 {ui("lessonsThisWeek", { count: lessonData.lessonsThisWeek })}
                           </span>
                         )}
                         {lessonData.currentStreak > 0 && (
                           <span style={{ fontSize: 12, color: '#B45309', fontWeight: 600 }}>
-                            🔥 {lessonData.currentStreak} jour{lessonData.currentStreak > 1 ? 's' : ''}
+                            🔥 {ui("dayCount", { count: lessonData.currentStreak })}
                           </span>
                         )}
                         {lessonData.streakAtRisk && (
                           <span style={{ fontSize: 11, color: '#A32D2D', fontWeight: 600 }}>
-                            ⚠️ Série en danger
+                            {ui("⚠️ Série en danger")}
                           </span>
                         )}
                         <span style={{ fontSize: 11, color: '#667085', marginLeft: 'auto' }}>

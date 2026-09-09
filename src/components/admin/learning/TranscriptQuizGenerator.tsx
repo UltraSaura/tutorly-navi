@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -51,6 +53,8 @@ const DIFFICULTIES = [
 const STEP_ORDER: Step[] = ['videos', 'settings', 'review', 'preview', 'save'];
 
 export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: TranscriptQuizGeneratorProps) {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   const queryClient = useQueryClient();
   const generateMutation = useGenerateQuizFromTranscripts();
   
@@ -288,7 +292,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
-            Generate Quiz from Transcripts
+            {ui("Generate Quiz from Transcripts")}
           </DialogTitle>
         </DialogHeader>
 
@@ -308,11 +312,11 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
         </div>
 
         {/* Step: Videos */}
-        {step === 'videos' && (
+        {step === "videos" && (
           <div className="flex-1 flex flex-col min-h-0">
             <div className="mb-4">
               <Input
-                placeholder="Search videos..."
+                placeholder={ui("Search videos...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -321,7 +325,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
             <ScrollArea className="flex-1 border rounded-lg">
               {videosLoading ? (
                 <div className="p-8 text-center text-muted-foreground">
-                  Loading videos...
+                  {ui("Loading videos...")}
                 </div>
               ) : filteredVideos.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground">
@@ -347,7 +351,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                           <div className="font-medium truncate">{video.title}</div>
                         </div>
                         <div className="text-sm text-muted-foreground flex-shrink-0">
-                          {wordCount.toLocaleString()} words
+                          {wordCount.toLocaleString(locale)} {ui("words")}
                         </div>
                       </div>
                     );
@@ -359,22 +363,22 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
             {selectedVideoIds.length > 0 && (
               <div className="mt-4 p-3 bg-muted rounded-lg flex items-center justify-between">
                 <span className="text-sm">
-                  <strong>{selectedVideoIds.length}</strong> video{selectedVideoIds.length !== 1 ? 's' : ''} selected
+                  <strong>{selectedVideoIds.length}</strong> {ui("video")}{selectedVideoIds.length !== 1 ? 's' : ''} {ui("selected")}
                   <span className="mx-2">·</span>
-                  <strong>{totalWordCount.toLocaleString()}</strong> words total
+                  <strong>{totalWordCount.toLocaleString(locale)}</strong> {ui("words total")}
                 </span>
                 <Button variant="ghost" size="sm" onClick={() => setSelectedVideoIds([])}>
-                  Clear
+                  {ui("Clear")}
                 </Button>
               </div>
             )}
 
             <div className="flex justify-end gap-2 mt-4">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+                {ui("Cancel")}
               </Button>
               <Button onClick={() => setStep('settings')} disabled={!canProceedFromVideos}>
-                Next
+                {ui("Next")}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
@@ -386,7 +390,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
           <div className="flex-1 flex flex-col">
             <div className="space-y-6">
               <div>
-                <Label className="mb-2 block">Number of Questions</Label>
+                <Label className="mb-2 block">{ui("Number of Questions")}</Label>
                 <Select value={questionCount.toString()} onValueChange={(v) => setQuestionCount(parseInt(v))}>
                   <SelectTrigger className="w-32">
                     <SelectValue />
@@ -400,7 +404,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
               </div>
 
               <div>
-                <Label className="mb-3 block">Question Types</Label>
+                <Label className="mb-3 block">{ui("Question Types")}</Label>
                 <label
                   className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors mb-3 ${
                     mixMode ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
@@ -411,8 +415,8 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                     onCheckedChange={(checked) => setMixMode(!!checked)}
                   />
                   <div>
-                    <div className="font-medium">🎲 Mix (Auto)</div>
-                    <div className="text-sm text-muted-foreground">AI picks the best question type for each question</div>
+                    <div className="font-medium">{ui("🎲 Mix (Auto)")}</div>
+                    <div className="text-sm text-muted-foreground">{ui("AI picks the best question type for each question")}</div>
                   </div>
                 </label>
                 <div className={`grid grid-cols-2 gap-3 ${mixMode ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -434,8 +438,8 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                         }}
                       />
                       <div>
-                        <div className="font-medium">{type.label}</div>
-                        <div className="text-sm text-muted-foreground">{type.description}</div>
+                        <div className="font-medium">{ui(type.label)}</div>
+                        <div className="text-sm text-muted-foreground">{ui(type.description)}</div>
                       </div>
                     </label>
                   ))}
@@ -443,13 +447,13 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
               </div>
 
               <div>
-                <Label className="mb-3 block">Difficulty</Label>
+                <Label className="mb-3 block">{ui("Difficulty")}</Label>
                 <RadioGroup value={difficulty} onValueChange={(v) => setDifficulty(v as typeof difficulty)}>
                   <div className="flex gap-4">
                     {DIFFICULTIES.map((d) => (
                       <label key={d.value} className="flex items-center gap-2 cursor-pointer">
                         <RadioGroupItem value={d.value} />
-                        <span>{d.label}</span>
+                        <span>{ui(d.label)}</span>
                       </label>
                     ))}
                   </div>
@@ -460,11 +464,11 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
             <div className="flex justify-between mt-auto pt-6">
               <Button variant="outline" onClick={() => setStep('videos')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
+                {ui("Back")}
               </Button>
               <Button onClick={handleGenerate} disabled={!canProceedFromSettings}>
                 <Sparkles className="w-4 h-4 mr-2" />
-                Generate Questions
+                {ui("Generate Questions")}
               </Button>
             </div>
           </div>
@@ -474,11 +478,11 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
         {step === 'generating' && (
           <div className="flex-1 flex flex-col items-center justify-center py-12">
             <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-            <h3 className="text-lg font-medium mb-2">Generating Questions</h3>
+            <h3 className="text-lg font-medium mb-2">{ui("Generating Questions")}</h3>
             <p className="text-muted-foreground text-center">
-              Analyzing {selectedVideoIds.length} video transcript{selectedVideoIds.length !== 1 ? 's' : ''}...
+              {ui("Analyzing")} {selectedVideoIds.length} {ui("video transcript")}{selectedVideoIds.length !== 1 ? 's' : ''}...
               <br />
-              This may take 10-30 seconds.
+              {ui("This may take 10-30 seconds.")}
             </p>
           </div>
         )}
@@ -488,7 +492,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
           <div className="flex-1 flex flex-col min-h-0">
             <div className="mb-4 flex items-center justify-between">
               <p className="text-muted-foreground">
-                {generatedQuestions.length} question{generatedQuestions.length !== 1 ? 's' : ''} generated. Review and edit before saving.
+                {generatedQuestions.length} {ui("question")}{generatedQuestions.length !== 1 ? 's' : ''} {ui("generated. Review and edit before saving.")}
               </p>
             </div>
 
@@ -509,7 +513,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                         <p className="font-medium">{question.prompt}</p>
                         {question.hint && (
                           <p className="text-sm text-muted-foreground mt-1">
-                            Hint: {question.hint}
+                            {ui("Hint:")} {question.hint}
                           </p>
                         )}
                       </div>
@@ -538,16 +542,16 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
             <div className="flex justify-between mt-4">
               <Button variant="outline" onClick={() => setStep('settings')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
+                {ui("Back")}
               </Button>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setStep('save')} disabled={generatedQuestions.length === 0}>
-                  Skip to Save
+                  {ui("Skip to Save")}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
                 <Button onClick={handleStartPreview} disabled={generatedQuestions.length === 0}>
                   <Play className="w-4 h-4 mr-2" />
-                  Preview Quiz
+                  {ui("Preview Quiz")}
                 </Button>
               </div>
             </div>
@@ -574,10 +578,10 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-muted-foreground">
-                      Question {currentPreviewIndex + 1} of {generatedQuestions.length}
+                      {ui("Question")} {currentPreviewIndex + 1} {ui("of")} {generatedQuestions.length}
                     </span>
                     <span className="text-sm text-muted-foreground">
-                      {Object.keys(previewAnswers).length} answered
+                      {Object.keys(previewAnswers).length} {ui("answered")}
                     </span>
                   </div>
                   <Progress value={((currentPreviewIndex + 1) / generatedQuestions.length) * 100} className="h-2" />
@@ -621,7 +625,7 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                 <div className="flex justify-between mt-4">
                   <Button variant="outline" onClick={handleBackToReview}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Review
+                    {ui("Back to Review")}
                   </Button>
                   <div className="flex gap-2">
                     <Button 
@@ -629,16 +633,16 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                       onClick={() => setCurrentPreviewIndex(prev => Math.max(0, prev - 1))}
                       disabled={currentPreviewIndex === 0}
                     >
-                      Previous
+                      {ui("Previous")}
                     </Button>
                     {currentPreviewIndex < generatedQuestions.length - 1 ? (
                       <Button onClick={() => setCurrentPreviewIndex(prev => prev + 1)}>
-                        Next
+                        {ui("Next")}
                       </Button>
                     ) : (
                       <Button onClick={handleSubmitPreview}>
                         <Check className="w-4 h-4 mr-2" />
-                        Submit Quiz
+                        {ui("Submit Quiz")}
                       </Button>
                     )}
                   </div>
@@ -648,12 +652,12 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
               <>
                 {/* Results view */}
                 <div className="text-center py-6">
-                  <h3 className="text-2xl font-bold mb-2">Quiz Results</h3>
+                  <h3 className="text-2xl font-bold mb-2">{ui("Quiz Results")}</h3>
                   <p className="text-4xl font-bold text-primary mb-2">
                     {previewResults?.score}/{previewResults?.maxScore}
                   </p>
                   <p className="text-muted-foreground">
-                    {Math.round(((previewResults?.score || 0) / (previewResults?.maxScore || 1)) * 100)}% correct
+                    {Math.round(((previewResults?.score || 0) / (previewResults?.maxScore || 1)) * 100)}{ui("% correct")}
                   </p>
                   <Progress 
                     value={((previewResults?.score || 0) / (previewResults?.maxScore || 1)) * 100} 
@@ -693,15 +697,15 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
                 <div className="flex justify-between mt-4">
                   <Button variant="outline" onClick={handleBackToReview}>
                     <Pencil className="w-4 h-4 mr-2" />
-                    Edit Questions
+                    {ui("Edit Questions")}
                   </Button>
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={handleRetakePreview}>
                       <RotateCcw className="w-4 h-4 mr-2" />
-                      Retake Quiz
+                      {ui("Retake Quiz")}
                     </Button>
                     <Button onClick={() => setStep('save')}>
-                      Continue to Save
+                      {ui("Continue to Save")}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
@@ -716,32 +720,32 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
           <div className="flex-1 flex flex-col">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="bank-title">Quiz Bank Title *</Label>
+                <Label htmlFor="bank-title">{ui("Quiz Bank Title *")}</Label>
                 <Input
                   id="bank-title"
                   value={bankTitle}
                   onChange={(e) => setBankTitle(e.target.value)}
-                  placeholder="e.g., Fractions Quiz - Generated"
+                  placeholder={ui("e.g., Fractions Quiz - Generated")}
                 />
               </div>
 
               <div>
-                <Label htmlFor="bank-description">Description (optional)</Label>
+                <Label htmlFor="bank-description">{ui("Description (optional)")}</Label>
                 <Textarea
                   id="bank-description"
                   value={bankDescription}
                   onChange={(e) => setBankDescription(e.target.value)}
-                  placeholder="Optional description for this quiz bank"
+                  placeholder={ui("Optional description for this quiz bank")}
                   rows={3}
                 />
               </div>
 
               <div className="p-4 bg-muted rounded-lg">
-                <h4 className="font-medium mb-2">Summary</h4>
+                <h4 className="font-medium mb-2">{ui("Summary")}</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• {generatedQuestions.length} questions</li>
-                  <li>• Generated from {selectedVideoIds.length} video{selectedVideoIds.length !== 1 ? 's' : ''}</li>
-                  <li>• Difficulty: {difficulty}</li>
+                  <li>• {generatedQuestions.length} {ui("questions")}</li>
+                  <li>{ui("• Generated from")} {selectedVideoIds.length} {ui("video")}{selectedVideoIds.length !== 1 ? 's' : ''}</li>
+                  <li>{ui("• Difficulty:")} {difficulty}</li>
                 </ul>
               </div>
             </div>
@@ -749,18 +753,18 @@ export function TranscriptQuizGenerator({ open, onOpenChange, onSaved }: Transcr
             <div className="flex justify-between mt-auto pt-6">
               <Button variant="outline" onClick={() => setStep('preview')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
+                {ui("Back")}
               </Button>
               <Button onClick={handleSave} disabled={!bankTitle.trim() || isSaving}>
                 {isSaving ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
+                    {ui("Saving...")}
                   </>
                 ) : (
                   <>
                     <Check className="w-4 h-4 mr-2" />
-                    Save Quiz Bank
+                    {ui("Save Quiz Bank")}
                   </>
                 )}
               </Button>

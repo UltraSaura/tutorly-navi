@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState } from "react";
 
 /** Hard-coded tokens so Cursor/Lovable can't freestyle */
@@ -9,6 +10,7 @@ const TOKENS = {
 };
 
 export default function ExercisePage() {
+  const ui = useInterfaceTranslation();
   const [msg, setMsg] = useState("");
 
   return (
@@ -30,7 +32,7 @@ export default function ExercisePage() {
             {/* Overall grade */}
             <div className="mt-6 flex items-center">
               <GradCap className="w-5 h-5 text-slate-700 mr-2" />
-              <span className="text-[18px] font-medium text-slate-900 mr-2">Overall grade:</span>
+              <span className="text-[18px] font-medium text-slate-900 mr-2">{ui("Overall grade:")}</span>
               <span className="text-[18px] font-extrabold text-[#FF3B30]">0%</span>
               <span className="text-[#FF3B30] ml-1">(—)</span>
             </div>
@@ -60,7 +62,7 @@ export default function ExercisePage() {
 
             {/* Title */}
             <h1 className="mt-8 text-center text-[28px] leading-[34px] font-extrabold tracking-tight text-slate-900">
-              Let's Start Learning !
+              {ui("Let's Start Learning !")}
             </h1>
 
             {/* Small emoji */}
@@ -72,16 +74,16 @@ export default function ExercisePage() {
         <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-[430px] px-4 z-30">
           <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_6px_24px_rgba(20,20,43,0.08)] p-2">
             <div className="flex items-center gap-2">
-              <button className="w-11 h-11 grid place-items-center border border-slate-200 rounded-2xl active:scale-95" aria-label="Add">
+              <button className="w-11 h-11 grid place-items-center border border-slate-200 rounded-2xl active:scale-95" aria-label={ui("Add")}>
                 <Plus className="w-5 h-5 text-slate-700" />
               </button>
               <input
                 value={msg}
                 onChange={(e) => setMsg(e.target.value)}
-                placeholder="Type your exercise or question..."
+                placeholder={ui("Type your exercise or question...")}
                 className="flex-1 h-12 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-indigo-200"
               />
-              <button className="w-12 h-12 grid place-items-center rounded-2xl bg-[#6366F1] text-white active:scale-95" aria-label="Send">
+              <button className="w-12 h-12 grid place-items-center rounded-2xl bg-[#6366F1] text-white active:scale-95" aria-label={ui("Send")}>
                 <Plane className="w-5 h-5" />
               </button>
             </div>
@@ -111,11 +113,12 @@ export default function ExercisePage() {
 
 /* --- Sub-components --- */
 function LevelStreakBadge({ level, streakDays }: { level: number; streakDays: number }) {
+  const ui = useInterfaceTranslation();
   return (
     <div className={`inline-flex items-center h-[52px] px-4 rounded-3xl text-white ${TOKENS.gradient}`}>
       <span className="text-[16px] font-bold mr-3">L-{level}</span>
       <span className="opacity-60 mx-2">|</span>
-      <span className="text-[16px] font-semibold">🔥 {streakDays} day streak</span>
+      <span className="text-[16px] font-semibold">🔥 {streakDays} {ui("day streak")}</span>
     </div>
   );
 }

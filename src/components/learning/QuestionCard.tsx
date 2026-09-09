@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import katex from "katex";
@@ -220,6 +221,7 @@ function regularPolygonPoints(cx: number, cy: number, r: number, sides: number, 
 }
 
 function GeometryFigureDiagram({ shape, label }: { shape: GeometryFigureShape; label?: string }) {
+  const ui = useInterfaceTranslation();
   const stroke = "#0f172a";
   const fill = "#ffffff";
   const accent = "#12C6A0";
@@ -293,7 +295,7 @@ function GeometryFigureDiagram({ shape, label }: { shape: GeometryFigureShape; l
 
   return (
     <div className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-      <svg width={220} height={170} viewBox="0 0 180 140" role="img" aria-label={label ?? "Figure géométrique"}>
+      <svg width={220} height={170} viewBox="0 0 180 140" role="img" aria-label={label ?? ui("Figure géométrique")}>
         <rect x={10} y={12} width={160} height={116} rx={14} fill="#f8fafc" stroke="#e2e8f0" />
         {shapeNode}
         <circle cx={150} cy={32} r={4} fill={accent} opacity={0.85} />
@@ -323,6 +325,7 @@ function midpoint(a: { x: number; y: number }, b: { x: number; y: number }) {
 }
 
 function TriangleDiagram({ visual }: { visual: VisualTriangle }) {
+  const ui = useInterfaceTranslation();
   const labels = visual.labels ?? ["A", "B", "C"];
   const points = labels.map((label, index) => getTrianglePoint(label, index));
   const [p0, p1, p2] = points;
@@ -338,7 +341,7 @@ function TriangleDiagram({ visual }: { visual: VisualTriangle }) {
 
   return (
     <div className="flex justify-center rounded-2xl border border-slate-200 bg-slate-50 p-3">
-      <svg width={220} height={170} viewBox="0 0 160 140" role="img" aria-label="Diagramme de triangle">
+      <svg width={220} height={170} viewBox="0 0 160 140" role="img" aria-label={ui("Diagramme de triangle")}>
         <polygon
           points={`${p0.x},${p0.y} ${p1.x},${p1.y} ${p2.x},${p2.y}`}
           fill="#ffffff"
@@ -618,6 +621,7 @@ export function QuestionCard({
   isCorrect: isCorrectProp,
   hideCorrect = false,
 }: QuestionCardProps) {
+  const ui = useInterfaceTranslation();
   const initialValue = useMemo(() => {
     if (question.kind === "multi") return [];
     if (question.kind === "visual") {
@@ -897,7 +901,7 @@ export function QuestionCard({
                 placeholder="?"
                 value={numVal}
                 onChange={e => setVal({ ...value, numerator: e.target.value })}
-                aria-label="Numérateur"
+                aria-label={ui("Numérateur")}
               />
               <div className="w-20 h-[2px] bg-foreground my-1" />
               <input
@@ -907,7 +911,7 @@ export function QuestionCard({
                 placeholder="?"
                 value={denVal}
                 onChange={e => setVal({ ...value, denominator: e.target.value })}
-                aria-label="Dénominateur"
+                aria-label={ui("Dénominateur")}
               />
             </div>
           );
@@ -923,7 +927,7 @@ export function QuestionCard({
                 style={{ borderColor: fractionBorderColor, background: fractionBgColor }}
                 {...getDropTargetProps((num) => setVal({ ...value, numerator: num }))}
                 onClick={() => handleTapZone("numerator")}
-                aria-label="Numérateur"
+                aria-label={ui("Numérateur")}
               >
                 {numVal || "?"}
               </div>
@@ -935,7 +939,7 @@ export function QuestionCard({
                 style={{ borderColor: fractionBorderColor, background: fractionBgColor }}
                 {...getDropTargetProps((num) => setVal({ ...value, denominator: num }))}
                 onClick={() => handleTapZone("denominator")}
-                aria-label="Dénominateur"
+                aria-label={ui("Dénominateur")}
               >
                 {denVal || "?"}
               </div>
@@ -975,7 +979,7 @@ export function QuestionCard({
               })}
             </div>
             <p className="text-xs text-muted-foreground">
-              Glisse un nombre dans chaque case, ou tapote pour sélectionner.
+              {ui("Glisse un nombre dans chaque case, ou tapote pour sélectionner.")}
             </p>
           </div>
         );
@@ -1007,7 +1011,7 @@ export function QuestionCard({
         return (
           <div className="mt-2 flex flex-col items-center gap-3 py-2">
             <p className="text-xs font-medium" style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>
-              Tape ta réponse
+              {ui("Tape ta réponse")}
             </p>
             <div
               className="flex items-center justify-center rounded-2xl transition-all"
@@ -1047,7 +1051,7 @@ export function QuestionCard({
             </div>
             {q.range && (
               <p className="text-xs" style={{ color: '#9CA3AF' }}>
-                Entre {q.range.min} et {q.range.max}
+                {ui("Entre")} {q.range.min} {ui("et")} {q.range.max}
               </p>
             )}
             {chips.length > 0 && (
@@ -1086,7 +1090,7 @@ export function QuestionCard({
                   );
                 })}
                 <p className="basis-full text-xs text-center text-muted-foreground mt-1">
-                  Glisse un nombre, ou tapote pour le placer.
+                  {ui("Glisse un nombre, ou tapote pour le placer.")}
                 </p>
               </div>
             )}
@@ -1138,7 +1142,7 @@ export function QuestionCard({
       )}
 
       {question.kind === "visual" && (
-        <div className="mt-4">{renderVisualQuestion(question.visual, value, setVal)}</div>
+        <div className="mt-4">{renderVisualQuestion(question.visual, value, setVal, ui)}</div>
       )}
 
       {question.kind === "slider" && (
@@ -1209,7 +1213,7 @@ export function QuestionCard({
               className="px-4 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800"
               onClick={onSkip}
             >
-              Passer
+              {ui("Passer")}
             </button>
           )}
           <motion.button
@@ -1217,7 +1221,7 @@ export function QuestionCard({
             onClick={submitIfTimeline}
             whileTap={{ scale: 0.96 }}
           >
-            Valider
+            {ui("Valider")}
           </motion.button>
         </div>
       )}
@@ -1243,7 +1247,8 @@ function getInitialVisualValue(visual: VisualUnion) {
 function renderVisualQuestion(
   visual: VisualUnion,
   value: any,
-  setValue: (next: any) => void
+  setValue: (next: any) => void,
+  ui: (text: string) => string
 ) {
   switch (visual.subtype) {
     case "pie":
@@ -1265,7 +1270,7 @@ function renderVisualQuestion(
     default:
       return (
         <div className="rounded-xl border border-dashed border-neutral-300 px-3 py-2 text-sm text-neutral-500">
-          Ce type de question visuelle n'est pas encore disponible pour les élèves.
+          {ui("Ce type de question visuelle n'est pas encore disponible pour les élèves.")}
         </div>
       );
   }
@@ -1293,6 +1298,7 @@ function AngleStudentView({
   value: any;
   onChange: (next: any) => void;
 }) {
+  const ui = useInterfaceTranslation();
   const isMulti = !!visual.multi;
 
   if (!isMulti) {
@@ -1311,14 +1317,14 @@ function AngleStudentView({
           </svg>
         </div>
         <div className="space-y-2 text-sm text-neutral-600">
-          <p>Saisis l'angle mesuré entre les deux rayons.</p>
+          <p>{ui("Saisis l'angle mesuré entre les deux rayons.")}</p>
           <input
             type="number"
             className="w-full rounded-xl border px-3 py-2"
             inputMode="numeric"
             value={value ?? ""}
             onChange={(e) => onChange(e.target.value)}
-            aria-label="Angle mesuré en degrés"
+            aria-label={ui("Angle mesuré en degrés")}
           />
         </div>
       </div>
@@ -1331,7 +1337,7 @@ function AngleStudentView({
   return (
     <div className="space-y-4">
       <p className="text-sm text-neutral-600">
-        Sélectionne toutes les cartes qui correspondent à la consigne.
+        {ui("Sélectionne toutes les cartes qui correspondent à la consigne.")}
       </p>
       <div className="grid grid-cols-2 gap-3">
         {options.map((option, index) => {
@@ -1447,6 +1453,7 @@ function PieStudentView({
   value: any;
   onChange: (next: any) => void;
 }) {
+  const ui = useInterfaceTranslation();
   const selected: string[] = Array.isArray(value) ? value : [];
 
   if (visual.interactionMode === "color_slices") {
@@ -1454,7 +1461,7 @@ function PieStudentView({
     return (
       <div className="space-y-4">
         <p className="text-sm text-neutral-600">
-          Clique sur les parts pour les colorier.
+          {ui("Clique sur les parts pour les colorier.")}
         </p>
         <div className="flex flex-col items-center gap-2">
           <svg viewBox="0 0 100 100" width={200} height={200} className="bg-white rounded-xl shadow-inner">
@@ -1524,7 +1531,7 @@ function PieStudentView({
   return (
     <div className="space-y-4">
       <p className="text-sm text-neutral-600">
-        Sélectionne le(s) diagramme(s) qui représente(nt) la fraction correcte.
+        {ui("Sélectionne le(s) diagramme(s) qui représente(nt) la fraction correcte.")}
       </p>
       <div className="grid grid-cols-2 gap-3">
         {allPies.map((pie) => {

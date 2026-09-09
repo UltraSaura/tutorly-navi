@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 // src/components/user/ChatInput.tsx
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MathfieldElement } from "mathlive";
@@ -41,6 +42,7 @@ export default function ChatInput({
   handleSendMessage, 
   isLoading 
 }: ChatInputProps) {
+  const ui = useInterfaceTranslation();
   const [mode, setMode] = useState<Mode>('math');          // default: math (no OS keyboard)
   const [tab, setTab]   = useState<Tab>('numbers');        // default: numbers (Frame-63)
   const [latex, setLatex] = useState("");
@@ -261,7 +263,7 @@ export default function ChatInput({
         <button 
           type="button" 
           className="tn-plus" 
-          title="Add" 
+          title={ui("Add")}
           onMouseDown={keepFocus}
           onPointerDown={keepFocus}
           onClick={() => {}} // Add click handler if needed
@@ -271,7 +273,7 @@ export default function ChatInput({
         <button 
           type="button" 
           className="tn-plus" 
-          title="Toggle keyboard" 
+          title={ui("Toggle keyboard")}
           onMouseDown={keepFocus}
           onPointerDown={keepFocus}
           onClick={toggleMode}
@@ -287,13 +289,13 @@ export default function ChatInput({
             onInput={handleMathChange}
             className="tn-chat-mathfield"
             {...({ 'virtual-keyboard-policy': 'manual' } as any)}
-            placeholder="Type your exercise or question…"
+            placeholder={ui("Type your exercise or question…")}
           />
         ) : (
           <input
             ref={textRef}
             className="tn-text-input"
-            placeholder="Type your exercise or question…"
+            placeholder={ui("Type your exercise or question…")}
             value={inputMessage}
             onChange={e => setInputMessage(e.target.value)}
           />
@@ -305,7 +307,7 @@ export default function ChatInput({
           onMouseDown={keepFocus}
           onPointerDown={keepFocus}
           onClick={send}
-          title="Send"
+          title={ui("Send")}
         >➤</button>
       </div>
 
@@ -365,21 +367,21 @@ export default function ChatInput({
                   }
                   steppedOutOnceRef.current = false; 
                 }}
-              >Clear</button>
+              >{ui("Clear")}</button>
               <button 
                 type="button" 
                 className="tn-btn" 
                 onMouseDown={keepFocus}
                 onPointerDown={keepFocus}
                 onClick={previous}
-              >◀ Prev</button>
+              >{ui("◀ Prev")}</button>
               <button 
                 type="button" 
                 className="tn-btn tn-next" 
                 onMouseDown={keepFocus}
                 onPointerDown={keepFocus}
                 onClick={next}
-              >Next ▶</button>
+              >{ui("Next ▶")}</button>
             </div>
           </div>
 

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,6 +43,7 @@ const createDefaultGroupedRetryPracticeTemplate = (): NewPromptTemplate => ({
 });
 
 const SystemPromptConfigNew = () => {
+  const ui = useInterfaceTranslation();
   const {
     templates,
     loading,
@@ -87,7 +89,7 @@ const SystemPromptConfigNew = () => {
     { value: 'chat', label: 'Chat Assistant', description: 'General assistant with cross-subject support, including math specialist' },
     { value: 'grading', label: 'Exercise Grader', description: 'Prompts for grading student answers' },
     { value: 'explanation', label: 'Explanation System', description: 'Prompts for generating step-by-step explanations' },
-    { value: 'grouped_retry_practice', label: 'Grouped Retry Practice', description: 'Prompts for grouped problem TwoCard-style retry explanations' }
+    { value: 'grouped_retry_practice', label: ui("Grouped Retry Practice"), description: 'Prompts for grouped problem TwoCard-style retry explanations' }
   ];
 
   const selectedPromptUsageType = selectedUsageType as PromptUsageType;
@@ -162,9 +164,9 @@ const SystemPromptConfigNew = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">System Prompt Management</h2>
+          <h2 className="text-2xl font-bold">{ui("System Prompt Management")}</h2>
           <p className="text-muted-foreground">
-            Manage AI prompts centrally for all system interactions
+            {ui("Manage AI prompts centrally for all system interactions")}
           </p>
         </div>
         <Button onClick={() => {
@@ -172,7 +174,7 @@ const SystemPromptConfigNew = () => {
           setShowNewDialog(true);
         }}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Template
+          {ui("Add Template")}
         </Button>
       </div>
 
@@ -193,7 +195,7 @@ const SystemPromptConfigNew = () => {
                 {type.description}
                 {activeTemplate && (
                   <span className="ml-2 font-medium">
-                    Active: {activeTemplate.name}
+                    {ui("Active:")} {activeTemplate.name}
                   </span>
                 )}
               </AlertDescription>
@@ -208,17 +210,17 @@ const SystemPromptConfigNew = () => {
                         <div className="flex items-center gap-2">
                           <CardTitle className="text-lg">{template.name}</CardTitle>
                           {template.is_active && (
-                            <Badge variant="default">Active</Badge>
+                            <Badge variant="default">{ui("Active")}</Badge>
                           )}
                           {template.auto_activate && (
-                            <Badge variant="secondary">Auto-activate</Badge>
+                            <Badge variant="secondary">{ui("Auto-activate")}</Badge>
                           )}
                         </div>
                         <CardDescription>{template.description}</CardDescription>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>Subject: {template.subject}</span>
+                          <span>{ui("Subject:")} {template.subject}</span>
                           <span>•</span>
-                          <span>Priority: {template.priority}</span>
+                          <span>{ui("Priority:")} {template.priority}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -227,7 +229,7 @@ const SystemPromptConfigNew = () => {
                             size="sm"
                             onClick={() => handleActivate(template.id)}
                           >
-                            Activate
+                            {ui("Activate")}
                           </Button>
                         )}
                         <Button 
@@ -277,14 +279,14 @@ const SystemPromptConfigNew = () => {
                   <CardContent className="p-6 text-center">
                     {type.value === GROUPED_RETRY_PRACTICE_USAGE_TYPE ? (
                       <div className="mx-auto max-w-xl space-y-2">
-                        <p className="font-medium">No Supabase prompt is installed for grouped retry practice.</p>
+                        <p className="font-medium">{ui("No Supabase prompt is installed for grouped retry practice.")}</p>
                         <p className="text-sm text-muted-foreground">
-                          Apply the latest Supabase migration, or create the default editable template here so newly generated grouped explanations can use it.
+                          {ui("Apply the latest Supabase migration, or create the default editable template here so newly generated grouped explanations can use it.")}
                         </p>
                       </div>
                     ) : (
                       <p className="text-muted-foreground">
-                        No templates found for {type.label.toLowerCase()}
+                        {ui("No templates found for")} {type.label.toLowerCase()}
                       </p>
                     )}
                     <Button 
@@ -295,7 +297,7 @@ const SystemPromptConfigNew = () => {
                       }}
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      Create First Template
+                      {ui("Create First Template")}
                     </Button>
                   </CardContent>
                 </Card>

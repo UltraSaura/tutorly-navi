@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 /**
  * Compact Math Stepper Component
  * A simplified version of the Interactive Math Stepper for modal environments
@@ -32,6 +33,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   expression,
   className
 }) => {
+  const ui = useInterfaceTranslation();
   console.log('[CompactMathStepper] Rendering with expression:', expression);
   const { language } = useLanguage();
   const parserExpression = useMemo(() => expression.replace(/,/g, '.'), [expression]);
@@ -128,7 +130,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         setCurrentStep(0);
       } catch (err) {
         console.error('[CompactMathStepper] Error generating steps:', err);
-        setError(`Error processing expression: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        setError(`Error processing expression: ${err instanceof Error ? err.message : ui("Unknown error")}`);
       } finally {
         setIsLoading(false);
       }
@@ -836,7 +838,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       <div className={cn("p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md", className)}>
         <div className="text-center">
           <div className="text-sm text-blue-700 dark:text-blue-300">
-            🧮 Loading Interactive Math Stepper...
+            {ui("🧮 Loading Interactive Math Stepper...")}
           </div>
         </div>
       </div>
@@ -852,7 +854,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
             {error}
           </div>
           <div className="text-xs text-red-600 dark:text-red-400 mt-1">
-            Expression: {expression}
+            {ui("Expression:")} {expression}
           </div>
         </div>
       </div>
@@ -864,7 +866,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       <div className={cn("p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-md", className)}>
         <div className="text-center">
           <div className="text-sm text-yellow-700 dark:text-yellow-300">
-            No steps available for this expression
+            {ui("No steps available for this expression")}
           </div>
         </div>
       </div>
@@ -906,12 +908,12 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         <div className="flex items-center gap-2">
           <Calculator className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           <span className="font-semibold text-blue-800 dark:text-blue-200 text-sm">
-            Step-by-Step Math
+            {ui("Step-by-Step Math")}
           </span>
         </div>
         <Badge variant="outline" className="text-xs">
           {currentStep}
-          {" "}of{" "}
+          {" "}{ui("of")}{" "}
           {getMaxStep() + 1}
         </Badge>
       </div>
@@ -1475,7 +1477,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 });
                 return (
                   <div className="text-center text-red-600 dark:text-red-400">
-                    Error: Invalid multiplication data
+                    {ui("Error: Invalid multiplication data")}
                   </div>
                 );
               }

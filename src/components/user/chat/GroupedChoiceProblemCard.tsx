@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useMemo, useRef, useState } from 'react';
 import { AlertCircle, Camera, CheckCircle2, Circle, FileUp, HelpCircle, Loader2, RotateCcw, Send, XCircle } from 'lucide-react';
 import { ProblemJustificationAttachment, ProblemRowStatus, ProblemSubmission, GroupedAnswerPayload } from '@/types/chat';
@@ -84,6 +85,7 @@ type RowAnswerState = {
 };
 
 const GroupedChoiceProblemCard = ({ problem, onSubmitAnswers, onShowExplanation }: GroupedChoiceProblemCardProps) => {
+  const ui = useInterfaceTranslation();
   const { language } = useLanguage();
   const fileInputsRef = useRef<Record<string, HTMLInputElement | null>>({});
   const cameraInputsRef = useRef<Record<string, HTMLInputElement | null>>({});
@@ -367,8 +369,8 @@ const GroupedChoiceProblemCard = ({ problem, onSubmitAnswers, onShowExplanation 
             })()}
 
             <div className="hidden md:grid grid-cols-[minmax(0,1.4fr)_minmax(190px,0.5fr)_minmax(220px,0.9fr)] gap-3 px-2 text-xs font-medium uppercase tracking-normal text-muted-foreground">
-              <div>{isMultipart ? (language === 'fr' ? 'Question' : 'Question') : (language === 'fr' ? 'Affirmation' : 'Assertion')}</div>
-              <div>{isMultipart ? (language === 'fr' ? 'Réponse' : 'Answer') : (language === 'fr' ? 'Sélection' : 'Selection')}</div>
+              <div>{isMultipart ? (language === 'fr' ? ui("Question") : ui("Question")) : (language === 'fr' ? 'Affirmation' : 'Assertion')}</div>
+              <div>{isMultipart ? (language === 'fr' ? ui("Réponse") : ui("Answer")) : (language === 'fr' ? 'Sélection' : 'Selection')}</div>
               <div>{isMultipart ? (language === 'fr' ? 'Preuve' : 'Evidence') : (language === 'fr' ? 'Justification' : 'Justification')}</div>
             </div>
 
@@ -656,7 +658,7 @@ const GroupedChoiceProblemCard = ({ problem, onSubmitAnswers, onShowExplanation 
                               size="icon"
                               className="h-7 w-7 shrink-0"
                               onClick={() => onShowExplanation(problem, row.id)}
-                              title={language === 'fr' ? 'Explication' : 'Explanation'}
+                              title={language === 'fr' ? 'Explication' : ui("Explanation")}
                               aria-label={language === 'fr' ? `Explication question ${row.label}` : `Explanation for question ${row.label}`}
                             >
                               <HelpCircle className="h-4 w-4" />
@@ -702,7 +704,7 @@ const GroupedChoiceProblemCard = ({ problem, onSubmitAnswers, onShowExplanation 
           {canRetry && (
             <Button variant="default" onClick={startRetry}>
               <RotateCcw className="h-4 w-4 mr-2" />
-              {language === 'fr' ? 'Réessayer' : 'Try again'}
+              {language === 'fr' ? ui("Réessayer") : 'Try again'}
             </Button>
           )}
 

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useEffect, useState } from 'react';
 import { Check, Loader2, Palette } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -27,6 +28,7 @@ const OPTIONS: LearningPreferenceOption[] = [
 ];
 
 export function LearningPreferenceSelector() {
+  const ui = useInterfaceTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -106,10 +108,10 @@ export function LearningPreferenceSelector() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Palette className="h-5 w-5" />
-          Learning Preference
+          {ui("Learning Preference")}
         </CardTitle>
         <CardDescription>
-          Choose the kind of help that feels best for you.
+          {ui("Choose the kind of help that feels best for you.")}
         </CardDescription>
       </CardHeader>
       <CardContent>

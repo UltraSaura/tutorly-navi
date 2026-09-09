@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { useLearningVideos, useLearningQuizzes, useCreateQuiz, useUpdateQuiz, us
 import type { Quiz } from '@/types/learning';
 
 const QuizManager = () => {
+  const ui = useInterfaceTranslation();
   const [selectedVideoId, setSelectedVideoId] = useState<string>('');
   const [selectedLanguageFilter, setSelectedLanguageFilter] = useState<string>('all');
   const { data: videos = [], isLoading: videosLoading, error: videosError } = useLearningVideos();
@@ -92,15 +94,15 @@ const QuizManager = () => {
   };
 
   if (videosError) {
-    return <div className="text-destructive">Error loading videos: {videosError.message}</div>;
+    return <div className="text-destructive">{ui("Error loading videos:")} {videosError.message}</div>;
   }
 
   if (quizzesError) {
-    return <div className="text-destructive">Error loading quizzes: {quizzesError.message}</div>;
+    return <div className="text-destructive">{ui("Error loading quizzes:")} {quizzesError.message}</div>;
   }
 
   if (videosLoading) {
-    return <div className="text-muted-foreground">Loading videos...</div>;
+    return <div className="text-muted-foreground">{ui("Loading videos...")}</div>;
   }
 
   const addOption = () => {
@@ -126,8 +128,8 @@ const QuizManager = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Video Quizzes</h2>
-          <p className="text-muted-foreground">Manage quizzes within videos</p>
+          <h2 className="text-2xl font-bold">{ui("Video Quizzes")}</h2>
+          <p className="text-muted-foreground">{ui("Manage quizzes within videos")}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);
@@ -136,7 +138,7 @@ const QuizManager = () => {
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Add Quiz
+              {ui("Add Quiz")}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -145,10 +147,10 @@ const QuizManager = () => {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="video_id">Video</Label>
+                <Label htmlFor="video_id">{ui("Video")}</Label>
                 <Select value={formData.video_id} onValueChange={(value) => setFormData({ ...formData, video_id: value })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select video" />
+                    <SelectValue placeholder={ui("Select video")} />
                   </SelectTrigger>
                   <SelectContent>
                     {videos.map((video) => (
@@ -158,10 +160,10 @@ const QuizManager = () => {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="language">Language</Label>
+                <Label htmlFor="language">{ui("Language")}</Label>
                 <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select language" />
+                    <SelectValue placeholder={ui("Select language")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="en">🇺🇸 English</SelectItem>
@@ -171,7 +173,7 @@ const QuizManager = () => {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="question">Question</Label>
+                <Label htmlFor="question">{ui("Question")}</Label>
                 <Textarea
                   id="question"
                   value={formData.question}
@@ -180,16 +182,16 @@ const QuizManager = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="question_latex">Question (LaTeX - optional)</Label>
+                <Label htmlFor="question_latex">{ui("Question (LaTeX - optional)")}</Label>
                 <Input
                   id="question_latex"
                   value={formData.question_latex}
                   onChange={(e) => setFormData({ ...formData, question_latex: e.target.value })}
-                  placeholder="For math questions: x^2 + 2x + 1"
+                  placeholder={ui("For math questions: x^2 + 2x + 1")}
                 />
               </div>
               <div>
-                <Label>Options</Label>
+                <Label>{ui("Options")}</Label>
                 {formData.options.map((option, index) => (
                   <div key={index} className="flex gap-2 mb-2">
                     <Input
@@ -207,11 +209,11 @@ const QuizManager = () => {
                 ))}
                 <Button type="button" variant="outline" size="sm" onClick={addOption}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Option
+                  {ui("Add Option")}
                 </Button>
               </div>
               <div>
-                <Label htmlFor="correct_answer_index">Correct Answer</Label>
+                <Label htmlFor="correct_answer_index">{ui("Correct Answer")}</Label>
                 <Select 
                   value={formData.correct_answer_index.toString()} 
                   onValueChange={(value) => setFormData({ ...formData, correct_answer_index: parseInt(value) })}
@@ -222,14 +224,14 @@ const QuizManager = () => {
                   <SelectContent>
                     {formData.options.map((option, index) => (
                       <SelectItem key={index} value={index.toString()}>
-                        Option {index + 1}: {option || '(empty)'}
+                        {ui("Option")} {index + 1}: {option || '(empty)'}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="explanation">Explanation</Label>
+                <Label htmlFor="explanation">{ui("Explanation")}</Label>
                 <Textarea
                   id="explanation"
                   value={formData.explanation}
@@ -239,7 +241,7 @@ const QuizManager = () => {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="timestamp_seconds">Timestamp (seconds)</Label>
+                  <Label htmlFor="timestamp_seconds">{ui("Timestamp (seconds)")}</Label>
                   <Input
                     id="timestamp_seconds"
                     type="number"
@@ -249,7 +251,7 @@ const QuizManager = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="xp_reward">XP Reward</Label>
+                  <Label htmlFor="xp_reward">{ui("XP Reward")}</Label>
                   <Input
                     id="xp_reward"
                     type="number"
@@ -259,7 +261,7 @@ const QuizManager = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="order_index">Order Index</Label>
+                  <Label htmlFor="order_index">{ui("Order Index")}</Label>
                   <Input
                     id="order_index"
                     type="number"
@@ -278,10 +280,10 @@ const QuizManager = () => {
 
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <Label>Select Video</Label>
+          <Label>{ui("Select Video")}</Label>
           <Select value={selectedVideoId} onValueChange={setSelectedVideoId}>
             <SelectTrigger>
-              <SelectValue placeholder="Select a video to view quizzes" />
+              <SelectValue placeholder={ui("Select a video to view quizzes")} />
             </SelectTrigger>
             <SelectContent>
               {videos.map((video) => (
@@ -291,13 +293,13 @@ const QuizManager = () => {
           </Select>
         </div>
         <div>
-          <Label>Filter by Language</Label>
+          <Label>{ui("Filter by Language")}</Label>
           <Select value={selectedLanguageFilter} onValueChange={setSelectedLanguageFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="All languages" />
+              <SelectValue placeholder={ui("All languages")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Languages</SelectItem>
+              <SelectItem value="all">{ui("All Languages")}</SelectItem>
               <SelectItem value="en">🇺🇸 English</SelectItem>
               <SelectItem value="fr">🇫🇷 Français</SelectItem>
               <SelectItem value="ar">🇸🇦 العربية</SelectItem>
@@ -308,30 +310,30 @@ const QuizManager = () => {
 
       {!selectedVideoId ? (
         <div className="text-center py-12 text-muted-foreground">
-          Select a video above to view and manage quizzes
+          {ui("Select a video above to view and manage quizzes")}
         </div>
       ) : quizzesLoading ? (
         <div className="text-center py-12 text-muted-foreground">
-          Loading quizzes...
+          {ui("Loading quizzes...")}
         </div>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Question</TableHead>
-              <TableHead>Language</TableHead>
-              <TableHead>Video</TableHead>
-              <TableHead>Timestamp</TableHead>
+              <TableHead>{ui("Question")}</TableHead>
+              <TableHead>{ui("Language")}</TableHead>
+              <TableHead>{ui("Video")}</TableHead>
+              <TableHead>{ui("Timestamp")}</TableHead>
               <TableHead>XP</TableHead>
-              <TableHead>Order</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{ui("Order")}</TableHead>
+              <TableHead>{ui("Actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredQuizzes.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  No quizzes found for this video
+                  {ui("No quizzes found for this video")}
                 </TableCell>
               </TableRow>
             ) : (

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,6 +38,7 @@ interface AddChildFormProps {
 }
 
 export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }: AddChildFormProps) {
+  const ui = useInterfaceTranslation();
   const { countries, schoolLevels, getSchoolLevelsByCountry } = useCountriesAndLevels(defaultCountry || 'US');
   const [selectedCountry, setSelectedCountry] = useState(defaultCountry || 'US');
   
@@ -87,64 +89,64 @@ export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }:
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="firstName">First Name</Label>
+          <Label htmlFor="firstName">{ui("First Name")}</Label>
           <Input
             id="firstName"
             {...register('firstName')}
             placeholder="John"
           />
           {errors.firstName && (
-            <p className="text-sm text-destructive">{errors.firstName.message}</p>
+            <p className="text-sm text-destructive">{ui(String(errors.firstName.message))}</p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="lastName">Last Name</Label>
+          <Label htmlFor="lastName">{ui("Last Name")}</Label>
           <Input
             id="lastName"
             {...register('lastName')}
             placeholder="Doe"
           />
           {errors.lastName && (
-            <p className="text-sm text-destructive">{errors.lastName.message}</p>
+            <p className="text-sm text-destructive">{ui(String(errors.lastName.message))}</p>
           )}
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email">Email (Optional - for notifications)</Label>
+        <Label htmlFor="email">{ui("Email (Optional - for notifications)")}</Label>
         <Input
           id="email"
           type="email"
           {...register('email')}
-          placeholder="child@example.com (optional)"
+          placeholder={ui("child@example.com (optional)")}
         />
         <p className="text-xs text-muted-foreground">
-          Leave blank if child doesn't need email notifications
+          {ui("Leave blank if child doesn't need email notifications")}
         </p>
         {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
+          <p className="text-sm text-destructive">{ui(String(errors.email.message))}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="username">Username (for login)</Label>
+        <Label htmlFor="username">{ui("Username (for login)")}</Label>
         <Input
           id="username"
           {...register('username')}
-          placeholder="e.g., sarah_2024"
+          placeholder={ui("e.g., sarah_2024")}
         />
         <p className="text-xs text-muted-foreground">
-          Child will use this username to log in (not email)
+          {ui("Child will use this username to log in (not email)")}
         </p>
         {errors.username && (
-          <p className="text-sm text-destructive">{errors.username.message}</p>
+          <p className="text-sm text-destructive">{ui(String(errors.username.message))}</p>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{ui("Password")}</Label>
           <Input
             id="password"
             type="password"
@@ -152,12 +154,12 @@ export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }:
             placeholder="••••••••"
           />
           {errors.password && (
-            <p className="text-sm text-destructive">{errors.password.message}</p>
+            <p className="text-sm text-destructive">{ui(String(errors.password.message))}</p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm Password</Label>
+          <Label htmlFor="confirmPassword">{ui("Confirm Password")}</Label>
           <Input
             id="confirmPassword"
             type="password"
@@ -165,13 +167,13 @@ export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }:
             placeholder="••••••••"
           />
           {errors.confirmPassword && (
-            <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+            <p className="text-sm text-destructive">{ui(String(errors.confirmPassword.message))}</p>
           )}
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="country">Country</Label>
+        <Label htmlFor="country">{ui("Country")}</Label>
         <Select
           value={country}
           onValueChange={(value) => {
@@ -181,7 +183,7 @@ export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }:
           }}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select country" />
+            <SelectValue placeholder={ui("Select country")} />
           </SelectTrigger>
           <SelectContent>
             {countries.map((c) => (
@@ -192,12 +194,12 @@ export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }:
           </SelectContent>
         </Select>
         {errors.country && (
-          <p className="text-sm text-destructive">{errors.country.message}</p>
+          <p className="text-sm text-destructive">{ui(String(errors.country.message))}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="phoneNumber">Phone Number (Optional)</Label>
+        <Label htmlFor="phoneNumber">{ui("Phone Number (Optional)")}</Label>
         <div className="flex gap-2">
           <span className="flex items-center px-3 bg-muted rounded-md text-sm">
             {getPhoneAreaCode(selectedCountry)}
@@ -210,18 +212,18 @@ export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }:
           />
         </div>
         {errors.phoneNumber && (
-          <p className="text-sm text-destructive">{errors.phoneNumber.message}</p>
+          <p className="text-sm text-destructive">{ui(String(errors.phoneNumber.message))}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="schoolLevel">School Level</Label>
+        <Label htmlFor="schoolLevel">{ui("School Level")}</Label>
         <Select
           value={watch('schoolLevel') || ''}
           onValueChange={(value) => setValue('schoolLevel', value)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select school level" />
+            <SelectValue placeholder={ui("Select school level")} />
           </SelectTrigger>
           <SelectContent>
             {getSchoolLevelsByCountry(selectedCountry).map((level) => (
@@ -232,12 +234,12 @@ export default function AddChildForm({ defaultCountry, onSubmit, isSubmitting }:
           </SelectContent>
         </Select>
         {errors.schoolLevel && (
-          <p className="text-sm text-destructive">{errors.schoolLevel.message}</p>
+          <p className="text-sm text-destructive">{ui(String(errors.schoolLevel.message))}</p>
         )}
       </div>
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? 'Creating Account...' : 'Create Child Account'}
+        {isSubmitting ? ui("Creating Account...") : ui("Create Child Account")}
       </Button>
     </form>
   );

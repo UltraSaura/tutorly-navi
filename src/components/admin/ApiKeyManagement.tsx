@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { useAdmin } from '@/context/AdminContext';
 import { toast } from 'sonner';
@@ -7,6 +8,7 @@ import ApiSecurityAlert from './api-keys/ApiSecurityAlert';
 import { useAdminAudit } from '@/hooks/useAdminAudit';
 
 const ApiKeyManagement = () => {
+  const ui = useInterfaceTranslation();
   const { apiKeys, addApiKey, deleteApiKey, testApiKeyConnection } = useAdmin();
   const { logAction } = useAdminAudit();
   
@@ -55,9 +57,9 @@ const ApiKeyManagement = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">API Key Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{ui("API Key Management")}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage API keys for different AI providers
+            {ui("Manage API keys for different AI providers")}
           </p>
         </div>
         

@@ -1,3 +1,5 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
+import { useLocale } from '@/i18n/useLocale';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, AlertTriangle, XCircle, Filter } from 'lucide-react';
@@ -10,6 +12,8 @@ interface Props {
 }
 
 export function RecentSummaryStrip({ counts, health, issuesOnly, onToggleIssues }: Props) {
+  const ui = useInterfaceTranslation();
+  const { locale, dateLocale } = useLocale();
   return (
     <div className="space-y-4">
       {/* Health summary */}
@@ -18,7 +22,7 @@ export function RecentSummaryStrip({ counts, health, issuesOnly, onToggleIssues 
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-2">
-                Recent rows health (last 50 per table)
+                {ui("Recent rows health (last 50 per table)")}
               </div>
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2">
@@ -29,12 +33,12 @@ export function RecentSummaryStrip({ counts, health, issuesOnly, onToggleIssues 
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-amber-500" />
                   <span className="text-2xl font-bold">{health.partial}</span>
-                  <span className="text-sm text-muted-foreground">Partial</span>
+                  <span className="text-sm text-muted-foreground">{ui("Partial")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <XCircle className="h-5 w-5 text-destructive" />
                   <span className="text-2xl font-bold">{health.issue}</span>
-                  <span className="text-sm text-muted-foreground">Issues</span>
+                  <span className="text-sm text-muted-foreground">{ui("Issues")}</span>
                 </div>
               </div>
             </div>
@@ -57,12 +61,12 @@ export function RecentSummaryStrip({ counts, health, issuesOnly, onToggleIssues 
         <Card>
           <CardContent className="pt-6">
             <div className="text-sm font-medium text-muted-foreground mb-3">
-              Total rows
+              {ui("Total rows")}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
               {Object.entries(counts).map(([table, count]) => (
                 <div key={table} className="text-center p-2 rounded-md bg-muted/40">
-                  <div className="text-lg font-bold">{count.toLocaleString()}</div>
+                  <div className="text-lg font-bold">{count.toLocaleString(locale)}</div>
                   <div className="text-xs text-muted-foreground capitalize">
                     {table.replace('_', ' ')}
                   </div>
