@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,6 +24,7 @@ interface LoginFormProps {
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onForgotPassword, loading = false }) => {
+  const ui = useInterfaceTranslation();
   const { t } = useTranslation();
 
   const {
@@ -49,7 +51,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onForgotPassword
               className={errors.email ? 'border-destructive' : ''}
             />
             {errors.email && (
-              <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
+              <p className="text-sm text-destructive mt-1">{ui(String(errors.email.message))}</p>
             )}
           </div>
 
@@ -62,7 +64,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onForgotPassword
               className={errors.password ? 'border-destructive' : ''}
             />
             {errors.password && (
-              <p className="text-sm text-destructive mt-1">{errors.password.message}</p>
+              <p className="text-sm text-destructive mt-1">{ui(String(errors.password.message))}</p>
             )}
           </div>
 

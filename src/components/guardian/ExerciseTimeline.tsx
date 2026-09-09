@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { type ExerciseHistoryWithAttempts } from '@/types/exercise-history';
@@ -8,14 +10,16 @@ interface ExerciseTimelineProps {
 }
 
 export function ExerciseTimeline({ attempts }: ExerciseTimelineProps) {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   return (
     <Card className="p-4 bg-muted/30">
       <h4 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
-        Attempt History
+        {ui("Attempt History")}
       </h4>
       <div className="space-y-2">
         {attempts.map((attempt, index) => {
-          const status = attempt.is_correct === true ? 'Correct' : attempt.is_correct === false ? 'Incorrect' : 'Partial';
+          const status = attempt.is_correct === true ? ui("Correct") : attempt.is_correct === false ? ui("Incorrect") : ui("Partial");
           const score = attempt.is_correct ? 100 : 0;
           const statusColor = 
             status === 'Correct' 
@@ -42,12 +46,12 @@ export function ExerciseTimeline({ attempts }: ExerciseTimelineProps) {
                 {attempt.user_answer && (
                   <>
                     <span className="text-xs text-muted-foreground">•</span>
-                    <span className="text-xs text-foreground">Answer: {attempt.user_answer}</span>
+                    <span className="text-xs text-foreground">{ui("Answer:")} {attempt.user_answer}</span>
                   </>
                 )}
               </div>
               <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {format(new Date(attempt.created_at), 'MMM d, h:mm a')}
+                {format(new Date(attempt.created_at), 'MMM d, h:mm a', { locale: dateLocale })}
               </span>
             </div>
           );

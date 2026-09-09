@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { useState, useMemo } from 'react';
 import { Plus, Trash, Check, X, FolderPlus } from 'lucide-react';
@@ -20,6 +21,7 @@ import LearningSubjectManager from './subjects/LearningSubjectManager';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 const SubjectManagement = () => {
+  const ui = useInterfaceTranslation();
   const { subjects, addSubject, updateSubject, deleteSubject, toggleSubjectActive } = useAdmin();
   
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -192,20 +194,20 @@ const SubjectManagement = () => {
   
   return (
     <div className="space-y-6">
-      <PageMeta title="Subjects" description="Manage subjects available across the Stuwy platform." />
+      <PageMeta title={ui("Subjects")} description={ui("Manage subjects available across the Stuwy platform.")} />
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Subject Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{ui("Subject Management")}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage subjects for homework, document analysis, and learning platform
+            {ui("Manage subjects for homework, document analysis, and learning platform")}
           </p>
         </div>
       </div>
 
       <Tabs defaultValue="chat-subjects" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="chat-subjects">Chat/Homework Subjects</TabsTrigger>
-          <TabsTrigger value="learning-subjects">Learning Platform Subjects</TabsTrigger>
+          <TabsTrigger value="chat-subjects">{ui("Chat/Homework Subjects")}</TabsTrigger>
+          <TabsTrigger value="learning-subjects">{ui("Learning Platform Subjects")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="chat-subjects" className="space-y-6">
@@ -214,23 +216,23 @@ const SubjectManagement = () => {
               <Dialog open={showAddCategoryDialog} onOpenChange={setShowAddCategoryDialog}>
                 <DialogTrigger asChild>
                   <Button variant="outline" className="flex gap-2">
-                    <FolderPlus className="h-4 w-4" /> Add Category
+                    <FolderPlus className="h-4 w-4" /> {ui("Add Category")}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
                   <DialogHeader>
-                    <DialogTitle>Add New Category</DialogTitle>
+                    <DialogTitle>{ui("Add New Category")}</DialogTitle>
                     <DialogDescription>
-                      Create a new category to organize your subjects.
+                      {ui("Create a new category to organize your subjects.")}
                     </DialogDescription>
                   </DialogHeader>
                   
                   <div className="grid gap-4 py-4">
                     <div className="space-y-2">
-                      <Label htmlFor="categoryName">Category Name</Label>
+                      <Label htmlFor="categoryName">{ui("Category Name")}</Label>
                       <Input
                         id="categoryName"
-                        placeholder="e.g., Science"
+                        placeholder={ui("e.g., Science")}
                         value={newCategoryName}
                         onChange={(e) => setNewCategoryName(e.target.value)}
                       />
@@ -238,9 +240,9 @@ const SubjectManagement = () => {
                   </div>
                   
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowAddCategoryDialog(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={() => setShowAddCategoryDialog(false)}>{ui("Cancel")}</Button>
                     <Button className="bg-stuwy-600 hover:bg-stuwy-700" onClick={handleAddCategory}>
-                      Add Category
+                      {ui("Add Category")}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -249,43 +251,43 @@ const SubjectManagement = () => {
               <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                 <DialogTrigger asChild>
                   <Button className="bg-stuwy-600 hover:bg-stuwy-700">
-                    <Plus className="mr-2 h-4 w-4" /> Add Subject
+                    <Plus className="mr-2 h-4 w-4" /> {ui("Add Subject")}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
                   <DialogHeader>
-                    <DialogTitle>Add New Subject</DialogTitle>
+                    <DialogTitle>{ui("Add New Subject")}</DialogTitle>
                     <DialogDescription>
-                      Add a new subject for homework and document analysis.
+                      {ui("Add a new subject for homework and document analysis.")}
                     </DialogDescription>
                   </DialogHeader>
                   
                   <div className="grid gap-4 py-4">
                     <div className="space-y-2">
-                      <Label htmlFor="subjectName">Subject Name</Label>
+                      <Label htmlFor="subjectName">{ui("Subject Name")}</Label>
                       <Input
                         id="subjectName"
-                        placeholder="e.g., Physics"
+                        placeholder={ui("e.g., Physics")}
                         value={newSubjectName}
                         onChange={(e) => setNewSubjectName(e.target.value)}
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="subjectDesc">Description (Optional)</Label>
+                      <Label htmlFor="subjectDesc">{ui("Description (Optional)")}</Label>
                       <Input
                         id="subjectDesc"
-                        placeholder="Brief description"
+                        placeholder={ui("Brief description")}
                         value={newSubjectDesc}
                         onChange={(e) => setNewSubjectDesc(e.target.value)}
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="subjectCategory">Category</Label>
+                      <Label htmlFor="subjectCategory">{ui("Category")}</Label>
                       <Select value={newSubjectCategory} onValueChange={setNewSubjectCategory}>
                         <SelectTrigger id="subjectCategory">
-                          <SelectValue placeholder="Select a category" />
+                          <SelectValue placeholder={ui("Select a category")} />
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map(category => (
@@ -298,10 +300,10 @@ const SubjectManagement = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="subjectIcon">Icon</Label>
+                      <Label htmlFor="subjectIcon">{ui("Icon")}</Label>
                       <Select value={newSubjectIcon} onValueChange={setNewSubjectIcon}>
                         <SelectTrigger id="subjectIcon">
-                          <SelectValue placeholder="Select an icon" />
+                          <SelectValue placeholder={ui("Select an icon")} />
                         </SelectTrigger>
                         <SelectContent>
                           {iconOptions.map(icon => (
@@ -315,9 +317,9 @@ const SubjectManagement = () => {
                   </div>
                   
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={() => setShowAddDialog(false)}>{ui("Cancel")}</Button>
                     <Button className="bg-stuwy-600 hover:bg-stuwy-700" onClick={handleAddSubject}>
-                      Add Subject
+                      {ui("Add Subject")}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -327,9 +329,9 @@ const SubjectManagement = () => {
           
           <div className="mt-4">
             <div className="mb-2 flex items-center gap-2">
-              <h2 className="text-lg font-medium">Categories</h2>
+              <h2 className="text-lg font-medium">{ui("Categories")}</h2>
               <Badge className="ml-1 text-xs">{categories.length}</Badge>
-              <span className="text-sm text-muted-foreground ml-auto">Drag subjects to reorder or move between categories</span>
+              <span className="text-sm text-muted-foreground ml-auto">{ui("Drag subjects to reorder or move between categories")}</span>
             </div>
             
             <DndContext

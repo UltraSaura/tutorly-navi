@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
  * Shows up to 6 topics with mastery progress
  */
 export function RecommendedNextSteps() {
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const { data: recommendations = [], isLoading } = useRecommendations({ limit: 6 });
 
@@ -55,7 +57,7 @@ export function RecommendedNextSteps() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Lightbulb className="w-6 h-6 text-amber-500" />
-          Recommended Next Steps
+          {ui("Recommended Next Steps")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -69,7 +71,7 @@ export function RecommendedNextSteps() {
               <h3 className="font-semibold" style={{ color: data.subject_color }}>
                 {data.subject_name}
               </h3>
-              <Badge variant="secondary">{data.topics.length} topics</Badge>
+              <Badge variant="secondary">{data.topics.length} {ui("topics")}</Badge>
             </div>
 
             {/* Topic Cards */}
@@ -98,7 +100,7 @@ export function RecommendedNextSteps() {
                             {topic.estimated_duration_minutes} min
                           </span>
                           <span>
-                            {topic.mastered_objectives} of {topic.total_objectives} mastered
+                            {topic.mastered_objectives} {ui("of")} {topic.total_objectives} {ui("mastered")}
                           </span>
                         </div>
                         

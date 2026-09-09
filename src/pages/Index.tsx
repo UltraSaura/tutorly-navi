@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { PageMeta } from "@/components/seo/PageMeta";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { MessageCircle, BookOpen, BarChart3, Award, Settings, Sparkles, LogIn } 
 import { useTranslation } from "react-i18next";
 
 const Index = () => {
+  const ui = useInterfaceTranslation();
   const { user, loading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminAuth();
   const { isGuardian, loading: guardianLoading } = useGuardianAuth();
@@ -46,26 +48,26 @@ const Index = () => {
   const userFeatures = [
     {
       icon: MessageCircle,
-      title: "AI-Powered Tutoring",
-      description: "Get instant help with homework and receive personalized explanations tailored to your learning style.",
+      title: ui("AI-Powered Tutoring"),
+      description: ui("Get instant help with homework and receive personalized explanations tailored to your learning style."),
       badge: "Smart"
     },
     {
       icon: BookOpen,
-      title: "Learning Roadmap", 
-      description: "Follow a structured path designed to build your knowledge progressively and efficiently.",
+      title: ui("Learning Roadmap"),
+      description: ui("Follow a structured path designed to build your knowledge progressively and efficiently."),
       badge: "Guided"
     },
     {
       icon: BarChart3,
-      title: "Grade Tracking",
-      description: "Monitor your academic progress with detailed analytics and performance insights.",
+      title: ui("Grade Tracking"),
+      description: ui("Monitor your academic progress with detailed analytics and performance insights."),
       badge: "Analytics"
     },
     {
       icon: Award,
-      title: "Skill Mastery",
-      description: "Track your competency levels and earn achievements as you master new concepts.",
+      title: ui("Skill Mastery"),
+      description: ui("Track your competency levels and earn achievements as you master new concepts."),
       badge: "Achievement"
     }
   ];
@@ -73,11 +75,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-secondary/10">
-      <PageMeta title="Home" description="Stuwy is an AI-powered tutoring platform that helps students master math and guardians track learning progress." />
+      <PageMeta title={ui("Home")} description={ui("Stuwy is an AI-powered tutoring platform that helps students master math and guardians track learning progress.")} />
       {/* Header */}
       <header className="container mx-auto px-4 py-6 flex justify-between items-center">
         <div className="flex items-center space-x-2">
-          <img src="/logo.png" alt="Stuwy Logo" className="h-8 w-8" />
+          <img src="/logo.png" alt={ui("Stuwy Logo")} className="h-8 w-8" />
           <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             Stuwy AI
           </span>
@@ -90,31 +92,30 @@ const Index = () => {
         <div className="max-w-4xl mx-auto">
           <Badge variant="secondary" className="mb-6 text-sm font-medium">
             <Sparkles className="mr-2 h-4 w-4" />
-            Next-Generation Learning Platform
+            {ui("Next-Generation Learning Platform")}
           </Badge>
           
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-primary to-secondary bg-clip-text text-transparent leading-tight">
-            AI-Powered Education
+            {ui("AI-Powered Education")}
             <br />
-            <span className="text-primary">Personalized for You</span>
+            <span className="text-primary">{ui("Personalized for You")}</span>
           </h1>
           
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-            Submit your homework and exercises to receive instant, personalized tutoring. 
-            Our AI adapts to your learning style and helps you master any subject.
+            {ui("Submit your homework and exercises to receive instant, personalized tutoring. Our AI adapts to your learning style and helps you master any subject.")}
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="text-lg px-8 py-6">
               <Link to="/auth">
                 <LogIn className="mr-2 h-5 w-5" />
-                Sign In / Register
+                {ui("Sign In / Register")}
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
               <Link to="/management">
                 <Settings className="mr-2 h-5 w-5" />
-                Admin Dashboard
+                {ui("Admin Dashboard")}
               </Link>
             </Button>
           </div>
@@ -124,9 +125,9 @@ const Index = () => {
       {/* Student Features Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">For Students</h2>
+          <h2 className="text-3xl font-bold mb-4">{ui("For Students")}</h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Unlock your potential with AI-powered learning tools designed to accelerate your academic success.
+            {ui("Unlock your potential with AI-powered learning tools designed to accelerate your academic success.")}
           </p>
         </div>
         
@@ -157,14 +158,14 @@ const Index = () => {
       {/* Footer */}
       <footer className="container mx-auto px-4 py-8 text-center border-t border-border/50 mt-16">
         <div className="flex items-center justify-center space-x-2 mb-4">
-          <img src="/logo.png" alt="Stuwy Logo" className="h-6 w-6" />
+          <img src="/logo.png" alt={ui("Stuwy Logo")} className="h-6 w-6" />
           <span className="text-lg font-semibold">Stuwy AI</span>
         </div>
         <p className="text-muted-foreground text-sm mb-2">
-          Submit your homework and exercises and get personalized tutoring.
+          {ui("Submit your homework and exercises and get personalized tutoring.")}
         </p>
         <p className="text-muted-foreground text-xs">
-          © 2024 Stuwy AI. All rights reserved.
+          {ui("© 2024 Stuwy AI. All rights reserved.")}
         </p>
       </footer>
     </div>

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import React from 'react';
 import { UserPlus, UsersRound } from 'lucide-react';
@@ -13,11 +14,12 @@ interface ChildrenTabProps {
 }
 
 export const ChildrenTab = ({ user, onAddChildClick, onUserSelect }: ChildrenTabProps) => {
+  const ui = useInterfaceTranslation();
   return (
     <div className="space-y-6">
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium">Children Accounts</h3>
+          <h3 className="text-sm font-medium">{ui("Children Accounts")}</h3>
           <Button 
             variant="outline" 
             size="sm" 
@@ -25,7 +27,7 @@ export const ChildrenTab = ({ user, onAddChildClick, onUserSelect }: ChildrenTab
             onClick={onAddChildClick}
           >
             <UserPlus className="h-3.5 w-3.5 mr-1" />
-            Add Child
+            {ui("Add Child")}
           </Button>
         </div>
         
@@ -53,7 +55,7 @@ export const ChildrenTab = ({ user, onAddChildClick, onUserSelect }: ChildrenTab
                     size="sm" 
                     onClick={() => onUserSelect(child)}
                   >
-                    Details
+                    {ui("Details")}
                   </Button>
                 </div>
               );
@@ -62,7 +64,7 @@ export const ChildrenTab = ({ user, onAddChildClick, onUserSelect }: ChildrenTab
         ) : (
           <div className="text-center py-6 border rounded-md">
             <UsersRound className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No child accounts yet</p>
+            <p className="text-sm text-muted-foreground">{ui("No child accounts yet")}</p>
             <Button
               className="mt-4"
               variant="outline"
@@ -70,19 +72,19 @@ export const ChildrenTab = ({ user, onAddChildClick, onUserSelect }: ChildrenTab
               onClick={onAddChildClick}
             >
               <UserPlus className="h-4 w-4 mr-2" />
-              Add Child Account
+              {ui("Add Child Account")}
             </Button>
           </div>
         )}
       </div>
       
       <div>
-        <h3 className="text-sm font-medium mb-3">Recent Activity</h3>
+        <h3 className="text-sm font-medium mb-3">{ui("Recent Activity")}</h3>
         <div className="space-y-2">
           {[
-            { date: '2023-06-14', action: 'Reviewed homework', child: user.children?.[0]?.first_name || 'Child' },
+            { date: '2023-06-14', action: 'Reviewed homework', child: user.children?.[0]?.first_name || ui("Child") },
             { date: '2023-06-12', action: 'Updated account settings', child: 'Account' },
-            { date: '2023-06-10', action: 'Messaged teacher', child: user.children?.[0]?.first_name || 'Child' },
+            { date: '2023-06-10', action: 'Messaged teacher', child: user.children?.[0]?.first_name || ui("Child") },
           ].map((activity, idx) => (
             <div key={idx} className="border rounded-md p-3">
               <p className="text-sm font-medium">{activity.action}</p>

@@ -1,3 +1,5 @@
+import { useSubjectLabel } from '@/i18n/useSubjectLabel';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BookOpen, Play, CheckCircle2, Lock } from 'lucide-react';
 import { useSubjectDashboard } from '@/hooks/useSubjectDashboard';
@@ -5,6 +7,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 const SubjectDashboardPage = () => {
+  const subjectLabel = useSubjectLabel();
+  const ui = useInterfaceTranslation();
   const { subjectSlug } = useParams<{ subjectSlug: string }>();
   const navigate = useNavigate();
   const { data, isLoading } = useSubjectDashboard(subjectSlug || '');
@@ -26,7 +30,7 @@ const SubjectDashboardPage = () => {
   if (!data?.subject) {
     return (
       <div style={{ background: '#F3F6FA', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>Sujet introuvable</p>
+        <p style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>{ui("Sujet introuvable")}</p>
       </div>
     );
   }
@@ -38,25 +42,25 @@ const SubjectDashboardPage = () => {
 
   return (
     <div style={{ background: '#F3F6FA', minHeight: '100vh', paddingBottom: 96 }}>
-      <PageMeta title={subject.name} description={`Lecons et exercices - ${subject.name}`} />
+      <PageMeta title={subjectLabel(subject.name)} description={ui("lessonsAndExercises", { subject: subjectLabel(subject.name) })} />
 
       <div style={{ background: 'white', borderBottom: '0.5px solid #EAECEF', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             onClick={() => navigate('/learning')}
-            aria-label="Retour"
+            aria-label={ui("Retour")}
             style={{ width: 28, height: 28, borderRadius: '50%', border: '0.5px solid #EAECEF', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
           >
             <ArrowLeft className="h-3.5 w-3.5" style={{ color: '#667085' }} />
           </button>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
-              {subject.name}
+              {subjectLabel(subject.name)}
             </p>
           </div>
           {lessonsAvailable > 0 && (
             <span style={{ background: '#F2FBF8', color: '#085041', border: '0.5px solid #9FE1CB', borderRadius: 999, padding: '3px 10px', fontSize: 10, fontWeight: 600, flexShrink: 0 }}>
-              {lessonsCompleted}/{lessonsAvailable} lecons
+              {lessonsCompleted}/{lessonsAvailable} {ui("lecons")}
             </span>
           )}
         </div>
@@ -67,7 +71,7 @@ const SubjectDashboardPage = () => {
               <div style={{ width: `${overallProgress.percentage}%`, height: '100%', background: '#12C6A0', borderRadius: 999, transition: 'width 0.4s ease' }} />
             </div>
             <p style={{ fontSize: 10, color: '#667085', margin: '3px 0 0', fontFamily: 'Poppins, sans-serif' }}>
-              {overallProgress.completedTopics}/{overallProgress.totalTopics} termines
+              {overallProgress.completedTopics}/{overallProgress.totalTopics} {ui("termines")}
             </p>
           </div>
         )}
@@ -132,16 +136,16 @@ const SubjectDashboardPage = () => {
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     {hasLesson && (
                       <span style={{ background: '#F2FBF8', color: '#085041', border: '0.5px solid #9FE1CB', borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 600 }}>
-                        Lecon
+                        {ui("Lecon")}
                       </span>
                     )}
                     {hasVideos && (
                       <span style={{ background: '#F3F6FA', color: '#667085', border: '0.5px solid #EAECEF', borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 600 }}>
-                        {topic.video_count} video{topic.video_count > 1 ? 's' : ''}
+                        {topic.video_count} {ui("video")}{topic.video_count > 1 ? 's' : ''}
                       </span>
                     )}
                     {!hasLesson && !hasVideos && (
-                      <span style={{ color: '#9CA3AF', fontSize: 10 }}>Bientot disponible</span>
+                      <span style={{ color: '#9CA3AF', fontSize: 10 }}>{ui("Bientot disponible")}</span>
                     )}
                   </div>
                 </div>

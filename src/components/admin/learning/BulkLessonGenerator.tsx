@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -62,6 +63,7 @@ async function getFunctionErrorMessage(err: unknown, response?: Response) {
 }
 
 export function BulkLessonGenerator() {
+  const ui = useInterfaceTranslation();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
@@ -225,7 +227,7 @@ export function BulkLessonGenerator() {
       <DialogTrigger asChild>
         <Button variant="outline">
           <BookOpen className="mr-2 h-4 w-4" />
-          Générer des leçons
+          {ui("Générer des leçons")}
         </Button>
       </DialogTrigger>
 
@@ -233,7 +235,7 @@ export function BulkLessonGenerator() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wand2 className="h-5 w-5" />
-            Générer des leçons en masse
+            {ui("Générer des leçons en masse")}
           </DialogTitle>
         </DialogHeader>
 
@@ -246,7 +248,7 @@ export function BulkLessonGenerator() {
                 </span>
                 {isRunning && (
                   <span className="text-xs text-muted-foreground">
-                    {elapsedSeconds}s écoulées
+                    {elapsedSeconds}{ui("s écoulées")}
                   </span>
                 )}
               </div>
@@ -281,7 +283,7 @@ export function BulkLessonGenerator() {
                   setSelected([]);
                 }}
               >
-                Retour à la sélection
+                {ui("Retour à la sélection")}
               </Button>
             )}
           </div>
@@ -290,10 +292,10 @@ export function BulkLessonGenerator() {
             <div className="flex flex-wrap gap-2">
               <Select value={filterSubject} onValueChange={setFilterSubject}>
                 <SelectTrigger className="h-8 w-40 text-sm">
-                  <SelectValue placeholder="Matière" />
+                  <SelectValue placeholder={ui("Matière")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toutes les matières</SelectItem>
+                  <SelectItem value="all">{ui("Toutes les matières")}</SelectItem>
                   {subjects.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
                       {s.name}
@@ -304,10 +306,10 @@ export function BulkLessonGenerator() {
 
               <Select value={filterLevel} onValueChange={setFilterLevel}>
                 <SelectTrigger className="h-8 w-28 text-sm">
-                  <SelectValue placeholder="Niveau" />
+                  <SelectValue placeholder={ui("Niveau")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="all">{ui("Tous")}</SelectItem>
                   {levels.map((l) => (
                     <SelectItem key={l} value={l}>
                       {l}
@@ -328,7 +330,7 @@ export function BulkLessonGenerator() {
 
               <label className="flex cursor-pointer items-center gap-1.5 text-sm">
                 <Checkbox checked={onlyMissing} onCheckedChange={(v) => setOnlyMissing(Boolean(v))} />
-                Sans leçon
+                {ui("Sans leçon")}
               </label>
             </div>
 
@@ -337,15 +339,15 @@ export function BulkLessonGenerator() {
                 onClick={() => setSelected(visible.filter((t) => !t.lesson_content).map((t) => t.id))}
                 className="text-primary hover:underline"
               >
-                Sélectionner sans leçon
+                {ui("Sélectionner sans leçon")}
               </button>
               <span className="text-muted-foreground">·</span>
               <button onClick={() => setSelected(visible.map((t) => t.id))} className="text-primary hover:underline">
-                Tout sélectionner
+                {ui("Tout sélectionner")}
               </button>
               <span className="text-muted-foreground">·</span>
               <button onClick={() => setSelected([])} className="text-muted-foreground hover:underline">
-                Désélectionner
+                {ui("Désélectionner")}
               </button>
             </div>
 
@@ -355,7 +357,7 @@ export function BulkLessonGenerator() {
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
               ) : visible.length === 0 ? (
-                <p className="py-10 text-center text-sm text-muted-foreground">Aucun sujet trouvé</p>
+                <p className="py-10 text-center text-sm text-muted-foreground">{ui("Aucun sujet trouvé")}</p>
               ) : (
                 visible.map((topic) => (
                   <div
@@ -374,12 +376,12 @@ export function BulkLessonGenerator() {
                       {topic.lesson_content ? (
                         <>
                           <Badge className="h-5 border-green-200 bg-green-50 text-xs text-green-700 hover:bg-green-50">
-                            Leçon ✓
+                            {ui("Leçon ✓")}
                           </Badge>
                           <button
                             onClick={(e) => handleDeleteOne(topic.id, e)}
                             disabled={deletingIds.has(topic.id)}
-                            title="Supprimer la leçon"
+                            title={ui("Supprimer la leçon")}
                             className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-red-50 hover:text-red-500 disabled:opacity-40"
                           >
                             {deletingIds.has(topic.id)
@@ -389,7 +391,7 @@ export function BulkLessonGenerator() {
                         </>
                       ) : (
                         <Badge variant="outline" className="h-5 text-xs text-muted-foreground">
-                          Pas de leçon
+                          {ui("Pas de leçon")}
                         </Badge>
                       )}
                     </div>
@@ -400,7 +402,7 @@ export function BulkLessonGenerator() {
 
             <div className="flex items-center justify-between border-t pt-2">
               <span className="text-sm text-muted-foreground">
-                {selected.length} sélectionné{selected.length !== 1 ? 's' : ''}
+                {selected.length} {ui("sélectionné")}{selected.length !== 1 ? 's' : ''}
               </span>
               <div className="flex gap-2">
                 {selected.some(id => topics.find(t => t.id === id)?.lesson_content) && (
@@ -411,7 +413,7 @@ export function BulkLessonGenerator() {
                     className="gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />
-                    Supprimer les leçons
+                    {ui("Supprimer les leçons")}
                   </Button>
                 )}
                 <Button onClick={handleGenerate} disabled={!selected.length || isRunning} className="gap-2">

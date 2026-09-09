@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -136,6 +138,8 @@ const skills: Skill[] = [
 ];
 
 const SkillMastery = () => {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   const getLevelColor = (level: Skill['level']) => {
     switch (level) {
       case 'Beginner': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400';
@@ -168,7 +172,7 @@ const SkillMastery = () => {
           </div>
           <div className="mt-2">
             <div className="flex justify-between text-sm mb-1">
-              <span>Mastery</span>
+              <span>{ui("Mastery")}</span>
               <span>{skill.progress}%</span>
             </div>
             <Progress 
@@ -179,7 +183,7 @@ const SkillMastery = () => {
         </CardHeader>
         <CardContent>
           <div className="text-sm text-muted-foreground mb-4">
-            Last practiced: {new Date(skill.lastPracticed).toLocaleDateString()}
+            {ui("Last practiced:")} {new Date(skill.lastPracticed).toLocaleDateString(locale)}
           </div>
           
           <div className="space-y-3">
@@ -215,7 +219,7 @@ const SkillMastery = () => {
           
           <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
             <button className="inline-flex items-center text-sm text-stuwy-600 dark:text-stuwy-400 hover:underline">
-              Practice now <ChevronRight className="w-4 h-4 ml-1" />
+              {ui("Practice now")} <ChevronRight className="w-4 h-4 ml-1" />
             </button>
           </div>
         </CardContent>
@@ -226,16 +230,16 @@ const SkillMastery = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Skill Mastery Progress</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">{ui("Skill Mastery Progress")}</h1>
         <p className="text-muted-foreground">
-          Track your skill development and identify areas for improvement.
+          {ui("Track your skill development and identify areas for improvement.")}
         </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="glass col-span-full sm:col-span-2">
           <CardHeader className="pb-2">
-            <CardTitle>Highest Performing Skills</CardTitle>
+            <CardTitle>{ui("Highest Performing Skills")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -266,7 +270,7 @@ const SkillMastery = () => {
 
         <Card className="glass col-span-full sm:col-span-1">
           <CardHeader className="pb-2">
-            <CardTitle>Recommended Focus</CardTitle>
+            <CardTitle>{ui("Recommended Focus")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -279,7 +283,7 @@ const SkillMastery = () => {
                     </div>
                     <div>
                       <h3 className="font-medium">{skill.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-1">Needs additional practice</p>
+                      <p className="text-xs text-muted-foreground mt-1">{ui("Needs additional practice")}</p>
                     </div>
                   </div>
                 );
@@ -287,7 +291,7 @@ const SkillMastery = () => {
               
               <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 text-center">
                 <button className="inline-flex items-center text-sm text-stuwy-600 dark:text-stuwy-400 hover:underline">
-                  View personalized study plan <ChevronRight className="w-4 h-4 ml-1" />
+                  {ui("View personalized study plan")} <ChevronRight className="w-4 h-4 ml-1" />
                 </button>
               </div>
             </div>
@@ -297,11 +301,11 @@ const SkillMastery = () => {
 
       <Tabs defaultValue="math" className="w-full">
         <TabsList className="glass flex flex-wrap justify-center space-x-2 mb-6">
-          <TabsTrigger value="all">All Skills</TabsTrigger>
-          <TabsTrigger value="math">Mathematics</TabsTrigger>
-          <TabsTrigger value="language">Language Arts</TabsTrigger>
-          <TabsTrigger value="science">Sciences</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="all">{ui("All Skills")}</TabsTrigger>
+          <TabsTrigger value="math">{ui("Mathematics")}</TabsTrigger>
+          <TabsTrigger value="language">{ui("Language Arts")}</TabsTrigger>
+          <TabsTrigger value="science">{ui("Sciences")}</TabsTrigger>
+          <TabsTrigger value="history">{ui("History")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="mt-0">

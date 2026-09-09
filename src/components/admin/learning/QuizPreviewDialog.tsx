@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import type { Question } from '@/types/quiz-bank';
 // ── Per-type correct-answer display ─────────────────────────────────────────
 
 function AnswerDisplay({ question }: { question: Question }) {
+  const ui = useInterfaceTranslation();
   switch (question.kind) {
 
     case 'single':
@@ -51,7 +53,7 @@ function AnswerDisplay({ question }: { question: Question }) {
           {q.answer}
           {q.range && (
             <span className="text-sm font-normal text-muted-foreground ml-2">
-              (accepted: {q.range.min} – {q.range.max})
+              {ui("(accepted:")} {q.range.min} – {q.range.max})
             </span>
           )}
         </div>
@@ -61,7 +63,7 @@ function AnswerDisplay({ question }: { question: Question }) {
     case 'ordering': {
       return (
         <div className="space-y-1.5">
-          <p className="text-xs text-muted-foreground mb-1">Correct order:</p>
+          <p className="text-xs text-muted-foreground mb-1">{ui("Correct order:")}</p>
           {question.correctOrder.map((item, i) => (
             <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-green-300 bg-green-50 dark:bg-green-950/20 text-sm">
               <span className="w-5 h-5 rounded-full bg-green-500 text-white text-xs flex items-center justify-center font-bold shrink-0">{i + 1}</span>
@@ -104,7 +106,7 @@ function AnswerDisplay({ question }: { question: Question }) {
     case 'match': {
       return (
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">Correct pairs:</p>
+          <p className="text-xs text-muted-foreground">{ui("Correct pairs:")}</p>
           {question.pairs.map(pair => (
             <div key={pair.leftId} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-green-300 bg-green-50 dark:bg-green-950/20 text-sm">
               <span className="font-medium">{pair.left}</span>
@@ -144,7 +146,7 @@ function AnswerDisplay({ question }: { question: Question }) {
           {/* Suggested-response chips (what the student drags) */}
           {q.chips && q.chips.length > 0 && (
             <div className="space-y-1.5">
-              <p className="text-xs text-muted-foreground">Suggested responses (drag targets):</p>
+              <p className="text-xs text-muted-foreground">{ui("Suggested responses (drag targets):")}</p>
               <div className="flex flex-wrap gap-2 justify-center">
                 {q.chips.map((chip, i) => (
                   <div
@@ -174,7 +176,7 @@ function AnswerDisplay({ question }: { question: Question }) {
     case 'visual': {
       return (
         <div className="text-sm text-muted-foreground border rounded-xl px-3 py-2">
-          Visual question — answer verified by correct segment/angle selection.
+          {ui("Visual question — answer verified by correct segment/angle selection.")}
           {(question.visual as any)?.subtype && (
             <span className="ml-1 font-medium">({(question.visual as any).subtype})</span>
           )}
@@ -201,7 +203,7 @@ function AnswerDisplay({ question }: { question: Question }) {
       return (
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">
-            Réponses attendues pour les cases manquantes :
+            {ui("Réponses attendues pour les cases manquantes :")}
           </p>
           <div className="flex flex-wrap gap-2">
             {question.blanks.map((blank) => (
@@ -215,7 +217,7 @@ function AnswerDisplay({ question }: { question: Question }) {
     }
 
     default:
-      return <p className="text-sm text-muted-foreground">Answer display not available for this type.</p>;
+      return <p className="text-sm text-muted-foreground">{ui("Answer display not available for this type.")}</p>;
   }
 }
 
@@ -229,6 +231,7 @@ interface QuizPreviewDialogProps {
 }
 
 export function QuizPreviewDialog({ questions, open, onClose, onProceedToSave }: QuizPreviewDialogProps) {
+  const ui = useInterfaceTranslation();
   const [index, setIndex] = useState(0);
   const q = questions[index] ?? null;
   const total = questions.length;
@@ -238,9 +241,9 @@ export function QuizPreviewDialog({ questions, open, onClose, onProceedToSave }:
       <DialogContent className="max-w-xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <div className="flex items-center justify-between gap-3">
-            <DialogTitle className="text-base">Preview — answers revealed</DialogTitle>
+            <DialogTitle className="text-base">{ui("Preview — answers revealed")}</DialogTitle>
             <span className="text-sm text-muted-foreground shrink-0">
-              Question {index + 1} / {total}
+              {ui("Question")} {index + 1} / {total}
             </span>
           </div>
           {/* Progress bar */}
@@ -258,7 +261,7 @@ export function QuizPreviewDialog({ questions, open, onClose, onProceedToSave }:
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-xs capitalize">{q.kind}</Badge>
               {(q as any).hide_labels && (
-                <Badge variant="outline" className="text-xs">pie uniquement</Badge>
+                <Badge variant="outline" className="text-xs">{ui("pie uniquement")}</Badge>
               )}
             </div>
 
@@ -275,7 +278,7 @@ export function QuizPreviewDialog({ questions, open, onClose, onProceedToSave }:
             {/* Correct answer */}
             <div>
               <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide mb-1.5">
-                ✓ Correct answer
+                {ui("✓ Correct answer")}
               </p>
               <AnswerDisplay question={q} />
             </div>
@@ -289,16 +292,16 @@ export function QuizPreviewDialog({ questions, open, onClose, onProceedToSave }:
             onClick={() => setIndex(i => Math.max(0, i - 1))}
             disabled={index === 0}
           >
-            <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+            <ChevronLeft className="h-4 w-4 mr-1" /> {ui("Previous")}
           </Button>
 
           {index < total - 1 ? (
             <Button size="sm" onClick={() => setIndex(i => i + 1)}>
-              Next <ChevronRight className="h-4 w-4 ml-1" />
+              {ui("Next")} <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
             <Button size="sm" onClick={() => { onProceedToSave(); setIndex(0); }}>
-              Save quiz bank →
+              {ui("Save quiz bank →")}
             </Button>
           )}
         </div>

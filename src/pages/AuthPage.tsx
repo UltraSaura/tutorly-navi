@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -19,6 +20,7 @@ import { PageMeta } from '@/components/seo/PageMeta';
 type AuthStep = 'login' | 'userType' | 'studentForm' | 'parentForm' | 'resetPassword';
 
 const AuthPage: React.FC = () => {
+  const ui = useInterfaceTranslation();
   const { user, loading: authLoading, signIn, signUp, signOut, resetPassword } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminAuth();
   const { t } = useTranslation();
@@ -34,7 +36,7 @@ const AuthPage: React.FC = () => {
   useEffect(() => {
     if (state?.message) {
       toast({
-        title: "Admin Access Required",
+        title: ui("Admin Access Required"),
         description: state.message,
         variant: "default",
       });
@@ -245,7 +247,7 @@ const AuthPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex items-center justify-center p-4">
-        <PageMeta title="Sign In" description="Sign in or create an account to access your Stuwy student, guardian, or teacher dashboard." />
+        <PageMeta title={ui("Sign In")} description={ui("Sign in or create an account to access your Stuwy student, guardian, or teacher dashboard.")} />
         <div className="w-full max-w-4xl">
         {step === 'login' && (
           <div className="space-y-6">

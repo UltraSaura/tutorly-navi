@@ -1,3 +1,5 @@
+import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +17,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export default function CurriculumBrowser() {
+  const ui = useInterfaceTranslation();
   const { data: userLevel } = useUserSchoolLevel();
   const countryId = 'fr'; // Default to France, could be from user profile
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
@@ -29,17 +32,17 @@ export default function CurriculumBrowser() {
     selectedDomain || ''
   );
 
-  const locale = 'fr'; // Could come from i18n context
+  const { language: locale } = useLanguage();
 
   // Subject selection view
   if (!selectedSubject) {
     return (
       <div className="container mx-auto p-6 space-y-6">
-        <PageMeta title="Curriculum" description="Browse the official curriculum mapped to Stuwy lessons and exercises." />
+        <PageMeta title={ui("Curriculum")} description={ui("Browse the official curriculum mapped to Stuwy lessons and exercises.")} />
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">Curriculum</h1>
+          <h1 className="text-3xl font-bold text-foreground">{ui("Curriculum")}</h1>
           <p className="text-muted-foreground">
-            Explore your curriculum by subject
+            {ui("Explore your curriculum by subject")}
           </p>
         </div>
 
@@ -66,7 +69,7 @@ export default function CurriculumBrowser() {
                     <div className="flex-1">
                       <CardTitle>{getLocalizedLabel(subject.labels, locale)}</CardTitle>
                       <CardDescription>
-                        {subject.domains.length} domain{subject.domains.length !== 1 ? 's' : ''}
+                        {subject.domains.length} {ui("domain")}{subject.domains.length !== 1 ? 's' : ''}
                       </CardDescription>
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -94,7 +97,7 @@ export default function CurriculumBrowser() {
             onClick={() => setSelectedSubject(null)}
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
-            Back
+            {ui("Back")}
           </Button>
         </div>
 
@@ -104,7 +107,7 @@ export default function CurriculumBrowser() {
               {getLocalizedLabel(currentSubject.labels, locale)}
             </Badge>
           </div>
-          <h1 className="text-3xl font-bold text-foreground">Domains</h1>
+          <h1 className="text-3xl font-bold text-foreground">{ui("Domains")}</h1>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -121,7 +124,7 @@ export default function CurriculumBrowser() {
                       {getLocalizedLabel(domain.labels, locale)}
                     </CardTitle>
                     <CardDescription className="text-xs mt-1">
-                      {domain.code} • {domain.subdomains.length} subdomain{domain.subdomains.length !== 1 ? 's' : ''}
+                      {domain.code} • {domain.subdomains.length} {ui("subdomain")}{domain.subdomains.length !== 1 ? 's' : ''}
                     </CardDescription>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -147,7 +150,7 @@ export default function CurriculumBrowser() {
           onClick={() => setSelectedDomain(null)}
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
-          Back
+          {ui("Back")}
         </Button>
       </div>
 
@@ -193,7 +196,7 @@ export default function CurriculumBrowser() {
                     </Card>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground">No skills defined yet</p>
+                  <p className="text-sm text-muted-foreground">{ui("No skills defined yet")}</p>
                 )}
               </div>
             </AccordionContent>

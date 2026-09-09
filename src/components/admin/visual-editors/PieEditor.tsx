@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 "use client";
 
 import * as React from "react";
@@ -22,6 +23,7 @@ export default function PieEditor({
   state: VisualPie;
   setState: (s: VisualPie) => void;
 }) {
+  const ui = useInterfaceTranslation();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activePieId, setActivePieId] = useState<string>("base");
 
@@ -171,7 +173,7 @@ export default function PieEditor({
     <div className="space-y-4">
       {/* Mode toggle */}
       <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
-        <Label className="text-sm font-medium">Interaction mode:</Label>
+        <Label className="text-sm font-medium">{ui("Interaction mode:")}</Label>
         <div className="flex gap-2">
           <Button
             type="button"
@@ -179,7 +181,7 @@ export default function PieEditor({
             variant={!isColorSlices ? "default" : "outline"}
             onClick={() => setState({ ...state, interactionMode: "select_pie" })}
           >
-            Select pie charts
+            {ui("Select pie charts")}
           </Button>
           <Button
             type="button"
@@ -187,7 +189,7 @@ export default function PieEditor({
             variant={isColorSlices ? "default" : "outline"}
             onClick={() => setState({ ...state, interactionMode: "color_slices" })}
           >
-            Color slices
+            {ui("Color slices")}
           </Button>
         </div>
       </div>
@@ -226,6 +228,7 @@ function ColorSlicesEditor({
   state: VisualPie;
   setState: (s: VisualPie) => void;
 }) {
+  const ui = useInterfaceTranslation();
   const uuid = () => crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
 
   const sliceCount = state.segments.length;
@@ -246,15 +249,14 @@ function ColorSlicesEditor({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
       <div className="space-y-3">
         <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
-          <div className="text-sm font-medium text-foreground">Color Slices Mode</div>
+          <div className="text-sm font-medium text-foreground">{ui("Color Slices Mode")}</div>
           <p className="text-xs text-muted-foreground">
-            The student sees a single pie with equal slices (all gray). They tap slices to color them.
-            The answer is correct if they color exactly the right number of slices.
+            {ui("The student sees a single pie with equal slices (all gray). They tap slices to color them. The answer is correct if they color exactly the right number of slices.")}
           </p>
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm">Number of slices</Label>
+          <Label className="text-sm">{ui("Number of slices")}</Label>
           <Input
             type="number"
             min={2}
@@ -265,7 +267,7 @@ function ColorSlicesEditor({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm">Correct colored count</Label>
+          <Label className="text-sm">{ui("Correct colored count")}</Label>
           <Input
             type="number"
             min={0}
@@ -276,14 +278,14 @@ function ColorSlicesEditor({
             }
           />
           <p className="text-xs text-muted-foreground">
-            The student must color exactly {correctCount} out of {sliceCount} slices ({correctCount}/{sliceCount}).
+            {ui("The student must color exactly")} {correctCount} {ui("out of")} {sliceCount} {ui("slices (")}{correctCount}/{sliceCount}).
           </p>
         </div>
       </div>
 
       {/* Preview */}
       <div className="flex flex-col items-center gap-2">
-        <div className="text-xs text-muted-foreground font-medium">Preview (correct answer)</div>
+        <div className="text-xs text-muted-foreground font-medium">{ui("Preview (correct answer)")}</div>
         <div className="rounded-lg border p-4 bg-white">
           <svg viewBox="0 0 100 100" width={180} height={180} className="rounded-xl shadow-inner">
             {state.segments.map((seg, i) => {
@@ -351,17 +353,17 @@ function SelectPieEditor({
   toggleCorrect: (id: string, checked: boolean) => void;
   calculateFraction: (segments: VisualPie["segments"]) => string;
 }) {
+  const ui = useInterfaceTranslation();
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
       <div className="space-y-3">
         <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
-          <div className="text-sm font-medium text-foreground">Fraction Visualization</div>
+          <div className="text-sm font-medium text-foreground">{ui("Fraction Visualization")}</div>
           <p className="text-xs text-muted-foreground">
-            Create multiple pie charts to represent fractions. Mark slices as "colored" to show the fraction visually. 
-            Mark the entire pie as "correct" if it represents the right answer.
+            {ui("Create multiple pie charts to represent fractions. Mark slices as \"colored\" to show the fraction visually. Mark the entire pie as \"correct\" if it represents the right answer.")}
           </p>
           <p className="text-xs text-muted-foreground">
-            <strong>Example:</strong> For "Select 1/2", create a pie with 4 slices where 2 are colored (2/4 = 1/2).
+            <strong>{ui("Example:")}</strong> {ui("For \"Select 1/2\", create a pie with 4 slices where 2 are colored (2/4 = 1/2).")}
           </p>
         </div>
 
@@ -374,13 +376,13 @@ function SelectPieEditor({
             className="h-4 w-4 rounded border-border"
           />
           <Label htmlFor="show-fraction-label" className="text-xs cursor-pointer">
-            Show fraction label (e.g., "2/4") below each pie in quiz
+            {ui("Show fraction label (e.g., \"2/4\") below each pie in quiz")}
           </Label>
         </div>
 
         <div className="space-y-2 border rounded-md p-2">
           <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-            <span>Pie Charts</span>
+            <span>{ui("Pie Charts")}</span>
             <Button 
               type="button" 
               size="sm" 
@@ -388,7 +390,7 @@ function SelectPieEditor({
               className="h-6 px-2 text-xs" 
               onClick={addVariant}
             >
-              Add pie
+              {ui("Add pie")}
             </Button>
           </div>
           <div className="flex flex-col gap-1">
@@ -415,7 +417,7 @@ function SelectPieEditor({
                         toggleCorrect(pie.id, e.target.checked);
                       }}
                     />
-                    correct
+                    {ui("correct")}
                   </label>
                   {pie.id !== "base" && (
                     <Button
@@ -428,7 +430,7 @@ function SelectPieEditor({
                         removeVariant(pie.id);
                       }}
                     >
-                      Remove
+                      {ui("Remove")}
                     </Button>
                   )}
                 </div>
@@ -438,7 +440,7 @@ function SelectPieEditor({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Segments for {allPies.find(p => p.id === activePieId)?.label}</Label>
+          <Label className="text-sm font-medium">{ui("Segments for")} {allPies.find(p => p.id === activePieId)?.label}</Label>
           {currentPie.segments.map((seg, i) => (
             <div
               key={seg.id}
@@ -465,10 +467,10 @@ function SelectPieEditor({
                   checked={!!seg.colored}
                   onChange={(e) => updateSeg(i, { colored: e.target.checked })}
                 />
-                colored
+                {ui("colored")}
               </label>
               <Button type="button" variant="outline" onClick={() => handleRemove(seg.id)}>
-                Remove
+                {ui("Remove")}
               </Button>
             </div>
           ))}
@@ -476,7 +478,7 @@ function SelectPieEditor({
 
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={addSeg}>
-            Add segment
+            {ui("Add segment")}
           </Button>
           <Button
             type="button"
@@ -484,7 +486,7 @@ function SelectPieEditor({
             disabled={!selectedId}
             onClick={() => selectedId && handleRemove(selectedId)}
           >
-            Remove selected
+            {ui("Remove selected")}
           </Button>
         </div>
       </div>
@@ -545,7 +547,7 @@ function SelectPieEditor({
                 <div className="text-xs text-muted-foreground">{pie.label}</div>
                 <div className="text-sm font-medium">{calculateFraction(pie.segments)}</div>
                 {pie.correct && (
-                  <div className="text-xs text-primary font-medium">✓ Correct</div>
+                  <div className="text-xs text-primary font-medium">{ui("✓ Correct")}</div>
                 )}
               </div>
             </div>

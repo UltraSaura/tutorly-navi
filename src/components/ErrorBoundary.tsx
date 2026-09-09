@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
@@ -19,6 +20,7 @@ function ErrorFallback({
   error?: Error; 
   onReset?: () => void;
 }) {
+  const ui = useInterfaceTranslation();
   const handleGoHome = () => {
     window.location.href = '/';
   };
@@ -28,11 +30,11 @@ function ErrorFallback({
       <div className="max-w-md w-full bg-card border rounded-lg shadow-lg p-6 space-y-4">
         <div className="flex items-center gap-2 text-destructive">
           <AlertTriangle className="w-6 h-6" />
-          <h2 className="text-xl font-semibold">Something went wrong</h2>
+          <h2 className="text-xl font-semibold">{ui("Something went wrong")}</h2>
         </div>
         
         <p className="text-muted-foreground">
-          An unexpected error occurred. Please try refreshing the page or go back to home.
+          {ui("An unexpected error occurred. Please try refreshing the page or go back to home.")}
         </p>
         
         {process.env.NODE_ENV === 'development' && error && (
@@ -50,7 +52,7 @@ function ErrorFallback({
               className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
-              Try Again
+              {ui("Try Again")}
             </button>
           )}
           <button
@@ -58,7 +60,7 @@ function ErrorFallback({
             className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-muted transition-colors"
           >
             <Home className="w-4 h-4" />
-            Go Home
+            {ui("Go Home")}
           </button>
         </div>
       </div>

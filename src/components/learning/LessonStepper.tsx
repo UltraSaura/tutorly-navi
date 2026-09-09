@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useRef, useCallback, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,6 +61,7 @@ function parseExampleSteps(example: string): string[] {
 
 // Progress indicator: coloured dots that widen on the active step
 function ProgressDots({ current, total }: { current: number; total: number }) {
+  const ui = useInterfaceTranslation();
   const stepLabels = ['Concept', 'Quiz', 'Exemple', 'Erreurs', 'Terminé'];
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0 16px 10px' }}>
@@ -76,7 +78,7 @@ function ProgressDots({ current, total }: { current: number; total: number }) {
         />
       ))}
       <span style={{ fontSize: 10, color: '#667085', marginLeft: 6, fontFamily: 'Poppins, sans-serif' }}>
-        {stepLabels[current]} · {current + 1}/{total}
+        {ui(stepLabels[current])} · {current + 1}/{total}
       </span>
     </div>
   );
@@ -88,6 +90,7 @@ function SuivantButton({ onClick, label = 'Suivant →', disabled = false }: {
   label?: string;
   disabled?: boolean;
 }) {
+  const ui = useInterfaceTranslation();
   return (
     <button
       onClick={onClick}
@@ -105,7 +108,7 @@ function SuivantButton({ onClick, label = 'Suivant →', disabled = false }: {
         fontFamily: 'Poppins, sans-serif',
       }}
     >
-      {label}
+      {ui(label)}
     </button>
   );
 }
@@ -162,6 +165,7 @@ export function LessonStepper({
   onSexercer,
   subjectId,
 }: LessonStepperProps) {
+  const ui = useInterfaceTranslation();
   const TOTAL_STEPS = 5;
   const [currentStep, setCurrentStep] = useState(0);
   const [activeDifficultyIdx, setActiveDifficultyIdx] = useState(0);
@@ -243,7 +247,7 @@ export function LessonStepper({
 
         if (!error) {
           void queryClient.invalidateQueries({ queryKey: ['student-stats'] });
-          showXpToast(5, 'Leçon terminée !');
+          showXpToast(5, ui("Leçon terminée !"));
 
           const nextStreak = stats?.activeToday
             ? stats.currentStreak
@@ -266,7 +270,7 @@ export function LessonStepper({
     } catch (err) {
       console.warn('[LessonStepper] Failed to record completion:', err);
     }
-  }, [user?.id, topicId, subjectId, queryClient, stats?.activeToday, stats?.currentStreak]);
+  }, [user?.id, topicId, subjectId, queryClient, stats?.activeToday, stats?.currentStreak, ui]);
 
   // ── Step navigation helpers ───────────────────────────────
   const goNext = useCallback(() => {
@@ -337,7 +341,7 @@ export function LessonStepper({
             {keyPoints.length > 0 && (
               <div style={{ background: '#F2FBF8', borderRadius: 14, padding: 14, border: '0.5px solid #9FE1CB' }}>
                 <p style={{ fontSize: 10, fontWeight: 700, color: '#0F6E56', letterSpacing: '0.06em', margin: '0 0 8px', fontFamily: 'Poppins, sans-serif' }}>
-                  EN BREF
+                  {ui("EN BREF")}
                 </p>
                 <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {keyPoints.map((point, i) => (
@@ -353,7 +357,7 @@ export function LessonStepper({
             {vocabulary.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <p style={{ fontSize: 10, fontWeight: 700, color: '#667085', letterSpacing: '0.06em', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
-                  VOCABULAIRE CLÉ
+                  {ui("VOCABULAIRE CLÉ")}
                 </p>
                 {vocabulary.map((item, i) => (
                   <div key={i} style={{ background: 'white', borderRadius: 10, border: '0.5px solid #EAECEF', padding: '9px 12px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
@@ -375,11 +379,11 @@ export function LessonStepper({
                   <BookOpen className="h-3.5 w-3.5" style={{ color: '#085041' }} />
                 </div>
                 <p style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
-                  Le cours
+                  {ui("Le cours")}
                 </p>
               </div>
               <p style={{ fontSize: 15, color: '#374151', margin: 0, lineHeight: 1.85 }}>
-                {explanation || 'Leçon en cours de préparation.'}
+                {explanation || ui("Leçon en cours de préparation.")}
               </p>
             </div>
 
@@ -401,7 +405,7 @@ export function LessonStepper({
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FFF3DC', borderRadius: 999, padding: '4px 12px', border: '0.5px solid #FAC775', width: 'fit-content' }}>
               <Zap className="h-3 w-3" style={{ color: '#B45309' }} />
               <span style={{ fontSize: 11, fontWeight: 700, color: '#B45309', fontFamily: 'Poppins, sans-serif' }}>
-                Petit test — vérifie ta compréhension !
+                {ui("Petit test — vérifie ta compréhension !")}
               </span>
             </div>
 
@@ -433,7 +437,7 @@ export function LessonStepper({
                       fontFamily: 'Poppins, sans-serif',
                     }}
                   >
-                    Valider
+                    {ui("Valider")}
                   </button>
                 ) : (
                   <SuivantButton onClick={goNext} />
@@ -444,7 +448,7 @@ export function LessonStepper({
               <>
                 <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 24, textAlign: 'center' }}>
                   <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>
-                    Quiz non disponible pour ce sujet.
+                    {ui("Quiz non disponible pour ce sujet.")}
                   </p>
                 </div>
                 <SuivantButton onClick={goNext} />
@@ -466,7 +470,7 @@ export function LessonStepper({
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FFF3DC', borderRadius: 999, padding: '3px 10px', border: '0.5px solid #FAC775', width: 'fit-content' }}>
               <Lightbulb className="h-3 w-3" style={{ color: '#B45309' }} />
               <span style={{ fontSize: 11, fontWeight: 700, color: '#B45309', fontFamily: 'Poppins, sans-serif' }}>
-                Exemple interactif
+                {ui("Exemple interactif")}
               </span>
             </div>
 
@@ -521,7 +525,7 @@ export function LessonStepper({
                       cursor: 'pointer', fontFamily: 'Poppins, sans-serif',
                     }}
                   >
-                    Révéler l'étape {revealedCount + 1} →
+                    {ui("Révéler l'étape")} {revealedCount + 1} →
                   </button>
                 ) : (
                   <SuivantButton onClick={goNext} />
@@ -531,7 +535,7 @@ export function LessonStepper({
               // No example content — skip gracefully
               <>
                 <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 24, textAlign: 'center' }}>
-                  <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>Exemple non disponible.</p>
+                  <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>{ui("Exemple non disponible.")}</p>
                 </div>
                 <SuivantButton onClick={goNext} />
               </>
@@ -551,7 +555,7 @@ export function LessonStepper({
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#FCEBEB', borderRadius: 999, padding: '3px 10px', border: '0.5px solid #F7C1C1', width: 'fit-content' }}>
               <AlertCircle className="h-3 w-3" style={{ color: '#A32D2D' }} />
               <span style={{ fontSize: 11, fontWeight: 700, color: '#A32D2D', fontFamily: 'Poppins, sans-serif' }}>
-                Erreurs fréquentes
+                {ui("Erreurs fréquentes")}
               </span>
             </div>
 
@@ -589,11 +593,11 @@ export function LessonStepper({
               </div>
             ) : (
               <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 24, textAlign: 'center' }}>
-                <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>Aucune erreur fréquente listée.</p>
+                <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>{ui("Aucune erreur fréquente listée.")}</p>
               </div>
             )}
 
-            <SuivantButton onClick={goNext} label="Voir le résultat →" />
+            <SuivantButton onClick={goNext} label={ui("Voir le résultat →")} />
           </div>
         )}
 
@@ -613,7 +617,7 @@ export function LessonStepper({
 
             <div>
               <h2 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', margin: '0 0 4px', fontFamily: 'Poppins, sans-serif' }}>
-                Leçon terminée !
+                {ui("Leçon terminée !")}
               </h2>
               <p style={{ fontSize: 13, color: '#667085', margin: 0 }}>
                 {topicName}
@@ -630,11 +634,11 @@ export function LessonStepper({
                 <p style={{ fontSize: 20, fontWeight: 800, color: '#085041', margin: '0 0 2px', fontFamily: 'Poppins, sans-serif' }}>
                   {actualMinutes ?? '—'} min
                 </p>
-                <p style={{ fontSize: 10, color: '#0F6E56', margin: 0 }}>Durée</p>
+                <p style={{ fontSize: 10, color: '#0F6E56', margin: 0 }}>{ui("Durée")}</p>
               </div>
               <div style={{ background: '#FAEEDA', borderRadius: 12, padding: '10px 8px', border: '0.5px solid #FAC775', textAlign: 'center' }}>
                 <p style={{ fontSize: 20, fontWeight: 800, color: '#633806', margin: '0 0 2px', fontFamily: 'Poppins, sans-serif' }}>+5 XP</p>
-                <p style={{ fontSize: 10, color: '#854F0B', margin: 0 }}>Gagné</p>
+                <p style={{ fontSize: 10, color: '#854F0B', margin: 0 }}>{ui("Gagné")}</p>
               </div>
             </div>
 
@@ -649,7 +653,7 @@ export function LessonStepper({
                 }}
               >
                 <Zap className="h-4 w-4" />
-                S'exercer sur {topicName}
+                {ui("S'exercer sur")} {topicName}
               </button>
 
               <button
@@ -661,7 +665,7 @@ export function LessonStepper({
                   cursor: 'pointer', fontFamily: 'Poppins, sans-serif',
                 }}
               >
-                Recommencer la leçon
+                {ui("Recommencer la leçon")}
               </button>
             </div>
           </div>

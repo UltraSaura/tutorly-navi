@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { DynamicIcon } from '../subjects/DynamicIcon';
 import type { Subject } from '@/types/learning';
 
 const SubjectManager = () => {
+  const ui = useInterfaceTranslation();
   const { data: subjects = [], isLoading } = useLearningSubjects();
   const createSubject = useCreateSubject();
   const updateSubject = useUpdateSubject();
@@ -78,15 +80,15 @@ const SubjectManager = () => {
   };
 
   if (isLoading) {
-    return <div>Loading subjects...</div>;
+    return <div>{ui("Loading subjects...")}</div>;
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Learning Subjects</h2>
-          <p className="text-muted-foreground">Manage learning subjects and their properties</p>
+          <h2 className="text-2xl font-bold">{ui("Learning Subjects")}</h2>
+          <p className="text-muted-foreground">{ui("Manage learning subjects and their properties")}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);
@@ -95,16 +97,16 @@ const SubjectManager = () => {
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Add Subject
+              {ui("Add Subject")}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingSubject ? 'Edit Subject' : 'Add New Subject'}</DialogTitle>
+              <DialogTitle>{editingSubject ? 'Edit Subject' : ui("Add New Subject")}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">{ui("Name")}</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -113,7 +115,7 @@ const SubjectManager = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="slug">Slug</Label>
+                <Label htmlFor="slug">{ui("Slug")}</Label>
                 <Input
                   id="slug"
                   value={formData.slug}
@@ -122,17 +124,17 @@ const SubjectManager = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="icon_name">Icon Name (Lucide or emoji)</Label>
+                <Label htmlFor="icon_name">{ui("Icon Name (Lucide or emoji)")}</Label>
                 <Input
                   id="icon_name"
                   value={formData.icon_name}
                   onChange={(e) => setFormData({ ...formData, icon_name: e.target.value })}
-                  placeholder="Calculator or 🔢"
+                  placeholder={ui("Calculator or 🔢")}
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="color_scheme">Color Scheme (CSS class)</Label>
+                <Label htmlFor="color_scheme">{ui("Color Scheme (CSS class)")}</Label>
                 <Input
                   id="color_scheme"
                   value={formData.color_scheme}
@@ -142,20 +144,20 @@ const SubjectManager = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="display_context">Display</Label>
+                <Label htmlFor="display_context">{ui("Display")}</Label>
                 <select
                   id="display_context"
                   value={formData.display_context}
                   onChange={(e) => setFormData({ ...formData, display_context: e.target.value as 'learn' | 'practice' | 'both' })}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
-                  <option value="both">Learn + Practice</option>
-                  <option value="learn">Learn only</option>
-                  <option value="practice">Practice only</option>
+                  <option value="both">{ui("Learn + Practice")}</option>
+                  <option value="learn">{ui("Learn only")}</option>
+                  <option value="practice">{ui("Practice only")}</option>
                 </select>
               </div>
               <div>
-                <Label htmlFor="order_index">Order Index</Label>
+                <Label htmlFor="order_index">{ui("Order Index")}</Label>
                 <Input
                   id="order_index"
                   type="number"
@@ -170,7 +172,7 @@ const SubjectManager = () => {
                   checked={formData.is_active}
                   onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
                 />
-                <Label htmlFor="is_active">Active</Label>
+                <Label htmlFor="is_active">{ui("Active")}</Label>
               </div>
               <Button type="submit" className="w-full">
                 {editingSubject ? 'Update Subject' : 'Create Subject'}
@@ -183,13 +185,13 @@ const SubjectManager = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Icon</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Slug</TableHead>
-            <TableHead>Order</TableHead>
-            <TableHead>Display</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>{ui("Icon")}</TableHead>
+            <TableHead>{ui("Name")}</TableHead>
+            <TableHead>{ui("Slug")}</TableHead>
+            <TableHead>{ui("Order")}</TableHead>
+            <TableHead>{ui("Display")}</TableHead>
+            <TableHead>{ui("Status")}</TableHead>
+            <TableHead>{ui("Actions")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -203,14 +205,14 @@ const SubjectManager = () => {
               <TableCell>{subject.order_index}</TableCell>
               <TableCell>
                 {subject.display_context === 'both'
-                  ? 'Learn + Practice'
+                  ? ui("Learn + Practice")
                   : subject.display_context === 'learn'
-                    ? 'Learn only'
-                    : 'Practice only'}
+                    ? ui("Learn only")
+                    : ui("Practice only")}
               </TableCell>
               <TableCell>
                 <span className={subject.is_active ? 'text-green-600' : 'text-red-600'}>
-                  {subject.is_active ? 'Active' : 'Inactive'}
+                  {subject.is_active ? ui("Active") : 'Inactive'}
                 </span>
               </TableCell>
               <TableCell>

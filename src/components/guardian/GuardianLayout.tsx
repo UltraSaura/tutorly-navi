@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Outlet, Navigate, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
@@ -23,6 +24,7 @@ const guardianNavigation = [
 ];
 
 const GuardianLayout = () => {
+  const ui = useInterfaceTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { canAccessGuardianPortal, loading } = useGuardianAuth();
   const navigate = useNavigate();
@@ -33,33 +35,33 @@ const GuardianLayout = () => {
   // Determine page title based on route
   const getPageTitle = () => {
     const path = location.pathname;
-    if (path === '/guardian') return 'Home';
-    if (path.includes('/children')) return 'Children';
-    if (path.includes('/results')) return 'Results';
-    if (path.includes('/explanations')) return 'Explanations';
-    if (path.includes('/progress')) return 'Progress';
-    if (path.includes('/billing')) return 'Billing';
-    if (path.includes('/settings')) return 'Settings';
+    if (path === '/guardian') return ui("Home");
+    if (path.includes('/children')) return ui("Children");
+    if (path.includes('/results')) return ui("Results");
+    if (path.includes('/explanations')) return ui("Explanations");
+    if (path.includes('/progress')) return ui("Progress");
+    if (path.includes('/billing')) return ui("Billing");
+    if (path.includes('/settings')) return ui("Settings");
     if (path.includes('/child/')) {
-      if (path.includes('/subject/')) return 'Subject Detail';
-      return 'Child Dashboard';
+      if (path.includes('/subject/')) return ui("Subject Detail");
+      return ui("Child Dashboard");
     }
-    return 'Guardian Portal';
+    return ui("Guardian Portal");
   };
 
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
       toast({
-        title: 'Signed out successfully',
-        description: 'You have been logged out of your account.',
+        title: ui("Signed out successfully"),
+        description: ui("You have been logged out of your account."),
       });
       navigate('/auth');
     } catch (error) {
       console.error('Error signing out:', error);
       toast({
-        title: 'Error signing out',
-        description: 'There was an error signing out. Please try again.',
+        title: ui("Error signing out"),
+        description: ui("There was an error signing out. Please try again."),
         variant: 'destructive',
       });
     }
@@ -70,14 +72,14 @@ const GuardianLayout = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">{ui("Loading...")}</p>
         </div>
       </div>
     );
   }
 
   if (!canAccessGuardianPortal) {
-    return <Navigate to="/auth" replace state={{ message: "Please log in as a guardian to access this portal" }} />;
+    return <Navigate to="/auth" replace state={{ message: ui("Please log in as a guardian to access this portal") }} />;
   }
 
   const Sidebar = ({ mobile = false }) => (
@@ -86,14 +88,14 @@ const GuardianLayout = () => {
       mobile ? "w-full" : "w-64"
     )}>
       <div className="p-6 border-b">
-        <h2 className="text-xl font-bold text-foreground">Guardian Portal</h2>
-        <p className="text-sm text-muted-foreground">Manage your children</p>
+        <h2 className="text-xl font-bold text-foreground">{ui("Guardian Portal")}</h2>
+        <p className="text-sm text-muted-foreground">{ui("Manage your children")}</p>
       </div>
       
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {guardianNavigation.map((item) => (
           <NavLink
-            key={item.title}
+            key={ui(item.title)}
             to={item.url}
             onClick={() => mobile && setIsMobileMenuOpen(false)}
             className={({ isActive }) =>
@@ -106,7 +108,7 @@ const GuardianLayout = () => {
             }
           >
             <item.icon className="h-5 w-5" />
-            <span className="font-medium">{item.title}</span>
+            <span className="font-medium">{ui(item.title)}</span>
           </NavLink>
         ))}
       </nav>
@@ -122,7 +124,7 @@ const GuardianLayout = () => {
           className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent"
         >
           <LogOut className="h-5 w-5 mr-3" />
-          <span className="font-medium">Sign Out</span>
+          <span className="font-medium">{ui("Sign Out")}</span>
         </Button>
       </div>
     </div>

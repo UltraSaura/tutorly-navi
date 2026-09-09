@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import type { MatchQuestion } from "@/types/quiz-bank";
@@ -112,6 +113,7 @@ const LINE_COLORS = [
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function MatchQuestionView({ question, value, onChange }: Props) {
+  const ui = useInterfaceTranslation();
   const hideLabel = question.hide_labels === true;
   const confirmedPairs: string[] = Array.isArray(value) ? value : [];
   const pairedLeftIds  = confirmedPairs.map(p => p.split(":")[0]);
@@ -295,7 +297,7 @@ export function MatchQuestionView({ question, value, onChange }: Props) {
       {/* Counter + hint */}
       <div className="mt-3 flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
-          {confirmedPairs.length}/{question.pairs.length} paires — tire un trait pour relier
+          {confirmedPairs.length}/{question.pairs.length} {ui("paires — tire un trait pour relier")}
         </p>
         {confirmedPairs.length > 0 && (
           <button
@@ -303,7 +305,7 @@ export function MatchQuestionView({ question, value, onChange }: Props) {
             onClick={() => onChange([])}
             className="text-xs text-muted-foreground hover:text-red-500 transition-colors"
           >
-            Tout effacer
+            {ui("Tout effacer")}
           </button>
         )}
       </div>
@@ -315,7 +317,7 @@ export function MatchQuestionView({ question, value, onChange }: Props) {
           animate={{ opacity: 1 }}
           className="text-xs text-center text-primary/70 mt-1"
         >
-          Appuie et fais glisser depuis la gauche vers la droite
+          {ui("Appuie et fais glisser depuis la gauche vers la droite")}
         </motion.p>
       )}
     </div>

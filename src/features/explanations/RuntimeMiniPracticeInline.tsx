@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React from "react";
 import { HelpCircle, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ function MiniPracticeVisual({ visualText }: { visualText: string }) {
 }
 
 export function RuntimeMiniPracticeInline({ context, fallbackBody }: RuntimeMiniPracticeInlineProps) {
+  const ui = useInterfaceTranslation();
   const { t } = useLanguage();
   const { selectedModelId } = useAdmin();
   const [practice, setPractice] = React.useState<RuntimeMiniPractice | null>(null);

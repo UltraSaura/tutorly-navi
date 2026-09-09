@@ -16,31 +16,26 @@ import { AccountTabContent } from "./AccountTabContent";
 const bottomTabItems = [
   { 
     title: "nav.home", 
-    mobileLabel: "Tuteur",
     url: "/chat", 
     icon: Bot 
   },
   {
     title: "nav.practice",
-    mobileLabel: "S’exercer",
     url: "/practice",
     icon: Dumbbell
   },
   { 
     title: "nav.learning", 
-    mobileLabel: "Leçons",
     url: "/learning", 
     icon: BookOpen 
   },
   { 
     title: "nav.history", 
-    mobileLabel: "Historique",
     url: "/exercise-history", 
     icon: History 
   },
   { 
     title: "nav.account", 
-    mobileLabel: "Compte",
     url: null, // Special case - opens sheet
     icon: User 
   },
@@ -76,7 +71,7 @@ export function MobileBottomTabs() {
         <div className="grid h-[72px] grid-cols-5 items-center rounded-[24px] bg-white px-2 shadow-[0_18px_45px_rgba(15,23,42,0.10)]">
           {bottomTabItems.map((item) => {
             const isActiveTab = isActive(item.url);
-            const label = item.mobileLabel ?? t(item.title);
+            const label = t(item.title);
             
             if (item.url) {
               return (

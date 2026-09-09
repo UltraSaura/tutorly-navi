@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,20 +12,22 @@ interface PromptTemplateDetailsProps {
 }
 
 export const PromptTemplateDetails = ({ selectedTemplate }: PromptTemplateDetailsProps) => {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   if (!selectedTemplate) {
     return (
       <Card className="glass lg:col-span-1">
         <CardHeader>
-          <CardTitle>Active Template</CardTitle>
+          <CardTitle>{ui("Active Template")}</CardTitle>
           <CardDescription>
-            Currently active system prompt that guides the AI tutor's behavior
+            {ui("Currently active system prompt that guides the AI tutor's behavior")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-6">
             <FileText className="h-12 w-12 text-muted-foreground mb-3" />
             <p className="text-muted-foreground text-center">
-              No template selected. Please select a template from the Templates tab.
+              {ui("No template selected. Please select a template from the Templates tab.")}
             </p>
           </div>
         </CardContent>
@@ -34,9 +38,9 @@ export const PromptTemplateDetails = ({ selectedTemplate }: PromptTemplateDetail
   return (
     <Card className="glass lg:col-span-1">
       <CardHeader>
-        <CardTitle>Active Template</CardTitle>
+        <CardTitle>{ui("Active Template")}</CardTitle>
         <CardDescription>
-          Currently active system prompt that guides the AI tutor's behavior
+          {ui("Currently active system prompt that guides the AI tutor's behavior")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -47,7 +51,7 @@ export const PromptTemplateDetails = ({ selectedTemplate }: PromptTemplateDetail
           </div>
           
           <div>
-            <p className="text-sm font-medium">Subject</p>
+            <p className="text-sm font-medium">{ui("Subject")}</p>
             <Badge variant="outline" className="mt-1">
               {selectedTemplate.subject}
             </Badge>
@@ -55,7 +59,7 @@ export const PromptTemplateDetails = ({ selectedTemplate }: PromptTemplateDetail
           
           {selectedTemplate.tags.length > 0 && (
             <div>
-              <p className="text-sm font-medium">Tags</p>
+              <p className="text-sm font-medium">{ui("Tags")}</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {selectedTemplate.tags.map((tag, index) => (
                   <Badge key={index} variant="secondary" className="text-xs">
@@ -67,10 +71,10 @@ export const PromptTemplateDetails = ({ selectedTemplate }: PromptTemplateDetail
           )}
           
           <div>
-            <p className="text-sm font-medium">Last Updated</p>
+            <p className="text-sm font-medium">{ui("Last Updated")}</p>
             <p className="text-sm">
-              {new Date(selectedTemplate.updated_at).toLocaleDateString()} at {' '}
-              {new Date(selectedTemplate.updated_at).toLocaleTimeString()}
+              {new Date(selectedTemplate.updated_at).toLocaleDateString(locale)} {ui("at")} {' '}
+              {new Date(selectedTemplate.updated_at).toLocaleTimeString(locale)}
             </p>
           </div>
         </div>

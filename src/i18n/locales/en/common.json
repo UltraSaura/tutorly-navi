@@ -3,10 +3,8 @@
   "common.cancel": "Cancel",
   "common.error": "Something went wrong.",
   "common.selectSubject": "Select subject",
-
   "brand.short": "SW",
   "brand.name": "Stuwy",
-
   "nav.main": "Main",
   "nav.home": "Tutor",
   "nav.dashboard": "Dashboard",
@@ -22,19 +20,15 @@
   "nav.profile": "Profile",
   "nav.settings": "Settings",
   "nav.language": "Language",
-
   "tools.comingSoon": "Coming Soon",
   "tools.description": "New tools and features will be available here soon.",
-
   "language.english": "English",
   "language.french": "French",
   "language.autoDetected": "Language auto-detected",
   "language.auto": "Auto",
-
   "chat.welcomeMessage": "Hi! Ask a question or paste your homework and I'll guide you.",
   "chat.inputPlaceholder": "Type your exercise or question…",
   "chat.error": "Couldn't load chat. Please try again.",
-
   "exercise.exerciseList": "Exercises",
   "exercise.noExercises": "No exercises yet",
   "exercise.correct": "correct",
@@ -52,7 +46,6 @@
   "exercise.learningOpportunity": "Learning opportunity!",
   "exercise.submitAnswer": "Submit answer",
   "exercise.submittingAnswer": "Submitting answer...",
-
   "grades.title": "Grades",
   "grades.description": "Track your performance across exercises and topics.",
   "grades.overallGrade": "Overall grade",
@@ -64,14 +57,12 @@
   "grades.totalExercises": "Total exercises",
   "grades.exerciseList": "Exercises",
   "grades.exerciseListDescription": "Your exercises will appear here.",
-
   "roadmap.title": "Learning roadmap",
   "roadmap.description": "Your personalized path to mastering key skills.",
   "roadmap.progress": "Progress",
   "roadmap.complete": "Complete",
   "roadmap.inProgress": "In progress",
   "roadmap.notStarted": "Not started",
-
   "explanation.stepByStepTitle": "Step-by-step explanation",
   "explanation.fallback.exercise": "Exercise",
   "explanation.fallback.concept": "Concept",
@@ -81,7 +72,6 @@
   "explanation.fallback.check": "Check yourself",
   "explanation.fallback.practice": "Practice Tip",
   "explanation.error": "We couldn't build an explanation. Showing a fallback instead.",
-
   "form.aria.close": "Close dialog",
   "form.aria.pagination": "Pagination",
   "form.aria.previousPage": "Previous page",
@@ -90,27 +80,21 @@
   "form.aria.sendQuestion": "Send question",
   "form.placeholders.enterAnswer": "Enter your answer…",
   "form.placeholders.questionOrHomework": "Type a question or paste homework text…",
-
   "ui.previous": "Previous",
   "ui.next": "Next",
-
   "practice.title": "Practice",
   "practice.subtitle": "Simple practice. One exercise at a time.",
   "practice.metaDescription": "Start fast with skills, exam papers, and AI practice (coming soon).",
-
   "practice.hero.title": "Ready to start?",
   "practice.hero.description": "Pick up where you left off, or start a fresh session.",
-
   "practice.sections.continue": "Continue",
   "practice.sections.bySkill": "Practice by skill",
   "practice.sections.exams": "Exam practice",
   "practice.sections.ai": "AI practice",
-
   "practice.cta.start": "Start practicing",
   "practice.cta.browseLessons": "Browse lessons",
   "practice.cta.continue": "Continue",
   "practice.cta.openSession": "Open session",
-
   "practice.subjects.title": "Subjects",
   "practice.subjects.cta": "Practice",
   "practice.subjects.levelLabel": "Level: {{level}}",
@@ -120,19 +104,16 @@
   "practice.subjects.examPaperCount_other": "{{count}} exam papers",
   "practice.subjects.emptyTitle": "No subjects yet.",
   "practice.subjects.emptyDescription": "Your curriculum may still be loading. Come back later.",
-
   "practice.subject.metaTitle": "Practice — {{subject}}",
   "practice.subject.metaDescription": "Choose a practice mode for this subject.",
   "practice.subject.title": "{{subject}}",
   "practice.subject.subtitle": "Choose one option.",
   "practice.subject.back": "Back",
-
   "practice.subject.quick.title": "Quick exercises",
   "practice.subject.quick.subtitle": "Short guided practice",
   "practice.subject.quick.itemCount_one": "{{count}} published exercise",
   "practice.subject.quick.itemCount_other": "{{count}} published exercises",
   "practice.subject.quick.cta": "Start a session",
-
   "practice.subject.exams.title": "Exam papers",
   "practice.subject.exams.subtitle": "Official papers, one exercise at a time",
   "practice.subject.exams.paperCount_one": "{{count}} paper",
@@ -140,11 +121,9 @@
   "practice.subject.exams.exerciseCount_one": "{{count}} exercise",
   "practice.subject.exams.exerciseCount_other": "{{count}} exercises",
   "practice.subject.exams.cta": "Open exam papers",
-
   "practice.subject.ai.title": "Practice by topic",
   "practice.subject.ai.subtitle": "Adaptive questions mapped to your curriculum",
   "practice.subject.ai.cta": "Choose a topic",
-
   "practice.topics.metaTitle": "Practice by topic — {{subject}}",
   "practice.topics.back": "Back",
   "practice.topics.practiceAll": "Practice all",
@@ -156,13 +135,11 @@
   "practice.topics.practiceBtn": "Practice",
   "practice.topics.questionsCount_one": "{{count}} question",
   "practice.topics.questionsCount_other": "{{count}} questions",
-
   "practice.annals.heading": "Past papers",
   "practice.annals.metaTitle": "Past papers — {{subject}}",
   "practice.annals.metaDescription": "Official papers for this subject.",
   "practice.annals.back": "Back",
   "practice.annals.fallbackPaperTitle": "DNB {{year}}",
-
   "practice.parsed.context": "Directions",
   "practice.parsed.documents": "Documents and tables",
   "practice.parsed.questions": "Questions",
@@ -172,18 +149,15 @@
   "practice.guidance.tryFirst": "Try answering this question first.",
   "practice.guidance.almost": "You’re close.",
   "practice.guidance.correct": "Correct.",
-
   "practice.continue.exercise.title": "Resume your last exercise",
   "practice.continue.exercise.subtitle": "Continue with zero friction",
   "practice.continue.exams.title": "Resume exam practice",
   "practice.continue.exams.subtitleHasSession": "Continue your latest paper",
   "practice.continue.exams.subtitleEmpty": "No active session yet",
-
   "practice.empty.exams.title": "No exam papers yet.",
   "practice.empty.exams.description": "Try AI practice or come back later.",
   "practice.empty.exams.sessionTitle": "No exam papers yet.",
   "practice.empty.exams.sessionDescription": "Try AI practice or come back later.",
-
   "practice.ai.generateSimilar.title": "Generate similar exercises",
   "practice.ai.generateSimilar.subtitle": "From your current topic",
   "practice.ai.trainWeakSkills.title": "Train weak skills",
@@ -192,7 +166,6 @@
   "practice.ai.createMockExam.subtitle": "Exam-like session",
   "practice.ai.generateFullMockExam.title": "Generate full mock exam",
   "practice.ai.generateFullMockExam.subtitle": "Longer timed practice",
-
   "practice.exam.start": "Start exam practice",
   "practice.exam.train": "Practice with these questions",
   "practice.exam.consult": "View official paper",
@@ -201,7 +174,6 @@
   "practice.exam.trainingItemsPending": "Conversion to interactive exercises in progress",
   "practice.exam.exerciseCount_one": "{{count}} exercise",
   "practice.exam.exerciseCount_other": "{{count}} exercises",
-
   "practice.session.metaTitle": "Exam practice",
   "practice.session.metaDescription": "Official exam paper consultation.",
   "practice.session.back": "Back",
@@ -216,11 +188,9 @@
   "practice.session.officialReadOnly.descriptionNoItems": "This paper is being converted into interactive exercises.",
   "practice.session.officialReadOnly.cta": "Practice with these questions",
   "practice.session.officialReadOnly.ctaShort": "Practice",
-
   "practice.session.preparing.title": "This exercise is being prepared.",
   "practice.session.preparing.description": "You can view the original PDF, or come back later.",
   "practice.session.preparing.viewPdf": "View original PDF",
-
   "upload.photoUploaded": "Photo uploaded",
   "upload.photoSuccess": "Your image was uploaded successfully.",
   "upload.fileTooLarge": "File too large",
@@ -230,20 +200,16 @@
   "upload.documentUploaded": "Document uploaded",
   "upload.documentSuccess": "was uploaded successfully.",
   "upload.documentFileError": "Please upload a valid document (PDF, DOCX, etc.).",
-
   "camera.title": "Take a photo of your exercise",
   "camera.accessError": "We couldn't access your camera. Check browser permissions.",
   "camera.starting": "Starting camera…",
-
   "errors.somethingWrong": "Something went wrong",
   "errors.refreshPage": "Please refresh the page and try again.",
-
   "profile.title": "Profile",
   "profile.description": "Manage your personal information and preferences.",
   "profile.personalInfo": "Personal information",
   "profile.personalInfoDescription": "Keep your information up to date.",
   "profile.accountType": "Account type",
-
   "profile.deleteAccount.title": "Delete account",
   "profile.deleteAccount.description": "This action is permanent and cannot be undone.",
   "profile.deleteAccount.warning": "Warning",
@@ -263,7 +229,6 @@
   "profile.deleteAccount.error": "Could not delete account",
   "profile.deleteAccount.confirmTextError": "Please type DELETE to confirm.",
   "profile.deleteAccount.errorMessage": "An error occurred while deleting your account.",
-
   "auth.signIn": "Sign in",
   "auth.email": "Email",
   "auth.password": "Password",
@@ -287,14 +252,12 @@
   "auth.continueAsStudent": "Continue as student",
   "auth.parent": "Parent",
   "auth.parentDescription": "Create an account to manage your children's accounts.",
-
   "game.level": "Lvl",
   "game.xp": "XP",
   "game.dayStreak": "day streak",
   "game.streak": "streak",
   "game.coins": "coins",
   "game.points": "points",
-
   "subjects.math": "Mathematics",
   "subjects.physics": "Physics",
   "subjects.chemistry": "Chemistry",
@@ -457,7 +420,6 @@
   "subjects.campania": "Campania",
   "subjects.sicily": "Sicily",
   "subjects.sardinia": "Sardinia",
-
   "topic.loadingContent": "Loading learning content...",
   "topic.loadingLesson": "Loading lesson...",
   "topic.fullLesson": "Full Lesson",
@@ -496,5 +458,34 @@
   "topic.searchTranscript": "Search transcript...",
   "topic.noSearchResults": "No matching text found",
   "topic.videoWatched": "Video",
-  "topic.quizCompleted": "Quiz"
+  "topic.quizCompleted": "Quiz",
+  "explanation.title": "Explanation",
+  "actions.clearAll": "Clear all",
+  "profile.signedOut": "Signed out successfully",
+  "nav.signOut": "Sign out",
+  "learning.videoNotFound": "Video not found",
+  "learning.quiz": "Quiz",
+  "learning.correct": "Correct!",
+  "learning.incorrect": "Try again",
+  "learning.submit": "Submit",
+  "learning.continueVideo": "Continue video",
+  "learning.topicNotFound": "Topic not found",
+  "dashboard.title": "My learning dashboard",
+  "dashboard.description": "Track your progress and continue learning.",
+  "dashboard.roadmap": "Learning roadmap",
+  "dashboard.grades": "Grades",
+  "dashboard.skills": "Skills",
+  "game.active": "Active",
+  "game.inactive": "Inactive",
+  "chat.mathInputPlaceholder": "Type your math problem…",
+  "upload.cropTitle": "Crop your image",
+  "upload.sendFull": "Send full image",
+  "upload.cropAndSend": "Crop and send",
+  "common.like": "Like",
+  "common.dislike": "Dislike",
+  "common.present": "Present",
+  "common.none": "None",
+  "subjects.science": "Science",
+  "subjects.historyGeography": "History & Geography",
+  "subjects.physicsChemistry": "Physics & Chemistry"
 }

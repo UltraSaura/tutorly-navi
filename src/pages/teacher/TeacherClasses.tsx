@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useTeacherClasses } from '@/hooks/useTeacherClasses';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function TeacherClasses() {
+  const ui = useInterfaceTranslation();
   const { data: classes = [], isLoading } = useTeacherClasses();
   const navigate = useNavigate();
 
@@ -23,15 +25,15 @@ export default function TeacherClasses() {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Classes" description="Manage your classes and enrolled students on Stuwy." />
+      <PageMeta title={ui("Classes")} description={ui("Manage your classes and enrolled students on Stuwy.")} />
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">My Classes</h1>
-          <p className="text-muted-foreground">Manage and view all your classes</p>
+          <h1 className="text-3xl font-bold">{ui("My Classes")}</h1>
+          <p className="text-muted-foreground">{ui("Manage and view all your classes")}</p>
         </div>
         <Button>
           <Plus className="w-4 h-4 mr-2" />
-          New Class
+          {ui("New Class")}
         </Button>
       </div>
 
@@ -50,15 +52,15 @@ export default function TeacherClasses() {
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Students:</span>
+                <span className="text-muted-foreground">{ui("Students:")}</span>
                 <span className="font-medium">{cls.student_count}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Level:</span>
+                <span className="text-muted-foreground">{ui("Level:")}</span>
                 <span className="font-medium">{cls.level_code || 'N/A'}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Year:</span>
+                <span className="text-muted-foreground">{ui("Year:")}</span>
                 <span className="font-medium">{cls.school_year || 'N/A'}</span>
               </div>
             </CardContent>
@@ -70,11 +72,11 @@ export default function TeacherClasses() {
         <Card>
           <CardContent className="p-12 text-center">
             <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">No classes yet</h3>
-            <p className="text-muted-foreground mb-4">Create your first class to get started</p>
+            <h3 className="text-lg font-semibold mb-2">{ui("No classes yet")}</h3>
+            <p className="text-muted-foreground mb-4">{ui("Create your first class to get started")}</p>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Create Class
+              {ui("Create Class")}
             </Button>
           </CardContent>
         </Card>

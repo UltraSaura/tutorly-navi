@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React from 'react';
 import { AlertCircle, Loader2, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import { GroupedRetryPractice, ProblemSubmission } from '@/types/chat';
@@ -64,6 +65,7 @@ const GroupedProblemExplanationModal = ({
   feedback = null,
   feedbackLoading = false,
 }: GroupedProblemExplanationModalProps) => {
+  const ui = useInterfaceTranslation();
   const { language } = useLanguage();
   const { userContext } = useUserContext();
   const { activeLevel } = useActiveSchoolLevel();
@@ -127,9 +129,9 @@ const GroupedProblemExplanationModal = ({
       <div className="w-full max-w-2xl rounded-2xl bg-card border border-border shadow-lg max-h-[80vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-5 border-b border-border">
           <h3 className="font-semibold text-lg text-foreground">
-            {language === 'fr' ? 'Explication' : 'Explanation'}
+            {language === 'fr' ? 'Explication' : ui("Explanation")}
           </h3>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6" aria-label="Close">
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6" aria-label={ui("Close")}>
             <X size={16} />
           </Button>
         </div>
@@ -178,7 +180,7 @@ const GroupedProblemExplanationModal = ({
                       <div className="flex items-start gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-2xl shadow-inner">📝</div>
                         <div className="flex-1 space-y-2">
-                          <h5 className="text-lg font-bold text-blue-900">{language === 'fr' ? 'Exemple' : 'Example'}</h5>
+                          <h5 className="text-lg font-bold text-blue-900">{language === 'fr' ? ui("Exemple") : 'Example'}</h5>
                           {practice.diagram && <div className="mb-3"><GeometryDiagram diagram={practice.diagram} /></div>}
                           <p className="text-base text-gray-700 font-medium whitespace-pre-wrap">{toChildFriendlyExplanationText(practice.similarProblem)}</p>
                         </div>
@@ -191,7 +193,7 @@ const GroupedProblemExplanationModal = ({
                     <div className="flex items-start gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-2xl shadow-inner">✅</div>
                       <div className="flex-1 space-y-2">
-                        <h5 className="text-lg font-bold text-green-900">{language === 'fr' ? 'Auto-vérification' : 'Self-check'}</h5>
+                        <h5 className="text-lg font-bold text-green-900">{language === 'fr' ? ui("Auto-vérification") : 'Self-check'}</h5>
                         <p className="text-base text-gray-700 font-medium whitespace-pre-wrap">{toChildFriendlyExplanationText(practice.retryPrompt)}</p>
                       </div>
                     </div>
@@ -202,7 +204,7 @@ const GroupedProblemExplanationModal = ({
                     <div className="flex items-start gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100 text-2xl shadow-inner">🚀</div>
                       <div className="flex-1 space-y-2">
-                        <h5 className="text-lg font-bold text-orange-900">{language === 'fr' ? 'Méthode' : 'Method'}</h5>
+                        <h5 className="text-lg font-bold text-orange-900">{language === 'fr' ? 'Méthode' : ui("Method")}</h5>
                         <p className="text-base text-gray-700 font-medium whitespace-pre-wrap">{toChildFriendlyExplanationText(practice.method)}</p>
                       </div>
                     </div>
@@ -287,7 +289,7 @@ const GroupedProblemExplanationModal = ({
 
                   <section className="rounded-lg border border-green-200 bg-green-50 p-4">
                     <h4 className="text-sm font-semibold text-green-950 mb-2">
-                      {language === 'fr' ? 'Auto-vérification' : 'Self-check'}
+                      {language === 'fr' ? ui("Auto-vérification") : 'Self-check'}
                     </h4>
                     <p className="text-sm text-green-950 whitespace-pre-wrap">
                       {practice.retryPrompt}
@@ -296,7 +298,7 @@ const GroupedProblemExplanationModal = ({
 
                   <section className="rounded-lg border bg-card p-4">
                     <h4 className="text-sm font-semibold text-foreground mb-2">
-                      {language === 'fr' ? 'Méthode' : 'Method'}
+                      {language === 'fr' ? 'Méthode' : ui("Method")}
                     </h4>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                       {practice.method}

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -19,6 +20,7 @@ import {
 const REAL_PROFILE_VALUE = 'real_profile';
 
 export function AdminPreviewSelector({ compact = false }: { compact?: boolean }) {
+  const ui = useInterfaceTranslation();
   const { i18n } = useTranslation();
   const { isAdmin } = useAdminAuth();
   const { previewLevel, setPreviewLevel, clearPreviewMode } = useAdminPreview();
@@ -29,7 +31,7 @@ export function AdminPreviewSelector({ compact = false }: { compact?: boolean })
   return (
     <div className="flex items-center gap-2">
       {!compact ? (
-        <span className="text-xs font-medium text-muted-foreground">Voir comme</span>
+        <span className="text-xs font-medium text-muted-foreground">{ui("Voir comme")}</span>
       ) : null}
       <Select
         value={previewLevel ?? REAL_PROFILE_VALUE}
@@ -39,10 +41,10 @@ export function AdminPreviewSelector({ compact = false }: { compact?: boolean })
         }}
       >
         <SelectTrigger className="h-9 w-[9.5rem] bg-background">
-          <SelectValue placeholder="Voir comme" />
+          <SelectValue placeholder={ui("Voir comme")} />
         </SelectTrigger>
         <SelectContent className="z-[9999]">
-          <SelectItem value={REAL_PROFILE_VALUE}>Profil réel</SelectItem>
+          <SelectItem value={REAL_PROFILE_VALUE}>{ui("Profil réel")}</SelectItem>
           {ADMIN_PREVIEW_LEVELS.map((level) => (
             <SelectItem key={level.code} value={level.code}>
               {language.startsWith('en') ? level.labelEn : level.labelFr}

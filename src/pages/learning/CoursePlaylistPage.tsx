@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -20,10 +21,11 @@ import type { LessonContent } from '@/types/learning';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 const CoursePlaylistPage = () => {
+  const ui = useInterfaceTranslation();
   const { subjectSlug, topicSlug } = useParams<{ subjectSlug: string; topicSlug: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const { data, isLoading } = useCoursePlaylist(topicSlug || '');
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
@@ -88,7 +90,7 @@ const CoursePlaylistPage = () => {
   if (!data?.topic) {
     return (
       <div className="container mx-auto p-4 text-center">
-        <p className="text-muted-foreground">{t('learning.topicNotFound') || 'Topic not found'}</p>
+        <p className="text-muted-foreground">{t('learning.topicNotFound') || ui("Topic not found")}</p>
       </div>
     );
   }
@@ -98,7 +100,7 @@ const CoursePlaylistPage = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <PageMeta title="Course" description="Follow the lesson playlist with videos, quizzes, and AI guidance." />
+      <PageMeta title={ui("Course")} description={ui("Follow the lesson playlist with videos, quizzes, and AI guidance.")} />
       {/* Header - Sticky */}
       <div className="flex items-center gap-4 px-4 py-3 bg-card border-b sticky top-0 z-20">
         <Button variant="ghost" size="icon" onClick={() => navigate(`/learning/${subjectSlug}`)}>
@@ -114,7 +116,7 @@ const CoursePlaylistPage = () => {
               domainId={topic.curriculum_domain_id}
               subdomainId={topic.curriculum_subdomain_id}
               variant="compact"
-              locale="en"
+              locale={language}
             />
           )}
         </div>

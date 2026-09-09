@@ -1,3 +1,5 @@
+import { useSubjectLabel } from '@/i18n/useSubjectLabel';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -88,6 +90,8 @@ const defaultPracticeSubjects = [
 ] as const;
 
 export default function PracticePage() {
+  const subjectLabel = useSubjectLabel();
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const subjectsQuery = useLearningSubjects();
@@ -242,10 +246,10 @@ export default function PracticePage() {
         <section className="relative min-h-[150px] overflow-hidden">
           <div className="relative z-10 max-w-[62%] space-y-2 pt-8">
             <h1 className="text-[32px] font-extrabold leading-none tracking-normal text-[#050B34]">
-              S&apos;exercer
+              {ui("S'exercer")}
             </h1>
             <p className="text-[18px] font-semibold leading-snug tracking-normal text-[#667085]">
-              Choisis une matière pour t&apos;entraîner 🚀
+              {ui("Choisis une matière pour t'entraîner 🚀")}
             </p>
           </div>
           <span className="absolute right-28 top-[60px] h-3 w-3 rounded-full bg-[#F9D66B]" />
@@ -253,7 +257,7 @@ export default function PracticePage() {
           <span className="absolute right-32 top-[134px] h-3 w-3 rounded-full bg-[#A8E6D8]" />
           <img
             src={MASCOT_SRC}
-            alt="Mascotte"
+            alt={ui("Mascotte")}
             onError={(event) => {
               event.currentTarget.src = FALLBACK_MASCOT_SRC;
             }}
@@ -280,7 +284,7 @@ export default function PracticePage() {
                 const colors = getSubjectVisuals(subject.slug, subject.color_scheme);
                 const sourceSubject = subjectsByKey.get(normalizeSubjectKey(subject.slug));
                 const exerciseCount = sourceSubject?.exercises ?? 0;
-                const exerciseLabel = `${exerciseCount} exercice${exerciseCount > 1 ? 's' : ''}`;
+                const exerciseLabel = ui("exerciseCount", { count: exerciseCount });
                 const Icon = subject.icon;
                 const subjectTitleFontSize = Math.max((subject.practice_font_size ?? 18) + 4, 16);
                 const subjectTitleFontFamily = subject.practice_font_family ?? 'Poppins, sans-serif';
@@ -318,7 +322,7 @@ export default function PracticePage() {
                         className="font-extrabold leading-tight tracking-normal"
                         style={{ color: subject.practice_text_color ?? '#050B34', fontSize: `${subjectTitleFontSize}px`, fontFamily: subjectTitleFontFamily }}
                       >
-                        {subject.name}
+                        {subjectLabel(subject.name)}
                       </h2>
                       <p className="text-base font-semibold leading-snug text-[#667085]">
                         {exerciseLabel}

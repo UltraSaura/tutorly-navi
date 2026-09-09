@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,7 @@ import type { Question } from '@/types/quiz-bank';
 import { getSchoolLevelLabel, getSchoolLevelOptions, normalizeSchoolLevel } from '@/domain/schoolLevels';
 
 const BankManager = () => {
+  const ui = useInterfaceTranslation();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBank, setEditingBank] = useState<any>(null);
@@ -388,58 +390,58 @@ const BankManager = () => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>{ui("Loading...")}</div>;
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Quiz Banks</h2>
+        <h2 className="text-2xl font-bold">{ui("Quiz Banks")}</h2>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setTopicGeneratorOpen(true)}>
             <BookOpen className="w-4 h-4 mr-2" />
-            Generate from Topics
+            {ui("Generate from Topics")}
           </Button>
           <Button variant="outline" onClick={() => setGeneratorOpen(true)}>
             <Sparkles className="w-4 h-4 mr-2" />
-            Generate from Transcripts
+            {ui("Generate from Transcripts")}
           </Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={resetForm}>
                 <Plus className="w-4 h-4 mr-2" />
-                Create Quiz Bank
+                {ui("Create Quiz Bank")}
               </Button>
             </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingBank ? 'Edit Quiz Bank' : 'Create Quiz Bank'}
+                {editingBank ? 'Edit Quiz Bank' : ui("Create Quiz Bank")}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="id">Bank ID</Label>
+                <Label htmlFor="id">{ui("Bank ID")}</Label>
                 <Input
                   id="id"
                   value={formData.id}
                   onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-                  placeholder="e.g., fra-add-01-bank"
+                  placeholder={ui("e.g., fra-add-01-bank")}
                   required={!editingBank}
                   disabled={!!editingBank}
                 />
                 <p className="text-sm text-muted-foreground mt-1">
-                  Unique identifier (cannot be changed after creation)
+                  {ui("Unique identifier (cannot be changed after creation)")}
                 </p>
               </div>
 
               {!editingBank && (
                 <div className="flex gap-2">
                   <div className="flex-1">
-                    <Label>Topic</Label>
+                    <Label>{ui("Topic")}</Label>
                     <Select value={dialogTopicId} onValueChange={handleDialogTopicChange}>
                       <SelectTrigger className="h-8 text-sm">
-                        <SelectValue placeholder="Sélectionner un topic…" />
+                        <SelectValue placeholder={ui("Sélectionner un topic…")} />
                       </SelectTrigger>
                       <SelectContent>
                         {topics.map((t: any) => (
@@ -450,13 +452,13 @@ const BankManager = () => {
                   </div>
                   {dialogTopicId && getTopicSteps(dialogTopicId).length > 0 && (
                     <div className="flex-1">
-                      <Label>Étape progressive</Label>
+                      <Label>{ui("Étape progressive")}</Label>
                       <Select value={dialogStepName} onValueChange={handleDialogStepChange}>
                         <SelectTrigger className="h-8 text-sm">
-                          <SelectValue placeholder="Toutes les étapes" />
+                          <SelectValue placeholder={ui("Toutes les étapes")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Toutes les étapes</SelectItem>
+                          <SelectItem value="">{ui("Toutes les étapes")}</SelectItem>
                           {getTopicSteps(dialogTopicId).map((s) => (
                             <SelectItem key={s.step_name} value={s.step_name}>{s.step_name}</SelectItem>
                           ))}
@@ -468,29 +470,29 @@ const BankManager = () => {
               )}
 
               <div>
-                <Label htmlFor="title">Titre</Label>
+                <Label htmlFor="title">{ui("Titre")}</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g., Addition de base"
+                  placeholder={ui("e.g., Addition de base")}
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">{ui("Description")}</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Optional description"
+                  placeholder={ui("Optional description")}
                   rows={3}
                 />
               </div>
 
               <div>
-                <Label htmlFor="time_limit_sec">Time Limit (seconds)</Label>
+                <Label htmlFor="time_limit_sec">{ui("Time Limit (seconds)")}</Label>
                 <Input
                   id="time_limit_sec"
                   type="number"
@@ -499,7 +501,7 @@ const BankManager = () => {
                     ...formData, 
                     time_limit_sec: e.target.value ? parseInt(e.target.value) : null 
                   })}
-                  placeholder="Optional (leave empty for no limit)"
+                  placeholder={ui("Optional (leave empty for no limit)")}
                   min="0"
                 />
               </div>
@@ -512,7 +514,7 @@ const BankManager = () => {
                   onChange={(e) => setFormData({ ...formData, shuffle: e.target.checked })}
                   className="rounded"
                 />
-                <Label htmlFor="shuffle">Shuffle questions</Label>
+                <Label htmlFor="shuffle">{ui("Shuffle questions")}</Label>
               </div>
 
               <div className="flex justify-end gap-2">
@@ -526,10 +528,10 @@ const BankManager = () => {
                     resetForm();
                   }}
                 >
-                  Cancel
+                  {ui("Cancel")}
                 </Button>
                 <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {editingBank ? 'Update' : 'Create'}
+                  {editingBank ? ui("Update") : ui("Create")}
                 </Button>
               </div>
             </form>
@@ -539,13 +541,13 @@ const BankManager = () => {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <div>
-          <Label className="mb-1 block">School level</Label>
+          <Label className="mb-1 block">{ui("School level")}</Label>
           <Select value={schoolLevelFilter} onValueChange={setSchoolLevelFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="All levels" />
+              <SelectValue placeholder={ui("All levels")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All levels</SelectItem>
+              <SelectItem value="all">{ui("All levels")}</SelectItem>
               {getSchoolLevelOptions('fr').map((level) => (
                 <SelectItem key={level.value} value={level.value}>{level.label}</SelectItem>
               ))}
@@ -553,13 +555,13 @@ const BankManager = () => {
           </Select>
         </div>
         <div>
-          <Label className="mb-1 block">Subject</Label>
+          <Label className="mb-1 block">{ui("Subject")}</Label>
           <Select value={subjectFilter} onValueChange={(value) => { setSubjectFilter(value); setTopicFilter('all'); }}>
             <SelectTrigger>
-              <SelectValue placeholder="All subjects" />
+              <SelectValue placeholder={ui("All subjects")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All subjects</SelectItem>
+              <SelectItem value="all">{ui("All subjects")}</SelectItem>
               {subjects.filter((subject: any) => subject?.id).map((subject: any) => (
                 <SelectItem key={subject.id} value={subject.id}>{subject.name}</SelectItem>
               ))}
@@ -567,13 +569,13 @@ const BankManager = () => {
           </Select>
         </div>
         <div>
-          <Label className="mb-1 block">Topic</Label>
+          <Label className="mb-1 block">{ui("Topic")}</Label>
           <Select value={topicFilter} onValueChange={setTopicFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="All topics" />
+              <SelectValue placeholder={ui("All topics")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All topics</SelectItem>
+              <SelectItem value="all">{ui("All topics")}</SelectItem>
               {visibleTopics.filter((topic: any) => topic?.id).map((topic: any) => (
                 <SelectItem key={topic.id} value={topic.id}>{topic.name}</SelectItem>
               ))}
@@ -581,15 +583,15 @@ const BankManager = () => {
           </Select>
         </div>
         <div>
-          <Label className="mb-1 block">Language</Label>
+          <Label className="mb-1 block">{ui("Language")}</Label>
           <Select value={languageFilter} onValueChange={setLanguageFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="All languages" />
+              <SelectValue placeholder={ui("All languages")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All languages</SelectItem>
+              <SelectItem value="all">{ui("All languages")}</SelectItem>
               <SelectItem value="fr">Français</SelectItem>
-              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="en">{ui("English")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -597,7 +599,7 @@ const BankManager = () => {
       <div className="space-y-2">
         {filteredBanks.length === 0 ? (
           <div className="border rounded-lg p-8 text-center text-muted-foreground">
-            No quiz banks found. Create one to get started.
+            {ui("No quiz banks found. Create one to get started.")}
           </div>
         ) : (
           filteredBanks.map((bank: any) => (
@@ -619,7 +621,7 @@ const BankManager = () => {
                       <span className="px-2 py-1 rounded bg-muted">{bank.effectiveSchoolLevelLabel}</span>
                       <span className="px-2 py-1 rounded bg-muted">{bank.effectiveSubjectName}</span>
                       <span className="px-2 py-1 rounded bg-muted">{bank.effectivePrimaryTopicName}</span>
-                      <span className="px-2 py-1 rounded bg-muted">{bank.effectiveLanguage === 'fr' ? 'Français' : bank.effectiveLanguage === 'en' ? 'English' : bank.effectiveLanguage}</span>
+                      <span className="px-2 py-1 rounded bg-muted">{bank.effectiveLanguage === 'fr' ? 'Français' : bank.effectiveLanguage === 'en' ? ui("English") : bank.effectiveLanguage}</span>
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
@@ -645,8 +647,8 @@ const BankManager = () => {
                 <div className="border-t p-4">
                   <Tabs defaultValue="questions" className="space-y-4">
                     <TabsList>
-                      <TabsTrigger value="questions">Questions ({questions.length})</TabsTrigger>
-                      <TabsTrigger value="assignments">Assignments ({assignments.length})</TabsTrigger>
+                      <TabsTrigger value="questions">{ui("Questions (")}{questions.length})</TabsTrigger>
+                      <TabsTrigger value="assignments">{ui("Assignments (")}{assignments.length})</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="questions">
@@ -659,13 +661,13 @@ const BankManager = () => {
                             }}
                           >
                             <Plus className="w-4 h-4 mr-2" />
-                            Add Question
+                            {ui("Add Question")}
                           </Button>
                         </div>
 
                         {questions.length === 0 ? (
                           <div className="text-center text-muted-foreground py-8">
-                            No questions yet. Add your first question!
+                            {ui("No questions yet. Add your first question!")}
                           </div>
                         ) : (
                           <div className="space-y-2">
@@ -677,13 +679,13 @@ const BankManager = () => {
                                       Q{idx + 1} ({q.kind})
                                     </span>
                                     <span className="text-sm text-muted-foreground">
-                                      {q.points || 1} point{q.points !== 1 ? 's' : ''}
+                                      {q.points || 1} {ui("point")}{q.points !== 1 ? 's' : ''}
                                     </span>
                                   </div>
                                   <p className="font-medium">{q.prompt}</p>
                                   {q.hint && (
                                     <p className="text-sm text-muted-foreground mt-1">
-                                      Hint: {q.hint}
+                                      {ui("Hint:")} {q.hint}
                                     </p>
                                   )}
                                 </div>
@@ -720,13 +722,13 @@ const BankManager = () => {
                             }}
                           >
                             <Plus className="w-4 h-4 mr-2" />
-                            Add Assignment
+                            {ui("Add Assignment")}
                           </Button>
                         </div>
 
                         {assignments.length === 0 ? (
                           <div className="text-center text-muted-foreground py-8">
-                            No assignments yet. Create an assignment to control when "Test yourself" buttons appear!
+                            {ui("No assignments yet. Create an assignment to control when \"Test yourself\" buttons appear!")}
                           </div>
                         ) : (
                           <div className="space-y-2">
@@ -735,17 +737,17 @@ const BankManager = () => {
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-2">
                                     <span className={`text-xs px-2 py-1 rounded ${assignment.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                      {assignment.is_active ? 'Active' : 'Inactive'}
+                                      {assignment.is_active ? ui("Active") : 'Inactive'}
                                     </span>
                                   </div>
                                   {assignment.topic_id && (
                                     <p className="text-sm">
-                                      <span className="font-medium">Topic-based:</span> Show after {assignment.trigger_after_n_videos} video(s) completed
+                                      <span className="font-medium">{ui("Topic-based:")}</span> {ui("Show after")} {assignment.trigger_after_n_videos} {ui("video(s) completed")}
                                     </p>
                                   )}
                                   {assignment.video_ids && assignment.video_ids.length > 0 && (
                                     <p className="text-sm">
-                                      <span className="font-medium">Video set:</span> Show after {assignment.min_completed_in_set} of {assignment.video_ids.length} video(s) completed
+                                      <span className="font-medium">{ui("Video set:")}</span> {ui("Show after")} {assignment.min_completed_in_set} {ui("of")} {assignment.video_ids.length} {ui("video(s) completed")}
                                     </p>
                                   )}
                                 </div>

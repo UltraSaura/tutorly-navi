@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useEffect } from 'react';
 import VisualQuestionBuilder from '@/components/admin/VisualQuestionBuilder';
 import type { VisualUnion } from '@/lib/quiz/visual-types';
@@ -45,6 +46,7 @@ const createDefaultVisual = (): VisualUnion => ({
   ]
 });
 export function QuestionEditor({ question, isOpen, onClose, onSave, position }: QuestionEditorProps) {
+  const ui = useInterfaceTranslation();
   const [kind, setKind] = useState<Question['kind']>(question?.kind || 'single');
   const [prompt, setPrompt] = useState(question?.prompt || '');
   const [hint, setHint] = useState(question?.hint || '');
@@ -471,67 +473,67 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{question ? 'Edit Question' : 'Add Question'}</DialogTitle>
+          <DialogTitle>{question ? 'Edit Question' : ui("Add Question")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="kind">Question Type</Label>
+            <Label htmlFor="kind">{ui("Question Type")}</Label>
             <Select value={kind} onValueChange={(value: Question['kind']) => setKind(value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="single">Single Choice</SelectItem>
-                <SelectItem value="multi">Multiple Choice</SelectItem>
-                <SelectItem value="numeric">Numeric Answer</SelectItem>
-                <SelectItem value="ordering">Ordering</SelectItem>
-                <SelectItem value="visual">Visual</SelectItem>
-                <SelectItem value="operation-posee">Pose et calcule</SelectItem>
-                <SelectItem value="column-fill">Méthode en colonnes</SelectItem>
-                <SelectItem value="slider">Slider</SelectItem>
-                <SelectItem value="match">Associer (Match)</SelectItem>
-                <SelectItem value="fill-expr">Compléter l'expression</SelectItem>
+                <SelectItem value="single">{ui("Single Choice")}</SelectItem>
+                <SelectItem value="multi">{ui("Multiple Choice")}</SelectItem>
+                <SelectItem value="numeric">{ui("Numeric Answer")}</SelectItem>
+                <SelectItem value="ordering">{ui("Ordering")}</SelectItem>
+                <SelectItem value="visual">{ui("Visual")}</SelectItem>
+                <SelectItem value="operation-posee">{ui("Pose et calcule")}</SelectItem>
+                <SelectItem value="column-fill">{ui("Méthode en colonnes")}</SelectItem>
+                <SelectItem value="slider">{ui("Slider")}</SelectItem>
+                <SelectItem value="match">{ui("Associer (Match)")}</SelectItem>
+                <SelectItem value="fill-expr">{ui("Compléter l'expression")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <Label htmlFor="id">Question ID</Label>
+            <Label htmlFor="id">{ui("Question ID")}</Label>
             <Input
               id="id"
               value={id}
               onChange={(e) => setId(e.target.value)}
-              placeholder="Unique identifier"
+              placeholder={ui("Unique identifier")}
               disabled={!!question}
             />
           </div>
 
           <div>
-            <Label htmlFor="prompt">Question Prompt</Label>
+            <Label htmlFor="prompt">{ui("Question Prompt")}</Label>
             <Textarea
               id="prompt"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Enter the question text"
+              placeholder={ui("Enter the question text")}
               rows={3}
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="hint">Hint (optional)</Label>
+            <Label htmlFor="hint">{ui("Hint (optional)")}</Label>
             <Textarea
               id="hint"
               value={hint}
               onChange={(e) => setHint(e.target.value)}
-              placeholder="Optional hint for students"
+              placeholder={ui("Optional hint for students")}
               rows={2}
             />
           </div>
 
           <div>
-            <Label htmlFor="points">Points</Label>
+            <Label htmlFor="points">{ui("Points")}</Label>
             <Input
               id="points"
               type="number"
@@ -544,7 +546,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
           {/* Single/Multi Choice Editor */}
           {(kind === 'single' || kind === 'multi') && (
             <div className="space-y-2">
-              <Label>Choices</Label>
+              <Label>{ui("Choices")}</Label>
               {choices.map((choice, index) => (
                 <div key={choice.id} className="flex gap-2 items-center">
                   <GripVertical className="w-4 h-4 text-muted-foreground" />
@@ -560,7 +562,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                       onChange={(e) => handleChoiceChange(choice.id, 'correct', e.target.checked)}
                       className="rounded"
                     />
-                    <Label className="text-sm">Correct</Label>
+                    <Label className="text-sm">{ui("Correct")}</Label>
                   </div>
                   {choices.length > 2 && (
                     <Button
@@ -576,7 +578,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
               ))}
               <Button type="button" variant="outline" onClick={handleAddChoice}>
                 <Plus className="w-4 h-4 mr-2" />
-                Add Choice
+                {ui("Add Choice")}
               </Button>
             </div>
           )}
@@ -584,14 +586,14 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
           {kind === 'numeric' && (
             <div className="space-y-2">
               <div>
-                <Label>Answer Format</Label>
+                <Label>{ui("Answer Format")}</Label>
                 <Select value={answerFormat} onValueChange={(v: "number" | "fraction") => setAnswerFormat(v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="number">Number</SelectItem>
-                    <SelectItem value="fraction">Fraction</SelectItem>
+                    <SelectItem value="number">{ui("Number")}</SelectItem>
+                    <SelectItem value="fraction">{ui("Fraction")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -599,7 +601,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
               {answerFormat === 'number' && (
                 <>
                   <div>
-                    <Label htmlFor="numeric-answer">Correct Answer</Label>
+                    <Label htmlFor="numeric-answer">{ui("Correct Answer")}</Label>
                     <Input
                       id="numeric-answer"
                       type="number"
@@ -610,7 +612,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label htmlFor="numeric-min">Min Value (optional)</Label>
+                      <Label htmlFor="numeric-min">{ui("Min Value (optional)")}</Label>
                       <Input
                         id="numeric-min"
                         type="number"
@@ -620,7 +622,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                       />
                     </div>
                     <div>
-                      <Label htmlFor="numeric-max">Max Value (optional)</Label>
+                      <Label htmlFor="numeric-max">{ui("Max Value (optional)")}</Label>
                       <Input
                         id="numeric-max"
                         type="number"
@@ -635,7 +637,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
 
               {answerFormat === 'fraction' && (
                 <div className="space-y-3">
-                  <Label>Correct Fraction</Label>
+                  <Label>{ui("Correct Fraction")}</Label>
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col items-center gap-0">
                       <Input
@@ -643,7 +645,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                         className="w-20 text-center"
                         value={fractionNumerator}
                         onChange={(e) => setFractionNumerator(parseInt(e.target.value) || 0)}
-                        placeholder="Num"
+                        placeholder={ui("Num")}
                       />
                       <div className="w-20 h-[2px] bg-foreground my-1" />
                       <Input
@@ -651,7 +653,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                         className="w-20 text-center"
                         value={fractionDenominator}
                         onChange={(e) => setFractionDenominator(parseInt(e.target.value) || 0)}
-                        placeholder="Den"
+                        placeholder={ui("Den")}
                       />
                     </div>
                     <span className="text-sm text-muted-foreground">
@@ -659,13 +661,13 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Any equivalent fraction will be accepted (e.g., 2/6 for 1/3).
+                    {ui("Any equivalent fraction will be accepted (e.g., 2/6 for 1/3).")}
                   </p>
 
                   {/* Drag Options */}
                   <div className="space-y-2 pt-2 border-t">
                     <div className="flex items-center justify-between">
-                      <Label>Number Chips (drag & drop options for students)</Label>
+                      <Label>{ui("Number Chips (drag & drop options for students)")}</Label>
                       <Button
                         type="button"
                         variant="outline"
@@ -692,7 +694,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                           setDragOptions(sorted);
                         }}
                       >
-                        Auto-generate
+                        {ui("Auto-generate")}
                       </Button>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -715,7 +717,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                     <div className="flex gap-2">
                       <Input
                         type="number"
-                        placeholder="Add number"
+                        placeholder={ui("Add number")}
                         className="w-28"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
@@ -728,7 +730,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                           }
                         }}
                       />
-                      <p className="text-xs text-muted-foreground self-center">Press Enter to add</p>
+                      <p className="text-xs text-muted-foreground self-center">{ui("Press Enter to add")}</p>
                     </div>
                   </div>
                 </div>
@@ -739,7 +741,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
           {/* Ordering Editor */}
           {kind === 'ordering' && (
             <div className="space-y-2">
-              <Label>Items to Order</Label>
+              <Label>{ui("Items to Order")}</Label>
               {orderingItems.map((item, index) => (
                 <div key={index} className="flex gap-2 items-center">
                   <GripVertical className="w-4 h-4 text-muted-foreground" />
@@ -762,11 +764,11 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
               ))}
               <Button type="button" variant="outline" onClick={handleAddOrderingItem}>
                 <Plus className="w-4 h-4 mr-2" />
-                Add Item
+                {ui("Add Item")}
               </Button>
 
               <div className="mt-4">
-                <Label>Correct Order (reorder using arrows or set current order)</Label>
+                <Label>{ui("Correct Order (reorder using arrows or set current order)")}</Label>
                 <div className="space-y-2 mt-2">
                   {(correctOrder.length > 0 ? correctOrder : orderingItems.filter(i => i.trim())).map((item, index) => (
                     <div key={index} className="flex gap-2 items-center">
@@ -812,7 +814,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                   className="mt-2"
                   onClick={() => setCorrectOrder([...orderingItems.filter(i => i.trim())])}
                 >
-                  Set Current Order as Correct
+                  {ui("Set Current Order as Correct")}
                 </Button>
               </div>
             </div>
@@ -820,7 +822,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
 
           {kind === 'visual' && (
             <div className="space-y-2">
-              <Label className="text-sm">Visual configuration</Label>
+              <Label className="text-sm">{ui("Visual configuration")}</Label>
               <VisualQuestionBuilder value={visual} onChange={setVisual} />
             </div>
           )}
@@ -828,20 +830,20 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
           {kind === 'operation-posee' && (
             <div className="space-y-3">
               <div>
-                <Label>Operation</Label>
+                <Label>{ui("Operation")}</Label>
                 <Select value={operation} onValueChange={(value: 'addition' | 'subtraction') => setOperation(value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="addition">Addition (+)</SelectItem>
-                    <SelectItem value="subtraction">Subtraction (-)</SelectItem>
+                    <SelectItem value="addition">{ui("Addition (+)")}</SelectItem>
+                    <SelectItem value="subtraction">{ui("Subtraction (-)")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label htmlFor="posee-top-number">Top number</Label>
+                  <Label htmlFor="posee-top-number">{ui("Top number")}</Label>
                   <Input
                     id="posee-top-number"
                     type="number"
@@ -850,7 +852,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                   />
                 </div>
                 <div>
-                  <Label htmlFor="posee-bottom-number">Bottom number</Label>
+                  <Label htmlFor="posee-bottom-number">{ui("Bottom number")}</Label>
                   <Input
                     id="posee-bottom-number"
                     type="number"
@@ -860,14 +862,14 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 </div>
               </div>
               <div>
-                <Label>Locale</Label>
+                <Label>{ui("Locale")}</Label>
                 <Select value={poseeLocale} onValueChange={(value: 'fr' | 'en') => setPoseeLocale(value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="fr">French</SelectItem>
-                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="fr">{ui("French")}</SelectItem>
+                    <SelectItem value="en">{ui("English")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -877,16 +879,16 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
           {kind === 'column-fill' && (
             <div className="space-y-3">
               <div>
-                <Label>Operation</Label>
+                <Label>{ui("Operation")}</Label>
                 <Select value={columnFillOperation} onValueChange={(value: ColumnFillQ['operation']) => setColumnFillOperation(value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="addition">Addition</SelectItem>
-                    <SelectItem value="subtraction">Soustraction</SelectItem>
-                    <SelectItem value="multiplication">Multiplication</SelectItem>
-                    <SelectItem value="division">Division</SelectItem>
+                    <SelectItem value="addition">{ui("Addition")}</SelectItem>
+                    <SelectItem value="subtraction">{ui("Soustraction")}</SelectItem>
+                    <SelectItem value="multiplication">{ui("Multiplication")}</SelectItem>
+                    <SelectItem value="division">{ui("Division")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -911,17 +913,17 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
               </div>
 
               <div>
-                <Label>Instruction affichée à l'élève (optionnel)</Label>
+                <Label>{ui("Instruction affichée à l'élève (optionnel)")}</Label>
                 <Textarea
                   value={columnInstructions}
                   onChange={(e) => setColumnInstructions(e.target.value)}
                   rows={2}
-                  placeholder="ex: Complète les retenues et le résultat."
+                  placeholder={ui("ex: Complète les retenues et le résultat.")}
                 />
               </div>
 
               <p className="text-xs text-muted-foreground">
-                Phase 1: addition, soustraction, multiplication à un chiffre, division avec quotient et reste.
+                {ui("Phase 1: addition, soustraction, multiplication à un chiffre, division avec quotient et reste.")}
               </p>
             </div>
           )}
@@ -930,36 +932,36 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label>Min</Label>
+                  <Label>{ui("Min")}</Label>
                   <Input type="number" value={sliderMin} onChange={e => setSliderMin(Number(e.target.value))} />
                 </div>
                 <div>
-                  <Label>Max</Label>
+                  <Label>{ui("Max")}</Label>
                   <Input type="number" value={sliderMax} onChange={e => setSliderMax(Number(e.target.value))} />
                 </div>
                 <div>
-                  <Label>Step</Label>
+                  <Label>{ui("Step")}</Label>
                   <Input type="number" value={sliderStep} onChange={e => setSliderStep(Number(e.target.value))} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label>Réponse correcte</Label>
+                  <Label>{ui("Réponse correcte")}</Label>
                   <Input type="number" value={sliderAnswer} onChange={e => setSliderAnswer(Number(e.target.value))} />
                 </div>
                 <div>
-                  <Label>Tolérance (±)</Label>
+                  <Label>{ui("Tolérance (±)")}</Label>
                   <Input type="number" value={sliderTolerance} onChange={e => setSliderTolerance(Number(e.target.value))} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label>Unité (optionnel)</Label>
-                  <Input value={sliderUnit} onChange={e => setSliderUnit(e.target.value)} placeholder="ex: °C, km, %" />
+                  <Label>{ui("Unité (optionnel)")}</Label>
+                  <Input value={sliderUnit} onChange={e => setSliderUnit(e.target.value)} placeholder={ui("ex: °C, km, %")} />
                 </div>
                 <div>
-                  <Label>Label (optionnel)</Label>
-                  <Input value={sliderTrackLabel} onChange={e => setSliderTrackLabel(e.target.value)} placeholder="ex: Choisis une valeur" />
+                  <Label>{ui("Label (optionnel)")}</Label>
+                  <Input value={sliderTrackLabel} onChange={e => setSliderTrackLabel(e.target.value)} placeholder={ui("ex: Choisis une valeur")} />
                 </div>
               </div>
             </div>
@@ -968,7 +970,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
           {kind === 'match' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label>Paires (gauche ↔ droite)</Label>
+                <Label>{ui("Paires (gauche ↔ droite)")}</Label>
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
@@ -977,13 +979,13 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                     className="rounded"
                   />
                   <span className="text-sm text-muted-foreground">
-                    Masquer les fractions <span className="text-xs">(pie uniquement)</span>
+                    {ui("Masquer les fractions")} <span className="text-xs">{ui("(pie uniquement)")}</span>
                   </span>
                 </label>
               </div>
               {matchHideLabels && (
                 <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 rounded-lg px-3 py-2">
-                  Les textes de fraction (ex: "1/2") seront cachés côté étudiant — seul le diagramme circulaire sera visible. Parfait pour les exercices "Compte les parts".
+                  {ui("Les textes de fraction (ex: \"1/2\") seront cachés côté étudiant — seul le diagramme circulaire sera visible. Parfait pour les exercices \"Compte les parts\".")}
                 </p>
               )}
               {matchPairs.map((pair, i) => (
@@ -991,13 +993,13 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                   <Input
                     value={pair.left}
                     onChange={e => setMatchPairs(prev => prev.map((p,j) => j===i ? {...p, left: e.target.value} : p))}
-                    placeholder="Gauche"
+                    placeholder={ui("Gauche")}
                   />
                   <span className="text-muted-foreground">↔</span>
                   <Input
                     value={pair.right}
                     onChange={e => setMatchPairs(prev => prev.map((p,j) => j===i ? {...p, right: e.target.value} : p))}
-                    placeholder="Droite"
+                    placeholder={ui("Droite")}
                   />
                   <Button variant="ghost" size="icon" onClick={() => setMatchPairs(prev => prev.filter((_,j) => j!==i))}>
                     <X className="w-4 h-4" />
@@ -1008,7 +1010,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                 leftId: `l${Date.now()}`, left: '',
                 rightId: `r${Date.now()}`, right: ''
               }])}>
-                <Plus className="w-4 h-4 mr-1" /> Ajouter une paire
+                <Plus className="w-4 h-4 mr-1" /> {ui("Ajouter une paire")}
               </Button>
             </div>
           )}
@@ -1016,19 +1018,19 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
           {kind === 'fill-expr' && (
             <div className="space-y-3">
               <div>
-                <Label>Template (utilise __ pour les blancs)</Label>
-                <Input value={fillTemplate} onChange={e => setFillTemplate(e.target.value)} placeholder="ex: 3 × __ = __" />
+                <Label>{ui("Template (utilise __ pour les blancs)")}</Label>
+                <Input value={fillTemplate} onChange={e => setFillTemplate(e.target.value)} placeholder={ui("ex: 3 × __ = __")} />
               </div>
               <div>
-                <Label>IDs des blancs (séparés par virgule)</Label>
-                <Input value={fillBlanks} onChange={e => setFillBlanks(e.target.value)} placeholder="ex: b1,b2" />
+                <Label>{ui("IDs des blancs (séparés par virgule)")}</Label>
+                <Input value={fillBlanks} onChange={e => setFillBlanks(e.target.value)} placeholder={ui("ex: b1,b2")} />
               </div>
               <div>
-                <Label>Chips disponibles (séparés par virgule)</Label>
-                <Input value={fillChips} onChange={e => setFillChips(e.target.value)} placeholder="ex: 4,6,12,9" />
+                <Label>{ui("Chips disponibles (séparés par virgule)")}</Label>
+                <Input value={fillChips} onChange={e => setFillChips(e.target.value)} placeholder={ui("ex: 4,6,12,9")} />
               </div>
               <div>
-                <Label>Réponses correctes (JSON)</Label>
+                <Label>{ui("Réponses correctes (JSON)")}</Label>
                 <Textarea value={fillAnswers} onChange={e => setFillAnswers(e.target.value)}
                   placeholder={'{"b1":"4","b2":"12"}'} className="font-mono text-xs" rows={3} />
               </div>
@@ -1037,10 +1039,10 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+              {ui("Cancel")}
             </Button>
             <Button onClick={handleSave}>
-              {question ? 'Update' : 'Add'} Question
+              {question ? ui("Update") : ui("Add")} {ui("Question")}
             </Button>
           </div>
         </div>

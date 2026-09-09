@@ -1,43 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
+import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { getLanguageFromCountry } from '@/utils/countryLanguageMapping';
 import { useAuth } from '@/context/AuthContext';
 import { useCountryDetection } from '@/hooks/useCountryDetection';
-import { loadTranslations, type SupportedLanguage, SUPPORTED_LANGUAGES } from '@/locales';
+import { type SupportedLanguage, SUPPORTED_LANGUAGES } from '@/locales';
 
-// Smart default language detection
-const getInitialLanguage = (): string => {
-  // 1. Check if user manually set language
-  const storedLang = localStorage.getItem('lang');
-  const manuallySet = localStorage.getItem('languageManuallySet');
-  
-  if (storedLang && manuallySet === 'true') {
-    console.log('[Language Init] Using manually set language:', storedLang);
-    return storedLang;
-  }
-  
-  // 2. Try browser language detection
-  const browserLang = navigator.language || (navigator as any).userLanguage;
-  if (browserLang) {
-    const langCode = browserLang.split('-')[0].toLowerCase();
-    if (SUPPORTED_LANGUAGES.includes(langCode as SupportedLanguage)) {
-      console.log('[Language Init] Using browser language:', langCode);
-      return langCode;
-    }
-  }
-  
-  // 3. Try timezone-based detection for French
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  if (timezone.includes('Paris') || timezone.includes('Europe/Brussels') || timezone.includes('Europe/Luxembourg')) {
-    console.log('[Language Init] Detected French timezone:', timezone);
-    return 'fr';
-  }
-  
-  // 4. Default to stored language or English
-  console.log('[Language Init] Falling back to stored or default language:', storedLang || 'en');
-  return storedLang || 'en';
-};
-
-export const defaultLang = getInitialLanguage();
+export const defaultLang = i18n.resolvedLanguage || 'en';
 
 interface LanguageContextType {
   language: string;
@@ -51,167 +20,31 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// Cache for loaded translations
-const translationCache = new Map<string, any>();
-
-// Helper function to flatten nested translations for legacy key support
-function flattenTranslations(obj: any, prefix = ''): Record<string, any> {
-  const flattened: Record<string, any> = {};
-  
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      const newKey = prefix ? `${prefix}.${key}` : key;
-      
-      if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-        Object.assign(flattened, flattenTranslations(obj[key], newKey));
-      } else {
-        flattened[newKey] = obj[key];
-      }
-    }
-  }
-  
-  return flattened;
-}
-
 export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState(() => {
-    const initialLang = defaultLang;
-    console.log('[Translation] SimpleLanguageProvider initialized with language:', initialLang);
-    
-    // Persist the initial language if it was detected (not manually set)
-    if (!localStorage.getItem('languageManuallySet')) {
-      localStorage.setItem('lang', initialLang);
-      console.log('[Translation] Persisted initial language to localStorage:', initialLang);
-    }
-    
-    return initialLang;
-  });
-
+  const { t: translate, i18n: instance } = useTranslation();
+  const language = instance.resolvedLanguage || instance.language || defaultLang;
   const languageRef = useRef(language);
-  useEffect(() => { languageRef.current = language; }, [language]);
-
-  const [translations, setTranslations] = useState<any>({});
-  const [isLoading, setIsLoading] = useState(true);
-  /** After first successful translation load; avoids unmounting the whole app when language changes. */
-  const [initialAppReady, setInitialAppReady] = useState(false);
-  
-  
-  
+  languageRef.current = language;
   const { user } = useAuth();
   const { detection, getLanguageFromDetection, detectCountry } = useCountryDetection();
 
-  // Load translations when language changes
+  const setLanguage = (lng: string) => {
+    if (!SUPPORTED_LANGUAGES.includes(lng as SupportedLanguage)) return;
+    languageRef.current = lng;
+    void i18n.changeLanguage(lng);
+  };
+
   useEffect(() => {
-    const loadLanguageTranslations = async () => {
-      console.log('[Translation] useEffect triggered for language:', language);
-      
-      if (translationCache.has(language)) {
-        console.log('[Translation] Using cached translations for:', language);
-        setTranslations(translationCache.get(language));
-        setIsLoading(false);
-        setInitialAppReady(true);
-
-        // Sync with i18next even when using cache
-        try {
-          const i18n = await import('i18next').then(m => m.default);
-          if (i18n.language !== language && i18n.changeLanguage) {
-            console.log('[Translation] Syncing i18next to:', language);
-            await i18n.changeLanguage(language);
-          }
-        } catch (error) {
-          console.warn('[Translation] Could not sync with i18next:', error);
-        }
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        console.log('[Translation] Loading translations for language:', language);
-        const loadedTranslations = await loadTranslations(language as SupportedLanguage);
-        console.log('[Translation] Loaded translations:', loadedTranslations);
-        
-        // Flatten translations for legacy key support
-        const flattened = flattenTranslations(loadedTranslations);
-        
-        // IMPORTANT: Also merge 'common' namespace to root for direct access
-        // This allows t('learning.chooseSubject') to work instead of requiring t('common.learning.chooseSubject')
-        const commonAtRoot = loadedTranslations.common ? { ...loadedTranslations.common } : {};
-        
-        const combined = { 
-          ...loadedTranslations,  // Keep original structure (common.*, exercises.*, etc.)
-          ...commonAtRoot,        // Add common.* keys directly at root (learning.*, nav.*, etc.)
-          ...flattened           // Add all flattened keys (common.learning.chooseSubject, etc.)
-        };
-        
-        console.log('[Translation] Combined translations:', combined);
-        console.log('[Translation] Sample translation test - exercise.answer:', combined['exercise.answer']);
-        console.log('[Translation] Sample translation test - exercises.exercise.answer:', combined['exercises.exercise.answer']);
-        translationCache.set(language, combined);
-        setTranslations(combined);
-        console.log('[Translation] Translations set successfully for:', language);
-        
-        // Sync with i18next
-        try {
-          const i18n = await import('i18next').then(m => m.default);
-          if (i18n.changeLanguage) {
-            console.log('[Translation] Syncing i18next to:', language);
-            await i18n.changeLanguage(language);
-          }
-        } catch (error) {
-          console.warn('[Translation] Could not sync with i18next:', error);
-        }
-      } catch (error) {
-        console.error('Failed to load translations:', error);
-        // Fallback to English if current language fails
-        if (language !== 'en') {
-          try {
-            const fallbackTranslations = await loadTranslations('en');
-            const flattened = flattenTranslations(fallbackTranslations);
-            const commonAtRoot = fallbackTranslations.common ? { ...fallbackTranslations.common } : {};
-            const combined = { 
-              ...fallbackTranslations, 
-              ...commonAtRoot, 
-              ...flattened 
-            };
-            setTranslations(combined);
-          } catch (fallbackError) {
-            console.error('Failed to load fallback translations:', fallbackError);
-            setTranslations({});
-          }
-        }
-      } finally {
-        setIsLoading(false);
-        setInitialAppReady(true);
-      }
-    };
-
-    loadLanguageTranslations();
+    localStorage.setItem('lang', language);
+    document.documentElement.lang = language;
+    document.documentElement.dir = i18n.dir(language);
   }, [language]);
 
-  const changeLanguage = async (lng: string) => {
-    console.log('[Translation] changeLanguage called with:', lng);
-    setLanguage(lng);
-    localStorage.setItem('lang', lng);
+  const changeLanguage = (lng: string) => {
+    if (!SUPPORTED_LANGUAGES.includes(lng as SupportedLanguage)) return;
     localStorage.setItem('languageManuallySet', 'true');
-    
-    // SYNC WITH i18next - Ensure both language systems are synchronized
-    try {
-      const i18n = await import('i18next').then(m => m.default);
-      if (i18n.changeLanguage) {
-        console.log('[Translation] Syncing with i18next:', lng);
-        await i18n.changeLanguage(lng);
-      }
-    } catch (error) {
-      console.warn('[Translation] Could not sync with i18next:', error);
-    }
-    
-    // Show notification about language change
-    import('@/hooks/use-toast').then(({ toast }) => {
-      toast({
-        title: lng === 'fr' ? 'Langue changée en français' : 'Language changed to English',
-        description: lng === 'fr' ? 'L\'interface utilisateur a été changée en français' : 'User interface has been changed to English',
-      });
-    });
+    localStorage.setItem('lang', lng);
+    setLanguage(lng);
   };
 
   // Normalize a country input (handles names like "France" and codes like "fr"/"FR"/"FRA")
@@ -264,8 +97,8 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
       // Show notification about automatic language change
       import('@/hooks/use-toast').then(({ toast }) => {
         toast({
-          title: detectedLanguage === 'fr' ? 'Langue automatiquement définie en français' : 'Language automatically set to English',
-          description: detectedLanguage === 'fr' ? 'Basé sur votre pays sélectionné' : 'Based on your selected country',
+          title: String(i18n.t('languageAutoSet', { lng: detectedLanguage, ns: 'interface' })),
+          description: String(i18n.t('languageBasedOnCountry', { lng: detectedLanguage, ns: 'interface' })),
         });
       });
     } else {
@@ -311,67 +144,17 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
   };
 
   const t = (key: string, params?: Record<string, string | number>): string => {
-    
-    // First load only: no strings yet. On language change keep showing previous bundle until swap.
-    if (isLoading && Object.keys(translations).length === 0) return key;
-    
-    // First try to find the key directly (for flattened keys like 'exercises.exercise.answer')
-    let value = translations[key];
-    
-    // If not found directly, try nested object navigation (for keys like 'exercise.answer')
-    if (value === undefined) {
-      const keys = key.split('.');
-      value = translations;
-      
-      for (const k of keys) {
-        value = value?.[k];
-        if (value === undefined) break;
-      }
-    }
-    
-    // If still not found, try with 'exercises.' prefix (for legacy support)
-    if (value === undefined && !key.startsWith('exercises.')) {
-      value = translations[`exercises.${key}`];
-    }
-    
-    // Fallback to key if translation not found
-    let result = value || key;
-    
-    // Debug logging for result
-    
-    // Handle interpolation if params provided
-    if (params && typeof result === 'string') {
-      result = result.replace(/\{(\w+)\}/g, (match, paramKey) => {
-        return params[paramKey] !== undefined ? String(params[paramKey]) : match;
-      });
-    }
-    
-    return result;
+    const result = translate(key, params);
+    return typeof result === 'string' ? result : key;
   };
 
-  // Auto-detect language from user profile on login
-  // Clear languageManuallySet when a new user logs in to allow profile-based detection
+  // Auto-detection never overrides an explicit language selection.
   useEffect(() => {
+    let cancelled = false;
     const detectLanguageFromUser = async () => {
-      const previousUserId = localStorage.getItem('lastUserId');
-      const isNewUserLogin = user?.id && user.id !== previousUserId;
-      
-      // If a new user logged in, clear the manual language flag and update lastUserId
-      if (isNewUserLogin) {
-        console.log('[Auto-detect] New user logged in, clearing languageManuallySet flag');
-        localStorage.removeItem('languageManuallySet');
-        localStorage.setItem('lastUserId', user.id);
-      }
-      
-      const languageManuallySet = localStorage.getItem('languageManuallySet') === 'true';
-      
-      // For new user logins, always try to detect from profile
-      // For existing sessions, skip if language was manually set
-      if (languageManuallySet && !isNewUserLogin) {
-        console.log('[Auto-detect] Language was manually set, skipping auto-detection');
-        return;
-      }
-      
+      // An explicit selection takes precedence over profile and country detection.
+      if (localStorage.getItem('languageManuallySet') === 'true') return;
+
       let detectedLanguage = null;
       
       // First try user profile country (highest priority for logged-in users)
@@ -402,41 +185,34 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         console.log('[Auto-detect] Using automatic detection:', detection.country, '->', detectedLanguage);
       }
       
-      if (detectedLanguage && detectedLanguage !== languageRef.current) {
+      if (!cancelled && localStorage.getItem('languageManuallySet') !== 'true' && detectedLanguage && detectedLanguage !== languageRef.current) {
         console.log('[Auto-detect] Changing language from', languageRef.current, 'to', detectedLanguage);
         setLanguage(detectedLanguage);
         localStorage.setItem('lang', detectedLanguage);
         
-        const methodText = user?.id ? 'profile' :
-                          detection.method === 'geolocation' ? 'location' :
-                          detection.method === 'ip' ? 'IP address' :
-                          detection.method === 'timezone' ? 'timezone' : 'profile';
-        
+        const methodKey = user?.id ? 'languageBasedOnProfile' :
+                          detection.method === 'geolocation' ? 'languageBasedOnLocation' :
+                          detection.method === 'ip' ? 'languageBasedOnIp' :
+                          detection.method === 'timezone' ? 'languageBasedOnTimezone' : 'languageBasedOnProfile';
+
         // Show notification about automatic language change
         import('@/hooks/use-toast').then(({ toast }) => {
           toast({
-            title: detectedLanguage === 'fr' ? 'Langue automatiquement définie en français' : 'Language automatically set to English',
-            description: detectedLanguage === 'fr' ? `Basé sur votre ${methodText}` : `Based on your ${methodText}`,
+            title: String(i18n.t('languageAutoSet', { lng: detectedLanguage, ns: 'interface' })),
+            description: String(i18n.t(methodKey, { lng: detectedLanguage, ns: 'interface' })),
           });
         });
       }
     };
     
     detectLanguageFromUser();
+    return () => { cancelled = true; };
   }, [user?.id, detection.country]);
-
-  if (!initialAppReady) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-muted-foreground">Loading translations...</div>
-      </div>
-    );
-  }
 
   return (
     <LanguageContext.Provider value={{
       language,
-      isLoading,
+      isLoading: !instance.isInitialized,
       changeLanguage,
       setLanguageFromCountry,
       detectLanguageNow,
@@ -453,13 +229,13 @@ export const useLanguage = () => {
   
   if (!context) {
     return {
-      language: defaultLang,
+      language: i18n.resolvedLanguage || defaultLang,
       isLoading: false,
       changeLanguage: () => {},
       setLanguageFromCountry: () => {},
       detectLanguageNow: async () => {},
       resetLanguageDetection: async () => {},
-      t: (key: string) => key
+      t: (key: string, params?: Record<string, string | number>) => String(i18n.t(key, params))
     };
   }
   

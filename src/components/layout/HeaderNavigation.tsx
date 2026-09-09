@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from "react";
 import { MessageSquare, GraduationCap, HeadphonesIcon, History, User, Globe, LogOut, ChevronDown, Settings, BookOpen, Trophy, Target } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -91,6 +92,7 @@ const LanguageMenuItems = () => {
 };
 
 export function HeaderNavigation() {
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
@@ -111,7 +113,7 @@ export function HeaderNavigation() {
     <div className="flex items-center justify-between w-full h-full px-6">
       {/* Logo and App Name */}
       <div className="flex items-center gap-3">
-        <img src="/logo.png" alt="Stuwy Logo" className="w-8 h-8" />
+        <img src="/logo.png" alt={ui("Stuwy Logo")} className="w-8 h-8" />
         <span className="text-lg font-semibold text-foreground">Stuwy</span>
       </div>
 
@@ -168,13 +170,13 @@ export function HeaderNavigation() {
             <DropdownMenuItem asChild>
               <NavLink to="/my-program" className="flex items-center">
                 <BookOpen className="mr-2 h-4 w-4" />
-                <span>My Program</span>
+                <span>{ui("My Program")}</span>
               </NavLink>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <NavLink to="/dashboard" className="flex items-center">
                 <Trophy className="mr-2 h-4 w-4" />
-                <span>Dashboard</span>
+                <span>{ui("Dashboard")}</span>
               </NavLink>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
@@ -187,7 +189,7 @@ export function HeaderNavigation() {
               <DropdownMenuItem asChild>
                 <NavLink to="/admin" className="flex items-center">
                   <Settings className="mr-2 h-4 w-4" />
-                  <span>Admin Panel</span>
+                  <span>{ui("Admin Panel")}</span>
                 </NavLink>
               </DropdownMenuItem>
             )}
@@ -204,7 +206,7 @@ export function HeaderNavigation() {
               className="text-destructive focus:text-destructive"
             >
               <LogOut className="mr-2 h-4 w-4" />
-              <span>{isSigningOut ? 'Signing out...' : 'Sign Out'}</span>
+              <span>{isSigningOut ? ui("Signing out...") : ui("Sign Out")}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

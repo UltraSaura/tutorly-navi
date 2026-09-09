@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
@@ -17,6 +18,7 @@ interface DraggableSubjectProps {
 }
 
 export const DraggableSubject = ({ subject, onDelete, onToggle }: DraggableSubjectProps) => {
+  const ui = useInterfaceTranslation();
   const {
     attributes,
     listeners,
@@ -84,17 +86,17 @@ export const DraggableSubject = ({ subject, onDelete, onToggle }: DraggableSubje
                 onCheckedChange={() => onToggle(subject.id)}
               />
               <Label htmlFor={`subject-active-${subject.id}`}>
-                {subject.active ? 'Active' : 'Inactive'}
+                {subject.active ? ui("Active") : 'Inactive'}
               </Label>
             </div>
             
             <div className="text-muted-foreground text-sm">
               {subject.active ? 
                 <div className="flex items-center text-green-500">
-                  <Check className="h-4 w-4 mr-1" /> Available for analysis
+                  <Check className="h-4 w-4 mr-1" /> {ui("Available for analysis")}
                 </div> : 
                 <div className="flex items-center text-amber-500">
-                  <X className="h-4 w-4 mr-1" /> Not available
+                  <X className="h-4 w-4 mr-1" /> {ui("Not available")}
                 </div>
               }
             </div>

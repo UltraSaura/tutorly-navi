@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { useState } from 'react';
 import { MoreHorizontal, ChevronLeft, ChevronRight, GraduationCap, UsersRound } from 'lucide-react';
@@ -20,6 +21,7 @@ export const UserTable = ({
   onUserSelect,
   onAddChildClick
 }: UserTableProps) => {
+  const ui = useInterfaceTranslation();
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10;
 
@@ -42,14 +44,14 @@ export const UserTable = ({
       <table className="min-w-full divide-y divide-border">
         <thead>
           <tr className="bg-muted/50">
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">User</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">Name</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">Email</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">Type</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">Phone</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">Country</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">Level</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">Style</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("User")}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("Name")}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("Email")}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("Type")}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("Phone")}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("Country")}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("Level")}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("Style")}</th>
             <th className="px-4 py-3.5 text-right text-sm font-semibold"></th>
           </tr>
         </thead>
@@ -108,23 +110,23 @@ export const UserTable = ({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel>{ui("Actions")}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={(e) => {
                           e.stopPropagation();
                           onUserSelect(user);
-                        }}>View Details</DropdownMenuItem>
+                        }}>{ui("View Details")}</DropdownMenuItem>
                         {user.user_type === 'parent' && (
                           <DropdownMenuItem onClick={(e) => {
                             e.stopPropagation();
                             onUserSelect(user);
                             onAddChildClick(user);
                           }}>
-                            Add Child Account
+                            {ui("Add Child Account")}
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem className="text-destructive">
-                          Deactivate Account
+                          {ui("Deactivate Account")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -135,7 +137,7 @@ export const UserTable = ({
           ) : (
             <tr>
               <td colSpan={9} className="px-4 py-6 text-center text-muted-foreground">
-                No users found matching your filters.
+                {ui("No users found matching your filters.")}
               </td>
             </tr>
           )}
@@ -145,7 +147,7 @@ export const UserTable = ({
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-4 py-3 border-t">
           <div className="text-sm text-muted-foreground">
-            Showing {(currentPage - 1) * usersPerPage + 1} to {Math.min(currentPage * usersPerPage, users.length)} of {users.length} users
+            {ui("Showing")} {(currentPage - 1) * usersPerPage + 1} {ui("to")} {Math.min(currentPage * usersPerPage, users.length)} {ui("of")} {users.length} {ui("users")}
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -157,7 +159,7 @@ export const UserTable = ({
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm">
-              Page {currentPage} of {totalPages}
+              {ui("Page")} {currentPage} {ui("of")} {totalPages}
             </span>
             <Button
               variant="outline"

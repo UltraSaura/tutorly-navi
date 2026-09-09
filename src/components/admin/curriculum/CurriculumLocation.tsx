@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, AlertCircle } from 'lucide-react';
 import { resolveCurriculumPath, getCurriculumLocation } from '@/lib/curriculum';
@@ -21,6 +22,7 @@ export function CurriculumLocation({
   locale = 'en',
   variant = 'full'
 }: CurriculumLocationProps) {
+  const ui = useInterfaceTranslation();
   const location = getCurriculumLocation(
     countryId,
     levelId,
@@ -35,7 +37,7 @@ export function CurriculumLocation({
     return (
       <div className="flex items-center gap-2 text-muted-foreground">
         <AlertCircle className="h-4 w-4" />
-        <span className="text-sm">Not mapped yet</span>
+        <span className="text-sm">{ui("Not mapped yet")}</span>
       </div>
     );
   }

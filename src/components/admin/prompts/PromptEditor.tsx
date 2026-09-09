@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,7 @@ export const PromptEditor = ({
   onPromptChange,
   onSave,
 }: PromptEditorProps) => {
+  const ui = useInterfaceTranslation();
   const [isCopied, setIsCopied] = useState(false);
   const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -55,16 +57,16 @@ export const PromptEditor = ({
     return (
       <Card className="glass lg:col-span-2">
         <CardHeader>
-          <CardTitle>Edit Prompt</CardTitle>
+          <CardTitle>{ui("Edit Prompt")}</CardTitle>
           <CardDescription>
-            Modify the system prompt to customize the AI tutor's behavior
+            {ui("Modify the system prompt to customize the AI tutor's behavior")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-12">
             <FileText className="h-12 w-12 text-muted-foreground mb-3" />
             <p className="text-muted-foreground text-center">
-              No template selected. Please select a template from the Templates tab.
+              {ui("No template selected. Please select a template from the Templates tab.")}
             </p>
           </div>
         </CardContent>
@@ -75,9 +77,9 @@ export const PromptEditor = ({
   return (
     <Card className="glass lg:col-span-2">
       <CardHeader>
-        <CardTitle>Edit Prompt</CardTitle>
+        <CardTitle>{ui("Edit Prompt")}</CardTitle>
         <CardDescription>
-          Modify the system prompt to customize the AI tutor's behavior
+          {ui("Modify the system prompt to customize the AI tutor's behavior")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -87,17 +89,17 @@ export const PromptEditor = ({
             value={editedPrompt}
             onChange={(e) => onPromptChange(e.target.value)}
             className="min-h-[300px] font-mono text-sm"
-            placeholder="Enter system prompt instructions..."
+            placeholder={ui("Enter system prompt instructions...")}
           />
           
           <div className="p-4 border rounded-md bg-muted/30">
-            <h4 className="text-sm font-medium mb-2">Tips for writing effective prompts:</h4>
+            <h4 className="text-sm font-medium mb-2">{ui("Tips for writing effective prompts:")}</h4>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-5">
-              <li>Be specific about the AI's role and personality</li>
-              <li>Define how to handle incorrect answers and misconceptions</li>
-              <li>Specify the level of detail for explanations</li>
-              <li>Include guidelines for age-appropriate language</li>
-              <li>Set boundaries on what topics to avoid or focus on</li>
+              <li>{ui("Be specific about the AI's role and personality")}</li>
+              <li>{ui("Define how to handle incorrect answers and misconceptions")}</li>
+              <li>{ui("Specify the level of detail for explanations")}</li>
+              <li>{ui("Include guidelines for age-appropriate language")}</li>
+              <li>{ui("Set boundaries on what topics to avoid or focus on")}</li>
             </ul>
           </div>
         </div>
@@ -109,7 +111,7 @@ export const PromptEditor = ({
             onClick={() => onPromptChange(selectedTemplate.prompt_content)}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
-            Reset
+            {ui("Reset")}
           </Button>
           
           <Button 
@@ -119,12 +121,12 @@ export const PromptEditor = ({
             {isCopied ? (
               <>
                 <CheckCheck className="mr-2 h-4 w-4" />
-                Copied
+                {ui("Copied")}
               </>
             ) : (
               <>
                 <Copy className="mr-2 h-4 w-4" />
-                Copy
+                {ui("Copy")}
               </>
             )}
           </Button>
@@ -136,7 +138,7 @@ export const PromptEditor = ({
           className="bg-stuwy-600 hover:bg-stuwy-700"
         >
           <Save className="mr-2 h-4 w-4" />
-          Save Changes
+          {ui("Save Changes")}
         </Button>
       </CardFooter>
     </Card>

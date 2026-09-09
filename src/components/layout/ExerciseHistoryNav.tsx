@@ -1,8 +1,10 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Link, useLocation } from 'react-router-dom';
 import { History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const ExerciseHistoryNav = () => {
+  const ui = useInterfaceTranslation();
   const location = useLocation();
   const isActive = location.pathname === '/exercise-history';
 
@@ -17,7 +19,7 @@ export const ExerciseHistoryNav = () => {
       )}
     >
       <History className="h-4 w-4" />
-      Exercise History
+      {ui("Exercise History")}
     </Link>
   );
 };

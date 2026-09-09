@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React from "react";
 import type { TeachingSections } from "./useTwoCardTeaching";
 import { useResolveText } from "@/hooks/useResolveText";
@@ -62,6 +63,7 @@ export function TwoCards({
   subjectSlug?: string;
   topicSlug?: string;
 }) {
+  const ui = useInterfaceTranslation();
   console.log('[TwoCards] Component rendered with sections:', s);
   const resolveText = useResolveText();
   const [isGuardian, setIsGuardian] = useState(false);
@@ -241,7 +243,7 @@ export function TwoCards({
       gradeLevel: userContext?.student_level,
       language,
       learningStyle: userContext?.learning_style,
-      subject: subjectSlug || "Math",
+      subject: subjectSlug || 'Math',
       country: userContext?.country,
       enabled: true,
     };
