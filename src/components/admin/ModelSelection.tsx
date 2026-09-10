@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState, useMemo } from 'react';
 import { Check, Info, ThumbsUp, Zap, BrainCircuit, Activity, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAdmin } from '@/context/AdminContext';
@@ -11,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ModelApiKeys } from './models/ModelApiKeys';
 
 const ModelSelection = () => {
+  const ui = useInterfaceTranslation();
   const { getAvailableModels, selectedModelId, setSelectedModelId } = useAdmin();
   const unsortedModels = getAvailableModels();
   
@@ -36,16 +38,16 @@ const ModelSelection = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Model Selection</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{ui("Model Selection")}</h1>
         <p className="text-muted-foreground mt-1">
-          Choose the AI model that best fits your educational needs
+          {ui("Choose the AI model that best fits your educational needs")}
         </p>
       </div>
 
       <Alert variant="default" className="bg-muted/50">
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Models are filtered based on available API keys. Add API keys in the API Key Management section.
+          {ui("Models are filtered based on available API keys. Add API keys in the API Key Management section.")}
         </AlertDescription>
       </Alert>
 
@@ -70,7 +72,7 @@ const ModelSelection = () => {
                     <CardDescription>{model.provider}</CardDescription>
                   </div>
                   <Badge variant={isDisabled ? "destructive" : model.usesSupabaseSecret ? "outline" : "default"}>
-                    {isDisabled ? "No API Key" : model.usesSupabaseSecret ? "Supabase Secret" : "Available"}
+                    {isDisabled ? "No API Key" : model.usesSupabaseSecret ? "Supabase Secret" : ui("Available")}
                   </Badge>
                 </div>
               </CardHeader>
@@ -101,7 +103,7 @@ const ModelSelection = () => {
                       <div className="space-y-3">
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs">
-                            <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> Speed</span>
+                            <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> {ui("Speed")}</span>
                             <span>{model.performance.speed}%</span>
                           </div>
                           <Progress value={model.performance.speed} className="h-1.5" />
@@ -109,7 +111,7 @@ const ModelSelection = () => {
                         
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs">
-                            <span className="flex items-center gap-1"><ThumbsUp className="h-3 w-3" /> Quality</span>
+                            <span className="flex items-center gap-1"><ThumbsUp className="h-3 w-3" /> {ui("Quality")}</span>
                             <span>{model.performance.quality}%</span>
                           </div>
                           <Progress value={model.performance.quality} className="h-1.5" />
@@ -117,7 +119,7 @@ const ModelSelection = () => {
                         
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs">
-                            <span className="flex items-center gap-1"><BrainCircuit className="h-3 w-3" /> Reasoning</span>
+                            <span className="flex items-center gap-1"><BrainCircuit className="h-3 w-3" /> {ui("Reasoning")}</span>
                             <span>{model.performance.reasoning}%</span>
                           </div>
                           <Progress value={model.performance.reasoning} className="h-1.5" />
@@ -126,11 +128,11 @@ const ModelSelection = () => {
                       
                       <div className="grid grid-cols-2 gap-4 text-sm mt-3">
                         <div>
-                          <p className="text-xs text-muted-foreground">Context Window</p>
-                          <p className="font-medium">{(model.contextWindow/1000).toFixed(0)}K tokens</p>
+                          <p className="text-xs text-muted-foreground">{ui("Context Window")}</p>
+                          <p className="font-medium">{(model.contextWindow/1000).toFixed(0)}{ui("K tokens")}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">Pricing</p>
+                          <p className="text-xs text-muted-foreground">{ui("Pricing")}</p>
                           <p className="font-medium">{model.pricing}</p>
                         </div>
                       </div>
@@ -151,7 +153,7 @@ const ModelSelection = () => {
                       <TooltipTrigger asChild>
                         <div className="text-xs text-muted-foreground flex items-center gap-1">
                           <Activity className="h-3 w-3" />
-                          <span>Best for: {model.bestFor[0]}{model.bestFor.length > 1 ? '...' : ''}</span>
+                          <span>{ui("Best for:")} {model.bestFor[0]}{model.bestFor.length > 1 ? '...' : ''}</span>
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -21,6 +22,7 @@ interface AssignmentEditorProps {
 }
 
 export function AssignmentEditor({ assignment, defaultTopicId, isOpen, onClose, onSave }: AssignmentEditorProps) {
+  const ui = useInterfaceTranslation();
   const [displayContext, setDisplayContext] = useState<DisplayContext>('practice');
   const [topicId, setTopicId] = useState('');
   const [triggerVideoId, setTriggerVideoId] = useState<string | null>(null);
@@ -80,7 +82,7 @@ export function AssignmentEditor({ assignment, defaultTopicId, isOpen, onClose, 
   const contextOptions: { value: DisplayContext; label: string; description: string; icon: React.ReactNode }[] = [
     {
       value: 'practice',
-      label: 'Practice page only',
+      label: ui("Practice page only"),
       description: 'Appears in "S\'entraîner par thème" — always available, no video required',
       icon: <BookOpen className="h-4 w-4 text-violet-500" />,
     },
@@ -92,7 +94,7 @@ export function AssignmentEditor({ assignment, defaultTopicId, isOpen, onClose, 
     },
     {
       value: 'both',
-      label: 'Both',
+      label: ui("Both"),
       description: 'Available on the practice page AND appears in the video player after the selected video',
       icon: <Layers className="h-4 w-4 text-green-500" />,
     },
@@ -110,15 +112,15 @@ export function AssignmentEditor({ assignment, defaultTopicId, isOpen, onClose, 
           {/* Active toggle */}
           <div className="flex items-center gap-3">
             <Switch id="is-active" checked={isActive} onCheckedChange={setIsActive} />
-            <Label htmlFor="is-active" className="cursor-pointer">Active</Label>
+            <Label htmlFor="is-active" className="cursor-pointer">{ui("Active")}</Label>
           </div>
 
           {/* Topic */}
           <div>
-            <Label className="mb-1.5 block">Topic</Label>
+            <Label className="mb-1.5 block">{ui("Topic")}</Label>
             <Select value={topicId} onValueChange={handleTopicChange}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a topic" />
+                <SelectValue placeholder={ui("Select a topic")} />
               </SelectTrigger>
               <SelectContent>
                 {topics.map((topic: Topic) => (
@@ -132,7 +134,7 @@ export function AssignmentEditor({ assignment, defaultTopicId, isOpen, onClose, 
 
           {/* Display context */}
           <div>
-            <Label className="mb-2 block">Show this quiz in</Label>
+            <Label className="mb-2 block">{ui("Show this quiz in")}</Label>
             <RadioGroup
               value={displayContext}
               onValueChange={(v) => setDisplayContext(v as DisplayContext)}
@@ -164,19 +166,19 @@ export function AssignmentEditor({ assignment, defaultTopicId, isOpen, onClose, 
           {(displayContext === 'lesson' || displayContext === 'both') && (
             <div>
               <Label className="mb-1.5 block">
-                Trigger video
+                {ui("Trigger video")}
                 <span className="text-xs text-muted-foreground ml-2">
-                  Quiz appears after the student completes this video
+                  {ui("Quiz appears after the student completes this video")}
                 </span>
               </Label>
 
               {!topicId ? (
                 <p className="text-sm text-muted-foreground border rounded-lg p-3">
-                  Select a topic first to see its videos
+                  {ui("Select a topic first to see its videos")}
                 </p>
               ) : sortedVideos.length === 0 ? (
                 <p className="text-sm text-muted-foreground border rounded-lg p-3">
-                  No videos found for this topic
+                  {ui("No videos found for this topic")}
                 </p>
               ) : (
                 <div className="border rounded-xl overflow-hidden">
@@ -200,7 +202,7 @@ export function AssignmentEditor({ assignment, defaultTopicId, isOpen, onClose, 
                         </div>
                         <span className="text-sm font-medium flex-1 truncate">{video.title}</span>
                         {isSelected && (
-                          <Badge variant="default" className="text-xs shrink-0">Trigger</Badge>
+                          <Badge variant="default" className="text-xs shrink-0">{ui("Trigger")}</Badge>
                         )}
                       </button>
                     );
@@ -213,14 +215,14 @@ export function AssignmentEditor({ assignment, defaultTopicId, isOpen, onClose, 
           {/* Practice-only info */}
           {displayContext === 'practice' && (
             <div className="rounded-xl bg-violet-50 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800 p-3 text-sm text-violet-800 dark:text-violet-300">
-              This quiz will always be available on the <strong>S'entraîner par thème</strong> page for this topic — no video completion required.
+              {ui("This quiz will always be available on the")} <strong>{ui("S'entraîner par thème")}</strong> {ui("page for this topic — no video completion required.")}
             </div>
           )}
 
           <div className="flex justify-end gap-2 pt-1">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={onClose}>{ui("Cancel")}</Button>
             <Button onClick={handleSave}>
-              {assignment ? 'Update' : 'Create'} Assignment
+              {assignment ? ui("Update") : ui("Create")} {ui("Assignment")}
             </Button>
           </div>
         </div>

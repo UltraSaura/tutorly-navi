@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,7 @@ interface ExercisesPanelProps {
 }
 
 export function ExercisesPanel({ exercises, childId }: ExercisesPanelProps) {
+  const ui = useInterfaceTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [needsAttention, setNeedsAttention] = useState(false);
 
@@ -65,7 +67,7 @@ export function ExercisesPanel({ exercises, childId }: ExercisesPanelProps) {
     <Card className="py-6 px-0.5">
       <div className="space-y-4 px-[10px]">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h2 className="text-xl font-semibold text-foreground">Exercises</h2>
+          <h2 className="text-xl font-semibold text-foreground">{ui("Exercises")}</h2>
           <div className="flex items-center gap-2">
             <Checkbox
               id="needs-attention"
@@ -73,7 +75,7 @@ export function ExercisesPanel({ exercises, childId }: ExercisesPanelProps) {
               onCheckedChange={(checked) => setNeedsAttention(checked === true)}
             />
             <Label htmlFor="needs-attention" className="text-sm cursor-pointer">
-              Needs attention
+              {ui("Needs attention")}
             </Label>
           </div>
         </div>
@@ -82,7 +84,7 @@ export function ExercisesPanel({ exercises, childId }: ExercisesPanelProps) {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search exercises..."
+            placeholder={ui("Search exercises...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -94,8 +96,8 @@ export function ExercisesPanel({ exercises, childId }: ExercisesPanelProps) {
           {filteredExercises.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
               {needsAttention
-                ? 'No exercises need attention. Great job! 🎉'
-                : 'No exercises found'}
+                ? ui("No exercises need attention. Great job! 🎉")
+                : ui("No exercises found")}
             </p>
           ) : (
             filteredExercises.map((exercise) => (

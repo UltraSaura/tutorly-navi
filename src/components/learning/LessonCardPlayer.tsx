@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useCallback, useRef, useEffect, useMemo, createContext, useContext, type ReactNode, type TouchEvent as RTouchEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -74,19 +75,21 @@ function buildFlowCards(steps: LessonContent[], hasTopicQuiz: boolean): Card[] {
 }
 
 function ProgressBar({ current, total, label }: { current: number; total: number; label: string }) {
+  const ui = useInterfaceTranslation();
   return (
     <div style={{ flex: 1 }}>
       <div style={{ height: 6, background: '#EAECEF', borderRadius: 999, overflow: 'hidden' }}>
         <div style={{ width: `${Math.round(((current + 1) / total) * 100)}%`, height: '100%', background: '#12C6A0', borderRadius: 999, transition: 'width .35s ease' }} />
       </div>
       <p style={{ fontSize: 9, color: '#667085', margin: '2px 0 0', fontFamily: 'Poppins, sans-serif' }}>
-        {label} · {current + 1}/{total}
+        {ui(label)} · {current + 1}/{total}
       </p>
     </div>
   );
 }
 
 function CardBadge({ icon, label, color }: { icon: ReactNode; label: string; color: string }) {
+  const ui = useInterfaceTranslation();
   const configs: Record<string, { bg: string; border: string; text: string }> = {
     teal: { bg: '#F2FBF8', border: '#9FE1CB', text: '#085041' },
     amber: { bg: '#FFF3DC', border: '#FAC775', text: '#B45309' },
@@ -97,7 +100,7 @@ function CardBadge({ icon, label, color }: { icon: ReactNode; label: string; col
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: c.bg, border: `0.5px solid ${c.border}`, borderRadius: 999, padding: '3px 10px', width: 'fit-content' }}>
       {icon}
-      <span style={{ fontSize: 10, fontWeight: 700, color: c.text, fontFamily: 'Poppins, sans-serif' }}>{label}</span>
+      <span style={{ fontSize: 10, fontWeight: 700, color: c.text, fontFamily: 'Poppins, sans-serif' }}>{ui(label)}</span>
     </div>
   );
 }
@@ -159,6 +162,7 @@ function InlineWorkedMath({ text }: { text: string }) {
 }
 
 function NextButton({ onClick, label = 'Suivant →', disabled = false }: { onClick: () => void; label?: string; disabled?: boolean }) {
+  const ui = useInterfaceTranslation();
   return (
     <button
       onClick={onClick}
@@ -177,7 +181,7 @@ function NextButton({ onClick, label = 'Suivant →', disabled = false }: { onCl
         fontFamily: 'Poppins, sans-serif',
       }}
     >
-      {label}
+      {ui(label)}
     </button>
   );
 }
@@ -192,6 +196,7 @@ const CONFETTI_COLORS = ['#12C6A0', '#3B82F6', '#F59E0B', '#8B5CF6', '#EF4444'];
 
 // A short confetti burst + label, shown when a level is cleared or the lesson is finished.
 export function CelebrationOverlay({ label }: { label: string }) {
+  const ui = useInterfaceTranslation();
   const pieces = useRef(
     Array.from({ length: 18 }, (_, i) => ({
       id: i,
@@ -220,7 +225,7 @@ export function CelebrationOverlay({ label }: { label: string }) {
         transition={{ type: 'spring', stiffness: 300, damping: 18 }}
         style={{ background: '#0F172A', color: 'white', padding: '10px 18px', borderRadius: 999, fontWeight: 800, fontSize: 14, fontFamily: 'Poppins, sans-serif', display: 'flex', gap: 8, alignItems: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}
       >
-        🎉 {label}
+        🎉 {ui(label)}
       </motion.div>
     </div>
   );
@@ -243,6 +248,7 @@ function IntroCard({
   compact?: boolean;   // levels 2+ : lighter header, no big topic visual
   heading?: string;    // override the H2 (e.g. the level name)
 }) {
+  const ui = useInterfaceTranslation();
   const explanation = lessonContent?.explanation ?? '';
   const sentences = explanation.split(/(?<=[.!?])\s+/).filter(Boolean);
   const hookSentence = sentences[0] ?? explanation;
@@ -257,7 +263,7 @@ function IntroCard({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-      <CardBadge icon={<BookOpen className="h-3 w-3" />} label={compact ? 'On continue' : 'Nouvelle leçon'} color="teal" />
+      <CardBadge icon={<BookOpen className="h-3 w-3" />} label={compact ? ui("On continue") : ui("Nouvelle leçon")} color="teal" />
       <h2 style={{ fontSize: compact ? 16 : 18, fontWeight: 900, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif', lineHeight: 1.25 }}>
         {heading ?? topicName}
       </h2>
@@ -273,9 +279,9 @@ function IntroCard({
                   <p style={{ fontSize: 22, fontWeight: 900, color: '#12C6A0', margin: 0, borderBottom: '2.5px solid #12C6A0', paddingBottom: 2, lineHeight: 1, fontFamily: 'Poppins, sans-serif' }}>1</p>
                   <p style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0, lineHeight: 1.2, fontFamily: 'Poppins, sans-serif' }}>4</p>
                 </div>
-                <div style={{ fontSize: 9, color: '#667085', lineHeight: 1.9 }}>← prises<br />← total</div>
+                <div style={{ fontSize: 9, color: '#667085', lineHeight: 1.9 }}>{ui("← prises")}<br />{ui("← total")}</div>
               </div>
-              <span style={{ fontSize: 9, color: '#12C6A0', fontWeight: 700 }}>= 1 part sur 4</span>
+              <span style={{ fontSize: 9, color: '#12C6A0', fontWeight: 700 }}>{ui("= 1 part sur 4")}</span>
             </div>
           )}
         </div>
@@ -327,7 +333,7 @@ function IntroCard({
             fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif',
           }}
         >
-          Continuer ↓
+          {ui("Continuer ↓")}
         </button>
       ) : (
         <NextButton onClick={onNext} />
@@ -348,6 +354,7 @@ function VocabularyCard({
   bodySize?: number;
   isYoung?: boolean;
 }) {
+  const ui = useInterfaceTranslation();
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const chipColors = [
     { bg: '#F2FBF8', border: '#9FE1CB', text: '#085041' },
@@ -357,12 +364,10 @@ function VocabularyCard({
   ];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-      <LargeCardBadge icon={<span style={{ fontSize: 14, lineHeight: 1 }}>📖</span>} label={`${vocabulary.length} mots à connaître`} color="purple" />
-      <p style={{ fontSize: 13, fontWeight: 400, color: '#667085', margin: '-2px 0 0', fontFamily: 'Poppins, sans-serif', lineHeight: 1.55 }}>
-        {isYoung
-          ? 'Appuie sur chaque mot pour apprendre les mots importants de cette leçon.'
-          : 'Appuie sur chaque mot pour comprendre les mots importants de la leçon.'}
-      </p>
+      <CardBadge icon={<span style={{ fontSize: 11 }}>📖</span>} label={ui("wordCount", { count: vocabulary.length })} color="purple" />
+      <h2 style={{ fontSize: isYoung ? 18 : 16, fontWeight: isYoung ? 900 : 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
+        {isYoung ? ui("Apprends ces mots !") : ui("Appuie sur chaque mot")}
+      </h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {vocabulary.map((item, i) => {
           const c = chipColors[i % chipColors.length];
@@ -400,7 +405,7 @@ function VocabularyCard({
           );
         })}
       </div>
-      <LessonFooter><NextButton onClick={onNext} label="J'ai compris →" /></LessonFooter>
+      <LessonFooter><NextButton onClick={onNext} label={ui("J'ai compris →")} /></LessonFooter>
     </div>
   );
 }
@@ -420,14 +425,15 @@ function ExamplesCard({
   visualSize?: number;
   exampleCount?: number;
 }) {
+  const ui = useInterfaceTranslation();
   const [active, setActive] = useState(0);
   const shownExamples = examples.slice(0, exampleCount);
   const ex = shownExamples[active] ?? shownExamples[0];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-      <CardBadge icon={<Zap className="h-3 w-3" />} label="Vois le pattern" color="amber" />
+      <CardBadge icon={<Zap className="h-3 w-3" />} label={ui("Vois le pattern")} color="amber" />
       <h2 style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif', lineHeight: 1.3 }}>
-        La même règle, des chiffres différents
+        {ui("La même règle, des chiffres différents")}
       </h2>
 
       <div style={{ display: 'flex', gap: 6 }}>
@@ -490,7 +496,7 @@ function ExamplesCard({
       </AnimatePresence>
 
       <p style={{ fontSize: 10, color: '#9CA3AF', margin: 0, textAlign: 'center' }}>
-        Appuie sur chaque exemple pour voir le changement
+        {ui("Appuie sur chaque exemple pour voir le changement")}
       </p>
       <LessonFooter><NextButton onClick={onNext} /></LessonFooter>
     </div>
@@ -510,6 +516,7 @@ function ExampleStepsCard({
   onNext: () => void;
   bodySize?: number;
 }) {
+  const ui = useInterfaceTranslation();
   const [revealed, setRevealed] = useState(1);
   const allRevealed = revealed >= exampleSteps.length;
   const stepRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -552,10 +559,10 @@ function ExampleStepsCard({
   };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-      <LargeCardBadge icon={<Zap className="h-3.5 w-3.5" />} label="Exemple résolu" color="amber" />
-      <p style={{ fontSize: 13, fontWeight: 400, color: '#667085', margin: '-2px 0 0', fontFamily: 'Poppins, sans-serif', lineHeight: 1.55 }}>
-        Suis la résolution, étape par étape, pour comprendre comment résoudre l’exemple.
-      </p>
+      <CardBadge icon={<Zap className="h-3 w-3" />} label={ui("Exemple résolu")} color="amber" />
+      <h2 style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif', lineHeight: 1.3 }}>
+        {ui("Suis la résolution, étape par étape")}
+      </h2>
 
       {context && (
         <div style={{ background: '#F2FBF8', borderRadius: 12, border: '0.5px solid #9FE1CB', padding: '11px 13px' }}>
@@ -635,7 +642,7 @@ function ExampleStepsCard({
             fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif',
           }}
         >
-          Étape suivante ↓
+          {ui("Étape suivante ↓")}
         </button>
       ) : (
         <NextButton onClick={onNext} />
@@ -653,6 +660,9 @@ function hasAnswer(question: Question | null | undefined, answer: any): boolean 
   }
   if (question.kind === 'match') return Array.isArray(answer) && answer.length > 0;
   if (question.kind === 'fill-expr') return answer && Object.keys(answer).length > 0;
+  if (question.kind === 'column-fill') {
+    return answer && typeof answer === 'object' && question.blanks.every(blank => String(answer[blank.id] ?? '').trim() !== '');
+  }
   if (question.kind === 'ordering') return Array.isArray(answer) && answer.length > 0;
   return answer !== null && answer !== undefined && answer !== '';
 }
@@ -669,6 +679,7 @@ function QuizCard({
   onNext: () => void;
   presetQuestion?: Question | null;
 }) {
+  const ui = useInterfaceTranslation();
   const [answer, setAnswer]   = useState<any>(null);
   const [correct, setCorrect] = useState(false);      // solved this card
   const [wrong, setWrong]     = useState(false);      // last attempt was wrong (showing nudge)
@@ -715,12 +726,9 @@ function QuizCard({
   if (!question) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-        <LargeCardBadge icon={<Zap className="h-3.5 w-3.5" />} label="Teste-toi" color="amber" />
-        <p style={{ fontSize: 13, fontWeight: 400, color: '#667085', margin: '-2px 0 0', fontFamily: 'Poppins, sans-serif', lineHeight: 1.55 }}>
-          Vérifie si tu as bien compris en répondant à cette question.
-        </p>
+        <CardBadge icon={<Zap className="h-3 w-3" />} label={ui("Teste-toi")} color="amber" />
         <div style={{ background: 'white', borderRadius: 14, border: '0.5px solid #EAECEF', padding: 24, textAlign: 'center', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>Quiz non disponible.</p>
+          <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>{ui("Quiz non disponible.")}</p>
         </div>
         <LessonFooter><NextButton onClick={onNext} /></LessonFooter>
       </div>
@@ -731,10 +739,7 @@ function QuizCard({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-      <LargeCardBadge icon={<Zap className="h-3.5 w-3.5" />} label="Teste-toi" color="amber" />
-      <p style={{ fontSize: 13, fontWeight: 400, color: '#667085', margin: '-2px 0 0', fontFamily: 'Poppins, sans-serif', lineHeight: 1.55 }}>
-        Vérifie si tu as bien compris en répondant à cette question.
-      </p>
+      <CardBadge icon={<Zap className="h-3 w-3" />} label={ui("Teste-toi")} color="amber" />
 
       {/* QuestionCard - interactive mode, never shows the correct answer */}
       <div style={{ background: correct ? '#F8FFFC' : '#FFF9EF', borderRadius: 14, border: correct ? '1px solid #9FE1CB' : '1px solid #FAC775', padding: 14, opacity: correct ? 0.9 : 1, pointerEvents: correct ? 'none' : 'auto', boxShadow: correct ? '0 4px 14px rgba(18, 198, 160, 0.10)' : '0 6px 18px rgba(250, 199, 117, 0.12)' }}>
@@ -753,7 +758,7 @@ function QuizCard({
       {correct && (
         <div style={{ borderRadius: 12, padding: '11px 14px', background: '#EAF3DE', border: '0.5px solid #9FE1CB', display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 18 }}>🎉</span>
-          <p style={{ fontSize: 13, fontWeight: 700, margin: 0, flex: 1, color: '#27500A' }}>Parfait ! Tu as bien compris.</p>
+          <p style={{ fontSize: 13, fontWeight: 700, margin: 0, flex: 1, color: '#27500A' }}>{ui("Parfait ! Tu as bien compris.")}</p>
         </div>
       )}
 
@@ -763,11 +768,11 @@ function QuizCard({
           <span style={{ fontSize: 18, lineHeight: 1.2 }}>💪</span>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: '#B45309' }}>
-              Pas tout à fait — réessaie, tu y es presque !
+              {ui("Pas tout à fait — réessaie, tu y es presque !")}
             </p>
             {hint && (
               <p style={{ fontSize: 12, fontWeight: 500, margin: '4px 0 0', color: '#92500A', lineHeight: 1.5 }}>
-                💡 Indice : {hint}
+                {ui("💡 Indice :")} {hint}
               </p>
             )}
           </div>
@@ -789,7 +794,7 @@ function QuizCard({
               cursor: 'pointer', fontFamily: 'Poppins, sans-serif',
             }}
           >
-            Réessayer
+            {ui("Réessayer")}
           </button>
           {attempts >= 2 && (
             <button
@@ -799,7 +804,7 @@ function QuizCard({
                 color: '#9CA3AF', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Poppins, sans-serif',
               }}
             >
-              Continuer quand même →
+              {ui("Continuer quand même →")}
             </button>
           )}
         </div>
@@ -817,7 +822,7 @@ function QuizCard({
             fontFamily: 'Poppins, sans-serif',
           }}
         >
-          Valider
+          {ui("Valider")}
         </button>
       )}
       </LessonFooter>
@@ -832,14 +837,15 @@ function getMistakeText(mistake: LessonContent['common_mistakes'][number] | unde
 }
 
 function MistakeCard({ mistakes, onNext }: { mistakes: LessonContent['common_mistakes']; onNext: () => void }) {
+  const ui = useInterfaceTranslation();
   const first = mistakes[0];
   const { text, why } = getMistakeText(first);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 16px', flex: 1 }}>
-      <LargeCardBadge icon={<AlertCircle className="h-3.5 w-3.5" />} label="Erreur fréquente" color="red" />
-      <p style={{ fontSize: 13, fontWeight: 400, color: '#667085', margin: '-2px 0 0', fontFamily: 'Poppins, sans-serif', lineHeight: 1.55 }}>
-        Repère l’erreur à éviter pour comprendre comment bien faire.
-      </p>
+      <CardBadge icon={<AlertCircle className="h-3 w-3" />} label={ui("Erreur fréquente")} color="red" />
+      <h2 style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
+        {ui("Attention à ce piège !")}
+      </h2>
       <div style={{ background: '#FCEBEB', borderRadius: 14, border: '0.5px solid #F7C1C1', padding: '12px 14px' }}>
         <p style={{ fontSize: 15, fontWeight: 800, color: '#A32D2D', margin: '0 0 8px', lineHeight: 1.35, fontFamily: 'Poppins, sans-serif' }}>{text}</p>
         {why && <p style={{ fontSize: 13, color: '#374151', margin: 0, lineHeight: 1.65, fontFamily: 'Poppins, sans-serif' }}>{why}</p>}
@@ -854,7 +860,7 @@ function MistakeCard({ mistakes, onNext }: { mistakes: LessonContent['common_mis
           </div>
         );
       })()}
-      <LessonFooter><NextButton onClick={onNext} label="Voir mon résultat →" /></LessonFooter>
+      <LessonFooter><NextButton onClick={onNext} label={ui("Voir mon résultat →")} /></LessonFooter>
     </div>
   );
 }
@@ -882,6 +888,7 @@ function CompleteCard({
   onPrimary?: () => void;    // overrides the default S'exercer primary
   onExitToPath?: () => void; // level mode: secondary "Retour au parcours"
 }) {
+  const ui = useInterfaceTranslation();
   const recap = lessonContent?.vocabulary?.slice(0, 3).map((v) => v.term) ?? [];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 14, padding: '20px 16px', flex: 1 }}>
@@ -890,7 +897,7 @@ function CompleteCard({
       </div>
       <div>
         <h2 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', margin: '0 0 4px', fontFamily: 'Poppins, sans-serif' }}>
-          {title ?? 'Leçon terminée !'}
+          {title ?? ui("Leçon terminée !")}
         </h2>
         <p style={{ fontSize: 13, color: '#667085', margin: 0 }}>{topicName}</p>
       </div>
@@ -899,16 +906,16 @@ function CompleteCard({
           <p style={{ fontSize: 20, fontWeight: 800, color: '#085041', margin: '0 0 2px', fontFamily: 'Poppins, sans-serif' }}>
             {actualMinutes ?? '—'} min
           </p>
-          <p style={{ fontSize: 10, color: '#0F6E56', margin: 0 }}>Durée</p>
+          <p style={{ fontSize: 10, color: '#0F6E56', margin: 0 }}>{ui("Durée")}</p>
         </div>
         <div style={{ background: '#FAEEDA', borderRadius: 12, padding: '10px 8px', border: '0.5px solid #FAC775', textAlign: 'center' }}>
           <p style={{ fontSize: 20, fontWeight: 800, color: '#633806', margin: '0 0 2px', fontFamily: 'Poppins, sans-serif' }}>{xpLabel}</p>
-          <p style={{ fontSize: 10, color: '#854F0B', margin: 0 }}>Gagné</p>
+          <p style={{ fontSize: 10, color: '#854F0B', margin: 0 }}>{ui("Gagné")}</p>
         </div>
       </div>
       {recap.length > 0 && (
         <div style={{ width: '100%', maxWidth: 280, background: '#F2FBF8', borderRadius: 12, border: '0.5px solid #9FE1CB', padding: '10px 12px', textAlign: 'left' }}>
-          <p style={{ fontSize: 10, fontWeight: 700, color: '#0F6E56', margin: '0 0 6px' }}>Tu sais maintenant :</p>
+          <p style={{ fontSize: 10, fontWeight: 700, color: '#0F6E56', margin: '0 0 6px' }}>{ui("Tu sais maintenant :")}</p>
           {recap.map((term, i) => (
             <p key={i} style={{ fontSize: 11, color: '#085041', margin: '0 0 3px', display: 'flex', gap: 6, alignItems: 'flex-start' }}>
               <span style={{ color: '#12C6A0', fontWeight: 800, flexShrink: 0 }}>✦</span>
@@ -921,20 +928,20 @@ function CompleteCard({
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {onPrimary ? (
           <button onClick={onPrimary} style={{ width: '100%', padding: 14, borderRadius: 14, border: 'none', background: '#12C6A0', color: '#0F172A', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            {primaryLabel ?? 'Continuer →'}
+            {primaryLabel ?? ui("Continuer →")}
           </button>
         ) : (
           <button onClick={onSexercer} style={{ width: '100%', padding: 14, borderRadius: 14, border: 'none', background: '#12C6A0', color: '#0F172A', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Poppins, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <Zap className="h-4 w-4" /> S'exercer sur {topicName}
+            <Zap className="h-4 w-4" /> {ui("S'exercer sur")} {topicName}
           </button>
         )}
         {onExitToPath ? (
           <button onClick={onExitToPath} style={{ width: '100%', padding: 12, borderRadius: 12, border: '1.5px solid #EAECEF', background: 'white', color: '#667085', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
-            Retour au parcours
+            {ui("Retour au parcours")}
           </button>
         ) : (
           <button onClick={onReplay} style={{ width: '100%', padding: 12, borderRadius: 12, border: '1.5px solid #EAECEF', background: 'white', color: '#667085', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Poppins, sans-serif' }}>
-            Recommencer la leçon
+            {ui("Recommencer la leçon")}
           </button>
         )}
       </div>
@@ -979,6 +986,7 @@ function LevelBanner({ levelIdx, totalLevels, stepName }: {
   totalLevels: number;
   stepName?: string;
 }) {
+  const ui = useInterfaceTranslation();
   return (
     <motion.div
       initial={{ opacity: 0, y: -6 }}
@@ -995,7 +1003,7 @@ function LevelBanner({ levelIdx, totalLevels, stepName }: {
         background: '#12C6A0', borderRadius: 999, padding: '2px 9px',
         fontFamily: 'Poppins, sans-serif',
       }}>
-        Niveau {levelIdx + 1}/{totalLevels}
+        {ui("Niveau")} {levelIdx + 1}/{totalLevels}
       </span>
       {stepName && (
         <span style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 700, color: '#085041', fontFamily: 'Poppins, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -1019,6 +1027,7 @@ export function LessonCardPlayer({
   onLevelComplete,
   onExitToPath,
 }: LessonCardPlayerProps) {
+  const ui = useInterfaceTranslation();
   const levelMode = !!levelContent;
   const isFinalLevel = levelMode && totalLevelsCount != null && (levelIndex ?? 0) === totalLevelsCount - 1;
   const { user } = useAuth();
@@ -1109,9 +1118,9 @@ export function LessonCardPlayer({
           time_spent_seconds: secs,
         });
         if (!error) {
-          showXpToast(5, 'Leçon terminée !');
-          window.setTimeout(() => showXpToast(0, '🔥 Continue comme ça !'), 900);
-          celebrate('Bravo, leçon terminée !', [0, 40, 30, 40, 30, 60]);
+          showXpToast(5, ui("Leçon terminée !"));
+          window.setTimeout(() => showXpToast(0, ui("🔥 Continue comme ça !")), 900);
+          celebrate(ui("Bravo, leçon terminée !"), [0, 40, 30, 40, 30, 60]);
         }
       }
       void queryClient.invalidateQueries({ queryKey: ['student-stats'] });
@@ -1121,7 +1130,7 @@ export function LessonCardPlayer({
     } finally {
       clearProgress(); // finished → don't resume into a completed lesson
     }
-  }, [user?.id, topicId, subjectId, queryClient, clearProgress, celebrate, levelMode, onLevelComplete]);
+  }, [user?.id, topicId, subjectId, queryClient, clearProgress, celebrate, levelMode, onLevelComplete, ui]);
 
   const goNext = useCallback(() => {
     const next = cardIndex + 1;
@@ -1129,12 +1138,12 @@ export function LessonCardPlayer({
     const nxt = cards[next];
     // Crossing into a new level (but not the final complete card) = level cleared → reward beat.
     if (cur && nxt && nxt.type !== 'complete' && nxt.stepIdx > cur.stepIdx) {
-      showXpToast(3, `Niveau ${cur.stepIdx + 1} terminé !`);
-      celebrate(`Niveau ${nxt.stepIdx + 1} débloqué`);
+      showXpToast(3, ui("levelCompleted", { level: cur.stepIdx + 1 }));
+      celebrate(ui("levelUnlocked", { level: nxt.stepIdx + 1 }));
     }
     if (next === cards.length - 1) void recordCompletion();
     if (next < cards.length) goTo(next);
-  }, [cardIndex, cards, recordCompletion, goTo, celebrate]);
+  }, [cardIndex, cards, recordCompletion, goTo, celebrate, ui]);
 
   // ── Swipe + keyboard navigation ─────────────────────────────────────
   // Forward = click the card's own primary CTA, so per-card gating (reveal /
@@ -1216,7 +1225,7 @@ export function LessonCardPlayer({
         {cardIndex > 0 && (
           <button
             onClick={() => goTo(cardIndex - 1)}
-            aria-label="Carte précédente"
+            aria-label={ui("Carte précédente")}
             style={{
               width: 28, height: 28, borderRadius: '50%',
               border: '0.5px solid #EAECEF', background: 'white',
@@ -1307,9 +1316,9 @@ export function LessonCardPlayer({
                 lessonContent={steps[0] ?? null}
                 onSexercer={onSexercer}
                 onReplay={replay}
-                title={isFinalLevel ? 'Leçon terminée !' : `Niveau ${(levelIndex ?? 0) + 1} terminé !`}
+                title={isFinalLevel ? ui("Leçon terminée !") : ui("levelCompleted", { level: (levelIndex ?? 0) + 1 })}
                 xpLabel={isFinalLevel ? '+5 XP' : '✓'}
-                primaryLabel={isFinalLevel ? 'Terminer le parcours →' : 'Continuer le parcours →'}
+                primaryLabel={isFinalLevel ? ui("Terminer le parcours →") : ui("Continuer le parcours →")}
                 onPrimary={onExitToPath}
               />
             ) : (

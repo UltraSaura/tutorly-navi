@@ -27,6 +27,54 @@ export type OperationPoseeQ = BaseQ & {
   locale?: "fr" | "en";
 };
 
+export type ColumnFillCell = {
+  kind: "text" | "blank" | "spacer";
+  text?: string;
+  blankId?: string;
+  colSpan?: number;
+  align?: "left" | "center" | "right";
+  tone?: "default" | "muted" | "accent" | "success" | "danger";
+  borderTop?: boolean;
+  borderBottom?: boolean;
+  borderLeft?: boolean;
+  className?: string;
+};
+
+export type ColumnFillRow = {
+  cells: ColumnFillCell[];
+  gap?: number;
+  minHeight?: number;
+  className?: string;
+};
+
+export type ColumnFillBlankKind =
+  | "digit"
+  | "carry"
+  | "borrow"
+  | "quotient"
+  | "remainder"
+  | "intermediate";
+
+export type ColumnFillBlankSpec = {
+  id: string;
+  answer: string;
+  kind?: ColumnFillBlankKind;
+  label?: string;
+};
+
+export type ColumnFillQ = BaseQ & {
+  kind: "column-fill";
+  operation: "addition" | "subtraction" | "multiplication" | "division";
+  operands: string[];
+  layout: {
+    columns: number;
+    rows: ColumnFillRow[];
+  };
+  blanks: ColumnFillBlankSpec[];
+  locale?: "fr" | "en";
+  instructions?: string;
+};
+
 export interface SliderQuestion {
   id: string;
   kind: "slider";
@@ -76,7 +124,17 @@ export interface FillExprQuestion {
   tags?: string[];
 }
 
-export type Question = SingleQ | MultiQ | NumericQ | OrderingQ | VisualQ | OperationPoseeQ | SliderQuestion | MatchQuestion | FillExprQuestion;
+export type Question =
+  | SingleQ
+  | MultiQ
+  | NumericQ
+  | OrderingQ
+  | VisualQ
+  | OperationPoseeQ
+  | ColumnFillQ
+  | SliderQuestion
+  | MatchQuestion
+  | FillExprQuestion;
 
 export type QuizBank = {
   quizBankId: string;

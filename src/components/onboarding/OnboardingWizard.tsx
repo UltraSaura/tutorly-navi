@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -67,6 +68,7 @@ const LEARNING_STYLES: {
 ];
 
 export function OnboardingWizard() {
+  const ui = useInterfaceTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { updateProfile } = useUserCurriculumProfile();
@@ -169,7 +171,7 @@ export function OnboardingWizard() {
             }}
           >
             <ArrowLeft className="h-4 w-4" />
-            Retour
+            {ui("Retour")}
           </button>
         )}
       </div>
@@ -264,7 +266,7 @@ export function OnboardingWizard() {
                   gap: 8,
                 }}
               >
-                Continuer <ArrowRight className="h-4 w-4" />
+                {ui("Continuer")} <ArrowRight className="h-4 w-4" />
               </button>
             </div>
           )}
@@ -346,7 +348,7 @@ export function OnboardingWizard() {
                   gap: 8,
                 }}
               >
-                Continuer <ArrowRight className="h-4 w-4" />
+                {ui("Continuer")} <ArrowRight className="h-4 w-4" />
               </button>
             </div>
           )}
@@ -402,7 +404,7 @@ export function OnboardingWizard() {
               <style>{'@keyframes spin { to { transform: rotate(360deg); } }'}</style>
 
               <p style={{ textAlign: 'center', fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>
-                Tu pourras changer ton style dans ton profil à tout moment.
+                {ui("Tu pourras changer ton style dans ton profil à tout moment.")}
               </p>
             </div>
           )}
@@ -411,7 +413,7 @@ export function OnboardingWizard() {
 
       <div style={{ padding: '0 20px 8px', textAlign: 'center' }}>
         <p style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'Poppins, sans-serif' }}>
-          🎓 Stuwy s&apos;adapte à <strong>toi</strong>
+          {ui("🎓 Stuwy s'adapte à")} <strong>{ui("toi")}</strong>
         </p>
       </div>
     </div>

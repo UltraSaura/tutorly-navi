@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 "use client";
 
 import * as React from "react";
@@ -30,6 +31,7 @@ export default function AngleEditor({
   state: VisualAngle;
   setState: (s: VisualAngle) => void;
 }) {
+  const ui = useInterfaceTranslation();
   const singleSvgRef = useRef<SVGSVGElement | null>(null);
   const [dragging, setDragging] = useState<DragState | null>(null);
   const [angleBadge, setAngleBadge] = useState<{ id: string; angle: number; x: number; y: number } | null>(null);
@@ -238,16 +240,16 @@ export default function AngleEditor({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
       <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <Label className="text-sm">Allow multiple answers</Label>
+          <Label className="text-sm">{ui("Allow multiple answers")}</Label>
           <input type="checkbox" checked={!!state.multi} onChange={(e) => toggleMulti(e.target.checked)} />
         </div>
 
         {state.multi && (
           <div className="space-y-2 border rounded-md p-2">
             <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-              <span>Angles</span>
+              <span>{ui("Angles")}</span>
               <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700" onClick={addVariant}>
-                Add angle
+                {ui("Add angle")}
               </Button>
             </div>
             <div className="flex flex-col gap-1">
@@ -270,7 +272,7 @@ export default function AngleEditor({
                           toggleCorrect(config.id, e.target.checked);
                         }}
                       />
-                      correct
+                      {ui("correct")}
                     </label>
                     {config.id !== "base" && (
                       <Button
@@ -283,7 +285,7 @@ export default function AngleEditor({
                           removeVariant(config.id);
                         }}
                       >
-                        Remove
+                        {ui("Remove")}
                       </Button>
                     )}
                   </div>
@@ -291,14 +293,14 @@ export default function AngleEditor({
               ))}
             </div>
             <div className="text-xs text-muted-foreground">
-              Add multiple angles and mark the correct ones. Students will select every correct angle card when answering.
+              {ui("Add multiple angles and mark the correct ones. Students will select every correct angle card when answering.")}
             </div>
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <Label>Ray A (deg)</Label>
+            <Label>{ui("Ray A (deg)")}</Label>
             <Input
               type="number"
               value={current?.aDeg ?? state.aDeg}
@@ -306,7 +308,7 @@ export default function AngleEditor({
             />
           </div>
           <div>
-            <Label>Ray B (deg)</Label>
+            <Label>{ui("Ray B (deg)")}</Label>
             <Input
               type="number"
               value={current?.bDeg ?? state.bDeg}
@@ -322,7 +324,7 @@ export default function AngleEditor({
             />
           </div>
           <div>
-            <Label>Tolerance (±deg)</Label>
+            <Label>{ui("Tolerance (±deg)")}</Label>
             <Input
               type="number"
               value={current?.toleranceDeg ?? state.toleranceDeg}
@@ -335,7 +337,7 @@ export default function AngleEditor({
             ? "Drag the handles inside each angle card to adjust the rays. Hold Alt for 15° snap, Shift for 5° snap."
             : "Drag the handles to set rays. Hold Alt for 15° snap, Shift for 5° snap. Students answer numeric values within tolerance."}
         </div>
-        <div className="text-xs">Active angle between rays: {activeAngleBetween}°</div>
+        <div className="text-xs">{ui("Active angle between rays:")} {activeAngleBetween}°</div>
       </div>
 
       <div className={state.multi ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "relative flex items-center justify-center"}>
@@ -398,7 +400,7 @@ export default function AngleEditor({
                   {betweenBadge?.id === config.id && (
                     <div className="absolute top-3 right-3 rounded-full bg-blue-500/90 px-3 py-1 text-xs text-white">{betweenBadge.value}°</div>
                   )}
-                  <div className="mt-2 text-center text-xs text-muted-foreground">Angle between rays: {Math.round(angleBetween(config.aDeg, config.bDeg))}°</div>
+                  <div className="mt-2 text-center text-xs text-muted-foreground">{ui("Angle between rays:")} {Math.round(angleBetween(config.aDeg, config.bDeg))}°</div>
                 </div>
               );
             })
@@ -431,7 +433,7 @@ export default function AngleEditor({
             className="cursor-pointer fill-white stroke-blue-500"
             strokeWidth={1.5}
                       onPointerDown={handlePointerDown("base", "a")}
-            aria-label="Ray A handle"
+            aria-label={ui("Ray A handle")}
           />
           <circle
                       cx={rayB.x}
@@ -440,7 +442,7 @@ export default function AngleEditor({
             className="cursor-pointer fill-white stroke-blue-500"
             strokeWidth={1.5}
                       onPointerDown={handlePointerDown("base", "b")}
-            aria-label="Ray B handle"
+            aria-label={ui("Ray B handle")}
           />
                     {angleBadge?.id === "base" && (
             <text x={angleBadge.x} y={angleBadge.y - 4} textAnchor="middle" fontSize={5} fill="#1d4ed8">

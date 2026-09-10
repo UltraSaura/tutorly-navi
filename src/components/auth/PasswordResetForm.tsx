@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,6 +27,7 @@ export const PasswordResetForm: React.FC<PasswordResetFormProps> = ({
   onBack, 
   loading = false 
 }) => {
+  const ui = useInterfaceTranslation();
   const { t } = useTranslation();
 
   const {
@@ -61,7 +63,7 @@ export const PasswordResetForm: React.FC<PasswordResetFormProps> = ({
               className={errors.email ? 'border-destructive' : ''}
             />
             {errors.email && (
-              <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
+              <p className="text-sm text-destructive mt-1">{ui(String(errors.email.message))}</p>
             )}
           </div>
 

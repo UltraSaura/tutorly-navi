@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from "react";
 import { User, HeadphonesIcon, Globe, LogOut, Settings, BookOpen, Trophy, Zap } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -18,6 +19,7 @@ interface AccountTabContentProps {
 }
 
 export function AccountTabContent({ onClose }: AccountTabContentProps) {
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -61,13 +63,13 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
                   {stats.totalXp}
                 </span>
                 <span style={{ fontSize: 12, color: '#0F6E56', fontWeight: 600 }}>XP</span>
-                <span style={{ fontSize: 11, color: '#667085', marginLeft: 'auto' }}>Niveau {stats.level}</span>
+                <span style={{ fontSize: 11, color: '#667085', marginLeft: 'auto' }}>{ui("Niveau")} {stats.level}</span>
               </div>
               <div style={{ height: 4, background: '#EAECEF', borderRadius: 999, overflow: 'hidden', marginTop: 6 }}>
                 <div style={{ width: `${Math.round(stats.xpProgressInLevel * 100)}%`, height: '100%', background: '#12C6A0', borderRadius: 999, transition: 'width 0.4s ease' }} />
               </div>
               <p style={{ fontSize: 10, color: '#667085', margin: '3px 0 0', fontFamily: 'Poppins, sans-serif' }}>
-                {stats.lessonsCompleted} lecon{stats.lessonsCompleted !== 1 ? 's' : ''} terminee{stats.lessonsCompleted !== 1 ? 's' : ''} · encore {stats.xpToNextLevel} XP pour le niveau {stats.level + 1}
+                {ui("completedLessonCount", { count: stats.lessonsCompleted })} {ui("· encore")} {stats.xpToNextLevel} {ui("XP pour le niveau")} {stats.level + 1}
               </p>
               <div style={{ marginTop: 10, paddingTop: 10, borderTop: '0.5px solid rgba(18, 198, 160, 0.22)', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 32, height: 32, borderRadius: 10, background: '#FFF3DC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -75,19 +77,19 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <p style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
-                    {stats.currentStreak > 0 ? `${stats.currentStreak} jours de suite` : 'Aucune serie active'}
+                    {stats.currentStreak > 0 ? `${stats.currentStreak} jours de suite` : ui("Aucune serie active")}
                   </p>
                   <p style={{ fontSize: 10, color: '#667085', margin: '2px 0 0', fontFamily: 'Poppins, sans-serif' }}>
                     {stats.streakAtRisk
-                      ? 'Ta serie est en danger aujourd hui.'
+                      ? ui("Ta serie est en danger aujourd hui.")
                       : stats.activeToday
-                        ? 'Serie maintenue aujourd hui.'
-                        : `Record: ${stats.longestStreak} jour${stats.longestStreak > 1 ? 's' : ''}`}
+                        ? ui("Serie maintenue aujourd hui.")
+                        : ui("streakRecord", { count: stats.longestStreak })}
                   </p>
                 </div>
                 {stats.longestStreak > stats.currentStreak && stats.longestStreak > 0 ? (
                   <div style={{ borderRadius: 999, background: '#FFF3DC', border: '0.5px solid #FAC775', padding: '4px 8px', fontSize: 10, fontWeight: 700, color: '#854F0B', whiteSpace: 'nowrap' }}>
-                    Record {stats.longestStreak}
+                    {ui("Record")} {stats.longestStreak}
                   </div>
                 ) : null}
               </div>
@@ -119,7 +121,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
         >
           <NavLink to="/my-program" className="flex items-center">
             <BookOpen className="mr-3 h-5 w-5" />
-            <span>My Program</span>
+            <span>{ui("My Program")}</span>
           </NavLink>
         </Button>
 
@@ -131,7 +133,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
         >
           <NavLink to="/dashboard" className="flex items-center">
             <Trophy className="mr-3 h-5 w-5" />
-            <span>Dashboard</span>
+            <span>{ui("Dashboard")}</span>
           </NavLink>
         </Button>
 
@@ -156,7 +158,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
           >
             <NavLink to="/admin" className="flex items-center">
               <Settings className="mr-3 h-5 w-5" />
-              <span>Admin Panel</span>
+              <span>{ui("Admin Panel")}</span>
             </NavLink>
           </Button>
         )}

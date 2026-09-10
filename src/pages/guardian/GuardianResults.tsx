@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
 import { useGuardianExerciseHistory } from '@/hooks/useGuardianExerciseHistory';
@@ -13,6 +14,7 @@ import { useLanguage } from '@/context/SimpleLanguageContext';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 export default function GuardianResults() {
+  const ui = useInterfaceTranslation();
   const { guardianId } = useGuardianAuth();
   const [selectedChild, setSelectedChild] = useState('all');
   const [subjectFilter, setSubjectFilter] = useState('all');
@@ -77,11 +79,11 @@ export default function GuardianResults() {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Results" description="Review detailed exercise results and quiz performance for your children." />
+      <PageMeta title={ui("Results")} description={ui("Review detailed exercise results and quiz performance for your children.")} />
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Exercise Results</h1>
+        <h1 className="text-3xl font-bold text-foreground">{ui("Exercise Results")}</h1>
         <p className="text-muted-foreground mt-2">
-          View and track your children's exercise performance
+          {ui("View and track your children's exercise performance")}
         </p>
       </div>
 
@@ -115,9 +117,9 @@ export default function GuardianResults() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium text-center">No children found</p>
+            <p className="text-lg font-medium text-center">{ui("No children found")}</p>
             <p className="text-sm text-muted-foreground text-center mt-2">
-              Add children to your account to start tracking their progress
+              {ui("Add children to your account to start tracking their progress")}
             </p>
           </CardContent>
         </Card>
@@ -125,11 +127,11 @@ export default function GuardianResults() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium text-center">No exercises found</p>
+            <p className="text-lg font-medium text-center">{ui("No exercises found")}</p>
             <p className="text-sm text-muted-foreground text-center mt-2">
               {selectedChild === 'all'
-                ? 'Your children haven\'t completed any exercises yet'
-                : 'No exercises match the current filters'}
+                ? ui("Your children haven't completed any exercises yet")
+                : ui("No exercises match the current filters")}
             </p>
           </CardContent>
         </Card>

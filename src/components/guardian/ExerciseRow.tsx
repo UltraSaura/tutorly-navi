@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +30,8 @@ export function ExerciseRow({
   allAttempts,
   childId
 }: ExerciseRowProps) {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   const [showTimeline, setShowTimeline] = useState(false);
   const [showExplanationModal, setShowExplanationModal] = useState(false);
   const teaching = useTwoCardTeaching();
@@ -38,9 +42,9 @@ export function ExerciseRow({
   // Status badge - Only "Correct" or "Incorrect"
   const getStatusBadge = () => {
     if (exercise.is_correct === true) {
-      return <Badge className="bg-green-500/10 text-green-700 dark:text-green-400">Correct</Badge>;
+      return <Badge className="bg-green-500/10 text-green-700 dark:text-green-400">{ui("Correct")}</Badge>;
     } else {
-      return <Badge className="bg-red-500/10 text-red-700 dark:text-red-400">Incorrect</Badge>;
+      return <Badge className="bg-red-500/10 text-red-700 dark:text-red-400">{ui("Incorrect")}</Badge>;
     }
   };
 
@@ -83,8 +87,8 @@ export function ExerciseRow({
       
       // Show loading toast
       toast({
-        title: "Generating explanation...",
-        description: "This may take a few seconds",
+        title: ui("Generating explanation..."),
+        description: ui("This may take a few seconds"),
       });
       
       try {
@@ -100,8 +104,8 @@ export function ExerciseRow({
       } catch (error) {
         console.error('Failed to generate explanation:', error);
         toast({
-          title: "Failed to generate explanation",
-          description: "Please try again later",
+          title: ui("Failed to generate explanation"),
+          description: ui("Please try again later"),
           variant: "destructive"
         });
       }
@@ -113,8 +117,8 @@ export function ExerciseRow({
     const explanationData = Array.isArray(exercise.explanation) ? exercise.explanation[0]?.explanation_data : exercise.explanation?.explanation_data;
     if (!explanationData) {
       toast({
-        title: "No explanation available",
-        description: "Click 'View explanation' to generate one.",
+        title: ui("No explanation available"),
+        description: ui("Click 'View explanation' to generate one."),
         variant: "destructive"
       });
       return;
@@ -127,7 +131,7 @@ export function ExerciseRow({
 ⚠️ Common Pitfall: ${explanationData.pitfall || 'N/A'}
     `.trim();
     toast({
-      title: "Quick Summary",
+      title: ui("Quick Summary"),
       description: summary,
       duration: 8000
     });
@@ -146,7 +150,7 @@ export function ExerciseRow({
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             {/* Subject chip */}
             <Badge variant="outline" className="w-fit">
-              {exercise.subject_id || 'General'}
+              {exercise.subject_id || ui("General")}
             </Badge>
 
             {/* Exercise title and student's answer */}
@@ -157,7 +161,7 @@ export function ExerciseRow({
               </p>
               {exercise.user_answer && (
                 <div className="flex items-center gap-2 mx-0.5">
-                  <span className="text-xs text-muted-foreground">Student's answer:</span>
+                  <span className="text-xs text-muted-foreground">{ui("Student's answer:")}</span>
                   <span className="text-sm font-medium text-foreground">{exercise.user_answer}</span>
                 </div>
               )}
@@ -167,12 +171,12 @@ export function ExerciseRow({
             <div className="flex items-center gap-2 flex-wrap">
               {getStatusBadge()}
               {hasMultipleAttempts && <Badge variant="outline" className="text-xs">
-                  Retried ×{allAttempts.length}
+                  {ui("Retried ×")}{allAttempts.length}
                 </Badge>}
               <span className="text-xs text-muted-foreground">•</span>
-              <span className="text-xs text-muted-foreground">Attempts: <span className="font-semibold text-foreground">{exercise.attempts_count}</span></span>
+              <span className="text-xs text-muted-foreground">{ui("Attempts:")} <span className="font-semibold text-foreground">{exercise.attempts_count}</span></span>
               <span className="text-xs text-muted-foreground">•</span>
-              <span className="text-xs text-muted-foreground">{format(new Date(exercise.created_at), 'MMM d, h:mm a')}</span>
+              <span className="text-xs text-muted-foreground">{format(new Date(exercise.created_at), 'MMM d, h:mm a', { locale: dateLocale })}</span>
             </div>
           </div>
 
@@ -180,7 +184,7 @@ export function ExerciseRow({
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={handleViewExplanation} className="text-xs">
               <ImageIcon className="h-3 w-3 mr-1" />
-              View explanation
+              {ui("View explanation")}
             </Button>
 
             
@@ -188,10 +192,10 @@ export function ExerciseRow({
             {hasMultipleAttempts && <Button variant="ghost" size="sm" onClick={() => setShowTimeline(!showTimeline)} className="text-xs ml-auto">
                 {showTimeline ? <>
                     <ChevronUp className="h-3 w-3 mr-1" />
-                    Hide history
+                    {ui("Hide history")}
                   </> : <>
                     <ChevronDown className="h-3 w-3 mr-1" />
-                    Show history
+                    {ui("Show history")}
                   </>}
               </Button>}
           </div>

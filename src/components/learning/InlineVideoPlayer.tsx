@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { X, Play, Pause, Volume2, VolumeX, Maximize, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ interface InlineVideoPlayerProps {
 }
 
 export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) {
+  const ui = useInterfaceTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const youtubePlayerRef = useRef<any>(null);
@@ -434,7 +436,7 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
     return (
       <Card ref={containerRef} className="w-full p-6">
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading video...</p>
+          <p className="text-muted-foreground">{ui("Loading video...")}</p>
         </div>
       </Card>
     );
@@ -444,7 +446,7 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
     return (
       <Card ref={containerRef} className="w-full p-6">
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Video not found</p>
+          <p className="text-muted-foreground">{ui("Video not found")}</p>
         </div>
       </Card>
     );
@@ -482,7 +484,7 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
                   <div className="absolute inset-0 flex items-center justify-center bg-black/50">
                     <div className="text-center space-y-2">
                       <Loader2 className="h-8 w-8 animate-spin text-white mx-auto" />
-                      <p className="text-white text-sm">Initializing player...</p>
+                      <p className="text-white text-sm">{ui("Initializing player...")}</p>
                     </div>
                   </div>
                 )}
@@ -492,9 +494,9 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
                   <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-6">
                     <Card className="max-w-md p-6 space-y-4">
                       <div className="space-y-2">
-                        <h3 className="font-semibold text-lg">Video Playback Restricted</h3>
+                        <h3 className="font-semibold text-lg">{ui("Video Playback Restricted")}</h3>
                         <p className="text-sm text-muted-foreground">
-                          This video can't be played here due to the owner's embedding settings.
+                          {ui("This video can't be played here due to the owner's embedding settings.")}
                         </p>
                       </div>
                       <div className="flex gap-2">
@@ -508,10 +510,10 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
                           className="flex-1"
                         >
                           <ExternalLink className="h-4 w-4 mr-2" />
-                          Open on YouTube
+                          {ui("Open on YouTube")}
                         </Button>
                         <Button variant="outline" onClick={onClose}>
-                          Close
+                          {ui("Close")}
                         </Button>
                       </div>
                     </Card>
@@ -616,7 +618,7 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
           {video.progress_percentage > 0 && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Progress</span>
+                <span className="text-muted-foreground">{ui("Progress")}</span>
                 <span className="font-medium">{video.progress_percentage}%</span>
               </div>
               <Progress value={video.progress_percentage} />
@@ -630,12 +632,12 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
         <Dialog open={showQuiz} onOpenChange={setShowQuiz}>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>Quiz Time! 🎯</DialogTitle>
+              <DialogTitle>{ui("Quiz Time! 🎯")}</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-6">
               <div className="space-y-2">
-                <h3 className="font-semibold">Question:</h3>
+                <h3 className="font-semibold">{ui("Question:")}</h3>
                 {currentQuiz.question_latex ? (
                   <MathRenderer latex={currentQuiz.question_latex} />
                 ) : (
@@ -644,7 +646,7 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
               </div>
 
               <div className="space-y-2">
-                <h3 className="font-semibold">Options:</h3>
+                <h3 className="font-semibold">{ui("Options:")}</h3>
                 <div className="space-y-2">
                   {currentQuiz.options.map((option, index) => (
                     <Button
@@ -674,15 +676,15 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
                 {!quizResult ? (
                   <>
                     <Button variant="outline" onClick={handleQuizContinue}>
-                      Skip
+                      {ui("Skip")}
                     </Button>
                     <Button onClick={handleQuizSubmit} disabled={selectedAnswer === null}>
-                      Submit Answer
+                      {ui("Submit Answer")}
                     </Button>
                   </>
                 ) : (
                   <Button onClick={handleQuizContinue}>
-                    Continue Video
+                    {ui("Continue Video")}
                   </Button>
                 )}
               </div>

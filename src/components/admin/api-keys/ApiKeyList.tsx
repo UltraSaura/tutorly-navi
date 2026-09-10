@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { ApiKey } from '@/context/AdminContext';
 import ApiKeyCard from './ApiKeyCard';
@@ -9,10 +10,11 @@ interface ApiKeyListProps {
 }
 
 const ApiKeyList = ({ apiKeys, onDeleteKey, onTestConnection }: ApiKeyListProps) => {
+  const ui = useInterfaceTranslation();
   if (apiKeys.length === 0) {
     return (
       <div className="text-center p-8 border border-dashed rounded-lg">
-        <p className="text-muted-foreground">No API keys added yet. Add your first API key to get started.</p>
+        <p className="text-muted-foreground">{ui("No API keys added yet. Add your first API key to get started.")}</p>
       </div>
     );
   }

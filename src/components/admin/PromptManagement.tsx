@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import SystemPromptConfigNew from './SystemPromptConfigNew';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 const PromptManagement = () => {
+  const ui = useInterfaceTranslation();
   const { templates, loading } = usePromptManagement();
 
   if (loading) {
@@ -15,7 +17,7 @@ const PromptManagement = () => {
       <Card>
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin mr-2" />
-          Loading prompt templates...
+          {ui("Loading prompt templates...")}
         </CardContent>
       </Card>
     );
@@ -23,12 +25,12 @@ const PromptManagement = () => {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Prompts" description="Edit and version AI system prompts." />
+      <PageMeta title={ui("Prompts")} description={ui("Edit and version AI system prompts.")} />
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Prompt Management</h2>
+          <h2 className="text-2xl font-bold">{ui("Prompt Management")}</h2>
           <p className="text-muted-foreground">
-            Centralized management of AI prompts across all system interactions
+            {ui("Centralized management of AI prompts across all system interactions")}
           </p>
         </div>
       </div>
@@ -38,10 +40,10 @@ const PromptManagement = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
-              System Status
+              {ui("System Status")}
             </CardTitle>
             <CardDescription>
-              Overview of active prompt templates by category
+              {ui("Overview of active prompt templates by category")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -54,10 +56,10 @@ const PromptManagement = () => {
                   <div key={type} className="text-center">
                     <div className="text-2xl font-bold">{activeCount}</div>
                     <div className="text-sm text-muted-foreground capitalize">
-                      {type.replace('_', ' ')} Active
+                      {type.replace('_', ' ')} {ui("Active")}
                     </div>
                     <Badge variant={activeCount > 0 ? 'default' : 'secondary'} className="mt-1">
-                      {typeTemplates.length} Total
+                      {typeTemplates.length} {ui("Total")}
                     </Badge>
                   </div>
                 );

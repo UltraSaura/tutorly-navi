@@ -1,5 +1,6 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { memo, useMemo, useState, useCallback } from 'react';
-import { Calculator, Send, Trash2, X } from 'lucide-react';
+import { Calculator, CheckCircle2, Send, Trash2, X, XCircle } from 'lucide-react';
 import { MathRenderer } from '@/components/math/MathRenderer';
 import { containsMathContent, textToMathDisplay, answerToLatex } from '@/utils/mathFormatUtils';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +22,7 @@ import GroupedProblemExplanationModal from './GroupedProblemExplanationModal';
 import { generateGroupedRetryPractice } from '@/services/problemSubmissionService';
 import { useAdmin } from '@/context/AdminContext';
 import { buildSafeHomeworkLearningRows, type SafeHomeworkLearningRow } from '@/services/homeworkLearningResources';
+import { motion } from 'framer-motion';
 
 interface AIResponseProps {
   messages: Message[];
@@ -73,8 +75,8 @@ const getStatusStyles = (content: string) => {
   const isUnanswered = /^UNANSWERED\b/i.test(contentTrimmed);
   
   if (isUnanswered) return 'bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800';
-  if (isCorrect) return 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800';
-  if (isIncorrect) return 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800';
+  if (isCorrect) return 'bg-green-50 border border-green-200 dark:bg-green-950/20 dark:border-green-800';
+  if (isIncorrect) return 'bg-red-50 border border-red-200 dark:bg-red-950/20 dark:border-red-800';
   return 'bg-neutral-surface border-neutral-border';
 };
 
@@ -88,8 +90,52 @@ const parseAIResponse = (content: string) => {
   }
 };
 
+function ExerciseResultBanner({
+  isCorrect,
+  isIncorrect,
+  language,
+}: {
+  isCorrect: boolean;
+  isIncorrect: boolean;
+  language: string;
+}) {
+  if (!isCorrect && !isIncorrect) return null;
+
+  const fr = language === 'fr';
+  const label = isCorrect
+    ? (fr ? 'Bien joué' : 'Good job')
+    : (fr ? 'Pas encore' : 'Not yet');
+
+  return (
+    <motion.div
+      initial={{ scale: 0.92, opacity: 0 }}
+      animate={isCorrect
+        ? { scale: [0.92, 1.06, 1], opacity: 1 }
+        : { x: [0, -6, 6, -4, 4, 0], opacity: 1, scale: 1 }
+      }
+      transition={{ duration: isCorrect ? 0.35 : 0.42 }}
+      className={cn(
+        'mb-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold',
+        isCorrect
+          ? 'border-green-300 bg-green-100 text-green-800'
+          : 'border-red-300 bg-red-100 text-red-800'
+      )}
+      role="status"
+      aria-live="polite"
+    >
+      {isCorrect ? (
+        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+      ) : (
+        <XCircle className="h-3.5 w-3.5 shrink-0" />
+      )}
+      <span>{label}</span>
+    </motion.div>
+  );
+}
+
 // Memoized ExerciseCard component
 const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmitAnswer, onShowExplanation }) => {
+  const ui = useInterfaceTranslation();
   const parsed = parseUserMessage(userMessage.content);
   const { question, answer, hasAnswer } = parsed;
   const choiceOptions = getExerciseChoices(userMessage);
@@ -169,13 +215,13 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
   const homeworkLearningRows = useMemo(() => {
     if (!question || (!isCorrect && !isIncorrect)) return [];
     return [{
-      label: language === 'fr' ? 'Exercice' : 'Exercise',
+      label: language === 'fr' ? 'Exercice' : ui("Exercise"),
       prompt: question,
       rowKind: 'calculation' as const,
       gradingExplanation: contentTrimmed,
       status: isCorrect ? 'correct' as const : 'incorrect' as const,
     }];
-  }, [contentTrimmed, isCorrect, isIncorrect, language, question]);
+  }, [contentTrimmed, isCorrect, isIncorrect, language, question, ui]);
 
   // JSON response path
   const jsonResponse = parseAIResponse(content);
@@ -187,8 +233,8 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
       <div className="w-full overflow-hidden">
         <div className={cn(
           'p-4 rounded-card transition-all duration-200 hover:shadow-md relative break-words overflow-hidden',
-          jsonIsCorrect ? 'bg-green-50 border-2 border-green-600'
-            : jsonIsIncorrect ? 'bg-red-50 border-2 border-red-600'
+          jsonIsCorrect ? 'bg-green-50 border border-green-200'
+            : jsonIsIncorrect ? 'bg-red-50 border border-red-200'
             : 'bg-neutral-surface border border-neutral-border'
         )}>
           <div className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center">
@@ -217,6 +263,12 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
               <div className="text-body font-semibold text-neutral-text mb-3 break-words whitespace-pre-wrap">
                 <MathText text={question || jsonResponse.exercise} />
               </div>
+
+              <ExerciseResultBanner
+                isCorrect={jsonIsCorrect}
+                isIncorrect={jsonIsIncorrect}
+                language={language}
+              />
               
               <div className="mb-3">
                 {hasNoAnswer ? (
@@ -307,6 +359,12 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
             <div className="text-body font-semibold text-neutral-text mb-3">
               <MathText text={question} />
             </div>
+
+            <ExerciseResultBanner
+              isCorrect={isCorrect}
+              isIncorrect={isIncorrect}
+              language={language}
+            />
             
             <div className="mb-3">
               {hasNoAnswer ? (
@@ -340,7 +398,14 @@ const ExerciseCard = memo<ExerciseCardProps>(({ userMessage, aiResponse, onSubmi
                   )}
                 </div>
               ) : (
-                <Badge variant="secondary" className="px-3 py-1 bg-neutral-bg text-neutral-muted">
+                <Badge variant="secondary" className={cn(
+                  'px-3 py-1',
+                  isCorrect
+                    ? 'bg-green-100 border border-green-300 text-green-800'
+                    : isIncorrect
+                      ? 'bg-white border border-border text-muted-foreground'
+                      : 'bg-neutral-bg text-neutral-muted'
+                )}>
                   <MathAnswer label={t('exercise.answer')} answer={answer} />
                 </Badge>
               )}
@@ -385,6 +450,7 @@ const LoadingSkeleton = () => (
 );
 
 const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAnswer, onSubmitGroupedAnswers, onClearAll, onDismissExercise }) => {
+  const ui = useInterfaceTranslation();
   const { t, language } = useLanguage();
   const teaching = useTwoCardTeaching();
   const { selectedModelId } = useAdmin();
@@ -545,7 +611,7 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
             <Button variant="outline" size="sm" onClick={onClearAll}
               className="text-muted-foreground hover:text-destructive hover:border-destructive">
               <Trash2 size={14} />
-              {language === 'fr' ? 'Tout effacer' : 'Clear all'}
+              {language === 'fr' ? ui("Tout effacer") : 'Clear all'}
             </Button>
           </div>
         )}

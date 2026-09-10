@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { useState, useEffect } from 'react';
 import { User as UserIcon } from 'lucide-react';
@@ -28,6 +29,7 @@ const defaultSubjects = [
 ];
 
 const UserManagement = () => {
+  const ui = useInterfaceTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -300,11 +302,11 @@ const UserManagement = () => {
   
   return (
     <div className="space-y-6">
-      <PageMeta title="Users" description="Administer user accounts, roles, and permissions." />
+      <PageMeta title={ui("Users")} description={ui("Administer user accounts, roles, and permissions.")} />
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{ui("User Management")}</h1>
         <p className="text-muted-foreground mt-1">
-          View and manage student and parent accounts
+          {ui("View and manage student and parent accounts")}
         </p>
       </div>
       
@@ -326,7 +328,7 @@ const UserManagement = () => {
                       <div className="absolute top-0 left-0 w-full h-full border-4 border-gray-200 rounded-full"></div>
                       <div className="absolute top-0 left-0 w-full h-full border-4 border-stuwy-600 rounded-full animate-spin border-t-transparent"></div>
                     </div>
-                    <p className="mt-4 text-lg font-medium">Loading users...</p>
+                    <p className="mt-4 text-lg font-medium">{ui("Loading users...")}</p>
                   </div>
                 </div>
               ) : error ? (
@@ -337,7 +339,7 @@ const UserManagement = () => {
                       className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" 
                       onClick={() => window.location.reload()}
                     >
-                      Retry
+                      {ui("Retry")}
                     </button>
                   </div>
                 </div>
@@ -369,7 +371,7 @@ const UserManagement = () => {
                   <UserIcon className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <p className="text-center text-muted-foreground">
-                  Select a user to view detailed information and statistics
+                  {ui("Select a user to view detailed information and statistics")}
                 </p>
               </CardContent>
             </Card>

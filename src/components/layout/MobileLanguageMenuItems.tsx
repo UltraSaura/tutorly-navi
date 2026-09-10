@@ -1,10 +1,12 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useLanguage } from "@/context/SimpleLanguageContext";
 
 const MobileLanguageMenuItems = () => {
+  const ui = useInterfaceTranslation();
   const { language, changeLanguage, t } = useLanguage();
 
   const languages = [
-    { code: 'en', name: t('language.english') || 'English', flag: '🇺🇸' },
+    { code: 'en', name: t('language.english') || ui("English"), flag: '🇺🇸' },
     { code: 'fr', name: t('language.french') || 'Français', flag: '🇫🇷' }
   ];
 

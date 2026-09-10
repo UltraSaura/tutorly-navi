@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import React, { useState, Suspense } from 'react';
 import { ThumbsUp, AlertCircle, CircleCheck, CircleX, ArrowRight, Loader2 } from 'lucide-react';
@@ -55,6 +56,7 @@ const Exercise = ({
   onSubmitAnswer,
   onFetchExplanation
 }: ExerciseProps) => {
+  const ui = useInterfaceTranslation();
   const { t } = useLanguage();
   const [answerInput, setAnswerInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -204,7 +206,7 @@ const Exercise = ({
                       value={answerInput}
                       onChange={setAnswerInput}
                       onEnter={handleSubmitAnswer}
-                      placeholder="Enter your mathematical answer..."
+                      placeholder={ui("Enter your mathematical answer...")}
                       className="flex-1"
                       disabled={isSubmitting}
                     />

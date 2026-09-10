@@ -1,3 +1,4 @@
+import { useLocale } from '@/i18n/useLocale';
 import React from 'react';
 import { Coins } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -8,7 +9,8 @@ interface CoinWalletProps {
 }
 
 const CoinWallet = ({ coins, className }: CoinWalletProps) => {
-  const formattedCoins = coins.toLocaleString();
+  const { locale, dateLocale } = useLocale();
+  const formattedCoins = coins.toLocaleString(locale);
 
   return (
     <div 

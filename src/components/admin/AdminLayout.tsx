@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
@@ -5,6 +6,7 @@ import AdminSidebarMobile from './AdminSidebarMobile';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 const AdminLayout = () => {
+  const ui = useInterfaceTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { canAccessAdmin, isLoading } = useAdminAuth();
 
@@ -12,12 +14,12 @@ const AdminLayout = () => {
 
   // Show loading while checking admin status
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center">{ui("Loading...")}</div>;
   }
 
   // Redirect non-admin users to login page
   if (!canAccessAdmin) {
-    return <Navigate to="/auth" replace state={{ message: "Please log in as an admin to access the admin panel", returnTo: "/admin" }} />;
+    return <Navigate to="/auth" replace state={{ message: ui("Please log in as an admin to access the admin panel"), returnTo: "/admin" }} />;
   }
 
   return (

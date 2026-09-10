@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2, Lightbulb, RotateCcw } from 'lucide-react';
@@ -80,6 +81,7 @@ function DocumentTable({ document }: { document: TrainingDocument }) {
 }
 
 function DocumentImage({ document }: { document: TrainingDocument }) {
+  const ui = useInterfaceTranslation();
   const [open, setOpen] = useState(false);
   const src = document.public_url ?? document.local_path;
   if (!src) return null;
@@ -99,7 +101,7 @@ function DocumentImage({ document }: { document: TrainingDocument }) {
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-medium">{document.label ?? 'Document'}</p>
               <Button size="sm" variant="outline" onClick={() => setOpen(false)}>
-                Fermer
+                {ui("Fermer")}
               </Button>
             </div>
             <div className="min-h-0 flex-1 overflow-auto">
@@ -113,6 +115,7 @@ function DocumentImage({ document }: { document: TrainingDocument }) {
 }
 
 function TrainingDocuments({ documents }: { documents: TrainingDocument[] }) {
+  const ui = useInterfaceTranslation();
   const visibleDocuments = documents.filter((document) => !document.fallback);
   const fallbackDocuments = documents.filter((document) => document.fallback);
   if (visibleDocuments.length === 0 && fallbackDocuments.length === 0) return null;
@@ -130,7 +133,7 @@ function TrainingDocuments({ documents }: { documents: TrainingDocument[] }) {
                 <DocumentImage document={document} />
                 {document.table && (
                   <details className="mt-2 rounded-md border border-dashed border-border/70 p-2">
-                    <summary className="cursor-pointer text-sm font-medium">Voir en tableau accessible</summary>
+                    <summary className="cursor-pointer text-sm font-medium">{ui("Voir en tableau accessible")}</summary>
                     <div className="mt-2">
                       <DocumentTable document={document} />
                     </div>
@@ -151,7 +154,7 @@ function TrainingDocuments({ documents }: { documents: TrainingDocument[] }) {
       })}
       {fallbackDocuments.length > 0 ? (
         <details className="rounded-md border border-dashed border-border/70 bg-muted/10 p-3">
-          <summary className="cursor-pointer text-sm font-medium">Voir la source visuelle</summary>
+          <summary className="cursor-pointer text-sm font-medium">{ui("Voir la source visuelle")}</summary>
           <div className="mt-3 space-y-3">
             {fallbackDocuments.map((document, index) => (
               <DocumentImage key={document.id ?? `${document.label}-fallback-${index}`} document={document} />
@@ -172,6 +175,7 @@ function AnswerControl({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const ui = useInterfaceTranslation();
   const choices = normalizeChoices(question.choices ?? null);
 
   if (question.answer_type === 'multiple_choice' && choices.length > 0) {
@@ -192,7 +196,7 @@ function AnswerControl({
       <Textarea
         value={value}
         onChange={(event) => onChange(event.currentTarget.value)}
-        placeholder="Ta réponse"
+        placeholder={ui("Ta réponse")}
         className="min-h-32"
       />
     );
@@ -203,7 +207,7 @@ function AnswerControl({
       value={value}
       onChange={(event) => onChange(event.currentTarget.value)}
       inputMode={question.answer_type === 'numeric' || question.answer_type === 'math' ? 'decimal' : 'text'}
-      placeholder="Ta réponse"
+      placeholder={ui("Ta réponse")}
     />
   );
 }
@@ -247,6 +251,7 @@ export function TrainingQuestionBlock({
   onCheck: () => void;
   onHint: () => void;
 }) {
+  const ui = useInterfaceTranslation();
   const { t } = useTranslation();
   const hints = question.guidance?.hints ?? [];
   const visibleHints = hints.filter((hint) => hint.level <= state.hint_level);
@@ -262,7 +267,7 @@ export function TrainingQuestionBlock({
       </div>
 
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Réponse</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{ui("Réponse")}</p>
         <AnswerControl question={question} value={state.answer} onChange={onAnswerChange} />
       </div>
 
@@ -293,7 +298,7 @@ export function TrainingQuestionBlock({
 
       {state.feedback ? (
         <div className="rounded-md border border-border/60 bg-background p-3 text-sm leading-6" role="status">
-          {state.feedback}
+          {ui(state.feedback)}
         </div>
       ) : null}
     </section>
@@ -301,6 +306,7 @@ export function TrainingQuestionBlock({
 }
 
 export default function TrainingSessionPage() {
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -393,12 +399,12 @@ export default function TrainingSessionPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <PageMeta title="Session d'entraînement" description="Exercices interactifs issus des annales normalisées." />
+      <PageMeta title={ui("Session d'entraînement")} description={ui("Exercices interactifs issus des annales normalisées.")} />
       <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-4 sm:px-6 sm:py-6">
         <div className="flex items-center justify-between gap-3">
           <Button variant="outline" size="sm" onClick={() => navigate(subject ? `/practice/${encodeURIComponent(subject)}` : '/practice')}>
             <ArrowLeft className="mr-1 h-4 w-4" />
-            Retour
+            {ui("Retour")}
           </Button>
           {item ? <Badge variant="secondary">{item.source_label ?? item.exam_style ?? 'Entraînement'}</Badge> : null}
         </div>
@@ -414,21 +420,21 @@ export default function TrainingSessionPage() {
         ) : itemsQuery.isError ? (
           <Card className="border-destructive/40">
             <CardHeader>
-              <CardTitle className="text-base">Impossible de charger les exercices</CardTitle>
+              <CardTitle className="text-base">{ui("Impossible de charger les exercices")}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                La table des entraînements n'est peut-être pas encore migrée ou publiée.
+                {ui("La table des entraînements n'est peut-être pas encore migrée ou publiée.")}
               </p>
             </CardContent>
           </Card>
         ) : !item ? (
           <Card className="border-dashed">
             <CardHeader>
-              <CardTitle className="text-base">Aucun exercice publié</CardTitle>
+              <CardTitle className="text-base">{ui("Aucun exercice publié")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Les items importés commencent en brouillon sauf validation explicite.</p>
+              <p className="text-sm text-muted-foreground">{ui("Les items importés commencent en brouillon sauf validation explicite.")}</p>
             </CardContent>
           </Card>
         ) : (
@@ -446,7 +452,7 @@ export default function TrainingSessionPage() {
               <CardContent className="space-y-5">
                 {activeSchoolLevel.isPreviewing ? (
                   <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
-                    Les réponses ne sont pas enregistrées en mode aperçu.
+                    {ui("Les réponses ne sont pas enregistrées en mode aperçu.")}
                   </div>
                 ) : null}
                 {item.context ? <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{item.context}</p> : null}
@@ -471,7 +477,7 @@ export default function TrainingSessionPage() {
             <div className="flex items-center justify-between gap-3">
               <Button variant="outline" onClick={() => goTo(index - 1)} disabled={index === 0}>
                 <ArrowLeft className="mr-1 h-4 w-4" />
-                Précédent
+                {ui("Précédent")}
               </Button>
               <Button
                 variant="outline"
@@ -482,10 +488,10 @@ export default function TrainingSessionPage() {
                 })}
               >
                 <RotateCcw className="mr-1 h-4 w-4" />
-                Effacer
+                {ui("Effacer")}
               </Button>
               <Button onClick={() => goTo(index + 1)} disabled={index >= items.length - 1}>
-                Suivant
+                {ui("Suivant")}
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </div>

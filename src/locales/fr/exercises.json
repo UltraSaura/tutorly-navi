@@ -89,7 +89,9 @@
       "got_it": "✅ J'ai compris !",
       "replay": "🔁 Rejouer",
       "intro_title": "Comprends l'idée, pas juste la réponse !",
-      "intro_sub": "Suis les étapes à ton rythme."
+      "intro_sub": "Suis les étapes à ton rythme.",
+      "view_lesson": "Voir la leçon →",
+      "back_to_interactive": "← Retour à l'exercice"
     }
   },
   "badges": {

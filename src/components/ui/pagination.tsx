@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import * as React from "react"
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -103,16 +104,19 @@ PaginationNext.displayName = "PaginationNext"
 const PaginationEllipsis = ({
   className,
   ...props
-}: React.ComponentProps<"span">) => (
+}: React.ComponentProps<"span">) => {
+  const ui = useInterfaceTranslation();
+  return (
   <span
     aria-hidden
     className={cn("flex h-9 w-9 items-center justify-center", className)}
     {...props}
   >
     <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">More pages</span>
+    <span className="sr-only">{ui("More pages")}</span>
   </span>
-)
+);
+}
 PaginationEllipsis.displayName = "PaginationEllipsis"
 
 export {

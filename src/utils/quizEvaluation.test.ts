@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { Question } from "@/types/quiz-bank";
+import { buildColumnFillQuestion } from "@/lib/quiz/columnFillBuilder";
 import {
+  evaluateQuestion,
   getPenaltyFactorForAttempt,
   gradeQuizWithDetails,
   scoreQuestionWithPenalty,
@@ -89,5 +91,51 @@ describe("quiz penalty grading", () => {
     expect(graded.score).toBe(0.5);
     expect(graded.maxScore).toBe(3);
     expect(graded.details).toHaveLength(2);
+  });
+});
+
+describe("column-fill questions", () => {
+  it("builds an addition column-fill question with layout and blanks", () => {
+    const question = buildColumnFillQuestion({
+      id: "cf-add",
+      prompt: "Complète l'addition posée.",
+      operation: "addition",
+      firstOperand: 29,
+      secondOperand: 66,
+    });
+
+    expect(question.kind).toBe("column-fill");
+    expect(question.layout.rows.length).toBeGreaterThan(0);
+    expect(question.blanks.length).toBeGreaterThan(0);
+    expect(question.blanks.some((blank) => blank.kind === "carry")).toBe(true);
+  });
+
+  it("marks a fully correct column-fill answer as correct", () => {
+    const question = buildColumnFillQuestion({
+      id: "cf-sub",
+      prompt: "Complète la soustraction posée.",
+      operation: "subtraction",
+      firstOperand: 52,
+      secondOperand: 18,
+    });
+
+    const answer = Object.fromEntries(question.blanks.map((blank) => [blank.id, blank.answer]));
+    expect(evaluateQuestion(question, answer)).toBe(true);
+  });
+
+  it("marks an incorrect column-fill answer as wrong", () => {
+    const question = buildColumnFillQuestion({
+      id: "cf-mul",
+      prompt: "Complète la multiplication posée.",
+      operation: "multiplication",
+      firstOperand: 12,
+      secondOperand: 8,
+    });
+
+    const answer = Object.fromEntries(question.blanks.map((blank) => [blank.id, blank.answer]));
+    const firstBlank = question.blanks[0];
+    answer[firstBlank.id] = firstBlank.answer === "0" ? "1" : "0";
+
+    expect(evaluateQuestion(question, answer)).toBe(false);
   });
 });

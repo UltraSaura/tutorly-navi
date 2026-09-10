@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -33,6 +34,7 @@ interface EditChildDialogProps {
 }
 
 export default function EditChildDialog({ open, onOpenChange, child }: EditChildDialogProps) {
+  const ui = useInterfaceTranslation();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -102,10 +104,10 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
       if (childError) throw childError;
 
       queryClient.invalidateQueries({ queryKey: ['guardian-children'] });
-      toast({ title: 'Success', description: 'Child details updated successfully' });
+      toast({ title: 'Success', description: ui("Child details updated successfully") });
       onOpenChange(false);
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'Failed to update', variant: 'destructive' });
+      toast({ title: 'Error', description: err.message || ui("Failed to update"), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -115,37 +117,37 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Child</DialogTitle>
-          <DialogDescription>Update your child's information</DialogDescription>
+          <DialogTitle>{ui("Edit Child")}</DialogTitle>
+          <DialogDescription>{ui("Update your child's information")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>First Name</Label>
+              <Label>{ui("First Name")}</Label>
               <Input value={firstName} onChange={e => setFirstName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Last Name</Label>
+              <Label>{ui("Last Name")}</Label>
               <Input value={lastName} onChange={e => setLastName(e.target.value)} />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Email</Label>
+            <Label>{ui("Email")}</Label>
             <Input value={email} onChange={e => setEmail(e.target.value)} type="email" />
           </div>
 
           <div className="space-y-2">
-            <Label>Username</Label>
+            <Label>{ui("Username")}</Label>
             <Input value={child?.users?.username || ''} disabled className="bg-muted" />
           </div>
 
           <div className="space-y-2">
-            <Label>Country</Label>
+            <Label>{ui("Country")}</Label>
             <Select value={country} onValueChange={setCountry} disabled={countriesLoading}>
               <SelectTrigger>
-                <SelectValue placeholder="Select country" />
+                <SelectValue placeholder={ui("Select country")} />
               </SelectTrigger>
               <SelectContent>
                 {countries.map(c => (
@@ -156,10 +158,10 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
           </div>
 
           <div className="space-y-2">
-            <Label>School Level</Label>
+            <Label>{ui("School Level")}</Label>
             <Select value={schoolLevel} onValueChange={setSchoolLevel} disabled={!country || filteredLevels.length === 0}>
               <SelectTrigger>
-                <SelectValue placeholder={country ? 'Select level' : 'Select country first'} />
+                <SelectValue placeholder={country ? ui("Select level") : ui("Select country first")} />
               </SelectTrigger>
               <SelectContent>
                 {filteredLevels.map(l => (
@@ -177,12 +179,12 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
               disabled={saving || deleting}
             >
               <Trash2 className="h-4 w-4 mr-1" />
-              Delete Child
+              {ui("Delete Child")}
             </Button>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>{ui("Cancel")}</Button>
               <Button onClick={handleSave} disabled={saving}>
-                {saving ? 'Saving...' : 'Save Changes'}
+                {saving ? ui("Saving...") : ui("Save Changes")}
               </Button>
             </div>
           </div>
@@ -192,13 +194,13 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Child Account</AlertDialogTitle>
+            <AlertDialogTitle>{ui("Delete Child Account")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure? This will permanently remove this child's profile and unlink them from your account. This action cannot be undone.
+              {ui("Are you sure? This will permanently remove this child's profile and unlink them from your account. This action cannot be undone.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{ui("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleting}
@@ -220,17 +222,17 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
                   if (childError) throw childError;
 
                   queryClient.invalidateQueries({ queryKey: ['guardian-children'] });
-                  toast({ title: 'Deleted', description: 'Child account has been removed' });
+                  toast({ title: 'Deleted', description: ui("Child account has been removed") });
                   setShowDeleteConfirm(false);
                   onOpenChange(false);
                 } catch (err: any) {
-                  toast({ title: 'Error', description: err.message || 'Failed to delete', variant: 'destructive' });
+                  toast({ title: 'Error', description: err.message || ui("Failed to delete"), variant: 'destructive' });
                 } finally {
                   setDeleting(false);
                 }
               }}
             >
-              {deleting ? 'Deleting...' : 'Delete'}
+              {deleting ? 'Deleting...' : ui("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

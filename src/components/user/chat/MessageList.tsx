@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -11,6 +12,7 @@ interface MessageListProps {
 }
 
 const MessageList = ({ messages, isLoading }: MessageListProps) => {
+  const ui = useInterfaceTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
   
@@ -24,8 +26,8 @@ const MessageList = ({ messages, isLoading }: MessageListProps) => {
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-64 text-center px-6">
             <div>
-              <h3 className="text-lg font-semibold text-neutral-text mb-2">Start a conversation</h3>
-              <p className="text-neutral-muted">Upload homework, ask questions, or type math problems to get started!</p>
+              <h3 className="text-lg font-semibold text-neutral-text mb-2">{ui("Start a conversation")}</h3>
+              <p className="text-neutral-muted">{ui("Upload homework, ask questions, or type math problems to get started!")}</p>
             </div>
           </div>
         ) : (

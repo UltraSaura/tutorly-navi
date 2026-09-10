@@ -1,8 +1,10 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { PageMeta } from "@/components/seo/PageMeta";
 
 const NotFound = () => {
+  const ui = useInterfaceTranslation();
   const location = useLocation();
 
   useEffect(() => {
@@ -14,12 +16,12 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <PageMeta title="Page Not Found" description="The page you're looking for doesn't exist. Return to your Stuwy dashboard." />
+      <PageMeta title={ui("Page Not Found")} description={ui("The page you're looking for doesn't exist. Return to your Stuwy dashboard.")} />
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
+        <p className="text-xl text-gray-600 mb-4">{ui("Oops! Page not found")}</p>
         <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
+          {ui("Return to Home")}
         </a>
       </div>
     </div>

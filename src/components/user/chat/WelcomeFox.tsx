@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 // src/components/user/chat/WelcomeFox.tsx
 
 import { motion } from "framer-motion";
@@ -32,6 +33,7 @@ const resolveFirstName = (
 };
 
 export function WelcomeFox({ userName }: WelcomeFoxProps) {
+  const ui = useInterfaceTranslation();
   const { profile } = useUserProfile();
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -76,7 +78,7 @@ export function WelcomeFox({ userName }: WelcomeFoxProps) {
             muted
             playsInline
             preload="auto"
-            aria-label="Baby fox mascot animation"
+            aria-label={ui("Baby fox mascot animation")}
             className="w-full max-w-xl sm:max-w-3xl translate-y-[2cm] object-contain pointer-events-none select-none mix-blend-multiply"
             style={{ maxHeight: "100%" }}
           />

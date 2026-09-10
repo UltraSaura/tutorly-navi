@@ -70,9 +70,12 @@ Rules for steps:
   • "icon": one of ["lightbulb","magnifier","divide","checklist","warning","target"]
   • "kind": one of ["concept","example","strategy","pitfall","check"]
 - In the "Learn it your way" step:
-  - If {{learning_style}} is visual: use a title like "See it" or "Learn it your way". Use diagrams, arrays, number lines, tables, visual grouping, labels, shape descriptions, or spatial language. Use words like look, draw, mark, group, compare, line up, circle, point to.
+  - If {{learning_style}} is visual: use a title like "See it" or "Learn it your way".
+    • For school level CM1, CM2, 6e (or multi-digit arithmetic / numbers > 20): NEVER tell the student to draw individual dots or count dozens of dots. Instead, explain using place-value breakdown (tens/units) or the standard column layout (la potence / division posée, colonnes alignées).
+    • For CP/CE1 (or small numbers <= 20): simple drawings, dot arrays, or number lines are allowed.
+    • For geometry: describe shapes, diagrams, or spatial relations.
   - If {{learning_style}} is auditory: use a title like "Say it" or "Learn it your way". Use spoken reasoning, repeatable phrases, verbal cues, or a memory sentence. Include one sentence the child can say out loud.
-  - If {{learning_style}} is kinesthetic: use a title like "Try it" or "Learn it your way". Give hands-on actions: draw, move, tap, sort, count, fold, point, build, or act it out.
+  - If {{learning_style}} is kinesthetic: use a title like "Try it" or "Learn it your way". Give hands-on actions: step-by-step writing, drawing column frames, moving, tapping, sorting, or acting it out.
   - If {{learning_style}} is mixed: title it "Learn it your way" or "Try it three ways". Include one visual hint, one verbal cue, and one action idea.
   - Include ONE guided example inside this same step. The example MUST use different numbers but the SAME operation/concept as the student's exercise.
 - If student exercise is division (÷ or /), show a division example.

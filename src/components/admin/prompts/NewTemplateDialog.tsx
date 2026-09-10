@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -31,89 +32,90 @@ export const NewTemplateDialog = ({
   onAddTag,
   onRemoveTag,
 }: NewTemplateDialogProps) => {
+  const ui = useInterfaceTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Create New Prompt Template</DialogTitle>
+          <DialogTitle>{ui("Create New Prompt Template")}</DialogTitle>
           <DialogDescription>
-            Create a new system prompt template for the AI tutor.
+            {ui("Create a new system prompt template for the AI tutor.")}
           </DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="templateName" className="text-right text-sm font-medium">
-              Name
+              {ui("Name")}
             </label>
             <Input
               id="templateName"
               value={newTemplate.name}
               onChange={(e) => onNewTemplateChange({ ...newTemplate, name: e.target.value })}
               className="col-span-3"
-              placeholder="e.g., History Tutor"
+              placeholder={ui("e.g., History Tutor")}
             />
           </div>
           
           <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="templateSubject" className="text-right text-sm font-medium">
-              Subject
+              {ui("Subject")}
             </label>
             <Select 
               value={newTemplate.subject} 
               onValueChange={(value) => onNewTemplateChange({ ...newTemplate, subject: value })}
             >
               <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select subject" />
+                <SelectValue placeholder={ui("Select subject")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="General">General</SelectItem>
-                <SelectItem value="Mathematics">Mathematics</SelectItem>
-                <SelectItem value="Science">Science</SelectItem>
-                <SelectItem value="Language Arts">Language Arts</SelectItem>
-                <SelectItem value="History">History</SelectItem>
-                <SelectItem value="Arts">Arts</SelectItem>
-                <SelectItem value="Programming">Programming</SelectItem>
+                <SelectItem value="General">{ui("General")}</SelectItem>
+                <SelectItem value="Mathematics">{ui("Mathematics")}</SelectItem>
+                <SelectItem value="Science">{ui("Science")}</SelectItem>
+                <SelectItem value="Language Arts">{ui("Language Arts")}</SelectItem>
+                <SelectItem value="History">{ui("History")}</SelectItem>
+                <SelectItem value="Arts">{ui("Arts")}</SelectItem>
+                <SelectItem value="Programming">{ui("Programming")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
           <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="templateDescription" className="text-right text-sm font-medium">
-              Description
+              {ui("Description")}
             </label>
             <Input
               id="templateDescription"
               value={newTemplate.description}
               onChange={(e) => onNewTemplateChange({ ...newTemplate, description: e.target.value })}
               className="col-span-3"
-              placeholder="Brief description of the template's purpose"
+              placeholder={ui("Brief description of the template's purpose")}
             />
           </div>
           
           <div className="grid grid-cols-4 items-start gap-4">
             <label htmlFor="templatePrompt" className="text-right text-sm font-medium pt-2">
-              Prompt
+              {ui("Prompt")}
             </label>
             <Textarea
               id="templatePrompt"
               value={newTemplate.prompt_content}
               onChange={(e) => onNewTemplateChange({ ...newTemplate, prompt_content: e.target.value })}
               className="col-span-3 min-h-32"
-              placeholder="Enter the system prompt instructions..."
+              placeholder={ui("Enter the system prompt instructions...")}
             />
           </div>
           
           <div className="grid grid-cols-4 items-start gap-4">
             <label className="text-right text-sm font-medium pt-2">
-              Tags
+              {ui("Tags")}
             </label>
             <div className="col-span-3 space-y-3">
               <div className="flex gap-2">
                 <Input
                   value={newTag}
                   onChange={(e) => onNewTagChange(e.target.value)}
-                  placeholder="Add a tag"
+                  placeholder={ui("Add a tag")}
                   className="flex-1"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -127,7 +129,7 @@ export const NewTemplateDialog = ({
                   variant="secondary" 
                   onClick={onAddTag}
                 >
-                  Add
+                  {ui("Add")}
                 </Button>
               </div>
               
@@ -156,21 +158,21 @@ export const NewTemplateDialog = ({
           
           <div className="grid grid-cols-4 items-center gap-4">
             <label htmlFor="templateType" className="text-right text-sm font-medium">
-              Type
+              {ui("Type")}
             </label>
             <Select 
               value={newTemplate.usage_type} 
               onValueChange={(value: 'chat' | 'grading' | 'explanation' | 'math_enhanced' | 'grouped_retry_practice') => onNewTemplateChange({ ...newTemplate, usage_type: value })}
             >
               <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select template type" />
+                <SelectValue placeholder={ui("Select template type")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="chat">Chat</SelectItem>
-                <SelectItem value="grading">Grading</SelectItem>
-                <SelectItem value="explanation">Explanation</SelectItem>
-                <SelectItem value="math_enhanced">Math Enhanced</SelectItem>
-                <SelectItem value="grouped_retry_practice">Grouped Retry Practice</SelectItem>
+                <SelectItem value="chat">{ui("Chat")}</SelectItem>
+                <SelectItem value="grading">{ui("Grading")}</SelectItem>
+                <SelectItem value="explanation">{ui("Explanation")}</SelectItem>
+                <SelectItem value="math_enhanced">{ui("Math Enhanced")}</SelectItem>
+                <SelectItem value="grouped_retry_practice">{ui("Grouped Retry Practice")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -178,13 +180,13 @@ export const NewTemplateDialog = ({
         
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {ui("Cancel")}
           </Button>
           <Button 
             className="bg-stuwy-600 hover:bg-stuwy-700"
             onClick={onAddTemplate}
           >
-            Create Template
+            {ui("Create Template")}
           </Button>
         </DialogFooter>
       </DialogContent>

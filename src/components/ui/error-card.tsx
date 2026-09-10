@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,7 @@ export function ErrorCard({
   showDetails = false,
   className,
 }: ErrorCardProps) {
+  const ui = useInterfaceTranslation();
   return (
     <Card className={cn('max-w-md mx-auto', className)}>
       <CardHeader>
@@ -45,13 +47,13 @@ export function ErrorCard({
           {onRetry && (
             <Button onClick={onRetry} variant="outline" size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
-              Try Again
+              {ui("Try Again")}
             </Button>
           )}
           {onGoHome && (
             <Button onClick={onGoHome} variant="ghost" size="sm">
               <Home className="w-4 h-4 mr-2" />
-              Go Home
+              {ui("Go Home")}
             </Button>
           )}
         </div>

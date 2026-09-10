@@ -55,6 +55,12 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
       key => String(answer[key] ?? "").trim() === q.answers[key].trim()
     );
   }
+  if (q.kind === "column-fill") {
+    if (!answer || typeof answer !== "object") return false;
+    return q.blanks.every(
+      blank => String(answer[blank.id] ?? "").trim() === String(blank.answer).trim()
+    );
+  }
   return false;
 }
 

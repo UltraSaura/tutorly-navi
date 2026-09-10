@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import type { MatchQuestion } from "@/types/quiz-bank";
 import { cn } from "@/lib/utils";
@@ -109,10 +110,29 @@ const LINE_COLORS = [
   "#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4",
 ];
 
+function hashString(value: string) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+function rotateRightColumn(pairs: MatchQuestion["pairs"]) {
+  if (pairs.length <= 1) return pairs;
+
+  const seed = pairs.map(pair => `${pair.leftId}:${pair.rightId}`).join("|");
+  const offset = (hashString(seed) % (pairs.length - 1)) + 1;
+
+  return pairs.map((_, index) => pairs[(index + offset) % pairs.length]);
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function MatchQuestionView({ question, value, onChange }: Props) {
+  const ui = useInterfaceTranslation();
   const hideLabel = question.hide_labels === true;
+  const rightColumnPairs = useMemo(() => rotateRightColumn(question.pairs), [question.pairs]);
   const confirmedPairs: string[] = Array.isArray(value) ? value : [];
   const pairedLeftIds  = confirmedPairs.map(p => p.split(":")[0]);
   const pairedRightIds = confirmedPairs.map(p => p.split(":")[1]);
@@ -260,8 +280,8 @@ export function MatchQuestionView({ question, value, onChange }: Props) {
 
         {/* Right column */}
         <div className="flex flex-col gap-2">
-          {/* Shuffle right items so order doesn't give away matches */}
-          {question.pairs.map((pair, i) => {
+          {/* Offset right items so order doesn't give away matches */}
+          {rightColumnPairs.map((pair, i) => {
             const isPaired = pairedRightIds.includes(pair.rightId);
             const isTarget = !!dragging && !isPaired;
             const color = isPaired
@@ -295,7 +315,7 @@ export function MatchQuestionView({ question, value, onChange }: Props) {
       {/* Counter + hint */}
       <div className="mt-3 flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
-          {confirmedPairs.length}/{question.pairs.length} paires — tire un trait pour relier
+          {confirmedPairs.length}/{question.pairs.length} {ui("paires — tire un trait pour relier")}
         </p>
         {confirmedPairs.length > 0 && (
           <button
@@ -303,7 +323,7 @@ export function MatchQuestionView({ question, value, onChange }: Props) {
             onClick={() => onChange([])}
             className="text-xs text-muted-foreground hover:text-red-500 transition-colors"
           >
-            Tout effacer
+            {ui("Tout effacer")}
           </button>
         )}
       </div>
@@ -315,7 +335,7 @@ export function MatchQuestionView({ question, value, onChange }: Props) {
           animate={{ opacity: 1 }}
           className="text-xs text-center text-primary/70 mt-1"
         >
-          Appuie et fais glisser depuis la gauche vers la droite
+          {ui("Appuie et fais glisser depuis la gauche vers la droite")}
         </motion.p>
       )}
     </div>

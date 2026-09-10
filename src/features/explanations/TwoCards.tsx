@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React from "react";
 import type { TeachingSections } from "./useTwoCardTeaching";
 import { useResolveText } from "@/hooks/useResolveText";
@@ -9,7 +10,7 @@ import { useUserContext } from '@/hooks/useUserContext';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { extractExpressionFromText } from '@/utils/mathStepper/parser';
 import { analyzeExerciseProfile, detectOperationType, generateProfileMatchedExample } from '@/utils/operationTypeDetector';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { toChildFriendlyExplanationText } from './childFriendlyText';
@@ -62,6 +63,7 @@ export function TwoCards({
   subjectSlug?: string;
   topicSlug?: string;
 }) {
+  const ui = useInterfaceTranslation();
   console.log('[TwoCards] Component rendered with sections:', s);
   const resolveText = useResolveText();
   const [isGuardian, setIsGuardian] = useState(false);
@@ -133,6 +135,16 @@ export function TwoCards({
     // Navigate to topic page (no hash, user lands at top)
     setTimeout(() => {
       window.location.href = `/learning/${finalSubjectSlug}/${finalTopicSlug}`;
+    }, 200);
+  };
+
+  const handlePracticeMore = () => {
+    onClose?.();
+
+    setTimeout(() => {
+      window.location.href = finalSubjectSlug
+        ? `/practice/${encodeURIComponent(finalSubjectSlug)}`
+        : '/practice';
     }, 200);
   };
   
@@ -241,7 +253,7 @@ export function TwoCards({
       gradeLevel: userContext?.student_level,
       language,
       learningStyle: userContext?.learning_style,
-      subject: subjectSlug || "Math",
+      subject: subjectSlug || 'Math',
       country: userContext?.country,
       enabled: true,
     };
@@ -335,6 +347,9 @@ export function TwoCards({
   const shouldShowInteractiveStepper = !isGuardian && activeLevel &&
     isUnder11YearsOld(activeLevel) && exampleExpression &&
     isPureArithmeticProblem(s.exercise || '');
+  const [guidedView, setGuidedView] = React.useState<'interactive' | 'lesson'>(
+    shouldShowInteractiveStepper ? 'interactive' : 'lesson'
+  );
   
   // Ensure method text is never empty
   const methodText = s.method?.trim() || t('exercises.explanation.fallback.method');
@@ -344,74 +359,171 @@ export function TwoCards({
     s.currentExercise !== t('exercises.explanation.fallback.no_solution')
   );
 
+  React.useEffect(() => {
+    setGuidedView(shouldShowInteractiveStepper ? 'interactive' : 'lesson');
+  }, [shouldShowInteractiveStepper, s.exercise]);
+
   return (
-    <div className="space-y-3">
-      {/* Problem card */}
-      <div className="rounded-xl border bg-muted p-4">
-        <div className="font-semibold">{t('exercises.explanation.headers.exercise')}</div>
-        <div
-          className={[
-            "explain-text prose prose-neutral max-w-none",
-            "mt-1 leading-relaxed break-words",
-            "whitespace-pre-wrap",
-            "!tracking-normal [letter-spacing:normal] [word-spacing:normal]",
-            "text-muted-foreground",
-          ].join(" ")}
-          style={{
-            whiteSpace: "pre-wrap",
-            letterSpacing: "normal",
-            wordSpacing: "normal",
-          }}
-        >
-          {s.exercise
-            ? toChildFriendlyExplanationText(resolveText(s.exercise))
-            : t('exercises.explanation.fallback.no_exercise')}
-        </div>
-      </div>
-
-      {/* Student View - Interactive Math Stepper (above Concept) */}
-      {shouldShowInteractiveStepper && (
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <div className="font-semibold mb-3">{t('exercises.explanation.headers.interactive_practice')}</div>
-          <CompactMathStepper 
-            expression={exampleExpression}
-            className="text-sm"
-          />
-        </div>
-      )}
-
-      {/* Student View - Regular Explanation */}
-      {!isGuardian && (
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          {orderedSteps ? (
-            <ExplanationRenderer 
-              mode={learningMode} 
-              steps={orderedSteps} 
-              miniPracticeContext={miniPracticeContext} 
-            />
-          ) : (
-            <>
-              <Section title={t('exercises.explanation.headers.concept')} text={s.concept} />
-              <Section title={t('exercises.explanation.headers.method')} text={methodText} />
-              <Section title={t('exercises.explanation.headers.example')} text={s.example} />
-              <Section title={t('exercises.explanation.headers.pitfall')} text={s.pitfall} />
-              <Section title={t('exercises.explanation.headers.check')} text={s.check} />
-            </>
-          )}
-          
-          {/* Watch Video link - only show if we have routing info */}
-          {canShowLessonLink && (
-            <div className="mt-4 pt-3 border-t border-border">
-              <button
-                type="button"
-                onClick={handleViewLesson}
-                className="text-sm text-primary hover:underline flex items-center gap-1"
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      {!isGuardian && shouldShowInteractiveStepper ? (
+        guidedView === 'interactive' ? (
+          <div className="flex min-h-0 flex-1 flex-col gap-3">
+            <div className="shrink-0 rounded-xl border bg-muted p-4">
+              <div className="font-semibold">{t('exercises.explanation.headers.exercise')}</div>
+              <div
+                className={[
+                  "explain-text prose prose-neutral max-w-none",
+                  "mt-1 leading-relaxed break-words",
+                  "whitespace-pre-wrap",
+                  "!tracking-normal [letter-spacing:normal] [word-spacing:normal]",
+                  "text-muted-foreground",
+                ].join(" ")}
+                style={{
+                  whiteSpace: "pre-wrap",
+                  letterSpacing: "normal",
+                  wordSpacing: "normal",
+                }}
               >
-                {t('exercises.explanation.watch_video')}
-              </button>
+                {s.exercise
+                  ? toChildFriendlyExplanationText(resolveText(s.exercise))
+                  : t('exercises.explanation.fallback.no_exercise')}
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 rounded-xl border bg-card p-4 shadow-sm">
+              <div className="font-semibold mb-3">{t('exercises.explanation.headers.interactive_practice')}</div>
+              <CompactMathStepper 
+                expression={exampleExpression}
+                className="text-sm"
+              />
+            </div>
+
+            <div className="shrink-0 flex justify-end">
+              <Button
+                type="button"
+                onClick={() => setGuidedView('lesson')}
+                className="rounded-2xl px-5"
+              >
+                {t('exercises.explanation.kid.view_lesson')}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex min-h-0 flex-1 flex-col gap-3">
+            <div className="shrink-0 flex justify-start">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setGuidedView('interactive')}
+                className="rounded-2xl"
+              >
+                {t('exercises.explanation.kid.back_to_interactive')}
+              </Button>
+            </div>
+
+            <div className="min-h-0 flex-1 rounded-xl border bg-card p-4 shadow-sm">
+              {orderedSteps ? (
+                <ExplanationRenderer 
+                  mode={learningMode} 
+                  steps={orderedSteps} 
+                  miniPracticeContext={miniPracticeContext} 
+                  onPracticeMore={handlePracticeMore}
+                  onViewLesson={handleViewLesson}
+                  canViewLesson={Boolean(canShowLessonLink)}
+                />
+              ) : (
+                <>
+                  <Section title={t('exercises.explanation.headers.concept')} text={s.concept} />
+                  <Section title={t('exercises.explanation.headers.method')} text={methodText} />
+                  <Section title={t('exercises.explanation.headers.example')} text={s.example} />
+                  <Section title={t('exercises.explanation.headers.pitfall')} text={s.pitfall} />
+                  <Section title={t('exercises.explanation.headers.check')} text={s.check} />
+                </>
+              )}
+
+              {canShowLessonLink && (
+                <div className="mt-4 pt-3 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={handleViewLesson}
+                    className="text-sm text-primary hover:underline flex items-center gap-1"
+                  >
+                    {t('exercises.explanation.watch_video')}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      ) : (
+        <>
+          <div className="shrink-0 rounded-xl border bg-muted p-4">
+            <div className="font-semibold">{t('exercises.explanation.headers.exercise')}</div>
+            <div
+              className={[
+                "explain-text prose prose-neutral max-w-none",
+                "mt-1 leading-relaxed break-words",
+                "whitespace-pre-wrap",
+                "!tracking-normal [letter-spacing:normal] [word-spacing:normal]",
+                "text-muted-foreground",
+              ].join(" ")}
+              style={{
+                whiteSpace: "pre-wrap",
+                letterSpacing: "normal",
+                wordSpacing: "normal",
+              }}
+            >
+              {s.exercise
+                ? toChildFriendlyExplanationText(resolveText(s.exercise))
+                : t('exercises.explanation.fallback.no_exercise')}
+            </div>
+          </div>
+
+          {shouldShowInteractiveStepper && (
+            <div className="min-h-0 flex-1 rounded-xl border bg-card p-4 shadow-sm">
+              <div className="font-semibold mb-3">{t('exercises.explanation.headers.interactive_practice')}</div>
+              <CompactMathStepper 
+                expression={exampleExpression}
+                className="text-sm"
+              />
             </div>
           )}
-        </div>
+
+          {!isGuardian && (
+            <div className="min-h-0 flex-1 rounded-xl border bg-card p-4 shadow-sm">
+              {orderedSteps ? (
+                <ExplanationRenderer 
+                  mode={learningMode} 
+                  steps={orderedSteps} 
+                  miniPracticeContext={miniPracticeContext} 
+                  onPracticeMore={handlePracticeMore}
+                  onViewLesson={handleViewLesson}
+                  canViewLesson={Boolean(canShowLessonLink)}
+                />
+              ) : (
+                <>
+                  <Section title={t('exercises.explanation.headers.concept')} text={s.concept} />
+                  <Section title={t('exercises.explanation.headers.method')} text={methodText} />
+                  <Section title={t('exercises.explanation.headers.example')} text={s.example} />
+                  <Section title={t('exercises.explanation.headers.pitfall')} text={s.pitfall} />
+                  <Section title={t('exercises.explanation.headers.check')} text={s.check} />
+                </>
+              )}
+              
+              {canShowLessonLink && (
+                <div className="mt-4 pt-3 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={handleViewLesson}
+                    className="text-sm text-primary hover:underline flex items-center gap-1"
+                  >
+                    {t('exercises.explanation.watch_video')}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {/* Guardian View - Concept + Parent Help + Detailed Solution */}

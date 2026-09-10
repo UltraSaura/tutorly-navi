@@ -1,7 +1,9 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { FillExprQuestion } from "@/types/quiz-bank";
 import { cn } from "@/lib/utils";
+import { useLearningDragDrop } from "./useLearningDragDrop";
 
 interface Props {
   question: FillExprQuestion;
@@ -10,8 +12,9 @@ interface Props {
 }
 
 export function FillExprQuestionView({ question, value, onChange }: Props) {
+  const ui = useInterfaceTranslation();
   const filled = value ?? {};
-  const [draggedChip, setDraggedChip] = useState<string | null>(null);
+  const { draggedValue, getDragSourceProps, getDropTargetProps } = useLearningDragDrop();
 
   const handleChip = (blank: string, chip: string) => {
     if (filled[blank] === chip) {
@@ -58,21 +61,14 @@ export function FillExprQuestionView({ question, value, onChange }: Props) {
                 key={`blank-${blank}`}
                 type="button"
                 onClick={() => filledValue && clearSlot(blank)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  const chip = event.dataTransfer.getData("text/plain");
-                  if (!chip) return;
-                  moveChipToBlank(blank, chip);
-                  setDraggedChip(null);
-                }}
+                {...getDropTargetProps((chip) => moveChipToBlank(blank, chip))}
                 whileTap={{ scale: 0.95 }}
                 className={cn(
                   "min-w-[48px] h-12 px-3 rounded-xl border-2 flex items-center justify-center",
                   "text-lg font-bold transition-colors",
                   filledValue
                     ? "border-primary bg-primary/10 text-primary cursor-pointer"
-                    : draggedChip
+                    : draggedValue
                       ? "border-primary/50 bg-primary/5 text-neutral-400"
                       : "border-dashed border-neutral-400 bg-neutral-50 dark:bg-neutral-800 text-neutral-400"
                 )}
@@ -120,16 +116,11 @@ export function FillExprQuestionView({ question, value, onChange }: Props) {
             <motion.button
               key={chip}
               type="button"
-              draggable
               initial={{ opacity: 0, scale: 0.7 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 20 }}
               whileTap={{ scale: 0.9 }}
-              onDragStart={(event: any) => {
-                event.dataTransfer?.setData("text/plain", chip);
-                setDraggedChip(chip);
-              }}
-              onDragEnd={() => setDraggedChip(null)}
+              {...getDragSourceProps(chip)}
               onClick={() => {
                 if (isUsed) {
                   clearSlot(usedInBlank!);
@@ -141,7 +132,7 @@ export function FillExprQuestionView({ question, value, onChange }: Props) {
                 "w-12 h-12 rounded-xl border text-lg font-semibold transition-all cursor-grab active:cursor-grabbing",
                 isUsed
                   ? "bg-primary/10 border-primary text-primary opacity-50"
-                  : draggedChip === chip
+                  : draggedValue === chip
                     ? "bg-primary text-primary-foreground border-primary shadow-sm"
                     : "bg-secondary border-transparent hover:border-primary/40 shadow-sm"
               )}
@@ -153,7 +144,7 @@ export function FillExprQuestionView({ question, value, onChange }: Props) {
       </div>
 
       <p className="text-xs text-center text-muted-foreground">
-        Glisse un nombre dans une case, ou tapote pour le placer.
+        {ui("Glisse un nombre dans une case, ou tapote pour le placer.")}
       </p>
     </div>
   );

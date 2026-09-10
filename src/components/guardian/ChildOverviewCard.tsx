@@ -1,3 +1,5 @@
+import { useLocale } from '@/i18n/useLocale';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +30,8 @@ export function ChildOverviewCard({
   needsAttention,
   lastActiveDate,
 }: ChildOverviewCardProps) {
+  const { locale, dateLocale } = useLocale();
+  const ui = useInterfaceTranslation();
   const initials = name
     .split(' ')
     .map(n => n[0])
@@ -48,7 +52,7 @@ export function ChildOverviewCard({
               {lastActiveDate && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                   <Clock className="h-3 w-3" />
-                  {formatDistanceToNow(new Date(lastActiveDate), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(lastActiveDate), { addSuffix: true , locale: dateLocale })}
                 </p>
               )}
             </div>
@@ -59,7 +63,7 @@ export function ChildOverviewCard({
       <CardContent className="space-y-4">
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Success Rate</span>
+            <span className="text-sm font-medium">{ui("Success Rate")}</span>
             <span className="text-sm font-bold">{successRate.toFixed(1)}%</span>
           </div>
           <Progress value={successRate} className="h-2" />
@@ -68,27 +72,27 @@ export function ChildOverviewCard({
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-1 text-muted-foreground">
             <BookOpen className="h-4 w-4" />
-            <span>This week</span>
+            <span>{ui("This week")}</span>
           </div>
-          <span className="font-semibold">{exercisesThisWeek} exercises</span>
+          <span className="font-semibold">{exercisesThisWeek} {ui("exercises")}</span>
         </div>
 
         {latestSubject && (
           <div className="text-sm">
-            <span className="text-muted-foreground">Latest: </span>
+            <span className="text-muted-foreground">{ui("Latest:")} </span>
             <span className="font-medium">{latestSubject}</span>
           </div>
         )}
 
         {needsAttention && (
           <Badge variant="destructive" className="w-full justify-center">
-            Needs Attention
+            {ui("Needs Attention")}
           </Badge>
         )}
 
         <Button asChild className="w-full" variant={needsAttention ? "default" : "outline"}>
           <Link to={`/guardian/child/${id}`}>
-            View Dashboard
+            {ui("View Dashboard")}
           </Link>
         </Button>
       </CardContent>

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { buildColumnFillQuestion } from "../../../src/lib/quiz/columnFillBuilder.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +26,23 @@ function buildTypeInstructions(questionTypes: string[]): string {
         return `- "numeric": Answer is a number. Include "answer" (the correct number) and optionally "range": { "min": X, "max": Y } for acceptable range.`;
       case 'ordering':
         return `- "ordering": Put items in correct order. Include "items" (shuffled array of strings) and "correctOrder" (same items in correct sequence). Frame these as step-building, process-ordering, or action-ordering when appropriate.`;
+      case 'column-fill':
+        return `- "column-fill": Student fills missing digits inside a column-method arithmetic layout. Use this only for kid-friendly arithmetic taken directly from the transcript content.
+  Required fields:
+  {
+    "id": "q-X",
+    "kind": "column-fill",
+    "prompt": "...",
+    "hint": "...",
+    "points": 1,
+    "operation": "addition" | "subtraction" | "multiplication" | "division",
+    "operands": ["29", "66"],
+    "instructions": "Complète les retenues et le résultat."
+  }
+  IMPORTANT:
+  - Do NOT generate the layout object yourself. The app builds the layout from operation + operands.
+  - Multiplication must use a one-digit second operand only.
+  - Division must use whole numbers only with a non-zero divisor.`;
       case 'visual_pie':
         return `- "visual" with subtype "pie": A fraction/proportion question using a pie chart. The prompt must clearly refer to the pie/chart the student sees. The student selects which pie chart shows the correct fraction.
   Structure:
@@ -67,12 +85,13 @@ function buildTypeInstructions(questionTypes: string[]): string {
   }
   Rules for angle: aDeg is the first ray angle (usually 0), bDeg is the second ray. targetDeg is the correct answer. toleranceDeg is the accepted error margin (use 2-5). Use angles between 10 and 350.`;
       case 'mix':
-        return `Choose the BEST question type for each question from the supported kinds only: single, multi, numeric, ordering, visual (pie), visual (angle).
+        return `Choose the BEST question type for each question from the supported kinds only: single, multi, numeric, ordering, column-fill, visual (pie), visual (angle).
 Create a balanced variety when the transcript content allows it:
 - Include at least one standard conceptual question using single or multi when possible.
 - Include at least one visual question when the transcript naturally supports pie charts, fractions, proportions, geometry, or angle measurement.
 - Include at least one ordering/action-style question when the transcript includes steps, processes, procedures, comparisons, or sequences.
 - Include at least one numeric or application question when calculation or applying a rule is appropriate.
+ - Use column-fill for primary-school arithmetic procedures when the transcript clearly teaches the column method.
 For fraction/proportion topics prefer visual pie. For geometry topics prefer visual angle. For sequences prefer ordering. For recall and verbal reasoning use single/multi.`;
       default:
         return '';
@@ -89,7 +108,7 @@ function buildLearningFriendlyGuidance(): string {
 - For ordering questions, use step-building, process-ordering, or action-ordering language when appropriate.
 - For single and multi questions, include some verbal-reasoning answer choices when appropriate, such as short explanations, comparison statements, or "which sentence is true" choices.
 - Do not use technical labels such as visual learner, auditory learner, kinesthetic learner, learning modality, or cognitive preference.
-- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, visual.`;
+- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, column-fill, visual.`;
 }
 
 function buildPromptExamples(): string {
@@ -129,11 +148,23 @@ For "ordering" questions:
   "points": 1,
   "items": ["Step B", "Step A", "Step C", "Step D"],
   "correctOrder": ["Step A", "Step B", "Step C", "Step D"]
+}
+
+For "column-fill" questions:
+{
+  "id": "q-4",
+  "kind": "column-fill",
+  "prompt": "Complète l'addition posée.",
+  "hint": "Commence par les unités.",
+  "points": 1,
+  "operation": "addition",
+  "operands": ["29", "66"],
+  "instructions": "Complète les retenues et le résultat."
 }`;
 }
 
 function validateQuestions(questions: any[]): any[] {
-  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'visual']);
+  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'column-fill', 'visual']);
   const validVisualSubtypes = new Set(['pie', 'angle']);
 
   return questions.filter((q, idx) => {
@@ -164,6 +195,28 @@ function validateQuestions(questions: any[]): any[] {
     if (q.kind === 'ordering') {
       if (!Array.isArray(q.items) || !Array.isArray(q.correctOrder)) return false;
       if (q.items.length < 2) return false;
+    }
+
+    if (q.kind === 'column-fill') {
+      if (!['addition', 'subtraction', 'multiplication', 'division'].includes(q.operation)) return false;
+      if (!Array.isArray(q.operands) || q.operands.length !== 2) return false;
+      const first = Number(q.operands[0]);
+      const second = Number(q.operands[1]);
+      if (!Number.isFinite(first) || !Number.isFinite(second)) return false;
+      if (q.operation === 'multiplication' && String(Math.abs(Math.trunc(second))).length > 1) return false;
+      if (q.operation === 'division' && Math.trunc(second) === 0) return false;
+      const built = buildColumnFillQuestion({
+        id: q.id,
+        prompt: q.prompt,
+        hint: q.hint,
+        points: q.points,
+        operation: q.operation,
+        firstOperand: Math.trunc(first),
+        secondOperand: Math.trunc(second),
+        locale: 'fr',
+        instructions: typeof q.instructions === 'string' ? q.instructions : undefined,
+      });
+      Object.assign(q, built);
     }
 
     if (q.kind === 'visual') {
@@ -274,7 +327,7 @@ RULES:
 - Vary question types across the set based on the types requested
 - Hints must be short, encouraging, and actionable without giving away the answer
 - Visual prompts must mention the visual object the student should inspect
-- Use only supported output kinds: single, multi, numeric, ordering, visual
+- Use only supported output kinds: single, multi, numeric, ordering, column-fill, visual
 - Return ONLY the JSON array, no markdown, no explanation`;
 
     const callAiForQuestions = async (count: number, existingPrompts: string[]) => {

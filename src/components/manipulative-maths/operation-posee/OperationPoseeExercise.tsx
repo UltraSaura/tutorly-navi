@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, CheckCircle2, RotateCcw } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -62,6 +63,7 @@ function normalizeInputDigit(value: string): string {
 }
 
 export function OperationPoseeExercise({ exercise, mode, onComplete }: OperationPoseeExerciseProps) {
+  const ui = useInterfaceTranslation();
   const width = useMemo(() => operationWidth(exercise), [exercise]);
   const topDigits = useMemo(() => digitsForNumber(exercise.topNumber, width), [exercise.topNumber, width]);
   const bottomDigits = useMemo(() => digitsForNumber(exercise.bottomNumber, width), [exercise.bottomNumber, width]);
@@ -116,14 +118,14 @@ export function OperationPoseeExercise({ exercise, mode, onComplete }: Operation
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
       className="mx-4 my-4 rounded-xl border bg-card p-4 shadow-sm md:p-5"
-      aria-label="Manipulatif d'opération posée"
+      aria-label={ui("Manipulatif d'opération posée")}
     >
       <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">Pose et calcule</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">{ui("Pose et calcule")}</p>
           <h3 className="text-lg font-semibold text-foreground">{prompt}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Complète les chiffres du résultat et les retenues / emprunts.
+            {ui("Complète les chiffres du résultat et les retenues / emprunts.")}
           </p>
         </div>
         <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
@@ -186,7 +188,7 @@ export function OperationPoseeExercise({ exercise, mode, onComplete }: Operation
           </div>
 
           <div className="mt-3 text-center text-xs font-medium text-muted-foreground">
-            retenues / emprunts
+            {ui("retenues / emprunts")}
           </div>
         </div>
       </div>
@@ -194,11 +196,11 @@ export function OperationPoseeExercise({ exercise, mode, onComplete }: Operation
       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
         <Button onClick={handleVerify}>
           <CheckCircle2 className="h-4 w-4" />
-          Vérifier
+          {ui("Vérifier")}
         </Button>
         <Button variant="outline" onClick={handleReset}>
           <RotateCcw className="h-4 w-4" />
-          Recommencer
+          {ui("Recommencer")}
         </Button>
       </div>
 

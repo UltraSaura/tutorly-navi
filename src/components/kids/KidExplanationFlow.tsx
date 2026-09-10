@@ -4,10 +4,9 @@
  * Progressive, interactive explanation for kids (<11).
  * Features:
  * - Reveals one step at a time ("Étape suivante" button)
- * - Spring-animated cards via AnimatedStepCard
+ * - Compact mobile-first layout
  * - ObjectCounter widget when an arithmetic expression is detected in the example
  * - RuntimeMiniPracticeInline on the "check" step
- * - No static walls of text — each step is short + visual
  */
 import React, { lazy, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,6 +18,7 @@ import { toChildFriendlyExplanationText } from "@/features/explanations/childFri
 import { useResolveText } from "@/hooks/useResolveText";
 import { useLanguage } from "@/context/SimpleLanguageContext";
 import { RuntimeMiniPracticeInline } from "@/features/explanations/RuntimeMiniPracticeInline";
+import { buildKidArithmeticSupportText } from "./kidArithmeticGuidance";
 
 // Lazy-load the heavy ObjectCounter (framer-motion + emoji rendering)
 const ObjectCounter = lazy(() =>
@@ -53,58 +53,65 @@ const KIND_FALLBACK_TITLE_EN: Record<Step["kind"], string> = {
   check:    "Try it yourself",
 };
 
-// ─── Progress dots ─────────────────────────────────────────────────────────────
-function ProgressDots({ total, current }: { total: number; current: number }) {
-  return (
-    <div className="flex items-center justify-center gap-2" aria-hidden="true">
-      {Array.from({ length: total }).map((_, i) => (
-        <motion.div
-          key={i}
-          animate={{
-            scale: i === current ? 1.35 : 1,
-            backgroundColor: i <= current ? "#a855f7" : "#e5e7eb",
-          }}
-          transition={{ type: "spring", stiffness: 200, damping: 18 }}
-          className="h-2.5 w-2.5 rounded-full"
-        />
-      ))}
-    </div>
-  );
-}
-
-// ─── Intro banner ─────────────────────────────────────────────────────────────
-function IntroBanner({ t }: { t: (key: string) => string }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 160, damping: 18 }}
-      className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-violet-100 to-purple-50 border border-violet-200 px-5 py-4"
-    >
-      <span className="text-3xl" aria-hidden="true">🧠</span>
-      <div>
-        <p className="font-bold text-violet-900 text-base leading-tight">
-          {t("exercises.explanation.kid.intro_title")}
-        </p>
-        <p className="text-xs text-violet-700 mt-0.5">
-          {t("exercises.explanation.kid.intro_sub")}
-        </p>
-      </div>
-    </motion.div>
-  );
-}
-
 // ─── Completion banner ─────────────────────────────────────────────────────────
-function CompletionBanner({ youGotThis }: { youGotThis: string }) {
+interface CompletionAction {
+  label: string;
+  href?: string;
+  onClick?: () => void;
+  variant?: "primary" | "secondary";
+}
+
+function CompletionBanner({
+  youGotThis,
+  actions = [],
+}: {
+  youGotThis: string;
+  actions?: CompletionAction[];
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: "spring", stiffness: 140, damping: 14 }}
-      className="flex items-center justify-center gap-3 rounded-2xl bg-blue-50 border border-blue-200 p-5 text-blue-800 font-bold text-sm"
+      className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-blue-900"
     >
-      <span className="text-2xl" aria-hidden="true">🎨</span>
-      <span>{youGotThis || "Tu vas y arriver, champion !"}</span>
+      <div className="flex items-center justify-center gap-3 text-sm font-bold">
+        <span className="text-2xl" aria-hidden="true">🎨</span>
+        <span>{youGotThis || "Tu vas y arriver, champion !"}</span>
+      </div>
+
+      {actions.length > 0 && (
+        <div className="mt-4 grid gap-2">
+          {actions.map((action) => {
+            const className = [
+              "flex min-h-11 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition-colors",
+              action.variant === "secondary"
+                ? "border border-blue-200 bg-white text-blue-900 hover:bg-blue-50"
+                : "bg-teal-400 text-slate-950 hover:bg-teal-500",
+            ].join(" ");
+
+            return action.href ? (
+              <a
+                key={action.label}
+                href={action.href}
+                onClick={action.onClick}
+                className={className}
+              >
+                {action.label}
+              </a>
+            ) : (
+              <button
+                key={action.label}
+                type="button"
+                onClick={action.onClick}
+                className={className}
+              >
+                {action.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -113,9 +120,22 @@ function CompletionBanner({ youGotThis }: { youGotThis: string }) {
 interface KidExplanationFlowProps {
   steps: Step[];
   miniPracticeContext?: RuntimeMiniPracticeContext;
+  onPracticeMore?: () => void;
+  onViewLesson?: () => void;
+  practiceHref?: string;
+  lessonHref?: string;
+  canViewLesson?: boolean;
 }
 
-export function KidExplanationFlow({ steps, miniPracticeContext }: KidExplanationFlowProps) {
+export function KidExplanationFlow({
+  steps,
+  miniPracticeContext,
+  onPracticeMore,
+  onViewLesson,
+  practiceHref,
+  lessonHref,
+  canViewLesson = false,
+}: KidExplanationFlowProps) {
   const { t, language } = useLanguage();
   const resolveText = useResolveText();
   const isFr = language === "fr";
@@ -124,85 +144,168 @@ export function KidExplanationFlow({ steps, miniPracticeContext }: KidExplanatio
   const [currentStep, setCurrentStep] = useState(0);
   const isLast = currentStep >= steps.length - 1;
   const isDone = currentStep >= steps.length;
+  const canGoBack = currentStep > 0;
 
   if (!steps?.length) return null;
 
   const fallbackTitles = isFr ? KIND_FALLBACK_TITLE_FR : KIND_FALLBACK_TITLE_EN;
+  const activeStep = isDone ? null : steps[currentStep];
+  const currentStepLabel = `${Math.min(currentStep + 1, steps.length)}/${steps.length}`;
+  const isCheckStep = activeStep?.kind === "check";
+  const completionActions: CompletionAction[] = [
+    ...(onPracticeMore
+      ? [{
+          label: isFr ? "Continuer à s’entraîner →" : "Keep practicing →",
+          href: practiceHref,
+          onClick: onPracticeMore,
+          variant: "primary" as const,
+        }]
+      : []),
+    ...(canViewLesson && onViewLesson
+      ? [{
+          label: isFr ? "Revoir la leçon →" : "Review the lesson →",
+          href: lessonHref,
+          onClick: onViewLesson,
+          variant: "secondary" as const,
+        }]
+      : []),
+  ];
 
   return (
-    <div className="space-y-5 py-1">
-      {/* Banner */}
-      <IntroBanner t={t} />
+    <div className="flex h-full min-h-0 flex-col justify-between gap-2">
+      {/* Active step only */}
+      <div className={isCheckStep ? "min-h-0 flex-1 overflow-hidden" : "overflow-visible"}>
+        <AnimatePresence mode="wait">
+          {isDone ? (
+            <motion.div
+              key="done"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ type: "spring", stiffness: 160, damping: 18 }}
+              className="h-full"
+            >
+              <CompletionBanner
+                youGotThis={t("exercises.explanation.kid.you_got_this") || (isFr ? "Tu vas y arriver, champion !" : "You got this, champion!")}
+                actions={completionActions}
+              />
+            </motion.div>
+          ) : activeStep ? (() => {
+              const rawTitle = activeStep.title?.trim() || fallbackTitles[activeStep.kind];
+              const title = toChildFriendlyExplanationText(rawTitle);
+              const rawBody = resolveText(activeStep.body || "");
+              const normalizedTitle = rawTitle.toLowerCase();
+              const isVisualSupportCard =
+                activeStep.kind === "strategy" && (
+                  normalizedTitle.includes("regarde") ||
+                  normalizedTitle.includes("vois") ||
+                  normalizedTitle.includes("see") ||
+                  normalizedTitle.includes("look")
+                );
+              const arithmeticSupportBody =
+                isVisualSupportCard && miniPracticeContext?.exercise
+                  ? buildKidArithmeticSupportText(
+                      miniPracticeContext.exercise,
+                      miniPracticeContext.gradeLevel,
+                      isFr ? "fr" : "en",
+                    )
+                  : null;
+              const body = toChildFriendlyExplanationText(arithmeticSupportBody || rawBody);
+              const icon = KID_ICONS[activeStep.kind] || "✨";
 
-      {/* Progress dots */}
-      <ProgressDots total={steps.length} current={isDone ? steps.length - 1 : currentStep} />
+              if (!body) return null;
 
-      {/* Steps revealed so far */}
-      <div className="space-y-4">
-        <AnimatePresence>
-          {steps.slice(0, isDone ? steps.length : currentStep + 1).map((step, index) => {
-            const rawTitle = step.title?.trim() || fallbackTitles[step.kind];
-            const title = toChildFriendlyExplanationText(rawTitle);
-            const rawBody = resolveText(step.body || "");
-            const body = toChildFriendlyExplanationText(rawBody);
-            const icon = KID_ICONS[step.kind] || "✨";
+              const parsedMath =
+                (activeStep.kind === "example" || activeStep.kind === "strategy")
+                  ? parseArithmetic(body)
+                  : null;
+              const emoji = parsedMath ? pickEmoji(body) : null;
 
-            if (!body) return null;
+              return (
+                <motion.div
+                  key={`${activeStep.kind}-${currentStep}`}
+                  initial={{ opacity: 0, x: 18 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -18 }}
+                  transition={{ type: "spring", stiffness: 150, damping: 20 }}
+                  className={isCheckStep ? "h-full min-h-0" : "h-auto"}
+                >
+                  {activeStep.kind === "check" ? (
+                    <section className="flex h-full min-h-0 flex-col rounded-xl border border-green-200 bg-white p-2 shadow-sm">
+                      <div className="mb-1.5 flex items-center gap-2 px-1">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-lg">
+                          {icon}
+                        </div>
+                        <h5 className="text-[15px] font-bold leading-tight text-green-900 sm:text-base">
+                          {title}
+                        </h5>
+                      </div>
 
-            // Detect arithmetic in "example" or "strategy" steps to show ObjectCounter
-            const parsedMath =
-              (step.kind === "example" || step.kind === "strategy")
-                ? parseArithmetic(body)
-                : null;
-            const emoji = parsedMath ? pickEmoji(body) : null;
-
-            return (
-              <AnimatedStepCard
-                key={`${step.kind}-${index}`}
-                kind={step.kind}
-                icon={icon}
-                title={title}
-                index={index}
-                animate={true}
-              >
-                {step.kind === "check" ? (
-                  /* Interactive mini-practice for "check" step */
-                  <div className="mt-2 rounded-xl bg-green-50 border border-green-100 p-3">
-                    <RuntimeMiniPracticeInline
-                      context={miniPracticeContext}
-                      fallbackBody={body}
-                    />
-                  </div>
-                ) : parsedMath ? (
-                  /* Visual arithmetic widget when numbers are simple enough */
-                  <div className="space-y-3">
-                    <p className="whitespace-pre-wrap break-words">{body}</p>
-                    <Suspense fallback={
-                      <div className="h-24 rounded-xl bg-sky-50 animate-pulse" aria-label={isFr ? "Chargement du visuel..." : "Loading visual..."} />
-                    }>
-                      <ObjectCounter
-                        a={parsedMath.a}
-                        b={parsedMath.b}
-                        operation={parsedMath.op}
-                        emoji={emoji ?? "🔵"}
-                        autoPlay={true}
-                        replayLabel={t("exercises.explanation.kid.replay")}
-                      />
-                    </Suspense>
-                  </div>
-                ) : (
-                  /* Plain text (child-friendly, short sentences from the AI) */
-                  <p className="whitespace-pre-wrap break-words">{body}</p>
-                )}
-              </AnimatedStepCard>
-            );
-          })}
+                      <div className="min-h-0 flex-1">
+                        <RuntimeMiniPracticeInline
+                          context={miniPracticeContext}
+                          fallbackBody={body}
+                          variant="kid-fit"
+                        />
+                      </div>
+                    </section>
+                  ) : (
+                    <AnimatedStepCard
+                      kind={activeStep.kind}
+                      icon={icon}
+                      title={title}
+                      index={currentStep}
+                      animate={false}
+                      isCurrent={true}
+                      isCompleted={false}
+                      fillHeight={false}
+                    >
+                      {parsedMath ? (
+                      <div className="space-y-2">
+                        <p className="whitespace-pre-wrap break-words">{body}</p>
+                        <Suspense fallback={
+                          <div className="h-24 rounded-xl bg-sky-50 animate-pulse" aria-label={isFr ? "Chargement du visuel..." : "Loading visual..."} />
+                        }>
+                          <ObjectCounter
+                            a={parsedMath.a}
+                            b={parsedMath.b}
+                            operation={parsedMath.op}
+                            emoji={emoji ?? "🔵"}
+                            autoPlay={true}
+                            replayLabel={t("exercises.explanation.kid.replay")}
+                          />
+                        </Suspense>
+                      </div>
+                    ) : (
+                      <p className="whitespace-pre-wrap break-words">{body}</p>
+                    )}
+                    </AnimatedStepCard>
+                  )}
+                </motion.div>
+              );
+            })() : null}
         </AnimatePresence>
       </div>
 
       {/* Navigation controls */}
       {!isDone && (
-        <div className="flex justify-end">
+        <div className="space-y-1.5 border-t border-slate-100 pt-2">
+          <div className="flex items-center justify-between gap-2">
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: canGoBack ? 1.02 : 1 }}
+            onClick={() => {
+              if (canGoBack) {
+                setCurrentStep((prev) => Math.max(0, prev - 1));
+              }
+            }}
+            disabled={!canGoBack}
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-45 sm:text-sm"
+          >
+            {isFr ? "← Étape précédente" : "← Previous step"}
+          </motion.button>
+
           <motion.button
             type="button"
             whileTap={{ scale: 0.94 }}
@@ -214,20 +317,20 @@ export function KidExplanationFlow({ steps, miniPracticeContext }: KidExplanatio
                 setCurrentStep((prev) => prev + 1);
               }
             }}
-            className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 hover:bg-violet-700 active:bg-violet-800 px-5 py-3 text-sm font-bold text-white shadow-md transition-colors"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 active:bg-violet-800 px-4 py-2 text-xs font-semibold text-white shadow-md transition-colors sm:text-sm"
           >
             {isLast
               ? t("exercises.explanation.kid.got_it")
               : t("exercises.explanation.kid.next_step")}
           </motion.button>
-        </div>
-      )}
+          </div>
 
-      {/* Completion footer */}
-      {isDone && (
-        <CompletionBanner
-          youGotThis={t("exercises.explanation.kid.you_got_this") || (isFr ? "Tu vas y arriver, champion !" : "You got this, champion!")}
-        />
+          <div className="flex justify-end">
+            <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-800">
+              {currentStepLabel}
+            </span>
+          </div>
+        </div>
       )}
     </div>
   );

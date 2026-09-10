@@ -1,3 +1,5 @@
+import { useSubjectLabel } from '@/i18n/useSubjectLabel';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -52,6 +54,7 @@ interface TopicCardProps {
 }
 
 function TopicCard({ topic, userId, index, onPractice }: TopicCardProps) {
+  const ui = useInterfaceTranslation();
   const { t } = useTranslation();
   const banksQuery = useAllBanks(topic.id, '', [], userId, 'practice');
   const banks = banksQuery.data?.banks ?? [];
@@ -89,7 +92,7 @@ function TopicCard({ topic, userId, index, onPractice }: TopicCardProps) {
             {t(masteryKey)}
           </span>
           {mastery === 'needs_practice' && (
-            <span className="text-xs text-muted-foreground">↩ à retravailler</span>
+            <span className="text-xs text-muted-foreground">{ui("↩ à retravailler")}</span>
           )}
         </div>
       </div>
@@ -110,6 +113,7 @@ function TopicCard({ topic, userId, index, onPractice }: TopicCardProps) {
 // ── Main page ────────────────────────────────────────────────────────────────
 
 export default function PracticeTopicsPage() {
+  const subjectLabel = useSubjectLabel();
   const navigate = useNavigate();
   const { subject } = useParams<{ subject: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -184,7 +188,7 @@ export default function PracticeTopicsPage() {
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{subjectName}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{subjectLabel(subjectName)}</h1>
             <p className="text-sm text-muted-foreground">{t('practice.subject.ai.subtitle')}</p>
           </div>
           <Button

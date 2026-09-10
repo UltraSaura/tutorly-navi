@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -84,46 +85,52 @@ const TeacherTopicDetail = lazy(() => import("./pages/teacher/TeacherTopicDetail
 const isDev = import.meta.env.DEV;
 
 // Loading Component
-const LoadingFallback = () => (
+const LoadingFallback = () => {
+  const ui = useInterfaceTranslation();
+  return (
   <div className="flex items-center justify-center min-h-screen bg-background">
     <div className="flex flex-col items-center">
       <div className="w-16 h-16 relative">
         <div className="absolute top-0 left-0 w-full h-full border-4 border-muted rounded-full"></div>
         <div className="absolute top-0 left-0 w-full h-full border-4 border-primary rounded-full animate-spin border-t-transparent"></div>
       </div>
-      <p className="mt-4 text-lg font-medium text-foreground">Loading...</p>
+      <p className="mt-4 text-lg font-medium text-foreground">{ui("Loading...")}</p>
     </div>
   </div>
 );
+};
 
 // Route-level error fallback
-const RouteErrorFallback = ({ section }: { section: string }) => (
+const RouteErrorFallback = ({ section }: { section: string }) => {
+  const ui = useInterfaceTranslation();
+  return (
   <div className="flex items-center justify-center min-h-screen bg-background p-6">
     <div className="max-w-md w-full bg-card border rounded-lg shadow-lg p-6 text-center space-y-4">
       <div className="w-12 h-12 mx-auto bg-destructive/10 rounded-full flex items-center justify-center">
         <span className="text-destructive text-xl">!</span>
       </div>
-      <h2 className="text-xl font-semibold">Unable to load {section}</h2>
+      <h2 className="text-xl font-semibold">{ui("Unable to load")} {section}</h2>
       <p className="text-muted-foreground text-sm">
-        Something went wrong loading this section. Please try again.
+        {ui("Something went wrong loading this section. Please try again.")}
       </p>
       <div className="flex gap-3 justify-center pt-2">
         <button
           onClick={() => window.location.reload()}
           className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
         >
-          Refresh Page
+          {ui("Refresh Page")}
         </button>
         <button
           onClick={() => window.location.href = '/'}
           className="px-4 py-2 border rounded-md hover:bg-muted"
         >
-          Go Home
+          {ui("Go Home")}
         </button>
       </div>
     </div>
   </div>
 );
+};
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -140,6 +147,7 @@ const queryClient = new QueryClient({
 
 // Simple App Component (no language detection for now)
 const App = () => {
+  const ui = useInterfaceTranslation();
   return <QueryClientProvider client={queryClient}>
       <HelmetProvider>
       <ErrorBoundary>
@@ -267,9 +275,9 @@ const App = () => {
             <Route path="classes/:classId" element={<ClassDetailPage />} />
             <Route path="students/:studentId" element={<TeacherStudentDetail />} />
             <Route path="topics/:topicId" element={<TeacherTopicDetail />} />
-            <Route path="resources" element={<div className="p-8">Resources (Coming Soon)</div>} />
-            <Route path="analytics" element={<div className="p-8">Analytics (Coming Soon)</div>} />
-            <Route path="settings" element={<div className="p-8">Settings (Coming Soon)</div>} />
+            <Route path="resources" element={<div className="p-8">{ui("Resources (Coming Soon)")}</div>} />
+            <Route path="analytics" element={<div className="p-8">{ui("Analytics (Coming Soon)")}</div>} />
+            <Route path="settings" element={<div className="p-8">{ui("Settings (Coming Soon)")}</div>} />
           </Route>
                         
                         {/* Curriculum Debug */}

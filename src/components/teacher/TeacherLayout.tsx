@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Outlet, Navigate, NavLink, useNavigate } from 'react-router-dom';
 import { useTeacherAuth } from '@/hooks/useTeacherAuth';
@@ -16,6 +17,7 @@ const teacherNavigation = [
 ];
 
 export default function TeacherLayout() {
+  const ui = useInterfaceTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { canAccessTeacherPortal, loading } = useTeacherAuth();
   const navigate = useNavigate();
@@ -24,11 +26,11 @@ export default function TeacherLayout() {
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
-      toast({ title: 'Signed out successfully' });
+      toast({ title: ui("Signed out successfully") });
       navigate('/auth');
     } catch (error) {
       console.error('Error signing out:', error);
-      toast({ title: 'Error signing out', variant: 'destructive' });
+      toast({ title: ui("Error signing out"), variant: 'destructive' });
     }
   };
 
@@ -47,14 +49,14 @@ export default function TeacherLayout() {
       {/* Desktop Sidebar */}
       <aside className="hidden md:block fixed left-0 top-0 h-full w-64 bg-card border-r">
         <div className="p-6 border-b">
-          <h2 className="text-xl font-bold">Teacher Portal</h2>
-          <p className="text-sm text-muted-foreground">Manage your classes</p>
+          <h2 className="text-xl font-bold">{ui("Teacher Portal")}</h2>
+          <p className="text-sm text-muted-foreground">{ui("Manage your classes")}</p>
         </div>
         
         <nav className="p-4 space-y-2">
           {teacherNavigation.map((item) => (
             <NavLink
-              key={item.title}
+              key={ui(item.title)}
               to={item.url}
               end={item.url === '/teacher'}
               className={({ isActive }) =>
@@ -67,7 +69,7 @@ export default function TeacherLayout() {
               }
             >
               <item.icon className="w-5 h-5" />
-              {item.title}
+              {ui(item.title)}
             </NavLink>
           ))}
         </nav>
@@ -75,7 +77,7 @@ export default function TeacherLayout() {
         <div className="absolute bottom-4 left-4 right-4">
           <Button variant="outline" onClick={handleSignOut} className="w-full">
             <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
+            {ui("Sign Out")}
           </Button>
         </div>
       </aside>
@@ -83,7 +85,7 @@ export default function TeacherLayout() {
       {/* Mobile Header */}
       <header className="md:hidden sticky top-0 z-40 bg-card border-b p-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-bold">Teacher Portal</h2>
+          <h2 className="font-bold">{ui("Teacher Portal")}</h2>
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -92,14 +94,14 @@ export default function TeacherLayout() {
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">
               <div className="p-6 border-b">
-                <h2 className="text-xl font-bold">Teacher Portal</h2>
-                <p className="text-sm text-muted-foreground">Manage your classes</p>
+                <h2 className="text-xl font-bold">{ui("Teacher Portal")}</h2>
+                <p className="text-sm text-muted-foreground">{ui("Manage your classes")}</p>
               </div>
               
               <nav className="p-4 space-y-2">
                 {teacherNavigation.map((item) => (
                   <NavLink
-                    key={item.title}
+                    key={ui(item.title)}
                     to={item.url}
                     end={item.url === '/teacher'}
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -113,7 +115,7 @@ export default function TeacherLayout() {
                     }
                   >
                     <item.icon className="w-5 h-5" />
-                    {item.title}
+                    {ui(item.title)}
                   </NavLink>
                 ))}
               </nav>
@@ -121,7 +123,7 @@ export default function TeacherLayout() {
               <div className="absolute bottom-4 left-4 right-4">
                 <Button variant="outline" onClick={handleSignOut} className="w-full">
                   <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
+                  {ui("Sign Out")}
                 </Button>
               </div>
             </SheetContent>

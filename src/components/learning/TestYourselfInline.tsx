@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Lock, ThumbsUp, ThumbsDown } from 'lucide-react';
@@ -18,6 +19,7 @@ export function TestYourselfInline({
   locked = false,
   progressMessage 
 }: TestYourselfInlineProps) {
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -44,7 +46,7 @@ export function TestYourselfInline({
         {locked && <Lock className="w-4 h-4 mr-2" />}
         {isPassed && <ThumbsUp className="w-4 h-4 mr-2 text-green-600" />}
         {hasAttempted && !isPassed && <ThumbsDown className="w-4 h-4 mr-2 text-red-600" />}
-        Test yourself
+        {ui("Test yourself")}
       </Button>
       {locked && progressMessage && (
         <p className="text-xs text-muted-foreground">{progressMessage}</p>

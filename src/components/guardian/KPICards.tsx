@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Card } from '@/components/ui/card';
 import { BookOpenCheck, CheckCircle, ListChecks, Trophy } from 'lucide-react';
 
@@ -18,16 +19,17 @@ export function KPICards({
   quizzesCompleted = 0,
   bestQuizScore = null,
 }: KPICardsProps) {
+  const ui = useInterfaceTranslation();
   const kpis = [
     {
-      label: 'Exercises',
+      label: ui("Exercises"),
       value: exercisesCompleted,
       icon: BookOpenCheck,
       color: 'text-blue-600 dark:text-blue-400',
       bgColor: 'bg-blue-500/10',
     },
     {
-      label: 'Correct',
+      label: ui("Correct"),
       value: correctExercises,
       icon: CheckCircle,
       color: 'text-green-600 dark:text-green-400',
@@ -48,14 +50,14 @@ export function KPICards({
       bgColor: 'bg-purple-500/10',
     },
     {
-      label: 'Quizzes',
+      label: ui("Quizzes"),
       value: quizzesCompleted,
       icon: ListChecks,
       color: 'text-cyan-600 dark:text-cyan-400',
       bgColor: 'bg-cyan-500/10',
     },
     {
-      label: 'Best Quiz',
+      label: ui("Best Quiz"),
       value: bestQuizScore === null ? 'N/A' : `${Math.round(bestQuizScore)}%`,
       icon: Trophy,
       color: 'text-rose-600 dark:text-rose-400',

@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,6 +16,7 @@ interface UserDetailsProps {
 }
 
 export const UserDetails = ({ user, onAddChildClick, onUserSelect }: UserDetailsProps) => {
+  const ui = useInterfaceTranslation();
   return (
     <Card className="glass">
       <CardHeader className="pb-3">
@@ -23,13 +25,13 @@ export const UserDetails = ({ user, onAddChildClick, onUserSelect }: UserDetails
       <CardContent>
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid grid-cols-3 w-full glass">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="overview">{ui("Overview")}</TabsTrigger>
+            <TabsTrigger value="activity">{ui("Activity")}</TabsTrigger>
             {user.user_type === 'student' && (
-              <TabsTrigger value="progress">Progress</TabsTrigger>
+              <TabsTrigger value="progress">{ui("Progress")}</TabsTrigger>
             )}
             {user.user_type === 'parent' && (
-              <TabsTrigger value="children">Children</TabsTrigger>
+              <TabsTrigger value="children">{ui("Children")}</TabsTrigger>
             )}
           </TabsList>
           

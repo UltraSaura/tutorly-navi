@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import React, { useState } from 'react';
 import { File, Image, Calculator, FlaskConical, BookOpen, ChevronDown, ChevronRight } from 'lucide-react';
@@ -16,6 +17,7 @@ const Message = ({
   subjectId,
   explanation 
 }: MessageType) => {
+  const ui = useInterfaceTranslation();
   const [showExplanation, setShowExplanation] = useState(false);
 
   const getSubjectIcon = (subjectId?: string) => {
@@ -40,7 +42,7 @@ const Message = ({
               target="_blank" 
               rel="noopener noreferrer"
             >
-              View
+              {ui("View")}
             </a>
           </div>
         );
@@ -88,7 +90,7 @@ const Message = ({
                   className="flex items-center gap-2 text-xs text-neutral-muted hover:text-neutral-text"
                 >
                   {showExplanation ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                  Step-by-step explanation
+                  {ui("Step-by-step explanation")}
                 </Button>
                 {showExplanation && (
                   <div className="mt-2 space-y-2">
@@ -104,7 +106,7 @@ const Message = ({
                       size="sm" 
                       className="mt-3 text-xs bg-brand-primary hover:bg-brand-navy"
                     >
-                      Try again → +5 XP
+                      {ui("Try again → +5 XP")}
                     </Button>
                   </div>
                 )}

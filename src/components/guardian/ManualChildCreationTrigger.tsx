@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -5,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 
 export const ManualChildCreationTrigger: React.FC = () => {
+  const ui = useInterfaceTranslation();
   const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
   const [hasPendingChildren, setHasPendingChildren] = useState(false);
@@ -21,8 +23,8 @@ export const ManualChildCreationTrigger: React.FC = () => {
     
     if (!pendingChildrenData) {
       toast({
-        title: 'No Pending Children',
-        description: 'No pending children data found in localStorage.',
+        title: ui("No Pending Children"),
+        description: ui("No pending children data found in localStorage."),
         variant: 'destructive',
       });
       return;
@@ -42,8 +44,8 @@ export const ManualChildCreationTrigger: React.FC = () => {
         if (!childPassword) {
           console.error(`Child ${child.username} is missing a password.`);
           toast({
-            title: 'Child Creation Error',
-            description: `Child ${child.firstName} is missing a password. Please provide one.`,
+            title: ui("Child Creation Error"),
+            description: ui("childPasswordMissing", { name: child.firstName }),
             variant: 'destructive',
           });
           continue;
@@ -79,20 +81,20 @@ export const ManualChildCreationTrigger: React.FC = () => {
         if (error) {
           console.error(`Error creating child ${child.username}:`, error);
           toast({
-            title: 'Child Creation Error',
-            description: `Failed to create account for ${child.firstName}: ${error.message}`,
+            title: ui("Child Creation Error"),
+            description: ui("childCreationFailed", { name: child.firstName, error: error.message }),
             variant: 'destructive',
           });
         } else if (data && data.success) {
           toast({
-            title: 'Child Account Created',
-            description: `Account for ${child.firstName} created successfully!`,
+            title: ui("Child Account Created"),
+            description: ui("childCreated", { name: child.firstName }),
           });
         } else {
           console.error(`Unknown error creating child ${child.username}:`, data);
           toast({
-            title: 'Child Creation Error',
-            description: `Failed to create account for ${child.firstName}: ${data?.error || 'Unknown error'}`,
+            title: ui("Child Creation Error"),
+            description: ui("childCreationFailed", { name: child.firstName, error: data?.error || ui("Unknown error") }),
             variant: 'destructive',
           });
         }
@@ -102,15 +104,15 @@ export const ManualChildCreationTrigger: React.FC = () => {
       localStorage.removeItem('pending_children');
       setHasPendingChildren(false);
       toast({
-        title: 'Child Creation Complete',
-        description: 'All pending child accounts have been processed.',
+        title: ui("Child Creation Complete"),
+        description: ui("All pending child accounts have been processed."),
       });
 
     } catch (error) {
       console.error('Error in manual child creation:', error);
       toast({
-        title: 'Child Creation Error',
-        description: `An error occurred: ${error.message || 'Unknown error'}`,
+        title: ui("Child Creation Error"),
+        description: ui("errorOccurred", { error: error.message || ui("Unknown error") }),
         variant: 'destructive',
       });
     } finally {
@@ -125,9 +127,9 @@ export const ManualChildCreationTrigger: React.FC = () => {
 
   return (
     <div className="p-4 border rounded-lg bg-yellow-50 border-yellow-200">
-      <h3 className="font-medium text-yellow-800 mb-2">Pending Child Accounts</h3>
+      <h3 className="font-medium text-yellow-800 mb-2">{ui("Pending Child Accounts")}</h3>
       <p className="text-sm text-yellow-700 mb-3">
-        You have pending child accounts that need to be created. Click the button below to create them.
+        {ui("You have pending child accounts that need to be created. Click the button below to create them.")}
       </p>
       <Button 
         onClick={handleCreatePendingChildren} 
@@ -137,10 +139,10 @@ export const ManualChildCreationTrigger: React.FC = () => {
         {isCreating ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Creating Accounts...
+            {ui("Creating Accounts...")}
           </>
         ) : (
-          'Create Pending Child Accounts'
+          ui("Create Pending Child Accounts")
         )}
       </Button>
     </div>

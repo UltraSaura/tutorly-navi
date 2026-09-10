@@ -11,11 +11,23 @@ import type { RuntimeMiniPracticeContext } from "./runtimeMiniPractice";
 export function KidExplanation({
   steps,
   miniPracticeContext,
+  onPracticeMore,
+  onViewLesson,
+  canViewLesson,
 }: {
   steps: Step[];
   miniPracticeContext?: RuntimeMiniPracticeContext;
+  onPracticeMore?: () => void;
+  onViewLesson?: () => void;
+  canViewLesson?: boolean;
 }) {
   return (
-    <KidExplanationFlow steps={steps} miniPracticeContext={miniPracticeContext} />
+    <KidExplanationFlow
+      steps={steps}
+      miniPracticeContext={miniPracticeContext}
+      onPracticeMore={onPracticeMore}
+      onViewLesson={onViewLesson}
+      canViewLesson={canViewLesson}
+    />
   );
 }

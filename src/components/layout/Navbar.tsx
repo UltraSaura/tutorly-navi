@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MessageSquare, BookOpen, BarChart3, CheckSquare, User, Settings, Globe, ChevronDown, LogOut } from 'lucide-react';
@@ -60,6 +61,7 @@ const LanguageMenuItems = () => {
 };
 
 const Navbar = () => {
+  const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
@@ -104,7 +106,7 @@ const Navbar = () => {
       <div className="stuwy-container">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Stuwy Logo" className="w-10 h-10" />
+            <img src="/logo.png" alt={ui("Stuwy Logo")} className="w-10 h-10" />
             <span className="text-lg font-semibold">{t('brand.name')}</span>
             <div className="hidden md:block">
               <SubjectSelector />

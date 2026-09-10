@@ -5,6 +5,7 @@ import {
   inferPromptFigure,
   promptReferencesVisual,
 } from "../../../src/lib/quiz/promptVisual.ts";
+import { buildColumnFillQuestion } from "../../../src/lib/quiz/columnFillBuilder.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,6 +58,27 @@ function buildTypeInstructions(questionTypes: string[]): string {
   Supported shape values: triangle, rectangle, square, circle, rhombus, parallelogram, trapezoid, pentagon, hexagon, polygon, cube, cuboid, cylinder, cone, sphere.`;
       case 'ordering':
         return `- "ordering": Put items in correct order. Include "items" (shuffled array) and "correctOrder" (correct sequence). Frame these as step-building, process-ordering, or action-ordering when appropriate.`;
+      case 'column-fill':
+        return `- "column-fill": Student fills missing digits inside a column-method arithmetic layout. Use this ONLY for kid-friendly arithmetic topics: addition, subtraction, one-digit multiplication, or integer division with remainder.
+  Required fields:
+  {
+    "id": "q-X",
+    "kind": "column-fill",
+    "prompt": "...",
+    "hint": "...",
+    "points": 1,
+    "operation": "addition" | "subtraction" | "multiplication" | "division",
+    "operands": ["29", "66"],
+    "instructions": "Complète les retenues et le résultat."
+  }
+  IMPORTANT:
+  - Do NOT generate the layout object yourself. The app builds the layout from operation + operands.
+  - Choose operands that fit the method:
+    - addition: include at least one carry when possible
+    - subtraction: include at least one borrow when possible
+    - multiplication: second operand must be ONE digit only
+    - division: use whole numbers only; divisor must be non-zero; prefer cases with a remainder when relevant
+  - Keep prompts short and concrete, for example: "Complète l'addition posée." or "Complète les chiffres manquants dans cette division."`;
       case 'visual_pie':
         return `- "visual" with subtype "pie": A fraction/proportion question using a pie chart. The prompt must clearly refer to the pie/chart the student sees. TWO MODES:
 
@@ -168,11 +190,12 @@ function buildTypeInstructions(questionTypes: string[]): string {
   }`;
 
       case 'mix':
-        return `Choose the BEST question type for each question from ALL supported kinds: single, multi, numeric, ordering, slider, match, fill-expr, visual pie (select_pie or color_slices mode), visual angle.
+        return `Choose the BEST question type for each question from ALL supported kinds: single, multi, numeric, ordering, column-fill, slider, match, fill-expr, visual pie (select_pie or color_slices mode), visual angle.
 Create a rich Brilliant-style variety when the topic allows it:
 - single/multi: conceptual recall, verbal reasoning, "which is true" style
 - numeric: calculation, apply a rule, find a missing number
 - ordering: steps, procedures, sequences, chronological order
+- column-fill: primary-school arithmetic in vertical columns with missing digits
 - slider: estimate a quantity, read a scale, place a value on a number line
 - match: vocabulary ↔ definition, fraction ↔ decimal, term ↔ example
 - fill-expr: complete an equation, fill missing numbers in a formula or calculation
@@ -195,9 +218,147 @@ function buildLearningFriendlyGuidance(): string {
 - For ordering questions, use step-building, process-ordering, or action-ordering language when appropriate.
 - For single and multi questions, include some verbal-reasoning answer choices when appropriate, such as short explanations, comparison statements, or "which sentence is true" choices.
 - Do not use technical labels such as visual learner, auditory learner, kinesthetic learner, learning modality, or cognitive preference.
-- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, visual, slider, match, fill-expr.
+- Do not invent unsupported question kinds. Use only: single, multi, numeric, ordering, column-fill, visual, slider, match, fill-expr.
+- For column-fill: include operation, operands, and optional instructions only. Do NOT include a layout object.
 - For slider: always include min, max, step, answer, tolerance. For match: always include 3-5 pairs and an answers object. For fill-expr: always include template, blanks, chips, answers.
 - If a "single", "multi", or "numeric" prompt references a visual ("ce gâteau", "cette figure", "ce triangle", "cette barre", "la partie colorée", etc.), you MUST include a matching "context_visual" field so the student can actually see it. Never reference a visual without providing it.`;
+}
+
+type ColumnOperation = "addition" | "subtraction" | "multiplication" | "division";
+
+function normalizeFrenchText(value: string) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function pickColumnOperations(topicNames: string[], topicContext: string, count: number): ColumnOperation[] {
+  const text = normalizeFrenchText(`${topicNames.join(" ")} ${topicContext}`);
+  const requested: ColumnOperation[] = [];
+
+  if (/(addition|somme|ajouter|plus)/.test(text)) requested.push("addition");
+  if (/(soustraction|subtraction|difference|retirer|moins)/.test(text)) requested.push("subtraction");
+  if (/(multiplication|produit|multiplier|fois)/.test(text)) requested.push("multiplication");
+  if (/(division|quotient|diviser|reste)/.test(text)) requested.push("division");
+
+  if (requested.length === 0) {
+    requested.push("addition", "subtraction", "multiplication", "division");
+  }
+
+  return Array.from({ length: count }, (_, index) => requested[index % requested.length]);
+}
+
+function buildColumnPrompt(operation: ColumnOperation, language: string) {
+  if (language === "en") {
+    switch (operation) {
+      case "addition":
+        return {
+          prompt: "Complete the column addition.",
+          hint: "Add column by column and watch for any carry.",
+          instructions: "Fill in the carries and the result.",
+        };
+      case "subtraction":
+        return {
+          prompt: "Complete the column subtraction.",
+          hint: "Subtract column by column and check if you need to borrow.",
+          instructions: "Fill in the borrows and the result.",
+        };
+      case "multiplication":
+        return {
+          prompt: "Complete the column multiplication.",
+          hint: "Multiply each digit carefully and complete the product.",
+          instructions: "Fill in the missing digits of the product.",
+        };
+      case "division":
+        return {
+          prompt: "Complete the long division.",
+          hint: "Find the quotient digit by digit and keep track of the remainder.",
+          instructions: "Fill in the quotient and the remainder.",
+        };
+    }
+  }
+
+  switch (operation) {
+    case "addition":
+      return {
+        prompt: "Complète l'addition posée.",
+        hint: "Additionne colonne par colonne et pense aux retenues.",
+        instructions: "Complète les retenues et le résultat.",
+      };
+    case "subtraction":
+      return {
+        prompt: "Complète la soustraction posée.",
+        hint: "Soustrais colonne par colonne et vérifie s'il faut emprunter.",
+        instructions: "Complète les emprunts et le résultat.",
+      };
+    case "multiplication":
+      return {
+        prompt: "Complète la multiplication posée.",
+        hint: "Multiplie chaque chiffre avec soin puis complète le produit.",
+        instructions: "Complète les chiffres manquants du produit.",
+      };
+    case "division":
+      return {
+        prompt: "Complète la division posée.",
+        hint: "Cherche le quotient chiffre par chiffre et garde le reste en tête.",
+        instructions: "Complète le quotient et le reste.",
+      };
+  }
+}
+
+function columnOperandsFor(operation: ColumnOperation, index: number, difficulty: "easy" | "medium" | "hard") {
+  const presets: Record<ColumnOperation, Array<[number, number]>> = {
+    addition: difficulty === "easy"
+      ? [[27, 58], [36, 47], [48, 35], [29, 66]]
+      : difficulty === "hard"
+        ? [[278, 457], [396, 587], [468, 375], [589, 276]]
+        : [[74, 58], [86, 47], [59, 38], [67, 85]],
+    subtraction: difficulty === "easy"
+      ? [[72, 48], [81, 36], [93, 57], [64, 28]]
+      : difficulty === "hard"
+        ? [[702, 458], [831, 476], [940, 587], [623, 289]]
+        : [[92, 57], [84, 39], [73, 48], [61, 27]],
+    multiplication: difficulty === "easy"
+      ? [[14, 3], [23, 4], [32, 2], [18, 5]]
+      : difficulty === "hard"
+        ? [[246, 4], [318, 3], [427, 2], [156, 6]]
+        : [[27, 4], [36, 3], [48, 2], [59, 5]],
+    division: difficulty === "easy"
+      ? [[84, 5], [68, 3], [95, 4], [73, 2]]
+      : difficulty === "hard"
+        ? [[742, 5], [968, 4], [853, 6], [617, 3]]
+        : [[145, 4], [126, 5], [187, 6], [134, 3]],
+  };
+
+  return presets[operation][index % presets[operation].length];
+}
+
+function buildForcedColumnFillQuestions(params: {
+  count: number;
+  topicNames: string[];
+  topicContext: string;
+  difficulty: "easy" | "medium" | "hard";
+  language: string;
+}) {
+  const operations = pickColumnOperations(params.topicNames, params.topicContext, params.count);
+
+  return operations.map((operation, index) => {
+    const [firstOperand, secondOperand] = columnOperandsFor(operation, index, params.difficulty);
+    const text = buildColumnPrompt(operation, params.language);
+
+    return buildColumnFillQuestion({
+      id: `q-${index + 1}`,
+      prompt: text.prompt,
+      hint: text.hint,
+      instructions: text.instructions,
+      points: 1,
+      operation,
+      firstOperand,
+      secondOperand,
+      locale: params.language === "en" ? "en" : "fr",
+    });
+  });
 }
 
 function isValidContextVisual(visual: any): boolean {
@@ -270,7 +431,7 @@ function repairContextVisual(question: any) {
 }
 
 function validateQuestions(questions: any[]): any[] {
-  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'visual', 'slider', 'match', 'fill-expr']);
+  const validKinds = new Set(['single', 'multi', 'numeric', 'ordering', 'column-fill', 'visual', 'slider', 'match', 'fill-expr']);
   const validVisualSubtypes = new Set(['pie', 'angle']);
 
   return questions.filter((q, idx) => {
@@ -304,6 +465,27 @@ function validateQuestions(questions: any[]): any[] {
     }
     if (q.kind === 'ordering') {
       if (!Array.isArray(q.items) || !Array.isArray(q.correctOrder) || q.items.length < 2) return false;
+    }
+    if (q.kind === 'column-fill') {
+      if (!['addition', 'subtraction', 'multiplication', 'division'].includes(q.operation)) return false;
+      if (!Array.isArray(q.operands) || q.operands.length !== 2) return false;
+      const first = Number(q.operands[0]);
+      const second = Number(q.operands[1]);
+      if (!Number.isFinite(first) || !Number.isFinite(second)) return false;
+      if (q.operation === 'multiplication' && String(Math.abs(Math.trunc(second))).length > 1) return false;
+      if (q.operation === 'division' && Math.trunc(second) === 0) return false;
+      const built = buildColumnFillQuestion({
+        id: q.id,
+        prompt: q.prompt,
+        hint: q.hint,
+        points: q.points,
+        operation: q.operation,
+        firstOperand: Math.trunc(first),
+        secondOperand: Math.trunc(second),
+        locale: 'fr',
+        instructions: typeof q.instructions === 'string' ? q.instructions : undefined,
+      });
+      Object.assign(q, built);
     }
     if (q.kind === 'visual') {
       if (!q.visual || !validVisualSubtypes.has(q.visual.subtype)) return false;
@@ -438,7 +620,9 @@ serve(async (req) => {
 
     const topicNames = topics.map(t => t.name);
 
+    const desiredCount = Math.max(1, Math.min(20, Number(questionCount) || 5));
     const effectiveTypes = mix ? ['mix'] : questionTypes;
+    const forceOnlyColumnFill = !mix && effectiveTypes.length === 1 && effectiveTypes[0] === 'column-fill';
     const typeInstructions = buildTypeInstructions(effectiveTypes);
 
     const difficultyGuide: Record<string, string> = {
@@ -486,6 +670,9 @@ For "numeric":
 For "ordering":
 { "id": "q-3", "kind": "ordering", "prompt": "...", "hint": "...", "points": 1, "items": ["B","A","C"], "correctOrder": ["A","B","C"] }
 
+For "column-fill":
+{ "id": "q-4", "kind": "column-fill", "prompt": "...", "hint": "...", "points": 1, "operation": "addition", "operands": ["29","66"], "instructions": "Complète les retenues et le résultat." }
+
 RULES:
 - Questions must test the curriculum topics and objectives provided
 - Each question ID unique (q-1, q-2, etc.)
@@ -493,7 +680,7 @@ RULES:
 - Hints must be short, encouraging, and actionable without giving away the answer
 - All prompts, hints, labels, explanations, instructions, and answer text must be written in ${language === 'fr' ? 'French' : 'English'}
 - Visual prompts must mention the visual object the student should inspect
-- Use only supported output kinds: single, multi, numeric, ordering, visual, slider, match, fill-expr
+- Use only supported output kinds: single, multi, numeric, ordering, column-fill, visual, slider, match, fill-expr
 - Return ONLY the JSON array`;
 
     const parseAiQuestions = (content: string) => {
@@ -548,9 +735,25 @@ RULES:
       }
     };
 
+    if (forceOnlyColumnFill) {
+      const forcedQuestions = buildForcedColumnFillQuestions({
+        count: desiredCount,
+        topicNames,
+        topicContext,
+        difficulty,
+        language,
+      });
+
+      return new Response(JSON.stringify({
+        questions: forcedQuestions,
+        topicNames,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const questions: any[] = [];
     const seenPromptKeys = new Set<string>();
-    const desiredCount = Math.max(1, Math.min(20, Number(questionCount) || 5));
 
     for (let attempt = 0; attempt < 3 && questions.length < desiredCount; attempt += 1) {
       const remaining = desiredCount - questions.length;

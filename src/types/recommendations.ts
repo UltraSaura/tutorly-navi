@@ -22,8 +22,33 @@ export interface RecommendedTopic {
 export interface RecommendationOptions {
   subjectId?: string;
   excludeTopicId?: string;
-  limit?: number;
   preferSameSubdomain?: string;  // Subdomain ID to boost in scoring
+  limit?: number;
+}
+
+// ── Next Best Action Types (Architecture v2) ──────────────────────────────────
+
+export type RecommendedActionSource = "learn" | "tutor" | "practice";
+
+export type RecommendedActionReason =
+  | "continue"
+  | "prerequisite"
+  | "weak_skill"
+  | "spaced_review"
+  | "homework_followup"
+  | "curriculum"
+  | "enrichment";
+
+export interface RecommendedAction {
+  source: RecommendedActionSource;
+  subjectId: string;
+  conceptId: string;
+  reason: RecommendedActionReason;
+  estimatedMinutes: number;
+  priority: number;
+  title?: string;
+  description?: string;
+  targetObjectiveId?: string;
 }
 
 export interface RecommendationsResponse {

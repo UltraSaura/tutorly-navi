@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useStudentCurriculum } from '@/hooks/useStudentCurriculum';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +13,7 @@ import { CurriculumErrorState } from '@/components/learning/CurriculumErrorState
 import { useAuth } from '@/context/AuthContext';
 
 const LearningRoadmap = () => {
+  const ui = useInterfaceTranslation();
   const { subjects, isLoading, error } = useStudentCurriculum();
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -116,7 +118,7 @@ const LearningRoadmap = () => {
           <CardHeader>
             <CardTitle className="text-3xl">{t('nav.roadmap')}</CardTitle>
             <p className="text-muted-foreground mt-2">
-              Track your learning journey through your curriculum
+              {ui("Track your learning journey through your curriculum")}
             </p>
           </CardHeader>
         </Card>
@@ -133,7 +135,7 @@ const LearningRoadmap = () => {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-2xl">{subject.subjectLabel}</CardTitle>
-                  <Badge variant="secondary">{subject.totalTopics} topics</Badge>
+                  <Badge variant="secondary">{subject.totalTopics} {ui("topics")}</Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -176,8 +178,8 @@ const LearningRoadmap = () => {
                                           </p>
                                         )}
                                         <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
-                                          <span>{topic.videoCount} videos</span>
-                                          <span>{topic.quizCount} quizzes</span>
+                                          <span>{topic.videoCount} {ui("videos")}</span>
+                                          <span>{topic.quizCount} {ui("quizzes")}</span>
                                           <span>~{topic.estimatedDurationMinutes} min</span>
                                         </div>
                                       </div>
@@ -186,7 +188,7 @@ const LearningRoadmap = () => {
                                     {status !== 'upcoming' && (
                                       <div className="mt-3">
                                         <div className="flex items-center justify-between text-xs mb-1">
-                                          <span className="text-muted-foreground">Progress</span>
+                                          <span className="text-muted-foreground">{ui("Progress")}</span>
                                           <span className="font-medium">{progress}%</span>
                                         </div>
                                         <Progress value={progress} className="h-2" />

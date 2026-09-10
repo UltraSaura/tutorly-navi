@@ -1,3 +1,4 @@
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,7 @@ export function TopicObjectivesSelector({
   curriculumLevelCode,
   curriculumCountryCode,
 }: TopicObjectivesSelectorProps) {
+  const ui = useInterfaceTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<ObjectiveSuggestion[]>([]);
   
@@ -103,9 +105,9 @@ export function TopicObjectivesSelector({
 
   const getConfidenceBadge = (confidence: number) => {
     if (confidence >= 0.9) {
-      return <Badge variant="default" className="bg-green-500/20 text-green-700 border-green-500/30">High {Math.round(confidence * 100)}%</Badge>;
+      return <Badge variant="default" className="bg-green-500/20 text-green-700 border-green-500/30">{ui("High")} {Math.round(confidence * 100)}%</Badge>;
     } else if (confidence >= 0.7) {
-      return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-700 border-yellow-500/30">Medium {Math.round(confidence * 100)}%</Badge>;
+      return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-700 border-yellow-500/30">{ui("Medium")} {Math.round(confidence * 100)}%</Badge>;
     }
     return <Badge variant="outline" className="text-muted-foreground">{Math.round(confidence * 100)}%</Badge>;
   };
@@ -117,9 +119,9 @@ export function TopicObjectivesSelector({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Learning Objectives</CardTitle>
+          <CardTitle>{ui("Learning Objectives")}</CardTitle>
           <CardDescription>
-            Please set the curriculum location first to select objectives
+            {ui("Please set the curriculum location first to select objectives")}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -133,10 +135,10 @@ export function TopicObjectivesSelector({
           <div>
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="w-5 h-5" />
-              Learning Objectives for this Topic
+              {ui("Learning Objectives for this Topic")}
             </CardTitle>
             <CardDescription>
-              Select curriculum objectives that students will learn in this topic
+              {ui("Select curriculum objectives that students will learn in this topic")}
             </CardDescription>
           </div>
           {topicName && (
@@ -152,7 +154,7 @@ export function TopicObjectivesSelector({
               ) : (
                 <Sparkles className="w-4 h-4" />
               )}
-              Suggest Objectives
+              {ui("Suggest Objectives")}
             </Button>
           )}
         </div>
@@ -164,15 +166,15 @@ export function TopicObjectivesSelector({
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-medium flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-primary" />
-                AI Suggestions ({filteredSuggestions.length})
+                {ui("AI Suggestions (")}{filteredSuggestions.length})
               </h4>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={handleAcceptAll}>
                   <Check className="w-3 h-3 mr-1" />
-                  Accept All
+                  {ui("Accept All")}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={handleClearSuggestions}>
-                  Clear
+                  {ui("Clear")}
                 </Button>
               </div>
             </div>
@@ -214,9 +216,9 @@ export function TopicObjectivesSelector({
 
         {/* Currently Linked Objectives */}
         <div>
-          <h4 className="text-sm font-medium mb-2">Linked Objectives ({linkedObjectives.length})</h4>
+          <h4 className="text-sm font-medium mb-2">{ui("Linked Objectives (")}{linkedObjectives.length})</h4>
           {linkedObjectives.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No objectives linked yet</p>
+            <p className="text-sm text-muted-foreground">{ui("No objectives linked yet")}</p>
           ) : (
             <div className="space-y-2">
               {linkedObjectives.map((objective) => (
@@ -239,12 +241,12 @@ export function TopicObjectivesSelector({
         
         {/* Add New Objectives */}
         <div>
-          <h4 className="text-sm font-medium mb-2">Add Objectives Manually</h4>
+          <h4 className="text-sm font-medium mb-2">{ui("Add Objectives Manually")}</h4>
           <div className="space-y-2">
             <div className="relative">
               <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search objectives..."
+                placeholder={ui("Search objectives...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -253,7 +255,7 @@ export function TopicObjectivesSelector({
             
             <ScrollArea className="h-64 border rounded-lg p-2">
               {isLoading ? (
-                <p className="text-sm text-muted-foreground p-2">Loading objectives...</p>
+                <p className="text-sm text-muted-foreground p-2">{ui("Loading objectives...")}</p>
               ) : filteredObjectives.length === 0 ? (
                 <p className="text-sm text-muted-foreground p-2">
                   {searchQuery ? 'No matching objectives found' : 'All objectives already linked'}
