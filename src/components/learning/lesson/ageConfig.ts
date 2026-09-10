@@ -1,6 +1,15 @@
 // Age configuration for the lesson card player.
 // Controls font sizes, visual sizes, celebration intensity, and vocabulary mode.
 // Derived from the student's curriculum_level_code stored in Supabase.
+//
+// NOTE: Canonical pedagogical configuration is now in @/config/ageConfig.
+// This module provides backward-compatible adapters for existing lesson player consumers.
+
+import {
+  getPedagogicalAgeBand,
+  getAgeLearningConfig,
+  type PedagogicalAgeBand,
+} from '@/config/ageConfig';
 
 export type AgeGroup = 'young' | 'mid' | 'old';
 
@@ -12,6 +21,30 @@ export interface AgeConfig {
   exampleCount: number;
   showMascot: boolean;
   celebration: 'big' | 'medium' | 'subtle';
+}
+
+function bandToLegacyGroup(band: PedagogicalAgeBand): AgeGroup {
+  if (band === 'early_primary') return 'young';
+  if (band === 'upper_primary') return 'mid';
+  return 'old';
+}
+
+export function getAgeGroup(levelCode: string): AgeGroup {
+  const band = getPedagogicalAgeBand(levelCode);
+  return bandToLegacyGroup(band);
+}
+
+export function getAgeConfig(levelCode?: string | null): AgeConfig {
+  const learningConfig = getAgeLearningConfig(levelCode);
+  return {
+    group: bandToLegacyGroup(learningConfig.band),
+    titleSize: learningConfig.titleSize,
+    bodySize: learningConfig.bodySize,
+    visualSize: learningConfig.visualSize,
+    exampleCount: learningConfig.exampleCount,
+    showMascot: learningConfig.showMascot,
+    celebration: learningConfig.celebration,
+  };
 }
 
 export const AGE_CONFIGS: Record<AgeGroup, AgeConfig> = {
@@ -44,16 +77,3 @@ export const AGE_CONFIGS: Record<AgeGroup, AgeConfig> = {
   },
 };
 
-const YOUNG_LEVELS = ['cp', 'ce1'];
-const OLD_LEVELS = ['6eme', '5eme', '4eme', '3eme', 'seconde', 'premiere', 'terminale'];
-
-export function getAgeGroup(levelCode: string): AgeGroup {
-  const code = levelCode.toLowerCase();
-  if (YOUNG_LEVELS.includes(code)) return 'young';
-  if (OLD_LEVELS.includes(code)) return 'old';
-  return 'mid';
-}
-
-export function getAgeConfig(levelCode?: string | null): AgeConfig {
-  return AGE_CONFIGS[getAgeGroup(levelCode ?? 'cm1')];
-}

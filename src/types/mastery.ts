@@ -1,4 +1,5 @@
 // Student mastery tracking types
+export * from './mastery-level';
 
 export interface StudentMastery {
   id: string;
@@ -21,7 +22,7 @@ export interface CurriculumTaskAttempt {
   success_criterion_id: string | null;
   objective_id: string | null;
   is_correct: boolean | null;
-  answer_data: Record<string, any> | null;
+  answer_data: Record<string, unknown> | null;
   time_spent_seconds: number | null;
   created_at: string;
 }
