@@ -102,6 +102,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
 
   // Load translations when language changes
   useEffect(() => {
+    let cancelled = false;
     const loadLanguageTranslations = async () => {
       console.log('[Translation] useEffect triggered for language:', language);
       
@@ -114,7 +115,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         // Sync with i18next even when using cache
         try {
           const i18n = await import('i18next').then(m => m.default);
-          if (i18n.language !== language && i18n.changeLanguage) {
+          if (!cancelled && i18n.language !== language && i18n.changeLanguage) {
             console.log('[Translation] Syncing i18next to:', language);
             await i18n.changeLanguage(language);
           }
@@ -128,6 +129,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         setIsLoading(true);
         console.log('[Translation] Loading translations for language:', language);
         const loadedTranslations = await loadTranslations(language as SupportedLanguage);
+        if (cancelled) return;
         console.log('[Translation] Loaded translations:', loadedTranslations);
         
         // Flatten translations for legacy key support
@@ -153,7 +155,7 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
         // Sync with i18next
         try {
           const i18n = await import('i18next').then(m => m.default);
-          if (i18n.changeLanguage) {
+          if (!cancelled && i18n.changeLanguage) {
             console.log('[Translation] Syncing i18next to:', language);
             await i18n.changeLanguage(language);
           }
@@ -161,11 +163,13 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
           console.warn('[Translation] Could not sync with i18next:', error);
         }
       } catch (error) {
+        if (cancelled) return;
         console.error('Failed to load translations:', error);
         // Fallback to English if current language fails
         if (language !== 'en') {
           try {
             const fallbackTranslations = await loadTranslations('en');
+            if (cancelled) return;
             const flattened = flattenTranslations(fallbackTranslations);
             const commonAtRoot = fallbackTranslations.common ? { ...fallbackTranslations.common } : {};
             const combined = { 
@@ -175,36 +179,31 @@ export const SimpleLanguageProvider: React.FC<{ children: React.ReactNode }> = (
             };
             setTranslations(combined);
           } catch (fallbackError) {
+            if (cancelled) return;
             console.error('Failed to load fallback translations:', fallbackError);
             setTranslations({});
           }
         }
       } finally {
-        setIsLoading(false);
-        setInitialAppReady(true);
+        if (!cancelled) {
+          setIsLoading(false);
+          setInitialAppReady(true);
+        }
       }
     };
 
     loadLanguageTranslations();
+    return () => { cancelled = true; };
   }, [language]);
 
-  const changeLanguage = async (lng: string) => {
+  const changeLanguage = (lng: string) => {
     console.log('[Translation] changeLanguage called with:', lng);
     setLanguage(lng);
     localStorage.setItem('lang', lng);
     localStorage.setItem('languageManuallySet', 'true');
     
-    // SYNC WITH i18next - Ensure both language systems are synchronized
-    try {
-      const i18n = await import('i18next').then(m => m.default);
-      if (i18n.changeLanguage) {
-        console.log('[Translation] Syncing with i18next:', lng);
-        await i18n.changeLanguage(lng);
-      }
-    } catch (error) {
-      console.warn('[Translation] Could not sync with i18next:', error);
-    }
-    
+    // The translation effect synchronizes i18next for the latest selection.
+
     // Show notification about language change
     import('@/hooks/use-toast').then(({ toast }) => {
       toast({

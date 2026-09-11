@@ -1,3 +1,5 @@
+import { useLanguage } from '@/context/SimpleLanguageContext';
+import { getSubjectNameForSlug } from '@/utils/examSubjectMapping';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BookOpen, Play, CheckCircle2, Lock } from 'lucide-react';
 import { useSubjectDashboard } from '@/hooks/useSubjectDashboard';
@@ -5,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageMeta } from '@/components/seo/PageMeta';
 
 const SubjectDashboardPage = () => {
+  const { language, t } = useLanguage();
   const { subjectSlug } = useParams<{ subjectSlug: string }>();
   const navigate = useNavigate();
   const { data, isLoading } = useSubjectDashboard(subjectSlug || '');
@@ -26,19 +29,20 @@ const SubjectDashboardPage = () => {
   if (!data?.subject) {
     return (
       <div style={{ background: '#F3F6FA', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>Sujet introuvable</p>
+        <p style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>{t('learning.subjectNotFound')}</p>
       </div>
     );
   }
 
   const { subject, categories, overallProgress } = data;
+  const subjectName = getSubjectNameForSlug(subject.slug, language, subject.name);
   const allTopics = categories.flatMap((category) => (category.topics || []) as any[]);
   const lessonsAvailable = allTopics.filter((topic: any) => topic.has_lesson).length;
   const lessonsCompleted = allTopics.filter((topic: any) => topic.lesson_completed).length;
 
   return (
     <div style={{ background: '#F3F6FA', minHeight: '100vh', paddingBottom: 96 }}>
-      <PageMeta title={subject.name} description={`Lecons et exercices - ${subject.name}`} />
+      <PageMeta title={subjectName} description={`${t('learning.libraryTitle')} - ${subjectName}`} />
 
       <div style={{ background: 'white', borderBottom: '0.5px solid #EAECEF', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -51,12 +55,12 @@ const SubjectDashboardPage = () => {
           </button>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', margin: 0, fontFamily: 'Poppins, sans-serif' }}>
-              {subject.name}
+              {subjectName}
             </p>
           </div>
           {lessonsAvailable > 0 && (
             <span style={{ background: '#F2FBF8', color: '#085041', border: '0.5px solid #9FE1CB', borderRadius: 999, padding: '3px 10px', fontSize: 10, fontWeight: 600, flexShrink: 0 }}>
-              {lessonsCompleted}/{lessonsAvailable} lecons
+              {lessonsCompleted}/{lessonsAvailable} {t('learning.lessons')}
             </span>
           )}
         </div>

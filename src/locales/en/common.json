@@ -6,6 +6,12 @@
     "cancel": "Cancel"
   },
   "learning": {
+    "libraryTitle": "Learning Library",
+    "libraryDescription": "Browse subjects, topics, and video lessons in your Stuwy learning library.",
+    "comingSoon": "{{subject}} is coming soon!",
+    "comingSoonDescription": "We’re working hard to bring you this content.",
+    "lessons": "lessons",
+
     "chooseSubject": "Choose Your Subject",
     "selectSubject": "Select a subject to begin exploring learning resources.",
     "ready": "ready",
