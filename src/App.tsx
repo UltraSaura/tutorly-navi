@@ -26,6 +26,7 @@ import ManagementDashboard from "./pages/ManagementDashboard";
 const ChatInterface = lazy(() => import("./components/user/ChatInterface"));
 const UnifiedDashboard = lazy(() => import("./components/user/UnifiedDashboard"));
 const Index = lazy(() => import("./pages/Index"));
+const HomePage = lazy(() => import("./pages/HomePage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
 const TokensPreview = lazy(() => import("./pages/TokensPreview"));
@@ -60,7 +61,7 @@ import AdminSettings from "./components/admin/AdminSettings";
 const RecentUpdates = lazy(() => import("./pages/admin/RecentUpdates"));
 const ExamAnnales = lazy(() => import("./pages/admin/ExamAnnales"));
 
-// Auth Pages  
+// Auth Pages
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 
 // Guardian Pages
@@ -84,221 +85,68 @@ const TeacherTopicDetail = lazy(() => import("./pages/teacher/TeacherTopicDetail
 
 const isDev = import.meta.env.DEV;
 
-// Loading Component
 const LoadingFallback = () => {
   const ui = useInterfaceTranslation();
   return (
-  <div className="flex items-center justify-center min-h-screen bg-background">
-    <div className="flex flex-col items-center">
-      <div className="w-16 h-16 relative">
-        <div className="absolute top-0 left-0 w-full h-full border-4 border-muted rounded-full"></div>
-        <div className="absolute top-0 left-0 w-full h-full border-4 border-primary rounded-full animate-spin border-t-transparent"></div>
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex flex-col items-center">
+        <div className="w-16 h-16 relative">
+          <div className="absolute top-0 left-0 w-full h-full border-4 border-muted rounded-full"></div>
+          <div className="absolute top-0 left-0 w-full h-full border-4 border-primary rounded-full animate-spin border-t-transparent"></div>
+        </div>
+        <p className="mt-4 text-lg font-medium text-foreground">{ui("Loading...")}</p>
       </div>
-      <p className="mt-4 text-lg font-medium text-foreground">{ui("Loading...")}</p>
     </div>
-  </div>
-);
+  );
 };
 
-// Route-level error fallback
 const RouteErrorFallback = ({ section }: { section: string }) => {
   const ui = useInterfaceTranslation();
   return (
-  <div className="flex items-center justify-center min-h-screen bg-background p-6">
-    <div className="max-w-md w-full bg-card border rounded-lg shadow-lg p-6 text-center space-y-4">
-      <div className="w-12 h-12 mx-auto bg-destructive/10 rounded-full flex items-center justify-center">
-        <span className="text-destructive text-xl">!</span>
-      </div>
-      <h2 className="text-xl font-semibold">{ui("Unable to load")} {section}</h2>
-      <p className="text-muted-foreground text-sm">
-        {ui("Something went wrong loading this section. Please try again.")}
-      </p>
-      <div className="flex gap-3 justify-center pt-2">
-        <button
-          onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-        >
-          {ui("Refresh Page")}
-        </button>
-        <button
-          onClick={() => window.location.href = '/'}
-          className="px-4 py-2 border rounded-md hover:bg-muted"
-        >
-          {ui("Go Home")}
-        </button>
+    <div className="flex items-center justify-center min-h-screen bg-background p-6">
+      <div className="max-w-md w-full bg-card border rounded-lg shadow-lg p-6 text-center space-y-4">
+        <div className="w-12 h-12 mx-auto bg-destructive/10 rounded-full flex items-center justify-center"><span className="text-destructive text-xl">!</span></div>
+        <h2 className="text-xl font-semibold">{ui("Unable to load")} {section}</h2>
+        <p className="text-muted-foreground text-sm">{ui("Something went wrong loading this section. Please try again.")}</p>
+        <div className="flex gap-3 justify-center pt-2">
+          <button onClick={() => window.location.reload()} className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">{ui("Refresh Page")}</button>
+          <button onClick={() => window.location.href = '/'} className="px-4 py-2 border rounded-md hover:bg-muted">{ui("Go Home")}</button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 };
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 2,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: false,
-    },
-    mutations: {
-      retry: 1,
-    },
-  },
-});
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 2, staleTime: 5 * 60 * 1000, refetchOnWindowFocus: false }, mutations: { retry: 1 } } });
 
-// Simple App Component (no language detection for now)
 const App = () => {
   const ui = useInterfaceTranslation();
   return <QueryClientProvider client={queryClient}>
-      <HelmetProvider>
-      <ErrorBoundary>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <OverlayProvider>
-            <AuthProvider>
-              <AdminPreviewProvider>
-                <SimpleLanguageProvider>
-                  <AdminProvider>
-                    <BrowserRouter>
-                    <AnimatePresence mode="wait">
-                      <Suspense fallback={<LoadingFallback />}>
-                      <Routes>
-                        {/* Auth Routes */}
-                        <Route path="/auth" element={<AuthPage />} />
-                        
-                        {/* Home Route */}
-                        <Route path="/" element={<Index />} />
-                        
-                        {/* User App Routes */}
-                        <Route path="/chat" element={<MainLayout />}>
-                          <Route index element={<ChatInterface />} />
-                        </Route>
-                        <Route path="/general-chat" element={<GeneralChatPage />} />
-                        <Route path="/dashboard" element={<MainLayout />}>
-                          <Route index element={<UnifiedDashboard />} />
-                        </Route>
-                        <Route path="/support" element={<MainLayout />}>
-                          <Route index element={<SupportPage />} />
-                        </Route>
-                        <Route path="/profile" element={<MainLayout />}>
-                          <Route index element={<ProfilePage />} />
-                        </Route>
-                        {isDev && (
-                          <Route path="/tokens" element={<MainLayout />}>
-                            <Route index element={<TokensPreview />} />
-                          </Route>
-                        )}
-                        {isDev && (
-                          <Route path="/game" element={<MainLayout />}>
-                            <Route index element={<GamePreview />} />
-                          </Route>
-                        )}
-                        {isDev && (
-                          <Route path="/dnb-preview" element={<MainLayout />}>
-                            <Route index element={<DnbSvgPreview />} />
-                          </Route>
-                        )}
-                        <Route path="/exercise-history" element={<MainLayout />}>
-                          <Route index element={<ExerciseHistoryPage />} />
-                        </Route>
-                        <Route path="/learning" element={<MainLayout />}>
-                          <Route index element={<LearningPage />} />
-                          <Route path=":subjectSlug" element={<SubjectDashboardPage />} />
-                          <Route path=":subjectSlug/:topicSlug" element={<LessonPage />} />
-                        </Route>
-                        <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
-                        <Route path="/practice" element={<MainLayout />}>
-                          <Route index element={<PracticePage />} />
-                          <Route path="session" element={<TrainingSessionPage />} />
-                          <Route path="exam/:paperId" element={<ExamSessionPage />} />
-                          <Route path=":subject/annales" element={<PracticeAnnalsPage />} />
-                          <Route path=":subject/topics" element={<PracticeTopicsPage />} />
-                          <Route path=":subject" element={<PracticeSubjectPage />} />
-                        </Route>
-                <Route path="/my-program" element={<MainLayout />}>
-                  <Route index element={<MyProgramPage />} />
-                </Route>
-                <Route path="/curriculum" element={<MainLayout />}>
-                  <Route index element={<CurriculumBrowser />} />
-                </Route>
-                        
-                        {/* Management Dashboard (dev-only until a proper admin guard is added) */}
-                        {isDev && (
-                          <Route path="/management" element={<ManagementDashboard />} />
-                        )}
-                        
-                        {/* Admin Panel Routes */}
-                        <Route path="/admin" element={
-                          <ErrorBoundary fallback={isDev ? undefined : <RouteErrorFallback section="Admin Panel" />}>
-                            <AdminLayout />
-                          </ErrorBoundary>
-                        }>
-                          <Route index element={<AIModelManagement />} />
-                          <Route path="models" element={<AIModelManagement />} />
-                          <Route path="diagnostics" element={<ConnectionDiagnostics />} />
-                          <Route path="subjects" element={<SubjectManagement />} />
-                          <Route path="users" element={<UserManagement />} />
-                          <Route path="prompts" element={<PromptManagement />} />
-                          <Route path="learning" element={<LearningContentManagement />} />
-                          <Route path="curriculum" element={<CurriculumManager />} />
-                          <Route path="exams" element={<ExamAnnales />} />
-                          <Route path="recent-updates" element={<RecentUpdates />} />
-                          <Route path="settings" element={<AdminSettings />} />
-                        </Route>
-                        
-          {/* Guardian Portal Routes */}
-          <Route path="/guardian" element={
-            <ErrorBoundary fallback={<RouteErrorFallback section="Guardian Portal" />}>
-              <GuardianLayout />
-            </ErrorBoundary>
-          }>
-            <Route index element={<GuardianHome />} />
-            <Route path="children" element={<GuardianChildren />} />
-            <Route path="child/:childId" element={<Suspense fallback={<LoadingFallback />}><ChildDashboard /></Suspense>} />
-            <Route path="child/:childId/subject/:subjectId" element={<Suspense fallback={<LoadingFallback />}><SubjectDetail /></Suspense>} />
-            <Route path="child/:childId/detail" element={<Suspense fallback={<LoadingFallback />}><ChildDetailPage /></Suspense>} />
-            <Route path="results" element={<Suspense fallback={<LoadingFallback />}><GuardianResults /></Suspense>} />
-            <Route path="explanations" element={<Suspense fallback={<LoadingFallback />}><GuardianExplanations /></Suspense>} />
-            <Route path="progress" element={<Suspense fallback={<LoadingFallback />}><GuardianProgress /></Suspense>} />
-            <Route path="billing" element={<Suspense fallback={<LoadingFallback />}><GuardianBilling /></Suspense>} />
-            <Route path="settings" element={<Suspense fallback={<LoadingFallback />}><GuardianSettings /></Suspense>} />
-          </Route>
-
-          {/* Teacher Portal Routes */}
-          <Route path="/teacher" element={
-            <ErrorBoundary fallback={<RouteErrorFallback section="Teacher Portal" />}>
-              <TeacherLayout />
-            </ErrorBoundary>
-          }>
-            <Route index element={<TeacherHome />} />
-            <Route path="classes" element={<TeacherClasses />} />
-            <Route path="classes/:classId" element={<ClassDetailPage />} />
-            <Route path="students/:studentId" element={<TeacherStudentDetail />} />
-            <Route path="topics/:topicId" element={<TeacherTopicDetail />} />
-            <Route path="resources" element={<div className="p-8">{ui("Resources (Coming Soon)")}</div>} />
-            <Route path="analytics" element={<div className="p-8">{ui("Analytics (Coming Soon)")}</div>} />
-            <Route path="settings" element={<div className="p-8">{ui("Settings (Coming Soon)")}</div>} />
-          </Route>
-                        
-                        {/* Curriculum Debug */}
-                        {isDev && (
-                          <Route path="/curriculum-debug" element={<CurriculumDebug />} />
-                        )}
-                        
-                        {/* 404 Route */}
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </Suspense>
-                  </AnimatePresence>
-                    </BrowserRouter>
-                  </AdminProvider>
-                </SimpleLanguageProvider>
-              </AdminPreviewProvider>
-            </AuthProvider>
-        </OverlayProvider>
-      </TooltipProvider>
-    </ErrorBoundary>
-    </HelmetProvider>
+    <HelmetProvider><ErrorBoundary><TooltipProvider><Toaster /><Sonner /><OverlayProvider><AuthProvider><AdminPreviewProvider><SimpleLanguageProvider><AdminProvider><BrowserRouter><AnimatePresence mode="wait"><Suspense fallback={<LoadingFallback />}><Routes>
+      <Route path="/auth" element={<AuthPage />} />
+      <Route path="/" element={<Index />} />
+      <Route path="/home" element={<MainLayout />}><Route index element={<HomePage />} /></Route>
+      <Route path="/chat" element={<MainLayout />}><Route index element={<ChatInterface />} /></Route>
+      <Route path="/general-chat" element={<GeneralChatPage />} />
+      <Route path="/dashboard" element={<MainLayout />}><Route index element={<UnifiedDashboard />} /></Route>
+      <Route path="/support" element={<MainLayout />}><Route index element={<SupportPage />} /></Route>
+      <Route path="/profile" element={<MainLayout />}><Route index element={<ProfilePage />} /></Route>
+      {isDev && <Route path="/tokens" element={<MainLayout />}><Route index element={<TokensPreview />} /></Route>}
+      {isDev && <Route path="/game" element={<MainLayout />}><Route index element={<GamePreview />} /></Route>}
+      {isDev && <Route path="/dnb-preview" element={<MainLayout />}><Route index element={<DnbSvgPreview />} /></Route>}
+      <Route path="/exercise-history" element={<MainLayout />}><Route index element={<ExerciseHistoryPage />} /></Route>
+      <Route path="/learning" element={<MainLayout />}><Route index element={<LearningPage />} /><Route path=":subjectSlug" element={<SubjectDashboardPage />} /><Route path=":subjectSlug/:topicSlug" element={<LessonPage />} /></Route>
+      <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
+      <Route path="/practice" element={<MainLayout />}><Route index element={<PracticePage />} /><Route path="session" element={<TrainingSessionPage />} /><Route path="exam/:paperId" element={<ExamSessionPage />} /><Route path=":subject/annales" element={<PracticeAnnalsPage />} /><Route path=":subject/topics" element={<PracticeTopicsPage />} /><Route path=":subject" element={<PracticeSubjectPage />} /></Route>
+      <Route path="/my-program" element={<MainLayout />}><Route index element={<MyProgramPage />} /></Route>
+      <Route path="/curriculum" element={<MainLayout />}><Route index element={<CurriculumBrowser />} /></Route>
+      {isDev && <Route path="/management" element={<ManagementDashboard />} />}
+      <Route path="/admin" element={<ErrorBoundary fallback={isDev ? undefined : <RouteErrorFallback section="Admin Panel" />}><AdminLayout /></ErrorBoundary>}><Route index element={<AIModelManagement />} /><Route path="models" element={<AIModelManagement />} /><Route path="diagnostics" element={<ConnectionDiagnostics />} /><Route path="subjects" element={<SubjectManagement />} /><Route path="users" element={<UserManagement />} /><Route path="prompts" element={<PromptManagement />} /><Route path="learning" element={<LearningContentManagement />} /><Route path="curriculum" element={<CurriculumManager />} /><Route path="exams" element={<ExamAnnales />} /><Route path="recent-updates" element={<RecentUpdates />} /><Route path="settings" element={<AdminSettings />} /></Route>
+      <Route path="/guardian" element={<ErrorBoundary fallback={<RouteErrorFallback section="Guardian Portal" />}><GuardianLayout /></ErrorBoundary>}><Route index element={<GuardianHome />} /><Route path="children" element={<GuardianChildren />} /><Route path="child/:childId" element={<Suspense fallback={<LoadingFallback />}><ChildDashboard /></Suspense>} /><Route path="child/:childId/subject/:subjectId" element={<Suspense fallback={<LoadingFallback />}><SubjectDetail /></Suspense>} /><Route path="child/:childId/detail" element={<Suspense fallback={<LoadingFallback />}><ChildDetailPage /></Suspense>} /><Route path="results" element={<Suspense fallback={<LoadingFallback />}><GuardianResults /></Suspense>} /><Route path="explanations" element={<Suspense fallback={<LoadingFallback />}><GuardianExplanations /></Suspense>} /><Route path="progress" element={<Suspense fallback={<LoadingFallback />}><GuardianProgress /></Suspense>} /><Route path="billing" element={<Suspense fallback={<LoadingFallback />}><GuardianBilling /></Suspense>} /><Route path="settings" element={<Suspense fallback={<LoadingFallback />}><GuardianSettings /></Suspense>} /></Route>
+      <Route path="/teacher" element={<ErrorBoundary fallback={<RouteErrorFallback section="Teacher Portal" />}><TeacherLayout /></ErrorBoundary>}><Route index element={<TeacherHome />} /><Route path="classes" element={<TeacherClasses />} /><Route path="classes/:classId" element={<ClassDetailPage />} /><Route path="students/:studentId" element={<TeacherStudentDetail />} /><Route path="topics/:topicId" element={<TeacherTopicDetail />} /><Route path="resources" element={<div className="p-8">{ui("Resources (Coming Soon)")}</div>} /><Route path="analytics" element={<div className="p-8">{ui("Analytics (Coming Soon)")}</div>} /><Route path="settings" element={<div className="p-8">{ui("Settings (Coming Soon)")}</div>} /></Route>
+      {isDev && <Route path="/curriculum-debug" element={<CurriculumDebug />} />}
+      <Route path="*" element={<NotFound />} />
+    </Routes></Suspense></AnimatePresence></BrowserRouter></AdminProvider></SimpleLanguageProvider></AdminPreviewProvider></AuthProvider></OverlayProvider></TooltipProvider></ErrorBoundary></HelmetProvider>
   </QueryClientProvider>;
 };
 export default App;
