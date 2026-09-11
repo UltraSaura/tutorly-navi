@@ -34,7 +34,12 @@ export type LearningInteractionEventType =
   | "resource_recommendation_empty"
   | "learning_preference_changed"
   | "lesson_started"
-  | "lesson_completed";
+  | "lesson_completed"
+  | "tutor_adaptive_attempt_processed"
+  | "tutor_remediation_offered"
+  | "tutor_remediation_started"
+  | "tutor_remediation_completed"
+  | "tutor_problem_resumed";
 
 export type LearningSupportType = LearningStyle;
 export type PracticeStyle = LearningStyle;

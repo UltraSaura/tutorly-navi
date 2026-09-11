@@ -13,6 +13,8 @@ import { useAdmin } from '@/context/AdminContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useOverlay } from '@/context/OverlayContext';
 import { useLanguage } from '@/context/SimpleLanguageContext';
+import { useAuth } from '@/context/AuthContext';
+import { useTutorAdaptiveProblem } from '@/hooks/useTutorAdaptiveProblem';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { FileText, Image, Camera, Upload } from 'lucide-react';
@@ -25,6 +27,8 @@ import { QuizOverlayController } from '@/components/learning/QuizOverlayControll
 const ChatInterface = () => {
   const ui = useInterfaceTranslation();
   const { t, language } = useLanguage();
+  const { user } = useAuth();
+  const tutorAdaptive = useTutorAdaptiveProblem(user?.id);
   const isMobile = useIsMobile();
   const location = useLocation();
   const { hasActiveOverlay } = useOverlay();
@@ -125,6 +129,7 @@ const ChatInterface = () => {
       try {
         const result = await processHomeworkFromChat(messageToSend);
         if (result.localGraded) {
+          if (result.exercise) tutorAdaptive.recordEvaluated(result.exercise);
           console.log('[ChatInterface] Local grading succeeded, skipping AI chat call');
           // Add user message
           addMessage({
@@ -155,7 +160,8 @@ const ChatInterface = () => {
     
     // Also process and grade the exercise so UI updates with correct/incorrect
     try {
-      await processHomeworkFromChat(messageToSend, { persist: false });
+      const result = await processHomeworkFromChat(messageToSend, { persist: false });
+      if (result.exercise) tutorAdaptive.recordEvaluated(result.exercise);
       console.log('[ChatInterface] Exercise processed and graded successfully');
     } catch (error) {
       console.error('[ChatInterface] Error processing homework:', error);

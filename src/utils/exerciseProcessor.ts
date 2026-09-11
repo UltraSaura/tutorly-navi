@@ -164,10 +164,11 @@ export const processNewExercise = async (
   existingExercises: Exercise[],
   processedContent: Set<string>,
   language: string = 'en',
-  selectedModelId: string
+  selectedModelId: string,
+  allowRepeatedAnswer = false
 ): Promise<{ exercise: Exercise; isUpdate: boolean } | null> => {
   // Check if we've processed this exact content before
-  if (processedContent.has(message)) {
+  if (!allowRepeatedAnswer && processedContent.has(message)) {
     console.log("[exerciseProcessor] Skipping duplicate homework submission for:", message);
     return null;
   }
@@ -231,7 +232,7 @@ export const processNewExercise = async (
     ex => ex.question === question && ex.userAnswer === answer
   );
 
-  if (exactDuplicate) {
+  if (!allowRepeatedAnswer && exactDuplicate) {
     console.log("[exerciseProcessor] Exact duplicate found, ignoring:", { question, answer });
     return null;
   }

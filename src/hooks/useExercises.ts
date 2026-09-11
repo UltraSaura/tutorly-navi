@@ -147,10 +147,11 @@ export const useExercises = () => {
 
   const processHomeworkFromChat = async (
     message: string,
-    options: { persist?: boolean } = {}
-  ): Promise<{ localGraded: boolean; isCorrect: boolean }> => {
+    options: { persist?: boolean; allowRepeatedAnswer?: boolean } = {}
+  ): Promise<{ localGraded: boolean; isCorrect: boolean; exercise?: Exercise }> => {
     console.log('[useExercises] Processing homework from chat message:', message);
     
+    let evaluatedExercise: Exercise | undefined;
     let localGraded = false;
     let isCorrect = false;
     const shouldPersist = options.persist !== false;
@@ -183,9 +184,10 @@ export const useExercises = () => {
         }
       }
     } else {
-      const result = await processNewExercise(message, exercises, processedContent, language, selectedModelId);
+      const result = await processNewExercise(message, exercises, processedContent, language, selectedModelId, options.allowRepeatedAnswer);
       if (result) {
         const { exercise, isUpdate } = result;
+        evaluatedExercise = exercise;
         
         localGraded = exercise.gradingMethod === 'local';
         isCorrect = exercise.isCorrect === true;
@@ -210,7 +212,7 @@ export const useExercises = () => {
       }
     }
     
-    return { localGraded, isCorrect };
+    return { localGraded, isCorrect, exercise: evaluatedExercise };
   };
 
   const linkAIResponseToExercise = (userMessage: string, aiMessage: Message) => {

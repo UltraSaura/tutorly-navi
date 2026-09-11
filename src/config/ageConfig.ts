@@ -156,6 +156,11 @@ export function getPedagogicalAgeBand(levelCode?: string | null): PedagogicalAge
     return "upper_primary";
   }
 
+  // If already a canonical band name, return directly
+  if (levelCode === "early_primary" || levelCode === "upper_primary" || levelCode === "middle_school" || levelCode === "high_school") {
+    return levelCode;
+  }
+
   // Strip possible country prefix (e.g. "fr:cm1" -> "cm1")
   const rawCode = levelCode.includes(":") ? levelCode.split(":")[1] : levelCode;
   const normalized = normalizeSchoolLevel(rawCode);

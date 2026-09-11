@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.curriculum_prerequisites (
   objective_id UUID REFERENCES public.objectives(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT uq_curriculum_prerequisite_edge UNIQUE (prerequisite_concept_id, target_concept_id),
+  CONSTRAINT uq_curriculum_prerequisite_edge UNIQUE (subject_id, prerequisite_concept_id, target_concept_id),
   CONSTRAINT chk_no_self_prerequisite CHECK (prerequisite_concept_id <> target_concept_id)
 );
 
@@ -29,32 +29,31 @@ CREATE INDEX IF NOT EXISTS idx_curriculum_prerequisites_subject
 -- Enable Row Level Security
 ALTER TABLE public.curriculum_prerequisites ENABLE ROW LEVEL SECURITY;
 
--- Read policy: Authenticated and anonymous users can read curriculum prerequisite graph
+-- Read policy: Anyone can read curriculum prerequisites (matches public curriculum read convention)
 CREATE POLICY "Anyone can read curriculum prerequisites"
   ON public.curriculum_prerequisites
   FOR SELECT
   USING (true);
 
--- Write policies: Restrict direct client writes (managed via admin or migration/service role)
+-- Write policies: Restrict client writes to service_role and admin users via user_roles table
 CREATE POLICY "Admins can insert curriculum prerequisites"
   ON public.curriculum_prerequisites
   FOR INSERT
   WITH CHECK (
     auth.role() = 'service_role' OR
     EXISTS (
-      SELECT 1 FROM public.users
-      WHERE users.id = auth.uid() AND users.role = 'admin'
+      SELECT 1 FROM public.user_roles
+      WHERE user_roles.user_id = auth.uid() AND user_roles.role = 'admin'::app_role
     )
   );
-
 CREATE POLICY "Admins can update curriculum prerequisites"
   ON public.curriculum_prerequisites
   FOR UPDATE
   USING (
     auth.role() = 'service_role' OR
     EXISTS (
-      SELECT 1 FROM public.users
-      WHERE users.id = auth.uid() AND users.role = 'admin'
+      SELECT 1 FROM public.user_roles
+      WHERE user_roles.user_id = auth.uid() AND user_roles.role = 'admin'::app_role
     )
   );
 
@@ -64,7 +63,7 @@ CREATE POLICY "Admins can delete curriculum prerequisites"
   USING (
     auth.role() = 'service_role' OR
     EXISTS (
-      SELECT 1 FROM public.users
-      WHERE users.id = auth.uid() AND users.role = 'admin'
+      SELECT 1 FROM public.user_roles
+      WHERE user_roles.user_id = auth.uid() AND user_roles.role = 'admin'::app_role
     )
   );

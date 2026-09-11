@@ -186,6 +186,10 @@ export interface Exercise {
   explanationLoading?: boolean;
   explanationRequested?: boolean;
   correctAnswer?: string; // internal, never displayed directly
+  /** Only populated from trusted curriculum metadata, never inferred from topic IDs. */
+  conceptId?: string;
+  conceptName?: string;
+  objectiveId?: string;
   responseType?: ExerciseResponseType;
   choices?: string[];
 }
