@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { House, BookOpen, Dumbbell, History, User } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useOverlay } from "@/context/OverlayContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -17,12 +16,10 @@ const bottomTabItems = [
 ];
 
 export function MobileBottomTabs() {
-  const isMobile = useIsMobile();
   const location = useLocation();
   const { t } = useTranslation();
   const { setHasActiveOverlay } = useOverlay();
   const [isAccountOpen, setIsAccountOpen] = useState(false);
-
   useEffect(() => { setHasActiveOverlay(isAccountOpen); }, [isAccountOpen, setHasActiveOverlay]);
   const currentPath = location.pathname;
   const isActive = (url: string | null) => url ? (currentPath === url || currentPath.startsWith(url + '/')) : false;
