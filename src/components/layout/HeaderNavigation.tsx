@@ -1,11 +1,10 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from "react";
 import { House, GraduationCap, HeadphonesIcon, History, User, Globe, LogOut, ChevronDown, Settings, BookOpen, Trophy, Target } from "lucide-react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { hardLogout } from "@/lib/logout";
-import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { AdminPreviewSelector } from "@/components/admin/AdminPreviewControls";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -28,12 +27,10 @@ const LanguageMenuItems = () => {
 
 export function HeaderNavigation() {
   const ui = useInterfaceTranslation();
-  const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isSigningOut] = useState(false);
   const { isAdmin } = useAdminAuth();
   const currentPath = location.pathname;
   const isActive = (path: string) => currentPath === path;
