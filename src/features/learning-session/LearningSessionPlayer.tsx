@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import type { LearningUnit } from '@/types/learning-unit';
 import { LearningUnitRenderer } from './LearningUnitRenderer';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, X, CheckCircle, RotateCcw } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, X, CheckCircle, RotateCcw } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 export interface LearningSessionPlayerProps {
   /** Ordered sequence of learning units to play */
@@ -31,6 +32,8 @@ export function LearningSessionPlayer({
   sessionTitle,
   allowBackwardNavigation = true,
 }: LearningSessionPlayerProps) {
+  const ui = useInterfaceTranslation();
+  const reducedMotion = useReducedMotion();
   // Clamped initial index
   const safeInitialIndex = useMemo(() => {
     if (units.length === 0) return 0;
@@ -45,10 +48,10 @@ export function LearningSessionPlayer({
   if (!units || units.length === 0) {
     return (
       <div className="w-full max-w-md mx-auto p-6 text-center space-y-4 bg-card border rounded-2xl shadow-sm">
-        <p className="text-sm text-muted-foreground">Aucune unité d’apprentissage disponible pour cette session.</p>
+        <p className="text-sm text-muted-foreground">{ui("Aucune unité d’apprentissage disponible pour cette session.")}</p>
         {onExit && (
           <Button onClick={onExit} variant="outline" size="sm">
-            Fermer
+            {ui("Fermer")}
           </Button>
         )}
       </div>
@@ -89,9 +92,9 @@ export function LearningSessionPlayer({
           <CheckCircle className="w-8 h-8" />
         </div>
         <div className="space-y-1">
-          <h3 className="text-xl font-bold text-foreground">Session terminée !</h3>
+          <h3 className="text-xl font-bold text-foreground">{ui("Session terminée !")}</h3>
           <p className="text-sm text-muted-foreground">
-            Tu as complété toutes les étapes ({units.length}/{units.length}) de cette session.
+            {ui('You completed all {{count}} steps in this session.', { count: units.length })}
           </p>
         </div>
         <div className="flex gap-3 justify-center pt-2">
@@ -104,14 +107,14 @@ export function LearningSessionPlayer({
             className="gap-2"
           >
             <RotateCcw className="w-4 h-4" />
-            <span>Recommencer</span>
+            <span>{ui("Recommencer")}</span>
           </Button>
           {onExit && (
             <Button
               onClick={onExit}
               className="bg-[#12C6A0] hover:bg-[#0F6E56] text-white"
             >
-              Terminer
+              {ui("Terminer")}
             </Button>
           )}
         </div>
@@ -130,21 +133,21 @@ export function LearningSessionPlayer({
                 onClick={handlePrevious}
                 variant="ghost"
                 size="sm"
-                aria-label="Étape précédente"
+                aria-label={ui("Étape précédente")}
                 className="h-8 w-8 p-0"
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             )}
             <span className="text-xs font-semibold text-muted-foreground">
-              {sessionTitle || 'Session d’apprentissage'}
+              {sessionTitle || ui('Session d’apprentissage')}
             </span>
           </div>
 
           <div className="flex items-center gap-3">
             <span
               className="text-xs font-bold text-[#12C6A0] bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full"
-              aria-label={`Étape ${currentIndex + 1} sur ${units.length}`}
+              aria-label={ui('Step {{current}} of {{total}}', { current: currentIndex + 1, total: units.length })}
             >
               {currentIndex + 1} / {units.length}
             </span>
@@ -153,7 +156,7 @@ export function LearningSessionPlayer({
                 onClick={onExit}
                 variant="ghost"
                 size="sm"
-                aria-label="Quitter la session"
+                aria-label={ui("Quitter la session")}
                 className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
               >
                 <X className="w-4 h-4" />
@@ -168,11 +171,11 @@ export function LearningSessionPlayer({
           aria-valuenow={progressPercent}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-label="Progression de la session"
+          aria-label={ui("Progression de la session")}
           className="w-full h-1.5 bg-muted rounded-full overflow-hidden"
         >
           <div
-            className="h-full bg-[#12C6A0] transition-all duration-300 ease-out"
+            className="h-full bg-[#12C6A0] transition-all duration-300 ease-out motion-reduce:transition-none"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -183,10 +186,10 @@ export function LearningSessionPlayer({
         <AnimatePresence mode="wait">
           <motion.div
             key={currentUnit.id}
-            initial={{ opacity: 0, y: 8 }}
+            initial={reducedMotion ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
+            exit={reducedMotion ? undefined : { opacity: 0, y: -8 }}
+            transition={{ duration: reducedMotion ? 0 : 0.2 }}
           >
             <LearningUnitRenderer
               unit={currentUnit}

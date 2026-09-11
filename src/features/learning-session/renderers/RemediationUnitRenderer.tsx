@@ -1,8 +1,9 @@
 import React from 'react';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import type { RemediationLearningUnit } from '@/types/learning-unit';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Stethoscope, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Stethoscope, ArrowRight, Sparkles } from 'lucide-react';
 
 export interface RemediationUnitRendererProps {
   unit: RemediationLearningUnit;
@@ -13,6 +14,7 @@ export function RemediationUnitRenderer({
   unit,
   onComplete,
 }: RemediationUnitRendererProps) {
+  const ui = useInterfaceTranslation();
   const { targetProblemContext, diagnosedGap, remediationAction } = unit.payload;
 
   return (
@@ -21,10 +23,10 @@ export function RemediationUnitRenderer({
       <div className="bg-sky-50/70 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 rounded-xl p-4">
         <div className="flex items-center gap-2 text-sky-800 dark:text-sky-200 font-semibold text-sm mb-1">
           <Stethoscope className="w-4 h-4 text-sky-600" />
-          <span>Pause Remédiation : {diagnosedGap.prerequisiteName}</span>
+          <span>{ui("Pause Remédiation :")} {diagnosedGap.prerequisiteName}</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Sur le problème <strong className="text-foreground">{targetProblemContext}</strong> : {diagnosedGap.reason}
+          {ui("Sur le problème")} <strong className="text-foreground">{targetProblemContext}</strong> : {diagnosedGap.reason}
         </p>
       </div>
 
@@ -33,7 +35,7 @@ export function RemediationUnitRenderer({
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-amber-500" />
-            <span>Étape de remédiation ciblée</span>
+            <span>{ui("Étape de remédiation ciblée")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -45,9 +47,9 @@ export function RemediationUnitRenderer({
 
           {remediationAction.type === 'manipulative_drill' && (
             <div className="p-6 bg-muted/30 border border-dashed rounded-xl text-center text-sm text-muted-foreground">
-              <p className="font-medium text-foreground">Exercice de manipulation ciblé</p>
+              <p className="font-medium text-foreground">{ui("Exercice de manipulation ciblé")}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                (Outil : {remediationAction.manipulativeType})
+                {ui("Tool: {{tool}}", { tool: remediationAction.manipulativeType })}
               </p>
             </div>
           )}
@@ -55,10 +57,10 @@ export function RemediationUnitRenderer({
           {remediationAction.type === 'skill_sprint' && (
             <div className="p-6 bg-emerald-50/40 dark:bg-emerald-950/20 border border-dashed border-emerald-200 dark:border-emerald-800 rounded-xl text-center">
               <p className="font-medium text-foreground">
-                Sprint de compétences : {remediationAction.activity.engine}
+                {ui("Skill sprint: {{engine}}", { engine: remediationAction.activity.engine })}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Renforce le prérequis ({remediationAction.activity.estimatedMinutes ?? 3} min)
+                {ui("Review the prerequisite ({{minutes}} min)", { minutes: remediationAction.activity.estimatedMinutes ?? 3 })}
               </p>
             </div>
           )}
@@ -71,7 +73,7 @@ export function RemediationUnitRenderer({
           onClick={() => onComplete?.({ remediated: true, prerequisiteId: diagnosedGap.prerequisiteConceptId })}
           className="bg-[#12C6A0] hover:bg-[#0F6E56] text-white font-medium gap-2"
         >
-          <span>Reprendre le devoir</span>
+          <span>{ui("Reprendre le devoir")}</span>
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>

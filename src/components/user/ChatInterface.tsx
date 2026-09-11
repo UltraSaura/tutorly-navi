@@ -14,7 +14,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useOverlay } from '@/context/OverlayContext';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useAuth } from '@/context/AuthContext';
-import { useTutorAdaptiveProblem } from '@/hooks/useTutorAdaptiveProblem';
+import { useTutorAdaptiveProblem, type TutorAdaptiveData } from '@/hooks/useTutorAdaptiveProblem';
+import { TutorRemediationPanel } from './chat/TutorRemediationPanel';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { FileText, Image, Camera, Upload } from 'lucide-react';
@@ -24,11 +25,11 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { classifyProblemSubmission } from '@/utils/problemClassifier';
 import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
 
-const ChatInterface = () => {
+const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = {}) => {
   const ui = useInterfaceTranslation();
   const { t, language } = useLanguage();
   const { user } = useAuth();
-  const tutorAdaptive = useTutorAdaptiveProblem(user?.id);
+  const tutorAdaptive = useTutorAdaptiveProblem(user?.id, user?.user_metadata?.level, adaptiveData);
   const isMobile = useIsMobile();
   const location = useLocation();
   const { hasActiveOverlay } = useOverlay();
@@ -290,10 +291,11 @@ const ChatInterface = () => {
             isLoading={isLoading}
             onSubmitAnswer={handleAnswerSubmit}
             onSubmitGroupedAnswers={submitGroupedProblemAnswers}
-            onClearAll={() => { clearMessages(); clearExercises(); }}
+            onClearAll={() => { clearMessages(); clearExercises(); tutorAdaptive.reset(); }}
             onDismissExercise={(messageId) => removeMessage(messageId)}
           />
         </ErrorBoundary>
+        <TutorRemediationPanel tutorAdaptive={tutorAdaptive} />
         
         {/* Add Calculation Status - Shows processing status */}
         <CalculationStatus
@@ -305,7 +307,7 @@ const ChatInterface = () => {
       </div>
 
       {/* Fixed Chat Input - Only show on /chat route when no overlays are active */}
-      {location.pathname === '/chat' && !hasActiveOverlay && (
+      {location.pathname === '/chat' && !hasActiveOverlay && tutorAdaptive.view?.phase !== 'active' && (
         <div 
           data-explanation-hide="chat-input"
           className={`fixed left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border transition-all duration-300 ease-in-out`}

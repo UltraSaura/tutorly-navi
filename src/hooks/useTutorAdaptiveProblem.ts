@@ -42,6 +42,7 @@ export function useTutorAdaptiveProblem(studentId?: string, gradeLevel?: string,
   // Account changes cannot inherit another student's evidence or unfinished detour.
   if (session.current.studentId !== studentId) {
     session.current = { studentId, contexts: new Map(), mastery: new Map(), cooldown: new Set() };
+    setView(null);
   }
   const key = (subject: string, concept: string) => JSON.stringify([subject, concept]);
   const log = (eventType: LearningInteractionEventType, context: TutorProblemContext, completed?: boolean) => {
