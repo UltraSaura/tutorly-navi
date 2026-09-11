@@ -1770,5 +1770,18 @@
   "Sur le problème": "For the problem",
   "Étape de remédiation ciblée": "Targeted prerequisite review",
   "Exercice de manipulation ciblé": "Targeted manipulative exercise",
-  "Reprendre le devoir": "Return to homework"
+  "Reprendre le devoir": "Return to homework",
+  "For you": "For you",
+  "What should I do now?": "What should I do now?",
+  "Tutorly uses your recent learning to suggest a useful next step.": "Tutorly uses your recent learning to suggest a useful next step.",
+  "Continue": "Continue",
+  "Recommended now": "Recommended now",
+  "Choose where to start": "Choose where to start",
+  "Explore your subjects or ask Tutor for help with homework.": "Explore your subjects or ask Tutor for help with homework.",
+  "Explore subjects": "Explore subjects",
+  "Open Tutor": "Open Tutor",
+  "See all": "See all",
+  "Personal recommendations are temporarily limited. You can still choose a subject below.": "Personal recommendations are temporarily limited. You can still choose a subject below.",
+  "Learning": "Learning",
+  "Stuwy is an AI-powered tutoring platform that helps students learn independently and guardians track learning progress.": "Stuwy is an AI-powered tutoring platform that helps students learn independently and guardians track learning progress."
 }
