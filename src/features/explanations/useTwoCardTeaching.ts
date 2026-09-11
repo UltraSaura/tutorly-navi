@@ -65,13 +65,16 @@ Rules for steps:
   - percentage exercise → percentage example
   - division with remainder → division with remainder example
   - exact division → exact division example
-- The guided example must also keep the same difficulty shape when possible:
-  - same digit band: 1-digit, 2-digit, or 3+ digit
+- The guided example must also keep the same written format and difficulty shape:
+  - use the exact same number of digits in the first operand and the second operand; do not only match a broad digit band
+  - for whole-number multiplication, keep the same trailing-zero/place-value pattern (for example, a 3-digit number ending in two zeros times a 1-digit number needs the same shape)
   - same decimal-place count for decimal exercises
   - if the student's addition needs a carry/retained 1, the guided example must also need a carry
   - if the student's subtraction needs a borrow/emprunt, the guided example must also need a borrow
 - The self-check step should tell the student what to verify or try next without revealing the original answer.
 - The method step should give reusable steps, not another full worked example.
+- Choose the simplest useful strategy before using the standard written algorithm. For multiplication by 10, 100, or numbers ending in zeros, explain place value: multiply the non-zero digits first, then append the correct number of zeros. For example, 300 × 4: first 3 × 4 = 12, then append the two zeros to make 1200.
+- Keep every sentence short. State one calculation, then what to write or do next. Never add a carry to a multiplication until the next column.
 - The common mistake step should warn about one likely trap.
 - Do NOT output the student's numbers anywhere.
 - No extra text, no markdown, no code fences.
