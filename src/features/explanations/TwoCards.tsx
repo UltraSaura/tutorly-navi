@@ -18,6 +18,9 @@ import { trackLearningInteraction } from '@/services/learningAnalytics';
 
 import { ExplanationRenderer } from "./ExplanationRenderer";
 import { getLearningMode } from "@/domain/learningMode";
+import { buildSimilarArithmeticQuiz } from '@/utils/generatedExactPractice';
+import { toast } from '@/hooks/use-toast';
+import type { QuizBank } from '@/types/quiz-bank';
 
 function Section({ title, text }: { title: string; text: string }) {
   const resolveText = useResolveText();
@@ -54,13 +57,15 @@ export function TwoCards({
   topicId, 
   onClose,
   subjectSlug,
-  topicSlug 
+  topicSlug,
+  onStartGeneratedPractice,
 }: { 
   s: TeachingSections; 
   topicId?: string; 
   onClose?: () => void;
   subjectSlug?: string;
   topicSlug?: string;
+  onStartGeneratedPractice?: (quiz: QuizBank) => void;
 }) {
   console.log('[TwoCards] Component rendered with sections:', s);
   const resolveText = useResolveText();
@@ -137,13 +142,28 @@ export function TwoCards({
   };
 
   const handlePracticeMore = () => {
-    onClose?.();
+    if (!s.exercise?.trim()) {
+      toast({
+        title: language === 'fr' ? 'Exercices ciblés indisponibles' : 'Targeted practice unavailable',
+        description: language === 'fr'
+          ? 'Cette explication ne contient pas une opération à pratiquer.'
+          : 'This explanation does not contain an arithmetic operation to practise.',
+      });
+      return;
+    }
 
-    setTimeout(() => {
-      window.location.href = finalSubjectSlug
-        ? `/practice/${encodeURIComponent(finalSubjectSlug)}`
-        : '/practice';
-    }, 200);
+    const practice = buildSimilarArithmeticQuiz(s.exercise, language === 'fr' ? 'fr' : 'en');
+    if (!practice) {
+      toast({
+        title: language === 'fr' ? 'Exercices ciblés indisponibles' : 'Targeted practice unavailable',
+        description: language === 'fr'
+          ? 'Ce type de calcul n’est pas encore pris en charge.'
+          : 'This type of calculation is not supported yet.',
+      });
+      return;
+    }
+
+    onStartGeneratedPractice?.(practice);
   };
   
   // NEW: Check if user is guardian

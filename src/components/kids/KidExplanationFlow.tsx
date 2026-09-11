@@ -155,7 +155,7 @@ export function KidExplanationFlow({
   const completionActions: CompletionAction[] = [
     ...(onPracticeMore
       ? [{
-          label: isFr ? "Continuer à s’entraîner →" : "Keep practicing →",
+          label: isFr ? "Essaie 3 exercices pareils →" : "Try 3 like this →",
           href: practiceHref,
           onClick: onPracticeMore,
           variant: "primary" as const,

@@ -158,6 +158,8 @@ Strict privacy and learning rules:
   - division with remainder → division with remainder
   - exact division → exact division
 - Keep the same digit band when possible: 1-digit, 2-digit, or 3+ digit.
+- Keep the exact written shape when possible: the same number of digits in the first operand and the second operand. For whole-number multiplication, preserve trailing zeros.
+- Choose the simplest useful strategy first. For multiplication by 10, 100, or numbers ending in zeros, multiply the non-zero digits and then append the correct number of zeros. Keep each explanation sentence short and explicit.
 - For decimal exercises, keep the same number of decimal places when possible.
 - If the original addition requires a carry/retained 1, the similar example must also require a carry.
 - If the original subtraction requires a borrow/emprunt, the similar example must also require a borrow.

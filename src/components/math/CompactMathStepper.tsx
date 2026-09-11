@@ -571,6 +571,62 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     const bIn = (parts[1] || '0').replace(/[^0-9]/g, '') || '0';
     const A = aIn.replace(/^0+/, '') || '0';
     const B = bIn.replace(/^0+/, '') || '0';
+
+    const trailingZeros = (value: string) => value.match(/0+$/)?.[0].length ?? 0;
+    const zerosInA = trailingZeros(A);
+    const zerosInB = trailingZeros(B);
+
+    // A zero-ending factor is best taught through place value, not by animating
+    // several unhelpful "0 × digit" steps.
+    if ((zerosInA > 0 || zerosInB > 0) && A !== '0' && B !== '0') {
+      const nonZeroA = A.slice(0, A.length - zerosInA) || '1';
+      const nonZeroB = B.slice(0, B.length - zerosInB) || '1';
+      const zeroCount = zerosInA + zerosInB;
+      const baseProduct = (BigInt(nonZeroA) * BigInt(nonZeroB)).toString();
+      const sumFinal = `${baseProduct}${'0'.repeat(zeroCount)}`;
+      const multiplicationSteps = [
+        {
+          step: 0,
+          multiplierDigit: '',
+          multiplierPosition: -1,
+          multiplicandDigit: '',
+          multiplicandPosition: -1,
+          partialResult: baseProduct,
+          carries: [],
+          explanation: language === 'fr'
+            ? `On met de côté les ${zeroCount} zéro${zeroCount > 1 ? 's' : ''} pour l'instant.`
+            : `Set aside the ${zeroCount} zero${zeroCount > 1 ? 's' : ''} for now.`,
+          isPartialProductComplete: false,
+          partialProduct: baseProduct,
+        },
+        {
+          step: 1,
+          multiplierDigit: '',
+          multiplierPosition: -1,
+          multiplicandDigit: '',
+          multiplicandPosition: -1,
+          partialResult: sumFinal,
+          carries: [],
+          explanation: language === 'fr'
+            ? `${nonZeroA} × ${nonZeroB} = ${baseProduct}. On remet les ${zeroCount} zéro${zeroCount > 1 ? 's' : ''} : ${sumFinal}.`
+            : `${nonZeroA} × ${nonZeroB} = ${baseProduct}. Put back the ${zeroCount} zero${zeroCount > 1 ? 's' : ''}: ${sumFinal}.`,
+          isPartialProductComplete: true,
+          partialProduct: sumFinal,
+        },
+      ];
+
+      return {
+        A,
+        B,
+        partials: [baseProduct],
+        sumFinal,
+        sumWidth: Math.max(A.length, B.length, sumFinal.length),
+        totalPhases: multiplicationSteps.length,
+        multiplicationSteps,
+        maxStep: multiplicationSteps.length,
+        strategy: { nonZeroA, nonZeroB, zeroCount, baseProduct },
+      };
+    }
     
     // Enhanced multiplication with detailed step tracking - each digit multiplication is a separate step
     const multiplicationSteps: Array<{
@@ -613,7 +669,10 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       // Each digit multiplication is a separate step
       for (let i = A.length - 1; i >= 0; i--) {
         const ai = A.charCodeAt(i) - 48;
-        const p = ai * bj + carry;
+        // Keep the carry that came from the previous column. The new carry is
+        // for the next column and must not appear in this calculation.
+        const carryIn = carry;
+        const p = ai * bj + carryIn;
         const digit = p % 10;
         const newCarry = Math.floor(p / 10);
         
@@ -635,8 +694,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
             partialResult: String(p), // Show complete result
             carries: [], // No carries for the last digit
             explanation: language === 'fr'
-              ? `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. On écrit ${p} pour compléter la ligne.`
-              : `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. Write ${p} to complete the row.`,
+              ? `${ai} × ${bj}${carryIn > 0 ? ` + ${carryIn}` : ''} = ${p}. On écrit ${p} pour terminer la ligne.`
+              : `${ai} × ${bj}${carryIn > 0 ? ` + ${carryIn}` : ''} = ${p}. Write ${p} to finish the row.`,
             isPartialProductComplete: true,
             partialProduct: row
           });
@@ -668,8 +727,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               used: false
             }] : [], // Show carry immediately when generated
              explanation: language === 'fr'
-              ? `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. On écrit ${digit}${newCarry > 0 ? ` et on retient ${newCarry}` : ''}.`
-              : `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. Write ${digit}${newCarry > 0 ? `, carry ${newCarry}` : ''}.`,
+              ? `${ai} × ${bj}${carryIn > 0 ? ` + ${carryIn}` : ''} = ${p}. On écrit ${digit}${newCarry > 0 ? ` et on retient ${newCarry}` : ''}.`
+              : `${ai} × ${bj}${carryIn > 0 ? ` + ${carryIn}` : ''} = ${p}. Write ${digit}${newCarry > 0 ? `, carry ${newCarry}` : ''}.`,
             isPartialProductComplete: false,
             partialProduct: row
           });
@@ -1476,6 +1535,45 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 return (
                   <div className="text-center text-red-600 dark:text-red-400">
                     Error: Invalid multiplication data
+                  </div>
+                );
+              }
+
+              if (multiplicationData.strategy) {
+                const { nonZeroA, nonZeroB, zeroCount, baseProduct } = multiplicationData.strategy;
+                const currentStrategyStep = currentStep > 0 ? multiplicationSteps[currentStep - 1] : null;
+                const zeroLabel = language === 'fr'
+                  ? `${zeroCount} zéro${zeroCount > 1 ? 's' : ''}`
+                  : `${zeroCount} zero${zeroCount > 1 ? 's' : ''}`;
+
+                return (
+                  <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-4 text-center font-mono dark:border-sky-800 dark:bg-sky-950/20">
+                    <div className="text-xl font-bold text-slate-800 dark:text-slate-100">{A} × {B}</div>
+                    <div className="my-3 h-px bg-sky-200 dark:bg-sky-800" />
+                    <div className="space-y-3 text-lg">
+                      <div className={currentStep >= 1 ? 'font-semibold text-blue-700 dark:text-blue-300' : 'text-slate-400'}>
+                        {currentStep >= 1 ? `${nonZeroA} × ${nonZeroB} = ${baseProduct}` : '• × • = •'}
+                      </div>
+                      <div className={currentStep >= 2 ? 'font-bold text-green-700 dark:text-green-300' : 'text-slate-400'}>
+                        {currentStep >= 2
+                          ? (language === 'fr'
+                            ? `${baseProduct}, puis ${zeroLabel} → ${sumFinal}`
+                            : `${baseProduct}, then append ${zeroLabel} → ${sumFinal}`)
+                          : '•'}
+                      </div>
+                    </div>
+                    <motion.div
+                      key={`zero-strategy-${currentStep}`}
+                      className="mt-4 text-sm leading-relaxed text-muted-foreground"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      {currentStep === 0
+                        ? (language === 'fr'
+                          ? `Utilisons une astuce de valeur de position : on garde les ${zeroLabel} pour la fin.`
+                          : `Use a place-value shortcut: save the ${zeroLabel} for the end.`)
+                        : currentStrategyStep?.explanation}
+                    </motion.div>
                   </div>
                 );
               }
