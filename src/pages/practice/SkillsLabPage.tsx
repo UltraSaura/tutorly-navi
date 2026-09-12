@@ -14,6 +14,11 @@ import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 registerMathSkillActivityRenderers();
 
+function canonicalPracticeSubject(subject: string): string {
+  const normalized = subject.toLowerCase().replace(/[^a-z]/g, '');
+  return ['math', 'maths', 'mathematics', 'mathematiques'].includes(normalized) ? 'mathematiques' : subject;
+}
+
 export default function SkillsLabPage() {
   const ui = useInterfaceTranslation();
   const navigate = useNavigate();
@@ -22,15 +27,16 @@ export default function SkillsLabPage() {
   const activeSchoolLevel = useActiveSchoolLevel();
   const mastery = usePracticeActivityMastery();
   const ageConfig = getAgeLearningConfig(activeSchoolLevel.normalizedLevel);
+  const catalogSubject = canonicalPracticeSubject(subject);
 
   const session = useMemo(
     () =>
       createPracticeActivitySession({
         activities: getPracticeActivityCatalog(),
-        subjectId: subject,
+        subjectId: catalogSubject,
         ageBand: ageConfig.band,
       }),
-    [subject, ageConfig.band],
+    [catalogSubject, ageConfig.band],
   );
 
   const practiceLabel = ageConfig.practiceLabel;
