@@ -23,6 +23,8 @@ interface MessageInputProps {
   handlePhotoUpload?: (file: File) => void;
   isLoading?: boolean;
   onKeyboardChange?: (visible: boolean, height?: number) => void; // Add this
+  uploadRequest?: 'document' | 'photo' | 'camera' | null;
+  onUploadRequestHandled?: () => void;
 }
 
 const MessageInput = ({ 
@@ -32,7 +34,9 @@ const MessageInput = ({
   handleFileUpload, 
   handlePhotoUpload, 
   isLoading, 
-  onKeyboardChange 
+  onKeyboardChange,
+  uploadRequest,
+  onUploadRequestHandled,
 }: MessageInputProps) => {
   const ui = useInterfaceTranslation();
   const { toast } = useToast();
@@ -101,6 +105,14 @@ const MessageInput = ({
     setIsCameraOpen(true);
   };
 
+  React.useEffect(() => {
+    if (!uploadRequest) return;
+    if (uploadRequest === 'document') triggerFileUpload();
+    if (uploadRequest === 'photo') triggerPhotoUpload();
+    if (uploadRequest === 'camera') openCameraDialog();
+    onUploadRequestHandled?.();
+  }, [uploadRequest, onUploadRequestHandled]);
+
   const openCropDialog = (file: File) => {
     const url = URL.createObjectURL(file);
     setCropFile(file);
@@ -162,7 +174,7 @@ const MessageInput = ({
           });
           return;
         }
-        handlePhotoUpload && openCropDialog(file);
+        if (handlePhotoUpload) openCropDialog(file);
       } else {
         // For documents, check that it's a valid type
         const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];

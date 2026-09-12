@@ -4,7 +4,6 @@ import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import AIResponse from './chat/AIResponse';
 import MessageInput from './chat/MessageInput';
-import CameraCapture from './chat/CameraCapture';
 import WelcomeFox from './chat/WelcomeFox';
 import { useChat } from '@/hooks/useChat';
 import { useExercises } from '@/hooks/useExercises';
@@ -49,7 +48,7 @@ const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = 
   } = useExercises();
   const { getActiveSubjects } = useAdmin();
 
-  const [showCamera, setShowCamera] = useState(false);
+  const [uploadRequest, setUploadRequest] = useState<'document' | 'photo' | 'camera' | null>(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -120,33 +119,6 @@ const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = 
     await handleSendMessageWithGrading(`${question}=${answer}`);
   };
 
-  const openFilePicker = (accept: string, onFile: (file: File) => void) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = accept;
-    input.onchange = (event) => {
-      const file = (event.target as HTMLInputElement).files?.[0];
-      if (file) onFile(file);
-    };
-    input.click();
-  };
-
-  const handleDocumentUploadClick = () => {
-    openFilePicker(
-      'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain',
-      handleDocumentFileUpload,
-    );
-  };
-
-  const handlePhotoUploadClick = () => {
-    openFilePicker('image/*', handlePhotoFileUpload);
-  };
-
-  const handleCameraCapture = (file: File) => {
-    handlePhotoFileUpload(file);
-    setShowCamera(false);
-  };
-
   const showWelcomeState =
     filteredMessages.filter((message) => message.role === 'user').length === 0 &&
     !isLoading &&
@@ -178,9 +150,9 @@ const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = 
               exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.25 } }}
             >
               <WelcomeFox
-                onUploadDocument={handleDocumentUploadClick}
-                onUploadPhoto={handlePhotoUploadClick}
-                onOpenCamera={() => setShowCamera(true)}
+                onUploadDocument={() => setUploadRequest('document')}
+                onUploadPhoto={() => setUploadRequest('photo')}
+                onOpenCamera={() => setUploadRequest('camera')}
               />
             </motion.div>
           )}
@@ -232,16 +204,13 @@ const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = 
               handlePhotoUpload={handlePhotoFileUpload}
               isLoading={isLoading}
               onKeyboardChange={handleKeyboardChange}
+              uploadRequest={uploadRequest}
+              onUploadRequestHandled={() => setUploadRequest(null)}
             />
           </div>
         </div>
       )}
 
-      <CameraCapture
-        isOpen={showCamera}
-        onClose={() => setShowCamera(false)}
-        onCapture={handleCameraCapture}
-      />
     </div>
   );
 };
