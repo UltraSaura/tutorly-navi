@@ -32,7 +32,7 @@
     "homework": "Devoirs",
     "progress": "Progrès", 
     "rewards": "Récompenses",
-    "home": "Tuteur",
+    "home": "Accueil",
     "learning": "Leçon",
     "practice": "S’entraîner",
     "grades": "Notes",
@@ -105,7 +105,7 @@
       "videoFiltered": "Vidéo (filtrée par programme ci-dessus)",
       "selectTopic": "Sélectionner un sujet",
       "selectVideo": "Sélectionner une vidéo",
-      "noVideosFound": "Aucune vidéo trouvée pour ce programme",
+      "noVideosFound": "Aucun vidéo trouvé pour ce programme",
       "createVideosFirst": "Aucune vidéo pour ce programme. Créez d'abord des vidéos."
     }
   }
