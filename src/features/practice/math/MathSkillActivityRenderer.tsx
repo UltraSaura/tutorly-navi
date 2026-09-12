@@ -42,7 +42,12 @@ export function MathSkillActivityRenderer({ activity, onAttempt, onComplete }: P
   const progress = Math.round((index / questions.length) * 100);
 
   function submit() {
-    const numericAnswer = Number(answer.replace(',', '.').trim());
+    const trimmedAnswer = answer.replace(',', '.').trim();
+    if (!trimmedAnswer) {
+      setFeedback(ui('Enter a number to continue.'));
+      return;
+    }
+    const numericAnswer = Number(trimmedAnswer);
     if (!Number.isFinite(numericAnswer)) {
       setFeedback(ui('Enter a number to continue.'));
       return;
