@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { House, BookOpen, Dumbbell, History, User } from "lucide-react";
+import { House, BookOpen, Dumbbell, MessageCircle, User } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useOverlay } from "@/context/OverlayContext";
@@ -9,9 +9,9 @@ import { AccountTabContent } from "./AccountTabContent";
 
 const bottomTabItems = [
   { title: "nav.home", url: "/home", icon: House },
-  { title: "nav.practice", url: "/practice", icon: Dumbbell },
   { title: "nav.learning", url: "/learning", icon: BookOpen },
-  { title: "nav.history", url: "/exercise-history", icon: History },
+  { title: "nav.tutor", fallbackTitle: "Tutor", url: "/chat", icon: MessageCircle },
+  { title: "nav.practice", url: "/practice", icon: Dumbbell },
   { title: "nav.account", url: null, icon: User },
 ];
 
@@ -30,8 +30,9 @@ export function MobileBottomTabs() {
       <div className="grid h-[72px] grid-cols-5 items-center rounded-[24px] bg-white px-2 shadow-[0_18px_45px_rgba(15,23,42,0.10)]">
         {bottomTabItems.map((item) => {
           const isActiveTab = isActive(item.url);
-          const label = t(item.title);
-          if (item.url) return <NavLink key={item.title} to={item.url} className={`mx-auto flex h-14 w-[66px] flex-col items-center justify-center rounded-2xl transition-colors ${isActiveTab ? "text-[#12C6A0]" : "text-[#667085] hover:text-[#0F172A]"}`}><item.icon className="mb-1 h-6 w-6 stroke-[2.4]" /><span className="text-[11px] font-bold leading-none">{label}</span></NavLink>;
+          const translated = t(item.title);
+          const label = translated === item.title && item.fallbackTitle ? item.fallbackTitle : translated;
+          if (item.url) return <NavLink key={item.title} to={item.url} aria-label={label} className={`mx-auto flex h-14 w-[66px] flex-col items-center justify-center rounded-2xl transition-colors ${isActiveTab ? "text-[#12C6A0]" : "text-[#667085] hover:text-[#0F172A]"}`}><item.icon className="mb-1 h-6 w-6 stroke-[2.4]" /><span className="text-[11px] font-bold leading-none">{label}</span></NavLink>;
           return <Button key={item.title} variant="ghost" size="sm" onClick={() => handleTabClick(item)} className={`mx-auto flex h-14 w-[66px] flex-col items-center justify-center rounded-2xl p-0 ${isAccountOpen ? "text-[#12C6A0] hover:text-[#12C6A0]" : "text-[#667085] hover:text-[#0F172A]"}`}><item.icon className="mb-1 h-6 w-6 stroke-[2.4]" /><span className="text-[11px] font-bold leading-none">{label}</span></Button>;
         })}
       </div>
