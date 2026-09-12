@@ -24,7 +24,7 @@ export function ManipulativeActivityRenderer({ activity, onAttempt, onComplete }
   const config = parseConfig(activity.configuration);
   const [latest, setLatest] = useState<ManipulativeInteraction | null>(null);
   if (!config) return <p className="text-sm text-muted-foreground">Manipulative configuration unavailable.</p>;
-  return <div className="space-y-4"><ManipulativeRenderer config={config} surface="practice" onInteraction={setLatest} /><Button type="button" disabled={!latest} onClick={() => { if (!latest) return; onAttempt({ masteryLevel: activity.masteryLevels.includes(2) ? 2 : activity.masteryLevels[0] ?? 2, correct: latest.correct ?? true, attemptNumber: 1, hintsUsed: 0, itemId: `${activity.id}:${latest.kind}`, tags: ['manipulative', latest.kind] }); onComplete(); }}>Done</Button></div>;
+  return <div className="space-y-4"><ManipulativeRenderer config={config} surface="practice" onInteraction={setLatest} /><Button type="button" disabled={!latest} onClick={() => { if (!latest) return; onAttempt({ masteryLevel: activity.masteryLevels.includes(2) ? 2 : activity.masteryLevels[0] ?? 2, correct: latest.correct === true, attemptNumber: 1, hintsUsed: 0, itemId: `${activity.id}:${latest.kind}`, tags: ['manipulative', latest.kind] }); onComplete(); }}>Done</Button></div>;
 }
 
 export default ManipulativeActivityRenderer;
