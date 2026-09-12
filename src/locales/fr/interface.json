@@ -1783,5 +1783,17 @@
   "See all": "Tout voir",
   "Personal recommendations are temporarily limited. You can still choose a subject below.": "Les recommandations personnalisées sont temporairement limitées. Tu peux toujours choisir une matière ci-dessous.",
   "Learning": "Apprentissage",
-  "Stuwy is an AI-powered tutoring platform that helps students learn independently and guardians track learning progress.": "Stuwy est une plateforme de tutorat utilisant l’IA qui aide les élèves à apprendre de manière autonome et les responsables à suivre leurs progrès."
+  "Stuwy is an AI-powered tutoring platform that helps students learn independently and guardians track learning progress.": "Stuwy est une plateforme de tutorat utilisant l’IA qui aide les élèves à apprendre de manière autonome et les responsables à suivre leurs progrès.",
+  "No practice activities are available for this session yet.": "Aucune activité d’entraînement n’est encore disponible pour cette session.",
+  "Back to Practice": "Retour à l’entraînement",
+  "Exit": "Quitter",
+  "Practice session progress": "Progression de la session d’entraînement",
+  "This activity type is not available yet.": "Ce type d’activité n’est pas encore disponible.",
+  "Completed": "Terminé",
+  "Complete the activity to continue": "Termine l’activité pour continuer",
+  "Finish session": "Terminer la session",
+  "Practice skills by subject.": "Entraîne tes compétences par matière.",
+  "Choose a subject first": "Choisis d’abord une matière",
+  "Open Practice and choose the subject you want to strengthen.": "Ouvre l’entraînement et choisis la matière que tu souhaites renforcer.",
+  "Personalized skill practice.": "Entraînement personnalisé des compétences."
 }
