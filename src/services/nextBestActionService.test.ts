@@ -28,6 +28,26 @@ describe('getNextBestActions', () => {
     expect(actions[0].reason).toBe('weak_skill');
   });
 
+  it('ranks a due spaced review ahead of homework follow-up and curriculum', () => {
+    const actions = getNextBestActions({
+      ...base,
+      now: '2026-09-12T12:00:00.000Z',
+      homework: [{ id: 'h1', subjectId: 'math', isCorrect: false, attemptsCount: 1 }],
+      spacedReviews: [{ subjectId: 'mathematiques', subjectSlug: 'mathematiques', conceptId: 'math:fractions', conceptName: 'Fractions', stage: 2, nextReviewAt: '2026-09-12T10:00:00.000Z' }],
+    });
+    expect(actions[0]).toMatchObject({ reason: 'spaced_review', conceptId: 'math:fractions' });
+    expect(actions[0].route).toContain('/practice/mathematiques/lab?review=math%3Afractions');
+  });
+
+  it('does not recommend a future spaced review', () => {
+    const actions = getNextBestActions({
+      ...base,
+      now: '2026-09-12T12:00:00.000Z',
+      spacedReviews: [{ subjectId: 'anglais', subjectSlug: 'anglais', conceptId: 'english:verbs', stage: 1, nextReviewAt: '2026-09-15T12:00:00.000Z' }],
+    });
+    expect(actions.some((action) => action.reason === 'spaced_review')).toBe(false);
+  });
+
   it('offers Tutor follow-up after a single incorrect homework when no stronger evidence exists', () => {
     const actions = getNextBestActions({
       ...base,
@@ -42,7 +62,7 @@ describe('getNextBestActions', () => {
     expect(actions[0]).toMatchObject({ reason: 'curriculum', conceptId: 'fractions' });
   });
 
-  it('does not fabricate prerequisite or spaced-review actions', () => {
+  it('does not fabricate prerequisite or spaced-review actions without evidence', () => {
     const actions = getNextBestActions(base);
     expect(actions.some((action) => action.reason === 'prerequisite')).toBe(false);
     expect(actions.some((action) => action.reason === 'spaced_review')).toBe(false);
