@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      spaced_review_states: {
+        Row: {
+          id: string
+          student_id: string
+          subject_id: string
+          concept_id: string
+          objective_id: string | null
+          stage: number
+          next_review_at: string
+          last_reviewed_at: string | null
+          last_result_correct: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          subject_id: string
+          concept_id: string
+          objective_id?: string | null
+          stage?: number
+          next_review_at: string
+          last_reviewed_at?: string | null
+          last_result_correct?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          subject_id?: string
+          concept_id?: string
+          objective_id?: string | null
+          stage?: number
+          next_review_at?: string
+          last_reviewed_at?: string | null
+          last_result_correct?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_audit_log: {
         Row: {
           action: string

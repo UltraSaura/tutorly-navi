@@ -33,6 +33,7 @@ import { QuizOverlayController } from '@/components/learning/QuizOverlayControll
 import { getAgeLearningConfig } from '@/config/ageConfig';
 import { getPracticeActivityCatalog } from '@/features/practice/practiceActivityCatalog';
 import { hasPracticeActivitiesForSubject } from '@/services/practiceActivityService';
+import { canonicalPracticeSubject } from '@/features/practice/canonicalPracticeSubject';
 
 type TopicState = 'mastered' | 'in_progress' | 'not_started';
 
@@ -93,17 +94,6 @@ function formatSubjectLabel(subjectSlug: string) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
-}
-
-function canonicalPracticeSubject(subjectSlug: string): string {
-  const normalized = subjectSlug.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]/g, '');
-  const aliases: Record<string, string> = {
-    math: 'mathematiques', maths: 'mathematiques', mathematics: 'mathematiques', mathematiques: 'mathematiques',
-    french: 'francais', francais: 'francais', english: 'anglais', anglais: 'anglais',
-    science: 'sciences', sciences: 'sciences', history: 'histoire', histoire: 'histoire',
-    geography: 'geographie', geographie: 'geographie',
-  };
-  return aliases[normalized] ?? subjectSlug;
 }
 
 function practiceModeForState(state: TopicState) {

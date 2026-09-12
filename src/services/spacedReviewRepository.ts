@@ -43,7 +43,7 @@ function toRow(state: SpacedReviewState) {
 }
 
 export async function fetchSpacedReviewStates(studentId: string): Promise<SpacedReviewState[]> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('spaced_review_states')
     .select('student_id, subject_id, concept_id, objective_id, stage, next_review_at, last_reviewed_at, last_result_correct')
     .eq('student_id', studentId)
@@ -62,7 +62,7 @@ export async function seedSpacedReviewConcept(input: {
   const conceptId = input.conceptId.trim();
   if (!input.studentId || !input.subjectId || !conceptId) return;
 
-  const { data: existing, error: lookupError } = await (supabase as any)
+  const { data: existing, error: lookupError } = await supabase
     .from('spaced_review_states')
     .select('id')
     .eq('student_id', input.studentId)
@@ -78,7 +78,7 @@ export async function seedSpacedReviewConcept(input: {
     objectiveId: input.objectiveId,
     masteredAt: input.masteredAt ?? new Date().toISOString(),
   });
-  const { error } = await (supabase as any).from('spaced_review_states').insert(toRow(initial));
+  const { error } = await supabase.from('spaced_review_states').insert(toRow(initial));
   if (error && import.meta.env.DEV) console.warn('[SpacedReview] unable to seed review state', error);
 }
 
@@ -104,7 +104,7 @@ export async function recordSpacedReviewAttempt(
 ): Promise<void> {
   const conceptId = reviewConceptId.trim();
   if (!conceptId) return;
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('spaced_review_states')
     .select('student_id, subject_id, concept_id, objective_id, stage, next_review_at, last_reviewed_at, last_result_correct')
     .eq('student_id', attempt.studentId)
@@ -114,7 +114,7 @@ export async function recordSpacedReviewAttempt(
   if (error || !data) return;
 
   const next = advanceSpacedReview(fromRow(data as ReviewRow), attempt.correct, reviewedAt);
-  const { error: updateError } = await (supabase as any)
+  const { error: updateError } = await supabase
     .from('spaced_review_states')
     .update(toRow(next))
     .eq('student_id', attempt.studentId)
