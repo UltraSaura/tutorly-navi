@@ -39,9 +39,7 @@ export function PracticeActivityPlayer({
   if (!activity) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>{sessionTitle}</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>{sessionTitle}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">{ui('No practice activities are available for this session yet.')}</p>
           {onExit ? <Button variant="outline" onClick={onExit}>{ui('Back to Practice')}</Button> : null}
@@ -64,10 +62,11 @@ export function PracticeActivityPlayer({
 
   function recordEvidence(evidence: PracticeActivityEvidence) {
     if (!studentId) return;
+    const granularConceptId = evidence.itemId?.trim() || activity.conceptId;
     const normalized = normalizePracticeAttempt({
       studentId,
       subjectId: activity.subjectId,
-      conceptId: activity.conceptId,
+      conceptId: granularConceptId,
       objectiveId: activity.objectiveId,
       taskMasteryLevel: evidence.masteryLevel,
       correct: evidence.correct,
@@ -77,7 +76,16 @@ export function PracticeActivityPlayer({
       difficulty: activity.difficulty,
       activityEngine: activity.engine,
     });
-    if (normalized.ok) onAttempt?.(normalized.attempt);
+    if (normalized.ok) {
+      onAttempt?.({
+        ...normalized.attempt,
+        metadata: {
+          ...normalized.attempt.metadata,
+          parentConceptId: granularConceptId === activity.conceptId ? undefined : activity.conceptId,
+          tags: evidence.tags,
+        },
+      });
+    }
   }
 
   function next() {
@@ -102,24 +110,14 @@ export function PracticeActivityPlayer({
       <Progress value={progress} aria-label={ui('Practice session progress')} />
 
       <Card>
-        <CardHeader>
-          <CardTitle>{activity.title ?? activity.conceptId}</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>{activity.title ?? activity.conceptId}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           {activity.description ? <p className="text-sm text-muted-foreground">{activity.description}</p> : null}
-
           {Renderer ? (
-            <Renderer
-              activity={activity}
-              onAttempt={recordEvidence}
-              onComplete={completeCurrent}
-            />
+            <Renderer activity={activity} onAttempt={recordEvidence} onComplete={completeCurrent} />
           ) : (
-            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-              {ui('This activity type is not available yet.')}
-            </div>
+            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">{ui('This activity type is not available yet.')}</div>
           )}
-
           <div className="flex items-center justify-between gap-3 pt-2">
             <span className="text-xs text-muted-foreground">
               {isCurrentComplete ? <span className="inline-flex items-center"><CheckCircle2 className="mr-1 h-4 w-4" />{ui('Completed')}</span> : ui('Complete the activity to continue')}
