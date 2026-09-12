@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import type { LearningAttemptResult } from '@/types/learning-attempt';
 import type { ConceptMasteryState, MasteryUpdateResult } from '@/types/mastery-v2';
 import { processLearningAttempt } from '@/services/learningEventNormalizer';
+import { seedSpacedReviewFromMastery } from '@/services/spacedReviewRepository';
 
 export function usePracticeActivityMastery() {
   const masteryRef = useRef<Record<string, ConceptMasteryState>>({});
@@ -20,6 +21,7 @@ export function usePracticeActivityMastery() {
 
     setMasteryByConcept(masteryRef.current);
     setLastUpdate(update);
+    void seedSpacedReviewFromMastery(update);
     return update;
   }, []);
 
