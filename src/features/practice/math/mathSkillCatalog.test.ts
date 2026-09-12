@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { getPracticeActivityCatalog } from '../practiceActivityCatalog';
 
-describe('Math Skills Lab catalog', () => {
-  it('publishes six upper-primary math activities through the shared catalog', () => {
+describe('shared Practice activity catalog', () => {
+  it('preserves all six upper-primary Math Skills Lab activities', () => {
     const activities = getPracticeActivityCatalog().filter(
       (activity) => activity.subjectId === 'mathematiques' && activity.ageBand === 'upper_primary',
     );
@@ -12,7 +12,8 @@ describe('Math Skills Lab catalog', () => {
     );
   });
 
-  it('does not fabricate non-math subject activities in Phase 10', () => {
-    expect(getPracticeActivityCatalog().some((activity) => activity.subjectId !== 'mathematiques')).toBe(false);
+  it('also publishes trusted Phase 12 cross-subject activities', () => {
+    const subjects = new Set(getPracticeActivityCatalog().map((activity) => activity.subjectId));
+    expect(subjects).toEqual(new Set(['mathematiques', 'francais', 'anglais', 'sciences', 'histoire', 'geographie']));
   });
 });
