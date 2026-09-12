@@ -1,8 +1,7 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Message } from '@/types/chat';
 import AIResponse from './chat/AIResponse';
 import MessageInput from './chat/MessageInput';
 import CameraCapture from './chat/CameraCapture';
@@ -12,13 +11,9 @@ import { useExercises } from '@/hooks/useExercises';
 import { useAdmin } from '@/context/AdminContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useOverlay } from '@/context/OverlayContext';
-import { useLanguage } from '@/context/SimpleLanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useTutorAdaptiveProblem, type TutorAdaptiveData } from '@/hooks/useTutorAdaptiveProblem';
 import { TutorRemediationPanel } from './chat/TutorRemediationPanel';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { FileText, Image, Camera, Upload } from 'lucide-react';
 import CalculationStatus from './chat/CalculationStatus';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -27,19 +22,16 @@ import { QuizOverlayController } from '@/components/learning/QuizOverlayControll
 
 const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = {}) => {
   const ui = useInterfaceTranslation();
-  const { t, language } = useLanguage();
   const { user } = useAuth();
   const tutorAdaptive = useTutorAdaptiveProblem(user?.id, user?.user_metadata?.level, adaptiveData);
   const isMobile = useIsMobile();
   const location = useLocation();
   const { hasActiveOverlay } = useOverlay();
-  
+
   const {
-    messages,
     inputMessage,
     setInputMessage,
     isLoading,
-    activeModel,
     addMessage,
     clearMessages,
     removeMessage,
@@ -48,98 +40,57 @@ const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = 
     handleFileUpload,
     handlePhotoUpload,
     filteredMessages,
-    calculationState
+    calculationState,
   } = useChat();
   const {
-    createExerciseFromAI,
     processHomeworkFromChat,
-    linkAIResponseToExercise,
     addExercises,
-    clearExercises
+    clearExercises,
   } = useExercises();
-  const {
-    getActiveSubjects,
-    selectedModelId
-  } = useAdmin();
+  const { getActiveSubjects } = useAdmin();
 
-  // Track processed message IDs to prevent duplication
-  const [processedMessageIds, setProcessedMessageIds] = useState<Set<string>>(new Set());
-  
-  // Upload sheet state
-  const [showUploadSheet, setShowUploadSheet] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
-
-  // Keyboard handling
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-  // Get active subjects and language
   const activeSubjects = getActiveSubjects();
   const defaultSubject = activeSubjects.length > 0 ? activeSubjects[0].id : undefined;
-  
-  // Simplified: AI now handles all detection and processing directly
-  // No need for complex client-side math detection anymore
 
-  // Keyboard change handler
   const handleKeyboardChange = (visible: boolean, height?: number) => {
-    console.log('[DEBUG] Keyboard change:', visible, height);
     setKeyboardVisible(visible);
     setKeyboardHeight(height || 0);
   };
 
-  // Create wrappers for the file upload handlers
   const handleDocumentFileUpload = (file: File) => {
-    console.log('=== DOCUMENT UPLOAD TRIGGERED ===');
-    console.log('File details:', { name: file.name, size: file.size, type: file.type });
-    console.log('Calling handleFileUpload...');
     handleFileUpload(file, addExercises, defaultSubject);
   };
-  
+
   const handlePhotoFileUpload = (file: File) => {
-    console.log('=== PHOTO UPLOAD TRIGGERED ===');
-    console.log('File details:', { name: file.name, size: file.size, type: file.type });
-    console.log('Calling handlePhotoUpload...');
     handlePhotoUpload(file, addExercises, defaultSubject);
   };
 
-  // Wrapper that sends message AND processes homework for grading
   const handleSendMessageWithGrading = async (overrideMessage?: string) => {
-    console.log('[ChatInterface] handleSendMessageWithGrading called');
-    
-    // Get the message that will be sent
     const messageToSend = overrideMessage ?? inputMessage;
-    
-    if (!messageToSend || messageToSend.trim() === '') {
-      console.log('[ChatInterface] Empty message, not sending');
-      return;
-    }
-    
-    console.log('[ChatInterface] Sending message and processing for grading:', messageToSend);
-    
+    if (!messageToSend || messageToSend.trim() === '') return;
+
     const classification = classifyProblemSubmission(messageToSend);
     if (classification.type !== 'simple_exercise') {
       await handleSendMessage(overrideMessage);
       return;
     }
 
-    // Check if this looks like a math exercise submission (contains = with digits)
     const looksLikeMathExercise = /\d.*=.*\d/.test(messageToSend.trim());
-    
     if (looksLikeMathExercise) {
-      console.log('[ChatInterface] Detected math exercise pattern, trying local grading first');
       try {
         const result = await processHomeworkFromChat(messageToSend);
         if (result.localGraded) {
           if (result.exercise) tutorAdaptive.recordEvaluated(result.exercise);
-          console.log('[ChatInterface] Local grading succeeded, skipping AI chat call');
-          // Add user message
           addMessage({
             id: Date.now().toString(),
             role: 'user',
             content: messageToSend,
             timestamp: new Date(),
           });
-          // Add synthetic assistant message so AIResponse renders the exercise card
           const grade = result.isCorrect ? '10/10' : '0/10';
           addMessage({
             id: (Date.now() + 1).toString(),
@@ -150,86 +101,45 @@ const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = 
           setInputMessage('');
           return;
         }
-        console.log('[ChatInterface] Local grading did not succeed, falling through to AI');
       } catch (error) {
-        console.error('[ChatInterface] Error in local grading attempt:', error);
+        if (import.meta.env.DEV) console.error('[ChatInterface] Local grading failed', error);
       }
     }
-    
-    // Send through chat system (AI call)
+
     await handleSendMessage(overrideMessage);
-    
-    // Also process and grade the exercise so UI updates with correct/incorrect
+
     try {
       const result = await processHomeworkFromChat(messageToSend, { persist: false });
       if (result.exercise) tutorAdaptive.recordEvaluated(result.exercise);
-      console.log('[ChatInterface] Exercise processed and graded successfully');
     } catch (error) {
-      console.error('[ChatInterface] Error processing homework:', error);
+      if (import.meta.env.DEV) console.error('[ChatInterface] Homework evaluation failed', error);
     }
   };
 
-  // Handle question submission through chat pipeline
-  const handleSubmitQuestion = async (question: string) => {
-    if (question.trim()) {
-      setInputMessage(question);
-      // Wait for next tick to ensure inputMessage is set
-      setTimeout(async () => {
-        await handleSendMessageWithGrading();
-      }, 0);
-    }
-  };
-
-  // Handle answer submission from AIResponse
   const handleAnswerSubmit = async (question: string, answer: string) => {
-    console.log('[ChatInterface] Submitting answer:', { question, answer });
-    
-    // Format the message as "question=answer"
-    const formattedMessage = `${question}=${answer}`;
-    
-    // Send through the unified system which handles both chat and grading
-    await handleSendMessageWithGrading(formattedMessage);
+    await handleSendMessageWithGrading(`${question}=${answer}`);
   };
 
-  // Handle upload sheet opening
-  const handleUploadHomework = () => {
-    setShowUploadSheet(true);
+  const openFilePicker = (accept: string, onFile: (file: File) => void) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    input.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (file) onFile(file);
+    };
+    input.click();
   };
 
-  // Handle document upload from sheet
   const handleDocumentUploadClick = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        handleDocumentFileUpload(file);
-        setShowUploadSheet(false);
-      }
-    };
-    input.click();
+    openFilePicker(
+      'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain',
+      handleDocumentFileUpload,
+    );
   };
 
-  // Handle photo upload from sheet
   const handlePhotoUploadClick = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        handlePhotoFileUpload(file);
-        setShowUploadSheet(false);
-      }
-    };
-    input.click();
-  };
-
-  // Handle camera capture
-  const handleCameraOpen = () => {
-    setShowUploadSheet(false);
-    setShowCamera(true);
+    openFilePicker('image/*', handlePhotoFileUpload);
   };
 
   const handleCameraCapture = (file: File) => {
@@ -237,52 +147,49 @@ const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = 
     setShowCamera(false);
   };
 
-  // Exercise-Focused Layout with Chat Input
   const showWelcomeState =
-    filteredMessages.filter((m) => m.role === 'user').length === 0 &&
+    filteredMessages.filter((message) => message.role === 'user').length === 0 &&
     !isLoading &&
     !calculationState.isProcessing;
 
   return (
     <div
-      className={`relative h-[calc(100vh-4rem)] overflow-x-hidden max-w-full ${
-        showWelcomeState ? 'bg-white' : 'bg-neutral-bg'
-      }`}
+      className={`relative h-[calc(100vh-4rem)] overflow-x-hidden max-w-full ${showWelcomeState ? 'bg-white' : 'bg-neutral-bg'}`}
     >
-      <PageMeta title={ui("Tutor Chat")} description={ui("Get instant AI-powered help with math homework, exercises, and explanations from your Stuwy tutor.")} />
-      {/* Scrollable Content Area */}
-      <div 
-        className={`h-full overflow-x-hidden ${
-          showWelcomeState
-            ? 'overflow-hidden flex flex-col items-center justify-start bg-white'
-            : 'overflow-auto'
-        }`}
+      <PageMeta
+        title={ui('Tutor')}
+        description={ui('Get guided help with homework, exercises, photos, and documents from your Stuwy tutor.')}
+      />
+
+      <div
+        className={`h-full overflow-x-hidden ${showWelcomeState ? 'overflow-auto bg-white' : 'overflow-auto'}`}
         style={{
           paddingBottom: showWelcomeState
-            ? 0
+            ? `${isMobile ? 150 : 100}px`
             : keyboardVisible && keyboardHeight > 0
-              ? `${keyboardHeight + 80}px`  // Keyboard height + input height
-              : `${isMobile ? 128 : 80}px`  // Normal bottom padding
+              ? `${keyboardHeight + 80}px`
+              : `${isMobile ? 128 : 80}px`,
         }}
       >
-        {/* AI Response - Display the latest AI explanation/response */}
-        {/* Welcome animation - shown when no user messages exist yet */}
         <AnimatePresence mode="wait">
           {showWelcomeState && (
             <motion.div
               key="welcome-fox"
               exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.25 } }}
             >
-              <WelcomeFox />
+              <WelcomeFox
+                onUploadDocument={handleDocumentUploadClick}
+                onUploadPhoto={handlePhotoUploadClick}
+                onOpenCamera={() => setShowCamera(true)}
+              />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* AI Response - Display the latest AI explanation/response */}
         <ErrorBoundary
           fallback={
             <div className="p-4 m-4 bg-card border rounded-lg text-center">
-              <p className="text-muted-foreground">{ui("Unable to display responses. Please refresh.")}</p>
+              <p className="text-muted-foreground">{ui('Unable to display responses. Please refresh.')}</p>
             </div>
           }
         >
@@ -295,9 +202,8 @@ const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = 
             onDismissExercise={(messageId) => removeMessage(messageId)}
           />
         </ErrorBoundary>
+
         <TutorRemediationPanel tutorAdaptive={tutorAdaptive} />
-        
-        {/* Add Calculation Status - Shows processing status */}
         <CalculationStatus
           isProcessing={calculationState.isProcessing}
           status={calculationState.currentStep}
@@ -306,18 +212,15 @@ const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = 
         <QuizOverlayController />
       </div>
 
-      {/* Fixed Chat Input - Only show on /chat route when no overlays are active */}
       {location.pathname === '/chat' && !hasActiveOverlay && tutorAdaptive.view?.phase !== 'active' && (
-        <div 
+        <div
           data-explanation-hide="chat-input"
-          className={`fixed left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border transition-all duration-300 ease-in-out`}
-          style={{ 
-            bottom: keyboardVisible && keyboardHeight > 0
-              ? `${Math.max(keyboardHeight, 0)}px`  // Ensure non-negative
-              : (isMobile ? '64px' : '0px'),  // Default position
+          className="fixed left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border transition-all duration-300 ease-in-out"
+          style={{
+            bottom: keyboardVisible && keyboardHeight > 0 ? `${Math.max(keyboardHeight, 0)}px` : (isMobile ? '88px' : '0px'),
             paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-            zIndex: keyboardVisible ? 10001 : 50,  // Above keyboard when visible
-            maxHeight: '30vh'  // Prevent input from taking too much space
+            zIndex: keyboardVisible ? 10001 : 50,
+            maxHeight: '30vh',
           }}
         >
           <div className="px-[10px] py-1">
@@ -334,50 +237,6 @@ const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = 
         </div>
       )}
 
-      {/* Upload Bottom Sheet */}
-      <Sheet open={showUploadSheet} onOpenChange={setShowUploadSheet}>
-        <SheetContent side="bottom" className="h-auto">
-          <SheetHeader>
-            <SheetTitle className="text-h2 font-semibold text-neutral-text">
-              {ui("Upload Homework")}
-            </SheetTitle>
-          </SheetHeader>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 mb-4">
-            {/* Document Upload */}
-            <Button
-              onClick={handleDocumentUploadClick}
-              className="flex flex-col items-center justify-center gap-3 h-24 bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 text-blue-700 rounded-card"
-              variant="outline"
-            >
-              <FileText size={32} />
-              <span className="text-body font-medium">{ui("Upload Document (PDF)")}</span>
-            </Button>
-
-            {/* Photo Upload */}
-            <Button
-              onClick={handlePhotoUploadClick}
-              className="flex flex-col items-center justify-center gap-3 h-24 bg-green-50 hover:bg-green-100 border-2 border-green-200 text-green-700 rounded-card"
-              variant="outline"
-            >
-              <Image size={32} />
-              <span className="text-body font-medium">{ui("Upload Photo")}</span>
-            </Button>
-
-            {/* Camera */}
-            <Button
-              onClick={handleCameraOpen}
-              className="flex flex-col items-center justify-center gap-3 h-24 bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 text-orange-700 rounded-card"
-              variant="outline"
-            >
-              <Camera size={32} />
-              <span className="text-body font-medium">{ui("Take Photo")}</span>
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* Camera Capture Modal */}
       <CameraCapture
         isOpen={showCamera}
         onClose={() => setShowCamera(false)}
