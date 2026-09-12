@@ -35,6 +35,7 @@ export interface LearningAttemptResult {
     questionId?: string;
     questionKind?: string;
     activityEngine?: string;
+    parentConceptId?: string;
     learningStyleUsed?: string;
     supportType?: string;
     targetPrerequisiteId?: string;
