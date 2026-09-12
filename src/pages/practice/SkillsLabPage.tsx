@@ -4,12 +4,15 @@ import { PageMeta } from '@/components/seo/PageMeta';
 import { Button } from '@/components/ui/button';
 import { PracticeActivityPlayer } from '@/features/practice/PracticeActivityPlayer';
 import { getPracticeActivityCatalog } from '@/features/practice/practiceActivityCatalog';
+import { registerMathSkillActivityRenderers } from '@/features/practice/math/registerMathSkillActivities';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { useAuth } from '@/context/AuthContext';
 import { usePracticeActivityMastery } from '@/hooks/usePracticeActivityMastery';
 import { getAgeLearningConfig } from '@/config/ageConfig';
 import { createPracticeActivitySession } from '@/services/practiceActivityService';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
+
+registerMathSkillActivityRenderers();
 
 export default function SkillsLabPage() {
   const ui = useInterfaceTranslation();
