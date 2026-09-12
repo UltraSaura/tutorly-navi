@@ -46,6 +46,7 @@ const TrainingSessionPage = lazy(() => import("./pages/practice/TrainingSessionP
 const PracticeSubjectPage = lazy(() => import("./pages/practice/PracticeSubjectPage"));
 const PracticeAnnalsPage = lazy(() => import("./pages/practice/PracticeAnnalsPage"));
 const PracticeTopicsPage = lazy(() => import("./pages/practice/PracticeTopicsPage"));
+const SkillsLabPage = lazy(() => import("./pages/practice/SkillsLabPage"));
 const CurriculumBrowser = lazy(() => import("./components/curriculum/CurriculumBrowser"));
 const CurriculumDebug = lazy(() => import("./pages/CurriculumDebug"));
 
@@ -137,7 +138,7 @@ const App = () => {
       <Route path="/exercise-history" element={<MainLayout />}><Route index element={<ExerciseHistoryPage />} /></Route>
       <Route path="/learning" element={<MainLayout />}><Route index element={<LearningPage />} /><Route path=":subjectSlug" element={<SubjectDashboardPage />} /><Route path=":subjectSlug/:topicSlug" element={<LessonPage />} /></Route>
       <Route path="/learning/video/:videoId" element={<VideoPlayerPage />} />
-      <Route path="/practice" element={<MainLayout />}><Route index element={<PracticePage />} /><Route path="session" element={<TrainingSessionPage />} /><Route path="exam/:paperId" element={<ExamSessionPage />} /><Route path=":subject/annales" element={<PracticeAnnalsPage />} /><Route path=":subject/topics" element={<PracticeTopicsPage />} /><Route path=":subject" element={<PracticeSubjectPage />} /></Route>
+      <Route path="/practice" element={<MainLayout />}><Route index element={<PracticePage />} /><Route path="session" element={<TrainingSessionPage />} /><Route path="exam/:paperId" element={<ExamSessionPage />} /><Route path=":subject/annales" element={<PracticeAnnalsPage />} /><Route path=":subject/topics" element={<PracticeTopicsPage />} /><Route path=":subject/lab" element={<SkillsLabPage />} /><Route path=":subject" element={<PracticeSubjectPage />} /></Route>
       <Route path="/my-program" element={<MainLayout />}><Route index element={<MyProgramPage />} /></Route>
       <Route path="/curriculum" element={<MainLayout />}><Route index element={<CurriculumBrowser />} /></Route>
       {isDev && <Route path="/management" element={<ManagementDashboard />} />}
