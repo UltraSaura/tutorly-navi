@@ -3,12 +3,15 @@ import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
+import { normalizePracticeAttempt } from '@/services/learningEventNormalizer';
 import type { LearningAttemptResult } from '@/types/learning-attempt';
 import type { SkillActivityDefinition } from '@/types/skill-activity';
-import { getPracticeActivityRenderer } from './activityRegistry';
+import { getPracticeActivityRenderer, type PracticeActivityEvidence } from './activityRegistry';
 
 interface PracticeActivityPlayerProps {
   activities: SkillActivityDefinition[];
+  studentId?: string;
   sessionTitle?: string;
   onAttempt?: (attempt: LearningAttemptResult) => void;
   onSessionComplete?: () => void;
@@ -17,11 +20,13 @@ interface PracticeActivityPlayerProps {
 
 export function PracticeActivityPlayer({
   activities,
+  studentId,
   sessionTitle = 'Practice',
   onAttempt,
   onSessionComplete,
   onExit,
 }: PracticeActivityPlayerProps) {
+  const ui = useInterfaceTranslation();
   const [index, setIndex] = useState(0);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const activity = activities[index];
@@ -38,8 +43,8 @@ export function PracticeActivityPlayer({
           <CardTitle>{sessionTitle}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">No practice activities are available for this session yet.</p>
-          {onExit ? <Button variant="outline" onClick={onExit}>Back to practice</Button> : null}
+          <p className="text-sm text-muted-foreground">{ui('No practice activities are available for this session yet.')}</p>
+          {onExit ? <Button variant="outline" onClick={onExit}>{ui('Back to Practice')}</Button> : null}
         </CardContent>
       </Card>
     );
@@ -57,6 +62,24 @@ export function PracticeActivityPlayer({
     });
   }
 
+  function recordEvidence(evidence: PracticeActivityEvidence) {
+    if (!studentId) return;
+    const normalized = normalizePracticeAttempt({
+      studentId,
+      subjectId: activity.subjectId,
+      conceptId: activity.conceptId,
+      objectiveId: activity.objectiveId,
+      taskMasteryLevel: evidence.masteryLevel,
+      correct: evidence.correct,
+      hintsUsed: evidence.hintsUsed,
+      attemptNumber: evidence.attemptNumber,
+      responseTimeMs: evidence.responseTimeMs,
+      difficulty: activity.difficulty,
+      activityEngine: activity.engine,
+    });
+    if (normalized.ok) onAttempt?.(normalized.attempt);
+  }
+
   function next() {
     if (!isCurrentComplete) return;
     if (isLast) {
@@ -71,12 +94,12 @@ export function PracticeActivityPlayer({
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-muted-foreground">{sessionTitle}</p>
-          <p className="text-xs text-muted-foreground">Activity {index + 1} of {activities.length}</p>
+          <p className="text-xs text-muted-foreground">{ui('Activity')} {index + 1} {ui('of')} {activities.length}</p>
         </div>
-        {onExit ? <Button variant="ghost" size="sm" onClick={onExit}><ArrowLeft className="mr-1 h-4 w-4" />Exit</Button> : null}
+        {onExit ? <Button variant="ghost" size="sm" onClick={onExit}><ArrowLeft className="mr-1 h-4 w-4" />{ui('Exit')}</Button> : null}
       </div>
 
-      <Progress value={progress} aria-label="Practice session progress" />
+      <Progress value={progress} aria-label={ui('Practice session progress')} />
 
       <Card>
         <CardHeader>
@@ -88,21 +111,21 @@ export function PracticeActivityPlayer({
           {Renderer ? (
             <Renderer
               activity={activity}
-              onAttempt={(attempt) => onAttempt?.(attempt)}
+              onAttempt={recordEvidence}
               onComplete={completeCurrent}
             />
           ) : (
             <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-              This activity type is not available yet.
+              {ui('This activity type is not available yet.')}
             </div>
           )}
 
           <div className="flex items-center justify-between gap-3 pt-2">
             <span className="text-xs text-muted-foreground">
-              {isCurrentComplete ? <span className="inline-flex items-center"><CheckCircle2 className="mr-1 h-4 w-4" />Completed</span> : 'Complete the activity to continue'}
+              {isCurrentComplete ? <span className="inline-flex items-center"><CheckCircle2 className="mr-1 h-4 w-4" />{ui('Completed')}</span> : ui('Complete the activity to continue')}
             </span>
             <Button onClick={next} disabled={!isCurrentComplete}>
-              {isLast ? 'Finish session' : 'Next'}
+              {isLast ? ui('Finish session') : ui('Next')}
               {!isLast ? <ArrowRight className="ml-1 h-4 w-4" /> : null}
             </Button>
           </div>
