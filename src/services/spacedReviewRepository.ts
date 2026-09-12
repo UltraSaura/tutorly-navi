@@ -52,33 +52,49 @@ export async function fetchSpacedReviewStates(studentId: string): Promise<Spaced
   return ((data ?? []) as ReviewRow[]).map(fromRow);
 }
 
+export async function seedSpacedReviewConcept(input: {
+  studentId: string;
+  subjectId: string;
+  conceptId: string;
+  objectiveId?: string;
+  masteredAt?: string;
+}): Promise<void> {
+  const conceptId = input.conceptId.trim();
+  if (!input.studentId || !input.subjectId || !conceptId) return;
+
+  const { data: existing, error: lookupError } = await (supabase as any)
+    .from('spaced_review_states')
+    .select('id')
+    .eq('student_id', input.studentId)
+    .eq('subject_id', input.subjectId)
+    .eq('concept_id', conceptId)
+    .maybeSingle();
+  if (lookupError || existing?.id) return;
+
+  const initial = initialSpacedReviewState({
+    studentId: input.studentId,
+    subjectId: input.subjectId,
+    conceptId,
+    objectiveId: input.objectiveId,
+    masteredAt: input.masteredAt ?? new Date().toISOString(),
+  });
+  const { error } = await (supabase as any).from('spaced_review_states').insert(toRow(initial));
+  if (error && import.meta.env.DEV) console.warn('[SpacedReview] unable to seed review state', error);
+}
+
 export async function seedSpacedReviewFromMastery(
   update: MasteryUpdateResult,
   reviewConceptId?: string,
 ): Promise<void> {
   const state = update.state;
   if ((state.currentMasteryLevel ?? 0) < 3 || state.currentScore < 70) return;
-  const conceptId = reviewConceptId?.trim() || state.conceptId;
-
-  const initial = initialSpacedReviewState({
+  await seedSpacedReviewConcept({
     studentId: state.studentId,
     subjectId: state.subjectId,
-    conceptId,
+    conceptId: reviewConceptId?.trim() || state.conceptId,
     objectiveId: state.objectiveId,
     masteredAt: state.lastSuccessfulAt ?? state.updatedAt,
   });
-
-  const { data: existing } = await (supabase as any)
-    .from('spaced_review_states')
-    .select('id')
-    .eq('student_id', state.studentId)
-    .eq('subject_id', state.subjectId)
-    .eq('concept_id', conceptId)
-    .maybeSingle();
-
-  if (existing?.id) return;
-  const { error } = await (supabase as any).from('spaced_review_states').insert(toRow(initial));
-  if (error && import.meta.env.DEV) console.warn('[SpacedReview] unable to seed review state', error);
 }
 
 export async function recordSpacedReviewAttempt(
