@@ -34,6 +34,7 @@ export interface LearningAttemptResult {
   metadata?: {
     questionId?: string;
     questionKind?: string;
+    activityEngine?: string;
     learningStyleUsed?: string;
     supportType?: string;
     targetPrerequisiteId?: string;
