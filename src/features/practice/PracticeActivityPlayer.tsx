@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,7 @@ interface PracticeActivityPlayerProps {
   studentId?: string;
   sessionTitle?: string;
   onAttempt?: (attempt: LearningAttemptResult) => void;
+  onActivityComplete?: (activity: SkillActivityDefinition, evidence: PracticeActivityEvidence[]) => void;
   onSessionComplete?: () => void;
   onExit?: () => void;
 }
@@ -23,12 +24,15 @@ export function PracticeActivityPlayer({
   studentId,
   sessionTitle = 'Practice',
   onAttempt,
+  onActivityComplete,
   onSessionComplete,
   onExit,
 }: PracticeActivityPlayerProps) {
   const ui = useInterfaceTranslation();
   const [index, setIndex] = useState(0);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  const evidenceByActivity = useRef<Record<string, PracticeActivityEvidence[]>>({});
+  const completionEmitted = useRef<Set<string>>(new Set());
   const activity = activities[index];
 
   const progress = useMemo(() => {
@@ -58,9 +62,14 @@ export function PracticeActivityPlayer({
       next.add(activity.id);
       return next;
     });
+    if (!completionEmitted.current.has(activity.id)) {
+      completionEmitted.current.add(activity.id);
+      onActivityComplete?.(activity, evidenceByActivity.current[activity.id] ?? []);
+    }
   }
 
   function recordEvidence(evidence: PracticeActivityEvidence) {
+    evidenceByActivity.current[activity.id] = [...(evidenceByActivity.current[activity.id] ?? []), evidence];
     if (!studentId) return;
     const granularConceptId = evidence.itemId?.trim() || activity.conceptId;
     const normalized = normalizePracticeAttempt({
