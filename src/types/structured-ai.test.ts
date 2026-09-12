@@ -30,6 +30,8 @@ describe('structured AI contracts', () => {
   it('rejects incomplete or out-of-range generated content', () => {
     expect(structuredLearningGenerationSchema.safeParse({ kind: 'hint', hint: { text: 'Think.', strategy: 'Compare.', revealLevel: 4, avoidsFinalAnswer: true }, groundingNote: 'x' }).success).toBe(false);
     expect(structuredLearningGenerationSchema.safeParse({ kind: 'exercise_set', exercises: [], groundingNote: 'x' }).success).toBe(false);
+    expect(structuredLearningGenerationSchema.safeParse({ kind: 'exercise_set', groundingNote: 'x', exercises: [{ id: 'x', prompt: 'x', answerType: 'multiple_choice', explanation: 'x', hint: 'x', masteryLevel: 3, difficulty: 2, tags: [] }] }).success).toBe(false);
+    expect(structuredLearningGenerationSchema.safeParse({ kind: 'exercise_set', groundingNote: 'x', exercises: [{ id: 'x', prompt: 'x', answerType: 'ordering', correctAnswer: 'first', explanation: 'x', hint: 'x', masteryLevel: 3, difficulty: 2, tags: [] }] }).success).toBe(false);
   });
 
   it('supports remediation and contextual problem outputs', () => {

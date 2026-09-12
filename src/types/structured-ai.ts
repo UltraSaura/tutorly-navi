@@ -31,6 +31,13 @@ const exerciseSchema = z.object({
   masteryLevel: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
   difficulty: z.number().int().min(1).max(5),
   tags: z.array(z.string().min(1).max(80)).max(8).default([]),
+}).superRefine((exercise, ctx) => {
+  if (exercise.answerType === 'multiple_choice' && (!exercise.choices || exercise.choices.length < 2)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['choices'], message: 'multiple_choice requires at least two choices' });
+  }
+  if (exercise.answerType === 'ordering' && (!Array.isArray(exercise.correctAnswer) || exercise.correctAnswer.length < 1)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['correctAnswer'], message: 'ordering requires an ordered answer' });
+  }
 });
 
 export const structuredExerciseSetSchema = z.object({

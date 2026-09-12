@@ -43,6 +43,13 @@ const exerciseSchema = z.object({
   explanation: z.string().min(1).max(1200), hint: z.string().min(1).max(600),
   masteryLevel: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
   difficulty: z.number().int().min(1).max(5), tags: z.array(z.string().min(1).max(80)).max(8).default([]),
+}).superRefine((exercise, ctx) => {
+  if (exercise.answerType === 'multiple_choice' && (!exercise.choices || exercise.choices.length < 2)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['choices'], message: 'multiple_choice requires at least two choices' });
+  }
+  if (exercise.answerType === 'ordering' && (!Array.isArray(exercise.correctAnswer) || exercise.correctAnswer.length < 1)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['correctAnswer'], message: 'ordering requires an ordered answer' });
+  }
 });
 const responseSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('exercise_set'), exercises: z.array(exerciseSchema).min(1).max(8), groundingNote: z.string().min(1).max(500) }),
@@ -121,7 +128,13 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
 
-    const parsedRequest = requestSchema.safeParse(await req.json());
+    let requestBody: unknown;
+    try {
+      requestBody = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid JSON request body' }), { status: 400, headers });
+    }
+    const parsedRequest = requestSchema.safeParse(requestBody);
     if (!parsedRequest.success) return new Response(JSON.stringify({ error: 'Invalid structured generation request', details: parsedRequest.error.flatten() }), { status: 400, headers });
 
     let selectedModel = parsedRequest.data.modelId;
