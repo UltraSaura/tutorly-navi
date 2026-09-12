@@ -38,7 +38,11 @@ export interface SkillActivityDefinition {
 
   difficulty: number;
 
+  title?: string;
+  description?: string;
   estimatedMinutes?: number;
+  contentVersion?: string;
+  tags?: string[];
 
   configuration: Record<string, unknown>;
 }
