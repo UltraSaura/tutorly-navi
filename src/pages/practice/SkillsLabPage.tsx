@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { PracticeActivityPlayer } from '@/features/practice/PracticeActivityPlayer';
 import { getPracticeActivityCatalog } from '@/features/practice/practiceActivityCatalog';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
+import { useAuth } from '@/context/AuthContext';
+import { usePracticeActivityMastery } from '@/hooks/usePracticeActivityMastery';
 import { getAgeLearningConfig } from '@/config/ageConfig';
 import { createPracticeActivitySession } from '@/services/practiceActivityService';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
@@ -13,7 +15,9 @@ export default function SkillsLabPage() {
   const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const { subject = '' } = useParams();
+  const { user } = useAuth();
   const activeSchoolLevel = useActiveSchoolLevel();
+  const mastery = usePracticeActivityMastery();
   const ageConfig = getAgeLearningConfig(activeSchoolLevel.normalizedLevel);
 
   const session = useMemo(
@@ -47,7 +51,9 @@ export default function SkillsLabPage() {
       <PageMeta title={`${practiceLabel} · ${subject}`} description={ui('Personalized skill practice.')} />
       <PracticeActivityPlayer
         activities={session.activities}
+        studentId={user?.id}
         sessionTitle={`${practiceLabel} · ${subject}`}
+        onAttempt={mastery.recordAttempt}
         onExit={() => navigate(backRoute)}
         onSessionComplete={() => navigate(backRoute)}
       />
