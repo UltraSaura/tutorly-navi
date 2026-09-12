@@ -155,7 +155,7 @@ export default function PracticeSubjectPage() {
     queryFn: async (): Promise<{ id: string; title: string; school_levels: string[] | null }[]> => {
       if (!subjectQuery.data?.id) return [];
 
-      const { data, error: banksError } = await (supabase as any)
+      const { data, error: banksError } = await supabase
         .from('quiz_banks')
         .select('id, title, school_levels')
         .eq('subject_id', subjectQuery.data.id)
@@ -163,7 +163,7 @@ export default function PracticeSubjectPage() {
         .limit(50);
 
       if (banksError) throw banksError;
-      return ((data ?? []) as any[]).filter((bank) => bankMatchesLevel(bank.school_levels, activeLevel));
+      return (data ?? []).filter((bank) => bankMatchesLevel(bank.school_levels, activeLevel));
     },
     enabled: Boolean(subjectQuery.data?.id && activeLevel),
   });
@@ -282,7 +282,7 @@ export default function PracticeSubjectPage() {
     limit: 1,
   });
 
-  const topicMastery = masteryQuery.data || {};
+  const topicMastery = useMemo(() => masteryQuery.data || {}, [masteryQuery.data]);
 
   const enrichedDomains = useMemo(() => {
     return domainGroups.map((domain) => {
@@ -474,6 +474,34 @@ export default function PracticeSubjectPage() {
             >
               {ui("Commencer le quiz")}
             </button>
+          </div>
+        )}
+
+        {['mathematiques', 'mathematics', 'maths', 'math'].includes(subjectSlug.toLowerCase().replace(/[^a-z]/g, '')) && (
+          <div className="rounded-2xl border-2 p-4 bg-white" style={{ borderColor: '#9FE1CB' }}>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl" style={{ background: '#E2F7F1' }}>
+                  <Calculator className="h-6 w-6" style={{ color: '#0A8C72' }} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
+                    {ui("Math Skills Lab")}
+                  </p>
+                  <p className="text-xs" style={{ color: '#667085' }}>
+                    {ui("Targeted interactive drills, mental math, and arithmetic challenges.")}
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => navigate(`/practice/${encodeURIComponent(subjectSlug)}/lab`)}
+                className="rounded-xl px-4 py-2 text-sm font-bold shrink-0"
+                style={{ background: '#12C6A0', color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}
+              >
+                <Sparkles className="mr-1.5 h-4 w-4" />
+                {ui("Enter Lab")}
+              </Button>
+            </div>
           </div>
         )}
 
