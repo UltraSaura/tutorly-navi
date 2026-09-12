@@ -54,10 +54,23 @@ export interface RecommendationHomeworkEvidence {
   updatedAt?: string | null;
 }
 
+export interface RecommendationSpacedReviewEvidence {
+  subjectId: string;
+  subjectSlug: string;
+  subjectName?: string;
+  conceptId: string;
+  conceptName?: string;
+  objectiveId?: string;
+  stage: number;
+  nextReviewAt: string;
+}
+
 export interface NextBestActionInput {
   studentId: string;
   curriculum: RecommendationCurriculumTopic[];
   progress: RecommendationProgressEvidence[];
   homework: RecommendationHomeworkEvidence[];
+  spacedReviews?: RecommendationSpacedReviewEvidence[];
+  now?: string;
   maxActions?: number;
 }
