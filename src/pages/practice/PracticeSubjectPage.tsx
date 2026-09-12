@@ -30,6 +30,9 @@ import { usePracticeTopics } from '@/hooks/usePracticeTopics';
 import type { PracticeDomainGroup, PracticeTopic } from '@/hooks/usePracticeTopics';
 import { resolveExamDisciplinesForSubjectSlug } from '@/utils/examSubjectMapping';
 import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
+import { getAgeLearningConfig } from '@/config/ageConfig';
+import { getPracticeActivityCatalog } from '@/features/practice/practiceActivityCatalog';
+import { hasPracticeActivitiesForSubject } from '@/services/practiceActivityService';
 
 type TopicState = 'mastered' | 'in_progress' | 'not_started';
 
@@ -90,6 +93,17 @@ function formatSubjectLabel(subjectSlug: string) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
+}
+
+function canonicalPracticeSubject(subjectSlug: string): string {
+  const normalized = subjectSlug.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]/g, '');
+  const aliases: Record<string, string> = {
+    math: 'mathematiques', maths: 'mathematiques', mathematics: 'mathematiques', mathematiques: 'mathematiques',
+    french: 'francais', francais: 'francais', english: 'anglais', anglais: 'anglais',
+    science: 'sciences', sciences: 'sciences', history: 'histoire', histoire: 'histoire',
+    geography: 'geographie', geographie: 'geographie',
+  };
+  return aliases[normalized] ?? subjectSlug;
 }
 
 function practiceModeForState(state: TopicState) {
@@ -327,6 +341,9 @@ export default function PracticeSubjectPage() {
   const hasSubjectQuizBanks = Boolean(firstSubjectQuizBank);
   const hasExamPrepContent = showExamSection && (hasTrainingItems || examPaperCount > 0);
   const hasPracticeQuizContent = hasSubjectQuizBanks || hasExamPrepContent;
+  const catalogSubject = canonicalPracticeSubject(subjectSlug);
+  const ageBand = getAgeLearningConfig(activeSchoolLevel.normalizedLevel).band;
+  const hasLabActivities = hasPracticeActivitiesForSubject(getPracticeActivityCatalog(), catalogSubject, ageBand);
   const isResolvingExamPrepFallback =
     showExamSection && enrichedDomains.length === 0 && (papersQuery.isLoading || trainingItemsQuery.isLoading);
   const isResolvingQuizFallback =
@@ -345,7 +362,7 @@ export default function PracticeSubjectPage() {
     );
   }
 
-  if (enrichedDomains.length === 0 && !hasPracticeQuizContent) {
+  if (enrichedDomains.length === 0 && !hasPracticeQuizContent && !hasLabActivities) {
     return (
       <div className="min-h-screen bg-background pb-24">
         <PageMeta title={pageTitle} description="" />
@@ -477,7 +494,7 @@ export default function PracticeSubjectPage() {
           </div>
         )}
 
-        {['mathematiques', 'mathematics', 'maths', 'math'].includes(subjectSlug.toLowerCase().replace(/[^a-z]/g, '')) && (
+        {hasLabActivities && (
           <div className="rounded-2xl border-2 p-4 bg-white" style={{ borderColor: '#9FE1CB' }}>
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -486,10 +503,10 @@ export default function PracticeSubjectPage() {
                 </div>
                 <div>
                   <p className="text-sm font-bold" style={{ color: '#0F172A', fontFamily: 'Poppins, sans-serif' }}>
-                    {ui("Math Skills Lab")}
+                    {catalogSubject === 'mathematiques' ? ui("Math Skills Lab") : ui("Skills Lab")}
                   </p>
                   <p className="text-xs" style={{ color: '#667085' }}>
-                    {ui("Targeted interactive drills, mental math, and arithmetic challenges.")}
+                    {catalogSubject === 'mathematiques' ? ui("Targeted interactive drills, mental math, and arithmetic challenges.") : ui("Interactive practice for this subject.")}
                   </p>
                 </div>
               </div>

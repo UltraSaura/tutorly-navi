@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SkillActivityDefinition } from '@/types/skill-activity';
 import { StructuredPracticeRenderer } from './StructuredPracticeRenderer';
 
@@ -14,6 +14,7 @@ const orderActivity: SkillActivityDefinition = {
 };
 
 describe('StructuredPracticeRenderer', () => {
+  afterEach(cleanup);
   it('emits verified evidence for a correct localized choice', () => {
     const onAttempt = vi.fn();
     render(<StructuredPracticeRenderer activity={choiceActivity} onAttempt={onAttempt} onComplete={vi.fn()} />);
