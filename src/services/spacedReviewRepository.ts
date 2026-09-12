@@ -52,14 +52,18 @@ export async function fetchSpacedReviewStates(studentId: string): Promise<Spaced
   return ((data ?? []) as ReviewRow[]).map(fromRow);
 }
 
-export async function seedSpacedReviewFromMastery(update: MasteryUpdateResult): Promise<void> {
+export async function seedSpacedReviewFromMastery(
+  update: MasteryUpdateResult,
+  reviewConceptId?: string,
+): Promise<void> {
   const state = update.state;
   if ((state.currentMasteryLevel ?? 0) < 3 || state.currentScore < 70) return;
+  const conceptId = reviewConceptId?.trim() || state.conceptId;
 
   const initial = initialSpacedReviewState({
     studentId: state.studentId,
     subjectId: state.subjectId,
-    conceptId: state.conceptId,
+    conceptId,
     objectiveId: state.objectiveId,
     masteredAt: state.lastSuccessfulAt ?? state.updatedAt,
   });
@@ -69,7 +73,7 @@ export async function seedSpacedReviewFromMastery(update: MasteryUpdateResult): 
     .select('id')
     .eq('student_id', state.studentId)
     .eq('subject_id', state.subjectId)
-    .eq('concept_id', state.conceptId)
+    .eq('concept_id', conceptId)
     .maybeSingle();
 
   if (existing?.id) return;
@@ -77,13 +81,19 @@ export async function seedSpacedReviewFromMastery(update: MasteryUpdateResult): 
   if (error && import.meta.env.DEV) console.warn('[SpacedReview] unable to seed review state', error);
 }
 
-export async function recordSpacedReviewAttempt(attempt: LearningAttemptResult, reviewedAt = new Date().toISOString()): Promise<void> {
+export async function recordSpacedReviewAttempt(
+  attempt: LearningAttemptResult,
+  reviewConceptId: string,
+  reviewedAt = new Date().toISOString(),
+): Promise<void> {
+  const conceptId = reviewConceptId.trim();
+  if (!conceptId) return;
   const { data, error } = await (supabase as any)
     .from('spaced_review_states')
     .select('student_id, subject_id, concept_id, objective_id, stage, next_review_at, last_reviewed_at, last_result_correct')
     .eq('student_id', attempt.studentId)
     .eq('subject_id', attempt.subjectId)
-    .eq('concept_id', attempt.conceptId)
+    .eq('concept_id', conceptId)
     .maybeSingle();
   if (error || !data) return;
 
@@ -93,6 +103,6 @@ export async function recordSpacedReviewAttempt(attempt: LearningAttemptResult, 
     .update(toRow(next))
     .eq('student_id', attempt.studentId)
     .eq('subject_id', attempt.subjectId)
-    .eq('concept_id', attempt.conceptId);
+    .eq('concept_id', conceptId);
   if (updateError && import.meta.env.DEV) console.warn('[SpacedReview] unable to advance review state', updateError);
 }
