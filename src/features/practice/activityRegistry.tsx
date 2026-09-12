@@ -1,10 +1,20 @@
 import type { ComponentType } from 'react';
-import type { LearningAttemptResult } from '@/types/learning-attempt';
+import type { MasteryLevel } from '@/types/mastery-level';
 import type { SkillActivityDefinition, SkillActivityEngine } from '@/types/skill-activity';
+
+export interface PracticeActivityEvidence {
+  masteryLevel: MasteryLevel;
+  correct: boolean;
+  attemptNumber: number;
+  hintsUsed: number;
+  responseTimeMs?: number;
+  itemId?: string;
+  tags?: string[];
+}
 
 export interface PracticeActivityRendererProps {
   activity: SkillActivityDefinition;
-  onAttempt: (attempt: LearningAttemptResult) => void;
+  onAttempt: (attempt: PracticeActivityEvidence) => void;
   onComplete: () => void;
 }
 
