@@ -9,9 +9,9 @@ import type {
 
 function failuresFor(action: RecommendedAction, input: PersonalizationInput): number {
   if (!action.conceptId) return 0;
-  return input.homework
+  return Math.min(12, input.homework
     .filter((item) => item.topicId === action.conceptId && item.isCorrect === false)
-    .reduce((sum, item) => sum + Math.max(1, item.attemptsCount || 1), 0);
+    .reduce((sum, item) => sum + Math.min(3, Math.max(1, Number.isFinite(item.attemptsCount) ? item.attemptsCount : 1)), 0));
 }
 
 function modeFor(action: RecommendedAction, failures: number): PersonalizedLearningMode {
@@ -52,7 +52,10 @@ export function personalizeNextBestActions(input: PersonalizationInput): Persona
     const failures = failuresFor(action, input);
     const learningMode = modeFor(action, failures);
     const metadataFailures = typeof action.metadata?.failedAttempts === 'number' ? action.metadata.failedAttempts : 0;
-    const evidenceCount = Math.max(failures, metadataFailures, action.reason === 'curriculum' ? 0 : 1);
+    const hasDirectSignal = action.reason === 'continue' || action.reason === 'weak_skill' || action.reason === 'prerequisite'
+      || action.reason === 'spaced_review' || action.reason === 'homework_followup' || action.reason === 'enrichment'
+      || action.source === 'practice';
+    const evidenceCount = Math.max(failures, metadataFailures, hasDirectSignal && action.reason !== 'enrichment' ? 1 : 0);
 
     return {
       ...action,

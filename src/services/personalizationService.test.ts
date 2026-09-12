@@ -48,4 +48,21 @@ describe('personalizeNextBestActions', () => {
     const result = personalizeNextBestActions({ actions: [action()], homework: [], schoolLevel: 'ce1' });
     expect(result[0].personalization).toMatchObject({ learningMode: 'new_learning', ageBand: 'early_primary', confidence: 'low', evidenceCount: 0 });
   });
+
+  it('supports prerequisite remediation and preserves metadata without mutation', () => {
+    const original = action({ reason: 'prerequisite', metadata: { source: 'trusted', failedAttempts: 2 } });
+    const result = personalizeNextBestActions({ actions: [original], homework: [], schoolLevel: 'ce2' });
+    expect(result[0].personalization.learningMode).toBe('guided_remediation');
+    expect(result[0].metadata).toMatchObject({ source: 'trusted', personalizedLearningMode: 'guided_remediation' });
+    expect(original.metadata).toEqual({ source: 'trusted', failedAttempts: 2 });
+  });
+
+  it('caps corrupt attempts and keeps enrichment evidence at zero', () => {
+    const result = personalizeNextBestActions({
+      actions: [action({ reason: 'weak_skill' }), action({ id: 'enrichment', conceptId: 'geometry', reason: 'enrichment' })],
+      homework: [{ id: 'bad', topicId: 'fractions', isCorrect: false, attemptsCount: 999999 }],
+    });
+    expect(result[0].personalization.evidenceCount).toBe(3);
+    expect(result[1].personalization.evidenceCount).toBe(0);
+  });
 });
