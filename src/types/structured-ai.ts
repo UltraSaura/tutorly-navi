@@ -45,7 +45,7 @@ export const structuredHintSchema = z.object({
     text: z.string().min(1).max(700),
     strategy: z.string().min(1).max(500),
     revealLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]),
-    avoidsFinalAnswer: z.boolean(),
+    avoidsFinalAnswer: z.literal(true),
   }),
   groundingNote: z.string().min(1).max(500),
 });
