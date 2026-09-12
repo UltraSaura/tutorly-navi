@@ -32,7 +32,7 @@
     "homework": "Homework", 
     "progress": "Progress",
     "rewards": "Rewards",
-    "home": "Tutor",
+    "home": "Home",
     "learning": "Learning",
     "practice": "Practice",
     "grades": "Grades",
@@ -62,7 +62,7 @@
     "close": "Close",
     "submit": "Submit",
     "retry": "Retry",
-    "selectSubject": "Select a subject"
+    "selectSubject": "Select subject"
   },
   "chat": {
     "placeholder": "Type your question or homework here…",
