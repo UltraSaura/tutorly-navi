@@ -1,15 +1,11 @@
 import type { SkillActivityDefinition } from '@/types/skill-activity';
+import { CROSS_SUBJECT_ACTIVITIES } from './crossSubject/crossSubjectDefinitions';
 import { MATH_SKILLS_LAB_ACTIVITIES } from './math/mathSkillDefinitions';
 
-/**
- * Trusted cross-subject activity catalog.
- *
- * Phase 10 publishes the first deterministic subject content: Math Skills Lab.
- * Later phases add French, English, Science, History and Geography modules without
- * changing the shared Phase 9 runtime.
- */
+/** Trusted deterministic activity catalog shared by the Practice runtime. */
 const PRACTICE_ACTIVITY_DEFINITIONS: readonly SkillActivityDefinition[] = [
   ...MATH_SKILLS_LAB_ACTIVITIES,
+  ...CROSS_SUBJECT_ACTIVITIES,
 ];
 
 export function getPracticeActivityCatalog(): SkillActivityDefinition[] {
