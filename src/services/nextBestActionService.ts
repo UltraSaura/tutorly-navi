@@ -77,6 +77,34 @@ function buildWeakSkillActions(input: NextBestActionInput): RecommendedAction[] 
     });
 }
 
+function buildSpacedReviewActions(input: NextBestActionInput): RecommendedAction[] {
+  const now = new Date(input.now ?? new Date().toISOString()).getTime();
+  if (!Number.isFinite(now)) return [];
+  return (input.spacedReviews ?? [])
+    .filter((review) => {
+      const due = new Date(review.nextReviewAt).getTime();
+      return Number.isFinite(due) && due <= now;
+    })
+    .slice()
+    .sort((a, b) => a.nextReviewAt.localeCompare(b.nextReviewAt) || a.conceptId.localeCompare(b.conceptId))
+    .map((review, index) => ({
+      id: `spaced-review:${review.subjectId}:${review.conceptId}`,
+      source: 'practice' as const,
+      subjectId: review.subjectId,
+      subjectName: review.subjectName,
+      conceptId: review.conceptId,
+      conceptName: review.conceptName,
+      objectiveId: review.objectiveId,
+      reason: 'spaced_review' as const,
+      priority: 450 - Math.min(49, index),
+      estimatedMinutes: 5,
+      title: review.conceptName ? `Review ${review.conceptName}` : 'Review a mastered skill',
+      description: 'A short review now will help you remember it longer.',
+      route: `/practice/${encodeURIComponent(review.subjectSlug)}/lab?review=${encodeURIComponent(review.conceptId)}`,
+      metadata: { reviewStage: review.stage, nextReviewAt: review.nextReviewAt },
+    } satisfies RecommendedAction));
+}
+
 function buildHomeworkActions(input: NextBestActionInput): RecommendedAction[] {
   const topics = topicById(input.curriculum);
   return input.homework
@@ -143,17 +171,14 @@ function diversify(actions: RecommendedAction[], maxActions: number): Recommende
   return result;
 }
 
-/**
- * Deterministic Phase 8 ranking. It only ranks evidence supplied by callers.
- * Prerequisite and spaced-review reasons are intentionally reserved for later
- * persisted evidence; this service never fabricates either one.
- */
+/** Deterministic ranking from trusted evidence only. */
 export function getNextBestActions(input: NextBestActionInput): RecommendedAction[] {
   if (!input.studentId) return [];
   const maxActions = Math.max(1, input.maxActions ?? DEFAULT_MAX_ACTIONS);
   const candidates = [
     ...buildContinueActions(input),
     ...buildWeakSkillActions(input),
+    ...buildSpacedReviewActions(input),
     ...buildHomeworkActions(input),
     ...buildCurriculumActions(input),
   ];
