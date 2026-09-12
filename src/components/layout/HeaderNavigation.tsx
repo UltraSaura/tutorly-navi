@@ -1,6 +1,6 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from "react";
-import { House, GraduationCap, HeadphonesIcon, History, User, Globe, LogOut, ChevronDown, Settings, BookOpen, Trophy, Target } from "lucide-react";
+import { House, GraduationCap, HeadphonesIcon, User, Globe, LogOut, ChevronDown, Settings, BookOpen, Trophy, Target, MessageCircle } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
@@ -12,10 +12,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
 const desktopNavigation = [
-  { title: "nav.home", url: "/home", icon: House },
-  { title: "nav.learning", url: "/learning", icon: GraduationCap },
-  { title: "nav.practice", url: "/practice", icon: Target },
-  { title: "nav.history", url: "/exercise-history", icon: History },
+  { title: "nav.home", fallbackTitle: "Home", url: "/home", icon: House },
+  { title: "nav.learning", fallbackTitle: "Learn", url: "/learning", icon: GraduationCap },
+  { title: "nav.tutor", fallbackTitle: "Tutor", url: "/chat", icon: MessageCircle },
+  { title: "nav.practice", fallbackTitle: "Practice", url: "/practice", icon: Target },
 ];
 
 const LanguageMenuItems = () => {
@@ -33,17 +33,22 @@ export function HeaderNavigation() {
   const [isSigningOut] = useState(false);
   const { isAdmin } = useAdminAuth();
   const currentPath = location.pathname;
-  const isActive = (path: string) => currentPath === path;
+  const isActive = (path: string) => currentPath === path || currentPath.startsWith(path + '/');
   const handleSignOut = () => { hardLogout(); };
   const userInitials = user?.email?.charAt(0).toUpperCase() || 'U';
 
   return <div className="flex items-center justify-between w-full h-full px-6">
     <div className="flex items-center gap-3"><img src="/logo.png" alt={ui("Stuwy Logo")} className="w-8 h-8" /><span className="text-lg font-semibold text-foreground">Stuwy</span></div>
-    <nav className="hidden md:flex items-center space-x-1">{desktopNavigation.map((item) => <NavLink key={item.title} to={item.url} className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive(item.url) ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"}`}><item.icon className="h-4 w-4" /><span>{t(item.title)}</span></NavLink>)}</nav>
+    <nav className="hidden md:flex items-center space-x-1">{desktopNavigation.map((item) => {
+      const translated = t(item.title);
+      const label = translated === item.title ? item.fallbackTitle : translated;
+      return <NavLink key={item.title} to={item.url} className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive(item.url) ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"}`}><item.icon className="h-4 w-4" /><span>{label}</span></NavLink>;
+    })}</nav>
     <div className="hidden md:flex items-center gap-3"><AdminPreviewSelector /><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" className="flex items-center gap-2 h-auto p-2 hover:bg-accent/50"><Avatar className="h-8 w-8"><AvatarFallback className="text-sm">{userInitials}</AvatarFallback></Avatar><div className="flex flex-col items-start text-sm"><span className="text-xs text-muted-foreground truncate max-w-32">{user?.email}</span></div><ChevronDown className="h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-56 bg-background border shadow-md">
       <DropdownMenuItem asChild><NavLink to="/profile" className="flex items-center"><User className="mr-2 h-4 w-4" /><span>{t('nav.profile')}</span></NavLink></DropdownMenuItem>
       <DropdownMenuItem asChild><NavLink to="/my-program" className="flex items-center"><BookOpen className="mr-2 h-4 w-4" /><span>{ui("My Program")}</span></NavLink></DropdownMenuItem>
       <DropdownMenuItem asChild><NavLink to="/dashboard" className="flex items-center"><Trophy className="mr-2 h-4 w-4" /><span>{ui("Dashboard")}</span></NavLink></DropdownMenuItem>
+      <DropdownMenuItem asChild><NavLink to="/exercise-history" className="flex items-center"><BookOpen className="mr-2 h-4 w-4" /><span>{ui("History")}</span></NavLink></DropdownMenuItem>
       <DropdownMenuItem asChild><NavLink to="/support" className="flex items-center"><HeadphonesIcon className="mr-2 h-4 w-4" /><span>{t('nav.support')}</span></NavLink></DropdownMenuItem>
       {isAdmin && <DropdownMenuItem asChild><NavLink to="/admin" className="flex items-center"><Settings className="mr-2 h-4 w-4" /><span>{ui("Admin Panel")}</span></NavLink></DropdownMenuItem>}
       <DropdownMenuSeparator /><DropdownMenuLabel className="flex items-center"><Globe className="mr-2 h-4 w-4" />{t('nav.language')}</DropdownMenuLabel><LanguageMenuItems /><DropdownMenuSeparator />
