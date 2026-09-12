@@ -21,7 +21,7 @@ export function usePracticeActivityMastery() {
 
     setMasteryByConcept(masteryRef.current);
     setLastUpdate(update);
-    void seedSpacedReviewFromMastery(update);
+    void seedSpacedReviewFromMastery(update, attempt.metadata?.parentConceptId);
     return update;
   }, []);
 
