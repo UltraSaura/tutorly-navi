@@ -20,6 +20,9 @@ export type SkillActivityEngine =
   | "simulation"
   | "error_detective"
   | "sentence_builder"
+  | "flash_recall"
+  | "map_interaction"
+  | "multiple_choice_challenge"
   | "mental_chain"
   | "missing_number";
 
