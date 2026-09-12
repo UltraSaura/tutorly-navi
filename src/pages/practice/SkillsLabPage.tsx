@@ -3,8 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { Button } from '@/components/ui/button';
 import { PracticeActivityPlayer } from '@/features/practice/PracticeActivityPlayer';
-import { getPracticeActivityCatalog } from '@/features/practice/practiceActivityCatalog';
+import { registerCrossSubjectActivityRenderers } from '@/features/practice/crossSubject/registerCrossSubjectActivities';
 import { registerMathSkillActivityRenderers } from '@/features/practice/math/registerMathSkillActivities';
+import { getPracticeActivityCatalog } from '@/features/practice/practiceActivityCatalog';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { useAuth } from '@/context/AuthContext';
 import { usePracticeActivityMastery } from '@/hooks/usePracticeActivityMastery';
@@ -13,10 +14,32 @@ import { createPracticeActivitySession } from '@/services/practiceActivityServic
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 registerMathSkillActivityRenderers();
+registerCrossSubjectActivityRenderers();
 
-function canonicalPracticeSubject(subject: string): string {
-  const normalized = subject.toLowerCase().replace(/[^a-z]/g, '');
-  return ['math', 'maths', 'mathematics', 'mathematiques'].includes(normalized) ? 'mathematiques' : subject;
+const SUBJECT_ALIASES: Record<string, string> = {
+  math: 'mathematiques',
+  maths: 'mathematiques',
+  mathematics: 'mathematiques',
+  mathematiques: 'mathematiques',
+  french: 'francais',
+  francais: 'francais',
+  english: 'anglais',
+  anglais: 'anglais',
+  science: 'sciences',
+  sciences: 'sciences',
+  history: 'histoire',
+  histoire: 'histoire',
+  geography: 'geographie',
+  geographie: 'geographie',
+};
+
+export function canonicalPracticeSubject(subject: string): string {
+  const normalized = subject
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z]/g, '');
+  return SUBJECT_ALIASES[normalized] ?? subject;
 }
 
 export default function SkillsLabPage() {
@@ -30,12 +53,11 @@ export default function SkillsLabPage() {
   const catalogSubject = canonicalPracticeSubject(subject);
 
   const session = useMemo(
-    () =>
-      createPracticeActivitySession({
-        activities: getPracticeActivityCatalog(),
-        subjectId: catalogSubject,
-        ageBand: ageConfig.band,
-      }),
+    () => createPracticeActivitySession({
+      activities: getPracticeActivityCatalog(),
+      subjectId: catalogSubject,
+      ageBand: ageConfig.band,
+    }),
     [catalogSubject, ageConfig.band],
   );
 
