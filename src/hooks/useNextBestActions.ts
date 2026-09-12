@@ -3,6 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useStudentCurriculum } from '@/hooks/useStudentCurriculum';
 import { supabase } from '@/integrations/supabase/client';
 import { getNextBestActions } from '@/services/nextBestActionService';
+import { fetchSpacedReviewStates } from '@/services/spacedReviewRepository';
 import type { RecommendationCurriculumTopic } from '@/types/recommendation';
 
 export function useNextBestActions() {
@@ -30,7 +31,7 @@ export function useNextBestActions() {
     queryKey: ['home-next-best-action-evidence', user?.id],
     enabled: Boolean(user?.id),
     queryFn: async () => {
-      const [progressResult, homeworkResult] = await Promise.all([
+      const [progressResult, homeworkResult, reviewResult] = await Promise.all([
         supabase
           .from('user_learning_progress')
           .select('topic_id, subject_id, progress_type, progress_percentage, updated_at')
@@ -43,11 +44,12 @@ export function useNextBestActions() {
           .eq('user_id', user!.id)
           .order('updated_at', { ascending: false })
           .limit(50),
+        fetchSpacedReviewStates(user!.id).then((data) => ({ data, error: null })).catch((error) => ({ data: [], error })),
       ]);
 
-      // Recommendation evidence is fail-open: one unavailable source must not make Home unusable.
       if (progressResult.error && import.meta.env.DEV) console.warn('[Home] progress evidence unavailable', progressResult.error);
       if (homeworkResult.error && import.meta.env.DEV) console.warn('[Home] homework evidence unavailable', homeworkResult.error);
+      if (reviewResult.error && import.meta.env.DEV) console.warn('[Home] spaced review evidence unavailable', reviewResult.error);
 
       return {
         progress: (progressResult.data ?? []).filter((row) => Boolean(row.topic_id)).map((row) => ({
@@ -65,6 +67,14 @@ export function useNextBestActions() {
           attemptsCount: row.attempts_count,
           updatedAt: row.updated_at,
         })),
+        spacedReviews: reviewResult.data.map((review) => ({
+          subjectId: review.subjectId,
+          subjectSlug: review.subjectId,
+          conceptId: review.conceptId,
+          objectiveId: review.objectiveId,
+          stage: review.stage,
+          nextReviewAt: review.nextReviewAt,
+        })),
       };
     },
     staleTime: 60_000,
@@ -76,6 +86,7 @@ export function useNextBestActions() {
         curriculum,
         progress: evidence.data?.progress ?? [],
         homework: evidence.data?.homework ?? [],
+        spacedReviews: evidence.data?.spacedReviews ?? [],
       })
     : [];
 
