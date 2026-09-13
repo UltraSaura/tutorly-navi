@@ -376,7 +376,13 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       }
       // Odd phase: write digit
       if (language === 'fr') {
-        explanations.push(`${info.top} − ${info.bottom} = ${info.diff}. On écrit ${info.diff} dans la colonne des ${pn}.`);
+        // In the French written method, an emprunt is recorded by adding one
+        // to the lower line while retaining the original upper digit. This
+        // keeps the displayed equivalent operation (e.g. 5 − 3) consistent
+        // with the notation students see on paper.
+        const frenchTop = info.borrowed ? info.top - 10 + 1 : info.top;
+        const frenchBottom = info.borrowed ? info.bottom + 1 : info.bottom;
+        explanations.push(`${frenchTop} − ${frenchBottom} = ${info.diff}. On écrit ${info.diff} dans la colonne des ${pn}.`);
       } else {
         explanations.push(`${info.top} − ${info.bottom} = ${info.diff}. Write ${info.diff} in the ${pn} column.`);
       }
@@ -1178,6 +1184,17 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 }
               }
 
+              // French notation writes the borrowed unit on the lower line.
+              // Keep this visual adjustment local to the displayed row; the
+              // calculation data remains unchanged.
+              const frenchBottomDigits = bDisplay.map((digit, index) => {
+                if (language !== 'fr') return digit;
+                const borrowedStep = stepsRTL.slice(0, processedColumns).find((step) =>
+                  step.borrowed && digitColToVisualIndex(step.index, displayIntDigits, hasDecimal) === index,
+                );
+                return borrowedStep ? String(Number(digit) + 1) : digit;
+              });
+
               // Build result digits array for reveal (RIGHT TO LEFT)
               const resultDigits = (() => {
                 // Build result array aligned with input columns
@@ -1236,7 +1253,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   {/* Subtrahend row with minus sign - right-aligned like addition */}
                   <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${n + 1}, 2rem)` }}>
                     <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">−</div>
-                    {bDisplay.map((ch, i) => (
+                    {frenchBottomDigits.map((ch, i) => (
                       <div key={i} className={cn("w-8 text-center text-lg md:text-xl font-bold", ch === separator ? "text-slate-500 dark:text-slate-400" : "text-gray-800 dark:text-gray-200")}>
                         {ch}
                         </div>
