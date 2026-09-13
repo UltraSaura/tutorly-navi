@@ -48,7 +48,6 @@ const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = 
   } = useExercises();
   const { getActiveSubjects } = useAdmin();
 
-  const [uploadRequest, setUploadRequest] = useState<'document' | 'photo' | 'camera' | null>(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -137,7 +136,7 @@ const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = 
         className={`h-full overflow-x-hidden ${showWelcomeState ? 'overflow-auto bg-white' : 'overflow-auto'}`}
         style={{
           paddingBottom: showWelcomeState
-            ? `${isMobile ? 150 : 100}px`
+            ? `${isMobile ? 190 : 110}px`
             : keyboardVisible && keyboardHeight > 0
               ? `${keyboardHeight + 80}px`
               : `${isMobile ? 128 : 80}px`,
@@ -149,11 +148,7 @@ const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = 
               key="welcome-fox"
               exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.25 } }}
             >
-              <WelcomeFox
-                onUploadDocument={() => setUploadRequest('document')}
-                onUploadPhoto={() => setUploadRequest('photo')}
-                onOpenCamera={() => setUploadRequest('camera')}
-              />
+              <WelcomeFox />
             </motion.div>
           )}
         </AnimatePresence>
@@ -204,13 +199,10 @@ const ChatInterface = ({ adaptiveData }: { adaptiveData?: TutorAdaptiveData } = 
               handlePhotoUpload={handlePhotoFileUpload}
               isLoading={isLoading}
               onKeyboardChange={handleKeyboardChange}
-              uploadRequest={uploadRequest}
-              onUploadRequestHandled={() => setUploadRequest(null)}
             />
           </div>
         </div>
       )}
-
     </div>
   );
 };
