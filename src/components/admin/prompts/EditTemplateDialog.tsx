@@ -1,3 +1,4 @@
+import { PROMPT_USAGE_TYPES, getPromptUsageLabel, type PromptUsageType } from './promptUsageLabels';
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -132,7 +133,7 @@ export const EditTemplateDialog = ({
             </Label>
             <Select 
               value={editedTemplate.usage_type || ''} 
-              onValueChange={(value: 'chat' | 'grading' | 'explanation' | 'math_enhanced' | 'grouped_retry_practice') => 
+              onValueChange={(value: PromptUsageType) =>
                 setEditedTemplate({ ...editedTemplate, usage_type: value })
               }
             >
@@ -140,11 +141,9 @@ export const EditTemplateDialog = ({
                 <SelectValue placeholder="Select template type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="chat">Chat</SelectItem>
-                <SelectItem value="grading">Grading</SelectItem>
-                <SelectItem value="explanation">Explanation</SelectItem>
-                <SelectItem value="math_enhanced">Math Enhanced</SelectItem>
-                <SelectItem value="grouped_retry_practice">Grouped Retry Practice</SelectItem>
+                {PROMPT_USAGE_TYPES.map(type => (
+                  <SelectItem key={type} value={type}>{getPromptUsageLabel(type)}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

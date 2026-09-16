@@ -382,11 +382,11 @@ export function TwoCards({
   }, [shouldShowInteractiveStepper, s.exercise]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3">
+    <div className="flex min-h-full flex-col gap-3 pb-2">
       {!isGuardian && shouldShowInteractiveStepper ? (
         guidedView === 'interactive' ? (
-          <div className="flex min-h-0 flex-1 flex-col gap-3">
-            <div className="shrink-0 rounded-xl border bg-muted p-4">
+          <div className="flex flex-none flex-col gap-3">
+            <div className="shrink-0 rounded-lg border bg-muted/70 px-4 py-3">
               <div className="font-semibold">{t('exercises.explanation.headers.exercise')}</div>
               <div
                 className={[
@@ -408,15 +408,15 @@ export function TwoCards({
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 rounded-xl border bg-card p-4 shadow-sm">
-              <div className="font-semibold mb-3">{t('exercises.explanation.headers.interactive_practice')}</div>
+            <div className="flex-none px-0.5">
+              <div className="mb-2 font-semibold">{t('exercises.explanation.headers.interactive_practice')}</div>
               <CompactMathStepper 
                 expression={exampleExpression}
                 className="text-sm"
               />
             </div>
 
-            <div className="shrink-0 flex justify-end">
+            <div className="sticky bottom-0 z-10 flex shrink-0 justify-end bg-card/95 py-2 backdrop-blur-sm">
               <Button
                 type="button"
                 onClick={() => setGuidedView('lesson')}

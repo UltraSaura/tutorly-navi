@@ -172,9 +172,9 @@ export function KidExplanationFlow({
   ];
 
   return (
-    <div className="flex h-full min-h-0 flex-col justify-between gap-2">
+    <div className="flex h-full min-h-0 flex-col gap-3 pb-2">
       {/* Active step only */}
-      <div className={isCheckStep ? "min-h-0 flex-1 overflow-hidden" : "overflow-visible"}>
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         <AnimatePresence mode="wait">
           {isDone ? (
             <motion.div
@@ -289,7 +289,7 @@ export function KidExplanationFlow({
 
       {/* Navigation controls */}
       {!isDone && (
-        <div className="space-y-1.5 border-t border-slate-100 pt-2">
+        <div className="shrink-0 space-y-1.5 border-t border-slate-100 bg-card pt-2">
           <div className="flex items-center justify-between gap-2">
           <motion.button
             type="button"

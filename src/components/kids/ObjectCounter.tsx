@@ -70,7 +70,7 @@ export function ObjectCounter({
       : safeA * safeB;
 
   return (
-    <div className="rounded-2xl border-2 border-sky-100 bg-sky-50/50 p-4 space-y-3">
+    <div className="space-y-3">
       {/* Group A */}
       <div className="space-y-1">
         <p className="text-xs font-semibold text-sky-700 uppercase tracking-wide">

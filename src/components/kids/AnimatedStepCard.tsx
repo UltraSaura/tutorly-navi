@@ -66,8 +66,8 @@ export function AnimatedStepCard({
         damping: 18,
         delay: index * 0.18,
       }}
-      className={`relative flex ${fillHeight ? "h-full min-h-0" : "h-auto"} flex-col overflow-hidden rounded-xl border ${colors.border} bg-gradient-to-br ${colors.bg} p-4 transition-all ${
-        isCurrent ? "shadow-md ring-2 ring-offset-2 ring-violet-200" : "shadow-sm"
+      className={`relative flex ${fillHeight ? "h-full min-h-0" : "h-auto"} flex-col overflow-hidden rounded-xl p-2 transition-all ${
+        isCurrent ? "" : ""
       }`}
     >
       {/* Side accent bar */}
@@ -81,7 +81,7 @@ export function AnimatedStepCard({
       <div className={`flex ${fillHeight ? "min-h-0 flex-1" : ""} items-start gap-2.5 pl-0.5`}>
         {/* Icon bubble */}
         <div
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${iconBg} text-xl shadow-inner transition-opacity ${
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${iconBg} text-xl transition-opacity ${
             isCompleted && !isCurrent ? "opacity-60" : "opacity-100"
           }`}
           aria-hidden="true"

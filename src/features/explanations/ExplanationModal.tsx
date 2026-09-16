@@ -105,7 +105,7 @@ export function ExplanationModal({
           </Button>
         </div>
 
-        <div className={generatedPractice ? "min-h-0 flex-1 overflow-hidden" : "min-h-0 flex-1 overflow-hidden p-5"}>
+        <div className={generatedPractice ? "min-h-0 flex-1 overflow-hidden" : "min-h-0 flex-1 overflow-y-auto p-5"}>
           {generatedPractice && user ? (
             <QuizOverlay
               bank={generatedPractice}
