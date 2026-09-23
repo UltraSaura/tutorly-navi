@@ -1,3 +1,4 @@
+import { buildDecimalMultiplicationSteps } from '@/utils/mathStepper/decimalMultiplication';
 /**
  * Compact Math Stepper Component
  * A simplified version of the Interactive Math Stepper for modal environments
@@ -121,7 +122,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         console.log('[CompactMathStepper] Processing expression:', expression);
         
         // Generate steps with AST-based animator (default to English locale)
-        const generatedSteps = buildStepsGeneral(parserExpression, 'en');
+        const generatedSteps = buildStepsGeneral(parserExpression, language === 'fr' ? 'fr' : 'en');
         console.log('[CompactMathStepper] Generated steps:', generatedSteps);
         
         setSteps(generatedSteps);
@@ -135,7 +136,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     };
 
     generateStepperSteps();
-  }, [expression, parserExpression]);
+  }, [expression, parserExpression, language]);
 
   // Calculate the max step dynamically based on current operation type
   const getMaxStep = () => {
@@ -200,7 +201,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   const isSimpleAddition = useMemo(() => /^(\s*\d+(?:[.,]\d+)?\s*\+\s*\d+(?:[.,]\d+)?\s*)$/.test(expression), [expression]);
   const isSimpleSubtraction = useMemo(() => /^(\s*\d+(?:[.,]\d+)?\s*-\s*\d+(?:[.,]\d+)?\s*)$/.test(expression), [expression]);
   const isSimpleDivision = useMemo(() => /^(\s*\d+\s*[\/÷]\s*\d+\s*)$/.test(expression), [expression]);
-  const isSimpleMultiplication = useMemo(() => /^(\s*\d+\s*[×*]\s*\d+\s*)$/.test(expression), [expression]);
+  const isSimpleMultiplication = useMemo(() => /^\s*\d+(?:[.,]\d+)?\s*[×*]\s*\d+(?:[.,]\d+)?(?:\s*=.*)?\s*$/.test(expression), [expression]);
 
   // Helper: localized place names
   const placeName = (colFromRight: number) => {
@@ -260,9 +261,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         : '';
       // Even phase: carry check / sum
       if (language === 'fr') {
-        explanations.push(`On regarde la colonne des ${pn} : ${info.ad} + ${info.bd}${carryText} = ${info.raw}.${info.carryOut > 0 ? ` Comme ${info.raw} ≥ 10, on retient ${info.carryOut}.` : ''}`);
+        explanations.push(`On regarde la colonne des ${pn} : ${info.ad} + ${info.bd}${carryText} = ${info.raw}.${info.carryOut > 0 ? ` On regroupe ${info.raw} ${pn} en ${info.carryOut} groupe de 10 et ${info.digit} ${pn}. Le groupe de 10 passe dans la colonne de gauche : c’est la retenue.` : ''}`);
       } else {
-        explanations.push(`Look at the ${pn} column: ${info.ad} + ${info.bd}${carryText} = ${info.raw}.${info.carryOut > 0 ? ` Since ${info.raw} ≥ 10, carry ${info.carryOut}.` : ''}`);
+        explanations.push(`Look at the ${pn} column: ${info.ad} + ${info.bd}${carryText} = ${info.raw}.${info.carryOut > 0 ? ` We can regroup ${info.raw} ${pn} into ${info.carryOut} group of 10 and ${info.digit} ${pn}. Move the group of 10 to the column on the left. This is the carry.` : ''}`);
       }
       // Odd phase: write digit
       if (language === 'fr') {
@@ -363,9 +364,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       // Even phase: borrow check
       if (info.borrowed) {
         if (language === 'fr') {
-          explanations.push(`On regarde la colonne des ${pn} : ${origTop} − ${info.bottom}. Comme ${origTop} < ${info.bottom}, on emprunte 1 à la colonne suivante.`);
+          explanations.push(`On regarde la colonne des ${pn} : ${origTop} − ${info.bottom}. Il n’y a pas assez de ${pn} pour enlever ${info.bottom}. On ajoute 10 dans cette colonne et on compense avec 1 en bas dans la colonne de gauche.`);
         } else {
-          explanations.push(`Look at the ${pn} column: ${origTop} − ${info.bottom}. Since ${origTop} < ${info.bottom}, borrow 1 from the next column.`);
+          explanations.push(`Look at the ${pn} column: ${origTop} − ${info.bottom}. There are not enough ${pn} to take away ${info.bottom}. Exchange 1 from the column on the left for 10 ${pn}.`);
         }
       } else {
         if (language === 'fr') {
@@ -376,7 +377,13 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       }
       // Odd phase: write digit
       if (language === 'fr') {
-        explanations.push(`${info.top} − ${info.bottom} = ${info.diff}. On écrit ${info.diff} dans la colonne des ${pn}.`);
+        // In the French written method, an emprunt is recorded by adding one
+        // to the lower line while retaining the original upper digit. This
+        // keeps the displayed equivalent operation (e.g. 5 − 3) consistent
+        // with the notation students see on paper.
+        const frenchTop = info.borrowed ? info.top - 10 + 1 : info.top;
+        const frenchBottom = info.borrowed ? info.bottom + 1 : info.bottom;
+        explanations.push(`${frenchTop} − ${frenchBottom} = ${info.diff}. On écrit ${info.diff} dans la colonne des ${pn}.`);
       } else {
         explanations.push(`${info.top} − ${info.bottom} = ${info.diff}. Write ${info.diff} in the ${pn} column.`);
       }
@@ -461,8 +468,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
             ? `On commence par prendre ${partial} (${partial < 10 ? 'le premier chiffre' : 'les premiers chiffres'} du dividende). Combien de fois ${divisor} entre dans ${partial} ?`
             : `Start with ${partial} (${partial < 10 ? 'the first digit' : 'the first digits'} of the dividend). How many times does ${divisor} go into ${partial}?`)
           : (language === 'fr'
-            ? `On obtient ${partial} comme nouveau dividende partiel. Combien de fois ${divisor} entre dans ${partial} ?`
-            : `The new partial dividend is ${partial}. How many times does ${divisor} go into ${partial}?`)
+            ? `On a maintenant ${partial} à partager. Combien de groupes complets de ${divisor} peut-on faire ?`
+            : `Now we have ${partial} to share. How many complete groups of ${divisor} can we make?`)
       });
 
       const qDigit = Math.floor(partial / divisor);
@@ -477,8 +484,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         workRows: [...inspectRows],
         explanationShort: `${partial} ÷ ${divisor} = ${qDigit}`,
         explanationTeacher: language === 'fr'
-          ? `${divisor} × ${qDigit} = ${qDigit * divisor}${qDigit * divisor <= partial ? ` ≤ ${partial}` : ''}, donc on écrit ${qDigit} au quotient.`
-          : `${divisor} × ${qDigit} = ${qDigit * divisor}${qDigit * divisor <= partial ? ` ≤ ${partial}` : ''}, so write ${qDigit} in the quotient.`
+          ? `On peut faire ${qDigit} groupes complets de ${divisor} : ${divisor} × ${qDigit} = ${qDigit * divisor}. Un groupe de plus dépasserait ${partial}. On écrit ${qDigit} dans le résultat.`
+          : `We can make ${qDigit} complete groups of ${divisor}: ${divisor} × ${qDigit} = ${qDigit * divisor}. Another group would be too much. Write ${qDigit} in the answer.`
       });
 
       const product = qDigit * divisor;
@@ -494,8 +501,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         workRows: [...workRows],
         explanationShort: `${divisor} × ${qDigit} = ${product}`,
         explanationTeacher: language === 'fr'
-          ? `On écrit ${product} sous ${partial} et on soustrait : ${partial} − ${product} = ${partial - product}.`
-          : `Write ${product} below ${partial} and subtract: ${partial} − ${product} = ${partial - product}.`
+          ? `Nos ${qDigit} groupes utilisent ${product}. On écrit ${product} sous ${partial}. Ensuite, on soustraira pour savoir ce qui reste.`
+          : `Our ${qDigit} groups use ${product}. Write ${product} below ${partial}. Next, we will subtract to see what is left.`
       });
 
       const rem = partial - product;
@@ -512,8 +519,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         workRows: [...workRows],
         explanationShort: `${partial} − ${product} = ${rem}`,
         explanationTeacher: language === 'fr'
-          ? `${partial} − ${product} = ${rem}. ${digitIndex < dDigits.length ? 'On descend le chiffre suivant.' : 'Il ne reste plus de chiffre à descendre.'}`
-          : `${partial} − ${product} = ${rem}. ${digitIndex < dDigits.length ? 'Bring down the next digit.' : 'No more digits to bring down.'}`
+          ? `On enlève les ${product} utilisés : ${partial} − ${product} = ${rem}. Il reste ${rem}. ${digitIndex < dDigits.length ? 'Ensuite, on descendra le chiffre suivant.' : 'On a utilisé tous les chiffres.'}`
+          : `Take away the ${product} we used: ${partial} − ${product} = ${rem}. We have ${rem} left. ${digitIndex < dDigits.length ? 'Next, we will bring down the next digit.' : 'We have used all the digits.'}`
       });
 
       if (digitIndex >= dDigits.length) break;
@@ -567,10 +574,93 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   const multiplicationData = useMemo(() => {
     if (!isSimpleMultiplication) return null;
     const parts = expression.split(/[×*]/);
-    const aIn = (parts[0] || '0').replace(/[^0-9]/g, '') || '0';
-    const bIn = (parts[1] || '0').replace(/[^0-9]/g, '') || '0';
+    const rawA = (parts[0] || '0').trim();
+    const rawB = (parts[1] || '0').split('=')[0].trim();
+    const decimalA = rawA.replace(',', '.');
+    const decimalB = rawB.replace(',', '.');
+
+    // Multiplying by a power of ten is a place-value move. Keep the decimal
+    // operand intact and teach the child to move the comma, rather than
+    // turning 24.5 into 245 and accidentally multiplying the wrong number.
+    const powerOfTenMatch = decimalB.match(/^10+$/);
+    if ((powerOfTenMatch || decimalA.includes('.') || decimalB.includes('.')) && /^\d+(?:\.\d+)?$/.test(decimalA) && /^\d+(?:\.\d+)?$/.test(decimalB)) {
+      const lesson = buildDecimalMultiplicationSteps(decimalA, decimalB, language);
+      const multiplicationSteps = lesson.steps.map((step, index) => ({
+        step: index, multiplierDigit: '', multiplierPosition: -1,
+        multiplicandDigit: '', multiplicandPosition: -1,
+        partialResult: step.calculation, carries: [], explanation: step.explanation,
+        isPartialProductComplete: index === lesson.steps.length - 1,
+        partialProduct: step.calculation,
+      }));
+      return {
+        A: rawA, B: rawB, partials: [], sumFinal: lesson.result,
+        sumWidth: Math.max(rawA.length, lesson.result.length),
+        totalPhases: multiplicationSteps.length, multiplicationSteps,
+        maxStep: multiplicationSteps.length - 1,
+        strategy: { mode: 'decimal' as const, lesson },
+      };
+    }
+
+    const aIn = rawA.replace(/[^0-9]/g, '') || '0';
+    const bIn = rawB.replace(/[^0-9]/g, '') || '0';
     const A = aIn.replace(/^0+/, '') || '0';
     const B = bIn.replace(/^0+/, '') || '0';
+
+    const trailingZeros = (value: string) => value.match(/0+$/)?.[0].length ?? 0;
+    const zerosInA = trailingZeros(A);
+    const zerosInB = trailingZeros(B);
+
+    // A zero-ending factor is best taught through place value, not by animating
+    // several unhelpful "0 × digit" steps.
+    if ((zerosInA > 0 || zerosInB > 0) && A !== '0' && B !== '0') {
+      const nonZeroA = A.slice(0, A.length - zerosInA) || '1';
+      const nonZeroB = B.slice(0, B.length - zerosInB) || '1';
+      const zeroCount = zerosInA + zerosInB;
+      const baseProduct = (BigInt(nonZeroA) * BigInt(nonZeroB)).toString();
+      const sumFinal = `${baseProduct}${'0'.repeat(zeroCount)}`;
+      const multiplicationSteps = [
+        {
+          step: 0,
+          multiplierDigit: '',
+          multiplierPosition: -1,
+          multiplicandDigit: '',
+          multiplicandPosition: -1,
+          partialResult: baseProduct,
+          carries: [],
+          explanation: language === 'fr'
+            ? `On met de côté les ${zeroCount} zéro${zeroCount > 1 ? 's' : ''} pour l'instant.`
+            : `Set aside the ${zeroCount} zero${zeroCount > 1 ? 's' : ''} for now.`,
+          isPartialProductComplete: false,
+          partialProduct: baseProduct,
+        },
+        {
+          step: 1,
+          multiplierDigit: '',
+          multiplierPosition: -1,
+          multiplicandDigit: '',
+          multiplicandPosition: -1,
+          partialResult: sumFinal,
+          carries: [],
+          explanation: language === 'fr'
+            ? `${nonZeroA} × ${nonZeroB} = ${baseProduct}. On remet les ${zeroCount} zéro${zeroCount > 1 ? 's' : ''} : ${sumFinal}.`
+            : `${nonZeroA} × ${nonZeroB} = ${baseProduct}. Put back the ${zeroCount} zero${zeroCount > 1 ? 's' : ''}: ${sumFinal}.`,
+          isPartialProductComplete: true,
+          partialProduct: sumFinal,
+        },
+      ];
+
+      return {
+        A,
+        B,
+        partials: [baseProduct],
+        sumFinal,
+        sumWidth: Math.max(A.length, B.length, sumFinal.length),
+        totalPhases: multiplicationSteps.length,
+        multiplicationSteps,
+        maxStep: multiplicationSteps.length,
+        strategy: { nonZeroA, nonZeroB, zeroCount, baseProduct },
+      };
+    }
     
     // Enhanced multiplication with detailed step tracking - each digit multiplication is a separate step
     const multiplicationSteps: Array<{
@@ -613,12 +703,36 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
       // Each digit multiplication is a separate step
       for (let i = A.length - 1; i >= 0; i--) {
         const ai = A.charCodeAt(i) - 48;
-        const p = ai * bj + carry;
+        // Keep the carry that came from the previous column. The new carry is
+        // for the next column and must not appear in this calculation.
+        const carryIn = carry;
+        const p = ai * bj + carryIn;
         const digit = p % 10;
         const newCarry = Math.floor(p / 10);
         
         // Check if this is the last digit (leftmost position)
         const isLastDigit = i === 0;
+        const column = placeName(A.length - 1 - i);
+        const caption = language === 'fr'
+          ? `Regarde le ${ai} dans la colonne des ${column} du nombre du haut. Multiplie-le par le ${bj} du bas : ${ai} × ${bj} = ${ai * bj}.`
+            + (carryIn > 0 ? ` Ajoute la retenue ${carryIn} : ${ai * bj} + ${carryIn} = ${p}.` : '')
+            + (isLastDigit
+              ? ` Écris ${p} pour terminer cette ligne.`
+              : newCarry > 0
+                ? ` ${p} se décompose en ${newCarry} groupe${newCarry > 1 ? 's' : ''} de 10 et ${digit}. Écris ${digit} et garde ${newCarry} pour la colonne suivante, à gauche.`
+                : ` Écris ${digit} dans cette colonne. Il n’y a pas de retenue.`)
+            + (B.length - 1 - j > 0 && i === A.length - 1
+              ? ` Le ${bj} du bas représente des ${placeName(B.length - 1 - j)} : cette ligne commence ${B.length - 1 - j} colonne${B.length - 1 - j > 1 ? 's' : ''} plus à gauche.` : '')
+          : `Look at the ${ai} in the top number’s ${column} column. Multiply it by the ${bj} below: ${ai} × ${bj} = ${ai * bj}.`
+            + (carryIn > 0 ? ` Add the carried ${carryIn}: ${ai * bj} + ${carryIn} = ${p}.` : '')
+            + (isLastDigit
+              ? ` Write ${p} to finish this row.`
+              : newCarry > 0
+                ? ` ${p} makes ${newCarry} group${newCarry > 1 ? 's' : ''} of 10 and ${digit} left over. Write ${digit}. Carry ${newCarry} to the next column on the left.`
+                : ` Write ${digit} in this column. There is nothing to carry.`)
+            + (B.length - 1 - j > 0 && i === A.length - 1
+              ? ` The bottom ${bj} is in the ${placeName(B.length - 1 - j)} column, so this row starts ${B.length - 1 - j} place${B.length - 1 - j > 1 ? 's' : ''} farther left.` : '');
+
         
         if (isLastDigit) {
           // For the last digit: show the complete result instead of creating a carry
@@ -634,9 +748,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
             multiplicandPosition: A.length - 1 - i,
             partialResult: String(p), // Show complete result
             carries: [], // No carries for the last digit
-            explanation: language === 'fr'
-              ? `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. On écrit ${p} pour compléter la ligne.`
-              : `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. Write ${p} to complete the row.`,
+            explanation: caption,
             isPartialProductComplete: true,
             partialProduct: row
           });
@@ -667,9 +779,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               value: newCarry,
               used: false
             }] : [], // Show carry immediately when generated
-             explanation: language === 'fr'
-              ? `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. On écrit ${digit}${newCarry > 0 ? ` et on retient ${newCarry}` : ''}.`
-              : `${ai} × ${bj}${carry > 0 ? ` + ${carry}` : ''} = ${p}. Write ${digit}${newCarry > 0 ? `, carry ${newCarry}` : ''}.`,
+             explanation: caption,
             isPartialProductComplete: false,
             partialProduct: row
           });
@@ -758,8 +868,8 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         columnPosition: position, // NEW: track which column we're adding
         contributingDigits, // NEW: track which partial product digits contribute
          explanation: language === 'fr'
-          ? `On additionne la colonne des ${placeName(position)} : ${digit}.`
-          : `Adding the ${placeName(position)} column: ${digit}.`,
+          ? `Regarde la colonne des ${placeName(position)}. Additionne les chiffres des lignes au-dessus, avec la retenue s’il y en a une. Écris ${digit} dans cette colonne du résultat.`
+          : `Look at the ${placeName(position)} column. Add the digits in the rows above, including any carry. Write ${digit} in this column of the answer.`,
         isPartialProductComplete: false,
         partialProduct: sumFinal.substring(0, sumFinal.length - digitIndex) // Show progress
       });
@@ -887,6 +997,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
     }
 
     if (multiplicationData) {
+      if (multiplicationData.strategy && 'lesson' in multiplicationData.strategy) {
+        return multiplicationData.strategy.lesson.steps[currentStep]?.explanation || '';
+      }
       if (currentStep === 0) {
         return language === 'fr'
           ? `On va multiplier ${multiplicationData.A} × ${multiplicationData.B} étape par étape.`
@@ -900,7 +1013,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
   })();
 
   return (
-    <div className={cn("p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md", className)}>
+    <div className={cn("rounded-xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/20", className)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -910,15 +1023,15 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
           </span>
         </div>
         <Badge variant="outline" className="text-xs">
-          {currentStep}
-          {" "}of{" "}
+          {currentStep + 1}
+          {language === 'fr' ? ' sur ' : ' of '}
           {getMaxStep() + 1}
         </Badge>
       </div>
 
       {/* Current Step Display */}
-      <div className="mb-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-blue-200 dark:border-blue-700">
+      <div className="mb-4 h-[390px] overflow-y-auto">
+        <div className="rounded-lg px-1 py-2">
           {additionData ? (
             // Two-phase column addition view
             (() => {
@@ -1119,6 +1232,17 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                 }
               }
 
+              // French notation writes the borrowed unit on the lower line.
+              // Keep this visual adjustment local to the displayed row; the
+              // calculation data remains unchanged.
+              const frenchBottomDigits = bDisplay.map((digit, index) => {
+                if (language !== 'fr') return digit;
+                const borrowedStep = stepsRTL.slice(0, processedColumns).find((step) =>
+                  step.borrowed && digitColToVisualIndex(step.index, displayIntDigits, hasDecimal) === index,
+                );
+                return borrowedStep ? String(Number(digit) + 1) : digit;
+              });
+
               // Build result digits array for reveal (RIGHT TO LEFT)
               const resultDigits = (() => {
                 // Build result array aligned with input columns
@@ -1177,7 +1301,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   {/* Subtrahend row with minus sign - right-aligned like addition */}
                   <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${n + 1}, 2rem)` }}>
                     <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">−</div>
-                    {bDisplay.map((ch, i) => (
+                    {frenchBottomDigits.map((ch, i) => (
                       <div key={i} className={cn("w-8 text-center text-lg md:text-xl font-bold", ch === separator ? "text-slate-500 dark:text-slate-400" : "text-gray-800 dark:text-gray-200")}>
                         {ch}
                         </div>
@@ -1479,6 +1603,57 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
                 );
               }
+
+              if (multiplicationData.strategy) {
+                if ('lesson' in multiplicationData.strategy) {
+                  const step = multiplicationData.strategy.lesson.steps[currentStep];
+                  return (
+                    <div className="space-y-3">
+                      <div className="text-center text-lg font-semibold">{step.title}</div>
+                      <motion.div key={`decimal-step-${currentStep}`} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
+                        <div className="mb-3 break-words text-center font-mono text-xl font-bold text-blue-800 dark:text-blue-200">{step.calculation}</div>
+                        <p className="max-h-[142px] min-h-[118px] overflow-y-auto border-t border-sky-200 pt-3 text-left font-sans text-base leading-relaxed text-foreground dark:border-sky-800">{currentExplanationText}</p>
+                      </motion.div>
+                    </div>
+                  );
+                }
+                const { nonZeroA, nonZeroB, zeroCount, baseProduct } = multiplicationData.strategy;
+                const currentStrategyStep = currentStep > 0 ? multiplicationSteps[currentStep - 1] : null;
+                const zeroLabel = language === 'fr'
+                  ? `${zeroCount} zéro${zeroCount > 1 ? 's' : ''}`
+                  : `${zeroCount} zero${zeroCount > 1 ? 's' : ''}`;
+
+                return (
+                  <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-4 text-center font-mono dark:border-sky-800 dark:bg-sky-950/20">
+                    <div className="text-xl font-bold text-slate-800 dark:text-slate-100">{A} × {B}</div>
+                    <div className="my-3 h-px bg-sky-200 dark:bg-sky-800" />
+                    <div className="space-y-3 text-lg">
+                      <div className={currentStep >= 1 ? 'font-semibold text-blue-700 dark:text-blue-300' : 'text-slate-400'}>
+                        {currentStep >= 1 ? `${nonZeroA} × ${nonZeroB} = ${baseProduct}` : '• × • = •'}
+                      </div>
+                      <div className={currentStep >= 2 ? 'font-bold text-green-700 dark:text-green-300' : 'text-slate-400'}>
+                        {currentStep >= 2
+                          ? (language === 'fr'
+                            ? `${baseProduct}, puis ${zeroLabel} → ${sumFinal}`
+                            : `${baseProduct}, then append ${zeroLabel} → ${sumFinal}`)
+                          : '•'}
+                      </div>
+                    </div>
+                    <motion.div
+                      key={`zero-strategy-${currentStep}`}
+                      className="mt-4 text-sm leading-relaxed text-muted-foreground"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      {currentStep === 0
+                        ? (language === 'fr'
+                          ? `Utilisons une astuce de valeur de position : on garde les ${zeroLabel} pour la fin.`
+                          : `Use a place-value shortcut: save the ${zeroLabel} for the end.`)
+                        : currentStrategyStep?.explanation}
+                    </motion.div>
+                  </div>
+                );
+              }
               
               const currentStepData = currentStep > 0 ? multiplicationSteps[currentStep - 1] : null; // Adjust for 0-based indexing
               
@@ -1497,7 +1672,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
                     
                     {/* Multiplier with × symbol */}
-                  <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+                  <div className="ml-auto -mt-10 grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
                     <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">×</div>
                     {B.padStart(sumWidth, ' ').split('').map((ch, i) => (
                       <div key={i} className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">
@@ -1680,9 +1855,9 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               const currentPartial = getCurrentPartialProduct();
               
               return (
-                <div className="relative font-mono">
+                <div className="relative max-w-full overflow-hidden font-mono leading-none">
                   {/* Carries row above multiplicand - shifted one column to the left */}
-                  <div className="ml-auto grid justify-end min-h-[28px]" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+                  <div className="ml-auto grid justify-end min-h-[20px]" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
                     <div className="w-8" />
                     {carriesToShow.carries.map((val, i) => (
                       <div key={i} className="w-8 text-center text-slate-400 font-semibold">
@@ -1731,7 +1906,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   </div>
                   
         {/* Multiplier with × symbol */}
-        <div className="ml-auto grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
+        <div className="ml-auto -mt-10 grid justify-end items-center" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>
           <div className="w-8 text-center text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200">×</div>
           {B.padStart(sumWidth, ' ').split('').map((ch, i) => {
             // Map display position to actual B index (0-based from left)
@@ -1758,7 +1933,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         </div>
                   
                   {/* Horizontal line */}
-                  <div className="my-2 h-[2px] w-full bg-gray-800 dark:bg-gray-200" />
+                  <div className="my-1 h-[2px] w-full bg-gray-800 dark:bg-gray-200" />
                   
                   {/* Progressive partial products */}
                   {partials.map((row, idx) => {
@@ -1879,7 +2054,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
                   })}
                   
                   {/* Final sum line */}
-                  <div className="my-2 h-[2px] w-full bg-gray-800 dark:bg-gray-200" />
+                  <div className="my-1 h-[2px] w-full bg-gray-800 dark:bg-gray-200" />
                   
                   {/* Final sum - show digit by digit for final sum steps */}
                   <div className="ml-auto grid justify-end" style={{ gridTemplateColumns: `repeat(${sumWidth + 1}, 2rem)` }}>

@@ -134,7 +134,7 @@ export default function PracticePage() {
       const card = {
         id: row.subject.id,
         slug: subjectSlug,
-        name: row.subject.name,
+        name: getSubjectNameForSlug(subjectSlug, i18n.language, row.subject.name),
         levelLabel,
         masteryPercent: 0,
         masteredTopics: 0,
@@ -189,7 +189,7 @@ export default function PracticePage() {
     }
 
     return [...mappedFromCurriculum, ...fallbackCards];
-  }, [subjectsQuery.data, activeSchoolLevel.activeLevel, papersByDiscipline, trainingCountsQuery.data]);
+  }, [subjectsQuery.data, activeSchoolLevel.activeLevel, papersByDiscipline, trainingCountsQuery.data, i18n.language]);
 
   const subjectsByKey = useMemo(() => {
     const map = new Map<string, (typeof subjectCards)[number]>();
@@ -223,7 +223,7 @@ export default function PracticePage() {
         ...fallback,
         id: adminSubject?.id ?? fallback.slug,
         slug: adminSubject?.slug ?? fallback.slug,
-        name: adminSubject?.name ?? fallback.name,
+        name: getSubjectNameForSlug(fallback.slug, i18n.language, adminSubject?.name ?? fallback.name),
         icon_name: adminSubject?.icon_name ?? fallback.icon_name,
         icon_image_url: adminSubject?.icon_image_url ?? null,
         color_scheme: adminSubject?.color_scheme ?? null,
@@ -233,7 +233,7 @@ export default function PracticePage() {
         practice_font_family: adminSubject?.practice_font_family ?? adminSubject?.font_family ?? null,
       };
     });
-  }, [practiceButtonsQuery.data]);
+  }, [practiceButtonsQuery.data, i18n.language]);
 
   return (
     <div className="min-h-screen bg-[#F7FAFE] pb-28">
@@ -242,10 +242,10 @@ export default function PracticePage() {
         <section className="relative min-h-[150px] overflow-hidden">
           <div className="relative z-10 max-w-[62%] space-y-2 pt-8">
             <h1 className="text-[32px] font-extrabold leading-none tracking-normal text-[#050B34]">
-              S&apos;exercer
+              {t('practice.title')}
             </h1>
             <p className="text-[18px] font-semibold leading-snug tracking-normal text-[#667085]">
-              Choisis une matière pour t&apos;entraîner 🚀
+              {t('practice.chooseSubject')} 🚀
             </p>
           </div>
           <span className="absolute right-28 top-[60px] h-3 w-3 rounded-full bg-[#F9D66B]" />
@@ -253,7 +253,7 @@ export default function PracticePage() {
           <span className="absolute right-32 top-[134px] h-3 w-3 rounded-full bg-[#A8E6D8]" />
           <img
             src={MASCOT_SRC}
-            alt="Mascotte"
+            alt=""
             onError={(event) => {
               event.currentTarget.src = FALLBACK_MASCOT_SRC;
             }}
@@ -280,7 +280,7 @@ export default function PracticePage() {
                 const colors = getSubjectVisuals(subject.slug, subject.color_scheme);
                 const sourceSubject = subjectsByKey.get(normalizeSubjectKey(subject.slug));
                 const exerciseCount = sourceSubject?.exercises ?? 0;
-                const exerciseLabel = `${exerciseCount} exercice${exerciseCount > 1 ? 's' : ''}`;
+                const exerciseLabel = t('practice.subjects.exerciseCount', { count: exerciseCount });
                 const Icon = subject.icon;
                 const subjectTitleFontSize = Math.max((subject.practice_font_size ?? 18) + 4, 16);
                 const subjectTitleFontFamily = subject.practice_font_family ?? 'Poppins, sans-serif';

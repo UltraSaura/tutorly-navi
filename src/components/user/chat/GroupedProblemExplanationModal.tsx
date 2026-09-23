@@ -484,7 +484,7 @@ const GroupedProblemExplanationModal = ({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-      <div className="w-full max-w-2xl rounded-2xl bg-card border border-border shadow-lg h-[85dvh] max-h-[85dvh] overflow-hidden flex flex-col">
+      <div className="w-full max-w-3xl rounded-2xl bg-card border border-border shadow-lg h-[88dvh] max-h-[88dvh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-4 py-4 border-b border-border">
           <h3 className="font-semibold text-base text-foreground sm:text-lg">
             {language === 'fr' ? 'Explication' : 'Explanation'}
@@ -494,7 +494,7 @@ const GroupedProblemExplanationModal = ({
           </Button>
         </div>
 
-        <div className={`flex-1 min-h-0 p-4 space-y-3 ${isKidMode && kidView === 'lesson' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+        <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4">
           {loading && (
             <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin shrink-0" />
@@ -536,7 +536,7 @@ const GroupedProblemExplanationModal = ({
                       )}
                     </section>
 
-                    <div className="flex justify-end pt-1">
+                    <div className="sticky bottom-0 z-10 flex justify-end bg-card/95 py-2 pt-2 backdrop-blur-sm">
                       <Button
                         type="button"
                         className="rounded-xl px-5"
@@ -548,7 +548,7 @@ const GroupedProblemExplanationModal = ({
                   </div>
                 ) : (
                   <div className="flex min-h-0 flex-1 flex-col">
-                    <section className="min-h-0 flex-1 overflow-hidden">
+                    <section className="min-h-0 flex-1">
                       <KidExplanationFlow
                         steps={kidSteps}
                         onPracticeMore={handleTargetedPractice}

@@ -18,6 +18,9 @@ import { trackLearningInteraction } from '@/services/learningAnalytics';
 
 import { ExplanationRenderer } from "./ExplanationRenderer";
 import { getLearningMode } from "@/domain/learningMode";
+import { buildSimilarArithmeticQuiz } from '@/utils/generatedExactPractice';
+import { toast } from '@/hooks/use-toast';
+import type { QuizBank } from '@/types/quiz-bank';
 
 function Section({ title, text }: { title: string; text: string }) {
   const resolveText = useResolveText();
@@ -54,13 +57,15 @@ export function TwoCards({
   topicId, 
   onClose,
   subjectSlug,
-  topicSlug 
+  topicSlug,
+  onStartGeneratedPractice,
 }: { 
   s: TeachingSections; 
   topicId?: string; 
   onClose?: () => void;
   subjectSlug?: string;
   topicSlug?: string;
+  onStartGeneratedPractice?: (quiz: QuizBank) => void;
 }) {
   console.log('[TwoCards] Component rendered with sections:', s);
   const resolveText = useResolveText();
@@ -137,13 +142,28 @@ export function TwoCards({
   };
 
   const handlePracticeMore = () => {
-    onClose?.();
+    if (!s.exercise?.trim()) {
+      toast({
+        title: language === 'fr' ? 'Exercices ciblés indisponibles' : 'Targeted practice unavailable',
+        description: language === 'fr'
+          ? 'Cette explication ne contient pas une opération à pratiquer.'
+          : 'This explanation does not contain an arithmetic operation to practise.',
+      });
+      return;
+    }
 
-    setTimeout(() => {
-      window.location.href = finalSubjectSlug
-        ? `/practice/${encodeURIComponent(finalSubjectSlug)}`
-        : '/practice';
-    }, 200);
+    const practice = buildSimilarArithmeticQuiz(s.exercise, language === 'fr' ? 'fr' : 'en');
+    if (!practice) {
+      toast({
+        title: language === 'fr' ? 'Exercices ciblés indisponibles' : 'Targeted practice unavailable',
+        description: language === 'fr'
+          ? 'Ce type de calcul n’est pas encore pris en charge.'
+          : 'This type of calculation is not supported yet.',
+      });
+      return;
+    }
+
+    onStartGeneratedPractice?.(practice);
   };
   
   // NEW: Check if user is guardian
@@ -362,11 +382,11 @@ export function TwoCards({
   }, [shouldShowInteractiveStepper, s.exercise]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3">
+    <div className="flex min-h-full flex-col gap-3 pb-2">
       {!isGuardian && shouldShowInteractiveStepper ? (
         guidedView === 'interactive' ? (
-          <div className="flex min-h-0 flex-1 flex-col gap-3">
-            <div className="shrink-0 rounded-xl border bg-muted p-4">
+          <div className="flex flex-none flex-col gap-3">
+            <div className="shrink-0 rounded-lg border bg-muted/70 px-4 py-3">
               <div className="font-semibold">{t('exercises.explanation.headers.exercise')}</div>
               <div
                 className={[
@@ -388,15 +408,15 @@ export function TwoCards({
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 rounded-xl border bg-card p-4 shadow-sm">
-              <div className="font-semibold mb-3">{t('exercises.explanation.headers.interactive_practice')}</div>
+            <div className="flex-none px-0.5">
+              <div className="mb-2 font-semibold">{t('exercises.explanation.headers.interactive_practice')}</div>
               <CompactMathStepper 
                 expression={exampleExpression}
                 className="text-sm"
               />
             </div>
 
-            <div className="shrink-0 flex justify-end">
+            <div className="sticky bottom-0 z-10 flex shrink-0 justify-end bg-card/95 py-2 backdrop-blur-sm">
               <Button
                 type="button"
                 onClick={() => setGuidedView('lesson')}

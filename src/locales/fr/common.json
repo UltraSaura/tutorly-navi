@@ -6,6 +6,12 @@
     "cancel": "Annuler"
   },
   "learning": {
+    "libraryTitle": "Bibliothèque de cours",
+    "libraryDescription": "Explore les matières, les thèmes et les leçons vidéo de ta bibliothèque Stuwy.",
+    "comingSoon": "{{subject}} arrive bientôt !",
+    "comingSoonDescription": "Nous préparons ce contenu pour toi.",
+    "lessons": "leçons",
+
     "chooseSubject": "Choisissez votre matière",
     "selectSubject": "Sélectionnez une matière pour commencer à explorer les ressources d'apprentissage.",
     "ready": "prêt",

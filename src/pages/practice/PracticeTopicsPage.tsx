@@ -1,3 +1,4 @@
+import { getSubjectNameForSlug } from '@/utils/examSubjectMapping';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -113,12 +114,12 @@ export default function PracticeTopicsPage() {
   const navigate = useNavigate();
   const { subject } = useParams<{ subject: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
 
   const subjectSlug = subject ?? '';
   const dashboardQuery = useSubjectDashboard(subjectSlug);
-  const subjectName = dashboardQuery.data?.subject?.name ?? subjectSlug;
+  const subjectName = getSubjectNameForSlug(subjectSlug ?? '', i18n.language, dashboardQuery.data?.subject?.name);
 
   // Flatten all topics across categories to check for "Practice All"
   const allTopics = useMemo(
