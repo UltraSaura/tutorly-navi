@@ -9,9 +9,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { VideoPlayerBox } from '@/components/learning/VideoPlayerBox';
 import { LessonCardPlayer } from '@/components/learning/LessonCardPlayer';
 import { LessonLevelPath } from '@/components/learning/LessonLevelPath';
+import { LessonV2Player } from '@/components/learning/LessonV2Player';
+import { LessonV21Path } from '@/components/learning/LessonV21Path';
 import { PageMeta } from '@/components/seo/PageMeta';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { LessonContent } from '@/types/learning';
+import { parseLessonContent, parseLessonV21 } from '@/types/lesson-generator';
 
 export default function LessonPage() {
   const { subjectSlug, topicSlug } = useParams<{
@@ -84,6 +87,16 @@ export default function LessonPage() {
   const hasVideos = videos.length > 0;
   const hasMultipleVideos = videos.length > 1;
   const lessonContent = topic?.lesson_content as LessonContent | null;
+  const lessonV2 = parseLessonContent(topic?.lesson_content);
+  const lessonV21 = parseLessonV21(topic?.lesson_content);
+  const hasLegacyLesson = Boolean(
+    lessonContent
+      && typeof lessonContent === 'object'
+      && typeof lessonContent.explanation === 'string'
+      && typeof lessonContent.example === 'string'
+      && !('version' in lessonContent)
+  );
+  const hasInvalidLesson = Boolean(topic?.lesson_content && !lessonV2 && !lessonV21 && !hasLegacyLesson);
   const inlineBank = allBanks.find(
     (bank) => bank.topicId === topic?.id && !bank.triggerVideoId && bank.isUnlocked
   );
@@ -228,7 +241,23 @@ export default function LessonPage() {
         )}
 
         {/* ── LESSON — multi-level → bubble path; single-level → flow ─── */}
-        {topic && (
+        {topic && hasInvalidLesson ? (
+          <div className="mx-4 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
+            <h2 className="text-lg font-bold text-amber-950">Cette leçon n'a pas pu être chargée.</h2>
+            <p className="mt-2 text-sm text-amber-800">Le contenu généré est incomplet. Demande une nouvelle génération depuis l'administration.</p>
+          </div>
+        ) : topic && lessonV21 ? (
+          <LessonV21Path topicId={topic.id} topicName={topic.name} subjectId={(topic as any).curriculum_subject_id ?? subject?.id ?? null} lesson={lessonV21} />
+        ) : topic && lessonV2 ? (
+          <div style={{ height: 'calc(100dvh - 132px)', minHeight: 460 }}>
+            <LessonV2Player
+              topicId={topic.id}
+              topicName={topic.name}
+              subjectId={(topic as any).curriculum_subject_id ?? subject?.id ?? null}
+              lesson={lessonV2}
+            />
+          </div>
+        ) : topic && (
           (lessonContent?.steps?.length ?? 0) > 1 ? (
             <LessonLevelPath
               topicId={topic.id}

@@ -1,4 +1,5 @@
 import type { SingleQ } from '@/types/quiz-bank';
+import type { LessonV2 } from '@/types/lesson-generator';
 
 // A labelled line in a worked example, revealed step by step
 export interface LessonExampleStep {
@@ -98,6 +99,9 @@ export interface LessonContent {
   steps?: LessonStep[];
 }
 
+/** Persisted lesson payloads are versioned; legacy rows remain supported. */
+export type GeneratedLessonContent = LessonContent | LessonV2;
+
 export interface Topic {
   id: string;
   category_id: string;
@@ -125,7 +129,7 @@ export interface Topic {
   // Linked objectives (when joined)
   topic_objective_links?: import('@/types/curriculum').TopicObjectiveWithDetails[];
   // Generated lesson content
-  lesson_content?: LessonContent | null;
+  lesson_content?: GeneratedLessonContent | null;
 }
 
 export interface Video {
@@ -199,7 +203,9 @@ export interface UserProgress {
 
 export interface SubjectProgress {
   subject: Subject;
+  lessons_ready: number;
   videos_ready: number;
+  quizzes_ready: number;
   videos_completed: number;
   lessons_completed: number;
   progress_percentage: number;

@@ -15,6 +15,12 @@ type ItemType =
 type Difficulty = "easy" | "medium" | "hard";
 type Status = "draft" | "reviewed" | "published" | "rejected";
 type AnswerType = "numeric" | "short_answer" | "multiple_choice" | "free_response" | "math";
+export type QuestionType = "mcq" | "numeric" | "text" | "expression";
+
+export type ValidationSpec = {
+  type: "exact" | "range" | "regex";
+  value: unknown;
+} | null;
 
 interface CliOptions {
   bundle: string;
@@ -110,6 +116,13 @@ interface TrainingQuestion {
     almost_feedback: string;
     incorrect_feedback: string;
   };
+}
+
+export interface EnrichedQuestion extends NormalizedQuestion {
+  type: QuestionType;
+  skill: string;
+  validation: ValidationSpec;
+  guidance: TrainingQuestion["guidance"];
 }
 
 async function main(): Promise<void> {
@@ -308,6 +321,74 @@ export function splitLetteredSubquestions(text: string): Array<{ label: string; 
       text: normalized.slice(textStart, textEnd).trim(),
     };
   }).filter((part) => part.text.length > 0);
+}
+
+// ---------------------------------------------------------------------------
+// 3-stage splitting pipeline
+// ---------------------------------------------------------------------------
+
+export function splitParts(text: string): Array<{ id: string; title: string | null; content: string }> {
+  const parts = text.split(/(?=Partie\s+[A-Z])/i);
+  const result = parts
+    .map((part, index) => ({
+      id: `part_${index}`,
+      title: part.match(/Partie\s+[A-Z]/i)?.[0] ?? null,
+      content: part.trim(),
+    }))
+    .filter((p) => p.content.length > 0);
+  return result.length > 0 ? result : [{ id: "part_0", title: null, content: text.trim() }];
+}
+
+export function splitMainQuestions(text: string): string[] {
+  return text
+    .split(/(?=\n?\s*\d+[.)]\s+)/)
+    .map((q) => q.trim())
+    .filter((q) => q.length > 20);
+}
+
+export function splitSubQuestions(text: string): string[] {
+  const subs = text.split(/(?=\b[a-d][.)]\s+)/i);
+  if (subs.length <= 1) return [text];
+  return subs.map((s) => s.trim()).filter((s) => s.length > 0);
+}
+
+export function cleanQuestionText(text: string): string {
+  return text
+    .replace(/^(\d+[.)]\s*)/, "")
+    .replace(/^([a-d][.)]\s*)/i, "")
+    .replace(/Exercice\s+\d+/i, "")
+    .replace(/\n/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function extractQuestions(exerciseText: string): NormalizedQuestion[] {
+  if (!exerciseText || exerciseText.trim().length === 0) return [];
+  const parts = splitParts(exerciseText);
+  const questions: NormalizedQuestion[] = [];
+
+  for (const [partIndex, part] of parts.entries()) {
+    const mainQs = splitMainQuestions(part.content);
+    for (const [mainIndex, mainQ] of mainQs.entries()) {
+      const subQs = splitSubQuestions(mainQ);
+      for (const [subIndex, subQ] of subQs.entries()) {
+        const text = cleanQuestionText(subQ);
+        if (text.length <= 15) continue;
+        const letterSuffix = subQs.length > 1 && subIndex > 0
+          ? String.fromCharCode(96 + subIndex)
+          : "";
+        questions.push({
+          id: `p${partIndex}_q${mainIndex}_s${subIndex}`,
+          label: `${mainIndex + 1}${letterSuffix}.`,
+          text,
+          answer_type: undefined,
+          choices: detectQcmChoices(text),
+        });
+      }
+    }
+  }
+
+  return questions;
 }
 
 export function detectQcmChoices(text: string): string[] | null {
@@ -847,6 +928,145 @@ function subjectSlugForDiscipline(discipline: string): string {
 
 export function resolveTrainingItemLevel(exercise: Pick<BundleExercise, "exam">, paper?: Pick<BundlePaper, "level" | "exam">): string {
   return cleanNullable(paper?.level) ?? levelForExam(paper?.exam ?? exercise.exam) ?? "unknown";
+}
+
+// ---------------------------------------------------------------------------
+// Pure helper functions for skill detection, validation, guidance & enrichment
+// ---------------------------------------------------------------------------
+
+export function detectSkill(text: string, context = ""): string {
+  const n = (text + " " + context).toLowerCase();
+  if (/tableau|cellule|formule|tableur|feuille de calcul|ligne|colonne/.test(n)) return "spreadsheet";
+  if (/moyenne|étendue|médiane|série|écart|données/.test(n)) return "statistics";
+  if (/probabilit|hasard|chance/.test(n)) return "probability";
+  if (/pourcentage|évolution|augmentation|diminution/.test(n)) return "percentages";
+  if (/triangle|angle|symétrie|rotation|figure|périmètre|géométrie|cercle|segment/.test(n)) return "geometry";
+  if (/équation|inéquation|développer|factoriser|expression|calcul littéral/.test(n)) return "algebra";
+  if (/fraction|quotient/.test(n)) return "fractions";
+  if (/volume|capacité|contenance/.test(n)) return "volume";
+  return "general_math";
+}
+
+export function buildValidation(itemType: ItemType, expectedAnswer: unknown): ValidationSpec {
+  if (expectedAnswer === null || expectedAnswer === undefined) return null;
+
+  if (itemType === "multiple_choice") {
+    const val = isRecord(expectedAnswer) ? expectedAnswer.value : expectedAnswer;
+    if (typeof val === "string") return { type: "exact", value: val };
+  }
+
+  if (itemType === "numeric" || itemType === "calculation") {
+    const val = isRecord(expectedAnswer) ? expectedAnswer.value : expectedAnswer;
+    const num = typeof val === "number" ? val : parseFloat(String(val).replace(",", "."));
+    if (Number.isFinite(num)) {
+      const round2 = (v: number) => Math.round(v * 100) / 100;
+      return { type: "range", value: [round2(num - 0.1), round2(num + 0.1)] };
+    }
+  }
+
+  if (itemType === "short_answer") {
+    const val = isRecord(expectedAnswer) ? expectedAnswer.value : expectedAnswer;
+    if (typeof val === "string") return { type: "exact", value: val };
+  }
+
+  return null;
+}
+
+export function detectQuestionType(text: string): QuestionType {
+  const t = text.toLowerCase();
+  if (/calculer|combien|déterminer|donner la valeur/.test(t)) return "numeric";
+  if (/choisir|parmi|quelle est la bonne réponse/.test(t)) return "mcq";
+  if (/résoudre|équation|expression/.test(t)) return "expression";
+  if (/justifier|expliquer|pourquoi|montrer que/.test(t)) return "text";
+  return "text";
+}
+
+export function buildValidationFromContext(text: string, context: string): ValidationSpec {
+  const combined = text + " " + context;
+  const numberMatch = combined.match(/[-+]?\d+(?:[.,]\d+)?/);
+  if (!numberMatch) return null;
+  const expected = parseFloat((numberMatch[0] ?? "").replace(",", "."));
+  if (!Number.isFinite(expected)) return null;
+  const tolerance = Math.max(0.01, Math.abs(expected * 0.02));
+  const round3 = (v: number) => Math.round(v * 1000) / 1000;
+  return { type: "range", value: [round3(expected - tolerance), round3(expected + tolerance)] };
+}
+
+export function buildGuidance(
+  text: string,
+  type: QuestionType,
+  skill: string,
+  documents: unknown[],
+): TrainingQuestion["guidance"] {
+  const hasTable = (documents as Array<Record<string, unknown>>).some((d) => d.type === "table");
+  const hasGraph = (documents as Array<Record<string, unknown>>).some((d) => d.type === "graph");
+
+  if (hasTable) {
+    return {
+      hints: [
+        { level: 1, text: "Regarde le tableau et repère la bonne ligne." },
+        { level: 2, text: "Identifie la colonne correspondant à la question." },
+        { level: 3, text: "Lis la valeur à l'intersection ligne/colonne." },
+      ],
+      correct_feedback: "Bonne lecture du tableau.",
+      almost_feedback: "Tu es proche : vérifie la ligne ou la colonne utilisée.",
+      incorrect_feedback: "Reviens au tableau et localise les données demandées.",
+    };
+  }
+
+  if (hasGraph) {
+    return {
+      hints: [
+        { level: 1, text: "Observe le graphique et repère les axes." },
+        { level: 2, text: "Identifie la valeur demandée sur l'axe correct." },
+        { level: 3, text: "Lis la valeur avec l'unité indiquée." },
+      ],
+      correct_feedback: "Bonne lecture du graphique.",
+      almost_feedback: "Tu es proche : vérifie les axes et l'unité.",
+      incorrect_feedback: "Reviens au graphique et repère les graduations.",
+    };
+  }
+
+  if (skill === "statistics") {
+    return {
+      hints: [
+        { level: 1, text: "Identifie toutes les valeurs de la série." },
+        { level: 2, text: "Applique la formule adaptée (moyenne, étendue, médiane…)." },
+        { level: 3, text: "Vérifie ton calcul et l'unité du résultat." },
+      ],
+      correct_feedback: "Bonne réponse.",
+      almost_feedback: "Tu es proche : vérifie le calcul ou les valeurs utilisées.",
+      incorrect_feedback: "Reprends la définition de la mesure demandée et refais le calcul.",
+    };
+  }
+
+  if (type === "numeric") {
+    return {
+      hints: [
+        { level: 1, text: "Repère les données utiles dans l'énoncé." },
+        { level: 2, text: "Fais le calcul étape par étape." },
+        { level: 3, text: "Vérifie ton résultat et n'oublie pas l'unité." },
+      ],
+      correct_feedback: "Bonne réponse.",
+      almost_feedback: "Tu es proche : vérifie chaque étape du calcul.",
+      incorrect_feedback: "Reprends le calcul depuis le début en utilisant les données de l'énoncé.",
+    };
+  }
+
+  // Generic fallback — delegates to topic-aware logic
+  return genericGuidanceForText(text);
+}
+
+export function enrichQuestion(
+  question: NormalizedQuestion,
+  context: string,
+  documents: unknown[],
+): EnrichedQuestion {
+  const type = detectQuestionType(question.text);
+  const skill = detectSkill(question.text, context);
+  const validation = buildValidationFromContext(question.text, context);
+  const guidance = buildGuidance(question.text, type, skill, documents);
+  return { ...question, type, skill, validation, guidance };
 }
 
 function cleanPrompt(value: string): string {

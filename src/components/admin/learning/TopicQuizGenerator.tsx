@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { Sparkles, ArrowLeft, ArrowRight, Loader2, Check, BookOpen, Pencil, Trash2, Play, Layers } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,6 +45,7 @@ interface BatchUnit {
   focusContext?: string;
   difficulty?: 'easy' | 'medium' | 'hard'; // per-level ramp (per-level batch only)
   questions: Question[];
+  error?: string;
 }
 
 // Map a level's position to a difficulty ramp: first third easy → last third hard.
@@ -74,6 +76,10 @@ const DIFFICULTIES = [
 
 // 'preview' and 'try' are overlays — not numbered steps in the indicator
 const STEP_ORDER: Step[] = ['topics', 'settings', 'review', 'save', 'assign'];
+const BATCH_GENERATION_ATTEMPTS = 2;
+const BATCH_RETRY_DELAY_MS = 2500;
+
+const wait = (milliseconds: number) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
 function normalizeTopicDisplayKey(value: string | null | undefined) {
   return String(value || '')
@@ -108,6 +114,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   const [selectedSchoolLevel, setSelectedSchoolLevel] = useState<string>('');
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [onlyWithoutQuiz, setOnlyWithoutQuiz] = useState(false);
 
   // Settings
   const [questionCount, setQuestionCount] = useState(5);
@@ -148,6 +155,13 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   }), [generatedQuestions, bankTitle]);
 
   const [isSaving, setIsSaving] = useState(false);
+
+  const invalidatePracticeContent = () => {
+    queryClient.invalidateQueries({ queryKey: ['learning-subjects'] });
+    queryClient.invalidateQueries({ queryKey: ['practice-bank-assignments'] });
+    queryClient.invalidateQueries({ queryKey: ['practice-topics-bank-assignments'] });
+    queryClient.invalidateQueries({ queryKey: ['topic-quiz-generator-assignments'] });
+  };
 
   // Fetch subjects
   const { data: subjects = [] } = useQuery({
@@ -253,7 +267,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     return subjects.filter((subject) => subjectIds.has(subject.id));
   }, [subjects, levelScopedTopics]);
 
-  const filteredTopics = useMemo(() => {
+  const matchingTopics = useMemo(() => {
     const subjectFiltered = selectedSubjectId
       ? levelScopedTopics.filter((topic) => {
           const subjectId = resolveTopicSubjectId(topic);
@@ -275,10 +289,10 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
   }, [levelScopedTopics, searchQuery, selectedSubjectId]);
 
   const { data: topicAssignmentRows = [] } = useQuery({
-    queryKey: ['topic-quiz-generator-assignments', filteredTopics.map((topic) => topic.id).sort().join(',')],
+    queryKey: ['topic-quiz-generator-assignments', matchingTopics.map((topic) => topic.id).sort().join(',')],
     queryFn: async () => {
-      if (filteredTopics.length === 0) return [];
-      const topicIds = filteredTopics.map((topic) => topic.id);
+      if (matchingTopics.length === 0) return [];
+      const topicIds = matchingTopics.map((topic) => topic.id);
       const { data, error } = await supabase
         .from('quiz_bank_assignments')
         .select('bank_id, topic_id, display_context, is_active')
@@ -287,7 +301,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
       if (error) throw error;
       return data || [];
     },
-    enabled: filteredTopics.length > 0,
+    enabled: matchingTopics.length > 0,
   });
 
   const topicQuizAvailability = useMemo(() => {
@@ -309,7 +323,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     }
 
     const availabilityByDisplayKey = new Map<string, { practice: Set<string>; lesson: Set<string> }>();
-    for (const topic of filteredTopics) {
+    for (const topic of matchingTopics) {
       const key = normalizeTopicDisplayKey(topic.name);
       const existing = availabilityByDisplayKey.get(key) || { practice: new Set<string>(), lesson: new Set<string>() };
       const topicAvailability = availabilityByTopicId.get(topic.id);
@@ -319,7 +333,29 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     }
 
     return availabilityByDisplayKey;
-  }, [filteredTopics, topicAssignmentRows]);
+  }, [matchingTopics, topicAssignmentRows]);
+
+  const filteredTopics = useMemo(() => {
+    if (!onlyWithoutQuiz) return matchingTopics;
+    return matchingTopics.filter((topic) => {
+      const availability = topicQuizAvailability.get(normalizeTopicDisplayKey(topic.name));
+      return (availability?.lesson.size ?? 0) + (availability?.practice.size ?? 0) === 0;
+    });
+  }, [matchingTopics, onlyWithoutQuiz, topicQuizAvailability]);
+
+  const allVisibleTopicsSelected = filteredTopics.length > 0
+    && filteredTopics.every((topic) => selectedTopicIds.includes(topic.id));
+
+  const toggleAllVisibleTopics = () => {
+    const visibleIds = filteredTopics.map((topic) => topic.id);
+    setSelectedTopicIds((current) => {
+      if (allVisibleTopicsSelected) {
+        const visibleIdSet = new Set(visibleIds);
+        return current.filter((id) => !visibleIdSet.has(id));
+      }
+      return Array.from(new Set([...current, ...visibleIds]));
+    });
+  };
 
   const selectedTopicLevel = useMemo(() => {
     const selectedTopics = topics.filter(topic => selectedTopicIds.includes(topic.id));
@@ -429,21 +465,45 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
         const filled: BatchUnit[] = [];
         for (let i = 0; i < units.length; i++) {
           const u = units[i];
-          const result = await generateMutation.mutateAsync({
-            topicIds: [u.topicId],
-            ...commonGenArgs(),
-            difficulty: u.difficulty ?? difficulty, // per-level ramp overrides the global picker
-            focusLabel: u.focusLabel,
-            focusContext: u.focusContext,
-          });
-          filled.push({ ...u, questions: result.questions ?? [] });
+          let completedUnit: BatchUnit | null = null;
+          for (let attempt = 1; attempt <= BATCH_GENERATION_ATTEMPTS; attempt++) {
+            try {
+              const result = await generateMutation.mutateAsync({
+                topicIds: [u.topicId],
+                ...commonGenArgs(),
+                difficulty: u.difficulty ?? difficulty, // per-level ramp overrides the global picker
+                focusLabel: u.focusLabel,
+                focusContext: u.focusContext,
+              });
+              completedUnit = { ...u, questions: result.questions ?? [] };
+              break;
+            } catch (error) {
+              if (attempt < BATCH_GENERATION_ATTEMPTS) {
+                await wait(BATCH_RETRY_DELAY_MS);
+                continue;
+              }
+              completedUnit = {
+                ...u,
+                questions: [],
+                error: error instanceof Error ? error.message : 'Generation failed',
+              };
+            }
+          }
+          filled.push(completedUnit ?? { ...u, questions: [], error: 'Generation failed' });
           setBatchProgress({ done: i + 1, total: units.length });
         }
         setBatchUnits(filled);
         setBatchProgress(null);
         setStep('review');
         const totalQ = filled.reduce((n, u) => n + u.questions.length, 0);
-        toast.success(`Generated ${totalQ} questions across ${filled.length} bank(s)!`);
+        const failedCount = filled.filter((unit) => unit.error).length;
+        if (totalQ === 0) {
+          toast.error(`Generation failed for all ${failedCount} bank(s). Review the errors below.`);
+        } else if (failedCount > 0) {
+          toast.warning(`Generated ${totalQ} questions. ${failedCount} bank(s) failed and were kept for review.`);
+        } else {
+          toast.success(`Generated ${totalQ} questions across ${filled.length} bank(s)!`);
+        }
       } catch (error) {
         console.error('Batch generation failed:', error);
         toast.error(error instanceof Error ? error.message : 'Failed to generate questions');
@@ -604,6 +664,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
       }
       queryClient.invalidateQueries({ queryKey: ['quiz-banks'] });
       queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
+      invalidatePracticeContent();
       toast.success(`${created} banque(s) créée(s) et assignée(s) en entraînement.`);
       onSaved?.();
       handleReset();
@@ -646,6 +707,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
         if (assignContext === 'lesson') break;
       }
       queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
+      invalidatePracticeContent();
       toast.success('Quiz assigned successfully!');
       onSaved?.();
       handleReset();
@@ -675,6 +737,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
           })
         ));
         queryClient.invalidateQueries({ queryKey: ['quiz-banks-all'] });
+        invalidatePracticeContent();
         onSaved?.();
       } catch (error) {
         toast.error('Assignment failed — the quiz was saved but not assigned.');
@@ -720,6 +783,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
     setSelectedSchoolLevel('');
     setSelectedTopicIds([]);
     setSearchQuery('');
+    setOnlyWithoutQuiz(false);
     setQuestionCount(5);
     setQuestionTypes(['single', 'multi']);
     setDifficulty('medium');
@@ -844,6 +908,50 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
               />
             </div>
 
+            {selectedSubjectId && (
+              <div className="mb-3 flex items-center justify-between gap-3 text-sm">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <Checkbox
+                    checked={onlyWithoutQuiz}
+                    onCheckedChange={(checked) => setOnlyWithoutQuiz(Boolean(checked))}
+                  />
+                  Without quiz
+                </label>
+                <div className="flex items-center gap-2 text-xs">
+                  <button
+                    type="button"
+                    className="text-primary hover:underline"
+                    onClick={toggleAllVisibleTopics}
+                  >
+                    {allVisibleTopicsSelected ? 'Deselect visible' : 'Select all visible'}
+                  </button>
+                  <span className="text-muted-foreground">·</span>
+                  <button
+                    type="button"
+                    className="text-primary hover:underline"
+                    onClick={() => setSelectedTopicIds(
+                      matchingTopics
+                        .filter((topic) => {
+                          const availability = topicQuizAvailability.get(normalizeTopicDisplayKey(topic.name));
+                          return (availability?.lesson.size ?? 0) + (availability?.practice.size ?? 0) === 0;
+                        })
+                        .map((topic) => topic.id),
+                    )}
+                  >
+                    Select without quiz
+                  </button>
+                  <span className="text-muted-foreground">·</span>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:underline"
+                    onClick={() => setSelectedTopicIds([])}
+                  >
+                    Clear selection
+                  </button>
+                </div>
+              </div>
+            )}
+
             <ScrollArea className="border rounded-lg h-[50vh]">
               {!selectedCountryCode ? (
                 <div className="p-8 text-center text-muted-foreground">Select a country to start filtering topics</div>
@@ -858,9 +966,14 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
               ) : (
                 <div className="p-2 space-y-1">
                   <div className="flex items-center gap-3 px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    <div className="w-4" />
+                    <Checkbox
+                      checked={allVisibleTopicsSelected}
+                      onCheckedChange={toggleAllVisibleTopics}
+                      aria-label="Select all visible topics"
+                    />
                     <div className="flex-1 min-w-0">Topic</div>
-                    <div className="w-16 text-center">Video</div>
+                    <div className="w-24 text-center">Status</div>
+                    <div className="w-16 text-center">Lesson</div>
                     <div className="w-16 text-center">Practice</div>
                   </div>
                   {filteredTopics.map((topic) => {
@@ -868,6 +981,7 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                     const quizAvailability = topicQuizAvailability.get(normalizeTopicDisplayKey(topic.name));
                     const lessonCount = quizAvailability?.lesson.size ?? 0;
                     const practiceCount = quizAvailability?.practice.size ?? 0;
+                    const hasQuiz = lessonCount + practiceCount > 0;
                     return (
                       <div
                         key={topic.id}
@@ -886,6 +1000,17 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                             <div className="text-xs text-muted-foreground mt-1">
                               {getSchoolLevelLabel(topic.curriculum_level_code)}
                             </div>
+                          )}
+                        </div>
+                        <div className="w-24 text-center">
+                          {hasQuiz ? (
+                            <Badge className="h-5 border-green-200 bg-green-50 text-xs text-green-700 hover:bg-green-50">
+                              Quiz ✓
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="h-5 text-xs text-muted-foreground">
+                              No quiz
+                            </Badge>
                           )}
                         </div>
                         <div className="w-16 text-center text-sm font-medium tabular-nums text-muted-foreground">
@@ -1114,7 +1239,9 @@ export function TopicQuizGenerator({ open, onOpenChange, onSaved }: TopicQuizGen
                     </div>
                     <div className="p-3 space-y-2">
                       {unit.questions.length === 0 && (
-                        <p className="text-xs text-muted-foreground italic">Aucune question — cette banque sera ignorée.</p>
+                        <p className={`text-xs italic ${unit.error ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {unit.error ? `Échec : ${unit.error}` : 'Aucune question — cette banque sera ignorée.'}
+                        </p>
                       )}
                       {unit.questions.map((question, index) => (
                         <div key={question.id ?? index} className="border rounded-lg p-3 flex items-start justify-between gap-3">

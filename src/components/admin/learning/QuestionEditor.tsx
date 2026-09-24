@@ -59,11 +59,20 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
   );
 
   // Numeric state
-  const [answerFormat, setAnswerFormat] = useState<"number" | "fraction">(
+  const [answerFormat, setAnswerFormat] = useState<"number" | "fraction" | "time">(
     question && question.kind === 'numeric' ? (question as NumericQ).answerFormat || 'number' : 'number'
   );
   const [numericAnswer, setNumericAnswer] = useState<number>(
     question && question.kind === 'numeric' ? (question as NumericQ).answer : 0
+  );
+  const [timeHours, setTimeHours] = useState<number>(
+    question?.kind === 'numeric' ? (question as NumericQ).timeAnswer?.hours ?? Math.floor((question as NumericQ).answer / 100) : 0
+  );
+  const [timeMinutes, setTimeMinutes] = useState<number>(
+    question?.kind === 'numeric' ? (question as NumericQ).timeAnswer?.minutes ?? (question as NumericQ).answer % 100 : 0
+  );
+  const [numericAnswerUnit, setNumericAnswerUnit] = useState(
+    question?.kind === 'numeric' ? (question as NumericQ).answerUnit ?? '' : ''
   );
   const [fractionNumerator, setFractionNumerator] = useState<number>(
     question && question.kind === 'numeric' && (question as NumericQ).fractionAnswer
@@ -175,6 +184,9 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
         setNumericRange(numQ.range || {});
         setFractionNumerator(numQ.fractionAnswer?.numerator ?? 1);
         setFractionDenominator(numQ.fractionAnswer?.denominator ?? 2);
+        setTimeHours(numQ.timeAnswer?.hours ?? Math.floor(numQ.answer / 100));
+        setTimeMinutes(numQ.timeAnswer?.minutes ?? numQ.answer % 100);
+        setNumericAnswerUnit(numQ.answerUnit ?? '');
         setDragOptions(numQ.dragOptions ?? []);
       } else if (question.kind === 'ordering') {
         const ordQ = question as OrderingQ;
@@ -350,6 +362,22 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
           fractionAnswer: { numerator: fractionNumerator, denominator: fractionDenominator },
           dragOptions: dragOptions.length > 0 ? dragOptions : undefined,
         } as NumericQ;
+      } else if (answerFormat === 'time') {
+        if (!Number.isInteger(timeHours) || !Number.isInteger(timeMinutes) || timeHours < 0 || timeHours > 23 || timeMinutes < 0 || timeMinutes > 59) {
+          alert('Enter a valid time between 00 h 00 and 23 h 59');
+          return;
+        }
+        questionData = {
+          id,
+          kind: 'numeric',
+          prompt,
+          hint: hint || undefined,
+          points,
+          answer: timeHours * 100 + timeMinutes,
+          answerFormat: 'time',
+          timeAnswer: { hours: timeHours, minutes: timeMinutes },
+          dragOptions: dragOptions.length > 0 ? dragOptions : undefined,
+        } as NumericQ;
       } else {
         if (!numericAnswer && numericAnswer !== 0) {
           alert('Please enter a correct answer');
@@ -364,6 +392,7 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
           answer: numericAnswer,
           answerFormat: 'number',
           range: numericRange.min !== undefined || numericRange.max !== undefined ? numericRange : undefined,
+          answerUnit: numericAnswerUnit.trim() || undefined,
         } as NumericQ;
       }
     } else if (kind === 'ordering') {
@@ -585,13 +614,14 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
             <div className="space-y-2">
               <div>
                 <Label>Answer Format</Label>
-                <Select value={answerFormat} onValueChange={(v: "number" | "fraction") => setAnswerFormat(v)}>
+                <Select value={answerFormat} onValueChange={(v: "number" | "fraction" | "time") => setAnswerFormat(v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="number">Number</SelectItem>
                     <SelectItem value="fraction">Fraction</SelectItem>
+                    <SelectItem value="time">Time (hours and minutes)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -606,6 +636,15 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                       value={numericAnswer}
                       onChange={(e) => setNumericAnswer(parseFloat(e.target.value) || 0)}
                       step="any"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="numeric-unit">Expected unit (optional)</Label>
+                    <Input
+                      id="numeric-unit"
+                      value={numericAnswerUnit}
+                      onChange={(e) => setNumericAnswerUnit(e.target.value)}
+                      placeholder="min, cm, kg, L…"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -631,6 +670,20 @@ export function QuestionEditor({ question, isOpen, onClose, onSave, position }: 
                     </div>
                   </div>
                 </>
+              )}
+
+              {answerFormat === 'time' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label htmlFor="time-hours">Hours</Label>
+                    <Input id="time-hours" type="number" min={0} max={23} value={timeHours} onChange={(e) => setTimeHours(Number(e.target.value))} />
+                  </div>
+                  <div>
+                    <Label htmlFor="time-minutes">Minutes</Label>
+                    <Input id="time-minutes" type="number" min={0} max={59} value={timeMinutes} onChange={(e) => setTimeMinutes(Number(e.target.value))} />
+                  </div>
+                  <p className="col-span-2 text-xs text-muted-foreground">Students will answer with separate hour and minute fields.</p>
+                </div>
               )}
 
               {answerFormat === 'fraction' && (

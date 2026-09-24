@@ -32,7 +32,10 @@ interface GenResult {
   currentStep?: string;
 }
 
-const GENERATION_TIMEOUT_MS = 120000;
+// V2.1 performs one planning call plus one validated lesson call per level.
+// Four levels can legitimately take several minutes; do not abort the request
+// while the Edge Function is still generating and validating the topic.
+const GENERATION_TIMEOUT_MS = 300000;
 
 async function getFunctionErrorMessage(err: unknown, response?: Response) {
   let errorMessage =
@@ -180,11 +183,14 @@ export function BulkLessonGenerator() {
           body: { topicId: topic.id, language },
         });
         const timeoutPromise = new Promise<never>((_, reject) => {
-          window.setTimeout(() => reject(new Error('La génération a dépassé 120 secondes.')), GENERATION_TIMEOUT_MS);
+          window.setTimeout(() => reject(new Error('La génération a dépassé 5 minutes.')), GENERATION_TIMEOUT_MS);
         });
         const result = await Promise.race([invokePromise, timeoutPromise]);
         const { data: fnData, error: fnError, response: invokeResponse } = result;
-        if (fnError) throw new Error(fnError.message ?? 'Erreur réseau');
+        if (fnError) {
+          const detailedMessage = await getFunctionErrorMessage(fnError, invokeResponse);
+          throw new Error(detailedMessage);
+        }
         if (fnData?.error) throw new Error(fnData.error);
         const stepCount = (fnData?.lesson_content?.steps?.length ?? 0);
         setResults((p) => p.map((r) => r.topicId === topic.id
@@ -268,7 +274,7 @@ export function BulkLessonGenerator() {
                   {r.status === 'done' && r.currentStep && (
                     <span className="text-xs text-green-600 font-medium">{r.currentStep}</span>
                   )}
-                  {r.error && <span className="max-w-[160px] truncate text-xs text-red-500">{r.error}</span>}
+                  {r.error && <span title={r.error} className="max-w-[280px] truncate text-xs text-red-500">{r.error}</span>}
                 </div>
               ))}
             </div>

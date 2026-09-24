@@ -1,0 +1,2 @@
+-- This migration was already applied remotely. The file is retained locally so
+-- Supabase CLI can reconcile the migration history before applying new migrations.

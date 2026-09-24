@@ -4,9 +4,12 @@ import type { Subject, SubjectProgress } from '@/types/learning';
 import { useActiveSchoolLevel } from './useActiveSchoolLevel';
 import { useUserCurriculumProfile } from './useUserCurriculumProfile';
 import { filterContentByUserLevel } from '@/utils/schoolLevelFilter';
+import { normalizeSchoolLevel } from '@/domain/schoolLevels';
 
 const EMPTY: Omit<SubjectProgress, 'subject'> = {
+  lessons_ready: 0,
   videos_ready: 0,
+  quizzes_ready: 0,
   videos_completed: 0,
   lessons_completed: 0,
   progress_percentage: 0,
@@ -63,8 +66,8 @@ export function useLearningSubjects() {
                 if (
                   effectiveLevelCode &&
                   t.curriculum_level_code &&
-                  t.curriculum_level_code.toLowerCase() !==
-                    effectiveLevelCode.toLowerCase()
+                  normalizeSchoolLevel(t.curriculum_level_code) !==
+                    normalizeSchoolLevel(effectiveLevelCode)
                 )
                   return false;
                 return true;
@@ -91,7 +94,17 @@ export function useLearningSubjects() {
               );
 
               const videos_ready = suitableVideos.length;
-              const content_ready = videos_ready + lessons_ready;
+              const { data: quizAssignments } = await supabase
+                .from('quiz_bank_assignments')
+                .select('bank_id')
+                .in('topic_id', topicIds)
+                .eq('is_active', true)
+                .in('display_context', ['practice', 'both']);
+
+              const quizzes_ready = new Set(
+                (quizAssignments ?? []).map((assignment) => assignment.bank_id),
+              ).size;
+              const content_ready = videos_ready + lessons_ready + quizzes_ready;
 
               if (content_ready === 0)
                 return { subject: subject as Subject, ...EMPTY };
@@ -122,7 +135,9 @@ export function useLearningSubjects() {
 
               return {
                 subject: subject as Subject,
-                videos_ready: content_ready,
+                lessons_ready,
+                videos_ready,
+                quizzes_ready,
                 videos_completed,
                 lessons_completed,
                 progress_percentage:
@@ -136,7 +151,7 @@ export function useLearningSubjects() {
           })
         );
 
-        return rows.filter((s) => s.videos_ready > 0);
+        return rows.filter((s) => s.lessons_ready > 0 || s.videos_ready > 0 || s.quizzes_ready > 0);
       } catch {
         return [];
       }

@@ -161,7 +161,7 @@ const AuthPage: React.FC = () => {
 
       toast({
         title: t('auth.registrationSuccess'),
-        description: t('auth.registrationSuccessStudent'),
+        description: `${t('auth.registrationSuccessStudent')} An administrator will review your account before you can sign in.`,
       });
       setStep('login');
     } catch (error) {
@@ -228,7 +228,7 @@ const AuthPage: React.FC = () => {
 
       toast({
         title: t('auth.registrationSuccess'),
-        description: t('auth.checkEmail'),
+        description: `${t('auth.checkEmail')} An administrator will review your account before you can sign in.`,
       });
       
       setStep('login');

@@ -16,7 +16,16 @@ export type BaseQ = {
 
 export type SingleQ = BaseQ & { kind: "single"; choices: Choice[] };
 export type MultiQ = BaseQ & { kind: "multi"; choices: Choice[] };
-export type NumericQ = BaseQ & { kind: "numeric"; answer: number; range?: { min: number; max: number }; answerFormat?: "number" | "fraction"; fractionAnswer?: { numerator: number; denominator: number }; dragOptions?: number[] };
+export type NumericQ = BaseQ & {
+  kind: "numeric";
+  answer: number;
+  range?: { min: number; max: number };
+  answerFormat?: "number" | "fraction" | "time";
+  fractionAnswer?: { numerator: number; denominator: number };
+  timeAnswer?: { hours: number; minutes: number };
+  answerUnit?: string;
+  dragOptions?: number[];
+};
 export type OrderingQ = BaseQ & { kind: "ordering"; items: string[]; correctOrder: string[] };
 export type VisualQ = BaseQ & { kind: "visual"; visual: VisualUnion };
 export type OperationPoseeQ = BaseQ & {

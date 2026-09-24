@@ -206,6 +206,9 @@ export type Database = {
       }
       children: {
         Row: {
+          approval_reviewed_at: string | null
+          approval_reviewed_by: string | null
+          approval_status: string
           contact_email: string | null
           created_at: string | null
           curriculum: string | null
@@ -219,6 +222,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          approval_reviewed_at?: string | null
+          approval_reviewed_by?: string | null
+          approval_status?: string
           contact_email?: string | null
           created_at?: string | null
           curriculum?: string | null
@@ -232,6 +238,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          approval_reviewed_at?: string | null
+          approval_reviewed_by?: string | null
+          approval_status?: string
           contact_email?: string | null
           created_at?: string | null
           curriculum?: string | null

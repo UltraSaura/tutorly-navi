@@ -139,3 +139,22 @@ describe("column-fill questions", () => {
     expect(evaluateQuestion(question, answer)).toBe(false);
   });
 });
+
+describe("clock-time numeric questions", () => {
+  const question: Question = {
+    id: "time-1",
+    kind: "numeric",
+    prompt: "À quelle heure arrive le bus ?",
+    answer: 955,
+    answerFormat: "time",
+    timeAnswer: { hours: 9, minutes: 55 },
+  };
+
+  it("accepts matching hour and minute fields", () => {
+    expect(evaluateQuestion(question, { hours: "9", minutes: "55" })).toBe(true);
+  });
+
+  it("rejects an invalid minute value", () => {
+    expect(evaluateQuestion(question, { hours: "9", minutes: "95" })).toBe(false);
+  });
+});

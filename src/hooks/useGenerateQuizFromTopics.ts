@@ -27,7 +27,17 @@ export function useGenerateQuizFromTopics() {
       });
 
       if (error) {
-        throw new Error(error.message || 'Failed to generate questions');
+        let message = error.message || 'Failed to generate questions';
+        const response = (error as { context?: Response }).context;
+        if (response instanceof Response) {
+          try {
+            const payload = await response.clone().json();
+            message = payload?.error || payload?.message || message;
+          } catch {
+            // Keep the Functions client message when the response is not JSON.
+          }
+        }
+        throw new Error(message);
       }
 
       if (data?.error) {

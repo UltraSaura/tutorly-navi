@@ -93,6 +93,48 @@ function buildNumericChips(q: any): number[] {
   return seededShuffle(Array.from(pool), String(q.id ?? 'n'));
 }
 
+function decodeClockValue(value: number): { hours: number; minutes: number } {
+  return { hours: Math.floor(value / 100), minutes: value % 100 };
+}
+
+function formatClockValue(value: number): string {
+  const { hours, minutes } = decodeClockValue(value);
+  return `${hours} h ${String(minutes).padStart(2, '0')}`;
+}
+
+function buildTimeChips(q: any): number[] {
+  if (Array.isArray(q?.dragOptions) && q.dragOptions.length > 0) {
+    return seededShuffle(
+      Array.from(new Set<number>(q.dragOptions.map(Number).filter(Number.isFinite))),
+      String(q.id ?? 'time'),
+    );
+  }
+  const hours = Number(q?.timeAnswer?.hours);
+  const minutes = Number(q?.timeAnswer?.minutes);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return [];
+  const total = hours * 60 + minutes;
+  return seededShuffle([total, total - 10, total + 10, total + 20].map((value) => {
+    const normalized = Math.max(0, value);
+    return Math.floor(normalized / 60) * 100 + normalized % 60;
+  }), String(q.id ?? 'time'));
+}
+
+function inferAnswerUnit(question: any): string | undefined {
+  if (question.answerUnit) return question.answerUnit;
+  const text = `${question.prompt ?? ''} ${question.hint ?? ''}`.toLowerCase();
+  if (/\b(minutes?|min)\b/.test(text)) return 'min';
+  if (/\bheures?\b/.test(text)) return 'h';
+  if (/\bkilomètres?\b|\bkm\b/.test(text)) return 'km';
+  if (/\bcentimètres?\b|\bcm\b/.test(text)) return 'cm';
+  if (/\bmillimètres?\b|\bmm\b/.test(text)) return 'mm';
+  if (/\bmètres?\b(?!\s*carr)/.test(text)) return 'm';
+  if (/\bkilogrammes?\b|\bkg\b/.test(text)) return 'kg';
+  if (/\bgrammes?\b|\bg\b/.test(text)) return 'g';
+  if (/\blitres?\b|\bml\b/.test(text)) return 'L';
+  if (/€|euros?/.test(text)) return '€';
+  return undefined;
+}
+
 function seededShuffle<T>(arr: T[], seed: string): T[] {
   let h = 2166136261;
   for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
@@ -629,6 +671,9 @@ export function QuestionCard({
     if (question.kind === "numeric" && (question as any).answerFormat === "fraction") {
       return { numerator: "", denominator: "" };
     }
+    if (question.kind === "numeric" && (question as any).answerFormat === "time") {
+      return { hours: "", minutes: "" };
+    }
     if (question.kind === "slider") return "";
     if (question.kind === "match") return [];
     if (question.kind === "fill-expr") return {};
@@ -981,9 +1026,56 @@ export function QuestionCard({
         );
       })()}
 
-      {question.kind === "numeric" && (question as any).answerFormat !== "fraction" && (() => {
+      {question.kind === "numeric" && (question as any).answerFormat === "time" && (() => {
+        const q: any = question;
+        const chips = buildTimeChips(q);
+        const selectedTime = value?.hours !== '' && value?.minutes !== ''
+          ? `${Number(value.hours)}:${String(value.minutes).padStart(2, '0')}`
+          : '';
+        return (
+          <div className="mt-2 flex flex-col items-center gap-4 py-2">
+            <p className="text-xs font-medium text-[#667085]">Choisis l'heure complète</p>
+            <button
+              type="button"
+              onClick={() => selectedTime && setVal({ hours: '', minutes: '' })}
+              className={cn(
+                'flex h-20 min-w-44 items-center justify-center rounded-2xl border-2 bg-white px-6 text-center text-3xl font-extrabold transition-colors',
+                selectedTime ? 'border-primary text-slate-900' : 'border-[#EAECEF] text-slate-400',
+              )}
+              aria-label={selectedTime ? `Réponse sélectionnée : ${selectedTime.replace(':', ' h ')}` : "Aucune heure sélectionnée"}
+            >
+              {selectedTime ? selectedTime.replace(':', ' h ') : '? h ??'}
+            </button>
+            {chips.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-2">
+                {chips.map((chip) => {
+                  const decoded = decodeClockValue(chip);
+                  const chipKey = `${decoded.hours}:${String(decoded.minutes).padStart(2, '0')}`;
+                  const selected = selectedTime === chipKey;
+                  return (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => setVal(selected ? { hours: '', minutes: '' } : decoded)}
+                      className={cn(
+                        'rounded-xl border px-3 py-3 text-base font-semibold shadow-sm transition-colors',
+                        selected ? 'border-slate-400 bg-slate-100' : 'border-transparent bg-secondary hover:border-primary/40',
+                      )}
+                    >
+                      {formatClockValue(chip)}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {question.kind === "numeric" && !["fraction", "time"].includes((question as any).answerFormat) && (() => {
         const q: any = question;
         const chips: number[] = buildNumericChips(q);
+        const answerUnit = inferAnswerUnit(q);
         const currentStr = String(value ?? '');
         const hasValue = currentStr !== '';
         const numericBorderColor = showSubmittedState
@@ -1007,12 +1099,12 @@ export function QuestionCard({
         return (
           <div className="mt-2 flex flex-col items-center gap-3 py-2">
             <p className="text-xs font-medium" style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>
-              Tape ta réponse
+              {answerUnit ? `Tape ta réponse en ${answerUnit}` : 'Tape ta réponse'}
             </p>
             <div
               className="flex items-center justify-center rounded-2xl transition-all"
               style={{
-                width: '160px',
+                width: answerUnit ? '220px' : '160px',
                 height: '96px',
                 background: numericBgColor,
                 border: `2.5px solid ${numericBorderColor}`,
@@ -1030,7 +1122,8 @@ export function QuestionCard({
                 onChange={e => setVal(e.target.value)}
                 placeholder="?"
                 style={{
-                  width: '100%',
+                  width: answerUnit ? '150px' : '100%',
+                  flex: answerUnit ? 1 : undefined,
                   height: '100%',
                   textAlign: 'center',
                   fontSize: '44px',
@@ -1044,10 +1137,11 @@ export function QuestionCard({
                   MozAppearance: 'textfield' as any,
                 }}
               />
+              {answerUnit && <span className="pr-4 text-xl font-bold text-slate-500">{answerUnit}</span>}
             </div>
             {q.range && (
               <p className="text-xs" style={{ color: '#9CA3AF' }}>
-                Entre {q.range.min} et {q.range.max}
+                Entre {q.range.min}{answerUnit ? ` ${answerUnit}` : ''} et {q.range.max}{answerUnit ? ` ${answerUnit}` : ''}
               </p>
             )}
             {chips.length > 0 && (
@@ -1081,7 +1175,7 @@ export function QuestionCard({
                       )}
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
-                      {chip}
+                      {chip}{answerUnit ? ` ${answerUnit}` : ''}
                     </motion.button>
                   );
                 })}

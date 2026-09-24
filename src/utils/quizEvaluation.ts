@@ -31,6 +31,19 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
       const { numerator: correctNum, denominator: correctDen } = numQ.fractionAnswer;
       return studentNum * correctDen === studentDen * correctNum;
     }
+    if (numQ.answerFormat === "time" && numQ.timeAnswer) {
+      const expectedMinutes = Number(numQ.timeAnswer.hours) * 60 + Number(numQ.timeAnswer.minutes);
+      if (answer && typeof answer === "object") {
+        const hours = Number(answer.hours);
+        const minutes = Number(answer.minutes);
+        return Number.isInteger(hours) && Number.isInteger(minutes)
+          && minutes >= 0 && minutes < 60
+          && hours * 60 + minutes === expectedMinutes;
+      }
+      const match = String(answer ?? '').trim().match(/^(\d{1,2})\s*(?:h|:|H)\s*(\d{1,2})$/);
+      return Boolean(match)
+        && Number(match?.[1]) * 60 + Number(match?.[2]) === expectedMinutes;
+    }
     return Number(answer) === numQ.answer;
   }
   if (q.kind === "ordering") {
