@@ -32,13 +32,18 @@ export function evaluateQuestion(q: Question, answer: any): boolean {
       return studentNum * correctDen === studentDen * correctNum;
     }
     if (numQ.answerFormat === "time" && numQ.timeAnswer) {
-      const expectedMinutes = Number(numQ.timeAnswer.hours) * 60 + Number(numQ.timeAnswer.minutes);
+      const expectedSeconds = Number(numQ.timeAnswer.days ?? 0) * 86400
+        + Number(numQ.timeAnswer.hours) * 3600
+        + Number(numQ.timeAnswer.minutes) * 60
+        + Number(numQ.timeAnswer.seconds ?? 0);
       if (answer && typeof answer === "object") {
+        const days = Number(answer.days ?? 0);
         const hours = Number(answer.hours);
         const minutes = Number(answer.minutes);
-        return Number.isInteger(hours) && Number.isInteger(minutes)
-          && minutes >= 0 && minutes < 60
-          && hours * 60 + minutes === expectedMinutes;
+        const seconds = Number(answer.seconds ?? 0);
+        return Number.isInteger(days) && Number.isInteger(hours) && Number.isInteger(minutes) && Number.isInteger(seconds)
+          && days >= 0 && hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60 && seconds >= 0 && seconds < 60
+          && days * 86400 + hours * 3600 + minutes * 60 + seconds === expectedSeconds;
       }
       const match = String(answer ?? '').trim().match(/^(\d{1,2})\s*(?:h|:|H)\s*(\d{1,2})$/);
       return Boolean(match)

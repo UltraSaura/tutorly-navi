@@ -3,7 +3,7 @@ import { LessonV2Schema, parseLessonContent } from './lesson-generator';
 
 const lesson = {
   version: '2.0', lesson_goal: 'Convertir les durées', success_criteria: ['Je peux convertir des minutes'],
-  prerequisites: [{ id: 'p1', description: 'Compter par 10', check_question: '10 + 10 ?', expected_answer: '20', remediation_hint: 'Compte deux dizaines.' }],
+  prerequisites: [{ id: 'p1', description: 'Compter par 10', check_question: '10 + 10 ?', answer_type: 'numeric', expected_answer: '20', remediation_hint: 'Compte deux dizaines.' }],
   sequence: [{ id: 's1', type: 'concept', title: 'Une minute', content: 'Une minute contient 60 secondes.' }],
   misconceptions: [], mastery: { skills: ['conversion'], threshold: .8 },
 };

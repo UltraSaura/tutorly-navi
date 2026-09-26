@@ -22,7 +22,7 @@ export type NumericQ = BaseQ & {
   range?: { min: number; max: number };
   answerFormat?: "number" | "fraction" | "time";
   fractionAnswer?: { numerator: number; denominator: number };
-  timeAnswer?: { hours: number; minutes: number };
+  timeAnswer?: { days?: number; hours: number; minutes: number; seconds?: number };
   answerUnit?: string;
   dragOptions?: number[];
 };

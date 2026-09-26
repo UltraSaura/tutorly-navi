@@ -2,6 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { validateLessonV21 } from './lesson-v21-contract.ts';
+import { pedagogicalIssues } from './pedagogical-quality.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -361,7 +362,7 @@ Contexte : curriculum={{curriculum}}; pays={{country}}; niveau={{grade_level}}; 
 Adapte le registre à l'âge (R1 concret, R2 modèle puis règle, R3/R4 raisonnement formel). Pour les mathématiques, établis le sens avant la procédure. Identifie les prérequis et les erreurs plausibles. La séquence doit contenir une vraie interaction avant la révélation et une vérification de maîtrise par transfert. Utilise des visuels seulement lorsqu'ils représentent le concept.
 Le JSON doit respecter exactement cette structure :
 {"version":"2.0","lesson_goal":"...","success_criteria":["..."],"prerequisites":[{"id":"...","description":"...","check_question":"...","expected_answer":"...","remediation_hint":"..."}],"sequence":[{"id":"...","type":"hook|concept|visual|prediction|guided_example|student_try|feedback_checkpoint|contrast|rule|worked_example|reflection|mastery_check", "...": "champs correspondant au type"}],"misconceptions":[{"id":"...","description":"...","detect_if":"...","feedback":"...","remediation_strategy":"..."}],"mastery":{"skills":["..."],"threshold":0.8}}
-Blocs : hook/concept {title,content}; visual {title,content,visual:{kind,data}} avec kind number_line|groups|timeline|clock|comparison|part_whole|table|equation|diagram|sequence; prediction {question,choices,correct_answer,hint,explanation}; guided_example {context,steps:[{instruction,representation,reason}]}; student_try ou feedback_checkpoint {question,answer_type,choices,correct_answer,hints,success_feedback,error_feedback}; contrast {title,left,right,explanation}; rule {title,content,representation}; worked_example {context,steps,conclusion}; reflection {question,expected_idea}; mastery_check {questions:[{id,question,answer_type,choices,correct_answer,skill,difficulty,success_feedback,error_feedback}]}.
+Blocs : hook {title,content}; concept {title,content,key_points:[{label,text}],takeaway,visual:{kind,purpose,alt_text,data}} quand une idée se prête à une représentation; visual {title,content,visual:{kind,data}} avec kind clock|timeline|number_line|fraction_bar|fraction_circle|triangle|rectangle|circle|polygon|angle|symmetry|coordinate_plane|geometric_solid|solid_section|measurement|unit_conversion|groups|comparison|part_whole|table|equation|diagram|sequence}; utilise un visuel déterministe lorsque voir l'objet aide à comprendre et fournis des données structurées, purpose et alt_text; prediction {question,choices,correct_answer,hint,explanation}; guided_example {context,steps:[{instruction,representation,reason}]}; student_try ou feedback_checkpoint {question,answer_type,choices,correct_answer,hints,success_feedback,error_feedback}; contrast {title,left,right,explanation}; rule {title,content,representation}; worked_example {context,steps,conclusion}; reflection {question,expected_idea}; mastery_check {questions:[{id,question,answer_type,choices,correct_answer,skill,difficulty,success_feedback,error_feedback}]}.
 Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représentation conceptuelle, une prédiction, un essai guidé, une rétroaction et 2 à 4 questions de maîtrise. Ne révèle jamais la réponse avant la soumission. Exactitude et programme priment. Inclure les champs requis, omettre les champs inutiles. JSON uniquement.`;
     if (!promptTemplate) promptTemplate = FALLBACK_V2_PROMPT;
     const isV2Prompt = /LESSON GENERATOR V2(?:\.1)?/i.test(promptTemplate)
@@ -448,8 +449,27 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
           ? { ...(generatedContent.mastery as Record<string, unknown>), skills: Array.isArray(generatedContent.mastery.skills) ? generatedContent.mastery.skills : [], threshold: Number(generatedContent.mastery.threshold ?? 0.8) }
           : { skills: [], threshold: 0.8 };
         const validTypes = new Set(['hook','concept','visual','prediction','guided_example','student_try','feedback_checkpoint','contrast','rule','worked_example','reflection','mastery_check']);
+        const visualKinds = new Set(['clock','timeline','number_line','fraction_bar','fraction_circle','triangle','rectangle','circle','polygon','angle','symmetry','coordinate_plane','geometric_solid','solid_section','measurement','unit_conversion','groups','comparison','part_whole','table','equation','diagram','sequence']);
         generatedContent.sequence = generatedContent.sequence.map((block: any, index: number) => {
           const type = validTypes.has(block?.type) ? block.type : (index === generatedContent.sequence.length - 1 ? 'mastery_check' : 'concept');
+          if (type === 'visual') {
+            const nested = block?.visual && typeof block.visual === 'object' && !Array.isArray(block.visual) ? block.visual : {};
+            const requestedKind = String(nested.kind ?? block?.visual_kind ?? block?.kind ?? 'diagram');
+            return {
+              ...block,
+              id: String(block?.id || `block-${index + 1}`),
+              type,
+              title: String(block?.title || nested.purpose || block?.purpose || 'Observe'),
+              content: String(block?.content || nested.purpose || block?.purpose || block?.alt_text || nested.alt_text || 'Observe cette représentation.'),
+              visual: {
+                ...nested,
+                kind: visualKinds.has(requestedKind) ? requestedKind : 'diagram',
+                purpose: nested.purpose ?? block?.purpose,
+                alt_text: nested.alt_text ?? block?.alt_text,
+                data: nested.data ?? block?.data ?? {},
+              },
+            };
+          }
           return { ...block, id: String(block?.id || `block-${index + 1}`), type };
         });
         const valid = Array.isArray(generatedContent.sequence)
@@ -575,10 +595,12 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
       for (let i = 0; i < planned.length; i++) {
         const p = planned[i];
         const assigned = Array.isArray(p.objective_ids) ? p.objective_ids.filter((id: unknown) => validIds.has(String(id))).map(String) : [];
-        const levelPrompt = `LESSON GENERATOR V2.1 — UNE SEULE LEÇON DE NIVEAU\nSujet: ${topic.name}\nObjectif global: ${plan.topic_goal}\nNiveau ${i + 1}/${planned.length}: ${p.title}\nBut: ${p.purpose}\nDifficulté: ${p.difficulty}\nObjectifs assignés (IDs réels, ne pas modifier): ${assigned.map((id: string) => `${id}: ${objectives.find((o) => o.id === id)?.text ?? id}`).join('; ')}\nPrérequis de niveau: ${(p.prerequisites ?? []).join('; ')}\nCritères: ${(p.success_criteria ?? []).join('; ')}\nRetourne UNIQUEMENT l'objet lesson, sans envelope: {"lesson_goal":"...","success_criteria":["..."],"prerequisites":[{"id":"p1","description":"...","check_question":"...","expected_answer":"...","remediation_hint":"..."}],"sequence":[{"id":"c1","type":"concept","title":"...","content":"..."},{"id":"m1","type":"mastery_check","questions":[{"id":"q1","question":"...","answer_type":"text","correct_answer":"...","skill":"...","difficulty":1,"success_feedback":"...","error_feedback":"..."}]}],"misconceptions":[{"id":"m1","description":"...","detect_if":"...","feedback":"...","remediation_strategy":"..."}],"mastery":{"skills":["..."],"threshold":0.8}}. Chaque concept DOIT avoir content. Chaque mastery_check DOIT avoir questions non vide. Les prérequis et misconceptions DOIVENT être objets, jamais des chaînes. N'utilise pas teacher_actions/student_actions comme substituts. JSON strict uniquement.`;
+        const levelPrompt = `LESSON GENERATOR V2.1 — UNE SEULE LEÇON DE NIVEAU\nSujet: ${topic.name}\nObjectif global: ${plan.topic_goal}\nNiveau ${i + 1}/${planned.length}: ${p.title}\nBut: ${p.purpose}\nDifficulté: ${p.difficulty}\nObjectifs assignés (IDs réels, ne pas modifier): ${assigned.map((id: string) => `${id}: ${objectives.find((o) => o.id === id)?.text ?? id}`).join('; ')}\nPrérequis de niveau: ${(p.prerequisites ?? []).join('; ')}\nCritères: ${(p.success_criteria ?? []).join('; ')}\nRetourne UNIQUEMENT l'objet lesson, sans envelope: {"lesson_goal":"...","success_criteria":["..."],"prerequisites":[{"id":"p1","description":"...","check_question":"...","answer_type":"multiple_choice|numeric|time|short_text|selection|ordering","choices":["...","..."],"expected_answer":"...","remediation_hint":"...","visual":{"kind":"clock|timeline|number_line|fraction_bar|fraction_circle|triangle|rectangle|circle|polygon|angle|symmetry|coordinate_plane|geometric_solid|solid_section|measurement|unit_conversion|groups|comparison|part_whole|table|equation|diagram|sequence","purpose":"...","alt_text":"...","data":{}}}],"sequence":[{"id":"c1","type":"concept","title":"...","content":"..."},{"id":"m1","type":"mastery_check","questions":[{"id":"q1","question":"...","answer_type":"text","correct_answer":"...","skill":"...","difficulty":1,"success_feedback":"...","error_feedback":"..."}]}],"misconceptions":[{"id":"m1","description":"...","detect_if":"...","feedback":"...","remediation_strategy":"..."}],"mastery":{"skills":["..."],"threshold":0.8}}. Chaque prérequis DOIT déclarer answer_type et expected_answer compatibles. Utilise multiple_choice avec choices pour les identifications; numeric pour les nombres; time pour les heures; short_text seulement quand une réponse libre est utile. Une question sur une horloge doit inclure une visual clock avec data.hour et data.minute. Ne demande jamais une heure/durée pour une question d'identification. Chaque concept DOIT avoir content. Chaque mastery_check DOIT avoir questions non vide. Les prérequis et misconceptions DOIVENT être objets, jamais des chaînes. N'utilise pas teacher_actions/student_actions comme substituts. JSON strict uniquement.`;
+        const pedagogyInstruction = `\n\nPÉDAGOGIE: un concept enseigne une seule petite idée, en 2 à 4 phrases courtes et environ 60–80 mots maximum. Découpe les idées uniquement avec les types canoniques concept, visual, guided_example, prediction, student_try et feedback_checkpoint; ne crée jamais de type example, interaction ou feedback. Progresse situation concrète → visual → concept → prediction/student_try → feedback_checkpoint. Respecte le but de ce niveau et n'enseigne pas les compétences ultérieures. Utilise un langage enfantin et ajoute un visuel pour les concepts de durée, heure, fraction ou géométrie lorsque cela aide. Les prérequis doivent toujours déclarer un answer_type compatible avec leur question; les questions d'identification utilisent multiple_choice/selection/short_text, les nombres numeric, les heures time. FORMES EXACTES: visual={"id":"v1","type":"visual","title":"...","content":"...","visual":{"kind":"clock|timeline|number_line|unit_conversion|measurement|fraction_bar|fraction_circle|triangle|rectangle|circle|polygon|angle|symmetry|coordinate_plane|geometric_solid|solid_section|diagram","purpose":"...","alt_text":"...","data":{}}}; prediction={"id":"p1","type":"prediction","question":"...","choices":["...","..."],"correct_answer":"...","explanation":"..."}; guided_example={"id":"g1","type":"guided_example","context":"...","steps":[{"instruction":"...","representation":"...","reason":"..."}]}; student_try/feedback_checkpoint={"id":"s1","type":"student_try","question":"...","answer_type":"multiple_choice|numeric|time|short_text|text|selection|ordering","choices":["..."],"correct_answer":"...","hints":["..."],"success_feedback":"...","error_feedback":"..."}.`;
+        const structuredConceptInstruction = `\n\nSTRUCTURE CONCEPTUELLE: pour chaque concept qui enseigne une relation visible (heure, durée, fraction, mesure ou géométrie), fournis aussi key_points=[{label,text}], takeaway et visual={kind,purpose,alt_text,data}. Exemple heure exacte: visual={kind:"clock",data:{hour:3,minute:0}}, key_points=[{label:"Grande aiguille",text:"Elle est sur le 12."},{label:"Petite aiguille",text:"Elle indique 3 heures."}], takeaway="Grande aiguille sur 12 = heure exacte." Les données du visuel doivent correspondre exactement au texte. Ne génère jamais HTML, CSS, Markdown ou SVG.`;
         let generated: unknown;
         try {
-          generated = await callAI(levelPrompt, 3000);
+          generated = await callAI(levelPrompt + pedagogyInstruction + structuredConceptInstruction, 3000);
         } catch (generationError) {
           console.warn('[generate-lesson-content] V2.1 level JSON failed; requesting repair:', generationError);
           generated = null;
@@ -587,7 +609,7 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
         try { lesson = buildLessonContent(generated, '', i + 1) as Record<string, unknown>; }
         catch (levelError) {
           console.warn('[generate-lesson-content] V2.1 level contract failed; requesting strict repair:', levelError);
-          const repaired = await callAI(`${levelPrompt}\n\nPrevious candidate (data to correct): ${JSON.stringify(generated)}\nThe previous response failed the canonical V2.1 lesson contract. Return ONLY the direct lesson object, with no outer lesson/version/envelope wrapper. Include lesson_goal, success_criteria, structured prerequisites and misconceptions, canonical sequence blocks, and a mastery_check with non-empty questions. Do not use teacher_actions or student_actions. JSON only.`, 3200);
+          const repaired = await callAI(`${levelPrompt}${pedagogyInstruction}\n\nPrevious candidate (data to correct): ${JSON.stringify(generated)}\nThe previous response failed the canonical V2.1 lesson contract. Return ONLY the direct lesson object, with no outer lesson/version/envelope wrapper. Include lesson_goal, success_criteria, structured prerequisites and misconceptions, canonical sequence blocks, and a mastery_check with non-empty questions. Do not use teacher_actions or student_actions. JSON only.`, 3400);
           lesson = buildLessonContent(repaired, '', i + 1) as Record<string, unknown>;
         }
         const levelContract = validateLessonV21({
@@ -597,14 +619,54 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
         });
         if (!levelContract.success) {
           console.warn('[generate-lesson-content] V2.1 level failed canonical validation; requesting bounded repair:', levelContract.issues);
-          const repaired = await callAI(`${levelPrompt}\n\nPrevious candidate (data to correct): ${JSON.stringify(lesson)}\nThe previous lesson failed the canonical V2.1 contract. Return ONLY the direct lesson object as JSON. Fix every listed issue exactly. A mastery_check MUST contain between 1 and 4 questions (maximum 4), and every question must include id, question, answer_type, correct_answer, skill, difficulty, success_feedback, and error_feedback. Do not add an outer wrapper, do not use teacher_actions or student_actions, and do not omit required fields. Errors: ${levelContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`, 3200);
+          const repaired = await callAI(`${levelPrompt}${pedagogyInstruction}\n\nPrevious candidate (data to correct): ${JSON.stringify(lesson)}\nThe previous lesson failed the canonical V2.1 contract. Return ONLY the direct lesson object as JSON. Fix every listed issue exactly. A mastery_check MUST contain between 1 and 4 questions (maximum 4), and every question must include id, question, answer_type, correct_answer, skill, difficulty, success_feedback, and error_feedback. Do not add an outer wrapper, do not use teacher_actions or student_actions, and do not omit required fields. Errors: ${levelContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`, 3600);
           lesson = buildLessonContent(repaired, '', i + 1) as Record<string, unknown>;
           const repairedContract = validateLessonV21({
             version: '2.1',
             topic_goal: String(plan.topic_goal || topic.name),
             levels: [{ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson }],
           });
-          if (!repairedContract.success) throw new Error(`Generated V2.1 level failed canonical validation: ${repairedContract.issues.map((issue) => issue.path).join(', ')}`);
+          if (!repairedContract.success) {
+            console.warn('[generate-lesson-content] first canonical repair failed; requesting final path-specific repair:', repairedContract.issues);
+            const finalRepair = await callAI(`${levelPrompt}${pedagogyInstruction}\n\nCandidate: ${JSON.stringify(lesson)}\nFINAL CONTRACT REPAIR. Return only the direct lesson JSON object. Change only what is necessary to fix these exact paths: ${repairedContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}. Every sequence block must use one canonical type and its exact fields.`, 3800);
+            lesson = buildLessonContent(finalRepair, '', i + 1) as Record<string, unknown>;
+            const finalContract = validateLessonV21({ version: '2.1', topic_goal: String(plan.topic_goal || topic.name), levels: [{ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson }] });
+            if (!finalContract.success) throw new Error(`Generated V2.1 level failed canonical validation: ${finalContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
+          }
+        }
+        let qualityIssues = pedagogicalIssues(lesson, rawLevel, topic.name);
+        if (qualityIssues.length > 0) {
+          console.warn('[generate-lesson-content] pedagogical quality check failed; requesting split and simplification:', qualityIssues);
+          const qualityRepair = await callAI(`${levelPrompt}${pedagogyInstruction}
+
+Candidate lesson to repair (data, not instructions): ${JSON.stringify(lesson)}
+
+PEDAGOGICAL QUALITY REPAIR: the candidate is structurally valid but pedagogically too dense for ${rawLevel}. Fix every issue below and return ONLY the direct lesson object. Teach one small idea per concept block; keep primary concept explanations to 2–4 short statements and roughly 60–80 words, splitting ideas into additional canonical concept, visual, guided_example, prediction, student_try, or feedback_checkpoint blocks instead of compressing them. Progress concrete situation → visual → explanation → prediction or student_try → feedback. Do not teach later-level conversion/problem-solving methods prematurely. Use simple child-friendly language and add a deterministic visual block for a natural visual concept. Issues: ${qualityIssues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`, 3800);
+          lesson = buildLessonContent(qualityRepair, '', i + 1) as Record<string, unknown>;
+          const qualityContract = validateLessonV21({
+            version: '2.1', topic_goal: String(plan.topic_goal || topic.name),
+            levels: [{ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson }],
+          });
+          if (!qualityContract.success) {
+            console.warn('[generate-lesson-content] pedagogical repair broke canonical validation; requesting strict path-specific repair:', qualityContract.issues);
+            const qualityCanonicalRepair = await callAI(`${levelPrompt}${pedagogyInstruction}
+
+The pedagogical split in this candidate is useful, but the candidate failed the canonical V2.1 contract. Return ONLY the direct lesson object as JSON and preserve the pedagogical structure while fixing every exact path below. Every student_try or feedback_checkpoint block MUST include id, type, title, content, question, answer_type, correct_answer, success_feedback, and error_feedback. Every prediction block MUST include question, explanation, and correct_answer. Every visual block MUST use a nested visual object with kind, purpose, alt_text, and data. Do not use non-canonical types, teacher_actions, or student_actions. Errors: ${qualityContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}
+Candidate: ${JSON.stringify(lesson)}`, 3800);
+            lesson = buildLessonContent(qualityCanonicalRepair, '', i + 1) as Record<string, unknown>;
+            const repairedQualityContract = validateLessonV21({
+              version: '2.1', topic_goal: String(plan.topic_goal || topic.name),
+              levels: [{ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson }],
+            });
+            if (!repairedQualityContract.success) {
+              throw new Error(`Pedagogical repair failed canonical validation: ${repairedQualityContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
+            }
+          }
+          qualityIssues = pedagogicalIssues(lesson, rawLevel, topic.name);
+          if (qualityIssues.length > 0) {
+            console.warn('[generate-lesson-content] pedagogical repair still failed', { topicId, level: i + 1, issues: qualityIssues });
+            throw new Error(`Generated V2.1 lesson failed pedagogical quality checks (level ${i + 1}): ${qualityIssues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
+          }
         }
         levels.push({ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson });
       }

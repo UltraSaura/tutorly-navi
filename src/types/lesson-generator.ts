@@ -2,20 +2,38 @@ import { z } from 'zod';
 import { validateLessonV21 } from './lesson-v21-contract';
 
 const base = { id: z.string().min(1) };
+const answerTypeValues = ['multiple_choice', 'numeric', 'time', 'short_text', 'text', 'selection', 'ordering'] as const;
+export const AnswerTypeSchema = z.enum(answerTypeValues);
+export const VisualSchema = z.object({
+  kind: z.enum(['clock','timeline','number_line','fraction_bar','fraction_circle','triangle','rectangle','circle','polygon','angle','symmetry','coordinate_plane','geometric_solid','solid_section','measurement','unit_conversion','groups','comparison','part_whole','table','equation','diagram','sequence']),
+  purpose: z.string().optional(), alt_text: z.string().optional(), data: z.unknown(),
+});
+export const ConceptKeyPointSchema = z.object({ label: z.string().min(1), text: z.string().min(1) });
+export const PrerequisiteSchema = z.object({
+  id: z.string().min(1),
+  description: z.string().min(1),
+  check_question: z.string().min(1),
+  answer_type: AnswerTypeSchema,
+  choices: z.array(z.string().min(1)).min(2).optional(),
+  expected_answer: z.union([z.string().min(1), z.number()]),
+  remediation_hint: z.string().min(1),
+  visual: VisualSchema.optional(),
+});
+export type LessonPrerequisite = z.infer<typeof PrerequisiteSchema>;
 
 export const LessonBlockSchema = z.discriminatedUnion('type', [
   z.object({ ...base, type: z.literal('hook'), title: z.string(), content: z.string() }),
-  z.object({ ...base, type: z.literal('concept'), title: z.string(), content: z.string() }),
-  z.object({ ...base, type: z.literal('visual'), title: z.string(), content: z.string(), visual: z.object({ kind: z.enum(['number_line','groups','timeline','clock','comparison','part_whole','table','equation','diagram','sequence']), data: z.unknown() }) }),
+  z.object({ ...base, type: z.literal('concept'), title: z.string(), content: z.string(), key_points: z.array(ConceptKeyPointSchema).min(1).max(6).optional(), takeaway: z.string().min(1).optional(), visual: VisualSchema.optional(), representation: z.string().optional() }),
+  z.object({ ...base, type: z.literal('visual'), title: z.string(), content: z.string(), visual: VisualSchema }),
   z.object({ ...base, type: z.literal('prediction'), question: z.string(), choices: z.array(z.string()).min(2).optional(), correct_answer: z.unknown(), hint: z.string().optional(), hints: z.array(z.string()).default([]), success_feedback: z.string().optional(), error_feedback: z.string().optional(), explanation: z.string() }),
   z.object({ ...base, type: z.literal('guided_example'), context: z.string(), steps: z.array(z.object({ instruction: z.string(), representation: z.string().optional(), reason: z.string() })).min(1) }),
-  z.object({ ...base, type: z.literal('student_try'), question: z.string(), answer_type: z.enum(['multiple_choice','numeric','text','selection','ordering']), choices: z.array(z.string()).optional(), correct_answer: z.unknown(), hints: z.array(z.string()).default([]), success_feedback: z.string(), error_feedback: z.string() }),
-  z.object({ ...base, type: z.literal('feedback_checkpoint'), question: z.string(), answer_type: z.enum(['multiple_choice','numeric','text','selection','ordering']), choices: z.array(z.string()).optional(), correct_answer: z.unknown(), hints: z.array(z.string()).default([]), success_feedback: z.string(), error_feedback: z.string() }),
+  z.object({ ...base, type: z.literal('student_try'), question: z.string(), answer_type: AnswerTypeSchema, choices: z.array(z.string()).optional(), correct_answer: z.unknown(), hints: z.array(z.string()).default([]), success_feedback: z.string(), error_feedback: z.string() }),
+  z.object({ ...base, type: z.literal('feedback_checkpoint'), question: z.string(), answer_type: AnswerTypeSchema, choices: z.array(z.string()).optional(), correct_answer: z.unknown(), hints: z.array(z.string()).default([]), success_feedback: z.string(), error_feedback: z.string() }),
   z.object({ ...base, type: z.literal('contrast'), title: z.string(), left: z.string(), right: z.string(), explanation: z.string() }),
   z.object({ ...base, type: z.literal('rule'), title: z.string(), content: z.string(), representation: z.string().optional() }),
   z.object({ ...base, type: z.literal('worked_example'), context: z.string(), steps: z.array(z.union([z.string(), z.object({ instruction: z.string(), representation: z.string().optional(), reason: z.string() })])).min(1), conclusion: z.string() }),
   z.object({ ...base, type: z.literal('reflection'), question: z.string(), expected_idea: z.string() }),
-  z.object({ ...base, type: z.literal('mastery_check'), hints: z.array(z.string()).default([]), questions: z.array(z.object({ id: z.string(), question: z.string(), answer_type: z.enum(['multiple_choice','numeric','text','selection','ordering']), choices: z.array(z.string()).optional(), correct_answer: z.unknown(), skill: z.string(), difficulty: z.union([z.string(), z.number()]), success_feedback: z.string(), error_feedback: z.string() })).min(1).max(4) }),
+  z.object({ ...base, type: z.literal('mastery_check'), hints: z.array(z.string()).default([]), questions: z.array(z.object({ id: z.string(), question: z.string(), answer_type: AnswerTypeSchema, choices: z.array(z.string()).optional(), correct_answer: z.unknown(), skill: z.string(), difficulty: z.union([z.string(), z.number()]), success_feedback: z.string(), error_feedback: z.string() })).min(1).max(4) }),
 ]);
 
 export type LessonBlock = z.infer<typeof LessonBlockSchema>;
@@ -24,7 +42,7 @@ export const LessonV2Schema = z.object({
   version: z.literal('2.0'),
   lesson_goal: z.string(),
   success_criteria: z.array(z.string()).min(1).max(3),
-  prerequisites: z.array(z.object({ id: z.string(), description: z.string(), check_question: z.string(), expected_answer: z.string(), remediation_hint: z.string() })).min(1).max(4),
+  prerequisites: z.array(PrerequisiteSchema).min(1).max(4),
   sequence: z.array(LessonBlockSchema).min(1),
   misconceptions: z.array(z.object({ id: z.string(), description: z.string(), detect_if: z.string(), feedback: z.string(), remediation_strategy: z.string() })),
   mastery: z.object({ skills: z.array(z.string()), threshold: z.number().min(0).max(1) }),
@@ -39,7 +57,7 @@ export type LessonLevelV21 = {
   id: string; level_number: number; title: string; purpose: string; difficulty: string;
   objective_ids: string[];
   lesson: {
-    lesson_goal: string; success_criteria: string[]; prerequisites: Array<Record<string, unknown>>;
+    lesson_goal: string; success_criteria: string[]; prerequisites: LessonPrerequisite[];
     sequence: LessonBlock[]; misconceptions: Array<Record<string, unknown>>;
     mastery: { skills: string[]; threshold: number };
   };

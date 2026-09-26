@@ -274,7 +274,7 @@ export function BulkLessonGenerator() {
                   {r.status === 'done' && r.currentStep && (
                     <span className="text-xs text-green-600 font-medium">{r.currentStep}</span>
                   )}
-                  {r.error && <span title={r.error} className="max-w-[280px] truncate text-xs text-red-500">{r.error}</span>}
+                  {r.error && <span title={r.error} className="max-w-[360px] break-words text-right text-xs text-red-500">{r.error}</span>}
                 </div>
               ))}
             </div>
