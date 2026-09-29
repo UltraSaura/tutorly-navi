@@ -109,26 +109,38 @@ function Visual({ block }: { block: Extract<LessonBlock, { type: 'visual' }> }) 
 }
 
 function ConceptPresentation({ block }: { block: Extract<LessonBlock, { type: 'concept' }> }) {
+  const compactPoint = (point: { label: string; text: string }) => point.text.trim().length <= 64 && point.label.trim().length <= 28;
   return (
-    <div className="space-y-5">
+    <div className="space-y-3" data-concept-presentation>
       {block.visual && (
         <PedagogicalVisual block={{ ...block, visual: block.visual, showText: false }} />
       )}
-      <p className="mx-auto max-w-2xl text-center text-lg leading-8 text-slate-700">{block.content}</p>
+      <p className="max-w-2xl text-left text-base leading-7 text-[#344054]">{block.content}</p>
+      {block.representation && (
+        <div className="rounded-xl border border-[#D8E1F0] bg-white px-4 py-2.5 text-left font-semibold text-[#3448A5]">
+          {block.representation}
+        </div>
+      )}
       {block.key_points && block.key_points.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2" aria-label="Points clés">
-          {block.key_points.map((point, index) => (
-            <div key={`${point.label}-${index}`} className="rounded-xl border border-[#D8E1F0] bg-white p-4 shadow-sm">
-              <p className="mb-1 text-xs font-extrabold uppercase tracking-wide text-[#3448A5]">{point.label}</p>
-              <p className="leading-6 text-[#111827]">{point.text}</p>
+        <div className="space-y-1.5" aria-label="Points clés">
+          {block.key_points.map((point, index) => compactPoint(point) ? (
+            <div key={`${point.label}-${index}`} className="flex items-baseline gap-2 rounded-lg bg-white px-3 py-2 text-sm">
+              <span className="font-extrabold text-[#3448A5]">{point.label}</span>
+              <span aria-hidden className="text-[#4F6FD8]">→</span>
+              <span className="text-[#475467]">{point.text}</span>
+            </div>
+          ) : (
+            <div key={`${point.label}-${index}`} className="rounded-xl border border-[#D8E1F0] bg-white px-3 py-2.5 shadow-sm">
+              <p className="text-sm font-extrabold leading-5 text-[#111827]">{point.label}</p>
+              <p className="mt-0.5 text-sm leading-5 text-[#475467]">{point.text}</p>
             </div>
           ))}
         </div>
       )}
       {block.takeaway && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-          <p className="mb-1 text-xs font-extrabold uppercase tracking-wide text-amber-800">À retenir</p>
-          <p className="text-lg font-bold leading-7 text-amber-950">{block.takeaway}</p>
+        <div className="rounded-xl border border-[#D8E1F0] bg-[#F4F7FF] px-4 py-2.5">
+          <p className="mb-1 text-xs font-extrabold uppercase tracking-wide text-[#3448A5]">À retenir</p>
+          <p className="text-base font-semibold leading-6 text-[#111827]">{block.takeaway}</p>
         </div>
       )}
     </div>

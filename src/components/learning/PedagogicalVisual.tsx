@@ -9,15 +9,69 @@ const s = (v: unknown, d = '') => typeof v === 'string' ? v : d;
 const arr = (v: unknown) => Array.isArray(v) ? v.map((item) => typeof item === 'string' || typeof item === 'number' ? { label: String(item) } : data(item)) : [];
 export function isVisualKind(v: unknown): v is typeof VISUAL_KINDS[number] { return typeof v === 'string' && (VISUAL_KINDS as readonly string[]).includes(v); }
 
-function Clock({ d }: { d: Data }) { const h = n(d.hour ?? d.hours, 0) % 12, m = n(d.minute ?? d.minutes, 0) % 60; const hand = (a: number, r: number) => `${120 + Math.sin(a * Math.PI / 180) * r},${90 - Math.cos(a * Math.PI / 180) * r}`; return <svg viewBox="0 0 240 180" className="mx-auto w-full max-w-sm" role="img" aria-label="Horloge pédagogique"><circle cx="120" cy="90" r="66" fill="white" stroke="#0f766e" strokeWidth="4" />{Array.from({length:12},(_,i)=>{const a=i*30;return <line key={i} x1={hand(a,56).split(',')[0]} y1={hand(a,56).split(',')[1]} x2={hand(a,63).split(',')[0]} y2={hand(a,63).split(',')[1]} stroke="#0f766e" strokeWidth="3"/>})}<text x="120" y="25" textAnchor="middle">12</text><text x="184" y="95" textAnchor="middle">3</text><text x="120" y="164" textAnchor="middle">6</text><text x="56" y="95" textAnchor="middle">9</text><line x1="120" y1="90" x2={hand((h+m/60)*30,35).split(',')[0]} y2={hand((h+m/60)*30,35).split(',')[1]} stroke="#134e4a" strokeWidth="6" strokeLinecap="round"/><line x1="120" y1="90" x2={hand(m*6,53).split(',')[0]} y2={hand(m*6,53).split(',')[1]} stroke="#14b8a6" strokeWidth="4" strokeLinecap="round"/><circle cx="120" cy="90" r="5" fill="#0f766e"/></svg>; }
+export const CLOCK_GEOMETRY = {
+  centerX: 120,
+  centerY: 90,
+  faceRadius: 66,
+  tickInnerRadius: 56,
+  tickOuterRadius: 63,
+  labelRadius: 45,
+  hourHandRadius: 35,
+  minuteHandRadius: 53,
+  labelFontSize: 14,
+} as const;
+
+export type ClockPoint = { x: number; y: number };
+
+/** Clock angles use 0° at 12 o'clock and increase clockwise. */
+export function clockPoint(hourAngle: number, radius: number): ClockPoint {
+  const angle = (hourAngle * 30 - 90) * Math.PI / 180;
+  return {
+    x: CLOCK_GEOMETRY.centerX + radius * Math.cos(angle),
+    y: CLOCK_GEOMETRY.centerY + radius * Math.sin(angle),
+  };
+}
+
+function Clock({ d }: { d: Data }) {
+  const h = n(d.hour ?? d.hours, 0) % 12, m = n(d.minute ?? d.minutes, 0) % 60;
+  const hand = (a: number, r: number) => { const point = clockPoint(a / 30, r); return `${point.x},${point.y}`; };
+  const label = (hour: number) => clockPoint(hour % 12, CLOCK_GEOMETRY.labelRadius);
+  const annotations = data(d.annotations);
+  const handLabels = data(d.hand_labels ?? d.handLabels);
+  const relationships = Array.isArray(d.relationships ?? d.relations)
+    ? (d.relationships ?? d.relations as unknown[]).filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    : [];
+  const hourLabel = s(annotations.hours ?? annotations.hour ?? handLabels.hours ?? handLabels.hour);
+  const minuteLabel = s(annotations.minutes ?? annotations.minute ?? handLabels.minutes ?? handLabels.minute);
+  return <div className="space-y-2">
+    <svg viewBox="0 0 240 205" className="mx-auto w-full max-w-sm" role="img" aria-label="Horloge pédagogique">
+      <circle cx={CLOCK_GEOMETRY.centerX} cy={CLOCK_GEOMETRY.centerY} r={CLOCK_GEOMETRY.faceRadius} fill="white" stroke="#4F6FD8" strokeWidth="3" />
+      {Array.from({length:12},(_,i)=>{const a=i*30;return <line key={i} x1={hand(a,CLOCK_GEOMETRY.tickInnerRadius).split(',')[0]} y1={hand(a,CLOCK_GEOMETRY.tickInnerRadius).split(',')[1]} x2={hand(a,CLOCK_GEOMETRY.tickOuterRadius).split(',')[0]} y2={hand(a,CLOCK_GEOMETRY.tickOuterRadius).split(',')[1]} stroke="#667085" strokeWidth="3"/>})}
+      {[{hour:12,text:'12'},{hour:3,text:'3'},{hour:6,text:'6'},{hour:9,text:'9'}].map(({hour,text}) => { const point = label(hour); return <text key={hour} x={point.x} y={point.y} textAnchor="middle" dominantBaseline="middle" fontSize={CLOCK_GEOMETRY.labelFontSize} fontWeight="700" fill="#111827">{text}</text>; })}
+      <line x1={CLOCK_GEOMETRY.centerX} y1={CLOCK_GEOMETRY.centerY} x2={hand((h+m/60)*30,CLOCK_GEOMETRY.hourHandRadius).split(',')[0]} y2={hand((h+m/60)*30,CLOCK_GEOMETRY.hourHandRadius).split(',')[1]} stroke="#3448A5" strokeWidth="7" strokeLinecap="round"/>
+      <line x1={CLOCK_GEOMETRY.centerX} y1={CLOCK_GEOMETRY.centerY} x2={hand(m*6,CLOCK_GEOMETRY.minuteHandRadius).split(',')[0]} y2={hand(m*6,CLOCK_GEOMETRY.minuteHandRadius).split(',')[1]} stroke="#16C7A3" strokeWidth="5" strokeLinecap="round"/>
+      <circle cx={CLOCK_GEOMETRY.centerX} cy={CLOCK_GEOMETRY.centerY} r="5" fill="#111827"/>
+      {hourLabel && <text x="28" y="190" fontSize="10" fontWeight="700" fill="#3448A5">{hourLabel}</text>}
+      {minuteLabel && <text x="212" y="190" textAnchor="end" fontSize="10" fontWeight="700" fill="#16C7A3">{minuteLabel}</text>}
+    </svg>
+    {relationships.length > 0 && <div className="flex flex-wrap justify-center gap-2" aria-label="Relations pédagogiques">{relationships.map((relationship, index) => <span key={`${relationship}-${index}`} className="rounded-full bg-[#EEF2FF] px-3 py-1 text-sm font-semibold text-[#3448A5]">{relationship}</span>)}</div>}
+  </div>;
+}
 function Timeline({ d }: { d: Data }) {
   const xs = arr(d.events ?? d.nodes ?? d.items ?? d.units ?? d.labels);
-  const relationByUnit: Record<string, string> = { seconde: '×60', secondes: '×60', minute: '×60', minutes: '×60', heure: '×24', heures: '×24', jour: '×7', jours: '×4', semaine: '×4', semaines: '×12', mois: '×12', année: '×100', années: '×100', siècle: '×1000' };
-  const relation = (item: Data, index: number) => s(item.next ?? item.relation ?? item.multiplier, relationByUnit[String(item.label ?? item.title ?? item.value ?? '').toLowerCase()] ?? (index < xs.length - 1 ? '' : ''));
+  // Relationship labels are data, not inferred from a unit's name. The
+  // generator may provide one label per connector in `relations` or on an
+  // individual item via `next`, `relation`, or `multiplier`.
+  const relations = Array.isArray(d.relations ?? d.relationships)
+    ? (d.relations ?? d.relationships as unknown[]).map((item) => typeof item === 'string' ? item : s(data(item).label ?? data(item).value))
+    : [];
+  const relation = (item: Data, index: number) => s(item.next ?? item.relation ?? item.multiplier ?? relations[index]);
   const rows = Array.from({ length: Math.ceil(xs.length / 3) }, (_, row) => xs.slice(row * 3, row * 3 + 3));
   return <div className="space-y-2" role="list" aria-label="Unités de durée">
     <p className="text-center text-xs font-bold uppercase tracking-wide text-[#3448A5]">Du plus court au plus long →</p>
-    {rows.map((row, rowIndex) => <div key={rowIndex} className="flex items-stretch justify-center gap-1 sm:gap-2">
+    {rows.map((row, rowIndex) => <div key={rowIndex}>
+      {rowIndex > 0 && <div className="flex h-5 items-center justify-center text-sm font-bold text-[#4F6FD8]" aria-hidden>↓</div>}
+      <div className="flex items-stretch justify-center gap-1 sm:gap-2">
       {row.map((item, columnIndex) => { const index = rowIndex * 3 + columnIndex; const factor = relation(item, index); return <div key={index} className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
         <div className="flex min-h-[62px] min-w-0 flex-1 flex-col items-center justify-center rounded-xl border-2 border-[#D8E1F0] bg-white px-1.5 py-2 text-center shadow-sm" role="listitem">
           <span className="text-[10px] font-extrabold text-[#667085]">{index + 1}</span>
@@ -26,6 +80,7 @@ function Timeline({ d }: { d: Data }) {
         </div>
         {columnIndex < row.length - 1 && <span className="flex shrink-0 flex-col items-center justify-center text-sm font-bold text-[#4F6FD8] sm:text-base"><span aria-hidden>→</span>{factor && <span className="text-[9px] font-semibold text-[#3448A5]">{factor}</span>}</span>}
       </div>; })}
+      </div>
     </div>)}
   </div>;
 }

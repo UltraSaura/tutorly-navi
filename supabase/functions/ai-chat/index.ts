@@ -314,7 +314,8 @@ JSON shape:
             modelConfig.model, 
             isExercise,
             requestExplanation,
-            maxTokens
+            maxTokens,
+            requestMode === 'lessonGeneration' ? { type: 'json_object' } : undefined
           );
           break;
         case 'Anthropic':

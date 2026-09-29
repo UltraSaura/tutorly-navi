@@ -2,7 +2,9 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { validateLessonV21 } from './lesson-v21-contract.ts';
-import { pedagogicalIssues } from './pedagogical-quality.ts';
+import { pedagogicalIssues, semanticDuplicationDiagnostics, validateCompositionRepairOutput } from './pedagogical-quality.ts';
+import { determineVisualRequirement, isSupportedVisualKind } from './visual-policy.ts';
+import { resolveEdition } from './curriculum-resolution.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -221,11 +223,14 @@ serve(async (req) => {
         let editionId: string | null = null;
 
         // Primary: use resolve_edition RPC (français + maths have applicability rows)
-        const { data: resolvedId } = await supabaseAdminEarly.rpc('resolve_edition', {
+        const { data: resolvedId, error: resolveEditionError } = await resolveEdition(supabaseAdminEarly, {
           p_level: rpcLevel,
           p_subject: subjectSlug,
           p_track: null,
-        }).maybeSingle().catch(() => ({ data: null }));
+        });
+        if (resolveEditionError) {
+          console.warn('[generate-lesson-content] resolve_edition failed; using curriculum fallback:', resolveEditionError);
+        }
         editionId = resolvedId as string | null;
 
         // Fallback for subjects without applicability rows (histoire, géo, sciences, emc)
@@ -396,6 +401,65 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         return JSON.parse(start !== -1 && end > start ? cleaned.slice(start, end + 1) : cleaned);
       }
       return raw;
+    };
+
+    // Repair only missing concept visuals that the shared policy marks as
+    // required. This is deliberately bounded and cannot rewrite pedagogy.
+    const repairRequiredConceptVisuals = async (lesson: Record<string, unknown>) => {
+      const sequence = Array.isArray(lesson.sequence) ? lesson.sequence as Array<Record<string, unknown>> : [];
+      const missing = sequence.flatMap((block, index) => {
+        if (block.type !== 'concept' || block.visual) return [];
+        const policy = determineVisualRequirement(block);
+        return policy.requirement === 'required' ? [{ index, block, policy }] : [];
+      });
+      if (missing.length === 0) return lesson;
+      const request = missing.map(({ index, block, policy }) => ({
+        index,
+        expected_kinds: policy.suggestedKinds,
+        title: block.title,
+        content: block.content,
+        representation: block.representation,
+        key_points: block.key_points,
+        takeaway: block.takeaway,
+      }));
+      const response = await callAI(`VISUAL REPAIR ONLY. Return one JSON object mapping sequence indexes to visual objects. Do not return a lesson, wrapper, prose, or Markdown. Add a visual only when the supplied concept has enough information. Use only the expected_kinds for that index and only supported kinds. Each value must contain kind, purpose, alt_text, and structured data. If a visual cannot be made faithfully, omit that index. Candidates: ${JSON.stringify(request)}`, 1400);
+      if (!response || typeof response !== 'object' || Array.isArray(response)) return lesson;
+      const repaired = { ...lesson, sequence: sequence.map((block) => ({ ...block })) };
+      for (const { index, policy } of missing) {
+        const candidate = (response as Record<string, unknown>)[String(index)];
+        if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) continue;
+        const visual = candidate as Record<string, unknown>;
+        const kind = String(visual.kind ?? '');
+        const data = visual.data;
+        const hasData = data && typeof data === 'object' && !Array.isArray(data) && Object.keys(data as Record<string, unknown>).length > 0;
+        if (!policy.suggestedKinds.includes(kind) || !isSupportedVisualKind(kind) || typeof visual.purpose !== 'string' || typeof visual.alt_text !== 'string' || !hasData) continue;
+        (repaired.sequence as Array<Record<string, unknown>>)[index].visual = visual;
+      }
+      return repaired;
+    };
+
+    // One bounded composition repair per duplicated structured concept. This
+    // changes only content/key_points/takeaway and never repairs factual or
+    // schema errors.
+    const repairDuplicatedConcepts = async (lesson: Record<string, unknown>, context: string) => {
+      const sequence = Array.isArray(lesson.sequence) ? lesson.sequence as Array<Record<string, unknown>> : [];
+      const candidates = sequence.flatMap((block, index) => {
+        if (block.type !== 'concept' || !block.visual) return [];
+        const diagnostics = semanticDuplicationDiagnostics(block);
+        return diagnostics.length ? [{ index, block, diagnostics }] : [];
+      });
+      for (const candidate of candidates) {
+        const { index, block, diagnostics } = candidate;
+        const response = await callAI(`STRUCTURED CONCEPT COMPOSITION REPAIR ONLY. Rewrite only content, key_points, and takeaway for this one concept so each field has a distinct pedagogical role. Preserve the original curriculum meaning, factual content, visual, and scope. Do not introduce new curriculum content. content must be a brief child-friendly introduction; key_points must add essential operational facts; takeaway must be one concise memory strategy. Return only JSON with content:string, key_points:[{label:string,text:string}], takeaway:string. Candidate context: ${context}. Exact duplication diagnostics: ${JSON.stringify(diagnostics)}. Original concept: ${JSON.stringify({ title: block.title, content: block.content, visual: block.visual, key_points: block.key_points, takeaway: block.takeaway })}`, 1200);
+        if (!response || typeof response !== 'object' || Array.isArray(response)) continue;
+        const validated = validateCompositionRepairOutput(response);
+        if (!validated.success) {
+          console.warn('[generate-lesson-content] composition repair output rejected', { topicId, level: context, block: index, issues: validated.issues });
+          continue;
+        }
+        (lesson.sequence as Array<Record<string, unknown>>)[index] = { ...block, ...validated.value };
+      }
+      return lesson;
     };
 
     // ── Helper: normalize an AI "quiz" object into a renderable SingleQ ──
@@ -596,8 +660,8 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
         const p = planned[i];
         const assigned = Array.isArray(p.objective_ids) ? p.objective_ids.filter((id: unknown) => validIds.has(String(id))).map(String) : [];
         const levelPrompt = `LESSON GENERATOR V2.1 — UNE SEULE LEÇON DE NIVEAU\nSujet: ${topic.name}\nObjectif global: ${plan.topic_goal}\nNiveau ${i + 1}/${planned.length}: ${p.title}\nBut: ${p.purpose}\nDifficulté: ${p.difficulty}\nObjectifs assignés (IDs réels, ne pas modifier): ${assigned.map((id: string) => `${id}: ${objectives.find((o) => o.id === id)?.text ?? id}`).join('; ')}\nPrérequis de niveau: ${(p.prerequisites ?? []).join('; ')}\nCritères: ${(p.success_criteria ?? []).join('; ')}\nRetourne UNIQUEMENT l'objet lesson, sans envelope: {"lesson_goal":"...","success_criteria":["..."],"prerequisites":[{"id":"p1","description":"...","check_question":"...","answer_type":"multiple_choice|numeric|time|short_text|selection|ordering","choices":["...","..."],"expected_answer":"...","remediation_hint":"...","visual":{"kind":"clock|timeline|number_line|fraction_bar|fraction_circle|triangle|rectangle|circle|polygon|angle|symmetry|coordinate_plane|geometric_solid|solid_section|measurement|unit_conversion|groups|comparison|part_whole|table|equation|diagram|sequence","purpose":"...","alt_text":"...","data":{}}}],"sequence":[{"id":"c1","type":"concept","title":"...","content":"..."},{"id":"m1","type":"mastery_check","questions":[{"id":"q1","question":"...","answer_type":"text","correct_answer":"...","skill":"...","difficulty":1,"success_feedback":"...","error_feedback":"..."}]}],"misconceptions":[{"id":"m1","description":"...","detect_if":"...","feedback":"...","remediation_strategy":"..."}],"mastery":{"skills":["..."],"threshold":0.8}}. Chaque prérequis DOIT déclarer answer_type et expected_answer compatibles. Utilise multiple_choice avec choices pour les identifications; numeric pour les nombres; time pour les heures; short_text seulement quand une réponse libre est utile. Une question sur une horloge doit inclure une visual clock avec data.hour et data.minute. Ne demande jamais une heure/durée pour une question d'identification. Chaque concept DOIT avoir content. Chaque mastery_check DOIT avoir questions non vide. Les prérequis et misconceptions DOIVENT être objets, jamais des chaînes. N'utilise pas teacher_actions/student_actions comme substituts. JSON strict uniquement.`;
-        const pedagogyInstruction = `\n\nPÉDAGOGIE: un concept enseigne une seule petite idée, en 2 à 4 phrases courtes et environ 60–80 mots maximum. Découpe les idées uniquement avec les types canoniques concept, visual, guided_example, prediction, student_try et feedback_checkpoint; ne crée jamais de type example, interaction ou feedback. Progresse situation concrète → visual → concept → prediction/student_try → feedback_checkpoint. Respecte le but de ce niveau et n'enseigne pas les compétences ultérieures. Utilise un langage enfantin et ajoute un visuel pour les concepts de durée, heure, fraction ou géométrie lorsque cela aide. Les prérequis doivent toujours déclarer un answer_type compatible avec leur question; les questions d'identification utilisent multiple_choice/selection/short_text, les nombres numeric, les heures time. FORMES EXACTES: visual={"id":"v1","type":"visual","title":"...","content":"...","visual":{"kind":"clock|timeline|number_line|unit_conversion|measurement|fraction_bar|fraction_circle|triangle|rectangle|circle|polygon|angle|symmetry|coordinate_plane|geometric_solid|solid_section|diagram","purpose":"...","alt_text":"...","data":{}}}; prediction={"id":"p1","type":"prediction","question":"...","choices":["...","..."],"correct_answer":"...","explanation":"..."}; guided_example={"id":"g1","type":"guided_example","context":"...","steps":[{"instruction":"...","representation":"...","reason":"..."}]}; student_try/feedback_checkpoint={"id":"s1","type":"student_try","question":"...","answer_type":"multiple_choice|numeric|time|short_text|text|selection|ordering","choices":["..."],"correct_answer":"...","hints":["..."],"success_feedback":"...","error_feedback":"..."}.`;
-        const structuredConceptInstruction = `\n\nSTRUCTURE CONCEPTUELLE: pour chaque concept qui enseigne une relation visible (heure, durée, fraction, mesure ou géométrie), fournis aussi key_points=[{label,text}], takeaway et visual={kind,purpose,alt_text,data}. Exemple heure exacte: visual={kind:"clock",data:{hour:3,minute:0}}, key_points=[{label:"Grande aiguille",text:"Elle est sur le 12."},{label:"Petite aiguille",text:"Elle indique 3 heures."}], takeaway="Grande aiguille sur 12 = heure exacte." Les données du visuel doivent correspondre exactement au texte. Ne génère jamais HTML, CSS, Markdown ou SVG.`;
+        const pedagogyInstruction = `\n\nPÉDAGOGIE: un concept enseigne une seule petite idée, en 1 à 3 phrases courtes. Quand le concept est structuré, son contenu explique l'idée centrale, le visual la montre, les key_points ajoutent uniquement des informations essentielles qui ne sont pas déjà évidentes, et le takeaway la compresse en une règle mémorable. Ne répète pas la même phrase dans content, key_points et takeaway. Découpe les idées uniquement avec les types canoniques concept, visual, guided_example, prediction, student_try et feedback_checkpoint; ne crée jamais de type example, interaction ou feedback. Progresse situation concrète → visual → concept → prediction/student_try → feedback_checkpoint. Respecte le but de ce niveau et n'enseigne pas les compétences ultérieures. Utilise un langage enfantin et un français naturel (par exemple «Chaque grand chiffre correspond à 5 minutes», jamais une formulation télégraphique). Les prérequis doivent toujours déclarer un answer_type compatible avec leur question; les questions d'identification utilisent multiple_choice/selection/short_text, les nombres numeric, les heures time. FORMES EXACTES: visual={"id":"v1","type":"visual","title":"...","content":"...","visual":{"kind":"clock|timeline|number_line|unit_conversion|measurement|fraction_bar|fraction_circle|triangle|rectangle|circle|polygon|angle|symmetry|coordinate_plane|geometric_solid|solid_section|diagram","purpose":"...","alt_text":"...","data":{}}}; prediction={"id":"p1","type":"prediction","question":"...","choices":["...","..."],"correct_answer":"...","explanation":"..."}; guided_example={"id":"g1","type":"guided_example","context":"...","steps":[{"instruction":"...","representation":"...","reason":"..."}]}; student_try/feedback_checkpoint={"id":"s1","type":"student_try","question":"...","answer_type":"multiple_choice|numeric|time|short_text|text|selection|ordering","choices":["..."],"correct_answer":"...","hints":["..."],"success_feedback":"...","error_feedback":"..."}.`;
+        const structuredConceptInstruction = `\n\nSTRUCTURE CONCEPTUELLE: décide au cas par cas si le concept bénéficie d'un modèle visuel. Politique visuelle partagée obligatoire: lecture de l'heure/horloge → visual kind clock requis; fractions partie/tout → fraction_bar ou fraction_circle requis; droite graduée → number_line requis; géométrie/angles/symétrie/coordonnées → figure appropriée requise; conversion et unités de durée → unit_conversion ou timeline requis; mesure/comparaison/processus → visual préféré mais non obligatoire; prose et relations non visuelles (par exemple commutativité) → visual optionnel. Pour les relations difficiles à organiser mentalement, préfère un concept autonome avec content court + visual déterministe + 1 à 4 key_points utiles + takeaway concis. Chaque champ doit avoir un rôle distinct: content introduit le modèle en 1 à 2 phrases, visual montre la relation, key_points ajoutent des faits opérationnels indispensables, takeaway donne une stratégie mémorable. Exemple unités: content=«On choisit une unité selon la durée à mesurer.»; visual=seconde → minute → heure → jour; key_points=«60 secondes = 1 minute», «60 minutes = 1 heure», «24 heures = 1 jour»; takeaway=«Repère l'unité de départ et celle d'arrivée avant de convertir.» Ne répète pas les mêmes conversions dans les quatre champs. N'ajoute pas de visuel décoratif. Si un bloc visual suivant explique exactement le même modèle mental que le concept, attache normalement le visual au concept au lieu de répéter le contenu sur deux écrans. Pour une horloge, fournis dans visual.data les annotations ou relations pédagogiques nécessaires (par exemple hand_labels:{hours:"Petite aiguille → heures",minutes:"Grande aiguille → minutes"}, relationships:["9 × 5 = 45 min"]); le frontend n'invente aucune annotation. Les unités doivent rester limitées à celles nécessaires à l'objectif immédiat. Les données du visuel et les key_points doivent correspondre exactement au texte; pour une timeline, fournis les relations dans les données quand elles sont pédagogiquement nécessaires (par exemple relations:["×60","×60","×24"]). Ne génère jamais HTML, CSS, Markdown ou SVG.`;
         let generated: unknown;
         try {
           generated = await callAI(levelPrompt + pedagogyInstruction + structuredConceptInstruction, 3000);
@@ -634,7 +698,31 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
             if (!finalContract.success) throw new Error(`Generated V2.1 level failed canonical validation: ${finalContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
           }
         }
+        // First attempt a bounded, policy-driven repair for missing required
+        // visuals. The normal quality repair remains the fallback for other
+        // pedagogical issues and cannot silently weaken the gate.
+        const repairedVisualLesson = await repairRequiredConceptVisuals(lesson);
+        lesson = repairedVisualLesson;
         let qualityIssues = pedagogicalIssues(lesson, rawLevel, topic.name);
+        if (qualityIssues.length > 0) {
+          const duplicationOnly = qualityIssues.length > 0 && qualityIssues.every((issue) => /^sequence\[\d+\]\.(key_points|takeaway)$/.test(issue.path));
+          if (duplicationOnly) {
+            const before = qualityIssues.map((issue) => `${issue.path}: ${issue.message}`).join('; ');
+            lesson = await repairDuplicatedConcepts(lesson, `Sujet=${topic.name}; niveau=${p.title}; objectifs=${assigned.join(', ')}`);
+            const compositionContract = validateLessonV21({
+              version: '2.1', topic_goal: String(plan.topic_goal || topic.name),
+              levels: [{ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson }],
+            });
+            if (!compositionContract.success) {
+              throw new Error(`Structured concept composition repair failed canonical validation (level ${i + 1}): ${compositionContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
+            }
+            qualityIssues = pedagogicalIssues(lesson, rawLevel, topic.name);
+            console.info('[generate-lesson-content] bounded structured-concept repair', { topicId, level: i + 1, before, remaining: qualityIssues });
+            if (qualityIssues.length > 0) {
+              throw new Error(`Structured concept composition repair failed after one attempt (level ${i + 1}): ${qualityIssues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
+            }
+          }
+        }
         if (qualityIssues.length > 0) {
           console.warn('[generate-lesson-content] pedagogical quality check failed; requesting split and simplification:', qualityIssues);
           const qualityRepair = await callAI(`${levelPrompt}${pedagogyInstruction}
@@ -665,7 +753,16 @@ Candidate: ${JSON.stringify(lesson)}`, 3800);
           qualityIssues = pedagogicalIssues(lesson, rawLevel, topic.name);
           if (qualityIssues.length > 0) {
             console.warn('[generate-lesson-content] pedagogical repair still failed', { topicId, level: i + 1, issues: qualityIssues });
-            throw new Error(`Generated V2.1 lesson failed pedagogical quality checks (level ${i + 1}): ${qualityIssues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
+            const sequence = Array.isArray(lesson.sequence) ? lesson.sequence as Array<Record<string, unknown>> : [];
+            const diagnostic = qualityIssues.map((issue) => {
+              const match = issue.path.match(/^sequence\[(\d+)\]/);
+              if (!match) return `${issue.path}: ${issue.message}`;
+              const index = Number(match[1]);
+              const block = sequence[index] ?? {};
+              const policy = block.type === 'concept' ? determineVisualRequirement(block) : undefined;
+              return `${issue.path} (title=${JSON.stringify(block.title ?? '')}, requirement=${policy?.requirement ?? 'n/a'}, expected=${policy?.suggestedKinds?.join('|') ?? 'n/a'}, actual=${JSON.stringify(block.visual ?? null)}): ${issue.message}`;
+            }).join('; ');
+            throw new Error(`Generated V2.1 lesson failed pedagogical quality checks (level ${i + 1}): ${diagnostic}`);
           }
         }
         levels.push({ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson });

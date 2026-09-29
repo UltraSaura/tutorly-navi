@@ -33,6 +33,7 @@ describe('lesson generation AI request', () => {
       const expression = line.slice(line.indexOf('`'), line.lastIndexOf('`') + 1);
       const message = runInNewContext(transpile(expression), {
         levelPrompt: 'CM2 Durées: schema with sequence', generated: { wrong: 'first' }, lesson: { wrong: 'second' },
+        pedagogyInstruction: '\nPÉDAGOGIE: structured lesson repair',
         levelContract: { issues: [{ path: 'sequence', message: 'Required' }] },
       });
       expect(message).toContain('CM2 Durées: schema with sequence');
