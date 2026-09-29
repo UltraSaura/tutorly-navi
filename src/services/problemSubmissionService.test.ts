@@ -702,29 +702,22 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
     const prompt = __problemSubmissionServiceTest.groupedRetryPracticePrompt;
 
     expect(prompt).toContain('Explication');
-    expect(prompt).toContain('TwoCard-style');
     expect(prompt).toContain('not a correction sheet');
     expect(prompt).toContain('transferable idea');
-    expect(prompt).toContain('structurally similar worked example');
-    expect(prompt).toContain('changed numbers');
-    expect(prompt).toContain('step by step');
-    expect(prompt).toContain('why each step is done');
-    expect(prompt).toContain('likely misconception or trap');
-    expect(prompt).toContain('without revealing the original final answer');
-    expect(prompt).toContain('problemContext.wantsDiagram');
-    expect(prompt).toContain('structured diagram spec');
-    expect(prompt).toContain('labels and dimensions must match the similarProblem');
-    expect(prompt).toContain('school level');
-    expect(prompt).toContain('country/curriculum');
-    expect(prompt).toContain('learning style');
-    expect(prompt).toContain('response language');
+    expect(prompt).toContain('ONE changed example');
+    expect(prompt).toContain('animationSteps');
+    expect(prompt).toContain('understandingCheck');
+    expect(prompt).toContain('profile.schoolLevel');
+    expect(prompt).toContain('profile.country');
+    expect(prompt).toContain('profile.curriculum');
+    expect(prompt).toContain('profile.responseLanguage');
     expect(prompt).toContain('Do NOT copy the exact original exercise text');
     expect(prompt).toContain('Do NOT reuse numbers, expressions, dimensions, labels, or concrete examples');
     expect(prompt).toContain('Do NOT reveal, mention, evaluate, correct, or explain unselected rows');
     expect(prompt).toContain('Do NOT solve the original row directly');
     expect(prompt).toContain('Do NOT give the original exercise');
     expect(prompt).toContain('Do NOT tell the student whether their original answer is correct');
-    expect(prompt).toContain('guardian-facing hint');
+    expect(prompt).toContain('guardian-facing question');
     expect(prompt).toContain('parentHelpHint');
   });
 
@@ -875,15 +868,16 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
       .resolves.toBe(__problemSubmissionServiceTest.defaultGroupedRetryPracticePrompt);
   });
 
-  it('keeps grouped retry-practice prompt ordered around adaptive support and self-check', () => {
+  it('keeps grouped retry-practice prompt ordered around adaptive animation and active checking', () => {
     const prompt = __problemSubmissionServiceTest.defaultGroupedRetryPracticePrompt;
 
-    expect(prompt).toContain('concept: quick idea');
-    expect(prompt).toContain('learningStyleSupport');
-    expect(prompt).toContain('must include one guided example');
-    expect(prompt).toContain('retryPrompt: Auto-vérification / self-check / try again');
-    expect(prompt).toContain('method: give reusable step by step guidance');
-    expect(prompt).toContain('commonMistake: name one likely misconception');
+    expect(prompt).toContain('concept: one short explanation');
+    expect(prompt).toContain('teachingStrategy');
+    expect(prompt).toContain('animationSteps: 3 to 6 meaningful frames');
+    expect(prompt).toContain('understandingCheck: ONE quick multiple-choice');
+    expect(prompt).toContain('method: a concise reusable summary');
+    expect(prompt).toContain('commonMistake: one likely trap');
+    expect(prompt).toContain('whole-number operand must remain a whole number');
   });
 
   it('parses valid grouped retry-practice JSON', () => {
@@ -900,6 +894,41 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
     expect(result?.similarProblem).toContain('8 ; 10 ; 12');
     expect(result?.method).toContain('30 / 3');
     expect(result?.parentHelpHint).toContain('nommer les étapes');
+  });
+
+  it('parses adaptive animation frames and a valid understanding check', () => {
+    const result = __problemSubmissionServiceTest.parseGroupedRetryPractice({
+      concept: 'Décomposer un nombre décimal aide à comprendre le produit.',
+      teachingStrategy: 'Décomposition',
+      similarProblem: 'Calculer 13,6 × 4.',
+      animationSteps: [
+        {
+          title: 'Sépare les parties',
+          equation: '13,6 = 13 + 0,6',
+          explanation: 'On sépare les unités et les dixièmes.',
+          highlight: ['13', 'missing'],
+        },
+        {
+          title: 'Multiplie puis réunis',
+          equation: '(13 × 4) + (0,6 × 4) = 54,4',
+          explanation: 'On multiplie chaque partie par le même nombre.',
+          highlight: ['54,4'],
+        },
+      ],
+      understandingCheck: {
+        question: 'Le résultat est proche de quel nombre ?',
+        choices: ['6', '56', '560'],
+        correctChoice: '56',
+        explanation: '13,6 est proche de 14 et 14 × 4 = 56.',
+      },
+      method: 'Décompose, multiplie chaque partie, puis additionne.',
+      retryPrompt: 'Applique ces étapes à ton exercice.',
+    });
+
+    expect(result?.teachingStrategy).toBe('Décomposition');
+    expect(result?.animationSteps).toHaveLength(2);
+    expect(result?.animationSteps?.[0].highlight).toEqual(['13']);
+    expect(result?.understandingCheck?.correctChoice).toBe('56');
   });
 
   it('parses valid grouped retry-practice JSON with a geometry diagram', () => {

@@ -503,7 +503,9 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
         language,
         schoolLevel: userContext?.student_level,
         country: userContext?.country,
-        curriculum: userContext?.country ? `${userContext.country} curriculum` : undefined,
+        curriculum: /^(france|fr)$/i.test(userContext?.country || '')
+          ? 'Programme national français'
+          : (userContext?.country ? `${userContext.country} curriculum` : undefined),
         learningStyle: userContext?.learning_style,
       });
       setGroupedRetryPractice(practice);

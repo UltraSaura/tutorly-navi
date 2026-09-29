@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
+import { AdaptiveTeachingStepper } from './AdaptiveTeachingStepper';
 import { useUserContext } from '@/hooks/useUserContext';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { extractExpressionFromText } from '@/utils/mathStepper/parser';
@@ -527,7 +528,13 @@ const GroupedProblemExplanationModal = ({
                           <GeometryDiagram diagram={practice.diagram} />
                         </div>
                       )}
-                      {shouldShowInteractiveStepper ? (
+                      {practice.animationSteps?.length ? (
+                        <AdaptiveTeachingStepper
+                          practice={practice}
+                          language={language === 'fr' ? 'fr' : 'en'}
+                          onRetryOriginal={onRetry}
+                        />
+                      ) : shouldShowInteractiveStepper ? (
                         <CompactMathStepper expression={practiceExpression} className="text-sm" />
                       ) : (
                         <p className="text-sm text-blue-950 whitespace-pre-wrap">
