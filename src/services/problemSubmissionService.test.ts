@@ -723,7 +723,7 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
 
   it('loads active problem explanation prompt from Supabase templates', async () => {
     const calls: Array<[string, unknown]> = [];
-    const customPrompt = 'Custom problem explanation prompt from Supabase';
+    const customPrompt = 'Custom adaptive prompt with animationSteps and understandingCheck';
     const client = {
       from(table: string) {
         calls.push(['from', table]);
@@ -758,6 +758,25 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
     expect(calls).toContainEqual(['eq:is_active', true]);
     expect(calls).toContainEqual(['order:priority', { ascending: false }]);
     expect(calls).toContainEqual(['limit', 1]);
+  });
+
+  it('ignores an outdated active grouped explanation prompt', async () => {
+    const client = {
+      from() {
+        return {
+          select() { return this; },
+          eq() { return this; },
+          order() { return this; },
+          limit() { return this; },
+          async maybeSingle() {
+            return { data: { prompt_content: 'Legacy prompt with concept and method only' }, error: null };
+          },
+        };
+      },
+    };
+
+    await expect(__problemSubmissionServiceTest.loadGroupedRetryPracticePrompt(client as any))
+      .resolves.toBe(__problemSubmissionServiceTest.defaultGroupedRetryPracticePrompt);
   });
 
   it('loads active grouped extraction prompt from Supabase templates', async () => {

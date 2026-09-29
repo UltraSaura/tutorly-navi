@@ -245,12 +245,18 @@ async function loadGroupedProblemGradingPrompt(
 async function loadGroupedRetryPracticePrompt(
   client: Pick<typeof supabase, 'from'> = supabase
 ): Promise<string> {
-  return loadActivePromptTemplate(
+  const prompt = await loadActivePromptTemplate(
     GROUPED_RETRY_PRACTICE_USAGE_TYPE,
     DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT,
     'grouped retry practice',
     client
   );
+  const supportsAdaptiveFlow = prompt.includes('animationSteps') && prompt.includes('understandingCheck');
+  if (!supportsAdaptiveFlow) {
+    console.warn('[problemSubmissionService] Active grouped retry prompt is outdated; using bundled adaptive prompt.');
+    return DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT;
+  }
+  return prompt;
 }
 
 function extractJsonObject(content: unknown): any | null {
@@ -388,21 +394,6 @@ function normalizeGroupedRetryPracticeExample(prompt: string, example: string): 
   return example;
 }
 
-function hasMatchingGroupedRetryPracticeReuseMeta(candidate: any, expected: GroupedRetryPracticeReuseMeta) {
-  const explanationData = candidate?.explanation_data;
-  const meta = explanationData?.reuseMeta;
-  if (!meta || typeof meta !== 'object') return false;
-
-  return (
-    meta.operationType === expected.operationType &&
-    meta.digitBand === expected.digitBand &&
-    meta.responseLanguage === expected.responseLanguage &&
-    meta.subjectId === expected.subjectId &&
-    (meta.schoolLevel || '') === (expected.schoolLevel || '') &&
-    explanationData?.groupedRetryPracticeVersion === GROUPED_RETRY_PRACTICE_CACHE_VERSION
-  );
-}
-
 function buildGroupedRetryPracticeContext(
   problem: ProblemSubmission,
   rowId?: string,
@@ -500,6 +491,15 @@ function parseUnderstandingCheck(check: any): GroupedRetryPractice['understandin
   const explanation = typeof check.explanation === 'string' ? check.explanation.trim() : '';
   if (!question || choices.length !== 3 || !choices.includes(correctChoice) || !explanation) return undefined;
   return { question, choices, correctChoice, explanation };
+}
+
+function hasAdaptiveTeachingFlow(value: unknown): value is GroupedRetryPractice {
+  if (!value || typeof value !== 'object') return false;
+  const practice = value as GroupedRetryPractice;
+  return Boolean(
+    practice.animationSteps && practice.animationSteps.length >= 2 &&
+    practice.understandingCheck
+  );
 }
 
 function parseLearningStyleSupport(support: any): GroupedRetryPractice['learningStyleSupport'] | undefined {
@@ -1725,7 +1725,7 @@ export async function generateGroupedRetryPractice(input: {
 
     if (exactCacheError) {
       console.error('[problemSubmissionService] Grouped retry exact cache lookup failed:', exactCacheError);
-    } else if (exactCached?.explanation_data && typeof exactCached.explanation_data === 'object') {
+    } else if (hasAdaptiveTeachingFlow(exactCached?.explanation_data)) {
       const cachedPractice = {
         ...(exactCached.explanation_data as unknown as GroupedRetryPractice),
         cacheEntryId: exactCached.id,
@@ -1734,55 +1734,23 @@ export async function generateGroupedRetryPractice(input: {
         arithmeticSourcePrompt,
         cachedPractice.similarProblem,
       );
-      void supabase
-        .from('exercise_explanations_cache')
-        .update({ usage_count: (exactCached.usage_count ?? 0) + 1 })
-        .eq('id', exactCached.id);
-      return cachedPractice;
+      const cachedSource = (exactCached.explanation_data as unknown as GroupedRetryPractice).similarProblem;
+      if (cachedPractice.similarProblem === cachedSource) {
+        void supabase
+          .from('exercise_explanations_cache')
+          .update({ usage_count: (exactCached.usage_count ?? 0) + 1 })
+          .eq('id', exactCached.id);
+        return cachedPractice;
+      }
+      console.warn('[problemSubmissionService] Ignoring incompatible exact explanation cache entry.');
     }
   } catch (exactCacheLookupError) {
     console.error('[problemSubmissionService] Unexpected grouped retry exact cache error:', exactCacheLookupError);
   }
 
-  if (reuseMeta.operationType !== 'unknown' && reuseMeta.digitBand !== 'non_arithmetic') {
-    try {
-      const { data: similarCached, error: similarCacheError } = await supabase
-        .from('exercise_explanations_cache')
-        .select('id, exercise_content, explanation_data, usage_count, quality_score, updated_at')
-        .eq('subject_id', GROUPED_RETRY_PRACTICE_SUBJECT_ID)
-        .gte('quality_score', 0)
-        .neq('exercise_hash', cacheHash)
-        .order('quality_score', { ascending: false })
-        .order('updated_at', { ascending: false })
-        .limit(25);
-
-      if (similarCacheError) {
-        console.error('[problemSubmissionService] Grouped retry similar cache lookup failed:', similarCacheError);
-      } else {
-        const reusableCandidate = (similarCached ?? []).find((candidate) =>
-          hasMatchingGroupedRetryPracticeReuseMeta(candidate, reuseMeta)
-        );
-
-        if (reusableCandidate?.explanation_data && typeof reusableCandidate.explanation_data === 'object') {
-          const cachedPractice = {
-            ...(reusableCandidate.explanation_data as unknown as GroupedRetryPractice),
-            cacheEntryId: reusableCandidate.id,
-          };
-          cachedPractice.similarProblem = normalizeGroupedRetryPracticeExample(
-            arithmeticSourcePrompt,
-            cachedPractice.similarProblem,
-          );
-          void supabase
-            .from('exercise_explanations_cache')
-            .update({ usage_count: (reusableCandidate.usage_count ?? 0) + 1 })
-            .eq('id', reusableCandidate.id);
-          return cachedPractice;
-        }
-      }
-    } catch (similarCacheLookupError) {
-      console.error('[problemSubmissionService] Unexpected grouped retry similar cache error:', similarCacheLookupError);
-    }
-  }
+  // Never reuse a worked explanation from a different exercise. Its frames,
+  // highlights and check are tied to the example values and can contradict a
+  // normalized similarProblem (for example displaying 33 × 5 while teaching 33 × 4).
 
   const customPrompt = await loadGroupedRetryPracticePrompt();
 
@@ -1808,14 +1776,17 @@ export async function generateGroupedRetryPractice(input: {
   const parsed = parseGroupedRetryPractice(
     extractJsonObject(data.retryPractice || data.content || data)
   );
-  if (!parsed) {
-    throw new Error('The practice service did not return a usable similar example.');
+  if (!parsed || !hasAdaptiveTeachingFlow(parsed)) {
+    throw new Error('The practice service did not return the required adaptive teaching steps.');
   }
 
-  parsed.similarProblem = normalizeGroupedRetryPracticeExample(
+  const normalizedSimilarProblem = normalizeGroupedRetryPracticeExample(
     arithmeticSourcePrompt,
     parsed.similarProblem,
   );
+  if (normalizedSimilarProblem !== parsed.similarProblem) {
+    throw new Error('The generated example did not preserve the original operation type. Please try again.');
+  }
 
   try {
     const { data: cacheEntry } = await supabase
