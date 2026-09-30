@@ -94,6 +94,11 @@ export const AdaptiveTeachingStepper: React.FC<Props> = ({ practice, language, o
             <div className={`mt-3 rounded-lg p-3 text-sm leading-5 ${correct ? 'bg-emerald-50 text-emerald-900' : 'bg-amber-50 text-amber-950'}`}>
               <strong>{correct ? (isFr ? 'Oui ! ' : 'Yes! ') : (isFr ? 'Regarde encore : ' : 'Look again: ')}</strong>
               {check.explanation}
+              {!correct && (
+                <button type="button" className="ml-2 underline" onClick={() => setChoice(null)}>
+                  {isFr ? 'Réessayer' : 'Try again'}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -108,7 +113,7 @@ export const AdaptiveTeachingStepper: React.FC<Props> = ({ practice, language, o
             {isFr ? 'Étape suivante' : 'Next step'} <ChevronRight className="ml-2 h-4 w-4" />
           </Button>
         ) : (
-          <Button type="button" disabled={Boolean(check && !choice)} onClick={onRetryOriginal}>
+          <Button type="button" disabled={Boolean(check && !correct)} onClick={onRetryOriginal}>
             {isFr ? 'Réessayer mon exercice' : 'Retry my exercise'}
           </Button>
         )}
@@ -119,4 +124,3 @@ export const AdaptiveTeachingStepper: React.FC<Props> = ({ practice, language, o
     </div>
   );
 };
-

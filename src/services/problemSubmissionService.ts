@@ -21,7 +21,7 @@ const GROUPED_RETRY_PRACTICE_TIMEOUT_MS = 20000;
 const GROUPED_PROBLEM_EXTRACTION_USAGE_TYPE = 'grouped_problem_extraction';
 const GROUPED_PROBLEM_GRADING_USAGE_TYPE = 'grouped_problem_grading';
 const GROUPED_RETRY_PRACTICE_USAGE_TYPE = 'grouped_retry_practice';
-const GROUPED_RETRY_PRACTICE_CACHE_VERSION = 4;
+const GROUPED_RETRY_PRACTICE_CACHE_VERSION = 5;
 const GROUPED_RETRY_PRACTICE_SUBJECT_ID = 'grouped_homework';
 
 export const DEFAULT_GROUPED_PROBLEM_GRADING_PROMPT = `You are grading a grouped homework problem.
@@ -135,7 +135,7 @@ Required sequence:
 - teachingStrategy: name the chosen representation or strategy in a few words.
 - similarProblem: ONE question in the same mathematical family, operand types, constraints and approximate difficulty, but with changed exercise-specific values/context. Do not solve it here.
 - animationSteps: 3 to 6 meaningful frames that solve only the similarProblem. Each frame contains one transformation, why it is valid, and exact equation substrings to highlight. The first frame must teach something; never add an empty introduction frame.
-- understandingCheck: ONE quick multiple-choice conceptual or estimation question with exactly 3 choices. It must test the key idea, not repeat the final calculation. Include the correct choice and a brief explanation for feedback.
+- understandingCheck: ONE self-contained multiple-choice question with exactly 3 distinct choices. Use one fresh set of values and one unambiguous task. It must test the same key idea without repeating the worked example's final calculation. Include the correct choice and a brief explanation for feedback.
 - method: a concise reusable summary, not a duplicate transcript of animationSteps.
 - commonMistake: one likely trap. Do not claim the student made it unless their working proves that.
 - retryPrompt: invite the learner to apply the strategy to the original exercise without restating or solving it.
@@ -162,6 +162,11 @@ Strict privacy and learning rules:
 - For decimal exercises, keep the same number of decimal places when possible. Explain place value or decomposition before any shortcut. Never say "remove the decimal point" without explicitly explaining the scale change and its reversal.
 - If the original addition requires a carry/retained 1, the similar example must also require a carry.
 - If the original subtraction requires a borrow/emprunt, the similar example must also require a borrow.
+- Use only ONE set of values throughout similarProblem and animationSteps. Never introduce or merge a second example inside those frames.
+- The understanding check must use values different from both the original exercise and the worked example. Do not show its answer in the question or visual before the learner responds.
+- For division with remainder, verify q × divisor + remainder = dividend and 0 ≤ remainder < divisor in the worked example and the understanding check.
+- For primary pupils, ask one concrete question at a time. Never combine two questions, two examples, or two remainder statements in one sentence.
+- Silently solve the worked example and the understanding check before returning JSON. Rebuild the response if any equality, choice, remainder, unit, or explanation is inconsistent.
 
 Return exactly this JSON shape:
 {
@@ -178,7 +183,7 @@ Return exactly this JSON shape:
     }
   ],
   "understandingCheck": {
-    "question": "one quick conceptual or estimation question",
+    "question": "one short, self-contained and unambiguous question",
     "choices": ["choice 1", "choice 2", "choice 3"],
     "correctChoice": "exactly one string from choices",
     "explanation": "brief feedback explaining why"
@@ -489,7 +494,10 @@ function parseUnderstandingCheck(check: any): GroupedRetryPractice['understandin
     : [];
   const correctChoice = typeof check.correctChoice === 'string' ? check.correctChoice.trim() : '';
   const explanation = typeof check.explanation === 'string' ? check.explanation.trim() : '';
-  if (!question || choices.length !== 3 || !choices.includes(correctChoice) || !explanation) return undefined;
+  const normalizedChoices = choices.map((choice: string) => choice.toLocaleLowerCase().replace(/\s+/g, ' '));
+  const hasDistinctChoices = new Set(normalizedChoices).size === 3;
+  const isConcise = question.length <= 240 && choices.every((choice: string) => choice.length <= 100);
+  if (!question || choices.length !== 3 || !hasDistinctChoices || !isConcise || !choices.includes(correctChoice) || !explanation) return undefined;
   return { question, choices, correctChoice, explanation };
 }
 

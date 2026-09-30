@@ -893,7 +893,7 @@ Affirmation A : La moyenne des prix est 11,40 €.`,
     expect(prompt).toContain('concept: one short explanation');
     expect(prompt).toContain('teachingStrategy');
     expect(prompt).toContain('animationSteps: 3 to 6 meaningful frames');
-    expect(prompt).toContain('understandingCheck: ONE quick multiple-choice');
+    expect(prompt).toContain('understandingCheck: ONE self-contained multiple-choice');
     expect(prompt).toContain('method: a concise reusable summary');
     expect(prompt).toContain('commonMistake: one likely trap');
     expect(prompt).toContain('whole-number operand must remain a whole number');
