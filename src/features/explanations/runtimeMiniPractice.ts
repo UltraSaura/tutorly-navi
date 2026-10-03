@@ -1,3 +1,4 @@
+import type { QuickExplanation } from "./quickExplanation";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeLearningStyle, type LearningStyle } from "@/types/learning-style";
 import { isUnder11YearsOld } from "@/utils/gradeLevelMapping";
@@ -26,6 +27,8 @@ export interface RuntimeMiniPractice {
 }
 
 export interface RuntimeMiniPracticeContext {
+  quickExplanation?: QuickExplanation;
+  onRetryOriginal?: () => void;
   exercise: string;
   explanationContext?: string;
   gradeLevel?: string;

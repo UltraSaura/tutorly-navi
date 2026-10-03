@@ -1,3 +1,4 @@
+import { isSupportedDivision } from "./quickExplanation";
 import React from "react";
 import type { TeachingSections } from "./useTwoCardTeaching";
 import { useResolveText } from "@/hooks/useResolveText";
@@ -56,6 +57,7 @@ export function TwoCards({
   s, 
   topicId, 
   onClose,
+  onRetryOriginal,
   subjectSlug,
   topicSlug,
   onStartGeneratedPractice,
@@ -63,6 +65,7 @@ export function TwoCards({
   s: TeachingSections; 
   topicId?: string; 
   onClose?: () => void;
+  onRetryOriginal?: () => void;
   subjectSlug?: string;
   topicSlug?: string;
   onStartGeneratedPractice?: (quiz: QuizBank) => void;
@@ -258,15 +261,17 @@ export function TwoCards({
     return explicitExampleStep?.body || s.example;
   }, [orderedSteps, s.example]);
   const miniPracticeContext = React.useMemo(() => {
-    if (!orderedSteps || !s.exercise?.trim()) return undefined;
+    if (!s.exercise?.trim()) return undefined;
 
-    const explanationContext = orderedSteps
+    const explanationContext = (orderedSteps || [])
       .filter(step => step.kind !== "check")
       .map(step => `${step.title}\n${step.body}`)
       .join("\n\n");
 
     return {
       exercise: s.exercise,
+      quickExplanation: s.quickExplanation,
+      onRetryOriginal: onRetryOriginal || onClose,
       explanationContext,
       gradeLevel: userContext?.student_level,
       language,
@@ -277,6 +282,9 @@ export function TwoCards({
     };
   }, [
     orderedSteps,
+    s.quickExplanation,
+    onRetryOriginal,
+    onClose,
     s.exercise,
     userContext?.student_level,
     userContext?.learning_style,
@@ -380,6 +388,13 @@ export function TwoCards({
   React.useEffect(() => {
     setGuidedView(shouldShowInteractiveStepper ? 'interactive' : 'lesson');
   }, [shouldShowInteractiveStepper, s.exercise]);
+
+  if (isSupportedDivision(s.exercise)) {
+    return <div className="max-h-full overflow-y-auto">
+      <ExplanationRenderer mode="kid" steps={[]} miniPracticeContext={miniPracticeContext}
+        onViewLesson={handleViewLesson} canViewLesson={Boolean(canShowLessonLink)} />
+    </div>;
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">

@@ -1,3 +1,5 @@
+import { QuickExplanationFlow } from "@/features/explanations/QuickExplanationFlow";
+import { isSupportedDivision, safeDivisionExplanation, validateQuickExplanation } from "@/features/explanations/quickExplanation";
 /**
  * KidExplanationFlow
  *
@@ -127,7 +129,7 @@ interface KidExplanationFlowProps {
   canViewLesson?: boolean;
 }
 
-export function KidExplanationFlow({
+function LegacyKidExplanationFlow({
   steps,
   miniPracticeContext,
   onPracticeMore,
@@ -334,4 +336,22 @@ export function KidExplanationFlow({
       )}
     </div>
   );
+}
+
+// Keep the active division route separate from legacy cards and runtime question generation.
+export function KidExplanationFlow(props: KidExplanationFlowProps) {
+  const { language } = useLanguage();
+  const context = props.miniPracticeContext;
+  if (context && isSupportedDivision(context.exercise)) {
+    try {
+      const supplied = context.quickExplanation;
+      const lesson = supplied && !validateQuickExplanation(context.exercise, supplied, language).length
+        ? supplied : safeDivisionExplanation(context.exercise, language);
+      return <QuickExplanationFlow key={JSON.stringify(lesson)} lesson={lesson} language={language}
+        onRetry={context.onRetryOriginal} onViewLesson={props.canViewLesson ? props.onViewLesson : undefined} />;
+    } catch {
+      return <p role="alert">{language === 'fr' ? 'Cette explication est indisponible. Consulte la leçon.' : 'This explanation is unavailable. Please consult the lesson.'}</p>;
+    }
+  }
+  return <LegacyKidExplanationFlow {...props} />;
 }

@@ -1,3 +1,4 @@
+import { isSupportedDivision } from "./quickExplanation";
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -141,7 +142,8 @@ export function ExplanationModal({
                 topicId={topicId} 
                 subjectSlug={subjectSlug}
                 topicSlug={topicSlug}
-                onClose={onClose} 
+                onClose={onClose}
+                onRetryOriginal={handleTryAgain}
                 onStartGeneratedPractice={setGeneratedPractice}
               />
             </div>
