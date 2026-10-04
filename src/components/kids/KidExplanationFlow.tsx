@@ -266,6 +266,7 @@ function LegacyKidExplanationFlow({
                       isCompleted={false}
                       fillHeight={isRestoredDivisionFrame}
                       neutralFrame={isRestoredDivisionFrame}
+                      fullWidthBody={isRestoredDivisionFrame}
                     >
                       {restoredDivisionExpression && currentStep === 0 ? (
                       <div className="space-y-2">

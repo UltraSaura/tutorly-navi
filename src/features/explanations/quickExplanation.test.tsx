@@ -136,4 +136,15 @@ describe('validated quick division explanation', () => {
     expect(html).not.toContain('border-teal-200');
     expect(html).toContain('h-[390px]');
   });
+
+  it('keeps the restored animation body outside the icon column', () => {
+    const html = renderToStaticMarkup(
+      <AnimatedStepCard kind="strategy" icon="÷" title="Exemple" neutralFrame fullWidthBody>
+        <div data-testid="wide-animation">animation</div>
+      </AnimatedStepCard>,
+    );
+
+    expect(html).toContain('w-full');
+    expect(html).toContain('wide-animation');
+  });
 });

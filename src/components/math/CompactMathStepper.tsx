@@ -965,12 +965,12 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
         <div className="flex items-center gap-2">
           <Calculator className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           <span className="font-semibold text-blue-800 dark:text-blue-200 text-sm">
-            Step-by-Step Math
+            {language === 'fr' ? 'Maths étape par étape' : 'Step-by-Step Math'}
           </span>
         </div>
         <Badge variant="outline" className="text-xs">
-          {currentStep}
-          {" "}of{" "}
+          {currentStep + 1}
+          {" "}{language === 'fr' ? 'sur' : 'of'}{" "}
           {getMaxStep() + 1}
         </Badge>
       </div>

@@ -20,6 +20,8 @@ interface AnimatedStepCardProps {
   fillHeight?: boolean;
   /** Neutral full-width frame used by the restored math animation. */
   neutralFrame?: boolean;
+  /** Places the body below the icon/title row so wide visuals are not indented. */
+  fullWidthBody?: boolean;
 }
 
 const KIND_COLORS: Record<StepKind, { border: string; bg: string; accent: string; title: string }> = {
@@ -51,6 +53,7 @@ export function AnimatedStepCard({
   isCompleted = false,
   fillHeight = false,
   neutralFrame = false,
+  fullWidthBody = false,
 }: AnimatedStepCardProps) {
   const colors = KIND_COLORS[kind] ?? KIND_COLORS.concept;
   const iconBg = KIND_ICON_BG[kind] ?? KIND_ICON_BG.concept;
@@ -102,15 +105,16 @@ export function AnimatedStepCard({
           >
             {title}
           </h5>
-          <div
-            className={`${fillHeight ? "min-h-0 flex-1 overflow-y-auto" : ""} pr-0.5 text-sm leading-relaxed font-medium transition-colors ${
-              isCompleted && !isCurrent ? "text-slate-400" : "text-gray-700"
-            }`}
-          >
-            {children}
-          </div>
+          {!fullWidthBody && <div
+              className={`${fillHeight ? "min-h-0 flex-1 overflow-y-auto" : ""} pr-0.5 text-sm leading-relaxed font-medium transition-colors ${
+                isCompleted && !isCurrent ? "text-slate-400" : "text-gray-700"
+              }`}
+            >
+              {children}
+            </div>}
         </div>
       </div>
+      {fullWidthBody && <div className="mt-3 w-full text-sm leading-relaxed font-medium text-gray-700">{children}</div>}
     </motion.div>
   );
 }
