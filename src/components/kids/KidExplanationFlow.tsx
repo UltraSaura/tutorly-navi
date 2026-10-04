@@ -345,8 +345,8 @@ export function KidExplanationFlow(props: KidExplanationFlowProps) {
   if (context && isSupportedDivision(context.exercise)) {
     try {
       const supplied = context.quickExplanation;
-      const lesson = supplied && !validateQuickExplanation(context.exercise, supplied, language).length
-        ? supplied : safeDivisionExplanation(context.exercise, language);
+      const lesson = supplied && !validateQuickExplanation(context.exercise, supplied, language, context.gradeLevel, context.country).length
+        ? supplied : safeDivisionExplanation(context.exercise, language, context.gradeLevel, context.country);
       return <QuickExplanationFlow key={JSON.stringify(lesson)} lesson={lesson} language={language}
         onRetry={context.onRetryOriginal} onViewLesson={props.canViewLesson ? props.onViewLesson : undefined} />;
     } catch {

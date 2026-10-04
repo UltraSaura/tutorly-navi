@@ -1,4 +1,5 @@
 import { isSupportedDivision } from "./quickExplanation";
+import { canonicalLessonRoute } from "./canonicalSkill";
 import React from "react";
 import type { TeachingSections } from "./useTwoCardTeaching";
 import { useResolveText } from "@/hooks/useResolveText";
@@ -133,14 +134,15 @@ export function TwoCards({
   
   // Handle view lesson - navigate to topic page (no scroll)
   const handleViewLesson = () => {
-    if (!finalSubjectSlug || !finalTopicSlug) return;
+    const lessonRoute = canonicalLessonRoute(finalSubjectSlug, finalTopicSlug);
+    if (!lessonRoute) return;
     
     // Close modal first
     onClose?.();
     
     // Navigate to topic page (no hash, user lands at top)
     setTimeout(() => {
-      window.location.href = `/learning/${finalSubjectSlug}/${finalTopicSlug}`;
+      window.location.href = lessonRoute;
     }, 200);
   };
 

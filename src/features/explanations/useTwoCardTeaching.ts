@@ -503,7 +503,7 @@ export function useTwoCardTeaching() {
       // Integer divisions bypass all legacy synthesis, cross-exercise reuse and partial repairs.
       if (isSupportedDivision(exercise_content)) {
         const cached = cachedResult?.sections.quickExplanation;
-        const quickExplanation = cached && !validateQuickExplanation(exercise_content, cached, response_language).length
+        const quickExplanation = cached && !validateQuickExplanation(exercise_content, cached, response_language, grade_level, profile.country).length
           ? cached
           : await generateQuickExplanation(exercise_content, response_language, async customPrompt => {
               const { data, error } = await supabase.functions.invoke("ai-chat", {
@@ -515,7 +515,7 @@ export function useTwoCardTeaching() {
               const raw = data?.tool_calls?.[0]?.function?.arguments || data?.content;
               if (typeof raw !== "string") return data;
               return JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, "").trim());
-            });
+            }, { level: grade_level, country: profile.country });
         const next: TeachingSections = { exercise: exercise_content, quickExplanation,
           concept: quickExplanation.concept, example: "", method: "", currentExercise: "", pitfall: "",
           check: "", practice: "", parentHelpHint: "" };

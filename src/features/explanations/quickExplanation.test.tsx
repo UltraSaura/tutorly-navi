@@ -8,6 +8,7 @@ import {
 } from './quickExplanation';
 import { quickFlowTransition } from './QuickExplanationFlow';
 import { QuickExplanationFlow } from './QuickExplanationFlow';
+import { canonicalLessonRoute, resolveCanonicalSkill } from './canonicalSkill';
 
 describe('validated quick division explanation', () => {
   it('keeps exact division exact and does not expose the original answer', () => {
@@ -20,6 +21,8 @@ describe('validated quick division explanation', () => {
     expect(validateQuickExplanation(source, lesson, 'fr')).toEqual([]);
     expect(JSON.stringify(lesson)).not.toContain('11');
     expect(lesson.frames.map(frame => frame.body).join(' ')).not.toMatch(/reste|remainder/i);
+    expect(lesson.frames.length).toBeGreaterThanOrEqual(3);
+    expect(lesson.canonicalSkill.skillId).toBe('fr.cm2.math.division.exact_integer');
   });
 
   it('distinguishes division with a remainder and preserves the invariant', () => {
@@ -49,13 +52,38 @@ describe('validated quick division explanation', () => {
 
   it('keeps the check answer hidden until the learner selects it and unlocks retry only when correct', () => {
     const lesson = safeDivisionExplanation('66 ÷ 6', 'fr');
-    const initial = { index: lesson.frames.length + 1, choice: null };
-    const wrong = quickFlowTransition(initial, { type: 'answer', choice: lesson.check.choices[0] }, lesson);
-    const correct = quickFlowTransition(initial, { type: 'answer', choice: lesson.check.correctChoice }, lesson);
+    const initial = { index: lesson.frames.length + 1, choice: null, validated: false, wrongAttempts: 0, showReasoning: false };
+    const selected = quickFlowTransition(initial, { type: 'select', choice: lesson.check.correctChoice }, lesson);
+    const correct = quickFlowTransition(selected, { type: 'validate' }, lesson);
 
     expect(initial.choice).toBeNull();
-    expect(wrong.choice).toBe(lesson.check.choices[0]);
+    expect(selected.validated).toBe(false);
     expect(correct.choice).toBe(lesson.check.correctChoice);
+    expect(correct.validated).toBe(true);
+  });
+
+  it('resolves the same canonical strategy and visual for the Lesson tab', () => {
+    const exact = resolveCanonicalSkill('66 ÷ 6', 'CM2', 'France');
+    const remainder = resolveCanonicalSkill('73 ÷ 8', 'CM2', 'France');
+    expect(exact.preferredStrategy).toBe('inverse multiplication');
+    expect(exact.preferredVisual).toBe('equal_groups_or_array');
+    expect(remainder.preferredVisual).toBe('equal_groups_with_remainder');
+    expect(remainder.constraints.remainderLessThanDivisor).toBe(true);
+    expect(canonicalLessonRoute('mathematiques', 'division')).toBe('/learning/mathematiques/division');
+  });
+
+  it('requires explicit validation and escalates hints after wrong attempts', () => {
+    const lesson = safeDivisionExplanation('66 ÷ 6', 'fr');
+    const index = lesson.frames.length + 1;
+    let state = { index, choice: null as string | null, validated: false, wrongAttempts: 0, showReasoning: false };
+    state = quickFlowTransition(state, { type: 'select', choice: lesson.check.choices[0] }, lesson);
+    expect(state.validated).toBe(false);
+    state = quickFlowTransition(state, { type: 'validate' }, lesson);
+    expect(state.wrongAttempts).toBe(1);
+    state = quickFlowTransition({ ...state, choice: lesson.check.choices[0] }, { type: 'validate' }, lesson);
+    expect(state.wrongAttempts).toBe(2);
+    state = quickFlowTransition({ ...state, choice: lesson.check.choices[0] }, { type: 'validate' }, lesson);
+    expect(state.showReasoning).toBe(true);
   });
 
   it('renders the active flow without the legacy completion action', () => {
