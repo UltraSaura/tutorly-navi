@@ -1,13 +1,14 @@
 /** One payload owns the example, frames and check. No expression-by-expression repairs. */
 import { resolveCanonicalSkill, type CanonicalSkill } from './canonicalSkill';
 export type DivisionSkill = 'exact_integer_division' | 'integer_division_with_remainder' | 'decimal_division' | 'fraction_division' | 'unknown';
+export type VisualPhase = 'show_total' | 'introduce_group_size' | 'form_groups' | 'count_groups' | 'show_remainder' | 'verify';
 export type Division = { dividend: number; divisor: number };
 export interface QuickExplanation {
   sourceSkill: DivisionSkill;
   canonicalSkill: CanonicalSkill;
   concept: string;
   workedExample: Division;
-  frames: Array<{ title: string; body: string }>;
+  frames: Array<{ title: string; body: string; visualPhase: VisualPhase }>;
   check: Division & { question: string; choices: string[]; correctChoice: string; hint: string; explanation: string };
   retryGuidance: string;
   lessonLinkReason?: string;
@@ -57,15 +58,15 @@ export function divisionExplanation(source: string, worked: Division, check: Div
       : (fr ? 'On cherche combien de groupes complets on peut former. Le reste doit être plus petit que le diviseur.' : 'Find how many complete groups you can make. The remainder must be smaller than the divisor.'),
     workedExample: worked,
     frames: exact ? [
-      { title: fr ? 'Comprendre la question' : 'Understand the question', body: `${equation(worked)}\n${fr ? `Cela demande combien de groupes de ${worked.divisor} forment ${worked.dividend}.` : `This asks how many groups of ${worked.divisor} make ${worked.dividend}.`}` },
-      { title: fr ? 'Chercher dans la table' : 'Find the fact', body: `${worked.divisor} × ${q - 1} = ${worked.divisor * (q - 1)}\n${worked.divisor} × ${q} = ${worked.divisor * q}\n${fr ? `Le second produit atteint exactement ${worked.dividend}.` : `The second product reaches exactly ${worked.dividend}.`}` },
-      { title: fr ? 'Lire le quotient' : 'Read the quotient', body: `${equation(worked)} = ${q}\n${fr ? `${q} groupes de ${worked.divisor} donnent ${worked.dividend}.` : `${q} groups of ${worked.divisor} make ${worked.dividend}.`}` },
-      { title: fr ? 'Vérifier' : 'Verify', body: `${fact}\n${fr ? 'On revient exactement au dividende : aucune unité ne manque.' : 'We return exactly to the dividend: no unit is missing.'}` },
+      { title: fr ? 'Comprendre le groupe' : 'Understand the group', visualPhase: 'introduce_group_size', body: `${equation(worked)}\n${fr ? `On cherche combien de groupes de ${worked.divisor} forment ${worked.dividend}.` : `We find how many groups of ${worked.divisor} make ${worked.dividend}.`}` },
+      { title: fr ? 'Former les groupes' : 'Form the groups', visualPhase: 'form_groups', body: `${worked.divisor} × ${q - 1} = ${worked.divisor * (q - 1)}\n${worked.divisor} × ${q} = ${worked.divisor * q}\n${fr ? `Le second produit atteint exactement ${worked.dividend}.` : `The second product reaches exactly ${worked.dividend}.`}` },
+      { title: fr ? 'Compter le quotient' : 'Count the quotient', visualPhase: 'count_groups', body: `${equation(worked)} = ${q}\n${fr ? `${q} groupes de ${worked.divisor} donnent ${worked.dividend}.` : `${q} groups of ${worked.divisor} make ${worked.dividend}.`}` },
+      { title: fr ? 'Vérifier' : 'Verify', visualPhase: 'verify', body: `${fact}\n${fr ? 'On revient exactement au dividende : aucune unité ne manque.' : 'We return exactly to the dividend: no unit is missing.'}` },
     ] : [
-      { title: fr ? 'Comprendre la question' : 'Understand the question', body: `${equation(worked)}\n${fr ? `Cela demande combien de groupes de ${worked.divisor} forment ${worked.dividend}.` : `This asks how many groups of ${worked.divisor} fit into ${worked.dividend}.`}` },
-      { title: fr ? 'Comparer deux produits' : 'Compare two products', body: `${worked.divisor} × ${q} = ${worked.divisor * q}\n${worked.divisor} × ${q + 1} = ${worked.divisor * (q + 1)}\n${fr ? `Le premier tient dans ${worked.dividend}, le second dépasse.` : `The first fits in ${worked.dividend}; the second is too large.`}` },
-      { title: fr ? 'Trouver le reste' : 'Find the remainder', body: `${worked.dividend} − ${worked.divisor * q} = ${r}\n${fr ? `Après ${q} groupes, il reste ${r}.` : `After ${q} groups, ${r} remains.`}` },
-      { title: fr ? 'Vérifier' : 'Verify', body: `${fact}\n${fr ? `Le reste ${r} est plus petit que ${worked.divisor}.` : `The remainder ${r} is smaller than ${worked.divisor}.`}` },
+      { title: fr ? 'Comprendre le groupe' : 'Understand the group', visualPhase: 'introduce_group_size', body: `${equation(worked)}\n${fr ? `On cherche combien de groupes de ${worked.divisor} peuvent être formés.` : `We find how many groups of ${worked.divisor} can be formed.`}` },
+      { title: fr ? 'Former les groupes' : 'Form the groups', visualPhase: 'form_groups', body: `${worked.divisor} × ${q} = ${worked.divisor * q}\n${worked.divisor} × ${q + 1} = ${worked.divisor * (q + 1)}\n${fr ? `Le premier tient dans ${worked.dividend}, le second dépasse.` : `The first fits in ${worked.dividend}; the second is too large.`}` },
+      { title: fr ? 'Séparer le reste' : 'Separate the remainder', visualPhase: 'show_remainder', body: `${worked.dividend} − ${worked.divisor * q} = ${r}\n${fr ? `Après ${q} groupes, il reste ${r}.` : `After ${q} groups, ${r} remains.`}` },
+      { title: fr ? 'Vérifier' : 'Verify', visualPhase: 'verify', body: `${fact}\n${fr ? `Le reste ${r} est plus petit que ${worked.divisor}.` : `The remainder ${r} is smaller than ${worked.divisor}.`}` },
     ],
     check: { ...check, question: `${equation(check)} = ?`, choices, correctChoice,
       hint: exact ? (fr ? `Cherche dans la table de ${check.divisor} le produit qui donne ${check.dividend}. Essaie encore.` : `Find ${check.dividend} in the ${check.divisor} times table. Try again.`) : (fr ? `Cherche le plus grand multiple de ${check.divisor} qui ne dépasse pas ${check.dividend}. Essaie encore.` : `Find the largest multiple of ${check.divisor} no greater than ${check.dividend}. Try again.`),
@@ -94,7 +95,7 @@ export function validateQuickExplanation(source: string, value: unknown, languag
   const expected = divisionExplanation(source, v.workedExample, v.check, language, level, country);
   // Compare every rendered field against the closed grammar. No spare visual/answer fields.
   if (v.sourceSkill !== expected.sourceSkill || JSON.stringify(v.canonicalSkill) !== JSON.stringify(expected.canonicalSkill) || v.concept !== expected.concept || v.retryGuidance !== expected.retryGuidance) errors.push('Concept, canonical skill, strategy or retry must use the safe division template.');
-  if (!Array.isArray(v.frames) || v.frames.length !== expected.frames.length || v.frames.some((f, i) => f.title !== expected.frames[i].title || f.body !== expected.frames[i].body)) errors.push('Guided frames contain unrelated numbers, an invalid equality, or unsupported arithmetic prose.');
+  if (!Array.isArray(v.frames) || v.frames.length !== expected.frames.length || v.frames.some((f, i) => f.title !== expected.frames[i].title || f.body !== expected.frames[i].body || f.visualPhase !== expected.frames[i].visualPhase)) errors.push('Guided frames contain unrelated numbers, an invalid equality, or unsupported arithmetic prose.');
   if (v.check.question !== expected.check.question || v.check.hint !== expected.check.hint || v.check.explanation !== expected.check.explanation || v.check.correctChoice !== expected.check.correctChoice) errors.push('Check has leaked, inconsistent or unsupported content.');
   if (!Array.isArray(v.check.choices) || v.check.choices.length !== 3 || new Set(v.check.choices).size !== 3 || !expected.check.choices.every(c => v.check.choices.includes(c))) errors.push('Check must have three distinct verified choices.');
   const permitted = ['dividend', 'divisor', 'question', 'choices', 'correctChoice', 'hint', 'explanation'];

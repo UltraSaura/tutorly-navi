@@ -7,7 +7,7 @@ import {
   validateQuickExplanation,
 } from './quickExplanation';
 import { quickFlowTransition } from './QuickExplanationFlow';
-import { QuickExplanationFlow } from './QuickExplanationFlow';
+import { QuickExplanationFlow, visibleGroupsForPhase } from './QuickExplanationFlow';
 import { canonicalLessonRoute, resolveCanonicalSkill } from './canonicalSkill';
 
 describe('validated quick division explanation', () => {
@@ -90,9 +90,21 @@ describe('validated quick division explanation', () => {
     const lesson = safeDivisionExplanation('66 ÷ 6', 'fr');
     const html = renderToStaticMarkup(<QuickExplanationFlow lesson={lesson} language="fr" />);
 
-    expect(html).toContain('L’idée à comprendre');
+    expect(html).toContain('Comprendre');
     expect(html).toContain(`1/${lesson.frames.length + 2}`);
     expect(html).not.toContain("J’ai compris");
     expect(html).not.toContain(`>${lesson.check.correctChoice}<`);
+    expect(html).not.toContain('groups of');
+    expect(html).toContain('72 au total');
+  });
+
+  it('progresses the canonical visual through grouping and verification phases', () => {
+    const exact = safeDivisionExplanation('66 ÷ 6', 'fr');
+    const remainder = safeDivisionExplanation('67 ÷ 6', 'fr');
+    expect(visibleGroupsForPhase(exact, 'show_total')).toBe(0);
+    expect(visibleGroupsForPhase(exact, 'form_groups')).toBe(9);
+    expect(visibleGroupsForPhase(exact, 'verify')).toBe(9);
+    expect(visibleGroupsForPhase(remainder, 'show_remainder')).toBe(Math.floor(remainder.workedExample.dividend / remainder.workedExample.divisor));
+    expect(remainder.frames.some(frame => frame.visualPhase === 'show_remainder')).toBe(true);
   });
 });
