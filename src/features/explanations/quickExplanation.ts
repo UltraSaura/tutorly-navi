@@ -1,5 +1,6 @@
 /** One payload owns the example, frames and check. No expression-by-expression repairs. */
 import { resolveCanonicalSkill, type CanonicalSkill } from './canonicalSkill';
+import type { Step } from './types';
 export type DivisionSkill = 'exact_integer_division' | 'integer_division_with_remainder' | 'decimal_division' | 'fraction_division' | 'unknown';
 export type VisualPhase = 'show_total' | 'introduce_group_size' | 'form_groups' | 'count_groups' | 'show_remainder' | 'verify';
 export type Division = { dividend: number; divisor: number };
@@ -12,6 +13,23 @@ export interface QuickExplanation {
   check: Division & { question: string; choices: string[]; correctChoice: string; hint: string; explanation: string };
   retryGuidance: string;
   lessonLinkReason?: string;
+}
+
+export function buildRestoredDivisionSteps(lesson: QuickExplanation, language: string): Step[] {
+  return [
+    ...lesson.frames.map((frame, index) => ({
+      title: frame.title,
+      body: frame.body,
+      kind: index === 0 ? "strategy" : "example",
+      icon: index === 0 ? "divide" : "magnifier",
+    } as Step)),
+    {
+      title: language === "fr" ? "À toi de réfléchir" : "Your turn to think",
+      body: lesson.check.question,
+      kind: "check",
+      icon: "target",
+    },
+  ];
 }
 export function parseSourceDivision(source: string): Division | null {
   // Ignore the student's equality RHS. Multiple operations/fractions are not simple integer division.

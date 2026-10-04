@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
+  buildRestoredDivisionSteps,
   classifyDivision,
   safeDivisionExplanation,
   validateQuickExplanation,
@@ -106,5 +107,15 @@ describe('validated quick division explanation', () => {
     expect(visibleGroupsForPhase(exact, 'verify')).toBe(9);
     expect(visibleGroupsForPhase(remainder, 'show_remainder')).toBe(Math.floor(remainder.workedExample.dividend / remainder.workedExample.divisor));
     expect(remainder.frames.some(frame => frame.visualPhase === 'show_remainder')).toBe(true);
+  });
+
+  it('routes the active division explanation through the historical math stepper', () => {
+    const lesson = safeDivisionExplanation('66 ÷ 6', 'fr');
+    const steps = buildRestoredDivisionSteps(lesson, 'fr');
+
+    expect(steps[0].kind).toBe('strategy');
+    expect(steps[0].body).toContain(`${lesson.workedExample.dividend} ÷ ${lesson.workedExample.divisor}`);
+    expect(steps.at(-1)?.kind).toBe('check');
+    expect(steps.at(-1)?.body).toBe(lesson.check.question);
   });
 });

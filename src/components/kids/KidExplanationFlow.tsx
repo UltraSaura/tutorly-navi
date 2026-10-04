@@ -1,5 +1,4 @@
-import { QuickExplanationFlow } from "@/features/explanations/QuickExplanationFlow";
-import { isSupportedDivision, safeDivisionExplanation, validateQuickExplanation } from "@/features/explanations/quickExplanation";
+import { buildRestoredDivisionSteps, isSupportedDivision, safeDivisionExplanation, validateQuickExplanation } from "@/features/explanations/quickExplanation";
 /**
  * KidExplanationFlow
  *
@@ -21,6 +20,7 @@ import { useResolveText } from "@/hooks/useResolveText";
 import { useLanguage } from "@/context/SimpleLanguageContext";
 import { RuntimeMiniPracticeInline } from "@/features/explanations/RuntimeMiniPracticeInline";
 import { buildKidArithmeticSupportText } from "./kidArithmeticGuidance";
+import { CompactMathStepper } from "@/components/math/CompactMathStepper";
 
 // Lazy-load the heavy ObjectCounter (framer-motion + emoji rendering)
 const ObjectCounter = lazy(() =>
@@ -154,6 +154,9 @@ function LegacyKidExplanationFlow({
   const activeStep = isDone ? null : steps[currentStep];
   const currentStepLabel = `${Math.min(currentStep + 1, steps.length)}/${steps.length}`;
   const isCheckStep = activeStep?.kind === "check";
+  const restoredDivisionExpression = miniPracticeContext?.quickExplanation
+    ? `${miniPracticeContext.quickExplanation.workedExample.dividend} ÷ ${miniPracticeContext.quickExplanation.workedExample.divisor}`
+    : null;
   const completionActions: CompletionAction[] = [
     ...(onPracticeMore
       ? [{
@@ -262,7 +265,12 @@ function LegacyKidExplanationFlow({
                       isCompleted={false}
                       fillHeight={false}
                     >
-                      {parsedMath ? (
+                      {restoredDivisionExpression && currentStep === 0 ? (
+                      <div className="space-y-2">
+                        <p className="whitespace-pre-wrap break-words">{body}</p>
+                        <CompactMathStepper expression={restoredDivisionExpression} className="text-sm" />
+                      </div>
+                    ) : parsedMath ? (
                       <div className="space-y-2">
                         <p className="whitespace-pre-wrap break-words">{body}</p>
                         <Suspense fallback={
@@ -347,8 +355,15 @@ export function KidExplanationFlow(props: KidExplanationFlowProps) {
       const supplied = context.quickExplanation;
       const lesson = supplied && !validateQuickExplanation(context.exercise, supplied, language, context.gradeLevel, context.country).length
         ? supplied : safeDivisionExplanation(context.exercise, language, context.gradeLevel, context.country);
-      return <QuickExplanationFlow key={JSON.stringify(lesson)} lesson={lesson} language={language}
-        onRetry={context.onRetryOriginal} onViewLesson={props.canViewLesson ? props.onViewLesson : undefined} />;
+      const restoredSteps = buildRestoredDivisionSteps(lesson, language);
+      return <LegacyKidExplanationFlow
+        key={JSON.stringify(lesson)}
+        steps={restoredSteps}
+        miniPracticeContext={context}
+        onPracticeMore={context.onRetryOriginal}
+        onViewLesson={props.canViewLesson ? props.onViewLesson : undefined}
+        canViewLesson={props.canViewLesson}
+      />;
     } catch {
       return <p role="alert">{language === 'fr' ? 'Cette explication est indisponible. Consulte la leçon.' : 'This explanation is unavailable. Please consult the lesson.'}</p>;
     }
