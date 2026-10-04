@@ -18,6 +18,8 @@ interface AnimatedStepCardProps {
   isCompleted?: boolean;
   /** Whether the card should stretch to consume the available height */
   fillHeight?: boolean;
+  /** Neutral full-width frame used by the restored math animation. */
+  neutralFrame?: boolean;
 }
 
 const KIND_COLORS: Record<StepKind, { border: string; bg: string; accent: string; title: string }> = {
@@ -48,6 +50,7 @@ export function AnimatedStepCard({
   isCurrent = false,
   isCompleted = false,
   fillHeight = false,
+  neutralFrame = false,
 }: AnimatedStepCardProps) {
   const colors = KIND_COLORS[kind] ?? KIND_COLORS.concept;
   const iconBg = KIND_ICON_BG[kind] ?? KIND_ICON_BG.concept;
@@ -66,22 +69,24 @@ export function AnimatedStepCard({
         damping: 18,
         delay: index * 0.18,
       }}
-      className={`relative flex ${fillHeight ? "h-full min-h-0" : "h-auto"} flex-col overflow-hidden rounded-xl border ${colors.border} bg-gradient-to-br ${colors.bg} p-4 transition-all ${
-        isCurrent ? "shadow-md ring-2 ring-offset-2 ring-violet-200" : "shadow-sm"
-      }`}
+      className={neutralFrame
+        ? `relative flex ${fillHeight ? "h-full min-h-0" : "h-auto"} w-full max-w-none flex-col overflow-visible rounded-xl border border-border bg-card p-4 shadow-sm transition-all`
+        : `relative flex ${fillHeight ? "h-full min-h-0" : "h-auto"} flex-col overflow-hidden rounded-xl border ${colors.border} bg-gradient-to-br ${colors.bg} p-4 transition-all ${
+            isCurrent ? "shadow-md ring-2 ring-offset-2 ring-violet-200" : "shadow-sm"
+          }`}
     >
       {/* Side accent bar */}
-      <div
-        className={`absolute left-0 top-0 h-full w-1 ${colors.accent} transition-opacity ${
-          isCompleted && !isCurrent ? "opacity-45" : "opacity-100"
-        }`}
-        aria-hidden="true"
-      />
+      {!neutralFrame && <div
+          className={`absolute left-0 top-0 h-full w-1 ${colors.accent} transition-opacity ${
+            isCompleted && !isCurrent ? "opacity-45" : "opacity-100"
+          }`}
+          aria-hidden="true"
+        />}
 
       <div className={`flex ${fillHeight ? "min-h-0 flex-1" : ""} items-start gap-2.5 pl-0.5`}>
         {/* Icon bubble */}
         <div
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${iconBg} text-xl shadow-inner transition-opacity ${
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${neutralFrame ? "bg-muted" : iconBg} text-xl shadow-inner transition-opacity ${
             isCompleted && !isCurrent ? "opacity-60" : "opacity-100"
           }`}
           aria-hidden="true"
@@ -92,7 +97,7 @@ export function AnimatedStepCard({
         <div className={`flex ${fillHeight ? "min-h-0 flex-1" : ""} flex-col min-w-0 space-y-2`}>
           <h5
             className={`text-[15px] font-bold leading-tight transition-colors sm:text-base ${
-              isCompleted && !isCurrent ? "text-slate-500" : colors.title
+              neutralFrame ? "text-foreground" : isCompleted && !isCurrent ? "text-slate-500" : colors.title
             }`}
           >
             {title}

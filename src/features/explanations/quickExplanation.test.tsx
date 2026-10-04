@@ -10,6 +10,7 @@ import {
 import { quickFlowTransition } from './QuickExplanationFlow';
 import { QuickExplanationFlow, visibleGroupsForPhase } from './QuickExplanationFlow';
 import { canonicalLessonRoute, resolveCanonicalSkill } from './canonicalSkill';
+import { AnimatedStepCard } from '@/components/kids/AnimatedStepCard';
 
 describe('validated quick division explanation', () => {
   it('keeps exact division exact and does not expose the original answer', () => {
@@ -117,5 +118,22 @@ describe('validated quick division explanation', () => {
     expect(steps[0].body).toContain(`${lesson.workedExample.dividend} ÷ ${lesson.workedExample.divisor}`);
     expect(steps.at(-1)?.kind).toBe('check');
     expect(steps.at(-1)?.body).toBe(lesson.check.question);
+  });
+
+  it('uses one responsive neutral frame for the restored animation', () => {
+    const html = renderToStaticMarkup(
+      <AnimatedStepCard kind="strategy" icon="÷" title="Exemple" neutralFrame fillHeight>
+        <div className="h-[390px] overflow-y-auto">animation</div>
+      </AnimatedStepCard>,
+    );
+
+    expect(html).toContain('w-full');
+    expect(html).toContain('max-w-none');
+    expect(html).toContain('border-border');
+    expect(html).toContain('bg-card');
+    expect(html).toContain('overflow-visible');
+    expect(html).not.toContain('bg-gradient-to-br');
+    expect(html).not.toContain('border-teal-200');
+    expect(html).toContain('h-[390px]');
   });
 });

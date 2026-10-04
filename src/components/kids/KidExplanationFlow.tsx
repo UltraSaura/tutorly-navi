@@ -157,6 +157,7 @@ function LegacyKidExplanationFlow({
   const restoredDivisionExpression = miniPracticeContext?.quickExplanation
     ? `${miniPracticeContext.quickExplanation.workedExample.dividend} ÷ ${miniPracticeContext.quickExplanation.workedExample.divisor}`
     : null;
+  const isRestoredDivisionFrame = Boolean(restoredDivisionExpression && currentStep === 0);
   const completionActions: CompletionAction[] = [
     ...(onPracticeMore
       ? [{
@@ -179,7 +180,7 @@ function LegacyKidExplanationFlow({
   return (
     <div className="flex h-full min-h-0 flex-col justify-between gap-2">
       {/* Active step only */}
-      <div className={isCheckStep ? "min-h-0 flex-1 overflow-hidden" : "overflow-visible"}>
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <AnimatePresence mode="wait">
           {isDone ? (
             <motion.div
@@ -263,7 +264,8 @@ function LegacyKidExplanationFlow({
                       animate={false}
                       isCurrent={true}
                       isCompleted={false}
-                      fillHeight={false}
+                      fillHeight={isRestoredDivisionFrame}
+                      neutralFrame={isRestoredDivisionFrame}
                     >
                       {restoredDivisionExpression && currentStep === 0 ? (
                       <div className="space-y-2">
