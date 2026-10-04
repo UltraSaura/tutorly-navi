@@ -10,7 +10,7 @@ export interface QuickExplanation {
   concept: string;
   workedExample: Division;
   frames: Array<{ title: string; body: string; visualPhase: VisualPhase }>;
-  check: Division & { question: string; choices: string[]; correctChoice: string; hint: string; explanation: string };
+  check: Division & { question: string; choices: string[]; correctChoice: string; hint: string; hintLevel1: string; hintLevel2: string; solutionReasoning: string; explanation: string };
   retryGuidance: string;
   lessonLinkReason?: string;
 }
@@ -87,8 +87,11 @@ export function divisionExplanation(source: string, worked: Division, check: Div
       { title: fr ? 'Vérifier' : 'Verify', visualPhase: 'verify', body: `${fact}\n${fr ? `Le reste ${r} est plus petit que ${worked.divisor}.` : `The remainder ${r} is smaller than ${worked.divisor}.`}` },
     ],
     check: { ...check, question: `${equation(check)} = ?`, choices, correctChoice,
-      hint: exact ? (fr ? `Cherche dans la table de ${check.divisor} le produit qui donne ${check.dividend}. Essaie encore.` : `Find ${check.dividend} in the ${check.divisor} times table. Try again.`) : (fr ? `Cherche le plus grand multiple de ${check.divisor} qui ne dépasse pas ${check.dividend}. Essaie encore.` : `Find the largest multiple of ${check.divisor} no greater than ${check.dividend}. Try again.`),
-      explanation: `${checkFact}. ${fr ? 'Tu peux utiliser cette vérification dans ton exercice.' : 'You can use this check in your exercise.'}` },
+      hint: exact ? (fr ? `Cherche dans la table de ${check.divisor} le produit qui donne ${check.dividend}. Essaie encore.` : `Find ${check.dividend} in the ${check.divisor} times table. Try again.`) : (fr ? `Cherche le plus grand multiple de ${check.divisor} qui ne dépasse pas ${check.dividend}.` : `Find the largest multiple of ${check.divisor} no greater than ${check.dividend}.`),
+      hintLevel1: exact ? (fr ? `Cherche le produit de la table de ${check.divisor} qui donne ${check.dividend}.` : `Find the product in the ${check.divisor} times table that gives ${check.dividend}.`) : (fr ? `Cherche le plus grand multiple de ${check.divisor} qui ne dépasse pas ${check.dividend}.` : `Find the largest multiple of ${check.divisor} no greater than ${check.dividend}.`),
+      hintLevel2: exact ? (fr ? `Compare les produits voisins dans la table de ${check.divisor}.` : `Compare neighboring products in the ${check.divisor} times table.`) : (fr ? `Compare ${check.divisor} × ${cq} et ${check.divisor} × ${cq + 1} avec ${check.dividend}.` : `Compare ${check.divisor} × ${cq} and ${check.divisor} × ${cq + 1} with ${check.dividend}.`),
+      solutionReasoning: checkFact,
+      explanation: `${checkFact}. ${fr ? (exact ? 'Le produit donne exactement le dividende.' : `On forme ${cq} groupes complets et il reste ${cr}.`) : (exact ? 'The product gives exactly the dividend.' : `We make ${cq} complete groups and ${cr} remains.`)}` },
     retryGuidance: fr ? 'Utilise cette méthode pour réessayer ton exercice.' : 'Use this method to retry your exercise.',
   };
 }
@@ -114,12 +117,12 @@ export function validateQuickExplanation(source: string, value: unknown, languag
   // Compare every rendered field against the closed grammar. No spare visual/answer fields.
   if (v.sourceSkill !== expected.sourceSkill || JSON.stringify(v.canonicalSkill) !== JSON.stringify(expected.canonicalSkill) || v.concept !== expected.concept || v.retryGuidance !== expected.retryGuidance) errors.push('Concept, canonical skill, strategy or retry must use the safe division template.');
   if (!Array.isArray(v.frames) || v.frames.length !== expected.frames.length || v.frames.some((f, i) => f.title !== expected.frames[i].title || f.body !== expected.frames[i].body || f.visualPhase !== expected.frames[i].visualPhase)) errors.push('Guided frames contain unrelated numbers, an invalid equality, or unsupported arithmetic prose.');
-  if (v.check.question !== expected.check.question || v.check.hint !== expected.check.hint || v.check.explanation !== expected.check.explanation || v.check.correctChoice !== expected.check.correctChoice) errors.push('Check has leaked, inconsistent or unsupported content.');
+  if (v.check.question !== expected.check.question || v.check.hint !== expected.check.hint || v.check.hintLevel1 !== expected.check.hintLevel1 || v.check.hintLevel2 !== expected.check.hintLevel2 || v.check.solutionReasoning !== expected.check.solutionReasoning || v.check.explanation !== expected.check.explanation || v.check.correctChoice !== expected.check.correctChoice) errors.push('Check has leaked, inconsistent or unsupported content.');
   if (!Array.isArray(v.check.choices) || v.check.choices.length !== 3 || new Set(v.check.choices).size !== 3 || !expected.check.choices.every(c => v.check.choices.includes(c))) errors.push('Check must have three distinct verified choices.');
-  const permitted = ['dividend', 'divisor', 'question', 'choices', 'correctChoice', 'hint', 'explanation'];
+  const permitted = ['dividend', 'divisor', 'question', 'choices', 'correctChoice', 'hint', 'hintLevel1', 'hintLevel2', 'solutionReasoning', 'explanation'];
   if (Object.keys(v.check).some(k => !permitted.includes(k))) errors.push('Check must not include a visual or extra answer presentation.');
   // Never disclose the original quotient, even through a coincidentally equal distractor.
-  const visible = [v.concept, ...(v.frames || []).map(f => f.body), v.check.question, ...(v.check.choices || []), v.check.hint, v.check.explanation].join(' ');
+  const visible = [v.concept, ...(v.frames || []).map(f => f.body), v.check.question, ...(v.check.choices || []), v.check.hint, v.check.hintLevel1, v.check.hintLevel2].join(' ');
   if ((visible.match(/\d+/g) || []).includes(String(quotient(original)))) errors.push('Content exposes the original quotient.');
   return errors;
 }

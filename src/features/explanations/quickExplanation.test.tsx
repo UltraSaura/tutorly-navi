@@ -64,6 +64,18 @@ describe('validated quick division explanation', () => {
     expect(correct.validated).toBe(true);
   });
 
+  it('keeps self-check calculations out of the initial question and choices', () => {
+    for (const source of ['29 ÷ 5', '45 ÷ 5']) {
+      const lesson = safeDivisionExplanation(source, 'fr');
+      const initial = `${lesson.check.question} ${lesson.check.choices.join(' ')}`;
+      expect(initial).not.toContain(lesson.check.solutionReasoning);
+      expect(initial).not.toContain(`${lesson.check.divisor} ×`);
+      expect(initial).not.toContain(`${lesson.check.dividend} −`);
+      expect(lesson.check.hintLevel1).not.toContain(lesson.check.solutionReasoning);
+      expect(lesson.check.hintLevel2).not.toContain(lesson.check.solutionReasoning);
+    }
+  });
+
   it('resolves the same canonical strategy and visual for the Lesson tab', () => {
     const exact = resolveCanonicalSkill('66 ÷ 6', 'CM2', 'France');
     const remainder = resolveCanonicalSkill('73 ÷ 8', 'CM2', 'France');

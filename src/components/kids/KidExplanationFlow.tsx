@@ -252,6 +252,7 @@ function LegacyKidExplanationFlow({
                           context={miniPracticeContext}
                           fallbackBody={body}
                           variant="kid-fit"
+                          onViewLesson={canViewLesson ? onViewLesson : undefined}
                         />
                       </div>
                     </section>
@@ -301,7 +302,7 @@ function LegacyKidExplanationFlow({
       </div>
 
       {/* Navigation controls */}
-      {!isDone && (
+      {!isDone && !isCheckStep && (
         <div className="space-y-1.5 border-t border-slate-100 pt-2">
           <div className="flex items-center justify-between gap-2">
           <motion.button

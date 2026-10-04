@@ -14,14 +14,95 @@ import {
   type RuntimeMiniPracticeContext,
 } from "./runtimeMiniPractice";
 import { trackLearningInteraction } from "@/services/learningAnalytics";
+import type { QuickExplanation } from "./quickExplanation";
 
 interface RuntimeMiniPracticeInlineProps {
   context?: RuntimeMiniPracticeContext;
   fallbackBody: string;
   variant?: "default" | "kid-fit";
+  onViewLesson?: () => void;
 }
 
 type AnswerState = "idle" | "correct" | "incorrect";
+
+function ValidatedDivisionCheck({
+  lesson,
+  onRetry,
+  onViewLesson,
+}: {
+  lesson: QuickExplanation;
+  onRetry?: () => void;
+  onViewLesson?: () => void;
+}) {
+  const { language } = useLanguage();
+  const [selected, setSelected] = React.useState("");
+  const [state, setState] = React.useState<AnswerState>("idle");
+  const [wrongAttempts, setWrongAttempts] = React.useState(0);
+  const [hintLevel, setHintLevel] = React.useState(0);
+  const check = lesson.check;
+  const isFrench = /^fr/i.test(language);
+  const remediation = wrongAttempts >= 3;
+  const feedback = state === "correct" || remediation;
+
+  const validate = () => {
+    if (!selected) return;
+    if (selected === check.correctChoice) {
+      setState("correct");
+      return;
+    }
+    setState("incorrect");
+    const next = wrongAttempts + 1;
+    setWrongAttempts(next);
+    setHintLevel((current) => Math.max(current, Math.min(2, next)));
+  };
+
+  const hint = hintLevel === 1 ? check.hintLevel1 : hintLevel >= 2 ? check.hintLevel2 : "";
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-3" data-self-check="validated-division">
+      <p className="text-sm font-semibold text-foreground">{check.question}</p>
+      <div role="radiogroup" aria-label={isFrench ? "Choisis une réponse" : "Choose an answer"} className="grid gap-2">
+        {check.choices.map((choice) => (
+          <button
+            key={choice}
+            type="button"
+            role="radio"
+            aria-checked={selected === choice}
+            onClick={() => { setSelected(choice); setState("idle"); }}
+            className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
+              remediation && choice === check.correctChoice
+                ? "border-green-500 bg-green-50 text-green-900"
+                : selected === choice
+                  ? "border-slate-400 bg-slate-50 text-foreground"
+                  : "bg-background hover:bg-muted/70"
+            }`}
+          >
+            {String.fromCharCode(65 + check.choices.indexOf(choice))}. {choice}
+          </button>
+        ))}
+      </div>
+      {feedback && <div role="status" className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-900">
+        <p>{check.solutionReasoning}</p>
+        <p className="mt-1">{check.explanation}</p>
+      </div>}
+      {state === "incorrect" && !remediation && <p role="status" className="text-sm text-amber-900">{hint || check.hintLevel1}</p>}
+      {hint && !feedback && <p role="status" className="text-sm text-amber-900">{hint}</p>}
+      <div className="mt-auto flex flex-wrap gap-2 border-t border-slate-100 pt-2">
+        {!feedback && <Button type="button" size="sm" onClick={validate} disabled={!selected}>
+          {isFrench ? "Valider ma réponse" : "Validate my answer"}
+        </Button>}
+        {!feedback && <Button type="button" size="sm" variant="outline" onClick={() => setHintLevel((value) => Math.min(2, value + 1))}>
+          <HelpCircle className="h-4 w-4" />{isFrench ? "Indice" : "Hint"}
+        </Button>}
+        {feedback && onRetry && <Button type="button" size="sm" onClick={onRetry}>
+          {isFrench ? "Réessayer mon exercice" : "Retry my exercise"}
+        </Button>}
+        {feedback && onViewLesson && <Button type="button" size="sm" variant="outline" onClick={onViewLesson}>
+          {isFrench ? "Voir la leçon complète" : "View the full lesson"}
+        </Button>}
+      </div>
+    </div>
+  );
+}
 
 const shouldSpanFullWidthChoice = (label: string) =>
   label.trim().length > 18 || /\s/.test(label.trim());
@@ -200,7 +281,7 @@ function normalizeChoiceValue(value: string): string {
   return value.trim().toLowerCase();
 }
 
-export function RuntimeMiniPracticeInline({
+function GeneratedMiniPracticeInline({
   context,
   fallbackBody,
   variant = "default",
@@ -536,4 +617,12 @@ export function RuntimeMiniPracticeInline({
       </div>
     </div>
   );
+}
+
+export function RuntimeMiniPracticeInline(props: RuntimeMiniPracticeInlineProps) {
+  if (props.context?.quickExplanation) {
+    return <ValidatedDivisionCheck lesson={props.context.quickExplanation} onRetry={props.context.onRetryOriginal} onViewLesson={props.onViewLesson} />;
+  }
+
+  return <GeneratedMiniPracticeInline {...props} />;
 }
