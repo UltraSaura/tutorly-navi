@@ -21,6 +21,7 @@ interface RuntimeMiniPracticeInlineProps {
   fallbackBody: string;
   variant?: "default" | "kid-fit";
   onViewLesson?: () => void;
+  onComplete?: (points: number) => void;
 }
 
 type AnswerState = "idle" | "correct" | "incorrect";
@@ -29,10 +30,12 @@ function ValidatedDivisionCheck({
   lesson,
   onRetry,
   onViewLesson,
+  onComplete,
 }: {
   lesson: QuickExplanation;
   onRetry?: () => void;
   onViewLesson?: () => void;
+  onComplete?: (points: number) => void;
 }) {
   const { language } = useLanguage();
   const [selected, setSelected] = React.useState("");
@@ -43,6 +46,8 @@ function ValidatedDivisionCheck({
   const isFrench = /^fr/i.test(language);
   const remediation = wrongAttempts >= 3;
   const feedback = state === "correct" || remediation;
+  const hasFeedback = state !== "idle";
+  const points = state === "correct" && wrongAttempts === 0 ? 1 : 0;
 
   const validate = () => {
     if (!selected) return;
@@ -81,10 +86,11 @@ function ValidatedDivisionCheck({
         ))}
       </div>
       {feedback && <div role="status" className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-900">
-        <p>{check.solutionReasoning}</p>
+        <p>{state === "correct" ? (isFrench ? "Bravo, c’est juste !" : "Great, that’s correct!") : (isFrench ? "Voici la solution pour t’aider." : "Here is the solution to help you.")}</p>
+        <p className="mt-1">{check.solutionReasoning}</p>
         <p className="mt-1">{check.explanation}</p>
       </div>}
-      {state === "incorrect" && !remediation && <p role="status" className="text-sm text-amber-900">{hint || check.hintLevel1}</p>}
+      {state === "incorrect" && !remediation && <p role="status" className="text-sm text-amber-900">{isFrench ? "Pas encore. " : "Not yet. "}{hint || check.hintLevel1}</p>}
       {hint && !feedback && <p role="status" className="text-sm text-amber-900">{hint}</p>}
       <div className="mt-auto flex flex-wrap gap-2 border-t border-slate-100 pt-2">
         {!feedback && <Button type="button" size="sm" onClick={validate} disabled={!selected}>
@@ -98,6 +104,9 @@ function ValidatedDivisionCheck({
         </Button>}
         {feedback && onViewLesson && <Button type="button" size="sm" variant="outline" onClick={onViewLesson}>
           {isFrench ? "Voir la leçon complète" : "View the full lesson"}
+        </Button>}
+        {hasFeedback && onComplete && <Button type="button" size="sm" variant="outline" onClick={() => onComplete(points)}>
+          {isFrench ? "Continuer" : "Continue"}
         </Button>}
       </div>
     </div>
@@ -621,7 +630,7 @@ function GeneratedMiniPracticeInline({
 
 export function RuntimeMiniPracticeInline(props: RuntimeMiniPracticeInlineProps) {
   if (props.context?.quickExplanation) {
-    return <ValidatedDivisionCheck lesson={props.context.quickExplanation} onRetry={props.context.onRetryOriginal} onViewLesson={props.onViewLesson} />;
+    return <ValidatedDivisionCheck lesson={props.context.quickExplanation} onRetry={props.context.onRetryOriginal} onViewLesson={props.onViewLesson} onComplete={props.onComplete} />;
   }
 
   return <GeneratedMiniPracticeInline {...props} />;

@@ -65,9 +65,11 @@ interface CompletionAction {
 
 function CompletionBanner({
   youGotThis,
+  points,
   actions = [],
 }: {
   youGotThis: string;
+  points?: number;
   actions?: CompletionAction[];
 }) {
   return (
@@ -81,6 +83,11 @@ function CompletionBanner({
         <span className="text-2xl" aria-hidden="true">🎨</span>
         <span>{youGotThis || "Tu vas y arriver, champion !"}</span>
       </div>
+      {points != null && (
+        <p className="mt-2 text-center text-sm font-semibold text-blue-800">
+          {points} {points === 1 ? "point gagné" : "points gagnés"}
+        </p>
+      )}
 
       {actions.length > 0 && (
         <div className="mt-4 grid gap-2">
@@ -144,6 +151,7 @@ function LegacyKidExplanationFlow({
 
   // Current step revealed (0-based). Starts at 0 so the first card is visible immediately.
   const [currentStep, setCurrentStep] = useState(0);
+  const [completionPoints, setCompletionPoints] = useState<number | undefined>();
   const isLast = currentStep >= steps.length - 1;
   const isDone = currentStep >= steps.length;
   const canGoBack = currentStep > 0;
@@ -193,6 +201,7 @@ function LegacyKidExplanationFlow({
             >
               <CompletionBanner
                 youGotThis={t("exercises.explanation.kid.you_got_this") || (isFr ? "Tu vas y arriver, champion !" : "You got this, champion!")}
+                points={completionPoints}
                 actions={completionActions}
               />
             </motion.div>
@@ -253,6 +262,7 @@ function LegacyKidExplanationFlow({
                           fallbackBody={body}
                           variant="kid-fit"
                           onViewLesson={canViewLesson ? onViewLesson : undefined}
+                          onComplete={(points) => { setCompletionPoints(points); setCurrentStep(steps.length); }}
                         />
                       </div>
                     </section>
