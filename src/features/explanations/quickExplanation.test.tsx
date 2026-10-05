@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   buildRestoredDivisionSteps,
   classifyDivision,
+  divisionExplanation,
   safeDivisionExplanation,
   validateQuickExplanation,
 } from './quickExplanation';
@@ -22,7 +23,6 @@ describe('validated quick division explanation', () => {
     expect(lesson.check.dividend % lesson.check.divisor).toBe(0);
     expect(validateQuickExplanation(source, lesson, 'fr')).toEqual([]);
     expect(JSON.stringify(lesson)).not.toContain('11');
-    expect(lesson.frames.map(frame => frame.body).join(' ')).not.toMatch(/reste|remainder/i);
     expect(lesson.frames.length).toBeGreaterThanOrEqual(3);
     expect(lesson.canonicalSkill.skillId).toBe('fr.cm2.math.division.exact_integer');
   });
@@ -74,6 +74,22 @@ describe('validated quick division explanation', () => {
       expect(lesson.check.hintLevel1).not.toContain(lesson.check.solutionReasoning);
       expect(lesson.check.hintLevel2).not.toContain(lesson.check.solutionReasoning);
     }
+  });
+
+  it('keeps exact grouping counts, products, and totals consistent', () => {
+    const lesson = divisionExplanation('45 ÷ 5', { dividend: 45, divisor: 5 }, { dividend: 72, divisor: 8 }, 'fr');
+    const forming = lesson.frames.find((frame) => frame.visualPhase === 'form_groups')?.body || '';
+    const counting = lesson.frames.find((frame) => frame.visualPhase === 'count_groups')?.body || '';
+    const verifying = lesson.frames.find((frame) => frame.visualPhase === 'verify')?.body || '';
+
+    expect(forming).toContain('5 × 8 = 40');
+    expect(forming).toContain('5 × 9 = 45');
+    expect(forming).toContain('8 groupes de 5');
+    expect(forming).toContain('5 objets');
+    expect(counting).toContain('9 groupes de 5');
+    expect(counting).toContain('45 objets');
+    expect(verifying).toContain('5 × 9 = 45');
+    expect(verifying).toContain('aucun objet ne reste');
   });
 
   it('resolves the same canonical strategy and visual for the Lesson tab', () => {
