@@ -394,6 +394,7 @@ export function TwoCards({
   if (isSupportedDivision(s.exercise)) {
     return <div className="flex h-[min(82dvh,720px)] max-h-[calc(100dvh-2rem)] min-h-0 flex-col overflow-hidden sm:h-[min(78dvh,720px)]">
       <ExplanationRenderer mode="kid" steps={[]} miniPracticeContext={miniPracticeContext}
+        onPracticeMore={handlePracticeMore}
         onViewLesson={handleViewLesson} canViewLesson={Boolean(canShowLessonLink)} />
     </div>;
   }

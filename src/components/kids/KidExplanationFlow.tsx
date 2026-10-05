@@ -374,7 +374,7 @@ export function KidExplanationFlow(props: KidExplanationFlowProps) {
         key={JSON.stringify(lesson)}
         steps={restoredSteps}
         miniPracticeContext={context}
-        onPracticeMore={context.onRetryOriginal}
+        onPracticeMore={props.onPracticeMore}
         onViewLesson={props.canViewLesson ? props.onViewLesson : undefined}
         canViewLesson={props.canViewLesson}
       />;
