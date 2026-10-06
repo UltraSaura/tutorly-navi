@@ -300,6 +300,7 @@ const ChatInterface = () => {
       {location.pathname === '/chat' && !hasActiveOverlay && (
         <div 
           data-explanation-hide="chat-input"
+          data-tour="home-input"
           className={`fixed left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border transition-all duration-300 ease-in-out`}
           style={{ 
             bottom: keyboardVisible && keyboardHeight > 0

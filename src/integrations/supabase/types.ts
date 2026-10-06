@@ -2804,6 +2804,7 @@ export type Database = {
           last_name: string | null
           level: string | null
           phone_number: string | null
+          product_tour_completed_at: string | null
           style: string | null
           updated_at: string
           user_type: string
@@ -2822,6 +2823,7 @@ export type Database = {
           last_name?: string | null
           level?: string | null
           phone_number?: string | null
+          product_tour_completed_at?: string | null
           style?: string | null
           updated_at?: string
           user_type: string
@@ -2840,6 +2842,7 @@ export type Database = {
           last_name?: string | null
           level?: string | null
           phone_number?: string | null
+          product_tour_completed_at?: string | null
           style?: string | null
           updated_at?: string
           user_type?: string

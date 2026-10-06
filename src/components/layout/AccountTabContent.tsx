@@ -29,6 +29,10 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
   const userInitials = user?.email?.charAt(0).toUpperCase() || 'U';
 
   const handleSignOut = () => { hardLogout(); };
+  const handleReplayTour = () => {
+    onClose();
+    window.dispatchEvent(new Event('stuwy:replay-product-tour'));
+  };
 
   return (
     <div className="flex min-h-full flex-col gap-4 py-4">
@@ -163,6 +167,15 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
       </div>
 
       <Separator />
+
+      <Button
+        variant="ghost"
+        onClick={handleReplayTour}
+        className="w-full justify-start h-12"
+      >
+        <BookOpen className="mr-3 h-5 w-5" />
+        <span>{t('productTour.actions.replay')}</span>
+      </Button>
 
       {isAdmin ? (
         <>

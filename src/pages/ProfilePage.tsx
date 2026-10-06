@@ -35,6 +35,11 @@ const ProfilePage = () => {
     }
   };
 
+  const handleReplayTour = () => {
+    window.dispatchEvent(new Event('stuwy:replay-product-tour'));
+    navigate('/chat');
+  };
+
   // Mock user data - in real app, fetch from users table
   const userData = {
     firstName: user?.user_metadata?.first_name || 'User',
@@ -154,6 +159,10 @@ const ProfilePage = () => {
           <ProfileEditForm />
 
           <LearningPreferenceSelector />
+
+          <Button variant="outline" className="w-full h-12" onClick={handleReplayTour}>
+            {t('productTour.actions.replay')}
+          </Button>
 
           {/* Account Deletion */}
           <AccountDeletion />

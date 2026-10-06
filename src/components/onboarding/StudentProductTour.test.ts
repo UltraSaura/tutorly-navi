@@ -1,0 +1,32 @@
+import { describe, expect, it } from 'vitest';
+import {
+  PRODUCT_TOUR_STEPS,
+  clampTourCardPosition,
+  getNextTourStepIndex,
+  getTourCardPosition,
+  getTourTargetSelector,
+} from './studentProductTourUtils';
+import { isEligibleStudentTourProfile } from '@/hooks/useStudentProductTour';
+
+describe('StudentProductTour', () => {
+  it('only auto-qualifies a completed-profile student without completion state', () => {
+    expect(isEligibleStudentTourProfile({ userType: 'student', curriculumCountryCode: 'fr', curriculumLevelCode: 'cm2', completedAt: null })).toBe(true);
+    expect(isEligibleStudentTourProfile({ userType: 'admin', curriculumCountryCode: 'fr', curriculumLevelCode: 'cm2', completedAt: null })).toBe(false);
+    expect(isEligibleStudentTourProfile({ userType: 'student', curriculumCountryCode: null, curriculumLevelCode: 'cm2', completedAt: null })).toBe(false);
+    expect(isEligibleStudentTourProfile({ userType: 'student', curriculumCountryCode: 'fr', curriculumLevelCode: 'cm2', completedAt: '2026-10-06T12:00:00Z' })).toBe(false);
+  });
+
+  it('keeps target selectors stable for mobile and desktop navigation', () => {
+    expect(getTourTargetSelector('nav-practice')).toBe('[data-tour="nav-practice"]');
+    expect(getTourTargetSelector('nav-learning')).toBe('[data-tour="nav-learning"]');
+    expect(getTourTargetSelector('nav-history')).toBe('[data-tour="nav-history"]');
+  });
+
+  it('advances and clamps tour navigation without pixel-based assumptions', () => {
+    expect(getNextTourStepIndex(0)).toBe(1);
+    expect(getNextTourStepIndex(PRODUCT_TOUR_STEPS.length - 1)).toBe(PRODUCT_TOUR_STEPS.length - 1);
+    expect(clampTourCardPosition(-20, 300, 390)).toBe(16);
+    expect(clampTourCardPosition(500, 300, 390)).toBe(74);
+    expect(getTourCardPosition(null, 'welcome', { width: 390, height: 844 }).left).toBe(16);
+  });
+});

@@ -49,6 +49,23 @@
     "settings": "Settings",
     "language": "Language"
   },
+  "productTour": {
+    "welcome": {
+      "title": "Welcome to Stuwy! 👋",
+      "description": "Your assistant to help you understand your homework and make progress.",
+      "principle": "Stuwy doesn't do the work for you: it guides you so you can understand and succeed."
+    },
+    "home": {
+      "title": "Need help with homework?",
+      "description": "Type your exercise or question here. You can also send a photo or import a document.",
+      "principle": "Stuwy guides you step by step instead of simply giving you the answer."
+    },
+    "practice": { "title": "Practice 🎯", "description": "Practice with exercises adapted to your level to check what you've understood and keep improving." },
+    "learning": { "title": "Learn and review 📚", "description": "Find lessons that match your curriculum and school level." },
+    "history": { "title": "Find your previous work 🕘", "description": "Find exercises you've already done here so you can review them." },
+    "complete": { "title": "You're ready! 🚀", "description": "Send your first exercise to Stuwy." },
+    "actions": { "next": "Next", "previous": "Previous", "skip": "Skip", "discover": "Discover Stuwy", "start": "Start", "replay": "Replay guided tour" }
+  },
   "language": {
     "english": "English",
     "french": "Français", 

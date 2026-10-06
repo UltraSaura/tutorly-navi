@@ -116,6 +116,7 @@ export function HeaderNavigation() {
               <NavLink
                 key={item.title}
                 to={item.url}
+                data-tour={`nav-${item.title.replace('nav.', '')}`}
                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActiveRoute
                     ? "bg-accent text-accent-foreground"
