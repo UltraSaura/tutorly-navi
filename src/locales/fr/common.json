@@ -57,12 +57,15 @@
     },
     "home": {
       "title": "Besoin d'aide pour un devoir ?",
-      "description": "Écris ton exercice ou ta question ici. Tu peux aussi envoyer une photo ou importer un document.",
+      "description": "Écris ton exercice ou ta question ici.",
       "principle": "Stuwy te guide étape par étape sans simplement te donner la réponse."
+    },
+    "photo": {
+      "title": "Prends ton devoir en photo 📸",
+      "description": "Pas besoin de tout recopier ! Appuie sur + pour prendre ton exercice en photo ou importer un document."
     },
     "practice": { "title": "Entraîne-toi 🎯", "description": "Fais des exercices adaptés à ton niveau pour vérifier ce que tu as compris et progresser." },
     "learning": { "title": "Apprends et révise 📚", "description": "Retrouve des leçons correspondant à ton programme et à ta classe." },
-    "history": { "title": "Retrouve ton travail 🕘", "description": "Retrouve ici les exercices que tu as déjà faits pour pouvoir les revoir." },
     "complete": { "title": "Tu es prêt ! 🚀", "description": "Envoie ton premier exercice à Stuwy." },
     "actions": { "next": "Suivant", "previous": "Précédent", "skip": "Passer", "discover": "Découvrir Stuwy", "start": "Commencer", "replay": "Revoir la visite guidée" }
   },

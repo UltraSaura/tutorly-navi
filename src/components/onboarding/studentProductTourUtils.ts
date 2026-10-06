@@ -9,9 +9,9 @@ export type ProductTourStep = {
 export const PRODUCT_TOUR_STEPS: ProductTourStep[] = [
   { id: 'welcome', titleKey: 'productTour.welcome.title', descriptionKey: 'productTour.welcome.description', principleKey: 'productTour.welcome.principle' },
   { id: 'home', target: 'home-input', titleKey: 'productTour.home.title', descriptionKey: 'productTour.home.description', principleKey: 'productTour.home.principle' },
+  { id: 'photo', target: 'chat-photo', titleKey: 'productTour.photo.title', descriptionKey: 'productTour.photo.description' },
   { id: 'practice', target: 'nav-practice', titleKey: 'productTour.practice.title', descriptionKey: 'productTour.practice.description' },
   { id: 'learning', target: 'nav-learning', titleKey: 'productTour.learning.title', descriptionKey: 'productTour.learning.description' },
-  { id: 'history', target: 'nav-history', titleKey: 'productTour.history.title', descriptionKey: 'productTour.history.description' },
   { id: 'complete', titleKey: 'productTour.complete.title', descriptionKey: 'productTour.complete.description' },
 ];
 
@@ -52,7 +52,7 @@ export function getTourCardPosition(
     };
   }
 
-  const isBottomTarget = stepId === 'home' || rect.top > viewport.height / 2;
+  const isBottomTarget = stepId === 'home' || stepId === 'photo' || rect.top > viewport.height / 2;
   const gap = 14;
   const aboveSpace = rect.top - safeMargins.top - gap;
   const belowSpace = viewport.height - safeMargins.bottom - rect.bottom - gap;

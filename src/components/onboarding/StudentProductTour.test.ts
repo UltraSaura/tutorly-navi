@@ -17,6 +17,10 @@ describe('StudentProductTour', () => {
   });
 
   it('keeps target selectors stable for mobile and desktop navigation', () => {
+    expect(PRODUCT_TOUR_STEPS.map((step) => step.id)).toEqual(['welcome', 'home', 'photo', 'practice', 'learning', 'complete']);
+    expect(PRODUCT_TOUR_STEPS.some((step) => step.id === 'history')).toBe(false);
+    expect(PRODUCT_TOUR_STEPS.find((step) => step.id === 'home')?.target).toBe('home-input');
+    expect(PRODUCT_TOUR_STEPS.find((step) => step.id === 'photo')?.target).toBe('chat-photo');
     expect(getTourTargetSelector('nav-practice')).toBe('[data-tour="nav-practice"]');
     expect(getTourTargetSelector('nav-learning')).toBe('[data-tour="nav-learning"]');
     expect(getTourTargetSelector('nav-history')).toBe('[data-tour="nav-history"]');

@@ -33,6 +33,12 @@ function getRadius(target: HTMLElement | null) {
   return Number.isFinite(radius) ? Math.min(radius + 8, 24) : 12;
 }
 
+function setAttachmentMenuOpen(open: boolean) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('stuwy:product-tour-attachment', { detail: { open } }));
+  }
+}
+
 export function StudentProductTour() {
   const { t } = useLanguage();
   const location = useLocation();
@@ -51,6 +57,7 @@ export function StudentProductTour() {
 
   const finish = useCallback(async () => {
     setOpen(false);
+    setAttachmentMenuOpen(false);
     try {
       await completeTour();
     } catch (error) {
@@ -82,6 +89,12 @@ export function StudentProductTour() {
     window.addEventListener('stuwy:replay-product-tour', replay);
     return () => window.removeEventListener('stuwy:replay-product-tour', replay);
   }, [location.pathname, navigate]);
+
+  useEffect(() => {
+    if (!open) return;
+    setAttachmentMenuOpen(step.id === 'photo');
+    return () => setAttachmentMenuOpen(false);
+  }, [open, step.id]);
 
   useEffect(() => {
     if (pendingReplay && location.pathname === '/chat') {

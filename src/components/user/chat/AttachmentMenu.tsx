@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Paperclip, Camera, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -17,6 +17,15 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
   const isMobile = useIsMobile();
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const handleTourMenu = (event: Event) => {
+      const shouldOpen = (event as CustomEvent<{ open?: boolean }>).detail?.open;
+      setOpen(Boolean(shouldOpen));
+    };
+    window.addEventListener('stuwy:product-tour-attachment', handleTourMenu);
+    return () => window.removeEventListener('stuwy:product-tour-attachment', handleTourMenu);
+  }, []);
 
   const handleItemClick = (originalOnClick: () => void) => {
     originalOnClick();
@@ -64,6 +73,7 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
                 : "p-4 min-h-[60px]"
             )}
             onClick={item.onClick}
+            data-tour={index === 1 ? 'chat-photo' : undefined}
           >
             {/* Background with color */}
             <div className={cn(
@@ -113,6 +123,7 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
       size="icon"
       className="rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-muted"
       {...props}
+      data-tour="chat-add"
     >
       <Plus className="h-5 w-5" />
     </Button>

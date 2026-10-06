@@ -57,12 +57,15 @@
     },
     "home": {
       "title": "Need help with homework?",
-      "description": "Type your exercise or question here. You can also send a photo or import a document.",
+      "description": "Type your exercise or question here.",
       "principle": "Stuwy guides you step by step instead of simply giving you the answer."
+    },
+    "photo": {
+      "title": "Take a photo of your homework 📸",
+      "description": "No need to type everything! Tap + to take a photo of your exercise or import a document."
     },
     "practice": { "title": "Practice 🎯", "description": "Practice with exercises adapted to your level to check what you've understood and keep improving." },
     "learning": { "title": "Learn and review 📚", "description": "Find lessons that match your curriculum and school level." },
-    "history": { "title": "Find your previous work 🕘", "description": "Find exercises you've already done here so you can review them." },
     "complete": { "title": "You're ready! 🚀", "description": "Send your first exercise to Stuwy." },
     "actions": { "next": "Next", "previous": "Previous", "skip": "Skip", "discover": "Discover Stuwy", "start": "Start", "replay": "Replay guided tour" }
   },
