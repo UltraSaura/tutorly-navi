@@ -66,8 +66,7 @@
     },
     "photo": {
       "title": "Prends ton devoir en photo 📸",
-      "description": "Prends ton exercice en photo et Stuwy pourra t'aider à le comprendre étape par étape.",
-      "principle": "Tu peux aussi importer un document."
+      "description": "Prends ton exercice en photo pour que Stuwy t'aide étape par étape, ou importe un document."
     },
     "practice": { "title": "Entraîne-toi 🎯", "description": "Fais des exercices adaptés à ton niveau pour vérifier ce que tu as compris et progresser." },
     "learning": { "title": "Apprends et révise 📚", "description": "Retrouve des leçons correspondant à ton programme et à ta classe." },

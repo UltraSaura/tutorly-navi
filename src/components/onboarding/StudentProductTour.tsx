@@ -124,6 +124,12 @@ export function StudentProductTour() {
       setViewport(getViewport());
       if (target) {
         const rect = target.getBoundingClientRect();
+        if (step.id === 'photo' && attempts < 3 && (rect.top < 12 || rect.bottom > getViewport().height - 12)) {
+          attempts += 1;
+          const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          target.scrollIntoView({ block: 'center', behavior: reducedMotion ? 'auto' : 'smooth' });
+          timer = window.setTimeout(update, reducedMotion ? 0 : 220);
+        }
         setTargetRect({ top: rect.top, left: rect.left, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height });
         setTargetRadius(getRadius(target));
       } else {
@@ -148,7 +154,7 @@ export function StudentProductTour() {
       visualViewport?.removeEventListener('resize', update);
       visualViewport?.removeEventListener('scroll', update);
     };
-  }, [open, step.target, stepIndex]);
+  }, [open, step.id, step.target, stepIndex]);
 
   useLayoutEffect(() => {
     if (!open || !cardRef.current) return;
@@ -182,7 +188,8 @@ export function StudentProductTour() {
   }, [finish, open, step.id, stepIndex]);
 
   if (!open || location.pathname !== '/chat') return null;
-  const cardPosition = getTourCardPosition(targetRect, step.id, viewport, cardHeight);
+  const compactAttachmentStep = step.id === 'photo';
+  const cardPosition = getTourCardPosition(targetRect, step.id, viewport, compactAttachmentStep ? Math.min(cardHeight, 190) : cardHeight);
   const next = () => {
     if (step.id === 'plus') {
       setAttachmentMenuOpen(true);
@@ -219,19 +226,19 @@ export function StudentProductTour() {
       {backdrop}
       {spotlight && <div className="pointer-events-none fixed z-[110] rounded-xl border-2 border-primary ring-4 ring-primary/30" aria-hidden="true" style={{ ...spotlight, borderRadius: targetRadius, boxShadow: '0 0 0 2px rgba(22, 199, 163, 0.4), 0 0 24px rgba(22, 199, 163, 0.55)' }} />}
       <div className="fixed inset-0 z-[120]" role="dialog" aria-modal="true" aria-labelledby="student-tour-title" aria-describedby="student-tour-description">
-      <section ref={cardRef} className="absolute flex flex-col overflow-visible rounded-2xl border bg-card p-4 shadow-2xl transition-[top,left] duration-200 motion-reduce:transition-none sm:p-5" style={{ top: cardPosition.top, left: cardPosition.left, width: cardPosition.width, maxHeight: Math.max(0, viewport.height - 24) }}>
-        <div className="mb-2 flex shrink-0 items-center justify-between gap-3 sm:mb-3">
+      <section ref={cardRef} className={`absolute flex flex-col overflow-visible rounded-2xl border bg-card shadow-2xl transition-[top,left] duration-200 motion-reduce:transition-none ${compactAttachmentStep ? 'p-3' : 'p-4 sm:p-5'}`} style={{ top: cardPosition.top, left: cardPosition.left, width: cardPosition.width, maxHeight: Math.max(0, viewport.height - 24) }}>
+        <div className={`${compactAttachmentStep ? 'mb-1.5' : 'mb-2 sm:mb-3'} flex shrink-0 items-center justify-between gap-3`}>
           <div className="flex gap-1.5" aria-label={`${stepIndex + 1} / ${PRODUCT_TOUR_STEPS.length}`}>
             {PRODUCT_TOUR_STEPS.map((item, index) => <span key={item.id} className={`h-2 rounded-full ${index === stepIndex ? 'w-5 bg-primary' : 'w-2 bg-muted'}`} />)}
           </div>
           <button type="button" onClick={() => void finish()} className="rounded-md p-1 text-muted-foreground hover:bg-muted" aria-label={t('productTour.actions.skip')}><X className="h-4 w-4" /></button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
-          <h2 id="student-tour-title" className="text-lg font-bold leading-tight text-foreground sm:text-xl">{t(step.titleKey)}</h2>
-          <p id="student-tour-description" className="mt-2 text-sm leading-5 text-muted-foreground sm:leading-6">{t(step.descriptionKey)}</p>
+          <h2 id="student-tour-title" className={`${compactAttachmentStep ? 'text-base' : 'text-lg sm:text-xl'} font-bold leading-tight text-foreground`}>{t(step.titleKey)}</h2>
+          <p id="student-tour-description" className={`${compactAttachmentStep ? 'mt-1 text-xs leading-4' : 'mt-2 text-sm leading-5 sm:leading-6'} text-muted-foreground`}>{t(step.descriptionKey)}</p>
           {step.principleKey && <p className="mt-3 rounded-lg bg-primary/10 p-2.5 text-sm font-medium leading-5 text-foreground sm:p-3">{t(step.principleKey)}</p>}
         </div>
-        <div className="mt-3 flex shrink-0 items-center justify-between gap-2 border-t pt-3">
+        <div className={`${compactAttachmentStep ? 'mt-2 pt-2' : 'mt-3 pt-3'} flex shrink-0 items-center justify-between gap-2 border-t`}>
           <button type="button" onClick={() => void finish()} className="text-sm font-medium text-muted-foreground hover:text-foreground">{t('productTour.actions.skip')}</button>
           <div className="flex gap-2">
             {stepIndex > 0 && <Button type="button" size="sm" variant="outline" onClick={() => setStepIndex((value) => value - 1)}><ArrowLeft className="mr-1 h-4 w-4" />{t('productTour.actions.previous')}</Button>}

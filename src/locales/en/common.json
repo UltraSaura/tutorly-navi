@@ -66,8 +66,7 @@
     },
     "photo": {
       "title": "Take a photo of your homework 📸",
-      "description": "Take a photo of your exercise and Stuwy can help you understand it step by step.",
-      "principle": "You can also import a document."
+      "description": "Take a photo of your exercise so Stuwy can guide you step by step, or import a document."
     },
     "practice": { "title": "Practice 🎯", "description": "Practice with exercises adapted to your level to check what you've understood and keep improving." },
     "learning": { "title": "Learn and review 📚", "description": "Find lessons that match your curriculum and school level." },

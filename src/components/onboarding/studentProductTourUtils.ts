@@ -10,7 +10,7 @@ export const PRODUCT_TOUR_STEPS: ProductTourStep[] = [
   { id: 'welcome', titleKey: 'productTour.welcome.title', descriptionKey: 'productTour.welcome.description', principleKey: 'productTour.welcome.principle' },
   { id: 'home', target: 'home-input', titleKey: 'productTour.home.title', descriptionKey: 'productTour.home.description', principleKey: 'productTour.home.principle' },
   { id: 'plus', target: 'chat-add', titleKey: 'productTour.plus.title', descriptionKey: 'productTour.plus.description' },
-  { id: 'photo', target: 'attachment-camera', titleKey: 'productTour.photo.title', descriptionKey: 'productTour.photo.description', principleKey: 'productTour.photo.principle' },
+  { id: 'photo', target: 'attachment-camera', titleKey: 'productTour.photo.title', descriptionKey: 'productTour.photo.description' },
   { id: 'practice', target: 'nav-practice', titleKey: 'productTour.practice.title', descriptionKey: 'productTour.practice.description' },
   { id: 'learning', target: 'nav-learning', titleKey: 'productTour.learning.title', descriptionKey: 'productTour.learning.description' },
   { id: 'complete', titleKey: 'productTour.complete.title', descriptionKey: 'productTour.complete.description' },
@@ -57,19 +57,20 @@ export function getTourCardPosition(
   const gap = 14;
   const aboveSpace = rect.top - safeMargins.top - gap;
   const belowSpace = viewport.height - safeMargins.bottom - rect.bottom - gap;
-  const preferAbove = isBottomTarget || belowSpace < height;
-  const placement: TourCardPlacement = preferAbove && aboveSpace >= height ? 'above' : belowSpace >= height ? 'below' : aboveSpace >= belowSpace ? 'above' : 'below';
+  const fitHeight = Math.min(height, Math.max(0, Math.max(aboveSpace, belowSpace)));
+  const preferAbove = isBottomTarget || belowSpace < fitHeight;
+  const placement: TourCardPlacement = preferAbove && aboveSpace >= fitHeight ? 'above' : belowSpace >= fitHeight ? 'below' : aboveSpace >= belowSpace ? 'above' : 'below';
   const top = placement === 'above'
-    ? rect.top - height - gap
+    ? rect.top - fitHeight - gap
     : placement === 'below'
       ? rect.bottom + gap
       : safeMargins.top;
 
   return {
-    top: clampTourCardPosition(top, height, viewport.height, safeMargins.top),
+    top: clampTourCardPosition(top, fitHeight, viewport.height, safeMargins.top),
     left: clampTourCardPosition(rect.left + (rect.width - cardWidth) / 2, cardWidth, viewport.width),
     width: cardWidth,
-    height,
+    height: fitHeight,
     placement,
   };
 }
