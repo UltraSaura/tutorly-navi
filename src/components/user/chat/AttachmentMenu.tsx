@@ -17,6 +17,7 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
   const isMobile = useIsMobile();
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
+  const [tourLocked, setTourLocked] = useState(false);
 
   useEffect(() => {
     const handleTourMenu = (event: Event) => {
@@ -24,10 +25,18 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
       setOpen(Boolean(shouldOpen));
     };
     window.addEventListener('stuwy:product-tour-attachment', handleTourMenu);
-    return () => window.removeEventListener('stuwy:product-tour-attachment', handleTourMenu);
+    const handleTourLock = (event: Event) => {
+      setTourLocked(Boolean((event as CustomEvent<{ locked?: boolean }>).detail?.locked));
+    };
+    window.addEventListener('stuwy:product-tour-attachment-lock', handleTourLock);
+    return () => {
+      window.removeEventListener('stuwy:product-tour-attachment', handleTourMenu);
+      window.removeEventListener('stuwy:product-tour-attachment-lock', handleTourLock);
+    };
   }, []);
 
   const handleItemClick = (originalOnClick: () => void) => {
+    if (tourLocked) return;
     originalOnClick();
     setTimeout(() => setOpen(false), 300);
   };

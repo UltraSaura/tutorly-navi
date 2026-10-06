@@ -5,6 +5,7 @@ import {
   getNextTourStepIndex,
   getTourCardPosition,
   getTourTargetSelector,
+  shouldBlockAttachmentActions,
 } from './studentProductTourUtils';
 import { isEligibleStudentTourProfile } from '@/hooks/useStudentProductTour';
 
@@ -22,6 +23,9 @@ describe('StudentProductTour', () => {
     expect(PRODUCT_TOUR_STEPS.find((step) => step.id === 'home')?.target).toBe('home-input');
     expect(PRODUCT_TOUR_STEPS.find((step) => step.id === 'plus')?.target).toBe('chat-add');
     expect(PRODUCT_TOUR_STEPS.find((step) => step.id === 'photo')?.target).toBe('attachment-camera');
+    expect(shouldBlockAttachmentActions('photo')).toBe(true);
+    expect(shouldBlockAttachmentActions('plus')).toBe(false);
+    expect(shouldBlockAttachmentActions('practice')).toBe(false);
     expect(getTourTargetSelector('nav-practice')).toBe('[data-tour="nav-practice"]');
     expect(getTourTargetSelector('nav-learning')).toBe('[data-tour="nav-learning"]');
     expect(getTourTargetSelector('nav-history')).toBe('[data-tour="nav-history"]');

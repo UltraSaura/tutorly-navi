@@ -24,6 +24,10 @@ export function getTourTargetSelector(target: string) {
   return `[data-tour="${target}"]`;
 }
 
+export function shouldBlockAttachmentActions(stepId: string) {
+  return stepId === 'photo';
+}
+
 export function getNextTourStepIndex(current: number, total = PRODUCT_TOUR_STEPS.length) {
   return Math.min(current + 1, total - 1);
 }
