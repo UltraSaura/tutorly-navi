@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { CompactMathStepper } from '@/components/math/CompactMathStepper';
+import { AdaptiveTeachingStepper } from './AdaptiveTeachingStepper';
 import { useUserContext } from '@/hooks/useUserContext';
 import { useActiveSchoolLevel } from '@/hooks/useActiveSchoolLevel';
 import { extractExpressionFromText } from '@/utils/mathStepper/parser';
@@ -16,8 +17,6 @@ import { toChildFriendlyExplanationText } from '@/features/explanations/childFri
 import { trackLearningInteraction } from '@/services/learningAnalytics';
 import { HomeworkSmartLearningResourcesCard } from '@/components/learning/HomeworkSmartLearningResourcesCard';
 import type { SafeHomeworkLearningRow } from '@/services/homeworkLearningResources';
-import { KidExplanationFlow } from '@/components/kids/KidExplanationFlow';
-import type { Step } from '@/features/explanations/types';
 import { useHomeworkLearningResources } from '@/hooks/useHomeworkLearningResources';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -169,62 +168,6 @@ const subjectSlugToLearningSubject = (slug: string) => {
   }
 };
 
-const buildKidSteps = (
-  practice: GroupedRetryPractice,
-  language: 'fr' | 'en'
-): Step[] => {
-  const isFr = language === 'fr';
-  const steps: Step[] = [
-    {
-      kind: 'concept',
-      icon: 'lightbulb',
-      title: isFr ? "L'idée clé" : 'The big idea',
-      body: practice.concept,
-    },
-  ];
-
-  if (practice.learningStyleSupport) {
-    steps.push({
-      kind: 'strategy',
-      icon: 'magnifier',
-      title: practice.learningStyleSupport.title || (isFr ? 'Vois-le' : 'See it'),
-      body: practice.learningStyleSupport.content,
-    });
-  } else {
-    steps.push({
-      kind: 'example',
-      icon: 'magnifier',
-      title: isFr ? 'Un exemple' : 'An example',
-      body: practice.similarProblem,
-    });
-  }
-
-  steps.push({
-    kind: 'method',
-    icon: 'divide',
-    title: isFr ? 'La méthode' : 'The method',
-    body: practice.method,
-  });
-
-  if (practice.commonMistake) {
-    steps.push({
-      kind: 'pitfall',
-      icon: 'warning',
-      title: isFr ? 'Attention' : 'Watch out',
-      body: practice.commonMistake,
-    });
-  }
-
-  steps.push({
-    kind: 'check',
-    icon: 'checklist',
-    title: isFr ? 'Essaie maintenant' : 'Try now',
-    body: practice.retryPrompt,
-  });
-
-  return steps;
-};
-
 const GroupedProblemExplanationModal = ({
   problem,
   practice,
@@ -243,7 +186,6 @@ const GroupedProblemExplanationModal = ({
   const { language } = useLanguage();
   const { userContext } = useUserContext();
   const { activeLevel } = useActiveSchoolLevel();
-  const [kidView, setKidView] = React.useState<'interactive' | 'lesson'>('interactive');
   const trackedOpenKeyRef = React.useRef<string | null>(null);
   const trackedSupportKeyRef = React.useRef<string | null>(null);
 
@@ -259,10 +201,6 @@ const GroupedProblemExplanationModal = ({
     isPureArithmeticProblem(practice.similarProblem)
   );
   const isKidMode = Boolean(activeLevel && isUnder11YearsOld(activeLevel));
-  const kidSteps = React.useMemo(
-    () => (practice && isKidMode ? buildKidSteps(practice, language === 'fr' ? 'fr' : 'en') : []),
-    [practice, isKidMode, language]
-  );
   const resourceRows = React.useMemo<SafeHomeworkLearningRow[]>(() => {
     if (homeworkLearningRows.length > 0) return homeworkLearningRows;
     if (!practice) return [];
@@ -404,18 +342,6 @@ const GroupedProblemExplanationModal = ({
     targetedQuiz,
     targetedVideo,
   ]);
-  const targetedPracticeRoute = React.useMemo(() => {
-    const subjectSlug = matchedTopicRouteForDetectedSubject?.subjectSlug || fallbackSubjectSlug;
-
-    if (targetedQuiz && matchedTopicRouteForDetectedSubject) {
-      return `/practice/${encodeURIComponent(subjectSlug)}/topics?quiz=${encodeURIComponent(targetedQuiz.id)}`;
-    }
-
-    return matchedTopicRouteForDetectedSubject
-      ? `/practice/${encodeURIComponent(subjectSlug)}/topics`
-      : `/practice/${encodeURIComponent(subjectSlug)}`;
-  }, [fallbackSubjectSlug, matchedTopicRouteForDetectedSubject, targetedQuiz]);
-
   const targetedLessonRoute = React.useMemo(() => {
     if (targetedVideo && matchedTopicRouteForDetectedSubject) {
       return `/learning/video/${encodeURIComponent(targetedVideo.id)}`;
@@ -428,19 +354,10 @@ const GroupedProblemExplanationModal = ({
     return `/learning/${encodeURIComponent(fallbackSubjectSlug)}`;
   }, [fallbackSubjectSlug, matchedTopicRouteForDetectedSubject, targetedVideo]);
 
-  const handleTargetedPractice = React.useCallback(() => {
-    onClose();
-    navigate(targetedPracticeRoute);
-  }, [navigate, onClose, targetedPracticeRoute]);
-
   const handleTargetedLesson = React.useCallback(() => {
     onClose();
     navigate(targetedLessonRoute);
   }, [navigate, onClose, targetedLessonRoute]);
-
-  React.useEffect(() => {
-    setKidView('interactive');
-  }, [problem?.id, practice?.similarProblem, rowId]);
 
   React.useEffect(() => {
     if (!problem || !practice) return;
@@ -494,7 +411,7 @@ const GroupedProblemExplanationModal = ({
           </Button>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4">
+        <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 space-y-3">
           {loading && (
             <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin shrink-0" />
@@ -507,11 +424,19 @@ const GroupedProblemExplanationModal = ({
           {!loading && practice && (
             <>
               {isKidMode ? (
-                kidView === 'interactive' ? (
                   <div className="space-y-3">
+                    <section className="rounded-lg border border-amber-100 bg-amber-50 p-4">
+                      <h4 className="mb-2 text-sm font-semibold text-amber-950">
+                        {language === 'fr' ? "L'idée à comprendre" : 'The idea to understand'}
+                      </h4>
+                      <p className="text-sm leading-6 text-amber-950">
+                        {toChildFriendlyExplanationText(practice.concept)}
+                      </p>
+                    </section>
+
                     <section className="rounded-lg border bg-muted/40 p-4">
                       <h4 className="text-sm font-semibold text-foreground mb-2">
-                        {language === 'fr' ? 'Exercice' : 'Exercise'}
+                        {language === 'fr' ? 'Exemple guidé' : 'Guided example'}
                       </h4>
                       <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                         {toChildFriendlyExplanationText(practice.similarProblem)}
@@ -527,7 +452,13 @@ const GroupedProblemExplanationModal = ({
                           <GeometryDiagram diagram={practice.diagram} />
                         </div>
                       )}
-                      {shouldShowInteractiveStepper ? (
+                      {practice.animationSteps?.length ? (
+                        <AdaptiveTeachingStepper
+                          practice={practice}
+                          language={language === 'fr' ? 'fr' : 'en'}
+                          onRetryOriginal={onRetry}
+                        />
+                      ) : shouldShowInteractiveStepper ? (
                         <CompactMathStepper expression={practiceExpression} className="text-sm" />
                       ) : (
                         <p className="text-sm text-blue-950 whitespace-pre-wrap">
@@ -536,30 +467,17 @@ const GroupedProblemExplanationModal = ({
                       )}
                     </section>
 
-                    <div className="sticky bottom-0 z-10 flex justify-end bg-card/95 py-2 pt-2 backdrop-blur-sm">
-                      <Button
-                        type="button"
-                        className="rounded-xl px-5"
-                        onClick={() => setKidView('lesson')}
-                      >
-                        {language === 'fr' ? 'Voir la leçon →' : 'See the lesson →'}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                      <Button type="button" variant="ghost" onClick={handleTargetedLesson}>
+                        {language === 'fr' ? 'Besoin de plus d’aide ? Voir la leçon complète' : 'Need more help? View the full lesson'}
                       </Button>
+                      {!practice.animationSteps?.length && (
+                        <Button type="button" className="rounded-xl px-5" onClick={onRetry}>
+                          {language === 'fr' ? 'Réessayer mon exercice' : 'Retry my exercise'}
+                        </Button>
+                      )}
                     </div>
                   </div>
-                ) : (
-                  <div className="flex min-h-0 flex-1 flex-col">
-                    <section className="min-h-0 flex-1">
-                      <KidExplanationFlow
-                        steps={kidSteps}
-                        onPracticeMore={handleTargetedPractice}
-                        onViewLesson={handleTargetedLesson}
-                        practiceHref={targetedPracticeRoute}
-                        lessonHref={targetedLessonRoute}
-                        canViewLesson={true}
-                      />
-                    </section>
-                  </div>
-                )
               ) : (
                 <>
                   <section className="rounded-lg border bg-muted/40 p-4">

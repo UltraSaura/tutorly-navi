@@ -1,3 +1,4 @@
+import { buildRestoredDivisionSteps, isSupportedDivision, safeDivisionExplanation, validateQuickExplanation } from "@/features/explanations/quickExplanation";
 /**
  * KidExplanationFlow
  *
@@ -19,6 +20,7 @@ import { useResolveText } from "@/hooks/useResolveText";
 import { useLanguage } from "@/context/SimpleLanguageContext";
 import { RuntimeMiniPracticeInline } from "@/features/explanations/RuntimeMiniPracticeInline";
 import { buildKidArithmeticSupportText } from "./kidArithmeticGuidance";
+import { CompactMathStepper } from "@/components/math/CompactMathStepper";
 
 // Lazy-load the heavy ObjectCounter (framer-motion + emoji rendering)
 const ObjectCounter = lazy(() =>
@@ -63,9 +65,11 @@ interface CompletionAction {
 
 function CompletionBanner({
   youGotThis,
+  points,
   actions = [],
 }: {
   youGotThis: string;
+  points?: number;
   actions?: CompletionAction[];
 }) {
   return (
@@ -79,6 +83,11 @@ function CompletionBanner({
         <span className="text-2xl" aria-hidden="true">🎨</span>
         <span>{youGotThis || "Tu vas y arriver, champion !"}</span>
       </div>
+      {points != null && (
+        <p className="mt-2 text-center text-sm font-semibold text-blue-800">
+          {points} {points === 1 ? "point gagné" : "points gagnés"}
+        </p>
+      )}
 
       {actions.length > 0 && (
         <div className="mt-4 grid gap-2">
@@ -127,7 +136,7 @@ interface KidExplanationFlowProps {
   canViewLesson?: boolean;
 }
 
-export function KidExplanationFlow({
+function LegacyKidExplanationFlow({
   steps,
   miniPracticeContext,
   onPracticeMore,
@@ -142,6 +151,7 @@ export function KidExplanationFlow({
 
   // Current step revealed (0-based). Starts at 0 so the first card is visible immediately.
   const [currentStep, setCurrentStep] = useState(0);
+  const [completionPoints, setCompletionPoints] = useState<number | undefined>();
   const isLast = currentStep >= steps.length - 1;
   const isDone = currentStep >= steps.length;
   const canGoBack = currentStep > 0;
@@ -152,6 +162,10 @@ export function KidExplanationFlow({
   const activeStep = isDone ? null : steps[currentStep];
   const currentStepLabel = `${Math.min(currentStep + 1, steps.length)}/${steps.length}`;
   const isCheckStep = activeStep?.kind === "check";
+  const restoredDivisionExpression = miniPracticeContext?.quickExplanation
+    ? `${miniPracticeContext.quickExplanation.workedExample.dividend} ÷ ${miniPracticeContext.quickExplanation.workedExample.divisor}`
+    : null;
+  const isRestoredDivisionFrame = Boolean(restoredDivisionExpression && currentStep === 0);
   const completionActions: CompletionAction[] = [
     ...(onPracticeMore
       ? [{
@@ -172,9 +186,9 @@ export function KidExplanationFlow({
   ];
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 pb-2">
+    <div className="flex h-full min-h-0 flex-col gap-2">
       {/* Active step only */}
-      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
         <AnimatePresence mode="wait">
           {isDone ? (
             <motion.div
@@ -187,6 +201,7 @@ export function KidExplanationFlow({
             >
               <CompletionBanner
                 youGotThis={t("exercises.explanation.kid.you_got_this") || (isFr ? "Tu vas y arriver, champion !" : "You got this, champion!")}
+                points={completionPoints}
                 actions={completionActions}
               />
             </motion.div>
@@ -246,6 +261,8 @@ export function KidExplanationFlow({
                           context={miniPracticeContext}
                           fallbackBody={body}
                           variant="kid-fit"
+                          onViewLesson={canViewLesson ? onViewLesson : undefined}
+                          onComplete={(points) => { setCompletionPoints(points); setCurrentStep(steps.length); }}
                         />
                       </div>
                     </section>
@@ -258,9 +275,16 @@ export function KidExplanationFlow({
                       animate={false}
                       isCurrent={true}
                       isCompleted={false}
-                      fillHeight={false}
+                      fillHeight={isRestoredDivisionFrame}
+                      neutralFrame={isRestoredDivisionFrame}
+                      fullWidthBody={isRestoredDivisionFrame}
                     >
-                      {parsedMath ? (
+                      {restoredDivisionExpression && currentStep === 0 ? (
+                      <div className="space-y-2">
+                        <p className="whitespace-pre-wrap break-words">{body}</p>
+                        <CompactMathStepper expression={restoredDivisionExpression} className="text-sm" />
+                      </div>
+                    ) : parsedMath ? (
                       <div className="space-y-2">
                         <p className="whitespace-pre-wrap break-words">{body}</p>
                         <Suspense fallback={
@@ -291,7 +315,7 @@ export function KidExplanationFlow({
       {!isDone && (
         <div className="shrink-0 space-y-1.5 border-t border-slate-100 bg-card pt-2">
           <div className="flex items-center justify-between gap-2">
-          <motion.button
+          {!isCheckStep && <motion.button
             type="button"
             whileTap={{ scale: 0.97 }}
             whileHover={{ scale: canGoBack ? 1.02 : 1 }}
@@ -304,7 +328,7 @@ export function KidExplanationFlow({
             className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-45 sm:text-sm"
           >
             {isFr ? "← Étape précédente" : "← Previous step"}
-          </motion.button>
+          </motion.button>}
 
           <motion.button
             type="button"
@@ -334,4 +358,29 @@ export function KidExplanationFlow({
       )}
     </div>
   );
+}
+
+// Keep the active division route separate from legacy cards and runtime question generation.
+export function KidExplanationFlow(props: KidExplanationFlowProps) {
+  const { language } = useLanguage();
+  const context = props.miniPracticeContext;
+  if (context && isSupportedDivision(context.exercise)) {
+    try {
+      const supplied = context.quickExplanation;
+      const lesson = supplied && !validateQuickExplanation(context.exercise, supplied, language, context.gradeLevel, context.country).length
+        ? supplied : safeDivisionExplanation(context.exercise, language, context.gradeLevel, context.country);
+      const restoredSteps = buildRestoredDivisionSteps(lesson, language);
+      return <LegacyKidExplanationFlow
+        key={JSON.stringify(lesson)}
+        steps={restoredSteps}
+        miniPracticeContext={context}
+        onPracticeMore={props.onPracticeMore}
+        onViewLesson={props.canViewLesson ? props.onViewLesson : undefined}
+        canViewLesson={props.canViewLesson}
+      />;
+    } catch {
+      return <p role="alert">{language === 'fr' ? 'Cette explication est indisponible. Consulte la leçon.' : 'This explanation is unavailable. Please consult the lesson.'}</p>;
+    }
+  }
+  return <LegacyKidExplanationFlow {...props} />;
 }

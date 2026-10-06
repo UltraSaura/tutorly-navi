@@ -98,6 +98,19 @@ export interface GroupedRetryPractice {
   concept: string;
   similarProblem: string;
   cacheEntryId?: string;
+  teachingStrategy?: string;
+  animationSteps?: Array<{
+    title: string;
+    equation: string;
+    explanation: string;
+    highlight?: string[];
+  }>;
+  understandingCheck?: {
+    question: string;
+    choices: string[];
+    correctChoice: string;
+    explanation: string;
+  };
   diagram?: {
     type: 'rectangle' | 'square' | 'triangle' | 'circle';
     labels?: string[];

@@ -1,3 +1,5 @@
+import { isSupportedDivision } from "./quickExplanation";
+import { canonicalLessonRoute } from "./canonicalSkill";
 import React from "react";
 import type { TeachingSections } from "./useTwoCardTeaching";
 import { useResolveText } from "@/hooks/useResolveText";
@@ -56,6 +58,7 @@ export function TwoCards({
   s, 
   topicId, 
   onClose,
+  onRetryOriginal,
   subjectSlug,
   topicSlug,
   onStartGeneratedPractice,
@@ -63,6 +66,7 @@ export function TwoCards({
   s: TeachingSections; 
   topicId?: string; 
   onClose?: () => void;
+  onRetryOriginal?: () => void;
   subjectSlug?: string;
   topicSlug?: string;
   onStartGeneratedPractice?: (quiz: QuizBank) => void;
@@ -130,14 +134,15 @@ export function TwoCards({
   
   // Handle view lesson - navigate to topic page (no scroll)
   const handleViewLesson = () => {
-    if (!finalSubjectSlug || !finalTopicSlug) return;
+    const lessonRoute = canonicalLessonRoute(finalSubjectSlug, finalTopicSlug);
+    if (!lessonRoute) return;
     
     // Close modal first
     onClose?.();
     
     // Navigate to topic page (no hash, user lands at top)
     setTimeout(() => {
-      window.location.href = `/learning/${finalSubjectSlug}/${finalTopicSlug}`;
+      window.location.href = lessonRoute;
     }, 200);
   };
 
@@ -258,15 +263,17 @@ export function TwoCards({
     return explicitExampleStep?.body || s.example;
   }, [orderedSteps, s.example]);
   const miniPracticeContext = React.useMemo(() => {
-    if (!orderedSteps || !s.exercise?.trim()) return undefined;
+    if (!s.exercise?.trim()) return undefined;
 
-    const explanationContext = orderedSteps
+    const explanationContext = (orderedSteps || [])
       .filter(step => step.kind !== "check")
       .map(step => `${step.title}\n${step.body}`)
       .join("\n\n");
 
     return {
       exercise: s.exercise,
+      quickExplanation: s.quickExplanation,
+      onRetryOriginal: onRetryOriginal || onClose,
       explanationContext,
       gradeLevel: userContext?.student_level,
       language,
@@ -277,6 +284,9 @@ export function TwoCards({
     };
   }, [
     orderedSteps,
+    s.quickExplanation,
+    onRetryOriginal,
+    onClose,
     s.exercise,
     userContext?.student_level,
     userContext?.learning_style,
@@ -380,6 +390,14 @@ export function TwoCards({
   React.useEffect(() => {
     setGuidedView(shouldShowInteractiveStepper ? 'interactive' : 'lesson');
   }, [shouldShowInteractiveStepper, s.exercise]);
+
+  if (isSupportedDivision(s.exercise)) {
+    return <div className="flex h-[min(82dvh,720px)] max-h-[calc(100dvh-2rem)] min-h-0 flex-col overflow-hidden sm:h-[min(78dvh,720px)]">
+      <ExplanationRenderer mode="kid" steps={[]} miniPracticeContext={miniPracticeContext}
+        onPracticeMore={handlePracticeMore}
+        onViewLesson={handleViewLesson} canViewLesson={Boolean(canShowLessonLink)} />
+    </div>;
+  }
 
   return (
     <div className="flex min-h-full flex-col gap-3 pb-2">
