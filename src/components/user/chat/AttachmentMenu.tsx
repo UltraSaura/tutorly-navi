@@ -73,7 +73,7 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
                 : "p-4 min-h-[60px]"
             )}
             onClick={item.onClick}
-            data-tour={index === 1 ? 'chat-photo' : undefined}
+            data-tour={index === 2 ? 'attachment-camera' : undefined}
           >
             {/* Background with color */}
             <div className={cn(
@@ -116,18 +116,26 @@ const AttachmentMenu = ({ onFileUpload, onPhotoUpload, onCameraOpen }: Attachmen
   const TriggerButton = React.forwardRef<
     React.ElementRef<typeof Button>,
     React.ComponentPropsWithoutRef<typeof Button>
-  >((props, ref) => (
-    <Button
-      ref={ref}
-      variant="ghost"
-      size="icon"
-      className="rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-muted"
-      {...props}
-      data-tour="chat-add"
-    >
-      <Plus className="h-5 w-5" />
-    </Button>
-  ));
+  >((props, ref) => {
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+      props.onClick?.(event);
+      window.dispatchEvent(new Event('stuwy:product-tour-attachment-triggered'));
+    };
+
+    return (
+      <Button
+        ref={ref}
+        variant="ghost"
+        size="icon"
+        className="rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-muted"
+        {...props}
+        onClick={handleClick}
+        data-tour="chat-add"
+      >
+        <Plus className="h-5 w-5" />
+      </Button>
+    );
+  });
 
   TriggerButton.displayName = "AttachmentTrigger";
 

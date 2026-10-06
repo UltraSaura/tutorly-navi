@@ -60,9 +60,14 @@
       "description": "Écris ton exercice ou ta question ici.",
       "principle": "Stuwy te guide étape par étape sans simplement te donner la réponse."
     },
+    "plus": {
+      "title": "Ajoute ton devoir 📎",
+      "description": "Appuie sur + pour ajouter ton devoir sans avoir à tout recopier."
+    },
     "photo": {
       "title": "Prends ton devoir en photo 📸",
-      "description": "Pas besoin de tout recopier ! Appuie sur + pour prendre ton exercice en photo ou importer un document."
+      "description": "Prends ton exercice en photo et Stuwy pourra t'aider à le comprendre étape par étape.",
+      "principle": "Tu peux aussi importer un document."
     },
     "practice": { "title": "Entraîne-toi 🎯", "description": "Fais des exercices adaptés à ton niveau pour vérifier ce que tu as compris et progresser." },
     "learning": { "title": "Apprends et révise 📚", "description": "Retrouve des leçons correspondant à ton programme et à ta classe." },

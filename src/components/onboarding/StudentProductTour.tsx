@@ -97,6 +97,17 @@ export function StudentProductTour() {
   }, [open, step.id]);
 
   useEffect(() => {
+    if (!open) return;
+    const handleAttachmentTrigger = () => {
+      if (step.id !== 'plus') return;
+      setAttachmentMenuOpen(true);
+      setStepIndex((value) => getNextTourStepIndex(value));
+    };
+    window.addEventListener('stuwy:product-tour-attachment-triggered', handleAttachmentTrigger);
+    return () => window.removeEventListener('stuwy:product-tour-attachment-triggered', handleAttachmentTrigger);
+  }, [open, step.id]);
+
+  useEffect(() => {
     if (pendingReplay && location.pathname === '/chat') {
       setPendingReplay(false);
       setStepIndex(0);
@@ -154,16 +165,34 @@ export function StudentProductTour() {
       const element = event.target as HTMLElement | null;
       if (element?.matches('input, textarea, select, [contenteditable="true"]')) return;
       if (event.key === 'Escape') { event.preventDefault(); void finish(); }
-      if (event.key === 'ArrowRight') { event.preventDefault(); if (stepIndex === PRODUCT_TOUR_STEPS.length - 1) void finish(); else setStepIndex((value) => getNextTourStepIndex(value)); }
-      if (event.key === 'ArrowLeft' && stepIndex > 0) { event.preventDefault(); setStepIndex((value) => value - 1); }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        if (step.id === 'plus') setAttachmentMenuOpen(true);
+        if (stepIndex === PRODUCT_TOUR_STEPS.length - 1) void finish();
+        else setStepIndex((value) => getNextTourStepIndex(value));
+      }
+      if (event.key === 'ArrowLeft' && stepIndex > 0) {
+        event.preventDefault();
+        if (step.id === 'photo') setAttachmentMenuOpen(false);
+        setStepIndex((value) => value - 1);
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [finish, open, stepIndex]);
+  }, [finish, open, step.id, stepIndex]);
 
   if (!open || location.pathname !== '/chat') return null;
   const cardPosition = getTourCardPosition(targetRect, step.id, viewport, cardHeight);
-  const next = () => stepIndex === PRODUCT_TOUR_STEPS.length - 1 ? void finish() : setStepIndex((value) => getNextTourStepIndex(value));
+  const next = () => {
+    if (step.id === 'plus') {
+      setAttachmentMenuOpen(true);
+      setStepIndex((value) => getNextTourStepIndex(value));
+      return;
+    }
+    if (step.id === 'photo') setAttachmentMenuOpen(false);
+    if (stepIndex === PRODUCT_TOUR_STEPS.length - 1) void finish();
+    else setStepIndex((value) => getNextTourStepIndex(value));
+  };
   const spotlightPadding = 8;
   const spotlight = targetRect ? {
     top: targetRect.top - spotlightPadding,
@@ -172,17 +201,24 @@ export function StudentProductTour() {
     height: targetRect.height + spotlightPadding * 2,
   } : null;
 
+  const backdrop = (
+    <div className={`fixed inset-0 pointer-events-none ${step.id === 'photo' ? 'z-40' : 'z-[100]'}`} aria-hidden="true">
+      {spotlight ? <>
+        <div className="absolute inset-x-0 top-0 bg-slate-950/60" style={{ height: spotlight.top }} />
+        <div className="absolute inset-x-0 bottom-0 bg-slate-950/60" style={{ height: Math.max(0, viewport.height - spotlight.top - spotlight.height) }} />
+        <div className="absolute bg-slate-950/60" style={{ top: spotlight.top, left: 0, width: spotlight.left, height: spotlight.height }} />
+        <div className="absolute bg-slate-950/60" style={{ top: spotlight.top, left: spotlight.left + spotlight.width, right: 0, height: spotlight.height }} />
+      </> : <div className="absolute inset-0 bg-slate-950/60" />}
+    </div>
+  );
+
+  const pointerLeft = targetRect ? Math.max(20, Math.min(cardPosition.width - 20, targetRect.left + targetRect.width / 2 - cardPosition.left)) : cardPosition.width / 2;
+
   return (
-    <div className="fixed inset-0 z-[100]" role="dialog" aria-modal="true" aria-labelledby="student-tour-title" aria-describedby="student-tour-description">
-      {spotlight ? (
-        <>
-          <div className="pointer-events-none absolute inset-x-0 top-0 bg-slate-950/60" style={{ height: spotlight.top }} aria-hidden="true" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-slate-950/60" style={{ height: Math.max(0, viewport.height - spotlight.top - spotlight.height) }} aria-hidden="true" />
-          <div className="pointer-events-none absolute bg-slate-950/60" style={{ top: spotlight.top, left: 0, width: spotlight.left, height: spotlight.height }} aria-hidden="true" />
-          <div className="pointer-events-none absolute bg-slate-950/60" style={{ top: spotlight.top, left: spotlight.left + spotlight.width, right: 0, height: spotlight.height }} aria-hidden="true" />
-          <div className="pointer-events-none absolute rounded-xl border-2 border-primary ring-4 ring-primary/30" aria-hidden="true" style={{ ...spotlight, borderRadius: targetRadius, boxShadow: '0 0 0 2px rgba(22, 199, 163, 0.4), 0 0 24px rgba(22, 199, 163, 0.55)' }} />
-        </>
-      ) : <div className="pointer-events-none absolute inset-0 bg-slate-950/60" aria-hidden="true" />}
+    <>
+      {backdrop}
+      {spotlight && <div className="pointer-events-none fixed z-[110] rounded-xl border-2 border-primary ring-4 ring-primary/30" aria-hidden="true" style={{ ...spotlight, borderRadius: targetRadius, boxShadow: '0 0 0 2px rgba(22, 199, 163, 0.4), 0 0 24px rgba(22, 199, 163, 0.55)' }} />}
+      <div className="fixed inset-0 z-[120]" role="dialog" aria-modal="true" aria-labelledby="student-tour-title" aria-describedby="student-tour-description">
       <section ref={cardRef} className="absolute flex flex-col overflow-visible rounded-2xl border bg-card p-4 shadow-2xl transition-[top,left] duration-200 motion-reduce:transition-none sm:p-5" style={{ top: cardPosition.top, left: cardPosition.left, width: cardPosition.width, maxHeight: Math.max(0, viewport.height - 24) }}>
         <div className="mb-2 flex shrink-0 items-center justify-between gap-3 sm:mb-3">
           <div className="flex gap-1.5" aria-label={`${stepIndex + 1} / ${PRODUCT_TOUR_STEPS.length}`}>
@@ -202,8 +238,9 @@ export function StudentProductTour() {
             <Button type="button" size="sm" onClick={next}>{stepIndex === 0 ? t('productTour.actions.discover') : stepIndex === PRODUCT_TOUR_STEPS.length - 1 ? <><Check className="mr-1 h-4 w-4" />{t('productTour.actions.start')}</> : <>{t('productTour.actions.next')}<ArrowRight className="ml-1 h-4 w-4" /></>}</Button>
           </div>
         </div>
-        {targetRect && cardPosition.placement !== 'center' && <span className={`pointer-events-none absolute left-1/2 h-0 w-0 -translate-x-1/2 border-x-[9px] border-x-transparent ${cardPosition.placement === 'above' ? '-bottom-2 border-t-[10px] border-t-card' : '-top-2 border-b-[10px] border-b-card'}`} aria-hidden="true" />}
+        {targetRect && cardPosition.placement !== 'center' && <span className={`pointer-events-none absolute h-0 w-0 -translate-x-1/2 border-x-[9px] border-x-transparent ${cardPosition.placement === 'above' ? '-bottom-2 border-t-[10px] border-t-card' : '-top-2 border-b-[10px] border-b-card'}`} style={{ left: pointerLeft }} aria-hidden="true" />}
       </section>
-    </div>
+      </div>
+    </>
   );
 }
