@@ -15,8 +15,8 @@ export const PRODUCT_TOUR_STEPS: ProductTourStep[] = [
   { id: 'complete', titleKey: 'productTour.complete.title', descriptionKey: 'productTour.complete.description' },
 ];
 
-export function clampTourCardPosition(value: number, size: number, viewport: number, margin = 16) {
-  return Math.max(margin, Math.min(value, viewport - size - margin));
+export function clampTourCardPosition(value: number, size: number, viewport: number, margin = 12) {
+  return Math.max(margin, Math.min(value, Math.max(margin, viewport - size - margin)));
 }
 
 export function getTourTargetSelector(target: string) {
@@ -29,17 +29,46 @@ export function getNextTourStepIndex(current: number, total = PRODUCT_TOUR_STEPS
 
 type Rect = Pick<DOMRect, 'top' | 'left' | 'right' | 'bottom' | 'width' | 'height'>;
 
-export function getTourCardPosition(rect: Rect | null, stepId: string, viewport: { width: number; height: number }) {
-  const cardWidth = Math.min(360, viewport.width - 32);
-  const cardHeight = 240;
+export type TourCardPlacement = 'above' | 'below' | 'center';
+
+export function getTourCardPosition(
+  rect: Rect | null,
+  stepId: string,
+  viewport: { width: number; height: number },
+  cardHeight = 300,
+  safeMargins = { top: 12, bottom: 12 },
+) {
+  const cardWidth = Math.min(360, Math.max(0, viewport.width - 24));
+  const availableHeight = Math.max(0, viewport.height - safeMargins.top - safeMargins.bottom);
+  const height = Math.min(cardHeight, availableHeight);
+
   if (!rect) {
-    return { top: Math.max(16, (viewport.height - cardHeight) / 2), left: (viewport.width - cardWidth) / 2, width: cardWidth };
+    return {
+      top: safeMargins.top + Math.max(0, (availableHeight - height) / 2),
+      left: clampTourCardPosition((viewport.width - cardWidth) / 2, cardWidth, viewport.width),
+      width: cardWidth,
+      height,
+      placement: 'center' as TourCardPlacement,
+    };
   }
-  const isBottomNavigation = ['practice', 'learning', 'history'].includes(stepId);
-  const preferredTop = isBottomNavigation ? rect.top - cardHeight - 20 : rect.bottom + 20;
-  const top = preferredTop >= 16 && preferredTop + cardHeight <= viewport.height - 16
-    ? preferredTop
-    : Math.max(16, viewport.height - cardHeight - 16);
-  const left = clampTourCardPosition(rect.left + (rect.width - cardWidth) / 2, cardWidth, viewport.width);
-  return { top, left, width: cardWidth };
+
+  const isBottomTarget = stepId === 'home' || rect.top > viewport.height / 2;
+  const gap = 14;
+  const aboveSpace = rect.top - safeMargins.top - gap;
+  const belowSpace = viewport.height - safeMargins.bottom - rect.bottom - gap;
+  const preferAbove = isBottomTarget || belowSpace < height;
+  const placement: TourCardPlacement = preferAbove && aboveSpace >= height ? 'above' : belowSpace >= height ? 'below' : aboveSpace >= belowSpace ? 'above' : 'below';
+  const top = placement === 'above'
+    ? rect.top - height - gap
+    : placement === 'below'
+      ? rect.bottom + gap
+      : safeMargins.top;
+
+  return {
+    top: clampTourCardPosition(top, height, viewport.height, safeMargins.top),
+    left: clampTourCardPosition(rect.left + (rect.width - cardWidth) / 2, cardWidth, viewport.width),
+    width: cardWidth,
+    height,
+    placement,
+  };
 }
