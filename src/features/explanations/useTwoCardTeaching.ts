@@ -1,3 +1,4 @@
+import { generateQuickExplanation, isSupportedDivision, validateQuickExplanation, type QuickExplanation } from "./quickExplanation";
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/context/AdminContext";
@@ -15,7 +16,7 @@ import {
   validateExampleOperationType,
 } from "@/utils/operationTypeDetector";
 
-const ADAPTIVE_EXPLANATION_CACHE_VERSION = 6;
+const ADAPTIVE_EXPLANATION_CACHE_VERSION = 7;
 
 const ADAPTIVE_TWOCARD_PROMPT = `You are a patient math tutor. Your job is to TEACH the underlying mathematical concept, NOT to solve the student's exercise.
 
@@ -65,13 +66,16 @@ Rules for steps:
   - percentage exercise → percentage example
   - division with remainder → division with remainder example
   - exact division → exact division example
-- The guided example must also keep the same difficulty shape when possible:
-  - same digit band: 1-digit, 2-digit, or 3+ digit
+- The guided example must also keep the same written format and difficulty shape:
+  - use the exact same number of digits in the first operand and the second operand; do not only match a broad digit band
+  - for whole-number multiplication, keep the same trailing-zero/place-value pattern (for example, a 3-digit number ending in two zeros times a 1-digit number needs the same shape)
   - same decimal-place count for decimal exercises
   - if the student's addition needs a carry/retained 1, the guided example must also need a carry
   - if the student's subtraction needs a borrow/emprunt, the guided example must also need a borrow
 - The self-check step should tell the student what to verify or try next without revealing the original answer.
 - The method step should give reusable steps, not another full worked example.
+- Choose the simplest useful strategy before using the standard written algorithm. For multiplication by 10, 100, or numbers ending in zeros, explain place value: multiply the non-zero digits first, then append the correct number of zeros. For example, 300 × 4: first 3 × 4 = 12, then append the two zeros to make 1200.
+- Keep every sentence short. State one calculation, then what to write or do next. Never add a carry to a multiplication until the next column.
 - The common mistake step should warn about one likely trap.
 - Do NOT output the student's numbers anywhere.
 - No extra text, no markdown, no code fences.
@@ -85,6 +89,7 @@ Learning style: {{learning_style}}`;
 
 export interface TeachingSections {
   exercise: string;
+  quickExplanation?: QuickExplanation;
   steps?: Step[];
   concept: string;
   example: string;
@@ -442,12 +447,13 @@ export function useTwoCardTeaching() {
 
   async function openFor(
     row: any,
-    profile: { response_language?: string; grade_level?: string; learning_style?: string | LearningStyle | null },
+    profile: { response_language?: string; grade_level?: string; learning_style?: string | LearningStyle | null; country?: string; curriculum?: string },
   ) {
     console.log("[TwoCardTeaching] Opening explanation for:", { row, profile });
     setOpen(true);
     setError(null);
     setLoading(true);
+    setSections(null);
     resetFeedbackState();
 
     try {
@@ -479,7 +485,8 @@ export function useTwoCardTeaching() {
         gradeLevel: grade_level,
         first_name: "Student",
         grade_level,
-        country: "your country",
+        country: profile.country || "your country",
+        curriculum: profile.curriculum || "national curriculum",
         learning_style,
         learning_mode: learningMode,
         subject: promptSubject,
@@ -493,6 +500,31 @@ export function useTwoCardTeaching() {
       const reuseMeta = buildReuseMeta(exercise_content, response_language, subject.toLowerCase());
 
       const cachedResult = await checkExplanationCache(cacheHash);
+      // Integer divisions bypass all legacy synthesis, cross-exercise reuse and partial repairs.
+      if (isSupportedDivision(exercise_content)) {
+        const cached = cachedResult?.sections.quickExplanation;
+        const quickExplanation = cached && !validateQuickExplanation(exercise_content, cached, response_language, grade_level, profile.country).length
+          ? cached
+          : await generateQuickExplanation(exercise_content, response_language, async customPrompt => {
+              const { data, error } = await supabase.functions.invoke("ai-chat", {
+                body: { message: exerciseMessage, modelId: selectedModelId || "gpt-5", isUnified: false,
+                  requestExplanation: false, usageType: "explanation", customPrompt,
+                  language: /^fr/i.test(rawLang) ? "fr" : "en", userContext: explanationContext, maxTokens: 1800 },
+              });
+              if (error) throw error;
+              const raw = data?.tool_calls?.[0]?.function?.arguments || data?.content;
+              if (typeof raw !== "string") return data;
+              return JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, "").trim());
+            }, { level: grade_level, country: profile.country });
+        const next: TeachingSections = { exercise: exercise_content, quickExplanation,
+          concept: quickExplanation.concept, example: "", method: "", currentExercise: "", pitfall: "",
+          check: "", practice: "", parentHelpHint: "" };
+        setSections(next);
+        if (cached && cached === quickExplanation) setCacheEntryId(cachedResult!.id);
+        else setCacheEntryId(await saveExplanationToCache(cacheHash, exercise_content, subject.toLowerCase(), next, reuseMeta));
+        setLoading(false);
+        return;
+      }
       if (cachedResult) {
         const normalizedCachedSections = {
           ...cachedResult.sections,

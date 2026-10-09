@@ -24,6 +24,8 @@ interface QuizOverlayProps {
   bank: QuizBank;
   userId: string;
   onClose: () => void;
+  recordAttempt?: boolean;
+  embedded?: boolean;
 }
 
 function XpPill({ onDone }: { onDone: () => void }) {
@@ -121,7 +123,7 @@ function formatScoreValue(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/\.?0+$/, '');
 }
 
-export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
+export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embedded = false }: QuizOverlayProps) {
   const ui = useInterfaceTranslation();
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [questionGrades, setQuestionGrades] = useState<Record<string, QuizQuestionGradeDetail>>({});
@@ -385,7 +387,7 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
       setQuestionResult(null);
     } else {
       // Last question — submit full attempt
-      if (user && bank.quizBankId !== "__empty__") {
+      if (recordAttempt && user && bank.quizBankId !== "__empty__") {
         try {
           await submitAttempt.mutateAsync({
             bankId: bank.quizBankId,
@@ -438,7 +440,9 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
 
     return (
       <div
-        className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 py-8 text-center"
+        className={embedded
+          ? "flex h-full min-h-0 flex-col items-center justify-center overflow-y-auto px-6 py-8 text-center"
+          : "fixed inset-0 z-50 flex flex-col items-center justify-center px-6 py-8 text-center"}
         style={{ background: '#F3F6FA' }}
       >
         <div
@@ -532,7 +536,10 @@ export function QuizOverlay({ bank, userId, onClose }: QuizOverlayProps) {
 
   // Step-by-step question flow
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col" style={{ background: '#F3F6FA' }}>
+    <div
+      className={embedded ? "flex h-full min-h-0 flex-col" : "fixed inset-0 z-[200] flex flex-col"}
+      style={{ background: '#F3F6FA' }}
+    >
       <div style={{ background: 'white', borderBottom: '0.5px solid #EAECEF' }}>
         <div className="flex items-center gap-3 px-4 py-3">
           <button

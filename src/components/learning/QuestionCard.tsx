@@ -1,6 +1,7 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { DndContext, PointerSensor, pointerWithin, useDraggable, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
 import katex from "katex";
 import type { Question } from "@/types/quiz-bank";
 import { evaluateQuestion } from "@/utils/quizEvaluation";
@@ -94,6 +95,84 @@ function buildNumericChips(q: any): number[] {
   return seededShuffle(Array.from(pool), String(q.id ?? 'n'));
 }
 
+function decodeClockValue(value: number): { hours: number; minutes: number } {
+  return { hours: Math.floor(value / 100), minutes: value % 100 };
+}
+
+function formatClockValue(value: number): string {
+  const { hours, minutes } = decodeClockValue(value);
+  return `${hours} h ${String(minutes).padStart(2, '0')}`;
+}
+
+function buildTimeChips(q: any): number[] {
+  if (Array.isArray(q?.dragOptions) && q.dragOptions.length > 0) {
+    return seededShuffle(
+      Array.from(new Set<number>(q.dragOptions.map(Number).filter(Number.isFinite))),
+      String(q.id ?? 'time'),
+    );
+  }
+  const hours = Number(q?.timeAnswer?.hours);
+  const minutes = Number(q?.timeAnswer?.minutes);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return [];
+  const total = hours * 60 + minutes;
+  return seededShuffle([total, total - 10, total + 10, total + 20].map((value) => {
+    const normalized = Math.max(0, value);
+    return Math.floor(normalized / 60) * 100 + normalized % 60;
+  }), String(q.id ?? 'time'));
+}
+
+/**
+ * Resolve the unit shown beside a numeric answer.  Conversion questions have
+ * two units in their prompt; the answer unit is always the requested (target)
+ * unit, never the source unit mentioned first.
+ */
+export function inferAnswerUnit(question: any): string | undefined {
+  const explicit = question.answerUnit ?? question.answer_unit ?? question.targetUnit ?? question.target_unit;
+  if (explicit) return normalizeAnswerUnit(String(explicit));
+
+  const prompt = String(question.prompt ?? question.question ?? '');
+  const target = prompt.match(/\b(?:en|vers|to|into)\s+(?:des?\s+|les?\s+)?(secondes?|secs?|s|minutes?|min|heures?|h|jours?|j|millisecondes?|ms|centim[eè]tres?|cm|m[eè]tres?|m|kilom[eè]tres?|km|kilogrammes?|kg|grammes?|g|millilitres?|ml|litres?|l)\b/i);
+  if (target) return normalizeAnswerUnit(target[1]);
+
+  // Questions phrased as “combien de minutes/heures…?” also name the target
+  // unit directly, while the hint may contain a different source unit.
+  const requested = prompt.match(/\bcombien\s+(?:de|d')\s+(secondes?|secs?|s|minutes?|min|heures?|h|jours?|j|millisecondes?|ms|centim[eè]tres?|cm|m[eè]tres?|m|kilom[eè]tres?|km|kilogrammes?|kg|grammes?|g|millilitres?|ml|litres?|l)\b/i);
+  if (requested) return normalizeAnswerUnit(requested[1]);
+
+  const text = `${prompt} ${String(question.hint ?? '')}`.toLowerCase();
+  if (/\b(secondes?|secs?|s)\b/.test(text)) return 's';
+  if (/\b(minutes?|min)\b/.test(text)) return 'min';
+  if (/\b(heures?|h)\b/.test(text)) return 'h';
+  if (/\b(jours?|j)\b/.test(text)) return 'j';
+  if (/\bkilom[eè]tres?\b|\bkm\b/.test(text)) return 'km';
+  if (/\bcentim[eè]tres?\b|\bcm\b/.test(text)) return 'cm';
+  if (/\bmillim[eè]tres?\b|\bmm\b/.test(text)) return 'mm';
+  if (/\bm[eè]tres?\b(?!\s*carr)/.test(text)) return 'm';
+  if (/\bkilogrammes?\b|\bkg\b/.test(text)) return 'kg';
+  if (/\bgrammes?\b|\bg\b/.test(text)) return 'g';
+  if (/\bmillilitres?\b|\bml\b/.test(text)) return 'mL';
+  if (/\blitres?\b|\bl\b/.test(text)) return 'L';
+  if (/€|euros?/.test(text)) return '€';
+  return undefined;
+}
+
+function normalizeAnswerUnit(unit: string): string {
+  const value = unit.trim().toLowerCase();
+  if (/^(s|sec|second|seconds|seconde|secondes)$/.test(value)) return 's';
+  if (/^(min|minute|minutes|minute?s)$/.test(value)) return 'min';
+  if (/^(h|hour|hours|heure|heures)$/.test(value)) return 'h';
+  if (/^(j|day|days|jour|jours)$/.test(value)) return 'j';
+  if (/^(ms|milliseconde|millisecondes)$/.test(value)) return 'ms';
+  if (/^(cm|centim[eè]tre|centim[eè]tres)$/.test(value)) return 'cm';
+  if (/^(m|m[eè]tre|m[eè]tres)$/.test(value)) return 'm';
+  if (/^(km|kilom[eè]tre|kilom[eè]tres)$/.test(value)) return 'km';
+  if (/^(kg|kilogramme|kilogrammes)$/.test(value)) return 'kg';
+  if (/^(g|gramme|grammes)$/.test(value)) return 'g';
+  if (/^(ml|millilitre|millilitres)$/.test(value)) return 'mL';
+  if (/^(l|litre|litres)$/.test(value)) return 'L';
+  return unit;
+}
+
 function seededShuffle<T>(arr: T[], seed: string): T[] {
   let h = 2166136261;
   for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
@@ -104,6 +183,41 @@ function seededShuffle<T>(arr: T[], seed: string): T[] {
     [out[i], out[j]] = [out[j], out[i]];
   }
   return out;
+}
+
+function ClockDropZone({ id, label, value, selectedChip, onPlace }: { id: string; label: string; value: string; selectedChip: number | null; onPlace: (value: number) => void }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      onClick={() => selectedChip !== null && onPlace(selectedChip)}
+      className={cn(
+        'min-h-20 rounded-2xl border-2 bg-white p-3 text-center transition-colors',
+        value ? 'border-primary' : 'border-[#D8E1F0]',
+        selectedChip !== null && 'border-dashed border-[#4F6FD8] bg-blue-50',
+        isOver && 'border-[#4F6FD8] bg-blue-100 ring-4 ring-blue-100',
+      )}
+      aria-label={`${label}: ${value || 'vide'}`}
+    >
+      <span className="block text-xs font-bold uppercase tracking-wide text-[#667085]">{label}</span>
+      <span className={cn('mt-1 block text-3xl font-extrabold', value ? 'text-[#111827]' : 'text-slate-300')}>{value || '?'}</span>
+    </button>
+  );
+}
+
+function ClockDragChip({ value, selected, onSelect }: { value: number; selected: boolean; onSelect: () => void }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `clock-value-${value}`, data: { value, answerType: 'clock' } });
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      {...listeners}
+      {...attributes}
+      onClick={onSelect}
+      className={cn('h-12 min-w-12 rounded-xl border px-3 text-lg font-bold shadow-sm transition-colors touch-none', selected ? 'border-[#4F6FD8] bg-blue-100 text-[#3448A5]' : 'border-transparent bg-secondary hover:border-primary/40', isDragging && 'opacity-50')}
+    >{value}</button>
+  );
 }
 
 const choiceVariants = {
@@ -633,6 +747,9 @@ export function QuestionCard({
     if (question.kind === "numeric" && (question as any).answerFormat === "fraction") {
       return { numerator: "", denominator: "" };
     }
+    if (question.kind === "numeric" && (question as any).answerFormat === "time") {
+      return { hours: "", minutes: "" };
+    }
     if (question.kind === "slider") return "";
     if (question.kind === "match") return [];
     if (question.kind === "fill-expr") return {};
@@ -644,6 +761,7 @@ export function QuestionCard({
   const [selectedChip, setSelectedChip] = useState<number | null>(null);
   const [draggedOrderingItem, setDraggedOrderingItem] = useState<string | null>(null);
   const { draggedValue, getDragSourceProps, getDropTargetProps } = useLearningDragDrop();
+  const clockSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const [tries, setTries] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -684,9 +802,7 @@ export function QuestionCard({
     }
     setSubmitted(true);
     setIsCorrect(ok);
-    if (!ok) {
-      onFinish(ok, tries);
-    }
+    onFinish(ok, tries);
   };
 
   const swap = (arr: string[], i: number, j: number) => {
@@ -709,6 +825,9 @@ export function QuestionCard({
   const externallySubmitted = submittedAnswer !== undefined;
   const effectiveCorrectness = externallySubmitted ? (isCorrectProp ?? null) : isCorrect;
   const showSubmittedState = submitted || externallySubmitted;
+  const answerReady = question.kind === "numeric" && (question as any).answerFormat === "time"
+    ? Boolean(value && String(value.hours ?? '').trim() !== '' && String(value.minutes ?? '').trim() !== '')
+    : true;
 
   const getSingleVariant = (choiceId: string, isCorrect_: boolean) => {
     if (!submitted) return value === choiceId ? "selected" : "idle";
@@ -985,9 +1104,52 @@ export function QuestionCard({
         );
       })()}
 
-      {question.kind === "numeric" && (question as any).answerFormat !== "fraction" && (() => {
+      {question.kind === "numeric" && (question as any).answerFormat === "time" && (() => {
+        const q: any = question;
+        const expected = q.timeAnswer ?? { hours: 0, minutes: 0 };
+        const fields = [
+          ...(Number(expected.days ?? 0) > 0 ? [{ key: 'days', label: 'Jours' }] : []),
+          { key: 'hours', label: 'Heures' },
+          { key: 'minutes', label: 'Minutes' },
+          ...(Number(expected.seconds ?? 0) > 0 ? [{ key: 'seconds', label: 'Secondes' }] : []),
+        ] as const;
+        const chipValues = Array.from(new Set([
+          ...fields.map(({ key }) => Number(expected[key] ?? 0)),
+          0, 1, 2, 3, 5, 10, 15, 20, 30, 45,
+        ])).filter((item) => Number.isInteger(item) && item >= 0).slice(0, 9);
+        return (
+          <div className="mt-2 flex flex-col items-center gap-4 py-2">
+            <p className="text-xs font-medium text-[#667085]">Glisse chaque nombre dans la bonne case.</p>
+            <DndContext
+              sensors={clockSensors}
+              collisionDetection={pointerWithin}
+              onDragEnd={({ active, over }) => {
+                if (!over) return;
+                const numeric = Number(active.data.current?.value);
+                if (!Number.isInteger(numeric) || numeric < 0) return;
+                const target = String(over.id);
+                if (fields.some((field) => field.key === target)) {
+                  setVal({ ...value, [target]: String(numeric) });
+                  setSelectedChip(null);
+                }
+              }}
+            >
+              <div className={`grid w-full gap-2 ${fields.length === 4 ? 'grid-cols-2' : 'grid-cols-2'}`}>
+                {fields.map(({ key, label }) => <ClockDropZone key={key} id={key} label={label} value={String(value?.[key] ?? '')} selectedChip={selectedChip} onPlace={(numeric) => { setVal({ ...value, [key]: String(numeric) }); setSelectedChip(null); }} />)}
+              </div>
+              <div className="mt-4 flex flex-wrap justify-center gap-2" aria-label="Nombres à placer">
+                {chipValues.map((chip) => <ClockDragChip key={chip} value={chip} selected={selectedChip === chip} onSelect={() => setSelectedChip(selectedChip === chip ? null : chip)} />)}
+              </div>
+            </DndContext>
+            <p className="text-center text-xs text-muted-foreground">Tu peux aussi toucher un nombre, puis toucher une case.</p>
+          </div>
+        );
+      })()}
+
+      {question.kind === "numeric" && !["fraction", "time"].includes((question as any).answerFormat) && (() => {
         const q: any = question;
         const chips: number[] = buildNumericChips(q);
+        const answerUnit = inferAnswerUnit(q);
         const currentStr = String(value ?? '');
         const hasValue = currentStr !== '';
         const numericBorderColor = showSubmittedState
@@ -1011,12 +1173,12 @@ export function QuestionCard({
         return (
           <div className="mt-2 flex flex-col items-center gap-3 py-2">
             <p className="text-xs font-medium" style={{ color: '#667085', fontFamily: 'Poppins, sans-serif' }}>
-              {ui("Tape ta réponse")}
+              {answerUnit ? `${ui("Tape ta réponse")} (${answerUnit})` : ui("Tape ta réponse")}
             </p>
             <div
               className="flex items-center justify-center rounded-2xl transition-all"
               style={{
-                width: '160px',
+                width: answerUnit ? '220px' : '160px',
                 height: '96px',
                 background: numericBgColor,
                 border: `2.5px solid ${numericBorderColor}`,
@@ -1034,7 +1196,8 @@ export function QuestionCard({
                 onChange={e => setVal(e.target.value)}
                 placeholder="?"
                 style={{
-                  width: '100%',
+                  width: answerUnit ? '150px' : '100%',
+                  flex: answerUnit ? 1 : undefined,
                   height: '100%',
                   textAlign: 'center',
                   fontSize: '44px',
@@ -1048,10 +1211,11 @@ export function QuestionCard({
                   MozAppearance: 'textfield' as any,
                 }}
               />
+              {answerUnit && <span className="pr-4 text-xl font-bold text-slate-500">{answerUnit}</span>}
             </div>
             {q.range && (
               <p className="text-xs" style={{ color: '#9CA3AF' }}>
-                {ui("Entre")} {q.range.min} {ui("et")} {q.range.max}
+                {ui("Entre")} {q.range.min}{answerUnit ? ` ${answerUnit}` : ''} {ui("et")} {q.range.max}{answerUnit ? ` ${answerUnit}` : ''}
               </p>
             )}
             {chips.length > 0 && (
@@ -1085,7 +1249,7 @@ export function QuestionCard({
                       )}
                       style={{ fontFamily: 'Poppins, sans-serif' }}
                     >
-                      {chip}
+                      {chip}{answerUnit ? ` ${answerUnit}` : ''}
                     </motion.button>
                   );
                 })}
@@ -1219,6 +1383,7 @@ export function QuestionCard({
           <motion.button
             className="px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black"
             onClick={submitIfTimeline}
+            disabled={!answerReady}
             whileTap={{ scale: 0.96 }}
           >
             {ui("Valider")}

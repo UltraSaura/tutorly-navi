@@ -47,9 +47,9 @@ export function usePracticeTopics(
       const { data: topics, error: topicsError } = await supabase
         .from('topics')
         .select('id, name, order_index, curriculum_domain_id')
-        .eq('curriculum_level_code', levelCode)
+        .ilike('curriculum_level_code', levelCode)
         .eq('curriculum_subject_id', subjectData.id)
-        .eq('curriculum_country_code', countryCode)
+        .ilike('curriculum_country_code', countryCode)
         .or('is_active.eq.true,is_active.is.null')
         .order('order_index', { ascending: true });
 

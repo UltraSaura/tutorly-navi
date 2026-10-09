@@ -21,7 +21,7 @@ const GROUPED_RETRY_PRACTICE_TIMEOUT_MS = 20000;
 const GROUPED_PROBLEM_EXTRACTION_USAGE_TYPE = 'grouped_problem_extraction';
 const GROUPED_PROBLEM_GRADING_USAGE_TYPE = 'grouped_problem_grading';
 const GROUPED_RETRY_PRACTICE_USAGE_TYPE = 'grouped_retry_practice';
-const GROUPED_RETRY_PRACTICE_CACHE_VERSION = 3;
+const GROUPED_RETRY_PRACTICE_CACHE_VERSION = 5;
 const GROUPED_RETRY_PRACTICE_SUBJECT_ID = 'grouped_homework';
 
 export const DEFAULT_GROUPED_PROBLEM_GRADING_PROMPT = `You are grading a grouped homework problem.
@@ -123,25 +123,24 @@ Return this JSON shape:
 export const DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT = `You are creating an "Explication" for ONE selected row in a grouped homework problem.
 Return ONLY valid JSON. Do not use markdown fences. Do not include prose outside JSON.
 
-Teaching goal:
-- Create a specialized TwoCard-style teaching response, not a correction sheet.
-- Teach the transferable idea behind the selected/evaluated row so the student can retry the original exercise independently.
-- Adapt vocabulary, explanation length, and examples to the provided profile: school level, country/curriculum, learning style, and response language.
-- Use warm, student-friendly language. Be concrete and concise.
+Goal: produce the clearest possible short teaching sequence, not a correction sheet.
+- Teach the transferable idea with ONE changed example, then check understanding and send the learner back to the original exercise.
+- Adapt terminology, representation, difficulty and sentence length to profile.schoolLevel, profile.country, profile.curriculum and profile.responseLanguage.
+- Treat learningStyle only as a presentation preference, never as a fixed label.
+- For primary pupils, prefer concrete meaning and decomposition before mechanical rules.
+- Select the simplest representation that fits the topic: place value, decomposition, number line, fraction bar, array, bar model, ratio table, graph, diagram or symbolic steps.
 
-Required teaching sequence:
-- concept: quick idea. Explain the underlying idea in student-friendly language. Do not state the original answer.
-- similarProblem: keep a short structurally similar example setup using changed numbers or a different concrete context. It must practice the same concept but must not copy the original wording or values.
-- diagram: if problemContext.wantsDiagram is true or the selected row is geometry, include a simple structured diagram spec for the similar example. The labels and dimensions must match the similarProblem. For non-geometry rows, omit diagram or set it to null. Do not draw SVG or return markdown images.
-- learningStyleSupport: optional student-facing support that reinforces the same concept using problemContext.profile.learningStyle. It must include one guided example before asking the student to retry. It must not change the academic goal. Do not say "Because you are a visual learner" or label the child.
-  - If learningStyle is visual: use title "See it" or similar. Include a diagram, table, number line, visual grouping instruction, labels, or spatial explanation when useful, then guide through one different example.
-  - If learningStyle is auditory: use title "Say it" or similar. Include a memory phrase, spoken reasoning cue, or sentence the child can repeat, then guide through one different example.
-  - If learningStyle is kinesthetic: use title "Try it" or similar. Include hands-on steps such as draw, move, tap, group, count, sort, build, or act it out, then guide through one different example.
-  - If learningStyle is mixed: use title "Learn it your way" or similar. Include one visual hint, one verbal cue, one action idea, then guide through one different example.
-- retryPrompt: Auto-vérification / self-check / try again. This is the student's own turn: invite the student to return to the original exercise and apply the idea without revealing the original final answer.
-- method: give reusable step by step guidance for this kind of problem. Explain why each step is done. Do not make this the student's own retry prompt.
-- commonMistake: name one likely misconception or trap and how to avoid it.
-- parentHelpHint: give a short guardian-facing hint, but do not address it to the student.
+Required sequence:
+- concept: one short explanation of what the idea means and why it works.
+- teachingStrategy: name the chosen representation or strategy in a few words.
+- similarProblem: ONE question in the same mathematical family, operand types, constraints and approximate difficulty, but with changed exercise-specific values/context. Do not solve it here.
+- animationSteps: 3 to 6 meaningful frames that solve only the similarProblem. Each frame contains one transformation, why it is valid, and exact equation substrings to highlight. The first frame must teach something; never add an empty introduction frame.
+- understandingCheck: ONE self-contained multiple-choice question with exactly 3 distinct choices. Use one fresh set of values and one unambiguous task. It must test the same key idea without repeating the worked example's final calculation. Include the correct choice and a brief explanation for feedback.
+- method: a concise reusable summary, not a duplicate transcript of animationSteps.
+- commonMistake: one likely trap. Do not claim the student made it unless their working proves that.
+- retryPrompt: invite the learner to apply the strategy to the original exercise without restating or solving it.
+- parentHelpHint: one short guardian-facing question or null.
+- diagram: use a supported geometry diagram only when it genuinely helps; otherwise null.
 
 Strict privacy and learning rules:
 - Do NOT copy the exact original exercise text.
@@ -150,7 +149,7 @@ Strict privacy and learning rules:
 - Do NOT solve the original row directly.
 - Do NOT give the original exercise's final answer as the teaching content.
 - Do NOT tell the student whether their original answer is correct inside this teaching response.
-- Keep all teaching content focused on the similar example and transferable method.
+- Keep all worked content focused on the similar example and transferable method.
 - The similar example MUST stay in the same exercise family as the original selected row:
   - decimal → decimal
   - fraction → fraction
@@ -158,30 +157,44 @@ Strict privacy and learning rules:
   - division with remainder → division with remainder
   - exact division → exact division
 - Keep the same digit band when possible: 1-digit, 2-digit, or 3+ digit.
-- For decimal exercises, keep the same number of decimal places when possible.
+- Preserve operand TYPES. A whole-number operand must remain a whole number: never rewrite 2 as 2.0 and never create unnecessary zero partial products.
+- Choose the simplest useful strategy first. For multiplication by 10, 100, or numbers ending in zeros, multiply the non-zero digits and then append the correct number of zeros. Keep each explanation sentence short and explicit.
+- For decimal exercises, keep the same number of decimal places when possible. Explain place value or decomposition before any shortcut. Never say "remove the decimal point" without explicitly explaining the scale change and its reversal.
 - If the original addition requires a carry/retained 1, the similar example must also require a carry.
 - If the original subtraction requires a borrow/emprunt, the similar example must also require a borrow.
+- Use only ONE set of values throughout similarProblem and animationSteps. Never introduce or merge a second example inside those frames.
+- The understanding check must use values different from both the original exercise and the worked example. Do not show its answer in the question or visual before the learner responds.
+- For division with remainder, verify q × divisor + remainder = dividend and 0 ≤ remainder < divisor in the worked example and the understanding check.
+- For primary pupils, ask one concrete question at a time. Never combine two questions, two examples, or two remainder statements in one sentence.
+- Silently solve the worked example and the understanding check before returning JSON. Rebuild the response if any equality, choice, remainder, unit, or explanation is inconsistent.
 
 Return exactly this JSON shape:
 {
   "concept": "student-friendly explanation of the underlying idea, not the original answer",
-  "similarProblem": "one structurally similar worked example with changed numbers/context",
-  "diagram": {
-    "type": "rectangle|square|triangle|circle",
-    "labels": ["A", "B", "C", "D"],
-    "dimensions": { "bottom": "6 cm", "left": "3 cm" },
-    "caption": "optional short caption"
+  "teachingStrategy": "short name of the age-appropriate representation or strategy",
+  "similarProblem": "question for one changed example",
+  "diagram": null,
+  "animationSteps": [
+    {
+      "title": "short action label",
+      "equation": "exact mathematical statement for this frame",
+      "explanation": "one or two short sentences explaining why this works",
+      "highlight": ["exact substring from equation"]
+    }
+  ],
+  "understandingCheck": {
+    "question": "one short, self-contained and unambiguous question",
+    "choices": ["choice 1", "choice 2", "choice 3"],
+    "correctChoice": "exactly one string from choices",
+    "explanation": "brief feedback explaining why"
   },
-  "learningStyleSupport": {
-    "style": "visual|auditory|kinesthetic|mixed",
-    "title": "short child-friendly title such as See it, Say it, Try it, or Learn it your way",
-    "content": "student-facing learning-style support that includes one guided example with changed numbers/context before the retry"
-  },
-  "retryPrompt": "self-check prompt encouraging the student to retry the original exercise without revealing its answer",
-  "method": "reusable steps for this type of problem, including why each step is done",
+  "method": "short reusable summary of the strategy",
+  "retryPrompt": "encouragement to retry the original without revealing its answer",
   "commonMistake": "one likely misconception or trap and how to avoid it",
-  "parentHelpHint": "optional short guardian guidance, not for display in the student app"
-}`;
+  "parentHelpHint": "short guardian guidance or null"
+}
+
+When diagram is non-null, use type rectangle, square, triangle or circle and provide only labels, dimensions and a short caption that exactly match the similar example.`;
 
 async function loadActivePromptTemplate(
   usageType: string,
@@ -237,12 +250,18 @@ async function loadGroupedProblemGradingPrompt(
 async function loadGroupedRetryPracticePrompt(
   client: Pick<typeof supabase, 'from'> = supabase
 ): Promise<string> {
-  return loadActivePromptTemplate(
+  const prompt = await loadActivePromptTemplate(
     GROUPED_RETRY_PRACTICE_USAGE_TYPE,
     DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT,
     'grouped retry practice',
     client
   );
+  const supportsAdaptiveFlow = prompt.includes('animationSteps') && prompt.includes('understandingCheck');
+  if (!supportsAdaptiveFlow) {
+    console.warn('[problemSubmissionService] Active grouped retry prompt is outdated; using bundled adaptive prompt.');
+    return DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT;
+  }
+  return prompt;
 }
 
 function extractJsonObject(content: unknown): any | null {
@@ -380,21 +399,6 @@ function normalizeGroupedRetryPracticeExample(prompt: string, example: string): 
   return example;
 }
 
-function hasMatchingGroupedRetryPracticeReuseMeta(candidate: any, expected: GroupedRetryPracticeReuseMeta) {
-  const explanationData = candidate?.explanation_data;
-  const meta = explanationData?.reuseMeta;
-  if (!meta || typeof meta !== 'object') return false;
-
-  return (
-    meta.operationType === expected.operationType &&
-    meta.digitBand === expected.digitBand &&
-    meta.responseLanguage === expected.responseLanguage &&
-    meta.subjectId === expected.subjectId &&
-    (meta.schoolLevel || '') === (expected.schoolLevel || '') &&
-    explanationData?.groupedRetryPracticeVersion === GROUPED_RETRY_PRACTICE_CACHE_VERSION
-  );
-}
-
 function buildGroupedRetryPracticeContext(
   problem: ProblemSubmission,
   rowId?: string,
@@ -444,14 +448,66 @@ function parseGroupedRetryPractice(payload: any): GroupedRetryPractice | null {
 
   return {
     concept: parsed.concept.trim(),
+    teachingStrategy: typeof parsed.teachingStrategy === 'string' ? parsed.teachingStrategy.trim() : undefined,
     similarProblem: parsed.similarProblem.trim(),
     diagram: parseRetryPracticeDiagram(parsed.diagram),
     learningStyleSupport: parseLearningStyleSupport(parsed.learningStyleSupport),
+    animationSteps: parseAnimationSteps(parsed.animationSteps),
+    understandingCheck: parseUnderstandingCheck(parsed.understandingCheck),
     method: parsed.method.trim(),
     retryPrompt: parsed.retryPrompt.trim(),
     commonMistake: typeof parsed.commonMistake === 'string' ? parsed.commonMistake.trim() : undefined,
     parentHelpHint: typeof parsed.parentHelpHint === 'string' ? parsed.parentHelpHint.trim() : undefined,
   };
+}
+
+function parseAnimationSteps(steps: any): GroupedRetryPractice['animationSteps'] | undefined {
+  if (!Array.isArray(steps) || steps.length < 2 || steps.length > 6) return undefined;
+  if (!steps.every((step: any) =>
+    step && typeof step.title === 'string' && step.title.trim().length > 0 &&
+    typeof step.equation === 'string' && step.equation.trim().length > 0 &&
+    typeof step.explanation === 'string' && step.explanation.trim().length > 0
+  )) return undefined;
+
+  return steps.map((step: any) => {
+      const equation = step.equation.trim();
+      const highlight = Array.isArray(step.highlight)
+        ? step.highlight.filter((value: unknown): value is string =>
+            typeof value === 'string' && value.trim().length > 0 && equation.includes(value.trim())
+          ).map((value: string) => value.trim())
+        : [];
+      return {
+        title: step.title.trim(),
+        equation,
+        explanation: step.explanation.trim(),
+        highlight,
+      };
+    });
+}
+
+function parseUnderstandingCheck(check: any): GroupedRetryPractice['understandingCheck'] | undefined {
+  if (!check || typeof check !== 'object') return undefined;
+  const question = typeof check.question === 'string' ? check.question.trim() : '';
+  const choices = Array.isArray(check.choices)
+    ? check.choices.filter((choice: unknown): choice is string => typeof choice === 'string' && choice.trim().length > 0)
+        .map((choice: string) => choice.trim())
+    : [];
+  const correctChoice = typeof check.correctChoice === 'string' ? check.correctChoice.trim() : '';
+  const explanation = typeof check.explanation === 'string' ? check.explanation.trim() : '';
+  const normalizedChoices = choices.map((choice: string) => choice.toLocaleLowerCase().replace(/\s+/g, ' '));
+  const hasDistinctChoices = new Set(normalizedChoices).size === 3;
+  const isConcise = question.length <= 240 && choices.every((choice: string) => choice.length <= 100);
+  if (!question || choices.length !== 3 || !hasDistinctChoices || !isConcise || !choices.includes(correctChoice) || !explanation) return undefined;
+  return { question, choices, correctChoice, explanation };
+}
+
+function hasAdaptiveTeachingFlow(value: unknown): value is GroupedRetryPractice {
+  if (!value || typeof value !== 'object') return false;
+  const practice = value as GroupedRetryPractice;
+  return Boolean(
+    practice.animationSteps && practice.animationSteps.length >= 2 &&
+    practice.understandingCheck
+  );
 }
 
 function parseLearningStyleSupport(support: any): GroupedRetryPractice['learningStyleSupport'] | undefined {
@@ -1677,7 +1733,7 @@ export async function generateGroupedRetryPractice(input: {
 
     if (exactCacheError) {
       console.error('[problemSubmissionService] Grouped retry exact cache lookup failed:', exactCacheError);
-    } else if (exactCached?.explanation_data && typeof exactCached.explanation_data === 'object') {
+    } else if (hasAdaptiveTeachingFlow(exactCached?.explanation_data)) {
       const cachedPractice = {
         ...(exactCached.explanation_data as unknown as GroupedRetryPractice),
         cacheEntryId: exactCached.id,
@@ -1686,55 +1742,23 @@ export async function generateGroupedRetryPractice(input: {
         arithmeticSourcePrompt,
         cachedPractice.similarProblem,
       );
-      void supabase
-        .from('exercise_explanations_cache')
-        .update({ usage_count: (exactCached.usage_count ?? 0) + 1 })
-        .eq('id', exactCached.id);
-      return cachedPractice;
+      const cachedSource = (exactCached.explanation_data as unknown as GroupedRetryPractice).similarProblem;
+      if (cachedPractice.similarProblem === cachedSource) {
+        void supabase
+          .from('exercise_explanations_cache')
+          .update({ usage_count: (exactCached.usage_count ?? 0) + 1 })
+          .eq('id', exactCached.id);
+        return cachedPractice;
+      }
+      console.warn('[problemSubmissionService] Ignoring incompatible exact explanation cache entry.');
     }
   } catch (exactCacheLookupError) {
     console.error('[problemSubmissionService] Unexpected grouped retry exact cache error:', exactCacheLookupError);
   }
 
-  if (reuseMeta.operationType !== 'unknown' && reuseMeta.digitBand !== 'non_arithmetic') {
-    try {
-      const { data: similarCached, error: similarCacheError } = await supabase
-        .from('exercise_explanations_cache')
-        .select('id, exercise_content, explanation_data, usage_count, quality_score, updated_at')
-        .eq('subject_id', GROUPED_RETRY_PRACTICE_SUBJECT_ID)
-        .gte('quality_score', 0)
-        .neq('exercise_hash', cacheHash)
-        .order('quality_score', { ascending: false })
-        .order('updated_at', { ascending: false })
-        .limit(25);
-
-      if (similarCacheError) {
-        console.error('[problemSubmissionService] Grouped retry similar cache lookup failed:', similarCacheError);
-      } else {
-        const reusableCandidate = (similarCached ?? []).find((candidate) =>
-          hasMatchingGroupedRetryPracticeReuseMeta(candidate, reuseMeta)
-        );
-
-        if (reusableCandidate?.explanation_data && typeof reusableCandidate.explanation_data === 'object') {
-          const cachedPractice = {
-            ...(reusableCandidate.explanation_data as unknown as GroupedRetryPractice),
-            cacheEntryId: reusableCandidate.id,
-          };
-          cachedPractice.similarProblem = normalizeGroupedRetryPracticeExample(
-            arithmeticSourcePrompt,
-            cachedPractice.similarProblem,
-          );
-          void supabase
-            .from('exercise_explanations_cache')
-            .update({ usage_count: (reusableCandidate.usage_count ?? 0) + 1 })
-            .eq('id', reusableCandidate.id);
-          return cachedPractice;
-        }
-      }
-    } catch (similarCacheLookupError) {
-      console.error('[problemSubmissionService] Unexpected grouped retry similar cache error:', similarCacheLookupError);
-    }
-  }
+  // Never reuse a worked explanation from a different exercise. Its frames,
+  // highlights and check are tied to the example values and can contradict a
+  // normalized similarProblem (for example displaying 33 × 5 while teaching 33 × 4).
 
   const customPrompt = await loadGroupedRetryPracticePrompt();
 
@@ -1760,14 +1784,17 @@ export async function generateGroupedRetryPractice(input: {
   const parsed = parseGroupedRetryPractice(
     extractJsonObject(data.retryPractice || data.content || data)
   );
-  if (!parsed) {
-    throw new Error('The practice service did not return a usable similar example.');
+  if (!parsed || !hasAdaptiveTeachingFlow(parsed)) {
+    throw new Error('The practice service did not return the required adaptive teaching steps.');
   }
 
-  parsed.similarProblem = normalizeGroupedRetryPracticeExample(
+  const normalizedSimilarProblem = normalizeGroupedRetryPracticeExample(
     arithmeticSourcePrompt,
     parsed.similarProblem,
   );
+  if (normalizedSimilarProblem !== parsed.similarProblem) {
+    throw new Error('The generated example did not preserve the original operation type. Please try again.');
+  }
 
   try {
     const { data: cacheEntry } = await supabase

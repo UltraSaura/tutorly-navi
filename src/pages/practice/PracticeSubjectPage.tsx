@@ -1,4 +1,6 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
+import { useTranslation } from 'react-i18next';
+import { getSubjectNameForSlug } from '@/utils/examSubjectMapping';
 import { useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -120,6 +122,7 @@ function TopicStateIcon({ state }: { state: TopicState }) {
 
 export default function PracticeSubjectPage() {
   const ui = useInterfaceTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [, setSearchParams] = useSearchParams();
   const { subject } = useParams<{ subject: string }>();
@@ -318,8 +321,8 @@ export default function PracticeSubjectPage() {
   const showTopicActionSkeletons = masteryQuery.isLoading || bankAssignmentsQuery.isLoading;
 
   const matchedSubject = learningSubjects.find((entry) => entry.subject.slug === subjectSlug);
-  const subjectLabel = matchedSubject?.subject.name || subjectQuery.data?.name || formatSubjectLabel(subjectSlug) || subjectSlug;
-  const pageTitle = subjectLabel ? `S'entraîner - ${subjectLabel}` : "S'entraîner";
+  const subjectLabel = getSubjectNameForSlug(subjectSlug, i18n.language, matchedSubject?.subject.name || subjectQuery.data?.name || formatSubjectLabel(subjectSlug));
+  const pageTitle = subjectLabel ? `${t('practice.title')} - ${subjectLabel}` : t('practice.title');
   const showExamSection = EXAM_PREP_LEVELS.has((activeSchoolLevel.normalizedLevel ?? '').toLowerCase());
   const examPaperCount = papersQuery.data?.length ?? 0;
   const hasTrainingItems = (trainingItemsQuery.data?.length ?? 0) > 0;

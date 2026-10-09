@@ -13,13 +13,15 @@ interface UserTableProps {
   selectedUser: User | null;
   onUserSelect: (user: User) => void;
   onAddChildClick: (user: User) => void;
+  onApprovalChange: (user: User, status: 'approved' | 'rejected') => void;
 }
 
 export const UserTable = ({
   users,
   selectedUser,
   onUserSelect,
-  onAddChildClick
+  onAddChildClick,
+  onApprovalChange
 }: UserTableProps) => {
   const ui = useInterfaceTranslation();
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,14 +46,15 @@ export const UserTable = ({
       <table className="min-w-full divide-y divide-border">
         <thead>
           <tr className="bg-muted/50">
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("User")}</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("Name")}</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("Email")}</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("Type")}</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("Phone")}</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("Country")}</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("Level")}</th>
-            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui("Style")}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('User')}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('Name')}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('Email')}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('Type')}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('Approval')}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('Phone')}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('Country')}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('Level')}</th>
+            <th className="px-4 py-3.5 text-left text-sm font-semibold">{ui('Style')}</th>
             <th className="px-4 py-3.5 text-right text-sm font-semibold"></th>
           </tr>
         </thead>
@@ -91,6 +94,17 @@ export const UserTable = ({
                     </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
+                    <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                      user.approval_status === 'approved'
+                        ? 'bg-green-100 text-green-800'
+                        : user.approval_status === 'rejected'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {user.approval_status || 'pending'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm">
                     {user.phone_number || 'Not set'}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
@@ -125,6 +139,18 @@ export const UserTable = ({
                             {ui("Add Child Account")}
                           </DropdownMenuItem>
                         )}
+                        {user.approval_status === 'pending' && (
+                          <>
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              onApprovalChange(user, 'approved');
+                            }}>Approve Account</DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              onApprovalChange(user, 'rejected');
+                            }}>Reject Account</DropdownMenuItem>
+                          </>
+                        )}
                         <DropdownMenuItem className="text-destructive">
                           {ui("Deactivate Account")}
                         </DropdownMenuItem>
@@ -136,7 +162,7 @@ export const UserTable = ({
             })
           ) : (
             <tr>
-              <td colSpan={9} className="px-4 py-6 text-center text-muted-foreground">
+              <td colSpan={10} className="px-4 py-6 text-center text-muted-foreground">
                 {ui("No users found matching your filters.")}
               </td>
             </tr>

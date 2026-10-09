@@ -1739,5 +1739,10 @@
   "languageBasedOnProfile": "Based on your profile",
   "languageBasedOnLocation": "Based on your location",
   "languageBasedOnIp": "Based on your IP address",
-  "languageBasedOnTimezone": "Based on your timezone"
+  "languageBasedOnTimezone": "Based on your timezone",
+  "No problem explanation template has been created.": "No problem explanation template has been created.",
+  "Create an editable template to customize new grouped problem explanations. Until then, the app uses its built-in prompt.": "Create an editable template to customize new grouped problem explanations. Until then, the app uses its built-in prompt.",
+  "Time (hours and minutes)": "Time (hours and minutes)",
+  "Lesson": "Lesson",
+  "Approval": "Approval"
 }

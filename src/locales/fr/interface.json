@@ -1739,5 +1739,10 @@
   "languageBasedOnProfile": "Selon votre profil",
   "languageBasedOnLocation": "Selon votre position",
   "languageBasedOnIp": "Selon votre adresse IP",
-  "languageBasedOnTimezone": "Selon votre fuseau horaire"
+  "languageBasedOnTimezone": "Selon votre fuseau horaire",
+  "No problem explanation template has been created.": "Aucun modèle d’explication de problème n’a été créé.",
+  "Create an editable template to customize new grouped problem explanations. Until then, the app uses its built-in prompt.": "Créez un modèle modifiable pour personnaliser les nouvelles explications de problèmes groupés. En attendant, l’application utilise son prompt intégré.",
+  "Time (hours and minutes)": "Heure (heures et minutes)",
+  "Lesson": "Leçon",
+  "Approval": "Approbation"
 }

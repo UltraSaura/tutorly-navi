@@ -37,6 +37,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // no-op – SimpleLanguageContext reads users.country directly
   }, []);
 
+  const ensureAccountApproved = useCallback(async (authUser: User) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('approval_status')
+      .eq('id', authUser.id)
+      .maybeSingle();
+
+    if (error) {
+      await supabase.auth.signOut();
+      return new Error('We could not verify your account approval. Please try again.');
+    }
+    if (data?.approval_status === 'pending') {
+      await supabase.auth.signOut();
+      return new Error('Your account is waiting for administrator approval.');
+    }
+    if (data?.approval_status === 'rejected') {
+      await supabase.auth.signOut();
+      return new Error('Your account was not approved.');
+    }
+    return null;
+  }, []);
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -54,7 +76,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const approvalError = await ensureAccountApproved(session.user);
+        if (approvalError) {
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+      }
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -67,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => subscription.unsubscribe();
-  }, [detectLanguageFromUser]); // Use the memoized callback
+  }, [detectLanguageFromUser, ensureAccountApproved]); // Use the memoized callbacks
 
   const signIn = async (emailOrUsername: string, password: string) => {
     // Check if input is email or username
@@ -75,11 +106,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (isEmail) {
       // Standard email login
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: emailOrUsername,
         password,
       });
-      return { error };
+      if (error) return { error };
+      return { error: data.user ? await ensureAccountApproved(data.user) : null };
     } else {
       const normalized = emailOrUsername.trim().toLowerCase();
       const tryStudent = await supabase.auth.signInWithPassword({
@@ -87,14 +119,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
       });
       if (!tryStudent.error) {
-        return { error: null };
+        return { error: tryStudent.data.user ? await ensureAccountApproved(tryStudent.data.user) : null };
       }
       const tryChild = await supabase.auth.signInWithPassword({
         email: `${normalized}@child.local`,
         password,
       });
       if (!tryChild.error) {
-        return { error: null };
+        return { error: tryChild.data.user ? await ensureAccountApproved(tryChild.data.user) : null };
       }
       return { error: new Error('Invalid username or password') };
     }
@@ -103,7 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, userData?: any) => {
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -111,6 +143,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         data: userData
       }
     });
+    // When email confirmation is disabled, signUp returns a session immediately.
+    // Keep pending registrants out of the application until an admin approves them.
+    if (!error && data.session) {
+      await supabase.auth.signOut();
+    }
     return { error };
   };
 

@@ -84,17 +84,22 @@ export function resolveSubjectSlugForExamDiscipline(discipline: string): string 
   return discipline;
 }
 
-/** Get human readable fallback name. */
-export function getSubjectNameForSlug(slug: string, locale: string = 'en'): string {
-  const isFr = locale.startsWith('fr');
-  const map: Record<string, { en: string; fr: string }> = {
-    mathematics: { en: 'Mathematics', fr: 'Mathématiques' },
-    french: { en: 'French', fr: 'Français' },
-    physics: { en: 'Physics & Chemistry', fr: 'Physique-Chimie' },
-    history: { en: 'History & Geography', fr: 'Histoire-Géographie' },
-    sciences: { en: 'Sciences', fr: 'Sciences' },
+/** Localize known subject slugs while preserving names of custom subjects. */
+export function getSubjectNameForSlug(slug: string, locale: string = 'en', fallbackName?: string): string {
+  const isFr = locale.toLowerCase().startsWith('fr');
+  const labels: Record<string, { en: string; fr: string; aliases: string[] }> = {
+    mathematics: { en: 'Mathematics', fr: 'Mathématiques', aliases: ['mathematiques', 'maths', 'math'] },
+    french: { en: 'French', fr: 'Français', aliases: ['francais'] },
+    english: { en: 'English', fr: 'Anglais', aliases: ['anglais'] },
+    sciences: { en: 'Science', fr: 'Sciences', aliases: ['science', 'svt'] },
+    physics: { en: 'Physics & Chemistry', fr: 'Physique-Chimie', aliases: ['physique_chimie', 'physique', 'chimie', 'chemistry'] },
+    history: { en: 'History', fr: 'Histoire', aliases: ['histoire'] },
+    geography: { en: 'Geography', fr: 'Géographie', aliases: ['geographie'] },
+    histoire_geographie: { en: 'History & Geography', fr: 'Histoire-Géographie', aliases: ['histoire_geo'] },
+    emc: { en: 'Civics', fr: 'Enseignement moral et civique', aliases: [] },
   };
-  const translation = map[slug];
+  const key = normalizeDisciplineKey(slug);
+  const translation = labels[key] ?? Object.values(labels).find((label) => label.aliases.includes(key));
   if (translation) return isFr ? translation.fr : translation.en;
-  return slug.charAt(0).toUpperCase() + slug.slice(1);
+  return fallbackName || slug.charAt(0).toUpperCase() + slug.slice(1);
 }

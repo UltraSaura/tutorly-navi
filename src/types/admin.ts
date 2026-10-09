@@ -41,6 +41,9 @@ export interface User {
   user_type: 'student' | 'parent';
   created_at: string;
   updated_at: string;
+  approval_status?: 'pending' | 'approved' | 'rejected';
+  approval_reviewed_at?: string | null;
+  approval_reviewed_by?: string | null;
   // Virtual properties for UI
   activity?: {
     day: string;

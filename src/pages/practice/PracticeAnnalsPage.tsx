@@ -1,3 +1,4 @@
+import { getSubjectNameForSlug } from '@/utils/examSubjectMapping';
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -26,7 +27,7 @@ function cleanExamTitle(raw: string | null | undefined): string {
 export default function PracticeAnnalsPage() {
   const navigate = useNavigate();
   const { subject } = useParams<{ subject: string }>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const subjectSlug = subject ?? '';
   const subjectsQuery = useLearningSubjects();
   const activeSchoolLevel = useActiveSchoolLevel();
@@ -42,8 +43,8 @@ export default function PracticeAnnalsPage() {
 
   const subjectLabel = useMemo(() => {
     const row = (subjectsQuery.data ?? []).find((s) => s.subject.slug === subjectSlug);
-    return row?.subject.name ?? subjectSlug;
-  }, [subjectsQuery.data, subjectSlug]);
+    return getSubjectNameForSlug(subjectSlug ?? '', i18n.language, row?.subject.name);
+  }, [subjectsQuery.data, subjectSlug, i18n.language]);
 
   const discLabel = examDisciplines[0]?.replace(/_/g, ' ') ?? '';
 

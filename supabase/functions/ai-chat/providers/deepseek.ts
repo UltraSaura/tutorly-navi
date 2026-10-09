@@ -9,7 +9,8 @@ export async function callDeepSeek(
   model: string, 
   isExercise: boolean = false,
   requestExplanation: boolean = false,
-  maxTokens: number = 800
+  maxTokens: number = 800,
+  responseFormat?: { type: 'json_object' | 'text' }
 ): Promise<any> {
   const { value: deepseekApiKey, source } = await resolveProviderKey('DeepSeek');
 
@@ -32,6 +33,7 @@ export async function callDeepSeek(
     temperature: 0.7,
     max_tokens: maxTokens,
   };
+  if (responseFormat) requestBody.response_format = responseFormat;
 
   // Add tool calling for explanation requests (DeepSeek is OpenAI-compatible)
   if (requestExplanation) {

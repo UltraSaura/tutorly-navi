@@ -484,9 +484,10 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
         response_language: language === 'fr' ? 'French' : 'English',
         grade_level: userContext?.student_level || 'High School',
         learning_style: userContext?.learning_style,
+        country: userContext?.country,
       }
     );
-  }, [language, teaching, userContext?.learning_style, userContext?.student_level]);
+  }, [language, teaching, userContext?.learning_style, userContext?.student_level, userContext?.country]);
 
   const handleShowGroupedExplanation = useCallback(async (problem: ProblemSubmission, rowId?: string) => {
     setGroupedExplanationProblem(problem);
@@ -506,7 +507,9 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
         language,
         schoolLevel: userContext?.student_level,
         country: userContext?.country,
-        curriculum: userContext?.country ? `${userContext.country} curriculum` : undefined,
+        curriculum: /^(france|fr)$/i.test(userContext?.country || '')
+          ? 'Programme national français'
+          : (userContext?.country ? `${userContext.country} curriculum` : undefined),
         learningStyle: userContext?.learning_style,
       });
       setGroupedRetryPractice(practice);

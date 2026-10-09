@@ -1,10 +1,10 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
+import { PROMPT_USAGE_TYPES, getPromptUsageLabel } from './prompts/promptUsageLabels';
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { usePromptManagement } from '@/hooks/usePromptManagement';
-import { Loader2, Plus, Settings } from 'lucide-react';
+import { Loader2, Settings } from 'lucide-react';
 import SystemPromptConfigNew from './SystemPromptConfigNew';
 import { PageMeta } from '@/components/seo/PageMeta';
 
@@ -47,8 +47,8 @@ const PromptManagement = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              {['chat', 'grading', 'explanation', 'grouped_retry_practice'].map((type) => {
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+              {PROMPT_USAGE_TYPES.map((type) => {
                 const typeTemplates = templates.filter(t => t.usage_type === type);
                 const activeCount = typeTemplates.filter(t => t.is_active).length;
                 
@@ -56,7 +56,7 @@ const PromptManagement = () => {
                   <div key={type} className="text-center">
                     <div className="text-2xl font-bold">{activeCount}</div>
                     <div className="text-sm text-muted-foreground capitalize">
-                      {type.replace('_', ' ')} {ui("Active")}
+                      {getPromptUsageLabel(type)} {ui("Active")}
                     </div>
                     <Badge variant={activeCount > 0 ? 'default' : 'secondary'} className="mt-1">
                       {typeTemplates.length} {ui("Total")}

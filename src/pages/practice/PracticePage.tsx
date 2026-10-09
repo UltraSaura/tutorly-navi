@@ -138,16 +138,18 @@ export default function PracticePage() {
       const card = {
         id: row.subject.id,
         slug: subjectSlug,
-        name: row.subject.name,
+        name: getSubjectNameForSlug(subjectSlug, i18n.language, row.subject.name),
         levelLabel,
         masteryPercent: 0,
         masteredTopics: 0,
         totalTopics: 0,
         examPapers: counts.papers,
-        exercises: trainingItems,
+        exercises: trainingItems + row.quizzes_ready,
         sourceExercises: counts.exercises,
+        practiceReady: counts.papers > 0 || trainingItems > 0 || row.videos_ready > 0 || row.quizzes_ready > 0,
+        displayContext: row.subject.display_context,
       };
-      return [card];
+      return card.practiceReady && (row.subject.display_context === 'practice' || row.subject.display_context === 'both') ? [card] : [];
     });
 
     const fallbackCards = [];
@@ -189,11 +191,13 @@ export default function PracticePage() {
         examPapers: counts.papers,
         exercises: trainingItems,
         sourceExercises: counts.exercises,
+        practiceReady: true,
+        displayContext: 'practice' as const,
       });
     }
 
     return [...mappedFromCurriculum, ...fallbackCards];
-  }, [subjectsQuery.data, activeSchoolLevel.activeLevel, papersByDiscipline, trainingCountsQuery.data]);
+  }, [subjectsQuery.data, activeSchoolLevel.activeLevel, papersByDiscipline, trainingCountsQuery.data, i18n.language]);
 
   const subjectsByKey = useMemo(() => {
     const map = new Map<string, (typeof subjectCards)[number]>();
@@ -219,15 +223,20 @@ export default function PracticePage() {
       }
     }
 
-    return defaultPracticeSubjects.map((fallback) => {
+    return defaultPracticeSubjects.flatMap((fallback) => {
       const normalizedSlug = normalizeSubjectKey(fallback.slug);
       const adminSubject = adminSubjectsBySlug.get(normalizedSlug) || adminSubjectsByAlias.get(normalizedSlug);
 
-      return {
+      const sourceSubject = [normalizedSlug, ...getSubjectSlugAliases(fallback.slug).map(normalizeSubjectKey)]
+        .map((key) => subjectsByKey.get(key))
+        .find(Boolean);
+      if (!sourceSubject?.practiceReady) return [];
+
+      return [{
         ...fallback,
         id: adminSubject?.id ?? fallback.slug,
         slug: adminSubject?.slug ?? fallback.slug,
-        name: adminSubject?.name ?? fallback.name,
+        name: getSubjectNameForSlug(fallback.slug, i18n.language, adminSubject?.name ?? fallback.name),
         icon_name: adminSubject?.icon_name ?? fallback.icon_name,
         icon_image_url: adminSubject?.icon_image_url ?? null,
         color_scheme: adminSubject?.color_scheme ?? null,
@@ -235,9 +244,9 @@ export default function PracticePage() {
         practice_text_color: adminSubject?.practice_text_color ?? adminSubject?.text_color ?? null,
         practice_font_size: adminSubject?.practice_font_size ?? adminSubject?.font_size ?? null,
         practice_font_family: adminSubject?.practice_font_family ?? adminSubject?.font_family ?? null,
-      };
+      }];
     });
-  }, [practiceButtonsQuery.data]);
+  }, [practiceButtonsQuery.data, subjectsByKey, i18n.language]);
 
   return (
     <div className="min-h-screen bg-[#F7FAFE] pb-28">
@@ -246,10 +255,10 @@ export default function PracticePage() {
         <section className="relative min-h-[150px] overflow-hidden">
           <div className="relative z-10 max-w-[62%] space-y-2 pt-8">
             <h1 className="text-[32px] font-extrabold leading-none tracking-normal text-[#050B34]">
-              {ui("S'exercer")}
+              {t('practice.title')}
             </h1>
             <p className="text-[18px] font-semibold leading-snug tracking-normal text-[#667085]">
-              {ui("Choisis une matière pour t'entraîner 🚀")}
+              {t('practice.chooseSubject')} 🚀
             </p>
           </div>
           <span className="absolute right-28 top-[60px] h-3 w-3 rounded-full bg-[#F9D66B]" />
@@ -257,7 +266,7 @@ export default function PracticePage() {
           <span className="absolute right-32 top-[134px] h-3 w-3 rounded-full bg-[#A8E6D8]" />
           <img
             src={MASCOT_SRC}
-            alt={ui("Mascotte")}
+            alt=""
             onError={(event) => {
               event.currentTarget.src = FALLBACK_MASCOT_SRC;
             }}
@@ -284,7 +293,7 @@ export default function PracticePage() {
                 const colors = getSubjectVisuals(subject.slug, subject.color_scheme);
                 const sourceSubject = subjectsByKey.get(normalizeSubjectKey(subject.slug));
                 const exerciseCount = sourceSubject?.exercises ?? 0;
-                const exerciseLabel = ui("exerciseCount", { count: exerciseCount });
+                const exerciseLabel = t('practice.subjects.exerciseCount', { count: exerciseCount });
                 const Icon = subject.icon;
                 const subjectTitleFontSize = Math.max((subject.practice_font_size ?? 18) + 4, 16);
                 const subjectTitleFontFamily = subject.practice_font_family ?? 'Poppins, sans-serif';

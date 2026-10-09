@@ -34,6 +34,11 @@ export type LearningInteractionEventType =
   | "resource_recommendation_empty"
   | "learning_preference_changed"
   | "lesson_started"
+  | "lesson_prerequisite_checked"
+  | "lesson_block_viewed"
+  | "lesson_hint_used"
+  | "lesson_misconception_detected"
+  | "lesson_mastery_checked"
   | "lesson_completed";
 
 export type LearningSupportType = LearningStyle;

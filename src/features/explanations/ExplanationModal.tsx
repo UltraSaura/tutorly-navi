@@ -1,3 +1,4 @@
+import { isSupportedDivision } from "./quickExplanation";
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,9 @@ import { TwoCards } from './TwoCards';
 import { useTwoCardTeaching, TeachingSections } from './useTwoCardTeaching';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import type { SafeHomeworkLearningRow } from '@/services/homeworkLearningResources';
+import { QuizOverlay } from '@/components/learning/QuizOverlay';
+import { useAuth } from '@/context/AuthContext';
+import type { QuizBank } from '@/types/quiz-bank';
 
 interface ExplanationModalProps {
   open: boolean;
@@ -50,6 +54,8 @@ export function ExplanationModal({
   feedbackLoading = false,
 }: ExplanationModalProps) {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const [generatedPractice, setGeneratedPractice] = React.useState<QuizBank | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -86,11 +92,13 @@ export function ExplanationModal({
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
       <div className="flex h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-lg md:h-[85vh]">
         <div className="flex shrink-0 items-center justify-between border-b border-border p-5">
-          <h3 className="font-semibold text-lg text-foreground">{t("exercises.explanation.modal_title")}</h3>
+          <h3 className="font-semibold text-lg text-foreground">
+            {generatedPractice?.title || t("exercises.explanation.modal_title")}
+          </h3>
           <Button
             variant="ghost"
             size="icon"
-            onClick={onClose}
+            onClick={() => generatedPractice ? setGeneratedPractice(null) : onClose()}
             className="h-6 w-6"
             aria-label={t("form.aria.close")}
           >
@@ -98,8 +106,16 @@ export function ExplanationModal({
           </Button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-hidden p-5">
-          {loading ? (
+        <div className={generatedPractice ? "min-h-0 flex-1 overflow-hidden" : "min-h-0 flex-1 overflow-y-auto p-5"}>
+          {generatedPractice && user ? (
+            <QuizOverlay
+              bank={generatedPractice}
+              userId={user.id}
+              onClose={() => setGeneratedPractice(null)}
+              recordAttempt={false}
+              embedded
+            />
+          ) : loading ? (
             <div className="space-y-4">
               <Skeleton className="h-20 rounded-xl" />
               <Skeleton className="h-32 rounded-xl" />
@@ -126,7 +142,9 @@ export function ExplanationModal({
                 topicId={topicId} 
                 subjectSlug={subjectSlug}
                 topicSlug={topicSlug}
-                onClose={onClose} 
+                onClose={onClose}
+                onRetryOriginal={handleTryAgain}
+                onStartGeneratedPractice={setGeneratedPractice}
               />
             </div>
           ) : (

@@ -79,6 +79,8 @@ Rules for steps:
 - If student exercise is multiplication (× or *), show a multiplication example.
 - If student exercise is addition (+), show an addition example.
 - If student exercise is subtraction (-), show a subtraction example.
+- Keep the exact written shape of the exercise: the same number of digits in the first operand and the same number in the second operand. For whole-number multiplication, preserve trailing zeros.
+- Use the simplest useful strategy first. For multiplication by 10, 100, or numbers ending in zeros, multiply the non-zero digits, then append the correct number of zeros. Use short sentences: one calculation, then what to write next.
 - The self-check step should tell the student what to verify or try next without revealing the original answer.
 - The method step should give reusable steps, not another full worked example.
 - The common mistake step should warn about one likely trap.

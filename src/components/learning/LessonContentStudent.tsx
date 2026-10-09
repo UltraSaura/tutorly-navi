@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import type { LessonContent } from '@/types/learning';
 import { useEffect } from 'react';
 import { useGenerateLessonContent } from '@/hooks/useGenerateLessonContent';
+import { LessonV2Player } from '@/components/learning/LessonV2Player';
+import { LessonV21Path } from '@/components/learning/LessonV21Path';
+import { parseLessonContent, parseLessonV21 } from '@/types/lesson-generator';
 
 interface LessonContentStudentProps {
   topicId: string;
@@ -36,7 +39,7 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('topics')
-        .select('lesson_content')
+        .select('name, curriculum_subject_id, lesson_content')
         .eq('id', topicId)
         .single();
       
@@ -90,6 +93,25 @@ export function LessonContentStudent({ topicId }: LessonContentStudentProps) {
   }
 
   const content = topic.lesson_content as unknown as LessonContent;
+  const v2Content = parseLessonContent(topic.lesson_content);
+  const v21Content = parseLessonV21(topic.lesson_content);
+
+  if (v21Content) {
+    return <div id="lesson-section" className="min-h-[460px]"><LessonV21Path topicId={topicId} topicName={(topic as { name?: string }).name ?? 'Leçon'} subjectId={(topic as { curriculum_subject_id?: string | null }).curriculum_subject_id ?? null} lesson={v21Content} /></div>;
+  }
+
+  if (v2Content) {
+    return (
+      <div id="lesson-section" className="h-[calc(100dvh-132px)] min-h-[460px]">
+        <LessonV2Player
+          topicId={topicId}
+          topicName={(topic as { name?: string }).name ?? 'Leçon'}
+          subjectId={(topic as { curriculum_subject_id?: string | null }).curriculum_subject_id ?? null}
+          lesson={v2Content}
+        />
+      </div>
+    );
+  }
 
   return (
     <div id="lesson-section" className="space-y-6">

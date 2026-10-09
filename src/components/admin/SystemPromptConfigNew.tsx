@@ -1,4 +1,5 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
+import { PROMPT_USAGE_TYPES, PROMPT_USAGE_DESCRIPTIONS, getPromptUsageLabel, getPromptTemplateDisplayName } from './prompts/promptUsageLabels';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +32,7 @@ const createBlankTemplate = (usageType: PromptUsageType): NewPromptTemplate => (
 });
 
 const createDefaultGroupedRetryPracticeTemplate = (): NewPromptTemplate => ({
-  name: 'Grouped Retry Practice Explanation',
+  name: 'Problem Explanation',
   subject: 'Math',
   description: 'Creates TwoCard-style teaching explanations for one selected row in grouped homework problems.',
   prompt_content: DEFAULT_GROUPED_RETRY_PRACTICE_PROMPT,
@@ -85,12 +86,11 @@ const SystemPromptConfigNew = () => {
     );
   }
 
-  const usageTypes = [
-    { value: 'chat', label: 'Chat Assistant', description: 'General assistant with cross-subject support, including math specialist' },
-    { value: 'grading', label: 'Exercise Grader', description: 'Prompts for grading student answers' },
-    { value: 'explanation', label: 'Explanation System', description: 'Prompts for generating step-by-step explanations' },
-    { value: 'grouped_retry_practice', label: ui("Grouped Retry Practice"), description: 'Prompts for grouped problem TwoCard-style retry explanations' }
-  ];
+  const usageTypes = PROMPT_USAGE_TYPES.map(value => ({
+    value,
+    label: ui(getPromptUsageLabel(value)),
+    description: ui(PROMPT_USAGE_DESCRIPTIONS[value]),
+  }));
 
   const selectedPromptUsageType = selectedUsageType as PromptUsageType;
   const filteredTemplates = templates.filter(t => t.usage_type === selectedUsageType);
@@ -179,7 +179,7 @@ const SystemPromptConfigNew = () => {
       </div>
 
       <Tabs value={selectedUsageType} onValueChange={setSelectedUsageType}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 md:grid-cols-3 xl:grid-cols-6">
           {usageTypes.map((type) => (
             <TabsTrigger key={type.value} value={type.value} className="text-xs">
               {type.label}
@@ -195,7 +195,7 @@ const SystemPromptConfigNew = () => {
                 {type.description}
                 {activeTemplate && (
                   <span className="ml-2 font-medium">
-                    {ui("Active:")} {activeTemplate.name}
+                    {ui("Active:")} {getPromptTemplateDisplayName(activeTemplate)}
                   </span>
                 )}
               </AlertDescription>
@@ -208,7 +208,7 @@ const SystemPromptConfigNew = () => {
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <CardTitle className="text-lg">{template.name}</CardTitle>
+                          <CardTitle className="text-lg">{getPromptTemplateDisplayName(template)}</CardTitle>
                           {template.is_active && (
                             <Badge variant="default">{ui("Active")}</Badge>
                           )}
@@ -279,9 +279,9 @@ const SystemPromptConfigNew = () => {
                   <CardContent className="p-6 text-center">
                     {type.value === GROUPED_RETRY_PRACTICE_USAGE_TYPE ? (
                       <div className="mx-auto max-w-xl space-y-2">
-                        <p className="font-medium">{ui("No Supabase prompt is installed for grouped retry practice.")}</p>
+                        <p className="font-medium">{ui("No problem explanation template has been created.")}</p>
                         <p className="text-sm text-muted-foreground">
-                          {ui("Apply the latest Supabase migration, or create the default editable template here so newly generated grouped explanations can use it.")}
+                          {ui("Create an editable template to customize new grouped problem explanations. Until then, the app uses its built-in prompt.")}
                         </p>
                       </div>
                     ) : (

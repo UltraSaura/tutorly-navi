@@ -1,5 +1,6 @@
 import { useSubjectLabel } from '@/i18n/useSubjectLabel';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
+import { getSubjectNameForSlug } from '@/utils/examSubjectMapping';
 import { useNavigate } from 'react-router-dom';
 import { useLearningSubjects } from '@/hooks/useLearningSubjects';
 import { useUserCurriculumProfile } from '@/hooks/useUserCurriculumProfile';
@@ -28,7 +29,7 @@ const LearningPage = () => {
   const subjectLabel = useSubjectLabel();
   const ui = useInterfaceTranslation();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { profile } = useUserCurriculumProfile();
   const activeSchoolLevel = useActiveSchoolLevel();
   const { data: subjects, isLoading, isError } = useLearningSubjects();
@@ -71,7 +72,7 @@ const LearningPage = () => {
   }
 
   return <div className="min-h-screen bg-gray-50 dark:bg-background pb-20 mx-[5px]">
-      <PageMeta title={ui("Learning Library")} description={ui("Browse subjects, topics, and video lessons in your Stuwy learning library.")} />
+      <PageMeta title={t('learning.libraryTitle')} description={t('learning.libraryDescription')} />
       {/* Header */}
       <header className="pt-6 pr-6 pb-4 pl-[20px] bg-[#253c7b] shadow-md">
         <div className="flex justify-between items-center">
@@ -89,12 +90,16 @@ const LearningPage = () => {
 
       {/* Subject List */}
       <main className="grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 lg:grid-cols-4">
-        {subjects?.map(({
+        {subjects?.filter(({ subject, lessons_ready }) =>
+          lessons_ready > 0 && (subject.display_context === 'learn' || subject.display_context === 'both')
+        ).map(({
         subject,
         videos_ready,
+        lessons_ready,
         lessons_completed
       }) => {
-        const isReady = videos_ready > 0;
+        const subjectName = getSubjectNameForSlug(subject.slug, language, subject.name);
+        const isReady = lessons_ready > 0;
         const subjectTitleFontSize = Math.max(subject.lesson_font_size ?? subject.font_size ?? 18, 12);
         const subjectTitleFontFamily = subject.lesson_font_family ?? subject.font_family ?? 'Poppins, sans-serif';
         return <div 
@@ -103,8 +108,8 @@ const LearningPage = () => {
             if (isReady) {
               navigate(`/learning/${subject.slug}`);
             } else {
-              toast.info(ui("subjectComingSoon", { subject: subjectLabel(subject.name) }), {
-                description: ui("We're working hard to bring you this content.")
+              toast.info(t('learning.comingSoon', { subject: subjectName }), {
+                description: t('learning.comingSoonDescription')
               });
             }
           }} 
@@ -136,7 +141,7 @@ const LearningPage = () => {
                     className="line-clamp-2 font-semibold leading-tight"
                     style={{ color: subject.lesson_text_color ?? subject.text_color ?? '#050B34', fontSize: `${subjectTitleFontSize}px`, fontFamily: subjectTitleFontFamily }}
                   >
-                    {subjectLabel(subject.name)}
+                    {subjectName}
                   </span>
                   {videos_ready > 0 && (
                     <div style={{ marginTop: 4 }}>
@@ -150,7 +155,7 @@ const LearningPage = () => {
                         }} />
                       </div>
                       <p style={{ fontSize: 9, color: 'rgba(15,23,42,0.5)', margin: '2px 0 0', fontFamily: 'Poppins, sans-serif' }}>
-                        {lessons_completed}/{videos_ready} {ui("lecons")}
+                        {lessons_completed}/{videos_ready} {t('learning.lessons')}
                       </p>
                     </div>
                   )}

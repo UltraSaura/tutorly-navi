@@ -6,6 +6,12 @@
     "cancel": "Cancel"
   },
   "learning": {
+    "libraryTitle": "Learning Library",
+    "libraryDescription": "Browse subjects, topics, and video lessons in your Stuwy learning library.",
+    "comingSoon": "{{subject}} is coming soon!",
+    "comingSoonDescription": "We’re working hard to bring you this content.",
+    "lessons": "lessons",
+
     "chooseSubject": "Choose Your Subject",
     "selectSubject": "Select a subject to begin exploring learning resources.",
     "ready": "ready",
@@ -42,6 +48,30 @@
     "profile": "Profile",
     "settings": "Settings",
     "language": "Language"
+  },
+  "productTour": {
+    "welcome": {
+      "title": "Welcome to Stuwy! 👋",
+      "description": "Your assistant to help you understand your homework and make progress.",
+      "principle": "Stuwy doesn't do the work for you: it guides you so you can understand and succeed."
+    },
+    "home": {
+      "title": "Need help with homework?",
+      "description": "Type your exercise or question here.",
+      "principle": "Stuwy guides you step by step instead of simply giving you the answer."
+    },
+    "plus": {
+      "title": "Add your homework 📎",
+      "description": "Tap + to add your homework without having to type everything."
+    },
+    "photo": {
+      "title": "Take a photo of your homework 📸",
+      "description": "Take a photo of your exercise so Stuwy can guide you step by step, or import a document."
+    },
+    "practice": { "title": "Practice 🎯", "description": "Practice with exercises adapted to your level to check what you've understood and keep improving." },
+    "learning": { "title": "Learn and review 📚", "description": "Find lessons that match your curriculum and school level." },
+    "complete": { "title": "You're ready! 🚀", "description": "Send your first exercise to Stuwy." },
+    "actions": { "next": "Next", "previous": "Previous", "skip": "Skip", "discover": "Discover Stuwy", "start": "Start", "replay": "Replay guided tour" }
   },
   "language": {
     "english": "English",

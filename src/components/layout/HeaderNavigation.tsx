@@ -3,6 +3,7 @@ import { useState } from "react";
 import { MessageSquare, GraduationCap, HeadphonesIcon, History, User, Globe, LogOut, ChevronDown, Settings, BookOpen, Trophy, Target } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/context/SimpleLanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { hardLogout } from "@/lib/logout";
@@ -47,7 +48,7 @@ const desktopNavigation = [
 ];
 
 const LanguageMenuItems = () => {
-  const { i18n, t } = useTranslation();
+  const { language, changeLanguage, t } = useLanguage();
 
   const languages = [
     { code: 'en', name: t('language.english'), flag: '🇺🇸' },
@@ -69,20 +70,12 @@ const LanguageMenuItems = () => {
       {languages.map((lang) => (
         <DropdownMenuItem
           key={lang.code}
-          onClick={() => {
-            // Sync both language systems
-            i18n.changeLanguage(lang.code);
-            localStorage.setItem('lang', lang.code);
-            localStorage.setItem('languageManuallySet', 'true');
-            
-            // Reload page to ensure all components pick up the language change
-            window.location.reload();
-          }}
-          className={i18n.resolvedLanguage === lang.code ? 'bg-accent' : ''}
+          onClick={() => changeLanguage(lang.code)}
+          className={language === lang.code ? 'bg-accent' : ''}
         >
           <span className="mr-2">{lang.flag}</span>
           {lang.name}
-          {i18n.resolvedLanguage === lang.code && !manuallySet && (
+          {language === lang.code && !manuallySet && (
             <span className="ml-auto text-xs text-muted-foreground">{t('language.auto')}</span>
           )}
         </DropdownMenuItem>
@@ -125,6 +118,7 @@ export function HeaderNavigation() {
               <NavLink
                 key={item.title}
                 to={item.url}
+                data-tour={`nav-${item.title.replace('nav.', '')}`}
                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActiveRoute
                     ? "bg-accent text-accent-foreground"

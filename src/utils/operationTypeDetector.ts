@@ -25,6 +25,8 @@ export interface ExerciseProfile {
   maxDigits: number;
   operand1Digits: number;
   operand2Digits: number;
+  operand1TrailingZeros: number;
+  operand2TrailingZeros: number;
   decimalPlaces: number;
   decimalSeparator: ',' | '.';
 }
@@ -78,6 +80,12 @@ function countTokenDecimalPlaces(token: string): number {
   const normalized = token.trim().replace('%', '').replace(',', '.');
   if (!normalized.includes('.')) return 0;
   return normalized.split('.')[1]?.replace(/\D/g, '').length || 0;
+}
+
+function countTrailingZeros(token: string): number {
+  const digits = token.trim().replace(/[^0-9]/g, '');
+  const match = digits.match(/0+$/);
+  return match ? match[0].length : 0;
 }
 
 function detectTokenKind(token: string): ExerciseNumberKind {
@@ -219,6 +227,8 @@ export function analyzeExerciseProfile(expression: string): ExerciseProfile {
     maxDigits,
     operand1Digits,
     operand2Digits,
+    operand1TrailingZeros: numberKind === 'integer' ? countTrailingZeros(left) : 0,
+    operand2TrailingZeros: numberKind === 'integer' ? countTrailingZeros(right) : 0,
     decimalPlaces,
     decimalSeparator,
   };
@@ -347,6 +357,41 @@ function formatDecimal(value: number, places: number, separator: ',' | '.'): str
 export function generateProfileMatchedExample(profile: ExerciseProfile): string {
   const digits = profile.digitBand;
   const separator = profile.decimalSeparator;
+
+  if (profile.numberKind === 'integer' && profile.operationType === 'division') {
+    const makeOperand = (length: number, firstDigit: string, fillDigit: string) =>
+      `${firstDigit}${fillDigit.repeat(Math.max(0, length - 1))}`;
+    const divisor = BigInt(makeOperand(profile.operand2Digits, '4', '8'));
+    const minimumDividend = 10n ** BigInt(Math.max(0, profile.operand1Digits - 1));
+    const maximumDividend = (10n ** BigInt(profile.operand1Digits)) - 1n;
+
+    if (profile.divisionKind === 'exact' && divisor > 0n) {
+      const quotient = (minimumDividend + divisor - 1n) / divisor;
+      const dividend = divisor * quotient;
+      if (dividend <= maximumDividend) {
+        return `${dividend} ÷ ${divisor} = ${quotient}`;
+      }
+    }
+
+    let dividend = BigInt(makeOperand(profile.operand1Digits, '1', '2'));
+    if (profile.divisionKind === 'remainder' && divisor > 0n && dividend % divisor === 0n) {
+      dividend += 1n;
+    }
+    const quotient = divisor > 0n ? dividend / divisor : 0n;
+    const remainder = divisor > 0n ? dividend % divisor : dividend;
+    return `${dividend} ÷ ${divisor} = ${quotient} reste ${remainder}`;
+  }
+
+  if (profile.numberKind === 'integer' && profile.operationType === 'multiplication') {
+    const makeOperand = (length: number, firstDigit: string, trailingZeros: number) => {
+      const zeroCount = Math.min(trailingZeros, Math.max(0, length - 1));
+      const significantDigits = Math.max(1, length - zeroCount);
+      return `${firstDigit}${'3'.repeat(significantDigits - 1)}${'0'.repeat(zeroCount)}`;
+    };
+    const left = makeOperand(profile.operand1Digits, '3', profile.operand1TrailingZeros);
+    const right = makeOperand(profile.operand2Digits, '4', profile.operand2TrailingZeros);
+    return `${left} × ${right} = ${(BigInt(left) * BigInt(right)).toString()}`;
+  }
 
   if (profile.numberKind === 'decimal') {
     const places = Math.max(profile.decimalPlaces, 1);
@@ -519,7 +564,13 @@ export function validateExampleOperationType(
   const isValidOperation = studentProfile.operationType === exampleProfile.operationType &&
     studentProfile.operationType !== 'unknown' &&
     exampleProfile.operationType !== 'unknown';
-  const digitCountValid = exampleProfile.digitBand === studentProfile.digitBand;
+  const digitCountValid =
+    exampleProfile.operand1Digits === studentProfile.operand1Digits &&
+    exampleProfile.operand2Digits === studentProfile.operand2Digits;
+  const zeroStructureValid =
+    studentProfile.operationType !== 'multiplication' ||
+    (exampleProfile.operand1TrailingZeros === studentProfile.operand1TrailingZeros &&
+      exampleProfile.operand2TrailingZeros === studentProfile.operand2TrailingZeros);
   const numberKindValid = exampleProfile.numberKind === studentProfile.numberKind;
   const decimalPlacesValid =
     studentProfile.numberKind !== 'decimal' ||
@@ -534,7 +585,7 @@ export function validateExampleOperationType(
     studentProfile.operationType !== 'subtraction' ||
     studentProfile.requiresBorrow === exampleProfile.requiresBorrow;
 
-  const overallValid = isValidOperation && digitCountValid && numberKindValid && decimalPlacesValid && divisionKindValid && carryPatternValid && borrowPatternValid;
+  const overallValid = isValidOperation && digitCountValid && zeroStructureValid && numberKindValid && decimalPlacesValid && divisionKindValid && carryPatternValid && borrowPatternValid;
 
   let reason = '';
   if (!isValidOperation) reason = 'Different operation type';
@@ -543,6 +594,7 @@ export function validateExampleOperationType(
   else if (!carryPatternValid) reason = `Different carry pattern (${exampleProfile.requiresCarry} vs ${studentProfile.requiresCarry})`;
   else if (!borrowPatternValid) reason = `Different borrow pattern (${exampleProfile.requiresBorrow} vs ${studentProfile.requiresBorrow})`;
   else if (!decimalPlacesValid) reason = `Different decimal places (${exampleProfile.decimalPlaces} vs ${studentProfile.decimalPlaces})`;
+  else if (!zeroStructureValid) reason = 'Different trailing-zero structure';
   else if (!digitCountValid) reason = `Different digit band (${exampleProfile.digitBand} vs ${studentProfile.digitBand})`;
   
   return {

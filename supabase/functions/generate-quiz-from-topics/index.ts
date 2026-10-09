@@ -462,6 +462,13 @@ function validateQuestions(questions: any[]): any[] {
     if (q.kind === 'numeric') {
       if (typeof q.answer !== 'number') q.answer = Number(q.answer);
       if (!Number.isFinite(q.answer)) return false;
+      if (q.answerFormat === 'time') {
+        const hours = Number(q.timeAnswer?.hours);
+        const minutes = Number(q.timeAnswer?.minutes);
+        if (!Number.isInteger(hours) || !Number.isInteger(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return false;
+        q.answer = hours * 100 + minutes;
+        delete q.range;
+      }
     }
     if (q.kind === 'ordering') {
       if (!Array.isArray(q.items) || !Array.isArray(q.correctOrder) || q.items.length < 2) return false;
@@ -666,6 +673,11 @@ For "single" or "multi":
 
 For "numeric":
 { "id": "q-2", "kind": "numeric", "prompt": "...", "hint": "...", "points": 1, "answer": 42, "range": {"min": 40, "max": 44} }
+
+For a measurement or quantity with a unit, include "answerUnit" with the exact expected unit, for example: { "answer": 125, "answerUnit": "cm" } or { "answer": 90, "answerUnit": "min" }. Never use a bare numeric response when the answer needs a unit.
+
+For a clock-time answer, ALWAYS use the time format (never encode 9 h 55 as a plain 955 and never add a numeric range):
+{ "id": "q-time", "kind": "numeric", "answerFormat": "time", "answer": 955, "timeAnswer": {"hours": 9, "minutes": 55}, "dragOptions": [955, 945, 1005, 1015], "prompt": "...", "hint": "...", "points": 1 }
 
 For "ordering":
 { "id": "q-3", "kind": "ordering", "prompt": "...", "hint": "...", "points": 1, "items": ["B","A","C"], "correctOrder": ["A","B","C"] }
