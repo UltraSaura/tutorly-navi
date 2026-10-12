@@ -1744,5 +1744,35 @@
   "Create an editable template to customize new grouped problem explanations. Until then, the app uses its built-in prompt.": "Create an editable template to customize new grouped problem explanations. Until then, the app uses its built-in prompt.",
   "Time (hours and minutes)": "Time (hours and minutes)",
   "Lesson": "Lesson",
-  "Approval": "Approval"
+  "Approval": "Approval",
+  "Correct!": "Correct!",
+  "Look at the value of one graduation and try again.": "Look at the value of one graduation and try again.",
+  "Activity complete!": "Activity complete!",
+  "Try again": "Try again",
+  "Choose a graduation": "Choose a graduation",
+  "Order values from smallest to largest": "Order values from smallest to largest",
+  "Move up": "Move up",
+  "Move down": "Move down",
+  "Check answer": "Check answer",
+  "Back to Practice": "Back to Practice",
+  "Next activity": "Next activity"
+  ,"Choose a label, then tap the graduation where you want to place it.": "Choose a label, then tap the graduation where you want to place it."
+  ,"Values to place": "Values to place"
+  ,"Selected label": "Selected label"
+  ,"Choose a label to begin.": "Choose a label to begin."
+  ,"Drag each label onto the correct graduation.": "Drag each label onto the correct graduation."
+  ,"You can also tap a label, then a graduation.": "You can also tap a label, then a graduation."
+  ,"Clear label": "Clear label"
+  ,"Reset placements": "Reset placements"
+  ,"Correct": "Correct"
+  ,"To correct": "To correct"
+  ,"Correct placement": "Correct placement."
+  ,"Halfway hint": "1/2 is halfway between 0 and 1."
+  ,"Three quarters hint": "0.75 has the same value as 3/4."
+  ,"Greater than one hint": "This value is greater than 1, so it belongs after 1."
+  ,"Graduation value hint": "Look at the value of one graduation. Each graduation is"
+  ,"Write the value": "Write the value"
+  ,"Choose a label, then slide the handle or tap the right graduation.": "Choose a label, then slide the handle or tap the right graduation."
+  ,"Accessible option: choose from a list": "Accessible option: choose from a list"
+  ,"Need help? Choose from a list": "Need help? Choose from a list"
 }

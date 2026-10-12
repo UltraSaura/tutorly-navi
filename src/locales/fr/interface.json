@@ -1744,5 +1744,35 @@
   "Create an editable template to customize new grouped problem explanations. Until then, the app uses its built-in prompt.": "Créez un modèle modifiable pour personnaliser les nouvelles explications de problèmes groupés. En attendant, l’application utilise son prompt intégré.",
   "Time (hours and minutes)": "Heure (heures et minutes)",
   "Lesson": "Leçon",
-  "Approval": "Approbation"
+  "Approval": "Approbation",
+  "Correct!": "Correct !",
+  "Look at the value of one graduation and try again.": "Regarde la valeur d’une graduation et réessaie.",
+  "Activity complete!": "Activité terminée !",
+  "Try again": "Réessayer",
+  "Choose a graduation": "Choisis une graduation",
+  "Order values from smallest to largest": "Range les valeurs du plus petit au plus grand",
+  "Move up": "Monter",
+  "Move down": "Descendre",
+  "Check answer": "Vérifier la réponse",
+  "Back to Practice": "Retour aux exercices",
+  "Next activity": "Activité suivante"
+  ,"Choose a label, then tap the graduation where you want to place it.": "Choisis une étiquette, puis touche la graduation où tu veux la placer."
+  ,"Values to place": "Valeurs à placer"
+  ,"Selected label": "Étiquette sélectionnée"
+  ,"Choose a label to begin.": "Choisis une étiquette pour commencer."
+  ,"Drag each label onto the correct graduation.": "Glisse chaque étiquette sur la bonne graduation."
+  ,"You can also tap a label, then a graduation.": "Tu peux aussi toucher une étiquette puis une graduation."
+  ,"Clear label": "Effacer l’étiquette"
+  ,"Reset placements": "Réinitialiser les placements"
+  ,"Correct": "Correct"
+  ,"To correct": "À corriger"
+  ,"Correct placement": "Placement correct."
+  ,"Halfway hint": "1/2 est au milieu entre 0 et 1."
+  ,"Three quarters hint": "0,75 est la même valeur que 3/4."
+  ,"Greater than one hint": "Cette valeur est supérieure à 1, elle se place après 1."
+  ,"Graduation value hint": "Regarde la valeur d’une graduation. Chaque graduation vaut"
+  ,"Write the value": "Écris la valeur"
+  ,"Choose a label, then slide the handle or tap the right graduation.": "Choisis une étiquette, puis fais glisser le curseur ou touche la bonne graduation."
+  ,"Accessible option: choose from a list": "Option accessible : choisir dans une liste"
+  ,"Need help? Choose from a list": "Besoin d’aide ? Choisir dans une liste"
 }
