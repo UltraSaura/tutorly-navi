@@ -1,3 +1,4 @@
+import { useLearner } from '@/context/FamilyProfileContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Topic, Video } from '@/types/learning';
@@ -46,14 +47,15 @@ interface CoursePlaylistData {
 }
 
 export function useCoursePlaylist(topicSlug: string) {
+  const { learnerId, user: learner } = useLearner();
   const activeSchoolLevel = useActiveSchoolLevel();
   const { language: userLanguage } = useLanguage();
   const { isAdmin } = useAdminAuth();
   
   return useQuery({
-    queryKey: ['course-playlist', topicSlug, activeSchoolLevel.activeLevel, userLanguage, isAdmin, activeSchoolLevel.isPreviewing],
+    queryKey: ['course-playlist', learnerId, topicSlug, activeSchoolLevel.activeLevel, userLanguage, isAdmin, activeSchoolLevel.isPreviewing],
     queryFn: async (): Promise<CoursePlaylistData> => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = { data: { user: learner } };
 
       // Get topic
       const { data: topic, error: topicError } = await (supabase as any)

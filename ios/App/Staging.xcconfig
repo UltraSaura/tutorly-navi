@@ -1,0 +1,5 @@
+// Build-only overrides for the internal staging app. Production project
+// settings and bundle identifiers remain unchanged.
+PRODUCT_BUNDLE_IDENTIFIER = com.tutorly.learning.staging
+PRODUCT_NAME = Stuwy Staging
+INFOPLIST_FILE = App/Info-Staging.plist

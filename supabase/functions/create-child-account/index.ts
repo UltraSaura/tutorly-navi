@@ -1,8 +1,9 @@
+import { requireParent } from '../_shared/family-access.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
 };
 
 interface CreateChildRequest {
@@ -23,6 +24,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    await requireParent(req);
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
@@ -35,7 +37,7 @@ Deno.serve(async (req) => {
     // Client for authenticated user
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
-        headers: { Authorization: authHeader },
+        headers: { Authorization: authHeader, 'x-family-grant': req.headers.get('x-family-grant') ?? '' },
       },
     });
 

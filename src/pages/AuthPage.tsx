@@ -1,3 +1,4 @@
+import { useFamilyProfile } from '@/context/FamilyProfileContext';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
@@ -21,6 +22,7 @@ type AuthStep = 'login' | 'userType' | 'studentForm' | 'parentForm' | 'resetPass
 
 const AuthPage: React.FC = () => {
   const ui = useInterfaceTranslation();
+  const family = useFamilyProfile();
   const { user, loading: authLoading, signIn, signUp, signOut, resetPassword } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminAuth();
   const { t } = useTranslation();
@@ -44,7 +46,7 @@ const AuthPage: React.FC = () => {
   }, [state?.message, toast]);
 
   // Redirect if already authenticated
-  if (authLoading || adminLoading) {
+  if (authLoading || family.loading || (!family.isFamily && adminLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin" />
@@ -53,6 +55,8 @@ const AuthPage: React.FC = () => {
   }
 
   if (user) {
+    if (family.isFamily) return <Navigate to="/family" replace />;
+    if (family.isLegacyGuardian) return <Navigate to="/guardian" replace />;
     const returnTo = state?.returnTo || "/";
     
     // Special handling for admin routes
@@ -106,7 +110,7 @@ const AuthPage: React.FC = () => {
       if (error) {
         toast({
           title: t('auth.loginError'),
-          description: error.message,
+          description: error.message === 'family.backendUnavailable' ? ui(error.message) : error.message,
           variant: 'destructive',
         });
       }
@@ -230,7 +234,7 @@ const AuthPage: React.FC = () => {
 
       toast({
         title: t('auth.registrationSuccess'),
-        description: `${t('auth.checkEmail')} An administrator will review your account before you can sign in.`,
+        description: t('auth.checkEmail'),
       });
       
       setStep('login');

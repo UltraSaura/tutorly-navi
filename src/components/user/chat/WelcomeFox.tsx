@@ -4,7 +4,7 @@ import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { useAuth } from "@/context/AuthContext";
+import { useLearner } from "@/context/FamilyProfileContext";
 import { useLanguage } from "@/context/SimpleLanguageContext";
 import { TutorWelcomeBubble } from "./TutorWelcomeBubble";
 
@@ -35,7 +35,7 @@ const resolveFirstName = (
 export function WelcomeFox({ userName }: WelcomeFoxProps) {
   const ui = useInterfaceTranslation();
   const { profile } = useUserProfile();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const { language } = useLanguage();
   const [showBubble, setShowBubble] = useState(false);
 

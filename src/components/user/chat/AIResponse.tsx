@@ -533,7 +533,7 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
     setGroupedRetryPracticeFeedbackLoading(true);
     try {
       const { data: current, error: currentError } = await supabase
-        .from('exercise_explanations_cache')
+        .from('learner_explanations_cache')
         .select('quality_score')
         .eq('id', cacheEntryId)
         .single();
@@ -551,7 +551,7 @@ const AIResponse: React.FC<AIResponseProps> = ({ messages, isLoading, onSubmitAn
             : currentScore - 1;
 
       const { error: updateError } = await supabase
-        .from('exercise_explanations_cache')
+        .from('learner_explanations_cache')
         .update({ quality_score: nextScore })
         .eq('id', cacheEntryId);
 

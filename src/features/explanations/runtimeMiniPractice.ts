@@ -40,7 +40,7 @@ export interface RuntimeMiniPracticeContext {
   enabled?: boolean;
 }
 
-type SimpleArithmeticOp = "+" | "-";
+type SimpleArithmeticOp = "+" | "-" | "*" | "/";
 
 interface SimpleArithmeticExercise {
   a: number;
@@ -202,16 +202,22 @@ function stringValue(value: unknown): string {
 }
 
 export function parseSimpleArithmeticExercise(exercise: string): SimpleArithmeticExercise | null {
-  if (!exercise) return null;
-  const match = exercise.replace(/,/g, ".").match(/(\d+)\s*([+\-])\s*(\d+)/);
+  const normalized = exercise
+    .replace(/\s+/g, "")
+    .replace(/−/g, "-")
+    .replace(/×/g, "*")
+    .replace(/x/gi, "*")
+    .replace(/÷/g, "/")
+    .replace(/,/g, ".");
+
+  const match = normalized.match(/^(-?\d+(?:\.\d+)?)([+\-*/])(-?\d+(?:\.\d+)?)$/);
   if (!match) return null;
 
-  const a = Number.parseInt(match[1], 10);
-  const op = match[2] as SimpleArithmeticOp;
-  const b = Number.parseInt(match[3], 10);
+  const a = Number(match[1]);
+  const b = Number(match[3]);
+  const op = match[2] as SimpleArithmeticExercise["op"];
 
   if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
-  if (a < 0 || b < 0) return null;
 
   return { a, b, op };
 }
@@ -359,6 +365,10 @@ export function buildDirectArithmeticMiniPracticeForContext(
   }
 
   const languageCode = /^fr/i.test(context.language || "") ? "fr" : "en";
+  if (parsedExercise.op === "*" || parsedExercise.op === "/") {
+    return buildDeterministicArithmeticMiniPractice(parsedExercise, learningStyle || normalizeLearningStyle(context.learningStyle), languageCode);
+  }
+
   return buildKidArithmeticDirectPractice(
     parsedExercise,
     learningStyle || normalizeLearningStyle(context.learningStyle),
@@ -455,6 +465,179 @@ function normalizeChoices(rawChoices: unknown): MiniPracticeChoice[] | undefined
   return choices.length > 0 ? choices : undefined;
 }
 
+function formatPracticeNumber(value: number, language: "fr" | "en"): string {
+  if (Number.isInteger(value)) return String(value);
+  const fixed = Number(value.toFixed(2)).toString();
+  return language === "fr" ? fixed.replace(".", ",") : fixed;
+}
+
+function computeArithmeticResult(parsed: SimpleArithmeticExercise): number | null {
+  switch (parsed.op) {
+    case "+":
+      return parsed.a + parsed.b;
+    case "-":
+      return parsed.a - parsed.b;
+    case "*":
+      return parsed.a * parsed.b;
+    case "/":
+      return parsed.b === 0 ? null : parsed.a / parsed.b;
+    default:
+      return null;
+  }
+}
+
+function buildVerticalVisual(parsed: SimpleArithmeticExercise, language: "fr" | "en"): string | undefined {
+  if (!Number.isInteger(parsed.a) || !Number.isInteger(parsed.b)) return undefined;
+  if (!["+", "-", "*"].includes(parsed.op)) return undefined;
+
+  const left = String(parsed.a);
+  const right = String(parsed.b);
+  const width = Math.max(left.length, right.length) + 2;
+  const symbol = parsed.op === "*" ? "×" : parsed.op;
+
+  return [
+    left.padStart(width, " "),
+    `${symbol} ${right.padStart(width - 2, " ")}`,
+    "-".repeat(width),
+  ].join("\n");
+}
+
+function buildArithmeticChoices(
+  parsed: SimpleArithmeticExercise,
+  correct: number,
+  language: "fr" | "en"
+): { choices: MiniPracticeChoice[]; correctId: string } {
+  const distractors = new Set<number>();
+
+  const addDistractor = (value: number) => {
+    if (!Number.isFinite(value) || value === correct) return;
+    distractors.add(value);
+  };
+
+  switch (parsed.op) {
+    case "+":
+      addDistractor(correct - 1);
+      addDistractor(correct + 1);
+      addDistractor(correct - 10);
+      addDistractor(correct + 10);
+      break;
+    case "-":
+      addDistractor(correct - 1);
+      addDistractor(correct + 1);
+      addDistractor(parsed.a + parsed.b);
+      addDistractor(Math.abs(correct) + 10);
+      break;
+    case "*":
+      addDistractor(correct - parsed.b);
+      addDistractor(correct + parsed.b);
+      addDistractor(correct + parsed.a);
+      addDistractor(correct - 1);
+      break;
+    case "/":
+      addDistractor(correct - 1);
+      addDistractor(correct + 1);
+      addDistractor(parsed.b);
+      addDistractor(parsed.a - parsed.b);
+      break;
+  }
+
+  const orderedDistractors = Array.from(distractors).filter((value) => value >= 0).slice(0, 2);
+  while (orderedDistractors.length < 2) {
+    const candidate = correct + orderedDistractors.length + 2;
+    if (candidate !== correct) orderedDistractors.push(candidate);
+  }
+
+  const values = [orderedDistractors[0], correct, orderedDistractors[1]];
+  const ids = ["A", "B", "C"] as const;
+  const choices = values.map((value, index) => ({
+    id: ids[index],
+    label: formatPracticeNumber(value, language),
+  }));
+
+  return { choices, correctId: "B" };
+}
+
+function buildArithmeticPrompt(parsed: SimpleArithmeticExercise, language: "fr" | "en"): string {
+  const op = parsed.op === "*" ? "×" : parsed.op === "/" ? "÷" : parsed.op;
+  return language === "fr"
+    ? `Calcule : ${formatPracticeNumber(parsed.a, language)} ${op} ${formatPracticeNumber(parsed.b, language)}`
+    : `Solve: ${formatPracticeNumber(parsed.a, language)} ${op} ${formatPracticeNumber(parsed.b, language)}`;
+}
+
+function buildArithmeticHint(parsed: SimpleArithmeticExercise, language: "fr" | "en"): string {
+  if (language === "fr") {
+    switch (parsed.op) {
+      case "+":
+        return "Additionne d'abord les unités, puis les dizaines si besoin.";
+      case "-":
+        return "Commence par les unités et pense à l'emprunt si le chiffre du haut est plus petit.";
+      case "*":
+        return "Appuie-toi sur la table de multiplication correspondante.";
+      case "/":
+        return `Cherche combien de fois ${parsed.b} entre dans ${parsed.a}.`;
+    }
+  }
+
+  switch (parsed.op) {
+    case "+":
+      return "Add the ones first, then regroup into tens if needed.";
+    case "-":
+      return "Start with the ones and borrow if the top digit is smaller.";
+    case "*":
+      return "Use the matching multiplication fact.";
+    case "/":
+      return `Ask how many times ${parsed.b} fits into ${parsed.a}.`;
+  }
+}
+
+function buildArithmeticFeedback(
+  parsed: SimpleArithmeticExercise,
+  correct: number,
+  language: "fr" | "en"
+): RuntimeMiniPractice["feedback"] {
+  const expression = `${formatPracticeNumber(parsed.a, language)} ${
+    parsed.op === "*" ? "×" : parsed.op === "/" ? "÷" : parsed.op
+  } ${formatPracticeNumber(parsed.b, language)}`;
+  const result = formatPracticeNumber(correct, language);
+
+  return language === "fr"
+    ? {
+        correct: `Oui. ${expression} = ${result}.`,
+        incorrect: `Reprends le calcul : ${expression} = ${result}.`,
+      }
+    : {
+        correct: `Yes. ${expression} = ${result}.`,
+        incorrect: `Try again: ${expression} = ${result}.`,
+      };
+}
+
+export function buildDeterministicArithmeticMiniPractice(
+  parsed: SimpleArithmeticExercise,
+  learningStyle: LearningStyle,
+  language: "fr" | "en"
+): RuntimeMiniPractice | null {
+  const correct = computeArithmeticResult(parsed);
+  if (correct === null || !Number.isFinite(correct)) return null;
+
+  if (!Number.isInteger(parsed.a) || !Number.isInteger(parsed.b)) return null;
+  if (parsed.op === "/" && !Number.isInteger(correct)) return null;
+
+  const { choices, correctId } = buildArithmeticChoices(parsed, correct, language);
+
+  return {
+    id: `runtime-arithmetic-${Date.now()}`,
+    concept: language === "fr" ? "calcul" : "calculation",
+    learningStyleUsed: learningStyle,
+    questionType: "multiple_choice",
+    prompt: buildArithmeticPrompt(parsed, language),
+    visualText: buildVerticalVisual(parsed, language),
+    choices,
+    correctAnswer: correctId,
+    hint: buildArithmeticHint(parsed, language),
+    feedback: buildArithmeticFeedback(parsed, correct, language),
+  };
+}
+
 export function validateRuntimeMiniPractice(raw: unknown): RuntimeMiniPractice | null {
   if (!raw || typeof raw !== "object") return null;
   const record = raw as Record<string, unknown>;
@@ -531,7 +714,12 @@ export async function generateRuntimeMiniPractice(
     (!context.gradeLevel || isUnder11YearsOld(context.gradeLevel))
   );
 
-  if (isKidTemplateCandidate && parsedExercise) {
+  if (isKidTemplateCandidate && parsedExercise && (parsedExercise.op === "*" || parsedExercise.op === "/")) {
+    const practice = buildDeterministicArithmeticMiniPractice(parsedExercise, learning_style, languageCode);
+    if (practice) return practice;
+  }
+
+  if (isKidTemplateCandidate && parsedExercise && (parsedExercise.op === "+" || parsedExercise.op === "-")) {
     const directPractice = buildDirectArithmeticMiniPracticeForContext(context, learning_style);
     if (directPractice) return directPractice;
 

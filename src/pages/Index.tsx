@@ -1,3 +1,4 @@
+import { useFamilyProfile } from '@/context/FamilyProfileContext';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { PageMeta } from "@/components/seo/PageMeta";
@@ -13,6 +14,7 @@ import { useTranslation } from "react-i18next";
 
 const Index = () => {
   const ui = useInterfaceTranslation();
+  const family = useFamilyProfile();
   const { user, loading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminAuth();
   const { isGuardian, loading: guardianLoading } = useGuardianAuth();
@@ -37,10 +39,12 @@ const Index = () => {
     }
     
     // If user is a guardian, redirect to guardian portal
-    if (isGuardian) {
-      return <Navigate to="/guardian" replace />;
+    if (family.isFamily) {
+      return <Navigate to={family.activeProfile?.kind === "child" ? "/chat" : family.activeProfile?.kind === "parent" ? "/guardian" : "/family"} replace />;
     }
     
+    if (family.isLegacyGuardian) return <Navigate to="/guardian" replace />;
+
     // Otherwise, redirect to chat for regular students
     return <Navigate to="/chat" replace />;
   }

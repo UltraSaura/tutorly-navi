@@ -1,4 +1,4 @@
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -9,7 +9,7 @@ interface ChildSettings {
 }
 
 export const useChildAuth = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useLearner();
 
   const { data: childData, isLoading } = useQuery({
     queryKey: ['child-auth', user?.id],

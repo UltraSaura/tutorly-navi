@@ -4,7 +4,7 @@ import { Check, Loader2, Palette } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -29,7 +29,7 @@ const OPTIONS: LearningPreferenceOption[] = [
 
 export function LearningPreferenceSelector() {
   const ui = useInterfaceTranslation();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedStyle, setSelectedStyle] = useState<LearningStyle>('mixed');

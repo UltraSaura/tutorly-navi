@@ -1,3 +1,5 @@
+import { FamilyProfileProvider } from './context/FamilyProfileContext';
+import { FamilyRouteBoundary } from './features/family/FamilyRouteBoundary';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -60,6 +62,8 @@ import AdminSettings from "./components/admin/AdminSettings";
 const RecentUpdates = lazy(() => import("./pages/admin/RecentUpdates"));
 const ExamAnnales = lazy(() => import("./pages/admin/ExamAnnales"));
 
+const FamilyPage = lazy(() => import("./pages/FamilyPage"));
+
 // Auth Pages  
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 
@@ -83,6 +87,18 @@ const TeacherStudentDetail = lazy(() => import("./pages/teacher/TeacherStudentDe
 const TeacherTopicDetail = lazy(() => import("./pages/teacher/TeacherTopicDetail"));
 
 const isDev = import.meta.env.DEV;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
+const isLocalSupabase = /^(https?:\/\/)?(127\.0\.0\.1|localhost)(:|\/|$)/i.test(supabaseUrl);
+const isStagingSupabase = supabaseUrl === 'https://sibprjxhbxahouejygeu.supabase.co';
+
+const EnvironmentIndicator = () => (isLocalSupabase || isStagingSupabase) ? (
+  <div
+    data-testid={isLocalSupabase ? 'local-environment-indicator' : 'staging-environment-indicator'}
+    className="fixed right-3 top-3 z-[10000] rounded-full border border-amber-700 bg-amber-300 px-3 py-1 text-xs font-bold tracking-wide text-amber-950 shadow-lg"
+  >
+    {isLocalSupabase ? 'LOCAL · Supabase isolé' : 'STAGING · Supabase'}
+  </div>
+) : null;
 
 // Loading Component
 const LoadingFallback = () => {
@@ -152,17 +168,20 @@ const App = () => {
       <HelmetProvider>
       <ErrorBoundary>
         <TooltipProvider>
+          <EnvironmentIndicator />
           <Toaster />
           <Sonner />
           <OverlayProvider>
             <AuthProvider>
+            <FamilyProfileProvider>
               <AdminPreviewProvider>
                 <SimpleLanguageProvider>
                   <AdminProvider>
                     <BrowserRouter>
-                    <AnimatePresence mode="wait">
+                    <FamilyRouteBoundary><AnimatePresence mode="wait">
                       <Suspense fallback={<LoadingFallback />}>
                       <Routes>
+                        <Route path="/family" element={<FamilyPage />} />
                         {/* Auth Routes */}
                         <Route path="/auth" element={<AuthPage />} />
                         
@@ -289,11 +308,12 @@ const App = () => {
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
-                  </AnimatePresence>
+                  </AnimatePresence></FamilyRouteBoundary>
                     </BrowserRouter>
                   </AdminProvider>
                 </SimpleLanguageProvider>
               </AdminPreviewProvider>
+            </FamilyProfileProvider>
             </AuthProvider>
         </OverlayProvider>
       </TooltipProvider>

@@ -1,3 +1,4 @@
+import { getProfileRuntime, guardianExplanationCacheTable } from '@/features/family/profileRuntime';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -102,9 +103,9 @@ export const useGuardianExerciseHistory = (options: UseGuardianExerciseHistoryOp
       // Manually join explanations by exercise_content match
       const exercisesWithExplanations = await Promise.all(
         (data || []).map(async (exercise) => {
-          const { data: explanation } = await supabase
-            .from('exercise_explanations_cache')
-            .select('*')
+          let explanationQuery = supabase.from(guardianExplanationCacheTable()).select('*');
+          if (!getProfileRuntime()?.legacyGuardian) explanationQuery = explanationQuery.eq('learner_user_id', exercise.user_id);
+          const { data: explanation } = await explanationQuery
             .like('exercise_content', `${exercise.exercise_content}%`)
             .maybeSingle();
 

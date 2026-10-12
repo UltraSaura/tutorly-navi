@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Stuwy Staging</string>
+    <string name="title_activity_main">Stuwy Staging</string>
+    <string name="package_name">com.tutorly.learning.staging</string>
+    <string name="custom_url_scheme">stuwy-staging</string>
+</resources>

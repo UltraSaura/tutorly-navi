@@ -1,3 +1,4 @@
+import { getProfileRuntime, guardianExplanationCacheTable } from '@/features/family/profileRuntime';
 import { useLocale } from '@/i18n/useLocale';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
@@ -56,10 +57,10 @@ export function ExerciseRow({
     console.log('[ExerciseRow] Opening explanation for:', exercise.exercise_content);
     
     // First, check if we have a cached explanation
-    const { data: cachedExplanation, error: cacheError } = await supabase
-      .from('exercise_explanations_cache')
-      .select('*')
-      .eq('exercise_hash', explanationHashForCache(exercise.exercise_content))
+    let cacheQuery = supabase.from(guardianExplanationCacheTable()).select('*')
+      .eq('exercise_hash', explanationHashForCache(exercise.exercise_content));
+    if (!getProfileRuntime()?.legacyGuardian) cacheQuery = cacheQuery.eq('learner_user_id', exercise.user_id);
+    const { data: cachedExplanation, error: cacheError } = await cacheQuery
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();

@@ -1,3 +1,4 @@
+import { requirePrivilegedFamily } from '../_shared/family-access.ts';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
@@ -8,7 +9,7 @@ import { resolveEdition } from './curriculum-resolution.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
 };
 
 const SUPPORTED_MODELS = ['gpt-5', 'gpt-4.1', 'deepseek-chat', 'claude-3-5-sonnet-20241022'];
@@ -105,6 +106,7 @@ serve(async (req) => {
   }
 
   try {
+    await requirePrivilegedFamily(req);
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(

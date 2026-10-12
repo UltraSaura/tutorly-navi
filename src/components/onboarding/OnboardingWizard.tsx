@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { useUserCurriculumProfile } from '@/hooks/useUserCurriculumProfile';
 import type { LearningStyle } from '@/types/learning-style';
 
@@ -69,7 +69,7 @@ const LEARNING_STYLES: {
 
 export function OnboardingWizard() {
   const ui = useInterfaceTranslation();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const queryClient = useQueryClient();
   const { updateProfile } = useUserCurriculumProfile();
 

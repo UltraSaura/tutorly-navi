@@ -8,14 +8,17 @@ import { OverviewTab } from './tabs/OverviewTab';
 import { ActivityTab } from './tabs/ActivityTab';
 import { ProgressTab } from './tabs/ProgressTab';
 import { ChildrenTab } from './tabs/ChildrenTab';
+import { Button } from '@/components/ui/button';
+import { Check, X } from 'lucide-react';
 
 interface UserDetailsProps {
   user: UserType;
   onAddChildClick: () => void;
   onUserSelect: (user: UserType) => void;
+  onApprovalChange: (user: UserType, status: 'approved' | 'rejected') => void;
 }
 
-export const UserDetails = ({ user, onAddChildClick, onUserSelect }: UserDetailsProps) => {
+export const UserDetails = ({ user, onAddChildClick, onUserSelect, onApprovalChange }: UserDetailsProps) => {
   const ui = useInterfaceTranslation();
   return (
     <Card className="glass">
@@ -23,6 +26,23 @@ export const UserDetails = ({ user, onAddChildClick, onUserSelect }: UserDetails
         <UserHeader user={user} />
       </CardHeader>
       <CardContent>
+        {user.approval_status === 'pending' && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="mb-3 text-sm font-medium text-amber-900">
+              {ui('This account is waiting for approval.')}
+            </p>
+            <div className="flex gap-2">
+              <Button type="button" size="sm" onClick={() => onApprovalChange(user, 'approved')}>
+                <Check className="mr-2 h-4 w-4" aria-hidden="true" />
+                {ui('Approve Account')}
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => onApprovalChange(user, 'rejected')}>
+                <X className="mr-2 h-4 w-4" aria-hidden="true" />
+                {ui('Reject Account')}
+              </Button>
+            </div>
+          </div>
+        )}
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid grid-cols-3 w-full glass">
             <TabsTrigger value="overview">{ui("Overview")}</TabsTrigger>

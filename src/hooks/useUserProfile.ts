@@ -1,4 +1,4 @@
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { useState, useEffect } from 'react';
 
 interface UserProfile {
@@ -12,7 +12,7 @@ interface UserProfile {
 }
 
 export const useUserProfile = () => {
-  const { user } = useAuth();
+  const { user } = useLearner();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 

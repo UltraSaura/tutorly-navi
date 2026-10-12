@@ -1,10 +1,11 @@
+import { requirePrivilegedFamily } from '../_shared/family-access.ts';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
 };
 
 interface ObjectiveSuggestion {
@@ -19,6 +20,7 @@ serve(async (req) => {
   }
 
   try {
+    await requirePrivilegedFamily(req);
     const { topicName, topicDescription, topicKeywords, levelCode, countryCode } = await req.json();
 
     if (!topicName) {

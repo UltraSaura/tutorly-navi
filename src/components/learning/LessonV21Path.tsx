@@ -1,30 +1,30 @@
+import { learnerStorageKey } from '@/features/family/profileRuntime';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Lock, Play, Check, ArrowLeft } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { LessonV2Player } from './LessonV2Player';
 import type { LessonV21 } from '@/types/lesson-generator';
 import { updateMasteryFromTaskResult } from '@/lib/mastery';
 
 type Props = { topicId: string; subjectId?: string | null; topicName: string; lesson: LessonV21 };
-const key = (topicId: string) => `stuwy:v21-levels:${topicId}`;
-const positionKey = (topicId: string) => `stuwy:v21-level-position:${topicId}`;
+const key = (topicId: string, learnerId?: string) => learnerStorageKey(`stuwy:v21-levels:${topicId}`, learnerId);
+const positionKey = (topicId: string, learnerId?: string) => learnerStorageKey(`stuwy:v21-level-position:${topicId}`, learnerId);
 
 export function LessonV21Path({ topicId, subjectId, topicName, lesson }: Props) {
-  const { user } = useAuth();
+  const { user } = useLearner();
   const [completed, setCompleted] = useState<Record<string, number>>({});
   const [positions, setPositions] = useState<Record<string, number>>({});
   const [selected, setSelected] = useState<number | null>(null);
-  useEffect(() => { try { const raw = localStorage.getItem(key(topicId)); if (raw) setCompleted(JSON.parse(raw)); const saved = localStorage.getItem(positionKey(topicId)); if (saved) setPositions(JSON.parse(saved)); } catch { /* ignore */ } }, [topicId]);
+  useEffect(() => { try { const raw = localStorage.getItem(key(topicId, user?.id)); setCompleted(raw ? JSON.parse(raw) : {}); const saved = localStorage.getItem(positionKey(topicId, user?.id)); setPositions(saved ? JSON.parse(saved) : {}); } catch { /* ignore */ } }, [topicId, user?.id]);
   const current = useMemo(() => lesson.levels.findIndex((level) => !((completed[level.id] ?? 0) >= (level.lesson.mastery.threshold ?? 0.8))), [completed, lesson.levels]);
   const unlock = (index: number) => index <= Math.max(0, current);
   const persist = async (index: number, score: number, position = 0) => {
     const level = lesson.levels[index]; if (!level) return;
     const threshold = level.lesson.mastery.threshold ?? 0.8;
     const next = { ...completed, [level.id]: Math.max(completed[level.id] ?? 0, score) };
-    setCompleted(next); try { localStorage.setItem(key(topicId), JSON.stringify(next)); } catch { /* ignore */ }
+    setCompleted(next); try { localStorage.setItem(key(topicId, user?.id), JSON.stringify(next)); } catch { /* ignore */ }
+    // V2 per-level state stays learner-scoped on this device. No optional V2 table is required.
     if (user?.id) {
-      await (supabase as any).from('topic_lesson_level_progress').upsert({ user_id: user.id, topic_id: topicId, level_id: level.id, status: score >= threshold ? 'mastered' : 'remediation', score, sequence_position: position, attempts: 1, mastered_at: score >= threshold ? new Date().toISOString() : null }, { onConflict: 'user_id,topic_id,level_id' });
       await Promise.all(level.objective_ids.map((objectiveId) => updateMasteryFromTaskResult({ studentId: user.id, topicId, objectiveId, scorePercent: Math.round(score * 100) })));
     }
   };
@@ -34,10 +34,10 @@ export function LessonV21Path({ topicId, subjectId, topicName, lesson }: Props) 
     setPositions((previous) => {
       if (previous[levelId] === position) return previous;
       const next = { ...previous, [levelId]: position };
-      try { localStorage.setItem(positionKey(topicId), JSON.stringify(next)); } catch { /* ignore */ }
+      try { localStorage.setItem(positionKey(topicId, user?.id), JSON.stringify(next)); } catch { /* ignore */ }
       return next;
     });
-  }, [lesson.levels, topicId]);
+  }, [lesson.levels, topicId, user?.id]);
   const handleSequencePosition = useCallback((position: number) => {
     if (selected != null) rememberPosition(selected, position);
   }, [rememberPosition, selected]);

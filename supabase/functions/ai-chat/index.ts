@@ -1,3 +1,4 @@
+import { requireLearner } from '../_shared/family-access.ts';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
@@ -27,7 +28,7 @@ import {
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
 };
 
 // Simple in-memory rate limiter
@@ -56,7 +57,7 @@ serve(async (req) => {
   // Set CORS headers for all responses
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
   };
 
   // Handle CORS preflight requests
@@ -76,9 +77,10 @@ serve(async (req) => {
   }
 
   console.log(`🚀 ${req.method} request to ai-chat function at ${new Date().toISOString()}`);
-  console.log('📋 Request headers:', Object.fromEntries(req.headers.entries()));
+
 
   try {
+    await requireLearner(req);
     // Parse request body with detailed logging
     const requestText = await req.text();
     console.log('📥 Raw request received, length:', requestText.length);

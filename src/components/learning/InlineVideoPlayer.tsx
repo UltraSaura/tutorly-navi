@@ -12,7 +12,7 @@ import { isYouTubeUrl, extractYouTubeVideoId, getYouTubeWatchUrl, loadYouTubeAPI
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useUpdateObjectiveMastery } from '@/hooks/useObjectiveMastery';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 
 interface InlineVideoPlayerProps {
   videoId: string;
@@ -41,7 +41,7 @@ export function InlineVideoPlayer({ videoId, onClose }: InlineVideoPlayerProps) 
   const [showControls, setShowControls] = useState(true);
   const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { user } = useAuth();
+  const { user } = useLearner();
   const updateMastery = useUpdateObjectiveMastery();
 
   const {

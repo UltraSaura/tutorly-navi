@@ -1,3 +1,4 @@
+import { useLearner } from '@/context/FamilyProfileContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserCurriculumProfile } from './useUserCurriculumProfile';
@@ -17,6 +18,7 @@ interface SubjectDashboardData {
 }
 
 export function useSubjectDashboard(subjectSlug: string) {
+  const { learnerId, user: learner } = useLearner();
   const { profile } = useUserCurriculumProfile();
   const { isAdmin } = useAdminAuth();
   const activeSchoolLevel = useActiveSchoolLevel();
@@ -24,9 +26,9 @@ export function useSubjectDashboard(subjectSlug: string) {
   const effectiveLevelCode = activeSchoolLevel.normalizedLevel ?? profile?.levelCode;
   
   return useQuery({
-    queryKey: ['subject-dashboard', subjectSlug, isAdmin, effectiveCountryCode, effectiveLevelCode, activeSchoolLevel.isPreviewing],
+    queryKey: ['subject-dashboard', learnerId, subjectSlug, isAdmin, effectiveCountryCode, effectiveLevelCode, activeSchoolLevel.isPreviewing],
     queryFn: async (): Promise<SubjectDashboardData> => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = { data: { user: learner } };
 
       // Get subject
       const { data: subject, error: subjectError } = await (supabase as any)
@@ -50,9 +52,34 @@ export function useSubjectDashboard(subjectSlug: string) {
         .eq('is_active', true)
         .eq('topics.is_active', true);
 
-      const { data: categories, error: categoriesError } = await topicsQuery.order('order_index');
+      const { data: queriedCategories, error: categoriesError } = await topicsQuery.order('order_index');
+      let categories = queriedCategories as any[] | null;
 
-      if (categoriesError) throw categoriesError;
+      // Older/local curriculum imports may contain the current subjects/topics
+      // tables without the category relation. Keep the subject dashboard
+      // usable by deriving one category from the direct topic rows.
+      if (categoriesError || !categories?.length) {
+        const { data: directTopics, error: directTopicsError } = await (supabase as any)
+          .from('topics')
+          .select('*')
+          .eq('curriculum_subject_id', (subject as any).id)
+          .eq('is_active', true)
+          .order('order_index');
+
+        if (directTopicsError) throw categoriesError || directTopicsError;
+
+        categories = directTopics?.length
+          ? [{
+              id: `derived-${(subject as any).id}`,
+              subject_id: (subject as any).id,
+              name: (subject as any).name,
+              slug: (subject as any).slug,
+              is_active: true,
+              order_index: 0,
+              topics: directTopics,
+            }]
+          : [];
+      }
       const shouldFilterCurriculum = (activeSchoolLevel.isPreviewing || !isAdmin) && effectiveCountryCode && effectiveLevelCode;
       const normalizedCountry = String(effectiveCountryCode || '').trim().toLowerCase();
       const normalizedLevel = normalizeSchoolLevel(effectiveLevelCode);

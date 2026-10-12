@@ -1,3 +1,4 @@
+import { useFamilyProfile } from '@/context/FamilyProfileContext';
 import { useAuth } from '@/context/AuthContext';
 import { useUserContext } from '@/hooks/useUserContext';
 import { useQuery } from '@tanstack/react-query';
@@ -5,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const useAdminAuth = () => {
   const { user, loading: authLoading } = useAuth();
+  const family = useFamilyProfile();
 
   const { data: userRoles, isLoading } = useQuery({
     queryKey: ['user-roles', user?.id],
@@ -22,7 +24,7 @@ export const useAdminAuth = () => {
     enabled: !!user?.id,
   });
 
-  const isAdmin = userRoles?.includes('admin') ?? false;
+  const isAdmin = !family.isFamily && (userRoles?.includes('admin') ?? false);
   const isAuthenticated = !!user;
   // Only consider loading if auth is loading OR if user exists and we're fetching their context
   const isLoading_ = authLoading || (!!user && isLoading);

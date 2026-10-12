@@ -1,3 +1,4 @@
+import { getLearnerUser } from '@/features/family/learnerIdentity';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { isSupportedDivision } from "./quickExplanation";
 import { canonicalLessonRoute } from "./canonicalSkill";
@@ -176,7 +177,7 @@ export function TwoCards({
   // NEW: Check if user is guardian
   useEffect(() => {
     async function checkUserRole() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await getLearnerUser();
       if (!user) return;
       
       const { data } = await supabase

@@ -1,10 +1,11 @@
+import { requireLearner } from '../_shared/family-access.ts';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
 };
 
 /**
@@ -37,7 +38,7 @@ serve(async (req) => {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: authHeader, 'x-family-grant': req.headers.get('x-family-grant') ?? '' } } }
     );
 
     // Get authenticated user
@@ -49,6 +50,8 @@ serve(async (req) => {
       );
     }
 
+    const { learnerId } = await requireLearner(req);
+
     // Parse query parameters
     const url = new URL(req.url);
     const subjectId = url.searchParams.get('subjectId') || undefined;
@@ -57,7 +60,7 @@ serve(async (req) => {
     const limit = parseInt(url.searchParams.get('limit') || '10', 10);
 
     console.log('[Recommendations] Request:', {
-      userId: user.id,
+      userId: learnerId,
       subjectId,
       excludeTopicId,
       preferSameSubdomain,
@@ -68,14 +71,14 @@ serve(async (req) => {
     const { data: profile } = await supabase
       .from('users')
       .select('curriculum_country_code, curriculum_level_code')
-      .eq('id', user.id)
+      .eq('id', learnerId)
       .single();
 
     if (!profile?.curriculum_country_code || !profile?.curriculum_level_code) {
       return new Response(
         JSON.stringify({
           recommendations: [],
-          student_id: user.id,
+          student_id: learnerId,
           country_code: null,
           level_code: null,
           message: 'No curriculum profile set',
@@ -134,7 +137,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           recommendations: [],
-          student_id: user.id,
+          student_id: learnerId,
           country_code: profile.curriculum_country_code,
           level_code: profile.curriculum_level_code,
         }),
@@ -146,7 +149,7 @@ serve(async (req) => {
     const { data: masteryRecords } = await supabase
       .from('objective_mastery')
       .select('objective_id, topic_id, status')
-      .eq('student_id', user.id);
+      .eq('student_id', learnerId);
 
     const masteryMap = new Map();
     (masteryRecords || []).forEach((record: any) => {
@@ -226,7 +229,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         recommendations: topRecommendations,
-        student_id: user.id,
+        student_id: learnerId,
         country_code: profile.curriculum_country_code,
         level_code: profile.curriculum_level_code,
       }),

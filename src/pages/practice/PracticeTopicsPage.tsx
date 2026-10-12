@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubjectDashboard } from '@/hooks/useSubjectDashboard';
 import { useAllBanks, useBankAttemptStatus } from '@/hooks/useQuizBank';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
 import { cn } from '@/lib/utils';
 import type { Topic, Category } from '@/types/learning';
@@ -119,7 +119,7 @@ export default function PracticeTopicsPage() {
   const { subject } = useParams<{ subject: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
+  const { user } = useLearner();
 
   const subjectSlug = subject ?? '';
   const dashboardQuery = useSubjectDashboard(subjectSlug);
