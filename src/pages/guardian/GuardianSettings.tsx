@@ -12,11 +12,13 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { User, Bell, Lock, Globe, Shield } from 'lucide-react';
 import { PageMeta } from '@/components/seo/PageMeta';
+import { PasswordUpdateForm } from '@/components/auth/PasswordUpdateForm';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export default function GuardianSettings() {
   const ui = useInterfaceTranslation();
   const { language, changeLanguage } = useLanguage();
-  const { user } = useAuth();
+  const { user, updatePassword } = useAuth();
   const { guardianCountry } = useGuardianAuth();
   const { toast } = useToast();
 
@@ -26,6 +28,8 @@ export default function GuardianSettings() {
     lowPerformance: true,
     newAchievements: false,
   });
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
   const handleSaveProfile = () => {
     toast({
@@ -39,6 +43,34 @@ export default function GuardianSettings() {
       title: ui("Notifications updated"),
       description: ui("Your notification preferences have been saved."),
     });
+  };
+
+  const handleChangePassword = async (password: string) => {
+    setIsPasswordLoading(true);
+    try {
+      const { error } = await updatePassword(password);
+      if (error) {
+        toast({
+          title: ui("Password update failed"),
+          description: error.message || ui("Please try again."),
+          variant: 'destructive',
+        });
+        return;
+      }
+      setIsPasswordDialogOpen(false);
+      toast({
+        title: ui("Password updated"),
+        description: ui("Your password has been changed successfully."),
+      });
+    } catch (error) {
+      toast({
+        title: ui("Password update failed"),
+        description: error instanceof Error ? error.message : ui("Please try again."),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPasswordLoading(false);
+    }
   };
 
   return (
@@ -214,10 +246,22 @@ export default function GuardianSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button variant="outline">{ui("Change Password")}</Button>
+          <Button type="button" variant="outline" onClick={() => setIsPasswordDialogOpen(true)}>
+            {ui("Change Password")}
+          </Button>
           <Button variant="outline">{ui("Enable Two-Factor Authentication")}</Button>
         </CardContent>
       </Card>
+
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{ui("Change Password")}</DialogTitle>
+            <DialogDescription>{ui("Choose a new password for your account.")}</DialogDescription>
+          </DialogHeader>
+          <PasswordUpdateForm onSubmit={handleChangePassword} loading={isPasswordLoading} />
+        </DialogContent>
+      </Dialog>
 
       {/* Language & Region */}
       <Card>
@@ -259,4 +303,3 @@ export default function GuardianSettings() {
     </div>
   );
 }
-

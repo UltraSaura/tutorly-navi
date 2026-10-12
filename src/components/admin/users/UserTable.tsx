@@ -1,7 +1,7 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 
 import { useState } from 'react';
-import { MoreHorizontal, ChevronLeft, ChevronRight, GraduationCap, UsersRound } from 'lucide-react';
+import { MoreHorizontal, ChevronLeft, ChevronRight, GraduationCap, UsersRound, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { User } from '@/types/admin';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -94,15 +94,48 @@ export const UserTable = ({
                     </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
-                    <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                      user.approval_status === 'approved'
-                        ? 'bg-green-100 text-green-800'
-                        : user.approval_status === 'rejected'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-amber-100 text-amber-800'
-                    }`}>
-                      {user.approval_status || 'pending'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                        user.approval_status === 'approved'
+                          ? 'bg-green-100 text-green-800'
+                          : user.approval_status === 'rejected'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {user.approval_status || 'pending'}
+                      </span>
+                      {user.approval_status === 'pending' && (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="h-8 bg-emerald-600 px-2 text-white hover:bg-emerald-700"
+                            aria-label={ui('Approve Account')}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onApprovalChange(user, 'approved');
+                            }}
+                          >
+                            <Check className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+                            {ui('Approve')}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-8 px-2 text-destructive"
+                            aria-label={ui('Reject Account')}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onApprovalChange(user, 'rejected');
+                            }}
+                          >
+                            <X className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+                            {ui('Reject')}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
                     {user.phone_number || 'Not set'}
