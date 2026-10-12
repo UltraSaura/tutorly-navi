@@ -37,7 +37,7 @@ function ErrorFallback({
           {ui("An unexpected error occurred. Please try refreshing the page or go back to home.")}
         </p>
         
-        {process.env.NODE_ENV === 'development' && error && (
+        {import.meta.env.DEV && error && (
           <div className="p-3 bg-muted rounded-md overflow-auto max-h-32">
             <p className="text-xs font-mono text-muted-foreground break-words">
               {error.message}

@@ -9,7 +9,7 @@ import { useTwoCardTeaching, TeachingSections } from './useTwoCardTeaching';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import type { SafeHomeworkLearningRow } from '@/services/homeworkLearningResources';
 import { QuizOverlay } from '@/components/learning/QuizOverlay';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import type { QuizBank } from '@/types/quiz-bank';
 
 interface ExplanationModalProps {
@@ -54,7 +54,7 @@ export function ExplanationModal({
   feedbackLoading = false,
 }: ExplanationModalProps) {
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const [generatedPractice, setGeneratedPractice] = React.useState<QuizBank | null>(null);
 
   useEffect(() => {
@@ -160,7 +160,7 @@ export function ExplanationModal({
 
         {!sections && (
           <div className="shrink-0 border-t border-border p-5">
-            {process.env.NODE_ENV !== "production" && (
+            {import.meta.env.DEV && (
               <div className="mb-4 text-xs text-muted-foreground">
                 <button 
                   onClick={() => console.log("[Explain] sections", sections)}
