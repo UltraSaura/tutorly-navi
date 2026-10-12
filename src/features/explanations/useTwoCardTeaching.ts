@@ -1,3 +1,4 @@
+import { learnerOperation } from '@/features/family/profileRuntime';
 import { generateQuickExplanation, isSupportedDivision, validateQuickExplanation, type QuickExplanation } from "./quickExplanation";
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -218,7 +219,7 @@ async function checkExplanationCache(
 ): Promise<{ id: string; sections: TeachingSections } | null> {
   try {
     const { data: cacheEntry, error } = await supabase
-      .from("exercise_explanations_cache")
+      .from("learner_explanations_cache")
       .select("id, explanation_data, usage_count, quality_score")
       .eq("exercise_hash", hash)
       .gte("quality_score", 0)
@@ -237,7 +238,7 @@ async function checkExplanationCache(
     }
 
     void supabase
-      .from("exercise_explanations_cache")
+      .from("learner_explanations_cache")
       .update({
         usage_count: (cacheEntry.usage_count ?? 0) + 1,
       })
@@ -269,7 +270,7 @@ async function saveExplanationToCache(
 ): Promise<string | null> {
   try {
     const { data: cacheEntry, error } = await supabase
-      .from("exercise_explanations_cache")
+      .from("learner_explanations_cache")
       .upsert(
         {
           exercise_content: exerciseContent,
@@ -285,7 +286,7 @@ async function saveExplanationToCache(
           usage_count: 1,
           updated_at: new Date().toISOString(),
         },
-        { onConflict: "exercise_hash" },
+        { onConflict: "learner_user_id,exercise_hash" },
       )
       .select("id")
       .single();
@@ -540,7 +541,7 @@ export function useTwoCardTeaching() {
       if (reuseMeta.operationType !== "unknown" && reuseMeta.digitBand !== "non_arithmetic") {
         try {
           const { data: similarExplanations, error: similarError } = await supabase
-            .from("exercise_explanations_cache")
+            .from("learner_explanations_cache")
             .select("id, exercise_content, explanation_data, usage_count, quality_score, updated_at")
             .eq("subject_id", subject.toLowerCase())
             .gte("quality_score", 0)
@@ -574,7 +575,7 @@ export function useTwoCardTeaching() {
               setLoading(false);
 
               void supabase
-                .from("exercise_explanations_cache")
+                .from("learner_explanations_cache")
                 .update({ usage_count: (reusableCandidate.usage_count ?? 0) + 1 })
                 .eq("id", reusableCandidate.id);
 
@@ -722,7 +723,7 @@ export function useTwoCardTeaching() {
     setFeedbackLoading(true);
     try {
       const { data: current, error: currentError } = await supabase
-        .from("exercise_explanations_cache")
+        .from("learner_explanations_cache")
         .select("quality_score")
         .eq("id", cacheEntryId)
         .single();
@@ -740,7 +741,7 @@ export function useTwoCardTeaching() {
             : currentScore - 1;
 
       const { error: updateError } = await supabase
-        .from("exercise_explanations_cache")
+        .from("learner_explanations_cache")
         .update({ quality_score: nextScore })
         .eq("id", cacheEntryId);
 
@@ -765,9 +766,9 @@ export function useTwoCardTeaching() {
     loading,
     sections,
     error,
-    openFor,
+    openFor: learnerOperation(openFor),
     setSections: debugSetSections,
-    submitFeedback,
+    submitFeedback: learnerOperation(submitFeedback),
     feedback,
     feedbackLoading,
     cacheEntryId,

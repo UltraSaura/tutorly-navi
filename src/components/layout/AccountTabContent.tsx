@@ -1,14 +1,15 @@
+import { SwitchFamilyProfile } from '@/features/family/FamilyProfileMenu';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from "react";
 import { User, HeadphonesIcon, Globe, LogOut, Settings, BookOpen, Trophy, Zap } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "@/context/AuthContext";
+import { useLearner } from "@/context/FamilyProfileContext";
 import { hardLogout } from "@/lib/logout";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useStudentStats } from "@/hooks/useStudentStats";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import MobileLanguageMenuItems from "./MobileLanguageMenuItems";
@@ -22,7 +23,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
   const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const { toast } = useToast();
   const { isAdmin } = useAdminAuth();
   const { data: stats } = useStudentStats();
@@ -41,6 +42,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
       {/* User Profile Section */}
       <div className="flex items-center space-x-3 p-4 bg-accent/20 rounded-lg">
         <Avatar className="h-12 w-12">
+          <AvatarImage src={user?.user_metadata?.avatar_url} alt="" />
           <AvatarFallback className="text-lg font-semibold">
             {userInitials}
           </AvatarFallback>
@@ -48,7 +50,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
         <div className="flex flex-col">
           <span className="font-semibold">{t('nav.myAccount')}</span>
           <span className="text-sm text-muted-foreground truncate">
-            {user?.email}
+            {user?.user_metadata?.first_name || user?.email}
           </span>
         </div>
       </div>
@@ -103,6 +105,7 @@ export function AccountTabContent({ onClose }: AccountTabContentProps) {
         </>
       )}
 
+      <SwitchFamilyProfile onClose={onClose} />
       {/* Account Actions */}
       <div className="space-y-2">
         <Button

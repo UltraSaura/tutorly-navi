@@ -1,3 +1,4 @@
+import { beginLearnerJob } from '@/features/family/profileRuntime';
 import { Message } from '@/types/chat';
 import { supabase } from "@/integrations/supabase/client";
 import { saveGradedWorkToHistory } from './gradedWorkHistory';
@@ -70,10 +71,13 @@ async function saveExplanationToCache(
   sections: Record<string, unknown>,
   subjectId: string | null
 ): Promise<void> {
+  const finishLearnerJob = beginLearnerJob();
+  try {
+
   try {
     // Check if explanation already exists
     const { data: existing } = await supabase
-      .from('exercise_explanations_cache')
+      .from('learner_explanations_cache')
       .select('id')
       .eq('exercise_content', exerciseContent)
       .maybeSingle();
@@ -89,7 +93,7 @@ async function saveExplanationToCache(
 
     // Save to cache
     const { error: insertError } = await supabase
-      .from('exercise_explanations_cache')
+      .from('learner_explanations_cache')
       .insert({
         exercise_content: exerciseContent,
         exercise_hash: exerciseContent.toLowerCase().replace(/\s+/g, ''),
@@ -108,6 +112,8 @@ async function saveExplanationToCache(
   } catch (err) {
     console.error('[SaveExplanation] Unexpected error:', err);
   }
+
+  } finally { finishLearnerJob(); }
 }
 
 export interface UnifiedChatResponse {
@@ -131,6 +137,9 @@ export async function sendUnifiedMessage(
   customPrompt?: string,
   userContext?: Record<string, unknown>
 ): Promise<{ data: UnifiedChatResponse | null; error: unknown }> {
+  const finishLearnerJob = beginLearnerJob();
+  try {
+
   try {
     console.log('[UnifiedChatService] Sending message to AI:', { inputMessage, selectedModelId });
 
@@ -255,6 +264,8 @@ export async function sendUnifiedMessage(
     console.error('[UnifiedChatService] Caught error:', error);
     return { data: null, error };
   }
+
+  } finally { finishLearnerJob(); }
 }
 
 /**

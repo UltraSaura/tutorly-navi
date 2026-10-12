@@ -1,3 +1,4 @@
+import { useLearner } from '@/context/FamilyProfileContext';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,6 +7,7 @@ import { toast } from 'sonner';
 import { useActiveSchoolLevel } from './useActiveSchoolLevel';
 
 export function useVideoPlayer(videoId: string) {
+  const { learnerId, user: learner } = useLearner();
   const queryClient = useQueryClient();
   const activeSchoolLevel = useActiveSchoolLevel();
   const currentTimeRef = useRef(0);
@@ -15,9 +17,9 @@ export function useVideoPlayer(videoId: string) {
 
   // Fetch video and quizzes
   const { data, isLoading, error } = useQuery({
-    queryKey: ['video-player', videoId],
+    queryKey: ['video-player', learnerId, videoId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = { data: { user: learner } };
 
       const { data: video, error: videoError } = await (supabase as any)
         .from('videos')
@@ -66,7 +68,7 @@ export function useVideoPlayer(videoId: string) {
     mutationFn: async ({ progressPercentage, progressType }: { progressPercentage: number; progressType: string }) => {
       if (activeSchoolLevel.isPreviewing) return { progressType, preview: true };
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = { data: { user: learner } };
       if (!user) return;
 
       const { error } = await (supabase as any)
@@ -95,7 +97,7 @@ export function useVideoPlayer(videoId: string) {
     onSuccess: (result) => {
       if (result?.progressType === 'video_completed') {
         // Update cache in-place instead of refetching
-        queryClient.setQueryData(['video-player', videoId], (old: any) =>
+        queryClient.setQueryData(['video-player', learnerId, videoId], (old: any) =>
           old ? { ...old, video: { ...old.video, progress_percentage: 100 } } : old
         );
         queryClient.invalidateQueries({ queryKey: ['subject-dashboard'] });
@@ -123,7 +125,7 @@ export function useVideoPlayer(videoId: string) {
         return { isCorrect, explanation: quiz.explanation, xpReward: 0, preview: true };
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = { data: { user: learner } };
       if (user && isCorrect) {
         await (supabase as any)
           .from('user_learning_progress')

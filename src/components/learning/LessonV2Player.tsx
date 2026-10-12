@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Lightbulb, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { trackLearningInteraction } from '@/services/learningAnalytics';
 import type { LessonBlock, LessonV2 } from '@/types/lesson-generator';
 import { PedagogicalVisual } from './PedagogicalVisual';
@@ -148,7 +148,7 @@ function ConceptPresentation({ block }: { block: Extract<LessonBlock, { type: 'c
 }
 
 export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMasteryResult, onSequencePosition }: Props) {
-  const { user } = useAuth();
+  const { user } = useLearner();
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);

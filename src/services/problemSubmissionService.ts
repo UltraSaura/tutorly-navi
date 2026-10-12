@@ -1,3 +1,4 @@
+import { beginLearnerJob } from '@/features/family/profileRuntime';
 import { GroupedAnswerPayload, GroupedRetryPractice, ProblemRow, ProblemRowEvaluation, ProblemSubmission } from '@/types/chat';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -1704,6 +1705,9 @@ export async function generateGroupedRetryPractice(input: {
   curriculum?: string;
   learningStyle?: string;
 }): Promise<GroupedRetryPractice> {
+  const finishLearnerJob = beginLearnerJob();
+  try {
+
   const responseLanguage = input.language === 'fr' ? 'French' : 'English';
   const context = buildGroupedRetryPracticeContext(input.problem, input.rowId, {
     responseLanguage,
@@ -1722,7 +1726,7 @@ export async function generateGroupedRetryPractice(input: {
 
   try {
     const { data: exactCached, error: exactCacheError } = await supabase
-      .from('exercise_explanations_cache')
+      .from('learner_explanations_cache')
       .select('id, explanation_data, usage_count, quality_score')
       .eq('exercise_hash', cacheHash)
       .gte('quality_score', 0)
@@ -1745,7 +1749,7 @@ export async function generateGroupedRetryPractice(input: {
       const cachedSource = (exactCached.explanation_data as unknown as GroupedRetryPractice).similarProblem;
       if (cachedPractice.similarProblem === cachedSource) {
         void supabase
-          .from('exercise_explanations_cache')
+          .from('learner_explanations_cache')
           .update({ usage_count: (exactCached.usage_count ?? 0) + 1 })
           .eq('id', exactCached.id);
         return cachedPractice;
@@ -1798,7 +1802,7 @@ export async function generateGroupedRetryPractice(input: {
 
   try {
     const { data: cacheEntry } = await supabase
-      .from('exercise_explanations_cache')
+      .from('learner_explanations_cache')
       .upsert([{
         exercise_content: selectedPrompt,
         exercise_hash: cacheHash,
@@ -1810,7 +1814,7 @@ export async function generateGroupedRetryPractice(input: {
         } as any,
         quality_score: 0,
         usage_count: 1,
-      }], { onConflict: 'exercise_hash' })
+      }], { onConflict: 'learner_user_id,exercise_hash' })
       .select('id')
       .single();
 
@@ -1822,6 +1826,8 @@ export async function generateGroupedRetryPractice(input: {
   }
 
   return parsed;
+
+  } finally { finishLearnerJob(); }
 }
 
 export const __problemSubmissionServiceTest = {

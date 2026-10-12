@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   generateRuntimeMiniPractice,
+  buildDeterministicArithmeticMiniPractice,
   isVerticalOperationVisualText,
   isMiniPracticeAnswerCorrect,
   parseSimpleArithmeticExercise,
@@ -108,5 +109,31 @@ describe("runtimeMiniPractice", () => {
     expect(practice?.visualText?.toLowerCase()).not.toContain("barre");
     expect(practice?.visualText?.toLowerCase()).not.toContain("cube");
     expect(practice?.choices?.some((choice) => choice.label === "25")).toBe(true);
+  });
+
+  it("parses additional arithmetic expressions", () => {
+    expect(parseSimpleArithmeticExercise("55 + 9")).toEqual({
+      a: 55,
+      b: 9,
+      op: "+",
+    });
+    expect(parseSimpleArithmeticExercise("7 × 8")).toEqual({
+      a: 7,
+      b: 8,
+      op: "*",
+    });
+  });
+
+  it("builds a direct arithmetic mini-practice without manipulatives", () => {
+    const parsed = parseSimpleArithmeticExercise("55 + 9");
+    expect(parsed).not.toBeNull();
+
+    const practice = buildDeterministicArithmeticMiniPractice(parsed!, "visual", "fr");
+    expect(practice).not.toBeNull();
+    expect(practice?.prompt).toContain("Calcule");
+    expect(practice?.visualText).toContain("55");
+    expect(practice?.visualText).not.toContain("barres");
+    expect(practice?.choices?.map((choice) => choice.label)).toContain("64");
+    expect(isMiniPracticeAnswerCorrect(practice!, "B")).toBe(true);
   });
 });

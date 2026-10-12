@@ -10,12 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { CurriculumErrorState } from '@/components/learning/CurriculumErrorState';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 
 const LearningRoadmap = () => {
   const ui = useInterfaceTranslation();
   const { subjects, isLoading, error } = useStudentCurriculum();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const { t } = useLanguage();
 
   // Fetch user progress for all topics

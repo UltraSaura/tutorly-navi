@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { TestYourselfInline } from '@/components/learning/TestYourselfInline';
 import { QuizOverlayController } from '@/components/learning/QuizOverlayController';
 import { useAllBanks } from '@/hooks/useQuizBank';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PageMeta } from '@/components/seo/PageMeta';
@@ -41,7 +41,7 @@ const VideoPlayerPage = () => {
     isLoading,
   } = useVideoPlayer(videoId || '');
 
-  const { user } = useAuth();
+  const { user } = useLearner();
 
   useEffect(() => {
     if (!videoId) return;

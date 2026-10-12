@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Zap, BookOpen, Lightbulb, AlertCircle } from 'lucide-react';
 import { QuestionCard } from '@/components/learning/QuestionCard';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { showXpToast } from '@/components/game/XpToast';
 import { StreakChip } from '@/components/game';
 import { useStudentStats } from '@/hooks/useStudentStats';
@@ -169,7 +169,7 @@ export function LessonStepper({
   const TOTAL_STEPS = 5;
   const [currentStep, setCurrentStep] = useState(0);
   const [activeDifficultyIdx, setActiveDifficultyIdx] = useState(0);
-  const { user } = useAuth();
+  const { user } = useLearner();
   const queryClient = useQueryClient();
   const { data: stats } = useStudentStats();
   const startTimeRef = useRef<number>(Date.now());

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Lock, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useBankAttemptStatus } from '@/hooks/useQuizBank';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 
 interface TestYourselfInlineProps {
   bankId: string;
@@ -22,7 +22,7 @@ export function TestYourselfInline({
   const ui = useInterfaceTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const { data: attemptStatus } = useBankAttemptStatus(bankId, user?.id);
 
   const handleClick = () => {

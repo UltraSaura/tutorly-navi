@@ -2,13 +2,13 @@ import { useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuizBank } from '@/hooks/useQuizBank';
 import { QuizOverlay } from './QuizOverlay';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { activeYouTubePlayer, activeVideoElement } from './VideoPlayerBox';
 
 export function QuizOverlayController() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const quizBankId = searchParams.get('quiz');
   const practiceQuestionIds = searchParams.get('practiceQuestions')?.split(',').filter(Boolean) ?? [];
 

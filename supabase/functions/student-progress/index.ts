@@ -1,10 +1,11 @@
+import { familyClient } from '../_shared/family-access.ts';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
 };
 
 serve(async (req) => {
@@ -24,7 +25,7 @@ serve(async (req) => {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: authHeader, 'x-family-grant': req.headers.get('x-family-grant') ?? '' } } }
     );
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -35,19 +36,19 @@ serve(async (req) => {
       );
     }
 
+    const access = await familyClient(req);
+    const { data: learnerId, error: learnerError } = await supabase.rpc('family_current_learner');
+    const { data: parentAllowed } = await supabase.rpc('family_parent_authorized');
+    if (learnerError || (access.isFamily && !learnerId && !parentAllowed)) throw new Error('Forbidden');
     const url = new URL(req.url);
-    const studentId = url.searchParams.get('studentId') || user.id;
+    const studentId = url.searchParams.get('studentId') || learnerId || user.id;
     const subjectId = url.searchParams.get('subjectId') || undefined;
 
     // Authorization check
-    if (studentId !== user.id) {
-      const { data: guardianLink } = await supabase
-        .from('guardian_child_links')
-        .select('id')
-        .eq('guardian_id', user.id)
-        .eq('child_id', studentId)
-        .maybeSingle();
-
+    if (studentId !== learnerId) {
+      const { data: guardianAllowed } = await supabase.rpc('is_guardian_of_child', {
+        _guardian_user_id: user.id, _child_user_id: studentId,
+      });
       const { data: teacherData } = await supabase
         .from('teachers')
         .select('id')
@@ -65,7 +66,7 @@ serve(async (req) => {
         teacherLink = classLink;
       }
 
-      if (!guardianLink && !teacherLink) {
+      if (!guardianAllowed && !teacherLink) {
         return new Response(
           JSON.stringify({ error: 'Forbidden' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

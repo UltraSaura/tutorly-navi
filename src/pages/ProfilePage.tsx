@@ -1,7 +1,7 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useFamilyProfile, useLearner } from '@/context/FamilyProfileContext';
 import { useLanguage } from '@/context/SimpleLanguageContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,8 @@ import { PageMeta } from '@/components/seo/PageMeta';
 
 const ProfilePage = () => {
   const ui = useInterfaceTranslation();
-  const { user } = useAuth();
+  const { user } = useLearner();
+  const family = useFamilyProfile();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -167,7 +168,7 @@ const ProfilePage = () => {
           </Button>
 
           {/* Account Deletion */}
-          <AccountDeletion />
+          {!family.isFamily && <AccountDeletion />}
 
           {/* Sign Out */}
           <Button

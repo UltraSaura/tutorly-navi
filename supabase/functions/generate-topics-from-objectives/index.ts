@@ -1,9 +1,10 @@
+import { requirePrivilegedFamily } from '../_shared/family-access.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-family-grant",
 };
 
 interface RequestBody {
@@ -66,6 +67,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    await requirePrivilegedFamily(req);
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Missing authorization" }), {

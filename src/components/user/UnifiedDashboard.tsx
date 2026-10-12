@@ -1,3 +1,4 @@
+import { useLearner } from '@/context/FamilyProfileContext';
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/context/SimpleLanguageContext';
@@ -9,13 +10,14 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 const UnifiedDashboard = () => {
+  const { learnerId, user: learner } = useLearner();
   const { t } = useLanguage();
 
   // Calculate overall progress across all subjects
   const { data: overallProgress } = useQuery({
-    queryKey: ['overall-subject-progress'],
+    queryKey: ['overall-subject-progress', learnerId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = { data: { user: learner } };
       if (!user) return { percentage: 0, completedTopics: 0, totalTopics: 0 };
 
       // Get all subjects

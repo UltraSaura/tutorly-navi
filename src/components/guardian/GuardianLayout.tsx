@@ -2,7 +2,7 @@ import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
 import { useState } from 'react';
 import { Outlet, Navigate, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useGuardianAuth } from '@/hooks/useGuardianAuth';
-import { Home, Users, FileText, Lightbulb, TrendingUp, CreditCard, Settings, Menu, LogOut } from 'lucide-react';
+import { Home, Users, FileText, Globe, Lightbulb, TrendingUp, CreditCard, Settings, Menu, LogOut, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -10,8 +10,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { GuardianBottomNav } from './GuardianBottomNav';
 import { GuardianStickyHeader } from './GuardianStickyHeader';
+import { SwitchFamilyProfile } from '@/features/family/FamilyProfileMenu';
 
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTranslation } from 'react-i18next';
+import MobileLanguageMenuItems from '@/components/layout/MobileLanguageMenuItems';
 
 const guardianNavigation = [
   { title: 'Home', url: '/guardian', icon: Home },
@@ -25,6 +28,7 @@ const guardianNavigation = [
 
 const GuardianLayout = () => {
   const ui = useInterfaceTranslation();
+  const { t } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { canAccessGuardianPortal, loading } = useGuardianAuth();
   const navigate = useNavigate();
@@ -91,6 +95,20 @@ const GuardianLayout = () => {
         <h2 className="text-xl font-bold text-foreground">{ui("Guardian Portal")}</h2>
         <p className="text-sm text-muted-foreground">{ui("Manage your children")}</p>
       </div>
+
+      {mobile && <div className="border-b px-4 py-3">
+        <div className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+          <UserRound className="h-5 w-5" aria-hidden="true" />
+          <span>{t('nav.account')}</span>
+        </div>
+        <SwitchFamilyProfile onClose={() => mobile && setIsMobileMenuOpen(false)} />
+        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-foreground">
+          <Globe className="h-4 w-4" aria-hidden="true" />
+          <span>{t('nav.language')}</span>
+        </div>
+        <div className="mt-2"><MobileLanguageMenuItems /></div>
+      </div>}
+      {!mobile && <div className="border-b p-4"><SwitchFamilyProfile /></div>}
       
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {guardianNavigation.map((item) => (

@@ -1,3 +1,5 @@
+import { beginLearnerJob } from '@/features/family/profileRuntime';
+import { getLearnerUser } from '@/features/family/learnerIdentity';
 import { supabase } from '@/integrations/supabase/client';
 import type { Exercise, ProblemSubmission } from '@/types/chat';
 
@@ -87,11 +89,14 @@ export function buildGradedWorkFromGroupedProblem(problem: ProblemSubmission): G
 }
 
 export async function saveGradedWorkToHistory(input: GradedWorkInput): Promise<SavedGradedWorkResult | null> {
+  const finishLearnerJob = beginLearnerJob();
+  try {
+
   const exerciseContent = cleanText(input.exerciseContent);
   const userAnswer = cleanText(input.userAnswer);
   if (!exerciseContent || !userAnswer) return null;
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const { data: userData, error: userError } = await getLearnerUser();
   if (userError || !userData.user) {
     if (import.meta.env.DEV) {
       console.debug('[GradedWorkHistory] No authenticated user, skipping save:', userError?.message);
@@ -165,9 +170,14 @@ export async function saveGradedWorkToHistory(input: GradedWorkInput): Promise<S
     exerciseHistoryId,
     attemptNumber,
   };
+
+  } finally { finishLearnerJob(); }
 }
 
 export async function saveGradedWorksToHistory(inputs: GradedWorkInput[]): Promise<SavedGradedWorkResult[]> {
+  const finishLearnerJob = beginLearnerJob();
+  try {
+
   const results: SavedGradedWorkResult[] = [];
 
   for (const input of inputs) {
@@ -176,4 +186,6 @@ export async function saveGradedWorksToHistory(inputs: GradedWorkInput[]): Promi
   }
 
   return results;
+
+  } finally { finishLearnerJob(); }
 }

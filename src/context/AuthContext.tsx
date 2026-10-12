@@ -1,3 +1,4 @@
+import { familyRpc } from '@/features/family/familyApi';
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,14 +43,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const ensureAccountApproved = useCallback(async (authUser: User) => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('approval_status')
-      .eq('id', authUser.id)
-      .maybeSingle();
+    let data: { approval_status?: string } | null = null;
+    let error: Error | null = null;
+    try {
+      const status = await familyRpc<{ approvalStatus?: string } | null>('family_bootstrap');
+      if (!status) throw new Error('Your session has expired. Please sign in again.');
+      data = { approval_status: status.approvalStatus };
+    } catch (cause) { error = cause as Error; }
 
     if (error) {
       await supabase.auth.signOut();
+      if (error.message === 'family.backendUnavailable') return error;
       return new Error('We could not verify your account approval. Please try again.');
     }
     if (data?.approval_status === 'pending') {
@@ -145,7 +149,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, userData?: any) => {
-    const redirectUrl = `${window.location.origin}/`;
+    // Keep redirect targets explicit for native/staging builds. The value is
+    // configured at build time and never contains a service-role credential.
+    const redirectUrl = import.meta.env.VITE_AUTH_REDIRECT_URL || `${window.location.origin}/`;
     
     const { data, error } = await supabase.auth.signUp({
       email,

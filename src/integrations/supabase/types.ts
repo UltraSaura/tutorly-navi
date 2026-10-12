@@ -14,6 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
+      learner_explanations_cache: Database["public"]["Tables"]["exercise_explanations_cache"]
       admin_audit_log: {
         Row: {
           action: string
@@ -1102,6 +1103,7 @@ export type Database = {
       }
       exercise_explanations_cache: {
         Row: {
+          learner_user_id: string | null
           correct_answer: string | null
           created_at: string
           exercise_content: string
@@ -1115,6 +1117,7 @@ export type Database = {
           usage_count: number | null
         }
         Insert: {
+          learner_user_id?: string | null
           correct_answer?: string | null
           created_at?: string
           exercise_content: string
@@ -1128,6 +1131,7 @@ export type Database = {
           usage_count?: number | null
         }
         Update: {
+          learner_user_id?: string | null
           correct_answer?: string | null
           created_at?: string
           exercise_content?: string

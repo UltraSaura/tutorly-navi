@@ -12,7 +12,7 @@ import {
   type QuizQuestionGradeDetail,
 } from '@/utils/quizEvaluation';
 import { useSubmitBankAttempt } from '@/hooks/useQuizBank';
-import { useAuth } from '@/context/AuthContext';
+import { useLearner } from '@/context/FamilyProfileContext';
 import { ExplanationModal } from '@/features/explanations/ExplanationModal';
 import { useTwoCardTeaching } from '@/features/explanations/useTwoCardTeaching';
 import { useUserContext } from '@/hooks/useUserContext';
@@ -134,7 +134,7 @@ export function QuizOverlay({ bank, userId, onClose, recordAttempt = true, embed
   const [questionResult, setQuestionResult] = useState<boolean | null>(null);
   const [showXpPill, setShowXpPill] = useState(false);
   const submitAttempt = useSubmitBankAttempt();
-  const { user } = useAuth();
+  const { user } = useLearner();
   const { userContext } = useUserContext();
   const { language } = useLanguage();
   const teaching = useTwoCardTeaching();

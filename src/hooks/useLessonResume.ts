@@ -1,3 +1,4 @@
+import { learnerStorageKey } from '@/features/family/profileRuntime';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -12,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
  * Note: there is no unique constraint on (user_id, topic_id, progress_type), so we avoid
  * upsert/onConflict (unreliable in supabase-js for non-PK columns) and keep the row id in a ref.
  */
-const storageKey = (topicId: string, suffix = '') => `stuwy:lesson-pos:${topicId}${suffix}`;
+const storageKey = (topicId: string, learnerId: string | undefined, suffix = '') => learnerStorageKey(`stuwy:lesson-pos:${topicId}${suffix}`, learnerId);
 
 /**
  * @param opts.keySuffix  namespaces the localStorage key (e.g. per level `:lvl2`).
@@ -39,7 +40,7 @@ export function useLessonResume(
       let idx: number | null = null;
 
       try {
-        const ls = localStorage.getItem(storageKey(topicId, keySuffix));
+        const ls = localStorage.getItem(storageKey(topicId, userId, keySuffix));
         if (ls != null) {
           const n = parseInt(ls, 10);
           if (!Number.isNaN(n)) idx = n;
@@ -73,7 +74,7 @@ export function useLessonResume(
   }, [topicId, userId]);
 
   const save = useCallback((index: number, percentage: number) => {
-    try { localStorage.setItem(storageKey(topicId, keySuffix), String(index)); } catch { /* ignore */ }
+    try { localStorage.setItem(storageKey(topicId, userId, keySuffix), String(index)); } catch { /* ignore */ }
     if (!userId || !dbEnabled) return;
     void (async () => {
       try {
@@ -101,7 +102,7 @@ export function useLessonResume(
   }, [topicId, userId, keySuffix, dbEnabled]);
 
   const clear = useCallback(() => {
-    try { localStorage.removeItem(storageKey(topicId, keySuffix)); } catch { /* ignore */ }
+    try { localStorage.removeItem(storageKey(topicId, userId, keySuffix)); } catch { /* ignore */ }
     if (userId && dbEnabled && rowIdRef.current) {
       const id = rowIdRef.current;
       rowIdRef.current = null;

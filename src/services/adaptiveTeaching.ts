@@ -1,3 +1,4 @@
+import { learningAnalyticsEnabled } from './learningAnalytics';
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeLearningStyle, type LearningStyle } from "@/types/learning-style";
 import {
@@ -206,7 +207,7 @@ export function summarizeLearningAnalyticsEvents(
 }
 
 async function getStyleStats(input: EffectiveLearningStyleInput): Promise<StyleStats> {
-  if (!input.studentId) {
+  if (!learningAnalyticsEnabled || !input.studentId) {
     return { relevantEvents: 0, answeredAfterSupport: 0, confidence: 0 };
   }
 
@@ -256,6 +257,7 @@ async function getStyleStats(input: EffectiveLearningStyleInput): Promise<StyleS
 }
 
 export async function getAdaptiveTeachingReadiness(): Promise<AdaptiveTeachingReadiness> {
+  if (!learningAnalyticsEnabled) return { relevantEvents: 0, answeredAfterSupport: 0, hasEnoughData: false };
   try {
     const [
       { count: relevantEvents, error: relevantError },
@@ -293,6 +295,7 @@ export async function getAdaptiveTeachingReadiness(): Promise<AdaptiveTeachingRe
 export async function getStudentLearningAnalyticsSummary(
   studentId?: string | null
 ): Promise<StudentLearningAnalyticsSummary> {
+  if (!learningAnalyticsEnabled) return summarizeLearningAnalyticsEvents([]);
   try {
     let query = (supabase as any)
       .from("learning_interaction_events")
