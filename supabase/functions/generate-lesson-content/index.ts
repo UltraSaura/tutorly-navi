@@ -6,12 +6,17 @@ import { validateLessonV21 } from './lesson-v21-contract.ts';
 import { pedagogicalIssues, semanticDuplicationDiagnostics, validateCompositionRepairOutput } from './pedagogical-quality.ts';
 import { determineVisualRequirement, isSupportedVisualKind } from './visual-policy.ts';
 import { resolveEdition } from './curriculum-resolution.ts';
+import { normalizeGeneratedLesson, ensureRequiredVisuals } from './lesson-normalization.ts';
+import { normalizeLessonComposition } from './composition-normalization.ts';
+import { parseProviderJsonSafely } from './provider-json.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
 };
 
+const GENERATOR_BUILD = 'practice-visual-normalizer-1';
+const SAFE_PROVIDER_ERROR = 'Le contenu généré n’a pas pu être lu correctement. Aucun contenu n’a été enregistré.';
 const SUPPORTED_MODELS = ['gpt-5', 'gpt-4.1', 'deepseek-chat', 'claude-3-5-sonnet-20241022'];
 
 function normalizeModelId(modelId: string): string {
@@ -101,8 +106,52 @@ function substituteVariables(template: string, vars: Record<string, string>): st
 }
 
 serve(async (req) => {
+  let requestAllowsPaidRepair = false;
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  let requestBody: Record<string, unknown> = {};
+  try { requestBody = await req.json(); } catch { requestBody = {}; }
+  const noPaidMode = requestBody.mode === 'healthcheck' || requestBody.mode === 'fixture';
+  if (noPaidMode) {
+    const mode = String(requestBody.mode);
+    if (mode === 'healthcheck') {
+      return new Response(JSON.stringify({ ok: true, success: true, mode, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0 }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const fixtureVariant = String(requestBody.fixtureVariant ?? 'fenced_repeated');
+    const fixture = {
+      lesson_goal: 'Comprendre les fractions.', success_criteria: ['Je sais lire une fraction.'], prerequisites: [], misconceptions: [],
+      sequence: [
+        { id: 'fixture-concept', type: 'concept', title: 'Fractions', content: 'Une fraction décrit une part d’un tout.', key_points: [{ label: 'Numérateur', text: 'Il compte les parts prises.' }, { label: 'Dénominateur', text: 'Il indique les parts égales.' }], takeaway: 'Il indique les parts égales et il compte les parts prises.', visual: { kind: fixtureVariant === 'unsupported_visual' ? 'diagram_magic' : 'missing', purpose: '', alt_text: '', data: {} } },
+        { id: 'fixture-try', type: 'student_try', question: 'Quelle fraction représente une part sur quatre ?', answer_type: 'short_text', correct_answer: '1/4', success_feedback: 'Bravo !', error_feedback: 'Compte les parts.' },
+      ],
+      mastery: { skills: ['fractions'], threshold: 0.8 },
+    } as Record<string, unknown>;
+    const rawProviderText = fixtureVariant === 'malformed_json'
+      ? '{"lesson_goal":"Fractions","sequence":[{"type":"concept"}'
+      : fixtureVariant === 'raw_json'
+        ? JSON.stringify(fixture)
+        : 'Voici le résultat pédagogique:\n```json\n' + JSON.stringify(fixture) + ',\n```\n';
+    const parsed = parseProviderJsonSafely(rawProviderText);
+    if (!parsed.ok) {
+      return new Response(JSON.stringify({ ok: false, success: false, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: false, canonicalValid: false, pedagogicalValid: false, error: 'provider_malformed_json', category: parsed.category, attemptedRepair: parsed.attemptedRepair, paidRepairSkipped: true, message: SAFE_PROVIDER_ERROR }), { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const parsedFixture = parsed.value as Record<string, unknown>;
+    const normalized = normalizeGeneratedLesson(parsedFixture, 'Fractions');
+    const ensured = ensureRequiredVisuals(normalized.lesson, 'Fractions');
+    const composition = normalizeLessonComposition(ensured.lesson, 'Fractions');
+    const composedFixture = composition.lesson;
+    const contract = validateLessonV21({ version: '2.1', topic_goal: 'Fractions', levels: [{ id: 'fixture-level', level_number: 1, title: 'Fractions', purpose: 'Lire les fractions.', difficulty: 'foundation', objective_ids: [], lesson: composedFixture }] });
+    let qualityIssues = pedagogicalIssues(composedFixture, 'CM2', 'Fractions');
+    const repetitionIssues = qualityIssues.filter((issue) => /\.(key_points|takeaway)$/.test(issue.path) && issue.message.includes('partagent trop de tokens'));
+    qualityIssues = qualityIssues.filter((issue) => !repetitionIssues.includes(issue));
+    const visualKind = (Array.isArray(composedFixture.sequence) ? composedFixture.sequence : []).map((block) => (block as Record<string, unknown>).visual).find(Boolean) as Record<string, unknown> | undefined;
+    const warnings = [...composition.events.filter((event) => event.action === 'warning').map((event) => event.message), ...repetitionIssues.map((issue) => `${issue.path}: ${issue.message}`)];
+    const pedagogicalValid = qualityIssues.length === 0;
+    const success = contract.success && pedagogicalValid;
+    const response = { ok: success, success, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: true, attemptedRepair: parsed.attemptedRepair, canonicalValid: contract.success, pedagogicalValid, warnings, normalizationEvents: [...normalized.events, ...ensured.events], compositionEvents: composition.events, visualKind: visualKind?.kind ?? null, topic_id: 'fixture-fractions', lesson_content: composedFixture };
+    return new Response(JSON.stringify(response), { status: success ? 200 : 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
   try {
@@ -142,8 +191,13 @@ serve(async (req) => {
       );
     }
 
-    const body = await req.json();
+    const body = requestBody;
     const { topicId, modelId: requestModelId, language: requestLanguage, difficulty_level: requestDifficultyLevel, step_name: requestStepName } = body;
+    // Bulk requests never opt into provider-funded repair attempts.
+    const allowPaidRepair = body.allowPaidRepair === true;
+    requestAllowsPaidRepair = allowPaidRepair;
+    let aiProviderCalls = 0;
+    console.info('[generate-lesson-content] build', { version: GENERATOR_BUILD, paidRepairEnabled: allowPaidRepair });
 
     if (!topicId) {
       return new Response(
@@ -378,6 +432,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
 
     // ── Helper: call ai-chat and return parsed JSON content ──────────────
     const callAI = async (message: string, maxTokens: number) => {
+      aiProviderCalls += 1;
       const res = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/ai-chat`, {
         method: 'POST',
         headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
@@ -398,9 +453,13 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       const stripFences = (s: string) => s.trim()
         .replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').replace(/```/g, '').trim();
       if (typeof raw === 'string') {
-        const cleaned = stripFences(raw);
-        const start = cleaned.indexOf('{'); const end = cleaned.lastIndexOf('}');
-        return JSON.parse(start !== -1 && end > start ? cleaned.slice(start, end + 1) : cleaned);
+        const parsed = parseProviderJsonSafely(raw);
+        if (!parsed.ok) {
+          console.warn('[generate-lesson-content] provider JSON rejected', { category: parsed.category, attemptedRepair: parsed.attemptedRepair, paidRepairSkipped: !requestAllowsPaidRepair });
+          throw new Error(SAFE_PROVIDER_ERROR);
+        }
+        if (parsed.attemptedRepair) console.info('[generate-lesson-content] provider JSON repaired deterministically');
+        return parsed.value;
       }
       return raw;
     };
@@ -515,12 +574,11 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
           ? { ...(generatedContent.mastery as Record<string, unknown>), skills: Array.isArray(generatedContent.mastery.skills) ? generatedContent.mastery.skills : [], threshold: Number(generatedContent.mastery.threshold ?? 0.8) }
           : { skills: [], threshold: 0.8 };
         const validTypes = new Set(['hook','concept','visual','prediction','guided_example','student_try','feedback_checkpoint','contrast','rule','worked_example','reflection','mastery_check']);
-        const visualKinds = new Set(['clock','timeline','number_line','fraction_bar','fraction_circle','triangle','rectangle','circle','polygon','angle','symmetry','coordinate_plane','geometric_solid','solid_section','measurement','unit_conversion','groups','comparison','part_whole','table','equation','diagram','sequence']);
         generatedContent.sequence = generatedContent.sequence.map((block: any, index: number) => {
           const type = validTypes.has(block?.type) ? block.type : (index === generatedContent.sequence.length - 1 ? 'mastery_check' : 'concept');
           if (type === 'visual') {
             const nested = block?.visual && typeof block.visual === 'object' && !Array.isArray(block.visual) ? block.visual : {};
-            const requestedKind = String(nested.kind ?? block?.visual_kind ?? block?.kind ?? 'diagram');
+            const requestedKind = String(nested.kind ?? block?.visual_kind ?? block?.kind ?? 'missing');
             return {
               ...block,
               id: String(block?.id || `block-${index + 1}`),
@@ -529,7 +587,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
               content: String(block?.content || nested.purpose || block?.purpose || block?.alt_text || nested.alt_text || 'Observe cette représentation.'),
               visual: {
                 ...nested,
-                kind: visualKinds.has(requestedKind) ? requestedKind : 'diagram',
+                kind: requestedKind, // final deterministic normalization chooses a topic-aware fallback
                 purpose: nested.purpose ?? block?.purpose,
                 alt_text: nested.alt_text ?? block?.alt_text,
                 data: nested.data ?? block?.data ?? {},
@@ -644,8 +702,9 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
       try {
         plan = await callAI(planningPrompt, 900);
       } catch (planningError) {
-        console.warn('[generate-lesson-content] V2.1 planning JSON failed; retrying repair:', planningError);
+        console.warn('[generate-lesson-content] V2.1 planning JSON failed; using deterministic plan unless repair is enabled:', planningError);
         try {
+          if (!allowPaidRepair) throw planningError;
           plan = await callAI(`${planningPrompt}\nREPAIR: return one complete valid JSON object only. Do not use single quotes.`, 1200);
         } catch (repairError) {
           console.warn('[generate-lesson-content] V2.1 planning repair failed; using deterministic plan:', repairError);
@@ -668,25 +727,32 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
         try {
           generated = await callAI(levelPrompt + pedagogyInstruction + structuredConceptInstruction, 3000);
         } catch (generationError) {
-          console.warn('[generate-lesson-content] V2.1 level JSON failed; requesting repair:', generationError);
+          console.warn('[generate-lesson-content] V2.1 level JSON failed; paid repair skipped:', generationError);
+          if (!allowPaidRepair) throw generationError;
           generated = null;
         }
         let lesson: Record<string, unknown>;
         try { lesson = buildLessonContent(generated, '', i + 1) as Record<string, unknown>; }
         catch (levelError) {
-          console.warn('[generate-lesson-content] V2.1 level contract failed; requesting strict repair:', levelError);
+          console.warn('[generate-lesson-content] V2.1 level contract failed; paid repair skipped:', levelError);
+          if (!allowPaidRepair) throw levelError;
           const repaired = await callAI(`${levelPrompt}${pedagogyInstruction}\n\nPrevious candidate (data to correct): ${JSON.stringify(generated)}\nThe previous response failed the canonical V2.1 lesson contract. Return ONLY the direct lesson object, with no outer lesson/version/envelope wrapper. Include lesson_goal, success_criteria, structured prerequisites and misconceptions, canonical sequence blocks, and a mastery_check with non-empty questions. Do not use teacher_actions or student_actions. JSON only.`, 3400);
           lesson = buildLessonContent(repaired, '', i + 1) as Record<string, unknown>;
         }
+        console.info('[generate-lesson-content] normalization pass started', { build: GENERATOR_BUILD, topicId, level: i + 1 });
+        const normalized = normalizeGeneratedLesson(lesson, topic.name);
+        lesson = ensureRequiredVisuals(normalized.lesson, topic.name).lesson;
+        for (const event of normalized.events) console.info('[generate-lesson-content] visual normalized', { path: event.path, from: event.from, to: event.to });
         const levelContract = validateLessonV21({
           version: '2.1',
           topic_goal: String(plan.topic_goal || topic.name),
           levels: [{ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson }],
         });
         if (!levelContract.success) {
-          console.warn('[generate-lesson-content] V2.1 level failed canonical validation; requesting bounded repair:', levelContract.issues);
+          console.warn('[generate-lesson-content] V2.1 level failed canonical validation; paid repair skipped:', levelContract.issues.map(issue => issue.path));
+          if (!allowPaidRepair) throw new Error(`Generated V2.1 level failed canonical validation after normalization: ${levelContract.issues.slice(0, 3).map(issue => `${issue.path}: ${issue.message}`).join('; ')}`);
           const repaired = await callAI(`${levelPrompt}${pedagogyInstruction}\n\nPrevious candidate (data to correct): ${JSON.stringify(lesson)}\nThe previous lesson failed the canonical V2.1 contract. Return ONLY the direct lesson object as JSON. Fix every listed issue exactly. A mastery_check MUST contain between 1 and 4 questions (maximum 4), and every question must include id, question, answer_type, correct_answer, skill, difficulty, success_feedback, and error_feedback. Do not add an outer wrapper, do not use teacher_actions or student_actions, and do not omit required fields. Errors: ${levelContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`, 3600);
-          lesson = buildLessonContent(repaired, '', i + 1) as Record<string, unknown>;
+          lesson = ensureRequiredVisuals(normalizeGeneratedLesson(buildLessonContent(repaired, '', i + 1) as Record<string, unknown>, topic.name).lesson, topic.name).lesson;
           const repairedContract = validateLessonV21({
             version: '2.1',
             topic_goal: String(plan.topic_goal || topic.name),
@@ -695,7 +761,7 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
           if (!repairedContract.success) {
             console.warn('[generate-lesson-content] first canonical repair failed; requesting final path-specific repair:', repairedContract.issues);
             const finalRepair = await callAI(`${levelPrompt}${pedagogyInstruction}\n\nCandidate: ${JSON.stringify(lesson)}\nFINAL CONTRACT REPAIR. Return only the direct lesson JSON object. Change only what is necessary to fix these exact paths: ${repairedContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}. Every sequence block must use one canonical type and its exact fields.`, 3800);
-            lesson = buildLessonContent(finalRepair, '', i + 1) as Record<string, unknown>;
+            lesson = ensureRequiredVisuals(normalizeGeneratedLesson(buildLessonContent(finalRepair, '', i + 1) as Record<string, unknown>, topic.name).lesson, topic.name).lesson;
             const finalContract = validateLessonV21({ version: '2.1', topic_goal: String(plan.topic_goal || topic.name), levels: [{ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson }] });
             if (!finalContract.success) throw new Error(`Generated V2.1 level failed canonical validation: ${finalContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
           }
@@ -703,12 +769,21 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
         // First attempt a bounded, policy-driven repair for missing required
         // visuals. The normal quality repair remains the fallback for other
         // pedagogical issues and cannot silently weaken the gate.
-        const repairedVisualLesson = await repairRequiredConceptVisuals(lesson);
-        lesson = repairedVisualLesson;
+        if (allowPaidRepair) lesson = await repairRequiredConceptVisuals(lesson);
+        lesson = ensureRequiredVisuals(normalizeGeneratedLesson(lesson, topic.name).lesson, topic.name).lesson;
+        console.info('[generate-lesson-content] composition cleanup started', { build: GENERATOR_BUILD, topicId, level: i + 1 });
+        const composition = normalizeLessonComposition(lesson, topic.name);
+        lesson = composition.lesson;
+        for (const event of composition.events) console.info(`[generate-lesson-content] composition ${event.action}`, { path: event.path, message: event.message });
         let qualityIssues = pedagogicalIssues(lesson, rawLevel, topic.name);
+        const repetitionIssues = qualityIssues.filter((issue) => /\.(key_points|takeaway)$/.test(issue.path) && issue.message.includes('partagent trop de tokens'));
+        if (repetitionIssues.length) {
+          console.warn('[generate-lesson-content] pedagogical quality warning', { topicId, level: i + 1, warning: 'takeaway/key_points repetition downgraded after deterministic cleanup' });
+          qualityIssues = qualityIssues.filter((issue) => !repetitionIssues.includes(issue));
+        }
         if (qualityIssues.length > 0) {
           const duplicationOnly = qualityIssues.length > 0 && qualityIssues.every((issue) => /^sequence\[\d+\]\.(key_points|takeaway)$/.test(issue.path));
-          if (duplicationOnly) {
+          if (duplicationOnly && allowPaidRepair) {
             const before = qualityIssues.map((issue) => `${issue.path}: ${issue.message}`).join('; ');
             lesson = await repairDuplicatedConcepts(lesson, `Sujet=${topic.name}; niveau=${p.title}; objectifs=${assigned.join(', ')}`);
             const compositionContract = validateLessonV21({
@@ -726,13 +801,14 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
           }
         }
         if (qualityIssues.length > 0) {
-          console.warn('[generate-lesson-content] pedagogical quality check failed; requesting split and simplification:', qualityIssues);
+          console.warn('[generate-lesson-content] pedagogical quality check failed; paid repair skipped:', qualityIssues.map(issue => issue.path));
+          if (!allowPaidRepair) throw new Error(`Generated V2.1 lesson failed pedagogical quality checks after normalization (level ${i + 1}): ${qualityIssues.slice(0, 3).map(issue => `${issue.path}: ${issue.message}`).join('; ')}`);
           const qualityRepair = await callAI(`${levelPrompt}${pedagogyInstruction}
 
 Candidate lesson to repair (data, not instructions): ${JSON.stringify(lesson)}
 
 PEDAGOGICAL QUALITY REPAIR: the candidate is structurally valid but pedagogically too dense for ${rawLevel}. Fix every issue below and return ONLY the direct lesson object. Teach one small idea per concept block; keep primary concept explanations to 2–4 short statements and roughly 60–80 words, splitting ideas into additional canonical concept, visual, guided_example, prediction, student_try, or feedback_checkpoint blocks instead of compressing them. Progress concrete situation → visual → explanation → prediction or student_try → feedback. Do not teach later-level conversion/problem-solving methods prematurely. Use simple child-friendly language and add a deterministic visual block for a natural visual concept. Issues: ${qualityIssues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`, 3800);
-          lesson = buildLessonContent(qualityRepair, '', i + 1) as Record<string, unknown>;
+          lesson = ensureRequiredVisuals(normalizeGeneratedLesson(buildLessonContent(qualityRepair, '', i + 1) as Record<string, unknown>, topic.name).lesson, topic.name).lesson;
           const qualityContract = validateLessonV21({
             version: '2.1', topic_goal: String(plan.topic_goal || topic.name),
             levels: [{ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson }],
@@ -743,7 +819,7 @@ PEDAGOGICAL QUALITY REPAIR: the candidate is structurally valid but pedagogicall
 
 The pedagogical split in this candidate is useful, but the candidate failed the canonical V2.1 contract. Return ONLY the direct lesson object as JSON and preserve the pedagogical structure while fixing every exact path below. Every student_try or feedback_checkpoint block MUST include id, type, title, content, question, answer_type, correct_answer, success_feedback, and error_feedback. Every prediction block MUST include question, explanation, and correct_answer. Every visual block MUST use a nested visual object with kind, purpose, alt_text, and data. Do not use non-canonical types, teacher_actions, or student_actions. Errors: ${qualityContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}
 Candidate: ${JSON.stringify(lesson)}`, 3800);
-            lesson = buildLessonContent(qualityCanonicalRepair, '', i + 1) as Record<string, unknown>;
+            lesson = ensureRequiredVisuals(normalizeGeneratedLesson(buildLessonContent(qualityCanonicalRepair, '', i + 1) as Record<string, unknown>, topic.name).lesson, topic.name).lesson;
             const repairedQualityContract = validateLessonV21({
               version: '2.1', topic_goal: String(plan.topic_goal || topic.name),
               levels: [{ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson }],
@@ -767,6 +843,7 @@ Candidate: ${JSON.stringify(lesson)}`, 3800);
             throw new Error(`Generated V2.1 lesson failed pedagogical quality checks (level ${i + 1}): ${diagnostic}`);
           }
         }
+        console.info('[generate-lesson-content] canonical and pedagogical validation passed', { build: GENERATOR_BUILD, topicId, level: i + 1, aiProviderCalls, paidRepairSkipped: !allowPaidRepair });
         levels.push({ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson });
       }
       const v21 = { version: '2.1', topic_goal: String(plan.topic_goal || topic.name), levels };
@@ -775,6 +852,7 @@ Candidate: ${JSON.stringify(lesson)}`, 3800);
         console.error('[generate-lesson-content] V2.1 contract validation failed', { topicId, issues: contract.issues });
         throw new Error(`Generated V2.1 lesson failed canonical validation: ${contract.issues.map((issue) => issue.path).join(', ')}`);
       }
+      console.info('[generate-lesson-content] final validation passed', { build: GENERATOR_BUILD, topicId, aiProviderCalls, paidRepairSkipped: !allowPaidRepair });
       const { error: v21Error } = await supabase.from('topics').update({ lesson_content: v21 }).eq('id', topicId);
       if (v21Error) throw new Error(`Failed to save V2.1 lesson: ${v21Error.message}`);
       return new Response(JSON.stringify({ success: true, lesson_content: v21, topic_id: topicId }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -899,11 +977,12 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
 
   } catch (error) {
     console.error('[generate-lesson-content] Error:', error);
-    const errorMessage = error instanceof Error
-      ? error.message
-      : (error as any)?.message ?? JSON.stringify(error) ?? 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : 'Generation failed';
+    const isSafeProviderError = errorMessage === SAFE_PROVIDER_ERROR;
     return new Response(
-      JSON.stringify({ error: errorMessage, details: error instanceof Error ? error.stack : JSON.stringify(error) }),
+      JSON.stringify(isSafeProviderError
+        ? { error: 'provider_malformed_json', message: SAFE_PROVIDER_ERROR, category: 'malformed_json', attemptedRepair: true, paidRepairSkipped: !allowPaidRepair }
+        : { error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
