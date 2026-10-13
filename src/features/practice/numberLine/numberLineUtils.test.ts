@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { equivalentNumberLineValues, normalizedNumberLinePosition, numberLineValidPositions, parseNumberLineValue, snapNumberLinePosition, sortNumberLineValues, validateNumberLinePlacement } from './numberLineUtils';
+import { equivalentNumberLineValues, initialNumberLinePositions, normalizedNumberLinePosition, numberLineValidPositions, parseNumberLineValue, snapNumberLinePosition, sortNumberLineValues, validateNumberLinePlacement } from './numberLineUtils';
 
 describe('graduated number line values', () => {
   it('parses fractions and French decimals', () => {
@@ -28,5 +28,14 @@ describe('graduated number line values', () => {
     const positions = numberLineValidPositions(0, 1, 4);
     expect(snapNumberLinePosition(0.74, positions)).toBe(0.75);
     expect(validateNumberLinePlacement('1/2', 0.75, 0, 1, 0.08)).toBe(false);
+  });
+  it('creates a deterministic wrong starting order for reorder activities', () => {
+    const positions = initialNumberLinePositions([
+      { id: 'quarter', value: '1/4' },
+      { id: 'half', value: '1/2' },
+      { id: 'three-quarter', value: '3/4' },
+    ], numberLineValidPositions(0, 1, 4));
+    expect(positions).toEqual({ quarter: 0.5, half: 0.25, 'three-quarter': 0 });
+    expect(positions.quarter).not.toBe(0.25);
   });
 });
