@@ -1,5 +1,6 @@
 type PedagogyIssue = { path: string; message: string };
 import { determineVisualRequirement, isSupportedVisualKind } from './visual-policy.ts';
+import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 
 const PEDAGOGY_STOP_WORDS = new Set('le la les un une des de du et en avec pour sur dans une est sont là ce cette ces que qui comme avec au aux par chaque il elle on se'.split(/\s+/));
 function meaningfulTokens(value: unknown): Set<string> {
@@ -85,6 +86,7 @@ export function pedagogicalIssues(lesson: Record<string, unknown>, grade: string
     if (visualPolicy.requirement === 'required' && !block.visual) issues.push({ path: `sequence[${conceptIndex}].visual`, message: `Visuel requis (${visualPolicy.suggestedKinds.join('|')}): ${visualPolicy.reason}` });
     if (visualPolicy.requirement === 'required' && block.visual && !visualPolicy.suggestedKinds.includes(visualKind)) issues.push({ path: `sequence[${conceptIndex}].visual.kind`, message: `Visuel incompatible: attendu ${visualPolicy.suggestedKinds.join('|')}, reçu ${visualKind || 'absent'}.` });
     if (block.visual && !isSupportedVisualKind(visualKind)) issues.push({ path: `sequence[${conceptIndex}].visual.kind`, message: `Type de visuel non pris en charge: ${visualKind || 'absent'}.` });
+    if (block.visual) geometryVisualDataErrors(visualKind, (block.visual as Record<string, unknown>).data, `sequence[${conceptIndex}].visual.data`).forEach((item) => issues.push({ path: item.path, message: item.message }));
     const visibleClockIdea = visualPolicy.suggestedKinds.includes('clock');
     if (visibleClockIdea && visualKind === 'clock' && visualData && typeof visualData === 'object') {
       const d = visualData as Record<string, unknown>;

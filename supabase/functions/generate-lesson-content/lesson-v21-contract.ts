@@ -1,4 +1,5 @@
 export type ContractIssue = { path: string; message: string; expected?: string; received?: string };
+import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 
 const obj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const text = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
@@ -12,7 +13,7 @@ export function validateLessonV21(value: unknown): { success: true } | { success
   const required = (v: Record<string, unknown>, path: string, fields: string[]) => fields.forEach((f) => { if (!text(v[f])) bad(`${path}.${f}`, 'Required non-empty string', 'string', v[f]); });
   const stringArray = (v: unknown, path: string, min = 0, max = Infinity) => { if (!array(v) || v.length < min || v.length > max || v.some((x) => !text(x))) bad(path, `Expected ${min}–${max === Infinity ? 'many' : max} non-empty strings`, 'array', v); };
   const structured = (v: unknown, path: string, fields: string[]) => { if (!array(v)) return bad(path, 'Expected array', 'array', v); v.forEach((x, i) => { const p = `${path}[${i}]`; if (!obj(x)) return bad(p, 'Expected object'); required(x, p, fields); }); };
-  const visual = (v: unknown, path: string) => { if (!obj(v)) return bad(path, 'Expected object'); if (!visuals.includes(String(v.kind))) bad(`${path}.kind`, 'Unsupported visual kind'); if (v.alt_text !== undefined && !text(v.alt_text)) bad(`${path}.alt_text`, 'Expected string'); if (v.purpose !== undefined && !text(v.purpose)) bad(`${path}.purpose`, 'Expected string'); };
+  const visual = (v: unknown, path: string) => { if (!obj(v)) return bad(path, 'Expected object'); if (!visuals.includes(String(v.kind))) bad(`${path}.kind`, 'Unsupported visual kind'); if (v.alt_text !== undefined && !text(v.alt_text)) bad(`${path}.alt_text`, 'Expected string'); if (v.purpose !== undefined && !text(v.purpose)) bad(`${path}.purpose`, 'Expected string'); geometryVisualDataErrors(String(v.kind), v.data, `${path}.data`).forEach((item) => bad(item.path, item.message)); };
   const conceptPresentation = (v: Record<string, unknown>, path: string) => {
     if (v.key_points !== undefined) {
       if (!array(v.key_points) || v.key_points.length < 1 || v.key_points.length > 6) bad(`${path}.key_points`, 'Expected 1–6 key points', 'array(1..6)', v.key_points);
@@ -50,7 +51,7 @@ export function validateLessonV21(value: unknown): { success: true } | { success
       case 'hook': required(v, path, ['title', 'content']); optionalStrings('representation'); break;
       case 'concept': required(v, path, ['title', 'content']); optionalStrings('representation'); conceptPresentation(v, path); break;
       case 'rule': required(v, path, ['title', 'content']); optionalStrings('representation'); break;
-      case 'visual': required(v, path, ['title', 'content']); if (!obj(v.visual)) bad(`${path}.visual`, 'Required object'); else { if (!visuals.includes(String(v.visual.kind))) bad(`${path}.visual.kind`, 'Unsupported visual kind'); if (v.visual.alt_text !== undefined && !text(v.visual.alt_text)) bad(`${path}.visual.alt_text`, 'Expected string'); if (v.visual.purpose !== undefined && !text(v.visual.purpose)) bad(`${path}.visual.purpose`, 'Expected string'); } break;
+      case 'visual': required(v, path, ['title', 'content']); if (!obj(v.visual)) bad(`${path}.visual`, 'Required object'); else visual(v.visual, `${path}.visual`); break;
       case 'prediction': required(v, path, ['question', 'explanation']); if (v.correct_answer === undefined) bad(`${path}.correct_answer`, 'Required value'); if (v.choices !== undefined && (!array(v.choices) || v.choices.length < 2 || v.choices.some((x) => !text(x)))) bad(`${path}.choices`, 'Expected at least 2 strings'); optionalHints(); break;
       case 'guided_example': required(v, path, ['context']); if (!array(v.steps) || v.steps.length < 1) bad(`${path}.steps`, 'Expected non-empty array'); else v.steps.forEach((s, i) => { const p = `${path}.steps[${i}]`; if (!obj(s)) return bad(p, 'Expected object'); required(s, p, ['instruction', 'reason']); if (s.representation !== undefined && !text(s.representation)) bad(`${p}.representation`, 'Expected string'); }); break;
       case 'student_try': case 'feedback_checkpoint': required(v, path, ['question', 'success_feedback', 'error_feedback']); if (!answers.includes(String(v.answer_type))) bad(`${path}.answer_type`, 'Unsupported answer type'); if (v.correct_answer === undefined) bad(`${path}.correct_answer`, 'Required value'); if (v.choices !== undefined && (!array(v.choices) || v.choices.some((x) => !text(x)))) bad(`${path}.choices`, 'Expected string array'); optionalHints(); break;
