@@ -35,7 +35,7 @@ function fallbackVisual(block: RecordValue, topicName: string, candidate: Record
         : /triangle/i.test(context) ? 'triangle'
           : /rectangle/i.test(context) ? 'rectangle'
             : /cercle|circle/i.test(context) ? 'circle'
-              : /polygone|polygon/i.test(context) ? 'polygon'
+                : /polygone|polygon|figures? planes?/i.test(context) ? 'polygon'
                 : /solide|geometric solid/i.test(context) ? 'geometric_solid'
                   : undefined;
   if (geometryKind && policy.suggestedKinds.includes(geometryKind)) {
