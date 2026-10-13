@@ -23,4 +23,20 @@ describe('canonical answer normalization', () => {
     const result = normalizeCanonicalAnswers({ sequence: [{ id: 'c', type: 'concept', title: 'Explain', content: 'x', question: 'q' }] });
     expect(result.errors).toHaveLength(0);
   });
+  it('normalizes a single success criterion and an alias', () => {
+    const direct = normalizeCanonicalAnswers({ success_criteria: 'Je peux comparer les nombres.', sequence: [] });
+    expect(direct.lesson.success_criteria).toEqual(['Je peux comparer les nombres.']);
+    const alias = normalizeCanonicalAnswers({ successCriteria: ['Je peux expliquer la méthode.'], sequence: [] });
+    expect(alias.lesson.success_criteria).toEqual(['Je peux expliquer la méthode.']);
+  });
+  it('removes empty and case-insensitive duplicate criteria and caps at five', () => {
+    const result = normalizeCanonicalAnswers({ success_criteria: ['A', '', 'a', 'B', 'C', 'D', 'E', 'F'], sequence: [] });
+    expect(result.lesson.success_criteria).toEqual(['A', 'B', 'C', 'D', 'E']);
+  });
+  it('uses planned criteria as a bounded fallback without inventing placeholders', () => {
+    const result = normalizeCanonicalAnswers({ sequence: [] }, ['Je peux expliquer la valeur.', '']);
+    expect(result.lesson.success_criteria).toEqual(['Je peux expliquer la valeur.']);
+    const invalid = normalizeCanonicalAnswers({ sequence: [] });
+    expect(invalid.lesson.success_criteria).toBeUndefined();
+  });
 });

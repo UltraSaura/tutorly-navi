@@ -3,6 +3,25 @@ export type CanonicalNormalizationEvent = { path: string; from: string; to: stri
 export type CanonicalNormalizationResult = { lesson: Record<string, unknown>; events: CanonicalNormalizationEvent[]; errors: Array<{ path: string; message: string }> };
 
 const nonEmpty = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+
+function normalizeCriteriaValue(value: unknown): string[] {
+  const values = Array.isArray(value) ? value : nonEmpty(value) ? [value] : [];
+  return values.filter(nonEmpty).map((item) => item.trim()).filter((item, index, all) => all.findIndex((candidate) => candidate.toLocaleLowerCase() === item.toLocaleLowerCase()) === index).slice(0, 5);
+}
+
+/** Normalize only unambiguous structural variants; never invent a criterion. */
+function normalizeSuccessCriteria(lesson: LessonBlock, fallback: unknown, events: CanonicalNormalizationEvent[]): LessonBlock {
+  const direct = normalizeCriteriaValue(lesson.success_criteria);
+  if (direct.length) {
+    if (!Array.isArray(lesson.success_criteria) || direct.length !== (lesson.success_criteria as unknown[]).length) events.push({ path: 'success_criteria', from: typeof lesson.success_criteria, to: 'array' });
+    return { ...lesson, success_criteria: direct };
+  }
+  const aliases = ['successCriteria', 'criteria', 'learning_outcomes'].map((key) => ({ key, value: lesson[key] })).find(({ value }) => normalizeCriteriaValue(value).length);
+  if (aliases) { events.push({ path: 'success_criteria', from: aliases.key, to: 'array' }); return { ...lesson, success_criteria: normalizeCriteriaValue(aliases.value) }; }
+  const derived = normalizeCriteriaValue(fallback);
+  if (derived.length) { events.push({ path: 'success_criteria', from: 'planned_success_criteria', to: 'array' }); return { ...lesson, success_criteria: derived }; }
+  return lesson;
+}
 const answerFrom = (candidate: LessonBlock): unknown => {
   if (candidate.correct_answer !== undefined) return candidate.correct_answer;
   const aliases: Array<[string, unknown]> = [['answer', candidate.answer], ['expected_answer', candidate.expected_answer], ['correctAnswer', candidate.correctAnswer]];
@@ -28,9 +47,10 @@ function normalizeQuestion(candidate: LessonBlock, path: string, events: Canonic
   return candidate;
 }
 
-export function normalizeCanonicalAnswers(lesson: Record<string, unknown>): CanonicalNormalizationResult {
+export function normalizeCanonicalAnswers(lesson: Record<string, unknown>, fallbackSuccessCriteria?: unknown): CanonicalNormalizationResult {
   const events: CanonicalNormalizationEvent[] = [];
   const errors: Array<{ path: string; message: string }> = [];
+  lesson = normalizeSuccessCriteria(lesson, fallbackSuccessCriteria, events);
   const sequence = Array.isArray(lesson.sequence) ? lesson.sequence.map((raw, index) => {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return raw;
     const block = raw as LessonBlock;

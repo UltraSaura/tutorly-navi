@@ -358,7 +358,8 @@ JSON shape:
             modelConfig.model, 
             isExercise,
             requestExplanation,
-            maxTokens
+            maxTokens,
+            requestMode === 'lessonGeneration' ? { type: 'json_object' } : undefined
           );
           break;
         case 'xAI':
@@ -384,7 +385,12 @@ JSON shape:
       throw providerError;
     }
     
-    console.log('📤 Returning successful response, content length:', responseContent?.length || 0);
+    let providerMetadata: Record<string, unknown> | null = null;
+    if (responseContent && typeof responseContent === 'object' && 'content' in responseContent && 'metadata' in responseContent) {
+      providerMetadata = (responseContent as { metadata?: Record<string, unknown> }).metadata ?? null;
+      responseContent = (responseContent as { content?: unknown }).content ?? '';
+    }
+    console.log('📤 Returning successful response, content length:', typeof responseContent === 'string' ? responseContent.length : 0);
     
     // Handle tool calling responses (e.g. from DeepSeek/OpenAI with requestExplanation)
     if (responseContent && typeof responseContent === 'object' && responseContent.tool_calls) {
@@ -396,6 +402,7 @@ JSON shape:
           modelId,
           modelUsed: modelConfig.model,
           provider: modelConfig.provider,
+          providerMetadata,
           isExercise,
           timestamp: new Date().toISOString()
         }),
@@ -427,6 +434,7 @@ JSON shape:
         modelId: modelId,
         modelUsed: modelConfig.model,
         provider: modelConfig.provider,
+        providerMetadata,
         isExercise: isExercise,
         timestamp: new Date().toISOString()
       }),
