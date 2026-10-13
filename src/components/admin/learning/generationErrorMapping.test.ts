@@ -3,6 +3,13 @@ import { formatGenerationError, getGenerationErrorTechnicalDetail } from './gene
 
 describe('generation error mapping', () => {
   it('maps structured canonical errors', () => expect(formatGenerationError({ error: { code: 'canonical_validation_failed', message: 'raw' } })).toBe('La leçon générée n’a pas le format attendu.'));
+  it.each([
+    { code: 'canonical_validation_failed', message: { path: 'levels[0].lesson.sequence[4].correct_answer', error: 'Required value' } },
+    { error: { code: 'canonical_validation_failed', message: { path: 'levels[0].lesson.sequence[4].correct_answer', error: 'Required value' } } },
+    { success: false, ok: false, error: { code: 'canonical_validation_failed', message: { path: 'levels[0].lesson.sequence[4].correct_answer', error: 'Required value' }, technicalDetail: 'levels[0].lesson.sequence[4].correct_answer: Required value' } },
+  ])('maps object-valued canonical messages to a safe string', (payload) => {
+    expect(formatGenerationError(payload)).toBe('La leçon générée n’a pas le format attendu.');
+  });
   it('maps invalid lesson errors and object-valued messages safely', () => {
     const payload = {
       success: false,
