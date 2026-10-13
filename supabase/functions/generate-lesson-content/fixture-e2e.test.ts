@@ -29,6 +29,49 @@ function run(raw: string, topicName = 'Fractions') {
   return { parsed, response: JSON.parse(JSON.stringify(response)), normalizationEvents: [...normalized.events, ...ensured.events], compositionEvents: composition.events };
 }
 
+function runPipeline(raw: string, topicName: string) {
+  const parsed = parseProviderJsonSafely(raw);
+  if (!parsed.ok) return { parsed, providerCalls: 0, success: false };
+  const answers = normalizeCanonicalAnswers(parsed.value as Record<string, unknown>);
+  if (answers.errors.length) return { parsed, providerCalls: 0, success: false, canonicalErrors: answers.errors };
+  const normalized = normalizeGeneratedLesson(answers.lesson, topicName);
+  const ensured = ensureRequiredVisuals(normalized.lesson, topicName);
+  const composition = normalizeLessonComposition(ensured.lesson, topicName);
+  const lesson = composition.lesson;
+  const canonical = validateLessonV21({ version: '2.1', topic_goal: topicName, levels: [{ id: 'fixture-level', level_number: 1, title: topicName, purpose: `Comprendre ${topicName}.`, difficulty: 'foundation', objective_ids: [], lesson }] });
+  const allQualityIssues = pedagogicalIssues(lesson, 'CM2', topicName);
+  // Match the live V2.1 gate: deterministic composition cleanup owns the
+  // key_points/takeaway repetition warning, while all other pedagogical
+  // issues remain hard failures.
+  const qualityIssues = allQualityIssues.filter((issue) => !(/\.(key_points|takeaway)$/.test(issue.path) && issue.message.includes('partagent trop de tokens')));
+  return {
+    parsed,
+    providerCalls: 0,
+    success: canonical.success && qualityIssues.length === 0,
+    canonicalValid: canonical.success,
+    pedagogicalValid: qualityIssues.length === 0,
+    canonicalIssues: canonical.success ? [] : canonical.issues,
+    qualityIssues,
+    normalizationEvents: [...normalized.events, ...ensured.events],
+    compositionEvents: composition.events,
+  };
+}
+
+function topicFixture(topicName: string, visualKind: string, content: string, data: Record<string, unknown>) {
+  return {
+    lesson_goal: `Comprendre ${topicName}.`,
+    success_criteria: ['Je peux expliquer la notion.', 'Je peux résoudre un exemple.'],
+    prerequisites: [],
+    misconceptions: [],
+    sequence: [
+      { id: 'concept', type: 'concept', title: topicName, content, key_points: [{ label: 'Idée', text: 'Je relie la représentation à la situation.' }], takeaway: 'Observe la représentation avant de choisir une méthode.', visual: { kind: visualKind, purpose: `Représenter ${topicName}.`, alt_text: `Représentation de ${topicName}.`, data } },
+      { id: 'try', type: 'student_try', question: 'Quelle réponse convient ?', answer_type: 'short_text', correct_answer: '42', success_feedback: 'Bravo !', error_feedback: 'Observe encore la représentation.' },
+      { id: 'mastery', type: 'mastery_check', questions: [{ id: 'q1', question: 'Explique ton choix.', answer_type: 'short_text', correct_answer: '42', skill: topicName, difficulty: 1, success_feedback: 'Bien joué !', error_feedback: 'Reprends l’idée centrale.' }] },
+    ],
+    mastery: { skills: [topicName], threshold: 0.8 },
+  };
+}
+
 describe('provider-free Fractions fixture pipeline', () => {
   it('passes fenced JSON with missing visual, repeated composition and serializes frontend shape', () => {
     const result = run('Voici:\n```json\n' + JSON.stringify(fixture()) + ',\n```');
@@ -61,5 +104,63 @@ describe('provider-free Fractions fixture pipeline', () => {
     const result = run('{"lesson_goal":"Fractions","sequence":[{"type":"concept"}');
     expect(result.parsed).toMatchObject({ ok: false, category: 'malformed_json' });
     expect(result.providerCalls).toBe(0);
+  });
+});
+
+describe('requested provider-free topic and failure matrix', () => {
+  const validTopics = [
+    ['CM2 — Les nombres entiers', 'number_line', 'Sur une droite graduée, la position montre la valeur du nombre.', { min: 0, max: 100, step: 10 }],
+    ['CM2 — Fractions', 'fraction_bar', 'Une fraction décrit des parts égales d’un même tout.', { parts: 4, filled: 1, denominator: 4, numerator: 1 }],
+    ['Calcul : mental, posé et instrumenté', 'groups', 'On choisit une méthode de calcul adaptée aux nombres et à la situation.', { groups: [10, 4, 2] }],
+    ['La résolution de problèmes', 'sequence', 'Pour résoudre un problème, je repère les données, la question et l’opération utile.', { items: ['données', 'question', 'opération'] }],
+    ['Algèbre', 'equation', 'Une égalité reste vraie quand on effectue la même action des deux côtés.', { left: 'x + 3', right: '8' }],
+    ['Geometry', 'triangle', 'Une figure géométrique se décrit avec ses côtés, ses sommets et ses propriétés.', { sides: 3, vertices: 3 }],
+    ['Measurement', 'measurement', 'Mesurer consiste à comparer une grandeur avec une unité adaptée.', { unit: 'cm', value: 7 }],
+  ] as const;
+
+  it.each(validTopics)('accepts %s using the same production pipeline with zero provider calls', (topic, visualKind, content, data) => {
+    const result = runPipeline(JSON.stringify(topicFixture(topic, visualKind, content, data)), topic);
+    expect(result).toMatchObject({ success: true, providerCalls: 0, canonicalValid: true, pedagogicalValid: true });
+  });
+
+  it('repairs missing and unsupported visuals deterministically without provider calls', () => {
+    const source = topicFixture('CM2 — Fractions', 'diagram_magic', 'Une fraction décrit des parts égales d’un même tout.', { });
+    delete (source.sequence[0] as { visual?: unknown }).visual;
+    const result = runPipeline(JSON.stringify(source), 'CM2 — Fractions');
+    expect(result).toMatchObject({ success: true, providerCalls: 0 });
+    expect(result.normalizationEvents.length).toBeGreaterThan(0);
+  });
+
+  it('hard-fails malformed, truncated, incomplete, and ambiguous provider output', () => {
+    const base = topicFixture('CM2 — Fractions', 'fraction_bar', 'Une fraction décrit des parts égales d’un même tout.', { parts: 4, filled: 1 });
+    const cases = [
+      ['truncated JSON', '{"lesson_goal":"Fractions","sequence":['],
+      ['malformed JSON', '{"lesson_goal":"Fractions",}'],
+      ['missing correct_answer', JSON.stringify({ ...base, sequence: [{ ...(base.sequence[0]) }, { ...(base.sequence[1]), correct_answer: undefined }] })],
+      ['ambiguous correct choices', JSON.stringify({ ...base, sequence: [{ ...(base.sequence[0]) }, { ...(base.sequence[1]), correct_answer: undefined, choices: [{ label: '1/4', correct: true }, { label: '2/4', correct: true }] }, base.sequence[2]] })],
+      ['invalid success criteria', JSON.stringify({ ...base, success_criteria: [] })],
+      ['missing essential steps', JSON.stringify({ ...base, sequence: [] })],
+    ] as const;
+    for (const [name, raw] of cases) {
+      const result = runPipeline(raw, 'CM2 — Fractions');
+      expect(result.success, name).toBe(false);
+      expect(result.providerCalls, name).toBe(0);
+    }
+  });
+
+  it('keeps repeated explanatory content from becoming a validation failure after deterministic cleanup', () => {
+    const repeated = topicFixture('CM2 — Fractions', 'fraction_bar', 'Le numérateur compte les parts prises et le dénominateur indique les parts égales.', { parts: 4, filled: 1 });
+    (repeated.sequence[0] as Record<string, unknown>).key_points = [{ label: 'Règle', text: 'Le numérateur compte les parts prises et le dénominateur indique les parts égales.' }];
+    (repeated.sequence[0] as Record<string, unknown>).takeaway = 'Le numérateur compte les parts prises et le dénominateur indique les parts égales.';
+    const result = runPipeline(JSON.stringify(repeated), 'CM2 — Fractions');
+    expect(result).toMatchObject({ success: true, providerCalls: 0 });
+    expect(result.compositionEvents.length).toBeGreaterThan(0);
+  });
+
+  it('rejects a mathematically inconsistent visual/text example', () => {
+    const clock = topicFixture('Lire l’heure', 'clock', 'La petite aiguille indique 3 heures et la grande aiguille est sur 12.', { hour: 4, minute: 30 });
+    const result = runPipeline(JSON.stringify(clock), 'Lire l’heure');
+    expect(result).toMatchObject({ success: false, providerCalls: 0, pedagogicalValid: false });
+    expect(result.qualityIssues?.some((issue) => issue.path.includes('visual.data'))).toBe(true);
   });
 });
