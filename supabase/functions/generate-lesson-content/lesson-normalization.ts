@@ -26,6 +26,23 @@ function fallbackVisual(block: RecordValue, topicName: string, candidate: Record
     return { kind: 'number_line', purpose: 'Montrer des graduations égales de 0 à 1.', alt_text: 'Droite graduée de 0 à 1.',
       data: { min: 0, max: 1, step: 0.25, ticks: [0, 0.25, 0.5, 0.75, 1] } };
   }
+  // Geometry has a broad policy because several figure types are valid, but
+  // `diagram` is not an acceptable fallback for a required geometry visual.
+  // Select the most specific figure supported by the actual lesson text.
+  const geometryKind = /angle/i.test(context) ? 'angle'
+    : /symétr|symmetr/i.test(context) ? 'symmetry'
+      : /coordonnée|coordonne|repère cartésien|repere cartesien/i.test(context) ? 'coordinate_plane'
+        : /triangle/i.test(context) ? 'triangle'
+          : /rectangle/i.test(context) ? 'rectangle'
+            : /cercle|circle/i.test(context) ? 'circle'
+              : /polygone|polygon/i.test(context) ? 'polygon'
+                : /solide|geometric solid/i.test(context) ? 'geometric_solid'
+                  : undefined;
+  if (geometryKind && policy.suggestedKinds.includes(geometryKind)) {
+    const label = String(block.title || block.content || topicName).trim().slice(0, 120);
+    return { kind: geometryKind, purpose: `Représenter ${label.toLocaleLowerCase()}.`, alt_text: label,
+      data: { label } };
+  }
   // A generic diagram carries only labels already present in the lesson; it
   // does not invent a numeric assertion, geometry, or clock time.
   const label = String(block.title || block.content || topicName).trim().slice(0, 120);
