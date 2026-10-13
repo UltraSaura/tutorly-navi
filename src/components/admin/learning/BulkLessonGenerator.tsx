@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Wand2, Loader2, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { formatGenerationError, getGenerationErrorTechnicalDetail } from './generationErrorMapping';
 
 interface TopicRow {
   id: string;
@@ -30,6 +31,7 @@ interface GenResult {
   name: string;
   status: GenStatus;
   error?: string;
+  technicalDetail?: string;
   currentStep?: string;
 }
 
@@ -38,29 +40,34 @@ interface GenResult {
 // while the Edge Function is still generating and validating the topic.
 const GENERATION_TIMEOUT_MS = 300000;
 
-async function getFunctionErrorMessage(err: unknown, response?: Response) {
-  let errorMessage =
-    err instanceof Error && err.message && err.message !== 'Unknown error'
-      ? err.message
-      : 'La génération a échoué.';
-
-  const candidateResponse =
-    response ||
-    (typeof err === 'object' && err !== null && 'context' in err && (err as { context?: Response }).context instanceof Response
-      ? (err as { context?: Response }).context
-      : undefined);
-
-  if (!candidateResponse) return errorMessage;
-
+async function getFunctionErrorDetails(err: unknown, response?: Response) {
+  const fallback = err instanceof Error && err.message && err.message !== 'Unknown error'
+    ? err.message
+    : 'La génération a échoué.';
+  const candidateResponse = response || (typeof err === 'object' && err !== null && 'context' in err && (err as { context?: Response }).context instanceof Response
+    ? (err as { context?: Response }).context : undefined);
+  if (!candidateResponse) return {
+    message: formatGenerationError(err, fallback),
+    technicalDetail: getGenerationErrorTechnicalDetail(err),
+  };
   try {
     const payload = await candidateResponse.clone().json();
-    return payload?.error || payload?.details || payload?.message || errorMessage;
+    return {
+      message: formatGenerationError(payload, fallback),
+      technicalDetail: getGenerationErrorTechnicalDetail(payload),
+    };
   } catch {
     try {
       const text = await candidateResponse.clone().text();
-      return text || errorMessage;
+      return {
+        message: formatGenerationError(text, fallback),
+        technicalDetail: getGenerationErrorTechnicalDetail(text),
+      };
     } catch {
-      return errorMessage;
+      return {
+        message: formatGenerationError(err, fallback),
+        technicalDetail: getGenerationErrorTechnicalDetail(err),
+      };
     }
   }
 }
@@ -190,18 +197,29 @@ export function BulkLessonGenerator() {
         const result = await Promise.race([invokePromise, timeoutPromise]);
         const { data: fnData, error: fnError, response: invokeResponse } = result;
         if (fnError) {
-          const detailedMessage = await getFunctionErrorMessage(fnError, invokeResponse);
-          throw new Error(detailedMessage);
+          const details = await getFunctionErrorDetails(fnError, invokeResponse);
+          throw Object.assign(new Error(details.message), { technicalDetail: details.technicalDetail });
         }
-        if (fnData?.error) throw new Error(fnData.error);
+        if (fnData?.error) {
+          const details = {
+            message: formatGenerationError(fnData),
+            technicalDetail: getGenerationErrorTechnicalDetail(fnData),
+          };
+          throw Object.assign(new Error(details.message), { technicalDetail: details.technicalDetail });
+        }
         const stepCount = (fnData?.lesson_content?.steps?.length ?? 0);
         setResults((p) => p.map((r) => r.topicId === topic.id
           ? { ...r, status: 'done', currentStep: stepCount > 1 ? `${stepCount} étapes` : undefined }
           : r));
         void invokeResponse;
       } catch (err) {
-        const errorMessage = await getFunctionErrorMessage(err);
-        setResults((p) => p.map((r) => r.topicId === topic.id ? { ...r, status: 'error', error: errorMessage } : r));
+        const details = await getFunctionErrorDetails(err);
+        setResults((p) => p.map((r) => r.topicId === topic.id ? {
+          ...r,
+          status: 'error',
+          error: details.message,
+          technicalDetail: details.technicalDetail,
+        } : r));
       }
     }
 
@@ -276,7 +294,7 @@ export function BulkLessonGenerator() {
                   {r.status === 'done' && r.currentStep && (
                     <span className="text-xs text-green-600 font-medium">{r.currentStep}</span>
                   )}
-                  {r.error && <span title={r.error} className="max-w-[360px] break-words text-right text-xs text-red-500">{r.error}</span>}
+                  {r.error && <span title={r.technicalDetail ?? r.error} className="max-w-[360px] break-words text-right text-xs text-red-500">{r.error}</span>}
                 </div>
               ))}
             </div>

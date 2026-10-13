@@ -53,6 +53,6 @@ describe('lesson generation AI request', () => {
     expect(source).toContain("requestBody.mode === 'fixture'");
     expect(source).toContain("providerCalls: 0");
     expect(source).toContain("pedagogicalValid");
-    expect(source).toContain("error: 'provider_malformed_json'");
+    expect(source).toContain("code: 'provider_malformed_json'");
     expect(source).toContain("success, mode, fixtureVariant");
   });

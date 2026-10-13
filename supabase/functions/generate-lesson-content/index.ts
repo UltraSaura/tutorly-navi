@@ -9,6 +9,7 @@ import { resolveEdition } from './curriculum-resolution.ts';
 import { normalizeGeneratedLesson, ensureRequiredVisuals } from './lesson-normalization.ts';
 import { normalizeLessonComposition } from './composition-normalization.ts';
 import { parseProviderJsonSafely } from './provider-json.ts';
+import { normalizeCanonicalAnswers } from './canonical-normalization.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +19,27 @@ const corsHeaders = {
 const GENERATOR_BUILD = 'practice-visual-normalizer-1';
 const SAFE_PROVIDER_ERROR = 'Le contenu généré n’a pas pu être lu correctement. Aucun contenu n’a été enregistré.';
 const SUPPORTED_MODELS = ['gpt-5', 'gpt-4.1', 'deepseek-chat', 'claude-3-5-sonnet-20241022'];
+const GENERATION_ERROR_MESSAGES: Record<string, string> = {
+  edge_unavailable: 'La fonction de génération est indisponible.',
+  unauthorized: 'Vous n’êtes pas autorisé à générer cette leçon.',
+  provider_error: 'Le fournisseur IA n’a pas pu générer le contenu.',
+  provider_malformed_json: 'Le contenu généré n’a pas pu être lu correctement.',
+  canonical_validation_failed: 'La leçon générée n’a pas le format attendu.',
+  pedagogical_validation_failed: 'La leçon générée n’a pas passé les contrôles pédagogiques.',
+  timeout: 'La génération a pris trop de temps.',
+  unknown: 'Une erreur inattendue est survenue.',
+};
+
+function categorizeGenerationError(error: unknown): { code: string; message: string; technicalDetail: string } {
+  const detail = error instanceof Error ? error.message : String(error ?? 'Generation failed');
+  if (/Unauthorized|Missing authorization|Forbidden/i.test(detail)) return { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: detail };
+  if (detail === SAFE_PROVIDER_ERROR || /provider JSON|malformed JSON/i.test(detail)) return { code: 'provider_malformed_json', message: GENERATION_ERROR_MESSAGES.provider_malformed_json, technicalDetail: detail };
+  if (/canonical validation|correct_answer|contract/i.test(detail)) return { code: 'canonical_validation_failed', message: GENERATION_ERROR_MESSAGES.canonical_validation_failed, technicalDetail: detail };
+  if (/pedagogical quality|pedagogical validation/i.test(detail)) return { code: 'pedagogical_validation_failed', message: GENERATION_ERROR_MESSAGES.pedagogical_validation_failed, technicalDetail: detail };
+  if (/timeout|timed out|exceeded 5 minutes/i.test(detail)) return { code: 'timeout', message: GENERATION_ERROR_MESSAGES.timeout, technicalDetail: detail };
+  if (/AI generation failed|provider/i.test(detail)) return { code: 'provider_error', message: GENERATION_ERROR_MESSAGES.provider_error, technicalDetail: detail };
+  return { code: 'unknown', message: GENERATION_ERROR_MESSAGES.unknown, technicalDetail: detail };
+}
 
 function normalizeModelId(modelId: string): string {
   const modelMap: Record<string, string> = {
@@ -107,6 +129,7 @@ function substituteVariables(template: string, vars: Record<string, string>): st
 
 serve(async (req) => {
   let requestAllowsPaidRepair = false;
+  let aiProviderCalls = 0;
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -120,11 +143,13 @@ serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, success: true, mode, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0 }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const fixtureVariant = String(requestBody.fixtureVariant ?? 'fenced_repeated');
+    const fixtureTopic = String(requestBody.fixtureTopic ?? 'Fractions');
+    const topicName = fixtureTopic === 'Les nombres entiers' ? 'Les nombres entiers' : fixtureTopic === 'Calcul : mental, posé et instrumenté' ? 'Calcul : mental, posé et instrumenté' : fixtureTopic === 'La résolution de problèmes' ? 'La résolution de problèmes' : 'Fractions';
     const fixture = {
-      lesson_goal: 'Comprendre les fractions.', success_criteria: ['Je sais lire une fraction.'], prerequisites: [], misconceptions: [],
+      lesson_goal: `Comprendre ${topicName}.`, success_criteria: ['Je sais lire une fraction.'], prerequisites: [], misconceptions: [],
       sequence: [
-        { id: 'fixture-concept', type: 'concept', title: 'Fractions', content: 'Une fraction décrit une part d’un tout.', key_points: [{ label: 'Numérateur', text: 'Il compte les parts prises.' }, { label: 'Dénominateur', text: 'Il indique les parts égales.' }], takeaway: 'Il indique les parts égales et il compte les parts prises.', visual: { kind: fixtureVariant === 'unsupported_visual' ? 'diagram_magic' : 'missing', purpose: '', alt_text: '', data: {} } },
-        { id: 'fixture-try', type: 'student_try', question: 'Quelle fraction représente une part sur quatre ?', answer_type: 'short_text', correct_answer: '1/4', success_feedback: 'Bravo !', error_feedback: 'Compte les parts.' },
+        { id: 'fixture-concept', type: 'concept', title: topicName, content: topicName === 'Fractions' ? 'Une fraction décrit une part d’un tout.' : `Cette notion aide à comprendre ${topicName.toLocaleLowerCase()}.`, key_points: [{ label: 'Numérateur', text: 'Il compte les parts prises.' }, { label: 'Dénominateur', text: 'Il indique les parts égales.' }], takeaway: 'Il indique les parts égales et il compte les parts prises.', visual: { kind: fixtureVariant === 'unsupported_visual' ? 'diagram_magic' : 'missing', purpose: '', alt_text: '', data: {} } },
+        { id: 'fixture-try', type: 'student_try', question: 'Quelle fraction représente une part sur quatre ?', answer_type: 'short_text', ...(fixtureVariant === 'missing_answer' ? {} : { correct_answer: '1/4' }), success_feedback: 'Bravo !', error_feedback: 'Compte les parts.' },
       ],
       mastery: { skills: ['fractions'], threshold: 0.8 },
     } as Record<string, unknown>;
@@ -135,22 +160,26 @@ serve(async (req) => {
         : 'Voici le résultat pédagogique:\n```json\n' + JSON.stringify(fixture) + ',\n```\n';
     const parsed = parseProviderJsonSafely(rawProviderText);
     if (!parsed.ok) {
-      return new Response(JSON.stringify({ ok: false, success: false, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: false, canonicalValid: false, pedagogicalValid: false, error: 'provider_malformed_json', category: parsed.category, attemptedRepair: parsed.attemptedRepair, paidRepairSkipped: true, message: SAFE_PROVIDER_ERROR }), { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ ok: false, success: false, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: false, canonicalValid: false, pedagogicalValid: false, error: { code: 'provider_malformed_json', message: 'Le contenu généré n’a pas pu être lu correctement.', technicalDetail: parsed.category, providerCalls: 0 }, category: parsed.category, attemptedRepair: parsed.attemptedRepair, paidRepairSkipped: true }), { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const parsedFixture = parsed.value as Record<string, unknown>;
-    const normalized = normalizeGeneratedLesson(parsedFixture, 'Fractions');
-    const ensured = ensureRequiredVisuals(normalized.lesson, 'Fractions');
-    const composition = normalizeLessonComposition(ensured.lesson, 'Fractions');
+    const canonicalAnswers = normalizeCanonicalAnswers(parsedFixture);
+    if (canonicalAnswers.errors.length) {
+      return new Response(JSON.stringify({ ok: false, success: false, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: true, canonicalValid: false, pedagogicalValid: false, error: { code: 'canonical_validation_failed', message: 'La leçon générée n’a pas le format attendu.', technicalDetail: canonicalAnswers.errors, providerCalls: 0 }, paidRepairSkipped: true }), { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const normalized = normalizeGeneratedLesson(canonicalAnswers.lesson, topicName);
+    const ensured = ensureRequiredVisuals(normalized.lesson, topicName);
+    const composition = normalizeLessonComposition(ensured.lesson, topicName);
     const composedFixture = composition.lesson;
-    const contract = validateLessonV21({ version: '2.1', topic_goal: 'Fractions', levels: [{ id: 'fixture-level', level_number: 1, title: 'Fractions', purpose: 'Lire les fractions.', difficulty: 'foundation', objective_ids: [], lesson: composedFixture }] });
-    let qualityIssues = pedagogicalIssues(composedFixture, 'CM2', 'Fractions');
+    const contract = validateLessonV21({ version: '2.1', topic_goal: topicName, levels: [{ id: 'fixture-level', level_number: 1, title: topicName, purpose: `Comprendre ${topicName}.`, difficulty: 'foundation', objective_ids: [], lesson: composedFixture }] });
+    let qualityIssues = pedagogicalIssues(composedFixture, 'CM2', topicName);
     const repetitionIssues = qualityIssues.filter((issue) => /\.(key_points|takeaway)$/.test(issue.path) && issue.message.includes('partagent trop de tokens'));
     qualityIssues = qualityIssues.filter((issue) => !repetitionIssues.includes(issue));
     const visualKind = (Array.isArray(composedFixture.sequence) ? composedFixture.sequence : []).map((block) => (block as Record<string, unknown>).visual).find(Boolean) as Record<string, unknown> | undefined;
     const warnings = [...composition.events.filter((event) => event.action === 'warning').map((event) => event.message), ...repetitionIssues.map((issue) => `${issue.path}: ${issue.message}`)];
     const pedagogicalValid = qualityIssues.length === 0;
     const success = contract.success && pedagogicalValid;
-    const response = { ok: success, success, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: true, attemptedRepair: parsed.attemptedRepair, canonicalValid: contract.success, pedagogicalValid, warnings, normalizationEvents: [...normalized.events, ...ensured.events], compositionEvents: composition.events, visualKind: visualKind?.kind ?? null, topic_id: 'fixture-fractions', lesson_content: composedFixture };
+    const response = { ok: success, success, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: true, attemptedRepair: parsed.attemptedRepair, canonicalValid: contract.success, pedagogicalValid, warnings, normalizationEvents: [...normalized.events, ...ensured.events], compositionEvents: composition.events, visualKind: visualKind?.kind ?? null, topic_id: `fixture-${topicName.toLocaleLowerCase().replace(/[^a-z0-9]+/g, '-')}`, lesson_content: composedFixture };
     return new Response(JSON.stringify(response), { status: success ? 200 : 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
@@ -159,7 +188,7 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: 'Missing authorization' }),
+        JSON.stringify({ success: false, ok: false, error: { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: 'Missing authorization', providerCalls: aiProviderCalls } }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -173,7 +202,7 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ success: false, ok: false, error: { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: 'Unauthorized', providerCalls: aiProviderCalls } }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -186,7 +215,7 @@ serve(async (req) => {
 
     if (!roles || roles.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'Forbidden: Admin or teacher role required' }),
+        JSON.stringify({ success: false, ok: false, error: { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: 'Admin or teacher role required', providerCalls: aiProviderCalls } }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -196,7 +225,6 @@ serve(async (req) => {
     // Bulk requests never opt into provider-funded repair attempts.
     const allowPaidRepair = body.allowPaidRepair === true;
     requestAllowsPaidRepair = allowPaidRepair;
-    let aiProviderCalls = 0;
     console.info('[generate-lesson-content] build', { version: GENERATOR_BUILD, paidRepairEnabled: allowPaidRepair });
 
     if (!topicId) {
@@ -604,7 +632,9 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
           && Array.isArray(generatedContent.misconceptions)
           && generatedContent.mastery && typeof generatedContent.mastery.threshold === 'number' && Number.isFinite(generatedContent.mastery.threshold);
         if (!valid) throw new Error('AI returned malformed Lesson Generator V2 JSON');
-        return { ...generatedContent, version: '2.0' };
+        const canonicalAnswers = normalizeCanonicalAnswers(generatedContent);
+        if (canonicalAnswers.errors.length) throw new Error(`Generated V2.1 lesson failed canonical validation after normalization: ${canonicalAnswers.errors.slice(0, 3).map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
+        return { ...canonicalAnswers.lesson, version: '2.0' };
       }
       if (isV2Prompt) throw new Error('AI returned non-V2 lesson content');
       const rawMistakes = generatedContent.common_mistakes || [];
@@ -855,7 +885,7 @@ Candidate: ${JSON.stringify(lesson)}`, 3800);
       console.info('[generate-lesson-content] final validation passed', { build: GENERATOR_BUILD, topicId, aiProviderCalls, paidRepairSkipped: !allowPaidRepair });
       const { error: v21Error } = await supabase.from('topics').update({ lesson_content: v21 }).eq('id', topicId);
       if (v21Error) throw new Error(`Failed to save V2.1 lesson: ${v21Error.message}`);
-      return new Response(JSON.stringify({ success: true, lesson_content: v21, topic_id: topicId }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ success: true, ok: true, lesson_content: v21, topic_id: topicId, providerCalls: aiProviderCalls }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // ── Step 1: Planning — AI decides step names, grade level enforces minimum count ──
@@ -971,19 +1001,16 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
     }
 
     return new Response(
-      JSON.stringify({ success: true, lesson_content: finalContent, topic_id: topicId }),
+      JSON.stringify({ success: true, ok: true, lesson_content: finalContent, topic_id: topicId, providerCalls: aiProviderCalls }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('[generate-lesson-content] Error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Generation failed';
-    const isSafeProviderError = errorMessage === SAFE_PROVIDER_ERROR;
+    const categorized = categorizeGenerationError(error);
     return new Response(
-      JSON.stringify(isSafeProviderError
-        ? { error: 'provider_malformed_json', message: SAFE_PROVIDER_ERROR, category: 'malformed_json', attemptedRepair: true, paidRepairSkipped: !allowPaidRepair }
-        : { error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ success: false, ok: false, error: { code: categorized.code, message: categorized.message, technicalDetail: categorized.technicalDetail, providerCalls: aiProviderCalls }, paidRepairSkipped: !requestAllowsPaidRepair }),
+      { status: categorized.code === 'unauthorized' ? 401 : 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
