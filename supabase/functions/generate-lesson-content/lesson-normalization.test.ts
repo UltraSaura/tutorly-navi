@@ -81,4 +81,16 @@ describe('provider-free geometry normalization', () => {
     expect(visual.kind).toBe('angle');
     expect(pedagogicalIssues(normalized, 'CM2', 'Angles').filter((issue) => issue.path.endsWith('.visual.kind'))).toEqual([]);
   });
+
+  it('uses a polygon fallback for generic plane figures', () => {
+    const lesson = fixture();
+    lesson.sequence[0] = {
+      id: 'c-figures', type: 'concept', title: 'Construire et transformer des figures planes',
+      content: 'On construit et transforme des figures planes.',
+      visual: { kind: 'diagram' },
+    } as unknown as typeof lesson.sequence[number];
+    const { lesson: normalized } = normalizeGeneratedLesson(lesson, 'Construire et transformer des figures planes');
+    const visual = (normalized.sequence as Array<Record<string, unknown>>)[0].visual as Record<string, unknown>;
+    expect(visual.kind).toBe('polygon');
+  });
 });
