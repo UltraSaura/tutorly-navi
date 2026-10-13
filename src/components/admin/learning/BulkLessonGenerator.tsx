@@ -280,7 +280,9 @@ export function BulkLessonGenerator() {
             </div>
             <Progress value={results.length ? (done / results.length) * 100 : 0} className="h-2" />
             <div className="mt-2 space-y-1">
-              {results.map((r) => (
+              {results.map((r) => {
+                const visibleErrorMessage = r.error ? formatGenerationError(r.error) : undefined;
+                return (
                 <div key={r.topicId} className="flex items-center gap-3 border-b py-2 text-sm last:border-0">
                   {r.status === 'running' && (
                     <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin text-primary" />
@@ -294,9 +296,10 @@ export function BulkLessonGenerator() {
                   {r.status === 'done' && r.currentStep && (
                     <span className="text-xs text-green-600 font-medium">{r.currentStep}</span>
                   )}
-                  {r.error && <span title={r.technicalDetail ?? r.error} className="max-w-[360px] break-words text-right text-xs text-red-500">{r.error}</span>}
+                  {visibleErrorMessage && <span title={r.technicalDetail ?? visibleErrorMessage} className="max-w-[360px] break-words text-right text-xs text-red-500">{visibleErrorMessage}</span>}
                 </div>
-              ))}
+                );
+              })}
             </div>
             {!isRunning && (
               <Button

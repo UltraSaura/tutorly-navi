@@ -10,7 +10,20 @@ describe('generation error mapping', () => {
     expect(formatGenerationError('timeout after 5 minutes')).toBe('La génération a pris trop de temps.');
   });
   it('never renders objects as [object Object]', () => {
-    for (const value of [null, undefined, {}, { error: {} }, '[object Object]']) expect(formatGenerationError(value)).not.toBe('[object Object]');
+    for (const value of [
+      null,
+      undefined,
+      {},
+      { error: {} },
+      { error: { message: { detail: 'x' } } },
+      { message: { detail: 'x' } },
+      '[object Object]',
+    ]) {
+      const visible = formatGenerationError(value);
+      expect(typeof visible).toBe('string');
+      expect(visible).not.toBe('[object Object]');
+      expect(visible).not.toContain('[object Object]');
+    }
   });
   it('keeps technical details separate', () => expect(getGenerationErrorTechnicalDetail({ error: { code: 'canonical_validation_failed', technicalDetail: { path: 'sequence[4].correct_answer' } } })).toContain('sequence[4]'));
 });
