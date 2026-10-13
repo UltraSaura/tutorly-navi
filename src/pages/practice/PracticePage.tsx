@@ -274,6 +274,18 @@ export default function PracticePage() {
           />
         </section>
 
+        <section className="rounded-[28px] border border-[#BCEFE3] bg-[#E8F8F3] p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#087F68]">Maths</p>
+              <h2 className="mt-1 text-xl font-extrabold text-[#050B34]">Demi-droite graduée</h2>
+              <p className="mt-1 text-sm font-medium text-[#436B65]">Lis, place et range des fractions et des décimaux.</p>
+            </div>
+            <ArrowRight className="mt-1 h-6 w-6 shrink-0 text-[#087F68]" aria-hidden="true" />
+          </div>
+          <button type="button" onClick={() => navigate('/practice/number-line')} className="mt-4 min-h-11 w-full rounded-xl bg-[#12C6A0] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0EAD8B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087F68] focus-visible:ring-offset-2">Commencer</button>
+        </section>
+
         <section>
           {(subjectsQuery.isLoading || practiceButtonsQuery.isLoading || activeSchoolLevel.isLoading || papersQuery.isLoading || trainingCountsQuery.isLoading) ? (
             <div className="grid grid-cols-2 gap-4">

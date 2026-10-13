@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { isPasswordRecoveryUrl, requestPasswordReset, updateRecoveredPassword } from '@/services/passwordRecovery';
 
 interface AuthContextType {
   user: User | null;
@@ -11,6 +12,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, userData?: any) => Promise<{ error: any }>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  updatePassword: (password: string) => Promise<{ error: any }>;
+  isPasswordRecovery: boolean;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
 }
@@ -29,6 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const { toast } = useToast();
   
 
@@ -64,9 +68,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
+    // PASSWORD_RECOVERY is normally emitted by Supabase, but also detect the
+    // link explicitly so a slow/late listener never redirects the user away
+    // from the password form.
+    if (typeof window !== 'undefined' && isPasswordRecoveryUrl(window.location.href)) {
+      setIsPasswordRecovery(true);
+    }
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (event === 'PASSWORD_RECOVERY') setIsPasswordRecovery(true);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -158,11 +170,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resetPassword = async (email: string) => {
-    const redirectUrl = import.meta.env.VITE_AUTH_RESET_REDIRECT_URL || `${window.location.origin}/auth`;
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl,
-    });
+    const { error } = await requestPasswordReset(supabase.auth, email, window.location.origin);
+    return { error };
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await updateRecoveredPassword(supabase.auth, password);
+    if (!error) setIsPasswordRecovery(false);
     return { error };
   };
 
@@ -205,6 +219,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signUp,
     resetPassword,
+    updatePassword,
+    isPasswordRecovery,
     signOut,
     deleteAccount,
   };
