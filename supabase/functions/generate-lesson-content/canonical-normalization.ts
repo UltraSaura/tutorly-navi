@@ -29,8 +29,20 @@ const answerFrom = (candidate: LessonBlock): unknown => {
   if (alias) return alias[1];
   if (typeof candidate.solution === 'string' && candidate.solution.trim().length > 0 && candidate.solution.trim().length <= 200) return candidate.solution.trim();
   if (Array.isArray(candidate.choices)) {
-    const correct = candidate.choices.find((choice) => choice && typeof choice === 'object' && !Array.isArray(choice) && ((choice as LessonBlock).correct === true || (choice as LessonBlock).is_correct === true));
-    if (correct && typeof correct === 'object') return (correct as LessonBlock).value ?? (correct as LessonBlock).label ?? (correct as LessonBlock).text;
+    // A choice-derived answer is safe only when exactly one option is marked
+    // correct. Selecting the first marked option would silently turn an
+    // ambiguous provider response into a mathematically/pedagogically false
+    // lesson.
+    const markedCorrect = candidate.choices.filter((choice) =>
+      choice && typeof choice === 'object' && !Array.isArray(choice)
+      && ((choice as LessonBlock).correct === true || (choice as LessonBlock).is_correct === true),
+    );
+    if (markedCorrect.length !== 1) return undefined;
+    const correct = markedCorrect[0];
+    if (correct && typeof correct === 'object') {
+      const value = (correct as LessonBlock).value ?? (correct as LessonBlock).label ?? (correct as LessonBlock).text;
+      if (value !== undefined && (typeof value !== 'string' || value.trim().length > 0)) return value;
+    }
   }
   return undefined;
 };
