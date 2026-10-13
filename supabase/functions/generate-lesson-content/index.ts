@@ -17,7 +17,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
 };
 
-const GENERATOR_BUILD = 'practice-visual-normalizer-2';
+const GENERATOR_BUILD = 'practice-v21-compiler-1';
 const SAFE_PROVIDER_ERROR = 'Le contenu généré n’a pas pu être lu correctement. Aucun contenu n’a été enregistré.';
 const SUPPORTED_MODELS = ['gpt-5', 'gpt-4.1', 'deepseek-chat', 'claude-3-5-sonnet-20241022'];
 const GENERATION_ERROR_MESSAGES: Record<string, string> = {
