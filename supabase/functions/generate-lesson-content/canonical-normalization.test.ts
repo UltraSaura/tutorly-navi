@@ -54,4 +54,16 @@ describe('canonical answer normalization', () => {
     const invalid = normalizeCanonicalAnswers({ sequence: [] });
     expect(invalid.lesson.success_criteria).toBeUndefined();
   });
+  it('removes provider mastery-question keys before persistence', () => {
+    const result = normalizeCanonicalAnswers({
+      mastery: {
+        0: { id: 'm1', question: 'Q', correct_answer: '1' },
+        skills: [],
+        threshold: 0.8,
+      },
+      sequence: [],
+    });
+    expect(result.lesson.mastery).toEqual({ skills: [], threshold: 0.8 });
+    expect(result.events).toContainEqual({ path: 'mastery', from: '0', to: 'skills,threshold' });
+  });
 });
