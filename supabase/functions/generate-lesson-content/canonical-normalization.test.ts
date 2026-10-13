@@ -11,6 +11,21 @@ describe('canonical answer normalization', () => {
     const result = normalizeCanonicalAnswers({ sequence: [{ id: 'q', type: 'student_try', question: 'q', answer_type: 'selection', choices: [{ label: 'A' }, { label: 'B', correct: true }] }] });
     expect((result.lesson.sequence as Array<Record<string, unknown>>)[0].correct_answer).toBe('B');
   });
+  it('rejects ambiguous choices when more than one option is marked correct', () => {
+    const result = normalizeCanonicalAnswers({ sequence: [{ id: 'q', type: 'student_try', question: 'q', answer_type: 'selection', choices: [
+      { label: 'A', correct: true },
+      { label: 'B', correct: true },
+    ] }] });
+    expect(result.lesson.sequence).toEqual([{ id: 'q', type: 'student_try', question: 'q', answer_type: 'selection', choices: [
+      { label: 'A', correct: true },
+      { label: 'B', correct: true },
+    ] }]);
+    expect(result.errors).toEqual([{ path: 'sequence[0].correct_answer', message: 'Interactive block has no safely inferable correct answer.' }]);
+  });
+  it('rejects a marked choice with no usable answer value', () => {
+    const result = normalizeCanonicalAnswers({ sequence: [{ id: 'q', type: 'student_try', question: 'q', answer_type: 'selection', choices: [{ correct: true }] }] });
+    expect(result.errors[0].path).toBe('sequence[0].correct_answer');
+  });
   it('normalizes prediction answers using the same safe aliases', () => {
     const result = normalizeCanonicalAnswers({ sequence: [{ id: 'p', type: 'prediction', question: 'q', explanation: 'e', expected_answer: 'B' }] });
     expect((result.lesson.sequence as Array<Record<string, unknown>>)[0].correct_answer).toBe('B');
