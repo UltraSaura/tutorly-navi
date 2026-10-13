@@ -9,6 +9,18 @@ function normalizeCriteriaValue(value: unknown): string[] {
   return values.filter(nonEmpty).map((item) => item.trim()).filter((item, index, all) => all.findIndex((candidate) => candidate.toLocaleLowerCase() === item.toLocaleLowerCase()) === index).slice(0, 5);
 }
 
+function normalizeMasteryMetadata(lesson: LessonBlock, events: CanonicalNormalizationEvent[]): LessonBlock {
+  if (!lesson.mastery || typeof lesson.mastery !== 'object' || Array.isArray(lesson.mastery)) return lesson;
+  const mastery = lesson.mastery as LessonBlock;
+  const normalized = {
+    skills: Array.isArray(mastery.skills) ? mastery.skills.filter(nonEmpty).map((skill) => skill.trim()) : [],
+    threshold: Number.isFinite(Number(mastery.threshold)) ? Number(mastery.threshold) : 0.8,
+  };
+  const extraKeys = Object.keys(mastery).filter((key) => !['skills', 'threshold'].includes(key));
+  if (extraKeys.length > 0) events.push({ path: 'mastery', from: extraKeys.join(','), to: 'skills,threshold' });
+  return { ...lesson, mastery: normalized };
+}
+
 /** Normalize only unambiguous structural variants; never invent a criterion. */
 function normalizeSuccessCriteria(lesson: LessonBlock, fallback: unknown, events: CanonicalNormalizationEvent[]): LessonBlock {
   const direct = normalizeCriteriaValue(lesson.success_criteria);
@@ -63,6 +75,7 @@ export function normalizeCanonicalAnswers(lesson: Record<string, unknown>, fallb
   const events: CanonicalNormalizationEvent[] = [];
   const errors: Array<{ path: string; message: string }> = [];
   lesson = normalizeSuccessCriteria(lesson, fallbackSuccessCriteria, events);
+  lesson = normalizeMasteryMetadata(lesson, events);
   const sequence = Array.isArray(lesson.sequence) ? lesson.sequence.map((raw, index) => {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return raw;
     const block = raw as LessonBlock;
