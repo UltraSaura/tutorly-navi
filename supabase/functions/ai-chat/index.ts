@@ -1,4 +1,4 @@
-import { requireLearner } from '../_shared/family-access.ts';
+import { requireLearner, requirePrivilegedFamily } from '../_shared/family-access.ts';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
@@ -53,6 +53,31 @@ const checkRateLimit = (identifier: string): boolean => {
   return true;
 };
 
+async function requireLessonGenerationAccess(req: Request): Promise<void> {
+  await requirePrivilegedFamily(req);
+
+  const authorization = req.headers.get('authorization');
+  if (!authorization) throw new Error('Unauthorized');
+
+  const client = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    { global: { headers: { Authorization: authorization } } },
+  );
+  const { data: { user }, error: authError } = await client.auth.getUser();
+  if (authError || !user) throw new Error('Unauthorized');
+
+  const { data: roles, error: roleError } = await client
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .in('role', ['admin', 'teacher']);
+
+  if (roleError || !roles || roles.length === 0) {
+    throw new Error('Admin or teacher role required');
+  }
+}
+
 serve(async (req) => {
   // Set CORS headers for all responses
   const corsHeaders = {
@@ -80,7 +105,6 @@ serve(async (req) => {
 
 
   try {
-    await requireLearner(req);
     // Parse request body with detailed logging
     const requestText = await req.text();
     console.log('📥 Raw request received, length:', requestText.length);
@@ -122,6 +146,15 @@ serve(async (req) => {
       problemContext,
       maxTokens = 800  // Default to 800 for backward compatibility
     } = parsedBody;
+
+    // Normal learner chat requires a learner profile. Lesson generation is
+    // initiated by the privileged admin/teacher generator and must use the
+    // corresponding privileged contract instead of pretending to be a child.
+    if (requestMode === 'lessonGeneration') {
+      await requireLessonGenerationAccess(req);
+    } else {
+      await requireLearner(req);
+    }
     
     // Normalize language: accept 'fr', 'french', 'French' etc.
     const language = /^fr/i.test(rawLanguage) ? 'fr' : 'en';
@@ -358,7 +391,8 @@ JSON shape:
             modelConfig.model, 
             isExercise,
             requestExplanation,
-            maxTokens
+            maxTokens,
+            requestMode === 'lessonGeneration' ? { type: 'json_object' } : undefined
           );
           break;
         case 'xAI':
@@ -384,7 +418,12 @@ JSON shape:
       throw providerError;
     }
     
-    console.log('📤 Returning successful response, content length:', responseContent?.length || 0);
+    let providerMetadata: Record<string, unknown> | null = null;
+    if (responseContent && typeof responseContent === 'object' && 'content' in responseContent && 'metadata' in responseContent) {
+      providerMetadata = (responseContent as { metadata?: Record<string, unknown> }).metadata ?? null;
+      responseContent = (responseContent as { content?: unknown }).content ?? '';
+    }
+    console.log('📤 Returning successful response, content length:', typeof responseContent === 'string' ? responseContent.length : 0);
     
     // Handle tool calling responses (e.g. from DeepSeek/OpenAI with requestExplanation)
     if (responseContent && typeof responseContent === 'object' && responseContent.tool_calls) {
@@ -396,6 +435,7 @@ JSON shape:
           modelId,
           modelUsed: modelConfig.model,
           provider: modelConfig.provider,
+          providerMetadata,
           isExercise,
           timestamp: new Date().toISOString()
         }),
@@ -427,6 +467,7 @@ JSON shape:
         modelId: modelId,
         modelUsed: modelConfig.model,
         provider: modelConfig.provider,
+        providerMetadata,
         isExercise: isExercise,
         timestamp: new Date().toISOString()
       }),

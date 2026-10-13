@@ -10,7 +10,7 @@ const REQUIRED: Array<{ pattern: RegExp; kinds: string[]; reason: string }> = [
   { pattern: /heure exacte|lire l'heure|lire une heure|horloge|aiguille|minutes? sur une horloge/i, kinds: ['clock'], reason: "La lecture d'une horloge dépend de la position des aiguilles." },
   { pattern: /fraction|numérateur|dénominateur|parts? égales?|partie(?:s)?[- ]tout/i, kinds: ['fraction_bar', 'fraction_circle'], reason: 'La relation partie/tout doit être visible.' },
   { pattern: /droite graduée|ligne numérique|position(?:ner|nement)? .*nombre|repérer un nombre/i, kinds: ['number_line'], reason: 'La position et les écarts doivent être visibles.' },
-  { pattern: /angle|symétrie|coordonnée|repère cartésien|triangle|rectangle|cercle|polygone|solide|géométrie/i, kinds: ['angle', 'triangle', 'rectangle', 'circle', 'polygon', 'symmetry', 'coordinate_plane', 'geometric_solid', 'solid_section'], reason: 'La propriété géométrique doit être montrée par une figure.' },
+  { pattern: /angle|symétrie|coordonnée|repère cartésien|triangle|rectangle|cercle|polygone|figures? planes?|solide|géométrie/i, kinds: ['angle', 'triangle', 'rectangle', 'circle', 'polygon', 'symmetry', 'coordinate_plane', 'geometric_solid', 'solid_section'], reason: 'La propriété géométrique doit être montrée par une figure.' },
   { pattern: /conversion|convertir|unités? de durée|durée.*unités?|unités?.*(?:seconde|minute|heure|jour)|(?:60|24|100|1000)\s*(?:secondes?|minutes?|heures?|jours?|ans?)/i, kinds: ['unit_conversion', 'timeline'], reason: 'La relation entre unités ou facteurs doit être visible.' },
 ];
 

@@ -6,13 +6,41 @@ import { validateLessonV21 } from './lesson-v21-contract.ts';
 import { pedagogicalIssues, semanticDuplicationDiagnostics, validateCompositionRepairOutput } from './pedagogical-quality.ts';
 import { determineVisualRequirement, isSupportedVisualKind } from './visual-policy.ts';
 import { resolveEdition } from './curriculum-resolution.ts';
+import { normalizeGeneratedLesson, ensureRequiredVisuals } from './lesson-normalization.ts';
+import { normalizeLessonComposition } from './composition-normalization.ts';
+import { parseProviderJsonSafely } from './provider-json.ts';
+import { normalizeCanonicalAnswers } from './canonical-normalization.ts';
+import { compileV21LessonDraft } from './v21-draft-compiler.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
 };
 
+const GENERATOR_BUILD = 'practice-v21-compiler-1';
+const SAFE_PROVIDER_ERROR = 'Le contenu généré n’a pas pu être lu correctement. Aucun contenu n’a été enregistré.';
 const SUPPORTED_MODELS = ['gpt-5', 'gpt-4.1', 'deepseek-chat', 'claude-3-5-sonnet-20241022'];
+const GENERATION_ERROR_MESSAGES: Record<string, string> = {
+  edge_unavailable: 'La fonction de génération est indisponible.',
+  unauthorized: 'Vous n’êtes pas autorisé à générer cette leçon.',
+  provider_error: 'Le fournisseur IA n’a pas pu générer le contenu.',
+  provider_malformed_json: 'Le contenu généré n’a pas pu être lu correctement.',
+  canonical_validation_failed: 'La leçon générée n’a pas le format attendu.',
+  pedagogical_validation_failed: 'La leçon générée n’a pas passé les contrôles pédagogiques.',
+  timeout: 'La génération a pris trop de temps.',
+  unknown: 'Une erreur inattendue est survenue.',
+};
+
+function categorizeGenerationError(error: unknown): { code: string; message: string; technicalDetail: string } {
+  const detail = error instanceof Error ? error.message : String(error ?? 'Generation failed');
+  if (/Unauthorized|Missing authorization|Forbidden/i.test(detail)) return { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: detail };
+  if (detail === SAFE_PROVIDER_ERROR || /provider JSON|malformed JSON/i.test(detail)) return { code: 'provider_malformed_json', message: GENERATION_ERROR_MESSAGES.provider_malformed_json, technicalDetail: detail };
+  if (/canonical validation|correct_answer|contract/i.test(detail)) return { code: 'canonical_validation_failed', message: GENERATION_ERROR_MESSAGES.canonical_validation_failed, technicalDetail: detail };
+  if (/pedagogical quality|pedagogical validation/i.test(detail)) return { code: 'pedagogical_validation_failed', message: GENERATION_ERROR_MESSAGES.pedagogical_validation_failed, technicalDetail: detail };
+  if (/timeout|timed out|exceeded 5 minutes/i.test(detail)) return { code: 'timeout', message: GENERATION_ERROR_MESSAGES.timeout, technicalDetail: detail };
+  if (/AI generation failed|provider/i.test(detail)) return { code: 'provider_error', message: GENERATION_ERROR_MESSAGES.provider_error, technicalDetail: detail };
+  return { code: 'unknown', message: GENERATION_ERROR_MESSAGES.unknown, technicalDetail: detail };
+}
 
 function normalizeModelId(modelId: string): string {
   const modelMap: Record<string, string> = {
@@ -101,16 +129,85 @@ function substituteVariables(template: string, vars: Record<string, string>): st
 }
 
 serve(async (req) => {
+  let requestAllowsPaidRepair = false;
+  let aiProviderCalls = 0;
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Keep the authorization boundary ahead of every request-body branch,
+  // including provider-free healthchecks and fixtures. Those modes cannot
+  // call an AI provider, but they are still part of this privileged function.
   try {
     await requirePrivilegedFamily(req);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error ?? 'Unauthorized');
+    return new Response(JSON.stringify({
+      success: false,
+      ok: false,
+      error: {
+        code: 'unauthorized',
+        message: GENERATION_ERROR_MESSAGES.unauthorized,
+        technicalDetail: detail,
+        providerCalls: 0,
+      },
+    }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+
+  let requestBody: Record<string, unknown> = {};
+  try { requestBody = await req.json(); } catch { requestBody = {}; }
+  const noPaidMode = requestBody.mode === 'healthcheck' || requestBody.mode === 'fixture';
+  if (noPaidMode) {
+    const mode = String(requestBody.mode);
+    if (mode === 'healthcheck') {
+      return new Response(JSON.stringify({ ok: true, success: true, mode, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0 }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const fixtureVariant = String(requestBody.fixtureVariant ?? 'fenced_repeated');
+    const fixtureTopic = String(requestBody.fixtureTopic ?? 'Fractions');
+    const topicName = fixtureTopic === 'Les nombres entiers' ? 'Les nombres entiers' : fixtureTopic === 'Calcul : mental, posé et instrumenté' ? 'Calcul : mental, posé et instrumenté' : fixtureTopic === 'La résolution de problèmes' ? 'La résolution de problèmes' : 'Fractions';
+    const fixture = {
+      lesson_goal: `Comprendre ${topicName}.`, success_criteria: ['Je sais lire une fraction.'], prerequisites: [], misconceptions: [],
+      sequence: [
+        { id: 'fixture-concept', type: 'concept', title: topicName, content: topicName === 'Fractions' ? 'Une fraction décrit une part d’un tout.' : `Cette notion aide à comprendre ${topicName.toLocaleLowerCase()}.`, key_points: [{ label: 'Numérateur', text: 'Il compte les parts prises.' }, { label: 'Dénominateur', text: 'Il indique les parts égales.' }], takeaway: 'Il indique les parts égales et il compte les parts prises.', visual: { kind: fixtureVariant === 'unsupported_visual' ? 'diagram_magic' : 'missing', purpose: '', alt_text: '', data: {} } },
+        { id: 'fixture-try', type: 'student_try', question: 'Quelle fraction représente une part sur quatre ?', answer_type: 'short_text', ...(fixtureVariant === 'missing_answer' ? {} : { correct_answer: '1/4' }), success_feedback: 'Bravo !', error_feedback: 'Compte les parts.' },
+      ],
+      mastery: { skills: ['fractions'], threshold: 0.8 },
+    } as Record<string, unknown>;
+    const rawProviderText = fixtureVariant === 'malformed_json'
+      ? '{"lesson_goal":"Fractions","sequence":[{"type":"concept"}'
+      : fixtureVariant === 'raw_json'
+        ? JSON.stringify(fixture)
+        : 'Voici le résultat pédagogique:\n```json\n' + JSON.stringify(fixture) + ',\n```\n';
+    const parsed = parseProviderJsonSafely(rawProviderText);
+    if (!parsed.ok) {
+      return new Response(JSON.stringify({ ok: false, success: false, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: false, canonicalValid: false, pedagogicalValid: false, error: { code: 'provider_malformed_json', message: 'Le contenu généré n’a pas pu être lu correctement.', technicalDetail: parsed.category, providerCalls: 0 }, category: parsed.category, attemptedRepair: parsed.attemptedRepair, paidRepairSkipped: true }), { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const parsedFixture = parsed.value as Record<string, unknown>;
+    const canonicalAnswers = normalizeCanonicalAnswers(parsedFixture);
+    if (canonicalAnswers.errors.length) {
+      return new Response(JSON.stringify({ ok: false, success: false, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: true, canonicalValid: false, pedagogicalValid: false, error: { code: 'canonical_validation_failed', message: 'La leçon générée n’a pas le format attendu.', technicalDetail: canonicalAnswers.errors, providerCalls: 0 }, paidRepairSkipped: true }), { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const normalized = normalizeGeneratedLesson(canonicalAnswers.lesson, topicName);
+    const ensured = ensureRequiredVisuals(normalized.lesson, topicName);
+    const composition = normalizeLessonComposition(ensured.lesson, topicName);
+    const composedFixture = composition.lesson;
+    const contract = validateLessonV21({ version: '2.1', topic_goal: topicName, levels: [{ id: 'fixture-level', level_number: 1, title: topicName, purpose: `Comprendre ${topicName}.`, difficulty: 'foundation', objective_ids: [], lesson: composedFixture }] });
+    let qualityIssues = pedagogicalIssues(composedFixture, 'CM2', topicName);
+    const repetitionIssues = qualityIssues.filter((issue) => /\.(key_points|takeaway)$/.test(issue.path) && issue.message.includes('partagent trop de tokens'));
+    qualityIssues = qualityIssues.filter((issue) => !repetitionIssues.includes(issue));
+    const visualKind = (Array.isArray(composedFixture.sequence) ? composedFixture.sequence : []).map((block) => (block as Record<string, unknown>).visual).find(Boolean) as Record<string, unknown> | undefined;
+    const warnings = [...composition.events.filter((event) => event.action === 'warning').map((event) => event.message), ...repetitionIssues.map((issue) => `${issue.path}: ${issue.message}`)];
+    const pedagogicalValid = qualityIssues.length === 0;
+    const success = contract.success && pedagogicalValid;
+    const response = { ok: success, success, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: true, attemptedRepair: parsed.attemptedRepair, canonicalValid: contract.success, pedagogicalValid, warnings, normalizationEvents: [...normalized.events, ...ensured.events], compositionEvents: composition.events, visualKind: visualKind?.kind ?? null, topic_id: `fixture-${topicName.toLocaleLowerCase().replace(/[^a-z0-9]+/g, '-')}`, lesson_content: composedFixture };
+    return new Response(JSON.stringify(response), { status: success ? 200 : 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+
+  try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: 'Missing authorization' }),
+        JSON.stringify({ success: false, ok: false, error: { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: 'Missing authorization', providerCalls: aiProviderCalls } }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -124,7 +221,7 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ success: false, ok: false, error: { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: 'Unauthorized', providerCalls: aiProviderCalls } }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -137,13 +234,17 @@ serve(async (req) => {
 
     if (!roles || roles.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'Forbidden: Admin or teacher role required' }),
+        JSON.stringify({ success: false, ok: false, error: { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: 'Admin or teacher role required', providerCalls: aiProviderCalls } }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const body = await req.json();
+    const body = requestBody;
     const { topicId, modelId: requestModelId, language: requestLanguage, difficulty_level: requestDifficultyLevel, step_name: requestStepName } = body;
+    // Bulk requests never opt into provider-funded repair attempts.
+    const allowPaidRepair = body.allowPaidRepair === true;
+    requestAllowsPaidRepair = allowPaidRepair;
+    console.info('[generate-lesson-content] build', { version: GENERATOR_BUILD, paidRepairEnabled: allowPaidRepair });
 
     if (!topicId) {
       return new Response(
@@ -378,6 +479,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
 
     // ── Helper: call ai-chat and return parsed JSON content ──────────────
     const callAI = async (message: string, maxTokens: number) => {
+      aiProviderCalls += 1;
       const res = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/ai-chat`, {
         method: 'POST',
         headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
@@ -394,13 +496,22 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       });
       if (!res.ok) throw new Error(`AI generation failed: ${await res.text()}`);
       const data = await res.json();
+      const providerMetadata = data.providerMetadata as { finishReason?: string; promptTokens?: number; completionTokens?: number; totalTokens?: number } | null;
+      if (providerMetadata?.finishReason === 'length') {
+        console.warn('[generate-lesson-content] provider output truncated', { stage: message.includes('PLAN') ? 'planning' : 'lesson', maxTokens, providerMetadata });
+        throw new Error(`provider_output_truncated: finish_reason=length; maxTokens=${maxTokens}`);
+      }
       const raw = data.content || data.data?.content || data;
       const stripFences = (s: string) => s.trim()
         .replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').replace(/```/g, '').trim();
       if (typeof raw === 'string') {
-        const cleaned = stripFences(raw);
-        const start = cleaned.indexOf('{'); const end = cleaned.lastIndexOf('}');
-        return JSON.parse(start !== -1 && end > start ? cleaned.slice(start, end + 1) : cleaned);
+        const parsed = parseProviderJsonSafely(raw);
+        if (!parsed.ok) {
+          console.warn('[generate-lesson-content] provider JSON rejected', { category: parsed.category, attemptedRepair: parsed.attemptedRepair, paidRepairSkipped: !requestAllowsPaidRepair });
+          throw new Error(SAFE_PROVIDER_ERROR);
+        }
+        if (parsed.attemptedRepair) console.info('[generate-lesson-content] provider JSON repaired deterministically');
+        return parsed.value;
       }
       return raw;
     };
@@ -488,7 +599,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
     };
 
     // ── Helper: build lesson content object from AI response ─────────────
-    const buildLessonContent = (generatedContent: any, stepName: string, difficultyLevel: number) => {
+    const buildLessonContent = (generatedContent: any, stepName: string, difficultyLevel: number, fallbackSuccessCriteria?: unknown) => {
       if (generatedContent?.version === '2.0' || (isV2Prompt && Array.isArray(generatedContent?.sequence))) {
         // Models occasionally omit identifiers even when the schema is otherwise
         // valid. Normalize only deterministic metadata before validation/storage;
@@ -507,20 +618,17 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
           })
           : generatedContent.prerequisites;
         generatedContent.misconceptions = Array.isArray(generatedContent.misconceptions) ? generatedContent.misconceptions : [];
-        generatedContent.success_criteria = Array.isArray(generatedContent.success_criteria) && generatedContent.success_criteria.length
-          ? generatedContent.success_criteria : ['Je peux expliquer et appliquer cette notion.'];
         generatedContent.lesson_goal = typeof generatedContent.lesson_goal === 'string' && generatedContent.lesson_goal.trim()
           ? generatedContent.lesson_goal : `Comprendre et appliquer ${topic.name}.`;
         generatedContent.mastery = generatedContent.mastery && typeof generatedContent.mastery === 'object'
           ? { ...(generatedContent.mastery as Record<string, unknown>), skills: Array.isArray(generatedContent.mastery.skills) ? generatedContent.mastery.skills : [], threshold: Number(generatedContent.mastery.threshold ?? 0.8) }
           : { skills: [], threshold: 0.8 };
         const validTypes = new Set(['hook','concept','visual','prediction','guided_example','student_try','feedback_checkpoint','contrast','rule','worked_example','reflection','mastery_check']);
-        const visualKinds = new Set(['clock','timeline','number_line','fraction_bar','fraction_circle','triangle','rectangle','circle','polygon','angle','symmetry','coordinate_plane','geometric_solid','solid_section','measurement','unit_conversion','groups','comparison','part_whole','table','equation','diagram','sequence']);
         generatedContent.sequence = generatedContent.sequence.map((block: any, index: number) => {
           const type = validTypes.has(block?.type) ? block.type : (index === generatedContent.sequence.length - 1 ? 'mastery_check' : 'concept');
           if (type === 'visual') {
             const nested = block?.visual && typeof block.visual === 'object' && !Array.isArray(block.visual) ? block.visual : {};
-            const requestedKind = String(nested.kind ?? block?.visual_kind ?? block?.kind ?? 'diagram');
+            const requestedKind = String(nested.kind ?? block?.visual_kind ?? block?.kind ?? 'missing');
             return {
               ...block,
               id: String(block?.id || `block-${index + 1}`),
@@ -529,7 +637,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
               content: String(block?.content || nested.purpose || block?.purpose || block?.alt_text || nested.alt_text || 'Observe cette représentation.'),
               visual: {
                 ...nested,
-                kind: visualKinds.has(requestedKind) ? requestedKind : 'diagram',
+                kind: requestedKind, // final deterministic normalization chooses a topic-aware fallback
                 purpose: nested.purpose ?? block?.purpose,
                 alt_text: nested.alt_text ?? block?.alt_text,
                 data: nested.data ?? block?.data ?? {},
@@ -546,7 +654,9 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
           && Array.isArray(generatedContent.misconceptions)
           && generatedContent.mastery && typeof generatedContent.mastery.threshold === 'number' && Number.isFinite(generatedContent.mastery.threshold);
         if (!valid) throw new Error('AI returned malformed Lesson Generator V2 JSON');
-        return { ...generatedContent, version: '2.0' };
+        const canonicalAnswers = normalizeCanonicalAnswers(generatedContent, fallbackSuccessCriteria);
+        if (canonicalAnswers.errors.length) throw new Error(`Generated V2.1 lesson failed canonical validation after normalization: ${canonicalAnswers.errors.slice(0, 3).map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
+        return { ...canonicalAnswers.lesson, version: '2.0' };
       }
       if (isV2Prompt) throw new Error('AI returned non-V2 lesson content');
       const rawMistakes = generatedContent.common_mistakes || [];
@@ -639,13 +749,15 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
     // V2.1: plan the topic first, then generate one complete V2 lesson per level.
     if (isV2Prompt && !requestStepName) {
       const objectiveText = objectives.map((o) => `${o.id}: ${o.text}`).join('\n- ') || 'Non précisés';
-      const planningPrompt = `LESSON GENERATOR V2.1 — PLANIFICATION UNIQUEMENT\nSujet: ${topic.name}\nNiveau: ${rawLevel}\nObjectifs réels (utiliser uniquement ces IDs):\n- ${objectiveText}\nDétermine 1 à 4 niveaux distincts adaptés à la complexité. Retourne uniquement du JSON strict (guillemets doubles, aucune apostrophe de code, aucun Markdown): {"topic_goal":"...","levels":[{"id":"level_1","level_number":1,"title":"...","purpose":"...","difficulty":"foundation|application|transfer","objective_ids":["real-id"],"prerequisites":["..."],"success_criteria":["..."]}]}`;
+      let planningPrompt = `LESSON GENERATOR V2.1 — PLANIFICATION UNIQUEMENT\nSujet: ${topic.name}\nNiveau: ${rawLevel}\nObjectifs réels (utiliser uniquement ces IDs):\n- ${objectiveText}\nDétermine 1 à 4 niveaux distincts adaptés à la complexité. Retourne uniquement du JSON strict (guillemets doubles, aucune apostrophe de code, aucun Markdown): {"topic_goal":"...","levels":[{"id":"level_1","level_number":1,"title":"...","purpose":"...","difficulty":"foundation|application|transfer","objective_ids":["real-id"],"prerequisites":["..."],"success_criteria":["..."]}]}`;
+      planningPrompt = `LESSON GENERATOR V2.1 — PLAN COURT\nSujet: ${topic.name}; niveau: ${rawLevel}; objectifs: ${objectiveText}\nRetourne uniquement un JSON strict, sans Markdown. Le plan contient 1 à 4 niveaux et aucun contenu de leçon:\n{"topic_goal":"...","levels":[{"id":"level_1","level_number":1,"title":"...","purpose":"...","difficulty":"foundation|application|transfer","objective_ids":["real-id"],"success_criteria":["1 à 5 réussites observables"]}]}`;
       let plan: any;
       try {
-        plan = await callAI(planningPrompt, 900);
+      plan = await callAI(planningPrompt, 1200);
       } catch (planningError) {
-        console.warn('[generate-lesson-content] V2.1 planning JSON failed; retrying repair:', planningError);
+        console.warn('[generate-lesson-content] V2.1 planning JSON failed; using deterministic plan unless repair is enabled:', planningError);
         try {
+          if (!allowPaidRepair) throw planningError;
           plan = await callAI(`${planningPrompt}\nREPAIR: return one complete valid JSON object only. Do not use single quotes.`, 1200);
         } catch (repairError) {
           console.warn('[generate-lesson-content] V2.1 planning repair failed; using deterministic plan:', repairError);
@@ -661,32 +773,53 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
       for (let i = 0; i < planned.length; i++) {
         const p = planned[i];
         const assigned = Array.isArray(p.objective_ids) ? p.objective_ids.filter((id: unknown) => validIds.has(String(id))).map(String) : [];
-        const levelPrompt = `LESSON GENERATOR V2.1 — UNE SEULE LEÇON DE NIVEAU\nSujet: ${topic.name}\nObjectif global: ${plan.topic_goal}\nNiveau ${i + 1}/${planned.length}: ${p.title}\nBut: ${p.purpose}\nDifficulté: ${p.difficulty}\nObjectifs assignés (IDs réels, ne pas modifier): ${assigned.map((id: string) => `${id}: ${objectives.find((o) => o.id === id)?.text ?? id}`).join('; ')}\nPrérequis de niveau: ${(p.prerequisites ?? []).join('; ')}\nCritères: ${(p.success_criteria ?? []).join('; ')}\nRetourne UNIQUEMENT l'objet lesson, sans envelope: {"lesson_goal":"...","success_criteria":["..."],"prerequisites":[{"id":"p1","description":"...","check_question":"...","answer_type":"multiple_choice|numeric|time|short_text|selection|ordering","choices":["...","..."],"expected_answer":"...","remediation_hint":"...","visual":{"kind":"clock|timeline|number_line|fraction_bar|fraction_circle|triangle|rectangle|circle|polygon|angle|symmetry|coordinate_plane|geometric_solid|solid_section|measurement|unit_conversion|groups|comparison|part_whole|table|equation|diagram|sequence","purpose":"...","alt_text":"...","data":{}}}],"sequence":[{"id":"c1","type":"concept","title":"...","content":"..."},{"id":"m1","type":"mastery_check","questions":[{"id":"q1","question":"...","answer_type":"text","correct_answer":"...","skill":"...","difficulty":1,"success_feedback":"...","error_feedback":"..."}]}],"misconceptions":[{"id":"m1","description":"...","detect_if":"...","feedback":"...","remediation_strategy":"..."}],"mastery":{"skills":["..."],"threshold":0.8}}. Chaque prérequis DOIT déclarer answer_type et expected_answer compatibles. Utilise multiple_choice avec choices pour les identifications; numeric pour les nombres; time pour les heures; short_text seulement quand une réponse libre est utile. Une question sur une horloge doit inclure une visual clock avec data.hour et data.minute. Ne demande jamais une heure/durée pour une question d'identification. Chaque concept DOIT avoir content. Chaque mastery_check DOIT avoir questions non vide. Les prérequis et misconceptions DOIVENT être objets, jamais des chaînes. N'utilise pas teacher_actions/student_actions comme substituts. JSON strict uniquement.`;
+        let levelPrompt = `LESSON GENERATOR V2.1 — UNE SEULE LEÇON DE NIVEAU\nSujet: ${topic.name}\nObjectif global: ${plan.topic_goal}\nNiveau ${i + 1}/${planned.length}: ${p.title}\nBut: ${p.purpose}\nDifficulté: ${p.difficulty}\nObjectifs assignés (IDs réels, ne pas modifier): ${assigned.map((id: string) => `${id}: ${objectives.find((o) => o.id === id)?.text ?? id}`).join('; ')}\nPrérequis de niveau: ${(p.prerequisites ?? []).join('; ')}\nCritères: ${(p.success_criteria ?? []).join('; ')}\nRetourne UNIQUEMENT l'objet lesson, sans envelope: {"lesson_goal":"...","success_criteria":["..."],"prerequisites":[{"id":"p1","description":"...","check_question":"...","answer_type":"multiple_choice|numeric|time|short_text|selection|ordering","choices":["...","..."],"expected_answer":"...","remediation_hint":"...","visual":{"kind":"clock|timeline|number_line|fraction_bar|fraction_circle|triangle|rectangle|circle|polygon|angle|symmetry|coordinate_plane|geometric_solid|solid_section|measurement|unit_conversion|groups|comparison|part_whole|table|equation|diagram|sequence","purpose":"...","alt_text":"...","data":{}}}],"sequence":[{"id":"c1","type":"concept","title":"...","content":"..."},{"id":"m1","type":"mastery_check","questions":[{"id":"q1","question":"...","answer_type":"text","correct_answer":"...","skill":"...","difficulty":1,"success_feedback":"...","error_feedback":"..."}]}],"misconceptions":[{"id":"m1","description":"...","detect_if":"...","feedback":"...","remediation_strategy":"..."}],"mastery":{"skills":["..."],"threshold":0.8}}. Chaque prérequis DOIT déclarer answer_type et expected_answer compatibles. Utilise multiple_choice avec choices pour les identifications; numeric pour les nombres; time pour les heures; short_text seulement quand une réponse libre est utile. Une question sur une horloge doit inclure une visual clock avec data.hour et data.minute. Ne demande jamais une heure/durée pour une question d'identification. Chaque concept DOIT avoir content. Chaque mastery_check DOIT avoir questions non vide. Les prérequis et misconceptions DOIVENT être objets, jamais des chaînes. N'utilise pas teacher_actions/student_actions comme substituts. JSON strict uniquement.`;
+        levelPrompt = `LESSON GENERATOR V2.1 — UNE LEÇON\nSujet: ${topic.name}; objectif: ${plan.topic_goal}; niveau: ${p.title}\nObjectifs assignés: ${assigned.map((id: string) => `${id}: ${objectives.find((o) => o.id === id)?.text ?? id}`).join('; ')}\nCritères de réussite obligatoires (1 à 5 chaînes non vides): ${(p.success_criteria ?? []).join('; ')}\nRetourne uniquement l'objet lesson JSON. Champs obligatoires: lesson_goal, success_criteria (1 à 5 chaînes non vides), prerequisites: [], sequence non vide avec types canoniques, misconceptions: [], mastery avec 1 à 4 questions et correct_answer. Ne génère aucun objet prerequisite ou misconception: ces métadonnées optionnelles sont ajoutées uniquement par une étape dédiée et validée. Chaque question interactive doit avoir answer_type, correct_answer, success_feedback et error_feedback. Chaque concept doit avoir content. Les visuels obligatoires utilisent un kind supporté. N'utilise pas teacher_actions/student_actions. JSON strict uniquement.`;
         const pedagogyInstruction = `\n\nPÉDAGOGIE: un concept enseigne une seule petite idée, en 1 à 3 phrases courtes. Quand le concept est structuré, son contenu explique l'idée centrale, le visual la montre, les key_points ajoutent uniquement des informations essentielles qui ne sont pas déjà évidentes, et le takeaway la compresse en une règle mémorable. Ne répète pas la même phrase dans content, key_points et takeaway. Découpe les idées uniquement avec les types canoniques concept, visual, guided_example, prediction, student_try et feedback_checkpoint; ne crée jamais de type example, interaction ou feedback. Progresse situation concrète → visual → concept → prediction/student_try → feedback_checkpoint. Respecte le but de ce niveau et n'enseigne pas les compétences ultérieures. Utilise un langage enfantin et un français naturel (par exemple «Chaque grand chiffre correspond à 5 minutes», jamais une formulation télégraphique). Les prérequis doivent toujours déclarer un answer_type compatible avec leur question; les questions d'identification utilisent multiple_choice/selection/short_text, les nombres numeric, les heures time. FORMES EXACTES: visual={"id":"v1","type":"visual","title":"...","content":"...","visual":{"kind":"clock|timeline|number_line|unit_conversion|measurement|fraction_bar|fraction_circle|triangle|rectangle|circle|polygon|angle|symmetry|coordinate_plane|geometric_solid|solid_section|diagram","purpose":"...","alt_text":"...","data":{}}}; prediction={"id":"p1","type":"prediction","question":"...","choices":["...","..."],"correct_answer":"...","explanation":"..."}; guided_example={"id":"g1","type":"guided_example","context":"...","steps":[{"instruction":"...","representation":"...","reason":"..."}]}; student_try/feedback_checkpoint={"id":"s1","type":"student_try","question":"...","answer_type":"multiple_choice|numeric|time|short_text|text|selection|ordering","choices":["..."],"correct_answer":"...","hints":["..."],"success_feedback":"...","error_feedback":"..."}.`;
         const structuredConceptInstruction = `\n\nSTRUCTURE CONCEPTUELLE: décide au cas par cas si le concept bénéficie d'un modèle visuel. Politique visuelle partagée obligatoire: lecture de l'heure/horloge → visual kind clock requis; fractions partie/tout → fraction_bar ou fraction_circle requis; droite graduée → number_line requis; géométrie/angles/symétrie/coordonnées → figure appropriée requise; conversion et unités de durée → unit_conversion ou timeline requis; mesure/comparaison/processus → visual préféré mais non obligatoire; prose et relations non visuelles (par exemple commutativité) → visual optionnel. Pour les relations difficiles à organiser mentalement, préfère un concept autonome avec content court + visual déterministe + 1 à 4 key_points utiles + takeaway concis. Chaque champ doit avoir un rôle distinct: content introduit le modèle en 1 à 2 phrases, visual montre la relation, key_points ajoutent des faits opérationnels indispensables, takeaway donne une stratégie mémorable. Exemple unités: content=«On choisit une unité selon la durée à mesurer.»; visual=seconde → minute → heure → jour; key_points=«60 secondes = 1 minute», «60 minutes = 1 heure», «24 heures = 1 jour»; takeaway=«Repère l'unité de départ et celle d'arrivée avant de convertir.» Ne répète pas les mêmes conversions dans les quatre champs. N'ajoute pas de visuel décoratif. Si un bloc visual suivant explique exactement le même modèle mental que le concept, attache normalement le visual au concept au lieu de répéter le contenu sur deux écrans. Pour une horloge, fournis dans visual.data les annotations ou relations pédagogiques nécessaires (par exemple hand_labels:{hours:"Petite aiguille → heures",minutes:"Grande aiguille → minutes"}, relationships:["9 × 5 = 45 min"]); le frontend n'invente aucune annotation. Les unités doivent rester limitées à celles nécessaires à l'objectif immédiat. Les données du visuel et les key_points doivent correspondre exactement au texte; pour une timeline, fournis les relations dans les données quand elles sont pédagogiquement nécessaires (par exemple relations:["×60","×60","×24"]). Ne génère jamais HTML, CSS, Markdown ou SVG.`;
         let generated: unknown;
         try {
-          generated = await callAI(levelPrompt + pedagogyInstruction + structuredConceptInstruction, 3000);
+          // A complete V2.1 level contains several canonical sequence blocks,
+          // interactive metadata, and pedagogical fields. DeepSeek has
+          // reported finish_reason `length` at 4500 even when the JSON is
+          // otherwise valid. Keep this as one bounded request (no automatic
+          // paid retry), with enough headroom for the canonical contract.
+          generated = await callAI(levelPrompt + pedagogyInstruction + structuredConceptInstruction, 6500);
         } catch (generationError) {
-          console.warn('[generate-lesson-content] V2.1 level JSON failed; requesting repair:', generationError);
+          console.warn('[generate-lesson-content] V2.1 level JSON failed; paid repair skipped:', generationError);
+          if (!allowPaidRepair) throw generationError;
           generated = null;
         }
         let lesson: Record<string, unknown>;
-        try { lesson = buildLessonContent(generated, '', i + 1) as Record<string, unknown>; }
+        const compiledDraft = compileV21LessonDraft(generated);
+        if (compiledDraft.discardedOptionalMetadata.length > 0) {
+          console.warn('[generate-lesson-content] discarded incomplete optional V2.1 metadata', {
+            topicId,
+            level: i + 1,
+            fields: compiledDraft.discardedOptionalMetadata,
+          });
+        }
+        try { lesson = buildLessonContent(compiledDraft.lesson, '', i + 1, p.success_criteria) as Record<string, unknown>; }
         catch (levelError) {
-          console.warn('[generate-lesson-content] V2.1 level contract failed; requesting strict repair:', levelError);
+          console.warn('[generate-lesson-content] V2.1 level contract failed; paid repair skipped:', levelError);
+          if (!allowPaidRepair) throw levelError;
           const repaired = await callAI(`${levelPrompt}${pedagogyInstruction}\n\nPrevious candidate (data to correct): ${JSON.stringify(generated)}\nThe previous response failed the canonical V2.1 lesson contract. Return ONLY the direct lesson object, with no outer lesson/version/envelope wrapper. Include lesson_goal, success_criteria, structured prerequisites and misconceptions, canonical sequence blocks, and a mastery_check with non-empty questions. Do not use teacher_actions or student_actions. JSON only.`, 3400);
           lesson = buildLessonContent(repaired, '', i + 1) as Record<string, unknown>;
         }
+        console.info('[generate-lesson-content] normalization pass started', { build: GENERATOR_BUILD, topicId, level: i + 1 });
+        const normalized = normalizeGeneratedLesson(lesson, topic.name);
+        lesson = ensureRequiredVisuals(normalized.lesson, topic.name).lesson;
+        for (const event of normalized.events) console.info('[generate-lesson-content] visual normalized', { path: event.path, from: event.from, to: event.to });
         const levelContract = validateLessonV21({
           version: '2.1',
           topic_goal: String(plan.topic_goal || topic.name),
           levels: [{ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson }],
         });
         if (!levelContract.success) {
-          console.warn('[generate-lesson-content] V2.1 level failed canonical validation; requesting bounded repair:', levelContract.issues);
+          console.warn('[generate-lesson-content] V2.1 level failed canonical validation; paid repair skipped:', levelContract.issues.map(issue => issue.path));
+          if (!allowPaidRepair) throw new Error(`Generated V2.1 level failed canonical validation after normalization: ${levelContract.issues.slice(0, 3).map(issue => `${issue.path}: ${issue.message}`).join('; ')}`);
           const repaired = await callAI(`${levelPrompt}${pedagogyInstruction}\n\nPrevious candidate (data to correct): ${JSON.stringify(lesson)}\nThe previous lesson failed the canonical V2.1 contract. Return ONLY the direct lesson object as JSON. Fix every listed issue exactly. A mastery_check MUST contain between 1 and 4 questions (maximum 4), and every question must include id, question, answer_type, correct_answer, skill, difficulty, success_feedback, and error_feedback. Do not add an outer wrapper, do not use teacher_actions or student_actions, and do not omit required fields. Errors: ${levelContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`, 3600);
-          lesson = buildLessonContent(repaired, '', i + 1) as Record<string, unknown>;
+          lesson = ensureRequiredVisuals(normalizeGeneratedLesson(buildLessonContent(repaired, '', i + 1) as Record<string, unknown>, topic.name).lesson, topic.name).lesson;
           const repairedContract = validateLessonV21({
             version: '2.1',
             topic_goal: String(plan.topic_goal || topic.name),
@@ -695,7 +828,7 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
           if (!repairedContract.success) {
             console.warn('[generate-lesson-content] first canonical repair failed; requesting final path-specific repair:', repairedContract.issues);
             const finalRepair = await callAI(`${levelPrompt}${pedagogyInstruction}\n\nCandidate: ${JSON.stringify(lesson)}\nFINAL CONTRACT REPAIR. Return only the direct lesson JSON object. Change only what is necessary to fix these exact paths: ${repairedContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}. Every sequence block must use one canonical type and its exact fields.`, 3800);
-            lesson = buildLessonContent(finalRepair, '', i + 1) as Record<string, unknown>;
+            lesson = ensureRequiredVisuals(normalizeGeneratedLesson(buildLessonContent(finalRepair, '', i + 1) as Record<string, unknown>, topic.name).lesson, topic.name).lesson;
             const finalContract = validateLessonV21({ version: '2.1', topic_goal: String(plan.topic_goal || topic.name), levels: [{ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson }] });
             if (!finalContract.success) throw new Error(`Generated V2.1 level failed canonical validation: ${finalContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
           }
@@ -703,12 +836,21 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
         // First attempt a bounded, policy-driven repair for missing required
         // visuals. The normal quality repair remains the fallback for other
         // pedagogical issues and cannot silently weaken the gate.
-        const repairedVisualLesson = await repairRequiredConceptVisuals(lesson);
-        lesson = repairedVisualLesson;
+        if (allowPaidRepair) lesson = await repairRequiredConceptVisuals(lesson);
+        lesson = ensureRequiredVisuals(normalizeGeneratedLesson(lesson, topic.name).lesson, topic.name).lesson;
+        console.info('[generate-lesson-content] composition cleanup started', { build: GENERATOR_BUILD, topicId, level: i + 1 });
+        const composition = normalizeLessonComposition(lesson, topic.name);
+        lesson = composition.lesson;
+        for (const event of composition.events) console.info(`[generate-lesson-content] composition ${event.action}`, { path: event.path, message: event.message });
         let qualityIssues = pedagogicalIssues(lesson, rawLevel, topic.name);
+        const repetitionIssues = qualityIssues.filter((issue) => /\.(key_points|takeaway)$/.test(issue.path) && issue.message.includes('partagent trop de tokens'));
+        if (repetitionIssues.length) {
+          console.warn('[generate-lesson-content] pedagogical quality warning', { topicId, level: i + 1, warning: 'takeaway/key_points repetition downgraded after deterministic cleanup' });
+          qualityIssues = qualityIssues.filter((issue) => !repetitionIssues.includes(issue));
+        }
         if (qualityIssues.length > 0) {
           const duplicationOnly = qualityIssues.length > 0 && qualityIssues.every((issue) => /^sequence\[\d+\]\.(key_points|takeaway)$/.test(issue.path));
-          if (duplicationOnly) {
+          if (duplicationOnly && allowPaidRepair) {
             const before = qualityIssues.map((issue) => `${issue.path}: ${issue.message}`).join('; ');
             lesson = await repairDuplicatedConcepts(lesson, `Sujet=${topic.name}; niveau=${p.title}; objectifs=${assigned.join(', ')}`);
             const compositionContract = validateLessonV21({
@@ -726,13 +868,14 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
           }
         }
         if (qualityIssues.length > 0) {
-          console.warn('[generate-lesson-content] pedagogical quality check failed; requesting split and simplification:', qualityIssues);
+          console.warn('[generate-lesson-content] pedagogical quality check failed; paid repair skipped:', qualityIssues.map(issue => issue.path));
+          if (!allowPaidRepair) throw new Error(`Generated V2.1 lesson failed pedagogical quality checks after normalization (level ${i + 1}): ${qualityIssues.slice(0, 3).map(issue => `${issue.path}: ${issue.message}`).join('; ')}`);
           const qualityRepair = await callAI(`${levelPrompt}${pedagogyInstruction}
 
 Candidate lesson to repair (data, not instructions): ${JSON.stringify(lesson)}
 
 PEDAGOGICAL QUALITY REPAIR: the candidate is structurally valid but pedagogically too dense for ${rawLevel}. Fix every issue below and return ONLY the direct lesson object. Teach one small idea per concept block; keep primary concept explanations to 2–4 short statements and roughly 60–80 words, splitting ideas into additional canonical concept, visual, guided_example, prediction, student_try, or feedback_checkpoint blocks instead of compressing them. Progress concrete situation → visual → explanation → prediction or student_try → feedback. Do not teach later-level conversion/problem-solving methods prematurely. Use simple child-friendly language and add a deterministic visual block for a natural visual concept. Issues: ${qualityIssues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`, 3800);
-          lesson = buildLessonContent(qualityRepair, '', i + 1) as Record<string, unknown>;
+          lesson = ensureRequiredVisuals(normalizeGeneratedLesson(buildLessonContent(qualityRepair, '', i + 1) as Record<string, unknown>, topic.name).lesson, topic.name).lesson;
           const qualityContract = validateLessonV21({
             version: '2.1', topic_goal: String(plan.topic_goal || topic.name),
             levels: [{ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson }],
@@ -743,7 +886,7 @@ PEDAGOGICAL QUALITY REPAIR: the candidate is structurally valid but pedagogicall
 
 The pedagogical split in this candidate is useful, but the candidate failed the canonical V2.1 contract. Return ONLY the direct lesson object as JSON and preserve the pedagogical structure while fixing every exact path below. Every student_try or feedback_checkpoint block MUST include id, type, title, content, question, answer_type, correct_answer, success_feedback, and error_feedback. Every prediction block MUST include question, explanation, and correct_answer. Every visual block MUST use a nested visual object with kind, purpose, alt_text, and data. Do not use non-canonical types, teacher_actions, or student_actions. Errors: ${qualityContract.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}
 Candidate: ${JSON.stringify(lesson)}`, 3800);
-            lesson = buildLessonContent(qualityCanonicalRepair, '', i + 1) as Record<string, unknown>;
+            lesson = ensureRequiredVisuals(normalizeGeneratedLesson(buildLessonContent(qualityCanonicalRepair, '', i + 1) as Record<string, unknown>, topic.name).lesson, topic.name).lesson;
             const repairedQualityContract = validateLessonV21({
               version: '2.1', topic_goal: String(plan.topic_goal || topic.name),
               levels: [{ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson }],
@@ -767,6 +910,7 @@ Candidate: ${JSON.stringify(lesson)}`, 3800);
             throw new Error(`Generated V2.1 lesson failed pedagogical quality checks (level ${i + 1}): ${diagnostic}`);
           }
         }
+        console.info('[generate-lesson-content] canonical and pedagogical validation passed', { build: GENERATOR_BUILD, topicId, level: i + 1, aiProviderCalls, paidRepairSkipped: !allowPaidRepair });
         levels.push({ id: String(p.id || `level_${i + 1}`), level_number: i + 1, title: String(p.title || `Niveau ${i + 1}`), purpose: String(p.purpose || ''), difficulty: String(p.difficulty || 'application'), objective_ids: assigned, lesson });
       }
       const v21 = { version: '2.1', topic_goal: String(plan.topic_goal || topic.name), levels };
@@ -775,9 +919,10 @@ Candidate: ${JSON.stringify(lesson)}`, 3800);
         console.error('[generate-lesson-content] V2.1 contract validation failed', { topicId, issues: contract.issues });
         throw new Error(`Generated V2.1 lesson failed canonical validation: ${contract.issues.map((issue) => issue.path).join(', ')}`);
       }
+      console.info('[generate-lesson-content] final validation passed', { build: GENERATOR_BUILD, topicId, aiProviderCalls, paidRepairSkipped: !allowPaidRepair });
       const { error: v21Error } = await supabase.from('topics').update({ lesson_content: v21 }).eq('id', topicId);
       if (v21Error) throw new Error(`Failed to save V2.1 lesson: ${v21Error.message}`);
-      return new Response(JSON.stringify({ success: true, lesson_content: v21, topic_id: topicId }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ success: true, ok: true, lesson_content: v21, topic_id: topicId, providerCalls: aiProviderCalls }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // ── Step 1: Planning — AI decides step names, grade level enforces minimum count ──
@@ -893,18 +1038,16 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
     }
 
     return new Response(
-      JSON.stringify({ success: true, lesson_content: finalContent, topic_id: topicId }),
+      JSON.stringify({ success: true, ok: true, lesson_content: finalContent, topic_id: topicId, providerCalls: aiProviderCalls }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('[generate-lesson-content] Error:', error);
-    const errorMessage = error instanceof Error
-      ? error.message
-      : (error as any)?.message ?? JSON.stringify(error) ?? 'Unknown error';
+    const categorized = categorizeGenerationError(error);
     return new Response(
-      JSON.stringify({ error: errorMessage, details: error instanceof Error ? error.stack : JSON.stringify(error) }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ success: false, ok: false, error: { code: categorized.code, message: categorized.message, technicalDetail: categorized.technicalDetail, providerCalls: aiProviderCalls }, paidRepairSkipped: !requestAllowsPaidRepair }),
+      { status: categorized.code === 'unauthorized' ? 401 : 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
