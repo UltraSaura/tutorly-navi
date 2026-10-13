@@ -780,11 +780,11 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
         let generated: unknown;
         try {
           // A complete V2.1 level contains several canonical sequence blocks,
-          // interactive metadata, and pedagogical fields. 3000 output tokens
-          // truncates otherwise valid lessons (DeepSeek reports finish_reason
-          // `length`), so keep the budget aligned with the provider-free dry
-          // runs and the actual contract size.
-          generated = await callAI(levelPrompt + pedagogyInstruction + structuredConceptInstruction, 4500);
+          // interactive metadata, and pedagogical fields. DeepSeek has
+          // reported finish_reason `length` at 4500 even when the JSON is
+          // otherwise valid. Keep this as one bounded request (no automatic
+          // paid retry), with enough headroom for the canonical contract.
+          generated = await callAI(levelPrompt + pedagogyInstruction + structuredConceptInstruction, 6500);
         } catch (generationError) {
           console.warn('[generate-lesson-content] V2.1 level JSON failed; paid repair skipped:', generationError);
           if (!allowPaidRepair) throw generationError;
