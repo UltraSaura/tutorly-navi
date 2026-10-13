@@ -134,6 +134,25 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Keep the authorization boundary ahead of every request-body branch,
+  // including provider-free healthchecks and fixtures. Those modes cannot
+  // call an AI provider, but they are still part of this privileged function.
+  try {
+    await requirePrivilegedFamily(req);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error ?? 'Unauthorized');
+    return new Response(JSON.stringify({
+      success: false,
+      ok: false,
+      error: {
+        code: 'unauthorized',
+        message: GENERATION_ERROR_MESSAGES.unauthorized,
+        technicalDetail: detail,
+        providerCalls: 0,
+      },
+    }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+
   let requestBody: Record<string, unknown> = {};
   try { requestBody = await req.json(); } catch { requestBody = {}; }
   const noPaidMode = requestBody.mode === 'healthcheck' || requestBody.mode === 'fixture';
@@ -184,7 +203,6 @@ serve(async (req) => {
   }
 
   try {
-    await requirePrivilegedFamily(req);
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
