@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Wand2, Loader2, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { formatGenerationError, getGenerationErrorTechnicalDetail } from './generationErrorMapping';
+import { formatGenerationError, generationErrorMessages, getGenerationErrorTechnicalDetail } from './generationErrorMapping';
 
 interface TopicRow {
   id: string;
@@ -281,7 +281,20 @@ export function BulkLessonGenerator() {
             <Progress value={results.length ? (done / results.length) * 100 : 0} className="h-2" />
             <div className="mt-2 space-y-1">
               {results.map((r) => {
-                const visibleErrorMessage = r.error ? formatGenerationError(r.error) : undefined;
+                const formattedErrorMessage = r.error ? formatGenerationError(r.error) : undefined;
+                const visibleErrorMessage = formattedErrorMessage &&
+                  typeof formattedErrorMessage === 'string' &&
+                  formattedErrorMessage.trim() &&
+                  !formattedErrorMessage.includes('[object Object]')
+                  ? formattedErrorMessage
+                  : r.error ? generationErrorMessages.unknown : undefined;
+                if (import.meta.env.DEV && r.error) {
+                  console.debug('[BulkLessonGenerator] visible row error payload', {
+                    topicName: r.name,
+                    rawError: r.error,
+                    formatted: visibleErrorMessage,
+                  });
+                }
                 return (
                 <div key={r.topicId} className="flex items-center gap-3 border-b py-2 text-sm last:border-0">
                   {r.status === 'running' && (

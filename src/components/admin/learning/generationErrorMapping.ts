@@ -1,10 +1,11 @@
-export type GenerationErrorCode = 'edge_unavailable' | 'unauthorized' | 'provider_error' | 'provider_malformed_json' | 'canonical_validation_failed' | 'pedagogical_validation_failed' | 'timeout' | 'unknown';
+export type GenerationErrorCode = 'edge_unavailable' | 'unauthorized' | 'provider_error' | 'provider_malformed_json' | 'provider_invalid_lesson' | 'canonical_validation_failed' | 'pedagogical_validation_failed' | 'timeout' | 'unknown';
 
 export const generationErrorMessages: Record<GenerationErrorCode, string> = {
   edge_unavailable: 'La fonction de génération est indisponible.',
   unauthorized: 'Vous n’êtes pas autorisé à générer cette leçon.',
   provider_error: 'Le fournisseur IA n’a pas pu générer le contenu.',
   provider_malformed_json: 'Le contenu généré n’a pas pu être lu correctement.',
+  provider_invalid_lesson: 'La leçon générée est incomplète ou invalide.',
   canonical_validation_failed: 'La leçon générée n’a pas le format attendu.',
   pedagogical_validation_failed: 'La leçon générée n’a pas passé les contrôles pédagogiques.',
   timeout: 'La génération a pris trop de temps.',
@@ -20,15 +21,15 @@ export function formatGenerationError(payload: unknown, fallback = generationErr
     const code = String(nested?.code ?? payload.code ?? '') as GenerationErrorCode;
     if (code in generationErrorMessages) return generationErrorMessages[code];
     const message = nested?.message ?? payload.message ?? payload.details;
-    if (typeof message === 'string' && message.trim() && message !== '[object Object]') return message;
-    if (typeof payload.error === 'string' && payload.error.trim() && payload.error !== '[object Object]') return payload.error;
-    if (nested?.error && typeof nested.error === 'string') return nested.error;
+    if (typeof message === 'string' && message.trim() && !message.includes('[object Object]')) return message;
+    if (typeof payload.error === 'string' && payload.error.trim() && !payload.error.includes('[object Object]')) return payload.error;
+    if (nested?.error && typeof nested.error === 'string' && !nested.error.includes('[object Object]')) return nested.error;
     return fallback;
   }
   const text = typeof payload === 'string' ? payload : '';
   if (/Failed to send a request|fetch failed|network/i.test(text)) return generationErrorMessages.edge_unavailable;
   if (/5 minutes|timed? out|timeout/i.test(text)) return generationErrorMessages.timeout;
-  if (text && text !== '[object Object]') return text;
+  if (text && !text.includes('[object Object]')) return text;
   return fallback;
 }
 

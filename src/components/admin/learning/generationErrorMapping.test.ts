@@ -3,6 +3,19 @@ import { formatGenerationError, getGenerationErrorTechnicalDetail } from './gene
 
 describe('generation error mapping', () => {
   it('maps structured canonical errors', () => expect(formatGenerationError({ error: { code: 'canonical_validation_failed', message: 'raw' } })).toBe('La leçon générée n’a pas le format attendu.'));
+  it('maps invalid lesson errors and object-valued messages safely', () => {
+    const payload = {
+      success: false,
+      ok: false,
+      error: {
+        code: 'provider_invalid_lesson',
+        message: { path: 'levels[0].lesson.sequence[4].correct_answer', error: 'Required value' },
+        technicalDetail: 'levels[0].lesson.sequence[4].correct_answer: Required value',
+      },
+    };
+    expect(formatGenerationError(payload)).toBe('La leçon générée est incomplète ou invalide.');
+    expect(getGenerationErrorTechnicalDetail(payload)).toContain('correct_answer');
+  });
   it('maps nested backend messages', () => expect(formatGenerationError({ success: false, ok: false, error: { message: 'Unauthorized' } })).toBe('Unauthorized'));
   it('maps string error payloads without coercing objects', () => expect(formatGenerationError({ error: 'Service unavailable' })).toBe('Service unavailable'));
   it('maps Error instances and request-boundary failures', () => {
