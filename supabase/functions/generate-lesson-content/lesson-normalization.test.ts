@@ -67,3 +67,18 @@ describe('provider-free V2.1 Fractions normalization', () => {
     expect(validateLessonV21({ version: '2.1', topic_goal: 'Fractions', levels: [{ id: 'level_1', level_number: 1, title: 'Fractions', purpose: 'Lire les fractions.', difficulty: 'foundation', objective_ids: [], lesson: normalized }] })).toEqual({ success: true });
   });
 });
+
+describe('provider-free geometry normalization', () => {
+  it('selects a geometry-specific fallback instead of generic diagram', () => {
+    const lesson = fixture();
+    lesson.sequence[0] = {
+      id: 'c-angle', type: 'concept', title: 'Les angles',
+      content: 'Un angle est formé par deux demi-droites.',
+      visual: { kind: 'diagram' },
+    } as unknown as typeof lesson.sequence[number];
+    const { lesson: normalized } = normalizeGeneratedLesson(lesson, 'Angles');
+    const visual = (normalized.sequence as Array<Record<string, unknown>>)[0].visual as Record<string, unknown>;
+    expect(visual.kind).toBe('angle');
+    expect(pedagogicalIssues(normalized, 'CM2', 'Angles').filter((issue) => issue.path.endsWith('.visual.kind'))).toEqual([]);
+  });
+});
