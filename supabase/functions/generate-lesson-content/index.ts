@@ -16,7 +16,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
 };
 
-const GENERATOR_BUILD = 'practice-visual-normalizer-1';
+const GENERATOR_BUILD = 'practice-visual-normalizer-2';
 const SAFE_PROVIDER_ERROR = 'Le contenu généré n’a pas pu être lu correctement. Aucun contenu n’a été enregistré.';
 const SUPPORTED_MODELS = ['gpt-5', 'gpt-4.1', 'deepseek-chat', 'claude-3-5-sonnet-20241022'];
 const GENERATION_ERROR_MESSAGES: Record<string, string> = {
@@ -778,7 +778,12 @@ RÈGLES : EXACTEMENT 4 choix, EXACTEMENT une seule "correct": true, mélange la 
         const structuredConceptInstruction = `\n\nSTRUCTURE CONCEPTUELLE: décide au cas par cas si le concept bénéficie d'un modèle visuel. Politique visuelle partagée obligatoire: lecture de l'heure/horloge → visual kind clock requis; fractions partie/tout → fraction_bar ou fraction_circle requis; droite graduée → number_line requis; géométrie/angles/symétrie/coordonnées → figure appropriée requise; conversion et unités de durée → unit_conversion ou timeline requis; mesure/comparaison/processus → visual préféré mais non obligatoire; prose et relations non visuelles (par exemple commutativité) → visual optionnel. Pour les relations difficiles à organiser mentalement, préfère un concept autonome avec content court + visual déterministe + 1 à 4 key_points utiles + takeaway concis. Chaque champ doit avoir un rôle distinct: content introduit le modèle en 1 à 2 phrases, visual montre la relation, key_points ajoutent des faits opérationnels indispensables, takeaway donne une stratégie mémorable. Exemple unités: content=«On choisit une unité selon la durée à mesurer.»; visual=seconde → minute → heure → jour; key_points=«60 secondes = 1 minute», «60 minutes = 1 heure», «24 heures = 1 jour»; takeaway=«Repère l'unité de départ et celle d'arrivée avant de convertir.» Ne répète pas les mêmes conversions dans les quatre champs. N'ajoute pas de visuel décoratif. Si un bloc visual suivant explique exactement le même modèle mental que le concept, attache normalement le visual au concept au lieu de répéter le contenu sur deux écrans. Pour une horloge, fournis dans visual.data les annotations ou relations pédagogiques nécessaires (par exemple hand_labels:{hours:"Petite aiguille → heures",minutes:"Grande aiguille → minutes"}, relationships:["9 × 5 = 45 min"]); le frontend n'invente aucune annotation. Les unités doivent rester limitées à celles nécessaires à l'objectif immédiat. Les données du visuel et les key_points doivent correspondre exactement au texte; pour une timeline, fournis les relations dans les données quand elles sont pédagogiquement nécessaires (par exemple relations:["×60","×60","×24"]). Ne génère jamais HTML, CSS, Markdown ou SVG.`;
         let generated: unknown;
         try {
-          generated = await callAI(levelPrompt + pedagogyInstruction + structuredConceptInstruction, 3000);
+          // A complete V2.1 level contains several canonical sequence blocks,
+          // interactive metadata, and pedagogical fields. 3000 output tokens
+          // truncates otherwise valid lessons (DeepSeek reports finish_reason
+          // `length`), so keep the budget aligned with the provider-free dry
+          // runs and the actual contract size.
+          generated = await callAI(levelPrompt + pedagogyInstruction + structuredConceptInstruction, 4500);
         } catch (generationError) {
           console.warn('[generate-lesson-content] V2.1 level JSON failed; paid repair skipped:', generationError);
           if (!allowPaidRepair) throw generationError;
