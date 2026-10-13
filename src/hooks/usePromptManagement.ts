@@ -10,6 +10,19 @@ type SupabasePromptError = {
   hint?: string;
 };
 
+/**
+ * Profile changes intentionally cancel in-flight learner requests. Prompt
+ * management is mounted globally, so its initial request can be cancelled
+ * while the family profile is being established. That is a stale request,
+ * not a prompt configuration failure, and should not be shown to learners.
+ */
+export const isPromptTemplateAbortError = (error: unknown): boolean => {
+  const candidate = error as { name?: unknown; message?: unknown } | null;
+  const name = typeof candidate?.name === 'string' ? candidate.name : '';
+  const message = typeof candidate?.message === 'string' ? candidate.message : String(error ?? '');
+  return name === 'AbortError' || /(?:abort(?:ed|ing|ion)?|signal is aborted)/i.test(message);
+};
+
 const promptTemplateErrorMessage = (error: unknown, action: 'add' | 'update' | 'activate' | 'delete' | 'load' | 'assign') => {
   const supabaseError = error as SupabasePromptError;
   const message = supabaseError?.message || '';
@@ -72,6 +85,7 @@ export const usePromptManagement = () => {
 
       setTemplates(formattedTemplates);
     } catch (error) {
+      if (isPromptTemplateAbortError(error)) return;
       console.error('Error fetching templates:', error);
       toast.error(promptTemplateErrorMessage(error, 'load'));
     } finally {
@@ -95,6 +109,7 @@ export const usePromptManagement = () => {
 
       setAssignments(formattedAssignments);
     } catch (error) {
+      if (isPromptTemplateAbortError(error)) return;
       console.error('Error fetching assignments:', error);
       toast.error('Failed to load subject assignments');
     }
@@ -263,6 +278,16 @@ export const usePromptManagement = () => {
   useEffect(() => {
     fetchTemplates();
     fetchAssignments();
+
+    // The first request can race family profile initialization. Retry after
+    // the profile runtime settles so admin data is available to the app
+    // without surfacing the cancelled request as a user-facing error.
+    const handleProfileChange = () => {
+      fetchTemplates();
+      fetchAssignments();
+    };
+    window.addEventListener('stuwy:profile-changed', handleProfileChange);
+    return () => window.removeEventListener('stuwy:profile-changed', handleProfileChange);
   }, []);
 
   return {

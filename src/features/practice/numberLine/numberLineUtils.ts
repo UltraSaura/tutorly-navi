@@ -18,6 +18,18 @@ export function numberLineValidPositions(start: number, end: number, subdivision
   if (validPositions?.length) return validPositions.filter((position) => position >= 0 && position <= 1).sort((a, b) => a - b);
   return numberLineTickValues(start, end, subdivisions).map((value) => normalizedNumberLinePosition(value, start, end) ?? 0);
 }
+export function initialNumberLinePositions<T extends { id: string; value: unknown; initialPosition?: number }>(items: T[], validPositions: number[]): Record<string, number> {
+  if (!validPositions.length) return {};
+  const sorted = sortNumberLineValues(items, (item) => item.value);
+  const slots = validPositions.slice(0, sorted.length);
+  const positions: Record<string, number> = {};
+  sorted.forEach((item, index) => {
+    positions[item.id] = typeof item.initialPosition === 'number'
+      ? snapNumberLinePosition(item.initialPosition, validPositions)
+      : slots[slots.length - 1 - index] ?? slots[0];
+  });
+  return positions;
+}
 export function snapNumberLinePosition(position: number, validPositions: number[]): number {
   if (!validPositions.length) return Math.max(0, Math.min(1, position));
   return validPositions.reduce((closest, candidate) => Math.abs(candidate - position) < Math.abs(closest - position) ? candidate : closest, validPositions[0]);

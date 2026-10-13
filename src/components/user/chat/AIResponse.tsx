@@ -23,6 +23,7 @@ import { generateGroupedRetryPractice } from '@/services/problemSubmissionServic
 import { useAdmin } from '@/context/AdminContext';
 import { buildSafeHomeworkLearningRows, type SafeHomeworkLearningRow } from '@/services/homeworkLearningResources';
 import { motion } from 'framer-motion';
+import { PracticeFeedback } from '@/components/practice/PracticeFeedback';
 
 interface AIResponseProps {
   messages: Message[];
@@ -100,37 +101,7 @@ function ExerciseResultBanner({
   language: string;
 }) {
   if (!isCorrect && !isIncorrect) return null;
-
-  const fr = language === 'fr';
-  const label = isCorrect
-    ? (fr ? 'Bien joué' : 'Good job')
-    : (fr ? 'Pas encore' : 'Not yet');
-
-  return (
-    <motion.div
-      initial={{ scale: 0.92, opacity: 0 }}
-      animate={isCorrect
-        ? { scale: [0.92, 1.06, 1], opacity: 1 }
-        : { x: [0, -6, 6, -4, 4, 0], opacity: 1, scale: 1 }
-      }
-      transition={{ duration: isCorrect ? 0.35 : 0.42 }}
-      className={cn(
-        'mb-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold',
-        isCorrect
-          ? 'border-green-300 bg-green-100 text-green-800'
-          : 'border-red-300 bg-red-100 text-red-800'
-      )}
-      role="status"
-      aria-live="polite"
-    >
-      {isCorrect ? (
-        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-      ) : (
-        <XCircle className="h-3.5 w-3.5 shrink-0" />
-      )}
-      <span>{label}</span>
-    </motion.div>
-  );
+  return <PracticeFeedback status={isCorrect ? 'correct' : 'incorrect'} language={language} />;
 }
 
 // Memoized ExerciseCard component
