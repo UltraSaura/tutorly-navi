@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useFamilyProfile } from '@/context/FamilyProfileContext';
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
@@ -17,6 +17,7 @@ export default function FamilyPage() {
   const { signOut, resetPassword, user } = useAuth();
   const ui = useInterfaceTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [target, setTarget] = useState<'parent' | 'add' | null>(null);
   const [reset, setReset] = useState(false);
   const [password, setPassword] = useState('');
@@ -25,6 +26,9 @@ export default function FamilyPage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const returnTo = typeof location.state?.returnTo === 'string' && location.state.returnTo.startsWith('/guardian')
+    ? location.state.returnTo
+    : null;
   const setup = !family.pinConfigured || reset;
   const explain = (message: string) => ['invalid_pin', 'rate_limited'].includes(message) ? ui(`family.${message}`) : message.startsWith('family.') ? ui(message) : ui('family.error');
   const openParent = (next: 'parent' | 'add') => { setTarget(next); setPin(''); setConfirmPin(''); setPassword(''); setError(''); setReset(false); };
@@ -38,7 +42,7 @@ export default function FamilyPage() {
       }
       await family.unlockParent(pin);
       setPin('');
-      navigate(target === 'add' ? '/guardian/children' : '/guardian');
+      navigate(returnTo ?? (target === 'add' ? '/guardian/children' : '/guardian'), { replace: true, state: null });
     } catch (cause) { setError(explain((cause as Error).message)); }
     finally { setPending(false); }
   };

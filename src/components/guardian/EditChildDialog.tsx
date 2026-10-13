@@ -1,5 +1,5 @@
 import { useInterfaceTranslation } from '@/i18n/useInterfaceTranslation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+function isProfileAuthorizationAbort(error: unknown) {
+  if (!error) return false;
+  const name = typeof error === 'object' && error !== null && 'name' in error
+    ? String((error as { name?: unknown }).name)
+    : '';
+  const message = error instanceof Error ? error.message : String(error);
+  return name === 'AbortError' && (/signal is aborted|without reason/i.test(message) || !message);
+}
 
 interface EditChildDialogProps {
   open: boolean;
@@ -35,6 +45,7 @@ interface EditChildDialogProps {
 
 export default function EditChildDialog({ open, onOpenChange, child }: EditChildDialogProps) {
   const ui = useInterfaceTranslation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -47,7 +58,7 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
   const [schoolLevel, setSchoolLevel] = useState('');
 
   const { countries, loading: countriesLoading, getSchoolLevelsByCountry } = useCountriesAndLevels(country);
-  const filteredLevels = country ? getSchoolLevelsByCountry(country) : [];
+  const filteredLevels = useMemo(() => country ? getSchoolLevelsByCountry(country) : [], [country, getSchoolLevelsByCountry]);
 
   // Pre-fill when child changes
   useEffect(() => {
@@ -95,6 +106,10 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
       const { error: childError } = await supabase
         .from('children')
         .update({
+          // The family chooser reads the display level from children.grade;
+          // keep it in sync with the learner curriculum fields.
+          grade: normalizedLevel,
+          curriculum: normalizedCountry,
           curriculum_country_code: normalizedCountry,
           curriculum_level_code: normalizedLevel,
           contact_email: email,
@@ -106,8 +121,18 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
       queryClient.invalidateQueries({ queryKey: ['guardian-children'] });
       toast({ title: 'Success', description: ui("Child details updated successfully") });
       onOpenChange(false);
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message || ui("Failed to update"), variant: 'destructive' });
+    } catch (err: unknown) {
+      if (isProfileAuthorizationAbort(err)) {
+        onOpenChange(false);
+        navigate('/family', { replace: true, state: { returnTo: '/guardian/children' } });
+      }
+      toast({
+        title: isProfileAuthorizationAbort(err) ? ui('family.expired') : 'Error',
+        description: isProfileAuthorizationAbort(err)
+          ? ui('family.expired')
+          : err.message || ui("Failed to update"),
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }
@@ -225,8 +250,19 @@ export default function EditChildDialog({ open, onOpenChange, child }: EditChild
                   toast({ title: 'Deleted', description: ui("Child account has been removed") });
                   setShowDeleteConfirm(false);
                   onOpenChange(false);
-                } catch (err: any) {
-                  toast({ title: 'Error', description: err.message || ui("Failed to delete"), variant: 'destructive' });
+                } catch (err: unknown) {
+                  if (isProfileAuthorizationAbort(err)) {
+                    setShowDeleteConfirm(false);
+                    onOpenChange(false);
+                    navigate('/family', { replace: true, state: { returnTo: '/guardian/children' } });
+                  }
+                  toast({
+                    title: isProfileAuthorizationAbort(err) ? ui('family.expired') : 'Error',
+                    description: isProfileAuthorizationAbort(err)
+                      ? ui('family.expired')
+                      : err.message || ui("Failed to delete"),
+                    variant: 'destructive',
+                  });
                 } finally {
                   setDeleting(false);
                 }
