@@ -3,6 +3,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { deriveLessonReview, GeneratedLessonPreview, discoverLessonVisuals } from './GeneratedLessonsPage';
 import { storedGeometryVisualFixture } from './geometryLesson.fixture';
+import { geometryDraftLesson, validateGeometryDraft } from './geometryDraft';
 
 const legacy = { explanation: 'old', example: 'x', common_mistakes: [], guided_practice: [], exit_ticket: [], generated_at: '2026-01-01' };
 const valid = { version: '2.1', topic_goal: 'Nombres', levels: [{ id: 'l1', level_number: 1, title: 'Base', purpose: 'Lire', difficulty: 'foundation', objective_ids: [], lesson: { lesson_goal: 'Lire', success_criteria: ['Je peux lire'], prerequisites: [], sequence: [{ id: 'c', type: 'concept', title: 'C', content: 'Contenu' }, { id: 'm', type: 'mastery_check', questions: [{ id: 'q', question: 'Q', answer_type: 'numeric', correct_answer: 1, skill: 's', difficulty: 1, success_feedback: 'Oui', error_feedback: 'Non' }] }], misconceptions: [], mastery: { skills: ['s'], threshold: .8 } } }] };
@@ -60,6 +61,19 @@ describe('generated lesson review derivation', () => {
     expect(html).toContain('>CA<');
     expect(html).toContain('>O<');
     expect((html.match(/<svg/g) ?? []).length).toBeGreaterThanOrEqual(5);
+    expect(html).not.toContain('[object Object]');
+  });
+  it('validates the separate complete geometry draft without provider calls or writes', () => {
+    const result = validateGeometryDraft();
+    expect(result.canonicalValid).toBe(true);
+    expect(result.pedagogicalValid).toBe(true);
+    expect(geometryDraftLesson.levels[0].lesson.sequence.map((block) => block.visual.kind)).toEqual(['rectangle', 'polygon', 'circle', 'angle', 'symmetry']);
+    const html = renderToStaticMarkup(createElement(GeneratedLessonPreview, { lesson: geometryDraftLesson }));
+    expect((html.match(/data-testid="admin-lesson-visual-rendered"/g) ?? []).length).toBe(5);
+    expect((html.match(/<svg/g) ?? []).length).toBe(5);
+    expect(html).toContain('AB = 6 cm');
+    expect(html).toContain('BC = 4 cm');
+    expect(html).toContain('>O<');
     expect(html).not.toContain('[object Object]');
   });
 });
