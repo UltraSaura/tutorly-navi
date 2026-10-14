@@ -39,7 +39,7 @@ describe('generated lesson review derivation', () => {
   it('discovers the visual blocks copied from the stored geometry lesson', () => {
     const entries = discoverLessonVisuals(storedGeometryVisualFixture.levels[3].lesson);
     expect(entries).toHaveLength(5);
-    expect(entries.map((entry) => entry.visual.kind)).toEqual(['diagram', 'angle', 'angle', 'circle', 'symmetry']);
+    expect(entries.map((entry) => entry.visual.kind)).toEqual(['diagram', 'angle', 'rectangle', 'circle', 'symmetry']);
     const html = renderToStaticMarkup(createElement(GeneratedLessonPreview, { lesson: { ...storedGeometryVisualFixture, levels: [storedGeometryVisualFixture.levels[3]] } }));
     expect(html).toContain('data-visual-kind="diagram"');
     expect(html).toContain('data-visual-kind="angle"');
@@ -48,13 +48,17 @@ describe('generated lesson review derivation', () => {
   });
   it('keeps every stored geometry visual visible in the admin preview', () => {
     const html = storedGeometryVisualFixture.levels.map((level) => renderToStaticMarkup(createElement(GeneratedLessonPreview, { lesson: { ...storedGeometryVisualFixture, levels: [level] } }))).join('');
-    expect((html.match(/data-testid="admin-lesson-visual"/g) ?? []).length).toBe(21);
+    expect((html.match(/data-testid="admin-lesson-visual"/g) ?? []).length).toBe(22);
     expect(html).toContain('data-visual-kind="diagram"');
     expect(html).toContain('data-visual-kind="angle"');
     expect(html).toContain('data-visual-kind="circle"');
     expect(html).toContain('data-visual-kind="polygon"');
     expect(html).toContain('data-visual-kind="symmetry"');
-    expect(html).toContain('Angle non traçable');
+    expect(html).toContain('AB = 6 cm');
+    expect(html).toContain('BC = 4 cm');
+    expect(html).toContain('>CA<');
+    expect(html).toContain('>O<');
+    expect((html.match(/<svg/g) ?? []).length).toBeGreaterThanOrEqual(5);
     expect(html).not.toContain('[object Object]');
   });
 });

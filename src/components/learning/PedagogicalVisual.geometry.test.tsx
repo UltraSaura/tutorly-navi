@@ -25,6 +25,16 @@ describe('PedagogicalVisual geometry data', () => {
     expect(html).toContain('150,20 240,70 210,160 90,160 60,70 150,20'); expect(html).toContain('>A<');
   });
 
+  it('renders a labelled rectangle with every side and consistent dimensions', () => {
+    const html = render('rectangle', { shape: 'rectangle', vertices: [{ x: 45, y: 45, label: 'A' }, { x: 255, y: 45, label: 'B' }, { x: 255, y: 155, label: 'C' }, { x: 45, y: 155, label: 'D' }], side_labels: [{ from: 'A', to: 'B', label: 'AB = 6 cm' }, { from: 'B', to: 'C', label: 'BC = 4 cm' }, { from: 'C', to: 'D', label: 'CD = 6 cm' }, { from: 'D', to: 'A', label: 'DA = 4 cm' }] });
+    for (const label of ['A', 'B', 'C', 'D', 'AB = 6 cm', 'BC = 4 cm', 'CD = 6 cm', 'DA = 4 cm']) expect(html).toContain(`>${label}<`);
+  });
+
+  it('renders a labelled triangle with named sides', () => {
+    const html = render('polygon', { shape: 'triangle', vertices: [{ x: 60, y: 150, label: 'A' }, { x: 150, y: 30, label: 'B' }, { x: 240, y: 150, label: 'C' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'A', label: 'CA' }] });
+    for (const label of ['A', 'B', 'C', 'AB', 'BC', 'CA']) expect(html).toContain(`>${label}<`);
+  });
+
   it('renders symmetry figures and its axis when complete', () => {
     const html = render('symmetry', { grid: { size: 8 }, axis: { x: 150, y: 0 }, original: [{ x: 80, y: 60 }, { x: 120, y: 120 }, { x: 80, y: 150 }], reflected: [{ x: 220, y: 60 }, { x: 180, y: 120 }, { x: 220, y: 150 }] });
     expect(html).toContain('stroke-dasharray="7 5"'); expect(html).toContain('stroke="#E2E8F0"');
