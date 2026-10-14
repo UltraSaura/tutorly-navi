@@ -49,6 +49,7 @@ describe('generated lesson review derivation', () => {
   it('keeps every stored geometry visual visible in the admin preview', () => {
     const html = storedGeometryVisualFixture.levels.map((level) => renderToStaticMarkup(createElement(GeneratedLessonPreview, { lesson: { ...storedGeometryVisualFixture, levels: [level] } }))).join('');
     expect((html.match(/data-testid="admin-lesson-visual"/g) ?? []).length).toBe(22);
+    expect((html.match(/data-testid="admin-lesson-visual-rendered"/g) ?? []).length).toBe(22);
     expect(html).toContain('data-visual-kind="diagram"');
     expect(html).toContain('data-visual-kind="angle"');
     expect(html).toContain('data-visual-kind="circle"');

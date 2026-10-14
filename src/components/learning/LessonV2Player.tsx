@@ -5,6 +5,7 @@ import { useLearner } from '@/context/FamilyProfileContext';
 import { trackLearningInteraction } from '@/services/learningAnalytics';
 import type { LessonBlock, LessonV2 } from '@/types/lesson-generator';
 import { PedagogicalVisual } from './PedagogicalVisual';
+import { LessonVisualBlock } from './LessonVisualBlock';
 import { QuestionCard } from './QuestionCard';
 import type { Question } from '@/types/quiz-bank';
 
@@ -87,7 +88,7 @@ function Visual({ block }: { block: Extract<LessonBlock, { type: 'visual' }> }) 
   const labels = Array.isArray(data.labels) ? data.labels.map(String) : [];
   const values = items.length > 0 ? items : nodes.length > 0 ? nodes : groups.length > 0 ? groups : rows.length > 0 ? rows : labels.map((label) => ({ label }));
   const nodeLabels = new Map(values.map((item) => [String(item.id ?? ''), String(item.label ?? item.value ?? '')]));
-  return <PedagogicalVisual block={block} />; /* legacy data fallback is rendered by PedagogicalVisual */ return <div className="rounded-xl border border-teal-200 bg-teal-50 p-4">
+  return <LessonVisualBlock visual={block.visual} title={block.title} content={block.content} />; /* legacy data fallback is rendered by PedagogicalVisual */ return <div className="rounded-xl border border-teal-200 bg-teal-50 p-4">
     <p className="text-xs font-bold uppercase tracking-wide text-teal-800">{block.visual.kind.replace('_', ' ')}</p>
     <p className="mt-2 text-sm text-teal-950">{block.content}</p>
     {values.length > 0 ? (
@@ -113,7 +114,7 @@ function ConceptPresentation({ block }: { block: Extract<LessonBlock, { type: 'c
   return (
     <div className="space-y-3" data-concept-presentation>
       {block.visual && (
-        <PedagogicalVisual block={{ ...block, visual: block.visual, showText: false }} />
+        <LessonVisualBlock visual={block.visual} title={block.title} content={block.content} />
       )}
       <p className="max-w-2xl text-left text-base leading-7 text-[#344054]">{block.content}</p>
       {block.representation && (
