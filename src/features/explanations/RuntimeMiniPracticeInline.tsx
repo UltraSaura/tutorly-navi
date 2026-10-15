@@ -595,7 +595,7 @@ function GeneratedMiniPracticeInline({
             </div>
             {practice.questionType === "multiple_choice" && answerState === "incorrect" && selectedChoice && (
               <div className="mt-1 text-[12px] font-medium text-amber-800">
-                {isFrench
+                {language === "fr"
                   ? `Ta réponse ${selectedChoice} n'est pas correcte.`
                   : `Your answer ${selectedChoice} is not correct.`}
               </div>

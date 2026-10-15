@@ -1,4 +1,4 @@
-import type { AuthResponse, SupabaseClient } from '@supabase/supabase-js';
+import type { AuthError, SupabaseClient } from '@supabase/supabase-js';
 
 export const getPasswordRecoveryRedirectUrl = (origin: string): string => {
   const base = origin.replace(/\/$/, '');
