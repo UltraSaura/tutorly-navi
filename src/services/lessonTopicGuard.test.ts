@@ -18,7 +18,8 @@ describe('symmetry drawable contract', () => {
     expect(symIssues(complete)).toEqual([]);
     expect(symIssues({ ...complete, axis: { y: 4 } })).toEqual([]);
     const html = renderToStaticMarkup(React.createElement(PedagogicalVisual, { block: { title: 'S', content: '', visual: { kind: 'symmetry', data: complete } } } as any));
-    expect(html).toContain('<svg');
+    expect(html).toContain('data-testid="symmetry-grid"');
+    expect(html).not.toContain('Symétrie incomplète');
   });
   it.each([
     ['missing axis', { ...complete, axis: undefined }],
