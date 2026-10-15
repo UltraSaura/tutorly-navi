@@ -69,7 +69,8 @@ function geometryIssuesForVisual(kind: string, data: unknown, path: string): Val
   if (kind === 'symmetry') {
     const axis = object(d.axis);
     const grid = object(d.grid);
-    return axis && Number.isFinite(Number(axis.x)) && points(d.original ?? d.figure) && points(d.reflected ?? d.symmetric_figure) && grid && Number(grid.width) > 0 && Number(grid.height) > 0
+    const axisOk = !!axis && (typeof axis.x === 'number' && Number.isFinite(axis.x) || typeof axis.y === 'number' && Number.isFinite(axis.y));
+    return axisOk && points(d.original ?? d.figure) && points(d.reflected ?? d.symmetric_figure) && grid && Number(grid.width) > 0 && Number(grid.height) > 0
       ? [] : [issue('', 'Symmetry requires an axis, grid dimensions, and original/reflected point sets.')];
   }
   return [];
@@ -133,11 +134,31 @@ export function validateLessonVersion(lesson: unknown): LessonValidation {
   };
 }
 
+/** The only topic the CM2 geometry staging generation may target. */
+export const CM2_GEOMETRY_TOPIC_ID = 'e5003f68-f3aa-404b-85a9-847cdb103a81';
+/** Fixture/staging copies that must never be silently selected for CM2 generation. */
+export const FIXTURE_TOPIC_IDS = ['185f20b5-d698-446d-80e8-c3c462819b94'] as const;
+
+export function assertGenerationTopic(topicId: string | null | undefined, expected = CM2_GEOMETRY_TOPIC_ID): string {
+  const value = (topicId ?? '').trim();
+  if (!value) throw new Error('staging_topic_id_required: choose the topic explicitly before generating.');
+  if ((FIXTURE_TOPIC_IDS as readonly string[]).includes(value)) throw new Error(`fixture_topic_refused: ${value} is a fixture topic and cannot be used for CM2 generation (expected ${expected}).`);
+  if (value !== expected) throw new Error(`unexpected_topic_id: ${value} is not the intended CM2 topic ${expected}.`);
+  return value;
+}
+
+export function assertReturnedTopicMatches(requestedTopicId: string, returnedTopicId: unknown): void {
+  if (typeof returnedTopicId !== 'string' || returnedTopicId !== requestedTopicId) {
+    throw new Error(`topic_id_mismatch: requested ${requestedTopicId}, generator returned ${String(returnedTopicId)}. Draft not saved.`);
+  }
+}
+
 export function buildDraftInsertPayload(topicId: string, lessonContent: unknown, userId: string) {
   return { topic_id: topicId, lesson_content: lessonContent, status: 'draft' as const, created_by: userId };
 }
 
 export async function generateStagingDraft(topicId: string, modelId?: string) {
+  assertGenerationTopic(topicId);
   const { data, error, response } = await supabase.functions.invoke('generate-lesson-content', {
     body: { mode: 'staging_draft', topicId, modelId, allowPaidRepair: false },
   });
@@ -159,10 +180,13 @@ export async function generateStagingDraft(topicId: string, modelId?: string) {
       ?? (data?.success && data?.lesson_content ? `Unexpected providerCalls value: ${String(data?.providerCalls)}` : undefined);
     throw new Error(technicalDetail ? `${message}\n${technicalDetail}` : message);
   }
+  assertReturnedTopicMatches(topicId, data.topic_id);
   return data as { lesson_content: unknown; topic_id: string; providerCalls: number; canonicalValid: true; pedagogicalValid: true };
 }
 
-export async function saveDraftVersion(topicId: string, lessonContent: unknown): Promise<LessonVersion> {
+export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId): Promise<LessonVersion> {
+  assertGenerationTopic(topicId);
+  assertReturnedTopicMatches(topicId, returnedTopicId);
   const validation = validateLessonVersion(lessonContent);
   if (!validation.canonicalValid || !validation.pedagogicalValid) {
     throw new Error(JSON.stringify({ code: 'draft_validation_failed', validation }));

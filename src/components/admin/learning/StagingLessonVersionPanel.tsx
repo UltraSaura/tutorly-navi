@@ -11,6 +11,8 @@ import {
   saveDraftVersion,
   validateSavedDraft,
   publishValidatedDraft,
+  assertGenerationTopic,
+  CM2_GEOMETRY_TOPIC_ID,
   type LessonVersion,
 } from '@/services/lessonVersionWorkflow';
 
@@ -45,9 +47,12 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
   };
 
   const generate = () => run('generate', async () => {
-    if (!topicId) throw new Error('Choose a topic before generating a draft.');
+    assertGenerationTopic(topicId);
+    const topic = topicNames.get(topicId);
+    if (!topic) throw new Error(`Topic ${topicId} is not in the loaded topic list.`);
+    if (!window.confirm(`Generate a staging draft for:\n${topic.name}\n${topic.id}\n\nThis calls the AI (up to 4 calls).`)) return;
     const generated = await generateStagingDraft(topicId);
-    const saved = await saveDraftVersion(topicId, generated.lesson_content);
+    const saved = await saveDraftVersion(topicId, generated.lesson_content, generated.topic_id);
     await refresh();
     navigate(`/admin/generated-lessons?version=${encodeURIComponent(saved.id)}`);
   });
@@ -77,9 +82,13 @@ export function StagingLessonVersionPanel({ topics }: { topics: TopicOption[] })
           <SelectTrigger className="w-[300px]"><SelectValue placeholder="Choose a topic" /></SelectTrigger>
           <SelectContent>{topics.map((topic) => <SelectItem key={topic.id} value={topic.id}>{topic.name} · {topic.curriculum_level_code ?? '—'}</SelectItem>)}</SelectContent>
         </Select>
-        <Button onClick={generate} disabled={busy !== null || !topicId} data-testid="generate-draft">{busy === 'generate' ? 'Generating…' : 'Generate draft'}</Button>
+        <Button onClick={generate} disabled={busy !== null || topicId !== CM2_GEOMETRY_TOPIC_ID} data-testid="generate-draft">{busy === 'generate' ? 'Generating…' : 'Generate draft'}</Button>
         <Button asChild variant="outline"><Link to="/admin/generated-lessons?draft=geometry">Preview geometry draft</Link></Button>
       </div>
+      <p className="text-xs text-muted-foreground" data-testid="selected-topic">
+        Selected: {topicId ? `${topicNames.get(topicId)?.name ?? '?'} · ${topicId}` : 'none'} — required: {CM2_GEOMETRY_TOPIC_ID}
+        {topicId && topicId !== CM2_GEOMETRY_TOPIC_ID && <span className="ml-1 text-destructive">(not the intended CM2 topic — generation blocked)</span>}
+      </p>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <div className="space-y-2" data-testid="lesson-version-list">
         {versions.length === 0 && <p className="text-sm text-muted-foreground">No saved staging versions yet.</p>}

@@ -19,7 +19,9 @@ type SafeResponse = {
 
 export type RunnerDependencies = {
   authenticate: () => Promise<{ userId: string; accessToken: string; isAdmin: boolean }>;
-  findTopic: (topicId: string) => Promise<{ id: string; lessonContent: unknown }>;
+  findTopic: (topicId: string) => Promise<{ id: string; name?: string; lessonContent: unknown }>;
+  /** Topic the run must target; defaults to the CM2 geometry topic, null disables the guard (tests only). */
+  expectedTopicId?: string | null;
   countExistingDrafts: (topicId: string) => Promise<number>;
   invoke: (accessToken: string, topicId: string) => Promise<SafeResponse>;
   insertDraft: (input: { topicId: string; lessonContent: Record<string, unknown>; createdBy: string }) => Promise<string>;
@@ -80,9 +82,14 @@ export function formatTopicListResult(matches: TopicSummary[]): RunnerResult {
   return { ok: true, code: 'topic_unique', matches, databaseWrite: false, providerCalls: 0 };
 }
 
-export function requireExplicitTopicId(topicId: string | undefined): string {
+export const CM2_GEOMETRY_TOPIC_ID = 'e5003f68-f3aa-404b-85a9-847cdb103a81';
+export const FIXTURE_TOPIC_IDS = ['185f20b5-d698-446d-80e8-c3c462819b94'];
+
+export function requireExplicitTopicId(topicId: string | undefined, expected: string | null = null): string {
   const value = topicId?.trim();
   if (!value) throw new Error('staging_topic_id_required');
+  if (expected && FIXTURE_TOPIC_IDS.includes(value) && value !== expected) throw new Error('fixture_topic_refused');
+  if (expected && value !== expected) throw new Error('unexpected_topic_id');
   return value;
 }
 
@@ -150,12 +157,14 @@ function responseErrorFields(body: unknown): Record<string, unknown> {
 }
 
 export async function executeStagingDraft(deps: RunnerDependencies, explicitTopicId = process.env.STAGING_TOPIC_ID): Promise<RunnerResult> {
-  const topicId = requireExplicitTopicId(explicitTopicId);
+  const topicId = requireExplicitTopicId(explicitTopicId, deps.expectedTopicId === undefined ? CM2_GEOMETRY_TOPIC_ID : deps.expectedTopicId);
   const auth = await deps.authenticate();
   if (!auth.userId || !auth.accessToken) throw new Error('authenticated_session_required');
   if (!auth.isAdmin) throw new Error('admin_access_required');
 
   const topic = await deps.findTopic(topicId);
+  if (topic.id !== topicId) throw new Error('topic_lookup_mismatch');
+  console.error(`[staging] target topic: ${topic.name ?? '(untitled)'} · ${topic.id}`);
   const initialTopicLessonContent = topic.lessonContent;
   if (await deps.countExistingDrafts(topic.id) > 0) throw new Error('duplicate_staging_version_refused');
 
@@ -174,6 +183,10 @@ export async function executeStagingDraft(deps: RunnerDependencies, explicitTopi
     throw Object.assign(new Error('generation_validation_failed'), { safeResult: failure });
   }
 
+  const returnedTopicId = isRecord(response.body) ? response.body.topic_id : undefined;
+  if (returnedTopicId !== undefined && returnedTopicId !== topic.id) {
+    throw Object.assign(new Error('topic_id_mismatch'), { safeResult: { ok: false, requestedTopicId: topic.id, returnedTopicId: String(returnedTopicId), providerCalls: generated.providerCalls, databaseWrite: false } });
+  }
   if (await deps.countExistingDrafts(topic.id) > 0) throw new Error('duplicate_staging_version_refused');
   const draftVersionId = await deps.insertDraft({ topicId: topic.id, lessonContent: generated.lessonContent, createdBy: auth.userId });
   const finalTopicLessonContent = await deps.readTopicLessonContent(topic.id);
@@ -238,10 +251,10 @@ async function createDependencies(url: string, anonKey: string, email: string, p
   return {
     authenticate: async () => ({ userId, accessToken, isAdmin }),
     findTopic: async (topicId) => {
-      const result = await client.from('topics').select('id,lesson_content').eq('id', topicId).limit(2);
+      const result = await client.from('topics').select('id,name,lesson_content').eq('id', topicId).limit(2);
       if (result.error) throw new Error('topic_lookup_failed');
       if (!result.data || result.data.length !== 1) throw new Error('staging_topic_not_found');
-      return { id: result.data[0].id as string, lessonContent: result.data[0].lesson_content };
+      return { id: result.data[0].id as string, name: result.data[0].name as string, lessonContent: result.data[0].lesson_content };
     },
     countExistingDrafts: async (topicId) => {
       const result = await client.from('topic_lesson_versions').select('id').eq('topic_id', topicId).in('status', ['draft', 'validated', 'published']).limit(1);
