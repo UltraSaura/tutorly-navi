@@ -1,7 +1,6 @@
 
 import React, { useRef, useCallback } from 'react';
-// react-cropper@2.3.3 in this branch resolves to a missing dist entry; use the shipped source entrypoint.
-import Cropper, { ReactCropperElement } from 'react-cropper/src';
+import Cropper, { ReactCropperElement } from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
