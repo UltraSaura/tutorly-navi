@@ -540,7 +540,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         console.warn('[generate-lesson-content] provider output truncated', { stage: message.includes('PLAN') ? 'planning' : 'lesson', maxTokens, providerMetadata });
         throw new Error(`provider_output_truncated: finish_reason=length; maxTokens=${maxTokens}`);
       }
-      const raw = data.content || data.data?.content || data;
+      const raw = data.content || (data.data as { content?: unknown } | undefined)?.content || data;
       const stripFences = (s: string) => s.trim()
         .replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').replace(/```/g, '').trim();
       if (typeof raw === 'string') {
@@ -579,7 +579,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       try { data = await res.json(); } catch { throw new Error('staging_level_json_parse_failed: ai-chat envelope is not JSON'); }
       const providerMetadata = data.providerMetadata as { finishReason?: string; promptTokens?: number; completionTokens?: number; totalTokens?: number } | null;
       const tokenUsage = stagingTokenUsage(providerMetadata);
-      const raw = data.content || data.data?.content || data;
+      const raw = data.content || (data.data as { content?: unknown } | undefined)?.content || data;
       const parsed = parseStagingLevelResponse(raw, metadata);
       return { value: parsed.value, tokenUsage };
     };
