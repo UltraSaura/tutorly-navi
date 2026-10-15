@@ -80,7 +80,7 @@ function practiceQuestion(question: any): Question | null {
 }
 
 function Visual({ block }: { block: any }) {
-  const data = block.visual.data && typeof block.visual.data === 'object' ? block.visual.data as Record<string, unknown> : {};
+  const data = block.visual.data && typeof block.visual.data === 'object' ? block.visual.data as Record<string, any> : {} as Record<string, any>;
   const items = Array.isArray(data.items) ? data.items as Array<Record<string, unknown>> : [];
   const nodes = Array.isArray(data.nodes) ? data.nodes as Array<Record<string, unknown>> : [];
   const groups = Array.isArray(data.groups) ? data.groups as Array<Record<string, unknown>> : [];
