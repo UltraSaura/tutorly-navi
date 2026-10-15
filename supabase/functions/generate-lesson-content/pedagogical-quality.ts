@@ -3,7 +3,7 @@ import { determineVisualRequirement, isSupportedVisualKind } from './visual-poli
 import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 
 const PEDAGOGY_STOP_WORDS = new Set('le la les un une des de du et en avec pour sur dans une est sont là ce cette ces que qui comme avec au aux par chaque il elle on se'.split(/\s+/));
-function meaningfulTokens(value: unknown): Set<string> {
+export function meaningfulTokens(value: unknown): Set<string> {
   if (typeof value !== 'string') return new Set();
   return new Set(value.toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g, '').match(/[a-zà-ÿ]{4,}/g)?.filter((token) => !PEDAGOGY_STOP_WORDS.has(token)) ?? []);
 }
