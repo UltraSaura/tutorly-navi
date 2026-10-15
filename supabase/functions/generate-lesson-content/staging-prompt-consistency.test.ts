@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 import { normalizeGeneratedLesson } from './lesson-normalization.ts';
 import { meaningfulTokens, semanticDuplicationDiagnostics } from './pedagogical-quality.ts';
+import { TAKEAWAY_RULE } from './staging-level-workflow.ts';
 import {
   KEY_POINT_RULE,
   PREREQUISITE_ANSWER_RULE,
@@ -89,5 +90,17 @@ describe('level-2 staging regressions: numeric prerequisite and key-point overla
   it('still rejects the observed overlapping angle key point at sequence[1]', () => {
     const v = validate((lesson) => { lesson.sequence[1].key_points = [{ label: 'Sommet', text: 'Point de départ des deux demi-droites' }, { label: 'Mesure', text: 'En degrés' }]; });
     expect(v.pedagogicalIssues.some((i) => i.path === 'sequence[1].key_points' && i.message.includes('partagent trop de tokens'))).toBe(true);
+  });
+});
+
+describe('staging takeaway rule', () => {
+  it('quotes the failing staging takeaway as forbidden', () => {
+    expect(TAKEAWAY_RULE).toContain('interdit');
+    expect(TAKEAWAY_RULE).toContain('trois sommets');
+  });
+  it('rejects the exact takeaway that failed on staging', () => {
+    const block = { id: 'c', type: 'concept', title: 'Triangle', content: 'Un triangle est un polygone qui possède trois sommets et trois côtés. On les nomme et on les note. La somme des angles est égale à 180 degrés.', key_points: [{ label: 'Côtés', text: 'AB, BC et CA' }], takeaway: 'Pour reconnaître un triangle, je compte ses trois sommets et ses trois côtés.' };
+    const diags = semanticDuplicationDiagnostics(block);
+    expect(JSON.stringify(diags)).toContain('takeaway');
   });
 });
