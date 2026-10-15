@@ -157,10 +157,65 @@ export function stagingLevelMetadata(topicId: string, topicName: string, objecti
   ];
 }
 
+type ConceptExample = Record<string, unknown> & { visual: { kind: string; purpose: string; alt_text: string; data: Record<string, unknown> } };
+
+/** Canonical drawable-visual concept examples. Each one must pass the real
+ * staging validators (see staging-prompt-consistency.test.ts); the prompt
+ * embeds them verbatim so the provider sees exactly the accepted shapes. */
+export const STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle' | 'angle' | 'symmetry', ConceptExample> = {
+  rectangle: { id: 'rectangle-concept', type: 'concept', title: 'Rectangle ABCD', content: 'Un rectangle est un quadrilatère dont les quatre angles sont droits. Ses côtés opposés ont la même longueur.', key_points: [{ label: 'Angles', text: '4 angles droits' }, { label: 'Longueurs', text: 'Côtés opposés égaux' }], takeaway: 'Je vérifie les angles puis les côtés opposés.', visual: { kind: 'rectangle', purpose: 'Nommer les sommets et les côtés.', alt_text: 'Rectangle ABCD dessiné avec quatre sommets étiquetés.', data: { shape: 'rectangle', vertices: [{ x: 45, y: 45, label: 'A' }, { x: 255, y: 45, label: 'B' }, { x: 255, y: 155, label: 'C' }, { x: 45, y: 155, label: 'D' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'D', label: 'CD' }, { from: 'D', to: 'A', label: 'DA' }] } } },
+  triangle: { id: 'triangle-concept', type: 'concept', title: 'Triangle ABC', content: 'Un triangle possède trois sommets et trois côtés.', key_points: [{ label: 'Côtés', text: 'AB, BC et CA' }], takeaway: 'Je compte trois sommets et trois côtés.', visual: { kind: 'polygon', purpose: 'Nommer les côtés du triangle.', alt_text: 'Triangle ABC dessiné avec trois sommets étiquetés.', data: { shape: 'triangle', vertices: [{ x: 60, y: 150, label: 'A' }, { x: 150, y: 30, label: 'B' }, { x: 240, y: 150, label: 'C' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'A', label: 'CA' }] } } },
+  circle: { id: 'circle-concept', type: 'concept', title: 'Cercle de centre O', content: 'Tous les points d’un cercle sont à la même distance du centre O. Le diamètre mesure deux rayons.', key_points: [{ label: 'Rayon', text: 'Du centre au cercle' }, { label: 'Diamètre', text: 'Deux rayons alignés' }], takeaway: 'Je mesure le rayon puis je le double pour le diamètre.', visual: { kind: 'circle', purpose: 'Montrer le centre, le rayon et le diamètre.', alt_text: 'Cercle de centre O avec un rayon de 3 cm et un diamètre de 6 cm.', data: { center: { x: 150, y: 100, label: 'O' }, radius: 3, diameter: 6, unit: 'cm' } } },
+  angle: { id: 'angle-concept', type: 'concept', title: 'Angle de sommet O', content: 'Un angle est formé par deux demi-droites qui partent du même sommet O. On le mesure en degrés.', key_points: [{ label: 'Sommet', text: 'Le point O' }, { label: 'Mesure', text: 'En degrés' }], takeaway: 'Je place le centre du rapporteur sur le sommet.', visual: { kind: 'angle', purpose: 'Montrer le sommet, les deux côtés et la mesure.', alt_text: 'Angle AOB de 45 degrés de sommet O.', data: { vertex: { x: 100, y: 150, label: 'O' }, rays: [{ x: 250, y: 150, label: 'A' }, { x: 206, y: 44, label: 'B' }], degrees: 45 } } },
+  symmetry: { id: 'symmetry-concept', type: 'concept', title: 'Symétrie axiale', content: 'Une figure et sa symétrique sont à la même distance de l’axe, de part et d’autre.', key_points: [{ label: 'Axe', text: 'Droite verticale x = 5' }, { label: 'Distance', text: 'Même nombre de carreaux' }], takeaway: 'Je compte les carreaux jusqu’à l’axe puis je reporte de l’autre côté.', visual: { kind: 'symmetry', purpose: 'Comparer une figure et sa symétrique sur quadrillage.', alt_text: 'Triangle et son symétrique par rapport à un axe vertical sur un quadrillage de 10 sur 8.', data: { axis: { x: 5 }, grid: { width: 10, height: 8 }, figure: [{ x: 2, y: 2 }, { x: 4, y: 2 }, { x: 4, y: 5 }], symmetric_figure: [{ x: 8, y: 2 }, { x: 6, y: 2 }, { x: 6, y: 5 }] } } },
+};
+
+export const STAGING_ALL_GEOMETRY_KINDS = ['rectangle', 'triangle', 'circle', 'angle', 'symmetry'] as const;
+
+/** Visual kinds the prompt demands for each level. Level 4 has no fixed kind
+ * but still must draw every concept, because pedagogical validation requires
+ * a figure for any geometric concept. */
+export function stagingPromptVisualKinds(metadata: StagingLevelMetadata): string[] {
+  return metadata.required_geometry_kinds.length > 0 ? metadata.required_geometry_kinds : [...STAGING_ALL_GEOMETRY_KINDS];
+}
+
+/** Complete, valid example level used in the prompt (validated in tests). */
+export function stagingFullLevelExample(metadata: StagingLevelMetadata): Record<string, unknown> {
+  const kinds = stagingPromptVisualKinds(metadata);
+  const first = STAGING_VISUAL_EXAMPLES[(kinds[0] ?? 'rectangle') as keyof typeof STAGING_VISUAL_EXAMPLES];
+  const second = STAGING_VISUAL_EXAMPLES[(kinds[1] ?? kinds[0] ?? 'triangle') as keyof typeof STAGING_VISUAL_EXAMPLES];
+  return {
+    lesson_goal: 'Reconnaître et décrire une figure plane.',
+    success_criteria: ['Je sais nommer les éléments de la figure.'],
+    prerequisites: [],
+    sequence: [
+      { ...first, id: 'c1' },
+      { ...second, id: 'c2' },
+      { id: 'g1', type: 'guided_example', content: 'Je lis les lettres de la figure puis je vérifie la propriété avec un instrument.', context: 'Vérifier une propriété sur une figure.', steps: [{ instruction: 'Je repère les éléments nommés.', reason: 'Les lettres désignent les sommets.' }] },
+      { id: 's1', type: 'student_try', content: 'À toi: compte les sommets.', question: 'Combien de sommets possède un triangle ?', answer_type: 'numeric', correct_answer: 3, success_feedback: 'Oui, trois sommets.', error_feedback: 'Compte les points nommés par une lettre.' },
+      { id: 'm1', type: 'mastery_check', content: 'Vérifie ta compréhension.', questions: [{ id: 'q1', question: 'Combien d’angles droits possède un rectangle ?', answer_type: 'numeric', correct_answer: 4, skill: 'figures_planes', difficulty: 1, success_feedback: 'Exact.', error_feedback: 'Compte les coins droits.' }] },
+    ],
+    misconceptions: [],
+    mastery: { skills: ['figures planes', 'propriétés'], threshold: 0.8 },
+  };
+}
+
+const VISUAL_FIELD_RULES = [
+  'Champs exacts exigés par le validateur pour visual.data:',
+  '- rectangle: kind "rectangle", data.shape "rectangle", data.vertices = exactement 4 objets {x:number,y:number,label:string}, data.side_labels = 4 objets {from,to,label}.',
+  '- triangle: kind "polygon", data.shape "triangle", data.vertices = exactement 3 objets {x,y,label}, data.side_labels = 3 objets {from,to,label}.',
+  '- circle: kind "circle", data.center = {x:number,y:number,label}, data.radius = nombre > 0 ET data.diameter = nombre > 0 (diamètre = 2 × rayon).',
+  '- angle: kind "angle", data.vertex = {x:number,y:number,label}, data.rays = tableau de EXACTEMENT 2 points {x:number,y:number,label} (jamais ray1/ray2, jamais des objets sans x/y), data.degrees = nombre entre 1 et 360 (ou data.rightAngle = true).',
+  '- symmetry: kind "symmetry", data.axis = {x:number} pour un axe vertical ou {y:number} pour un axe horizontal (jamais {x1,y1,x2,y2}), data.grid = {width:number,height:number}, data.figure = tableau de points {x,y}, data.symmetric_figure = tableau de points {x,y} (images exactes par la symétrie).',
+  'N’ajoute width/height à une figure que si leurs proportions sont cohérentes avec les coordonnées.',
+].join('\n');
+
 export function stagingLevelPrompt(topicName: string, grade: string, language: string, metadata: StagingLevelMetadata, objectiveText: string): string {
+  const kinds = stagingPromptVisualKinds(metadata);
   const required = metadata.required_geometry_kinds.length > 0
-    ? 'Visuels obligatoires dans ce niveau: ' + metadata.required_geometry_kinds.join(', ') + '.'
-    : 'Ajoute seulement les visuels utiles et entièrement dessinables.';
+    ? 'Visuels obligatoires dans ce niveau: ' + metadata.required_geometry_kinds.join(', ') + '. Chaque bloc concept DOIT contenir un visual dessinable complet.'
+    : 'Chaque bloc concept DOIT contenir un visual dessinable complet, choisi parmi: ' + kinds.join(', ') + '. Un concept sans figure est refusé.';
+  const examples = kinds.map((kind) => 'Exemple de bloc conceptuel ' + kind + ' valide: ' + JSON.stringify(STAGING_VISUAL_EXAMPLES[kind as keyof typeof STAGING_VISUAL_EXAMPLES]));
   return [
     'LESSON GENERATOR V2.1 — STAGING LEVEL ' + metadata.level_number + '/4',
     'Sujet: ' + topicName + '; niveau scolaire: ' + grade + '; langue: ' + language + '.',
@@ -172,16 +227,15 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     'sequence doit contenir exactement cinq blocs, dans cet ordre et avec ces types: concept, concept, guided_example, student_try, mastery_check.',
     'Chaque bloc doit contenir son propre id non vide, type canonique et content: une chaîne destinée à l’élève, non vide après trim. Aucun bloc ne peut contenir uniquement des métadonnées, une question ou des réponses sans content. Ne laisse jamais le compilateur inventer un id, un type ou du contenu.',
     'Le content du concept explique la notion; celui de guided_example explique un exemple résolu; celui de student_try demande une action à l’élève; celui de mastery_check vérifie sa compréhension. Tous les cinq blocs doivent avoir un content réaliste en français.',
-    'Les concepts exigent title et key_points: un tableau de 1 à 4 objets {label, text}; chaque key_point est un rappel court et distinct, pas une phrase copiée du content. guided_example exige context et steps; student_try exige question, answer_type, correct_answer, success_feedback et error_feedback; mastery_check exige 1 à 4 questions complètes.',
+    'Les concepts exigent title, key_points (1 à 4 objets {label, text}, rappels courts et distincts, pas une phrase copiée du content), takeaway et visual. guided_example exige context et steps; student_try exige question, answer_type, correct_answer, success_feedback et error_feedback; mastery_check exige 1 à 4 questions complètes.',
     'mastery doit être exactement {"skills":["étiquette courte 1","étiquette courte 2"],"threshold":0.8}: skills est un tableau de chaînes non vides, jamais un tableau d’objets, un objet ou un paragraphe.',
     'prerequisites et misconceptions doivent être des tableaux d’objets complets, jamais des tableaux de chaînes.',
     'Exemple prerequisite valide: {"id":"p1","description":"Lire les longueurs","check_question":"Quel segment mesure 6 cm ?","answer_type":"short_text","expected_answer":"AB","remediation_hint":"Repère les lettres des extrémités."}',
     'Exemple misconception valide: {"id":"m1","description":"Confondre rayon et diamètre","detect_if":"L’élève appelle rayon un segment qui traverse le centre","feedback":"Le rayon va du centre au cercle; le diamètre traverse le centre.","remediation_strategy":"Comparer les deux segments sur le dessin."}',
-    'Exemple de bloc conceptuel rectangle valide: {"id":"rectangle-concept","type":"concept","title":"Rectangle ABCD","content":"Un rectangle est un quadrilatère dont les quatre angles sont droits. Ses côtés opposés ont la même longueur.","key_points":[{"label":"Angles","text":"4 angles droits"},{"label":"Longueurs","text":"Côtés opposés de même longueur"}],"takeaway":"Je vérifie les angles puis les côtés opposés.","visual":{"kind":"rectangle","purpose":"Nommer les sommets et les côtés.","alt_text":"Rectangle ABCD dessiné avec quatre sommets étiquetés.","data":{"shape":"rectangle","vertices":[{"x":45,"y":45,"label":"A"},{"x":255,"y":45,"label":"B"},{"x":255,"y":155,"label":"C"},{"x":45,"y":155,"label":"D"}],"side_labels":[{"from":"A","to":"B","label":"AB"},{"from":"B","to":"C","label":"BC"},{"from":"C","to":"D","label":"CD"},{"from":"D","to":"A","label":"DA"}]}}}',
-    'Exemple de bloc conceptuel triangle valide: {"id":"triangle-concept","type":"concept","title":"Triangle ABC","content":"Un triangle possède trois sommets et trois côtés.","key_points":[{"label":"Côtés","text":"AB, BC et CA sont les trois côtés."}],"takeaway":"Je compte trois sommets et trois côtés.","visual":{"kind":"polygon","purpose":"Nommer les côtés du triangle.","alt_text":"Triangle ABC dessiné avec trois sommets étiquetés.","data":{"shape":"triangle","vertices":[{"x":60,"y":150,"label":"A"},{"x":150,"y":30,"label":"B"},{"x":240,"y":150,"label":"C"}],"side_labels":[{"from":"A","to":"B","label":"AB"},{"from":"B","to":"C","label":"BC"},{"from":"C","to":"A","label":"CA"}]}}}',
-    'Exemple complet des cinq blocs et de mastery.skills (tous les content sont obligatoires): {"lesson_goal":"Reconnaître les propriétés d’un rectangle.","success_criteria":["Je sais identifier un rectangle."],"prerequisites":[],"sequence":[{"id":"c1","type":"concept","title":"Rectangle ABCD","content":"Un rectangle est un quadrilatère dont les quatre angles sont droits.","key_points":[{"label":"Angles","text":"4 angles droits"}],"takeaway":"Je vérifie les angles droits.","visual":{"kind":"rectangle","purpose":"Voir les angles et les côtés.","alt_text":"Rectangle ABCD avec quatre sommets étiquetés.","data":{"shape":"rectangle","vertices":[{"x":45,"y":45,"label":"A"},{"x":255,"y":45,"label":"B"},{"x":255,"y":155,"label":"C"},{"x":45,"y":155,"label":"D"}],"side_labels":[{"from":"A","to":"B","label":"AB"},{"from":"B","to":"C","label":"BC"},{"from":"C","to":"D","label":"CD"},{"from":"D","to":"A","label":"DA"}]} }},{"id":"c2","type":"concept","title":"Côtés opposés","content":"Les côtés opposés d’un rectangle ont la même longueur.","key_points":[{"label":"Longueurs","text":"Opposés égaux"}],"takeaway":"Je compare les côtés opposés."},{"id":"g1","type":"guided_example","content":"Je lis les lettres puis je compare les côtés opposés.","context":"Vérifier un rectangle.","steps":[{"instruction":"Je repère les côtés AB et CD.","reason":"Ils sont opposés."}]},{"id":"s1","type":"student_try","content":"À toi: indique la propriété des côtés opposés.","question":"Que peux-tu dire de AB et CD ?","answer_type":"short_text","correct_answer":"Ils ont la même longueur.","success_feedback":"Oui, ils sont de même longueur.","error_feedback":"Compare les côtés opposés."},{"id":"m1","type":"mastery_check","content":"Vérifie ta compréhension des deux propriétés.","questions":[{"id":"q1","question":"Combien d’angles droits possède un rectangle ?","answer_type":"numeric","correct_answer":4,"skill":"figures_planes","difficulty":1,"success_feedback":"Exact.","error_feedback":"Compte les quatre coins droits."}]}],"misconceptions":[],"mastery":{"skills":["angles droits","côtés opposés"],"threshold":0.8}}',
-    'La sequence doit contenir deux explications concises, un exemple guidé, une question interactive avant mastery_check, un contrôle de compréhension, un takeaway et les métadonnées de maîtrise.',
-    'Toutes les données de dessin sont obligatoires: rectangle avec exactement 4 sommets à coordonnées numériques, labels de points et 4 side_labels ou segments; triangle avec exactement 3 sommets à coordonnées numériques, labels de points et 3 side_labels ou segments; cercle avec centre, rayon et diamètre; angle avec sommet, deux rayons et degrés; symétrie avec axe, grille, figure originale et figure réfléchie. N’ajoute width/height que si leurs proportions sont cohérentes avec les coordonnées.',
+    VISUAL_FIELD_RULES,
+    ...examples,
+    'Exemple complet des cinq blocs et de mastery.skills (tous les content sont obligatoires): ' + JSON.stringify(stagingFullLevelExample(metadata)),
+    'La sequence doit contenir deux explications concises illustrées, un exemple guidé, une question interactive avant mastery_check, un contrôle de compréhension, un takeaway et les métadonnées de maîtrise.',
     'Ne dis jamais «voir la figure». JSON strict, sans Markdown.'
   ].join('\n');
 }
