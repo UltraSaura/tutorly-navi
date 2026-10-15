@@ -295,6 +295,7 @@ function GeneratedMiniPracticeInline({
   fallbackBody,
   variant = "default",
 }: RuntimeMiniPracticeInlineProps) {
+  const { language } = useLanguage();
   const { t } = useLanguage();
   const { selectedModelId } = useAdmin();
   const [practice, setPractice] = React.useState<RuntimeMiniPractice | null>(null);

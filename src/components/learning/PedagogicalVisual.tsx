@@ -39,7 +39,7 @@ function Clock({ d }: { d: Data }) {
   const annotations = data(d.annotations);
   const handLabels = data(d.hand_labels ?? d.handLabels);
   const relationships = Array.isArray(d.relationships ?? d.relations)
-    ? (d.relationships ?? d.relations as unknown[]).filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    ? ((d.relationships ?? d.relations) as unknown[]).filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
     : [];
   const hourLabel = s(annotations.hours ?? annotations.hour ?? handLabels.hours ?? handLabels.hour);
   const minuteLabel = s(annotations.minutes ?? annotations.minute ?? handLabels.minutes ?? handLabels.minute);
@@ -63,7 +63,7 @@ function Timeline({ d }: { d: Data }) {
   // generator may provide one label per connector in `relations` or on an
   // individual item via `next`, `relation`, or `multiplier`.
   const relations = Array.isArray(d.relations ?? d.relationships)
-    ? (d.relations ?? d.relationships as unknown[]).map((item) => typeof item === 'string' ? item : s(data(item).label ?? data(item).value))
+    ? ((d.relations ?? d.relationships) as unknown[]).map((item) => typeof item === 'string' ? item : s(data(item).label ?? data(item).value))
     : [];
   const relation = (item: Data, index: number) => s(item.next ?? item.relation ?? item.multiplier ?? relations[index]);
   const rows = Array.from({ length: Math.ceil(xs.length / 3) }, (_, row) => xs.slice(row * 3, row * 3 + 3));
@@ -123,7 +123,7 @@ function Polygon({ d, kind }: { d: Data; kind: string }) {
   if (ps.length < 3) return fallback(`Forme : ${s(d.shape ?? d.name, kind)} — coordonnées absentes.`, 'Polygone non traçable');
   const value = ps.map(p => `${p.x},${p.y}`).join(' ');
   const pointByLabel = (label: unknown) => ps.find((p) => p.label === String(label));
-  const dimensions = Array.isArray(d.side_labels ?? d.dimensions) ? (d.side_labels ?? d.dimensions as unknown[]) : [];
+  const dimensions = Array.isArray(d.side_labels ?? d.dimensions) ? ((d.side_labels ?? d.dimensions) as unknown[]) : [];
   const annotations = Array.isArray(d.annotations) ? d.annotations : [];
   return <svg viewBox="0 0 300 200" className="mx-auto w-full max-w-sm" role="img" aria-label={`${s(d.shape, kind)} géométrique`}>
     <polygon points={value} fill="#CCFBF1" stroke="#0F766E" strokeWidth="3"/>

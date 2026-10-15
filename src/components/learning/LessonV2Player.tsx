@@ -79,15 +79,15 @@ function practiceQuestion(question: any): Question | null {
   return null;
 }
 
-function Visual({ block }: { block: Extract<LessonBlock, { type: 'visual' }> }) {
-  const data = block.visual.data && typeof block.visual.data === 'object' ? block.visual.data as Record<string, unknown> : {};
+function Visual({ block }: { block: any }) {
+  const data = block.visual.data && typeof block.visual.data === 'object' ? block.visual.data as Record<string, any> : {} as Record<string, any>;
   const items = Array.isArray(data.items) ? data.items as Array<Record<string, unknown>> : [];
   const nodes = Array.isArray(data.nodes) ? data.nodes as Array<Record<string, unknown>> : [];
   const groups = Array.isArray(data.groups) ? data.groups as Array<Record<string, unknown>> : [];
   const rows = Array.isArray(data.rows) ? data.rows as Array<Record<string, unknown>> : [];
   const labels = Array.isArray(data.labels) ? data.labels.map(String) : [];
   const values = items.length > 0 ? items : nodes.length > 0 ? nodes : groups.length > 0 ? groups : rows.length > 0 ? rows : labels.map((label) => ({ label }));
-  const nodeLabels = new Map(values.map((item) => [String(item.id ?? ''), String(item.label ?? item.value ?? '')]));
+  const nodeLabels = new Map<string, string>(values.map((item): [string, string] => [String(item.id ?? ''), String(item.label ?? item.value ?? '')]));
   return <LessonVisualBlock visual={block.visual} title={block.title} content={block.content} />; /* legacy data fallback is rendered by PedagogicalVisual */ return <div className="rounded-xl border border-teal-200 bg-teal-50 p-4">
     <p className="text-xs font-bold uppercase tracking-wide text-teal-800">{block.visual.kind.replace('_', ' ')}</p>
     <p className="mt-2 text-sm text-teal-950">{block.content}</p>
@@ -109,7 +109,7 @@ function Visual({ block }: { block: Extract<LessonBlock, { type: 'visual' }> }) 
   </div>;
 }
 
-function ConceptPresentation({ block }: { block: Extract<LessonBlock, { type: 'concept' }> }) {
+function ConceptPresentation({ block }: { block: any }) {
   const compactPoint = (point: { label: string; text: string }) => point.text.trim().length <= 64 && point.label.trim().length <= 28;
   return (
     <div className="space-y-3" data-concept-presentation>
@@ -334,7 +334,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
         <div className="space-y-4">
           <span className="inline-flex rounded-full bg-teal-50 px-3 py-1 text-xs font-bold uppercase text-teal-800">{block.type.replace('_', ' ')}</span>
           {'title' in block && <h2 className="text-xl font-bold">{block.title}</h2>}
-          {block.type === 'visual' && <PedagogicalVisual block={block} />}
+          {block.type === 'visual' && <PedagogicalVisual block={block as any} />}
           {block.type === 'concept' && <ConceptPresentation block={block} />}
           {block.type === 'hook' || block.type === 'rule' ? <p className="whitespace-pre-wrap rounded-xl bg-card p-4 leading-7">{block.content}</p> : null}
           {block.type === 'contrast' && <div className="grid gap-3 sm:grid-cols-2"><div className="rounded-xl bg-muted p-4">{block.left}</div><div className="rounded-xl bg-muted p-4">{block.right}</div><p className="sm:col-span-2">{block.explanation}</p></div>}
@@ -359,7 +359,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
             const format = responseGuidance(item.question, item.answer_type); const hasChoices = Boolean(item.choices?.length);
             return <div key={item.id} className="space-y-2"><p className="font-medium">{item.question}</p>{hasChoices && item.choices?.map((choice) => <button key={choice} onClick={() => setMasteryAnswers((a) => ({ ...a, [item.id]: choice }))} className={`mr-2 rounded-lg border px-3 py-2 ${masteryAnswers[item.id] === choice ? 'border-primary bg-primary/10' : ''}`}>{choice}</button>)}{!hasChoices && <><p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{format.hint}</p><input className="w-full rounded-lg border p-2" value={masteryAnswers[item.id] ?? ''} placeholder={format.placeholder} inputMode={format.inputMode} onChange={(e) => setMasteryAnswers((a) => ({ ...a, [item.id]: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') submitMastery(); }} aria-label="Réponse" /></>}</div>;
           })}</div>}
-          {questionData && <div className="space-y-3">{practiceQuestionData ? <QuestionCard question={practiceQuestionData} allowRetry={false} hideCorrect onFinish={(result) => { setSubmitted(true); setCorrect(result); record(result ? 'quiz_completed' : 'quiz_wrong_answer', { wasCorrect: result }); }} /> : <><p className="text-lg font-semibold">{questionData.question}</p>{(() => { const format = responseGuidance(questionData.question, questionData.answer_type); return <><p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{format.hint}</p><input className="w-full rounded-lg border p-3" value={answer} placeholder={format.placeholder} inputMode={format.inputMode} onChange={(e) => setAnswer(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && answer) submit(); }} aria-label="Réponse" /></>; })()}</>}</div>}
+          {questionData && <div className="space-y-3">{practiceQuestionData ? <QuestionCard question={practiceQuestionData} allowRetry={false} hideCorrect onFinish={(result) => { setSubmitted(true); setCorrect(result); record(result ? 'quiz_completed' : 'quiz_wrong_answer', { wasCorrect: result }); }} /> : <><p className="text-lg font-semibold">{questionData.question}</p>{(() => { const format = responseGuidance(questionData.question, (questionData as any).answer_type); return <><p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{format.hint}</p><input className="w-full rounded-lg border p-3" value={answer} placeholder={format.placeholder} inputMode={format.inputMode} onChange={(e) => setAnswer(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && answer) submit(); }} aria-label="Réponse" /></>; })()}</>}</div>}
           {submitted && correct !== null && <div className={`rounded-xl p-3 ${correct ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900'}`}>{correct ? <CheckCircle2 className="mr-2 inline h-5 w-5" /> : <XCircle className="mr-2 inline h-5 w-5" />}{correct ? (questionData && 'success_feedback' in questionData ? questionData.success_feedback : 'Bonne réponse.') : (questionData && 'error_feedback' in questionData ? questionData.error_feedback : 'Relis la question et essaie encore.')}</div>}
           {questionData && !correct && questionData.hints?.[hint] && <p className="rounded-xl bg-blue-50 p-3 text-blue-900"><Lightbulb className="mr-2 inline h-4 w-4" />{questionData.hints[hint]}</p>}
         </div>

@@ -57,7 +57,7 @@ export function ExerciseRow({
     console.log('[ExerciseRow] Opening explanation for:', exercise.exercise_content);
     
     // First, check if we have a cached explanation
-    let cacheQuery = supabase.from(guardianExplanationCacheTable()).select('*')
+    let cacheQuery: any = (supabase as any).from(guardianExplanationCacheTable()).select('*')
       .eq('exercise_hash', explanationHashForCache(exercise.exercise_content));
     if (!getProfileRuntime()?.legacyGuardian) cacheQuery = cacheQuery.eq('learner_user_id', exercise.user_id);
     const { data: cachedExplanation, error: cacheError } = await cacheQuery

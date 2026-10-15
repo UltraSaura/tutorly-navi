@@ -34,5 +34,5 @@ export function validateGeometryDraft() {
     const content = block.content.trim();
     return content.length === 0 || /voir la figure/i.test(content) ? [`sequence[${index}].content must describe the visible figure`] : [];
   });
-  return { canonicalValid: canonical.success, canonicalIssues: canonical.success ? [] : canonical.issues, pedagogicalValid: pedagogicalIssues.length === 0 && missingKinds.length === 0, pedagogicalIssues: [...pedagogicalIssues, ...missingKinds.map((kind) => `missing required visual kind: ${kind}`)] };
+  return { canonicalValid: canonical.success, canonicalIssues: canonical.success ? [] : (canonical as any).issues, pedagogicalValid: pedagogicalIssues.length === 0 && missingKinds.length === 0, pedagogicalIssues: [...pedagogicalIssues, ...missingKinds.map((kind) => `missing required visual kind: ${kind}`)] };
 }

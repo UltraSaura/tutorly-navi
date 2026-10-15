@@ -1,4 +1,4 @@
-import type { AuthResponse, SupabaseClient } from '@supabase/supabase-js';
+import type { AuthError, SupabaseClient } from '@supabase/supabase-js';
 
 export const getPasswordRecoveryRedirectUrl = (origin: string): string => {
   const base = origin.replace(/\/$/, '');
@@ -21,11 +21,11 @@ export const requestPasswordReset = async (
   auth: RecoveryAuth,
   email: string,
   origin: string,
-): Promise<AuthResponse> => auth.resetPasswordForEmail(email, {
+): Promise<{ error: AuthError | null }> => auth.resetPasswordForEmail(email, {
   redirectTo: getPasswordRecoveryRedirectUrl(origin),
 });
 
 export const updateRecoveredPassword = async (
   auth: RecoveryAuth,
   password: string,
-): Promise<AuthResponse> => auth.updateUser({ password });
+): Promise<{ error: AuthError | null }> => auth.updateUser({ password });
