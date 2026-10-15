@@ -304,7 +304,7 @@ serve(async (req) => {
       console.warn('[generate-lesson-content] Error fetching model config:', err);
     }
 
-    const modelId = resolveModel(requestModelId || adminSelectedModel);
+    const modelId = resolveModel(String(requestModelId || adminSelectedModel));
     const language = requestLanguage === 'fr' ? 'fr' : 'en';
     console.log('[generate-lesson-content] Starting for topic:', topicId, '| model:', modelId, '| language:', language);
 
@@ -364,7 +364,7 @@ serve(async (req) => {
         let editionId: string | null = null;
 
         // Primary: use resolve_edition RPC (français + maths have applicability rows)
-        const { data: resolvedId, error: resolveEditionError } = await resolveEdition(supabaseAdminEarly, {
+        const { data: resolvedId, error: resolveEditionError } = await resolveEdition(supabaseAdminEarly as unknown as Parameters<typeof resolveEdition>[0], {
           p_level: rpcLevel,
           p_subject: subjectSlug,
           p_track: null,
@@ -649,8 +649,8 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         label: typeof c === 'string' ? c : String(c?.label ?? c?.text ?? ''),
         correct: typeof c === 'object' && c !== null && (c.correct === true || c.is_correct === true),
       }));
-      if (choices.some((c) => !c.label.trim())) return undefined;
-      if (choices.filter((c) => c.correct).length !== 1) return undefined;
+      if (choices.some((c: { label: string }) => !c.label.trim())) return undefined;
+      if (choices.filter((c: { correct: boolean }) => c.correct).length !== 1) return undefined;
       return {
         id: `lesson-q-l${difficultyLevel}`,
         kind: 'single',
@@ -746,7 +746,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
     };
 
     if (body.mode === 'staging_draft') {
-      const metadata = stagingLevelMetadata(topicId, topic.name, objectives.map((o) => o.id));
+      const metadata = stagingLevelMetadata(String(topicId), topic.name, objectives.map((o) => o.id));
       const validatedLevels: Array<{ metadata: typeof metadata[number]; lesson: Record<string, unknown> }> = [];
       for (const levelMetadata of metadata) {
         const levelIndex = levelMetadata.level_number;
@@ -1169,7 +1169,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       plannedSteps = [{ name: '', focus: '' }];
     } else {
       // Explicit step_name passed — treat as a single targeted generation
-      plannedSteps = [{ name: requestStepName, focus: '' }];
+      plannedSteps = [{ name: String(requestStepName), focus: '' }];
     }
 
     // ── Step 2: Generate content for each planned step ───────────────────

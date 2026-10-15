@@ -74,7 +74,7 @@ function visualDataErrors(kind: string, data: unknown): ConceptAdapterError[] {
       break;
     case 'unit_conversion':
       if (Array.isArray(d.relations) || Array.isArray(d.units)) {
-        if ((d.relations ?? d.units as unknown[]).length < 1) errors.push(error('visual.data', 'malformed_visual_data', 'Conversion relations/units cannot be empty.'));
+        if (((d.relations ?? d.units) as unknown[]).length < 1) errors.push(error('visual.data', 'malformed_visual_data', 'Conversion relations/units cannot be empty.'));
       } else if (!(nonEmpty(d.from) && nonEmpty(d.to) && positiveNumber(d.factor))) {
         errors.push(error('visual.data', 'malformed_visual_data', 'Unit conversion needs from, to, and a positive factor, or non-empty relations/units.'));
       }

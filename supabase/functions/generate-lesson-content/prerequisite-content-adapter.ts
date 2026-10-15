@@ -72,7 +72,7 @@ function answerErrors(slot: PrerequisiteAdapterSlot, raw: Record<string, unknown
   }
   if (answerType === 'ordering') {
     if (!Array.isArray(raw.choices) || raw.choices.length < 2 || raw.choices.some((choice) => !nonEmpty(choice))) errors.push(error('choices', 'choices_required', 'Ordering prerequisites require at least two options.'));
-    if (!Array.isArray(expected) || expected.length !== raw.choices?.length || new Set(expected.map(String)).size !== expected.length || !expected.every((value) => raw.choices?.map(String).includes(String(value)))) errors.push(error('expected_answer', 'ordering_format', 'Ordering expected_answer must be a complete permutation of the choices.'));
+    if (!Array.isArray(expected) || expected.length !== (raw.choices as unknown[] | undefined)?.length || new Set(expected.map(String)).size !== expected.length || !expected.every((value) => (raw.choices as unknown[] | undefined)?.map(String).includes(String(value)))) errors.push(error('expected_answer', 'ordering_format', 'Ordering expected_answer must be a complete permutation of the choices.'));
   }
   if (answerType === 'short_text' && !nonEmpty(expected)) errors.push(error('expected_answer', 'text_format', 'Short-text prerequisites require a non-empty text answer.'));
   const question = text(raw.check_question).toLocaleLowerCase('fr');

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { geometryDraftLesson } from '../../../src/components/admin/learning/geometryDraft';
+import { geometryDraftLesson } from '../../../src/components/admin/learning/geometryDraft.ts';
 import {
   assembleStagingLesson,
   parseStagingLevelResponse,
@@ -11,7 +11,7 @@ import {
   stagingTokenUsage,
   stagingValidationFailure,
   validateStagingLevel,
-} from './staging-level-workflow';
+} from './staging-level-workflow.ts';
 
 const topicName = 'La géométrie plane — CM2';
 const metadata = stagingLevelMetadata('topic-1', topicName, ['geometry']);

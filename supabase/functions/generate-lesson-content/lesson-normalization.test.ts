@@ -41,7 +41,7 @@ describe('provider-free V2.1 Fractions normalization', () => {
       const result = validate(lesson);
       expect(result.events).toHaveLength(1);
       expect(result.events[0].to).toBe('fraction_bar');
-      if (name === 'omitted kind') expect(result.visual.data).toMatchObject({ parts: 4, filled: 1 });
+      if (name === 'omitted kind') expect((result.visual as { data?: unknown }).data).toMatchObject({ parts: 4, filled: 1 });
     });
   }
 
