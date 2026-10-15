@@ -153,7 +153,7 @@ function requestOriginOf(req: Request): string | null {
 }
 
 export async function handleRequest(req: Request): Promise<Response> {
-  const requestId = req.headers.get('x-request-id') ?? req.headers.get('sb-request-id') ?? undefined;
+  let requestId: string | undefined;
   let requestAllowsPaidRepair = false;
   let aiProviderCalls = 0;
   let stagingProgress: StagingLevelProgress[] = [];
@@ -179,6 +179,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   // call an AI provider, but they are still part of this privileged function.
   try {
     await requirePrivilegedFamily(req);
+    requestId = req.headers.get('x-request-id') ?? req.headers.get('sb-request-id') ?? undefined;
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error ?? 'Unauthorized');
     return new Response(JSON.stringify({
