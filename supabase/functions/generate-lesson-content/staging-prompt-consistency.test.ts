@@ -100,7 +100,7 @@ describe('staging takeaway rule', () => {
   });
   it('rejects the exact takeaway that failed on staging', () => {
     const block = { id: 'c', type: 'concept', title: 'Triangle', content: 'Un triangle est un polygone qui possède trois sommets et trois côtés. On les nomme et on les note. La somme des angles est égale à 180 degrés.', key_points: [{ label: 'Côtés', text: 'AB, BC et CA' }], takeaway: 'Pour reconnaître un triangle, je compte ses trois sommets et ses trois côtés.' };
-    const diags = semanticDuplicationDiagnostics([block] as never);
+    const diags = semanticDuplicationDiagnostics(block);
     expect(JSON.stringify(diags)).toContain('takeaway');
   });
 });
