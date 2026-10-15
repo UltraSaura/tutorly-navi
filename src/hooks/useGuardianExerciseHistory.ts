@@ -103,7 +103,7 @@ export const useGuardianExerciseHistory = (options: UseGuardianExerciseHistoryOp
       // Manually join explanations by exercise_content match
       const exercisesWithExplanations = await Promise.all(
         (data || []).map(async (exercise) => {
-          let explanationQuery = supabase.from(guardianExplanationCacheTable()).select('*');
+          let explanationQuery: any = (supabase as any).from(guardianExplanationCacheTable()).select('*');
           if (!getProfileRuntime()?.legacyGuardian) explanationQuery = explanationQuery.eq('learner_user_id', exercise.user_id);
           const { data: explanation } = await explanationQuery
             .like('exercise_content', `${exercise.exercise_content}%`)

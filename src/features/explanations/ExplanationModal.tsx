@@ -124,7 +124,7 @@ export function ExplanationModal({
             <p className="text-sm text-destructive">{error}</p>
           ) : sections ? (
             <div className="flex h-full min-h-0 flex-col">
-              {console.log('[ExplanationModal] Rendering TwoCards with sections:', sections)}
+
               {imageUrl && (
                 <div className="mb-6 shrink-0">
                   <img 
