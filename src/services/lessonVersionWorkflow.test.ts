@@ -57,14 +57,14 @@ describe('lesson version workflow', () => {
   });
 
   it('makes exactly one staging edge request and does not retry', async () => {
-    invoke.mockResolvedValue({ data: { success: true, providerCalls: 1, lesson_content: geometryDraftLesson }, error: null, response: null });
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 1, lesson_content: geometryDraftLesson, topic_id: "e5003f68-f3aa-404b-85a9-847cdb103a81" }, error: null, response: null });
     await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
     expect(invoke).toHaveBeenCalledTimes(1);
     expect(invoke).toHaveBeenCalledWith('generate-lesson-content', expect.objectContaining({ body: expect.objectContaining({ mode: 'staging_draft', allowPaidRepair: false }) }));
   });
 
   it('accepts a successful four-level staging result (one provider call per level)', async () => {
-    invoke.mockResolvedValue({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson }, error: null, response: null });
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: "e5003f68-f3aa-404b-85a9-847cdb103a81" }, error: null, response: null });
     const result = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
     expect(result.lesson_content).toBe(geometryDraftLesson);
     expect(result.providerCalls).toBe(4);
