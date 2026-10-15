@@ -113,3 +113,36 @@ describe('staging concept length rule', () => {
     expect(String((ex as unknown as { content: string }).content).split(/\s+/).length).toBeLessThanOrEqual(40);
   });
 });
+
+describe('takeaway distinctness (staging level 3 regression, providerCalls=0)', () => {
+  const failedSymmetryBlock = {
+    type: 'concept',
+    content: 'Pour vérifier une symétrie, je compte les carreaux entre un point et l’axe, puis je reporte la même distance de l’autre côté.',
+    key_points: [{ label: 'Axe', text: 'Droite verticale' }],
+    takeaway: 'Je compte les carreaux jusqu’à l’axe puis je reporte de l’autre côté.',
+  };
+
+  it('still rejects the exact takeaway that failed on staging (validator unchanged)', () => {
+    const diags = semanticDuplicationDiagnostics(failedSymmetryBlock);
+    expect(diags.some((d) => d.fieldB === 'takeaway' && d.diagnostic.overlap === 6)).toBe(true);
+  });
+
+  it.each(Object.entries(SVE))('the %s example takeaway shares at most one significant word with content and key_points', (_k, example) => {
+    const ex = example as unknown as { content: string; takeaway: string; key_points: Array<{ label: string; text: string }> };
+    const take = meaningfulTokens(ex.takeaway);
+    const others = meaningfulTokens(`${ex.content} ${ex.key_points.map((p) => `${p.label} ${p.text}`).join(' ')}`);
+    expect([...take].filter((t) => others.has(t)).length).toBeLessThanOrEqual(1);
+    expect(semanticDuplicationDiagnostics(ex as unknown as Record<string, unknown>)).toEqual([]);
+  });
+
+  it.each(Object.entries(SVE))('the %s example takeaway stays valid even if copied next to the content the AI actually wrote', (_k, example) => {
+    const ex = example as unknown as { takeaway: string };
+    expect(semanticDuplicationDiagnostics({ ...failedSymmetryBlock, takeaway: ex.takeaway })).toEqual([]);
+    expect(semanticDuplicationDiagnostics({ type: 'concept', content: 'Un triangle est un polygone qui possède trois sommets et trois côtés. On nomme et on note ses sommets; la somme de ses angles est égale à 180 degrés.', key_points: [{ label: 'Côtés', text: 'AB, BC, CA' }], takeaway: ex.takeaway })).toEqual([]);
+  });
+
+  it('the takeaway rule quotes the failed staging takeaway and forbids copying examples', () => {
+    expect(TAKEAWAY_RULE).toContain('Je compte les carreaux jusqu’à l’axe');
+    expect(TAKEAWAY_RULE).toContain('Ne recopie jamais');
+  });
+});
