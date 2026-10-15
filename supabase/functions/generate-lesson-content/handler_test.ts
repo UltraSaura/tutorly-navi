@@ -55,6 +55,9 @@ async function run(reply: ProviderReply) {
   return { status: res.status, body, calls };
 }
 
+// Supabase clients start auth-refresh timers the handler does not own.
+const test = (name: string, fn: () => Promise<void>) => Deno.test({ name, fn, sanitizeOps: false, sanitizeResources: false });
+
 const valid = (level: number) => ({ content: stagingFullLevelExample(levels[level - 1]) });
 const withLevel = (target: number, mutate: (lesson: any) => void): ProviderReply => (level) => {
   const lesson = structuredClone(stagingFullLevelExample(levels[level - 1])) as any;
@@ -62,7 +65,7 @@ const withLevel = (target: number, mutate: (lesson: any) => void): ProviderReply
   return { content: lesson };
 };
 
-Deno.test('four valid levels return 200 with providerCalls=4 and no database write', async () => {
+test('four valid levels return 200 with providerCalls=4 and no database write', async () => {
   const { status, body, calls } = await run(valid);
   assertEquals(status, 200);
   assertEquals(body.providerCalls, 4);
@@ -72,7 +75,7 @@ Deno.test('four valid levels return 200 with providerCalls=4 and no database wri
   assertEquals(calls.dbWrites, []);
 });
 
-Deno.test('invalid angle geometry (ray1/ray2) returns 422 at level 2 without retry', async () => {
+test('invalid angle geometry (ray1/ray2) returns 422 at level 2 without retry', async () => {
   const { status, body, calls } = await run(withLevel(2, (lesson) => {
     const angle = lesson.sequence.find((b: any) => b.visual?.kind === 'angle');
     angle.visual.data = { vertex: angle.visual.data.vertex, ray1: { x: 1, y: 1 }, ray2: { x: 2, y: 2 }, degrees: 45 };
@@ -88,7 +91,7 @@ Deno.test('invalid angle geometry (ray1/ray2) returns 422 at level 2 without ret
   assertEquals(calls.dbWrites, []);
 });
 
-Deno.test('invalid symmetry geometry (line axis) returns 422 at level 3', async () => {
+test('invalid symmetry geometry (line axis) returns 422 at level 3', async () => {
   const { status, body, calls } = await run(withLevel(3, (lesson) => {
     for (const block of lesson.sequence) if (block.visual?.kind === 'symmetry') block.visual.data.axis = { x1: 5, y1: 0, x2: 5, y2: 8 };
   }));
@@ -100,7 +103,7 @@ Deno.test('invalid symmetry geometry (line axis) returns 422 at level 3', async 
   assertEquals(calls.dbWrites, []);
 });
 
-Deno.test('missing required level-4 visual returns 422', async () => {
+test('missing required level-4 visual returns 422', async () => {
   const { status, body, calls } = await run(withLevel(4, (lesson) => {
     for (const block of lesson.sequence) delete block.visual;
   }));
@@ -111,7 +114,7 @@ Deno.test('missing required level-4 visual returns 422', async () => {
   assertEquals(calls.dbWrites, []);
 });
 
-Deno.test('truncated provider output returns 502 provider_output_truncated', async () => {
+test('truncated provider output returns 502 provider_output_truncated', async () => {
   const { status, body, calls } = await run(() => ({ content: stagingFullLevelExample(levels[0]), finishReason: 'length' }));
   assertEquals(status, 502);
   assertEquals(body.error.code, 'provider_output_truncated');
@@ -120,7 +123,7 @@ Deno.test('truncated provider output returns 502 provider_output_truncated', asy
   assertEquals(calls.dbWrites, []);
 });
 
-Deno.test('malformed provider JSON returns 502 provider_malformed_json without repair', async () => {
+test('malformed provider JSON returns 502 provider_malformed_json without repair', async () => {
   const { status, body, calls } = await run(() => ({ content: '{"lesson_goal":"x","sequence":[' }));
   assertEquals(status, 502);
   assertEquals(body.error.code, 'provider_malformed_json');
@@ -129,7 +132,7 @@ Deno.test('malformed provider JSON returns 502 provider_malformed_json without r
   assertEquals(calls.dbWrites, []);
 });
 
-Deno.test('provider HTTP failure returns 502 provider_error', async () => {
+test('provider HTTP failure returns 502 provider_error', async () => {
   const { status, body, calls } = await run(() => new Response('upstream down', { status: 503 }));
   assertEquals(status, 502);
   assertEquals(body.error.code, 'provider_error');
