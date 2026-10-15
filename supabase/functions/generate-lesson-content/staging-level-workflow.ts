@@ -330,3 +330,26 @@ export function assembleStagingLesson(topicName: string, levels: Array<{ metadat
   if (ordered.some((item, index) => item.metadata.level_number !== index + 1)) throw new Error('staging_assembly_failed: levels must be numbered 1 through 4');
   return { version: '2.1', topic_goal: topicName, levels: ordered.map(({ metadata, lesson }) => ({ ...metadata, lesson })) };
 }
+
+export type StagingErrorClassification = { status: number; code: string; message: string; stage?: string };
+
+/** Map a known staging/generation failure to a structured HTTP outcome.
+ * 422 = output rejected by validation; 502 = provider protocol problem;
+ * 500 only for unexpected server exceptions. */
+export function classifyGenerationFailure(error: unknown, stagingStage?: string): StagingErrorClassification {
+  const detail = error instanceof Error ? error.message : String(error ?? '');
+  if (/Unauthorized|Missing authorization/i.test(detail)) return { status: 401, code: 'unauthorized', message: 'Authentication required.' };
+  if (/Forbidden|role required/i.test(detail)) return { status: 403, code: 'forbidden', message: 'Admin or teacher role required.' };
+  if (stagingStage === 'level_validation' || error instanceof StagingLevelContractError || /^staging_level_contract_failed/.test(detail)) {
+    return { status: 422, code: 'staging_level_validation_failed', message: 'A staging level failed canonical, pedagogical, or geometry validation.', stage: 'level_validation' };
+  }
+  if (/^staging_assembly_/.test(detail)) return { status: 422, code: 'staging_assembly_validation_failed', message: 'The assembled staging lesson failed validation.', stage: 'assembly_validation' };
+  if (/staging_level_json_parse_failed|provider JSON|malformed JSON|malformed_json/i.test(detail)) return { status: 502, code: 'provider_malformed_json', message: 'The AI provider returned malformed JSON.', stage: 'provider_parse' };
+  if (/provider_output_truncated|finish_reason=length/.test(detail)) return { status: 502, code: 'provider_output_truncated', message: 'The AI provider output was truncated.', stage: 'provider_call' };
+  if (/staging_level_provider_unavailable/.test(detail)) return { status: 502, code: 'provider_unavailable', message: 'The AI provider could not be reached.', stage: 'provider_call' };
+  if (/staging_level_provider_http_|AI generation failed|provider/i.test(detail)) return { status: 502, code: 'provider_error', message: 'The AI provider failed to generate content.', stage: 'provider_call' };
+  if (/timeout|timed out/i.test(detail)) return { status: 502, code: 'timeout', message: 'The AI provider timed out.', stage: 'provider_call' };
+  if (/canonical validation|correct_answer|contract/i.test(detail)) return { status: 422, code: 'canonical_validation_failed', message: 'The generated lesson does not match the contract.' };
+  if (/pedagogical quality|pedagogical validation/i.test(detail)) return { status: 422, code: 'pedagogical_validation_failed', message: 'The generated lesson failed pedagogical validation.' };
+  return { status: 500, code: 'unknown', message: 'Unexpected server error.' };
+}
