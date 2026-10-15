@@ -334,7 +334,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
         <div className="space-y-4">
           <span className="inline-flex rounded-full bg-teal-50 px-3 py-1 text-xs font-bold uppercase text-teal-800">{block.type.replace('_', ' ')}</span>
           {'title' in block && <h2 className="text-xl font-bold">{block.title}</h2>}
-          {block.type === 'visual' && <PedagogicalVisual block={block} />}
+          {block.type === 'visual' && <PedagogicalVisual block={block as any} />}
           {block.type === 'concept' && <ConceptPresentation block={block} />}
           {block.type === 'hook' || block.type === 'rule' ? <p className="whitespace-pre-wrap rounded-xl bg-card p-4 leading-7">{block.content}</p> : null}
           {block.type === 'contrast' && <div className="grid gap-3 sm:grid-cols-2"><div className="rounded-xl bg-muted p-4">{block.left}</div><div className="rounded-xl bg-muted p-4">{block.right}</div><p className="sm:col-span-2">{block.explanation}</p></div>}

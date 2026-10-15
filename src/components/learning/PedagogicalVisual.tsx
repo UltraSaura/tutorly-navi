@@ -123,7 +123,7 @@ function Polygon({ d, kind }: { d: Data; kind: string }) {
   if (ps.length < 3) return fallback(`Forme : ${s(d.shape ?? d.name, kind)} — coordonnées absentes.`, 'Polygone non traçable');
   const value = ps.map(p => `${p.x},${p.y}`).join(' ');
   const pointByLabel = (label: unknown) => ps.find((p) => p.label === String(label));
-  const dimensions = Array.isArray(d.side_labels ?? d.dimensions) ? (d.side_labels ?? d.dimensions as unknown[]) : [];
+  const dimensions = Array.isArray(d.side_labels ?? d.dimensions) ? ((d.side_labels ?? d.dimensions) as unknown[]) : [];
   const annotations = Array.isArray(d.annotations) ? d.annotations : [];
   return <svg viewBox="0 0 300 200" className="mx-auto w-full max-w-sm" role="img" aria-label={`${s(d.shape, kind)} géométrique`}>
     <polygon points={value} fill="#CCFBF1" stroke="#0F766E" strokeWidth="3"/>
