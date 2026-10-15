@@ -1071,7 +1071,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               })();
 
               const revealedStr = (() => {
-                const out = resultDisplay.map(ch => (ch === separator ? separator : ' '));
+                const out: string[] = resultDisplay.map(ch => (ch === separator ? separator : ' '));
                 let digitPhases = 0;
                 if (withinColumns) {
                   digitPhases = Math.floor(((colPhaseIndex as number) + 1) / 2);
