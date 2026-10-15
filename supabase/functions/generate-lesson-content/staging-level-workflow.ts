@@ -215,7 +215,7 @@ const VISUAL_FIELD_RULES = [
   '- triangle: kind "polygon", data.shape "triangle", data.vertices = exactement 3 objets {x,y,label}, data.side_labels = 3 objets {from,to,label}.',
   '- circle: kind "circle", data.center = {x:number,y:number,label}, data.radius = nombre > 0 ET data.diameter = nombre > 0 (diamètre = 2 × rayon).',
   '- angle: kind "angle", data.vertex = {x:number,y:number,label}, data.rays = tableau de EXACTEMENT 2 points {x:number,y:number,label} (jamais ray1/ray2, jamais des objets sans x/y), data.degrees = nombre entre 1 et 360 (ou data.rightAngle = true).',
-  '- symmetry: kind "symmetry", data.axis = {x:number} pour un axe vertical ou {y:number} pour un axe horizontal (jamais {x1,y1,x2,y2}), data.grid = {width:number,height:number}, data.figure = tableau de points {x,y}, data.symmetric_figure = tableau de points {x,y} (images exactes par la symétrie).',
+  '- symmetry: kind "symmetry", data.axis = {x:number} pour un axe vertical ou {y:number} pour un axe horizontal (jamais {x1,y1,x2,y2}), data.grid = {width:number,height:number}, data.figure = tableau d\'AU MOINS 2 points {x,y} (jamais un seul point), data.symmetric_figure = tableau d\'AU MOINS 2 points {x,y} (images exactes par la symétrie).',
   'N’ajoute width/height à une figure que si leurs proportions sont cohérentes avec les coordonnées.',
 ].join('\n');
 
