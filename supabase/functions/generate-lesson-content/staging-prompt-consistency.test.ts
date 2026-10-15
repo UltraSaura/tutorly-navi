@@ -82,7 +82,7 @@ describe('level-2 staging regressions: numeric prerequisite and key-point overla
   });
 
   it.each(Object.entries(STAGING_VISUAL_EXAMPLES))('the %s example key points stay short and do not repeat the content', (_kind, example) => {
-    for (const point of example.key_points) expect(meaningfulTokens(`${point.label} ${point.text}`).size).toBeLessThanOrEqual(5);
+    for (const point of (example as unknown as { key_points: Array<{ label: string; text: string }> }).key_points) expect(meaningfulTokens(`${point.label} ${point.text}`).size).toBeLessThanOrEqual(5);
     expect(semanticDuplicationDiagnostics(example as any)).toEqual([]);
   });
 
