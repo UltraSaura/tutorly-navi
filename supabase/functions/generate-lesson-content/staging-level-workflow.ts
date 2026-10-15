@@ -179,6 +179,13 @@ export function stagingPromptVisualKinds(metadata: StagingLevelMetadata): string
   return metadata.required_geometry_kinds.length > 0 ? metadata.required_geometry_kinds : [...STAGING_ALL_GEOMETRY_KINDS];
 }
 
+/** Numeric prerequisite shown to the provider (validated in tests). */
+export const STAGING_NUMERIC_PREREQUISITE_EXAMPLE = { id: 'p1', description: 'Compter les sommets', check_question: 'Combien de sommets possède un carré ?', answer_type: 'numeric', expected_answer: '4', remediation_hint: 'Pose le doigt sur chaque coin et compte.' };
+
+export const PREREQUISITE_ANSWER_RULE = 'Chaque prerequisite DOIT contenir expected_answer (jamais correct_answer ni answer). Si answer_type vaut "numeric", expected_answer est OBLIGATOIRE et ne contient que des chiffres (ex. "4", "90", "2,5"), sans unité ni mot. Si la réponse n’est pas un nombre, utilise answer_type "short_text".';
+
+export const KEY_POINT_RULE = 'Chaque key_point (label + text ensemble) contient au plus 5 mots importants et ne réutilise pas les mots du content: il nomme l’idée en 2 à 4 mots (ex. {"label":"Sommet","text":"Le point O"}), jamais une reformulation de la phrase du content (interdit: {"label":"Sommet","text":"Point de départ des deux demi-droites"} si le content parle déjà des deux demi-droites).';
+
 /** Complete, valid example level used in the prompt (validated in tests). */
 export function stagingFullLevelExample(metadata: StagingLevelMetadata): Record<string, unknown> {
   const kinds = stagingPromptVisualKinds(metadata);
@@ -187,7 +194,7 @@ export function stagingFullLevelExample(metadata: StagingLevelMetadata): Record<
   return {
     lesson_goal: 'Reconnaître et décrire une figure plane.',
     success_criteria: ['Je sais nommer les éléments de la figure.'],
-    prerequisites: [],
+    prerequisites: [STAGING_NUMERIC_PREREQUISITE_EXAMPLE],
     sequence: [
       { ...first, id: 'c1' },
       { ...second, id: 'c2' },
@@ -228,9 +235,12 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     'Chaque bloc doit contenir son propre id non vide, type canonique et content: une chaîne destinée à l’élève, non vide après trim. Aucun bloc ne peut contenir uniquement des métadonnées, une question ou des réponses sans content. Ne laisse jamais le compilateur inventer un id, un type ou du contenu.',
     'Le content du concept explique la notion; celui de guided_example explique un exemple résolu; celui de student_try demande une action à l’élève; celui de mastery_check vérifie sa compréhension. Tous les cinq blocs doivent avoir un content réaliste en français.',
     'Les concepts exigent title, key_points (1 à 4 objets {label, text}, rappels courts et distincts, pas une phrase copiée du content), takeaway et visual. guided_example exige context et steps; student_try exige question, answer_type, correct_answer, success_feedback et error_feedback; mastery_check exige 1 à 4 questions complètes.',
+    KEY_POINT_RULE,
     'mastery doit être exactement {"skills":["étiquette courte 1","étiquette courte 2"],"threshold":0.8}: skills est un tableau de chaînes non vides, jamais un tableau d’objets, un objet ou un paragraphe.',
     'prerequisites et misconceptions doivent être des tableaux d’objets complets, jamais des tableaux de chaînes.',
+    PREREQUISITE_ANSWER_RULE,
     'Exemple prerequisite valide: {"id":"p1","description":"Lire les longueurs","check_question":"Quel segment mesure 6 cm ?","answer_type":"short_text","expected_answer":"AB","remediation_hint":"Repère les lettres des extrémités."}',
+    'Exemple prerequisite numeric valide: ' + JSON.stringify(STAGING_NUMERIC_PREREQUISITE_EXAMPLE),
     'Exemple misconception valide: {"id":"m1","description":"Confondre rayon et diamètre","detect_if":"L’élève appelle rayon un segment qui traverse le centre","feedback":"Le rayon va du centre au cercle; le diamètre traverse le centre.","remediation_strategy":"Comparer les deux segments sur le dessin."}',
     VISUAL_FIELD_RULES,
     ...examples,
