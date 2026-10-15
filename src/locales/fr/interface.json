@@ -358,7 +358,7 @@
   "Students can view this topic at:": "Les élèves peuvent consulter ce sujet ici :",
   "Students:": "Élèves :",
   "Stuwy Logo": "Logo Stuwy",
-  "Stuwy is an AI-powered tutoring platform that helps students master math and guardians track learning progress.": "Stuwy est une plateforme de soutien scolaire utilisant l'IA pour aider les élèves à maîtriser les mathématiques et les parents à suivre leurs progrès.",
+  "Stuwy is an AI-powered tutoring platform that helps students master math and guardians track learning progress.": "Stuwy est une plateforme de soutien scolaire par l'IA qui aide les élèves à maîtriser les maths et les parents à suivre leurs progrès.",
   "Subject": "Matière",
   "Subject Detail": "Détails de la matière",
   "Subject Progress": "Progrès par matière",
@@ -1836,5 +1836,7 @@
   "No linked children yet.": "Aucun enfant lié pour le moment.",
   "Learning profile": "Profil d’apprentissage",
   "Continuer avec ce profil": "Continuer avec ce profil",
-  "Changer de profil": "Changer de profil"
+  "Changer de profil": "Changer de profil",
+  "AI-Powered Tutoring for Students and Guardians": "Soutien scolaire par l'IA pour les élèves et leurs parents",
+  "Stuwy management dashboard for overseeing users, learning content and platform activity.": "Tableau de bord de gestion Stuwy pour superviser les utilisateurs, les contenus pédagogiques et l'activité de la plateforme."
 }

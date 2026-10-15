@@ -1,4 +1,3 @@
-// @ts-nocheck -- Deno strict typecheck; covered by vitest/node tests.
 import { describe, expect, it } from 'vitest';
 import { parseProviderJsonSafely } from './provider-json.ts';
 import { normalizeGeneratedLesson, ensureRequiredVisuals } from './lesson-normalization.ts';
@@ -77,8 +76,8 @@ describe('provider-free Fractions fixture pipeline', () => {
   it('passes fenced JSON with missing visual, repeated composition and serializes frontend shape', () => {
     const result = run('Voici:\n```json\n' + JSON.stringify(fixture()) + ',\n```');
     expect(result.response).toMatchObject({ success: true, providerCalls: 0, canonicalValid: true, pedagogicalValid: true, visualKind: 'fraction_bar' });
-    expect(result.normalizationEvents.length).toBeGreaterThan(0);
-    expect(result.compositionEvents.length).toBeGreaterThan(0);
+    expect(result.normalizationEvents?.length).toBeGreaterThan(0);
+    expect(result.compositionEvents?.length).toBeGreaterThan(0);
     expect(result.response.lesson_content).toBeTruthy();
   });
   it('passes all four topic families without provider calls', () => {
@@ -129,7 +128,7 @@ describe('requested provider-free topic and failure matrix', () => {
     delete (source.sequence[0] as { visual?: unknown }).visual;
     const result = runPipeline(JSON.stringify(source), 'CM2 — Fractions');
     expect(result).toMatchObject({ success: true, providerCalls: 0 });
-    expect(result.normalizationEvents.length).toBeGreaterThan(0);
+    expect(result.normalizationEvents?.length).toBeGreaterThan(0);
   });
 
   it('hard-fails malformed, truncated, incomplete, and ambiguous provider output', () => {
@@ -155,7 +154,7 @@ describe('requested provider-free topic and failure matrix', () => {
     (repeated.sequence[0] as Record<string, unknown>).takeaway = 'Le numérateur compte les parts prises et le dénominateur indique les parts égales.';
     const result = runPipeline(JSON.stringify(repeated), 'CM2 — Fractions');
     expect(result).toMatchObject({ success: true, providerCalls: 0 });
-    expect(result.compositionEvents.length).toBeGreaterThan(0);
+    expect(result.compositionEvents?.length).toBeGreaterThan(0);
   });
 
   it('rejects a mathematically inconsistent visual/text example', () => {

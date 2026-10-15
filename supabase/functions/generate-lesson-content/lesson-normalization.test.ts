@@ -1,4 +1,3 @@
-// @ts-nocheck -- Deno strict typecheck; covered by vitest/node tests.
 import { describe, expect, it } from 'vitest';
 import { normalizeGeneratedLesson, ensureRequiredVisuals } from './lesson-normalization.ts';
 import { validateLessonV21 } from './lesson-v21-contract.ts';
@@ -42,7 +41,7 @@ describe('provider-free V2.1 Fractions normalization', () => {
       const result = validate(lesson);
       expect(result.events).toHaveLength(1);
       expect(result.events[0].to).toBe('fraction_bar');
-      if (name === 'omitted kind') expect(result.visual.data).toMatchObject({ parts: 4, filled: 1 });
+      if (name === 'omitted kind') expect((result.visual as { data?: unknown }).data).toMatchObject({ parts: 4, filled: 1 });
     });
   }
 

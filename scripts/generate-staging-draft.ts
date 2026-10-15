@@ -250,7 +250,13 @@ async function createDependencies(url: string, anonKey: string, email: string, p
     },
     invoke: async (token, topicId) => {
       const result = await client.functions.invoke(FUNCTION_NAME, { body: { mode: 'staging_draft', topicId, allowPaidRepair: false }, headers: { Authorization: `Bearer ${token}` } });
-      return { ok: !result.error, status: result.response?.status ?? (result.error ? 500 : 200), headers: result.response?.headers, body: result.data };
+      // On non-2xx responses supabase-js leaves data null; read the structured
+      // error body so code/level/stage/technicalDetail survive to the report.
+      let body: unknown = result.data;
+      if (result.error && result.response) {
+        try { body = await result.response.clone().json(); } catch { body = null; }
+      }
+      return { ok: !result.error, status: result.response?.status ?? (result.error ? 500 : 200), headers: result.response?.headers, body };
     },
     insertDraft: async ({ topicId, lessonContent, createdBy }) => {
       const result = await client.from('topic_lesson_versions').insert({ topic_id: topicId, lesson_content: lessonContent, status: 'draft', created_by: createdBy }).select('id').single();

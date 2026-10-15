@@ -1,4 +1,3 @@
-// @ts-nocheck -- Deno strict typecheck; covered by vitest/node tests.
 import type { BlueprintAnswerType, InteractionSlot } from './lesson-blueprint.ts';
 import { fillSlot, type FillResult, type LessonAssemblyDraft, type StructuralSlot } from './lesson-assembly.ts';
 
@@ -124,7 +123,7 @@ function answerErrors(slot: InteractionAdapterSlot, raw: Record<string, unknown>
   }
   if (type === 'ordering') {
     errors.push(...choicesErrors(raw.choices));
-    if (!Array.isArray(answer) || !Array.isArray(raw.choices) || answer.length !== raw.choices.length || new Set(answer.map(normalized)).size !== answer.length || !answer.every((item) => raw.choices!.map(normalized).includes(normalized(item)))) errors.push(error('correct_answer', 'ordering_format', 'Ordering answers must be a complete permutation of the choices.'));
+    if (!Array.isArray(answer) || !Array.isArray(raw.choices) || answer.length !== raw.choices.length || new Set(answer.map(normalized)).size !== answer.length || !answer.every((item) => (raw.choices as unknown[]).map(normalized).includes(normalized(item)))) errors.push(error('correct_answer', 'ordering_format', 'Ordering answers must be a complete permutation of the choices.'));
   }
   if (type === 'short_text' && !nonEmpty(answer)) errors.push(error('correct_answer', 'text_format', 'Short-text answers require non-empty text.'));
   if (raw.choices !== undefined && !Array.isArray(raw.choices)) errors.push(error('choices', 'invalid_type', 'choices must be an array when supplied.'));

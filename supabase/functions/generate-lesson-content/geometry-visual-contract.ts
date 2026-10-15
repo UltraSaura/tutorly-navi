@@ -1,4 +1,3 @@
-// @ts-nocheck -- Deno strict typecheck; covered by vitest/node tests.
 export type GeometryContractIssue = { path: string; code: string; message: string };
 type Obj = Record<string, unknown>;
 const obj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -53,4 +52,5 @@ export function geometryVisualDataErrors(kind: string, data: unknown, basePath =
       return errors;
     }
   }
+  return [];
 }

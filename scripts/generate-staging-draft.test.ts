@@ -96,6 +96,14 @@ describe('staging terminal runner', () => {
     expect(d.insertDraft).not.toHaveBeenCalled();
   });
 
+  it('preserves a 422 validation failure and never inserts a draft', async () => {
+    const d = deps({ invoke: vi.fn(async () => ({ ok: false, status: 422, headers: new Headers({ 'x-request-id': 'request-422' }), body: { success: false, error: { code: 'staging_level_validation_failed', level: 2, stage: 'level_validation', providerCalls: 2 } } })) });
+    const error = await executeStagingDraft(d).catch((e) => e);
+    expect(error.message).toBe('edge_function_failed');
+    expect(error.safeResult).toMatchObject({ ok: false, httpStatus: 422, databaseWrite: false });
+    expect(d.insertDraft).not.toHaveBeenCalled();
+  });
+
   it('refuses duplicate runs before the provider call', async () => {
     const d = deps({ countExistingDrafts: vi.fn(async () => 1) });
     await expect(executeStagingDraft(d)).rejects.toThrow('duplicate_staging_version_refused');

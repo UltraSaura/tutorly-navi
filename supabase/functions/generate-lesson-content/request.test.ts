@@ -3,7 +3,7 @@ import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import { describe, it, expect } from 'vitest';
 
-const source = readFileSync(new URL('./index.ts', import.meta.url), 'utf8');
+const source = readFileSync(new URL('./handler.ts', import.meta.url), 'utf8');
 const transpile = (s: string) => ts.transpile(s, { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None });
 
 describe('lesson generation AI request', () => {

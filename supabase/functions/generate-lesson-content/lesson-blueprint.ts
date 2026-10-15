@@ -1,4 +1,3 @@
-// @ts-nocheck -- Deno strict typecheck; covered by vitest/node tests.
 import { determineVisualRequirement, isSupportedVisualKind } from './visual-policy.ts';
 
 export type BlueprintObjective = {
@@ -246,7 +245,7 @@ export function validateLessonBlueprint(blueprint: unknown, knownObjectiveIds: I
       if (!slot?.priorSkill) add(`${p}.priorSkill`, 'Missing prior skill');
       const forbidden = new Set(slot?.forbiddenTargetObjectiveIds ?? []);
       for (const objectiveId of slot?.mustPrecedeObjectiveIds ?? []) if (!forbidden.has(objectiveId)) add(`${p}`, `Prerequisite must explicitly forbid testing target objective: ${objectiveId}`);
-      if (!Array.isArray(slot?.allowedAnswerTypes) || slot.allowedAnswerTypes.some((type: string) => !SUPPORTED_ANSWER_TYPES.includes(type))) add(`${p}.allowedAnswerTypes`, 'Unsupported answer type');
+      if (!Array.isArray(slot?.allowedAnswerTypes) || slot.allowedAnswerTypes.some((type: string) => !SUPPORTED_ANSWER_TYPES.includes(type as BlueprintAnswerType))) add(`${p}.allowedAnswerTypes`, 'Unsupported answer type');
     });
     const sequence = Array.isArray(level.sequenceSlots) ? level.sequenceSlots : [];
     if (sequence.length < 1) add(`${path}.sequenceSlots`, 'Sequence cannot be empty');
