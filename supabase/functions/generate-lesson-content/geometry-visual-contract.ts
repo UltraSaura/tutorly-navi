@@ -47,8 +47,8 @@ export function geometryVisualDataErrors(kind: string, data: unknown, basePath =
       const errors: GeometryContractIssue[] = [];
       if (!(point(d.axis) || (obj(d.axis) && (finite(d.axis.x) || finite(d.axis.y))) || (typeof d.axis === 'string' && d.axis.trim()))) errors.push(issue(`${basePath}.axis`, 'missing_geometry_data', 'A renderable symmetry axis is required.'));
       if (!obj(d.grid) || !finite(d.grid.width) || !finite(d.grid.height)) errors.push(issue(`${basePath}.grid`, 'missing_geometry_data', 'Grid width and height are required.'));
-      errors.push(...points(d, 'figure', 1, basePath, ['original']));
-      errors.push(...points(d, 'symmetric_figure', 1, basePath, ['reflected']));
+      errors.push(...points(d, 'figure', 2, basePath, ['original']));
+      errors.push(...points(d, 'symmetric_figure', 2, basePath, ['reflected']));
       return errors;
     }
   }

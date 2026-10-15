@@ -18,4 +18,8 @@ describe('canonical geometry visual contract', () => {
     expect(geometryVisualDataErrors('polygon', { shape: 'triangle', sides: 3 }).some((error) => error.path.endsWith('.vertices'))).toBe(true);
     expect(geometryVisualDataErrors('symmetry', { figure: [{ x: 1, y: 1 }], symmetric_figure: [{ x: 2, y: 1 }] }).map((error) => error.path)).toEqual(expect.arrayContaining(['visual.data.axis', 'visual.data.grid']));
   });
+  it('rejects a symmetry figure with a single point even when axis and grid are present', () => {
+    const errors = geometryVisualDataErrors('symmetry', { axis: { x: 5 }, grid: { width: 10, height: 8 }, figure: [{ x: 2, y: 3 }], symmetric_figure: [{ x: 8, y: 3 }] });
+    expect(errors.map((error) => error.path)).toEqual(expect.arrayContaining(['visual.data.figure', 'visual.data.symmetric_figure']));
+  });
 });
