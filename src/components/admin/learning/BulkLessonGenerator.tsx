@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Wand2, Loader2, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Link } from 'react-router-dom';
 import { formatGenerationError, generationErrorMessages, getGenerationErrorTechnicalDetail } from './generationErrorMapping';
 
 interface TopicRow {
@@ -314,6 +315,11 @@ export function BulkLessonGenerator() {
                 );
               })}
             </div>
+            {!isRunning && (
+              <Button asChild variant="outline" className="mt-2 w-full">
+                <Link to="/admin/generated-lessons?workflow=staging">Voir les versions staging</Link>
+              </Button>
+            )}
             {!isRunning && (
               <Button
                 variant="outline"

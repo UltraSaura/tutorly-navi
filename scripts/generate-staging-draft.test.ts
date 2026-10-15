@@ -1,0 +1,113 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  assertSafeProjectUrl,
+  executeStagingDraft,
+  extractVisualKinds,
+  safeDiagnostics,
+  validateGenerationResponse,
+  STAGING_URL,
+  filterMatchingTopics,
+  formatTopicListResult,
+  requireExplicitTopicId,
+} from './generate-staging-draft.ts';
+
+const lessonContent = {
+  version: '2.1',
+  levels: [1, 2, 3, 4].map((level) => ({
+    level_number: level,
+    lesson: {
+      sequence: [{ visual: { kind: level === 1 ? 'rectangle' : level === 2 ? 'circle' : level === 3 ? 'symmetry' : 'angle', data: {} } }, { visual: { kind: level === 1 ? 'polygon' : 'angle', data: { shape: 'triangle' } } }],
+    },
+  })),
+};
+
+const successfulBody = {
+  success: true,
+  providerCalls: 4,
+  canonicalValid: true,
+  pedagogicalValid: true,
+  geometryValid: true,
+  lesson_content: lessonContent,
+  progress: [1, 2, 3, 4].map((level) => ({ level, status: 'complete', providerCalls: 1, tokenUsage: { promptTokens: 100, completionTokens: 500, totalTokens: 600 } })),
+};
+
+function deps(overrides: Partial<Parameters<typeof executeStagingDraft>[0]> = {}) {
+  return {
+    authenticate: vi.fn(async () => ({ userId: 'admin-1', accessToken: 'secret-token', isAdmin: true })),
+    findTopic: vi.fn(async () => ({ id: 'topic-1', lessonContent: { original: true } })),
+    countExistingDrafts: vi.fn(async () => 0),
+    invoke: vi.fn(async () => ({ ok: true, status: 200, headers: new Headers({ 'x-request-id': 'request-1' }), body: successfulBody })),
+    insertDraft: vi.fn(async () => 'version-1'),
+    readTopicLessonContent: vi.fn(async () => ({ original: true })),
+    ...overrides,
+  };
+}
+
+describe('staging terminal runner', () => {
+  beforeEach(() => vi.stubEnv('STAGING_TOPIC_ID', 'topic-1'));
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('requires an explicit staging topic id', () => {
+    expect(() => requireExplicitTopicId(undefined)).toThrow('staging_topic_id_required');
+    expect(requireExplicitTopicId(' topic-1 ')).toBe('topic-1');
+  });
+
+  it('reports zero topic matches without providers or writes', () => {
+    const result = formatTopicListResult(filterMatchingTopics([]));
+    expect(result).toMatchObject({ ok: false, code: 'topic_not_found', databaseWrite: false, providerCalls: 0 });
+  });
+
+  it('reports one topic match clearly', () => {
+    const result = formatTopicListResult(filterMatchingTopics([{ id: 'topic-1', name: 'La géométrie plane', curriculumLevel: 'cm2', subject: 'Mathématiques', country: 'fr', language: 'fr', hasLessonContent: true }]));
+    expect(result).toMatchObject({ ok: true, code: 'topic_unique', matches: [{ id: 'topic-1' }] });
+  });
+
+  it('reports multiple topic matches clearly', () => {
+    const result = formatTopicListResult(filterMatchingTopics([
+      { id: 'topic-1', name: 'La géométrie plane', curriculumLevel: 'cm2', subject: 'Mathématiques', country: 'fr', language: 'fr', hasLessonContent: true },
+      { id: 'topic-2', name: 'La géométrie plane — version staging', curriculumLevel: 'cm2', subject: 'Mathématiques', country: 'fr', language: 'fr', hasLessonContent: false },
+    ]));
+    expect(result).toMatchObject({ ok: false, code: 'topic_not_unique', matches: [{ id: 'topic-1' }, { id: 'topic-2' }] });
+  });
+
+  it('refuses production and non-staging projects', () => {
+    expect(() => assertSafeProjectUrl('https://urskkwizwutodikgznas.supabase.co')).toThrow('production_project_refused');
+    expect(() => assertSafeProjectUrl('https://example.supabase.co')).toThrow('staging_project_required');
+    expect(assertSafeProjectUrl(STAGING_URL)).toBe(STAGING_URL);
+  });
+
+  it('refuses unauthenticated and non-admin users before invoking', async () => {
+    await expect(executeStagingDraft(deps({ authenticate: vi.fn(async () => ({ userId: '', accessToken: '', isAdmin: false })) }))).rejects.toThrow('authenticated_session_required');
+    await expect(executeStagingDraft(deps({ authenticate: vi.fn(async () => ({ userId: 'user-1', accessToken: 'token', isAdmin: false })) }))).rejects.toThrow('admin_access_required');
+  });
+
+  it('accepts exactly four complete levels and inserts one draft', async () => {
+    const d = deps();
+    const result = await executeStagingDraft(d);
+    expect(result).toMatchObject({ ok: true, providerCalls: 4, draftVersionId: 'version-1', topicLessonContentUnchanged: true });
+    expect(d.invoke).toHaveBeenCalledTimes(1);
+    expect(d.insertDraft).toHaveBeenCalledTimes(1);
+    expect(extractVisualKinds(lessonContent)).toEqual(['angle', 'circle', 'rectangle', 'symmetry', 'triangle']);
+  });
+
+  it('does not write when a level is incomplete', async () => {
+    const d = deps({ invoke: vi.fn(async () => ({ ok: true, status: 200, body: { ...successfulBody, progress: successfulBody.progress.slice(0, 3) } })) });
+    await expect(executeStagingDraft(d)).rejects.toThrow('generation_validation_failed');
+    expect(d.insertDraft).not.toHaveBeenCalled();
+  });
+
+  it('refuses duplicate runs before the provider call', async () => {
+    const d = deps({ countExistingDrafts: vi.fn(async () => 1) });
+    await expect(executeStagingDraft(d)).rejects.toThrow('duplicate_staging_version_refused');
+    expect(d.invoke).not.toHaveBeenCalled();
+    expect(d.insertDraft).not.toHaveBeenCalled();
+  });
+
+  it('rejects wrong provider call counts and does not leak secrets', () => {
+    expect(() => validateGenerationResponse({ ...successfulBody, providerCalls: 3 })).toThrow('provider_call_count_mismatch');
+    const output = safeDiagnostics({ ok: false, code: 'staging_runner_failed', providerCalls: 0, databaseWrite: false });
+    expect(output).not.toContain('secret-token');
+    expect(output).not.toContain('password');
+    expect(output).not.toContain('anon-key');
+  });
+});

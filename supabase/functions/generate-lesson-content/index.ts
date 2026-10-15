@@ -11,11 +11,31 @@ import { normalizeLessonComposition } from './composition-normalization.ts';
 import { parseProviderJsonSafely } from './provider-json.ts';
 import { normalizeCanonicalAnswers } from './canonical-normalization.ts';
 import { compileV21LessonDraft } from './v21-draft-compiler.ts';
+// The shared CORS policy also permits x-family-grant for family-access callers.
+import { DEFAULT_ALLOWED_ORIGINS, corsHeadersFor, isAllowedOrigin } from './cors-policy.ts';
+import {
+  STAGING_LEVEL_COUNT,
+  STAGING_LEVEL_MAX_TOKENS,
+  assembleStagingLesson,
+  parseStagingLevelResponse,
+  requiredGeometryIssues,
+  requiredGeometryKindsIssues,
+  stagingLevelMetadata,
+  stagingLevelPrompt,
+  StagingLevelContractError,
+  stagingTokenUsage,
+  stagingValidationFailure,
+  validateStagingLevel,
+  type StagingLevelMetadata,
+  type StagingLevelProgress,
+} from './staging-level-workflow.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-family-grant',
-};
+const configuredOrigins = (Deno.env.get('STAGING_FRONTEND_ORIGINS') ?? Deno.env.get('STAGING_FRONTEND_ORIGIN') ?? '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = new Set([...DEFAULT_ALLOWED_ORIGINS, ...configuredOrigins]);
 
 const GENERATOR_BUILD = 'practice-v21-compiler-1';
 const SAFE_PROVIDER_ERROR = 'Le contenu généré n’a pas pu être lu correctement. Aucun contenu n’a été enregistré.';
@@ -128,11 +148,29 @@ function substituteVariables(template: string, vars: Record<string, string>): st
   return result;
 }
 
+function requestOriginOf(req: Request): string | null {
+  return req.headers.get('Origin');
+}
+
 serve(async (req) => {
   let requestAllowsPaidRepair = false;
   let aiProviderCalls = 0;
+  let stagingProgress: StagingLevelProgress[] = [];
+  let stagingFailure: { level?: number; stage?: string; message?: string } | undefined;
+  const requestOrigin = requestOriginOf(req);
+  const corsHeaders = corsHeadersFor(requestOrigin, allowedOrigins);
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    if (!isAllowedOrigin(requestOrigin, allowedOrigins)) {
+      return new Response(JSON.stringify({ success: false, ok: false, error: { code: 'cors_origin_rejected', message: 'Origin is not allowed.', providerCalls: 0 } }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+  if (!isAllowedOrigin(requestOrigin, allowedOrigins)) {
+    return new Response(JSON.stringify({
+      success: false,
+      ok: false,
+      error: { code: 'cors_origin_rejected', message: 'Origin is not allowed.', providerCalls: 0 },
+    }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
   // Keep the authorization boundary ahead of every request-body branch,
@@ -516,6 +554,29 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       return raw;
     };
 
+    // Staging calls are intentionally isolated from the legacy generator:
+    // exactly one provider request per level, with no repair/retry path.
+    const callStagingLevelAI = async (message: string, metadata: StagingLevelMetadata) => {
+      aiProviderCalls += 1;
+      const res = await fetch(Deno.env.get('SUPABASE_URL') + '/functions/v1/ai-chat', {
+        method: 'POST',
+        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message, modelId, history: [], language, maxTokens: STAGING_LEVEL_MAX_TOKENS,
+          customPrompt: 'Return one compact, complete lesson-level JSON object only. No Markdown, wrapper, retry, or repair.',
+          isUnified: true, requestMode: 'lessonGeneration',
+          userContext: { grade_level: rawLevel, age_group: ageGroup, curriculum, country: countryLabel, response_language: responseLang, learning_style: 'visual', format: 'json' },
+        }),
+      });
+      if (!res.ok) throw new Error('staging_level_provider_http_' + res.status + ': ' + await res.text());
+      const data = await res.json();
+      const providerMetadata = data.providerMetadata as { finishReason?: string; promptTokens?: number; completionTokens?: number; totalTokens?: number } | null;
+      const tokenUsage = stagingTokenUsage(providerMetadata);
+      const raw = data.content || data.data?.content || data;
+      const parsed = parseStagingLevelResponse(raw, metadata);
+      return { value: parsed.value, tokenUsage };
+    };
+
     // Repair only missing concept visuals that the shared policy marks as
     // required. This is deliberately bounded and cannot rewrite pedagogy.
     const repairRequiredConceptVisuals = async (lesson: Record<string, unknown>) => {
@@ -683,6 +744,123 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         ...(stepName ? { step_name: stepName, difficulty_level: difficultyLevel } : {}),
       };
     };
+
+    if (body.mode === 'staging_draft') {
+      const metadata = stagingLevelMetadata(topicId, topic.name, objectives.map((o) => o.id));
+      const validatedLevels: Array<{ metadata: typeof metadata[number]; lesson: Record<string, unknown> }> = [];
+      for (const levelMetadata of metadata) {
+        const levelIndex = levelMetadata.level_number;
+        try {
+          const result = await callStagingLevelAI(stagingLevelPrompt(topic.name, rawLevel, responseLang, levelMetadata, objectives.map((o) => o.text).join('; ')), levelMetadata);
+          const normalized = normalizeGeneratedLesson(result.value, topic.name, { preserveProviderSequence: true });
+          // Staging keeps provider key_points/content byte-for-byte intact.
+          // Semantic duplication is a validation failure, never a cleanup
+          // opportunity; no provider educational text is fabricated or rewritten.
+          const lesson = normalized.lesson;
+          const validation = validateStagingLevel(lesson, levelMetadata, topic.name, rawLevel);
+          const requiredIssues = requiredGeometryKindsIssues(lesson, levelMetadata.required_geometry_kinds);
+          const issues = [...validation.canonicalIssues, ...validation.pedagogicalIssues, ...validation.geometryIssues, ...requiredIssues];
+          if (issues.length > 0) {
+            const validationError = new Error(stagingValidationFailure(levelIndex, issues, aiProviderCalls).technicalDetail);
+            Object.assign(validationError, { stagingFailure: stagingValidationFailure(levelIndex, issues, aiProviderCalls) });
+            throw validationError;
+          }
+          validatedLevels.push({ metadata: levelMetadata, lesson });
+          stagingProgress.push({ level: levelIndex, status: 'complete', providerCalls: 1, tokenUsage: result.tokenUsage });
+          console.info('[generate-lesson-content] staging level complete', { level: levelIndex, total: STAGING_LEVEL_COUNT, providerCalls: aiProviderCalls, tokenUsage: result.tokenUsage });
+        } catch (error) {
+          const structuredFailure = error && typeof error === 'object' && 'stagingFailure' in error
+            ? (error as { stagingFailure?: { level?: number; stage?: string; technicalDetail?: string } }).stagingFailure
+            : undefined;
+          const contractFailure = error instanceof StagingLevelContractError
+            ? stagingValidationFailure(levelIndex, error.issues, aiProviderCalls)
+            : undefined;
+          stagingFailure = structuredFailure
+            ? { level: structuredFailure.level, stage: structuredFailure.stage, message: structuredFailure.technicalDetail }
+            : contractFailure
+              ? { level: contractFailure.level, stage: contractFailure.stage, message: contractFailure.technicalDetail }
+            : { level: levelIndex, stage: 'level_generation_or_validation', message: error instanceof Error ? error.message : String(error) };
+          throw error;
+        }
+      }
+      const candidate = assembleStagingLesson(topic.name, validatedLevels);
+      const finalCanonical = validateLessonV21(candidate);
+      const finalGeometryIssues = requiredGeometryIssues(candidate);
+      if (!finalCanonical.success) throw new Error('staging_assembly_canonical_validation_failed: ' + finalCanonical.issues.slice(0, 8).map((issue) => issue.path + ': ' + issue.message).join('; '));
+      if (finalGeometryIssues.length > 0) throw new Error('staging_assembly_geometry_validation_failed: ' + finalGeometryIssues.map((issue) => issue.message).join('; '));
+      return new Response(JSON.stringify({
+        success: true,
+        ok: true,
+        mode: 'staging_draft',
+        topic_id: topicId,
+        lesson_content: candidate,
+        canonicalValid: true,
+        pedagogicalValid: true,
+        geometryValid: true,
+        providerCalls: aiProviderCalls,
+        progress: stagingProgress,
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Staging draft mode is deliberately a single provider request. It
+    // returns a normalized, validated candidate to the authenticated browser;
+    // the browser saves it through topic_lesson_versions under the user's JWT.
+    // This branch must never write public.topics or perform repair requests.
+    if (body.mode === 'legacy_staging_draft') {
+      const stagingPrompt = `LESSON GENERATOR V2.1 — STAGING DRAFT, ONE REQUEST ONLY
+Sujet: ${topic.name}
+Niveau: ${rawLevel}
+Matière: ${subjectName}
+Objectifs: ${objectives.map((o) => o.text).join('; ') || 'Non précisés'}
+Retourne exactement un objet JSON complet avec version "2.1", topic_goal et un seul niveau dans levels. Le niveau doit contenir lesson_goal, success_criteria, prerequisites, sequence, misconceptions et mastery. Chaque sequence block doit être canonique (concept, visual, prediction, guided_example, student_try, feedback_checkpoint, rule, worked_example, reflection ou mastery_check), avec les champs requis. Pour toute notion de géométrie, utilise uniquement des visuels réellement dessinables et fournis toutes les coordonnées, sommets, axes, rayons, degrés, grilles et relations nécessaires dans visual.data. Ne réponds pas avec un nom de figure ou « voir la figure ». Réponse JSON stricte uniquement, sans Markdown ni commentaire.`;
+      const generated = await callAI(stagingPrompt, 6500);
+      const raw = generated && typeof generated === 'object' ? generated as Record<string, unknown> : {};
+      const generatedLevel = raw.version === '2.1' && Array.isArray(raw.levels) ? raw.levels[0] as Record<string, unknown> | undefined : undefined;
+      const generatedLesson = generatedLevel?.lesson && typeof generatedLevel.lesson === 'object'
+        ? generatedLevel.lesson as Record<string, unknown>
+        : raw;
+      const level = generatedLevel ?? {
+        id: `staging-${topicId}`,
+        level_number: 1,
+        title: topic.name,
+        purpose: `Comprendre ${topic.name}.`,
+        difficulty: 'application',
+        objective_ids: objectives.map((o) => o.id),
+      };
+      const normalized = normalizeGeneratedLesson(generatedLesson, topic.name);
+      const ensured = ensureRequiredVisuals(normalized.lesson, topic.name);
+      const composition = normalizeLessonComposition(ensured.lesson, topic.name);
+      const lesson = composition.lesson;
+      const candidate = {
+        version: '2.1',
+        topic_goal: String(raw.topic_goal || topic.name),
+        levels: [{
+          id: String(level.id || `staging-${topicId}`),
+          level_number: Number(level.level_number || 1),
+          title: String(level.title || topic.name),
+          purpose: String(level.purpose || `Comprendre ${topic.name}.`),
+          difficulty: String(level.difficulty || 'application'),
+          objective_ids: Array.isArray(level.objective_ids) ? level.objective_ids.map(String) : objectives.map((o) => o.id),
+          lesson,
+        }],
+      };
+      const canonical = validateLessonV21(candidate);
+      const qualityIssues = pedagogicalIssues(lesson, rawLevel, topic.name);
+      if (!canonical.success) throw new Error(`Staging draft canonical validation failed: ${canonical.issues.slice(0, 5).map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
+      if (qualityIssues.length > 0) throw new Error(`Staging draft pedagogical validation failed: ${qualityIssues.slice(0, 5).map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
+      return new Response(JSON.stringify({
+        success: true,
+        ok: true,
+        mode: 'staging_draft',
+        topic_id: topicId,
+        lesson_content: candidate,
+        canonicalValid: true,
+        pedagogicalValid: true,
+        providerCalls: aiProviderCalls,
+        normalizationEvents: [...normalized.events, ...ensured.events],
+        compositionEvents: composition.events,
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
 
     // ── Helper: generate content for one step ────────────────────────────
     const generateOneStep = async (stepName: string, stepFocus: string, difficultyLevel: number, totalSteps: number) => {
@@ -1045,8 +1223,26 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
   } catch (error) {
     console.error('[generate-lesson-content] Error:', error);
     const categorized = categorizeGenerationError(error);
+    const stagingValidationFailed = stagingFailure?.stage === 'level_validation';
+    const responseError = stagingValidationFailed
+      ? {
+        code: 'staging_level_validation_failed',
+        message: 'A staging level failed canonical, pedagogical, or geometry validation.',
+        technicalDetail: stagingFailure?.message,
+        providerCalls: aiProviderCalls,
+        level: stagingFailure?.level,
+        stage: 'level_validation',
+      }
+      : {
+        code: categorized.code,
+        message: categorized.message,
+        technicalDetail: categorized.technicalDetail,
+        providerCalls: aiProviderCalls,
+        level: stagingFailure?.level,
+        stage: stagingFailure?.stage,
+      };
     return new Response(
-      JSON.stringify({ success: false, ok: false, error: { code: categorized.code, message: categorized.message, technicalDetail: categorized.technicalDetail, providerCalls: aiProviderCalls }, paidRepairSkipped: !requestAllowsPaidRepair }),
+      JSON.stringify({ success: false, ok: false, error: responseError, progress: stagingProgress, paidRepairSkipped: !requestAllowsPaidRepair }),
       { status: categorized.code === 'unauthorized' ? 401 : 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

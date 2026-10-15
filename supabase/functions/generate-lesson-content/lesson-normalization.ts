@@ -82,9 +82,11 @@ function normalizeOptionalConceptFields(block: RecordValue): RecordValue {
 }
 
 /** Pure, provider-free pass. Returns a new lesson and audit events without writing data. */
-export function normalizeGeneratedLesson(lesson: RecordValue, topicName: string): { lesson: RecordValue; events: NormalizationEvent[] } {
+export function normalizeGeneratedLesson(lesson: RecordValue, topicName: string, options: { preserveProviderSequence?: boolean } = {}): { lesson: RecordValue; events: NormalizationEvent[] } {
   const events: NormalizationEvent[] = [];
-  const sequence = Array.isArray(lesson.sequence) ? lesson.sequence.map((raw, index) => {
+  const sequence = options.preserveProviderSequence
+    ? lesson.sequence
+    : Array.isArray(lesson.sequence) ? lesson.sequence.map((raw, index) => {
     if (!object(raw)) return raw;
     let block = raw.type === 'concept' ? normalizeOptionalConceptFields(raw) : { ...raw };
     const policy = determineVisualRequirement(block);

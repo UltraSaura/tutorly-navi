@@ -54,17 +54,27 @@ function substantiallyRepeats(a: unknown, b: unknown): boolean {
 
 export function semanticDuplicationDiagnostics(block: Record<string, unknown>): Array<{ fieldA: string; fieldB: string; diagnostic: SemanticOverlapDiagnostic; reason: string }> {
   const keyPoints = Array.isArray(block.key_points) ? block.key_points as Array<Record<string, unknown>> : [];
+  const duplicateReason = 'partagent trop de tokens pédagogiquement significatifs.';
+  const keyPointDuplicates = keyPoints.flatMap((point, index) => {
+    const pointText = `${String(point.label ?? '')} ${String(point.text ?? '')}`;
+    // Short learning takeaways are intentionally allowed to name the same
+    // essential terms as the explanation (for example “4 angles droits”).
+    // Reject only a long key point that copies most of the explanation.
+    if (meaningfulTokens(pointText).size <= 5) return [];
+    const diagnostic = semanticOverlap(block.content, pointText);
+    if (diagnostic.overlap < 2 || diagnostic.ratio < 0.65) return [];
+    return [{ fieldA: 'content', fieldB: `key_points[${index}]`, diagnostic, reason: duplicateReason }];
+  });
   const keyPointText = keyPoints.map((point) => `${String(point.label ?? '')} ${String(point.text ?? '')}`).join(' ');
   const pairs: Array<[string, unknown, string, unknown]> = [
-    ['content', block.content, 'key_points', keyPointText],
     ['content', block.content, 'takeaway', block.takeaway],
     ['key_points', keyPointText, 'takeaway', block.takeaway],
   ];
-  return pairs.flatMap(([fieldA, valueA, fieldB, valueB]) => {
+  return [...keyPointDuplicates, ...pairs.flatMap(([fieldA, valueA, fieldB, valueB]) => {
     const diagnostic = semanticOverlap(valueA, valueB);
     if (diagnostic.overlap < 2 || diagnostic.ratio < 0.65) return [];
-    return [{ fieldA, fieldB, diagnostic, reason: `${fieldA} et ${fieldB} partagent trop de tokens pédagogiquement significatifs.` }];
-  });
+    return [{ fieldA, fieldB, diagnostic, reason: `${fieldA} et ${fieldB} ${duplicateReason}` }];
+  })];
 }
 
 export function pedagogicalIssues(lesson: Record<string, unknown>, grade: string, topicName: string): PedagogyIssue[] {
@@ -113,7 +123,7 @@ export function pedagogicalIssues(lesson: Record<string, unknown>, grade: string
       else if (block.takeaway.trim().split(/\s+/).length > 24) issues.push({ path: `sequence[${conceptIndex}].takeaway`, message: 'Le takeaway doit rester concis.' });
     }
     for (const duplicate of semanticDuplicationDiagnostics(block)) {
-      const pathField = duplicate.fieldB === 'key_points' ? 'key_points' : 'takeaway';
+      const pathField = duplicate.fieldB === 'key_points' || duplicate.fieldB.startsWith('key_points[') ? 'key_points' : 'takeaway';
       const d = duplicate.diagnostic;
       issues.push({ path: `sequence[${conceptIndex}].${pathField}`, message: `${duplicate.reason} overlap=${d.overlap}, ratio=${d.ratio.toFixed(2)}, tokensA=[${d.leftTokens.join(', ')}], tokensB=[${d.rightTokens.join(', ')}].` });
     }
