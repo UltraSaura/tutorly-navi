@@ -1233,7 +1233,7 @@ export function QuestionCard({
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
                       whileTap={{ scale: 0.9 }}
-                      {...getDragSourceProps(chipStr)}
+                      {...(getDragSourceProps(chipStr) as any)}
                       onClick={() => setVal(isUsed ? '' : chipStr)}
                       className={cn(
                         'w-12 h-12 rounded-xl border text-lg font-semibold transition-all cursor-grab active:cursor-grabbing',
