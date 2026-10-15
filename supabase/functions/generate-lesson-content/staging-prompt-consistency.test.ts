@@ -146,14 +146,14 @@ describe('takeaway distinctness (staging level 3 regression, providerCalls=0)', 
       type: 'concept',
       content: 'Pour vérifier une figure symétrique, je compte les carreaux entre un point et l’axe, puis je reporte la même distance de l’autre côté.',
       key_points: [{ label: 'Axe', text: 'Droite verticale' }],
-      takeaway: 'Astuce : je compte puis je reporte.',
+      takeaway: 'Astuce : je compte et je reporte.',
     });
     expect(diags.some((d) => d.fieldB === 'takeaway' && d.diagnostic.overlap === 2)).toBe(true);
   });
 
   it('the takeaway rule states the zero-reuse rule and quotes both failed staging takeaways', () => {
     expect(TAKEAWAY_RULE).toContain('RÈGLE ZÉRO');
-    expect(TAKEAWAY_RULE).toContain('Astuce : je compte puis je reporte');
+    expect(TAKEAWAY_RULE).toContain('Astuce : je compte et je reporte');
   });
 
   it('the takeaway rule quotes the failed staging takeaway and forbids copying examples', () => {
