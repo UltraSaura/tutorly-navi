@@ -95,7 +95,7 @@ describe('staging level workflow', () => {
     expect(prompt).toContain('jamais des tableaux de chaînes');
     expect(prompt).toContain('Tous les cinq blocs');
     expect(prompt).toContain('Exemple complet des cinq blocs');
-    expect(prompt).toContain('À toi: indique la propriété');
+    expect(prompt).toContain('À toi: compte les sommets');
     expect(prompt).toContain('Vérifie ta compréhension');
   });
 
