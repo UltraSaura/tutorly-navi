@@ -79,7 +79,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-secondary/10">
-      <PageMeta title={ui("Home")} description={ui("Stuwy is an AI-powered tutoring platform that helps students master math and guardians track learning progress.")} />
+      <PageMeta title={ui("AI-Powered Tutoring for Students and Guardians")} description={ui("Stuwy is an AI-powered tutoring platform that helps students master math and guardians track learning progress.")} />
       {/* Header */}
       <header className="container mx-auto px-4 py-6 flex justify-between items-center">
         <div className="flex items-center space-x-2">

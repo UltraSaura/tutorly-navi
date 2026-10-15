@@ -10,7 +10,7 @@ const ManagementDashboard = () => {
   const ui = useInterfaceTranslation();
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
-      <PageMeta title={ui("Management")} description={ui("Stuwy management dashboard.")} />
+      <PageMeta title={ui("Management")} description={ui("Stuwy management dashboard for overseeing users, learning content and platform activity.")} />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
