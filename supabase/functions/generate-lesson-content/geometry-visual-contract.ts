@@ -52,4 +52,5 @@ export function geometryVisualDataErrors(kind: string, data: unknown, basePath =
       return errors;
     }
   }
+  return [];
 }

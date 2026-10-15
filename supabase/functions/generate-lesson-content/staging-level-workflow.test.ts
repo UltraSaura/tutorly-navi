@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { geometryDraftLesson } from '../../../src/components/admin/learning/geometryDraft';
+import { geometryDraftLesson } from '../../../src/components/admin/learning/geometryDraft.ts';
 import {
   assembleStagingLesson,
   parseStagingLevelResponse,
@@ -11,7 +11,7 @@ import {
   stagingTokenUsage,
   stagingValidationFailure,
   validateStagingLevel,
-} from './staging-level-workflow';
+} from './staging-level-workflow.ts';
 
 const topicName = 'La géométrie plane — CM2';
 const metadata = stagingLevelMetadata('topic-1', topicName, ['geometry']);
@@ -95,7 +95,7 @@ describe('staging level workflow', () => {
     expect(prompt).toContain('jamais des tableaux de chaînes');
     expect(prompt).toContain('Tous les cinq blocs');
     expect(prompt).toContain('Exemple complet des cinq blocs');
-    expect(prompt).toContain('À toi: indique la propriété');
+    expect(prompt).toContain('À toi: compte les sommets');
     expect(prompt).toContain('Vérifie ta compréhension');
   });
 

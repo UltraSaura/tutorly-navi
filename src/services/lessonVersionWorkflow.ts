@@ -120,7 +120,7 @@ export function validatePedagogicalLesson(lesson: unknown): ValidationIssue[] {
 
 export function validateLessonVersion(lesson: unknown): LessonValidation {
   const canonical = validateLessonV21(lesson);
-  const canonicalIssues = canonical.success ? [] : canonical.issues.map((issue: ContractIssue) => ({ path: issue.path, message: issue.message }));
+  const canonicalIssues = !('issues' in canonical) ? [] : canonical.issues.map((issue: ContractIssue) => ({ path: issue.path, message: issue.message }));
   const pedagogicalIssues = validatePedagogicalLesson(lesson);
   const geometryIssues = validateDrawableGeometry(lesson);
   return {
@@ -163,7 +163,7 @@ export async function saveDraftVersion(topicId: string, lessonContent: unknown):
   }
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) throw new Error('You must be signed in as an admin to save a lesson draft.');
-  const { data, error } = await supabase.from('topic_lesson_versions').insert(buildDraftInsertPayload(topicId, lessonContent, user.id)).select('*').single();
+  const { data, error } = await supabase.from('topic_lesson_versions').insert(buildDraftInsertPayload(topicId, lessonContent, user.id) as any).select('*').single();
   if (error) throw new Error(`Draft save failed: ${error.message}`);
   return data as unknown as LessonVersion;
 }

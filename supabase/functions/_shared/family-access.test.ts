@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -21,8 +21,10 @@ const privilegedFunctions = [
 describe('privileged family Edge Function contract', () => {
   for (const name of privilegedFunctions) {
     it(`${name} checks family mode before existing authorization and work`, () => {
-      const source = readFileSync(resolve('supabase/functions', name, 'index.ts'), 'utf8');
-      const handlerStart = Math.max(source.indexOf('Deno.serve('), source.indexOf('serve(async'));
+      // generate-lesson-content keeps its request handler in handler.ts so it can be tested directly.
+      const file = existsSync(resolve('supabase/functions', name, 'handler.ts')) ? 'handler.ts' : 'index.ts';
+      const source = readFileSync(resolve('supabase/functions', name, file), 'utf8');
+      const handlerStart = Math.max(source.indexOf('Deno.serve('), source.indexOf('serve(async'), source.indexOf('export async function handleRequest('));
       const guard = source.indexOf('await requirePrivilegedFamily(req)', handlerStart);
       const protectedWork = [
         source.indexOf('req.headers.get', handlerStart),
