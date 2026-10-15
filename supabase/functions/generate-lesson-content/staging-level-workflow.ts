@@ -185,6 +185,7 @@ export const STAGING_NUMERIC_PREREQUISITE_EXAMPLE = { id: 'p1', description: 'Co
 export const PREREQUISITE_ANSWER_RULE = 'Chaque prerequisite DOIT contenir expected_answer (jamais correct_answer ni answer). Si answer_type vaut "numeric", expected_answer est OBLIGATOIRE et ne contient que des chiffres (ex. "4", "90", "2,5"), sans unité ni mot. Si la réponse n’est pas un nombre, utilise answer_type "short_text".';
 
 export const TAKEAWAY_RULE = 'Le takeaway est une ACTION que l’élève fait (verbe à la 1re personne: "Je pose…", "Je vérifie…"), en au plus 12 mots, et partage au plus 2 mots importants avec le content et les key_points: ne répète jamais le nom de la figure ni ses éléments déjà cités (interdit: "Pour reconnaître un triangle, je compte ses trois sommets et ses trois côtés" si le content dit déjà "trois sommets et trois côtés"; correct: "Je pose le doigt sur chaque coin nommé.").';
+export const CONCEPT_LENGTH_RULE = 'Le content de chaque concept compte au plus 40 mots (limite stricte 55, au-delà la leçon est rejetée): 1 à 3 phrases courtes. Les détails vont dans key_points, le visual ou un autre concept, jamais dans un long paragraphe.';
 export const KEY_POINT_RULE = 'Chaque key_point (label + text ensemble) contient au plus 5 mots importants et ne réutilise pas les mots du content: il nomme l’idée en 2 à 4 mots (ex. {"label":"Sommet","text":"Le point O"}), jamais une reformulation de la phrase du content (interdit: {"label":"Sommet","text":"Point de départ des deux demi-droites"} si le content parle déjà des deux demi-droites).';
 
 /** Complete, valid example level used in the prompt (validated in tests). */
@@ -236,6 +237,7 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     'Chaque bloc doit contenir son propre id non vide, type canonique et content: une chaîne destinée à l’élève, non vide après trim. Aucun bloc ne peut contenir uniquement des métadonnées, une question ou des réponses sans content. Ne laisse jamais le compilateur inventer un id, un type ou du contenu.',
     'Le content du concept explique la notion; celui de guided_example explique un exemple résolu; celui de student_try demande une action à l’élève; celui de mastery_check vérifie sa compréhension. Tous les cinq blocs doivent avoir un content réaliste en français.',
     'Les concepts exigent title, key_points (1 à 4 objets {label, text}, rappels courts et distincts, pas une phrase copiée du content), takeaway et visual. guided_example exige context et steps; student_try exige question, answer_type, correct_answer, success_feedback et error_feedback; mastery_check exige 1 à 4 questions complètes.',
+    CONCEPT_LENGTH_RULE,
     KEY_POINT_RULE,
     TAKEAWAY_RULE,
     'mastery doit être exactement {"skills":["étiquette courte 1","étiquette courte 2"],"threshold":0.8}: skills est un tableau de chaînes non vides, jamais un tableau d’objets, un objet ou un paragraphe.',

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 import { normalizeGeneratedLesson } from './lesson-normalization.ts';
 import { meaningfulTokens, semanticDuplicationDiagnostics } from './pedagogical-quality.ts';
-import { TAKEAWAY_RULE } from './staging-level-workflow.ts';
+import { TAKEAWAY_RULE, CONCEPT_LENGTH_RULE, STAGING_VISUAL_EXAMPLES as SVE } from './staging-level-workflow.ts';
 import {
   KEY_POINT_RULE,
   PREREQUISITE_ANSWER_RULE,
@@ -102,5 +102,14 @@ describe('staging takeaway rule', () => {
     const block = { id: 'c', type: 'concept', title: 'Triangle', content: 'Un triangle est un polygone qui possède trois sommets et trois côtés. On les nomme et on les note. La somme des angles est égale à 180 degrés.', key_points: [{ label: 'Côtés', text: 'AB, BC et CA' }], takeaway: 'Pour reconnaître un triangle, je compte ses trois sommets et ses trois côtés.' };
     const diags = semanticDuplicationDiagnostics(block);
     expect(JSON.stringify(diags)).toContain('takeaway');
+  });
+});
+
+describe('staging concept length rule', () => {
+  it('states a limit below the 55-word validator ceiling', () => {
+    expect(CONCEPT_LENGTH_RULE).toContain('40 mots');
+  });
+  it.each(Object.entries(SVE))('%s example content stays within 40 words', (_k, ex) => {
+    expect(String((ex as unknown as { content: string }).content).split(/\s+/).length).toBeLessThanOrEqual(40);
   });
 });
