@@ -1440,7 +1440,7 @@ export const CompactMathStepper: React.FC<CompactMathStepperProps> = ({
               ];
 
               const workGridRows = visibleWorkRows.map((row, idx) => {
-                const rowChars = Array.from({ length: totalLeftCols }).map(() => ({ value: '', tone: 'default' as const }));
+                const rowChars = Array.from({ length: totalLeftCols }).map(() => ({ value: '', tone: 'default' } as { value: string; tone: any }));
                 const isSubtractRow = row.type === 'subtract';
                 const rawValue = row.value;
                 const valueStr = isSubtractRow ? rawValue.replace(/^-/, '') : rawValue;
