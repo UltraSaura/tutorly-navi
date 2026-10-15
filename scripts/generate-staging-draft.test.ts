@@ -9,6 +9,7 @@ import {
   filterMatchingTopics,
   formatTopicListResult,
   requireExplicitTopicId,
+  CM2_GEOMETRY_TOPIC_ID,
 } from './generate-staging-draft.ts';
 
 const lessonContent = {
@@ -39,6 +40,7 @@ function deps(overrides: Partial<Parameters<typeof executeStagingDraft>[0]> = {}
     invoke: vi.fn(async () => ({ ok: true, status: 200, headers: new Headers({ 'x-request-id': 'request-1' }), body: successfulBody })),
     insertDraft: vi.fn(async () => 'version-1'),
     readTopicLessonContent: vi.fn(async () => ({ original: true })),
+    expectedTopicId: 'topic-1' as string | null,
     ...overrides,
   };
 }
@@ -117,5 +119,22 @@ describe('staging terminal runner', () => {
     expect(output).not.toContain('secret-token');
     expect(output).not.toContain('password');
     expect(output).not.toContain('anon-key');
+  });
+
+  it('refuses the fixture topic 185f20b5 for CM2 generation before any provider call', async () => {
+    const fixture = '185f20b5-d698-446d-80e8-c3c462819b94';
+    expect(() => requireExplicitTopicId(fixture, CM2_GEOMETRY_TOPIC_ID)).toThrow('fixture_topic_refused');
+    const d = deps({ expectedTopicId: undefined, findTopic: vi.fn(async () => ({ id: fixture, lessonContent: null })) });
+    await expect(executeStagingDraft(d, fixture)).rejects.toThrow('fixture_topic_refused');
+    expect(d.invoke).not.toHaveBeenCalled();
+    expect(d.insertDraft).not.toHaveBeenCalled();
+  });
+
+  it('refuses to save when the generator returns a different topic id', async () => {
+    const d = deps({ invoke: vi.fn(async () => ({ ok: true, status: 200, body: { ...successfulBody, topic_id: 'other-topic' } })) });
+    const error = await executeStagingDraft(d).catch((e) => e);
+    expect(error.message).toBe('topic_id_mismatch');
+    expect(error.safeResult).toMatchObject({ databaseWrite: false, requestedTopicId: 'topic-1', returnedTopicId: 'other-topic' });
+    expect(d.insertDraft).not.toHaveBeenCalled();
   });
 });

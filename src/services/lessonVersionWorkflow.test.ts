@@ -27,25 +27,25 @@ describe('lesson version workflow', () => {
   });
 
   it('builds a separate draft insertion payload without touching topics', () => {
-    const payload = buildDraftInsertPayload('topic-1', geometryDraftLesson, 'admin-1');
-    expect(payload).toEqual({ topic_id: 'topic-1', lesson_content: geometryDraftLesson, status: 'draft', created_by: 'admin-1' });
+    const payload = buildDraftInsertPayload('e5003f68-f3aa-404b-85a9-847cdb103a81', geometryDraftLesson, 'admin-1');
+    expect(payload).toEqual({ topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81', lesson_content: geometryDraftLesson, status: 'draft', created_by: 'admin-1' });
     expect(payload).not.toHaveProperty('lesson_content_update');
   });
 
   it('inserts a valid draft through the version table and preserves the admin identity', async () => {
-    const single = vi.fn().mockResolvedValue({ data: { id: 'version-1', ...buildDraftInsertPayload('topic-1', geometryDraftLesson, 'admin-1') }, error: null });
+    const single = vi.fn().mockResolvedValue({ data: { id: 'version-1', ...buildDraftInsertPayload('e5003f68-f3aa-404b-85a9-847cdb103a81', geometryDraftLesson, 'admin-1') }, error: null });
     const select = vi.fn(() => ({ single }));
     const insert = vi.fn(() => ({ select }));
     from.mockReturnValue({ insert });
-    await saveDraftVersion('topic-1', geometryDraftLesson);
+    await saveDraftVersion('e5003f68-f3aa-404b-85a9-847cdb103a81', geometryDraftLesson);
     expect(from).toHaveBeenCalledWith('topic_lesson_versions');
-    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ topic_id: 'topic-1', status: 'draft', created_by: 'admin-1' }));
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ topic_id: 'e5003f68-f3aa-404b-85a9-847cdb103a81', status: 'draft', created_by: 'admin-1' }));
   });
 
   it('surfaces the RLS rejection returned for a non-admin authenticated user', async () => {
     const single = vi.fn().mockResolvedValue({ data: null, error: { code: '42501', message: 'new row violates row-level security policy' } });
     from.mockReturnValue({ insert: vi.fn(() => ({ select: vi.fn(() => ({ single })) })) });
-    await expect(saveDraftVersion('topic-1', geometryDraftLesson)).rejects.toThrow(/row-level security/);
+    await expect(saveDraftVersion('e5003f68-f3aa-404b-85a9-847cdb103a81', geometryDraftLesson)).rejects.toThrow(/row-level security/);
   });
 
   it('rejects incomplete geometry before a draft can be published', () => {
@@ -57,15 +57,15 @@ describe('lesson version workflow', () => {
   });
 
   it('makes exactly one staging edge request and does not retry', async () => {
-    invoke.mockResolvedValue({ data: { success: true, providerCalls: 1, lesson_content: geometryDraftLesson }, error: null, response: null });
-    await generateStagingDraft('topic-1');
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 1, lesson_content: geometryDraftLesson, topic_id: "e5003f68-f3aa-404b-85a9-847cdb103a81" }, error: null, response: null });
+    await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
     expect(invoke).toHaveBeenCalledTimes(1);
     expect(invoke).toHaveBeenCalledWith('generate-lesson-content', expect.objectContaining({ body: expect.objectContaining({ mode: 'staging_draft', allowPaidRepair: false }) }));
   });
 
   it('accepts a successful four-level staging result (one provider call per level)', async () => {
-    invoke.mockResolvedValue({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson }, error: null, response: null });
-    const result = await generateStagingDraft('topic-1');
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson, topic_id: "e5003f68-f3aa-404b-85a9-847cdb103a81" }, error: null, response: null });
+    const result = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81');
     expect(result.lesson_content).toBe(geometryDraftLesson);
     expect(result.providerCalls).toBe(4);
     expect(invoke).toHaveBeenCalledTimes(1);
@@ -73,7 +73,7 @@ describe('lesson version workflow', () => {
 
   it('rejects a success response that reports no provider calls', async () => {
     invoke.mockResolvedValue({ data: { success: true, providerCalls: 0, lesson_content: geometryDraftLesson }, error: null, response: null });
-    await expect(generateStagingDraft('topic-1')).rejects.toThrow(/Unexpected providerCalls value: 0/);
+    await expect(generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81')).rejects.toThrow(/Unexpected providerCalls value: 0/);
   });
 
   it('surfaces exact staging validation paths to the admin UI', async () => {
@@ -90,14 +90,14 @@ describe('lesson version workflow', () => {
       error: { message: 'Edge Function returned a non-2xx status code' },
       response: { clone: () => ({ json: async () => payload }) },
     });
-    await expect(generateStagingDraft('topic-1')).rejects.toThrow(/levels\[0\]\.lesson\.mastery\.skills: Expected 0–many non-empty strings/);
+    await expect(generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81')).rejects.toThrow(/levels\[0\]\.lesson\.mastery\.skills: Expected 0–many non-empty strings/);
     expect(from).not.toHaveBeenCalled();
   });
 
   it('does not update existing topic lesson_content during draft insertion', async () => {
-    const single = vi.fn().mockResolvedValue({ data: { id: 'version-1', ...buildDraftInsertPayload('topic-1', geometryDraftLesson, 'admin-1') }, error: null });
+    const single = vi.fn().mockResolvedValue({ data: { id: 'version-1', ...buildDraftInsertPayload('e5003f68-f3aa-404b-85a9-847cdb103a81', geometryDraftLesson, 'admin-1') }, error: null });
     from.mockReturnValue({ insert: vi.fn(() => ({ select: vi.fn(() => ({ single })) })) });
-    await saveDraftVersion('topic-1', geometryDraftLesson);
+    await saveDraftVersion('e5003f68-f3aa-404b-85a9-847cdb103a81', geometryDraftLesson);
     expect(from).toHaveBeenCalledTimes(1);
     expect(from).toHaveBeenCalledWith('topic_lesson_versions');
     expect(from).not.toHaveBeenCalledWith('topics');
