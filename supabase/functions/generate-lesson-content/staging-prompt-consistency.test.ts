@@ -127,11 +127,11 @@ describe('takeaway distinctness (staging level 3 regression, providerCalls=0)', 
     expect(diags.some((d) => d.fieldB === 'takeaway' && d.diagnostic.overlap === 6)).toBe(true);
   });
 
-  it.each(Object.entries(SVE))('the %s example takeaway shares at most one significant word with content and key_points', (_k, example) => {
+  it.each(Object.entries(SVE))('the %s example takeaway shares no significant word with content and key_points (zero rule)', (_k, example) => {
     const ex = example as unknown as { content: string; takeaway: string; key_points: Array<{ label: string; text: string }> };
     const take = meaningfulTokens(ex.takeaway);
     const others = meaningfulTokens(`${ex.content} ${ex.key_points.map((p) => `${p.label} ${p.text}`).join(' ')}`);
-    expect([...take].filter((t) => others.has(t)).length).toBeLessThanOrEqual(1);
+    expect([...take].filter((t) => others.has(t))).toEqual([]);
     expect(semanticDuplicationDiagnostics(ex as unknown as Record<string, unknown>)).toEqual([]);
   });
 
@@ -139,6 +139,21 @@ describe('takeaway distinctness (staging level 3 regression, providerCalls=0)', 
     const ex = example as unknown as { takeaway: string };
     expect(semanticDuplicationDiagnostics({ ...failedSymmetryBlock, takeaway: ex.takeaway })).toEqual([]);
     expect(semanticDuplicationDiagnostics({ type: 'concept', content: 'Un triangle est un polygone qui possède trois sommets et trois côtés. On nomme et on note ses sommets; la somme de ses angles est égale à 180 degrés.', key_points: [{ label: 'Côtés', text: 'AB, BC, CA' }], takeaway: ex.takeaway })).toEqual([]);
+  });
+
+  it('still rejects the short procedural takeaway that failed on staging level 3 (overlap=2)', () => {
+    const diags = semanticDuplicationDiagnostics({
+      type: 'concept',
+      content: 'Pour vérifier une figure symétrique, je compte les carreaux entre un point et l’axe, puis je reporte la même distance de l’autre côté.',
+      key_points: [{ label: 'Axe', text: 'Droite verticale' }],
+      takeaway: 'Astuce : je compte puis je reporte.',
+    });
+    expect(diags.some((d) => d.fieldB === 'takeaway' && d.diagnostic.overlap === 2)).toBe(true);
+  });
+
+  it('the takeaway rule states the zero-reuse rule and quotes both failed staging takeaways', () => {
+    expect(TAKEAWAY_RULE).toContain('RÈGLE ZÉRO');
+    expect(TAKEAWAY_RULE).toContain('Astuce : je compte puis je reporte');
   });
 
   it('the takeaway rule quotes the failed staging takeaway and forbids copying examples', () => {
