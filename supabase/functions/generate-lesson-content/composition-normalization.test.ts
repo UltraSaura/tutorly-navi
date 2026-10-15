@@ -1,4 +1,3 @@
-// @ts-nocheck -- Deno strict typecheck; covered by vitest/node tests.
 import { describe, expect, it } from 'vitest';
 import { normalizeLessonComposition } from './composition-normalization.ts';
 import { semanticDuplicationDiagnostics, pedagogicalIssues } from './pedagogical-quality.ts';

@@ -1,4 +1,3 @@
-// @ts-nocheck -- Deno strict typecheck; covered by vitest/node tests.
 import { describe, expect, it } from 'vitest';
 import { geometryDraftLesson } from '../../../src/components/admin/learning/geometryDraft';
 import {

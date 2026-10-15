@@ -1,4 +1,3 @@
-// @ts-nocheck -- Deno strict typecheck; covered by vitest/node tests.
 import { determineVisualRequirement, isSupportedVisualKind } from './visual-policy.ts';
 
 export type BlueprintObjective = {

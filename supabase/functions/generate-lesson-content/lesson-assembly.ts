@@ -1,4 +1,3 @@
-// @ts-nocheck -- Deno strict typecheck; covered by vitest/node tests.
 import { validateLessonV21, type ContractIssue } from './lesson-v21-contract.ts';
 import {
   validateLessonBlueprint,

@@ -1,4 +1,3 @@
-// @ts-nocheck -- Deno strict typecheck; covered by vitest/node tests.
 import { isSupportedVisualKind } from './visual-policy.ts';
 import type { BlueprintAnswerType, PrerequisiteSlot } from './lesson-blueprint.ts';
 import type { StructuralSlot } from './lesson-assembly.ts';

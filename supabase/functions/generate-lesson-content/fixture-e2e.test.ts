@@ -1,4 +1,3 @@
-// @ts-nocheck -- Deno strict typecheck; covered by vitest/node tests.
 import { describe, expect, it } from 'vitest';
 import { parseProviderJsonSafely } from './provider-json.ts';
 import { normalizeGeneratedLesson, ensureRequiredVisuals } from './lesson-normalization.ts';

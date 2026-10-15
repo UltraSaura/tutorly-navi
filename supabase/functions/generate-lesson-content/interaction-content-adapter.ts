@@ -1,4 +1,3 @@
-// @ts-nocheck -- Deno strict typecheck; covered by vitest/node tests.
 import type { BlueprintAnswerType, InteractionSlot } from './lesson-blueprint.ts';
 import { fillSlot, type FillResult, type LessonAssemblyDraft, type StructuralSlot } from './lesson-assembly.ts';
 
