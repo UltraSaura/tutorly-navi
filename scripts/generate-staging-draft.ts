@@ -294,7 +294,7 @@ export async function main(argv = process.argv.slice(2), env = process.env): Pro
       return;
     }
     if (!env.STAGING_SUPABASE_URL || !env.STAGING_SUPABASE_ANON_KEY || !env.STAGING_ADMIN_EMAIL || !env.STAGING_ADMIN_PASSWORD) throw new Error('staging_credentials_required');
-    requireExplicitTopicId(env.STAGING_TOPIC_ID);
+    requireExplicitTopicId(env.STAGING_TOPIC_ID, CM2_GEOMETRY_TOPIC_ID);
     const deps = await createDependencies(configuredUrl, env.STAGING_SUPABASE_ANON_KEY, env.STAGING_ADMIN_EMAIL, env.STAGING_ADMIN_PASSWORD);
     console.log(safeDiagnostics(await executeStagingDraft(deps, env.STAGING_TOPIC_ID)));
   } catch (error) {
