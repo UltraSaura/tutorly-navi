@@ -148,12 +148,18 @@ export async function generateStagingDraft(topicId: string, modelId?: string) {
     throw new Error(technicalDetail ? `${message}\n${technicalDetail}` : message);
   }
   if (error) throw error;
-  if (!data?.success || data?.providerCalls !== 1 || !data.lesson_content) {
+  // Staging generation makes one provider request per level (the server
+  // validates each level and the assembled lesson), so providerCalls is the
+  // number of levels, not 1. Accept any positive count reported by a
+  // successful response that carries lesson content.
+  const providerCalls = Number(data?.providerCalls);
+  if (!data?.success || !data.lesson_content || !Number.isInteger(providerCalls) || providerCalls < 1) {
     const message = formatGenerationError(data ?? { code: 'staging_generation_failed' });
-    const technicalDetail = getGenerationErrorTechnicalDetail(data);
+    const technicalDetail = getGenerationErrorTechnicalDetail(data)
+      ?? (data?.success && data?.lesson_content ? `Unexpected providerCalls value: ${String(data?.providerCalls)}` : undefined);
     throw new Error(technicalDetail ? `${message}\n${technicalDetail}` : message);
   }
-  return data as { lesson_content: unknown; topic_id: string; providerCalls: 1; canonicalValid: true; pedagogicalValid: true };
+  return data as { lesson_content: unknown; topic_id: string; providerCalls: number; canonicalValid: true; pedagogicalValid: true };
 }
 
 export async function saveDraftVersion(topicId: string, lessonContent: unknown): Promise<LessonVersion> {

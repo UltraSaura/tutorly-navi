@@ -56,11 +56,24 @@ describe('lesson version workflow', () => {
     expect(validateDrawableGeometry(incomplete).some((issue) => issue.message.includes('positive radius'))).toBe(true);
   });
 
-  it('makes exactly one staging provider request and does not retry', async () => {
+  it('makes exactly one staging edge request and does not retry', async () => {
     invoke.mockResolvedValue({ data: { success: true, providerCalls: 1, lesson_content: geometryDraftLesson }, error: null, response: null });
     await generateStagingDraft('topic-1');
     expect(invoke).toHaveBeenCalledTimes(1);
     expect(invoke).toHaveBeenCalledWith('generate-lesson-content', expect.objectContaining({ body: expect.objectContaining({ mode: 'staging_draft', allowPaidRepair: false }) }));
+  });
+
+  it('accepts a successful four-level staging result (one provider call per level)', async () => {
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 4, lesson_content: geometryDraftLesson }, error: null, response: null });
+    const result = await generateStagingDraft('topic-1');
+    expect(result.lesson_content).toBe(geometryDraftLesson);
+    expect(result.providerCalls).toBe(4);
+    expect(invoke).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a success response that reports no provider calls', async () => {
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 0, lesson_content: geometryDraftLesson }, error: null, response: null });
+    await expect(generateStagingDraft('topic-1')).rejects.toThrow(/Unexpected providerCalls value: 0/);
   });
 
   it('surfaces exact staging validation paths to the admin UI', async () => {
