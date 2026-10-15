@@ -581,7 +581,7 @@ function PromptFigure({ spec }: { spec: PromptFigureSpec }) {
     );
   }
 
-  const { rows, cols } = factorizeRectParts(spec.total);
+  const { rows, cols } = factorizeRectParts((spec as any).total);
   return (
     <div className="flex flex-col items-center gap-3">
       <div
@@ -595,11 +595,11 @@ function PromptFigure({ spec }: { spec: PromptFigureSpec }) {
           aspectRatio: rows === 1 ? "4 / 1.25" : `${Math.max(cols * 1.5, 3)} / ${Math.max(rows, 1.5)}`
         }}
       >
-        {Array.from({ length: spec.total }, (_, i) => (
+        {Array.from({ length: (spec as any).total }, (_, i) => (
           <div
             key={i}
             className="border border-slate-300"
-            style={{ backgroundColor: i < spec.colored ? "#2563eb" : "#f8fafc" }}
+            style={{ backgroundColor: i < (spec as any).colored ? "#2563eb" : "#f8fafc" }}
           />
         ))}
       </div>
@@ -1077,7 +1077,7 @@ export function QuestionCard({
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 20 }}
                     whileTap={{ scale: 0.9 }}
-                    {...getDragSourceProps(String(num))}
+                    {...(getDragSourceProps(String(num)) as any)}
                     onClick={() => handleTapChip(num)}
                     className={cn(
                       "w-12 h-12 rounded-xl flex items-center justify-center text-lg font-semibold cursor-grab active:cursor-grabbing select-none transition-all",

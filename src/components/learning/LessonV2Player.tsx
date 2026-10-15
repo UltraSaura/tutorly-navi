@@ -79,7 +79,7 @@ function practiceQuestion(question: any): Question | null {
   return null;
 }
 
-function Visual({ block }: { block: Extract<LessonBlock, { type: 'visual' }> }) {
+function Visual({ block }: { block: any }) {
   const data = block.visual.data && typeof block.visual.data === 'object' ? block.visual.data as Record<string, unknown> : {};
   const items = Array.isArray(data.items) ? data.items as Array<Record<string, unknown>> : [];
   const nodes = Array.isArray(data.nodes) ? data.nodes as Array<Record<string, unknown>> : [];
@@ -109,7 +109,7 @@ function Visual({ block }: { block: Extract<LessonBlock, { type: 'visual' }> }) 
   </div>;
 }
 
-function ConceptPresentation({ block }: { block: Extract<LessonBlock, { type: 'concept' }> }) {
+function ConceptPresentation({ block }: { block: any }) {
   const compactPoint = (point: { label: string; text: string }) => point.text.trim().length <= 64 && point.label.trim().length <= 28;
   return (
     <div className="space-y-3" data-concept-presentation>
