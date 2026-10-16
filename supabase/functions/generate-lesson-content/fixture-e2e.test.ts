@@ -113,7 +113,7 @@ describe('requested provider-free topic and failure matrix', () => {
     ['CM2 — Fractions', 'fraction_bar', 'Une fraction décrit des parts égales d’un même tout.', { parts: 4, filled: 1, denominator: 4, numerator: 1 }],
     ['Calcul : mental, posé et instrumenté', 'groups', 'On choisit une méthode de calcul adaptée aux nombres et à la situation.', { groups: [10, 4, 2] }],
     ['La résolution de problèmes', 'sequence', 'Pour résoudre un problème, je repère les données, la question et l’opération utile.', { items: ['données', 'question', 'opération'] }],
-    ['Algèbre', 'equation', 'Une égalité reste vraie quand on effectue la même action des deux côtés.', { left: 'x + 3', right: '8' }],
+    ['Algèbre', 'equation', 'Une égalité reste vraie quand on effectue la même action sur les deux membres.', { left: 'x + 3', right: '8' }],
     ['Geometry', 'triangle', 'Une figure géométrique se décrit avec ses côtés, ses sommets et ses propriétés.', { shape: 'triangle', vertices: [{ x: 0, y: 0 }, { x: 80, y: 0 }, { x: 40, y: 70 }] }],
     ['Measurement', 'measurement', 'Mesurer consiste à comparer une grandeur avec une unité adaptée.', { unit: 'cm', value: 7 }],
   ] as const;
