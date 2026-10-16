@@ -9,7 +9,7 @@ import { LessonVisualBlock } from './LessonVisualBlock';
 import { QuestionCard } from './QuestionCard';
 import type { Question } from '@/types/quiz-bank';
 
-type Props = { topicId: string; subjectId?: string | null; topicName: string; lesson: LessonV2; onMasteryResult?: (score: number, threshold: number) => void; onSequencePosition?: (position: number) => void };
+type Props = { topicId: string; subjectId?: string | null; topicName: string; lesson: LessonV2; onMasteryResult?: (score: number, threshold: number) => void; onSequencePosition?: (position: number) => void; readOnly?: boolean };
 
 function sameAnswer(expected: unknown, actual: string): boolean {
   if (typeof expected === 'number') return Number(actual) === expected;
@@ -148,7 +148,7 @@ function ConceptPresentation({ block }: { block: any }) {
   );
 }
 
-export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMasteryResult, onSequencePosition }: Props) {
+export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMasteryResult, onSequencePosition, readOnly = false }: Props) {
   const { user } = useLearner();
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState('');
@@ -175,12 +175,12 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
   const allMasteryPractice = masteryQuestions.length > 0 && masteryPracticeQuestions.every(Boolean);
 
   const progress = useMemo(() => Math.round(((index + (completed ? 1 : 0)) / lesson.sequence.length) * 100), [index, completed, lesson.sequence.length]);
-  const record = (eventType: Parameters<typeof trackLearningInteraction>[0]['eventType'], data: Record<string, unknown> = {}) => trackLearningInteraction({ studentId: user?.id, eventType, topicId, metadata: { lessonVersion: '2.0', blockId: block?.id, ...data } });
+  const record = (eventType: Parameters<typeof trackLearningInteraction>[0]['eventType'], data: Record<string, unknown> = {}) => { if (!readOnly) void trackLearningInteraction({ studentId: user?.id, eventType, topicId, metadata: { lessonVersion: '2.0', blockId: block?.id, ...data } }); };
 
   const next = async () => {
     if (index >= lesson.sequence.length - 1) {
       setCompleted(true);
-      if (user?.id) await supabase.from('user_learning_progress').upsert({ user_id: user.id, topic_id: topicId, subject_id: subjectId ?? null, progress_type: 'lesson_completed', progress_percentage: 100, time_spent_seconds: 0 }, { onConflict: 'user_id,topic_id,progress_type' });
+      if (user?.id && !readOnly) await supabase.from('user_learning_progress').upsert({ user_id: user.id, topic_id: topicId, subject_id: subjectId ?? null, progress_type: 'lesson_completed', progress_percentage: 100, time_spent_seconds: 0 }, { onConflict: 'user_id,topic_id,progress_type' });
       record('lesson_completed');
       return;
     }

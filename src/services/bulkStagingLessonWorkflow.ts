@@ -45,6 +45,9 @@ export type BulkStagingResult = {
   topicTitle: string;
   status: 'saved' | 'failed';
   version?: LessonVersion;
+  requestId?: string;
+  providerCalls?: number;
+  validation?: ReturnType<typeof validateLessonVersion>;
   failure?: BulkStagingFailure;
 };
 
@@ -125,7 +128,7 @@ export async function runBulkStagingGeneration(
       }
       const version = await save(topicId, generated.lesson_content, generated.topic_id);
       onProgress?.({ ...base, level: STAGING_LEVEL_COUNT, providerCalls, status: 'saved' });
-      results.push({ topicId, topicTitle: topic.name, status: 'saved', version });
+      results.push({ topicId, topicTitle: topic.name, status: 'saved', version, requestId: generated.requestId, providerCalls, validation });
     } catch (error) {
       const details = getGenerationErrorDetails(error);
       providerCalls = Number(details.providerCalls ?? providerCalls) || providerCalls;
