@@ -45,7 +45,7 @@ function stringValue(value: unknown): string | undefined {
 
 export function getGenerationErrorDetails(payload: unknown, fallback = generationErrorMessages.unknown): GenerationErrorDetails {
   if (payload instanceof Error) {
-    const error = payload as Error & Partial<GenerationErrorDetails> & { context?: unknown };
+    const error = payload as Error & Partial<GenerationErrorDetails> & { context?: unknown; failedLevel?: number; failureStage?: string };
     const context = isRecord(error.context) ? error.context : undefined;
     const details = getGenerationErrorDetails({
       ...(context ?? {}),
