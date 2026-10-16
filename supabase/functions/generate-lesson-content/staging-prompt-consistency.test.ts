@@ -7,6 +7,7 @@ import {
   KEY_POINT_RULE,
   PREREQUISITE_ANSWER_RULE,
   STAGING_NUMERIC_PREREQUISITE_EXAMPLE,
+  STAGING_CHOICE_PREREQUISITE_EXAMPLE,
   STAGING_VISUAL_EXAMPLES,
   requiredGeometryKindsIssues,
   stagingFullLevelExample,
@@ -80,6 +81,26 @@ describe('level-2 staging regressions: numeric prerequisite and key-point overla
     expect(issues.some((i) => /prerequisites\[1\]\.expected_answer/.test(i.path))).toBe(true);
   });
 
+  it('levels 2-4 prompts show a multiple-choice prerequisite whose expected_answer is a choice', () => {
+    for (const level of metadata.slice(1)) {
+      expect(stagingLevelPrompt(topicName, 'CM2', 'fr', level, '')).toContain(JSON.stringify(STAGING_CHOICE_PREREQUISITE_EXAMPLE));
+    }
+    expect(STAGING_CHOICE_PREREQUISITE_EXAMPLE.choices).toContain(STAGING_CHOICE_PREREQUISITE_EXAMPLE.expected_answer);
+    expect(PREREQUISITE_ANSWER_RULE).toMatch(/COPIE EXACTE/);
+    expect(PREREQUISITE_ANSWER_RULE).toMatch(/correct_answer/);
+  });
+
+  it('staging 01a14515: choice prerequisite using correct_answer instead of expected_answer is still rejected', () => {
+    const { expected_answer: _omit, ...rest } = STAGING_CHOICE_PREREQUISITE_EXAMPLE;
+    const issues = allIssues(validate((lesson) => { lesson.prerequisites = [lesson.prerequisites[0], { ...rest, correct_answer: 'Un axe de symétrie' }]; }));
+    expect(issues.some((i) => /prerequisites\[1\]\.expected_answer/.test(i.path))).toBe(true);
+  });
+
+  it('still rejects a choice prerequisite whose expected_answer is not one of the choices', () => {
+    const issues = allIssues(validate((lesson) => { lesson.prerequisites = [lesson.prerequisites[0], { ...STAGING_CHOICE_PREREQUISITE_EXAMPLE, expected_answer: 'A' }]; }));
+    expect(issues.some((i) => /prerequisites\[1\]\.expected_answer/.test(i.path))).toBe(true);
+  });
+
   it('prompt states the short key-point rule', () => {
     expect(prompt).toContain(KEY_POINT_RULE);
   });
@@ -98,8 +119,9 @@ describe('level-2 staging regressions: numeric prerequisite and key-point overla
 describe('staging takeaway rule', () => {
   it('states the distinct practical-action takeaway role', () => {
     expect(TAKEAWAY_RULE).toContain('action');
-    expect(TAKEAWAY_RULE).toContain('24 mots');
+    expect(TAKEAWAY_RULE).toContain('8 mots');
     expect(TAKEAWAY_RULE).toContain('ne reformule');
+    expect(TAKEAWAY_RULE).toContain('RÈGLE ZÉRO');
   });
   it('rejects the exact takeaway that failed on staging', () => {
     const block = { id: 'c', type: 'concept', title: 'Triangle', content: 'Un triangle est un polygone qui possède trois sommets et trois côtés. On les nomme et on les note. La somme des angles est égale à 180 degrés.', key_points: [{ label: 'Côtés', text: 'AB, BC et CA' }], takeaway: 'Pour reconnaître un triangle, je compte ses trois sommets et ses trois côtés.' };
@@ -151,7 +173,33 @@ describe('takeaway distinctness (staging level 3 regression, providerCalls=0)', 
 
   it('the takeaway rule preserves the practical-action contract', () => {
     expect(TAKEAWAY_RULE).toContain('action');
-    expect(TAKEAWAY_RULE).toContain('24 mots');
+    expect(TAKEAWAY_RULE).toContain('8 mots');
     expect(TAKEAWAY_RULE).toContain('ne reformule');
+    expect(TAKEAWAY_RULE).toContain('RÈGLE ZÉRO');
+  });
+});
+
+describe('staging 01a14518: folding takeaway regression (providerCalls=0)', () => {
+  const failed = {
+    type: 'concept',
+    content: 'Pour vérifier, je plie mentalement le long de l’axe : les deux parties se superposent, la figure est symétrique.',
+    key_points: [{ label: 'Axe', text: 'Ligne de pliage' }],
+    takeaway: 'Si je plie la figure le long de l’axe, les bords coïncident : elle est symétrique.',
+  };
+  it('the exact failed takeaway is still rejected (validator unchanged)', () => {
+    expect(semanticDuplicationDiagnostics(failed).some((d) => d.fieldB === 'takeaway' && d.diagnostic.overlap === 4)).toBe(true);
+  });
+  it('the rule quotes the failed takeaway as forbidden', () => {
+    expect(TAKEAWAY_RULE).toContain('Si je plie la figure le long de l’axe, les bords coïncident');
+  });
+  it.each(Object.entries(SVE))('the %s example takeaway reuses no important word from content, title or key points', (_k, ex) => {
+    const e = ex as unknown as { title: string; content: string; takeaway: string; key_points: Array<{ label: string; text: string }> };
+    const source = meaningfulTokens([e.title, e.content, ...e.key_points.map((p) => `${p.label} ${p.text}`)].join(' '));
+    const reused = [...meaningfulTokens(e.takeaway)].filter((t) => source.has(t));
+    expect(reused).toEqual([]);
+  });
+  it.each(Object.entries(SVE))('the %s example takeaway still passes next to the failed symmetry explanation', (_k, ex) => {
+    const takeaway = (ex as unknown as { takeaway: string }).takeaway;
+    expect(semanticDuplicationDiagnostics({ ...failed, takeaway }).filter((d) => d.fieldB === 'takeaway')).toEqual([]);
   });
 });

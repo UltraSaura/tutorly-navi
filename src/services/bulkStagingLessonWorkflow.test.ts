@@ -7,9 +7,9 @@ const generated = (topicId: string, providerCalls = 4) => ({
   lesson_content: geometryDraftLesson,
   topic_id: topicId,
   providerCalls,
-  canonicalValid: true,
-  pedagogicalValid: true,
-  geometryValid: true,
+  canonicalValid: true as const,
+  pedagogicalValid: true as const,
+  geometryValid: true as const,
 });
 
 const valid = () => ({ canonicalValid: true, pedagogicalValid: true, geometryValid: true, canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] });
