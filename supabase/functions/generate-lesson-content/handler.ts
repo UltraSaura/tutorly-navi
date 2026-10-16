@@ -15,6 +15,7 @@ import { DEFAULT_ALLOWED_ORIGINS, corsHeadersFor, isAllowedOrigin } from './cors
 import {
   STAGING_LEVEL_COUNT,
   STAGING_LEVEL_MAX_TOKENS,
+  STAGING_PROMPT_VERSION,
   assembleStagingLesson,
   parseStagingLevelResponse,
   requiredGeometryIssues,
@@ -577,6 +578,13 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
     // exactly one provider request per level, with no repair/retry path.
     const callStagingLevelAI = async (message: string, metadata: StagingLevelMetadata) => {
       aiProviderCalls += 1;
+      console.info('[generate-lesson-content] staging provider call', {
+        build: GENERATOR_BUILD,
+        promptVersion: STAGING_PROMPT_VERSION,
+        topicId,
+        level: metadata.level_number,
+        providerCalls: aiProviderCalls,
+      });
       let res: Response;
       try {
       res = await fetch(Deno.env.get('SUPABASE_URL') + '/functions/v1/ai-chat', {
@@ -791,8 +799,8 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
             throw validationError;
           }
           validatedLevels.push({ metadata: levelMetadata, lesson });
-          stagingProgress.push({ level: levelIndex, status: 'complete', providerCalls: 1, tokenUsage: result.tokenUsage });
-          console.info('[generate-lesson-content] staging level complete', { level: levelIndex, total: STAGING_LEVEL_COUNT, providerCalls: aiProviderCalls, tokenUsage: result.tokenUsage });
+          stagingProgress.push({ level: levelIndex, status: 'complete', providerCalls: 1, tokenUsage: result.tokenUsage, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION });
+          console.info('[generate-lesson-content] staging level complete', { build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, level: levelIndex, total: STAGING_LEVEL_COUNT, providerCalls: aiProviderCalls, tokenUsage: result.tokenUsage });
         } catch (error) {
           const structuredFailure = error && typeof error === 'object' && 'stagingFailure' in error
             ? (error as { stagingFailure?: { level?: number; stage?: string; technicalDetail?: string } }).stagingFailure
@@ -809,7 +817,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         }
       }
       const candidate = assembleStagingLesson(topic.name, validatedLevels);
-      const finalCanonical = validateLessonV21(candidate);
+      const finalCanonical = validateLessonV21(candidate, { prerequisiteFormat: 'staging' });
       const finalGeometryIssues = requiredGeometryIssues(candidate);
       if (!finalCanonical.success) throw new Error('staging_assembly_canonical_validation_failed: ' + finalCanonical.issues.slice(0, 8).map((issue) => issue.path + ': ' + issue.message).join('; '));
       if (finalGeometryIssues.length > 0) throw new Error('staging_assembly_geometry_validation_failed: ' + finalGeometryIssues.map((issue) => issue.message).join('; '));
@@ -824,6 +832,8 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         pedagogicalValid: true,
         geometryValid: true,
         providerCalls: aiProviderCalls,
+        build: GENERATOR_BUILD,
+        promptVersion: STAGING_PROMPT_VERSION,
         progress: stagingProgress,
       }), { status: 200, headers: responseHeaders() });
     }
@@ -1261,7 +1271,7 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       requestId,
     };
     return new Response(
-      JSON.stringify({ success: false, ok: false, requestId, error: responseError, progress: stagingProgress, paidRepairSkipped: !requestAllowsPaidRepair }),
+      JSON.stringify({ success: false, ok: false, requestId, build: GENERATOR_BUILD, promptVersion: STAGING_PROMPT_VERSION, error: responseError, progress: stagingProgress, paidRepairSkipped: !requestAllowsPaidRepair }),
       { status: classified.status, headers: responseHeaders() }
     );
   }

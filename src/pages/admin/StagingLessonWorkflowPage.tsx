@@ -42,9 +42,9 @@ function topicIds(topics: Topic[], selected: Set<string>): string[] {
 }
 
 function diagnostics(result: BulkStagingResult): string {
-  if (result.status === 'saved') return `Saved draft ${result.version?.id ?? 'unknown'} · providerCalls=${result.providerCalls ?? 0} · requestId=${result.requestId ?? 'not returned'}`;
+  if (result.status === 'saved') return `Saved draft ${result.version?.id ?? 'unknown'} · providerCalls=${result.providerCalls ?? 0} · requestId=${result.requestId ?? 'not returned'}${result.build ? ` · build=${result.build}` : ''}${result.promptVersion ? ` · promptVersion=${result.promptVersion}` : ''}`;
   const failure = result.failure;
-  return `${failure?.failureStage ?? 'unknown'} · ${failure?.technicalDiagnostic ?? 'No diagnostic'} · providerCalls=${failure?.providerCalls ?? 0}${failure?.requestId ? ` · requestId=${failure.requestId}` : ''}`;
+  return `${failure?.failureStage ?? 'unknown'} · ${failure?.technicalDiagnostic ?? 'No diagnostic'} · providerCalls=${failure?.providerCalls ?? 0}${failure?.requestId ? ` · requestId=${failure.requestId}` : ''}${failure?.build ? ` · build=${failure.build}` : ''}${failure?.promptVersion ? ` · promptVersion=${failure.promptVersion}` : ''}`;
 }
 
 export function StagingLessonWorkflowPage() {

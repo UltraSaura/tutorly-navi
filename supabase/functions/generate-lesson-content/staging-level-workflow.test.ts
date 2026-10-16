@@ -9,6 +9,8 @@ import {
   requiredGeometryKindsIssues,
   stagingLevelMetadata,
   stagingLevelPrompt,
+  stagingFullLevelExample,
+  STAGING_PROMPT_VERSION,
   STAGING_VISUAL_EXAMPLES,
   stagingSequenceContractIssues,
   stagingTokenUsage,
@@ -78,9 +80,9 @@ describe('staging level workflow', () => {
     expect(result.geometryIssues.some((issue) => issue.path.includes('vertices'))).toBe(true);
   });
 
-  it('accepts valid prerequisite and misconception objects with the production field names', () => {
+  it('accepts valid prerequisite and misconception objects with the staging field names', () => {
     const candidate = structuredClone(validLevel1) as any;
-    candidate.prerequisites = [{ id: 'p1', description: 'Lire une longueur', check_question: 'Quel segment mesure 6 cm ?', answer_type: 'short_text', expected_answer: 'AB', remediation_hint: 'Observe les extrémités.' }];
+    candidate.prerequisites = [{ id: 'p1', description: 'Lire une longueur', type: 'short_text', prompt: 'Quel segment mesure 6 cm ?', expected_answer: 'AB', remediation_hint: 'Observe les extrémités.' }];
     candidate.misconceptions = [{ id: 'm1', description: 'Confondre rayon et diamètre', detect_if: 'Le segment traverse le centre', feedback: 'Le diamètre traverse le centre.', remediation_strategy: 'Compare les deux segments.' }];
     const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
     expect(result.canonicalIssues).toEqual([]);
@@ -91,6 +93,26 @@ describe('staging level workflow', () => {
     expect(result.canonicalIssues).toEqual([]);
     expect(result.pedagogicalIssues).toEqual([]);
     expect(result.geometryIssues).toEqual([]);
+  });
+
+  it('keeps modern prerequisite fields intact before canonical validation', () => {
+    const parsed = parseStagingLevelResponse(JSON.stringify({ ...validLevel1, prerequisites: [validNumericPrerequisite] }));
+    expect(parsed.value.prerequisites).toEqual([expect.objectContaining({ id: validNumericPrerequisite.id, type: 'numeric', prompt: validNumericPrerequisite.prompt, expected_answer: 90 })]);
+    expect(() => parseStagingLevelResponse(JSON.stringify({ ...validLevel1, prerequisites: [{ id: 'legacy', description: 'Ancien', check_question: 'Combien ?', answer_type: 'numeric', expected_answer: 12, remediation_hint: 'Recommence.' }] }), metadata[1])).toThrow(/Legacy prerequisite format rejected/);
+  });
+
+  it('accepts four Aires-like prompt examples with four modern prerequisite objects', () => {
+    metadata.forEach((item, index) => {
+      const example = stagingFullLevelExample(item) as any;
+      example.prerequisites = [
+        { ...structuredClone(validNumericPrerequisite), id: `aires-p-${index + 1}` },
+        { id: `aires-p-choice-${index + 1}`, description: 'Choisir la propriété utile', type: 'multiple_choice', prompt: 'Quelle propriété aide ici ?', choices: ['La propriété utile', 'Une réponse hors sujet'], expected_answer: 'La propriété utile', remediation_hint: 'Relis la propriété.' },
+        { id: `aires-p-text-${index + 1}`, description: 'Nommer la mesure', type: 'short_text', prompt: 'Quelle mesure dois-tu relever ?', expected_answer: 'La mesure demandée', remediation_hint: 'Observe les données.' },
+        { id: `aires-p-time-${index + 1}`, description: 'Lire une durée', type: 'time', prompt: 'Quelle heure est indiquée ?', expected_answer: '8 h', remediation_hint: 'Lis les aiguilles.' },
+      ];
+      const issues = stagingSequenceContractIssues(example, item);
+      expect(issues.filter((issue) => issue.path.startsWith('prerequisites'))).toEqual([]);
+    });
   });
 
   it('rejects a numeric prerequisite without expected_answer', () => {
@@ -118,18 +140,18 @@ describe('staging level workflow', () => {
     });
   });
 
-  it('rejects a legacy numeric prerequisite that omits the staging type and prompt', () => {
+  it('rejects a legacy numeric prerequisite without renaming its fields', () => {
     const candidate = level2Candidate();
     candidate.prerequisites[0] = { id: 'p-angle', description: 'Mesurer un angle droit', check_question: 'Combien de degrés ?', answer_type: 'numeric', expected_answer: 90, remediation_hint: 'Un quart de tour.' };
     const result = validateStagingLevel(candidate, metadata[1], topicName, 'CM2');
-    expect(stagingSequenceContractIssues(candidate, metadata[1])).toEqual(expect.arrayContaining([
-      { path: 'prerequisites[0].type', message: 'Numeric prerequisite must use type "numeric"' },
-      { path: 'prerequisites[0].prompt', message: 'Numeric prerequisite requires prompt' },
-    ]));
-    expect(result.canonicalIssues).toEqual(expect.arrayContaining([
-      { path: 'prerequisites[0].type', message: 'Numeric prerequisite must use type "numeric"' },
-      { path: 'prerequisites[0].prompt', message: 'Numeric prerequisite requires prompt' },
-    ]));
+    expect(stagingSequenceContractIssues(candidate, metadata[1])).toContainEqual(expect.objectContaining({
+      path: 'prerequisites[0]',
+      message: expect.stringContaining('Legacy prerequisite format rejected'),
+    }));
+    expect(result.canonicalIssues).toContainEqual(expect.objectContaining({
+      path: 'prerequisites[0]',
+      message: expect.stringContaining('Legacy prerequisite format rejected'),
+    }));
   });
 
   it('reproduces the exact version-162 level-2 failure without retry or database write', () => {
@@ -171,7 +193,7 @@ describe('staging level workflow', () => {
     const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
     expect(result.canonicalIssues.map((issue) => issue.path)).toEqual(expect.arrayContaining([
       'prerequisites[0].description',
-      'prerequisites[0].check_question',
+      'prerequisites[0].prompt',
       'prerequisites[0].remediation_hint',
       'misconceptions[0].description',
       'misconceptions[0].detect_if',
@@ -182,7 +204,8 @@ describe('staging level workflow', () => {
 
   it('requires the real object fields in the compact prompt', () => {
     const prompt = stagingLevelPrompt(topicName, 'CM2', 'fr', metadata[0], 'geometry');
-    expect(prompt).toContain('check_question');
+    expect(prompt).toContain(STAGING_PROMPT_VERSION);
+    expect(prompt).not.toContain('check_question');
     expect(prompt).toContain('type":"numeric"');
     expect(prompt).toContain('expected_answer":90');
     expect(prompt).toContain('remediation_hint');

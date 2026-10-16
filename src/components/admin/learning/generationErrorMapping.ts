@@ -21,6 +21,8 @@ export type GenerationErrorDetails = {
   providerCalls?: number;
   level?: number;
   stage?: string;
+  build?: string;
+  promptVersion?: string;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -57,6 +59,8 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
       providerCalls: error.providerCalls,
       level: error.level ?? error.failedLevel,
       stage: error.stage ?? error.failureStage,
+      build: error.build,
+      promptVersion: error.promptVersion,
     }, fallback);
     return details;
   }
@@ -88,6 +92,8 @@ export function getGenerationErrorDetails(payload: unknown, fallback = generatio
     providerCalls: finiteNumber(nested.providerCalls) ?? finiteNumber(root.providerCalls),
     level: finiteNumber(nested.level) ?? finiteNumber(root.level),
     stage: stringValue(nested.stage) ?? stringValue(root.stage) ?? stringValue(nested.failureStage) ?? stringValue(root.failureStage),
+    build: stringValue(nested.build) ?? stringValue(root.build),
+    promptVersion: stringValue(nested.promptVersion) ?? stringValue(root.promptVersion),
   };
   return details;
 }

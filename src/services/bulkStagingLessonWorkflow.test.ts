@@ -98,4 +98,36 @@ describe('bulk staging lesson workflow', () => {
     });
     expect(save[0].failure).toMatchObject({ failureStage: 'database_save', providerCalls: 4 });
   });
+
+  it('reports the legacy prerequisite format clearly and never saves the Aires-like failure', async () => {
+    const save = vi.fn();
+    const results = await runBulkStagingGeneration([{ id: 'aires-topic', name: 'Aires' }], undefined, {
+      generate: async (id) => ({ ...generated(id), providerCalls: 4 }),
+      validate: () => ({
+        canonicalValid: false,
+        pedagogicalValid: true,
+        geometryValid: true,
+        canonicalIssues: [
+          { path: 'levels[0].lesson.prerequisites[0].check_question', message: 'Required' },
+          { path: 'levels[0].lesson.prerequisites[0].answer_type', message: 'Unsupported answer type' },
+        ],
+        pedagogicalIssues: [],
+        geometryIssues: [],
+      }),
+      save,
+    });
+    expect(results[0].failure).toMatchObject({ failureStage: 'validation_failure', providerCalls: 4 });
+    expect(results[0].failure?.technicalDiagnostic).toContain('Validation failed: prerequisites have the legacy format');
+    expect(results[0].failure?.technicalDiagnostic).toContain('check_question');
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it('uses one shared four-level generation result for a valid Aires-like topic', async () => {
+    const generate = vi.fn(async (id: string) => ({ ...generated(id), providerCalls: 4, build: 'practice-v21-compiler-1', promptVersion: 'staging-v21-prerequisite-contract-v2' }));
+    const save = vi.fn(async (id: string) => ({ id } as any));
+    const results = await runBulkStagingGeneration([{ id: 'aires-topic', name: 'Aires' }], undefined, { generate, save, validate: valid });
+    expect(results[0]).toMatchObject({ status: 'saved', providerCalls: 4, build: 'practice-v21-compiler-1', promptVersion: 'staging-v21-prerequisite-contract-v2' });
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(save).toHaveBeenCalledTimes(1);
+  });
 });

@@ -18,6 +18,8 @@ export type StagingLevelProgress = {
   status: 'complete';
   providerCalls: number;
   tokenUsage: { promptTokens: number; completionTokens: number; totalTokens: number };
+  build?: string;
+  promptVersion?: string;
 };
 
 export type StagingValidation = {
@@ -51,6 +53,7 @@ const object = (value: unknown): Record<string, unknown> | null =>
 
 export const STAGING_LEVEL_COUNT = 4;
 export const STAGING_LEVEL_MAX_TOKENS = 3600;
+export const STAGING_PROMPT_VERSION = 'staging-v21-prerequisite-contract-v2';
 
 const nonEmpty = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 
@@ -94,16 +97,26 @@ function requiredStagingPrerequisites(value: Record<string, unknown>, issues: Ar
   value.prerequisites.forEach((raw, index) => {
     const path = `prerequisites[${index}]`;
     const prerequisite = object(raw);
-    if (!prerequisite) return;
+    if (!prerequisite) { issues.push({ path, message: 'Expected object' }); return; }
     const type = prerequisite.type;
-    if (type !== undefined && !ANSWER_TYPE_VALUES.includes(String(type) as typeof ANSWER_TYPE_VALUES[number])) {
+    for (const field of ['id', 'description', 'prompt', 'remediation_hint']) {
+      if (!nonEmpty(prerequisite[field])) issues.push({ path: `${path}.${field}`, message: 'Required non-empty string' });
+    }
+    if (prerequisite.check_question !== undefined || prerequisite.answer_type !== undefined) {
+      issues.push({ path, message: 'Legacy prerequisite format rejected; use type, prompt, and expected_answer.' });
+    }
+    if (!ANSWER_TYPE_VALUES.includes(String(type) as typeof ANSWER_TYPE_VALUES[number])) {
       issues.push({ path: `${path}.type`, message: `Expected one of ${ANSWER_TYPE_VALUES.join(', ')}` });
     }
-    if (type === 'numeric' || prerequisite.answer_type === 'numeric') {
-      if (type !== 'numeric') issues.push({ path: `${path}.type`, message: 'Numeric prerequisite must use type "numeric"' });
-      if (!nonEmpty(prerequisite.prompt)) issues.push({ path: `${path}.prompt`, message: 'Numeric prerequisite requires prompt' });
-      if (typeof prerequisite.expected_answer !== 'number' || !Number.isFinite(prerequisite.expected_answer)) {
-        issues.push({ path: `${path}.expected_answer`, message: 'Numeric prerequisite requires a numeric expected answer' });
+    if (prerequisite.expected_answer === undefined) issues.push({ path: `${path}.expected_answer`, message: 'Required value' });
+    if (type === 'numeric' && (typeof prerequisite.expected_answer !== 'number' || !Number.isFinite(prerequisite.expected_answer))) {
+      issues.push({ path: `${path}.expected_answer`, message: 'Numeric prerequisite requires a numeric expected answer' });
+    }
+    if (['multiple_choice', 'selection'].includes(String(type))) {
+      if (!Array.isArray(prerequisite.choices) || prerequisite.choices.length < 2 || prerequisite.choices.some((choice) => !nonEmpty(choice))) {
+        issues.push({ path: `${path}.choices`, message: 'Choice prerequisite requires at least two non-empty choices' });
+      } else if (!prerequisite.choices.some((choice) => String(choice).trim() === String(prerequisite.expected_answer ?? '').trim())) {
+        issues.push({ path: `${path}.expected_answer`, message: 'Expected answer must exactly match one choice' });
       }
     }
   });
@@ -257,7 +270,7 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     : 'Chaque bloc concept DOIT contenir un visual dessinable complet, choisi parmi: ' + kinds.join(', ') + '. Un concept sans figure est refusé.';
   const examples = kinds.map((kind) => 'Exemple de bloc conceptuel ' + kind + ' valide: ' + JSON.stringify(STAGING_VISUAL_EXAMPLES[kind as keyof typeof STAGING_VISUAL_EXAMPLES]));
   return [
-    'LESSON GENERATOR V2.1 — STAGING LEVEL ' + metadata.level_number + '/4',
+    'LESSON GENERATOR V2.1 — STAGING LEVEL ' + metadata.level_number + '/4 — PROMPT ' + STAGING_PROMPT_VERSION,
     'Sujet: ' + topicName + '; niveau scolaire: ' + grade + '; langue: ' + language + '.',
     'But de ce niveau: ' + metadata.purpose,
     'Objectifs autorisés: ' + (objectiveText || 'aucun objectif précisé'),
@@ -275,7 +288,7 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     'mastery doit être exactement {"skills":["étiquette courte 1","étiquette courte 2"],"threshold":0.8}: skills est un tableau de chaînes non vides, jamais un tableau d’objets, un objet ou un paragraphe.',
     'prerequisites et misconceptions doivent être des tableaux d’objets complets, jamais des tableaux de chaînes.',
     'Chaque prerequisite numérique doit utiliser exactement type:"numeric", prompt et expected_answer numérique; n’omets jamais expected_answer et ne le remplace jamais par une chaîne. Exemple niveau 2: {"id":"p-angle-droit","description":"Connaître la mesure d’un angle droit","type":"numeric","prompt":"Combien de degrés mesure un angle droit ?","expected_answer":90,"remediation_hint":"Un angle droit correspond à un quart de tour."}',
-    'Exemple prerequisite textuel canonique: {"id":"p1","description":"Lire les longueurs","check_question":"Quel segment mesure 6 cm ?","answer_type":"short_text","expected_answer":"AB","remediation_hint":"Repère les lettres des extrémités."}',
+    'Exemple prerequisite à réponse courte canonique: {"id":"p1","description":"Lire les longueurs","type":"short_text","prompt":"Quel segment mesure 6 cm ?","expected_answer":"AB","remediation_hint":"Repère les lettres des extrémités."}',
     'Exemple misconception valide: {"id":"m1","description":"Confondre rayon et diamètre","detect_if":"L’élève appelle rayon un segment qui traverse le centre","feedback":"Le rayon va du centre au cercle; le diamètre traverse le centre.","remediation_strategy":"Comparer les deux segments sur le dessin."}',
     metadata.level_number === 3
       ? 'Exemples interactifs valides pour la symétrie: student_try {"question":"Quel point est à la même distance de l’axe ?","answer_type":"multiple_choice","choices":["A","B"],"correct_answer":"B","success_feedback":"Oui.","error_feedback":"Compare les carreaux."}; mastery_check question {"id":"q-sym","question":"Explique comment reporter un point.","answer_type":"short_text","correct_answer":"Même nombre de carreaux de l’autre côté","skill":"symétrie","difficulty":1,"success_feedback":"Exact.","error_feedback":"Compte les carreaux."}. '
@@ -351,7 +364,7 @@ function visualGeometryIssues(lesson: Record<string, unknown>): Array<{ path: st
 
 export function validateStagingLevel(lesson: Record<string, unknown>, metadata: StagingLevelMetadata, topicName: string, grade: string): StagingValidation {
   const candidate = { version: '2.1', topic_goal: topicName, levels: [{ ...metadata, lesson }] };
-  const canonical = validateLessonV21(candidate);
+  const canonical = validateLessonV21(candidate, { prerequisiteFormat: 'staging' });
   const localPath = (path: string) => path.replace(/^levels\[0\]\.lesson\.?/, '');
   return {
     canonicalIssues: [...(canonical.success ? [] : canonical.issues.map((issue) => ({ path: localPath(issue.path), message: issue.message }))), ...stagingSequenceContractIssues(lesson, metadata)],

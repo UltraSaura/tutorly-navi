@@ -204,11 +204,13 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
   };
 
   const prerequisite = lesson.prerequisites[prerequisiteIndex];
-  const prerequisiteAnswerType = String((prerequisite as Record<string, unknown>).answer_type ?? 'short_text');
+  const prerequisiteRecord = prerequisite as Record<string, unknown>;
+  const prerequisitePrompt = String(prerequisiteRecord.prompt ?? prerequisiteRecord.check_question ?? '');
+  const prerequisiteAnswerType = String(prerequisiteRecord.type ?? prerequisiteRecord.answer_type ?? 'short_text');
   const prerequisiteChoices = Array.isArray((prerequisite as Record<string, unknown>).choices) ? (prerequisite as Record<string, unknown>).choices as string[] : [];
   const prerequisitePracticeQuestion = practiceQuestion({
     id: prerequisite.id,
-    question: prerequisite.check_question,
+    question: prerequisitePrompt,
     answer_type: prerequisiteAnswerType,
     choices: prerequisiteChoices,
     correct_answer: prerequisite.expected_answer,
@@ -216,7 +218,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
   const prerequisiteVisual = (prerequisite as Record<string, unknown>).visual && typeof (prerequisite as Record<string, unknown>).visual === 'object'
     ? { id: `${prerequisite.id}-visual`, type: 'visual' as const, title: 'Observe', content: prerequisite.description, visual: (prerequisite as Record<string, unknown>).visual as { kind: string; data: unknown; alt_text?: string; purpose?: string } }
     : null;
-  const prerequisiteFormat = responseGuidance(prerequisite.check_question, prerequisiteAnswerType);
+  const prerequisiteFormat = responseGuidance(prerequisitePrompt, prerequisiteAnswerType);
   const updateTimePart = (part: keyof typeof timeParts, value: string) => {
     const next = { ...timeParts, [part]: value.replace(/\D/g, '').slice(0, 2) };
     setTimeParts(next);
@@ -268,7 +270,7 @@ export function LessonV2Player({ topicId, subjectId, topicName, lesson, onMaster
                 }
               }}
             /> : <>
-            <p className="text-lg font-semibold">{prerequisite.check_question}</p>
+            <p className="text-lg font-semibold">{prerequisitePrompt}</p>
             {prerequisiteFormat.hint && <p className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">{prerequisiteFormat.hint}</p>}
             {prerequisiteChoices.length > 0 || ['multiple_choice', 'selection'].includes(prerequisiteAnswerType)
               ? <div className="flex flex-wrap gap-2">{prerequisiteChoices.map((choice) => <button type="button" key={choice} onClick={() => { setPrerequisiteAnswer(choice); setPrerequisiteResult(null); }} className={`rounded-lg border px-4 py-3 text-left ${prerequisiteAnswer === choice ? 'border-[#12C6A0] bg-emerald-50' : 'bg-white'}`}>{choice}</button>)}</div>

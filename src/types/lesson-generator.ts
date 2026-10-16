@@ -111,5 +111,7 @@ export function parseLessonContent(value: unknown): LessonV2 | null {
 
 export function parseLessonV21(value: unknown): LessonV21 | null {
   const contract = validateLessonV21(value);
-  return contract.success ? value as LessonV21 : null;
+  if (contract.success) return value as LessonV21;
+  const stagingContract = validateLessonV21(value, { prerequisiteFormat: 'staging' });
+  return stagingContract.success ? value as LessonV21 : null;
 }

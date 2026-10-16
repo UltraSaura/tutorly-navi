@@ -121,7 +121,7 @@ export function validatePedagogicalLesson(lesson: unknown): ValidationIssue[] {
 }
 
 export function validateLessonVersion(lesson: unknown): LessonValidation {
-  const canonical = validateLessonV21(lesson);
+  const canonical = validateLessonV21(lesson, { prerequisiteFormat: 'staging' });
   const canonicalIssues = !('issues' in canonical) ? [] : canonical.issues.map((issue: ContractIssue) => ({ path: issue.path, message: issue.message }));
   const pedagogicalIssues = validatePedagogicalLesson(lesson);
   const geometryIssues = validateDrawableGeometry(lesson);
@@ -227,7 +227,7 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
     });
   }
   assertReturnedTopicMatches(requested, data.topic_id);
-  return data as { lesson_content: unknown; topic_id: string; providerCalls: number; requestId?: string; canonicalValid: true; pedagogicalValid: true; geometryValid: true; progress?: Array<{ level: number; status: string; providerCalls: number; tokenUsage?: unknown }> };
+  return data as { lesson_content: unknown; topic_id: string; providerCalls: number; requestId?: string; build?: string; promptVersion?: string; canonicalValid: true; pedagogicalValid: true; geometryValid: true; progress?: Array<{ level: number; status: string; providerCalls: number; tokenUsage?: unknown; build?: string; promptVersion?: string }> };
 }
 
 export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = CM2_GEOMETRY_TOPIC_ID): Promise<LessonVersion> {

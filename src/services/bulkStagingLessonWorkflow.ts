@@ -36,6 +36,8 @@ export type BulkStagingFailure = {
   message?: string;
   technicalDetail?: string;
   requestId?: string;
+  build?: string;
+  promptVersion?: string;
   level?: number;
   stage?: string;
 };
@@ -46,6 +48,8 @@ export type BulkStagingResult = {
   status: 'saved' | 'failed';
   version?: LessonVersion;
   requestId?: string;
+  build?: string;
+  promptVersion?: string;
   providerCalls?: number;
   validation?: ReturnType<typeof validateLessonVersion>;
   failure?: BulkStagingFailure;
@@ -70,6 +74,10 @@ export function validateBulkTopicIds(topics: BulkStagingTopic[]): void {
 }
 
 function diagnostic(error: unknown): string { return formatGenerationDiagnostic(error, 'Unknown staging workflow error.'); }
+
+function isLegacyPrerequisiteDiagnostic(value: string): boolean {
+  return /legacy prerequisite|prerequisites?\[\d+\].*(check_question|answer_type)|check_question.*(missing|required)|answer_type.*(missing|unsupported)/i.test(value);
+}
 
 function failureStage(details: GenerationErrorDetails): string {
   if (details.stage) return details.stage;
@@ -128,17 +136,21 @@ export async function runBulkStagingGeneration(
       }
       const version = await save(topicId, generated.lesson_content, generated.topic_id);
       onProgress?.({ ...base, level: STAGING_LEVEL_COUNT, providerCalls, status: 'saved' });
-      results.push({ topicId, topicTitle: topic.name, status: 'saved', version, requestId: generated.requestId, providerCalls, validation });
+      results.push({ topicId, topicTitle: topic.name, status: 'saved', version, requestId: generated.requestId, providerCalls, validation, build: generated.build, promptVersion: generated.promptVersion });
     } catch (error) {
       const details = getGenerationErrorDetails(error);
       providerCalls = Number(details.providerCalls ?? providerCalls) || providerCalls;
-      const stage = failureStage({ ...details, providerCalls });
+      const rawDiagnostic = diagnostic(error);
+      const legacyPrerequisite = isLegacyPrerequisiteDiagnostic(rawDiagnostic);
+      const stage = legacyPrerequisite ? 'validation_failure' : failureStage({ ...details, providerCalls });
       const failure = {
         topicId,
         topicTitle: topic.name,
         failedLevel: details.level ?? failedLevel(error),
         failureStage: stage,
-        technicalDiagnostic: diagnostic(error),
+        technicalDiagnostic: legacyPrerequisite
+          ? `Validation failed: prerequisites have the legacy format · ${rawDiagnostic}`
+          : rawDiagnostic,
         providerCalls,
         httpStatus: details.httpStatus,
         code: details.code,
@@ -147,6 +159,8 @@ export async function runBulkStagingGeneration(
         requestId: details.requestId,
         level: details.level,
         stage,
+        build: details.build,
+        promptVersion: details.promptVersion,
       };
       onProgress?.({ ...base, level: failure.failedLevel ?? 1, providerCalls, status: 'failed' });
       results.push({ topicId, topicTitle: topic.name, status: 'failed', failure });
