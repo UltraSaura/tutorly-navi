@@ -143,7 +143,11 @@ export function validateGenerationResponse(body: unknown): {
 }
 
 function responseRequestId(response: SafeResponse): string {
-  return response.headers?.get('x-request-id') || response.headers?.get('x-supabase-request-id') || 'not-provided';
+  if (response.headers?.get('x-request-id')) return response.headers.get('x-request-id') as string;
+  if (response.headers?.get('x-supabase-request-id')) return response.headers.get('x-supabase-request-id') as string;
+  if (isRecord(response.body) && typeof response.body.requestId === 'string') return response.body.requestId;
+  if (isRecord(response.body) && isRecord(response.body.error) && typeof response.body.error.requestId === 'string') return response.body.error.requestId;
+  return 'not-provided';
 }
 
 function responseErrorFields(body: unknown): Record<string, unknown> {

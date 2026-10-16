@@ -24,6 +24,7 @@ const lessonContent = {
 
 const successfulBody = {
   success: true,
+  requestId: 'request-1',
   providerCalls: 4,
   canonicalValid: true,
   pedagogicalValid: true,
@@ -90,6 +91,12 @@ describe('staging terminal runner', () => {
     expect(d.invoke).toHaveBeenCalledTimes(1);
     expect(d.insertDraft).toHaveBeenCalledTimes(1);
     expect(extractVisualKinds(lessonContent)).toEqual(['angle', 'circle', 'rectangle', 'symmetry', 'triangle']);
+  });
+
+  it('captures the function request ID from the success body when headers are unavailable', async () => {
+    const d = deps({ invoke: vi.fn(async () => ({ ok: true, status: 200, body: successfulBody })) });
+    const result = await executeStagingDraft(d);
+    expect(result.requestId).toBe('request-1');
   });
 
   it('does not write when a level is incomplete', async () => {

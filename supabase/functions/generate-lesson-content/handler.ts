@@ -154,25 +154,32 @@ function requestOriginOf(req: Request): string | null {
 }
 
 export async function handleRequest(req: Request): Promise<Response> {
-  let requestId: string | undefined;
+  let requestId = crypto.randomUUID();
   let requestAllowsPaidRepair = false;
   let aiProviderCalls = 0;
   let stagingProgress: StagingLevelProgress[] = [];
   let stagingFailure: { level?: number; stage?: string; message?: string } | undefined;
   const requestOrigin = requestOriginOf(req);
   const corsHeaders = corsHeadersFor(requestOrigin, allowedOrigins);
+  const responseHeaders = (contentType = true): Record<string, string> => ({
+    ...corsHeaders,
+    'x-request-id': requestId,
+    'Access-Control-Expose-Headers': 'x-request-id',
+    ...(contentType ? { 'Content-Type': 'application/json' } : {}),
+  });
   if (req.method === 'OPTIONS') {
     if (!isAllowedOrigin(requestOrigin, allowedOrigins)) {
-      return new Response(JSON.stringify({ success: false, ok: false, error: { code: 'cors_origin_rejected', message: 'Origin is not allowed.', providerCalls: 0 } }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ success: false, ok: false, requestId, error: { code: 'cors_origin_rejected', message: 'Origin is not allowed.', providerCalls: 0 } }), { status: 403, headers: responseHeaders() });
     }
-    return new Response(null, { status: 204, headers: corsHeaders });
+    return new Response(null, { status: 204, headers: responseHeaders(false) });
   }
   if (!isAllowedOrigin(requestOrigin, allowedOrigins)) {
     return new Response(JSON.stringify({
       success: false,
       ok: false,
+      requestId,
       error: { code: 'cors_origin_rejected', message: 'Origin is not allowed.', providerCalls: 0 },
-    }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }), { status: 403, headers: responseHeaders() });
   }
 
   // Keep the authorization boundary ahead of every request-body branch,
@@ -180,19 +187,20 @@ export async function handleRequest(req: Request): Promise<Response> {
   // call an AI provider, but they are still part of this privileged function.
   try {
     await requirePrivilegedFamily(req);
-    requestId = req.headers.get('x-request-id') ?? req.headers.get('sb-request-id') ?? undefined;
+    requestId = req.headers.get('x-request-id') ?? req.headers.get('sb-request-id') ?? requestId;
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error ?? 'Unauthorized');
     return new Response(JSON.stringify({
       success: false,
       ok: false,
+      requestId,
       error: {
         code: 'unauthorized',
         message: GENERATION_ERROR_MESSAGES.unauthorized,
         technicalDetail: detail,
         providerCalls: 0,
       },
-    }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }), { status: 401, headers: responseHeaders() });
   }
 
   let requestBody: Record<string, unknown> = {};
@@ -201,7 +209,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   if (noPaidMode) {
     const mode = String(requestBody.mode);
     if (mode === 'healthcheck') {
-      return new Response(JSON.stringify({ ok: true, success: true, mode, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0 }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ ok: true, success: true, requestId, mode, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0 }), { status: 200, headers: responseHeaders() });
     }
     const fixtureVariant = String(requestBody.fixtureVariant ?? 'fenced_repeated');
     const fixtureTopic = String(requestBody.fixtureTopic ?? 'Fractions');
@@ -221,12 +229,12 @@ export async function handleRequest(req: Request): Promise<Response> {
         : 'Voici le résultat pédagogique:\n```json\n' + JSON.stringify(fixture) + ',\n```\n';
     const parsed = parseProviderJsonSafely(rawProviderText);
     if (!parsed.ok) {
-      return new Response(JSON.stringify({ ok: false, success: false, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: false, canonicalValid: false, pedagogicalValid: false, error: { code: 'provider_malformed_json', message: 'Le contenu généré n’a pas pu être lu correctement.', technicalDetail: parsed.category, providerCalls: 0 }, category: parsed.category, attemptedRepair: parsed.attemptedRepair, paidRepairSkipped: true }), { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ ok: false, success: false, requestId, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: false, canonicalValid: false, pedagogicalValid: false, error: { code: 'provider_malformed_json', message: 'Le contenu généré n’a pas pu être lu correctement.', technicalDetail: parsed.category, providerCalls: 0, requestId }, category: parsed.category, attemptedRepair: parsed.attemptedRepair, paidRepairSkipped: true }), { status: 422, headers: responseHeaders() });
     }
     const parsedFixture = parsed.value as Record<string, unknown>;
     const canonicalAnswers = normalizeCanonicalAnswers(parsedFixture);
     if (canonicalAnswers.errors.length) {
-      return new Response(JSON.stringify({ ok: false, success: false, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: true, canonicalValid: false, pedagogicalValid: false, error: { code: 'canonical_validation_failed', message: 'La leçon générée n’a pas le format attendu.', technicalDetail: canonicalAnswers.errors, providerCalls: 0 }, paidRepairSkipped: true }), { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ ok: false, success: false, requestId, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: true, canonicalValid: false, pedagogicalValid: false, error: { code: 'canonical_validation_failed', message: 'La leçon générée n’a pas le format attendu.', technicalDetail: canonicalAnswers.errors, providerCalls: 0, requestId }, paidRepairSkipped: true }), { status: 422, headers: responseHeaders() });
     }
     const normalized = normalizeGeneratedLesson(canonicalAnswers.lesson, topicName);
     const ensured = ensureRequiredVisuals(normalized.lesson, topicName);
@@ -240,16 +248,17 @@ export async function handleRequest(req: Request): Promise<Response> {
     const warnings = [...composition.events.filter((event) => event.action === 'warning').map((event) => event.message), ...repetitionIssues.map((issue) => `${issue.path}: ${issue.message}`)];
     const pedagogicalValid = qualityIssues.length === 0;
     const success = contract.success && pedagogicalValid;
-    const response = { ok: success, success, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: true, attemptedRepair: parsed.attemptedRepair, canonicalValid: contract.success, pedagogicalValid, warnings, normalizationEvents: [...normalized.events, ...ensured.events], compositionEvents: composition.events, visualKind: visualKind?.kind ?? null, topic_id: `fixture-${topicName.toLocaleLowerCase().replace(/[^a-z0-9]+/g, '-')}`, lesson_content: composedFixture };
-    return new Response(JSON.stringify(response), { status: success ? 200 : 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // Keep the fixture response shape explicit: success, mode, fixtureVariant.
+    const response = { ok: success, success, requestId, mode, fixtureVariant, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0, parsed: true, attemptedRepair: parsed.attemptedRepair, canonicalValid: contract.success, pedagogicalValid, warnings, normalizationEvents: [...normalized.events, ...ensured.events], compositionEvents: composition.events, visualKind: visualKind?.kind ?? null, topic_id: `fixture-${topicName.toLocaleLowerCase().replace(/[^a-z0-9]+/g, '-')}`, lesson_content: composedFixture };
+    return new Response(JSON.stringify(response), { status: success ? 200 : 422, headers: responseHeaders() });
   }
 
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ success: false, ok: false, error: { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: 'Missing authorization', providerCalls: aiProviderCalls } }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, ok: false, requestId, error: { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: 'Missing authorization', providerCalls: aiProviderCalls, requestId } }),
+        { status: 401, headers: responseHeaders() }
       );
     }
 
@@ -262,8 +271,8 @@ export async function handleRequest(req: Request): Promise<Response> {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return new Response(
-        JSON.stringify({ success: false, ok: false, error: { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: 'Unauthorized', providerCalls: aiProviderCalls } }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, ok: false, requestId, error: { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: 'Unauthorized', providerCalls: aiProviderCalls, requestId } }),
+        { status: 401, headers: responseHeaders() }
       );
     }
 
@@ -275,8 +284,8 @@ export async function handleRequest(req: Request): Promise<Response> {
 
     if (!roles || roles.length === 0) {
       return new Response(
-        JSON.stringify({ success: false, ok: false, error: { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: 'Admin or teacher role required', providerCalls: aiProviderCalls } }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, ok: false, requestId, error: { code: 'unauthorized', message: GENERATION_ERROR_MESSAGES.unauthorized, technicalDetail: 'Admin or teacher role required', providerCalls: aiProviderCalls, requestId } }),
+        { status: 403, headers: responseHeaders() }
       );
     }
 
@@ -289,8 +298,8 @@ export async function handleRequest(req: Request): Promise<Response> {
 
     if (!topicId) {
       return new Response(
-        JSON.stringify({ error: 'Missing topicId' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Missing topicId', requestId }),
+        { status: 400, headers: responseHeaders() }
       );
     }
     if (body.mode === 'staging_draft' && topicId !== EXPECTED_STAGING_TOPIC_ID) {
@@ -803,6 +812,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       return new Response(JSON.stringify({
         success: true,
         ok: true,
+        requestId,
         mode: 'staging_draft',
         topic_id: topicId,
         lesson_content: candidate,
@@ -811,7 +821,7 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
         geometryValid: true,
         providerCalls: aiProviderCalls,
         progress: stagingProgress,
-      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }), { status: 200, headers: responseHeaders() });
     }
 
     // Staging draft mode is deliberately a single provider request. It
@@ -863,6 +873,7 @@ Retourne exactement un objet JSON complet avec version "2.1", topic_goal et un s
       return new Response(JSON.stringify({
         success: true,
         ok: true,
+        requestId,
         mode: 'staging_draft',
         topic_id: topicId,
         lesson_content: candidate,
@@ -871,7 +882,7 @@ Retourne exactement un objet JSON complet avec version "2.1", topic_goal et un s
         providerCalls: aiProviderCalls,
         normalizationEvents: [...normalized.events, ...ensured.events],
         compositionEvents: composition.events,
-      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }), { status: 200, headers: responseHeaders() });
     }
 
     // ── Helper: generate content for one step ────────────────────────────
@@ -1112,7 +1123,7 @@ Candidate: ${JSON.stringify(lesson)}`, 3800);
       console.info('[generate-lesson-content] final validation passed', { build: GENERATOR_BUILD, topicId, aiProviderCalls, paidRepairSkipped: !allowPaidRepair });
       const { error: v21Error } = await supabase.from('topics').update({ lesson_content: v21 }).eq('id', topicId);
       if (v21Error) throw new Error(`Failed to save V2.1 lesson: ${v21Error.message}`);
-      return new Response(JSON.stringify({ success: true, ok: true, lesson_content: v21, topic_id: topicId, providerCalls: aiProviderCalls }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ success: true, ok: true, requestId, lesson_content: v21, topic_id: topicId, providerCalls: aiProviderCalls }), { status: 200, headers: responseHeaders() });
     }
 
     // ── Step 1: Planning — AI decides step names, grade level enforces minimum count ──
@@ -1228,8 +1239,8 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
     }
 
     return new Response(
-      JSON.stringify({ success: true, ok: true, lesson_content: finalContent, topic_id: topicId, providerCalls: aiProviderCalls }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ success: true, ok: true, requestId, lesson_content: finalContent, topic_id: topicId, providerCalls: aiProviderCalls }),
+      { status: 200, headers: responseHeaders() }
     );
 
   } catch (error) {
@@ -1243,11 +1254,11 @@ Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :
       providerCalls: aiProviderCalls,
       level: stagingFailure?.level,
       stage: classified.stage ?? stagingFailure?.stage,
-      ...(requestId ? { requestId } : {}),
+      requestId,
     };
     return new Response(
-      JSON.stringify({ success: false, ok: false, error: responseError, progress: stagingProgress, paidRepairSkipped: !requestAllowsPaidRepair }),
-      { status: classified.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ success: false, ok: false, requestId, error: responseError, progress: stagingProgress, paidRepairSkipped: !requestAllowsPaidRepair }),
+      { status: classified.status, headers: responseHeaders() }
     );
   }
 }

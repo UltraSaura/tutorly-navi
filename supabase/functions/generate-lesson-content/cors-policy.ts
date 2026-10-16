@@ -13,7 +13,7 @@ export function isAllowedOrigin(origin: string | null, allowedOrigins: ReadonlyS
 export function corsHeadersFor(origin: string | null, allowedOrigins: ReadonlySet<string>): Record<string, string> {
   const headers: Record<string, string> = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'authorization, apikey, x-client-info, content-type, x-family-grant',
+    'Access-Control-Allow-Headers': 'authorization, apikey, x-client-info, content-type, x-family-grant, x-request-id',
     Vary: 'Origin',
   };
   if (origin !== null && allowedOrigins.has(origin)) headers['Access-Control-Allow-Origin'] = origin;

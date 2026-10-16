@@ -44,11 +44,13 @@ function installFakes(reply: ProviderReply): Calls {
   return calls;
 }
 
-async function run(reply: ProviderReply) {
+async function run(reply: ProviderReply, requestId: string | undefined = 'req-1') {
   const calls = installFakes(reply);
+  const headers = { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' } as Record<string, string>;
+  if (requestId) headers['x-request-id'] = requestId;
   const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
     method: 'POST',
-    headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080', 'x-request-id': 'req-1' },
+    headers,
     body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr' }),
   }));
   const body = await res.json();
@@ -68,11 +70,33 @@ const withLevel = (target: number, mutate: (lesson: any) => void): ProviderReply
 test('four valid levels return 200 with providerCalls=4 and no database write', async () => {
   const { status, body, calls } = await run(valid);
   assertEquals(status, 200);
+  assertEquals(body.requestId, 'req-1');
   assertEquals(body.providerCalls, 4);
   assertEquals(calls.provider, 4);
   assertEquals(body.progress.length, 4);
   assertEquals(body.lesson_content.levels.length, 4);
   assertEquals(calls.dbWrites, []);
+});
+
+test('successful response exposes the same request ID in JSON and headers', async () => {
+  const calls = installFakes(valid);
+  const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080', 'x-request-id': 'success-request' },
+    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr' }),
+  }));
+  const body = await res.json();
+  assertEquals(body.requestId, 'success-request');
+  assertEquals(res.headers.get('x-request-id'), 'success-request');
+  assertEquals(res.headers.get('Access-Control-Expose-Headers'), 'x-request-id');
+  assertEquals(calls.provider, 4);
+});
+
+test('one generated request ID is reused across all four level calls', async () => {
+  const { status, body, calls } = await run(valid, undefined);
+  assertEquals(status, 200);
+  assert(typeof body.requestId === 'string' && body.requestId.length > 0);
+  assertEquals(calls.provider, 4);
 });
 
 test('invalid angle geometry (ray1/ray2) returns 422 at level 2 without retry', async () => {
@@ -85,9 +109,29 @@ test('invalid angle geometry (ray1/ray2) returns 422 at level 2 without retry', 
   assertEquals(body.error.level, 2);
   assertEquals(body.error.stage, 'level_validation');
   assertEquals(body.error.requestId, 'req-1');
+  assertEquals(body.requestId, 'req-1');
   assert(String(body.error.technicalDetail).includes('rays'));
   assertEquals(calls.provider, 2);
   assertEquals(body.error.providerCalls, 2);
+  assertEquals(calls.dbWrites, []);
+});
+
+test('validation error exposes the same request ID in JSON and headers', async () => {
+  const calls = installFakes(withLevel(2, (lesson) => {
+    const angle = lesson.sequence.find((b: any) => b.visual?.kind === 'angle');
+    angle.visual.data = { vertex: angle.visual.data.vertex, ray1: { x: 1, y: 1 }, ray2: { x: 2, y: 2 }, degrees: 45 };
+  }));
+  const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080', 'x-request-id': 'validation-request' },
+    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr' }),
+  }));
+  const body = await res.json();
+  assertEquals(res.status, 422);
+  assertEquals(body.requestId, 'validation-request');
+  assertEquals(body.error.requestId, 'validation-request');
+  assertEquals(res.headers.get('x-request-id'), 'validation-request');
+  assertEquals(calls.provider, 2);
   assertEquals(calls.dbWrites, []);
 });
 
