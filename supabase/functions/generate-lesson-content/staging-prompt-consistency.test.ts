@@ -7,6 +7,7 @@ import {
   KEY_POINT_RULE,
   PREREQUISITE_ANSWER_RULE,
   STAGING_NUMERIC_PREREQUISITE_EXAMPLE,
+  STAGING_CHOICE_PREREQUISITE_EXAMPLE,
   STAGING_VISUAL_EXAMPLES,
   requiredGeometryKindsIssues,
   stagingFullLevelExample,
@@ -77,6 +78,26 @@ describe('level-2 staging regressions: numeric prerequisite and key-point overla
 
   it('still rejects a numeric prerequisite with a word answer', () => {
     const issues = allIssues(validate((lesson) => { lesson.prerequisites = [lesson.prerequisites[0], { ...STAGING_NUMERIC_PREREQUISITE_EXAMPLE, id: 'p2', expected_answer: 'quatre' }]; }));
+    expect(issues.some((i) => /prerequisites\[1\]\.expected_answer/.test(i.path))).toBe(true);
+  });
+
+  it('levels 2-4 prompts show a multiple-choice prerequisite whose expected_answer is a choice', () => {
+    for (const level of metadata.slice(1)) {
+      expect(stagingLevelPrompt(topicName, 'CM2', 'fr', level, '')).toContain(JSON.stringify(STAGING_CHOICE_PREREQUISITE_EXAMPLE));
+    }
+    expect(STAGING_CHOICE_PREREQUISITE_EXAMPLE.choices).toContain(STAGING_CHOICE_PREREQUISITE_EXAMPLE.expected_answer);
+    expect(PREREQUISITE_ANSWER_RULE).toMatch(/COPIE EXACTE/);
+    expect(PREREQUISITE_ANSWER_RULE).toMatch(/correct_answer/);
+  });
+
+  it('staging 01a14515: choice prerequisite using correct_answer instead of expected_answer is still rejected', () => {
+    const { expected_answer: _omit, ...rest } = STAGING_CHOICE_PREREQUISITE_EXAMPLE;
+    const issues = allIssues(validate((lesson) => { lesson.prerequisites = [lesson.prerequisites[0], { ...rest, correct_answer: 'Un axe de symétrie' }]; }));
+    expect(issues.some((i) => /prerequisites\[1\]\.expected_answer/.test(i.path))).toBe(true);
+  });
+
+  it('still rejects a choice prerequisite whose expected_answer is not one of the choices', () => {
+    const issues = allIssues(validate((lesson) => { lesson.prerequisites = [lesson.prerequisites[0], { ...STAGING_CHOICE_PREREQUISITE_EXAMPLE, expected_answer: 'A' }]; }));
     expect(issues.some((i) => /prerequisites\[1\]\.expected_answer/.test(i.path))).toBe(true);
   });
 
