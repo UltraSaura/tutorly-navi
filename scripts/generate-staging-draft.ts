@@ -253,7 +253,7 @@ export async function listStagingTopics(url: string, anonKey: string, email: str
   return formatTopicListResult(matches);
 }
 
-async function createDependencies(url: string, anonKey: string, email: string, password: string): Promise<RunnerDependencies> {
+async function createDependencies(url: string, anonKey: string, email: string, password: string, expectedTopicId: string | null = CM2_GEOMETRY_TOPIC_ID): Promise<RunnerDependencies> {
   const authClient = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const signedIn = await authClient.auth.signInWithPassword({ email, password });
   if (signedIn.error || !signedIn.data.user || !signedIn.data.session?.access_token) throw new Error('authentication_failed');
@@ -264,6 +264,7 @@ async function createDependencies(url: string, anonKey: string, email: string, p
   if (roles.error) throw new Error('admin_access_check_failed');
   const isAdmin = Array.isArray(roles.data) && roles.data.some((row: { role?: string }) => row.role === 'admin');
   return {
+    expectedTopicId,
     authenticate: async () => ({ userId, accessToken, isAdmin }),
     findTopic: async (topicId) => {
       const result = await client.from('topics').select('id,name,lesson_content').eq('id', topicId).limit(2);
@@ -309,8 +310,9 @@ export async function main(argv = process.argv.slice(2), env = process.env): Pro
       return;
     }
     if (!env.STAGING_SUPABASE_URL || !env.STAGING_SUPABASE_ANON_KEY || !env.STAGING_ADMIN_EMAIL || !env.STAGING_ADMIN_PASSWORD) throw new Error('staging_credentials_required');
-    requireExplicitTopicId(env.STAGING_TOPIC_ID, CM2_GEOMETRY_TOPIC_ID);
-    const deps = await createDependencies(configuredUrl, env.STAGING_SUPABASE_ANON_KEY, env.STAGING_ADMIN_EMAIL, env.STAGING_ADMIN_PASSWORD);
+    const expectedTopicId = env.STAGING_EXPECTED_TOPIC_ID?.trim() || CM2_GEOMETRY_TOPIC_ID;
+    requireExplicitTopicId(env.STAGING_TOPIC_ID, expectedTopicId);
+    const deps = await createDependencies(configuredUrl, env.STAGING_SUPABASE_ANON_KEY, env.STAGING_ADMIN_EMAIL, env.STAGING_ADMIN_PASSWORD, expectedTopicId);
     console.log(safeDiagnostics(await executeStagingDraft(deps, env.STAGING_TOPIC_ID)));
   } catch (error) {
     const safeResult = isRecord(error) && isRecord(error.safeResult) ? error.safeResult : { ok: false, code: safeErrorCode(error), providerCalls: 0, databaseWrite: false };
