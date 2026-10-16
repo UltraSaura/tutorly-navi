@@ -38,7 +38,8 @@ const configuredOrigins = (Deno.env.get('STAGING_FRONTEND_ORIGINS') ?? Deno.env.
 const allowedOrigins = new Set([...DEFAULT_ALLOWED_ORIGINS, ...configuredOrigins]);
 
 const GENERATOR_BUILD = 'practice-v21-compiler-1';
-const EXPECTED_STAGING_TOPIC_ID = 'e5003f68-f3aa-404b-85a9-847cdb103a81';
+// Fixture topics must never receive generated staging drafts.
+const FIXTURE_STAGING_TOPIC_IDS = ['185f20b5-d698-446d-80e8-c3c462819b94'];
 const SAFE_PROVIDER_ERROR = 'Le contenu généré n’a pas pu être lu correctement. Aucun contenu n’a été enregistré.';
 const SUPPORTED_MODELS = ['gpt-5', 'gpt-4.1', 'deepseek-chat', 'claude-3-5-sonnet-20241022'];
 const GENERATION_ERROR_MESSAGES: Record<string, string> = {
@@ -154,7 +155,7 @@ function requestOriginOf(req: Request): string | null {
 }
 
 export async function handleRequest(req: Request): Promise<Response> {
-  let requestId = crypto.randomUUID();
+  let requestId: string = crypto.randomUUID();
   let requestAllowsPaidRepair = false;
   let aiProviderCalls = 0;
   let stagingProgress: StagingLevelProgress[] = [];
@@ -302,8 +303,11 @@ export async function handleRequest(req: Request): Promise<Response> {
         { status: 400, headers: responseHeaders() }
       );
     }
-    if (body.mode === 'staging_draft' && topicId !== EXPECTED_STAGING_TOPIC_ID) {
-      throw new Error('staging_topic_id_mismatch');
+    if (body.mode === 'staging_draft' && FIXTURE_STAGING_TOPIC_IDS.includes(String(topicId))) {
+      return new Response(
+        JSON.stringify({ success: false, ok: false, requestId, error: { code: 'fixture_topic_refused', message: 'Ce sujet de test ne peut pas être utilisé pour générer une leçon.', technicalDetail: `topicId=${topicId} is a fixture topic`, providerCalls: 0, stage: 'pre_generation', requestId } }),
+        { status: 400, headers: responseHeaders() }
+      );
     }
 
     let adminSelectedModel = 'deepseek-chat';
