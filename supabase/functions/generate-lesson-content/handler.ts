@@ -155,7 +155,7 @@ function requestOriginOf(req: Request): string | null {
 }
 
 export async function handleRequest(req: Request): Promise<Response> {
-  let requestId = crypto.randomUUID();
+  let requestId: string = crypto.randomUUID();
   let requestAllowsPaidRepair = false;
   let aiProviderCalls = 0;
   let stagingProgress: StagingLevelProgress[] = [];
