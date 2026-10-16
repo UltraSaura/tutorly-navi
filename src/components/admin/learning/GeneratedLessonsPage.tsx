@@ -71,13 +71,13 @@ export function GeneratedLessonPreview({ lesson, topicId }: { lesson: any; topic
     const rawVisual = entry.visual;
     const visualKind = safeText(rawVisual.kind);
     const title = safeText(entry.block.title || 'Visuel');
-    return <Card key={`visual-${entry.path}-${index}`} data-testid="admin-lesson-visual" data-visual-kind={visualKind} data-visual-path={entry.path}>
-      <CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader>
-      <CardContent className="space-y-2">
+    return <div key={`visual-${entry.path}-${index}`} data-testid="admin-lesson-visual" data-visual-kind={visualKind} data-visual-path={entry.path} className="space-y-2">
+      <h4 className="text-base font-semibold">{title}</h4>
+      <div className="space-y-2">
         <p className="text-xs font-semibold text-muted-foreground">Visuel : {visualKind}{rawVisual.alt_text && ` — ${safeText(rawVisual.alt_text)}`}</p>
         <LessonVisualBlock testId="admin-lesson-visual-rendered" title={title} content={safeText(entry.block.content)} visual={{ kind: visualKind, data: rawVisual.data, alt_text: safeText(rawVisual.alt_text), purpose: safeText(rawVisual.purpose) }} />
-      </CardContent>
-    </Card>;
+      </div>
+    </div>;
   };
   return <div className="space-y-4">
     {import.meta.env.DEV && <div data-testid="admin-lesson-visual-diagnostics" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">payload visuals found: {discovered.length} · visual components rendered: {discovered.length}</div>}
