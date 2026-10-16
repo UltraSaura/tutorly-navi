@@ -2,6 +2,9 @@ type PedagogyIssue = { path: string; message: string };
 import { determineVisualRequirement, isSupportedVisualKind } from './visual-policy.ts';
 import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 
+export const PEDAGOGICAL_CONCEPT_MAX_WORDS = 55;
+export const PEDAGOGICAL_TAKEAWAY_MAX_WORDS = 24;
+
 const PEDAGOGY_STOP_WORDS = new Set('le la les un une des de du et en avec pour sur dans une est sont là ce cette ces que qui comme avec au aux par chaque il elle on se'.split(/\s+/));
 export function meaningfulTokens(value: unknown): Set<string> {
   if (typeof value !== 'string') return new Set();
@@ -52,6 +55,18 @@ function substantiallyRepeats(a: unknown, b: unknown): boolean {
   return diagnostic.overlap >= 2 && diagnostic.ratio >= 0.65;
 }
 
+function keyPointsTakeawayOverlap(keyPoints: unknown, takeaway: unknown): SemanticOverlapDiagnostic {
+  const diagnostic = semanticOverlap(keyPoints, takeaway);
+  const takeawayTokens = meaningfulTokens(takeaway);
+  return {
+    ...diagnostic,
+    // A concise factual key-point list will naturally reuse the concept's
+    // nouns. Measure this pair against the actionable takeaway, while the
+    // content↔takeaway check remains strict and catches substantive copying.
+    ratio: takeawayTokens.size ? diagnostic.overlap / takeawayTokens.size : 0,
+  };
+}
+
 export function semanticDuplicationDiagnostics(block: Record<string, unknown>): Array<{ fieldA: string; fieldB: string; diagnostic: SemanticOverlapDiagnostic; reason: string }> {
   const keyPoints = Array.isArray(block.key_points) ? block.key_points as Array<Record<string, unknown>> : [];
   const duplicateReason = 'partagent trop de tokens pédagogiquement significatifs.';
@@ -71,7 +86,9 @@ export function semanticDuplicationDiagnostics(block: Record<string, unknown>): 
     ['key_points', keyPointText, 'takeaway', block.takeaway],
   ];
   return [...keyPointDuplicates, ...pairs.flatMap(([fieldA, valueA, fieldB, valueB]) => {
-    const diagnostic = semanticOverlap(valueA, valueB);
+    const diagnostic = fieldA === 'key_points' && fieldB === 'takeaway'
+      ? keyPointsTakeawayOverlap(valueA, valueB)
+      : semanticOverlap(valueA, valueB);
     if (diagnostic.overlap < 2 || diagnostic.ratio < 0.65) return [];
     return [{ fieldA, fieldB, diagnostic, reason: `${fieldA} et ${fieldB} ${duplicateReason}` }];
   })];
@@ -92,7 +109,7 @@ export function pedagogicalIssues(lesson: Record<string, unknown>, grade: string
     const visualKind = block.visual && typeof block.visual === 'object' ? String((block.visual as Record<string, unknown>).kind ?? '') : '';
     const structured = Boolean(block.visual || Array.isArray(block.key_points) || typeof block.takeaway === 'string');
     const visualPolicy = determineVisualRequirement(block);
-    if (structured && words > 55) issues.push({ path: `sequence[${conceptIndex}].content`, message: `Concept structuré trop long (${words} mots); garder une introduction de 1 à 3 phrases.` });
+    if (structured && words > PEDAGOGICAL_CONCEPT_MAX_WORDS) issues.push({ path: `sequence[${conceptIndex}].content`, message: `Concept structuré trop long (${words} mots); garder une introduction de 1 à 3 phrases.` });
     if (visualPolicy.requirement === 'required' && !block.visual) issues.push({ path: `sequence[${conceptIndex}].visual`, message: `Visuel requis (${visualPolicy.suggestedKinds.join('|')}): ${visualPolicy.reason}` });
     if (visualPolicy.requirement === 'required' && block.visual && !visualPolicy.suggestedKinds.includes(visualKind)) issues.push({ path: `sequence[${conceptIndex}].visual.kind`, message: `Visuel incompatible: attendu ${visualPolicy.suggestedKinds.join('|')}, reçu ${visualKind || 'absent'}.` });
     if (block.visual && !isSupportedVisualKind(visualKind)) issues.push({ path: `sequence[${conceptIndex}].visual.kind`, message: `Type de visuel non pris en charge: ${visualKind || 'absent'}.` });
@@ -120,7 +137,7 @@ export function pedagogicalIssues(lesson: Record<string, unknown>, grade: string
         });
       }
       if (typeof block.takeaway !== 'string' || !block.takeaway.trim()) issues.push({ path: `sequence[${conceptIndex}].takeaway`, message: 'Un concept visuel doit fournir un takeaway.' });
-      else if (block.takeaway.trim().split(/\s+/).length > 24) issues.push({ path: `sequence[${conceptIndex}].takeaway`, message: 'Le takeaway doit rester concis.' });
+      else if (block.takeaway.trim().split(/\s+/).length > PEDAGOGICAL_TAKEAWAY_MAX_WORDS) issues.push({ path: `sequence[${conceptIndex}].takeaway`, message: 'Le takeaway doit rester concis.' });
     }
     for (const duplicate of semanticDuplicationDiagnostics(block)) {
       const pathField = duplicate.fieldB === 'key_points' || duplicate.fieldB.startsWith('key_points[') ? 'key_points' : 'takeaway';

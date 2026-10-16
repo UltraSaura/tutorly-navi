@@ -11,6 +11,8 @@ import { BookOpen, Wand2, Loader2, CheckCircle2, XCircle, Trash2 } from 'lucide-
 import { Progress } from '@/components/ui/progress';
 import { Link } from 'react-router-dom';
 import { formatGenerationError, generationErrorMessages, getGenerationErrorTechnicalDetail } from './generationErrorMapping';
+import { geometryDraftLesson } from './geometryDraft';
+import { runBulkStagingGeneration, type BulkStagingProgress } from '@/services/bulkStagingLessonWorkflow';
 
 interface TopicRow {
   id: string;
@@ -25,7 +27,7 @@ type SubjectRow = {
   name: string;
 };
 
-type GenStatus = 'idle' | 'running' | 'done' | 'error';
+type GenStatus = 'idle' | 'generating' | 'validating' | 'saved' | 'failed';
 
 interface GenResult {
   topicId: string;
@@ -34,12 +36,11 @@ interface GenResult {
   error?: string;
   technicalDetail?: string;
   currentStep?: string;
+  progress?: BulkStagingProgress;
+  providerCalls?: number;
+  failedLevel?: number;
+  failureStage?: string;
 }
-
-// V2.1 performs one planning call plus one validated lesson call per level.
-// Four levels can legitimately take several minutes; do not abort the request
-// while the Edge Function is still generating and validating the topic.
-const GENERATION_TIMEOUT_MS = 300000;
 
 async function getFunctionErrorDetails(err: unknown, response?: Response) {
   const fallback = err instanceof Error && err.message && err.message !== 'Unknown error'
@@ -87,6 +88,7 @@ export function BulkLessonGenerator() {
   const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [dryRun, setDryRun] = useState(false);
 
   useEffect(() => {
     if (!isRunning || runStartedAt === null) return;
@@ -186,42 +188,39 @@ export function BulkLessonGenerator() {
     setRunStartedAt(Date.now());
     setElapsedMs(0);
 
-    for (const topic of batch) {
-      setResults((p) => p.map((r) => r.topicId === topic.id ? { ...r, status: 'running' } : r));
-      try {
-        const invokePromise = supabase.functions.invoke('generate-lesson-content', {
-          body: { topicId: topic.id, language },
-        });
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          window.setTimeout(() => reject(new Error('La génération a dépassé 5 minutes.')), GENERATION_TIMEOUT_MS);
-        });
-        const result = await Promise.race([invokePromise, timeoutPromise]);
-        const { data: fnData, error: fnError, response: invokeResponse } = result;
-        if (fnError) {
-          const details = await getFunctionErrorDetails(fnError, invokeResponse);
-          throw Object.assign(new Error(details.message), { technicalDetail: details.technicalDetail });
-        }
-        if (fnData?.error) {
-          const details = {
-            message: formatGenerationError(fnData),
-            technicalDetail: getGenerationErrorTechnicalDetail(fnData),
-          };
-          throw Object.assign(new Error(details.message), { technicalDetail: details.technicalDetail });
-        }
-        const stepCount = (fnData?.lesson_content?.steps?.length ?? 0);
-        setResults((p) => p.map((r) => r.topicId === topic.id
-          ? { ...r, status: 'done', currentStep: stepCount > 1 ? `${stepCount} étapes` : undefined }
-          : r));
-        void invokeResponse;
-      } catch (err) {
-        const details = await getFunctionErrorDetails(err);
-        setResults((p) => p.map((r) => r.topicId === topic.id ? {
-          ...r,
-          status: 'error',
-          error: details.message,
-          technicalDetail: details.technicalDetail,
-        } : r));
-      }
+    try {
+      const workflowResults = await runBulkStagingGeneration(
+        batch,
+        (progress) => setResults((previous) => previous.map((result) => result.topicId === progress.topicId ? {
+          ...result,
+          status: progress.status,
+          providerCalls: progress.providerCalls,
+          progress,
+        } : result)),
+        { dryRun, dryRunContent: geometryDraftLesson, language },
+      );
+      setResults((previous) => previous.map((result) => {
+        const workflowResult = workflowResults.find((candidate) => candidate.topicId === result.topicId);
+        if (!workflowResult) return result;
+        if (workflowResult.status === 'saved') return { ...result, status: 'saved', providerCalls: result.providerCalls ?? (dryRun ? 0 : 4) };
+        return {
+          ...result,
+          status: 'failed',
+          error: workflowResult.failure?.failureStage ?? 'La génération staging a échoué.',
+          technicalDetail: workflowResult.failure?.technicalDiagnostic,
+          providerCalls: workflowResult.failure?.providerCalls ?? 0,
+          failedLevel: workflowResult.failure?.failedLevel,
+          failureStage: workflowResult.failure?.failureStage,
+        };
+      }));
+    } catch (err) {
+      const details = await getFunctionErrorDetails(err);
+      setResults((previous) => previous.map((result) => selected.includes(result.topicId) ? {
+        ...result,
+        status: 'failed',
+        error: details.message,
+        technicalDetail: details.technicalDetail,
+      } : result));
     }
 
     setIsRunning(false);
@@ -231,7 +230,34 @@ export function BulkLessonGenerator() {
     setSelected([]);
   };
 
-  const done = results.filter((r) => r.status === 'done').length;
+  const handleLegacyGenerate = async () => {
+    if (!selected.length) return;
+    const batch = topics.filter((topic) => selected.includes(topic.id));
+    setResults(batch.map((topic) => ({ topicId: topic.id, name: topic.name, status: 'idle' })));
+    setIsRunning(true);
+    setRunStartedAt(Date.now());
+    setElapsedMs(0);
+    for (const topic of batch) {
+      setResults((previous) => previous.map((result) => result.topicId === topic.id ? { ...result, status: 'generating' } : result));
+      try {
+        const { data, error, response } = await supabase.functions.invoke('generate-lesson-content', { body: { topicId: topic.id, language } });
+        if (error) {
+          const details = await getFunctionErrorDetails(error, response);
+          throw Object.assign(new Error(details.message), { technicalDetail: details.technicalDetail });
+        }
+        if (data?.error) throw new Error(formatGenerationError(data));
+        setResults((previous) => previous.map((result) => result.topicId === topic.id ? { ...result, status: 'saved' } : result));
+      } catch (error) {
+        const details = await getFunctionErrorDetails(error);
+        setResults((previous) => previous.map((result) => result.topicId === topic.id ? { ...result, status: 'failed', error: details.message, technicalDetail: details.technicalDetail } : result));
+      }
+    }
+    setIsRunning(false);
+    setRunStartedAt(null);
+    setSelected([]);
+  };
+
+  const done = results.filter((r) => r.status === 'saved').length;
   const showResults = results.length > 0;
   const elapsedSeconds = Math.floor(elapsedMs / 1000);
 
@@ -269,7 +295,7 @@ export function BulkLessonGenerator() {
             <div className="flex items-center justify-between text-sm">
               <div className="flex flex-col">
                 <span className="font-medium">
-                  {isRunning ? 'Génération en cours…' : `Terminé — ${done} / ${results.length}`}
+                {isRunning ? 'Génération staging en cours…' : `Terminé — ${done} / ${results.length}`}
                 </span>
                 {isRunning && (
                   <span className="text-xs text-muted-foreground">
@@ -298,18 +324,17 @@ export function BulkLessonGenerator() {
                 }
                 return (
                 <div key={r.topicId} className="flex items-center gap-3 border-b py-2 text-sm last:border-0">
-                  {r.status === 'running' && (
+                  {(r.status === 'generating' || r.status === 'validating') && (
                     <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin text-primary" />
                   )}
-                  {r.status === 'done' && (
+                  {r.status === 'saved' && (
                     <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-500" />
                   )}
-                  {r.status === 'error' && <XCircle className="h-4 w-4 flex-shrink-0 text-red-500" />}
+                  {r.status === 'failed' && <XCircle className="h-4 w-4 flex-shrink-0 text-red-500" />}
                   {r.status === 'idle' && <div className="h-4 w-4 flex-shrink-0 rounded-full border-2 border-muted" />}
                   <span className="flex-1 truncate">{r.name}</span>
-                  {r.status === 'done' && r.currentStep && (
-                    <span className="text-xs text-green-600 font-medium">{r.currentStep}</span>
-                  )}
+                  {r.progress && <span className="text-xs text-muted-foreground">Topic {r.progress.topicIndex} of {r.progress.totalTopics} · Level {r.progress.level} of 4 · Provider calls: {r.providerCalls ?? 0} · Status: {r.progress.status}</span>}
+                  {r.status === 'failed' && <span className="text-xs text-red-500">{r.topicId} · Level {r.failedLevel ?? '?'} · {r.failureStage ?? 'failed'}</span>}
                   {visibleErrorMessage && <span title={r.technicalDetail ?? visibleErrorMessage} className="max-w-[360px] break-words text-right text-xs text-red-500">{visibleErrorMessage}</span>}
                 </div>
                 );
@@ -378,6 +403,10 @@ export function BulkLessonGenerator() {
                 <Checkbox checked={onlyMissing} onCheckedChange={(v) => setOnlyMissing(Boolean(v))} />
                 {ui("Sans leçon")}
               </label>
+              {import.meta.env.DEV && <label className="flex cursor-pointer items-center gap-1.5 text-sm text-amber-700">
+                <Checkbox checked={dryRun} onCheckedChange={(v) => setDryRun(Boolean(v))} />
+                Dry-run staging (0 appels, aucune écriture)
+              </label>}
             </div>
 
             <div className="flex gap-3 text-xs">
@@ -464,7 +493,10 @@ export function BulkLessonGenerator() {
                 )}
                 <Button onClick={handleGenerate} disabled={!selected.length || isRunning} className="gap-2">
                   <Wand2 className="h-4 w-4" />
-                  {`Générer ${selected.length > 0 ? `${selected.length} leçon${selected.length !== 1 ? 's' : ''}` : ''}`}
+                  {`${dryRun ? 'Tester' : 'Générer'} ${selected.length > 0 ? `${selected.length} leçon${selected.length !== 1 ? 's' : ''}` : ''} (staging)`}
+                </Button>
+                <Button variant="ghost" onClick={handleLegacyGenerate} disabled={!selected.length || isRunning} title="Ancien générateur; utilise l'ancien contrat et peut modifier le contenu public.">
+                  Générateur legacy (ancien)
                 </Button>
               </div>
             </div>

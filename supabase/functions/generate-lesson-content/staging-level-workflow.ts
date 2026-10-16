@@ -1,5 +1,5 @@
-import { validateLessonV21 } from './lesson-v21-contract.ts';
-import { pedagogicalIssues } from './pedagogical-quality.ts';
+import { ANSWER_TYPE_VALUES, validateLessonV21 } from './lesson-v21-contract.ts';
+import { pedagogicalIssues, PEDAGOGICAL_CONCEPT_MAX_WORDS, PEDAGOGICAL_TAKEAWAY_MAX_WORDS } from './pedagogical-quality.ts';
 import { geometryVisualDataErrors } from './geometry-visual-contract.ts';
 import { parseProviderJsonSafely } from './provider-json.ts';
 
@@ -59,8 +59,8 @@ function requiredStagingField(value: Record<string, unknown>, path: string, fiel
 }
 
 function requiredStagingKeyPoints(value: Record<string, unknown>, path: string, issues: Array<{ path: string; message: string }>) {
-  if (!Array.isArray(value.key_points) || value.key_points.length < 1 || value.key_points.length > 4) {
-    issues.push({ path: `${path}.key_points`, message: 'Expected 1–4 concise key point objects' });
+  if (!Array.isArray(value.key_points) || value.key_points.length < 2 || value.key_points.length > 3) {
+    issues.push({ path: `${path}.key_points`, message: 'Expected 2–3 concise factual key point objects' });
     return;
   }
   value.key_points.forEach((point, index) => {
@@ -89,6 +89,26 @@ function requiredStagingMastery(value: Record<string, unknown>, issues: Array<{ 
   }
 }
 
+function requiredStagingPrerequisites(value: Record<string, unknown>, issues: Array<{ path: string; message: string }>) {
+  if (!Array.isArray(value.prerequisites)) return;
+  value.prerequisites.forEach((raw, index) => {
+    const path = `prerequisites[${index}]`;
+    const prerequisite = object(raw);
+    if (!prerequisite) return;
+    const type = prerequisite.type;
+    if (type !== undefined && !ANSWER_TYPE_VALUES.includes(String(type) as typeof ANSWER_TYPE_VALUES[number])) {
+      issues.push({ path: `${path}.type`, message: `Expected one of ${ANSWER_TYPE_VALUES.join(', ')}` });
+    }
+    if (type === 'numeric' || prerequisite.answer_type === 'numeric') {
+      if (type !== 'numeric') issues.push({ path: `${path}.type`, message: 'Numeric prerequisite must use type "numeric"' });
+      if (!nonEmpty(prerequisite.prompt)) issues.push({ path: `${path}.prompt`, message: 'Numeric prerequisite requires prompt' });
+      if (typeof prerequisite.expected_answer !== 'number' || !Number.isFinite(prerequisite.expected_answer)) {
+        issues.push({ path: `${path}.expected_answer`, message: 'Numeric prerequisite requires a numeric expected answer' });
+      }
+    }
+  });
+}
+
 /** The provider-facing level contract. It is intentionally stricter than the
  * general V2.1 envelope: no block IDs/types/content may be compiler-filled. */
 export function stagingSequenceContractIssues(lesson: Record<string, unknown>, metadata: StagingLevelMetadata): Array<{ path: string; message: string }> {
@@ -113,6 +133,13 @@ export function stagingSequenceContractIssues(lesson: Record<string, unknown>, m
     if (block.type === 'concept') {
       requiredStagingField(block, path, 'title', issues);
       requiredStagingKeyPoints(block, path, issues);
+      requiredStagingField(block, path, 'takeaway', issues);
+      if (typeof block.content === 'string' && block.content.trim().split(/\s+/).length > PEDAGOGICAL_CONCEPT_MAX_WORDS) {
+        issues.push({ path: `${path}.content`, message: `Expected at most ${PEDAGOGICAL_CONCEPT_MAX_WORDS} words for a structured concept` });
+      }
+      if (typeof block.takeaway === 'string' && block.takeaway.trim().split(/\s+/).length > PEDAGOGICAL_TAKEAWAY_MAX_WORDS) {
+        issues.push({ path: `${path}.takeaway`, message: `Expected at most ${PEDAGOGICAL_TAKEAWAY_MAX_WORDS} words` });
+      }
     }
     if (block.type === 'guided_example') {
       requiredStagingField(block, path, 'context', issues);
@@ -134,6 +161,7 @@ export function stagingSequenceContractIssues(lesson: Record<string, unknown>, m
     if (conceptsWithVisual.length < 2) issues.push({ path: 'sequence', message: 'Level 1 requires visual concept blocks for rectangle and triangle.' });
   }
   requiredStagingMastery(lesson, issues);
+  requiredStagingPrerequisites(lesson, issues);
   return issues;
 }
 
@@ -163,11 +191,11 @@ type ConceptExample = Record<string, unknown> & { visual: { kind: string; purpos
  * staging validators (see staging-prompt-consistency.test.ts); the prompt
  * embeds them verbatim so the provider sees exactly the accepted shapes. */
 export const STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle' | 'angle' | 'symmetry', ConceptExample> = {
-  rectangle: { id: 'rectangle-concept', type: 'concept', title: 'Rectangle ABCD', content: 'Un rectangle est un quadrilatère dont les quatre angles sont droits. Ses côtés opposés ont la même longueur.', key_points: [{ label: 'Angles', text: '4 angles droits' }, { label: 'Longueurs', text: 'Côtés opposés égaux' }], takeaway: 'Astuce : l’équerre dans chaque coin.', visual: { kind: 'rectangle', purpose: 'Nommer les sommets et les côtés.', alt_text: 'Rectangle ABCD dessiné avec quatre sommets étiquetés.', data: { shape: 'rectangle', vertices: [{ x: 45, y: 45, label: 'A' }, { x: 255, y: 45, label: 'B' }, { x: 255, y: 155, label: 'C' }, { x: 45, y: 155, label: 'D' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'D', label: 'CD' }, { from: 'D', to: 'A', label: 'DA' }] } } },
-  triangle: { id: 'triangle-concept', type: 'concept', title: 'Triangle ABC', content: 'Un triangle possède trois sommets et trois côtés.', key_points: [{ label: 'Côtés', text: 'AB, BC et CA' }], takeaway: 'Astuce : un doigt par lettre.', visual: { kind: 'polygon', purpose: 'Nommer les côtés du triangle.', alt_text: 'Triangle ABC dessiné avec trois sommets étiquetés.', data: { shape: 'triangle', vertices: [{ x: 60, y: 150, label: 'A' }, { x: 150, y: 30, label: 'B' }, { x: 240, y: 150, label: 'C' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'A', label: 'CA' }] } } },
-  circle: { id: 'circle-concept', type: 'concept', title: 'Cercle de centre O', content: 'Tous les points d’un cercle sont à la même distance du centre O. Le diamètre mesure deux rayons.', key_points: [{ label: 'Rayon', text: 'Du centre au cercle' }, { label: 'Diamètre', text: 'Deux rayons alignés' }], takeaway: 'Astuce : la pointe du compas reste fixe.', visual: { kind: 'circle', purpose: 'Montrer le centre, le rayon et le diamètre.', alt_text: 'Cercle de centre O avec un rayon de 3 cm et un diamètre de 6 cm.', data: { center: { x: 150, y: 100, label: 'O' }, radius: 3, diameter: 6, unit: 'cm' } } },
-  angle: { id: 'angle-concept', type: 'concept', title: 'Angle de sommet O', content: 'Un angle est formé par deux demi-droites qui partent du même sommet O. On le mesure en degrés.', key_points: [{ label: 'Sommet', text: 'Le point O' }, { label: 'Mesure', text: 'En degrés' }], takeaway: 'Astuce : le rapporteur se pose au coin.', visual: { kind: 'angle', purpose: 'Montrer le sommet, les deux côtés et la mesure.', alt_text: 'Angle AOB de 45 degrés de sommet O.', data: { vertex: { x: 100, y: 150, label: 'O' }, rays: [{ x: 250, y: 150, label: 'A' }, { x: 206, y: 44, label: 'B' }], degrees: 45 } } },
-  symmetry: { id: 'symmetry-concept', type: 'concept', title: 'Symétrie axiale', content: 'Une figure et sa symétrique sont à la même distance de l’axe, de part et d’autre.', key_points: [{ label: 'Axe', text: 'Droite verticale x = 5' }, { label: 'Distance', text: 'Même nombre de carreaux' }], takeaway: 'Astuce : pense à un miroir.', visual: { kind: 'symmetry', purpose: 'Comparer une figure et sa symétrique sur quadrillage.', alt_text: 'Triangle et son symétrique par rapport à un axe vertical sur un quadrillage de 10 sur 8.', data: { axis: { x: 5 }, grid: { width: 10, height: 8 }, figure: [{ x: 2, y: 2 }, { x: 4, y: 2 }, { x: 4, y: 5 }], symmetric_figure: [{ x: 8, y: 2 }, { x: 6, y: 2 }, { x: 6, y: 5 }] } } },
+  rectangle: { id: 'rectangle-concept', type: 'concept', title: 'Rectangle ABCD', content: 'Un rectangle est un quadrilatère qui possède quatre angles droits. Ses côtés opposés ont la même longueur.', key_points: [{ label: 'Forme', text: '4 côtés' }, { label: 'Angles', text: '4 angles droits' }], takeaway: 'Pour vérifier une figure, commence par contrôler ses angles, puis compare les côtés opposés.', visual: { kind: 'rectangle', purpose: 'Nommer les sommets et les côtés.', alt_text: 'Rectangle ABCD dessiné avec quatre sommets étiquetés.', data: { shape: 'rectangle', vertices: [{ x: 45, y: 45, label: 'A' }, { x: 255, y: 45, label: 'B' }, { x: 255, y: 155, label: 'C' }, { x: 45, y: 155, label: 'D' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'D', label: 'CD' }, { from: 'D', to: 'A', label: 'DA' }] } } },
+  triangle: { id: 'triangle-concept', type: 'concept', title: 'Triangle ABC', content: 'Un triangle est un polygone formé de trois côtés et de trois sommets.', key_points: [{ label: 'Côtés', text: '3 côtés' }, { label: 'Sommets', text: '3 sommets' }], takeaway: 'Pour identifier un triangle, compte ses côtés et ses sommets.', visual: { kind: 'polygon', purpose: 'Nommer les côtés du triangle.', alt_text: 'Triangle ABC dessiné avec trois sommets étiquetés.', data: { shape: 'triangle', vertices: [{ x: 60, y: 150, label: 'A' }, { x: 150, y: 30, label: 'B' }, { x: 240, y: 150, label: 'C' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'A', label: 'CA' }] } } },
+  circle: { id: 'circle-concept', type: 'concept', title: 'Cercle de centre O', content: 'Tous les points d’un cercle sont à la même distance du centre O. Le diamètre mesure deux rayons.', key_points: [{ label: 'Rayon', text: 'Du centre au cercle' }, { label: 'Diamètre', text: 'Deux rayons alignés' }], takeaway: 'Je mesure le rayon puis je le double pour le diamètre.', visual: { kind: 'circle', purpose: 'Montrer le centre, le rayon et le diamètre.', alt_text: 'Cercle de centre O avec un rayon de 3 cm et un diamètre de 6 cm.', data: { center: { x: 150, y: 100, label: 'O' }, radius: 3, diameter: 6, unit: 'cm' } } },
+  angle: { id: 'angle-concept', type: 'concept', title: 'Angle de sommet O', content: 'Un angle est formé par deux demi-droites qui partent du même sommet O. On le mesure en degrés.', key_points: [{ label: 'Sommet', text: 'Le point O' }, { label: 'Mesure', text: 'En degrés' }], takeaway: 'Je place le centre du rapporteur sur le sommet.', visual: { kind: 'angle', purpose: 'Montrer le sommet, les deux côtés et la mesure.', alt_text: 'Angle AOB de 45 degrés de sommet O.', data: { vertex: { x: 100, y: 150, label: 'O' }, rays: [{ x: 250, y: 150, label: 'A' }, { x: 206, y: 44, label: 'B' }], degrees: 45 } } },
+  symmetry: { id: 'symmetry-concept', type: 'concept', title: 'Symétrie axiale', content: 'Une figure et son image symétrique se correspondent de part et d’autre d’un axe vertical.', key_points: [{ label: 'Repère', text: 'Axe vertical' }, { label: 'Correspondance', text: 'Même écart' }], takeaway: 'Place un point, compte les carreaux jusqu’à l’axe, puis reporte ce nombre de l’autre côté.', visual: { kind: 'symmetry', purpose: 'Comparer une figure et sa symétrique sur quadrillage.', alt_text: 'Triangle et son symétrique par rapport à un axe vertical sur un quadrillage de 10 sur 8.', data: { axis: { x: 5 }, grid: { width: 10, height: 8 }, figure: [{ x: 2, y: 2 }, { x: 4, y: 2 }, { x: 4, y: 5 }], symmetric_figure: [{ x: 8, y: 2 }, { x: 6, y: 2 }, { x: 6, y: 5 }] } } },
 };
 
 export const STAGING_ALL_GEOMETRY_KINDS = ['rectangle', 'triangle', 'circle', 'angle', 'symmetry'] as const;
@@ -180,11 +208,11 @@ export function stagingPromptVisualKinds(metadata: StagingLevelMetadata): string
 }
 
 /** Numeric prerequisite shown to the provider (validated in tests). */
-export const STAGING_NUMERIC_PREREQUISITE_EXAMPLE = { id: 'p1', description: 'Compter les sommets', check_question: 'Combien de sommets possède un carré ?', answer_type: 'numeric', expected_answer: '4', remediation_hint: 'Pose le doigt sur chaque coin et compte.' };
+export const STAGING_NUMERIC_PREREQUISITE_EXAMPLE = { id: 'p-angle-droit', description: 'Connaître la mesure d’un angle droit', type: 'numeric', prompt: 'Combien de degrés mesure un angle droit ?', expected_answer: 90, remediation_hint: 'Un angle droit correspond à un quart de tour.' };
 
-export const PREREQUISITE_ANSWER_RULE = 'Chaque prerequisite DOIT contenir expected_answer (jamais correct_answer ni answer). Si answer_type vaut "numeric", expected_answer est OBLIGATOIRE et ne contient que des chiffres (ex. "4", "90", "2,5"), sans unité ni mot. Si la réponse n’est pas un nombre, utilise answer_type "short_text".';
+export const PREREQUISITE_ANSWER_RULE = 'Chaque prerequisite numérique DOIT utiliser exactement type:"numeric", prompt et expected_answer numérique (ex. 12 ou 90). expected_answer est OBLIGATOIRE: ne l’omets jamais, ne le remplace pas par correct_answer, answer ou une chaîne, et ne l’infère pas dans le normalizer.';
 
-export const TAKEAWAY_RULE = 'Le takeaway est une IMAGE de mémoire très courte (au plus 8 mots, ex. "Astuce : pense à un miroir."): une comparaison ou un objet concret (miroir, pliage, doigt, équerre, compas), JAMAIS les étapes de la méthode. RÈGLE ZÉRO: aucun mot de 4 lettres ou plus du takeaway ne doit apparaître dans le content ou dans les key_points (ni le même verbe conjugué autrement). Si le content dit "je compte… puis je reporte…", le takeaway ne contient ni "compte" ni "reporte". Ne recopie jamais un takeaway d’exemple; invente le tien. Exemples interdits: "Je compte les carreaux jusqu’à l’axe puis je reporte de l’autre côté"; "Astuce : je compte et je reporte"; "Pour reconnaître un triangle, je compte ses trois sommets et ses trois côtés". Avant de répondre, relis chaque concept et vérifie la RÈGLE ZÉRO mot par mot.';
+export const TAKEAWAY_RULE = 'Le takeaway est une action, une méthode ou une vérification pratique pour l’élève, en 24 mots maximum. Il ne reformule ni le content ni les key_points: emploie une formulation différente et indique quoi faire.';
 export const CONCEPT_LENGTH_RULE = 'Le content de chaque concept compte au plus 40 mots (limite stricte 55, au-delà la leçon est rejetée): 1 à 3 phrases courtes. Les détails vont dans key_points, le visual ou un autre concept, jamais dans un long paragraphe.';
 export const KEY_POINT_RULE = 'Chaque key_point (label + text ensemble) contient au plus 5 mots importants et ne réutilise pas les mots du content: il nomme l’idée en 2 à 4 mots (ex. {"label":"Sommet","text":"Le point O"}), jamais une reformulation de la phrase du content (interdit: {"label":"Sommet","text":"Point de départ des deux demi-droites"} si le content parle déjà des deux demi-droites).';
 
@@ -196,7 +224,7 @@ export function stagingFullLevelExample(metadata: StagingLevelMetadata): Record<
   return {
     lesson_goal: 'Reconnaître et décrire une figure plane.',
     success_criteria: ['Je sais nommer les éléments de la figure.'],
-    prerequisites: [STAGING_NUMERIC_PREREQUISITE_EXAMPLE],
+    prerequisites: metadata.level_number === 2 ? [STAGING_NUMERIC_PREREQUISITE_EXAMPLE] : [],
     sequence: [
       { ...first, id: 'c1' },
       { ...second, id: 'c2' },
@@ -235,17 +263,21 @@ export function stagingLevelPrompt(topicName: string, grade: string, language: s
     'Le JSON doit contenir lesson_goal, success_criteria, prerequisites, sequence, misconceptions et mastery.',
     'sequence doit contenir exactement cinq blocs, dans cet ordre et avec ces types: concept, concept, guided_example, student_try, mastery_check.',
     'Chaque bloc doit contenir son propre id non vide, type canonique et content: une chaîne destinée à l’élève, non vide après trim. Aucun bloc ne peut contenir uniquement des métadonnées, une question ou des réponses sans content. Ne laisse jamais le compilateur inventer un id, un type ou du contenu.',
-    'Le content du concept explique la notion; celui de guided_example explique un exemple résolu; celui de student_try demande une action à l’élève; celui de mastery_check vérifie sa compréhension. Tous les cinq blocs doivent avoir un content réaliste en français.',
-    'Les concepts exigent title, key_points (1 à 4 objets {label, text}, rappels courts et distincts, pas une phrase copiée du content), takeaway et visual. guided_example exige context et steps; student_try exige question, answer_type, correct_answer, success_feedback et error_feedback; mastery_check exige 1 à 4 questions complètes.',
     CONCEPT_LENGTH_RULE,
     KEY_POINT_RULE,
     TAKEAWAY_RULE,
+    PREREQUISITE_ANSWER_RULE,
+    `Le content du concept explique progressivement le concept mathématique en 1 à 3 phrases courtes et en ${PEDAGOGICAL_CONCEPT_MAX_WORDS} mots maximum (limite exacte du validateur pour un concept structuré); key_points contient 2 ou 3 rappels factuels courts, sous forme de labels ou d’énoncés concis; takeaway donne une méthode pratique, une vérification ou une action à faire par l’élève en ${PEDAGOGICAL_TAKEAWAY_MAX_WORDS} mots maximum. Le takeaway ne doit jamais reformuler le content ou les key_points: emploie une formulation différente et centre-toi sur ce que l’élève doit faire. Le content de guided_example explique un exemple résolu de façon concise mais complète; celui de student_try demande une action à l’élève avec une consigne et un feedback concis; celui de mastery_check vérifie sa compréhension avec des questions complètes et concises. Tous les cinq blocs doivent avoir un content réaliste en français.`,
+    `Les concepts exigent title, key_points (exactement 2 ou 3 objets {label, text}, rappels factuels courts et distincts, pas une phrase copiée du content), takeaway actionnable de ${PEDAGOGICAL_TAKEAWAY_MAX_WORDS} mots maximum et visual. Tous les blocs interactifs (student_try et les questions de mastery_check) doivent utiliser exactement l’un de ces answer_type: ${ANSWER_TYPE_VALUES.join(', ')}; ne convertis jamais une valeur inconnue. guided_example exige context et steps concis mais complets; student_try exige question, answer_type autorisé, correct_answer, success_feedback et error_feedback concis; mastery_check exige 1 à 4 questions complètes et concises avec answer_type autorisé.`,
     'mastery doit être exactement {"skills":["étiquette courte 1","étiquette courte 2"],"threshold":0.8}: skills est un tableau de chaînes non vides, jamais un tableau d’objets, un objet ou un paragraphe.',
     'prerequisites et misconceptions doivent être des tableaux d’objets complets, jamais des tableaux de chaînes.',
-    PREREQUISITE_ANSWER_RULE,
-    'Exemple prerequisite valide: {"id":"p1","description":"Lire les longueurs","check_question":"Quel segment mesure 6 cm ?","answer_type":"short_text","expected_answer":"AB","remediation_hint":"Repère les lettres des extrémités."}',
-    'Exemple prerequisite numeric valide: ' + JSON.stringify(STAGING_NUMERIC_PREREQUISITE_EXAMPLE),
+    'Chaque prerequisite numérique doit utiliser exactement type:"numeric", prompt et expected_answer numérique; n’omets jamais expected_answer et ne le remplace jamais par une chaîne. Exemple niveau 2: {"id":"p-angle-droit","description":"Connaître la mesure d’un angle droit","type":"numeric","prompt":"Combien de degrés mesure un angle droit ?","expected_answer":90,"remediation_hint":"Un angle droit correspond à un quart de tour."}',
+    'Exemple prerequisite textuel canonique: {"id":"p1","description":"Lire les longueurs","check_question":"Quel segment mesure 6 cm ?","answer_type":"short_text","expected_answer":"AB","remediation_hint":"Repère les lettres des extrémités."}',
     'Exemple misconception valide: {"id":"m1","description":"Confondre rayon et diamètre","detect_if":"L’élève appelle rayon un segment qui traverse le centre","feedback":"Le rayon va du centre au cercle; le diamètre traverse le centre.","remediation_strategy":"Comparer les deux segments sur le dessin."}',
+    metadata.level_number === 3
+      ? 'Exemples interactifs valides pour la symétrie: student_try {"question":"Quel point est à la même distance de l’axe ?","answer_type":"multiple_choice","choices":["A","B"],"correct_answer":"B","success_feedback":"Oui.","error_feedback":"Compare les carreaux."}; mastery_check question {"id":"q-sym","question":"Explique comment reporter un point.","answer_type":"short_text","correct_answer":"Même nombre de carreaux de l’autre côté","skill":"symétrie","difficulty":1,"success_feedback":"Exact.","error_feedback":"Compte les carreaux."}. '
+      : '',
+    `answer_type autorisés: ${ANSWER_TYPE_VALUES.join(', ')}.`,
     VISUAL_FIELD_RULES,
     ...examples,
     'Exemple complet des cinq blocs et de mastery.skills (tous les content sont obligatoires): ' + JSON.stringify(stagingFullLevelExample(metadata)),
@@ -317,8 +349,9 @@ function visualGeometryIssues(lesson: Record<string, unknown>): Array<{ path: st
 export function validateStagingLevel(lesson: Record<string, unknown>, metadata: StagingLevelMetadata, topicName: string, grade: string): StagingValidation {
   const candidate = { version: '2.1', topic_goal: topicName, levels: [{ ...metadata, lesson }] };
   const canonical = validateLessonV21(candidate);
+  const localPath = (path: string) => path.replace(/^levels\[0\]\.lesson\.?/, '');
   return {
-    canonicalIssues: [...(canonical.success ? [] : canonical.issues.map((issue) => ({ path: issue.path, message: issue.message }))), ...stagingSequenceContractIssues(lesson, metadata)],
+    canonicalIssues: [...(canonical.success ? [] : canonical.issues.map((issue) => ({ path: localPath(issue.path), message: issue.message }))), ...stagingSequenceContractIssues(lesson, metadata)],
     pedagogicalIssues: pedagogicalIssues(lesson, grade, topicName),
     geometryIssues: visualGeometryIssues(lesson),
   };

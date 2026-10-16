@@ -45,8 +45,11 @@ export function geometryVisualDataErrors(kind: string, data: unknown, basePath =
     }
     case 'symmetry': {
       const errors: GeometryContractIssue[] = [];
-      if (!(point(d.axis) || (obj(d.axis) && (finite(d.axis.x) || finite(d.axis.y))) || (typeof d.axis === 'string' && d.axis.trim()))) errors.push(issue(`${basePath}.axis`, 'missing_geometry_data', 'A renderable symmetry axis is required.'));
-      if (!obj(d.grid) || !finite(d.grid.width) || !finite(d.grid.height)) errors.push(issue(`${basePath}.grid`, 'missing_geometry_data', 'Grid width and height are required.'));
+      const axis = obj(d.axis) ? d.axis : null;
+      const axisKeys = axis ? Object.keys(axis).filter((key) => key === 'x' || key === 'y') : [];
+      const hasExactlyOneAxisCoordinate = !!axis && axisKeys.length === 1 && ((axisKeys[0] === 'x' && finite(axis.x)) || (axisKeys[0] === 'y' && finite(axis.y)));
+      if (!hasExactlyOneAxisCoordinate) errors.push(issue(`${basePath}.axis`, 'missing_geometry_data', 'Symmetry axis must be an object with exactly one finite x or y coordinate.'));
+      if (!obj(d.grid) || !finite(d.grid.width) || d.grid.width <= 0 || !finite(d.grid.height) || d.grid.height <= 0) errors.push(issue(`${basePath}.grid`, 'missing_geometry_data', 'Grid width and height must be positive numbers.'));
       errors.push(...points(d, 'figure', 2, basePath, ['original']));
       errors.push(...points(d, 'symmetric_figure', 2, basePath, ['reflected']));
       return errors;

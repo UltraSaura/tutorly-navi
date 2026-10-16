@@ -34,7 +34,7 @@ const object = (value: unknown): Record<string, unknown> | null =>
 
 const point = (value: unknown) => {
   const item = object(value);
-  return item && Number.isFinite(Number(item.x)) && Number.isFinite(Number(item.y));
+  return item && typeof item.x === 'number' && Number.isFinite(item.x) && typeof item.y === 'number' && Number.isFinite(item.y);
 };
 
 const points = (value: unknown) => Array.isArray(value) && value.length >= 2 && value.every(point);
@@ -69,8 +69,9 @@ function geometryIssuesForVisual(kind: string, data: unknown, path: string): Val
   if (kind === 'symmetry') {
     const axis = object(d.axis);
     const grid = object(d.grid);
-    const axisOk = !!axis && (typeof axis.x === 'number' && Number.isFinite(axis.x) || typeof axis.y === 'number' && Number.isFinite(axis.y));
-    return axisOk && points(d.original ?? d.figure) && points(d.reflected ?? d.symmetric_figure) && grid && Number(grid.width) > 0 && Number(grid.height) > 0
+    const axisKeys = axis ? Object.keys(axis).filter((key) => key === 'x' || key === 'y') : [];
+    const axisOk = !!axis && axisKeys.length === 1 && ((axisKeys[0] === 'x' && typeof axis.x === 'number' && Number.isFinite(axis.x)) || (axisKeys[0] === 'y' && typeof axis.y === 'number' && Number.isFinite(axis.y)));
+    return axisOk && points(d.original ?? d.figure) && points(d.reflected ?? d.symmetric_figure) && grid && typeof grid.width === 'number' && Number.isFinite(grid.width) && grid.width > 0 && typeof grid.height === 'number' && Number.isFinite(grid.height) && grid.height > 0
       ? [] : [issue('', 'Symmetry requires an axis, grid dimensions, and original/reflected point sets.')];
   }
   return [];
@@ -139,6 +140,13 @@ export const CM2_GEOMETRY_TOPIC_ID = 'e5003f68-f3aa-404b-85a9-847cdb103a81';
 /** Fixture/staging copies that must never be silently selected for CM2 generation. */
 export const FIXTURE_TOPIC_IDS = ['185f20b5-d698-446d-80e8-c3c462819b94'] as const;
 
+export function assertExplicitStagingTopicId(topicId: string | null | undefined): string {
+  const value = (topicId ?? '').trim();
+  if (!value) throw new Error('staging_topic_id_required: choose the topic explicitly before generating.');
+  if ((FIXTURE_TOPIC_IDS as readonly string[]).includes(value)) throw new Error(`fixture_topic_refused: ${value} is a fixture topic and cannot be selected for staging generation.`);
+  return value;
+}
+
 export function assertGenerationTopic(topicId: string | null | undefined, expected = CM2_GEOMETRY_TOPIC_ID): string {
   const value = (topicId ?? '').trim();
   if (!value) throw new Error('staging_topic_id_required: choose the topic explicitly before generating.');
@@ -157,16 +165,27 @@ export function buildDraftInsertPayload(topicId: string, lessonContent: unknown,
   return { topic_id: topicId, lesson_content: lessonContent, status: 'draft' as const, created_by: userId };
 }
 
-export async function generateStagingDraft(topicId: string, modelId?: string) {
-  assertGenerationTopic(topicId);
+export async function generateStagingDraft(topicId: string, modelId?: string, expectedTopicId: string | null = CM2_GEOMETRY_TOPIC_ID, language: 'fr' | 'en' = 'fr') {
+  const requested = topicId.trim();
+  if (!requested) throw new Error('staging_topic_id_required: choose the topic explicitly before generating.');
+  if (expectedTopicId === null) {
+    assertExplicitStagingTopicId(requested);
+  } else {
+    assertGenerationTopic(requested, expectedTopicId);
+  }
   const { data, error, response } = await supabase.functions.invoke('generate-lesson-content', {
-    body: { mode: 'staging_draft', topicId, modelId, allowPaidRepair: false },
+    body: { mode: 'staging_draft', topicId: requested, modelId, language, allowPaidRepair: false },
   });
   if (error && response) {
     const payload = await response.clone().json().catch(() => null);
     const message = formatGenerationError(payload ?? error.message);
     const technicalDetail = getGenerationErrorTechnicalDetail(payload);
-    throw new Error(technicalDetail ? `${message}\n${technicalDetail}` : message);
+    const nested = payload && typeof payload === 'object' && 'error' in payload && payload.error && typeof payload.error === 'object' ? payload.error as Record<string, unknown> : {};
+    throw Object.assign(new Error(technicalDetail ? `${message}\n${technicalDetail}` : message), {
+      providerCalls: Number(nested.providerCalls ?? (payload as Record<string, unknown> | null)?.providerCalls ?? 0),
+      failedLevel: Number(nested.level ?? (payload as Record<string, unknown> | null)?.level ?? 0) || undefined,
+      failureStage: nested.stage ?? (payload as Record<string, unknown> | null)?.stage,
+    });
   }
   if (error) throw error;
   // Staging generation makes one provider request per level (the server
@@ -180,15 +199,16 @@ export async function generateStagingDraft(topicId: string, modelId?: string) {
       ?? (data?.success && data?.lesson_content ? `Unexpected providerCalls value: ${String(data?.providerCalls)}` : undefined);
     throw new Error(technicalDetail ? `${message}\n${technicalDetail}` : message);
   }
-  assertReturnedTopicMatches(topicId, data.topic_id);
-  return data as { lesson_content: unknown; topic_id: string; providerCalls: number; canonicalValid: true; pedagogicalValid: true };
+  assertReturnedTopicMatches(requested, data.topic_id);
+  return data as { lesson_content: unknown; topic_id: string; providerCalls: number; canonicalValid: true; pedagogicalValid: true; geometryValid: true; progress?: Array<{ level: number; status: string; providerCalls: number; tokenUsage?: unknown }> };
 }
 
-export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId): Promise<LessonVersion> {
-  assertGenerationTopic(topicId);
+export async function saveDraftVersion(topicId: string, lessonContent: unknown, returnedTopicId: unknown = topicId, expectedTopicId: string | null = CM2_GEOMETRY_TOPIC_ID): Promise<LessonVersion> {
+  if (expectedTopicId === null) assertExplicitStagingTopicId(topicId);
+  else assertGenerationTopic(topicId, expectedTopicId);
   assertReturnedTopicMatches(topicId, returnedTopicId);
   const validation = validateLessonVersion(lessonContent);
-  if (!validation.canonicalValid || !validation.pedagogicalValid) {
+  if (!validation.canonicalValid || !validation.pedagogicalValid || !validation.geometryValid) {
     throw new Error(JSON.stringify({ code: 'draft_validation_failed', validation }));
   }
   const { data: { user }, error: userError } = await supabase.auth.getUser();

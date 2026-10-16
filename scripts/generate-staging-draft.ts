@@ -150,9 +150,20 @@ function responseErrorFields(body: unknown): Record<string, unknown> {
   if (!isRecord(body) || !isRecord(body.error)) return {};
   const error = body.error;
   const result: Record<string, unknown> = {};
-  for (const key of ['code', 'level', 'stage', 'providerCalls']) {
+  for (const key of ['code', 'message', 'technicalDetail', 'level', 'stage', 'providerCalls', 'requestId']) {
     if (typeof error[key] === 'string' || typeof error[key] === 'number') result[key] = error[key];
   }
+  return result;
+}
+
+function safeErrorResponseBody(body: unknown): Record<string, unknown> {
+  if (!isRecord(body)) return {};
+  const result: Record<string, unknown> = {};
+  for (const key of ['success', 'ok', 'progress', 'paidRepairSkipped']) {
+    if (body[key] !== undefined) result[key] = body[key];
+  }
+  const error = responseErrorFields(body);
+  if (Object.keys(error).length > 0) result.error = error;
   return result;
 }
 
@@ -171,7 +182,7 @@ export async function executeStagingDraft(deps: RunnerDependencies, explicitTopi
   const response = await deps.invoke(auth.accessToken, topic.id);
   if (!response.ok) {
     const fields = responseErrorFields(response.body);
-    const failure = { ok: false, requestId: responseRequestId(response), httpStatus: response.status, providerCalls: Number(fields.providerCalls ?? 0), databaseWrite: false, ...fields };
+    const failure = { ok: false, requestId: responseRequestId(response), httpStatus: response.status, providerCalls: Number(fields.providerCalls ?? 0), databaseWrite: false, responseBody: safeErrorResponseBody(response.body), ...fields };
     throw Object.assign(new Error('edge_function_failed'), { safeResult: failure });
   }
 

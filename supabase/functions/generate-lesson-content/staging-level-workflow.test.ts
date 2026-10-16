@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { geometryDraftLesson } from '../../../src/components/admin/learning/geometryDraft.ts';
+import { PEDAGOGICAL_CONCEPT_MAX_WORDS, PEDAGOGICAL_TAKEAWAY_MAX_WORDS } from './pedagogical-quality.ts';
+import { ANSWER_TYPE_VALUES } from './lesson-v21-contract.ts';
 import {
   assembleStagingLesson,
   parseStagingLevelResponse,
@@ -7,6 +9,7 @@ import {
   requiredGeometryKindsIssues,
   stagingLevelMetadata,
   stagingLevelPrompt,
+  STAGING_VISUAL_EXAMPLES,
   stagingSequenceContractIssues,
   stagingTokenUsage,
   stagingValidationFailure,
@@ -19,12 +22,36 @@ const lesson = geometryDraftLesson.levels[0].lesson as unknown as Record<string,
 
 const validLevel1 = structuredClone(lesson) as any;
 validLevel1.sequence = [
-  { ...validLevel1.sequence[0], id: 'rectangle-concept', type: 'concept', content: 'Un rectangle est un quadrilatère dont les quatre angles sont droits. Ses côtés opposés ont la même longueur.', key_points: [{ label: 'Angles', text: '4 angles droits' }, { label: 'Longueurs', text: 'Côtés opposés de même longueur' }], takeaway: 'Je vérifie les angles puis les côtés opposés.' },
-  { ...validLevel1.sequence[1], id: 'triangle-concept', type: 'concept', content: 'Les segments AB, BC et CA ferment une figure à trois points.', key_points: [{ label: 'Repérage', text: 'Trois sommets nommés' }], takeaway: 'Je commence par relever les lettres.' },
+  { ...validLevel1.sequence[0], ...structuredClone(STAGING_VISUAL_EXAMPLES.rectangle) },
+  { ...validLevel1.sequence[1], ...structuredClone(STAGING_VISUAL_EXAMPLES.triangle) },
   { id: 'guided-example', type: 'guided_example', content: 'On repère les sommets puis les côtés.', context: 'Décrire une figure plane.', steps: [{ instruction: 'Nommer les sommets.', reason: 'Chaque sommet porte une lettre.' }], visual: validLevel1.sequence[2].visual },
   { id: 'student-try', type: 'student_try', content: 'À toi de reconnaître la figure.', question: 'Combien de sommets possède un rectangle ?', answer_type: 'numeric', correct_answer: 4, success_feedback: 'Correct.', error_feedback: 'Compte les sommets.', visual: validLevel1.sequence[3].visual },
   { id: 'mastery-check', type: 'mastery_check', content: 'Vérifie ta maîtrise.', questions: [{ id: 'mastery-q1', question: 'Quel est le nombre de côtés d’un triangle ?', answer_type: 'numeric', correct_answer: 3, skill: 'figures_planes', difficulty: 1, success_feedback: 'Correct.', error_feedback: 'Un triangle a trois côtés.' }], visual: validLevel1.sequence[4].visual },
 ];
+
+const maxLengthConcept = (base: string) => {
+  const words = base.trim().split(/\s+/);
+  return [...words, ...Array.from({ length: Math.max(0, PEDAGOGICAL_CONCEPT_MAX_WORDS - words.length) }, (_, index) => `repère${index}`)].join(' ');
+};
+
+const overlongTakeaway = Array.from({ length: PEDAGOGICAL_TAKEAWAY_MAX_WORDS + 1 }, (_, index) => `action${index}`).join(' ');
+
+const validNumericPrerequisite = {
+  id: 'p-angle-droit',
+  description: 'Connaître la mesure d’un angle droit',
+  type: 'numeric',
+  prompt: 'Combien de degrés mesure un angle droit ?',
+  expected_answer: 90,
+  remediation_hint: 'Un angle droit correspond à un quart de tour.',
+};
+
+const level2Candidate = () => {
+  const candidate = structuredClone(validLevel1) as any;
+  candidate.prerequisites = [structuredClone(validNumericPrerequisite)];
+  candidate.sequence[0] = { ...candidate.sequence[0], ...structuredClone(STAGING_VISUAL_EXAMPLES.circle), id: 'circle-concept' };
+  candidate.sequence[1] = { ...candidate.sequence[1], ...structuredClone(STAGING_VISUAL_EXAMPLES.angle), id: 'angle-concept' };
+  return candidate;
+};
 
 describe('staging level workflow', () => {
   it('assembles four independently valid level responses into one canonical lesson', () => {
@@ -59,14 +86,81 @@ describe('staging level workflow', () => {
     expect(result.canonicalIssues).toEqual([]);
   });
 
+  it('accepts the exact numeric staging prerequisite shape and answer', () => {
+    const result = validateStagingLevel(level2Candidate(), metadata[1], topicName, 'CM2');
+    expect(result.canonicalIssues).toEqual([]);
+    expect(result.pedagogicalIssues).toEqual([]);
+    expect(result.geometryIssues).toEqual([]);
+  });
+
+  it('rejects a numeric prerequisite without expected_answer', () => {
+    const candidate = level2Candidate();
+    delete candidate.prerequisites[0].expected_answer;
+    const result = validateStagingLevel(candidate, metadata[1], topicName, 'CM2');
+    expect(result.canonicalIssues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ path: 'prerequisites[0].expected_answer', message: 'Required value' }),
+      expect.objectContaining({ path: 'prerequisites[0].expected_answer', message: 'Numeric prerequisite requires a numeric expected answer' }),
+    ]));
+    expect(result.pedagogicalIssues).toEqual([]);
+  });
+
+  it('rejects a numeric prerequisite with a non-numeric expected_answer', () => {
+    const candidate = level2Candidate();
+    candidate.prerequisites[0].expected_answer = 'ninety';
+    const result = validateStagingLevel(candidate, metadata[1], topicName, 'CM2');
+    expect(result.canonicalIssues).toContainEqual(expect.objectContaining({
+      path: 'prerequisites[0].expected_answer',
+      message: 'Numeric prerequisite requires a numeric expected answer',
+    }));
+    expect(stagingSequenceContractIssues(candidate, metadata[1])).toContainEqual({
+      path: 'prerequisites[0].expected_answer',
+      message: 'Numeric prerequisite requires a numeric expected answer',
+    });
+  });
+
+  it('rejects a legacy numeric prerequisite that omits the staging type and prompt', () => {
+    const candidate = level2Candidate();
+    candidate.prerequisites[0] = { id: 'p-angle', description: 'Mesurer un angle droit', check_question: 'Combien de degrés ?', answer_type: 'numeric', expected_answer: 90, remediation_hint: 'Un quart de tour.' };
+    const result = validateStagingLevel(candidate, metadata[1], topicName, 'CM2');
+    expect(stagingSequenceContractIssues(candidate, metadata[1])).toEqual(expect.arrayContaining([
+      { path: 'prerequisites[0].type', message: 'Numeric prerequisite must use type "numeric"' },
+      { path: 'prerequisites[0].prompt', message: 'Numeric prerequisite requires prompt' },
+    ]));
+    expect(result.canonicalIssues).toEqual(expect.arrayContaining([
+      { path: 'prerequisites[0].type', message: 'Numeric prerequisite must use type "numeric"' },
+      { path: 'prerequisites[0].prompt', message: 'Numeric prerequisite requires prompt' },
+    ]));
+  });
+
+  it('reproduces the exact version-162 level-2 failure without retry or database write', () => {
+    const candidate = level2Candidate();
+    candidate.prerequisites.push({ ...structuredClone(validNumericPrerequisite), id: 'p-angle', expected_answer: undefined });
+    candidate.sequence[1].key_points = [{ label: 'Résumé', text: 'Un angle est formé par deux demi-droites qui partent du même sommet O et se mesure en degrés.' }, { label: 'Rappel', text: 'Deux demi-droites' }];
+    const result = validateStagingLevel(candidate, metadata[1], topicName, 'CM2');
+    expect(result.canonicalIssues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ path: 'prerequisites[1].expected_answer', message: 'Required value' }),
+      expect.objectContaining({ path: 'prerequisites[1].expected_answer', message: 'Numeric prerequisite requires a numeric expected answer' }),
+    ]));
+    expect(result.pedagogicalIssues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ path: 'sequence[1].key_points', message: expect.stringContaining('partagent trop de tokens') }),
+    ]));
+    expect(candidate.prerequisites[1].expected_answer).toBeUndefined();
+    expect(candidate.sequence[1].key_points[0].text).toContain('deux demi-droites');
+  });
+
+  it('accepts level-2 key_points as concise facts distinct from explanation and takeaway', () => {
+    const result = validateStagingLevel(level2Candidate(), metadata[1], topicName, 'CM2');
+    expect(result.pedagogicalIssues).toEqual([]);
+  });
+
   it('rejects string prerequisites and misconceptions', () => {
     const candidate = structuredClone(validLevel1) as any;
     candidate.prerequisites = ['Lire une longueur'];
     candidate.misconceptions = ['Confondre rayon et diamètre'];
     const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
     expect(result.canonicalIssues.map((issue) => issue.path)).toEqual(expect.arrayContaining([
-      'levels[0].lesson.prerequisites[0]',
-      'levels[0].lesson.misconceptions[0]',
+      'prerequisites[0]',
+      'misconceptions[0]',
     ]));
   });
 
@@ -76,24 +170,28 @@ describe('staging level workflow', () => {
     candidate.misconceptions = [{ id: 'm1' }];
     const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
     expect(result.canonicalIssues.map((issue) => issue.path)).toEqual(expect.arrayContaining([
-      'levels[0].lesson.prerequisites[0].description',
-      'levels[0].lesson.prerequisites[0].check_question',
-      'levels[0].lesson.prerequisites[0].remediation_hint',
-      'levels[0].lesson.misconceptions[0].description',
-      'levels[0].lesson.misconceptions[0].detect_if',
-      'levels[0].lesson.misconceptions[0].feedback',
-      'levels[0].lesson.misconceptions[0].remediation_strategy',
+      'prerequisites[0].description',
+      'prerequisites[0].check_question',
+      'prerequisites[0].remediation_hint',
+      'misconceptions[0].description',
+      'misconceptions[0].detect_if',
+      'misconceptions[0].feedback',
+      'misconceptions[0].remediation_strategy',
     ]));
   });
 
   it('requires the real object fields in the compact prompt', () => {
     const prompt = stagingLevelPrompt(topicName, 'CM2', 'fr', metadata[0], 'geometry');
     expect(prompt).toContain('check_question');
+    expect(prompt).toContain('type":"numeric"');
+    expect(prompt).toContain('expected_answer":90');
     expect(prompt).toContain('remediation_hint');
     expect(prompt).toContain('detect_if');
     expect(prompt).toContain('remediation_strategy');
     expect(prompt).toContain('jamais des tableaux de chaînes');
     expect(prompt).toContain('Tous les cinq blocs');
+    expect(prompt).toContain('2 ou 3 rappels factuels courts');
+    expect(prompt).toContain('Le takeaway ne doit jamais reformuler');
     expect(prompt).toContain('Exemple complet des cinq blocs');
     expect(prompt).toContain('À toi: compte les sommets');
     expect(prompt).toContain('Vérifie ta compréhension');
@@ -109,7 +207,7 @@ describe('staging level workflow', () => {
 
   it('accepts mastery.skills as the canonical non-empty string array', () => {
     const result = validateStagingLevel(validLevel1, metadata[0], topicName, 'CM2');
-    expect(result.canonicalIssues).not.toEqual(expect.arrayContaining([expect.objectContaining({ path: 'levels[0].lesson.mastery.skills' })]));
+    expect(result.canonicalIssues).not.toEqual(expect.arrayContaining([expect.objectContaining({ path: 'mastery.skills' })]));
     expect(validLevel1.mastery.skills).toEqual(['figures_planes']);
   });
 
@@ -121,7 +219,7 @@ describe('staging level workflow', () => {
     candidate.mastery.skills = skills;
     const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
     expect(result.canonicalIssues).toEqual(expect.arrayContaining([
-      expect.objectContaining({ path: 'levels[0].lesson.mastery.skills', message: 'Expected 0–many non-empty strings' }),
+      expect.objectContaining({ path: 'mastery.skills', message: 'Expected 0–many non-empty strings' }),
     ]));
   });
 
@@ -129,9 +227,158 @@ describe('staging level workflow', () => {
     const result = validateStagingLevel(validLevel1, metadata[0], topicName, 'CM2');
     expect(result.pedagogicalIssues).toEqual([]);
     expect(validLevel1.sequence[0].key_points).toEqual([
+      { label: 'Forme', text: '4 côtés' },
       { label: 'Angles', text: '4 angles droits' },
-      { label: 'Longueurs', text: 'Côtés opposés de même longueur' },
     ]);
+  });
+
+  it('accepts a structured concept at the pedagogical maximum of 55 words', () => {
+    const candidate = structuredClone(validLevel1) as any;
+    candidate.sequence[0].content = maxLengthConcept(STAGING_VISUAL_EXAMPLES.rectangle.content as string);
+    expect(candidate.sequence[0].content.trim().split(/\s+/)).toHaveLength(PEDAGOGICAL_CONCEPT_MAX_WORDS);
+    const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
+    expect(result.pedagogicalIssues).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ path: 'sequence[0].content', message: expect.stringContaining('Concept structuré trop long') }),
+    ]));
+  });
+
+  it('rejects a structured concept above the exact 55-word limit', () => {
+    const candidate = structuredClone(validLevel1) as any;
+    candidate.sequence[0].content = `${maxLengthConcept(STAGING_VISUAL_EXAMPLES.rectangle.content as string)} supplémentaire`;
+    const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
+    expect(result.pedagogicalIssues).toContainEqual(expect.objectContaining({ path: 'sequence[0].content', message: 'Concept structuré trop long (56 mots); garder une introduction de 1 à 3 phrases.' }));
+    expect(stagingSequenceContractIssues(candidate, metadata[0])).toContainEqual({ path: 'sequence[0].content', message: 'Expected at most 55 words for a structured concept' });
+  });
+
+  it('accepts a concise actionable takeaway within the exact 24-word limit', () => {
+    const candidate = structuredClone(validLevel1) as any;
+    candidate.sequence[0].takeaway = 'Pour vérifier une figure, contrôle les angles, puis compare les côtés opposés avant de conclure.';
+    expect(candidate.sequence[0].takeaway.trim().split(/\s+/).length).toBeLessThanOrEqual(PEDAGOGICAL_TAKEAWAY_MAX_WORDS);
+    const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
+    expect(result.pedagogicalIssues).not.toContainEqual(expect.objectContaining({ path: 'sequence[0].takeaway', message: 'Le takeaway doit rester concis.' }));
+  });
+
+  it('rejects an overlong takeaway above the exact 24-word limit', () => {
+    const candidate = structuredClone(validLevel1) as any;
+    candidate.sequence[0].takeaway = overlongTakeaway;
+    const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
+    expect(result.pedagogicalIssues).toContainEqual({ path: 'sequence[0].takeaway', message: 'Le takeaway doit rester concis.' });
+    expect(stagingSequenceContractIssues(candidate, metadata[0])).toContainEqual({ path: 'sequence[0].takeaway', message: 'Expected at most 24 words' });
+  });
+
+  it('reports every path from the exact observed version-160 invalid response', () => {
+    const candidate = structuredClone(validLevel1) as any;
+    candidate.sequence[0].takeaway = overlongTakeaway;
+    candidate.sequence[1].content = `${maxLengthConcept(STAGING_VISUAL_EXAMPLES.triangle.content as string)} ${Array.from({ length: 18 }, (_, index) => `mot${index}`).join(' ')}`;
+    candidate.sequence[1].takeaway = overlongTakeaway;
+    const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
+    expect(result.pedagogicalIssues).toEqual(expect.arrayContaining([
+      { path: 'sequence[0].takeaway', message: 'Le takeaway doit rester concis.' },
+      { path: 'sequence[1].content', message: 'Concept structuré trop long (73 mots); garder une introduction de 1 à 3 phrases.' },
+      { path: 'sequence[1].takeaway', message: 'Le takeaway doit rester concis.' },
+    ]));
+  });
+
+  it('accepts the distinct rectangle and triangle content, reminders, and actions', () => {
+    const result = validateStagingLevel(validLevel1, metadata[0], topicName, 'CM2');
+    expect(result).toEqual({ canonicalIssues: [], pedagogicalIssues: [], geometryIssues: [] });
+    expect(validLevel1.sequence[0]).toMatchObject(STAGING_VISUAL_EXAMPLES.rectangle);
+    expect(validLevel1.sequence[1]).toMatchObject(STAGING_VISUAL_EXAMPLES.triangle);
+  });
+
+  it.each(ANSWER_TYPE_VALUES)('accepts allowed answer_type %s in every interactive question', (answerType) => {
+    const candidate = structuredClone(validLevel1) as any;
+    candidate.sequence[3].answer_type = answerType;
+    candidate.sequence[4].questions[0].answer_type = answerType;
+    const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
+    expect(result.canonicalIssues).not.toEqual(expect.arrayContaining([expect.objectContaining({ path: 'sequence[3].answer_type' })]));
+    expect(result.canonicalIssues).not.toEqual(expect.arrayContaining([expect.objectContaining({ path: 'sequence[4].questions[0].answer_type' })]));
+  });
+
+  it.each(['boolean', 'freeform', 'multipleChoice', 'unknown'])('reports unsupported answer_type %s with its received value', (answerType) => {
+    const candidate = structuredClone(validLevel1) as any;
+    candidate.sequence[3].answer_type = answerType;
+    const result = validateStagingLevel(candidate, metadata[0], topicName, 'CM2');
+    expect(result.canonicalIssues).toContainEqual({
+      path: 'sequence[3].answer_type',
+      message: `Unsupported answer type "${answerType}". Allowed values: ${ANSWER_TYPE_VALUES.join(', ')}`,
+    });
+  });
+
+  it('accepts complete symmetry concepts with distinct pedagogical roles', () => {
+    const candidate = structuredClone(validLevel1) as any;
+    candidate.sequence[0] = { ...candidate.sequence[0], ...structuredClone(STAGING_VISUAL_EXAMPLES.symmetry), id: 'symmetry-concept-1' };
+    candidate.sequence[1] = { ...candidate.sequence[1], ...structuredClone(STAGING_VISUAL_EXAMPLES.symmetry), id: 'symmetry-concept-2' };
+    const result = validateStagingLevel(candidate, metadata[2], topicName, 'CM2');
+    expect(result.canonicalIssues).toEqual([]);
+    expect(result.pedagogicalIssues).toEqual([]);
+    expect(result.geometryIssues).toEqual([]);
+  });
+
+  it('rejects repeated symmetry fields with exact local paths', () => {
+    const candidate = structuredClone(validLevel1) as any;
+    candidate.sequence[0] = { ...candidate.sequence[0], ...structuredClone(STAGING_VISUAL_EXAMPLES.symmetry), id: 'symmetry-concept-1' };
+    candidate.sequence[1] = { ...candidate.sequence[1], ...structuredClone(STAGING_VISUAL_EXAMPLES.symmetry), id: 'symmetry-concept-2' };
+    candidate.sequence[0].key_points = [{ label: 'Résumé', text: candidate.sequence[0].content }, { label: 'Rappel', text: 'Même distance' }];
+    candidate.sequence[0].takeaway = candidate.sequence[0].content;
+    candidate.sequence[1].key_points = [{ label: 'Résumé', text: candidate.sequence[1].content }, { label: 'Rappel', text: 'Même distance' }];
+    candidate.sequence[1].takeaway = candidate.sequence[1].content;
+    const result = validateStagingLevel(candidate, metadata[2], topicName, 'CM2');
+    expect(result.pedagogicalIssues.map((issue) => issue.path)).toEqual(expect.arrayContaining([
+      'sequence[0].key_points', 'sequence[0].takeaway', 'sequence[1].key_points', 'sequence[1].takeaway',
+    ]));
+  });
+
+  it('maps the exact version-161 per-level response to user-facing level 3', () => {
+    const candidate = structuredClone(validLevel1) as any;
+    candidate.sequence[0] = { ...candidate.sequence[0], ...structuredClone(STAGING_VISUAL_EXAMPLES.symmetry), id: 'symmetry-concept-1' };
+    candidate.sequence[1] = { ...candidate.sequence[1], ...structuredClone(STAGING_VISUAL_EXAMPLES.symmetry), id: 'symmetry-concept-2' };
+    candidate.sequence[3].answer_type = 'unsupported_value';
+    candidate.sequence[0].key_points = [{ label: 'Résumé', text: candidate.sequence[0].content }, { label: 'Rappel', text: 'Même distance' }];
+    candidate.sequence[0].takeaway = candidate.sequence[0].content;
+    candidate.sequence[1].key_points = [{ label: 'Résumé', text: candidate.sequence[1].content }, { label: 'Rappel', text: 'Même distance' }];
+    candidate.sequence[1].takeaway = candidate.sequence[1].content;
+    const result = validateStagingLevel(candidate, metadata[2], topicName, 'CM2');
+    expect(result.canonicalIssues).toContainEqual(expect.objectContaining({ path: 'sequence[3].answer_type', message: expect.stringContaining('"unsupported_value"') }));
+    expect(result.pedagogicalIssues.map((issue) => issue.path)).toEqual(expect.arrayContaining(['sequence[0].takeaway', 'sequence[1].takeaway']));
+    const failure = stagingValidationFailure(metadata[2].level_number, [...result.canonicalIssues, ...result.pedagogicalIssues], 3);
+    expect(failure.level).toBe(3);
+    expect(failure.technicalDetail).toContain('sequence[3].answer_type');
+    expect(failure.technicalDetail).not.toContain('levels[0].lesson');
+  });
+
+  it('rejects the exact version-158 level-1 response with field-specific takeaway paths', () => {
+    const rejected = structuredClone(validLevel1) as any;
+    rejected.sequence[0].takeaway = 'Pour reconnaitre un rectangle, vérifie ses quatre angles droits et ses côtés opposés égaux.';
+    rejected.sequence[1].takeaway = 'Pour reconnaitre un triangle, compte ses trois sommets et ses côtés.';
+    const result = validateStagingLevel(rejected, metadata[0], topicName, 'CM2');
+    expect(result.pedagogicalIssues.filter((issue) => issue.path.endsWith('.takeaway')).map((issue) => issue.path)).toEqual(expect.arrayContaining([
+      'sequence[0].takeaway',
+      'sequence[1].takeaway',
+    ]));
+    expect(rejected.sequence[0].takeaway).toContain('rectangle');
+    expect(rejected.sequence[1].takeaway).toContain('triangle');
+  });
+
+  it('rejects a repeated takeaway without rewriting it', () => {
+    const rejected = structuredClone(validLevel1) as any;
+    rejected.sequence[0].takeaway = rejected.sequence[0].content;
+    rejected.sequence[1].takeaway = rejected.sequence[1].key_points.map((point: any) => `${point.label} ${point.text}`).join(' ');
+    const result = validateStagingLevel(rejected, metadata[0], topicName, 'CM2');
+    expect(result.pedagogicalIssues.filter((issue) => issue.path.endsWith('.takeaway')).map((issue) => issue.path)).toEqual(expect.arrayContaining([
+      'sequence[0].takeaway',
+      'sequence[1].takeaway',
+    ]));
+    expect(rejected.sequence[0].takeaway).toBe(rejected.sequence[0].content);
+  });
+
+  it('requires a takeaway and two or three key points in the compact contract', () => {
+    const missingTakeaway = structuredClone(validLevel1) as any;
+    delete missingTakeaway.sequence[0].takeaway;
+    expect(stagingSequenceContractIssues(missingTakeaway, metadata[0])).toContainEqual({ path: 'sequence[0].takeaway', message: 'Required non-empty string' });
+    const oneKeyPoint = structuredClone(validLevel1) as any;
+    oneKeyPoint.sequence[0].key_points = [oneKeyPoint.sequence[0].key_points[0]];
+    expect(stagingSequenceContractIssues(oneKeyPoint, metadata[0])).toContainEqual({ path: 'sequence[0].key_points', message: 'Expected 2–3 concise factual key point objects' });
   });
 
   it('rejects copied or repetitive key_points without rewriting them', () => {
