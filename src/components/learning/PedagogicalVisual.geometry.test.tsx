@@ -67,3 +67,16 @@ describe('PedagogicalVisual geometry data', () => {
     expect(render('clock', { hour: 3, minute: 0 })).toContain('Horloge pédagogique');
   });
 });
+
+import { circleDisplayRadius } from './PedagogicalVisual';
+describe('circle centimetre scale', () => {
+  it('scales cm radii to a readable size and clamps to the canvas', () => {
+    expect(circleDisplayRadius(3, 'cm', { x: 150, y: 100 })).toBe(60);
+    expect(circleDisplayRadius(10, 'cm', { x: 150, y: 100 })).toBe(94);
+    expect(circleDisplayRadius(55, undefined, { x: 150, y: 100 })).toBe(55);
+  });
+  it('renders the saved draft circle (radius 3 cm) at 60 points', () => {
+    const html = render('circle', { center: { x: 150, y: 100, label: 'O' }, radius: 3, diameter: 6, unit: 'cm' });
+    expect(html).toContain('r="60"');
+  });
+});
