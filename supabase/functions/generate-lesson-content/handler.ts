@@ -211,7 +211,18 @@ export async function handleRequest(req: Request): Promise<Response> {
   if (noPaidMode) {
     const mode = String(requestBody.mode);
     if (mode === 'healthcheck') {
-      return new Response(JSON.stringify({ ok: true, success: true, requestId, mode, function: 'generate-lesson-content', build: GENERATOR_BUILD, providerCalls: 0 }), { status: 200, headers: responseHeaders() });
+      return new Response(JSON.stringify({
+        ok: true,
+        success: true,
+        requestId,
+        mode,
+        function: 'generate-lesson-content',
+        build: GENERATOR_BUILD,
+        promptVersion: STAGING_PROMPT_VERSION,
+        prerequisiteContract: { type: 'numeric', prompt: 'non-empty string', expected_answer: 'number' },
+        providerCalls: 0,
+        databaseWrite: false,
+      }), { status: 200, headers: responseHeaders() });
     }
     const fixtureVariant = String(requestBody.fixtureVariant ?? 'fenced_repeated');
     const fixtureTopic = String(requestBody.fixtureTopic ?? 'Fractions');
