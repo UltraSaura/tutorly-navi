@@ -119,8 +119,9 @@ describe('level-2 staging regressions: numeric prerequisite and key-point overla
 describe('staging takeaway rule', () => {
   it('states the distinct practical-action takeaway role', () => {
     expect(TAKEAWAY_RULE).toContain('action');
-    expect(TAKEAWAY_RULE).toContain('24 mots');
+    expect(TAKEAWAY_RULE).toContain('8 mots');
     expect(TAKEAWAY_RULE).toContain('ne reformule');
+    expect(TAKEAWAY_RULE).toContain('RÈGLE ZÉRO');
   });
   it('rejects the exact takeaway that failed on staging', () => {
     const block = { id: 'c', type: 'concept', title: 'Triangle', content: 'Un triangle est un polygone qui possède trois sommets et trois côtés. On les nomme et on les note. La somme des angles est égale à 180 degrés.', key_points: [{ label: 'Côtés', text: 'AB, BC et CA' }], takeaway: 'Pour reconnaître un triangle, je compte ses trois sommets et ses trois côtés.' };
@@ -172,7 +173,33 @@ describe('takeaway distinctness (staging level 3 regression, providerCalls=0)', 
 
   it('the takeaway rule preserves the practical-action contract', () => {
     expect(TAKEAWAY_RULE).toContain('action');
-    expect(TAKEAWAY_RULE).toContain('24 mots');
+    expect(TAKEAWAY_RULE).toContain('8 mots');
     expect(TAKEAWAY_RULE).toContain('ne reformule');
+    expect(TAKEAWAY_RULE).toContain('RÈGLE ZÉRO');
+  });
+});
+
+describe('staging 01a14518: folding takeaway regression (providerCalls=0)', () => {
+  const failed = {
+    type: 'concept',
+    content: 'Pour vérifier, je plie mentalement le long de l’axe : les deux parties se superposent, la figure est symétrique.',
+    key_points: [{ label: 'Axe', text: 'Ligne de pliage' }],
+    takeaway: 'Si je plie la figure le long de l’axe, les bords coïncident : elle est symétrique.',
+  };
+  it('the exact failed takeaway is still rejected (validator unchanged)', () => {
+    expect(semanticDuplicationDiagnostics(failed).some((d) => d.fieldB === 'takeaway' && d.diagnostic.overlap === 4)).toBe(true);
+  });
+  it('the rule quotes the failed takeaway as forbidden', () => {
+    expect(TAKEAWAY_RULE).toContain('Si je plie la figure le long de l’axe, les bords coïncident');
+  });
+  it.each(Object.entries(SVE))('the %s example takeaway reuses no important word from content, title or key points', (_k, ex) => {
+    const e = ex as unknown as { title: string; content: string; takeaway: string; key_points: Array<{ label: string; text: string }> };
+    const source = meaningfulTokens([e.title, e.content, ...e.key_points.map((p) => `${p.label} ${p.text}`)].join(' '));
+    const reused = [...meaningfulTokens(e.takeaway)].filter((t) => source.has(t));
+    expect(reused).toEqual([]);
+  });
+  it.each(Object.entries(SVE))('the %s example takeaway still passes next to the failed symmetry explanation', (_k, ex) => {
+    const takeaway = (ex as unknown as { takeaway: string }).takeaway;
+    expect(semanticDuplicationDiagnostics({ ...failed, takeaway }).filter((d) => d.fieldB === 'takeaway')).toEqual([]);
   });
 });
