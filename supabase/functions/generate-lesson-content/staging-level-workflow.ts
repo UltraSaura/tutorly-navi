@@ -210,7 +210,10 @@ export function stagingPromptVisualKinds(metadata: StagingLevelMetadata): string
 /** Numeric prerequisite shown to the provider (validated in tests). */
 export const STAGING_NUMERIC_PREREQUISITE_EXAMPLE = { id: 'p-angle-droit', description: 'Connaître la mesure d’un angle droit', type: 'numeric', prompt: 'Combien de degrés mesure un angle droit ?', expected_answer: 90, remediation_hint: 'Un angle droit correspond à un quart de tour.' };
 
-export const PREREQUISITE_ANSWER_RULE = 'Chaque prerequisite numérique DOIT utiliser exactement type:"numeric", prompt et expected_answer numérique (ex. 12 ou 90). expected_answer est OBLIGATOIRE: ne l’omets jamais, ne le remplace pas par correct_answer, answer ou une chaîne, et ne l’infère pas dans le normalizer.';
+/** Multiple-choice prerequisite shown to the provider (validated in tests). */
+export const STAGING_CHOICE_PREREQUISITE_EXAMPLE = { id: 'p-axe', description: 'Reconnaître un axe de symétrie', type: 'multiple_choice', prompt: 'Quelle ligne partage une figure en deux moitiés superposables ?', choices: ['Un axe de symétrie', 'Une diagonale quelconque', 'Un rayon'], expected_answer: 'Un axe de symétrie', remediation_hint: 'Pense au pliage : les deux moitiés se recouvrent.' };
+
+export const PREREQUISITE_ANSWER_RULE = 'expected_answer est OBLIGATOIRE dans CHAQUE prerequisite, quel que soit son type: ne l’omets jamais, ne le remplace jamais par correct_answer ou answer (ces champs sont ignorés et la leçon est rejetée), et ne l’infère pas dans le normalizer. Prerequisite numérique: type:"numeric", prompt et expected_answer numérique (ex. 12 ou 90). Prerequisite à choix (type "multiple_choice" ou "selection"): choices = au moins 2 chaînes, et expected_answer = la COPIE EXACTE, caractère pour caractère, de l’un des choices (jamais une lettre "A"/"B", un index, une reformulation ou une réponse absente des choices). Relis chaque prerequisite avant de répondre: expected_answer présent, et pour un choix, présent mot pour mot dans choices.';
 
 export const TAKEAWAY_RULE = 'Le takeaway est une action, une méthode ou une vérification pratique pour l’élève, en 24 mots maximum. Il ne reformule ni le content ni les key_points: emploie une formulation différente et indique quoi faire.';
 export const CONCEPT_LENGTH_RULE = 'Le content de chaque concept compte au plus 40 mots (limite stricte 55, au-delà la leçon est rejetée): 1 à 3 phrases courtes. Les détails vont dans key_points, le visual ou un autre concept, jamais dans un long paragraphe.';
@@ -224,7 +227,7 @@ export function stagingFullLevelExample(metadata: StagingLevelMetadata): Record<
   return {
     lesson_goal: 'Reconnaître et décrire une figure plane.',
     success_criteria: ['Je sais nommer les éléments de la figure.'],
-    prerequisites: metadata.level_number === 2 ? [STAGING_NUMERIC_PREREQUISITE_EXAMPLE] : [],
+    prerequisites: metadata.level_number === 1 ? [] : [STAGING_NUMERIC_PREREQUISITE_EXAMPLE, STAGING_CHOICE_PREREQUISITE_EXAMPLE],
     sequence: [
       { ...first, id: 'c1' },
       { ...second, id: 'c2' },
