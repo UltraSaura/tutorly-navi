@@ -49,7 +49,7 @@ describe('bulk staging lesson workflow', () => {
   it('rejects the known duplicate fixture before any provider call', async () => {
     const generate = vi.fn();
     await expect(runBulkStagingGeneration([{ id: '185f20b5-d698-446d-80e8-c3c462819b94', name: 'Fixture' }], undefined, { generate })).resolves.toEqual([
-      expect.objectContaining({ status: 'failed', failure: expect.objectContaining({ failureStage: 'generation_or_save', providerCalls: 0 }) }),
+      expect.objectContaining({ status: 'failed', failure: expect.objectContaining({ failureStage: 'pre_generation', providerCalls: 0 }) }),
     ]);
     expect(generate).not.toHaveBeenCalled();
   });
@@ -71,5 +71,31 @@ describe('bulk staging lesson workflow', () => {
       generate: async () => { throw { code: 'validation', path: 'levels[0]', message: 'invalid' }; },
     });
     expect(results[0].failure?.technicalDiagnostic).not.toContain('[object Object]');
+  });
+
+  it.each([
+    ['topic lookup failure', { code: 'topic_lookup_failed', message: 'Topic could not be loaded.', stage: 'pre_generation' }, 'pre_generation'],
+    ['duplicate-version refusal', { code: 'duplicate_staging_version_refused', message: 'A draft already exists.', stage: 'pre_generation' }, 'pre_generation'],
+    ['transport failure', { code: 'edge_unavailable', message: 'The Edge Function is unavailable.', stage: 'pre_generation' }, 'pre_generation'],
+  ])('preserves %s with zero provider calls', async (_name, error, expectedStage) => {
+    const results = await runBulkStagingGeneration([{ id: 'topic-1', name: 'Figures' }], undefined, {
+      generate: async () => { throw { ...error, httpStatus: 503, requestId: 'req-1', providerCalls: 0 }; },
+    });
+    expect(results[0].failure).toMatchObject({ code: error.code, message: error.message, failureStage: expectedStage, httpStatus: 503, requestId: 'req-1', providerCalls: 0 });
+    expect(results[0].failure?.technicalDiagnostic).toContain(error.message);
+  });
+
+  it('keeps validation and database-save failures distinct', async () => {
+    const validation = await runBulkStagingGeneration([{ id: 'topic-1', name: 'Figures' }], undefined, {
+      generate: async () => { throw { code: 'canonical_validation_failed', message: 'Invalid lesson.', stage: 'validation_failure', providerCalls: 1, level: 2 }; },
+    });
+    expect(validation[0].failure).toMatchObject({ failureStage: 'validation_failure', failedLevel: 2, providerCalls: 1 });
+
+    const save = await runBulkStagingGeneration([{ id: 'topic-1', name: 'Figures' }], undefined, {
+      generate: async (id) => generated(id),
+      validate: valid,
+      save: async () => { throw { code: 'draft_save_failed', message: 'Insert failed.', stage: 'database_save', providerCalls: 4 }; },
+    });
+    expect(save[0].failure).toMatchObject({ failureStage: 'database_save', providerCalls: 4 });
   });
 });

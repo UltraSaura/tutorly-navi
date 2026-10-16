@@ -6,6 +6,7 @@ import {
   validateLessonVersion,
   type LessonVersion,
 } from './lessonVersionWorkflow';
+import { formatGenerationDiagnostic, getGenerationErrorDetails, type GenerationErrorDetails } from '@/components/admin/learning/generationErrorMapping';
 
 export const STAGING_LEVEL_COUNT = 4;
 
@@ -30,6 +31,13 @@ export type BulkStagingFailure = {
   failureStage: string;
   technicalDiagnostic: string;
   providerCalls: number;
+  httpStatus?: number;
+  code?: string;
+  message?: string;
+  technicalDetail?: string;
+  requestId?: string;
+  level?: number;
+  stage?: string;
 };
 
 export type BulkStagingResult = {
@@ -58,10 +66,16 @@ export function validateBulkTopicIds(topics: BulkStagingTopic[]): void {
   if (duplicates.length) throw new Error(`duplicate_topic_id: ${[...new Set(duplicates)].join(', ')}`);
 }
 
-function diagnostic(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (typeof error === 'string') return error;
-  try { return JSON.stringify(error); } catch { return 'Unknown staging workflow error.'; }
+function diagnostic(error: unknown): string { return formatGenerationDiagnostic(error, 'Unknown staging workflow error.'); }
+
+function failureStage(details: GenerationErrorDetails): string {
+  if (details.stage) return details.stage;
+  const code = details.code ?? '';
+  if (/save|draft|database/i.test(code)) return 'database_save';
+  if (/provider|upstream|timeout/i.test(code)) return 'provider_failure';
+  if (/validat|canonical|pedagogical|geometry/i.test(code)) return 'validation_failure';
+  if ((details.providerCalls ?? 0) === 0) return 'pre_generation';
+  return 'generation_or_save';
 }
 
 function failedLevel(error: unknown): number | undefined {
@@ -113,9 +127,24 @@ export async function runBulkStagingGeneration(
       onProgress?.({ ...base, level: STAGING_LEVEL_COUNT, providerCalls, status: 'saved' });
       results.push({ topicId, topicTitle: topic.name, status: 'saved', version });
     } catch (error) {
-      const details = error && typeof error === 'object' ? error as { providerCalls?: number; failedLevel?: number; failureStage?: string } : {};
+      const details = getGenerationErrorDetails(error);
       providerCalls = Number(details.providerCalls ?? providerCalls) || providerCalls;
-      const failure = { topicId, topicTitle: topic.name, failedLevel: details.failedLevel ?? failedLevel(error), failureStage: details.failureStage ?? (diagnostic(error).includes('validation') ? 'validation' : 'generation_or_save'), technicalDiagnostic: diagnostic(error), providerCalls };
+      const stage = failureStage({ ...details, providerCalls });
+      const failure = {
+        topicId,
+        topicTitle: topic.name,
+        failedLevel: details.level ?? failedLevel(error),
+        failureStage: stage,
+        technicalDiagnostic: diagnostic(error),
+        providerCalls,
+        httpStatus: details.httpStatus,
+        code: details.code,
+        message: details.message,
+        technicalDetail: details.technicalDetail,
+        requestId: details.requestId,
+        level: details.level,
+        stage,
+      };
       onProgress?.({ ...base, level: failure.failedLevel ?? 1, providerCalls, status: 'failed' });
       results.push({ topicId, topicTitle: topic.name, status: 'failed', failure });
     }

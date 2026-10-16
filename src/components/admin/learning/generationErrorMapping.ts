@@ -12,7 +12,108 @@ export const generationErrorMessages: Record<GenerationErrorCode, string> = {
   unknown: 'Une erreur inattendue est survenue pendant la génération.',
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object';
+export type GenerationErrorDetails = {
+  httpStatus?: number;
+  code?: string;
+  message: string;
+  technicalDetail?: string;
+  requestId?: string;
+  providerCalls?: number;
+  level?: number;
+  stage?: string;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+function safeSerialize(value: unknown): string | undefined {
+  if (typeof value === 'string') return value;
+  try {
+    const serialized = JSON.stringify(value);
+    return serialized && serialized !== '{}' ? serialized : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function finiteNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+export function getGenerationErrorDetails(payload: unknown, fallback = generationErrorMessages.unknown): GenerationErrorDetails {
+  if (payload instanceof Error) {
+    const error = payload as Error & Partial<GenerationErrorDetails> & { context?: unknown };
+    const context = isRecord(error.context) ? error.context : undefined;
+    const details = getGenerationErrorDetails({
+      ...(context ?? {}),
+      message: error.message,
+      httpStatus: error.httpStatus ?? context?.status,
+      code: error.code,
+      technicalDetail: error.technicalDetail,
+      requestId: error.requestId,
+      providerCalls: error.providerCalls,
+      level: error.level ?? error.failedLevel,
+      stage: error.stage ?? error.failureStage,
+    }, fallback);
+    return details;
+  }
+
+  if (typeof payload === 'string') {
+    const message = payload.trim() || fallback;
+    return {
+      message: message.includes('[object Object]') ? fallback : message,
+      technicalDetail: message.includes('[object Object]') ? undefined : message,
+    };
+  }
+
+  const root = isRecord(payload) ? payload : {};
+  const nested = isRecord(root.error) ? root.error : {};
+  const code = stringValue(nested.code) ?? stringValue(root.code);
+  const rawMessage = stringValue(nested.message) ?? stringValue(root.message) ?? stringValue(root.error);
+  const mappedMessage = code && code in generationErrorMessages ? generationErrorMessages[code as GenerationErrorCode] : undefined;
+  const message = rawMessage && !rawMessage.includes('[object Object]') ? rawMessage : mappedMessage ?? fallback;
+  const rawTechnical = nested.technicalDetail ?? root.technicalDetail ?? nested.details ?? root.details;
+  const technicalDetail = typeof rawTechnical === 'string'
+    ? rawTechnical
+    : safeSerialize(rawTechnical);
+  const details: GenerationErrorDetails = {
+    httpStatus: finiteNumber(nested.httpStatus) ?? finiteNumber(root.httpStatus) ?? finiteNumber(root.status),
+    code,
+    message,
+    technicalDetail: technicalDetail && !technicalDetail.includes('[object Object]') ? technicalDetail : undefined,
+    requestId: stringValue(nested.requestId) ?? stringValue(root.requestId),
+    providerCalls: finiteNumber(nested.providerCalls) ?? finiteNumber(root.providerCalls),
+    level: finiteNumber(nested.level) ?? finiteNumber(root.level),
+    stage: stringValue(nested.stage) ?? stringValue(root.stage) ?? stringValue(nested.failureStage) ?? stringValue(root.failureStage),
+  };
+  return details;
+}
+
+export function formatGenerationErrorDetails(details: GenerationErrorDetails): string {
+  const prefix = details.stage === 'pre_generation' ? 'Generation did not start' :
+    details.stage === 'provider_failure' ? 'Provider failure' :
+      details.stage === 'validation_failure' ? 'Validation failure' :
+        details.stage === 'database_save' ? 'Database save failure' : 'Generation failed';
+  return `${prefix}: ${details.message}`;
+}
+
+export function formatGenerationDiagnostic(payload: unknown, fallback = generationErrorMessages.unknown): string {
+  const details = getGenerationErrorDetails(payload, fallback);
+  const fields = [
+    details.message,
+    details.httpStatus !== undefined ? `HTTP ${details.httpStatus}` : undefined,
+    details.code ? `code=${details.code}` : undefined,
+    details.requestId ? `requestId=${details.requestId}` : undefined,
+    details.providerCalls !== undefined ? `providerCalls=${details.providerCalls}` : undefined,
+    details.level !== undefined ? `level=${details.level}` : undefined,
+    details.stage ? `stage=${details.stage}` : undefined,
+    details.technicalDetail,
+  ].filter(Boolean);
+  return fields.join(' · ') || details.message;
+}
 
 export function formatGenerationError(payload: unknown, fallback = generationErrorMessages.unknown): string {
   if (payload instanceof Error) return formatGenerationError(payload.message, fallback);

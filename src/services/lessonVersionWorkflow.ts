@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { formatGenerationError, getGenerationErrorTechnicalDetail } from '@/components/admin/learning/generationErrorMapping';
+import { getGenerationErrorDetails, getGenerationErrorTechnicalDetail } from '@/components/admin/learning/generationErrorMapping';
 import { validateLessonV21, type ContractIssue } from '@/types/lesson-v21-contract';
 
 export const LESSON_VERSION_STATUSES = ['draft', 'validated', 'published', 'rejected'] as const;
@@ -178,26 +178,53 @@ export async function generateStagingDraft(topicId: string, modelId?: string, ex
   });
   if (error && response) {
     const payload = await response.clone().json().catch(() => null);
-    const message = formatGenerationError(payload ?? error.message);
-    const technicalDetail = getGenerationErrorTechnicalDetail(payload);
-    const nested = payload && typeof payload === 'object' && 'error' in payload && payload.error && typeof payload.error === 'object' ? payload.error as Record<string, unknown> : {};
-    throw Object.assign(new Error(technicalDetail ? `${message}\n${technicalDetail}` : message), {
-      providerCalls: Number(nested.providerCalls ?? (payload as Record<string, unknown> | null)?.providerCalls ?? 0),
-      failedLevel: Number(nested.level ?? (payload as Record<string, unknown> | null)?.level ?? 0) || undefined,
-      failureStage: nested.stage ?? (payload as Record<string, unknown> | null)?.stage,
+    const details = getGenerationErrorDetails(payload ?? error, 'The Edge Function returned an error.');
+    const requestId = details.requestId ?? response.headers?.get('x-request-id') ?? undefined;
+    const errorMessage = details.technicalDetail ? `${details.message}\n${details.technicalDetail}` : details.message;
+    throw Object.assign(new Error(errorMessage), {
+      ...details,
+      message: errorMessage,
+      httpStatus: response.status,
+      requestId,
+      providerCalls: details.providerCalls ?? 0,
+      failedLevel: details.level,
+      failureStage: details.stage,
     });
   }
-  if (error) throw error;
+  if (error) {
+    const details = getGenerationErrorDetails(error, 'The generation request could not start.');
+    throw Object.assign(new Error(details.message), {
+      ...details,
+      stage: details.stage ?? 'pre_generation',
+      providerCalls: details.providerCalls ?? 0,
+      failedLevel: details.level,
+      failureStage: details.stage ?? 'pre_generation',
+    });
+  }
   // Staging generation makes one provider request per level (the server
   // validates each level and the assembled lesson), so providerCalls is the
   // number of levels, not 1. Accept any positive count reported by a
   // successful response that carries lesson content.
   const providerCalls = Number(data?.providerCalls);
   if (!data?.success || !data.lesson_content || !Number.isInteger(providerCalls) || providerCalls < 1) {
-    const message = formatGenerationError(data ?? { code: 'staging_generation_failed' });
     const technicalDetail = getGenerationErrorTechnicalDetail(data)
       ?? (data?.success && data?.lesson_content ? `Unexpected providerCalls value: ${String(data?.providerCalls)}` : undefined);
-    throw new Error(technicalDetail ? `${message}\n${technicalDetail}` : message);
+    const details = getGenerationErrorDetails({
+      ...(data ?? {}),
+      code: data?.code ?? 'malformed_response',
+      message: data?.message ?? 'The generation response was malformed or incomplete.',
+      technicalDetail,
+      stage: data?.stage ?? 'response_parsing',
+      providerCalls: Number(data?.providerCalls) || 0,
+    });
+    const errorMessage = technicalDetail ? `${details.message}\n${technicalDetail}` : details.message;
+    throw Object.assign(new Error(errorMessage), {
+      ...details,
+      message: errorMessage,
+      providerCalls: details.providerCalls ?? 0,
+      failedLevel: details.level,
+      failureStage: details.stage,
+    });
   }
   assertReturnedTopicMatches(requested, data.topic_id);
   return data as { lesson_content: unknown; topic_id: string; providerCalls: number; canonicalValid: true; pedagogicalValid: true; geometryValid: true; progress?: Array<{ level: number; status: string; providerCalls: number; tokenUsage?: unknown }> };
@@ -209,12 +236,12 @@ export async function saveDraftVersion(topicId: string, lessonContent: unknown, 
   assertReturnedTopicMatches(topicId, returnedTopicId);
   const validation = validateLessonVersion(lessonContent);
   if (!validation.canonicalValid || !validation.pedagogicalValid || !validation.geometryValid) {
-    throw new Error(JSON.stringify({ code: 'draft_validation_failed', validation }));
+    throw Object.assign(new Error('Draft validation failed.'), { code: 'draft_validation_failed', stage: 'validation_failure', technicalDetail: JSON.stringify(validation) });
   }
   const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) throw new Error('You must be signed in as an admin to save a lesson draft.');
+  if (userError || !user) throw Object.assign(new Error('You must be signed in as an admin to save a lesson draft.'), { code: 'database_save_unauthorized', stage: 'database_save' });
   const { data, error } = await supabase.from('topic_lesson_versions').insert(buildDraftInsertPayload(topicId, lessonContent, user.id) as any).select('*').single();
-  if (error) throw new Error(`Draft save failed: ${error.message}`);
+  if (error) throw Object.assign(new Error(`Draft save failed: ${error.message}`), { code: 'database_save_failed', stage: 'database_save', technicalDetail: error.message });
   return data as unknown as LessonVersion;
 }
 

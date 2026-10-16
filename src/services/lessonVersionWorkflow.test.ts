@@ -94,6 +94,33 @@ describe('lesson version workflow', () => {
     expect(from).not.toHaveBeenCalled();
   });
 
+  it('preserves transport failures as pre-generation diagnostics with zero provider calls', async () => {
+    invoke.mockResolvedValue({ data: null, error: Object.assign(new Error('Failed to send a request to the Edge Function'), { code: 'FunctionsFetchError' }), response: null });
+    const error = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
+    expect(error).toMatchObject({ stage: 'pre_generation', failureStage: 'pre_generation', providerCalls: 0 });
+    expect(error.message).toContain('Failed to send');
+  });
+
+  it('preserves structured 4xx and 5xx response diagnostics without saving', async () => {
+    for (const [status, code] of [[422, 'staging_level_validation_failed'], [502, 'provider_error']] as const) {
+      vi.clearAllMocks();
+      const payload = { success: false, error: { code, message: `Failure ${status}`, technicalDetail: 'exact technical detail', requestId: `req-${status}`, providerCalls: status === 422 ? 1 : 2, level: 1, stage: status === 422 ? 'level_validation' : 'provider_failure' } };
+      invoke.mockResolvedValue({ data: null, error: { message: 'Edge Function returned a non-2xx status code' }, response: { status, headers: new Headers({ 'x-request-id': `req-${status}` }), clone: () => ({ json: async () => payload }) } });
+      const error = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
+      expect(error).toMatchObject({ httpStatus: status, code, requestId: `req-${status}`, providerCalls: payload.error.providerCalls, failedLevel: 1, failureStage: payload.error.stage });
+      expect(error.message).toContain(`Failure ${status}`);
+      expect(error.message).toContain('exact technical detail');
+      expect(from).not.toHaveBeenCalled();
+    }
+  });
+
+  it('rejects malformed success envelopes with a response-parsing diagnostic', async () => {
+    invoke.mockResolvedValue({ data: { success: true, providerCalls: 0 }, error: null, response: new Response(null, { status: 200 }) });
+    const error = await generateStagingDraft('e5003f68-f3aa-404b-85a9-847cdb103a81').catch((value) => value);
+    expect(error).toMatchObject({ code: 'malformed_response', stage: 'response_parsing', providerCalls: 0 });
+    expect(error.message).toContain('malformed');
+  });
+
   it('does not update existing topic lesson_content during draft insertion', async () => {
     const single = vi.fn().mockResolvedValue({ data: { id: 'version-1', ...buildDraftInsertPayload('e5003f68-f3aa-404b-85a9-847cdb103a81', geometryDraftLesson, 'admin-1') }, error: null });
     from.mockReturnValue({ insert: vi.fn(() => ({ select: vi.fn(() => ({ single })) })) });

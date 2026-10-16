@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatGenerationError, getGenerationErrorTechnicalDetail } from './generationErrorMapping';
+import { formatGenerationError, formatGenerationErrorDetails, getGenerationErrorDetails, getGenerationErrorTechnicalDetail } from './generationErrorMapping';
 
 describe('generation error mapping', () => {
   it('maps structured canonical errors', () => expect(formatGenerationError({ error: { code: 'canonical_validation_failed', message: 'raw' } })).toBe('La leçon générée n’a pas le format attendu.'));
@@ -46,4 +46,33 @@ describe('generation error mapping', () => {
     }
   });
   it('keeps technical details separate', () => expect(getGenerationErrorTechnicalDetail({ error: { code: 'canonical_validation_failed', technicalDetail: { path: 'sequence[4].correct_answer' } } })).toContain('sequence[4]'));
+
+  it('preserves structured HTTP diagnostics without rendering objects', () => {
+    const details = getGenerationErrorDetails({
+      httpStatus: 422,
+      error: { code: 'staging_level_validation_failed', message: 'Level validation failed.', technicalDetail: 'sequence[0].takeaway: too long', requestId: 'req-1', providerCalls: 1, level: 1, stage: 'level_validation' },
+    });
+    expect(details).toMatchObject({ httpStatus: 422, code: 'staging_level_validation_failed', requestId: 'req-1', providerCalls: 1, level: 1, stage: 'level_validation' });
+    expect(formatGenerationErrorDetails(details)).toContain('Level validation failed.');
+    expect(JSON.stringify(details)).not.toContain('[object Object]');
+  });
+
+  it.each([
+    new Error('topic lookup failed'),
+    { message: 'Edge Function returned a non-2xx status code', context: { status: 503 } },
+    { status: 422, error: { code: 'canonical_validation_failed', message: 'Invalid lesson.' } },
+    { unexpected: { value: true } },
+  ])('formats unknown and transport error shapes safely', (value) => {
+    const details = getGenerationErrorDetails(value);
+    expect(typeof details.message).toBe('string');
+    expect(details.message).not.toContain('[object Object]');
+    expect(formatGenerationErrorDetails(details)).not.toContain('[object Object]');
+  });
+
+  it('distinguishes pre-generation, provider, validation, and save failures', () => {
+    expect(formatGenerationErrorDetails({ message: 'Topic lookup failed.', stage: 'pre_generation' })).toContain('Generation did not start');
+    expect(formatGenerationErrorDetails({ message: 'Upstream failed.', stage: 'provider_failure' })).toContain('Provider failure');
+    expect(formatGenerationErrorDetails({ message: 'Invalid lesson.', stage: 'validation_failure' })).toContain('Validation failure');
+    expect(formatGenerationErrorDetails({ message: 'Insert failed.', stage: 'database_save' })).toContain('Database save failure');
+  });
 });

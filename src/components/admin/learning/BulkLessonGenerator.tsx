@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { BookOpen, Wand2, Loader2, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Link } from 'react-router-dom';
-import { formatGenerationError, generationErrorMessages, getGenerationErrorTechnicalDetail } from './generationErrorMapping';
+import { formatGenerationErrorDetails, generationErrorMessages, getGenerationErrorDetails, type GenerationErrorDetails } from './generationErrorMapping';
 import { geometryDraftLesson } from './geometryDraft';
 import { runBulkStagingGeneration, type BulkStagingProgress } from '@/services/bulkStagingLessonWorkflow';
 
@@ -40,36 +40,28 @@ interface GenResult {
   providerCalls?: number;
   failedLevel?: number;
   failureStage?: string;
+  httpStatus?: number;
+  errorCode?: string;
+  requestId?: string;
 }
 
-async function getFunctionErrorDetails(err: unknown, response?: Response) {
-  const fallback = err instanceof Error && err.message && err.message !== 'Unknown error'
-    ? err.message
-    : 'La génération a échoué.';
+async function getFunctionErrorDetails(err: unknown, response?: Response): Promise<GenerationErrorDetails> {
   const candidateResponse = response || (typeof err === 'object' && err !== null && 'context' in err && (err as { context?: Response }).context instanceof Response
     ? (err as { context?: Response }).context : undefined);
-  if (!candidateResponse) return {
-    message: formatGenerationError(err, fallback),
-    technicalDetail: getGenerationErrorTechnicalDetail(err),
-  };
+  if (!candidateResponse) return getGenerationErrorDetails(err, 'The generation request could not start.');
   try {
     const payload = await candidateResponse.clone().json();
     return {
-      message: formatGenerationError(payload, fallback),
-      technicalDetail: getGenerationErrorTechnicalDetail(payload),
+      ...getGenerationErrorDetails(payload, 'The Edge Function returned an error.'),
+      httpStatus: candidateResponse.status,
+      requestId: getGenerationErrorDetails(payload).requestId ?? candidateResponse.headers.get('x-request-id') ?? undefined,
     };
   } catch {
     try {
       const text = await candidateResponse.clone().text();
-      return {
-        message: formatGenerationError(text, fallback),
-        technicalDetail: getGenerationErrorTechnicalDetail(text),
-      };
+      return { ...getGenerationErrorDetails(text, 'The Edge Function returned an unreadable error.'), httpStatus: candidateResponse.status, requestId: candidateResponse.headers.get('x-request-id') ?? undefined };
     } catch {
-      return {
-        message: formatGenerationError(err, fallback),
-        technicalDetail: getGenerationErrorTechnicalDetail(err),
-      };
+      return { ...getGenerationErrorDetails(err, 'The Edge Function returned an error.'), httpStatus: candidateResponse.status, requestId: candidateResponse.headers.get('x-request-id') ?? undefined };
     }
   }
 }
@@ -206,11 +198,14 @@ export function BulkLessonGenerator() {
         return {
           ...result,
           status: 'failed',
-          error: workflowResult.failure?.failureStage ?? 'La génération staging a échoué.',
+          error: workflowResult.failure?.message ?? 'The staging generation failed.',
           technicalDetail: workflowResult.failure?.technicalDiagnostic,
           providerCalls: workflowResult.failure?.providerCalls ?? 0,
           failedLevel: workflowResult.failure?.failedLevel,
           failureStage: workflowResult.failure?.failureStage,
+          httpStatus: workflowResult.failure?.httpStatus,
+          errorCode: workflowResult.failure?.code,
+          requestId: workflowResult.failure?.requestId,
         };
       }));
     } catch (err) {
@@ -220,6 +215,12 @@ export function BulkLessonGenerator() {
         status: 'failed',
         error: details.message,
         technicalDetail: details.technicalDetail,
+        providerCalls: details.providerCalls ?? 0,
+        failedLevel: details.level,
+        failureStage: details.stage ?? 'pre_generation',
+        httpStatus: details.httpStatus,
+        errorCode: details.code,
+        requestId: details.requestId,
       } : result));
     }
 
@@ -243,13 +244,24 @@ export function BulkLessonGenerator() {
         const { data, error, response } = await supabase.functions.invoke('generate-lesson-content', { body: { topicId: topic.id, language } });
         if (error) {
           const details = await getFunctionErrorDetails(error, response);
-          throw Object.assign(new Error(details.message), { technicalDetail: details.technicalDetail });
+          throw Object.assign(new Error(details.message), details);
         }
-        if (data?.error) throw new Error(formatGenerationError(data));
+        if (data?.error) throw Object.assign(new Error(getGenerationErrorDetails(data).message), getGenerationErrorDetails(data));
         setResults((previous) => previous.map((result) => result.topicId === topic.id ? { ...result, status: 'saved' } : result));
       } catch (error) {
-        const details = await getFunctionErrorDetails(error);
-        setResults((previous) => previous.map((result) => result.topicId === topic.id ? { ...result, status: 'failed', error: details.message, technicalDetail: details.technicalDetail } : result));
+        const details = getGenerationErrorDetails(error);
+        setResults((previous) => previous.map((result) => result.topicId === topic.id ? {
+          ...result,
+          status: 'failed',
+          error: details.message,
+          technicalDetail: details.technicalDetail,
+          providerCalls: details.providerCalls ?? 0,
+          failedLevel: details.level,
+          failureStage: details.stage ?? 'pre_generation',
+          httpStatus: details.httpStatus,
+          errorCode: details.code,
+          requestId: details.requestId,
+        } : result));
       }
     }
     setIsRunning(false);
@@ -308,7 +320,11 @@ export function BulkLessonGenerator() {
             <Progress value={results.length ? (done / results.length) * 100 : 0} className="h-2" />
             <div className="mt-2 space-y-1">
               {results.map((r) => {
-                const formattedErrorMessage = r.error ? formatGenerationError(r.error) : undefined;
+                const formattedErrorMessage = r.error ? formatGenerationErrorDetails({
+                  message: r.error,
+                  technicalDetail: r.technicalDetail,
+                  stage: r.failureStage,
+                }) : undefined;
                 const visibleErrorMessage = formattedErrorMessage &&
                   typeof formattedErrorMessage === 'string' &&
                   formattedErrorMessage.trim() &&
@@ -334,8 +350,9 @@ export function BulkLessonGenerator() {
                   {r.status === 'idle' && <div className="h-4 w-4 flex-shrink-0 rounded-full border-2 border-muted" />}
                   <span className="flex-1 truncate">{r.name}</span>
                   {r.progress && <span className="text-xs text-muted-foreground">Topic {r.progress.topicIndex} of {r.progress.totalTopics} · Level {r.progress.level} of 4 · Provider calls: {r.providerCalls ?? 0} · Status: {r.progress.status}</span>}
-                  {r.status === 'failed' && <span className="text-xs text-red-500">{r.topicId} · Level {r.failedLevel ?? '?'} · {r.failureStage ?? 'failed'}</span>}
+                  {r.status === 'failed' && <span className="text-xs text-red-500">{r.topicId} · Level {r.failedLevel ?? '?'} · {r.failureStage ?? 'failed'}{r.httpStatus ? ` · HTTP ${r.httpStatus}` : ''}</span>}
                   {visibleErrorMessage && <span title={r.technicalDetail ?? visibleErrorMessage} className="max-w-[360px] break-words text-right text-xs text-red-500">{visibleErrorMessage}</span>}
+                  {r.status === 'failed' && <span className="max-w-[360px] break-words text-right text-[11px] text-muted-foreground">{[r.errorCode, r.requestId, `providerCalls=${r.providerCalls ?? 0}`, r.technicalDetail].filter(Boolean).join(' · ')}</span>}
                 </div>
                 );
               })}
