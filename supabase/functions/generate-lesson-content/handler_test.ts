@@ -1,7 +1,7 @@
 // Handler-level staging tests. Every provider and database call is faked;
 // no real network request is ever made (providerCalls counts fake calls only).
 import { assert, assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
-import { stagingFullLevelExample, stagingLevelMetadata } from './staging-level-workflow.ts';
+import { stagingFullLevelExample, stagingLevelMetadata, STAGING_VISUAL_EXAMPLES } from './staging-level-workflow.ts';
 
 const SB = 'https://fake-staging.supabase.test';
 Deno.env.set('SUPABASE_URL', SB);
@@ -13,11 +13,13 @@ const { handleRequest } = await import('./handler.ts');
 
 const TOPIC = { id: 'topic-1', name: 'La géométrie plane', slug: 'geo', description: '', curriculum_level_code: 'cm2', curriculum_country_code: 'fr', curriculum_subject_id: null, lesson_content: null, learning_category_id: null, learning_categories: null };
 const levels = stagingLevelMetadata(TOPIC.id, TOPIC.name, []);
+const TIME_TOPIC = { id: 'time-topic-1', name: 'Le repérage dans le temps et les durées', slug: 'time', description: '', curriculum_level_code: 'cm2', curriculum_country_code: 'fr', curriculum_subject_id: null, lesson_content: null, learning_category_id: null, learning_categories: null };
+const timeLevels = stagingLevelMetadata(TIME_TOPIC.id, TIME_TOPIC.name, []);
 
 type ProviderReply = (level: number) => { content: unknown; finishReason?: string } | Response;
 type Calls = { provider: number; dbWrites: string[] };
 
-function installFakes(reply: ProviderReply): Calls {
+function installFakes(reply: ProviderReply, topic = TOPIC): Calls {
   const calls: Calls = { provider: 0, dbWrites: [] };
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
   globalThis.fetch = async (input: Request | URL | string, init?: RequestInit) => {
@@ -37,21 +39,21 @@ function installFakes(reply: ProviderReply): Calls {
     if (p.endsWith('/rpc/get_model_with_fallback')) return json([{ default_model_id: 'deepseek-chat' }]);
     if (p.endsWith('/rpc/resolve_edition')) return json(null);
     if (p.endsWith('/user_roles')) return json([{ role: 'admin' }]);
-    if (p.endsWith('/topics')) return json(TOPIC);
+    if (p.endsWith('/topics')) return json(topic);
     if (p.startsWith('/rest/v1/')) return json([]);
     return json({}, 404);
   };
   return calls;
 }
 
-async function run(reply: ProviderReply, requestId: string | undefined = 'req-1') {
-  const calls = installFakes(reply);
+async function run(reply: ProviderReply, requestId: string | undefined = 'req-1', topic = TOPIC) {
+  const calls = installFakes(reply, topic);
   const headers = { Authorization: 'Bearer fake-user-jwt', 'Content-Type': 'application/json', Origin: 'http://localhost:8080' } as Record<string, string>;
   if (requestId) headers['x-request-id'] = requestId;
   const res = await handleRequest(new Request('http://localhost/generate-lesson-content', {
     method: 'POST',
     headers,
-    body: JSON.stringify({ topicId: TOPIC.id, mode: 'staging_draft', language: 'fr' }),
+    body: JSON.stringify({ topicId: topic.id, mode: 'staging_draft', language: 'fr' }),
   }));
   const body = await res.json();
   return { status: res.status, body, calls };
@@ -188,4 +190,22 @@ test('provider HTTP failure returns 502 provider_error', async () => {
   assertEquals(status, 502);
   assertEquals(body.error.code, 'provider_error');
   assertEquals(calls.provider, 1);
+});
+
+test('time-topic rectangle/polygon output is rejected before any partial draft write', async () => {
+  const { status, body, calls } = await run((level) => {
+    const lesson = structuredClone(stagingFullLevelExample(timeLevels[level - 1])) as any;
+    if (level === 1) {
+      lesson.sequence[0].visual = structuredClone(STAGING_VISUAL_EXAMPLES.rectangle.visual);
+      lesson.sequence[1].visual = structuredClone(STAGING_VISUAL_EXAMPLES.triangle.visual);
+    }
+    return { content: lesson };
+  }, 'time-validation', TIME_TOPIC);
+  assertEquals(status, 422);
+  assertEquals(body.error.code, 'staging_level_validation_failed');
+  assertEquals(body.error.level, 1);
+  assert(String(body.error.technicalDetail).includes('unit_conversion'));
+  assert(String(body.error.technicalDetail).includes('timeline'));
+  assertEquals(calls.provider, 1);
+  assertEquals(calls.dbWrites, []);
 });

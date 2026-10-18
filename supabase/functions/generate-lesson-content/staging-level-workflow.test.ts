@@ -494,3 +494,43 @@ describe('staging level workflow', () => {
     expect(metadata).toHaveLength(4);
   });
 });
+
+describe('time-topic visual contract (providerCalls=0)', () => {
+  const timeTopic = 'Le repérage dans le temps et les durées';
+  const timeMetadata = stagingLevelMetadata('time-topic', timeTopic, [], 'Résoudre des problèmes impliquant des durées; lire une horloge et convertir des unités.');
+
+  it('builds topic-specific prompts for clock, timeline, and unit_conversion visuals', () => {
+    expect(timeMetadata.flatMap((level) => level.required_geometry_kinds)).toEqual(expect.arrayContaining(['clock', 'timeline', 'unit_conversion']));
+    expect(stagingLevelPrompt(timeTopic, 'CM2', 'fr', timeMetadata[0], 'Convertir des durées')).toContain('Visuels obligatoires dans ce niveau: unit_conversion, timeline');
+    expect(stagingLevelPrompt(timeTopic, 'CM2', 'fr', timeMetadata[1], 'Lire une horloge')).toContain('Visuels obligatoires dans ce niveau: clock, timeline');
+    expect(stagingLevelPrompt(timeTopic, 'CM2', 'fr', timeMetadata[0], 'Convertir des durées')).toContain(JSON.stringify(STAGING_VISUAL_EXAMPLES.unit_conversion));
+    expect(stagingLevelPrompt(timeTopic, 'CM2', 'fr', timeMetadata[1], 'Lire une horloge')).toContain(JSON.stringify(STAGING_VISUAL_EXAMPLES.clock));
+  });
+
+  it('accepts complete time visuals through the real geometry and pedagogical validators', () => {
+    for (const level of timeMetadata) {
+      const candidate = structuredClone(stagingFullLevelExample(level));
+      const validation = validateStagingLevel(candidate, level, timeTopic, 'CM2');
+      expect(validation.canonicalIssues).toEqual([]);
+      expect(validation.pedagogicalIssues).toEqual([]);
+      expect(validation.geometryIssues).toEqual([]);
+      expect(requiredGeometryKindsIssues(candidate, level.required_geometry_kinds)).toEqual([]);
+    }
+    const assembled = assembleStagingLesson(timeTopic, timeMetadata.map((metadata) => ({ metadata, lesson: stagingFullLevelExample(metadata) })));
+    expect(requiredGeometryIssues(assembled, [...new Set(timeMetadata.flatMap((level) => level.required_geometry_kinds))])).toEqual([]);
+  });
+
+  it('rejects rectangle/polygon-only provider output for a time topic', () => {
+    const level = timeMetadata[0];
+    const candidate = structuredClone(stagingFullLevelExample(level)) as any;
+    candidate.sequence[0].visual = structuredClone(STAGING_VISUAL_EXAMPLES.rectangle.visual);
+    candidate.sequence[1].visual = structuredClone(STAGING_VISUAL_EXAMPLES.triangle.visual);
+    const validation = validateStagingLevel(candidate, level, timeTopic, 'CM2');
+    const required = requiredGeometryKindsIssues(candidate, level.required_geometry_kinds);
+    expect(required).toEqual(expect.arrayContaining([
+      expect.objectContaining({ message: expect.stringContaining('unit_conversion') }),
+      expect.objectContaining({ message: expect.stringContaining('timeline') }),
+    ]));
+    expect([...validation.geometryIssues, ...required]).not.toEqual([]);
+  });
+});

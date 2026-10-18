@@ -14,10 +14,30 @@ const points = (data: Obj, field: string, min: number, path: string, aliases: st
 };
 
 export function geometryVisualDataErrors(kind: string, data: unknown, basePath = 'visual.data'): GeometryContractIssue[] {
-  if (!['diagram', 'angle', 'circle', 'polygon', 'symmetry', 'triangle', 'rectangle'].includes(kind)) return [];
+  if (!['clock', 'timeline', 'unit_conversion', 'diagram', 'angle', 'circle', 'polygon', 'symmetry', 'triangle', 'rectangle'].includes(kind)) return [];
   if (!obj(data)) return [issue(basePath, 'missing_geometry_data', `Visual kind ${kind} requires complete renderable data.`)];
   const d = data;
   switch (kind) {
+    case 'clock':
+      return Number.isInteger(d.hour) && Number(d.hour) >= 1 && Number(d.hour) <= 12
+        && Number.isInteger(d.minute) && Number(d.minute) >= 0 && Number(d.minute) <= 59
+        ? []
+        : [issue(basePath, 'missing_geometry_data', 'Clock requires integer hour 1–12 and minute 0–59.')];
+    case 'timeline': {
+      const units = Array.isArray(d.units) ? d.units.filter((unit) => typeof unit === 'string' && unit.trim().length > 0) : [];
+      const relations = Array.isArray(d.relations) ? d.relations : [];
+      if (units.length >= 2 || relations.length >= 1) return [];
+      return [issue(basePath, 'missing_geometry_data', 'Timeline requires at least two non-empty units or one relation.')];
+    }
+    case 'unit_conversion': {
+      const units = Array.isArray(d.units) ? d.units.filter((unit) => typeof unit === 'string' && unit.trim().length > 0) : [];
+      const relations = Array.isArray(d.relations) ? d.relations : [];
+      const pair = typeof d.from === 'string' && d.from.trim().length > 0
+        && typeof d.to === 'string' && d.to.trim().length > 0
+        && finite(d.factor) && d.factor > 0;
+      if (pair || (units.length >= 2 && relations.length >= 1)) return [];
+      return [issue(basePath, 'missing_geometry_data', 'Unit conversion requires from/to/factor or declared units and relations.')];
+    }
     case 'diagram': {
       const errors = points(d, 'points', 1, basePath);
       const relations = [...(Array.isArray(d.segments) ? d.segments : []), ...(Array.isArray(d.lines) ? d.lines : [])];

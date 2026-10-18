@@ -793,7 +793,8 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
     };
 
     if (body.mode === 'staging_draft') {
-      const metadata = stagingLevelMetadata(String(topicId), topic.name, objectives.map((o) => o.id));
+      const objectiveText = objectives.map((o) => o.text).join('; ');
+      const metadata = stagingLevelMetadata(String(topicId), topic.name, objectives.map((o) => o.id), objectiveText);
       const validatedLevels: Array<{ metadata: typeof metadata[number]; lesson: Record<string, unknown> }> = [];
       for (const levelMetadata of metadata) {
         const levelIndex = levelMetadata.level_number;
@@ -847,7 +848,8 @@ Pour CM2, crée environ 6 à 10 blocs, avec au moins un prérequis, une représe
       }
       const candidate = assembleStagingLesson(topic.name, validatedLevels);
       const finalCanonical = validateLessonV21(candidate, { prerequisiteFormat: 'staging' });
-      const finalGeometryIssues = requiredGeometryIssues(candidate);
+      const requiredKinds = [...new Set(metadata.flatMap((level) => level.required_geometry_kinds))];
+      const finalGeometryIssues = requiredGeometryIssues(candidate, requiredKinds);
       if (!finalCanonical.success) throw new Error('staging_assembly_canonical_validation_failed: ' + finalCanonical.issues.slice(0, 8).map((issue) => issue.path + ': ' + issue.message).join('; '));
       if (finalGeometryIssues.length > 0) throw new Error('staging_assembly_geometry_validation_failed: ' + finalGeometryIssues.map((issue) => issue.message).join('; '));
       const aggregateValidation = {

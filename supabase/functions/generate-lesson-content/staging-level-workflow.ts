@@ -226,7 +226,19 @@ export function stagingTokenUsage(providerMetadata: { finishReason?: string; pro
   };
 }
 
-export function stagingLevelMetadata(topicId: string, topicName: string, objectiveIds: string[]): StagingLevelMetadata[] {
+function isTimeTopic(topicName: string, objectiveText = ''): boolean {
+  return /dur[ée]e|temps|heure|horloge|aiguille|minute|seconde|jour|semaine|mois|ann[ée]e|conversion|unit[ée]s? de dur[ée]e/i.test(`${topicName} ${objectiveText}`);
+}
+
+export function stagingLevelMetadata(topicId: string, topicName: string, objectiveIds: string[], objectiveText = ''): StagingLevelMetadata[] {
+  if (isTimeTopic(topicName, objectiveText)) {
+    return [
+      { id: topicId + '-level-1', level_number: 1, title: 'Comprendre les unités de durée', purpose: 'Comparer les unités de temps et leur ordre.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['unit_conversion', 'timeline'] },
+      { id: topicId + '-level-2', level_number: 2, title: 'Lire l’heure et calculer des durées', purpose: 'Lire une horloge et relier une heure à une durée.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['clock', 'timeline'] },
+      { id: topicId + '-level-3', level_number: 3, title: 'Convertir des durées', purpose: 'Choisir une unité et effectuer une conversion.', difficulty: 'application', objective_ids: objectiveIds, required_geometry_kinds: ['unit_conversion', 'timeline'] },
+      { id: topicId + '-level-4', level_number: 4, title: 'Résoudre des problèmes de durée', purpose: 'Résoudre une situation de durée en justifiant ses choix.', difficulty: 'transfer', objective_ids: objectiveIds, required_geometry_kinds: ['clock', 'unit_conversion'] },
+    ];
+  }
   return [
     { id: topicId + '-level-1', level_number: 1, title: 'Découvrir les figures', purpose: 'Reconnaître les éléments des figures planes.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['rectangle', 'triangle'] },
     { id: topicId + '-level-2', level_number: 2, title: 'Décrire cercle et angle', purpose: 'Décrire un cercle et un angle avec leurs mesures.', difficulty: 'foundation', objective_ids: objectiveIds, required_geometry_kinds: ['circle', 'angle'] },
@@ -240,12 +252,15 @@ type ConceptExample = Record<string, unknown> & { visual: { kind: string; purpos
 /** Canonical drawable-visual concept examples. Each one must pass the real
  * staging validators (see staging-prompt-consistency.test.ts); the prompt
  * embeds them verbatim so the provider sees exactly the accepted shapes. */
-export const STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle' | 'angle' | 'symmetry', ConceptExample> = {
+export const STAGING_VISUAL_EXAMPLES: Record<'rectangle' | 'triangle' | 'circle' | 'angle' | 'symmetry' | 'clock' | 'timeline' | 'unit_conversion', ConceptExample> = {
   rectangle: { id: 'rectangle-concept', type: 'concept', title: 'Rectangle ABCD', content: 'Un rectangle est un quadrilatère qui possède quatre angles droits. Ses côtés opposés ont la même longueur.', key_points: [{ label: 'Forme', text: '4 côtés' }, { label: 'Angles', text: '4 angles droits' }], takeaway: 'Astuce : pense à une porte.', visual: { kind: 'rectangle', purpose: 'Nommer les sommets et les côtés.', alt_text: 'Rectangle ABCD dessiné avec quatre sommets étiquetés.', data: { shape: 'rectangle', vertices: [{ x: 45, y: 45, label: 'A' }, { x: 255, y: 45, label: 'B' }, { x: 255, y: 155, label: 'C' }, { x: 45, y: 155, label: 'D' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'D', label: 'CD' }, { from: 'D', to: 'A', label: 'DA' }] } } },
   triangle: { id: 'triangle-concept', type: 'concept', title: 'Triangle ABC', content: 'Un triangle est un polygone formé de trois côtés et de trois sommets.', key_points: [{ label: 'Côtés', text: '3 côtés' }, { label: 'Sommets', text: '3 sommets' }], takeaway: 'Astuce : un doigt par coin.', visual: { kind: 'polygon', purpose: 'Nommer les côtés du triangle.', alt_text: 'Triangle ABC dessiné avec trois sommets étiquetés.', data: { shape: 'triangle', vertices: [{ x: 60, y: 150, label: 'A' }, { x: 150, y: 30, label: 'B' }, { x: 240, y: 150, label: 'C' }], side_labels: [{ from: 'A', to: 'B', label: 'AB' }, { from: 'B', to: 'C', label: 'BC' }, { from: 'C', to: 'A', label: 'CA' }] } } },
   circle: { id: 'circle-concept', type: 'concept', title: 'Cercle de centre O', content: 'Tous les points d’un cercle sont à la même distance du centre O. Le diamètre mesure deux rayons.', key_points: [{ label: 'Rayon', text: 'Du centre au cercle' }, { label: 'Diamètre', text: 'Deux rayons alignés' }], takeaway: 'Astuce : pense à une roue de vélo.', visual: { kind: 'circle', purpose: 'Montrer le centre, le rayon et le diamètre.', alt_text: 'Cercle de centre O avec un rayon de 3 cm et un diamètre de 6 cm.', data: { center: { x: 150, y: 100, label: 'O' }, radius: 3, diameter: 6, unit: 'cm' } } },
   angle: { id: 'angle-concept', type: 'concept', title: 'Angle de sommet O', content: 'Un angle est formé par deux demi-droites qui partent du même sommet O. On le mesure en degrés.', key_points: [{ label: 'Sommet', text: 'Le point O' }, { label: 'Mesure', text: 'En degrés' }], takeaway: 'Astuce : pense aux aiguilles d’une horloge.', visual: { kind: 'angle', purpose: 'Montrer le sommet, les deux côtés et la mesure.', alt_text: 'Angle AOB de 45 degrés de sommet O.', data: { vertex: { x: 100, y: 150, label: 'O' }, rays: [{ x: 250, y: 150, label: 'A' }, { x: 206, y: 44, label: 'B' }], degrees: 45 } } },
   symmetry: { id: 'symmetry-concept', type: 'concept', title: 'Symétrie axiale', content: 'Une figure et son image symétrique se correspondent de part et d’autre d’un axe vertical.', key_points: [{ label: 'Repère', text: 'Axe vertical' }, { label: 'Correspondance', text: 'Même écart' }], takeaway: 'Astuce : pense aux ailes d’un papillon.', visual: { kind: 'symmetry', purpose: 'Comparer une figure et sa symétrique sur quadrillage.', alt_text: 'Triangle et son symétrique par rapport à un axe vertical sur un quadrillage de 10 sur 8.', data: { axis: { x: 5 }, grid: { width: 10, height: 8 }, figure: [{ x: 2, y: 2 }, { x: 4, y: 2 }, { x: 4, y: 5 }], symmetric_figure: [{ x: 8, y: 2 }, { x: 6, y: 2 }, { x: 6, y: 5 }] } } },
+  clock: { id: 'clock-concept', type: 'concept', title: 'Lire une horloge', content: 'Une horloge indique une heure grâce à ses aiguilles. La petite aiguille montre les heures et la grande les minutes.', key_points: [{ label: 'Heures', text: 'Petite aiguille' }, { label: 'Minutes', text: 'Grande aiguille' }], takeaway: 'Astuce : observe le cadran avant d’agir.', visual: { kind: 'clock', purpose: 'Lire une heure précise sur un cadran.', alt_text: 'Horloge indiquant 3 heures et 15 minutes.', data: { hour: 3, minute: 15 } } },
+  timeline: { id: 'timeline-concept', type: 'concept', title: 'Ordre des unités', content: 'Les unités de durée se suivent de la seconde au jour. Une frise aide à comparer leur ordre.', key_points: [{ label: 'Ordre', text: 'Seconde puis minute' }, { label: 'Repère', text: 'Minute puis heure' }], takeaway: 'Astuce : ordonne les cartes avant d’agir.', visual: { kind: 'timeline', purpose: 'Comparer l’ordre des unités de durée.', alt_text: 'Frise des unités seconde, minute et heure.', data: { units: ['seconde', 'minute', 'heure'] } } },
+  unit_conversion: { id: 'unit-conversion-concept', type: 'concept', title: 'Convertir une durée', content: 'Pour convertir une durée, on relie les unités par leur facteur. Une minute correspond à 60 secondes.', key_points: [{ label: 'Facteur', text: '1 minute = 60 secondes' }, { label: 'Sens', text: 'Vers une unité plus petite' }], takeaway: 'Astuce : choisis avant d’agir.', visual: { kind: 'unit_conversion', purpose: 'Montrer le facteur entre minute et seconde.', alt_text: 'Conversion d’une minute en secondes.', data: { from: 'minute', to: 'seconde', factor: 60 } } },
 };
 
 export const STAGING_ALL_GEOMETRY_KINDS = ['rectangle', 'triangle', 'circle', 'angle', 'symmetry'] as const;
@@ -442,11 +457,11 @@ export function summarizeStagingValidation(validation: StagingValidation, extraG
   };
 }
 
-export function requiredGeometryIssues(lesson: Record<string, unknown>): Array<{ path: string; message: string }> {
+export function requiredGeometryIssues(lesson: Record<string, unknown>, requiredKinds = [...STAGING_ALL_GEOMETRY_KINDS]): Array<{ path: string; message: string }> {
   const sequence = (Array.isArray(lesson.levels) ? lesson.levels : []).flatMap((level: any) => Array.isArray(level?.lesson?.sequence) ? level.lesson.sequence : []);
   const visuals = sequence.map((block: any) => block?.visual).filter(Boolean);
   const has = (kind: string) => visuals.some((visual: any) => visual.kind === kind || (kind === 'triangle' && visual.kind === 'polygon' && visual.data?.shape === 'triangle'));
-  return ['rectangle', 'triangle', 'circle', 'angle', 'symmetry'].filter((kind) => !has(kind)).map((kind) => ({ path: 'levels', message: 'Missing required drawable visual: ' + kind + '.' }));
+  return requiredKinds.filter((kind) => !has(kind)).map((kind) => ({ path: 'levels', message: 'Missing required drawable visual: ' + kind + '.' }));
 }
 
 export function requiredGeometryKindsIssues(lesson: Record<string, unknown>, requiredKinds: string[]): Array<{ path: string; message: string }> {
